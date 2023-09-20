@@ -79,7 +79,7 @@
 #define CPLMalloc malloc
 #define CPLCalloc calloc
 #define CPLFree free
-#define GInt16 short
+#define int16_t short
 #define GByte unsigned char
 #define VSIFSeekL fseek
 #define CPLAssert assert
@@ -143,23 +143,23 @@ DTEDInfo *DTEDOpenEx(VSILFILE *fp, const char *pszFilename,
         top-left corner of the file (contrary to the internal
         organization or a DTED file)
 */
-int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, GInt16 *panVal);
+int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, int16_t *panVal);
 
 /**    Read one profile line.  These are organized in bottom to top
        order starting from the leftmost column (0).
 */
-int DTEDReadProfile(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData);
+int DTEDReadProfile(DTEDInfo *psDInfo, int nColumnOffset, int16_t *panData);
 
 /* Extended version of DTEDReadProfile that enables the user to specify */
 /* whether the checksums should be verified */
-int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData,
+int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, int16_t *panData,
                       int bVerifyChecksum);
 
 /**    Write one profile line.
        @warning Contrary to DTEDReadProfile,
                 the profile should be organized from top to bottom
 */
-int DTEDWriteProfile(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData);
+int DTEDWriteProfile(DTEDInfo *psDInfo, int nColumnOffset, int16_t *panData);
 
 void DTEDClose(DTEDInfo *);
 

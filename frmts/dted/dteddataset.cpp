@@ -130,7 +130,7 @@ CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
 {
     DTEDDataset *poDTED_DS = (DTEDDataset *)poDS;
     int nYSize = poDTED_DS->psDTED->nYSize;
-    GInt16 *panData;
+    int16_t *panData;
 
     (void)nBlockXOff;
     CPLAssert(nBlockYOff == 0);
@@ -139,8 +139,8 @@ CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     {
         const int cbs = 32;  // optimize for 64 byte cache line size
         const int bsy = (nBlockYSize + cbs - 1) / cbs * cbs;
-        panData = (GInt16 *)pImage;
-        GInt16 *panBuffer = (GInt16 *)CPLMalloc(sizeof(GInt16) * cbs * bsy);
+        panData = (int16_t *)pImage;
+        int16_t *panBuffer = (int16_t *)CPLMalloc(sizeof(int16_t) * cbs * bsy);
         for (int i = 0; i < nBlockXSize; i += cbs)
         {
             int n = std::min(cbs, nBlockXSize - i);
@@ -156,8 +156,8 @@ CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
             }
             for (int y = 0; y < nBlockYSize; ++y)
             {
-                GInt16 *dst = panData + i + (nYSize - y - 1) * nBlockXSize;
-                GInt16 *src = panBuffer + y;
+                int16_t *dst = panData + i + (nYSize - y - 1) * nBlockXSize;
+                int16_t *src = panBuffer + y;
                 for (int j = 0; j < n; ++j)
                 {
                     dst[j] = src[j * bsy];
@@ -172,7 +172,7 @@ CPLErr DTEDRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Read the data.                                                  */
     /* -------------------------------------------------------------------- */
-    panData = (GInt16 *)pImage;
+    panData = (int16_t *)pImage;
     if (!DTEDReadProfileEx(poDTED_DS->psDTED, nBlockXOff, panData,
                            poDTED_DS->bVerifyChecksum))
         return CE_Failure;
@@ -197,7 +197,7 @@ CPLErr DTEDRasterBand::IWriteBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
                                    void *pImage)
 {
     DTEDDataset *poDTED_DS = (DTEDDataset *)poDS;
-    GInt16 *panData;
+    int16_t *panData;
 
     (void)nBlockXOff;
     CPLAssert(nBlockYOff == 0);
@@ -207,8 +207,9 @@ CPLErr DTEDRasterBand::IWriteBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
 
     if (nBlockXSize != 1)
     {
-        panData = (GInt16 *)pImage;
-        GInt16 *panBuffer = (GInt16 *)CPLMalloc(sizeof(GInt16) * nBlockYSize);
+        panData = (int16_t *)pImage;
+        int16_t *panBuffer =
+            (int16_t *)CPLMalloc(sizeof(int16_t) * nBlockYSize);
         for (int i = 0; i < nBlockXSize; i++)
         {
             for (int j = 0; j < nBlockYSize; j++)
@@ -226,7 +227,7 @@ CPLErr DTEDRasterBand::IWriteBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
         return CE_None;
     }
 
-    panData = (GInt16 *)pImage;
+    panData = (int16_t *)pImage;
     if (!DTEDWriteProfile(poDTED_DS->psDTED, nBlockXOff, panData))
         return CE_Failure;
 
@@ -797,8 +798,8 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     /*      Read all the data in a single buffer.                           */
     /* -------------------------------------------------------------------- */
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
-    GInt16 *panData = (GInt16 *)VSI_MALLOC_VERBOSE(
-        sizeof(GInt16) * psDTED->nXSize * psDTED->nYSize);
+    int16_t *panData = (int16_t *)VSI_MALLOC_VERBOSE(
+        sizeof(int16_t) * psDTED->nXSize * psDTED->nYSize);
     if (panData == nullptr)
     {
         DTEDClose(psDTED);
@@ -834,7 +835,7 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Write all the profiles.                                         */
     /* -------------------------------------------------------------------- */
-    GInt16 anProfData[3601];
+    int16_t anProfData[3601];
     int dfNodataCount = 0;
     GByte iPartialCell;
 

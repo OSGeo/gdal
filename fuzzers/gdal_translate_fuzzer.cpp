@@ -216,14 +216,14 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                             (pszInterleave && EQUAL(pszInterleave, "PIXEL"))
                                 ? nBands
                                 : 1;
-                        if (static_cast<GIntBig>(nSimultaneousBands) * nBXSize *
+                        if (static_cast<int64_t>(nSimultaneousBands) * nBXSize *
                                 nBYSize * nDTSize >
                             10 * 1024 * 1024)
                         {
                             bOKForSrc = false;
                         }
 
-                        if (static_cast<GIntBig>(nBlockXSize) * nBlockYSize >
+                        if (static_cast<int64_t>(nBlockXSize) * nBlockYSize >
                             10 * 1024 * 1024 / (nBands * nDTSize))
                         {
                             bOKForSrc = false;

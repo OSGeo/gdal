@@ -453,11 +453,11 @@ BSBInfo *BSBOpen(const char *pszFilename)
     /* -------------------------------------------------------------------- */
     if (psInfo->nYSize > 10000000)
     {
-        vsi_l_offset nCurOffset = VSIFTellL(fp);
-        vsi_l_offset nFileSize;
+        uint64_t nCurOffset = VSIFTellL(fp);
+        uint64_t nFileSize;
         VSIFSeekL(fp, 0, SEEK_END);
         nFileSize = VSIFTellL(fp);
-        if (nFileSize < (vsi_l_offset)(psInfo->nYSize))
+        if (nFileSize < (uint64_t)(psInfo->nYSize))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Truncated file");
             BSBClose(psInfo);
@@ -489,7 +489,7 @@ BSBInfo *BSBOpen(const char *pszFilename)
         int nVal;
         int listIsOK = 1;
         int nOffsetIndexTable;
-        vsi_l_offset nFileLenLarge;
+        uint64_t nFileLenLarge;
         int nFileLen;
 
         /* Seek fp to point the last 4 byte integer which points
@@ -925,7 +925,7 @@ int BSBReadScanline(BSBInfo *psInfo, int nScanline,
              (nScanline == psInfo->nYSize - 1 ||
               psInfo->panLineOffset[nScanline + 1] == -1 ||
               VSIFTellL(fp) - psInfo->nBufferSize + psInfo->nBufferOffset <
-                  (vsi_l_offset)psInfo->panLineOffset[nScanline + 1]));
+                  (uint64_t)psInfo->panLineOffset[nScanline + 1]));
 
     /* -------------------------------------------------------------------- */
     /*      If the line buffer is not filled after reading the line in the  */

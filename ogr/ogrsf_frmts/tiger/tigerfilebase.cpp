@@ -204,9 +204,9 @@ void TigerFileBase::EstablishFeatureCount()
     /* -------------------------------------------------------------------- */
 
     VSIFSeekL(fpPrimary, 0, SEEK_END);
-    const vsi_l_offset nFileSize = VSIFTellL(fpPrimary);
+    const uint64_t nFileSize = VSIFTellL(fpPrimary);
 
-    if ((nFileSize % (vsi_l_offset)nRecordLength) != 0)
+    if ((nFileSize % (uint64_t)nRecordLength) != 0)
     {
         CPLError(CE_Warning, CPLE_FileIO,
                  "TigerFileBase::EstablishFeatureCount(): "
@@ -214,10 +214,10 @@ void TigerFileBase::EstablishFeatureCount()
                  (int)nFileSize, (int)nRecordLength);
     }
 
-    if (nFileSize / (vsi_l_offset)nRecordLength > (vsi_l_offset)INT_MAX)
+    if (nFileSize / (uint64_t)nRecordLength > (uint64_t)INT_MAX)
         nFeatures = INT_MAX;
     else
-        nFeatures = static_cast<int>(nFileSize / (vsi_l_offset)nRecordLength);
+        nFeatures = static_cast<int>(nFileSize / (uint64_t)nRecordLength);
 }
 
 /************************************************************************/

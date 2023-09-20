@@ -302,8 +302,7 @@ RB_PROXY_METHOD_WITH_RET_AND_CALL_OTHER_METHOD(
     CPLErr, CE_Failure, IRasterIO, RasterIO,
     (GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
      void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-     GSpacing nPixelSpace, GSpacing nLineSpace,
-     GDALRasterIOExtraArg *psExtraArg),
+     int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg),
     (eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
      eBufType, nPixelSpace, nLineSpace, psExtraArg))
 
@@ -343,7 +342,7 @@ RB_PROXY_METHOD_WITH_RET(int, 0, GetOverviewCount, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetOverview, (int arg1),
                          (arg1))
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetRasterSampleOverview,
-                         (GUIntBig arg1), (arg1))
+                         (uint64_t arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
                          (const char *arg1, int arg2, const int *arg3,
@@ -681,7 +680,7 @@ CPLErr NITFSetColorInterpretation(NITFImage *psImage, int nBand,
     /* -------------------------------------------------------------------- */
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
     strcpy(psBandInfo->szIREPBAND, pszREP);
-    GUIntBig nOffset = NITFIHFieldOffset(psImage, "IREPBAND");
+    uint64_t nOffset = NITFIHFieldOffset(psImage, "IREPBAND");
 
     if (nOffset != 0)
         nOffset += (nBand - 1) * 13;
@@ -975,7 +974,7 @@ void NITFRasterBand::Unpack(GByte *pData)
         case 12:
         {
             GByte *pabyImage = reinterpret_cast<GByte *>(pData);
-            GUInt16 *panImage = reinterpret_cast<GUInt16 *>(pData);
+            uint16_t *panImage = reinterpret_cast<uint16_t *>(pData);
             // DANGER: Non-standard decrement of counter in the test section of
             // for.
             for (int i = n; --i >= 0;)

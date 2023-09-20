@@ -203,10 +203,11 @@ int CPL_DLL CPLIsVirtualMemFileMapAvailable(void);
  *
  * @since GDAL 1.11
  */
-CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
-    VSILFILE *fp, vsi_l_offset nOffset, vsi_l_offset nLength,
-    CPLVirtualMemAccessMode eAccessMode,
-    CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData);
+CPLVirtualMem CPL_DLL *
+CPLVirtualMemFileMapNew(VSILFILE *fp, uint64_t nOffset, uint64_t nLength,
+                        CPLVirtualMemAccessMode eAccessMode,
+                        CPLVirtualMemFreeUserData pfnFreeUserData,
+                        void *pCbkUserData);
 
 /** Create a new virtual memory mapping derived from an other virtual memory
  *  mapping.
@@ -228,7 +229,7 @@ CPLVirtualMem CPL_DLL *CPLVirtualMemFileMapNew(
  * @since GDAL 1.11
  */
 CPLVirtualMem CPL_DLL *CPLVirtualMemDerivedNew(
-    CPLVirtualMem *pVMemBase, vsi_l_offset nOffset, vsi_l_offset nSize,
+    CPLVirtualMem *pVMemBase, uint64_t nOffset, uint64_t nSize,
     CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData);
 
 /** Free a virtual memory mapping.

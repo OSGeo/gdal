@@ -35,6 +35,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+#include <cinttypes>
+
 /*!
   \brief IVFKFeature constructor
 
@@ -74,7 +76,7 @@ void IVFKFeature::SetGeometryType(OGRwkbGeometryType nGeomType)
 
   \param nFID feature id
 */
-void IVFKFeature::SetFID(GIntBig nFID)
+void IVFKFeature::SetFID(int64_t nFID)
 {
     if (m_nFID > 0)
     {
@@ -113,8 +115,8 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
     if (m_nGeometryType == wkbNone && poGeom->IsEmpty())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "%s: empty geometry fid = " CPL_FRMT_GIB,
-                 m_poDataBlock->GetName(), m_nFID);
+                 "%s: empty geometry fid = %" PRId64, m_poDataBlock->GetName(),
+                 m_nFID);
         m_bValid = false;
     }
 
@@ -126,7 +128,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
         const double y = poPoint->getY();
         if (x > -430000 || x < -910000 || y > -930000 || y < -1230000)
         {
-            CPLDebug("OGR-VFK", "%s: invalid point fid = " CPL_FRMT_GIB,
+            CPLDebug("OGR-VFK", "%s: invalid point fid = %" PRId64,
                      m_poDataBlock->GetName(), m_nFID);
             m_bValid = false;
         }
@@ -138,7 +140,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
         OGRLinearRing *poRing = poGeom->toPolygon()->getExteriorRing();
         if (!poRing || poRing->getNumPoints() < 3)
         {
-            CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
+            CPLDebug("OGR-VFK", "%s: invalid polygon fid = %" PRId64,
                      m_poDataBlock->GetName(), m_nFID);
             m_bValid = false;
         }
@@ -225,7 +227,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 {
                     CPLDebug("OGR-VFK",
                              "%s: invalid circle (unknown or negative radius) "
-                             "fid = " CPL_FRMT_GIB,
+                             "fid = %" PRId64,
                              m_poDataBlock->GetName(), m_nFID);
                     m_bValid = false;
                 }
@@ -285,7 +287,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                     poGeomCurved->toLineString()->getNumPoints();
                 CPLDebug("OGR-VFK",
                          "%s: curve (type=%s) to linestring (npoints=%d) fid "
-                         "= " CPL_FRMT_GIB,
+                         "= %" PRId64,
                          m_poDataBlock->GetName(), ftype, npoints, m_nFID);
                 if (npoints > 1)
                     m_paGeom = poGeomCurved->clone();
@@ -304,7 +306,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "%s: invalid linestring (%d vertices) fid "
-                             "= " CPL_FRMT_GIB,
+                             "= %" PRId64,
                              m_poDataBlock->GetName(), npoints, m_nFID);
                     m_bValid = false;
                 }
@@ -376,7 +378,7 @@ bool IVFKFeature::LoadGeometry()
 
   \param poDataBlock pointer to VFKDataBlock instance
 */
-VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock, GIntBig iFID)
+VFKFeature::VFKFeature(IVFKDataBlock *poDataBlock, int64_t iFID)
     : IVFKFeature(poDataBlock)
 {
     m_nFID = iFID;
@@ -542,7 +544,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
         const VFKProperty *poVfkProperty = GetProperty("PORADOVE_CISLO_BODU");
         if (poVfkProperty)
         {
-            GUIntBig id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
+            uint64_t id = strtoul(poVfkProperty->GetValueS(), NULL, 0);
             if (id == 1)
                 SetFID(0);
             else
@@ -598,14 +600,13 @@ bool VFKFeature::SetProperty(int iIndex, const char *pszValue)
             if ((fType == OFTInteger &&
                  (errno == ERANGE || !pszLast || *pszLast)) ||
                 CPLGetValueType(pszValue) != CPL_VALUE_INTEGER || pbOverflow)
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Value '%s' parsed incompletely to integer " CPL_FRMT_GIB
-                    ".",
-                    pszValue,
-                    (fType == OFTInteger)
-                        ? m_propertyList[iIndex].GetValueI()
-                        : m_propertyList[iIndex].GetValueI64());
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Value '%s' parsed incompletely to integer %" PRId64
+                         ".",
+                         pszValue,
+                         (fType == OFTInteger)
+                             ? m_propertyList[iIndex].GetValueI()
+                             : m_propertyList[iIndex].GetValueI64());
             break;
         }
         case OFTReal:

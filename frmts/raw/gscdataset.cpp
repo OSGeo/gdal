@@ -142,11 +142,11 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
 
     int nRecordLen =
-        CPL_LSBWORD32(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader)[0]);
+        CPL_LSBWORD32(reinterpret_cast<int32_t *>(poOpenInfo->pabyHeader)[0]);
     const int nPixels =
-        CPL_LSBWORD32(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader)[1]);
+        CPL_LSBWORD32(reinterpret_cast<int32_t *>(poOpenInfo->pabyHeader)[1]);
     const int nLines =
-        CPL_LSBWORD32(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader)[2]);
+        CPL_LSBWORD32(reinterpret_cast<int32_t *>(poOpenInfo->pabyHeader)[2]);
 
     if (nPixels < 1 || nLines < 1 || nPixels > 100000 || nLines > 100000)
         return nullptr;

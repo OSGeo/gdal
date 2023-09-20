@@ -45,6 +45,7 @@
 #include "gpb.h"
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 #include <set>
@@ -190,8 +191,8 @@ class OGRMVTLayer final : public OGRMVTLayerBase
         OGRField sValue;
     } Value;
     std::vector<Value> m_asValues;
-    GIntBig m_nFID = 0;
-    GIntBig m_nFeatureCount = -1;
+    int64_t m_nFID = 0;
+    int64_t m_nFeatureCount = -1;
     OGRPolygon m_oClipPoly;
     double m_dfTileMinX = 0;
     double m_dfTileMinY = 0;
@@ -221,7 +222,7 @@ class OGRMVTLayer final : public OGRMVTLayerBase
 
     virtual void ResetReading() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 };
 
 /************************************************************************/
@@ -242,7 +243,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     int m_nYIndex = 0;
     GDALDataset *m_poCurrentTile = nullptr;
     bool m_bJsonField = false;
-    GIntBig m_nFIDBase = 0;
+    int64_t m_nFIDBase = 0;
     OGREnvelope m_sExtent;
     int m_nFilterMinX = 0;
     int m_nFilterMinY = 0;
@@ -266,7 +267,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
 
     virtual void ResetReading() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -280,7 +281,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 
     virtual int TestCapability(const char *) override;
 };
@@ -498,7 +499,7 @@ void OGRMVTLayer::Init(const CPLJSONObject &oFields,
                 }
                 else if (nKey == MAKE_KEY(knVALUE_INT, WT_VARINT))
                 {
-                    GIntBig nVal = 0;
+                    int64_t nVal = 0;
                     READ_VARINT64(pabyData, pabyDataLimit, nVal);
                     Value sValue;
                     sValue.eType = (nVal >= INT_MIN && nVal <= INT_MAX)
@@ -513,7 +514,7 @@ void OGRMVTLayer::Init(const CPLJSONObject &oFields,
                 }
                 else if (nKey == MAKE_KEY(knVALUE_UINT, WT_VARINT))
                 {
-                    GUIntBig nVal = 0;
+                    uint64_t nVal = 0;
                     READ_VARUINT64(pabyData, pabyDataLimit, nVal);
                     Value sValue;
                     sValue.eType =
@@ -522,12 +523,12 @@ void OGRMVTLayer::Init(const CPLJSONObject &oFields,
                     if (sValue.eType == OFTInteger)
                         sValue.sValue.Integer = static_cast<int>(nVal);
                     else
-                        sValue.sValue.Integer64 = static_cast<GIntBig>(nVal);
+                        sValue.sValue.Integer64 = static_cast<int64_t>(nVal);
                     m_asValues.push_back(sValue);
                 }
                 else if (nKey == MAKE_KEY(knVALUE_SINT, WT_VARINT))
                 {
-                    GIntBig nVal = 0;
+                    int64_t nVal = 0;
                     READ_VARSINT64(pabyData, pabyDataLimit, nVal);
                     Value sValue;
                     sValue.eType = (nVal >= INT_MIN && nVal <= INT_MAX)
@@ -555,7 +556,7 @@ void OGRMVTLayer::Init(const CPLJSONObject &oFields,
             }
             else if (nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT))
             {
-                GUInt32 nExtent = 0;
+                uint32_t nExtent = 0;
                 READ_VARUINT32(pabyData, pabyDataLimit, nExtent);
                 m_nExtent = std::max(1U, nExtent);  // to avoid divide by zero
             }
@@ -833,7 +834,7 @@ bool OGRMVTLayer::QuickScanFeature(const GByte *pabyData,
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRMVTLayer::GetFeatureCount(int bForce)
+int64_t OGRMVTLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
         m_nFeatureCount >= 0)
@@ -1274,9 +1275,9 @@ OGRFeature *OGRMVTLayer::GetNextRawFeature()
                 READ_VARUINT32(m_pabyDataCur, pabyDataFeatureEnd, nKey);
                 if (nKey == MAKE_KEY(knFEATURE_ID, WT_VARINT))
                 {
-                    GUIntBig nID = 0;
+                    uint64_t nID = 0;
                     READ_VARUINT64(m_pabyDataCur, pabyDataFeatureEnd, nID);
-                    poFeature->SetField("mvt_id", static_cast<GIntBig>(nID));
+                    poFeature->SetField("mvt_id", static_cast<int64_t>(nID));
                 }
                 else if (nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT))
                 {
@@ -1645,7 +1646,7 @@ void OGRMVTDirectoryLayer::OpenTile()
                      : m_nXIndex;
         int nY =
             m_bUseReadDir ? atoi(m_aosSubDirContent[m_nYIndex]) : m_nYIndex;
-        m_nFIDBase = (static_cast<GIntBig>(nX) << m_nZ) | nY;
+        m_nFIDBase = (static_cast<int64_t>(nX) << m_nZ) | nY;
     }
 }
 
@@ -1700,11 +1701,11 @@ void OGRMVTDirectoryLayer::OpenTileIfNeeded()
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRMVTDirectoryLayer::GetFeatureCount(int bForce)
+int64_t OGRMVTDirectoryLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
-        GIntBig nFeatureCount = 0;
+        int64_t nFeatureCount = 0;
         ResetReading();
         while (true)
         {
@@ -1844,11 +1845,11 @@ OGRFeature *OGRMVTDirectoryLayer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRMVTDirectoryLayer::GetFeature(int64_t nFID)
 {
     const int nX = static_cast<int>(nFID & ((1 << m_nZ) - 1));
     const int nY = static_cast<int>((nFID >> m_nZ) & ((1 << m_nZ) - 1));
-    const GIntBig nTileFID = nFID >> (2 * m_nZ);
+    const int64_t nTileFID = nFID >> (2 * m_nZ);
     const CPLString osFilename = CPLFormFilename(
         CPLFormFilename(m_osDirName, CPLSPrintf("%d", nX), nullptr),
         CPLSPrintf("%d.%s", nY, m_poDS->m_osTileExtension.c_str()), nullptr);
@@ -3046,7 +3047,7 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // Check file size and ingest into memory
         VSIFSeekL(fp, 0, SEEK_END);
-        vsi_l_offset nFileSizeL = VSIFTellL(fp);
+        uint64_t nFileSizeL = VSIFTellL(fp);
         if (nFileSizeL > 10 * 1024 * 1024)
         {
             VSIFCloseL(fp);
@@ -3238,7 +3239,7 @@ class OGRMVTWriterLayer;
 struct OGRMVTFeatureContent
 {
     std::vector<std::pair<std::string, MVTTileLayerValue>> oValues;
-    GIntBig nFID;
+    int64_t nFID;
 };
 
 class OGRMVTWriterDataset final : public GDALDataset
@@ -3261,7 +3262,7 @@ class OGRMVTWriterDataset final : public GDALDataset
       public:
         int m_nMinZoom = 0;
         int m_nMaxZoom = 0;
-        std::map<MVTTileLayerFeature::GeomType, GIntBig> m_oCountGeomType;
+        std::map<MVTTileLayerFeature::GeomType, int64_t> m_oCountGeomType;
         std::map<CPLString, size_t> m_oMapFieldNameToIdx;
         std::vector<MVTFieldProperties> m_aoFields;
         std::set<CPLString> m_oSetFields;
@@ -3286,7 +3287,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     bool m_bGZip = true;
     mutable CPLWorkerThreadPool m_oThreadPool;
     bool m_bThreadPoolOK = false;
-    mutable GIntBig m_nTempTiles = 0;
+    mutable int64_t m_nTempTiles = 0;
     CPLString m_osName;
     CPLString m_osDescription;
     CPLString m_osType{"overlay"};
@@ -3295,7 +3296,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     unsigned m_nMaxTileSize = 500000;
     unsigned m_nMaxFeatures = 200000;
     std::map<std::string, std::string> m_oMapLayerNameToDesc;
-    std::map<std::string, GIntBig> m_oMapLayerNameToFeatureCount;
+    std::map<std::string, int64_t> m_oMapLayerNameToFeatureCount;
     CPLString m_osBounds;
     CPLString m_osCenter;
     CPLString m_osExtension{"pbf"};
@@ -3309,7 +3310,7 @@ class OGRMVTWriterDataset final : public GDALDataset
         int nZ, int nX, int nY, const CPLString &osTargetName,
         bool bIsMaxZoomForLayer,
         const std::shared_ptr<OGRMVTFeatureContent> &poFeatureContent,
-        GIntBig nSerial, const std::shared_ptr<OGRGeometry> &poGeom,
+        int64_t nSerial, const std::shared_ptr<OGRGeometry> &poGeom,
         const OGREnvelope &sEnvelope) const;
 
     static void WriterTaskFunc(void *pParam);
@@ -3318,7 +3319,7 @@ class OGRMVTWriterDataset final : public GDALDataset
                                   const CPLString &osTargetName,
                                   bool bIsMaxZoomForLayer,
                                   const OGRMVTFeatureContent *poFeatureContent,
-                                  GIntBig nSerial, const OGRGeometry *poGeom,
+                                  int64_t nSerial, const OGRGeometry *poGeom,
                                   const OGREnvelope &sEnvelope) const;
 
     void ConvertToTileCoords(double dfX, double dfY, int &nX, int &nY,
@@ -3327,7 +3328,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     bool EncodeLineString(MVTTileLayerFeature *poGPBFeature,
                           const OGRLineString *poLS, OGRLineString *poOutLS,
                           bool bWriteLastPoint, bool bReverseOrder,
-                          GUInt32 nMinLineTo, double dfTopX, double dfTopY,
+                          uint32_t nMinLineTo, double dfTopX, double dfTopY,
                           double dfTileDim, int &nLastX, int &nLastY) const;
     bool EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                        const OGRPolygon *poPoly, OGRPolygon *poOutPoly,
@@ -3346,16 +3347,16 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     void EncodeFeature(const void *pabyBlob, int nBlobSize,
                        std::shared_ptr<MVTTileLayer> poTargetLayer,
-                       std::map<CPLString, GUInt32> &oMapKeyToIdx,
-                       std::map<MVTTileLayerValue, GUInt32> &oMapValueToIdx,
-                       MVTLayerProperties *poLayerProperties, GUInt32 nExtent,
+                       std::map<CPLString, uint32_t> &oMapKeyToIdx,
+                       std::map<MVTTileLayerValue, uint32_t> &oMapValueToIdx,
+                       MVTLayerProperties *poLayerProperties, uint32_t nExtent,
                        unsigned &nFeaturesInTile);
 
     std::string
     EncodeTile(int nZ, int nX, int nY, sqlite3_stmt *hStmtLayer,
                sqlite3_stmt *hStmtRows,
                std::map<CPLString, MVTLayerProperties> &oMapLayerProps,
-               std::set<CPLString> &oSetLayers, GIntBig &nTempTilesRead);
+               std::set<CPLString> &oSetLayers, int64_t &nTempTilesRead);
 
     std::string RecodeTileLowerResolution(int nZ, int nX, int nY, int nExtent,
                                           sqlite3_stmt *hStmtLayer,
@@ -3379,7 +3380,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     int TestCapability(const char *) override;
 
     OGRErr WriteFeature(OGRMVTWriterLayer *poLayer, OGRFeature *poFeature,
-                        GIntBig nSerial, OGRGeometry *poGeom);
+                        int64_t nSerial, OGRGeometry *poGeom);
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
@@ -3402,7 +3403,7 @@ class OGRMVTWriterLayer final : public OGRLayer
     OGRMVTWriterDataset *m_poDS = nullptr;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     OGRCoordinateTransformation *m_poCT = nullptr;
-    GIntBig m_nSerial = 0;
+    int64_t m_nSerial = 0;
     int m_nMinZoom = 0;
     int m_nMaxZoom = 5;
     CPLString m_osTargetName;
@@ -3614,13 +3615,13 @@ static unsigned GetCmdCountCombined(unsigned int nCmdId, unsigned int nCmdCount)
 bool OGRMVTWriterDataset::EncodeLineString(
     MVTTileLayerFeature *poGPBFeature, const OGRLineString *poLS,
     OGRLineString *poOutLS, bool bWriteLastPoint, bool bReverseOrder,
-    GUInt32 nMinLineTo, double dfTopX, double dfTopY, double dfTileDim,
+    uint32_t nMinLineTo, double dfTopX, double dfTopY, double dfTileDim,
     int &nLastX, int &nLastY) const
 {
-    const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
+    const uint32_t nInitialSize = poGPBFeature->getGeometryCount();
     const int nLastXOri = nLastX;
     const int nLastYOri = nLastY;
-    GUInt32 nLineToCount = 0;
+    uint32_t nLineToCount = 0;
     const int nPoints = poLS->getNumPoints() - (bWriteLastPoint ? 0 : 1);
     if (poOutLS)
         poOutLS->setNumPoints(nPoints);
@@ -3734,10 +3735,10 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     OGRLinearRing *poRing = poPoly->getExteriorRing();
     const bool bReverseOrder = !poRing->isClockwise();
 
-    const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
+    const uint32_t nInitialSize = poGPBFeature->getGeometryCount();
     const int nLastXOri = nLastX;
     const int nLastYOri = nLastY;
-    GUInt32 nLineToCount = 0;
+    uint32_t nLineToCount = 0;
     const int nPoints = poRing->getNumPoints() - 1;
     auto poOutLinearRing = cpl::make_unique<OGRLinearRing>();
     poOutLinearRing->setNumPoints(nPoints);
@@ -3847,7 +3848,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                           (i > 0 && poRing->isClockwise()))
                                        : ((i == 0 && poRing->isClockwise()) ||
                                           (i > 0 && !poRing->isClockwise()));
-        const GUInt32 nMinLineTo = 2;
+        const uint32_t nMinLineTo = 2;
         std::unique_ptr<OGRLinearRing> poOutInnerRing;
         if (i > 0)
             poOutInnerRing = cpl::make_unique<OGRLinearRing>();
@@ -3855,7 +3856,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
 #ifndef HAVE_MAKE_VALID
-        const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
+        const uint32_t nInitialSize = poGPBFeature->getGeometryCount();
         const int nLastXOri = nLastX;
         const int nLastYOri = nLastY;
 #endif
@@ -4010,7 +4011,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     int nZ, int nTileX, int nTileY, const CPLString &osTargetName,
     bool bIsMaxZoomForLayer, const OGRMVTFeatureContent *poFeatureContent,
-    GIntBig nSerial, const OGRGeometry *poGeom,
+    int64_t nSerial, const OGRGeometry *poGeom,
     const OGREnvelope &sEnvelope) const
 {
     double dfTileDim = m_dfTileDim0 / (1 << nZ);
@@ -4199,7 +4200,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     }
                 }
             }
-            GUInt32 nPoints = static_cast<GUInt32>(oSetUniqueCoords.size());
+            uint32_t nPoints = static_cast<uint32_t>(oSetUniqueCoords.size());
             bGeomOK = nPoints > 0;
             poGPBFeature->setGeometry(
                 0, GetCmdCountCombined(knCMD_MOVETO, nPoints));
@@ -4209,7 +4210,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     {
         const bool bWriteLastPoint = true;
         const bool bReverseOrder = false;
-        const GUInt32 nMinLineTo = 1;
+        const uint32_t nMinLineTo = 1;
 
         if (eGeomToEncodeType == wkbLineString)
         {
@@ -4260,7 +4261,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastX = 0;
             int nLastY = 0;
             OGRPolygon oOutPoly;
-            const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
+            const uint32_t nInitialSize = poGPBFeature->getGeometryCount();
             CPL_IGNORE_RET_VAL(nInitialSize);
             bGeomOK = EncodePolygon(poGPBFeature.get(), poPoly, &oOutPoly,
                                     dfTopX, dfTopY, dfTileDim, bCanRecurse,
@@ -4293,7 +4294,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             int nLastX = 0;
             int nLastY = 0;
             OGRMultiPolygon oOutMP;
-            const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
+            const uint32_t nInitialSize = poGPBFeature->getGeometryCount();
             CPL_IGNORE_RET_VAL(nInitialSize);
             for (auto &&poSubGeom : poGC)
             {
@@ -4336,8 +4337,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
 
     for (const auto &pair : poFeatureContent->oValues)
     {
-        GUInt32 nKey = poLayer->addKey(pair.first);
-        GUInt32 nVal = poLayer->addValue(pair.second);
+        uint32_t nKey = poLayer->addKey(pair.first);
+        uint32_t nVal = poLayer->addValue(pair.second);
         poGPBFeature->addTag(nKey);
         poGPBFeature->addTag(nVal);
     }
@@ -4414,7 +4415,7 @@ class MVTWriterTask
     CPLString osTargetName;
     bool bIsMaxZoomForLayer;
     std::shared_ptr<OGRMVTFeatureContent> poFeatureContent;
-    GIntBig nSerial;
+    int64_t nSerial;
     std::shared_ptr<OGRGeometry> poGeom;
     OGREnvelope sEnvelope;
 };
@@ -4447,7 +4448,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(
     int nZ, int nTileX, int nTileY, const CPLString &osTargetName,
     bool bIsMaxZoomForLayer,
     const std::shared_ptr<OGRMVTFeatureContent> &poFeatureContent,
-    GIntBig nSerial, const std::shared_ptr<OGRGeometry> &poGeom,
+    int64_t nSerial, const std::shared_ptr<OGRGeometry> &poGeom,
     const OGREnvelope &sEnvelope) const
 {
     if (!m_bThreadPoolOK)
@@ -4539,7 +4540,9 @@ void OGRMVTWriterDataset::UpdateLayerProperties(
                     oValue.getType() == MVTTileLayerValue::ValueType::INT ||
                     oValue.getType() == MVTTileLayerValue::ValueType::SINT ||
                     (oValue.getType() == MVTTileLayerValue::ValueType::UINT &&
-                     oValue.getUIntValue() < GINT64_MAX);
+                     oValue.getUIntValue() <
+                         static_cast<uint64_t>(
+                             std::numeric_limits<int64_t>::max()));
             }
             double dfVal = oValue.getNumericValue();
             poFieldProps->m_dfMinVal =
@@ -4589,7 +4592,7 @@ static void GZIPCompress(std::string &oTileBuffer)
             VSIFWriteL(oTileBuffer.data(), 1, oTileBuffer.size(), fpGZip);
             VSIFCloseL(fpGZip);
 
-            vsi_l_offset nCompressedSize = 0;
+            uint64_t nCompressedSize = 0;
             GByte *pabyCompressed =
                 VSIGetMemFileBuffer(osTmpFilename, &nCompressedSize, false);
             oTileBuffer.assign(reinterpret_cast<char *>(pabyCompressed),
@@ -4603,12 +4606,12 @@ static void GZIPCompress(std::string &oTileBuffer)
 /*                     GetReducedPrecisionGeometry()                    */
 /************************************************************************/
 
-static std::vector<GUInt32>
+static std::vector<uint32_t>
 GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
-                            const std::vector<GUInt32> &anSrcGeometry,
-                            GUInt32 nSrcExtent, GUInt32 nDstExtent)
+                            const std::vector<uint32_t> &anSrcGeometry,
+                            uint32_t nSrcExtent, uint32_t nDstExtent)
 {
-    std::vector<GUInt32> anDstGeometry;
+    std::vector<uint32_t> anDstGeometry;
     size_t nLastMoveToIdx = 0;
     int nX = 0;
     int nY = 0;
@@ -4643,9 +4646,9 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
                     nX += DecodeSInt(anSrcGeometry[iSrc]);
                     nY += DecodeSInt(anSrcGeometry[iSrc + 1]);
 
-                    int nReducedX = static_cast<int>(static_cast<GIntBig>(nX) *
+                    int nReducedX = static_cast<int>(static_cast<int64_t>(nX) *
                                                      nDstExtent / nSrcExtent);
-                    int nReducedY = static_cast<int>(static_cast<GIntBig>(nY) *
+                    int nReducedY = static_cast<int>(static_cast<int64_t>(nY) *
                                                      nDstExtent / nSrcExtent);
                     int nDiffX = nReducedX - nLastReducedX;
                     int nDiffY = nReducedY - nLastReducedY;
@@ -4695,9 +4698,9 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
                     nX += DecodeSInt(anSrcGeometry[iSrc]);
                     nY += DecodeSInt(anSrcGeometry[iSrc + 1]);
 
-                    int nReducedX = static_cast<int>(static_cast<GIntBig>(nX) *
+                    int nReducedX = static_cast<int>(static_cast<int64_t>(nX) *
                                                      nDstExtent / nSrcExtent);
-                    int nReducedY = static_cast<int>(static_cast<GIntBig>(nY) *
+                    int nReducedY = static_cast<int>(static_cast<int64_t>(nY) *
                                                      nDstExtent / nSrcExtent);
                     int nDiffX = nReducedX - nLastReducedX;
                     int nDiffY = nReducedY - nLastReducedY;
@@ -4861,9 +4864,9 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
 void OGRMVTWriterDataset::EncodeFeature(
     const void *pabyBlob, int nBlobSize,
     std::shared_ptr<MVTTileLayer> poTargetLayer,
-    std::map<CPLString, GUInt32> &oMapKeyToIdx,
-    std::map<MVTTileLayerValue, GUInt32> &oMapValueToIdx,
-    MVTLayerProperties *poLayerProperties, GUInt32 nExtent,
+    std::map<CPLString, uint32_t> &oMapKeyToIdx,
+    std::map<MVTTileLayerValue, uint32_t> &oMapValueToIdx,
+    MVTLayerProperties *poLayerProperties, uint32_t nExtent,
     unsigned &nFeaturesInTile)
 {
     size_t nUncompressedSize = 0;
@@ -4899,8 +4902,8 @@ void OGRMVTWriterDataset::EncodeFeature(
                 const auto &anSrcTags = poSrcFeature->getTags();
                 for (size_t i = 0; i + 1 < anSrcTags.size(); i += 2)
                 {
-                    GUInt32 nSrcIdxKey = anSrcTags[i];
-                    GUInt32 nSrcIdxValue = anSrcTags[i + 1];
+                    uint32_t nSrcIdxKey = anSrcTags[i];
+                    uint32_t nSrcIdxValue = anSrcTags[i + 1];
                     if (nSrcIdxKey < srcKeys.size() &&
                         nSrcIdxValue < srcValues.size())
                     {
@@ -4954,8 +4957,8 @@ void OGRMVTWriterDataset::EncodeFeature(
                 const auto &anSrcTags = poSrcFeature->getTags();
                 for (size_t i = 0; i + 1 < anSrcTags.size(); i += 2)
                 {
-                    GUInt32 nSrcIdxKey = anSrcTags[i];
-                    GUInt32 nSrcIdxValue = anSrcTags[i + 1];
+                    uint32_t nSrcIdxKey = anSrcTags[i];
+                    uint32_t nSrcIdxValue = anSrcTags[i + 1];
                     if (nSrcIdxKey < srcKeys.size() &&
                         nSrcIdxValue < srcValues.size())
                     {
@@ -4994,7 +4997,7 @@ void OGRMVTWriterDataset::EncodeFeature(
 std::string OGRMVTWriterDataset::EncodeTile(
     int nZ, int nX, int nY, sqlite3_stmt *hStmtLayer, sqlite3_stmt *hStmtRows,
     std::map<CPLString, MVTLayerProperties> &oMapLayerProps,
-    std::set<CPLString> &oSetLayers, GIntBig &nTempTilesRead)
+    std::set<CPLString> &oSetLayers, int64_t &nTempTilesRead)
 {
     MVTTile oTargetTile;
 
@@ -5003,8 +5006,8 @@ std::string OGRMVTWriterDataset::EncodeTile(
     sqlite3_bind_int(hStmtLayer, 3, nY);
 
     unsigned nFeaturesInTile = 0;
-    const GIntBig nProgressStep =
-        std::max(static_cast<GIntBig>(1), m_nTempTiles / 10);
+    const int64_t nProgressStep =
+        std::max(static_cast<int64_t>(1), m_nTempTiles / 10);
 
     while (nFeaturesInTile < m_nMaxFeatures &&
            sqlite3_step(hStmtLayer) == SQLITE_ROW)
@@ -5051,8 +5054,8 @@ std::string OGRMVTWriterDataset::EncodeTile(
         poTargetLayer->setVersion(m_nMVTVersion);
         poTargetLayer->setExtent(m_nExtent);
 
-        std::map<CPLString, GUInt32> oMapKeyToIdx;
-        std::map<MVTTileLayerValue, GUInt32> oMapValueToIdx;
+        std::map<CPLString, uint32_t> oMapKeyToIdx;
+        std::map<MVTTileLayerValue, uint32_t> oMapValueToIdx;
 
         while (nFeaturesInTile < m_nMaxFeatures &&
                sqlite3_step(hStmtRows) == SQLITE_ROW)
@@ -5092,7 +5095,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
     bool bTooBigTile = oTileBuffer.size() > m_nMaxTileSize;
     const bool bTooManyFeatures = nFeaturesInTile >= m_nMaxFeatures;
 
-    GUInt32 nExtent = m_nExtent;
+    uint32_t nExtent = m_nExtent;
     while (bTooBigTile && !bTooManyFeatures && nExtent >= 256)
     {
         nExtent /= 2;
@@ -5142,8 +5145,8 @@ std::string OGRMVTWriterDataset::EncodeTile(
         {
           public:
             std::shared_ptr<MVTTileLayer> m_poLayer;
-            std::map<CPLString, GUInt32> m_oMapKeyToIdx;
-            std::map<MVTTileLayerValue, GUInt32> m_oMapValueToIdx;
+            std::map<CPLString, uint32_t> m_oMapKeyToIdx;
+            std::map<MVTTileLayerValue, uint32_t> m_oMapValueToIdx;
         };
 
         std::map<std::string, TargetTileLayerProps> oMapLayerNameToTargetLayer;
@@ -5158,8 +5161,8 @@ std::string OGRMVTWriterDataset::EncodeTile(
             const void *pabyBlob = sqlite3_column_blob(hTmpStmt, 1);
 
             std::shared_ptr<MVTTileLayer> poTargetLayer;
-            std::map<CPLString, GUInt32> *poMapKeyToIdx;
-            std::map<MVTTileLayerValue, GUInt32> *poMapValueToIdx;
+            std::map<CPLString, uint32_t> *poMapKeyToIdx;
+            std::map<MVTTileLayerValue, uint32_t> *poMapValueToIdx;
             auto oIter = oMapLayerNameToTargetLayer.find(pszLayerName);
             if (oIter == oMapLayerNameToTargetLayer.end())
             {
@@ -5244,8 +5247,8 @@ std::string OGRMVTWriterDataset::RecodeTileLowerResolution(
         poTargetLayer->setVersion(m_nMVTVersion);
         poTargetLayer->setExtent(nExtent);
 
-        std::map<CPLString, GUInt32> oMapKeyToIdx;
-        std::map<MVTTileLayerValue, GUInt32> oMapValueToIdx;
+        std::map<CPLString, uint32_t> oMapKeyToIdx;
+        std::map<MVTTileLayerValue, uint32_t> oMapValueToIdx;
 
         while (nFeaturesInTile < m_nMaxFeatures &&
                sqlite3_step(hStmtRows) == SQLITE_ROW)
@@ -5344,7 +5347,7 @@ bool OGRMVTWriterDataset::CreateOutput()
     int nLastZ = -1;
     int nLastX = -1;
     bool bRet = true;
-    GIntBig nTempTilesRead = 0;
+    int64_t nTempTilesRead = 0;
 
     while (sqlite3_step(hStmtZXY) == SQLITE_ROW)
     {
@@ -5678,7 +5681,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
             // Find majority geometry type
             MVTTileLayerFeature::GeomType eMaxGeomType =
                 MVTTileLayerFeature::GeomType::UNKNOWN;
-            GIntBig nMaxCountGeom = 0;
+            int64_t nMaxCountGeom = 0;
             for (int i = static_cast<int>(MVTTileLayerFeature::GeomType::POINT);
                  i <= static_cast<int>(MVTTileLayerFeature::GeomType::POLYGON);
                  i++)
@@ -5739,7 +5742,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
                     {
                         if (oFieldProps.m_bAllInt)
                         {
-                            oValues.Add(static_cast<GInt64>(
+                            oValues.Add(static_cast<int64_t>(
                                 oIterValue.getNumericValue()));
                         }
                         else
@@ -5757,10 +5760,10 @@ bool OGRMVTWriterDataset::GenerateMetadata(
                 {
                     if (oFieldProps.m_bAllInt)
                     {
-                        oFieldObj.Add(
-                            "min", static_cast<GInt64>(oFieldProps.m_dfMinVal));
-                        oFieldObj.Add(
-                            "max", static_cast<GInt64>(oFieldProps.m_dfMaxVal));
+                        oFieldObj.Add("min", static_cast<int64_t>(
+                                                 oFieldProps.m_dfMinVal));
+                        oFieldObj.Add("max", static_cast<int64_t>(
+                                                 oFieldProps.m_dfMaxVal));
                     }
                     else
                     {
@@ -5791,7 +5794,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
 /************************************************************************/
 
 OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
-                                         OGRFeature *poFeature, GIntBig nSerial,
+                                         OGRFeature *poFeature, int64_t nSerial,
                                          OGRGeometry *poGeom)
 {
     if (poFeature->GetGeometryRef() == poGeom)

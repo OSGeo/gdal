@@ -91,10 +91,10 @@ class KEARasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     // histogram methods
     CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets,
-                               GUIntBig **ppanHistogram, int bForce,
+                               uint64_t **ppanHistogram, int bForce,
                                GDALProgressFunc, void *pProgressData) override;
     CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
-                               GUIntBig *panHistogram) override;
+                               uint64_t *panHistogram) override;
 
     // virtual methods for RATs
     GDALRasterAttributeTable *GetDefaultRAT() override;

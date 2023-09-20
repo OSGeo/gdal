@@ -2271,7 +2271,7 @@ static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
         if (dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
             dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()))
         {
-            const auto nFID = static_cast<GIntBig>(dfFID);
+            const auto nFID = static_cast<int64_t>(dfFID);
             if (nFID == poFeature->GetFID())
             {
                 ok = true;
@@ -2327,7 +2327,7 @@ OGRErr OGROpenFileGDBLayer::ICreateFeature(OGRFeature *poFeature)
                         dfFID <= static_cast<double>(
                                      std::numeric_limits<int64_t>::max()))
                     {
-                        const auto nFID = static_cast<GIntBig>(dfFID);
+                        const auto nFID = static_cast<int64_t>(dfFID);
                         if (static_cast<double>(nFID) == dfFID)
                         {
                             poFeature->SetFID(nFID);
@@ -2409,7 +2409,7 @@ OGRErr OGROpenFileGDBLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    const GIntBig nFID = poFeature->GetFID();
+    const int64_t nFID = poFeature->GetFID();
     if (nFID <= 0 || !CPL_INT64_FITS_ON_INT32(nFID))
         return OGRERR_NON_EXISTING_FEATURE;
 
@@ -2437,7 +2437,7 @@ OGRErr OGROpenFileGDBLayer::ISetFeature(OGRFeature *poFeature)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGROpenFileGDBLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGROpenFileGDBLayer::DeleteFeature(int64_t nFID)
 
 {
     if (!m_bEditable)

@@ -112,7 +112,7 @@ StylePtr addstylestring2kml(const char *pszStyleString, StylePtr poKmlStyle,
                     cpl::down_cast<OGRStylePen *>(poOgrST);
 
                 /***** pen color *****/
-                GBool nullcheck = FALSE;
+                bool nullcheck = FALSE;
                 const char *const pszColor = poStylePen->Color(nullcheck);
 
                 int nR = 0;
@@ -142,7 +142,7 @@ StylePtr addstylestring2kml(const char *pszStyleString, StylePtr poKmlStyle,
                     cpl::down_cast<OGRStyleBrush *>(poOgrST);
 
                 /***** brush color *****/
-                GBool nullcheck = FALSE;
+                bool nullcheck = FALSE;
                 const char *pszColor = poStyleBrush->ForeColor(nullcheck);
 
                 int nR = 0;
@@ -165,7 +165,7 @@ StylePtr addstylestring2kml(const char *pszStyleString, StylePtr poKmlStyle,
                     cpl::down_cast<OGRStyleSymbol *>(poOgrST);
 
                 /***** id (kml icon) *****/
-                GBool nullcheck = FALSE;
+                bool nullcheck = FALSE;
                 const char *pszId = poStyleSymbol->Id(nullcheck);
 
                 if (!nullcheck)
@@ -234,7 +234,7 @@ StylePtr addstylestring2kml(const char *pszStyleString, StylePtr poKmlStyle,
                 /***** hotspot *****/
 
                 double dfDx = poStyleSymbol->SpacingX(nullcheck);
-                GBool nullcheck2 = FALSE;
+                bool nullcheck2 = FALSE;
                 double dfDy = poStyleSymbol->SpacingY(nullcheck2);
 
                 if (!nullcheck && !nullcheck2)
@@ -256,8 +256,8 @@ StylePtr addstylestring2kml(const char *pszStyleString, StylePtr poKmlStyle,
             }
             case OGRSTCLabel:
             {
-                GBool nullcheck;
-                GBool nullcheck2;
+                bool nullcheck;
+                bool nullcheck2;
 
                 OGRStyleLabel *poStyleLabel =
                     cpl::down_cast<OGRStyleLabel *>(poOgrST);

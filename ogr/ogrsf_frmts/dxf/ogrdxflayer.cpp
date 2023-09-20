@@ -2794,7 +2794,7 @@ OGRDXFLayer::InsertBlockReference(const CPLString &osBlockName,
 /************************************************************************/
 
 OGRDXFFeature *OGRDXFLayer::InsertBlockInline(
-    GUInt32 nInitialErrorCounter, const CPLString &osBlockName,
+    uint32_t nInitialErrorCounter, const CPLString &osBlockName,
     OGRDXFInsertTransformer oTransformer, OGRDXFFeature *const poFeature,
     OGRDXFFeatureQueue &apoExtraFeatures, const bool bInlineRecursively,
     const bool bMergeGeometry)

@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <algorithm>
 
@@ -399,15 +400,15 @@ class VSICryptFileHeader
     int ReadFromFile(VSIVirtualHandle *fp, const CPLString &osKey);
     int WriteToFile(VSIVirtualHandle *fp, CryptoPP::BlockCipher *poEncCipher);
 
-    GUInt16 nHeaderSize = 0;
+    uint16_t nHeaderSize = 0;
     GByte nMajorVersion = 0;
     GByte nMinorVersion = 0;
-    GUInt16 nSectorSize = 512;
+    uint16_t nSectorSize = 512;
     VSICryptAlg eAlg = ALG_AES;
     VSICryptMode eMode = MODE_CBC;
     CPLString osIV{};
     bool bAddKeyCheck = false;
-    GUIntBig nPayloadFileSize = 0;
+    uint64_t nPayloadFileSize = 0;
     CPLString osFreeText{};
     CPLString osExtraContent{};
 };
@@ -428,10 +429,10 @@ static bool VSICryptReadError()
 
 // TODO(rouault): This function really needs a comment saying what it does.
 static std::string VSICryptGenerateSectorIV(const std::string &osIV,
-                                            vsi_l_offset nOffset)
+                                            uint64_t nOffset)
 {
     std::string osSectorIV(osIV);
-    const size_t nLength = std::min(sizeof(vsi_l_offset), osSectorIV.size());
+    const size_t nLength = std::min(sizeof(uint64_t), osSectorIV.size());
     for (size_t i = 0; i < nLength; i++)
     {
         // TODO(rouault): Explain what this block is trying to do?
@@ -453,7 +454,7 @@ VSICryptFileHeader::CryptKeyCheck(CryptoPP::BlockCipher *poEncCipher)
     CPLAssert(osIV.size() == poEncCipher->BlockSize());
     // Generate a unique IV with a sector offset of 0xFFFFFFFFFFFFFFFF.
     std::string osCheckIV(
-        VSICryptGenerateSectorIV(osIV, ~(static_cast<vsi_l_offset>(0))));
+        VSICryptGenerateSectorIV(osIV, ~(static_cast<uint64_t>(0))));
     CryptoPP::StreamTransformation *poMode;
     try
     {
@@ -560,7 +561,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
                  nIVSize) != nIVSize)
         return VSICryptReadError();
 
-    GUInt16 nFreeTextSize;
+    uint16_t nFreeTextSize;
     if (fp->Read(&nFreeTextSize, 2, 1) == 0)
         return VSICryptReadError();
 
@@ -647,11 +648,10 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         return VSICryptReadError();
     CPL_LSBPTR64(&nPayloadFileSize);
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "nPayloadFileSize read = " CPL_FRMT_GUIB,
-             nPayloadFileSize);
+    CPLDebug("VSICRYPT", "nPayloadFileSize read = %" PRIu64, nPayloadFileSize);
 #endif
 
-    GUInt16 nExtraContentSize = 0;
+    uint16_t nExtraContentSize = 0;
     if (fp->Read(&nExtraContentSize, 2, 1) == 0)
         return VSICryptReadError();
     nExtraContentSize = CPL_LSBWORD16(nExtraContentSize);
@@ -681,25 +681,25 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
         osKeyCheckRes = CryptKeyCheck(poEncCipher);
     }
 
-    GUInt16 nHeaderSizeNew =
-        static_cast<GUInt16>(8 +                         /* signature */
-                             2 +                         /* header size */
-                             1 +                         /* major version */
-                             1 +                         /* minor version */
-                             2 +                         /* sector size */
-                             1 +                         /* alg */
-                             1 +                         /* mode */
-                             1 + osIV.size() +           /* IV */
-                             2 + osFreeText.size() +     /* free text */
-                             1 + osKeyCheckRes.size() +  /* key check */
-                             8 +                         /* payload size */
-                             2 + osExtraContent.size()); /* extra content */
+    uint16_t nHeaderSizeNew =
+        static_cast<uint16_t>(8 +                         /* signature */
+                              2 +                         /* header size */
+                              1 +                         /* major version */
+                              1 +                         /* minor version */
+                              2 +                         /* sector size */
+                              1 +                         /* alg */
+                              1 +                         /* mode */
+                              1 + osIV.size() +           /* IV */
+                              2 + osFreeText.size() +     /* free text */
+                              1 + osKeyCheckRes.size() +  /* key check */
+                              8 +                         /* payload size */
+                              2 + osExtraContent.size()); /* extra content */
     if (nHeaderSize != 0)
         CPLAssert(nHeaderSizeNew == nHeaderSize);
     else
         nHeaderSize = nHeaderSizeNew;
 
-    GUInt16 nHeaderSizeToWrite = CPL_LSBWORD16(nHeaderSizeNew);
+    uint16_t nHeaderSizeToWrite = CPL_LSBWORD16(nHeaderSizeNew);
     bRet &= (fp->Write(&nHeaderSizeToWrite, 2, 1) == 1);
 
     GByte nMajorVersionToWrite = VSICRYPT_CURRENT_MAJOR;
@@ -708,7 +708,7 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
     GByte nMinorVersionToWrite = VSICRYPT_CURRENT_MINOR;
     bRet &= (fp->Write(&nMinorVersionToWrite, 1, 1) == 1);
 
-    GUInt16 nSectorSizeToWrite = CPL_LSBWORD16(nSectorSize);
+    uint16_t nSectorSizeToWrite = CPL_LSBWORD16(nSectorSize);
     bRet &= (fp->Write(&nSectorSizeToWrite, 2, 1) == 1);
 
     GByte nAlg = static_cast<GByte>(eAlg);
@@ -722,8 +722,8 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
     bRet &= (fp->Write(&nIVSizeToWrite, 1, 1) == 1);
     bRet &= (fp->Write(osIV.c_str(), 1, osIV.size()) == osIV.size());
 
-    GUInt16 nFreeTextSizeToWrite =
-        CPL_LSBWORD16(static_cast<GUInt16>(osFreeText.size()));
+    uint16_t nFreeTextSizeToWrite =
+        CPL_LSBWORD16(static_cast<uint16_t>(osFreeText.size()));
     bRet &= (fp->Write(&nFreeTextSizeToWrite, 2, 1) == 1);
     bRet &= (fp->Write(osFreeText.c_str(), 1, osFreeText.size()) ==
              osFreeText.size());
@@ -733,12 +733,12 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
     bRet &= (fp->Write(osKeyCheckRes.c_str(), 1, osKeyCheckRes.size()) ==
              osKeyCheckRes.size());
 
-    GUIntBig nPayloadFileSizeToWrite = nPayloadFileSize;
+    uint64_t nPayloadFileSizeToWrite = nPayloadFileSize;
     CPL_LSBPTR64(&nPayloadFileSizeToWrite);
     bRet &= (fp->Write(&nPayloadFileSizeToWrite, 8, 1) == 1);
 
-    GUInt16 nExtraContentSizeToWrite =
-        CPL_LSBWORD16(static_cast<GUInt16>(osExtraContent.size()));
+    uint16_t nExtraContentSizeToWrite =
+        CPL_LSBWORD16(static_cast<uint16_t>(osExtraContent.size()));
     bRet &= (fp->Write(&nExtraContentSizeToWrite, 2, 1) == 1);
     bRet &= (fp->Write(osExtraContent.c_str(), 1, osExtraContent.size()) ==
              osExtraContent.size());
@@ -762,22 +762,22 @@ class VSICryptFileHandle final : public VSIVirtualHandle
     VSIVirtualHandle *poBaseHandle = nullptr;
     VSICryptFileHeader *poHeader = nullptr;
     bool bUpdateHeader = false;
-    vsi_l_offset nCurPos = 0;
+    uint64_t nCurPos = 0;
     bool bEOF = false;
 
     CryptoPP::BlockCipher *poEncCipher = nullptr;
     CryptoPP::BlockCipher *poDecCipher = nullptr;
     int nBlockSize = 0;
 
-    vsi_l_offset nWBOffset = 0;
+    uint64_t nWBOffset = 0;
     GByte *pabyWB = nullptr;
     int nWBSize = 0;
     bool bWBDirty = false;
 
     bool bLastSectorWasModified = false;
 
-    void EncryptBlock(GByte *pabyData, vsi_l_offset nOffset);
-    bool DecryptBlock(GByte *pabyData, vsi_l_offset nOffset);
+    void EncryptBlock(GByte *pabyData, uint64_t nOffset);
+    bool DecryptBlock(GByte *pabyData, uint64_t nOffset);
     bool FlushDirty();
 
   public:
@@ -788,14 +788,14 @@ class VSICryptFileHandle final : public VSIVirtualHandle
 
     int Init(const CPLString &osKey, bool bWriteHeader = false);
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
     int Flush() override;
     int Close() override;
-    int Truncate(vsi_l_offset nNewSize) override;
+    int Truncate(uint64_t nNewSize) override;
 };
 
 /************************************************************************/
@@ -909,7 +909,7 @@ int VSICryptFileHandle::Init(const CPLString &osKey, bool bWriteHeader)
 /*                          EncryptBlock()                              */
 /************************************************************************/
 
-void VSICryptFileHandle::EncryptBlock(GByte *pabyData, vsi_l_offset nOffset)
+void VSICryptFileHandle::EncryptBlock(GByte *pabyData, uint64_t nOffset)
 {
     std::string osRes;
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
@@ -963,7 +963,7 @@ void VSICryptFileHandle::EncryptBlock(GByte *pabyData, vsi_l_offset nOffset)
 /*                          DecryptBlock()                              */
 /************************************************************************/
 
-bool VSICryptFileHandle::DecryptBlock(GByte *pabyData, vsi_l_offset nOffset)
+bool VSICryptFileHandle::DecryptBlock(GByte *pabyData, uint64_t nOffset)
 {
     std::string osRes;
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
@@ -1045,10 +1045,10 @@ bool VSICryptFileHandle::FlushDirty()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSICryptFileHandle::Seek(uint64_t nOffset, int nWhence)
 {
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Seek(nOffset=" CPL_FRMT_GUIB ", nWhence=%d)", nOffset,
+    CPLDebug("VSICRYPT", "Seek(nOffset=" PRIu64 ", nWhence=%d)", nOffset,
              nWhence);
 #endif
 
@@ -1067,10 +1067,10 @@ int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                  Tell()                              */
 /************************************************************************/
 
-vsi_l_offset VSICryptFileHandle::Tell()
+uint64_t VSICryptFileHandle::Tell()
 {
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Tell()=" CPL_FRMT_GUIB, nCurPos);
+    CPLDebug("VSICRYPT", "Tell()=" PRIu64, nCurPos);
 #endif
     return nCurPos;
 }
@@ -1085,7 +1085,7 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
     GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
 
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Read(nCurPos=" CPL_FRMT_GUIB ", nToRead=%d)", nCurPos,
+    CPLDebug("VSICRYPT", "Read(nCurPos=" PRIu64 ", nToRead=%d)", nCurPos,
              static_cast<int>(nToRead));
 #endif
 
@@ -1124,7 +1124,7 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
             CPLAssert((nCurPos % poHeader->nSectorSize) == 0);
         }
 
-        vsi_l_offset nSectorOffset =
+        uint64_t nSectorOffset =
             (nCurPos / poHeader->nSectorSize) * poHeader->nSectorSize;
         poBaseHandle->Seek(poHeader->nHeaderSize + nSectorOffset, SEEK_SET);
         if (poBaseHandle->Read(pabyWB, poHeader->nSectorSize, 1) != 1)
@@ -1170,9 +1170,9 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
 
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT",
-             "Write(nCurPos=" CPL_FRMT_GUIB ", nToWrite=%d,"
-             "nPayloadFileSize=" CPL_FRMT_GUIB
-             ",bWBDirty=%d,nWBOffset=" CPL_FRMT_GUIB ",nWBSize=%d)",
+             "Write(nCurPos=" PRIu64 ", nToWrite=%d,"
+             "nPayloadFileSize=" PRIu64 ",bWBDirty=%d,nWBOffset=" PRIu64
+             ",nWBSize=%d)",
              nCurPos, static_cast<int>(nToWrite), poHeader->nPayloadFileSize,
              static_cast<int>(bWBDirty), nWBOffset, nWBSize);
 #endif
@@ -1192,10 +1192,10 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
     {
         if (!FlushDirty())
             return 0;
-        vsi_l_offset nOffset =
+        uint64_t nOffset =
             (poHeader->nPayloadFileSize + poHeader->nSectorSize - 1) /
             poHeader->nSectorSize * poHeader->nSectorSize;
-        const vsi_l_offset nEndOffset =
+        const uint64_t nEndOffset =
             nCurPos / poHeader->nSectorSize * poHeader->nSectorSize;
         for (; nOffset < nEndOffset; nOffset += poHeader->nSectorSize)
         {
@@ -1254,9 +1254,9 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
             if (!FlushDirty())
                 break;
 
-            const vsi_l_offset nSectorOffset =
+            const uint64_t nSectorOffset =
                 (nCurPos / poHeader->nSectorSize) * poHeader->nSectorSize;
-            const vsi_l_offset nLastSectorOffset =
+            const uint64_t nLastSectorOffset =
                 (poHeader->nPayloadFileSize / poHeader->nSectorSize) *
                 poHeader->nSectorSize;
             if (nSectorOffset > nLastSectorOffset &&
@@ -1323,10 +1323,10 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
 /************************************************************************/
 
 // Returns 0 on success.  Returns -1 on error.
-int VSICryptFileHandle::Truncate(vsi_l_offset nNewSize)
+int VSICryptFileHandle::Truncate(uint64_t nNewSize)
 {
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Truncate(" CPL_FRMT_GUIB ")", nNewSize);
+    CPLDebug("VSICRYPT", "Truncate(" PRIu64 ")", nNewSize);
 #endif
     if ((nPerms & VSICRYPT_WRITE) == 0)
         return -1;
@@ -1373,7 +1373,7 @@ int VSICryptFileHandle::Flush()
         if (bLastSectorWasModified &&
             (poHeader->nPayloadFileSize % poHeader->nSectorSize) != 0)
         {
-            const vsi_l_offset nLastSectorOffset =
+            const uint64_t nLastSectorOffset =
                 (poHeader->nPayloadFileSize / poHeader->nSectorSize) *
                 poHeader->nSectorSize;
             if (poBaseHandle->Seek(poHeader->nHeaderSize + nLastSectorOffset,
@@ -1412,7 +1412,7 @@ int VSICryptFileHandle::Flush()
     if (bUpdateHeader)
     {
 #ifdef VERBOSE_VSICRYPT
-        CPLDebug("VSICRYPT", "nPayloadFileSize = " CPL_FRMT_GUIB,
+        CPLDebug("VSICRYPT", "nPayloadFileSize = %" PRIu64,
                  poHeader->nPayloadFileSize);
 #endif
         if (!poHeader->WriteToFile(poBaseHandle, poEncCipher))
@@ -1733,7 +1733,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         poHeader->osIV = osIV;
         poHeader->eAlg = eAlg;
         poHeader->eMode = eMode;
-        poHeader->nSectorSize = static_cast<GUInt16>(nSectorSize);
+        poHeader->nSectorSize = static_cast<uint16_t>(nSectorSize);
         poHeader->osFreeText = std::move(osFreeText);
         poHeader->bAddKeyCheck = bAddKeyCheck;
 

@@ -543,12 +543,12 @@ int:
 ";
 
 %feature("docstring")  GetFieldAsInteger64 "
-GIntBig OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
+int64_t OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
 
 Fetch field value as integer 64 bit.
 
 OFTInteger are promoted to 64 bit. OFTString features will be
-translated using CPLAtoGIntBig(). OFTReal fields will be cast to
+translated using CPLAtoint64_t(). OFTReal fields will be cast to
 integer. Other field types, or errors will result in a return value of
 zero.
 
@@ -654,7 +654,7 @@ list[int]:
     the returned pointer may be NULL or non-NULL.
 ";
 
-%feature("docstring")  GetFieldAsInteger64List "const GIntBig\\*
+%feature("docstring")  GetFieldAsInteger64List "const int64_t\\*
 OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField, int
 \\*pnCount)
 
@@ -884,7 +884,7 @@ nValue:
 ";
 
 %feature("docstring")  SetFieldInteger64 "void
-OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, GIntBig nValue)
+OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, int64_t nValue)
 
 Set field to 64 bit integer value.
 
@@ -948,7 +948,7 @@ OGR_F_SetFieldString(OGRFeatureH hFeat, int iField, const char
 Set field to string value.
 
 OFTInteger fields will be set based on an atoi() conversion of the
-string. OFTInteger64 fields will be set based on an CPLAtoGIntBig()
+string. OFTInteger64 fields will be set based on an CPLAtoint64_t()
 conversion of the string. OFTReal fields will be set based on an
 CPLAtof() conversion of the string. Other field types may be
 unaffected.
@@ -1002,7 +1002,7 @@ panValues:
 
 %feature("docstring")  SetFieldInteger64List "void
 OGR_F_SetFieldInteger64List(OGRFeatureH hFeat, int iField, int nCount,
-const GIntBig \\*panValues)
+const int64_t \\*panValues)
 
 Set field to list of 64 bit integers value.
 
@@ -1243,13 +1243,13 @@ fpOut:
     the stream to write to, such as strout.
 ";
 
-%feature("docstring")  GetFID "GIntBig OGR_F_GetFID(OGRFeatureH
+%feature("docstring")  GetFID "int64_t OGR_F_GetFID(OGRFeatureH
 hFeat)
 
 Get feature identifier.
 
 This function is the same as the C++ method OGRFeature::GetFID().
-Note: since GDAL 2.0, this method returns a GIntBig (previously a
+Note: since GDAL 2.0, this method returns a int64_t (previously a
 long)
 
 Parameters
@@ -1265,7 +1265,7 @@ int:
 ";
 
 %feature("docstring")  SetFID "OGRErr OGR_F_SetFID(OGRFeatureH hFeat,
-GIntBig nFID)
+int64_t nFID)
 
 Set the feature identifier.
 

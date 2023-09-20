@@ -128,7 +128,7 @@ class OGRAVCBinLayer final : public OGRAVCLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
 
     int TestCapability(const char *) override;
 };
@@ -203,8 +203,8 @@ class OGRAVCE00Layer final : public OGRAVCLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
+    int64_t GetFeatureCount(int bForce) override;
     bool CheckSetupTable(AVCE00Section *psTblSectionIn);
     bool AppendTableFields(OGRFeature *poFeature);
 };

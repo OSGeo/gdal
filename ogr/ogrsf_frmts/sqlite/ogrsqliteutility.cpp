@@ -128,7 +128,7 @@ int SQLResult::GetValueAsInteger(int iColNum, int iRowNum) const
 }
 
 /* Returns the first row of first column of SQL as integer */
-GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
+int64_t SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
 {
     CPLAssert(poDb != nullptr);
 
@@ -160,7 +160,7 @@ GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
     }
 
     /* Read the integer from the row */
-    GIntBig i = sqlite3_column_int64(poStmt, 0);
+    int64_t i = sqlite3_column_int64(poStmt, 0);
     sqlite3_finalize(poStmt);
 
     if (err)

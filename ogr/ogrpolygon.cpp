@@ -412,7 +412,7 @@ OGRErr OGRPolygon::exportToWkb(OGRwkbByteOrder eByteOrder,
     /* -------------------------------------------------------------------- */
     /*      Set the geometry feature type.                                  */
     /* -------------------------------------------------------------------- */
-    GUInt32 nGType = getGeometryType();
+    uint32_t nGType = getGeometryType();
 
     if (eWkbVariant == wkbVariantPostGIS1)
     {

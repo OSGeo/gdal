@@ -875,7 +875,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo *poOpenInfo,
     /*      Parse GeoJSON and build valid OGRLayer instance.                */
     /* -------------------------------------------------------------------- */
     bool bUseStreamingInterface = false;
-    const GIntBig nMaxBytesFirstPass = CPLAtoGIntBig(
+    const int64_t nMaxBytesFirstPass = CPLAtoGIntBig(
         CPLGetConfigOption("OGR_GEOJSON_MAX_BYTES_FIRST_PASS", "0"));
     if ((fp != nullptr || poOpenInfo->fpL != nullptr) &&
         (!STARTS_WITH(pszUnprefixed, "/vsistdin/") ||

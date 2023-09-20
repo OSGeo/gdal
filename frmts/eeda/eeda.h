@@ -81,7 +81,7 @@ class GDALEEDABaseDataset CPL_NON_FINAL : public GDALDataset
     bool m_bMustCleanPersistent;
     CPLString m_osBaseURL{};
     CPLString m_osBearer{};
-    GIntBig m_nExpirationTime;
+    int64_t m_nExpirationTime;
 
     char **GetBaseHTTPOptions();
     static CPLString ConvertPathToName(const CPLString &path);

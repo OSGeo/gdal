@@ -192,7 +192,7 @@ int ods_formulalex(YYSTYPE *ppNode, ods_formula_parse_context *context)
         }
         else
         {
-            GIntBig nVal = CPLAtoGIntBig(osToken);
+            int64_t nVal = CPLAtoGIntBig(osToken);
             if (osToken.size() >= 12 || nVal < INT_MIN || nVal > INT_MAX)
                 *ppNode = new ods_formula_node(CPLAtof(osToken));
             else

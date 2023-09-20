@@ -33,6 +33,8 @@
 #include "gnm_priv.h"
 #include "ogr_p.h"
 
+#include <cinttypes>
+
 enum operation
 {
     op_unknown = 0, /** no operation */
@@ -255,7 +257,7 @@ static void ReportOnLayer(OGRLayer *poLayer, int bVerbose)
                    OGRGeometryTypeToName(poLayer->GetGeomType()));
         }
 
-        printf("Feature Count: " CPL_FRMT_GIB "\n", poLayer->GetFeatureCount());
+        printf("Feature Count: %" PRId64 "\n", poLayer->GetFeatureCount());
 
         OGREnvelope oExt;
         if (nGeomFieldCount > 1)

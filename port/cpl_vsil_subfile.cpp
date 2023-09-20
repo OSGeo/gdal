@@ -55,15 +55,15 @@ class VSISubFileHandle final : public VSIVirtualHandle
 
   public:
     VSILFILE *fp = nullptr;
-    vsi_l_offset nSubregionOffset = 0;
-    vsi_l_offset nSubregionSize = 0;
+    uint64_t nSubregionOffset = 0;
+    uint64_t nSubregionSize = 0;
     bool bAtEOF = false;
 
     VSISubFileHandle() = default;
     ~VSISubFileHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -85,8 +85,7 @@ class VSISubFileFilesystemHandler final : public VSIFilesystemHandler
     ~VSISubFileFilesystemHandler() override = default;
 
     static int DecomposePath(const char *pszPath, CPLString &osFilename,
-                             vsi_l_offset &nSubFileOffset,
-                             vsi_l_offset &nSubFileSize);
+                             uint64_t &nSubFileOffset, uint64_t &nSubFileSize);
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
                            bool bSetError,
@@ -129,15 +128,14 @@ int VSISubFileHandle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSISubFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSISubFileHandle::Seek(uint64_t nOffset, int nWhence)
 
 {
     bAtEOF = false;
 
     if (nWhence == SEEK_SET)
     {
-        if (nOffset >
-            std::numeric_limits<vsi_l_offset>::max() - nSubregionOffset)
+        if (nOffset > std::numeric_limits<uint64_t>::max() - nSubregionOffset)
             return -1;
         nOffset += nSubregionOffset;
     }
@@ -166,10 +164,10 @@ int VSISubFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSISubFileHandle::Tell()
+uint64_t VSISubFileHandle::Tell()
 
 {
-    vsi_l_offset nBasePos = VSIFTellL(fp);
+    uint64_t nBasePos = VSIFTellL(fp);
     if (nBasePos >= nSubregionOffset)
         return nBasePos - nSubregionOffset;
     return 0;
@@ -192,7 +190,7 @@ size_t VSISubFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         if (nSize == 0)
             return 0;
 
-        const vsi_l_offset nCurOffset = VSIFTellL(fp);
+        const uint64_t nCurOffset = VSIFTellL(fp);
         if (nCurOffset >= nSubregionOffset + nSubregionSize)
         {
             bAtEOF = true;
@@ -236,7 +234,7 @@ size_t VSISubFileHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
     if (nSize == 0)
         return 0;
 
-    const vsi_l_offset nCurOffset = VSIFTellL(fp);
+    const uint64_t nCurOffset = VSIFTellL(fp);
     if (nCurOffset >= nSubregionOffset + nSubregionSize)
         return 0;
 
@@ -278,8 +276,8 @@ int VSISubFileHandle::Eof()
 
 int VSISubFileFilesystemHandler::DecomposePath(const char *pszPath,
                                                CPLString &osFilename,
-                                               vsi_l_offset &nSubFileOffset,
-                                               vsi_l_offset &nSubFileSize)
+                                               uint64_t &nSubFileOffset,
+                                               uint64_t &nSubFileSize)
 
 {
     if (!STARTS_WITH(pszPath, "/vsisubfile/"))
@@ -334,15 +332,15 @@ VSISubFileFilesystemHandler::Open(const char *pszFilename,
         return nullptr;
 
     CPLString osSubFilePath;
-    vsi_l_offset nOff = 0;
-    vsi_l_offset nSize = 0;
+    uint64_t nOff = 0;
+    uint64_t nSize = 0;
 
     if (!DecomposePath(pszFilename, osSubFilePath, nOff, nSize))
     {
         errno = ENOENT;
         return nullptr;
     }
-    if (nOff > std::numeric_limits<vsi_l_offset>::max() - nSize)
+    if (nOff > std::numeric_limits<uint64_t>::max() - nSize)
     {
         return nullptr;
     }
@@ -380,9 +378,9 @@ VSISubFileFilesystemHandler::Open(const char *pszFilename,
             delete poHandle;
             return nullptr;
         }
-        vsi_l_offset nFpSize = VSIFTellL(fp);
-        // For a directory, the size will be max(vsi_l_offset) / 2
-        if (nFpSize == ~(static_cast<vsi_l_offset>(0)) / 2 || nOff > nFpSize)
+        uint64_t nFpSize = VSIFTellL(fp);
+        // For a directory, the size will be max(uint64_t) / 2
+        if (nFpSize == ~(static_cast<uint64_t>(0)) / 2 || nOff > nFpSize)
         {
             poHandle->Close();
             delete poHandle;
@@ -417,8 +415,8 @@ int VSISubFileFilesystemHandler::Stat(const char *pszFilename,
         return -1;
 
     CPLString osSubFilePath;
-    vsi_l_offset nOff = 0;
-    vsi_l_offset nSize = 0;
+    uint64_t nOff = 0;
+    uint64_t nSize = 0;
 
     memset(psStatBuf, 0, sizeof(VSIStatBufL));
 
@@ -434,7 +432,7 @@ int VSISubFileFilesystemHandler::Stat(const char *pszFilename,
     {
         if (nSize != 0)
             psStatBuf->st_size = nSize;
-        else if (static_cast<vsi_l_offset>(psStatBuf->st_size) >= nOff)
+        else if (static_cast<uint64_t>(psStatBuf->st_size) >= nOff)
             psStatBuf->st_size -= nOff;
         else
             psStatBuf->st_size = 0;

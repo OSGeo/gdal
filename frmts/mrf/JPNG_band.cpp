@@ -97,11 +97,11 @@ static CPLErr initBuffer(buf_mgr &b)
 
 CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
 {
-    const static GUInt32 PNG_SIG = 0x474e5089;  // PNG 4CC code
+    const static uint32_t PNG_SIG = 0x474e5089;  // PNG 4CC code
 
     CPLErr retval = CE_None;
     ILImage image(img);
-    GUInt32 signature;
+    uint32_t signature;
     memcpy(&signature, src.buffer, sizeof(signature));
 
     // test against an LSB signature

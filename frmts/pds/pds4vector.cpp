@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -113,7 +114,7 @@ char **PDS4TableBaseLayer::GetFileList() const
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig PDS4TableBaseLayer::GetFeatureCount(int bForce)
+int64_t PDS4TableBaseLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != nullptr || m_poFilterGeom != nullptr)
     {
@@ -445,7 +446,7 @@ CPLXMLNode *PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
 
     CPLXMLNode *psOffset =
         CPLCreateXMLElementAndValue(psTable, (osPrefix + "offset").c_str(),
-                                    CPLSPrintf(CPL_FRMT_GUIB, m_nOffset));
+                                    CPLSPrintf("%" PRIu64, m_nOffset));
     CPLAddXMLAttributeAndValue(psOffset, "unit", "byte");
 
     return psTable;
@@ -640,7 +641,7 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "SignedLSB2")
         {
-            GInt16 sVal = static_cast<GInt16>(std::max(
+            int16_t sVal = static_cast<int16_t>(std::max(
                 -32768, std::min(32767, poRawFeature->GetFieldAsInteger(i))));
             CPL_LSBPTR16(&sVal);
             osBuffer.resize(sizeof(sVal));
@@ -648,7 +649,7 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "SignedMSB2")
         {
-            GInt16 sVal = static_cast<GInt16>(std::max(
+            int16_t sVal = static_cast<int16_t>(std::max(
                 -32768, std::min(32767, poRawFeature->GetFieldAsInteger(i))));
             CPL_MSBPTR16(&sVal);
             osBuffer.resize(sizeof(sVal));
@@ -656,7 +657,7 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "UnsignedLSB2")
         {
-            GUInt16 usVal = static_cast<GUInt16>(std::max(
+            uint16_t usVal = static_cast<uint16_t>(std::max(
                 0, std::min(65535, poRawFeature->GetFieldAsInteger(i))));
             CPL_LSBPTR16(&usVal);
             osBuffer.resize(sizeof(usVal));
@@ -664,7 +665,7 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "UnsignedMSB2")
         {
-            GUInt16 usVal = static_cast<GUInt16>(std::max(
+            uint16_t usVal = static_cast<uint16_t>(std::max(
                 0, std::min(65535, poRawFeature->GetFieldAsInteger(i))));
             CPL_MSBPTR16(&usVal);
             osBuffer.resize(sizeof(usVal));
@@ -672,21 +673,21 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "SignedLSB4")
         {
-            GInt32 nVal = poRawFeature->GetFieldAsInteger(i);
+            int32_t nVal = poRawFeature->GetFieldAsInteger(i);
             CPL_LSBPTR32(&nVal);
             osBuffer.resize(sizeof(nVal));
             memcpy(&osBuffer[0], &nVal, sizeof(nVal));
         }
         else if (osDT == "SignedMSB4")
         {
-            GInt32 nVal = poRawFeature->GetFieldAsInteger(i);
+            int32_t nVal = poRawFeature->GetFieldAsInteger(i);
             CPL_MSBPTR32(&nVal);
             osBuffer.resize(sizeof(nVal));
             memcpy(&osBuffer[0], &nVal, sizeof(nVal));
         }
         else if (osDT == "UnsignedLSB4")
         {
-            GUInt32 nVal = static_cast<GUInt32>(
+            uint32_t nVal = static_cast<uint32_t>(
                 std::max(0, poRawFeature->GetFieldAsInteger(i)));
             CPL_LSBPTR32(&nVal);
             osBuffer.resize(sizeof(nVal));
@@ -694,7 +695,7 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "UnsignedMSB4")
         {
-            GUInt32 nVal = static_cast<GUInt32>(
+            uint32_t nVal = static_cast<uint32_t>(
                 std::max(0, poRawFeature->GetFieldAsInteger(i)));
             CPL_MSBPTR32(&nVal);
             osBuffer.resize(sizeof(nVal));
@@ -702,30 +703,30 @@ OGRErr PDS4FixedWidthTable::ISetFeature(OGRFeature *poFeature)
         }
         else if (osDT == "SignedLSB8")
         {
-            GInt64 nVal = poRawFeature->GetFieldAsInteger64(i);
+            int64_t nVal = poRawFeature->GetFieldAsInteger64(i);
             CPL_LSBPTR64(&nVal);
             osBuffer.resize(sizeof(nVal));
             memcpy(&osBuffer[0], &nVal, sizeof(nVal));
         }
         else if (osDT == "SignedMSB8")
         {
-            GInt64 nVal = poRawFeature->GetFieldAsInteger64(i);
+            int64_t nVal = poRawFeature->GetFieldAsInteger64(i);
             CPL_MSBPTR64(&nVal);
             osBuffer.resize(sizeof(nVal));
             memcpy(&osBuffer[0], &nVal, sizeof(nVal));
         }
         else if (osDT == "UnsignedLSB8")
         {
-            GUInt64 nVal = static_cast<GUInt64>(std::max(
-                static_cast<GIntBig>(0), poRawFeature->GetFieldAsInteger64(i)));
+            uint64_t nVal = static_cast<uint64_t>(std::max(
+                static_cast<int64_t>(0), poRawFeature->GetFieldAsInteger64(i)));
             CPL_LSBPTR64(&nVal);
             osBuffer.resize(sizeof(nVal));
             memcpy(&osBuffer[0], &nVal, sizeof(nVal));
         }
         else if (osDT == "UnsignedMSB8")
         {
-            GUInt64 nVal = static_cast<GUInt64>(std::max(
-                static_cast<GIntBig>(0), poRawFeature->GetFieldAsInteger64(i)));
+            uint64_t nVal = static_cast<uint64_t>(std::max(
+                static_cast<int64_t>(0), poRawFeature->GetFieldAsInteger64(i)));
             CPL_MSBPTR64(&nVal);
             osBuffer.resize(sizeof(nVal));
             memcpy(&osBuffer[0], &nVal, sizeof(nVal));
@@ -823,7 +824,7 @@ OGRErr PDS4FixedWidthTable::ICreateFeature(OGRFeature *poFeature)
 /*                              GetFeature()                            */
 /************************************************************************/
 
-OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
+OGRFeature *PDS4FixedWidthTable::GetFeature(int64_t nFID)
 {
     if (nFID <= 0 || nFID > m_nFeatureCount)
     {
@@ -899,7 +900,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "SignedLSB2")
         {
-            GInt16 sVal;
+            int16_t sVal;
             CPLAssert(osVal.size() == sizeof(sVal));
             memcpy(&sVal, osVal.data(), sizeof(sVal));
             CPL_LSBPTR16(&sVal);
@@ -907,7 +908,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "SignedMSB2")
         {
-            GInt16 sVal;
+            int16_t sVal;
             CPLAssert(osVal.size() == sizeof(sVal));
             memcpy(&sVal, osVal.data(), sizeof(sVal));
             CPL_MSBPTR16(&sVal);
@@ -915,7 +916,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "UnsignedLSB2")
         {
-            GUInt16 usVal;
+            uint16_t usVal;
             CPLAssert(osVal.size() == sizeof(usVal));
             memcpy(&usVal, osVal.data(), sizeof(usVal));
             CPL_LSBPTR16(&usVal);
@@ -923,7 +924,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "UnsignedMSB2")
         {
-            GUInt16 usVal;
+            uint16_t usVal;
             CPLAssert(osVal.size() == sizeof(usVal));
             memcpy(&usVal, osVal.data(), sizeof(usVal));
             CPL_MSBPTR16(&usVal);
@@ -931,7 +932,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "SignedLSB4")
         {
-            GInt32 nVal;
+            int32_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_LSBPTR32(&nVal);
@@ -939,7 +940,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "SignedMSB4")
         {
-            GInt32 nVal;
+            int32_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_MSBPTR32(&nVal);
@@ -947,23 +948,23 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "UnsignedLSB4")
         {
-            GUInt32 nVal;
+            uint32_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_LSBPTR32(&nVal);
-            poRawFeature->SetField(i, static_cast<GIntBig>(nVal));
+            poRawFeature->SetField(i, static_cast<int64_t>(nVal));
         }
         else if (osDT == "UnsignedMSB4")
         {
-            GUInt32 nVal;
+            uint32_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_MSBPTR32(&nVal);
-            poRawFeature->SetField(i, static_cast<GIntBig>(nVal));
+            poRawFeature->SetField(i, static_cast<int64_t>(nVal));
         }
         else if (osDT == "SignedLSB8")
         {
-            GInt64 nVal;
+            int64_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_LSBPTR64(&nVal);
@@ -971,7 +972,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "SignedMSB8")
         {
-            GInt64 nVal;
+            int64_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_MSBPTR64(&nVal);
@@ -979,19 +980,19 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
         }
         else if (osDT == "UnsignedLSB8")
         {
-            GUInt64 nVal;
+            uint64_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_LSBPTR64(&nVal);
-            poRawFeature->SetField(i, static_cast<GIntBig>(nVal));
+            poRawFeature->SetField(i, static_cast<int64_t>(nVal));
         }
         else if (osDT == "UnsignedMSB8")
         {
-            GUInt64 nVal;
+            uint64_t nVal;
             CPLAssert(osVal.size() == sizeof(nVal));
             memcpy(&nVal, osVal.data(), sizeof(nVal));
             CPL_MSBPTR64(&nVal);
-            poRawFeature->SetField(i, static_cast<GIntBig>(nVal));
+            poRawFeature->SetField(i, static_cast<int64_t>(nVal));
         }
         else if (osDT == "ASCII_Boolean")
         {
@@ -1133,7 +1134,7 @@ bool PDS4FixedWidthTable::ReadTableDef(const CPLXMLNode *psTable)
         return false;
     }
 
-    m_nOffset = static_cast<GUIntBig>(
+    m_nOffset = static_cast<uint64_t>(
         CPLAtoGIntBig(CPLGetXMLValue(psTable, "offset", "0")));
 
     m_nFeatureCount = CPLAtoGIntBig(CPLGetXMLValue(psTable, "records", "-1"));
@@ -1365,7 +1366,7 @@ void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
         psFAO, osPrefix, ("Table_" + GetSubType()).c_str(), osDescription);
 
     CPLCreateXMLElementAndValue(psTable, (osPrefix + "records").c_str(),
-                                CPLSPrintf(CPL_FRMT_GIB, m_nFeatureCount));
+                                CPLSPrintf("%" PRId64, m_nFeatureCount));
     if (!osDescription.empty())
         CPLCreateXMLElementAndValue(psTable, (osPrefix + "description").c_str(),
                                     osDescription);
@@ -1937,7 +1938,7 @@ OGRFeature *PDS4DelimitedTable::GetNextFeatureRaw()
     if (CSLCount(papszFields) != m_poRawFeatureDefn->GetFieldCount())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Did not get expected number of fields at line " CPL_FRMT_GIB,
+                 "Did not get expected number of fields at line %" PRId64,
                  m_nFID);
     }
 
@@ -2179,7 +2180,7 @@ bool PDS4DelimitedTable::ReadTableDef(const CPLXMLNode *psTable)
         return false;
     }
 
-    m_nOffset = static_cast<GUIntBig>(
+    m_nOffset = static_cast<uint64_t>(
         CPLAtoGIntBig(CPLGetXMLValue(psTable, "offset", "0")));
 
     m_nFeatureCount = CPLAtoGIntBig(CPLGetXMLValue(psTable, "records", "-1"));
@@ -2368,7 +2369,7 @@ void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
         psTable, (osPrefix + "parsing_standard_id").c_str(), "PDS DSV 1");
 
     CPLCreateXMLElementAndValue(psTable, (osPrefix + "records").c_str(),
-                                CPLSPrintf(CPL_FRMT_GIB, m_nFeatureCount));
+                                CPLSPrintf("%" PRId64, m_nFeatureCount));
     if (!osDescription.empty())
         CPLCreateXMLElementAndValue(psTable, (osPrefix + "description").c_str(),
                                     osDescription);

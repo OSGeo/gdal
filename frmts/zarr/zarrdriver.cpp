@@ -1127,12 +1127,12 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         for (const auto &poDim : aoDims)
         {
             if (poDim->GetName() == "Y" &&
-                poDim->GetSize() == static_cast<GUInt64>(nYSize))
+                poDim->GetSize() == static_cast<uint64_t>(nYSize))
             {
                 poDS->m_poDimY = poDim;
             }
             else if (poDim->GetName() == "X" &&
-                     poDim->GetSize() == static_cast<GUInt64>(nXSize))
+                     poDim->GetSize() == static_cast<uint64_t>(nXSize))
             {
                 poDS->m_poDimX = poDim;
             }
@@ -1244,14 +1244,14 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
             auto poAttr = m_poSingleArray->GetAttribute("COLOR_INTERPRETATION");
             if (!poAttr)
                 poAttr = m_poSingleArray->CreateAttribute(
-                    "COLOR_INTERPRETATION", {static_cast<GUInt64>(nBands)},
+                    "COLOR_INTERPRETATION", {static_cast<uint64_t>(nBands)},
                     oStringDT);
             if (poAttr)
             {
-                const GUInt64 nStartIndex = 0;
+                const uint64_t nStartIndex = 0;
                 const size_t nCount = nBands;
-                const GInt64 arrayStep = 1;
-                const GPtrDiff_t bufferStride = 1;
+                const int64_t arrayStep = 1;
+                const ptrdiff_t bufferStride = 1;
                 std::vector<const char *> apszValues;
                 for (int i = 0; i < nBands; ++i)
                 {
@@ -1346,10 +1346,10 @@ CPLErr ZarrDataset::SetGeoTransform(double *padfTransform)
                      "Out of memory when allocating X array");
             return CE_Failure;
         }
-        const GUInt64 nStartIndex = 0;
+        const uint64_t nStartIndex = 0;
         const size_t nCount = adfX.size();
-        const GInt64 arrayStep = 1;
-        const GPtrDiff_t bufferStride = 1;
+        const int64_t arrayStep = 1;
+        const ptrdiff_t bufferStride = 1;
         if (!poX->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
                         poX->GetDataType(), adfX.data()))
         {
@@ -1379,10 +1379,10 @@ CPLErr ZarrDataset::SetGeoTransform(double *padfTransform)
                      "Out of memory when allocating Y array");
             return CE_Failure;
         }
-        const GUInt64 nStartIndex = 0;
+        const uint64_t nStartIndex = 0;
         const size_t nCount = adfY.size();
-        const GInt64 arrayStep = 1;
-        const GPtrDiff_t bufferStride = 1;
+        const int64_t arrayStep = 1;
+        const ptrdiff_t bufferStride = 1;
         if (!poY->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
                         poY->GetDataType(), adfY.data()))
         {
@@ -1420,10 +1420,10 @@ CPLErr ZarrDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
                         poArray->CreateAttribute(pszKey, {}, oStringDT);
                     if (poAttr)
                     {
-                        const GUInt64 nStartIndex = 0;
+                        const uint64_t nStartIndex = 0;
                         const size_t nCount = 1;
-                        const GInt64 arrayStep = 1;
-                        const GPtrDiff_t bufferStride = 1;
+                        const int64_t arrayStep = 1;
+                        const ptrdiff_t bufferStride = 1;
                         poAttr->Write(&nStartIndex, &nCount, &arrayStep,
                                       &bufferStride, oStringDT, &pszValue);
                     }
@@ -1606,10 +1606,10 @@ CPLErr ZarrRasterBand::SetColorInterpretation(GDALColorInterp eColorInterp)
                                                 oStringDT);
         if (poAttr)
         {
-            const GUInt64 nStartIndex = 0;
+            const uint64_t nStartIndex = 0;
             const size_t nCount = 1;
-            const GInt64 arrayStep = 1;
-            const GPtrDiff_t bufferStride = 1;
+            const int64_t arrayStep = 1;
+            const ptrdiff_t bufferStride = 1;
             const char *pszValue = GDALGetColorInterpretationName(eColorInterp);
             poAttr->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
                           oStringDT, &pszValue);
@@ -1629,12 +1629,12 @@ CPLErr ZarrRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     const int nYOff = nBlockYOff * nBlockYSize;
     const int nReqXSize = std::min(nRasterXSize - nXOff, nBlockXSize);
     const int nReqYSize = std::min(nRasterYSize - nYOff, nBlockYSize);
-    GUInt64 arrayStartIdx[] = {static_cast<GUInt64>(nYOff),
-                               static_cast<GUInt64>(nXOff)};
+    uint64_t arrayStartIdx[] = {static_cast<uint64_t>(nYOff),
+                                static_cast<uint64_t>(nXOff)};
     size_t count[] = {static_cast<size_t>(nReqYSize),
                       static_cast<size_t>(nReqXSize)};
-    constexpr GInt64 arrayStep[] = {1, 1};
-    GPtrDiff_t bufferStride[] = {nBlockXSize, 1};
+    constexpr int64_t arrayStep[] = {1, 1};
+    ptrdiff_t bufferStride[] = {nBlockXSize, 1};
     return m_poArray->Read(arrayStartIdx, count, arrayStep, bufferStride,
                            m_poArray->GetDataType(), pData)
                ? CE_None
@@ -1651,12 +1651,12 @@ CPLErr ZarrRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData)
     const int nYOff = nBlockYOff * nBlockYSize;
     const int nReqXSize = std::min(nRasterXSize - nXOff, nBlockXSize);
     const int nReqYSize = std::min(nRasterYSize - nYOff, nBlockYSize);
-    GUInt64 arrayStartIdx[] = {static_cast<GUInt64>(nYOff),
-                               static_cast<GUInt64>(nXOff)};
+    uint64_t arrayStartIdx[] = {static_cast<uint64_t>(nYOff),
+                                static_cast<uint64_t>(nXOff)};
     size_t count[] = {static_cast<size_t>(nReqYSize),
                       static_cast<size_t>(nReqXSize)};
-    constexpr GInt64 arrayStep[] = {1, 1};
-    GPtrDiff_t bufferStride[] = {nBlockXSize, 1};
+    constexpr int64_t arrayStep[] = {1, 1};
+    ptrdiff_t bufferStride[] = {nBlockXSize, 1};
     return m_poArray->Write(arrayStartIdx, count, arrayStep, bufferStride,
                             m_poArray->GetDataType(), pData)
                ? CE_None
@@ -1670,8 +1670,8 @@ CPLErr ZarrRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData)
 CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                                 GSpacing nLineSpaceBuf,
+                                 GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                                 int64_t nLineSpaceBuf,
                                  GDALRasterIOExtraArg *psExtraArg)
 {
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
@@ -1679,14 +1679,14 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         (nPixelSpaceBuf % nBufferDTSize) == 0 &&
         (nLineSpaceBuf % nBufferDTSize) == 0)
     {
-        GUInt64 arrayStartIdx[] = {static_cast<GUInt64>(nYOff),
-                                   static_cast<GUInt64>(nXOff)};
+        uint64_t arrayStartIdx[] = {static_cast<uint64_t>(nYOff),
+                                    static_cast<uint64_t>(nXOff)};
         size_t count[] = {static_cast<size_t>(nYSize),
                           static_cast<size_t>(nXSize)};
-        constexpr GInt64 arrayStep[] = {1, 1};
-        GPtrDiff_t bufferStride[] = {
-            static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize),
-            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize)};
+        constexpr int64_t arrayStep[] = {1, 1};
+        ptrdiff_t bufferStride[] = {
+            static_cast<ptrdiff_t>(nLineSpaceBuf / nBufferDTSize),
+            static_cast<ptrdiff_t>(nPixelSpaceBuf / nBufferDTSize)};
 
         if (eRWFlag == GF_Read)
         {

@@ -135,7 +135,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     bool ScanIndices();
 
-    GIntBig *panMatchingFIDs;
+    int64_t *panMatchingFIDs;
     int iMatchingFID;
     void ClearMatchingFIDs();
 
@@ -235,11 +235,11 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(int64_t nIndex) override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr SyncToDisk() override;
 
@@ -248,7 +248,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
         return poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int) override;
+    int64_t GetFeatureCount(int) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {

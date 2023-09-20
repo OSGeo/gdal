@@ -34,6 +34,7 @@
 #include "parsexsd.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <memory>
 #include <vector>
 #include <set>
@@ -149,7 +150,7 @@ class OGROAPIFLayer final : public OGRLayer
     bool m_bFeatureDefnEstablished = false;
     std::unique_ptr<GDALDataset> m_poUnderlyingDS;
     OGRLayer *m_poUnderlyingLayer = nullptr;
-    GIntBig m_nFID = 1;
+    int64_t m_nFID = 1;
     CPLString m_osGetURL;
     CPLString m_osAttributeFilter;
     CPLString m_osGetID;
@@ -161,7 +162,7 @@ class OGROAPIFLayer final : public OGRLayer
     bool m_bHasCQLText = false;
     // https://github.com/tschaub/ogcapi-features/blob/json-array-expression/extensions/cql/jfe/readme.md
     bool m_bHasJSONFilterExpression = false;
-    GIntBig m_nTotalFeatureCount = -1;
+    int64_t m_nTotalFeatureCount = -1;
     bool m_bHasIntIdMember = false;
     bool m_bHasStringIdMember = false;
     std::vector<std::unique_ptr<OGRFieldDefn>> m_apoFieldsFromSchema{};
@@ -202,9 +203,9 @@ class OGROAPIFLayer final : public OGRLayer
     OGRFeatureDefn *GetLayerDefn() override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig) override;
+    OGRFeature *GetFeature(int64_t) override;
     int TestCapability(const char *) override;
-    GIntBig GetFeatureCount(int bForce = FALSE) override;
+    int64_t GetFeatureCount(int bForce = FALSE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
@@ -1674,7 +1675,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     }
 
     const auto &oRoot = oDoc.GetRoot();
-    GIntBig nFeatures = oRoot.GetLong("numberMatched", -1);
+    int64_t nFeatures = oRoot.GetLong("numberMatched", -1);
     if (nFeatures >= 0)
         m_nTotalFeatureCount = nFeatures;
 
@@ -2015,14 +2016,14 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
 /*                            GetFeature()                              */
 /************************************************************************/
 
-OGRFeature *OGROAPIFLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGROAPIFLayer::GetFeature(int64_t nFID)
 {
     if (!m_bFeatureDefnEstablished)
         EstablishFeatureDefn();
     if (!m_bHasIntIdMember)
         return OGRLayer::GetFeature(nFID);
 
-    m_osGetID.Printf(CPL_FRMT_GIB, nFID);
+    m_osGetID.Printf("%" PRId64, nFID);
     ResetReading();
     auto poRet = GetNextRawFeature();
     m_osGetID.clear();
@@ -2106,7 +2107,7 @@ bool OGROAPIFLayer::SupportsResultTypeHits()
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
+int64_t OGROAPIFLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
@@ -2152,7 +2153,7 @@ GIntBig OGROAPIFLayer::GetFeatureCount(int bForce)
             CPLJSONDocument oDoc;
             if (m_poDS->DownloadJSon(osURL, oDoc))
             {
-                GIntBig nFeatures = oDoc.GetRoot().GetLong("numberMatched", -1);
+                int64_t nFeatures = oDoc.GetRoot().GetLong("numberMatched", -1);
                 if (nFeatures >= 0)
                     return nFeatures;
             }
@@ -2352,7 +2353,7 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
                 CPLString osRet(osEscapedFieldName);
                 osRet += "=";
                 osRet +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
                 return osRet;
             }
         }
@@ -2532,7 +2533,7 @@ CPLString OGROAPIFLayer::BuildFilterCQLText(const swq_expr_node *poNode)
                 poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
             {
                 osRet +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
                 return osRet;
             }
             if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
@@ -2719,7 +2720,7 @@ CPLString OGROAPIFLayer::BuildFilterJSONFilterExpr(const swq_expr_node *poNode)
         if (poNode->field_type == SWQ_INTEGER ||
             poNode->field_type == SWQ_INTEGER64)
         {
-            return CPLSPrintf(CPL_FRMT_GIB, poNode->int_value);
+            return CPLSPrintf("%" PRId64, poNode->int_value);
         }
         if (poNode->field_type == SWQ_FLOAT)
         {

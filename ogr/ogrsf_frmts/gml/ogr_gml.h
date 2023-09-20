@@ -56,7 +56,7 @@ class OGRGMLLayer final : public OGRLayer
 {
     OGRFeatureDefn *poFeatureDefn;
 
-    GIntBig iNextGMLId;
+    int64_t iNextGMLId;
     bool bInvalidFIDFound;
     char *pszFIDPrefix;
 
@@ -81,7 +81,7 @@ class OGRGMLLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override

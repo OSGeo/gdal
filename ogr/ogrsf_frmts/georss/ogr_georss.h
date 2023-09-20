@@ -141,7 +141,7 @@ class OGRGeoRSSLayer final : public OGRLayer
 
     int TestCapability(const char *) override;
 
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 
     void LoadSchema();
 

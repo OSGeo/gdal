@@ -181,8 +181,8 @@ CPLErr JP2LuraRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType eBufType, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);

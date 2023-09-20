@@ -31,6 +31,7 @@
 
 #include "gdal_priv.h"
 #include <cassert>
+#include <cinttypes>
 #include <vector>
 #include <algorithm>
 #include "cpl_json.h"
@@ -99,9 +100,9 @@ static CPLErr Delete(const char *)
 
 // Read a 32bit unsigned integer stored in little endian
 // Same as CPL_LSBUINT32PTR
-static inline GUInt32 u32lat(void *data)
+static inline uint32_t u32lat(void *data)
 {
-    GUInt32 val;
+    uint32_t val;
     memcpy(&val, data, 4);
     return CPL_LSBWORD32(val);
 }
@@ -146,7 +147,7 @@ struct Bundle
         return;
 #endif
     }
-    std::vector<GUInt64> index;
+    std::vector<uint64_t> index;
     VSILFILE *fh;
     bool isV2;
     bool isTpkx;
@@ -639,8 +640,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
         return CE_None;
     }
     int block = static_cast<int>((nBlockYOff % BSZ) * BSZ + (nBlockXOff % BSZ));
-    GUInt64 offset = bundle.index[block] & 0xffffffffffull;
-    GUInt64 size = bundle.index[block] >> 40;
+    uint64_t offset = bundle.index[block] & 0xffffffffffull;
+    uint64_t size = bundle.index[block] >> 40;
     if (0 == size)
     {
         memset(pData, 0, nBytes);
@@ -652,9 +653,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     if (size != VSIFReadL(fbuffer.data(), size_t(1), size_t(size), bundle.fh))
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Error reading tile, reading " CPL_FRMT_GUIB
-                 " at " CPL_FRMT_GUIB,
-                 GUInt64(size), GUInt64(offset));
+                 "Error reading tile, reading %" PRIu64 " at %" PRIu64,
+                 uint64_t(size), uint64_t(offset));
         return CE_Failure;
     }
     CPLString magic;

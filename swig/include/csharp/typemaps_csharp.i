@@ -162,16 +162,16 @@ OPTIONAL_POD(int, int);
 %}
 
 /*
- * Typemap for GIntBig (int64)
+ * Typemap for int64_t (int64)
  */
 
-%typemap(ctype, out="GIntBig") GIntBig  %{GIntBig%}
-%typemap(imtype, out="long") GIntBig "long"
-%typemap(cstype) GIntBig %{long%}
-%typemap(in) GIntBig %{ $1 = $input; %}
-%typemap(out) GIntBig %{ $result = $1; %}
-%typemap(csin) GIntBig "$csinput"
-%typemap(csout, excode=SWIGEXCODE) GIntBig {
+%typemap(ctype, out="int64_t") int64_t  %{int64_t%}
+%typemap(imtype, out="long") int64_t "long"
+%typemap(cstype) int64_t %{long%}
+%typemap(in) int64_t %{ $1 = $input; %}
+%typemap(out) int64_t %{ $result = $1; %}
+%typemap(csin) int64_t "$csinput"
+%typemap(csout, excode=SWIGEXCODE) int64_t {
     long res = $imcall;$excode
     return res;
 }

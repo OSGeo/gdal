@@ -1349,7 +1349,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                     if (poGDS->m_ePopulation == BAGDataset::Population::COUNT)
                     {
-                        static_cast<GUInt32 *>(pImage)[nTargetIdx]++;
+                        static_cast<uint32_t *>(pImage)[nTargetIdx]++;
                         continue;
                     }
 
@@ -1467,10 +1467,10 @@ CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
     const int nRows = static_cast<int>(poValues->GetDimensions()[0]->GetSize());
     for (int iRow = 0; iRow < nRows; iRow++)
     {
-        const GUInt64 arrayStartIdx = static_cast<GUInt64>(iRow);
+        const uint64_t arrayStartIdx = static_cast<uint64_t>(iRow);
         const size_t count = 1;
-        const GInt64 arrayStep = 0;
-        const GPtrDiff_t bufferStride = 0;
+        const int64_t arrayStep = 0;
+        const ptrdiff_t bufferStride = 0;
         poValues->Read(&arrayStartIdx, &count, &arrayStep, &bufferStride,
                        oValuesDT, &abyRow[0]);
         int iCol = 0;
@@ -1658,10 +1658,10 @@ CPLErr BAGGeorefMDBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (m_poKeys)
     {
-        const GUInt64 arrayStartIdx[2] = {
-            static_cast<GUInt64>(
+        const uint64_t arrayStartIdx[2] = {
+            static_cast<uint64_t>(
                 std::max(0, nRasterYSize - (nBlockYOff + 1) * nBlockYSize)),
-            static_cast<GUInt64>(nBlockXOff) * nBlockXSize};
+            static_cast<uint64_t>(nBlockXOff) * nBlockXSize};
         size_t count[2] = {
             std::min(static_cast<size_t>(nBlockYSize),
                      static_cast<size_t>(GetYSize() - arrayStartIdx[0])),
@@ -1671,8 +1671,8 @@ CPLErr BAGGeorefMDBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         {
             count[0] += (nRasterYSize - (nBlockYOff + 1) * nBlockYSize);
         }
-        const GInt64 arrayStep[2] = {1, 1};
-        const GPtrDiff_t bufferStride[2] = {nBlockXSize, 1};
+        const int64_t arrayStep[2] = {1, 1};
+        const ptrdiff_t bufferStride[2] = {nBlockXSize, 1};
 
         if (!m_poKeys->Read(arrayStartIdx, count, arrayStep, bufferStride,
                             m_poKeys->GetDataType(), pImage))
@@ -1759,13 +1759,13 @@ CPLErr BAGGeorefMDSuperGridBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     BAGDataset *poGDS = cpl::down_cast<BAGDataset *>(poDS);
     if (m_poKeys)
     {
-        const GUInt64 arrayStartIdx[2] = {
+        const uint64_t arrayStartIdx[2] = {
             0, poGDS->m_nSuperGridRefinementStartIndex +
-                   static_cast<GUInt64>(nRasterYSize - 1 - nBlockYOff) *
+                   static_cast<uint64_t>(nRasterYSize - 1 - nBlockYOff) *
                        nBlockXSize};
         size_t count[2] = {1, static_cast<size_t>(nBlockXSize)};
-        const GInt64 arrayStep[2] = {1, 1};
-        const GPtrDiff_t bufferStride[2] = {nBlockXSize, 1};
+        const int64_t arrayStep[2] = {1, 1};
+        const ptrdiff_t bufferStride[2] = {nBlockXSize, 1};
 
         if (!m_poKeys->Read(arrayStartIdx, count, arrayStep, bufferStride,
                             m_poKeys->GetDataType(), pImage))
@@ -2881,17 +2881,17 @@ void BAGTrackingListLayer::ResetReading()
 
 OGRFeature *BAGTrackingListLayer::GetNextRawFeature()
 {
-    if (static_cast<GUInt64>(m_nIdx) >=
+    if (static_cast<uint64_t>(m_nIdx) >=
         m_poArray->GetDimensions()[0]->GetSize())
         return nullptr;
 
     const auto &oDataType = m_poArray->GetDataType();
     std::vector<GByte> abyRow(oDataType.GetSize());
 
-    const GUInt64 arrayStartIdx = static_cast<GUInt64>(m_nIdx);
+    const uint64_t arrayStartIdx = static_cast<uint64_t>(m_nIdx);
     const size_t count = 1;
-    const GInt64 arrayStep = 0;
-    const GPtrDiff_t bufferStride = 0;
+    const int64_t arrayStep = 0;
+    const ptrdiff_t bufferStride = 0;
     m_poArray->Read(&arrayStartIdx, &count, &arrayStep, &bufferStride,
                     oDataType, &abyRow[0]);
     int iCol = 0;
@@ -3688,7 +3688,7 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                             bOK = false;
                             break;
                         }
-                        if (rgrid.nIndex + static_cast<GUInt64>(rgrid.nWidth) *
+                        if (rgrid.nIndex + static_cast<uint64_t>(rgrid.nWidth) *
                                                rgrid.nHeight >
                             nRefinementsSize)
                         {

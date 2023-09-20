@@ -47,19 +47,19 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints, double dCenterX,
                    double dStartAngle, double dEndAngle);
 int TABCloseRing(OGRLineString *poRing);
 
-GBool TABAdjustFilenameExtension(char *pszFname);
+bool TABAdjustFilenameExtension(char *pszFname);
 char *TABGetBasename(const char *pszFname);
 char **TAB_CSLLoad(const char *pszFname);
 
 char *TABEscapeString(char *pszString);
-char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
+char *TABUnEscapeString(char *pszString, bool bSrcIsConst);
 
 char *TABCleanFieldName(const char *pszSrcName);
 
 const char *TABUnitIdToString(int nId);
 int TABUnitIdFromString(const char *pszName);
 
-void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd);
-GInt16 TABInt16Diff(int a, int b);
+void TABSaturatedAdd(int32_t &nVal, int32_t nAdd);
+int16_t TABInt16Diff(int a, int b);
 
 #endif /* MITAB_UTILS_H_INCLUDED_ */

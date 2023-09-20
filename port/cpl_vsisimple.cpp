@@ -50,6 +50,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>
@@ -101,7 +102,7 @@
 // #define DEBUG_BLOCK_CACHE_USE
 
 #ifdef DEBUG_BLOCK_CACHE_USE
-extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
+extern "C" int64_t CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 #endif
 
 /* Unix or Windows NT/2000/XP */
@@ -403,10 +404,10 @@ int VSIFPutc(int nChar, FILE *fp)
 static CPLMutex *hMemStatMutex = nullptr;
 static size_t nCurrentTotalAllocs = 0;
 static size_t nMaxTotalAllocs = 0;
-static GUIntBig nVSIMallocs = 0;
-static GUIntBig nVSICallocs = 0;
-static GUIntBig nVSIReallocs = 0;
-static GUIntBig nVSIFrees = 0;
+static uint64_t nVSIMallocs = 0;
+static uint64_t nVSICallocs = 0;
+static uint64_t nVSIReallocs = 0;
+static uint64_t nVSIFrees = 0;
 
 /************************************************************************/
 /*                         VSIShowMemStats()                            */
@@ -419,26 +420,26 @@ void VSIShowMemStats()
     char *pszShowMemStats = getenv("CPL_SHOW_MEM_STATS");
     if (pszShowMemStats == nullptr || pszShowMemStats[0] == '\0')
         return;
-    printf("Current VSI memory usage        : " CPL_FRMT_GUIB " bytes\n", /*ok*/
-           static_cast<GUIntBig>(nCurrentTotalAllocs));
-    printf("Maximum VSI memory usage        : " CPL_FRMT_GUIB " bytes\n", /*ok*/
-           static_cast<GUIntBig>(nMaxTotalAllocs));
-    printf("Number of calls to VSIMalloc()  : " CPL_FRMT_GUIB "\n", /*ok*/
+    printf("Current VSI memory usage        : %" PRIu64 " bytes\n", /*ok*/
+           static_cast<uint64_t>(nCurrentTotalAllocs));
+    printf("Maximum VSI memory usage        : %" PRIu64 " bytes\n", /*ok*/
+           static_cast<uint64_t>(nMaxTotalAllocs));
+    printf("Number of calls to VSIMalloc()  : %" PRIu64 "\n", /*ok*/
            nVSIMallocs);
-    printf("Number of calls to VSICalloc()  : " CPL_FRMT_GUIB "\n", /*ok*/
+    printf("Number of calls to VSICalloc()  : %" PRIu64 "\n", /*ok*/
            nVSICallocs);
-    printf("Number of calls to VSIRealloc() : " CPL_FRMT_GUIB "\n", /*ok*/
+    printf("Number of calls to VSIRealloc() : %" PRIu64 "\n", /*ok*/
            nVSIReallocs);
-    printf("Number of calls to VSIFree()    : " CPL_FRMT_GUIB "\n", /*ok*/
+    printf("Number of calls to VSIFree()    : %" PRIu64 "\n", /*ok*/
            nVSIFrees);
-    printf("VSIMalloc + VSICalloc - VSIFree : " CPL_FRMT_GUIB "\n", /*ok*/
+    printf("VSIMalloc + VSICalloc - VSIFree : %" PRIu64 "\n", /*ok*/
            nVSIMallocs + nVSICallocs - nVSIFrees);
 }
 #endif
 
 #ifdef DEBUG_VSIMALLOC
-static GIntBig nMaxPeakAllocSize = -1;
-static GIntBig nMaxCumulAllocSize = -1;
+static int64_t nMaxPeakAllocSize = -1;
+static int64_t nMaxCumulAllocSize = -1;
 #endif
 
 /************************************************************************/
@@ -473,11 +474,11 @@ void *VSICalloc(size_t nCount, size_t nSize)
         nMaxCumulAllocSize =
             pszMaxCumulAllocSize ? atoi(pszMaxCumulAllocSize) : 0;
     }
-    if (nMaxPeakAllocSize > 0 && static_cast<GIntBig>(nMul) > nMaxPeakAllocSize)
+    if (nMaxPeakAllocSize > 0 && static_cast<int64_t>(nMul) > nMaxPeakAllocSize)
         return nullptr;
 #ifdef DEBUG_VSIMALLOC_STATS
     if (nMaxCumulAllocSize > 0 &&
-        static_cast<GIntBig>(nCurrentTotalAllocs) + static_cast<GIntBig>(nMul) >
+        static_cast<int64_t>(nCurrentTotalAllocs) + static_cast<int64_t>(nMul) >
             nMaxCumulAllocSize)
         return nullptr;
 #endif
@@ -521,9 +522,9 @@ void *VSICalloc(size_t nCount, size_t nSize)
             fprintf(stderr, /*ok*/
                     "Thread[%p] VSICalloc(%d,%d) = %p"
 #ifdef DEBUG_VSIMALLOC_STATS
-                    ", current_cumul = " CPL_FRMT_GUIB
+                    ", current_cumul = %" PRIu64
 #ifdef DEBUG_BLOCK_CACHE_USE
-                    ", block_cache_used = " CPL_FRMT_GIB
+                    ", block_cache_used = %" PRId64
 #endif
                     ", mal+cal-free = %d"
 #endif
@@ -532,7 +533,7 @@ void *VSICalloc(size_t nCount, size_t nSize)
                     static_cast<int>(nSize), ptr + 2 * sizeof(void *)
 #ifdef DEBUG_VSIMALLOC_STATS
                                                  ,
-                    static_cast<GUIntBig>(nCurrentTotalAllocs + nMul)
+                    static_cast<uint64_t>(nCurrentTotalAllocs + nMul)
 #ifdef DEBUG_BLOCK_CACHE_USE
                         ,
                     GDALGetCacheUsed64()
@@ -584,11 +585,11 @@ void *VSIMalloc(size_t nSize)
             pszMaxCumulAllocSize ? atoi(pszMaxCumulAllocSize) : 0;
     }
     if (nMaxPeakAllocSize > 0 &&
-        static_cast<GIntBig>(nSize) > nMaxPeakAllocSize)
+        static_cast<int64_t>(nSize) > nMaxPeakAllocSize)
         return nullptr;
 #ifdef DEBUG_VSIMALLOC_STATS
-    if (nMaxCumulAllocSize > 0 && static_cast<GIntBig>(nCurrentTotalAllocs) +
-                                          static_cast<GIntBig>(nSize) >
+    if (nMaxCumulAllocSize > 0 && static_cast<int64_t>(nCurrentTotalAllocs) +
+                                          static_cast<int64_t>(nSize) >
                                       nMaxCumulAllocSize)
         return nullptr;
 #endif  // DEBUG_VSIMALLOC_STATS
@@ -628,9 +629,9 @@ void *VSIMalloc(size_t nSize)
             fprintf(stderr, /*ok*/
                     "Thread[%p] VSIMalloc(%d) = %p"
 #ifdef DEBUG_VSIMALLOC_STATS
-                    ", current_cumul = " CPL_FRMT_GUIB
+                    ", current_cumul = %" PRIu64
 #ifdef DEBUG_BLOCK_CACHE_USE
-                    ", block_cache_used = " CPL_FRMT_GIB
+                    ", block_cache_used = %" PRId64
 #endif
                     ", mal+cal-free = %d"
 #endif
@@ -639,7 +640,7 @@ void *VSIMalloc(size_t nSize)
                     ptr + 2 * sizeof(void *)
 #ifdef DEBUG_VSIMALLOC_STATS
                         ,
-                    static_cast<GUIntBig>(nCurrentTotalAllocs + nSize)
+                    static_cast<uint64_t>(nCurrentTotalAllocs + nSize)
 #ifdef DEBUG_BLOCK_CACHE_USE
                         ,
                     GDALGetCacheUsed64()
@@ -712,12 +713,12 @@ void *VSIRealloc(void *pData, size_t nNewSize)
         nMaxPeakAllocSize = pszMaxPeakAllocSize ? atoi(pszMaxPeakAllocSize) : 0;
     }
     if (nMaxPeakAllocSize > 0 &&
-        static_cast<GIntBig>(nNewSize) > nMaxPeakAllocSize)
+        static_cast<int64_t>(nNewSize) > nMaxPeakAllocSize)
         return nullptr;
 #ifdef DEBUG_VSIMALLOC_STATS
-    if (nMaxCumulAllocSize > 0 && static_cast<GIntBig>(nCurrentTotalAllocs) +
-                                          static_cast<GIntBig>(nNewSize) -
-                                          static_cast<GIntBig>(nOldSize) >
+    if (nMaxCumulAllocSize > 0 && static_cast<int64_t>(nCurrentTotalAllocs) +
+                                          static_cast<int64_t>(nNewSize) -
+                                          static_cast<int64_t>(nOldSize) >
                                       nMaxCumulAllocSize)
         return nullptr;
 #endif
@@ -797,9 +798,9 @@ void *VSIRealloc(void *pData, size_t nNewSize)
                 stderr,
                 "Thread[%p] VSIRealloc(%p, %d) = %p" /*ok*/
 #ifdef DEBUG_VSIMALLOC_STATS
-                ", current_cumul = " CPL_FRMT_GUIB
+                ", current_cumul = %" PRIu64
 #ifdef DEBUG_BLOCK_CACHE_USE
-                ", block_cache_used = " CPL_FRMT_GIB
+                ", block_cache_used = %" PRId64
 #endif
                 ", mal+cal-free = %d"
 #endif
@@ -808,7 +809,7 @@ void *VSIRealloc(void *pData, size_t nNewSize)
                 ptr + 2 * sizeof(void *)
 #ifdef DEBUG_VSIMALLOC_STATS
                     ,
-                static_cast<GUIntBig>(nCurrentTotalAllocs - nOldSize + nNewSize)
+                static_cast<uint64_t>(nCurrentTotalAllocs - nOldSize + nNewSize)
 #ifdef DEBUG_BLOCK_CACHE_USE
                     ,
                 GDALGetCacheUsed64()
@@ -970,9 +971,9 @@ void *VSIMallocAlignedAutoVerbose(size_t nSize, const char *pszFile, int nLine)
     if (pRet == nullptr && nSize != 0)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(nSize));
+                 static_cast<uint64_t>(nSize));
     }
     return pRet;
 }
@@ -1040,10 +1041,9 @@ static size_t VSICheckMul2(size_t mul1, size_t mul2, bool *pbOverflowFlag,
             if (pbOverflowFlag)
                 *pbOverflowFlag = TRUE;
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB
-                     " * " CPL_FRMT_GUIB,
+                     "%s: %d: Multiplication overflow : %" PRIu64 " * %" PRIu64,
                      pszFile ? pszFile : "(unknown file)", nLine,
-                     static_cast<GUIntBig>(mul1), static_cast<GUIntBig>(mul2));
+                     static_cast<uint64_t>(mul1), static_cast<uint64_t>(mul2));
         }
     }
     else
@@ -1081,12 +1081,12 @@ static size_t VSICheckMul3(size_t mul1, size_t mul2, size_t mul3,
                     if (pbOverflowFlag)
                         *pbOverflowFlag = true;
                     CPLError(CE_Failure, CPLE_OutOfMemory,
-                             "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB
-                             " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
+                             "%s: %d: Multiplication overflow : %" PRIu64
+                             " * %" PRIu64 " * %" PRIu64,
                              pszFile ? pszFile : "(unknown file)", nLine,
-                             static_cast<GUIntBig>(mul1),
-                             static_cast<GUIntBig>(mul2),
-                             static_cast<GUIntBig>(mul3));
+                             static_cast<uint64_t>(mul1),
+                             static_cast<uint64_t>(mul2),
+                             static_cast<uint64_t>(mul3));
                 }
             }
             else
@@ -1100,11 +1100,11 @@ static size_t VSICheckMul3(size_t mul1, size_t mul2, size_t mul3,
             if (pbOverflowFlag)
                 *pbOverflowFlag = true;
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "%s: %d: Multiplication overflow : " CPL_FRMT_GUIB
-                     " * " CPL_FRMT_GUIB " * " CPL_FRMT_GUIB,
+                     "%s: %d: Multiplication overflow : %" PRIu64 " * %" PRIu64
+                     " * %" PRIu64,
                      pszFile ? pszFile : "(unknown file)", nLine,
-                     static_cast<GUIntBig>(mul1), static_cast<GUIntBig>(mul2),
-                     static_cast<GUIntBig>(mul3));
+                     static_cast<uint64_t>(mul1), static_cast<uint64_t>(mul2),
+                     static_cast<uint64_t>(mul3));
         }
     }
     else
@@ -1150,9 +1150,9 @@ void *VSIMallocVerbose(size_t nSize, const char *pszFile, int nLine)
     if (pRet == nullptr && nSize != 0)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(nSize));
+                 static_cast<uint64_t>(nSize));
     }
     return pRet;
 }
@@ -1174,9 +1174,9 @@ void *VSIMalloc2Verbose(size_t nSize1, size_t nSize2, const char *pszFile,
     if (pRet == nullptr)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(nSize1) * static_cast<GUIntBig>(nSize2));
+                 static_cast<uint64_t>(nSize1) * static_cast<uint64_t>(nSize2));
     }
     return pRet;
 }
@@ -1198,10 +1198,10 @@ void *VSIMalloc3Verbose(size_t nSize1, size_t nSize2, size_t nSize3,
     if (pRet == nullptr)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(nSize1) * static_cast<GUIntBig>(nSize2) *
-                     static_cast<GUIntBig>(nSize3));
+                 static_cast<uint64_t>(nSize1) * static_cast<uint64_t>(nSize2) *
+                     static_cast<uint64_t>(nSize3));
     }
     return pRet;
 }
@@ -1216,10 +1216,9 @@ void *VSICallocVerbose(size_t nCount, size_t nSize, const char *pszFile,
     if (pRet == nullptr && nCount != 0 && nSize != 0)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB
-                 " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 "x %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(nCount), static_cast<GUIntBig>(nSize));
+                 static_cast<uint64_t>(nCount), static_cast<uint64_t>(nSize));
     }
     return pRet;
 }
@@ -1235,9 +1234,9 @@ void *VSIReallocVerbose(void *pOldPtr, size_t nNewSize, const char *pszFile,
     if (pRet == nullptr && nNewSize != 0)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(nNewSize));
+                 static_cast<uint64_t>(nNewSize));
     }
     return pRet;
 }
@@ -1252,9 +1251,9 @@ char *VSIStrdupVerbose(const char *pszStr, const char *pszFile, int nLine)
     if (pRet == nullptr)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
+                 "%s, %d: cannot allocate %" PRIu64 " bytes",
                  pszFile ? pszFile : "(unknown file)", nLine,
-                 static_cast<GUIntBig>(strlen(pszStr) + 1));
+                 static_cast<uint64_t>(strlen(pszStr) + 1));
     }
     return pRet;
 }
@@ -1375,13 +1374,13 @@ char *VSIStrerror(int nErrno)
  * @return the total physical RAM in bytes (or 0 in case of failure).
  * @since GDAL 2.0
  */
-GIntBig CPLGetPhysicalRAM(void)
+int64_t CPLGetPhysicalRAM(void)
 {
     const long nPhysPages = sysconf(_SC_PHYS_PAGES);
     const long nPageSize = sysconf(_SC_PAGESIZE);
     if (nPhysPages < 0 || nPageSize < 0)
         return 0;
-    GIntBig nVal = static_cast<GIntBig>(nPhysPages) * nPageSize;
+    int64_t nVal = static_cast<int64_t>(nPhysPages) * nPageSize;
 
 #ifdef __linux
     {
@@ -1403,12 +1402,12 @@ GIntBig CPLGetPhysicalRAM(void)
                     *pszEnd = 0;
                     if (CPLGetValueType(pszVal) == CPL_VALUE_INTEGER)
                     {
-                        const GUIntBig nLimit =
+                        const uint64_t nLimit =
                             CPLScanUIntBig(pszVal,
                                            static_cast<int>(strlen(pszVal))) *
                             1024;
-                        nVal = static_cast<GIntBig>(
-                            std::min(static_cast<GUIntBig>(nVal), nLimit));
+                        nVal = static_cast<int64_t>(
+                            std::min(static_cast<uint64_t>(nVal), nLimit));
                     }
                 }
                 break;
@@ -1472,9 +1471,9 @@ GIntBig CPLGetPhysicalRAM(void)
                         fread(szBuffer, 1, sizeof(szBuffer) - 1, f));
                     szBuffer[nRead] = 0;
                     fclose(f);
-                    const GUIntBig nLimit = CPLScanUIntBig(szBuffer, nRead);
-                    nVal = static_cast<GIntBig>(
-                        std::min(static_cast<GUIntBig>(nVal), nLimit));
+                    const uint64_t nLimit = CPLScanUIntBig(szBuffer, nRead);
+                    nVal = static_cast<int64_t>(
+                        std::min(static_cast<uint64_t>(nVal), nLimit));
                 }
                 char *pszLastSlash = strrchr(szGroupName, '/');
                 if (!pszLastSlash || pszLastSlash == szGroupName)
@@ -1506,9 +1505,9 @@ GIntBig CPLGetPhysicalRAM(void)
                     fclose(f);
                     if (CPLGetValueType(szBuffer) == CPL_VALUE_INTEGER)
                     {
-                        const GUIntBig nLimit = CPLScanUIntBig(szBuffer, nRead);
-                        nVal = static_cast<GIntBig>(
-                            std::min(static_cast<GUIntBig>(nVal), nLimit));
+                        const uint64_t nLimit = CPLScanUIntBig(szBuffer, nRead);
+                        nVal = static_cast<int64_t>(
+                            std::min(static_cast<uint64_t>(nVal), nLimit));
                     }
                 }
                 char *pszLastSlash = strrchr(szGroupName, '/');
@@ -1528,9 +1527,9 @@ GIntBig CPLGetPhysicalRAM(void)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-GIntBig CPLGetPhysicalRAM(void)
+int64_t CPLGetPhysicalRAM(void)
 {
-    GIntBig nPhysMem = 0;
+    int64_t nPhysMem = 0;
 
     int mib[2] = {CTL_HW, HW_MEMSIZE};
     size_t nLengthRes = sizeof(nPhysMem);
@@ -1547,18 +1546,18 @@ GIntBig CPLGetPhysicalRAM(void)
 #endif
 #include <windows.h>
 
-GIntBig CPLGetPhysicalRAM(void)
+int64_t CPLGetPhysicalRAM(void)
 {
     MEMORYSTATUSEX statex;
     statex.ullTotalPhys = 0;
     statex.dwLength = sizeof(statex);
     GlobalMemoryStatusEx(&statex);
-    return static_cast<GIntBig>(statex.ullTotalPhys);
+    return static_cast<int64_t>(statex.ullTotalPhys);
 }
 
 #else
 
-GIntBig CPLGetPhysicalRAM(void)
+int64_t CPLGetPhysicalRAM(void)
 {
     static bool bOnce = false;
     if (!bOnce)
@@ -1589,9 +1588,9 @@ GIntBig CPLGetPhysicalRAM(void)
  * in case of failure).
  * @since GDAL 2.0
  */
-GIntBig CPLGetUsablePhysicalRAM(void)
+int64_t CPLGetUsablePhysicalRAM(void)
 {
-    GIntBig nRAM = CPLGetPhysicalRAM();
+    int64_t nRAM = CPLGetPhysicalRAM();
 #if SIZEOF_VOIDP == 4
     if (nRAM > INT_MAX)
         nRAM = INT_MAX;
@@ -1605,18 +1604,18 @@ GIntBig CPLGetUsablePhysicalRAM(void)
     const int res = RLIMIT_DATA;
 #endif
     if (getrlimit(res, &sLimit) == 0 && sLimit.rlim_cur != RLIM_INFINITY &&
-        static_cast<GIntBig>(sLimit.rlim_cur) < nRAM)
+        static_cast<int64_t>(sLimit.rlim_cur) < nRAM)
     {
-        nRAM = static_cast<GIntBig>(sLimit.rlim_cur);
+        nRAM = static_cast<int64_t>(sLimit.rlim_cur);
     }
 #ifdef RLIMIT_RSS
     // Helps with RSS limit set by the srun utility. Cf
     // https://github.com/OSGeo/gdal/issues/6669
     if (getrlimit(RLIMIT_RSS, &sLimit) == 0 &&
         sLimit.rlim_cur != RLIM_INFINITY &&
-        static_cast<GIntBig>(sLimit.rlim_cur) < nRAM)
+        static_cast<int64_t>(sLimit.rlim_cur) < nRAM)
     {
-        nRAM = static_cast<GIntBig>(sLimit.rlim_cur);
+        nRAM = static_cast<int64_t>(sLimit.rlim_cur);
     }
 #endif
 #endif

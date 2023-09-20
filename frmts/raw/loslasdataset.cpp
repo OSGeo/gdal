@@ -249,8 +249,8 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     auto poBand = RawRasterBand::Create(
         poDS.get(), 1, poDS->fpImage,
-        static_cast<vsi_l_offset>(poDS->nRasterYSize) * poDS->nRecordLength + 4,
-        4, -1 * poDS->nRecordLength, GDT_Float32,
+        static_cast<uint64_t>(poDS->nRasterYSize) * poDS->nRecordLength + 4, 4,
+        -1 * poDS->nRecordLength, GDT_Float32,
         RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
         RawRasterBand::OwnFP::NO);
     if (!poBand)

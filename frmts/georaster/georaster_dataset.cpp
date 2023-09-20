@@ -615,8 +615,8 @@ boolean GeoRasterDataset::JP2_CopyDirect(const char *pszJP2Filename,
 
     (void)oBox.ReadFirst();
 
-    GUInt32 nLBox;
-    GUInt32 nTBox;
+    uint32_t nLBox;
+    uint32_t nTBox;
 
     int nBoxCount = 0;
 
@@ -739,7 +739,7 @@ boolean GeoRasterDataset::JPEG_CopyDirect(const char *pszJPGFilename,
 
         VSIFSeekL(fpInput, 0L, SEEK_SET);
 
-        GUIntBig nCurOff = 0;
+        uint64_t nCurOff = 0;
 
         while (nCount < nDataLength)
         {
@@ -1720,8 +1720,8 @@ CPLErr GeoRasterDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
                                    GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
+                                   int *panBandMap, int64_t nPixelSpace,
+                                   int64_t nLineSpace, int64_t nBandSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {

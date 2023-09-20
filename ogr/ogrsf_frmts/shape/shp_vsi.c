@@ -173,7 +173,7 @@ static SAOffset VSI_SHP_Seek(SAFile file, SAOffset offset, int whence)
 
 {
     OGRSHPDBFFile *pFile = (OGRSHPDBFFile *)file;
-    SAOffset ret = (SAOffset)VSIFSeekL(pFile->fp, (vsi_l_offset)offset, whence);
+    SAOffset ret = (SAOffset)VSIFSeekL(pFile->fp, (uint64_t)offset, whence);
     if (whence == 0 && ret == 0)
         pFile->nCurOffset = offset;
     else

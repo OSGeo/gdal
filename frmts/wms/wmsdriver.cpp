@@ -489,8 +489,8 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode *psXML)
 
     while (nLevelCount > 0)
     {
-        GIntBig nXSizeBig = (GIntBig)((dfMaxX - dfMinX) / dfPixelSize + 0.5);
-        GIntBig nYSizeBig = (GIntBig)((dfMaxY - dfMinY) / dfPixelSize + 0.5);
+        int64_t nXSizeBig = (int64_t)((dfMaxX - dfMinX) / dfPixelSize + 0.5);
+        int64_t nYSizeBig = (int64_t)((dfMaxY - dfMinY) / dfPixelSize + 0.5);
         if (nXSizeBig < INT_MAX && nYSizeBig < INT_MAX)
         {
             nXSize = (int)nXSizeBig;

@@ -124,10 +124,11 @@ static void GDALGridGetPointBounds(const void *hFeature, CPLRectObj *pBounds)
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridInverseDistanceToAPower(const void *poOptionsIn, GUInt32 nPoints,
-                                       const double *padfX, const double *padfY,
-                                       const double *padfZ, double dfXPoint,
-                                       double dfYPoint, double *pdfValue,
+CPLErr GDALGridInverseDistanceToAPower(const void *poOptionsIn,
+                                       uint32_t nPoints, const double *padfX,
+                                       const double *padfY, const double *padfZ,
+                                       double dfXPoint, double dfYPoint,
+                                       double *pdfValue,
                                        CPL_UNUSED void *hExtraParamsIn)
 {
     // TODO: For optimization purposes pre-computed parameters should be moved
@@ -150,12 +151,12 @@ CPLErr GDALGridInverseDistanceToAPower(const void *poOptionsIn, GUInt32 nPoints,
 
     const double dfPowerDiv2 = poOptions->dfPower / 2;
     const double dfSmoothing = poOptions->dfSmoothing;
-    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMaxPoints = poOptions->nMaxPoints;
     double dfNominator = 0.0;
     double dfDenominator = 0.0;
-    GUInt32 n = 0;
+    uint32_t n = 0;
 
-    for (GUInt32 i = 0; i < nPoints; i++)
+    for (uint32_t i = 0; i < nPoints; i++)
     {
         double dfRX = padfX[i] - dfXPoint;
         double dfRY = padfY[i] - dfYPoint;
@@ -257,7 +258,7 @@ CPLErr GDALGridInverseDistanceToAPower(const void *poOptionsIn, GUInt32 nPoints,
  */
 
 CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(
-    const void *poOptionsIn, GUInt32 nPoints, const double *padfX,
+    const void *poOptionsIn, uint32_t nPoints, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -271,7 +272,7 @@ CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(
     const double dfSmoothing = poOptions->dfSmoothing;
     const double dfSmoothing2 = dfSmoothing * dfSmoothing;
 
-    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMaxPoints = poOptions->nMaxPoints;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -321,7 +322,7 @@ CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(
 
     double dfNominator = 0.0;
     double dfDenominator = 0.0;
-    GUInt32 n = 0;
+    uint32_t n = 0;
 
     // Examine all "neighbors" within the radius (sorted by distance via the
     // multimap), and use the closest n points based on distance until the max
@@ -366,7 +367,7 @@ CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(
  * search logic.
  */
 static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
-    const void *poOptionsIn, GUInt32 /*nPoints*/, const double *padfX,
+    const void *poOptionsIn, uint32_t /*nPoints*/, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -378,9 +379,9 @@ static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
     const double dfSmoothing = poOptions->dfSmoothing;
     const double dfSmoothing2 = dfSmoothing * dfSmoothing;
 
-    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
-    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+    const uint32_t nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const uint32_t nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -444,10 +445,10 @@ static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
     // point in quadrant 1, 2 and 3, and starting againg with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
-    GUInt32 anPerQuadrant[4] = {0};
+    uint32_t anPerQuadrant[4] = {0};
     double dfNominator = 0.0;
     double dfDenominator = 0.0;
-    GUInt32 n = 0;
+    uint32_t n = 0;
     for (int iQuadrant = 0; /* true */; iQuadrant = (iQuadrant + 1) % 4)
     {
         if (aoIter[iQuadrant] ==
@@ -513,7 +514,7 @@ static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
  */
 
 CPLErr GDALGridInverseDistanceToAPowerNoSearch(
-    const void *poOptionsIn, GUInt32 nPoints, const double *padfX,
+    const void *poOptionsIn, uint32_t nPoints, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void * /* hExtraParamsIn */)
 {
@@ -527,7 +528,7 @@ CPLErr GDALGridInverseDistanceToAPowerNoSearch(
     double dfDenominator = 0.0;
     const bool bPower2 = dfPowerDiv2 == 1.0;
 
-    GUInt32 i = 0;  // Used after if.
+    uint32_t i = 0;  // Used after if.
     if (bPower2)
     {
         if (dfSmoothing2 > 0)
@@ -644,7 +645,7 @@ CPLErr GDALGridInverseDistanceToAPowerNoSearch(
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridMovingAverage(const void *poOptionsIn, uint32_t nPoints,
                              const double *padfX, const double *padfY,
                              const double *padfZ, double dfXPoint,
                              double dfYPoint, double *pdfValue,
@@ -675,7 +676,7 @@ CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
 
     double dfAccumulator = 0.0;
 
-    GUInt32 n = 0;  // Used after for.
+    uint32_t n = 0;  // Used after for.
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -707,7 +708,7 @@ CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
-        for (GUInt32 i = 0; i < nPoints; i++)
+        for (uint32_t i = 0; i < nPoints; i++)
         {
             double dfRX = padfX[i] - dfXPoint;
             double dfRY = padfY[i] - dfYPoint;
@@ -751,7 +752,7 @@ CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
  * Moving average, with a per-quadrant search logic.
  */
 static CPLErr GDALGridMovingAveragePerQuadrant(
-    const void *poOptionsIn, GUInt32 /*nPoints*/, const double *padfX,
+    const void *poOptionsIn, uint32_t /*nPoints*/, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -761,9 +762,9 @@ static CPLErr GDALGridMovingAveragePerQuadrant(
     const double dfRadius2Square = poOptions->dfRadius2 * poOptions->dfRadius2;
     const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
-    const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
-    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+    const uint32_t nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const uint32_t nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -819,9 +820,9 @@ static CPLErr GDALGridMovingAveragePerQuadrant(
     // point in quadrant 1, 2 and 3, and starting againg with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
-    GUInt32 anPerQuadrant[4] = {0};
+    uint32_t anPerQuadrant[4] = {0};
     double dfNominator = 0.0;
-    GUInt32 n = 0;
+    uint32_t n = 0;
     for (int iQuadrant = 0; /* true */; iQuadrant = (iQuadrant + 1) % 4)
     {
         if (aoIter[iQuadrant] ==
@@ -894,7 +895,7 @@ static CPLErr GDALGridMovingAveragePerQuadrant(
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridNearestNeighbor(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridNearestNeighbor(const void *poOptionsIn, uint32_t nPoints,
                                const double *padfX, const double *padfY,
                                const double *padfZ, double dfXPoint,
                                double dfYPoint, double *pdfValue,
@@ -921,7 +922,7 @@ CPLErr GDALGridNearestNeighbor(const void *poOptionsIn, GUInt32 nPoints,
 
     // If the nearest point will not be found, its value remains as NODATA.
     double dfNearestValue = poOptions->dfNoDataValue;
-    GUInt32 i = 0;
+    uint32_t i = 0;
 
     double dfSearchRadius = psExtraParams->dfInitialSearchRadius;
     if (hQuadTree != nullptr)
@@ -1048,7 +1049,7 @@ CPLErr GDALGridNearestNeighbor(const void *poOptionsIn, GUInt32 nPoints,
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridDataMetricMinimum(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridDataMetricMinimum(const void *poOptionsIn, uint32_t nPoints,
                                  const double *padfX, const double *padfY,
                                  const double *padfZ, double dfXPoint,
                                  double dfYPoint, double *pdfValue,
@@ -1078,7 +1079,7 @@ CPLErr GDALGridDataMetricMinimum(const void *poOptionsIn, GUInt32 nPoints,
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
     double dfMinimumValue = std::numeric_limits<double>::max();
-    GUInt32 n = 0;
+    uint32_t n = 0;
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -1111,7 +1112,7 @@ CPLErr GDALGridDataMetricMinimum(const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
-        GUInt32 i = 0;
+        uint32_t i = 0;
         while (i < nPoints)
         {
             double dfRX = padfX[i] - dfXPoint;
@@ -1175,9 +1176,9 @@ static CPLErr GDALGridDataMetricMinimumOrMaximumPerQuadrant(
         std::max(poOptions->dfRadius1, poOptions->dfRadius2);
     const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
-    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
-    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+    // const uint32_t nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const uint32_t nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -1231,10 +1232,10 @@ static CPLErr GDALGridDataMetricMinimumOrMaximumPerQuadrant(
     // point in quadrant 1, 2 and 3, and starting againg with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
-    GUInt32 anPerQuadrant[4] = {0};
+    uint32_t anPerQuadrant[4] = {0};
     double dfExtremum = IS_MIN ? std::numeric_limits<double>::max()
                                : -std::numeric_limits<double>::max();
-    GUInt32 n = 0;
+    uint32_t n = 0;
     for (int iQuadrant = 0; /* true */; iQuadrant = (iQuadrant + 1) % 4)
     {
         if (aoIter[iQuadrant] ==
@@ -1297,7 +1298,7 @@ static CPLErr GDALGridDataMetricMinimumOrMaximumPerQuadrant(
  * Minimum data value (data metric), with a per-quadrant search logic.
  */
 static CPLErr GDALGridDataMetricMinimumPerQuadrant(
-    const void *poOptionsIn, GUInt32 /* nPoints */, const double *padfX,
+    const void *poOptionsIn, uint32_t /* nPoints */, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -1342,7 +1343,7 @@ static CPLErr GDALGridDataMetricMinimumPerQuadrant(
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, uint32_t nPoints,
                                  const double *padfX, const double *padfY,
                                  const double *padfZ, double dfXPoint,
                                  double dfYPoint, double *pdfValue,
@@ -1372,7 +1373,7 @@ CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
     double dfMaximumValue = -std::numeric_limits<double>::max();
-    GUInt32 n = 0;
+    uint32_t n = 0;
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -1405,7 +1406,7 @@ CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
-        GUInt32 i = 0;
+        uint32_t i = 0;
         while (i < nPoints)
         {
             double dfRX = padfX[i] - dfXPoint;
@@ -1453,7 +1454,7 @@ CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
  * Maximum data value (data metric), with a per-quadrant search logic.
  */
 static CPLErr GDALGridDataMetricMaximumPerQuadrant(
-    const void *poOptionsIn, GUInt32 /* nPoints */, const double *padfX,
+    const void *poOptionsIn, uint32_t /* nPoints */, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -1499,7 +1500,7 @@ static CPLErr GDALGridDataMetricMaximumPerQuadrant(
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridDataMetricRange(const void *poOptionsIn, uint32_t nPoints,
                                const double *padfX, const double *padfY,
                                const double *padfZ, double dfXPoint,
                                double dfYPoint, double *pdfValue,
@@ -1529,7 +1530,7 @@ CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
 
     double dfMaximumValue = -std::numeric_limits<double>::max();
     double dfMinimumValue = std::numeric_limits<double>::max();
-    GUInt32 n = 0;
+    uint32_t n = 0;
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -1564,7 +1565,7 @@ CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
-        GUInt32 i = 0;
+        uint32_t i = 0;
         while (i < nPoints)
         {
             double dfRX = padfX[i] - dfXPoint;
@@ -1614,7 +1615,7 @@ CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
  * Data range (data metric), with a per-quadrant search logic.
  */
 static CPLErr GDALGridDataMetricRangePerQuadrant(
-    const void *poOptionsIn, GUInt32 /* nPoints */, const double *padfX,
+    const void *poOptionsIn, uint32_t /* nPoints */, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -1628,9 +1629,9 @@ static CPLErr GDALGridDataMetricRangePerQuadrant(
         std::max(poOptions->dfRadius1, poOptions->dfRadius2);
     const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
-    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
-    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+    // const uint32_t nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const uint32_t nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -1684,10 +1685,10 @@ static CPLErr GDALGridDataMetricRangePerQuadrant(
     // point in quadrant 1, 2 and 3, and starting againg with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
-    GUInt32 anPerQuadrant[4] = {0};
+    uint32_t anPerQuadrant[4] = {0};
     double dfMaximumValue = -std::numeric_limits<double>::max();
     double dfMinimumValue = std::numeric_limits<double>::max();
-    GUInt32 n = 0;
+    uint32_t n = 0;
     for (int iQuadrant = 0; /* true */; iQuadrant = (iQuadrant + 1) % 4)
     {
         if (aoIter[iQuadrant] ==
@@ -1770,7 +1771,7 @@ static CPLErr GDALGridDataMetricRangePerQuadrant(
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridDataMetricCount(const void *poOptionsIn, uint32_t nPoints,
                                const double *padfX, const double *padfY,
                                CPL_UNUSED const double *padfZ, double dfXPoint,
                                double dfYPoint, double *pdfValue,
@@ -1799,7 +1800,7 @@ CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
     const double dfCoeff1 = bRotated ? cos(dfAngle) : 0.0;
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
-    GUInt32 n = 0;
+    uint32_t n = 0;
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -1830,7 +1831,7 @@ CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
     }
     else
     {
-        GUInt32 i = 0;
+        uint32_t i = 0;
         while (i < nPoints)
         {
             double dfRX = padfX[i] - dfXPoint;
@@ -1876,7 +1877,7 @@ CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
  * Number of data points (data metric), with a per-quadrant search logic.
  */
 static CPLErr GDALGridDataMetricCountPerQuadrant(
-    const void *poOptionsIn, GUInt32 /* nPoints */, const double *padfX,
+    const void *poOptionsIn, uint32_t /* nPoints */, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -1890,9 +1891,9 @@ static CPLErr GDALGridDataMetricCountPerQuadrant(
         std::max(poOptions->dfRadius1, poOptions->dfRadius2);
     const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
-    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
-    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+    // const uint32_t nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const uint32_t nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -1946,8 +1947,8 @@ static CPLErr GDALGridDataMetricCountPerQuadrant(
     // point in quadrant 1, 2 and 3, and starting againg with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
-    GUInt32 anPerQuadrant[4] = {0};
-    GUInt32 n = 0;
+    uint32_t anPerQuadrant[4] = {0};
+    uint32_t n = 0;
     for (int iQuadrant = 0; /* true */; iQuadrant = (iQuadrant + 1) % 4)
     {
         if (aoIter[iQuadrant] ==
@@ -2030,7 +2031,7 @@ static CPLErr GDALGridDataMetricCountPerQuadrant(
  */
 
 CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
-                                         GUInt32 nPoints, const double *padfX,
+                                         uint32_t nPoints, const double *padfX,
                                          const double *padfY,
                                          CPL_UNUSED const double *padfZ,
                                          double dfXPoint, double dfYPoint,
@@ -2060,7 +2061,7 @@ CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
     double dfAccumulator = 0.0;
-    GUInt32 n = 0;
+    uint32_t n = 0;
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -2092,7 +2093,7 @@ CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
     }
     else
     {
-        GUInt32 i = 0;
+        uint32_t i = 0;
 
         while (i < nPoints)
         {
@@ -2140,7 +2141,7 @@ CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
  * Average distance (data metric), with a per-quadrant search logic.
  */
 static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
-    const void *poOptionsIn, GUInt32 /* nPoints */, const double *padfX,
+    const void *poOptionsIn, uint32_t /* nPoints */, const double *padfX,
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
@@ -2154,9 +2155,9 @@ static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
         std::max(poOptions->dfRadius1, poOptions->dfRadius2);
     const double dfR12Square = dfRadius1Square * dfRadius2Square;
 
-    // const GUInt32 nMaxPoints = poOptions->nMaxPoints;
-    const GUInt32 nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
-    const GUInt32 nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
+    // const uint32_t nMaxPoints = poOptions->nMaxPoints;
+    const uint32_t nMinPointsPerQuadrant = poOptions->nMinPointsPerQuadrant;
+    const uint32_t nMaxPointsPerQuadrant = poOptions->nMaxPointsPerQuadrant;
 
     GDALGridExtraParameters *psExtraParams =
         static_cast<GDALGridExtraParameters *>(hExtraParamsIn);
@@ -2210,8 +2211,8 @@ static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
     // point in quadrant 1, 2 and 3, and starting againg with the next nearest
     // point in quarant 0, etc.
     int nQuadrantIterFinishedFlag = 0;
-    GUInt32 anPerQuadrant[4] = {0};
-    GUInt32 n = 0;
+    uint32_t anPerQuadrant[4] = {0};
+    uint32_t n = 0;
     double dfAccumulator = 0;
     for (int iQuadrant = 0; /* true */; iQuadrant = (iQuadrant + 1) % 4)
     {
@@ -2299,7 +2300,7 @@ static CPLErr GDALGridDataMetricAverageDistancePerQuadrant(
  */
 
 CPLErr GDALGridDataMetricAverageDistancePts(
-    const void *poOptionsIn, GUInt32 nPoints, const double *padfX,
+    const void *poOptionsIn, uint32_t nPoints, const double *padfX,
     const double *padfY, CPL_UNUSED const double *padfZ, double dfXPoint,
     double dfYPoint, double *pdfValue, void *hExtraParamsIn)
 {
@@ -2326,7 +2327,7 @@ CPLErr GDALGridDataMetricAverageDistancePts(
     const double dfCoeff2 = bRotated ? sin(dfAngle) : 0.0;
 
     double dfAccumulator = 0.0;
-    GUInt32 n = 0;
+    uint32_t n = 0;
     if (phQuadTree != nullptr)
     {
         CPLRectObj sAoi;
@@ -2375,7 +2376,7 @@ CPLErr GDALGridDataMetricAverageDistancePts(
     }
     else
     {
-        GUInt32 i = 0;
+        uint32_t i = 0;
         while (i < nPoints - 1)
         {
             double dfRX1 = padfX[i] - dfXPoint;
@@ -2397,7 +2398,7 @@ CPLErr GDALGridDataMetricAverageDistancePts(
             {
                 // Search all the remaining points within the ellipse and
                 // compute distances between them and the first point.
-                for (GUInt32 j = i + 1; j < nPoints; j++)
+                for (uint32_t j = i + 1; j < nPoints; j++)
                 {
                     double dfRX2 = padfX[j] - dfXPoint;
                     double dfRY2 = padfY[j] - dfYPoint;
@@ -2474,7 +2475,7 @@ CPLErr GDALGridDataMetricAverageDistancePts(
  * @since GDAL 2.1
  */
 
-CPLErr GDALGridLinear(const void *poOptionsIn, GUInt32 nPoints,
+CPLErr GDALGridLinear(const void *poOptionsIn, uint32_t nPoints,
                       const double *padfX, const double *padfY,
                       const double *padfZ, double dfXPoint, double dfYPoint,
                       double *pdfValue, void *hExtraParams)
@@ -2551,17 +2552,17 @@ typedef struct _GDALGridJob GDALGridJob;
 
 struct _GDALGridJob
 {
-    GUInt32 nYStart;
+    uint32_t nYStart;
 
     GByte *pabyData;
-    GUInt32 nYStep;
-    GUInt32 nXSize;
-    GUInt32 nYSize;
+    uint32_t nYStep;
+    uint32_t nXSize;
+    uint32_t nYSize;
     double dfXMin;
     double dfYMin;
     double dfDeltaX;
     double dfDeltaY;
-    GUInt32 nPoints;
+    uint32_t nPoints;
     const double *padfX;
     const double *padfY;
     const double *padfZ;
@@ -2622,7 +2623,7 @@ static void GDALGridJobProcess(void *user_data)
 {
     GDALGridJob *const psJob = static_cast<GDALGridJob *>(user_data);
     int (*pfnProgress)(GDALGridJob * psJob) = psJob->pfnProgress;
-    const GUInt32 nXSize = psJob->nXSize;
+    const uint32_t nXSize = psJob->nXSize;
 
     /* -------------------------------------------------------------------- */
     /*  Allocate a buffer of scanline size, fill it with gridded values     */
@@ -2639,16 +2640,16 @@ static void GDALGridJobProcess(void *user_data)
         return;
     }
 
-    const GUInt32 nYStart = psJob->nYStart;
-    const GUInt32 nYStep = psJob->nYStep;
+    const uint32_t nYStart = psJob->nYStart;
+    const uint32_t nYStep = psJob->nYStep;
     GByte *pabyData = psJob->pabyData;
 
-    const GUInt32 nYSize = psJob->nYSize;
+    const uint32_t nYSize = psJob->nYSize;
     const double dfXMin = psJob->dfXMin;
     const double dfYMin = psJob->dfYMin;
     const double dfDeltaX = psJob->dfDeltaX;
     const double dfDeltaY = psJob->dfDeltaY;
-    const GUInt32 nPoints = psJob->nPoints;
+    const uint32_t nPoints = psJob->nPoints;
     const double *padfX = psJob->padfX;
     const double *padfY = psJob->padfY;
     const double *padfZ = psJob->padfZ;
@@ -2662,11 +2663,11 @@ static void GDALGridJobProcess(void *user_data)
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eType);
     const int nLineSpace = nXSize * nDataTypeSize;
 
-    for (GUInt32 nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep)
+    for (uint32_t nYPoint = nYStart; nYPoint < nYSize; nYPoint += nYStep)
     {
         const double dfYPoint = dfYMin + (nYPoint + 0.5) * dfDeltaY;
 
-        for (GUInt32 nXPoint = 0; nXPoint < nXSize; nXPoint++)
+        for (uint32_t nXPoint = 0; nXPoint < nXSize; nXPoint++)
         {
             const double dfXPoint = dfXMin + (nXPoint + 0.5) * dfDeltaX;
 
@@ -2706,7 +2707,7 @@ struct GDALGridContext
     void *poOptions;
     GDALGridFunction pfnGDALGridMethod;
 
-    GUInt32 nPoints;
+    uint32_t nPoints;
     GDALGridPoint *pasGridPoints;
     GDALGridXYArrays sXYArrays;
 
@@ -2763,7 +2764,7 @@ static void GDALGridContextCreateQuadTree(GDALGridContext *psContext);
  */
 
 GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
-                                       const void *poOptions, GUInt32 nPoints,
+                                       const void *poOptions, uint32_t nPoints,
                                        const double *padfX, const double *padfY,
                                        const double *padfZ,
                                        int bCallerWillKeepPointArraysAlive)
@@ -2837,7 +2838,7 @@ GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
                                      "Using AVX optimized version");
                             pfnGDALGridMethod =
                                 GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX;
-                            for (GUInt32 i = 0; i < nPoints; i++)
+                            for (uint32_t i = 0; i < nPoints; i++)
                             {
                                 pafXAligned[i] = static_cast<float>(padfX[i]);
                                 pafYAligned[i] = static_cast<float>(padfY[i]);
@@ -2879,7 +2880,7 @@ GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
                                      "Using SSE optimized version");
                             pfnGDALGridMethod =
                                 GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE;
-                            for (GUInt32 i = 0; i < nPoints; i++)
+                            for (uint32_t i = 0; i < nPoints; i++)
                             {
                                 pafXAligned[i] = static_cast<float>(padfX[i]);
                                 pafYAligned[i] = static_cast<float>(padfY[i]);
@@ -3310,7 +3311,7 @@ GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
 
 void GDALGridContextCreateQuadTree(GDALGridContext *psContext)
 {
-    const GUInt32 nPoints = psContext->nPoints;
+    const uint32_t nPoints = psContext->nPoints;
     psContext->pasGridPoints = static_cast<GDALGridPoint *>(
         VSI_MALLOC2_VERBOSE(nPoints, sizeof(GDALGridPoint)));
     if (psContext->pasGridPoints != nullptr)
@@ -3324,7 +3325,7 @@ void GDALGridContextCreateQuadTree(GDALGridContext *psContext)
         sRect.miny = padfY[0];
         sRect.maxx = padfX[0];
         sRect.maxy = padfY[0];
-        for (GUInt32 i = 1; i < nPoints; i++)
+        for (uint32_t i = 1; i < nPoints; i++)
         {
             if (padfX[i] < sRect.minx)
                 sRect.minx = padfX[i];
@@ -3344,7 +3345,7 @@ void GDALGridContextCreateQuadTree(GDALGridContext *psContext)
         psContext->sExtraParameters.hQuadTree =
             CPLQuadTreeCreate(&sRect, GDALGridGetPointBounds);
 
-        for (GUInt32 i = 0; i < nPoints; i++)
+        for (uint32_t i = 0; i < nPoints; i++)
         {
             psContext->pasGridPoints[i].psXYArrays = &(psContext->sXYArrays);
             psContext->pasGridPoints[i].i = i;
@@ -3421,7 +3422,7 @@ void GDALGridContextFree(GDALGridContext *psContext)
 
 CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
                               double dfXMax, double dfYMin, double dfYMax,
-                              GUInt32 nXSize, GUInt32 nYSize,
+                              uint32_t nXSize, uint32_t nYSize,
                               GDALDataType eType, void *pData,
                               GDALProgressFunc pfnProgress, void *pProgressArg)
 {
@@ -3449,7 +3450,7 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
         int nStartRight = 0;
         const double dfXPointMin = dfXMin + (0 + 0.5) * dfDeltaX;
         const double dfXPointMax = dfXMin + (nXSize - 1 + 0.5) * dfDeltaX;
-        for (GUInt32 nYPoint = 0; !bNeedNearest && nYPoint < nYSize; nYPoint++)
+        for (uint32_t nYPoint = 0; !bNeedNearest && nYPoint < nYSize; nYPoint++)
         {
             const double dfYPoint = dfYMin + (nYPoint + 0.5) * dfDeltaY;
 
@@ -3470,7 +3471,7 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
         int nStartBottom = 0;
         const double dfYPointMin = dfYMin + (0 + 0.5) * dfDeltaY;
         const double dfYPointMax = dfYMin + (nYSize - 1 + 0.5) * dfDeltaY;
-        for (GUInt32 nXPoint = 1; !bNeedNearest && nXPoint + 1 < nXSize;
+        for (uint32_t nXPoint = 1; !bNeedNearest && nXPoint + 1 < nXSize;
              nXPoint++)
         {
             const double dfXPoint = dfXMin + (nXPoint + 0.5) * dfDeltaX;
@@ -3655,11 +3656,12 @@ CPLErr GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
  */
 
 CPLErr GDALGridCreate(GDALGridAlgorithm eAlgorithm, const void *poOptions,
-                      GUInt32 nPoints, const double *padfX, const double *padfY,
-                      const double *padfZ, double dfXMin, double dfXMax,
-                      double dfYMin, double dfYMax, GUInt32 nXSize,
-                      GUInt32 nYSize, GDALDataType eType, void *pData,
-                      GDALProgressFunc pfnProgress, void *pProgressArg)
+                      uint32_t nPoints, const double *padfX,
+                      const double *padfY, const double *padfZ, double dfXMin,
+                      double dfXMax, double dfYMin, double dfYMax,
+                      uint32_t nXSize, uint32_t nYSize, GDALDataType eType,
+                      void *pData, GDALProgressFunc pfnProgress,
+                      void *pProgressArg)
 {
     GDALGridContext *psContext = GDALGridContextCreate(
         eAlgorithm, poOptions, nPoints, padfX, padfY, padfZ, TRUE);
@@ -3851,11 +3853,11 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue(papszParams, "max_points");
             poPowerOpts->nMaxPoints =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue(papszParams, "min_points");
             poPowerOpts->nMinPoints =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue(papszParams, "nodata");
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
@@ -3897,11 +3899,11 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue(papszParams, "max_points");
             poPowerOpts->nMaxPoints =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 12);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 12);
 
             pszValue = CSLFetchNameValue(papszParams, "min_points");
             poPowerOpts->nMinPoints =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue(papszParams, "nodata");
             poPowerOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
@@ -3909,12 +3911,12 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
             pszValue =
                 CSLFetchNameValue(papszParams, "min_points_per_quadrant");
             poPowerOpts->nMinPointsPerQuadrant =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue =
                 CSLFetchNameValue(papszParams, "max_points_per_quadrant");
             poPowerOpts->nMaxPointsPerQuadrant =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             static const char *const apszKnownOptions[] = {
                 "power",
@@ -3959,11 +3961,11 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
 
             pszValue = CSLFetchNameValue(papszParams, "min_points");
             poAverageOpts->nMinPoints =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue(papszParams, "max_points");
             poAverageOpts->nMaxPoints =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue = CSLFetchNameValue(papszParams, "nodata");
             poAverageOpts->dfNoDataValue = pszValue ? CPLAtofM(pszValue) : 0.0;
@@ -3971,12 +3973,12 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
             pszValue =
                 CSLFetchNameValue(papszParams, "min_points_per_quadrant");
             poAverageOpts->nMinPointsPerQuadrant =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue =
                 CSLFetchNameValue(papszParams, "max_points_per_quadrant");
             poAverageOpts->nMaxPointsPerQuadrant =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             if (poAverageOpts->nMinPointsPerQuadrant != 0 ||
                 poAverageOpts->nMaxPointsPerQuadrant != 0)
@@ -4102,12 +4104,12 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
             pszValue =
                 CSLFetchNameValue(papszParams, "min_points_per_quadrant");
             poMetricsOptions->nMinPointsPerQuadrant =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             pszValue =
                 CSLFetchNameValue(papszParams, "max_points_per_quadrant");
             poMetricsOptions->nMaxPointsPerQuadrant =
-                static_cast<GUInt32>(pszValue ? CPLAtofM(pszValue) : 0);
+                static_cast<uint32_t>(pszValue ? CPLAtofM(pszValue) : 0);
 
             if (poMetricsOptions->nMinPointsPerQuadrant != 0 ||
                 poMetricsOptions->nMaxPointsPerQuadrant != 0)

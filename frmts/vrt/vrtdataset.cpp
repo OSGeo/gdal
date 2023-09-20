@@ -1506,7 +1506,7 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
          */
         const char *pszImageOffset =
             CSLFetchNameValueDef(papszOptions, "ImageOffset", "0");
-        vsi_l_offset nImageOffset = CPLScanUIntBig(
+        uint64_t nImageOffset = CPLScanUIntBig(
             pszImageOffset, static_cast<int>(strlen(pszImageOffset)));
 
         int nPixelOffset = nWordDataSize;
@@ -2089,8 +2089,8 @@ CPLErr VRTDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     bool bLocalCompatibleForDatasetIO =

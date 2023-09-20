@@ -321,16 +321,16 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     CPLErr SetScale(double) override;
 
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                        GUIntBig *panHistogram, int bIncludeOutOfRange,
+                        uint64_t *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc,
                         void *pProgressData) override;
 
     CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets,
-                               GUIntBig **ppanHistogram, int bForce,
+                               uint64_t **ppanHistogram, int bForce,
                                GDALProgressFunc, void *pProgressData) override;
 
     CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
-                               GUIntBig *panHistogram) override;
+                               uint64_t *panHistogram) override;
 
     CPLErr SetMetadata(char **papszMetadata,
                        const char *pszDomain = "") override;
@@ -385,11 +385,11 @@ class CPL_DLL GDALPamMultiDim
 
     CPLErr GetStatistics(const std::string &osArrayFullName, bool bApproxOK,
                          double *pdfMin, double *pdfMax, double *pdfMean,
-                         double *pdfStdDev, GUInt64 *pnValidCount);
+                         double *pdfStdDev, uint64_t *pnValidCount);
 
     void SetStatistics(const std::string &osArrayFullName, bool bApproxStats,
                        double dfMin, double dfMax, double dfMean,
-                       double dfStdDev, GUInt64 nValidCount);
+                       double dfStdDev, uint64_t nValidCount);
 
     void ClearStatistics();
 
@@ -410,7 +410,7 @@ class CPL_DLL GDALPamMDArray : public GDALMDArray
                    const std::shared_ptr<GDALPamMultiDim> &poPam);
 
     bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
-                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       double dfMean, double dfStdDev, uint64_t nValidCount,
                        CSLConstList papszOptions) override;
 
   public:
@@ -421,7 +421,7 @@ class CPL_DLL GDALPamMDArray : public GDALMDArray
 
     CPLErr GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
                          double *pdfMax, double *pdfMean, double *padfStdDev,
-                         GUInt64 *pnValidCount, GDALProgressFunc pfnProgress,
+                         uint64_t *pnValidCount, GDALProgressFunc pfnProgress,
                          void *pProgressData) override;
 
     void ClearStatistics() override;
@@ -434,7 +434,7 @@ class CPL_DLL GDALPamMDArray : public GDALMDArray
 // These are mainly helper functions for internal use.
 int CPL_DLL PamParseHistogram(CPLXMLNode *psHistItem, double *pdfMin,
                               double *pdfMax, int *pnBuckets,
-                              GUIntBig **ppanHistogram,
+                              uint64_t **ppanHistogram,
                               int *pbIncludeOutOfRange, int *pbApproxOK);
 CPLXMLNode CPL_DLL *PamFindMatchingHistogram(CPLXMLNode *psSavedHistograms,
                                              double dfMin, double dfMax,
@@ -442,7 +442,7 @@ CPLXMLNode CPL_DLL *PamFindMatchingHistogram(CPLXMLNode *psSavedHistograms,
                                              int bIncludeOutOfRange,
                                              int bApproxOK);
 CPLXMLNode CPL_DLL *PamHistogramToXMLTree(double dfMin, double dfMax,
-                                          int nBuckets, GUIntBig *panHistogram,
+                                          int nBuckets, uint64_t *panHistogram,
                                           int bIncludeOutOfRange, int bApprox);
 
 // For managing the proxy file database.

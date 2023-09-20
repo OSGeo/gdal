@@ -115,7 +115,7 @@ CPLErr NGSGEOIDRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
      * imagery */
     VSIFSeekL(poGDS->fp,
               HEADER_SIZE +
-                  static_cast<vsi_l_offset>(nRasterYSize - 1 - nBlockYOff) *
+                  static_cast<uint64_t>(nRasterYSize - 1 - nBlockYOff) *
                       nRasterXSize * 4,
               SEEK_SET);
 

@@ -1253,8 +1253,8 @@ int VRTSimpleSource::NeedMaxValAdjustment() const
 CPLErr VRTSimpleSource::RasterIO(GDALDataType eBandDataType, int nXOff,
                                  int nYOff, int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType, GSpacing nPixelSpace,
-                                 GSpacing nLineSpace,
+                                 GDALDataType eBufType, int64_t nPixelSpace,
+                                 int64_t nLineSpace,
                                  GDALRasterIOExtraArg *psExtraArgIn)
 
 {
@@ -1329,7 +1329,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eBandDataType, int nXOff,
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +
                      nOutXOff * nPixelSpace +
-                     static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
+                     static_cast<ptrdiff_t>(nOutYOff) * nLineSpace;
 
     auto l_band = GetRasterBand();
     if (!l_band)
@@ -1355,7 +1355,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eBandDataType, int nXOff,
                         pabyTemp +
                             static_cast<size_t>(iY) * nBandDTSize * nOutXSize,
                         eBandDataType, nBandDTSize,
-                        pabyOut + static_cast<GPtrDiff_t>(iY * nLineSpace),
+                        pabyOut + static_cast<ptrdiff_t>(iY * nLineSpace),
                         eBufType, static_cast<int>(nPixelSpace), nOutXSize);
                 }
             }
@@ -1480,7 +1480,7 @@ double VRTSimpleSource::GetMaximum(int nXSize, int nYSize, int *pbSuccess)
 
 CPLErr VRTSimpleSource::GetHistogram(int nXSize, int nYSize, double dfMin,
                                      double dfMax, int nBuckets,
-                                     GUIntBig *panHistogram,
+                                     uint64_t *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
@@ -1526,8 +1526,8 @@ CPLErr VRTSimpleSource::GetHistogram(int nXSize, int nYSize, double dfMin,
 CPLErr VRTSimpleSource::DatasetRasterIO(
     GDALDataType eBandDataType, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArgIn)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArgIn)
 {
     if (!EQUAL(GetType(), "SimpleSource"))
     {
@@ -1601,7 +1601,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +
                      nOutXOff * nPixelSpace +
-                     static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
+                     static_cast<ptrdiff_t>(nOutYOff) * nLineSpace;
 
     CPLErr eErr = CE_Failure;
 
@@ -1631,7 +1631,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                 static_cast<size_t>(iY) * nBandDTSize *
                                     nOutXSize,
                             eBandDataType, nBandDTSize,
-                            pabyOut + static_cast<GPtrDiff_t>(
+                            pabyOut + static_cast<ptrdiff_t>(
                                           iY * nLineSpace + iBand * nBandSpace),
                             eBufType, static_cast<int>(nPixelSpace), nOutXSize);
                     }
@@ -1742,8 +1742,8 @@ void VRTAveragedSource::SetNoDataValue(double dfNewNoDataValue)
 CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eBandDataType*/, int nXOff,
                                    int nYOff, int nXSize, int nYSize,
                                    void *pData, int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArgIn)
 
 {
@@ -1920,9 +1920,9 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eBandDataType*/, int nXOff,
             const float dfOutputValue = static_cast<float>(dfSum / nPixelCount);
 
             // Put it in the output buffer.
-            GByte *pDstLocation =
-                static_cast<GByte *>(pData) + nPixelSpace * iBufPixel +
-                static_cast<GPtrDiff_t>(nLineSpace) * iBufLine;
+            GByte *pDstLocation = static_cast<GByte *>(pData) +
+                                  nPixelSpace * iBufPixel +
+                                  static_cast<ptrdiff_t>(nLineSpace) * iBufLine;
 
             if (eBufType == GDT_Byte)
                 *pDstLocation = static_cast<GByte>(
@@ -1966,7 +1966,7 @@ double VRTAveragedSource::GetMaximum(int /* nXSize */, int /* nYSize */,
 
 CPLErr VRTAveragedSource::GetHistogram(
     int /* nXSize */, int /* nYSize */, double /* dfMin */, double /* dfMax */,
-    int /* nBuckets */, GUIntBig * /* panHistogram */,
+    int /* nBuckets */, uint64_t * /* panHistogram */,
     int /* bIncludeOutOfRange */, int /* bApproxOK */,
     GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
 {
@@ -2391,8 +2391,8 @@ void VRTComplexSource::SetColorTableComponent(int nComponent)
 CPLErr VRTComplexSource::RasterIO(GDALDataType eBandDataType, int nXOff,
                                   int nYOff, int nXSize, int nYSize,
                                   void *pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace,
+                                  GDALDataType eBufType, int64_t nPixelSpace,
+                                  int64_t nLineSpace,
                                   GDALRasterIOExtraArg *psExtraArgIn)
 
 {
@@ -2476,7 +2476,7 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         eErr = RasterIOInternal<double>(
             eBandDataType, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
             static_cast<GByte *>(pData) + nPixelSpace * nOutXOff +
-                static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                static_cast<ptrdiff_t>(nLineSpace) * nOutYOff,
             nOutXSize, nOutYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
             bIsComplex ? GDT_CFloat64 : GDT_Float64);
     }
@@ -2485,7 +2485,7 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         eErr = RasterIOInternal<float>(
             eBandDataType, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
             static_cast<GByte *>(pData) + nPixelSpace * nOutXOff +
-                static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                static_cast<ptrdiff_t>(nLineSpace) * nOutYOff,
             nOutXSize, nOutYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
             bIsComplex ? GDT_CFloat32 : GDT_Float32);
     }
@@ -2503,7 +2503,7 @@ template <class WorkingDT>
 CPLErr VRTComplexSource::RasterIOInternal(
     GDALDataType eBandDataType, int nReqXOff, int nReqYOff, int nReqXSize,
     int nReqYSize, void *pData, int nOutXSize, int nOutYSize,
-    GDALDataType eBufType, GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALDataType eBufType, int64_t nPixelSpace, int64_t nLineSpace,
     GDALRasterIOExtraArg *psExtraArg, GDALDataType eWrkDataType)
 {
     /* -------------------------------------------------------------------- */
@@ -2565,7 +2565,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
         const CPLErr eErr = l_band->RasterIO(
             GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pafData,
             nOutXSize, nOutYSize, eWrkDataType, nWordSize,
-            nWordSize * static_cast<GSpacing>(nOutXSize), psExtraArg);
+            nWordSize * static_cast<int64_t>(nOutXSize), psExtraArg);
         if (!m_osResampling.empty())
             psExtraArg->eResampleAlg = eResampleAlgBack;
 
@@ -2600,7 +2600,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
             if (poMaskBand->RasterIO(
                     GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                     &abyMask[0], nOutXSize, nOutYSize, GDT_Byte, 1,
-                    static_cast<GSpacing>(nOutXSize), psExtraArg) != CE_None)
+                    static_cast<int64_t>(nOutXSize), psExtraArg) != CE_None)
             {
                 CPLFree(pafData);
                 return CE_Failure;
@@ -2628,7 +2628,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
     for (int iY = 0; iY < nOutYSize; iY++)
     {
         GByte *pDstLocation = static_cast<GByte *>(pData) +
-                              static_cast<GPtrDiff_t>(nLineSpace) * iY;
+                              static_cast<ptrdiff_t>(nLineSpace) * iY;
 
         for (int iX = 0; iX < nOutXSize;
              iX++, pDstLocation += nPixelSpace, idxBuffer++)
@@ -2786,7 +2786,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
 template CPLErr VRTComplexSource::RasterIOInternal<float>(
     GDALDataType eBandDataType, int nReqXOff, int nReqYOff, int nReqXSize,
     int nReqYSize, void *pData, int nOutXSize, int nOutYSize,
-    GDALDataType eBufType, GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALDataType eBufType, int64_t nPixelSpace, int64_t nLineSpace,
     GDALRasterIOExtraArg *psExtraArg, GDALDataType eWrkDataType);
 
 /************************************************************************/
@@ -2836,7 +2836,7 @@ double VRTComplexSource::GetMaximum(int nXSize, int nYSize, int *pbSuccess)
 
 CPLErr VRTComplexSource::GetHistogram(int nXSize, int nYSize, double dfMin,
                                       double dfMax, int nBuckets,
-                                      GUIntBig *panHistogram,
+                                      uint64_t *panHistogram,
                                       int bIncludeOutOfRange, int bApproxOK,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
@@ -2891,8 +2891,8 @@ CPLXMLNode *VRTFuncSource::SerializeToXML(CPL_UNUSED const char *pszVRTPath)
 CPLErr VRTFuncSource::RasterIO(GDALDataType /*eBandDataType*/, int nXOff,
                                int nYOff, int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, GSpacing nPixelSpace,
-                               GSpacing nLineSpace,
+                               GDALDataType eBufType, int64_t nPixelSpace,
+                               int64_t nLineSpace,
                                GDALRasterIOExtraArg * /* psExtraArg */)
 {
     if (nPixelSpace * 8 == GDALGetDataTypeSize(eBufType) &&
@@ -2944,7 +2944,7 @@ double VRTFuncSource::GetMaximum(int /* nXSize */, int /* nYSize */,
 
 CPLErr VRTFuncSource::GetHistogram(
     int /* nXSize */, int /* nYSize */, double /* dfMin */, double /* dfMax */,
-    int /* nBuckets */, GUIntBig * /* panHistogram */,
+    int /* nBuckets */, uint64_t * /* panHistogram */,
     int /* bIncludeOutOfRange */, int /* bApproxOK */,
     GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
 {

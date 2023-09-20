@@ -57,18 +57,18 @@ class OGRGeoconceptLayer final : public OGRLayer
     //    const char* pszQuery );
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    //    OGRErr               SetNextByIndex( GIntBig nIndex );
+    //    OGRErr               SetNextByIndex( int64_t nIndex );
 
-    //    OGRFeature*          GetFeature( GIntBig nFID );
+    //    OGRFeature*          GetFeature( int64_t nFID );
     //    OGRErr               ISetFeature( OGRFeature* poFeature );
-    //    OGRErr               DeleteFeature( GIntBig nFID );
+    //    OGRErr               DeleteFeature( int64_t nFID );
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRFeatureDefn *GetLayerDefn() override
     {
         return _poFeatureDefn;
     }  // FIXME
     OGRSpatialReference *GetSpatialRef() override;
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override

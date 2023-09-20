@@ -325,12 +325,11 @@ JP2_Error JP2_Callback_Conv GDALJP2Lura_Callback_Compress_Write(
     JP2_Gdal_Stream_Data *data =
         reinterpret_cast<JP2_Gdal_Stream_Data *>(lParam);
 
-    if (VSIFSeekL(data->fp, (vsi_l_offset)(ulPos + data->Position), SEEK_SET) !=
-        0)
+    if (VSIFSeekL(data->fp, (uint64_t)(ulPos + data->Position), SEEK_SET) != 0)
     {
         return cJP2_Error_Failure_Write;
     }
-    if (VSIFWriteL(pucData, 1, (vsi_l_offset)ulSize, data->fp) != ulSize)
+    if (VSIFWriteL(pucData, 1, (uint64_t)ulSize, data->fp) != ulSize)
     {
         return cJP2_Error_Failure_Write;
     }

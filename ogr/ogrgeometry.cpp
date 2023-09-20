@@ -6550,15 +6550,15 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
     pszTextBufCurrent += 2;
 
     // Next, get the geom type which is bytes 2 through 5.
-    GUInt32 geomType;
+    uint32_t geomType;
     memcpy(&geomType, pabyWKB + 1, 4);
 
     // Now add the SRID flag if an SRID is provided.
     if (nSRSId > 0)
     {
         // Change the flag to wkbNDR (little) endianness.
-        constexpr GUInt32 WKBSRIDFLAG = 0x20000000;
-        GUInt32 nGSrsFlag = CPL_LSBWORD32(WKBSRIDFLAG);
+        constexpr uint32_t WKBSRIDFLAG = 0x20000000;
+        uint32_t nGSrsFlag = CPL_LSBWORD32(WKBSRIDFLAG);
         // Apply the flag.
         geomType = geomType | nGSrsFlag;
     }
@@ -6573,7 +6573,7 @@ char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
     if (nSRSId > 0)
     {
         // Force the srsid to wkbNDR (little) endianness.
-        const GUInt32 nGSRSId = CPL_LSBWORD32(nSRSId);
+        const uint32_t nGSRSId = CPL_LSBWORD32(nSRSId);
         pszHex = CPLBinaryToHex(sizeof(nGSRSId),
                                 reinterpret_cast<const GByte *>(&nGSRSId));
         strcpy(pszTextBufCurrent, pszHex);

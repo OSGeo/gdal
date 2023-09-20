@@ -400,8 +400,8 @@ class PDFDataset final : public GDALPamDataset
                                    const char *pszDomain = "") override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int GetGCPCount() override;
@@ -411,8 +411,8 @@ class PDFDataset final : public GDALPamDataset
                    const OGRSpatialReference *poSRS) override;
 
     CPLErr ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize, int nReqYSize,
-                      GSpacing nPixelSpace, GSpacing nLineSpace,
-                      GSpacing nBandSpace, GByte *pabyData);
+                      int64_t nPixelSpace, int64_t nLineSpace,
+                      int64_t nBandSpace, GByte *pabyData);
 
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
@@ -478,8 +478,8 @@ class PDFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation() override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 

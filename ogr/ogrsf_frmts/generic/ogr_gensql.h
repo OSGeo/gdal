@@ -72,10 +72,10 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     int *panGeomFieldToSrcGeomField;
 
     size_t nIndexSize;
-    GIntBig *panFIDIndex;
+    int64_t *panFIDIndex;
     int bOrderByValid;
 
-    GIntBig nNextIndexFID;
+    int64_t nNextIndexFID;
     OGRFeature *poSummaryFeature;
 
     int iFIDFieldIndex;
@@ -83,7 +83,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     int nExtraDSCount;
     GDALDataset **papoExtraDS;
 
-    GIntBig nIteratedFeatures;
+    int64_t nIteratedFeatures;
     std::vector<CPLString> m_oDistinctList;
 
     int PrepareSummary();
@@ -92,7 +92,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     void CreateOrderByIndex();
     void ReadIndexFields(OGRFeature *poSrcFeat, int nOrderItems,
                          OGRField *pasIndexFields);
-    void SortIndexSection(const OGRField *pasIndexFields, GIntBig *panMerged,
+    void SortIndexSection(const OGRField *pasIndexFields, int64_t *panMerged,
                           size_t nStart, size_t nEntries);
     void FreeIndexFields(OGRField *pasIndexFields, size_t l_nIndexSize,
                          bool bFreeArray = true);
@@ -123,12 +123,12 @@ class OGRGenSQLResultsLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
     {
         return GetExtent(0, psExtent, bForce);

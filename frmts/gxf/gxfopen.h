@@ -118,7 +118,7 @@ typedef struct
     double dfZMaximum;
     double dfZMinimum;
 
-    vsi_l_offset *panRawLineOffset;
+    uint64_t *panRawLineOffset;
 } GXFInfo_t;
 
 #endif /* ndef GXFOPEN_H_INCLUDED */

@@ -37,6 +37,7 @@
 #include "cpl_http.h"
 #include "cpl_sha1.h"
 #include <algorithm>
+#include <cinttypes>
 
 // #define DEBUG_VERBOSE 1
 
@@ -399,7 +400,7 @@ void VSIOSSHandleHelper::SetEndpoint(const CPLString &osStr)
 
 CPLString VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
-    GIntBig nStartDate = static_cast<GIntBig>(time(nullptr));
+    int64_t nStartDate = static_cast<int64_t>(time(nullptr));
     const char *pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
     if (pszStartDate)
     {
@@ -417,11 +418,11 @@ CPLString VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
             nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
         }
     }
-    GIntBig nExpiresIn =
+    int64_t nExpiresIn =
         nStartDate +
         atoi(CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600"));
     CPLString osExpires(CSLFetchNameValueDef(
-        papszOptions, "EXPIRES", CPLSPrintf(CPL_FRMT_GIB, nExpiresIn)));
+        papszOptions, "EXPIRES", CPLSPrintf("%" PRId64, nExpiresIn)));
 
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
 

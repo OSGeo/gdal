@@ -1295,7 +1295,7 @@ class OGRGMLASDataSource final : public GDALDataset
     /** Base unique identifier */
     CPLString m_osHash;
 
-    vsi_l_offset m_nFileSize;
+    uint64_t m_nFileSize;
 
     GMLASReader *m_poReader;
 
@@ -1754,7 +1754,7 @@ class GMLASReader final : public DefaultHandler
     /** Base unique identifier */
     CPLString m_osHash;
 
-    vsi_l_offset m_nFileSize;
+    uint64_t m_nFileSize;
 
     bool m_bWarnUnexpected;
 
@@ -1918,7 +1918,7 @@ class GMLASReader final : public DefaultHandler
         m_osHash = osHash;
     }
 
-    void SetFileSize(vsi_l_offset nFileSize)
+    void SetFileSize(uint64_t nFileSize)
     {
         m_nFileSize = nFileSize;
     }

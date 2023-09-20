@@ -229,20 +229,20 @@ class FileGDBIndexIteratorBase : virtual public FileGDBIterator
     FileGDBTable *poParent = nullptr;
     bool bAscending = false;
     VSILFILE *fpCurIdx = nullptr;
-    GUInt32 m_nPageCount = 0;
-    GUInt32 nMaxPerPages = 0;
-    GUInt32 m_nValueSize = 0;
-    GUInt32 nOffsetFirstValInPage = 0;
-    GUInt32 nValueCountInIdx = 0;
-    GUInt32 nIndexDepth = 0;
+    uint32_t m_nPageCount = 0;
+    uint32_t nMaxPerPages = 0;
+    uint32_t m_nValueSize = 0;
+    uint32_t nOffsetFirstValInPage = 0;
+    uint32_t nValueCountInIdx = 0;
+    uint32_t nIndexDepth = 0;
 #ifdef DEBUG
     int iLoadedPage[MAX_DEPTH];
 #endif
     int iFirstPageIdx[MAX_DEPTH];
     int iLastPageIdx[MAX_DEPTH];
     int iCurPageIdx[MAX_DEPTH];
-    GUInt32 nSubPagesCount[MAX_DEPTH];
-    GUInt32 nLastPageAccessed[MAX_DEPTH];
+    uint32_t nSubPagesCount[MAX_DEPTH];
+    uint32_t nLastPageAccessed[MAX_DEPTH];
 
     int iCurFeatureInPage = -1;
     int nFeaturesInPage = 0;
@@ -299,7 +299,7 @@ class FileGDBIndexIterator final : public FileGDBIndexIteratorBase
     int *panSortedRows = nullptr;
     int SortRows();
 
-    GUInt16 asUTF16Str[MAX_CAR_COUNT_INDEXED_STR];
+    uint16_t asUTF16Str[MAX_CAR_COUNT_INDEXED_STR];
     int nStrLen = 0;
     char szUUID[UUID_LEN_AS_STRING + 1];
 
@@ -778,21 +778,21 @@ bool FileGDBIndexIteratorBase::ReadTrailer(const std::string &osFilename)
     returnErrorIf(fpCurIdx == nullptr);
 
     VSIFSeekL(fpCurIdx, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpCurIdx);
+    uint64_t nFileSize = VSIFTellL(fpCurIdx);
     returnErrorIf(nFileSize < FGDB_PAGE_SIZE + 22);
 
     VSIFSeekL(fpCurIdx, nFileSize - 22, SEEK_SET);
     GByte abyTrailer[22];
     returnErrorIf(VSIFReadL(abyTrailer, 22, 1, fpCurIdx) != 1);
 
-    m_nPageCount = static_cast<GUInt32>((nFileSize - 22) / FGDB_PAGE_SIZE);
+    m_nPageCount = static_cast<uint32_t>((nFileSize - 22) / FGDB_PAGE_SIZE);
 
     m_nValueSize = abyTrailer[0];
 
     nMaxPerPages = (FGDB_PAGE_SIZE - 12) / (4 + m_nValueSize);
     nOffsetFirstValInPage = 12 + nMaxPerPages * 4;
 
-    GUInt32 nMagic1 = GetUInt32(abyTrailer + 2, 0);
+    uint32_t nMagic1 = GetUInt32(abyTrailer + 2, 0);
     returnErrorIf(nMagic1 != 1);
 
     nIndexDepth = GetUInt32(abyTrailer + 6, 0);
@@ -958,7 +958,7 @@ int FileGDBIndex::GetMaxWidthInBytes(const FileGDBTable *poTable) const
         return 0;
 
     VSIFSeekL(fpCurIdx, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpCurIdx);
+    uint64_t nFileSize = VSIFTellL(fpCurIdx);
     if (nFileSize < FGDB_PAGE_SIZE + 22)
     {
         VSIFCloseL(fpCurIdx);
@@ -1009,12 +1009,12 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
     if (!ReadTrailer(pszAtxName))
         return FALSE;
     returnErrorIf(nValueCountInIdx >
-                  static_cast<GUInt32>(poParent->GetValidRecordCount()));
+                  static_cast<uint32_t>(poParent->GetValidRecordCount()));
 
     switch (eFieldType)
     {
         case FGFT_INT16:
-            returnErrorIf(m_nValueSize != sizeof(GUInt16));
+            returnErrorIf(m_nValueSize != sizeof(uint16_t));
             if (eOp != FGSO_ISNOTNULL)
             {
                 returnErrorIf(eOGRFieldType != OFTInteger);
@@ -1022,7 +1022,7 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
             }
             break;
         case FGFT_INT32:
-            returnErrorIf(m_nValueSize != sizeof(GUInt32));
+            returnErrorIf(m_nValueSize != sizeof(uint32_t));
             if (eOp != FGSO_ISNOTNULL)
             {
                 returnErrorIf(eOGRFieldType != OFTInteger);
@@ -1141,8 +1141,8 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
 /*                          FileGDBUTF16StrCompare()                    */
 /************************************************************************/
 
-static int FileGDBUTF16StrCompare(const GUInt16 *pasFirst,
-                                  const GUInt16 *pasSecond, int nStrLen)
+static int FileGDBUTF16StrCompare(const uint16_t *pasFirst,
+                                  const uint16_t *pasSecond, int nStrLen)
 {
     for (int i = 0; i < nStrLen; i++)
     {
@@ -1167,7 +1167,7 @@ static int FileGDBUTF16StrCompare(const GUInt16 *pasFirst,
 bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
 {
     const bool errorRetValue = false;
-    VSIFSeekL(fpCurIdx, static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+    VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
               SEEK_SET);
 #ifdef DEBUG
     iLoadedPage[iLevel] = nPage;
@@ -1188,11 +1188,11 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
         return true;
     }
 
-    GUInt32 i;
+    uint32_t i;
 #ifdef DEBUG_INDEX_CONSISTENCY
     double dfLastMax = 0.0;
     int nLastMax = 0;
-    GUInt16 asLastMax[MAX_CAR_COUNT_INDEXED_STR] = {0};
+    uint16_t asLastMax[MAX_CAR_COUNT_INDEXED_STR] = {0};
     char szLastMaxUUID[UUID_LEN_AS_STRING + 1] = {0};
 #endif
     iFirstPageIdx[iLevel] = iLastPageIdx[iLevel] = -1;
@@ -1205,7 +1205,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
         {
             case FGFT_INT16:
             {
-                GInt16 nVal =
+                int16_t nVal =
                     GetInt16(abyPage[iLevel] + nOffsetFirstValInPage, i);
 #ifdef DEBUG_INDEX_CONSISTENCY
                 returnErrorIf(i > 0 && nVal < nLastMax);
@@ -1217,7 +1217,7 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
 
             case FGFT_INT32:
             {
-                GInt32 nVal =
+                int32_t nVal =
                     GetInt32(abyPage[iLevel] + nOffsetFirstValInPage, i);
 #ifdef DEBUG_INDEX_CONSISTENCY
                 returnErrorIf(i > 0 && nVal < nLastMax);
@@ -1270,20 +1270,15 @@ bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
 
             case FGFT_STRING:
             {
-                GUInt16 *pasMax;
-                GUInt16 asMax[MAX_CAR_COUNT_INDEXED_STR];
+                uint16_t *pasMax;
+                uint16_t asMax[MAX_CAR_COUNT_INDEXED_STR];
                 pasMax = asMax;
                 memcpy(asMax,
                        abyPage[iLevel] + nOffsetFirstValInPage +
-                           nStrLen * sizeof(GUInt16) * i,
-                       nStrLen * sizeof(GUInt16));
+                           nStrLen * sizeof(uint16_t) * i,
+                       nStrLen * sizeof(uint16_t));
                 for (int j = 0; j < nStrLen; j++)
                     CPL_LSBPTR16(&asMax[j]);
-#ifdef DEBUG_INDEX_CONSISTENCY
-                returnErrorIf(i > 0 && FileGDBUTF16StrCompare(pasMax, asLastMax,
-                                                              nStrLen) < 0);
-                memcpy(asLastMax, pasMax, nStrLen * 2);
-#endif
                 nComp = FileGDBUTF16StrCompare(asUTF16Str, pasMax, nStrLen);
                 break;
             }
@@ -1428,7 +1423,7 @@ void FileGDBIndexIterator::Reset()
 int FileGDBIndexIteratorBase::ReadPageNumber(int iLevel)
 {
     const int errorRetValue = 0;
-    GUInt32 nPage = GetUInt32(abyPage[iLevel] + 8, iCurPageIdx[iLevel]);
+    uint32_t nPage = GetUInt32(abyPage[iLevel] + 8, iCurPageIdx[iLevel]);
     if (nPage == nLastPageAccessed[iLevel])
     {
         if (!LoadNextPage(iLevel))
@@ -1453,7 +1448,7 @@ int FileGDBIndexIteratorBase::LoadNextPage(int iLevel)
         if (iLevel == 0 || !LoadNextPage(iLevel - 1))
             return FALSE;
 
-        GUInt32 nPage = ReadPageNumber(iLevel - 1);
+        uint32_t nPage = ReadPageNumber(iLevel - 1);
         returnErrorIf(!FindPages(iLevel, nPage));
 
         iCurPageIdx[iLevel] =
@@ -1477,7 +1472,7 @@ int FileGDBIndexIteratorBase::LoadNextPage(int iLevel)
 int FileGDBIndexIteratorBase::LoadNextFeaturePage()
 {
     const int errorRetValue = FALSE;
-    GUInt32 nPage;
+    uint32_t nPage;
 
     if (nIndexDepth == 1)
     {
@@ -1516,8 +1511,7 @@ int FileGDBIndexIteratorBase::LoadNextFeaturePage()
             cachedPage.clear();
         }
 
-        VSIFSeekL(fpCurIdx,
-                  static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+        VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
                   SEEK_SET);
 #ifdef DEBUG
         iLoadedPage[nIndexDepth - 1] = nPage;
@@ -1529,7 +1523,7 @@ int FileGDBIndexIteratorBase::LoadNextFeaturePage()
         m_oCacheFeaturePage.insert(nPage, std::move(cachedPage));
     }
 
-    GUInt32 nFeatures = GetUInt32(abyPageFeature + 4, 0);
+    uint32_t nFeatures = GetUInt32(abyPageFeature + 4, 0);
     returnErrorIf(nFeatures > nMaxPerPages);
 
     nFeaturesInPage = static_cast<int>(nFeatures);
@@ -1573,7 +1567,7 @@ int FileGDBIndexIterator::GetNextRow()
             {
                 case FGFT_INT16:
                 {
-                    const GInt16 nVal =
+                    const int16_t nVal =
                         GetInt16(abyPageFeature + nOffsetFirstValInPage,
                                  iCurFeatureInPage);
                     nComp = COMPARE(sValue.Integer, nVal);
@@ -1582,7 +1576,7 @@ int FileGDBIndexIterator::GetNextRow()
 
                 case FGFT_INT32:
                 {
-                    const GInt32 nVal =
+                    const int32_t nVal =
                         GetInt32(abyPageFeature + nOffsetFirstValInPage,
                                  iCurFeatureInPage);
                     nComp = COMPARE(sValue.Integer, nVal);
@@ -1623,7 +1617,7 @@ int FileGDBIndexIterator::GetNextRow()
 
                 case FGFT_STRING:
                 {
-                    GUInt16 asVal[MAX_CAR_COUNT_INDEXED_STR];
+                    uint16_t asVal[MAX_CAR_COUNT_INDEXED_STR];
                     memcpy(asVal,
                            abyPageFeature + nOffsetFirstValInPage +
                                nStrLen * 2 * iCurFeatureInPage,
@@ -1697,14 +1691,14 @@ int FileGDBIndexIterator::GetNextRow()
 
         if (bMatch)
         {
-            const GUInt32 nFID =
+            const uint32_t nFID =
                 GetUInt32(abyPageFeature + 12, iCurFeatureInPage);
             if (bAscending)
                 iCurFeatureInPage++;
             else
                 iCurFeatureInPage--;
             returnErrorAndCleanupIf(
-                nFID < 1 || nFID > static_cast<GUInt32>(
+                nFID < 1 || nFID > static_cast<uint32_t>(
                                        poParent->GetTotalRecordCount()),
                 bEOF = true);
             return static_cast<int>(nFID - 1);
@@ -1825,17 +1819,16 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
         return nullptr;
 
     GByte l_abyPage[FGDB_PAGE_SIZE];
-    GUInt32 nPage = 1;
-    for (GUInt32 iLevel = 0; iLevel < nIndexDepth - 1; iLevel++)
+    uint32_t nPage = 1;
+    for (uint32_t iLevel = 0; iLevel < nIndexDepth - 1; iLevel++)
     {
-        VSIFSeekL(fpCurIdx,
-                  static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+        VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
                   SEEK_SET);
 #ifdef DEBUG
         iLoadedPage[iLevel] = nPage;
 #endif
         returnErrorIf(VSIFReadL(l_abyPage, FGDB_PAGE_SIZE, 1, fpCurIdx) != 1);
-        GUInt32 l_nSubPagesCount = GetUInt32(l_abyPage + 4, 0);
+        uint32_t l_nSubPagesCount = GetUInt32(l_abyPage + 4, 0);
         returnErrorIf(l_nSubPagesCount == 0 || l_nSubPagesCount > nMaxPerPages);
 
         if (bIsMin)
@@ -1845,14 +1838,14 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
         returnErrorIf(nPage < 2);
     }
 
-    VSIFSeekL(fpCurIdx, static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+    VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
               SEEK_SET);
 #ifdef DEBUG
     iLoadedPage[nIndexDepth - 1] = nPage;
 #endif
     returnErrorIf(VSIFReadL(l_abyPage, FGDB_PAGE_SIZE, 1, fpCurIdx) != 1);
 
-    GUInt32 nFeatures = GetUInt32(l_abyPage + 4, 0);
+    uint32_t nFeatures = GetUInt32(l_abyPage + 4, 0);
     returnErrorIf(nFeatures < 1 || nFeatures > nMaxPerPages);
 
     int iFeature = (bIsMin) ? 0 : nFeatures - 1;
@@ -1861,7 +1854,7 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
     {
         case FGFT_INT16:
         {
-            const GInt16 nVal =
+            const int16_t nVal =
                 GetInt16(l_abyPage + nOffsetFirstValInPage, iFeature);
             psField->Integer = nVal;
             eOutType = OFTInteger;
@@ -1870,7 +1863,7 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
 
         case FGFT_INT32:
         {
-            const GInt32 nVal =
+            const int32_t nVal =
                 GetInt32(l_abyPage + nOffsetFirstValInPage, iFeature);
             psField->Integer = nVal;
             eOutType = OFTInteger;
@@ -1909,9 +1902,9 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
             wchar_t awsVal[MAX_CAR_COUNT_INDEXED_STR + 1] = {0};
             for (int j = 0; j < nStrLen; j++)
             {
-                GUInt16 nCh =
+                uint16_t nCh =
                     GetUInt16(l_abyPage + nOffsetFirstValInPage +
-                                  nStrLen * sizeof(GUInt16) * iFeature,
+                                  nStrLen * sizeof(uint16_t) * iFeature,
                               j);
                 awsVal[j] = nCh;
             }
@@ -2111,10 +2104,10 @@ class FileGDBSpatialIndexIteratorImpl final : public FileGDBIndexIteratorBase,
     std::vector<int> m_oFIDVector{};
     size_t m_nVectorIdx = 0;
     int m_nGridNo = 0;
-    GInt64 m_nMinVal = 0;
-    GInt64 m_nMaxVal = 0;
-    GInt32 m_nCurX = 0;
-    GInt32 m_nMaxX = 0;
+    int64_t m_nMinVal = 0;
+    int64_t m_nMaxVal = 0;
+    int32_t m_nCurX = 0;
+    int32_t m_nMaxX = 0;
 
     virtual bool FindPages(int iLevel, int nPage) override;
     int GetNextRow();
@@ -2239,14 +2232,14 @@ bool FileGDBSpatialIndexIteratorImpl::Init()
         iFirstPageIdx[0] = iLastPageIdx[0] = -1;
         if (nFeaturesInPage >= 2 &&
             nFeaturesInPage < poParent->GetTotalRecordCount() / 10 &&
-            m_nPageCount > static_cast<GUInt32>(nFeaturesInPage))
+            m_nPageCount > static_cast<uint32_t>(nFeaturesInPage))
         {
             // Check if it looks like a non-feature page, that is that the
             // IDs pointed by it are index page IDs and not feature IDs.
             bool bReferenceOtherPages = true;
             for (int i = 0; i < nFeaturesInPage; ++i)
             {
-                const GUInt32 nID = GetUInt32(abyPageFeature + 8, i);
+                const uint32_t nID = GetUInt32(abyPageFeature + 8, i);
                 if (!(nID >= 2 && nID <= m_nPageCount))
                 {
                     bReferenceOtherPages = false;
@@ -2283,16 +2276,16 @@ double FileGDBSpatialIndexIteratorImpl::GetScaledCoord(double coord) const
 
 bool FileGDBSpatialIndexIteratorImpl::ReadNewXRange()
 {
-    const GUInt64 v1 =
-        (static_cast<GUInt64>(m_nGridNo) << 62) |
-        (static_cast<GUInt64>(m_nCurX) << 31) |
-        (static_cast<GUInt64>(
+    const uint64_t v1 =
+        (static_cast<uint64_t>(m_nGridNo) << 62) |
+        (static_cast<uint64_t>(m_nCurX) << 31) |
+        (static_cast<uint64_t>(
             std::min(std::max(0.0, GetScaledCoord(m_sFilterEnvelope.MinY)),
                      static_cast<double>(INT_MAX))));
-    const GUInt64 v2 =
-        (static_cast<GUInt64>(m_nGridNo) << 62) |
-        (static_cast<GUInt64>(m_nCurX) << 31) |
-        (static_cast<GUInt64>(
+    const uint64_t v2 =
+        (static_cast<uint64_t>(m_nGridNo) << 62) |
+        (static_cast<uint64_t>(m_nCurX) << 31) |
+        (static_cast<uint64_t>(
             std::min(std::max(0.0, GetScaledCoord(m_sFilterEnvelope.MaxY)),
                      static_cast<double>(INT_MAX))));
     if (m_nGridNo < 2)
@@ -2303,8 +2296,8 @@ bool FileGDBSpatialIndexIteratorImpl::ReadNewXRange()
     else
     {
         // Reverse order due to negative sign
-        memcpy(&m_nMinVal, &v2, sizeof(GInt64));
-        memcpy(&m_nMaxVal, &v1, sizeof(GInt64));
+        memcpy(&m_nMinVal, &v2, sizeof(int64_t));
+        memcpy(&m_nMaxVal, &v1, sizeof(int64_t));
     }
 
     const bool errorRetValue = false;
@@ -2329,9 +2322,9 @@ bool FileGDBSpatialIndexIteratorImpl::ReadNewXRange()
 /*                              GetInt64()                              */
 /************************************************************************/
 
-static GInt64 GetInt64(const GByte *pBaseAddr, int iOffset)
+static int64_t GetInt64(const GByte *pBaseAddr, int iOffset)
 {
-    GInt64 nVal;
+    int64_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR64(&nVal);
     return nVal;
@@ -2342,7 +2335,7 @@ static GInt64 GetInt64(const GByte *pBaseAddr, int iOffset)
 /************************************************************************/
 
 static bool FindMinMaxIdx(const GByte *pBaseAddr, const int nVals,
-                          const GInt64 nMinVal, const GInt64 nMaxVal,
+                          const int64_t nMinVal, const int64_t nMaxVal,
                           int &minIdxOut, int &maxIdxOut)
 {
     // Find maximum index that is <= nMaxVal
@@ -2351,7 +2344,7 @@ static bool FindMinMaxIdx(const GByte *pBaseAddr, const int nVals,
     while (nMaxIdx - nMinIdx >= 2)
     {
         int nIdx = (nMinIdx + nMaxIdx) / 2;
-        const GInt64 nVal = GetInt64(pBaseAddr, nIdx);
+        const int64_t nVal = GetInt64(pBaseAddr, nIdx);
         if (nVal <= nMaxVal)
             nMinIdx = nIdx;
         else
@@ -2372,7 +2365,7 @@ static bool FindMinMaxIdx(const GByte *pBaseAddr, const int nVals,
     while (nMaxIdx - nMinIdx >= 2)
     {
         int nIdx = (nMinIdx + nMaxIdx) / 2;
-        const GInt64 nVal = GetInt64(pBaseAddr, nIdx);
+        const int64_t nVal = GetInt64(pBaseAddr, nIdx);
         if (nVal >= nMinVal)
             nMaxIdx = nIdx;
         else
@@ -2415,8 +2408,7 @@ bool FileGDBSpatialIndexIteratorImpl::FindPages(int iLevel, int nPage)
             cachedPage.clear();
         }
 
-        VSIFSeekL(fpCurIdx,
-                  static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+        VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
                   SEEK_SET);
 #ifdef DEBUG
         iLoadedPage[iLevel] = nPage;
@@ -2495,11 +2487,11 @@ int FileGDBSpatialIndexIteratorImpl::GetNextRow()
                         gridRes[m_nGridNo + 1] > 0)
                     {
                         m_nGridNo++;
-                        m_nCurX = static_cast<GInt32>(std::min(
+                        m_nCurX = static_cast<int32_t>(std::min(
                             std::max(0.0,
                                      GetScaledCoord(m_sFilterEnvelope.MinX)),
                             static_cast<double>(INT_MAX)));
-                        m_nMaxX = static_cast<GInt32>(std::min(
+                        m_nMaxX = static_cast<int32_t>(std::min(
                             std::max(0.0,
                                      GetScaledCoord(m_sFilterEnvelope.MaxX)),
                             static_cast<double>(INT_MAX)));
@@ -2517,17 +2509,17 @@ int FileGDBSpatialIndexIteratorImpl::GetNextRow()
         }
 
 #ifdef DEBUG
-        const GInt64 nVal =
+        const int64_t nVal =
             GetInt64(abyPageFeature + nOffsetFirstValInPage, iCurFeatureInPage);
         CPL_IGNORE_RET_VAL(nVal);
         CPLAssert(nVal >= m_nMinVal && nVal <= m_nMaxVal);
 #endif
 
-        const GUInt32 nFID = GetUInt32(abyPageFeature + 12, iCurFeatureInPage);
+        const uint32_t nFID = GetUInt32(abyPageFeature + 12, iCurFeatureInPage);
         iCurFeatureInPage++;
         returnErrorAndCleanupIf(
             nFID < 1 ||
-                nFID > static_cast<GUInt32>(poParent->GetTotalRecordCount()),
+                nFID > static_cast<uint32_t>(poParent->GetTotalRecordCount()),
             bEOF = true);
         return static_cast<int>(nFID - 1);
     }
@@ -2548,10 +2540,10 @@ bool FileGDBSpatialIndexIteratorImpl::ResetInternal()
         return false;
     }
 
-    m_nCurX = static_cast<GInt32>(
+    m_nCurX = static_cast<int32_t>(
         std::min(std::max(0.0, GetScaledCoord(m_sFilterEnvelope.MinX)),
                  static_cast<double>(INT_MAX)));
-    m_nMaxX = static_cast<GInt32>(
+    m_nMaxX = static_cast<int32_t>(
         std::min(std::max(0.0, GetScaledCoord(m_sFilterEnvelope.MaxX)),
                  static_cast<double>(INT_MAX)));
     m_nVectorIdx = 0;

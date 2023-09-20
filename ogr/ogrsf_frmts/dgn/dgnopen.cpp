@@ -245,10 +245,10 @@ void DGNSpatialFilterToUOR(DGNInfo *psDGN)
     DGNInverseTransformPoint(psDGN, &sMin);
     DGNInverseTransformPoint(psDGN, &sMax);
 
-    psDGN->sf_min_x = (GUInt32)(sMin.x + 2147483648.0);
-    psDGN->sf_min_y = (GUInt32)(sMin.y + 2147483648.0);
-    psDGN->sf_max_x = (GUInt32)(sMax.x + 2147483648.0);
-    psDGN->sf_max_y = (GUInt32)(sMax.y + 2147483648.0);
+    psDGN->sf_min_x = (uint32_t)(sMin.x + 2147483648.0);
+    psDGN->sf_min_y = (uint32_t)(sMin.y + 2147483648.0);
+    psDGN->sf_max_x = (uint32_t)(sMax.x + 2147483648.0);
+    psDGN->sf_max_y = (uint32_t)(sMax.y + 2147483648.0);
 
     psDGN->sf_converted_to_uor = true;
 }

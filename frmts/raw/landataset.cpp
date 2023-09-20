@@ -212,12 +212,12 @@ CPLErr LAN4BitRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Seek to profile.                                                */
     /* -------------------------------------------------------------------- */
-    const vsi_l_offset nOffset =
+    const uint64_t nOffset =
         ERD_HEADER_SIZE +
-        (static_cast<vsi_l_offset>(nBlockYOff) * nRasterXSize *
+        (static_cast<uint64_t>(nBlockYOff) * nRasterXSize *
          poLAN_DS->GetRasterCount()) /
             2 +
-        (static_cast<vsi_l_offset>(nBand - 1) * nRasterXSize) / 2;
+        (static_cast<uint64_t>(nBand - 1) * nRasterXSize) / 2;
 
     if (VSIFSeekL(poLAN_DS->fpImage, nOffset, SEEK_SET) != 0)
     {
@@ -445,14 +445,14 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        GInt32 nTmp = 0;
+        int32_t nTmp = 0;
         memcpy(&nTmp, poDS->pachHeader + 16, 4);
         poDS->nRasterXSize = nTmp;
         memcpy(&nTmp, poDS->pachHeader + 20, 4);
         poDS->nRasterYSize = nTmp;
     }
 
-    GInt16 nTmp16 = 0;
+    int16_t nTmp16 = 0;
     memcpy(&nTmp16, poDS->pachHeader + 6, 2);
 
     int nPixelOffset = 0;
@@ -721,7 +721,7 @@ CPLErr LANDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL(abyHeader, 128, 1, fpImage));
 
-    GUInt16 nProjCode = 0;
+    uint16_t nProjCode = 0;
 
     if (poSRS->IsGeographic())
     {
@@ -840,8 +840,8 @@ void LANDataset::CheckForStatistics()
         if (poBand == nullptr)
             break;
 
-        GInt16 nMin = 0;
-        GInt16 nMax = 0;
+        int16_t nMin = 0;
+        int16_t nMax = 0;
 
         if (poBand->GetRasterDataType() != GDT_Byte)
         {
@@ -906,7 +906,7 @@ GDALDataset *LANDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     memcpy(abyHeader + 0, "HEAD74", 6);
 
     // Pixel type.
-    GInt16 n16Val = 0;
+    int16_t n16Val = 0;
     if (eType == GDT_Byte)  // Do we want 4bit?
         n16Val = 0;
     else
@@ -914,13 +914,13 @@ GDALDataset *LANDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     memcpy(abyHeader + 6, &n16Val, 2);
 
     // Number of Bands.
-    n16Val = static_cast<GInt16>(nBandsIn);
+    n16Val = static_cast<int16_t>(nBandsIn);
     memcpy(abyHeader + 8, &n16Val, 2);
 
     // Unknown (6).
 
     // Width.
-    GInt32 n32Val = nXSize;
+    int32_t n32Val = nXSize;
     memcpy(abyHeader + 16, &n32Val, 4);
 
     // Height.
@@ -971,18 +971,18 @@ GDALDataset *LANDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Extend the file to the target size.                             */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nImageBytes = 0;
+    uint64_t nImageBytes = 0;
 
     if (eType != GDT_Byte)
-        nImageBytes = nXSize * static_cast<vsi_l_offset>(nYSize) * 2;
+        nImageBytes = nXSize * static_cast<uint64_t>(nYSize) * 2;
     else
-        nImageBytes = nXSize * static_cast<vsi_l_offset>(nYSize);
+        nImageBytes = nXSize * static_cast<uint64_t>(nYSize);
 
     memset(abyHeader, 0, sizeof(abyHeader));
 
     while (nImageBytes > 0)
     {
-        const vsi_l_offset nWriteThisTime =
+        const uint64_t nWriteThisTime =
             std::min(static_cast<size_t>(nImageBytes), sizeof(abyHeader));
 
         if (VSIFWriteL(abyHeader, 1, static_cast<size_t>(nWriteThisTime), fp) !=

@@ -256,7 +256,7 @@ class CPL_DLL GMLFeatureClass
 
     bool m_bSchemaLocked;
 
-    GIntBig m_nFeatureCount;
+    int64_t m_nFeatureCount;
 
     char *m_pszExtraInfo;
 
@@ -341,8 +341,8 @@ class CPL_DLL GMLFeatureClass
     const char *GetExtraInfo();
     void SetExtraInfo(const char *);
 
-    GIntBig GetFeatureCount();
-    void SetFeatureCount(GIntBig);
+    int64_t GetFeatureCount();
+    void SetFeatureCount(int64_t);
 
     bool HasExtents() const
     {

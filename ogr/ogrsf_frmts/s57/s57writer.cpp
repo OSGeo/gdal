@@ -593,10 +593,10 @@ bool S57Writer::WriteGeometry(DDFRecord *poRec, int nVertCount,
 
     for (int i = 0; i < nVertCount; i++)
     {
-        const GInt32 nXCOO =
-            CPL_LSBWORD32(static_cast<GInt32>(floor(padfX[i] * m_nCOMF + 0.5)));
-        const GInt32 nYCOO =
-            CPL_LSBWORD32(static_cast<GInt32>(floor(padfY[i] * m_nCOMF + 0.5)));
+        const int32_t nXCOO = CPL_LSBWORD32(
+            static_cast<int32_t>(floor(padfX[i] * m_nCOMF + 0.5)));
+        const int32_t nYCOO = CPL_LSBWORD32(
+            static_cast<int32_t>(floor(padfY[i] * m_nCOMF + 0.5)));
 
         if (padfZ == nullptr)
         {
@@ -605,8 +605,8 @@ bool S57Writer::WriteGeometry(DDFRecord *poRec, int nVertCount,
         }
         else
         {
-            const GInt32 nVE3D = CPL_LSBWORD32(
-                static_cast<GInt32>(floor(padfZ[i] * m_nSOMF + 0.5)));
+            const int32_t nVE3D = CPL_LSBWORD32(
+                static_cast<int32_t>(floor(padfZ[i] * m_nSOMF + 0.5)));
             memcpy(pabyRawData + i * 12, &nYCOO, 4);
             memcpy(pabyRawData + i * 12 + 4, &nXCOO, 4);
             memcpy(pabyRawData + i * 12 + 8, &nVE3D, 4);
@@ -892,14 +892,14 @@ bool S57Writer::WriteCompleteFeature(OGRFeature *poFeature)
             poFeature->GetFieldAsIntegerList("MASK", &nItemCount);
 
         // cppcheck-suppress duplicateExpression
-        CPLAssert(sizeof(int) == sizeof(GInt32));
+        CPLAssert(sizeof(int) == sizeof(int32_t));
 
         const int nRawDataSize = nItemCount * 8;
         unsigned char *pabyRawData = (unsigned char *)CPLMalloc(nRawDataSize);
 
         for (int i = 0; i < nItemCount; i++)
         {
-            GInt32 nRCID = CPL_LSBWORD32(panRCID[i]);
+            int32_t nRCID = CPL_LSBWORD32(panRCID[i]);
 
             pabyRawData[i * 8 + 0] = (GByte)panRCNM[i];
             memcpy(pabyRawData + i * 8 + 1, &nRCID, 4);
@@ -1009,7 +1009,7 @@ bool S57Writer::WriteATTF(DDFRecord *poRec, OGRFeature *poFeature)
         if (nATTLInt == -1)
             continue;
 
-        GUInt16 nATTL = (GUInt16)nATTLInt;
+        uint16_t nATTL = (uint16_t)nATTLInt;
         CPL_LSBPTR16(&nATTL);
         memcpy(achRawData + nRawSize, &nATTL, 2);
         nRawSize += 2;

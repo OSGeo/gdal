@@ -191,7 +191,7 @@ void GMLPropertyDefn::AnalysePropertyValue(const GMLProperty *psGMLProperty,
                 m_eType = GMLPT_Real;
             else if (m_eType != GMLPT_Integer64)
             {
-                const GIntBig nVal = CPLAtoGIntBig(pszValue);
+                const int64_t nVal = CPLAtoGIntBig(pszValue);
                 if (!CPL_INT64_FITS_ON_INT32(nVal))
                     m_eType = GMLPT_Integer64;
                 else
@@ -206,7 +206,7 @@ void GMLPropertyDefn::AnalysePropertyValue(const GMLProperty *psGMLProperty,
         }
         else if (m_eType == GMLPT_IntegerList && valueType == CPL_VALUE_INTEGER)
         {
-            GIntBig nVal = CPLAtoGIntBig(pszValue);
+            int64_t nVal = CPLAtoGIntBig(pszValue);
             if (!CPL_INT64_FITS_ON_INT32(nVal))
                 m_eType = GMLPT_Integer64List;
         }

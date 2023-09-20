@@ -118,9 +118,9 @@ char **ParseConnectionString(const char *pszConnectionString)
  * \brief Translate a PostGIS Raster datatype string in a valid
  * GDALDataType object.
  **********************************************************************/
-GBool TranslateDataType(const char *pszDataType,
-                        GDALDataType *poDataType = nullptr,
-                        int *pnBitsDepth = nullptr)
+bool TranslateDataType(const char *pszDataType,
+                       GDALDataType *poDataType = nullptr,
+                       int *pnBitsDepth = nullptr)
 {
     if (!pszDataType)
         return false;

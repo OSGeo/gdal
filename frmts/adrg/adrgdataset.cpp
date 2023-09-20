@@ -31,6 +31,7 @@
 #include "iso8211.h"
 #include "ogr_spatialref.h"
 
+#include <cinttypes>
 #include <limits>
 #include <new>
 
@@ -231,7 +232,7 @@ CPLErr ADRGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     }
     CPLDebug("ADRG", "(%d,%d) -> nBlock = %d", nBlockXOff, nBlockYOff, nBlock);
 
-    vsi_l_offset offset;
+    uint64_t offset;
     if (l_poDS->TILEINDEX)
     {
         if (l_poDS->TILEINDEX[nBlock] <= 0)
@@ -240,25 +241,25 @@ CPLErr ADRGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             return CE_None;
         }
         offset = l_poDS->offsetInIMG +
-                 static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1) *
-                     128 * 128 * 3 +
+                 static_cast<uint64_t>(l_poDS->TILEINDEX[nBlock] - 1) * 128 *
+                     128 * 3 +
                  (nBand - 1) * 128 * 128;
     }
     else
         offset = l_poDS->offsetInIMG +
-                 static_cast<vsi_l_offset>(nBlock) * 128 * 128 * 3 +
+                 static_cast<uint64_t>(nBlock) * 128 * 128 * 3 +
                  (nBand - 1) * 128 * 128;
 
     if (VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot seek to offset " CPL_FRMT_GUIB, offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %" PRIu64,
+                 offset);
         return CE_Failure;
     }
     if (VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128 * 128)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot read data at offset " CPL_FRMT_GUIB, offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %" PRIu64,
+                 offset);
         return CE_Failure;
     }
 
@@ -404,7 +405,7 @@ static int BeginLeader(VSILFILE *fd, int sizeFieldLength, int sizeFieldPos,
     VSIFSeekL(fd,
               24 +
                   (sizeFieldLength + sizeFieldPos + sizeFieldTag) *
-                      (vsi_l_offset)nFields +
+                      (uint64_t)nFields +
                   1,
               SEEK_CUR);
     return pos;

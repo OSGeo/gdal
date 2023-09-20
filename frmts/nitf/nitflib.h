@@ -41,19 +41,19 @@
 CPL_C_START
 
 /* 1e-12 - 1 */
-#define NITF_MAX_FILE_SIZE 999999999999ULL
+#define NITF_MAX_FILE_SIZE UINT64_C(999999999999)
 
 /* 1e-10 - 1 */
-#define NITF_MAX_IMAGE_SIZE 9999999999ULL
+#define NITF_MAX_IMAGE_SIZE UINT64_C(9999999999)
 
 typedef struct
 {
     char szSegmentType[3]; /* one of "IM", ... */
 
-    GUIntBig nSegmentHeaderStart;
-    GUInt32 nSegmentHeaderSize;
-    GUIntBig nSegmentStart;
-    GUIntBig nSegmentSize;
+    uint64_t nSegmentHeaderStart;
+    uint32_t nSegmentHeaderSize;
+    uint64_t nSegmentStart;
+    uint64_t nSegmentSize;
 
     void *hAccess;
 
@@ -99,8 +99,8 @@ int CPL_DLL NITFCreate(const char *pszFilename, int nPixels, int nLines,
 
 int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
                  int nBitsPerSample, const char *pszPVType, char **papszOptions,
-                 int *pnIndex, int *pnImageCount, vsi_l_offset *pnImageOffset,
-                 vsi_l_offset *pnICOffset);
+                 int *pnIndex, int *pnImageCount, uint64_t *pnImageOffset,
+                 uint64_t *pnICOffset);
 
 const char CPL_DLL *NITFFindTRE(const char *pszTREData, int nTREBytes,
                                 const char *pszTag, int *pnFoundTRESize);
@@ -127,9 +127,9 @@ typedef struct
 
 typedef struct
 {
-    GUInt16 nLocId;
-    GUInt32 nLocOffset;
-    GUInt32 nLocSize;
+    uint16_t nLocId;
+    uint32_t nLocOffset;
+    uint32_t nLocSize;
 } NITFLocation;
 
 typedef struct
@@ -203,16 +203,16 @@ typedef struct
     /* Internal information not for application use. */
 
     int nWordSize;
-    GUIntBig nPixelOffset;
-    GUIntBig nLineOffset;
-    GUIntBig nBlockOffset;
-    GUIntBig nBandOffset;
+    uint64_t nPixelOffset;
+    uint64_t nLineOffset;
+    uint64_t nBlockOffset;
+    uint64_t nBandOffset;
 
-    GUIntBig *panBlockStart;
+    uint64_t *panBlockStart;
 
     char **papszMetadata;
 
-    GUInt32 *apanVQLUT[4];
+    uint32_t *apanVQLUT[4];
 
     int nLocCount;
     NITFLocation *pasLocations;
@@ -240,7 +240,7 @@ char CPL_DLL **NITFReadUSE00A(NITFImage *psImage);
 char CPL_DLL **NITFReadSTDIDC(NITFImage *psImage);
 char CPL_DLL **NITFReadBLOCKA(NITFImage *psImage);
 
-GUIntBig CPL_DLL NITFIHFieldOffset(NITFImage *psImage,
+uint64_t CPL_DLL NITFIHFieldOffset(NITFImage *psImage,
                                    const char *pszFieldName);
 
 #define BLKREAD_OK 0

@@ -36,6 +36,8 @@
 #include <errno.h>
 
 #include <algorithm>
+#include <cinttypes>
+#include <limits>
 #include <set>
 #include <map>
 #include <memory>
@@ -233,7 +235,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     // Block list upload
     bool UploadFile(const CPLString &osFilename, Event event,
-                    vsi_l_offset nPosition, const void *pabyBuffer,
+                    uint64_t nPosition, const void *pabyBuffer,
                     size_t nBufferSize,
                     IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
                     double dfRetryDelay, CSLConstList papszOptions);
@@ -266,7 +268,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     CPLString UploadPart(const CPLString &osFilename, int /* nPartNumber */,
                          const std::string & /* osUploadID */,
-                         vsi_l_offset nPosition, const void *pabyBuffer,
+                         uint64_t nPosition, const void *pabyBuffer,
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry, double dfRetryDelay,
@@ -282,7 +284,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     bool CompleteMultipart(const CPLString &osFilename,
                            const CPLString & /* osUploadID */,
                            const std::vector<CPLString> & /* aosEtags */,
-                           vsi_l_offset nTotalSize,
+                           uint64_t nTotalSize,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry, double dfRetryDelay) override
     {
@@ -321,7 +323,7 @@ void VSIDIRADLS::clear()
 /*                        GetUnixTimeFromRFC822()                       */
 /************************************************************************/
 
-static GIntBig GetUnixTimeFromRFC822(const char *pszRFC822DateTime)
+static int64_t GetUnixTimeFromRFC822(const char *pszRFC822DateTime)
 {
     int nYear, nMonth, nDay, nHour, nMinute, nSecond;
     if (CPLParseRFC822DateTime(pszRFC822DateTime, &nYear, &nMonth, &nDay,
@@ -336,7 +338,7 @@ static GIntBig GetUnixTimeFromRFC822(const char *pszRFC822DateTime)
         brokendowntime.tm_sec = nSecond < 0 ? 0 : nSecond;
         return CPLYMDHMSToUnixTime(&brokendowntime);
     }
-    return GINTBIG_MIN;
+    return std::numeric_limits<int64_t>::min();
 }
 
 /************************************************************************/
@@ -379,7 +381,7 @@ bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
             entry->pszName = CPLStrdup((m_osFilesystem + '/' + osName).c_str());
         else
             entry->pszName = CPLStrdup(osName.c_str());
-        entry->nSize = static_cast<GUIntBig>(oPath.GetLong("contentLength"));
+        entry->nSize = static_cast<uint64_t>(oPath.GetLong("contentLength"));
         entry->bSizeKnown = true;
         entry->nMode =
             oPath.GetString("isDirectory") == "true" ? S_IFDIR : S_IFREG;
@@ -394,9 +396,9 @@ bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
                 CSLSetNameValue(entry->papszExtra, "ETag", ETag.c_str());
         }
 
-        const GIntBig nMTime =
+        const int64_t nMTime =
             GetUnixTimeFromRFC822(oPath.GetString("lastModified").c_str());
-        if (nMTime != GINTBIG_MIN)
+        if (nMTime != std::numeric_limits<int64_t>::min())
         {
             entry->nMTime = nMTime;
             entry->bMTimeKnown = true;
@@ -474,9 +476,9 @@ bool VSIDIRADLS::AnalyseFilesystemList(const CPLString &osBaseURL,
                 CSLSetNameValue(entry->papszExtra, "ETag", ETag.c_str());
         }
 
-        const GIntBig nMTime =
+        const int64_t nMTime =
             GetUnixTimeFromRFC822(oPath.GetString("lastModified").c_str());
-        if (nMTime != GINTBIG_MIN)
+        if (nMTime != std::numeric_limits<int64_t>::min())
         {
             entry->nMTime = nMTime;
             entry->bMTimeKnown = true;
@@ -802,9 +804,9 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                 osLastModified.assign(pszLastModified,
                                       pszEOL - pszLastModified);
 
-                const GIntBig nMTime =
+                const int64_t nMTime =
                     GetUnixTimeFromRFC822(osLastModified.c_str());
-                if (nMTime != GINTBIG_MIN)
+                if (nMTime != std::numeric_limits<int64_t>::min())
                 {
                     pStatBuf->st_mtime = static_cast<time_t>(nMTime);
                 }
@@ -1919,8 +1921,8 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
 /************************************************************************/
 
 bool VSIADLSFSHandler::UploadFile(const CPLString &osFilename, Event event,
-                                  vsi_l_offset nPosition,
-                                  const void *pabyBuffer, size_t nBufferSize,
+                                  uint64_t nPosition, const void *pabyBuffer,
+                                  size_t nBufferSize,
                                   IVSIS3LikeHandleHelper *poHandleHelper,
                                   int nMaxRetry, double dfRetryDelay,
                                   CSLConstList papszOptions)
@@ -1957,7 +1959,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString &osFilename, Event event,
             poHandleHelper->AddQueryParameter("action", "append");
             poHandleHelper->AddQueryParameter(
                 "position",
-                CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nPosition)));
+                CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nPosition)));
         }
         else
         {
@@ -1965,7 +1967,7 @@ bool VSIADLSFSHandler::UploadFile(const CPLString &osFilename, Event event,
             poHandleHelper->AddQueryParameter("close", "true");
             poHandleHelper->AddQueryParameter(
                 "position",
-                CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nPosition)));
+                CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nPosition)));
         }
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);

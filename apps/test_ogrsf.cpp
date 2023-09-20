@@ -37,6 +37,7 @@
 #include "commonutils.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 bool bReadOnly = false;
@@ -1413,10 +1414,10 @@ static int TestLayerErrorConditions(OGRLayer *poLyr)
 
     // This should detect int overflow
     if (LOG_ACTION(poLyr->GetFeature(
-            static_cast<GIntBig>(std::numeric_limits<int>::max()) + 1)) !=
+            static_cast<int64_t>(std::numeric_limits<int>::max()) + 1)) !=
         nullptr)
     {
-        printf("ERROR: GetFeature((GIntBig)INT_MAX + 1) "
+        printf("ERROR: GetFeature((int64_t)INT_MAX + 1) "
                "should have returned NULL\n");
         bRet = FALSE;
         goto bye;
@@ -1533,8 +1534,8 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
 
 {
     int bRet = TRUE;
-    GIntBig nFC = 0;
-    GIntBig nClaimedFC = LOG_ACTION(poLayer->GetFeatureCount());
+    int64_t nFC = 0;
+    int64_t nClaimedFC = LOG_ACTION(poLayer->GetFeatureCount());
     bool bWarnAboutSRS = false;
     OGRFeatureDefn *poLayerDefn = LOG_ACTION(poLayer->GetLayerDefn());
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
@@ -1646,15 +1647,15 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
     if (nFC != nClaimedFC)
     {
         bRet = FALSE;
-        printf("ERROR: Claimed feature count " CPL_FRMT_GIB
-               " doesn't match actual, " CPL_FRMT_GIB ".\n",
+        printf("ERROR: Claimed feature count %" PRId64
+               " doesn't match actual, %" PRId64 ".\n",
                nClaimedFC, nFC);
     }
     else if (nFC != LOG_ACTION(poLayer->GetFeatureCount()))
     {
         bRet = FALSE;
-        printf("ERROR: Feature count at end of layer, " CPL_FRMT_GIB
-               ", differs from at start, " CPL_FRMT_GIB ".\n",
+        printf("ERROR: Feature count at end of layer, %" PRId64
+               ", differs from at start, %" PRId64 ".\n",
                poLayer->GetFeatureCount(), nFC);
     }
     else if (bVerbose)
@@ -1679,8 +1680,8 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
             else if (nClaimedFC != poFeatCount->GetFieldAsInteger(0))
             {
                 bRet = FALSE;
-                printf("ERROR: Claimed feature count " CPL_FRMT_GIB
-                       " doesn't match '%s' one, " CPL_FRMT_GIB ".\n",
+                printf("ERROR: Claimed feature count %" PRId64
+                       " doesn't match '%s' one, %" PRId64 ".\n",
                        nClaimedFC, osSQL.c_str(),
                        poFeatCount->GetFieldAsInteger64(0));
             }
@@ -1716,7 +1717,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     if (LOG_ACTION(poLayer->GetFeatureCount()) < 5)
     {
         if (bVerbose)
-            printf("INFO: Only " CPL_FRMT_GIB " features on layer,"
+            printf("INFO: Only %" PRId64 " features on layer,"
                    "skipping random read test.\n",
                    poLayer->GetFeatureCount());
 
@@ -1751,7 +1752,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     poFeature = LOG_ACTION(poLayer->GetFeature(papoFeatures[1]->GetFID()));
     if (poFeature == nullptr)
     {
-        printf("ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
+        printf("ERROR: Cannot fetch feature %" PRId64 ".\n",
                papoFeatures[1]->GetFID());
         goto end;
     }
@@ -1759,7 +1760,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     if (!poFeature->Equal(papoFeatures[1]))
     {
         bRet = FALSE;
-        printf("ERROR: Attempt to randomly read feature " CPL_FRMT_GIB
+        printf("ERROR: Attempt to randomly read feature %" PRId64
                " appears to\n"
                "       have returned a different feature than sequential\n"
                "       reading indicates should have happened.\n",
@@ -1778,7 +1779,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     poFeature = LOG_ACTION(poLayer->GetFeature(papoFeatures[4]->GetFID()));
     if (poFeature == nullptr)
     {
-        printf("ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
+        printf("ERROR: Cannot fetch feature %" PRId64 ".\n",
                papoFeatures[4]->GetFID());
         goto end;
     }
@@ -1786,7 +1787,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     if (!poFeature->Equal(papoFeatures[4]))
     {
         bRet = FALSE;
-        printf("ERROR: Attempt to randomly read feature " CPL_FRMT_GIB
+        printf("ERROR: Attempt to randomly read feature %" PRId64
                " appears to\n"
                "       have returned a different feature than sequential\n"
                "       reading indicates should have happened.\n",
@@ -1805,7 +1806,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     poFeature = LOG_ACTION(poLayer->GetFeature(papoFeatures[2]->GetFID()));
     if (poFeature == nullptr)
     {
-        printf("ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
+        printf("ERROR: Cannot fetch feature %" PRId64 ".\n",
                papoFeatures[2]->GetFID());
         goto end;
     }
@@ -1813,7 +1814,7 @@ static int TestOGRLayerRandomRead(OGRLayer *poLayer)
     if (!poFeature->Equal(papoFeatures[2]))
     {
         bRet = FALSE;
-        printf("ERROR: Attempt to randomly read feature " CPL_FRMT_GIB
+        printf("ERROR: Attempt to randomly read feature %" PRId64
                " appears to\n"
                "       have returned a different feature than sequential\n"
                "       reading indicates should have happened.\n",
@@ -1858,7 +1859,7 @@ static int TestOGRLayerSetNextByIndex(OGRLayer *poLayer)
     if (LOG_ACTION(poLayer->GetFeatureCount()) < 5)
     {
         if (bVerbose)
-            printf("INFO: Only " CPL_FRMT_GIB " features on layer,"
+            printf("INFO: Only %" PRId64 " features on layer,"
                    "skipping SetNextByIndex test.\n",
                    poLayer->GetFeatureCount());
 
@@ -1992,7 +1993,7 @@ static int TestOGRLayerRandomWrite(OGRLayer *poLayer)
     if (LOG_ACTION(poLayer->GetFeatureCount()) < 5)
     {
         if (bVerbose)
-            printf("INFO: Only " CPL_FRMT_GIB " features on layer,"
+            printf("INFO: Only %" PRId64 " features on layer,"
                    "skipping random write test.\n",
                    poLayer->GetFeatureCount());
 
@@ -2007,8 +2008,8 @@ static int TestOGRLayerRandomWrite(OGRLayer *poLayer)
         return bRet;
     }
 
-    GIntBig nFID2;
-    GIntBig nFID5;
+    int64_t nFID2;
+    int64_t nFID5;
 
     CPLString os_Id2;
     CPLString os_Id5;
@@ -2209,7 +2210,7 @@ static int TestSpatialFilter(OGRLayer *poLayer, int iGeomField)
     /*      Verify that we can find the target feature.                     */
     /* -------------------------------------------------------------------- */
     bool bFound = false;
-    GIntBig nIterCount = 0;
+    int64_t nIterCount = 0;
     for (auto &&poFeature : poLayer)
     {
         if (poFeature->Equal(poTargetFeature))
@@ -2231,7 +2232,7 @@ static int TestSpatialFilter(OGRLayer *poLayer, int iGeomField)
         printf("INFO: Spatial filter inclusion seems to work.\n");
     }
 
-    GIntBig nInclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
+    int64_t nInclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
 
     // Identity check doesn't always work depending on feature geometries
     if (nIterCount > nInclusiveCount)
@@ -2243,7 +2244,7 @@ static int TestSpatialFilter(OGRLayer *poLayer, int iGeomField)
     }
 
     LOG_ACTION(poLayer->SetAttributeFilter("1=1"));
-    GIntBig nShouldBeSame = LOG_ACTION(poLayer->GetFeatureCount());
+    int64_t nShouldBeSame = LOG_ACTION(poLayer->GetFeatureCount());
     LOG_ACTION(poLayer->SetAttributeFilter(nullptr));
     if (nShouldBeSame != nInclusiveCount)
     {
@@ -2253,7 +2254,7 @@ static int TestSpatialFilter(OGRLayer *poLayer, int iGeomField)
     }
 
     LOG_ACTION(poLayer->SetAttributeFilter("1=0"));
-    GIntBig nShouldBeZero = LOG_ACTION(poLayer->GetFeatureCount());
+    int64_t nShouldBeZero = LOG_ACTION(poLayer->GetFeatureCount());
     LOG_ACTION(poLayer->SetAttributeFilter(nullptr));
     if (nShouldBeZero != 0)
     {
@@ -2458,8 +2459,8 @@ static int TestFullSpatialFilter(OGRLayer *poLayer, int iGeomField)
                   10.0;
     }
 
-    const GIntBig nTotalFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
-    for (GIntBig i = 0; i < nTotalFeatureCount; i++)
+    const int64_t nTotalFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
+    for (int64_t i = 0; i < nTotalFeatureCount; i++)
     {
         /* --------------------------------------------------------------------
          */
@@ -2533,7 +2534,7 @@ static int TestFullSpatialFilter(OGRLayer *poLayer, int iGeomField)
         if (!bFound)
         {
             bRet = FALSE;
-            printf("ERROR: Spatial filter (%d) eliminated feature " CPL_FRMT_GIB
+            printf("ERROR: Spatial filter (%d) eliminated feature %" PRId64
                    " unexpectedly!\n",
                    iGeomField, poTargetFeature->GetFID());
             DestroyFeatureAndNullify(poTargetFeature);
@@ -2752,7 +2753,7 @@ static int TestAttributeFilter(CPL_UNUSED GDALDataset *poDS, OGRLayer *poLayer)
         printf("INFO: Attribute filter inclusion seems to work.\n");
     }
 
-    const GIntBig nInclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
+    const int64_t nInclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
 
     /* -------------------------------------------------------------------- */
     /*      Construct exclusive filter.                                     */
@@ -2784,7 +2785,7 @@ static int TestAttributeFilter(CPL_UNUSED GDALDataset *poDS, OGRLayer *poLayer)
     /* -------------------------------------------------------------------- */
     LOG_ACTION(poLayer->ResetReading());
 
-    GIntBig nExclusiveCountWhileIterating = 0;
+    int64_t nExclusiveCountWhileIterating = 0;
     while ((poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr)
     {
         if (poFeature->Equal(poTargetFeature))
@@ -2799,7 +2800,7 @@ static int TestAttributeFilter(CPL_UNUSED GDALDataset *poDS, OGRLayer *poLayer)
         nExclusiveCountWhileIterating++;
     }
 
-    const GIntBig nExclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
+    const int64_t nExclusiveCount = LOG_ACTION(poLayer->GetFeatureCount());
 
     // Check that GetFeature() ignores the attribute filter
     OGRFeature *poFeature2 =
@@ -2820,7 +2821,7 @@ static int TestAttributeFilter(CPL_UNUSED GDALDataset *poDS, OGRLayer *poLayer)
 
     LOG_ACTION(poLayer->SetAttributeFilter(nullptr));
 
-    const GIntBig nTotalCount = LOG_ACTION(poLayer->GetFeatureCount());
+    const int64_t nTotalCount = LOG_ACTION(poLayer->GetFeatureCount());
 
     if (poFeature != nullptr)
     {
@@ -2834,10 +2835,10 @@ static int TestAttributeFilter(CPL_UNUSED GDALDataset *poDS, OGRLayer *poLayer)
     {
         bRet = FALSE;
         printf("ERROR: GetFeatureCount() may not be taking attribute "
-               "filter into account (nInclusiveCount = " CPL_FRMT_GIB
-               ", nExclusiveCount = " CPL_FRMT_GIB
-               ", nExclusiveCountWhileIterating = " CPL_FRMT_GIB
-               ", nTotalCount = " CPL_FRMT_GIB ").\n",
+               "filter into account (nInclusiveCount = %" PRId64
+               ", nExclusiveCount = %" PRId64
+               ", nExclusiveCountWhileIterating = %" PRId64
+               ", nTotalCount = %" PRId64 ").\n",
                nInclusiveCount, nExclusiveCount, nExclusiveCountWhileIterating,
                nTotalCount);
     }
@@ -2928,7 +2929,7 @@ static int TestOGRLayerUTF8(OGRLayer *poLayer)
                         if (!bIsUTF8)
                         {
                             printf("ERROR: Found non-UTF8 content at field %d "
-                                   "of feature " CPL_FRMT_GIB
+                                   "of feature %" PRId64
                                    ", but layer is advertized as UTF-8.\n",
                                    i, poFeature->GetFID());
                             bRet = FALSE;
@@ -3131,7 +3132,7 @@ static int TestOGRLayerDeleteAndCreateFeature(OGRLayer *poLayer)
     /*      Fetch the last feature                                          */
     /* -------------------------------------------------------------------- */
     OGRFeature *poFeatureTest = nullptr;
-    GIntBig nFID = 0;
+    int64_t nFID = 0;
 
     LOG_ACTION(poLayer->ResetReading());
 
@@ -3231,7 +3232,7 @@ end:
 static int TestTransactions(OGRLayer *poLayer)
 
 {
-    GIntBig nInitialFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
+    int64_t nInitialFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
 
     OGRErr eErr = LOG_ACTION(poLayer->StartTransaction());
     if (eErr == OGRERR_NONE)
@@ -3354,7 +3355,7 @@ static int TestTransactions(OGRLayer *poLayer)
         if (poLayer->GetLayerDefn()->GetFieldCount() > 0)
             poFeature->SetField(0, "0");
         eErr = poLayer->CreateFeature(poFeature);
-        GIntBig nFID = poFeature->GetFID();
+        int64_t nFID = poFeature->GetFID();
         delete poFeature;
         poFeature = nullptr;
 

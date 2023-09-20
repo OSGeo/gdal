@@ -61,14 +61,14 @@ typedef enum
  */
 typedef struct
 {
-    GUInt16 tdir_tag;    /* see below */
-    GUInt16 tdir_type;   /* data type; see below */
-    GUInt32 tdir_count;  /* number of items; length in spec */
-    GUInt32 tdir_offset; /* byte offset to field data */
+    uint16_t tdir_tag;    /* see below */
+    uint16_t tdir_type;   /* data type; see below */
+    uint32_t tdir_count;  /* number of items; length in spec */
+    uint32_t tdir_offset; /* byte offset to field data */
 } GDALEXIFTIFFDirEntry;
 
 GByte CPL_DLL *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
-                          GUInt32 nThumbnailSize, GUInt32 nThumbnailWidth,
-                          GUInt32 nThumbnailHeight, GUInt32 *pnOutBufferSize);
+                          uint32_t nThumbnailSize, uint32_t nThumbnailWidth,
+                          uint32_t nThumbnailHeight, uint32_t *pnOutBufferSize);
 
 //! @endcond

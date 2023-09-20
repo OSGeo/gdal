@@ -200,11 +200,11 @@ OGRwkbGeometryType OGRPMTilesVectorLayer::GuessGeometryType(
 /*                    GetTotalFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRPMTilesVectorLayer::GetTotalFeatureCount() const
+int64_t OGRPMTilesVectorLayer::GetTotalFeatureCount() const
 {
     OGRPMTilesTileIterator oIterator(m_poDS, m_nZoomLevel);
 
-    GIntBig nFeatureCount = 0;
+    int64_t nFeatureCount = 0;
     const char *const apszAllowedDrivers[] = {"MVT", nullptr};
     CPLStringList aosOpenOptions;
     aosOpenOptions.SetNameValue("METADATA_FILE",
@@ -240,7 +240,7 @@ GIntBig OGRPMTilesVectorLayer::GetTotalFeatureCount() const
             auto poTileLayer = poTileDS->GetLayerByName(GetDescription());
             if (poTileLayer)
             {
-                const GIntBig nTileFeatureCount =
+                const int64_t nTileFeatureCount =
                     poTileLayer->GetFeatureCount();
                 nFeatureCount += nRunLength * nTileFeatureCount;
                 if (nRunLength > 1)
@@ -257,7 +257,7 @@ GIntBig OGRPMTilesVectorLayer::GetTotalFeatureCount() const
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRPMTilesVectorLayer::GetFeatureCount(int bForce)
+int64_t OGRPMTilesVectorLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
@@ -274,14 +274,14 @@ GIntBig OGRPMTilesVectorLayer::GetFeatureCount(int bForce)
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRPMTilesVectorLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRPMTilesVectorLayer::GetFeature(int64_t nFID)
 {
     if (nFID < 0)
         return nullptr;
     const int nZ = m_nZoomLevel;
     const int nX = static_cast<int>(nFID & ((1 << nZ) - 1));
     const int nY = static_cast<int>((nFID >> nZ) & ((1 << nZ) - 1));
-    const GIntBig nTileFID = nFID >> (2 * nZ);
+    const int64_t nTileFID = nFID >> (2 * nZ);
 
     OGRPMTilesTileIterator oIterator(m_poDS, m_nZoomLevel, nX, nY, nX, nY);
     const auto sTile = oIterator.GetNextTile();
@@ -478,8 +478,8 @@ OGRFeature *OGRPMTilesVectorLayer::GetNextRawFeature()
     if (poSrcFeat == nullptr)
         return nullptr;
 
-    const GIntBig nFIDBase =
-        (static_cast<GIntBig>(m_nY) << m_nZoomLevel) | m_nX;
+    const int64_t nFIDBase =
+        (static_cast<int64_t>(m_nY) << m_nZoomLevel) | m_nX;
     auto poFeature = CreateFeatureFrom(poSrcFeat.get());
     poFeature->SetFID((poSrcFeat->GetFID() << (2 * m_nZoomLevel)) | nFIDBase);
 

@@ -41,7 +41,7 @@
 #endif
 
 // Alias for some big data type to store identificators.
-#define GNMGFID GIntBig
+#define GNMGFID int64_t
 // Graph constants
 #define GNM_EDGE_DIR_BOTH 0      // bidirectional
 #define GNM_EDGE_DIR_SRCTOTGT 1  // from source to target

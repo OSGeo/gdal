@@ -1731,7 +1731,7 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
         double dfMin = 0.0;
         double dfMax = 0.0;
         int nBuckets = 0;
-        GUIntBig *panHistogram = nullptr;
+        uint64_t *panHistogram = nullptr;
 
         if (poAuxBand->GetDefaultHistogram(&dfMin, &dfMax, &nBuckets,
                                            &panHistogram, FALSE, nullptr,

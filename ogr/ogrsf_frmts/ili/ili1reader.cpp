@@ -36,6 +36,7 @@
 #include "ili1reader.h"
 #include "ili1readerp.h"
 
+#include <cinttypes>
 #include <vector>
 
 #ifdef HAVE_GEOS
@@ -440,7 +441,7 @@ int ILI1Reader::ReadTable(CPL_UNUSED const char *layername)
         }
         else if (EQUAL(firsttok, "ETAB"))
         {
-            CPLDebug("OGR_ILI", "Total features: " CPL_FRMT_GIB,
+            CPLDebug("OGR_ILI", "Total features: %" PRId64,
                      curLayer->GetFeatureCount());
             CSLDestroy(tokens);
             if (!bFeatureAdded)

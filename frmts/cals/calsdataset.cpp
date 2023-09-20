@@ -46,10 +46,10 @@ class CALSDataset final : public GDALPamDataset
     CPLString osSparseFilename;
     GDALDataset *poUnderlyingDS;
 
-    static void WriteLEInt16(VSILFILE *fp, GInt16 nVal);
-    static void WriteLEInt32(VSILFILE *fp, GInt32 nVal);
-    static void WriteTIFFTAG(VSILFILE *fp, GInt16 nTagName, GInt16 nTagType,
-                             GInt32 nTagValue);
+    static void WriteLEInt16(VSILFILE *fp, int16_t nVal);
+    static void WriteLEInt32(VSILFILE *fp, int32_t nVal);
+    static void WriteTIFFTAG(VSILFILE *fp, int16_t nTagName, int16_t nTagType,
+                             int32_t nTagValue);
 
   public:
     CALSDataset() : poUnderlyingDS(nullptr)
@@ -93,8 +93,8 @@ class CALSRasterBand final : public GDALPamRasterBand
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace,
+                     GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override
     {
         return poUnderlyingBand->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -171,8 +171,8 @@ class CALSWrapperSrcBand final : public GDALPamRasterBand
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace,
+                     GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override
     {
         const CPLErr eErr = poSrcDS->GetRasterBand(1)->RasterIO(
@@ -258,7 +258,7 @@ int CALSDataset::Identify(GDALOpenInfo *poOpenInfo)
 /*                           WriteLEInt16()                             */
 /************************************************************************/
 
-void CALSDataset::WriteLEInt16(VSILFILE *fp, GInt16 nVal)
+void CALSDataset::WriteLEInt16(VSILFILE *fp, int16_t nVal)
 {
     CPL_LSBPTR16(&nVal);
     VSIFWriteL(&nVal, 1, 2, fp);
@@ -268,7 +268,7 @@ void CALSDataset::WriteLEInt16(VSILFILE *fp, GInt16 nVal)
 /*                            WriteLEInt32()                            */
 /************************************************************************/
 
-void CALSDataset::WriteLEInt32(VSILFILE *fp, GInt32 nVal)
+void CALSDataset::WriteLEInt32(VSILFILE *fp, int32_t nVal)
 {
     CPL_LSBPTR32(&nVal);
     VSIFWriteL(&nVal, 1, 4, fp);
@@ -278,8 +278,8 @@ void CALSDataset::WriteLEInt32(VSILFILE *fp, GInt32 nVal)
 /*                            WriteTIFFTAG()                            */
 /************************************************************************/
 
-void CALSDataset::WriteTIFFTAG(VSILFILE *fp, GInt16 nTagName, GInt16 nTagType,
-                               GInt32 nTagValue)
+void CALSDataset::WriteTIFFTAG(VSILFILE *fp, int16_t nTagName, int16_t nTagType,
+                               int32_t nTagValue)
 {
     WriteLEInt16(fp, nTagName);
     WriteLEInt16(fp, nTagType);

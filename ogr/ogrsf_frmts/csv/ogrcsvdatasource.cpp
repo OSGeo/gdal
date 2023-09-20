@@ -334,7 +334,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlagsIn) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 };
 
 /************************************************************************/
@@ -408,12 +408,12 @@ OGRErr OGRCSVEditableLayer::AlterFieldDefn(int iField,
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig OGRCSVEditableLayer::GetFeatureCount(int bForce)
+int64_t OGRCSVEditableLayer::GetFeatureCount(int bForce)
 {
-    const GIntBig nRet = OGREditableLayer::GetFeatureCount(bForce);
+    const int64_t nRet = OGREditableLayer::GetFeatureCount(bForce);
     if (m_poDecoratedLayer != nullptr && m_nNextFID <= 0)
     {
-        const GIntBig nTotalFeatureCount =
+        const int64_t nTotalFeatureCount =
             static_cast<OGRCSVLayer *>(m_poDecoratedLayer)
                 ->GetTotalFeatureCount();
         if (nTotalFeatureCount >= 0)

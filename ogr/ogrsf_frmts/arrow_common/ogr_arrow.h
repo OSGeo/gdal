@@ -388,7 +388,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
     OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 
   protected:
     OGRErr ICreateFeature(OGRFeature *poFeature) override;

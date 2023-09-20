@@ -368,8 +368,8 @@ CPLErr GDALWMSRasterBand::IReadBlock(int x, int y, void *buffer)
 
 CPLErr GDALWMSRasterBand::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx,
                                     int sy, void *buffer, int bsx, int bsy,
-                                    GDALDataType bdt, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType bdt, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 {
     CPLErr ret;

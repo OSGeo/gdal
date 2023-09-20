@@ -1139,7 +1139,7 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 brokenDown.tm_year = nYear - 1900;
                 brokenDown.tm_mon = nMonth - 1;
                 brokenDown.tm_mday = nDay;
-                GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
+                int64_t nVal = CPLYMDHMSToUnixTime(&brokenDown);
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(
                     static_cast<arrow::Date32Builder *>(poBuilder)->Append(
                         static_cast<int>(nVal / 86400)));
@@ -1176,7 +1176,7 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 brokenDown.tm_hour = nHour;
                 brokenDown.tm_min = nMinute;
                 brokenDown.tm_sec = 0;
-                GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
+                int64_t nVal = CPLYMDHMSToUnixTime(&brokenDown);
                 if (!IsFileWriterCreated() && m_anTZFlag[i] != TZFLAG_MIXED)
                 {
                     if (m_anTZFlag[i] == TZFLAG_UNINITIALIZED)
@@ -1550,7 +1550,7 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-inline GIntBig OGRArrowWriterLayer::GetFeatureCount(int bForce)
+inline int64_t OGRArrowWriterLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
     {

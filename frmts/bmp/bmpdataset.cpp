@@ -32,6 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <cinttypes>
 #include <limits>
 
 // Enable if you want to see lots of BMP debugging output.
@@ -88,11 +89,11 @@ enum BMPLCSType  // Type of logical color space.
 typedef struct
 {
     // cppcheck-suppress unusedStructMember
-    GInt32 iCIEX;
+    int32_t iCIEX;
     // cppcheck-suppress unusedStructMember
-    GInt32 iCIEY;
+    int32_t iCIEY;
     // cppcheck-suppress unusedStructMember
-    GInt32 iCIEZ;
+    int32_t iCIEZ;
 } BMPCIEXYZ;
 
 typedef struct  // This structure contains the x, y, and z
@@ -107,13 +108,13 @@ typedef struct  // This structure contains the x, y, and z
 
 typedef struct
 {
-    GByte bType[2];      // Signature "BM"
-    GUInt32 iSize;       // Size in bytes of the bitmap file. Should always
-                         // be ignored while reading because of error
-                         // in Windows 3.0 SDK's description of this field
-    GUInt16 iReserved1;  // Reserved, set as 0
-    GUInt16 iReserved2;  // Reserved, set as 0
-    GUInt32 iOffBits;    // Offset of the image from file start in bytes
+    GByte bType[2];       // Signature "BM"
+    uint32_t iSize;       // Size in bytes of the bitmap file. Should always
+                          // be ignored while reading because of error
+                          // in Windows 3.0 SDK's description of this field
+    uint16_t iReserved1;  // Reserved, set as 0
+    uint16_t iReserved2;  // Reserved, set as 0
+    uint32_t iOffBits;    // Offset of the image from file start in bytes
 } BMPFileHeader;
 
 // File header size in bytes:
@@ -124,53 +125,53 @@ constexpr int SIZE_OF_INFOHEADER_SIZE = 4;
 
 typedef struct
 {
-    GUInt32 iSize;      // Size of BMPInfoHeader structure in bytes.
-                        // Should be used to determine start of the
-                        // colour table
-    GInt32 iWidth;      // Image width
-    GInt32 iHeight;     // Image height. If positive, image has bottom left
-                        // origin, if negative --- top left.
-    GUInt16 iPlanes;    // Number of image planes (must be set to 1)
-    GUInt16 iBitCount;  // Number of bits per pixel (1, 4, 8, 16, 24 or 32).
-                        // If 0 then the number of bits per pixel is
-                        // specified or is implied by the JPEG or PNG format.
+    uint32_t iSize;      // Size of BMPInfoHeader structure in bytes.
+                         // Should be used to determine start of the
+                         // colour table
+    int32_t iWidth;      // Image width
+    int32_t iHeight;     // Image height. If positive, image has bottom left
+                         // origin, if negative --- top left.
+    uint16_t iPlanes;    // Number of image planes (must be set to 1)
+    uint16_t iBitCount;  // Number of bits per pixel (1, 4, 8, 16, 24 or 32).
+                         // If 0 then the number of bits per pixel is
+                         // specified or is implied by the JPEG or PNG format.
     BMPComprMethod iCompression;  // Compression method
-    GUInt32 iSizeImage;     // Size of uncompressed image in bytes. May be 0
-                            // for BMPC_RGB bitmaps. If iCompression is BI_JPEG
-                            // or BI_PNG, iSizeImage indicates the size
-                            // of the JPEG or PNG image buffer.
-    GInt32 iXPelsPerMeter;  // X resolution, pixels per meter (0 if not used)
-    GInt32 iYPelsPerMeter;  // Y resolution, pixels per meter (0 if not used)
-    GUInt32 iClrUsed;       // Size of colour table. If 0, iBitCount should
-                            // be used to calculate this value (1<<iBitCount)
-    GUInt32 iClrImportant;  // Number of important colours. If 0, all
-                            // colours are required
+    uint32_t iSizeImage;     // Size of uncompressed image in bytes. May be 0
+                             // for BMPC_RGB bitmaps. If iCompression is BI_JPEG
+                             // or BI_PNG, iSizeImage indicates the size
+                             // of the JPEG or PNG image buffer.
+    int32_t iXPelsPerMeter;  // X resolution, pixels per meter (0 if not used)
+    int32_t iYPelsPerMeter;  // Y resolution, pixels per meter (0 if not used)
+    uint32_t iClrUsed;       // Size of colour table. If 0, iBitCount should
+                             // be used to calculate this value (1<<iBitCount)
+    uint32_t iClrImportant;  // Number of important colours. If 0, all
+                             // colours are required
 
     // Fields above should be used for bitmaps, compatible with Windows NT 3.51
     // and earlier. Windows 98/Me, Windows 2000/XP introduces additional fields:
 
-    GUInt32 iRedMask;    // Colour mask that specifies the red component
-                         // of each pixel, valid only if iCompression
-                         // is set to BI_BITFIELDS.
-    GUInt32 iGreenMask;  // The same for green component
-    GUInt32 iBlueMask;   // The same for blue component
+    uint32_t iRedMask;    // Colour mask that specifies the red component
+                          // of each pixel, valid only if iCompression
+                          // is set to BI_BITFIELDS.
+    uint32_t iGreenMask;  // The same for green component
+    uint32_t iBlueMask;   // The same for blue component
     // cppcheck-suppress unusedStructMember
-    GUInt32 iAlphaMask;  // Colour mask that specifies the alpha
-                         // component of each pixel.
+    uint32_t iAlphaMask;  // Colour mask that specifies the alpha
+                          // component of each pixel.
     // cppcheck-suppress unusedStructMember
     BMPLCSType iCSType;  // Colour space of the DIB.
     // cppcheck-suppress unusedStructMember
     BMPCIEXYZTriple sEndpoints;  // This member is ignored unless the iCSType
                                  // member specifies BMPLT_CALIBRATED_RGB.
     // cppcheck-suppress unusedStructMember
-    GUInt32 iGammaRed;  // Toned response curve for red. This member
-                        // is ignored unless color values are calibrated
-                        // RGB values and iCSType is set to
-                        // BMPLT_CALIBRATED_RGB. Specified in 16^16 format.
+    uint32_t iGammaRed;  // Toned response curve for red. This member
+                         // is ignored unless color values are calibrated
+                         // RGB values and iCSType is set to
+                         // BMPLT_CALIBRATED_RGB. Specified in 16^16 format.
     // cppcheck-suppress unusedStructMember
-    GUInt32 iGammaGreen;  // Toned response curve for green.
+    uint32_t iGammaGreen;  // Toned response curve for green.
     // cppcheck-suppress unusedStructMember
-    GUInt32 iGammaBlue;  // Toned response curve for blue.
+    uint32_t iGammaBlue;  // Toned response curve for blue.
 } BMPInfoHeader;
 
 // Info header size in bytes:
@@ -197,7 +198,7 @@ typedef struct
 
 /*****************************************************************/
 
-static int countonbits(GUInt32 dw)
+static int countonbits(uint32_t dw)
 {
     int r = 0;
     for (int x = 0; x < 32; x++)
@@ -208,7 +209,7 @@ static int countonbits(GUInt32 dw)
     return r;
 }
 
-static int findfirstonbit(GUInt32 n)
+static int findfirstonbit(uint32_t n)
 {
     for (int x = 0; x < 32; x++)
     {
@@ -237,15 +238,15 @@ class BMPDataset final : public GDALPamDataset
     double adfGeoTransform[6];
     int bGeoTransformValid;
     bool m_bNewFile = false;
-    vsi_l_offset m_nLargeFileSize = 0;
+    uint64_t m_nLargeFileSize = 0;
 
     char *pszFilename;
     VSILFILE *fp;
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing nPixelSpace,
-                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALDataType, int, int *, int64_t nPixelSpace,
+                     int64_t nLineSpace, int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -273,7 +274,7 @@ class BMPRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     friend class BMPDataset;
 
   protected:
-    GUInt32 nScanSize;
+    uint32_t nScanSize;
     unsigned int iBytesPerPixel;
     GByte *pabyScan;
 
@@ -344,15 +345,15 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                  void *pImage)
 {
     BMPDataset *poGDS = (BMPDataset *)poDS;
-    vsi_l_offset iScanOffset = 0;
+    uint64_t iScanOffset = 0;
 
     if (poGDS->sInfoHeader.iHeight > 0)
         iScanOffset = poGDS->sFileHeader.iOffBits +
                       (poGDS->GetRasterYSize() - nBlockYOff - 1) *
-                          static_cast<vsi_l_offset>(nScanSize);
+                          static_cast<uint64_t>(nScanSize);
     else
         iScanOffset = poGDS->sFileHeader.iOffBits +
-                      nBlockYOff * static_cast<vsi_l_offset>(nScanSize);
+                      nBlockYOff * static_cast<uint64_t>(nScanSize);
 
     if (VSIFSeekL(poGDS->fp, iScanOffset, SEEK_SET) < 0)
     {
@@ -366,7 +367,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         else
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Can't seek to offset " CPL_FRMT_GUIB
+                     "Can't seek to offset %" PRIu64
                      " in input file to read data.",
                      iScanOffset);
             return CE_Failure;
@@ -383,7 +384,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         else
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Can't read from offset " CPL_FRMT_GUIB " in input file.",
+                     "Can't read from offset %" PRIu64 " in input file.",
                      iScanOffset);
             return CE_Failure;
         }
@@ -416,9 +417,9 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         // 8-bit, support BMPC_BITFIELDS channel mask indicators,
         // and generalize band handling.
 
-        GUInt16 *pScan16 = (GUInt16 *)pabyScan;
+        uint16_t *pScan16 = (uint16_t *)pabyScan;
 #ifdef CPL_MSB
-        GDALSwapWords(pScan16, sizeof(GUInt16), nBlockXSize, 0);
+        GDALSwapWords(pScan16, sizeof(uint16_t), nBlockXSize, 0);
 #endif
 
         // todo: make these band members and precompute.
@@ -551,13 +552,13 @@ CPLErr BMPRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     CPLAssert(poGDS != nullptr && nBlockXOff >= 0 && nBlockYOff >= 0 &&
               pImage != nullptr);
 
-    vsi_l_offset iScanOffset = poGDS->sFileHeader.iOffBits +
-                               (poGDS->GetRasterYSize() - nBlockYOff - 1) *
-                                   static_cast<vsi_l_offset>(nScanSize);
+    uint64_t iScanOffset = poGDS->sFileHeader.iOffBits +
+                           (poGDS->GetRasterYSize() - nBlockYOff - 1) *
+                               static_cast<uint64_t>(nScanSize);
     if (VSIFSeekL(poGDS->fp, iScanOffset, SEEK_SET) < 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Can't seek to offset " CPL_FRMT_GUIB
+                 "Can't seek to offset %" PRIu64
                  " in output file to write data.\n%s",
                  iScanOffset, VSIStrerror(errno));
         return CE_Failure;
@@ -615,7 +616,7 @@ CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
 
         VSIFSeekL(poGDS->fp, BFH_SIZE + 32, SEEK_SET);
 
-        GUInt32 iULong = CPL_LSBWORD32(poGDS->sInfoHeader.iClrUsed);
+        uint32_t iULong = CPL_LSBWORD32(poGDS->sInfoHeader.iClrUsed);
         VSIFWriteL(&iULong, 4, 1, poGDS->fp);
         poGDS->pabyColorTable = (GByte *)CPLRealloc(
             poGDS->pabyColorTable,
@@ -641,7 +642,7 @@ CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
         if (VSIFWriteL(poGDS->pabyColorTable, 1,
                        poGDS->nColorElems * poGDS->sInfoHeader.iClrUsed,
                        poGDS->fp) <
-            poGDS->nColorElems * (GUInt32)poGDS->sInfoHeader.iClrUsed)
+            poGDS->nColorElems * (uint32_t)poGDS->sInfoHeader.iClrUsed)
         {
             return CE_Failure;
         }
@@ -726,9 +727,9 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
         return;
     }
 
-    GUInt32 iComprSize =
+    uint32_t iComprSize =
         poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits;
-    GUInt32 iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
+    uint32_t iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
 
 #ifdef DEBUG
     CPLDebug("BMP", "RLE compression detected.");
@@ -1052,8 +1053,8 @@ CPLErr BMPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1122,7 +1123,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef CPL_MSB
     CPL_SWAP32PTR(&poDS->sFileHeader.iOffBits);
 #endif
-    poDS->sFileHeader.iSize = (GUInt32)sStat.st_size;
+    poDS->sFileHeader.iSize = (uint32_t)sStat.st_size;
 
 #ifdef BMP_DEBUG
     CPLDebug("BMP", "File size %d bytes.", poDS->sFileHeader.iSize);
@@ -1222,7 +1223,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (eBMPType == BMPT_OS21)
     {
-        GInt16 iShort;
+        int16_t iShort;
 
         VSIFReadL(&iShort, 1, 2, poDS->fp);
         poDS->sInfoHeader.iWidth = CPL_LSBWORD16(iShort);
@@ -1290,7 +1291,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
             // Allocate memory for colour table and read it
             if (poDS->sInfoHeader.iClrUsed)
             {
-                if (poDS->sInfoHeader.iClrUsed > (GUInt32)nMaxColorTableSize)
+                if (poDS->sInfoHeader.iClrUsed > (uint32_t)nMaxColorTableSize)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Wrong value for iClrUsed: %u",
@@ -1311,8 +1312,8 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
             }
 
             if (VSIFSeekL(poDS->fp,
-                          BFH_SIZE + static_cast<vsi_l_offset>(
-                                         poDS->sInfoHeader.iSize),
+                          BFH_SIZE +
+                              static_cast<uint64_t>(poDS->sInfoHeader.iSize),
                           SEEK_SET) != 0 ||
                 VSIFReadL(poDS->pabyColorTable, poDS->nColorElems,
                           nColorTableSize, poDS->fp) != (size_t)nColorTableSize)
@@ -1481,11 +1482,11 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
      * formula, but we should check for overflow conditions
      * during calculation.
      */
-    GUInt32 nScanSize =
-        (GUInt32)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
+    uint32_t nScanSize =
+        (uint32_t)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
     if (!poDS->sInfoHeader.iWidth || !poDS->sInfoHeader.iBitCount ||
         (nScanSize - 31) / poDS->sInfoHeader.iBitCount !=
-            (GUInt32)poDS->sInfoHeader.iWidth)
+            (uint32_t)poDS->sInfoHeader.iWidth)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Wrong image parameters; "
@@ -1542,8 +1543,8 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                         "Windows Photo Viewer");
     }
 
-    const vsi_l_offset nLargeImageSize =
-        static_cast<vsi_l_offset>(nScanSize) * poDS->sInfoHeader.iHeight;
+    const uint64_t nLargeImageSize =
+        static_cast<uint64_t>(nScanSize) * poDS->sInfoHeader.iHeight;
     poDS->m_nLargeFileSize = poDS->sFileHeader.iOffBits + nLargeImageSize;
     if (nLargeImageSize > std::numeric_limits<uint32_t>::max())
     {
@@ -1588,9 +1589,9 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    GInt32 iLong;
-    GUInt32 iULong;
-    GUInt16 iUShort;
+    int32_t iLong;
+    uint32_t iULong;
+    uint16_t iUShort;
 
     iULong = CPL_LSBWORD32(poDS->sFileHeader.iSize);
     VSIFWriteL(&iULong, 4, 1, poDS->fp);

@@ -142,7 +142,7 @@ CPLErr GDALOrientedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         std::string osTmpName;
         if (poGTiffDrv)
         {
-            if (static_cast<GIntBig>(nRasterXSize) * nRasterYSize * nDTSize >
+            if (static_cast<int64_t>(nRasterXSize) * nRasterYSize * nDTSize >
                 10 * 1024 * 1024)
             {
                 osTmpName = CPLGenerateTempFilename(nullptr);

@@ -204,7 +204,7 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
                 return SWQT_FLOAT_NUMBER;
             }
 
-            GIntBig nVal = CPLAtoGIntBig(osToken);
+            int64_t nVal = CPLAtoGIntBig(osToken);
             if (CPL_INT64_FITS_ON_INT32(nVal))
                 *ppNode = new swq_expr_node(static_cast<int>(nVal));
             else

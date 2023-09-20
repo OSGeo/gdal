@@ -34,6 +34,7 @@
 #include "jpgdataset.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -163,7 +164,7 @@ void JPGDatasetCommon::ReadImageStructureMetadata()
         return;  // quality guessing not implemented for 12-bit JPEG for now
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     GByte abyChunkHeader[4];
     int nChunkLoc = 2;
@@ -234,7 +235,7 @@ void JPGDatasetCommon::ReadEXIFMetadata()
     CPLAssert(papszMetadata == nullptr);
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     if (EXIFInit(m_fpImage))
     {
@@ -305,7 +306,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
         return;
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     // Search for APP1 chunk.
     constexpr int APP1_BYTE = 0xe1;
@@ -387,7 +388,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     bHasReadFLIRMetadata = true;
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     int nChunkLoc = 2;
     // size of APP1 segment marker + size of "FLIR\0"
@@ -742,7 +743,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         const auto nSS = ReadUInt32(nRecOffset + 904) & 0xffff;
         const auto nTZ = ReadInt16(nRecOffset + 908);
         struct tm brokenDown;
-        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(nUnixTime) - nTZ * 60,
+        CPLUnixTimeToYMDHMS(static_cast<int64_t>(nUnixTime) - nTZ * 60,
                             &brokenDown);
         std::string osDateTime(CPLSPrintf(
             "%04d-%02d-%02dT%02d:%02d:%02d.%03d", brokenDown.tm_year + 1900,
@@ -1005,7 +1006,7 @@ void JPGDatasetCommon::ReadICCProfile()
         return;
     bHasReadICCMetadata = true;
 
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     int nChunkCount = -1;
     int anChunkSize[256] = {};
@@ -1346,8 +1347,8 @@ CPLErr JPGMaskBand::IReadBlock(int /* nBlockX */, int nBlockY, void *pImage)
         return CE_Failure;
 
     // Set mask based on bitmask for this scanline.
-    GUInt32 iBit =
-        static_cast<GUInt32>(nBlockY) * static_cast<GUInt32>(nBlockXSize);
+    uint32_t iBit =
+        static_cast<uint32_t>(nBlockY) * static_cast<uint32_t>(nBlockXSize);
 
     GByte *const pbyImage = static_cast<GByte *>(pImage);
     if (poJDS->bMaskLSBOrder)
@@ -1719,15 +1720,15 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
         return nullptr;
 
     // Read number of entry in directory.
-    GUInt16 nEntryCount = 0;
+    uint16_t nEntryCount = 0;
     if (nTiffDirStart > (INT_MAX - nTIFFHEADER) ||
         VSIFSeekL(m_fpImage, nTiffDirStart + nTIFFHEADER, SEEK_SET) != 0 ||
-        VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), m_fpImage) !=
-            sizeof(GUInt16))
+        VSIFReadL(&nEntryCount, 1, sizeof(uint16_t), m_fpImage) !=
+            sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
-                 static_cast<vsi_l_offset>(nTiffDirStart) + nTIFFHEADER);
+                 "Error reading EXIF Directory count at %" PRIu64,
+                 static_cast<uint64_t>(nTiffDirStart) + nTIFFHEADER);
         return nullptr;
     }
 
@@ -1747,9 +1748,9 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     VSIFSeekL(m_fpImage, nEntryCount * sizeof(GDALEXIFTIFFDirEntry), SEEK_CUR);
 
     // Read offset of next directory (IFD1).
-    GUInt32 nNextDirOff = 0;
-    if (VSIFReadL(&nNextDirOff, 1, sizeof(GUInt32), m_fpImage) !=
-        sizeof(GUInt32))
+    uint32_t nNextDirOff = 0;
+    if (VSIFReadL(&nNextDirOff, 1, sizeof(uint32_t), m_fpImage) !=
+        sizeof(uint32_t))
         return nullptr;
     if (bSwabflag)
         CPL_SWAP32PTR(&nNextDirOff);
@@ -1758,8 +1759,8 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
 
     // Seek to IFD1.
     if (VSIFSeekL(m_fpImage, nTIFFHEADER + nNextDirOff, SEEK_SET) != 0 ||
-        VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), m_fpImage) !=
-            sizeof(GUInt16))
+        VSIFReadL(&nEntryCount, 1, sizeof(uint16_t), m_fpImage) !=
+            sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error reading IFD1 Directory count at %d.",
@@ -1783,8 +1784,8 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     int nImageWidth = 0;
     int nImageHeight = 0;
     int nCompression = 6;
-    GUInt32 nJpegIFOffset = 0;
-    GUInt32 nJpegIFByteCount = 0;
+    uint32_t nJpegIFOffset = 0;
+    uint32_t nJpegIFByteCount = 0;
     for (int i = 0; i < nEntryCount; i++)
     {
         GDALEXIFTIFFDirEntry sEntry;
@@ -1866,7 +1867,7 @@ void JPGDatasetCommon::InitInternalOverviews()
         GDALDataset *poEXIFOverview = nullptr;
         if (nRasterXSize > 512 || nRasterYSize > 512)
         {
-            const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+            const uint64_t nCurOffset = VSIFTellL(m_fpImage);
             poEXIFOverview = InitEXIFOverview();
             if (poEXIFOverview != nullptr)
             {
@@ -2075,7 +2076,7 @@ CPLErr JPGDataset::StartDecompress()
         /* in libjpeg */
 
         // 1 MB for regular libjpeg usage
-        vsi_l_offset nRequiredMemory = 1024 * 1024;
+        uint64_t nRequiredMemory = 1024 * 1024;
 
         for (int ci = 0; ci < sDInfo.num_components; ci++)
         {
@@ -2087,8 +2088,8 @@ CPLErr JPGDataset::StartDecompress()
                 return CE_Failure;
             }
             nRequiredMemory +=
-                static_cast<vsi_l_offset>(DIV_ROUND_UP(
-                    compptr->width_in_blocks, compptr->h_samp_factor)) *
+                static_cast<uint64_t>(DIV_ROUND_UP(compptr->width_in_blocks,
+                                                   compptr->h_samp_factor)) *
                 DIV_ROUND_UP(compptr->height_in_blocks,
                              compptr->v_samp_factor) *
                 sizeof(JBLOCK);
@@ -2106,23 +2107,22 @@ CPLErr JPGDataset::StartDecompress()
 
         if (sDInfo.mem->max_memory_to_use > 0 &&
             nRequiredMemory >
-                static_cast<vsi_l_offset>(sDInfo.mem->max_memory_to_use) &&
+                static_cast<uint64_t>(sDInfo.mem->max_memory_to_use) &&
             CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) ==
                 nullptr)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Reading this image would require libjpeg to allocate "
-                     "at least " CPL_FRMT_GUIB " bytes. "
-                     "This is disabled since above the " CPL_FRMT_GUIB
-                     " threshold. "
+                     "at least %" PRIu64 " bytes. "
+                     "This is disabled since above the %" PRIu64 " threshold. "
                      "You may override this restriction by defining the "
                      "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
                      "or setting the JPEGMEM environment variable to a value "
                      "greater "
-                     "or equal to '" CPL_FRMT_GUIB "M'",
-                     static_cast<GUIntBig>(nRequiredMemory),
-                     static_cast<GUIntBig>(sDInfo.mem->max_memory_to_use),
-                     static_cast<GUIntBig>((nRequiredMemory + 1000000 - 1) /
+                     "or equal to '%" PRIu64 "M'",
+                     static_cast<uint64_t>(nRequiredMemory),
+                     static_cast<uint64_t>(sDInfo.mem->max_memory_to_use),
+                     static_cast<uint64_t>((nRequiredMemory + 1000000 - 1) /
                                            1000000));
             return CE_Failure;
         }
@@ -2548,8 +2548,8 @@ CPLErr JPGDatasetCommon::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
                                    GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
+                                   int *panBandMap, int64_t nPixelSpace,
+                                   int64_t nLineSpace, int64_t nBandSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -2937,8 +2937,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     // If it is a subfile, read the JPEG header.
     bool bIsSubfile = false;
-    GUIntBig subfile_offset = 0;
-    GUIntBig subfile_size = 0;
+    uint64_t subfile_offset = 0;
+    uint64_t subfile_size = 0;
     const char *real_filename = pszFilename;
     int nQLevel = -1;
 
@@ -2998,8 +2998,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
         }
 
         CPLDebug("JPG",
-                 "real_filename %s, offset=" CPL_FRMT_GUIB
-                 ", size=" CPL_FRMT_GUIB "\n",
+                 "real_filename %s, offset=%" PRIu64 ", size=%" PRIu64 "\n",
                  real_filename, subfile_offset, subfile_size);
 
         bIsSubfile = true;
@@ -3286,15 +3285,15 @@ void JPGDatasetCommon::CheckForMask()
 
 {
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     // Go to the end of the file, pull off four bytes, and see if
     // it is plausibly the size of the real image data.
     VSIFSeekL(m_fpImage, 0, SEEK_END);
-    GIntBig nFileSize = VSIFTellL(m_fpImage);
+    int64_t nFileSize = VSIFTellL(m_fpImage);
     VSIFSeekL(m_fpImage, nFileSize - 4, SEEK_SET);
 
-    GUInt32 nImageSize = 0;
+    uint32_t nImageSize = 0;
     VSIFReadL(&nImageSize, 4, 1, m_fpImage);
     CPL_LSBPTR32(&nImageSize);
 
@@ -3770,7 +3769,7 @@ void JPGAddICCProfile(void *pInfo, const char *pszICCProfile,
 
     // Write out each segment of the ICC profile.
     char *pEmbedBuffer = CPLStrdup(pszICCProfile);
-    GInt32 nEmbedLen = CPLBase64DecodeInPlace((GByte *)pEmbedBuffer);
+    int32_t nEmbedLen = CPLBase64DecodeInPlace((GByte *)pEmbedBuffer);
     char *pEmbedPtr = pEmbedBuffer;
     char const *const paHeader = "ICC_PROFILE";
     int nSegments = (nEmbedLen + 65518) / 65519;
@@ -3844,7 +3843,7 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
     const bool bMaskLSBOrder = EQUAL(pszJPEGMaskBitOrder, "LSB");
 
     // Set bit buffer from mask band, scanline by scanline.
-    GUInt32 iBit = 0;
+    uint32_t iBit = 0;
     for (int iY = 0; eErr == CE_None && iY < nYSize; iY++)
     {
         eErr = poMask->RasterIO(GF_Read, 0, iY, nXSize, 1, pabyMaskLine, nXSize,
@@ -3923,7 +3922,7 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
         {
             VSIFSeekL(fpOut, 0, SEEK_END);
 
-            GUInt32 nImageSize = static_cast<GUInt32>(VSIFTellL(fpOut));
+            uint32_t nImageSize = static_cast<uint32_t>(VSIFTellL(fpOut));
             CPL_LSBPTR32(&nImageSize);
 
             if (VSIFWriteL(pabyCMask, 1, nTotalOut, fpOut) != nTotalOut)
@@ -4001,7 +4000,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
     }
     if (nOvrWidth == 0)
     {
-        nOvrWidth = static_cast<int>(static_cast<GIntBig>(nOvrHeight) * nXSize /
+        nOvrWidth = static_cast<int>(static_cast<int64_t>(nOvrHeight) * nXSize /
                                      nYSize);
         if (nOvrWidth == 0)
             nOvrWidth = 1;
@@ -4009,12 +4008,12 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
     else if (nOvrHeight == 0)
     {
         nOvrHeight =
-            static_cast<int>(static_cast<GIntBig>(nOvrWidth) * nYSize / nXSize);
+            static_cast<int>(static_cast<int64_t>(nOvrWidth) * nYSize / nXSize);
         if (nOvrHeight == 0)
             nOvrHeight = 1;
     }
 
-    vsi_l_offset nJPEGIfByteCount = 0;
+    uint64_t nJPEGIfByteCount = 0;
     GByte *pabyOvr = nullptr;
 
     if (bGenerateEXIFThumbnail && nXSize > nOvrWidth && nYSize > nOvrHeight)
@@ -4069,18 +4068,18 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
         }
     }
 
-    GUInt32 nMarkerSize;
+    uint32_t nMarkerSize;
     const bool bWriteExifMetadata =
         CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
 
     GByte *pabyEXIF =
         EXIFCreate(bWriteExifMetadata ? poSrcDS->GetMetadata() : nullptr,
-                   pabyOvr, static_cast<GUInt32>(nJPEGIfByteCount), nOvrWidth,
+                   pabyOvr, static_cast<uint32_t>(nJPEGIfByteCount), nOvrWidth,
                    nOvrHeight, &nMarkerSize);
     if (pabyEXIF)
     {
         p_jpeg_write_m_header(cinfo, JPEG_APP0 + 1, nMarkerSize);
-        for (GUInt32 i = 0; i < nMarkerSize; i++)
+        for (uint32_t i = 0; i < nMarkerSize; i++)
         {
             p_jpeg_write_m_byte(cinfo, pabyEXIF[i]);
         }
@@ -4137,7 +4136,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                     {
                         papszEXIF_MD = poSrcDS->GetMetadata();
                     }
-                    GUInt32 nEXIFContentSize = 0;
+                    uint32_t nEXIFContentSize = 0;
                     GByte *pabyEXIF = EXIFCreate(papszEXIF_MD, nullptr, 0, 0, 0,
                                                  &nEXIFContentSize);
                     if (nEXIFContentSize > 0 && nEXIFContentSize + 2 <= 65535U)
@@ -4692,7 +4691,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
         // Clamp 16bit values to 12bit.
         if (nWorkDTSize == 2)
         {
-            GUInt16 *panScanline = reinterpret_cast<GUInt16 *>(pabyScanline);
+            uint16_t *panScanline = reinterpret_cast<uint16_t *>(pabyScanline);
 
             for (int iPixel = 0; iPixel < nXSize * nBands; iPixel++)
             {

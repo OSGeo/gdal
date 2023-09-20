@@ -533,7 +533,7 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
 }
 
 template <>
-inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
+inline void GDALCopy4Words(const float *pValueIn, int16_t *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
@@ -555,7 +555,7 @@ inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
 }
 
 template <>
-inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
+inline void GDALCopy4Words(const float *pValueIn, uint16_t *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
@@ -602,7 +602,7 @@ inline void GDALCopy8Words(const float *pValueIn, GByte *const pValueOut)
 }
 
 template <>
-inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
+inline void GDALCopy8Words(const float *pValueIn, uint16_t *const pValueOut)
 {
     __m256 ymm = _mm256_loadu_ps(pValueIn);
 
@@ -621,7 +621,7 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
 }
 #else
 template <>
-inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
+inline void GDALCopy8Words(const float *pValueIn, uint16_t *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
     __m128 xmm1 = _mm_loadu_ps(pValueIn + 4);

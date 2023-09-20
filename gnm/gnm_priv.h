@@ -34,6 +34,8 @@
 
 #include "gdal_priv.h"
 
+#include <cinttypes>
+
 /* -------------------------------------------------------------------- */
 /*              Common constants for internal use                       */
 /* -------------------------------------------------------------------- */
@@ -84,9 +86,9 @@
 
 // Corespondent datatype for identificator
 // (i.e. int -> OFTInteger -> GetFieldAsInteger and
-//       GUIntBig -> OFTInteger64 -> GetFieldAsInteger64)
+//       uint64_t -> OFTInteger64 -> GetFieldAsInteger64)
 #define GNMGFIDInt OFTInteger64
 #define GetFieldAsGNMGFID GetFieldAsInteger64
-#define GNMGFIDFormat CPL_FRMT_GIB
+#define GNMGFIDFormat PRId64
 
 #endif  // GNM_PRIV

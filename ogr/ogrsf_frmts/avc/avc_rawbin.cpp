@@ -220,9 +220,9 @@ void AVCRawBinSetFileDataSize(AVCRawBinFile *psFile, int nFileDataSize)
  *                      AVCRawBinIsFileGreaterThan()
  *
  **********************************************************************/
-int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize)
+int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, uint64_t nSize)
 {
-    vsi_l_offset nCurPos = VSIFTellL(psFile->fp);
+    uint64_t nCurPos = VSIFTellL(psFile->fp);
     VSIFSeekL(psFile->fp, 0, SEEK_END);
     bool bRet = VSIFTellL(psFile->fp) >= nSize;
     VSIFSeekL(psFile->fp, nCurPos, SEEK_SET);
@@ -235,7 +235,7 @@ int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize)
  * Copy the number of bytes from the input file to the specified
  * memory location.
  **********************************************************************/
-static GBool bDisableReadBytesEOFError = FALSE;
+static bool bDisableReadBytesEOFError = FALSE;
 
 void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 {
@@ -374,11 +374,11 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
 
     /* Compute destination relative to current memory buffer
      */
-    GIntBig nTargetBig;
+    int64_t nTargetBig;
     if (nFrom == SEEK_SET)
-        nTargetBig = static_cast<GIntBig>(nOffset) - psFile->nOffset;
+        nTargetBig = static_cast<int64_t>(nOffset) - psFile->nOffset;
     else /* if (nFrom == SEEK_CUR) */
-        nTargetBig = static_cast<GIntBig>(nOffset) + psFile->nCurPos;
+        nTargetBig = static_cast<int64_t>(nOffset) + psFile->nCurPos;
     if (nTargetBig > INT_MAX)
         return;
     nTarget = static_cast<int>(nTargetBig);
@@ -418,7 +418,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
  * Return TRUE if there is no more data to read from the file or
  * FALSE otherwise.
  **********************************************************************/
-GBool AVCRawBinEOF(AVCRawBinFile *psFile)
+bool AVCRawBinEOF(AVCRawBinFile *psFile)
 {
     if (psFile == nullptr || psFile->fp == nullptr)
         return TRUE;
@@ -475,29 +475,29 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
  * and return a value with the bytes ordered properly for the current
  * platform.
  **********************************************************************/
-GInt16 AVCRawBinReadInt16(AVCRawBinFile *psFile)
+int16_t AVCRawBinReadInt16(AVCRawBinFile *psFile)
 {
-    GInt16 n16Value = 0;
+    int16_t n16Value = 0;
 
     AVCRawBinReadBytes(psFile, 2, (GByte *)(&n16Value));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        return (GInt16)CPL_SWAP16(n16Value);
+        return (int16_t)CPL_SWAP16(n16Value);
     }
 
     return n16Value;
 }
 
-GInt32 AVCRawBinReadInt32(AVCRawBinFile *psFile)
+int32_t AVCRawBinReadInt32(AVCRawBinFile *psFile)
 {
-    GInt32 n32Value = 0;
+    int32_t n32Value = 0;
 
     AVCRawBinReadBytes(psFile, 4, (GByte *)(&n32Value));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        return (GInt32)CPL_SWAP32(n32Value);
+        return (int32_t)CPL_SWAP32(n32Value);
     }
 
     return n32Value;
@@ -577,21 +577,21 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
  * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
-void AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value)
+void AVCRawBinWriteInt16(AVCRawBinFile *psFile, int16_t n16Value)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        n16Value = (GInt16)CPL_SWAP16(n16Value);
+        n16Value = (int16_t)CPL_SWAP16(n16Value);
     }
 
     AVCRawBinWriteBytes(psFile, 2, (GByte *)&n16Value);
 }
 
-void AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value)
+void AVCRawBinWriteInt32(AVCRawBinFile *psFile, int32_t n32Value)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        n32Value = (GInt32)CPL_SWAP32(n32Value);
+        n32Value = (int32_t)CPL_SWAP32(n32Value);
     }
 
     AVCRawBinWriteBytes(psFile, 4, (GByte *)&n32Value);

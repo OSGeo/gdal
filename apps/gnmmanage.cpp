@@ -34,6 +34,8 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
+#include <cinttypes>
+
 // #include "ogr_p.h"
 // #include "gnm.h"
 // #include "gnm_api.h"
@@ -944,7 +946,7 @@ MAIN_START(nArgc, papszArgv)
                                                        true) != CE_None)
                 {
                     fprintf(stderr,
-                            "\nChange block state of id " GNMGFIDFormat
+                            "\nChange block state of id %" GNMGFIDFormat
                             " failed\n",
                             anFIDsToBlock[i]);
                     nRet = 1;
@@ -958,7 +960,7 @@ MAIN_START(nArgc, papszArgv)
                                                        false) != CE_None)
                 {
                     fprintf(stderr,
-                            "\nChange block state of id " GNMGFIDFormat
+                            "\nChange block state of id %" GNMGFIDFormat
                             " failed\n",
                             anFIDsToBlock[i]);
                     nRet = 1;

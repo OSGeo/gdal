@@ -25,7 +25,7 @@
 #include "cpl_vsi.h"
 #include "zlib.h"
 
-#define uLong64 vsi_l_offset
+#define uLong64 uint64_t
 
 #define ZLIB_FILEFUNC_SEEK_CUR (1)
 #define ZLIB_FILEFUNC_SEEK_END (2)

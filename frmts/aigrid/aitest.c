@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
 {
     AIGInfo_t *psInfo;
-    GInt32 *panRaster;
+    int32_t *panRaster;
     int i, j;
     int bMagic = FALSE, bSuppressMagic = FALSE;
     int iTestTileX = 0, iTestTileY = 0;
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
     /*      Read a block, and report its contents.                          */
     /* -------------------------------------------------------------------- */
     panRaster =
-        (GInt32 *)CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);
+        (int32_t *)CPLMalloc(psInfo->nBlockXSize * psInfo->nBlockYSize * 4);
 
     while (argc > 2 && (atoi(argv[2]) > 0 || argv[2][0] == '0'))
     {

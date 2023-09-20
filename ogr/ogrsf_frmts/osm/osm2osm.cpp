@@ -34,26 +34,26 @@
 #include <cstdio>
 #include <ctime>
 
-constexpr GIntBig SECSPERMIN = 60L;
-constexpr GIntBig MINSPERHOUR = 60L;
-constexpr GIntBig HOURSPERDAY = 24L;
-constexpr GIntBig SECSPERHOUR = SECSPERMIN * MINSPERHOUR;
-constexpr GIntBig SECSPERDAY = SECSPERHOUR * HOURSPERDAY;
-constexpr GIntBig DAYSPERWEEK = 7;
-constexpr GIntBig MONSPERYEAR = 12;
+constexpr int64_t SECSPERMIN = 60L;
+constexpr int64_t MINSPERHOUR = 60L;
+constexpr int64_t HOURSPERDAY = 24L;
+constexpr int64_t SECSPERHOUR = SECSPERMIN * MINSPERHOUR;
+constexpr int64_t SECSPERDAY = SECSPERHOUR * HOURSPERDAY;
+constexpr int64_t DAYSPERWEEK = 7;
+constexpr int64_t MONSPERYEAR = 12;
 
-constexpr GIntBig EPOCH_YEAR = 1970;
-constexpr GIntBig EPOCH_WDAY = 4;
-constexpr GIntBig TM_YEAR_BASE = 1900;
-constexpr GIntBig DAYSPERNYEAR = 365;
-constexpr GIntBig DAYSPERLYEAR = 366;
+constexpr int64_t EPOCH_YEAR = 1970;
+constexpr int64_t EPOCH_WDAY = 4;
+constexpr int64_t TM_YEAR_BASE = 1900;
+constexpr int64_t DAYSPERNYEAR = 365;
+constexpr int64_t DAYSPERLYEAR = 366;
 
-static bool isleap(GIntBig y)
+static bool isleap(int64_t y)
 {
     return ((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0;
 }
 
-static GIntBig LEAPS_THROUGH_END_OF(GIntBig y)
+static int64_t LEAPS_THROUGH_END_OF(int64_t y)
 {
     return y / 4 - y / 100 + y / 400;
 }
@@ -80,10 +80,10 @@ static const int year_lengths[2] = {DAYSPERNYEAR, DAYSPERLYEAR};
  * @return the structure pointed by pRet filled with a broken-down UTC time.
  */
 
-static struct tm *myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
+static struct tm *myCPLUnixTimeToYMDHMS(int64_t unixTime, struct tm *pRet)
 {
-    GIntBig days = unixTime / SECSPERDAY;
-    GIntBig rem = unixTime % SECSPERDAY;
+    int64_t days = unixTime / SECSPERDAY;
+    int64_t rem = unixTime % SECSPERDAY;
 
     while (rem < 0)
     {
@@ -103,11 +103,11 @@ static struct tm *myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
     if (pRet->tm_wday < 0)
         pRet->tm_wday += DAYSPERWEEK;
     int yleap = 0;
-    GIntBig y = EPOCH_YEAR;
+    int64_t y = EPOCH_YEAR;
     while (days < 0 ||
-           days >= static_cast<GIntBig>(year_lengths[yleap = isleap(y)]))
+           days >= static_cast<int64_t>(year_lengths[yleap = isleap(y)]))
     {
-        GIntBig newy = y + days / DAYSPERNYEAR;
+        int64_t newy = y + days / DAYSPERNYEAR;
         if (days < 0)
             --newy;
         days -= (newy - y) * DAYSPERNYEAR + LEAPS_THROUGH_END_OF(newy - 1) -
@@ -117,9 +117,9 @@ static struct tm *myCPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
     pRet->tm_year = static_cast<int>(y - TM_YEAR_BASE);
     pRet->tm_yday = static_cast<int>(days);
     const int *ip = mon_lengths[yleap];
-    for (pRet->tm_mon = 0; days >= static_cast<GIntBig>(ip[pRet->tm_mon]);
+    for (pRet->tm_mon = 0; days >= static_cast<int64_t>(ip[pRet->tm_mon]);
          ++(pRet->tm_mon))
-        days = days - static_cast<GIntBig>(ip[pRet->tm_mon]);
+        days = days - static_cast<int64_t>(ip[pRet->tm_mon]);
 
     pRet->tm_mday = static_cast<int>(days + 1);
     pRet->tm_isdst = 0;

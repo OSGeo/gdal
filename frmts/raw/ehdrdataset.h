@@ -142,9 +142,9 @@ class EHdrRasterBand final : public RawRasterBand
 
     bool m_bValid = false;
     int nBits{};
-    vsi_l_offset nStartBit{};
+    uint64_t nStartBit{};
     int nPixelOffsetBits{};
-    vsi_l_offset nLineOffsetBits{};
+    uint64_t nLineOffsetBits{};
 
     int bNoDataSet{};  // TODO(schwehr): Convert to bool.
     double dfNoData{};
@@ -156,14 +156,14 @@ class EHdrRasterBand final : public RawRasterBand
     int minmaxmeanstddev{};
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     CPL_DISALLOW_COPY_ASSIGN(EHdrRasterBand)
 
   public:
     EHdrRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                   vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                   uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                    GDALDataType eDataType,
                    RawRasterBand::ByteOrder eByteOrderIn, int nBits);
 

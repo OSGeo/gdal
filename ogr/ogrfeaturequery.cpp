@@ -396,10 +396,10 @@ int OGRFeatureQuery::CanUseIndex(const swq_expr_node *psExpr, OGRLayer *poLayer)
 /*      multi-part queries with ranges.                                 */
 /************************************************************************/
 
-static int CompareGIntBig(const void *pa, const void *pb)
+static int Compareint64_t(const void *pa, const void *pb)
 {
-    const GIntBig a = *(reinterpret_cast<const GIntBig *>(pa));
-    const GIntBig b = *(reinterpret_cast<const GIntBig *>(pb));
+    const int64_t a = *(reinterpret_cast<const int64_t *>(pa));
+    const int64_t b = *(reinterpret_cast<const int64_t *>(pb));
     if (a < b)
         return -1;
     else if (a > b)
@@ -408,7 +408,7 @@ static int CompareGIntBig(const void *pa, const void *pb)
         return 0;
 }
 
-GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(OGRLayer *poLayer,
+int64_t *OGRFeatureQuery::EvaluateAgainstIndices(OGRLayer *poLayer,
                                                  OGRErr *peErr)
 
 {
@@ -421,26 +421,26 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(OGRLayer *poLayer,
     if (poLayer->GetIndex() == nullptr)
         return nullptr;
 
-    GIntBig nFIDCount = 0;
+    int64_t nFIDCount = 0;
     return EvaluateAgainstIndices(psExpr, poLayer, nFIDCount);
 }
 
 // The input arrays must be sorted.
-static GIntBig *OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
-                                  GIntBig panFIDList2[], GIntBig nFIDCount2,
-                                  GIntBig &nFIDCount)
+static int64_t *OGRORint64_tArray(int64_t panFIDList1[], int64_t nFIDCount1,
+                                  int64_t panFIDList2[], int64_t nFIDCount2,
+                                  int64_t &nFIDCount)
 {
-    const GIntBig nMaxCount = nFIDCount1 + nFIDCount2;
-    GIntBig *panFIDList = static_cast<GIntBig *>(
-        CPLMalloc(static_cast<size_t>(nMaxCount + 1) * sizeof(GIntBig)));
+    const int64_t nMaxCount = nFIDCount1 + nFIDCount2;
+    int64_t *panFIDList = static_cast<int64_t *>(
+        CPLMalloc(static_cast<size_t>(nMaxCount + 1) * sizeof(int64_t)));
     nFIDCount = 0;
 
-    for (GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 || i2 < nFIDCount2;)
+    for (int64_t i1 = 0, i2 = 0; i1 < nFIDCount1 || i2 < nFIDCount2;)
     {
         if (i1 < nFIDCount1 && i2 < nFIDCount2)
         {
-            const GIntBig nVal1 = panFIDList1[i1];
-            const GIntBig nVal2 = panFIDList2[i2];
+            const int64_t nVal1 = panFIDList1[i1];
+            const int64_t nVal2 = panFIDList2[i2];
             if (nVal1 < nVal2)
             {
                 if (i1 + 1 < nFIDCount1 && panFIDList1[i1 + 1] <= nVal2)
@@ -480,13 +480,13 @@ static GIntBig *OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
         }
         else if (i1 < nFIDCount1)
         {
-            const GIntBig nVal1 = panFIDList1[i1];
+            const int64_t nVal1 = panFIDList1[i1];
             panFIDList[nFIDCount++] = nVal1;
             i1++;
         }
         else if (i2 < nFIDCount2)
         {
-            const GIntBig nVal2 = panFIDList2[i2];
+            const int64_t nVal2 = panFIDList2[i2];
             panFIDList[nFIDCount++] = nVal2;
             i2++;
         }
@@ -498,19 +498,19 @@ static GIntBig *OGRORGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
 }
 
 // The input arrays must be sorted.
-static GIntBig *OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
-                                   GIntBig panFIDList2[], GIntBig nFIDCount2,
-                                   GIntBig &nFIDCount)
+static int64_t *OGRANDint64_tArray(int64_t panFIDList1[], int64_t nFIDCount1,
+                                   int64_t panFIDList2[], int64_t nFIDCount2,
+                                   int64_t &nFIDCount)
 {
-    GIntBig nMaxCount = std::max(nFIDCount1, nFIDCount2);
-    GIntBig *panFIDList = static_cast<GIntBig *>(
-        CPLMalloc(static_cast<size_t>(nMaxCount + 1) * sizeof(GIntBig)));
+    int64_t nMaxCount = std::max(nFIDCount1, nFIDCount2);
+    int64_t *panFIDList = static_cast<int64_t *>(
+        CPLMalloc(static_cast<size_t>(nMaxCount + 1) * sizeof(int64_t)));
     nFIDCount = 0;
 
-    for (GIntBig i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2;)
+    for (int64_t i1 = 0, i2 = 0; i1 < nFIDCount1 && i2 < nFIDCount2;)
     {
-        const GIntBig nVal1 = panFIDList1[i1];
-        const GIntBig nVal2 = panFIDList2[i2];
+        const int64_t nVal1 = panFIDList1[i1];
+        const int64_t nVal2 = panFIDList2[i2];
         if (nVal1 < nVal2)
         {
             if (i1 + 1 < nFIDCount1 && panFIDList1[i1 + 1] <= nVal2)
@@ -548,9 +548,9 @@ static GIntBig *OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     return panFIDList;
 }
 
-GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
+int64_t *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
                                                  OGRLayer *poLayer,
-                                                 GIntBig &nFIDCount)
+                                                 int64_t &nFIDCount)
 {
     // Does the expression meet our requirements?
     if (psExpr == nullptr || psExpr->eNodeType != SNT_OPERATION)
@@ -559,25 +559,25 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
     if ((psExpr->nOperation == SWQ_OR || psExpr->nOperation == SWQ_AND) &&
         psExpr->nSubExprCount == 2)
     {
-        GIntBig nFIDCount1 = 0;
-        GIntBig nFIDCount2 = 0;
-        GIntBig *panFIDList1 =
+        int64_t nFIDCount1 = 0;
+        int64_t nFIDCount2 = 0;
+        int64_t *panFIDList1 =
             EvaluateAgainstIndices(psExpr->papoSubExpr[0], poLayer, nFIDCount1);
-        GIntBig *panFIDList2 =
+        int64_t *panFIDList2 =
             panFIDList1 == nullptr
                 ? nullptr
                 : EvaluateAgainstIndices(psExpr->papoSubExpr[1], poLayer,
                                          nFIDCount2);
-        GIntBig *panFIDList = nullptr;
+        int64_t *panFIDList = nullptr;
         if (panFIDList1 != nullptr && panFIDList2 != nullptr)
         {
             if (psExpr->nOperation == SWQ_OR)
                 panFIDList =
-                    OGRORGIntBigArray(panFIDList1, nFIDCount1, panFIDList2,
+                    OGRORint64_tArray(panFIDList1, nFIDCount1, panFIDList2,
                                       nFIDCount2, nFIDCount);
             else if (psExpr->nOperation == SWQ_AND)
                 panFIDList =
-                    OGRANDGIntBigArray(panFIDList1, nFIDCount1, panFIDList2,
+                    OGRANDint64_tArray(panFIDList1, nFIDCount1, panFIDList2,
                                        nFIDCount2, nFIDCount);
         }
         CPLFree(panFIDList1);
@@ -611,7 +611,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
     if (psExpr->nOperation == SWQ_IN)
     {
         int nLength = 0;
-        GIntBig *panFIDs = nullptr;
+        int64_t *panFIDs = nullptr;
         nFIDCount = 0;
 
         for (int iIN = 1; iIN < psExpr->nSubExprCount; iIN++)
@@ -629,7 +629,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
 
                 case OFTInteger64:
                     if (psExpr->papoSubExpr[iIN]->field_type == SWQ_FLOAT)
-                        sValue.Integer64 = static_cast<GIntBig>(
+                        sValue.Integer64 = static_cast<int64_t>(
                             psExpr->papoSubExpr[iIN]->float_value);
                     else
                         sValue.Integer64 = psExpr->papoSubExpr[iIN]->int_value;
@@ -657,8 +657,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
         if (nFIDCount > 1)
         {
             // The returned FIDs are expected to be in sorted order.
-            qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
-                  CompareGIntBig);
+            qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(int64_t),
+                  Compareint64_t);
         }
         return panFIDs;
     }
@@ -675,7 +675,7 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
 
         case OFTInteger64:
             if (poValue->field_type == SWQ_FLOAT)
-                sValue.Integer64 = static_cast<GIntBig>(poValue->float_value);
+                sValue.Integer64 = static_cast<int64_t>(poValue->float_value);
             else
                 sValue.Integer64 = poValue->int_value;
             break;
@@ -695,15 +695,15 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
 
     int nLength = 0;
     int nFIDCount32 = 0;
-    GIntBig *panFIDs =
+    int64_t *panFIDs =
         poIndex->GetAllMatches(&sValue, nullptr, &nFIDCount32, &nLength);
     nFIDCount = nFIDCount32;
     if (nFIDCount > 1)
     {
         // The returned FIDs are expected to be sorted.
         // TODO(schwehr): Use std::sort.
-        qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(GIntBig),
-              CompareGIntBig);
+        qsort(panFIDs, static_cast<size_t>(nFIDCount), sizeof(int64_t),
+              Compareint64_t);
     }
     return panFIDs;
 }

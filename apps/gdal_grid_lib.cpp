@@ -454,7 +454,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         return CE_Failure;
     }
 
-    GIntBig nBlock = 0;
+    int64_t nBlock = 0;
     const double dfBlockCount =
         static_cast<double>(DIV_ROUND_UP(nXSize, nBlockXSize)) *
         DIV_ROUND_UP(nYSize, nBlockYSize);

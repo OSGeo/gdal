@@ -112,7 +112,7 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
     // Layer srid.
     int nSRSId;
 
-    GIntBig iNextShapeId;
+    int64_t iNextShapeId;
 
     OGRMySQLDataSource *poDS;
 
@@ -140,7 +140,7 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -181,9 +181,9 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
 
     OGRErr Initialize(const char *pszTableName);
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     void SetSpatialFilter(OGRGeometry *) override;
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
@@ -193,7 +193,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
 
     virtual OGRErr SetAttributeFilter(const char *) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(OGRFieldDefn *poField,
@@ -235,7 +235,7 @@ class OGRMySQLResultLayer final : public OGRMySQLLayer
     OGRFeatureDefn *ReadResultDefinition();
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual int TestCapability(const char *) override;
 };

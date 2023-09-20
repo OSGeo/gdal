@@ -54,8 +54,8 @@ class PCRasterRasterBand final : public GDALPamRasterBand
     GDALDataType d_create_in;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     //! Assignment operator. NOT IMPLEMENTED.

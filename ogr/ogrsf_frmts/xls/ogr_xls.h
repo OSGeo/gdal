@@ -66,7 +66,7 @@ class OGRXLSLayer final : public OGRLayer,
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXLSLayer)
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
     virtual const char *GetName() override
     {

@@ -327,14 +327,14 @@ OGRErr OGRJMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
                     if (poTool->GetType() == OGRSTCPen &&
                         eGeomType != wkbPolygon && eGeomType != wkbMultiPolygon)
                     {
-                        GBool bIsNull;
+                        bool bIsNull;
                         pszColor = ((OGRStylePen *)poTool)->Color(bIsNull);
                         if (bIsNull)
                             pszColor = nullptr;
                     }
                     else if (poTool->GetType() == OGRSTCBrush)
                     {
-                        GBool bIsNull;
+                        bool bIsNull;
                         pszColor =
                             ((OGRStyleBrush *)poTool)->ForeColor(bIsNull);
                         if (bIsNull)

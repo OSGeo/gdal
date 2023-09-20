@@ -35,6 +35,7 @@
 
 #include "gdal_pdf.h"
 
+#include <cinttypes>
 #include <limits>
 #include <vector>
 #include "pdfobject.h"
@@ -298,8 +299,8 @@ void GDALPDFObject::Serialize(CPLString &osStr, bool bEmitRef)
             char szReal[512];
             double dfRealNonRounded = GetReal();
             double dfReal = ROUND_TO_INT_IF_CLOSE(dfRealNonRounded);
-            if (dfReal == (double)(GIntBig)dfReal)
-                snprintf(szReal, sizeof(szReal), CPL_FRMT_GIB, (GIntBig)dfReal);
+            if (dfReal == (double)(int64_t)dfReal)
+                snprintf(szReal, sizeof(szReal), "%" PRId64, (int64_t)dfReal);
             else if (CanRepresentRealAsString())
             {
                 /* Used for OGC BP numeric values */

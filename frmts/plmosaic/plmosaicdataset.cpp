@@ -123,8 +123,8 @@ class PLMosaicDataset final : public GDALPamDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
@@ -153,7 +153,7 @@ class PLMosaicRasterBand final : public GDALRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual const char *GetMetadataItem(const char *pszName,
@@ -237,8 +237,8 @@ CPLErr PLMosaicRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr PLMosaicRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     PLMosaicDataset *poMOSDS = reinterpret_cast<PLMosaicDataset *>(poDS);
@@ -446,7 +446,7 @@ CPLHTTPResult *PLMosaicDataset::Download(const char *pszURL, int bQuiet404Error)
         CPLDebug("PLSCENES", "Fetching %s", pszURL);
         psResult = reinterpret_cast<CPLHTTPResult *>(
             CPLCalloc(1, sizeof(CPLHTTPResult)));
-        vsi_l_offset nDataLength = 0;
+        uint64_t nDataLength = 0;
         CPLString osURL(pszURL);
         if (osURL.back() == '/')
             osURL.resize(osURL.size() - 1);
@@ -1470,8 +1470,8 @@ CPLErr PLMosaicDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, int nBandCount,
-                                  int *panBandMap, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
+                                  int *panBandMap, int64_t nPixelSpace,
+                                  int64_t nLineSpace, int64_t nBandSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
     if (bUseTMSForMain && !apoTMSDS.empty())

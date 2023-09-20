@@ -286,7 +286,7 @@ OGRFeature *OGRMySQLLayer::GetNextRawFeature()
 /*      Note that we actually override this in OGRMySQLTableLayer.      */
 /************************************************************************/
 
-OGRFeature *OGRMySQLLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRMySQLLayer::GetFeature(int64_t nFeatureId)
 
 {
     return OGRLayer::GetFeature(nFeatureId);

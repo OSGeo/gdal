@@ -57,7 +57,7 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_vsi.h"
-#define uLong64 vsi_l_offset
+#define uLong64 uint64_t
 
 #ifdef __cplusplus
 extern "C"

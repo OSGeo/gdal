@@ -153,7 +153,7 @@ template <typename CODEC, typename BASE>
 CPLErr JP2OPJLikeRasterBand<CODEC, BASE>::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     auto poGDS = (JP2OPJLikeDataset<CODEC, BASE> *)poDS;
 
@@ -280,7 +280,7 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
     int nXEnd = (nXOff + nXSize - 1) / poBand->nBlockXSize;
     int nYStart = nYOff / poBand->nBlockYSize;
     int nYEnd = (nYOff + nYSize - 1) / poBand->nBlockYSize;
-    GIntBig nReqMem = (GIntBig)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
+    int64_t nReqMem = (int64_t)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
                       poBand->nBlockXSize * poBand->nBlockYSize *
                       (GDALGetDataTypeSize(poBand->eDataType) / 8);
 
@@ -395,10 +395,10 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-GIntBig JP2OPJLikeDataset<CODEC, BASE>::GetEstimatedRAMUsage()
+int64_t JP2OPJLikeDataset<CODEC, BASE>::GetEstimatedRAMUsage()
 {
     // libopenjp2 holds the code block values in a uint32_t array.
-    GIntBig nVal = static_cast<GIntBig>(this->m_nTileWidth) *
+    int64_t nVal = static_cast<int64_t>(this->m_nTileWidth) *
                    this->m_nTileHeight * this->nBands * sizeof(uint32_t);
     if (this->bSingleTiled)
     {
@@ -422,8 +422,8 @@ template <typename CODEC, typename BASE>
 CPLErr JP2OPJLikeDataset<CODEC, BASE>::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag != GF_Read)
         return CE_Failure;
@@ -597,7 +597,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
             if (iBand == 4)
             {
                 const auto pSrcA = localctx.psImage->comps[3].data;
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     memcpy(pDst + j * nBlockXSize,
                            pSrcA + j * localctx.stride(localctx.psImage->comps),
@@ -609,7 +609,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 const auto pSrcY = localctx.psImage->comps[0].data;
                 const auto pSrcCb = localctx.psImage->comps[1].data;
                 const auto pSrcCr = localctx.psImage->comps[2].data;
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
@@ -640,7 +640,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
 
             if (bPromoteTo8Bit)
             {
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
@@ -665,7 +665,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
 
             if (bPromoteTo8Bit)
             {
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
@@ -684,11 +684,11 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 GDALCopyWords64(
                     localctx.psImage->comps[iBand - 1].data, GDT_Int32, 4,
                     pDstBuffer, eDataType, nDataTypeSize,
-                    static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                    static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
             }
             else
             {
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     GDALCopyWords(
                         localctx.psImage->comps[iBand - 1].data +
@@ -824,13 +824,13 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
             if (this->bRewrite)
             {
                 GDALJP2Box oBox(this->fp_);
-                vsi_l_offset nOffsetJP2C = 0;
-                vsi_l_offset nLengthJP2C = 0;
-                vsi_l_offset nOffsetXML = 0;
-                vsi_l_offset nOffsetASOC = 0;
-                vsi_l_offset nOffsetUUID = 0;
-                vsi_l_offset nOffsetIHDR = 0;
-                vsi_l_offset nLengthIHDR = 0;
+                uint64_t nOffsetJP2C = 0;
+                uint64_t nLengthJP2C = 0;
+                uint64_t nOffsetXML = 0;
+                uint64_t nOffsetASOC = 0;
+                uint64_t nOffsetUUID = 0;
+                uint64_t nOffsetIHDR = 0;
+                uint64_t nLengthIHDR = 0;
                 int bMSIBox = FALSE;
                 int bGMLData = FALSE;
                 int bUnsupportedConfiguration = FALSE;
@@ -941,14 +941,14 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                         abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
                         abyBuffer[2] == 0 && abyBuffer[3] == 0)
                     {
-                        if ((vsi_l_offset)(GUInt32)(nLengthJP2C + 8) ==
+                        if ((uint64_t)(uint32_t)(nLengthJP2C + 8) ==
                             (nLengthJP2C + 8))
                         {
                             CPLDebug(
                                 CODEC::debugId(),
                                 "Patching length of JP2C box with real length");
                             VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
-                            GUInt32 nLength = (GUInt32)nLengthJP2C + 8;
+                            uint32_t nLength = (uint32_t)nLengthJP2C + 8;
                             CPL_MSBPTR32(&nLength);
                             if (VSIFWriteL(&nLength, 1, 4, this->fp_) != 1)
                                 eErr = CE_Failure;
@@ -1251,10 +1251,10 @@ int JP2OPJLikeDataset<CODEC, BASE>::Identify(GDALOpenInfo *poOpenInfo)
 /*                        JP2FindCodeStream()                           */
 /************************************************************************/
 
-static vsi_l_offset JP2FindCodeStream(VSILFILE *fp, vsi_l_offset *pnLength)
+static uint64_t JP2FindCodeStream(VSILFILE *fp, uint64_t *pnLength)
 {
-    vsi_l_offset nCodeStreamStart = 0;
-    vsi_l_offset nCodeStreamLength = 0;
+    uint64_t nCodeStreamStart = 0;
+    uint64_t nCodeStreamLength = 0;
 
     VSIFSeekL(fp, 0, SEEK_SET);
     GByte abyHeader[16];
@@ -1301,8 +1301,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
 
     /* Detect which codec to use : J2K or JP2 ? */
-    vsi_l_offset nCodeStreamLength = 0;
-    vsi_l_offset nCodeStreamStart =
+    uint64_t nCodeStreamLength = 0;
+    uint64_t nCodeStreamStart =
         JP2FindCodeStream(poOpenInfo->fpL, &nCodeStreamLength);
 
     if (nCodeStreamStart == 0 && nCodeStreamLength == 0)
@@ -1470,7 +1470,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
     {
-        vsi_l_offset nCurOffset = VSIFTellL(poDS->fp_);
+        uint64_t nCurOffset = VSIFTellL(poDS->fp_);
 
         GDALJP2Box oBox(poDS->fp_);
         if (oBox.ReadFirst())
@@ -1485,7 +1485,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
                          strlen(oSubBox.GetType()) > 0;
                          oSubBox.ReadNextChild(&oBox))
                     {
-                        GIntBig nDataLength = oSubBox.GetDataLength();
+                        int64_t nDataLength = oSubBox.GetDataLength();
                         if (poCT == nullptr &&
                             EQUAL(oSubBox.GetType(), "pclr") &&
                             nDataLength >= 3 &&
@@ -1551,10 +1551,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
                                 if (pabyContent[0] ==
                                     1 /* enumerated colourspace */)
                                 {
-                                    GUInt32 enumcs = (pabyContent[3] << 24) |
-                                                     (pabyContent[4] << 16) |
-                                                     (pabyContent[5] << 8) |
-                                                     (pabyContent[6]);
+                                    uint32_t enumcs = (pabyContent[3] << 24) |
+                                                      (pabyContent[4] << 16) |
+                                                      (pabyContent[5] << 8) |
+                                                      (pabyContent[6]);
                                     if (enumcs == 16)
                                     {
                                         poDS->eColorSpace =
@@ -1836,7 +1836,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     }
 
     poOpenInfo->fpL = poDS->fp_;
-    vsi_l_offset nCurOffset = VSIFTellL(poDS->fp_);
+    uint64_t nCurOffset = VSIFTellL(poDS->fp_);
     poDS->LoadJP2Metadata(poOpenInfo);
     VSIFSeekL(poDS->fp_, nCurOffset, SEEK_SET);
     poOpenInfo->fpL = nullptr;
@@ -1884,8 +1884,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
 template <typename CODEC, typename BASE>
 bool JP2OPJLikeDataset<CODEC, BASE>::WriteBox(VSILFILE *fp, GDALJP2Box *poBox)
 {
-    GUInt32 nLBox;
-    GUInt32 nTBox;
+    uint32_t nLBox;
+    uint32_t nTBox;
 
     if (poBox == nullptr)
         return true;
@@ -2776,7 +2776,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     /* -------------------------------------------------------------------- */
     /*      Add JP2 boxes.                                                  */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nStartJP2C = 0;
+    uint64_t nStartJP2C = 0;
     int bUseXLBoxes = FALSE;
 
     if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
@@ -2852,7 +2852,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         ihdrBox.SetType("ihdr");
         ihdrBox.AppendUInt32(nYSize);
         ihdrBox.AppendUInt32(nXSize);
-        ihdrBox.AppendUInt16(static_cast<GUInt16>(nBands));
+        ihdrBox.AppendUInt16(static_cast<uint16_t>(nBands));
         GByte BPC;
         if (bSamePrecision)
             BPC = static_cast<GByte>((localctx.pasBandParams[0].prec - 1) |
@@ -2883,7 +2883,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         colrBox.AppendUInt8(
             0); /* PREC: Precedence. 0=(field reserved for ISO use) */
         colrBox.AppendUInt8(0); /* APPROX: Colourspace approximation. */
-        GUInt32 enumcs = 16;
+        uint32_t enumcs = 16;
         if (eColorSpace == CODEC::cvtenum(JP2_CLRSPC_SRGB))
             enumcs = 16;
         else if (eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY))
@@ -2935,7 +2935,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             nBlueBandIndex = 2;
             nAlphaBandIndex = (nCTComponentCount == 4) ? 3 : -1;
 
-            pclrBox.AppendUInt16(static_cast<GUInt16>(nEntries));
+            pclrBox.AppendUInt16(static_cast<uint16_t>(nEntries));
             pclrBox.AppendUInt8(static_cast<GByte>(
                 nCTComponentCount)); /* NPC: Number of components */
             for (int i = 0; i < nCTComponentCount; i++)
@@ -2972,11 +2972,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         {
             cdefBox.SetType("cdef");
             int nComponents = (nCTComponentCount == 4) ? 4 : nBands;
-            cdefBox.AppendUInt16(static_cast<GUInt16>(nComponents));
+            cdefBox.AppendUInt16(static_cast<uint16_t>(nComponents));
             for (int i = 0; i < nComponents; i++)
             {
                 cdefBox.AppendUInt16(
-                    static_cast<GUInt16>(i)); /* Component number */
+                    static_cast<uint16_t>(i)); /* Component number */
                 if (i != nAlphaBandIndex)
                 {
                     cdefBox.AppendUInt16(
@@ -3065,10 +3065,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                     nXDenom *= 2;
                 }
 
-                oResd.AppendUInt16((GUInt16)dfYRes);
-                oResd.AppendUInt16((GUInt16)nYDenom);
-                oResd.AppendUInt16((GUInt16)dfXRes);
-                oResd.AppendUInt16((GUInt16)nXDenom);
+                oResd.AppendUInt16((uint16_t)dfYRes);
+                oResd.AppendUInt16((uint16_t)nYDenom);
+                oResd.AppendUInt16((uint16_t)dfXRes);
+                oResd.AppendUInt16((uint16_t)nXDenom);
                 oResd.AppendUInt8(2); /* vertical exponent */
                 oResd.AppendUInt8(2); /* horizontal exponent */
 
@@ -3131,8 +3131,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     /* -------------------------------------------------------------------- */
     /*      Try lossless reuse of an existing JPEG2000 codestream           */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nCodeStreamLength = 0;
-    vsi_l_offset nCodeStreamStart = 0;
+    uint64_t nCodeStreamLength = 0;
+    uint64_t nCodeStreamStart = 0;
     VSILFILE *fpSrc = nullptr;
     if (CPLFetchBool(papszOptions, "USE_SRC_CODESTREAM", false))
     {
@@ -3165,20 +3165,20 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         nStartJP2C = VSIFTellL(fp);
         if (nCodeStreamLength)
             bUseXLBoxes =
-                ((vsi_l_offset)(GUInt32)nCodeStreamLength != nCodeStreamLength);
+                ((uint64_t)(uint32_t)nCodeStreamLength != nCodeStreamLength);
         else
             bUseXLBoxes = CPLFetchBool(papszOptions, "JP2C_XLBOX",
                                        false) || /* For debugging */
-                          (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
+                          (int64_t)nXSize * nYSize * nBands * nDataTypeSize /
                                   adfRates.back() >
                               4e9;
-        GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
+        uint32_t nLBox = (bUseXLBoxes) ? 1 : 0;
         CPL_MSBPTR32(&nLBox);
         VSIFWriteL(&nLBox, 1, 4, fp);
         VSIFWriteL("jp2c", 1, 4, fp);
         if (bUseXLBoxes)
         {
-            GUIntBig nXLBox = 0;
+            uint64_t nXLBox = 0;
             VSIFWriteL(&nXLBox, 1, 8, fp);
         }
     }
@@ -3217,7 +3217,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
         GByte abyBuffer[4096];
         VSIFSeekL(fpSrc, nCodeStreamStart, SEEK_SET);
-        vsi_l_offset nRead = 0;
+        uint64_t nRead = 0;
         /* coverity[tainted_data] */
         while (nRead < nCodeStreamLength)
         {
@@ -3279,8 +3279,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         const int nTilesX = DIV_ROUND_UP(nXSize, nBlockXSize);
         const int nTilesY = DIV_ROUND_UP(nYSize, nBlockYSize);
 
-        const GUIntBig nTileSize =
-            (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
+        const uint64_t nTileSize =
+            (uint64_t)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
         GByte *pTempBuffer = nullptr;
 
         const bool bUseIOThread =
@@ -3570,8 +3570,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         !CPLFetchBool(papszOptions, "JP2C_LENGTH_ZERO",
                       false) /* debug option */)
     {
-        vsi_l_offset nEndJP2C = VSIFTellL(fp);
-        GUIntBig nBoxSize = nEndJP2C - nStartJP2C;
+        uint64_t nEndJP2C = VSIFTellL(fp);
+        uint64_t nBoxSize = nEndJP2C - nStartJP2C;
         if (bUseXLBoxes)
         {
             VSIFSeekL(fp, nStartJP2C + 8, SEEK_SET);
@@ -3581,8 +3581,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
         else
         {
-            GUInt32 nBoxSize32 = (GUInt32)nBoxSize;
-            if ((vsi_l_offset)nBoxSize32 != nBoxSize)
+            uint32_t nBoxSize32 = (uint32_t)nBoxSize;
+            if ((uint64_t)nBoxSize32 != nBoxSize)
             {
                 /*  Should not happen hopefully */
                 if ((bGeoreferencingCompatOfGeoJP2 || poGMLJP2Box) &&

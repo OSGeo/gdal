@@ -633,12 +633,12 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex)
      *----------------------------------------------------------------*/
     if (bIndexed)
     {
-        GIntBig nIndexOffsetBig;
+        int64_t nIndexOffsetBig;
 
         if (psFile->eCoverType == AVCCoverPC)
-            nIndexOffsetBig = 356 + static_cast<GIntBig>(iObjIndex - 1) * 8;
+            nIndexOffsetBig = 356 + static_cast<int64_t>(iObjIndex - 1) * 8;
         else
-            nIndexOffsetBig = 100 + static_cast<GIntBig>(iObjIndex - 1) * 8;
+            nIndexOffsetBig = 100 + static_cast<int64_t>(iObjIndex - 1) * 8;
         if (nIndexOffsetBig < INT_MIN || nIndexOffsetBig > INT_MAX)
             return nullptr;
 
@@ -657,8 +657,8 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex)
     }
     else
     {
-        GIntBig nObjectOffsetBig =
-            nRecordStart + nRecordSize * static_cast<GIntBig>(iObjIndex - 1);
+        int64_t nObjectOffsetBig =
+            nRecordStart + nRecordSize * static_cast<int64_t>(iObjIndex - 1);
         if (nObjectOffsetBig < INT_MIN || nObjectOffsetBig > INT_MAX)
             return nullptr;
         nObjectOffset = static_cast<int>(nObjectOffsetBig);
@@ -1055,8 +1055,8 @@ static int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
      */
     if (psCnt->panLabelIds == nullptr || numLabels > psCnt->numLabels)
     {
-        GInt32 *panIds = (GInt32 *)VSIRealloc(psCnt->panLabelIds,
-                                              numLabels * sizeof(GInt32));
+        int32_t *panIds = (int32_t *)VSIRealloc(psCnt->panLabelIds,
+                                                numLabels * sizeof(int32_t));
         if (panIds == nullptr)
             return -1;
         psCnt->panLabelIds = panIds;
@@ -1800,13 +1800,13 @@ static int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
  * If pszRetFnmae/pszRetNitFile != nullptr then the filename with full path
  * will be copied to the specified buffer.
  **********************************************************************/
-static GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
-                                        const char *pszBasename,
-                                        const char *pszDatOrNit,
-                                        AVCCoverType eCoverType,
-                                        char *pszRetFname, size_t nRetFnameLen)
+static bool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
+                                       const char *pszBasename,
+                                       const char *pszDatOrNit,
+                                       AVCCoverType eCoverType,
+                                       char *pszRetFname, size_t nRetFnameLen)
 {
-    GBool bFilesExist = FALSE;
+    bool bFilesExist = FALSE;
     char *pszBuf = nullptr;
     VSIStatBufL sStatBuf;
     size_t nBufLen;
@@ -1866,9 +1866,9 @@ static GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
  * If pszRetDatFile/pszRetNitFile != nullptr then the .DAT and .NIT filename
  * without the info path will be copied to the specified buffers.
  **********************************************************************/
-static GBool _AVCBinReadInfoFileExists(const char *pszInfoPath,
-                                       const char *pszBasename,
-                                       AVCCoverType eCoverType)
+static bool _AVCBinReadInfoFileExists(const char *pszInfoPath,
+                                      const char *pszBasename,
+                                      AVCCoverType eCoverType)
 {
 
     return (_AVCBinReadGetInfoFilename(pszInfoPath, pszBasename, "dat",
@@ -1995,7 +1995,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     AVCTableDef sTableDef;
     AVCFieldInfo *pasFieldDef;
     char *pszFname;
-    GBool bFound;
+    bool bFound;
     int i;
     size_t nFnameLen;
 
@@ -2428,7 +2428,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
     snprintf(psTableDef->szTableName, sizeof(psTableDef->szTableName),
              "%-32.32s", pszArcInfoTableName);
 
-    psTableDef->numFields = (GInt16)DBFGetFieldCount(hDBFFile);
+    psTableDef->numFields = (int16_t)DBFGetFieldCount(hDBFFile);
 
     /* We'll compute nRecSize value when we read fields info later */
     psTableDef->nRecSize = 0;
@@ -2462,11 +2462,11 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
                         &nDecimals);
         cNativeType = DBFGetNativeFieldType(hDBFFile, iField);
 
-        pasFieldDef[iField].nFmtWidth = (GInt16)nWidth;
-        pasFieldDef[iField].nFmtPrec = (GInt16)nDecimals;
+        pasFieldDef[iField].nFmtWidth = (int16_t)nWidth;
+        pasFieldDef[iField].nFmtPrec = (int16_t)nDecimals;
 
         /* nIndex is the 1-based field index that we see in the E00 header */
-        pasFieldDef[iField].nIndex = (GInt16)(iField + 1);
+        pasFieldDef[iField].nIndex = (int16_t)(iField + 1);
 
         if (cNativeType == 'F' || (cNativeType == 'N' && nDecimals > 0))
         {
@@ -2500,7 +2500,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
              * DATE - Actually handled as a string internally
              *--------------------------------------------------------*/
             pasFieldDef[iField].nType1 = AVC_FT_DATE / 10;
-            pasFieldDef[iField].nSize = (GInt16)nWidth;
+            pasFieldDef[iField].nSize = (int16_t)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
         }
         else /* (cNativeType == 'C' || cNativeType == 'L') */
@@ -2509,7 +2509,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
              * CHAR STRINGS ... and all unknown types also handled as strings
              *--------------------------------------------------------*/
             pasFieldDef[iField].nType1 = AVC_FT_CHAR / 10;
-            pasFieldDef[iField].nSize = (GInt16)nWidth;
+            pasFieldDef[iField].nSize = (int16_t)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
         }
 
@@ -2640,7 +2640,7 @@ static int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
              * 16 bit binary integers
              *--------------------------------------------------------*/
             pasFields[i].nInt16 =
-                (GInt16)DBFReadIntegerAttribute(hDBFFile, *piRecordIndex, i);
+                (int16_t)DBFReadIntegerAttribute(hDBFFile, *piRecordIndex, i);
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 4)
         {

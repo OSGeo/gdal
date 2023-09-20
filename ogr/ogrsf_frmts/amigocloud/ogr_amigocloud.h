@@ -63,11 +63,11 @@ class OGRAmigoCloudGeomFieldDefn final : public OGRGeomFieldDefn
 class OGRAmigoCloudFID
 {
   public:
-    GIntBig iIndex;
-    GIntBig iFID;
+    int64_t iIndex;
+    int64_t iFID;
     std::string osAmigoId;
 
-    OGRAmigoCloudFID(const std::string &amigo_id, GIntBig index)
+    OGRAmigoCloudFID(const std::string &amigo_id, int64_t index)
         : iIndex(index),
           iFID(std::abs((long)CPLHashSetHashStr(amigo_id.c_str()))),
           osAmigoId(amigo_id)
@@ -101,10 +101,10 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
     int bEOF;
     int nFetchedObjects;
     int iNextInFetchedObjects;
-    GIntBig iNext;
+    int64_t iNext;
     json_object *poCachedObj;
 
-    std::map<GIntBig, OGRAmigoCloudFID> mFIDs;
+    std::map<int64_t, OGRAmigoCloudFID> mFIDs;
 
     virtual OGRFeature *GetNextRawFeature();
     OGRFeature *BuildFeature(json_object *poRowObj);
@@ -122,7 +122,7 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) = 0;
-    virtual json_object *FetchNewFeatures(GIntBig iNext);
+    virtual json_object *FetchNewFeatures(int64_t iNext);
 
     virtual const char *GetFIDColumn() override
     {
@@ -151,7 +151,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     CPLString osSELECTWithoutWHERE;
 
     std::vector<std::string> vsDeferredInsertChangesets;
-    GIntBig nNextFID;
+    int64_t nNextFID;
 
     int bDeferredCreation;
     int nMaxChunkSize;
@@ -177,10 +177,10 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
         return osDatasetId.c_str();
     }
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
-    virtual json_object *FetchNewFeatures(GIntBig iNext) override;
+    virtual json_object *FetchNewFeatures(int64_t iNext) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -191,7 +191,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override
     {

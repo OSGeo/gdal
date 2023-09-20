@@ -28,6 +28,7 @@
 
 #include "cpl_port.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -186,7 +187,7 @@ OGRErr OGROSMLayer::SetAttributeFilter(const char *pszAttrQuery)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGROSMLayer::GetFeatureCount(int bForce)
+int64_t OGROSMLayer::GetFeatureCount(int bForce)
 {
     if (m_poDS->IsFeatureCountEnabled())
         return OGRLayer::GetFeatureCount(bForce);
@@ -563,7 +564,7 @@ static const char *GetValueOfTag(const char *pszKeyToSearch, unsigned int nTags,
 /*                        SetFieldsFromTags()                           */
 /************************************************************************/
 
-void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
+void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, int64_t nID,
                                     bool bIsWayID, unsigned int nTags,
                                     OSMTag *pasTags, OSMInfo *psInfo)
 {
@@ -574,7 +575,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
         if (m_bHasOSMId)
         {
             char szID[32];
-            snprintf(szID, sizeof(szID), CPL_FRMT_GIB, nID);
+            snprintf(szID, sizeof(szID), "%" PRId64, nID);
             poFeature->SetField(m_nIndexOSMId, szID);
         }
     }
@@ -585,7 +586,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
         if (m_nIndexOSMWayId >= 0)
         {
             char szID[32];
-            snprintf(szID, sizeof(szID), CPL_FRMT_GIB, nID);
+            snprintf(szID, sizeof(szID), "%" PRId64, nID);
             poFeature->SetField(m_nIndexOSMWayId, szID);
         }
     }
@@ -656,7 +657,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
                     if (!m_bHasWarnedAllTagsTruncated)
                         CPLDebug("OSM",
                                  "all_tags/other_tags field truncated for "
-                                 "feature " CPL_FRMT_GIB,
+                                 "feature %" PRId64,
                                  nID);
                     m_bHasWarnedAllTagsTruncated = true;
                     continue;
@@ -921,7 +922,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
                 case SQLITE_INTEGER:
                     poFeature->SetField(
                         oAttr.nIndex,
-                        (GIntBig)sqlite3_column_int64(oAttr.hStmt, 0));
+                        (int64_t)sqlite3_column_int64(oAttr.hStmt, 0));
                     break;
                 case SQLITE_FLOAT:
                     poFeature->SetField(oAttr.nIndex,

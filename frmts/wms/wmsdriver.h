@@ -479,9 +479,8 @@ class GDALWMSDataset final : public GDALPamDataset
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
                              void *buffer, int bsx, int bsy, GDALDataType bdt,
-                             int band_count, int *band_map,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int band_count, int *band_map, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions);
 
@@ -561,7 +560,7 @@ class GDALWMSRasterBand final : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int x, int y, void *buffer) override;
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
                              void *buffer, int bsx, int bsy, GDALDataType bdt,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
     virtual int HasArbitraryOverviews() override;
     virtual int GetOverviewCount() override;

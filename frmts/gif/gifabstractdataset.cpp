@@ -89,7 +89,7 @@ static CPLString GIFCollectXMPMetadata(VSILFILE *fp)
     CPLString osXMP;
 
     /* Save current position to avoid disturbing GIF stream decoding */
-    vsi_l_offset nCurOffset = VSIFTellL(fp);
+    uint64_t nCurOffset = VSIFTellL(fp);
 
     char abyBuffer[2048 + 1];
 

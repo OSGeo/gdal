@@ -43,6 +43,7 @@
 #include "subfile_source.h"
 #include "vsil_target.h"
 
+#include <cinttypes>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -434,7 +435,7 @@ CPLErr JP2KAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         GF_Read, nWXOff, nWYOff, nWXSize, nWYSize, pabyWrkBuffer, nXSize,
         nYSize, eDataType, static_cast<int>(anBands.size()), &anBands[0],
         nWordSize, nWordSize * nBlockXSize,
-        static_cast<GSpacing>(nWordSize) * nBlockXSize * nBlockYSize,
+        static_cast<int64_t>(nWordSize) * nBlockXSize * nBlockYSize,
         &sExtraArg);
 
     if (eErr == CE_None)
@@ -509,8 +510,8 @@ CPLErr JP2KAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr JP2KAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1315,8 +1316,8 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                      int nYOff, int nXSize, int nYSize,
                                      void *pData, int nBufXSize, int nBufYSize,
                                      GDALDataType eBufType, int nBandCount,
-                                     int *panBandMap, GSpacing nPixelSpace,
-                                     GSpacing nLineSpace, GSpacing nBandSpace,
+                                     int *panBandMap, int64_t nPixelSpace,
+                                     int64_t nLineSpace, int64_t nBandSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1552,27 +1553,27 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                      pData)[iX * nPixelSpace + iY * nLineSpace +
                                             i * nBandSpace] = pabyIntermediate
                                     [iSrcX * nBandCount +
-                                     static_cast<GPtrDiff_t>(iSrcY) *
+                                     static_cast<ptrdiff_t>(iSrcY) *
                                          l_dims.size.x * nBandCount +
                                      i];
                             else if (eBufType == GDT_Int16 ||
                                      eBufType == GDT_UInt16)
-                                ((GUInt16 *)pData)[iX * nPixelSpace / 2 +
-                                                   iY * nLineSpace / 2 +
-                                                   i * nBandSpace / 2] =
-                                    ((GUInt16 *)pabyIntermediate)
+                                ((uint16_t *)pData)[iX * nPixelSpace / 2 +
+                                                    iY * nLineSpace / 2 +
+                                                    i * nBandSpace / 2] =
+                                    ((uint16_t *)pabyIntermediate)
                                         [iSrcX * nBandCount +
-                                         static_cast<GPtrDiff_t>(iSrcY) *
+                                         static_cast<ptrdiff_t>(iSrcY) *
                                              l_dims.size.x * nBandCount +
                                          i];
                             else if (eBufType == GDT_Int32 ||
                                      eBufType == GDT_UInt32)
-                                ((GUInt32 *)pData)[iX * nPixelSpace / 4 +
-                                                   iY * nLineSpace / 4 +
-                                                   i * nBandSpace / 4] =
-                                    ((GUInt32 *)pabyIntermediate)
+                                ((uint32_t *)pData)[iX * nPixelSpace / 4 +
+                                                    iY * nLineSpace / 4 +
+                                                    i * nBandSpace / 4] =
+                                    ((uint32_t *)pabyIntermediate)
                                         [iSrcX * nBandCount +
-                                         static_cast<GPtrDiff_t>(iSrcY) *
+                                         static_cast<ptrdiff_t>(iSrcY) *
                                              l_dims.size.x * nBandCount +
                                          i];
                         }
@@ -1589,8 +1590,8 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                     auto hBand = MEMCreateRasterBandEx(
                         poMEMDS.get(), i + 1,
                         pabyIntermediate + i * nDataTypeSize, eBufType,
-                        static_cast<GSpacing>(nDataTypeSize) * nBandCount,
-                        static_cast<GSpacing>(nDataTypeSize) * nBandCount *
+                        static_cast<int64_t>(nDataTypeSize) * nBandCount,
+                        static_cast<int64_t>(nDataTypeSize) * nBandCount *
                             l_dims.size.x,
                         false);
                     poMEMDS->AddMEMBand(hBand);
@@ -1727,8 +1728,8 @@ CPLErr JP2KAKDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1760,7 +1761,7 @@ static void JP2KAKWriteBox(jp2_family_tgt *jp2_family, GDALJP2Box *poBox)
 
     jp2_output_box jp2_out;
 
-    GUInt32 nBoxType = 0;
+    uint32_t nBoxType = 0;
     memcpy(&nBoxType, poBox->GetType(), sizeof(nBoxType));
     CPL_MSBPTR32(&nBoxType);
 
@@ -1907,7 +1908,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_Int16)
             {
-                const GInt16 *sp = static_cast<const GInt16 *>(pabyBuffer);
+                const int16_t *sp = static_cast<const int16_t *>(pabyBuffer);
                 if (kdu_sample16 *dest16 = apoLines[c]->get_buf16())
                 {
                     for (int n = nXSize; n > 0; n--, dest16++, sp++)
@@ -1956,7 +1957,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_UInt16)
             {
-                const GUInt16 *sp = static_cast<const GUInt16 *>(pabyBuffer);
+                const uint16_t *sp = static_cast<const uint16_t *>(pabyBuffer);
                 const kdu_int32 nOffset = 1 << (nBits - 1);
                 if (kdu_sample16 *dest16 = apoLines[c]->get_buf16())
                 {
@@ -2008,7 +2009,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_Int32)
             {
-                const GInt32 *sp = static_cast<const GInt32 *>(pabyBuffer);
+                const int32_t *sp = static_cast<const int32_t *>(pabyBuffer);
                 if (kdu_sample32 *dest32 = apoLines[c]->get_buf32())
                 {
                     const float fScale = static_cast<float>(
@@ -2043,7 +2044,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_UInt32)
             {
-                const GUInt32 *sp = static_cast<const GUInt32 *>(pabyBuffer);
+                const uint32_t *sp = static_cast<const uint32_t *>(pabyBuffer);
                 if (kdu_sample32 *dest32 = apoLines[c]->get_buf32())
                 {
                     const float fScale = static_cast<float>(
@@ -2935,7 +2936,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // Determine if we can use the kdu_stripe_compressor logic
     const auto nMaxBufferSize = std::strtoull(
         CPLGetConfigOption("JP2KAK_MAX_BUFFER_SIZE",
-                           CPLSPrintf(CPL_FRMT_GUIB, GDALGetCacheMax64() / 4)),
+                           CPLSPrintf("%" PRIu64, GDALGetCacheMax64() / 4)),
         nullptr, 10);
     const auto nLineBufferSize = static_cast<unsigned long long>(nXSize) *
                                  num_components * nDataTypeSizeBytes;
@@ -2951,10 +2952,10 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         {
             CPLDebug("JP2KAK",
                      "Using kdu_multi_analysis because "
-                     "nNeededBufferSize = " CPL_FRMT_GUIB
-                     " is > JP2KAK_MAX_BUFFER_SIZE = " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(nNeededBufferSize),
-                     static_cast<GUIntBig>(nMaxBufferSize));
+                     "nNeededBufferSize = %" PRIu64
+                     " is > JP2KAK_MAX_BUFFER_SIZE = %" PRIu64,
+                     static_cast<uint64_t>(nNeededBufferSize),
+                     static_cast<uint64_t>(nMaxBufferSize));
             pszUseStripeCompressor = "NO";
         }
     }

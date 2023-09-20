@@ -181,7 +181,7 @@ CPLODBCStatement *OGRMSSQLSpatialSelectLayer::GetStatement()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRMSSQLSpatialSelectLayer::GetFeature(int64_t nFeatureId)
 
 {
     return OGRMSSQLSpatialLayer::GetFeature(nFeatureId);
@@ -219,7 +219,7 @@ OGRErr OGRMSSQLSpatialSelectLayer::GetExtent(OGREnvelope *, int)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRMSSQLSpatialSelectLayer::GetFeatureCount(int bForce)
+int64_t OGRMSSQLSpatialSelectLayer::GetFeatureCount(int bForce)
 
 {
     return OGRMSSQLSpatialLayer::GetFeatureCount(bForce);

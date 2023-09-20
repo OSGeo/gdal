@@ -101,7 +101,7 @@ void CPL_DLL CPLDestroyCond(CPLCond *hCond);
 
 /** Contrary to what its name suggests, CPLGetPID() actually returns the thread
  * id */
-GIntBig CPL_DLL CPLGetPID(void);
+int64_t CPL_DLL CPLGetPID(void);
 int CPL_DLL CPLGetCurrentProcessID(void);
 int CPL_DLL CPLCreateThread(CPLThreadFunc pfnMain, void *pArg);
 CPLJoinableThread CPL_DLL *CPLCreateJoinableThread(CPLThreadFunc pfnMain,

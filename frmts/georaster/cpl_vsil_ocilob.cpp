@@ -66,8 +66,8 @@ class VSIOCILobHandle : public VSIVirtualHandle
     OWConnection *poConnection;
     OWStatement *poStatement;
     OCILobLocator *phLocator;
-    GUIntBig nFileSize;
-    GUIntBig nCurOff;
+    uint64_t nFileSize;
+    uint64_t nCurOff;
     boolean bUpdate;
 
   public:
@@ -75,8 +75,8 @@ class VSIOCILobHandle : public VSIVirtualHandle
                     OCILobLocator *phLocatorIn, boolean bUpdateIn);
     ~VSIOCILobHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -426,7 +426,7 @@ VSIOCILobHandle::~VSIOCILobHandle()
 //                                                                       Seek()
 // ----------------------------------------------------------------------------
 
-int VSIOCILobHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIOCILobHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (nWhence == SEEK_END)
     {
@@ -447,7 +447,7 @@ int VSIOCILobHandle::Seek(vsi_l_offset nOffset, int nWhence)
 //                                                                       Tell()
 // ----------------------------------------------------------------------------
 
-vsi_l_offset VSIOCILobHandle::Tell()
+uint64_t VSIOCILobHandle::Tell()
 {
     return nCurOff;
 }
@@ -458,18 +458,18 @@ vsi_l_offset VSIOCILobHandle::Tell()
 
 size_t VSIOCILobHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 {
-    GUIntBig nBytes = (nSize * nCount);
+    uint64_t nBytes = (nSize * nCount);
 
     if (nBytes == 0)
     {
         return 0;
     }
 
-    GUIntBig nRead = poStatement->ReadBlob(
+    uint64_t nRead = poStatement->ReadBlob(
         phLocator, pBuffer, static_cast<unsigned long>(nCurOff + 1),
         static_cast<unsigned long>(nBytes));
 
-    nCurOff += (GUIntBig)nRead;
+    nCurOff += (uint64_t)nRead;
 
     return (size_t)(nRead / nSize);
 }
@@ -480,18 +480,18 @@ size_t VSIOCILobHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 size_t VSIOCILobHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 {
-    GUIntBig nBytes = (nSize * nCount);
+    uint64_t nBytes = (nSize * nCount);
 
     if (nBytes == 0)
     {
         return 0;
     }
 
-    GUIntBig nWrite = poStatement->WriteBlob(
+    uint64_t nWrite = poStatement->WriteBlob(
         phLocator, (void *)pBuffer, static_cast<unsigned long>(nCurOff + 1),
         static_cast<unsigned long>(nBytes));
 
-    nCurOff += (GUIntBig)nWrite;
+    nCurOff += (uint64_t)nWrite;
 
     return (size_t)(nWrite / nSize);
 }

@@ -98,7 +98,7 @@ class OGRWFSLayer final : public OGRLayer
 
     CPLString osGeometryColumnName;
     OGRwkbGeometryType eGeomType;
-    GIntBig nFeatures;
+    int64_t nFeatures;
     bool bCountFeaturesInGetNextFeature;
 
     int CanRunGetFeatureCountAndGetExtentTogether();
@@ -107,7 +107,7 @@ class OGRWFSLayer final : public OGRLayer
     bool MustRetryIfNonCompliantServer(const char *pszServerAnswer);
     GDALDataset *FetchGetFeature(int nMaxFeatures);
     OGRFeatureDefn *DescribeFeatureType();
-    GIntBig ExecuteGetFeatureResultTypeHits();
+    int64_t ExecuteGetFeatureResultTypeHits();
 
     OGREnvelope m_oWGS84Extents{};
     OGREnvelope m_oExtents{};
@@ -160,7 +160,7 @@ class OGRWFSLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
@@ -174,7 +174,7 @@ class OGRWFSLayer final : public OGRLayer
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
     void SetExtents(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     void SetWGS84Extents(double dfMinX, double dfMinY, double dfMaxX,
@@ -188,7 +188,7 @@ class OGRWFSLayer final : public OGRLayer
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual OGRErr StartTransaction() override;
     virtual OGRErr CommitTransaction() override;
@@ -287,7 +287,7 @@ class OGRWFSJoinLayer final : public OGRLayer
                     const CPLString &osGlobalFilter);
     CPLString MakeGetFeatureURL(int bRequestHits = FALSE);
     GDALDataset *FetchGetFeature();
-    GIntBig ExecuteGetFeatureResultTypeHits();
+    int64_t ExecuteGetFeatureResultTypeHits();
 
   public:
     static OGRWFSJoinLayer *Build(OGRWFSDataSource *poDS,
@@ -301,7 +301,7 @@ class OGRWFSJoinLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override

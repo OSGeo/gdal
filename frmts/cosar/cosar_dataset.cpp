@@ -97,7 +97,7 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
      */
 
     VSIFSeekL(pCDS->m_fp,
-              static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + ITEM_SIZE),
+              static_cast<uint64_t>(nRTNB) * (nBlockYOff + ITEM_SIZE),
               SEEK_SET);
 
     /* Read RSFV and RSLV (TX-GS-DD-3307) */
@@ -127,7 +127,7 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
     if (nRSFV > 1)
     {
         VSIFSeekL(pCDS->m_fp,
-                  static_cast<vsi_l_offset>(nRTNB) * (nBlockYOff + ITEM_SIZE) +
+                  static_cast<uint64_t>(nRTNB) * (nBlockYOff + ITEM_SIZE) +
                       (nRSFV + 1) * ITEM_SIZE,
                   SEEK_SET);
     }
@@ -147,8 +147,8 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
         // Iterate starting the end to avoid overwriting first values
         for (int i = nBlockXSize * 2 - 1; i >= 0; --i)
         {
-            static_cast<GUInt32 *>(pImage)[i] =
-                CPLHalfToFloat(static_cast<GUInt16 *>(pImage)[i]);
+            static_cast<uint32_t *>(pImage)[i] =
+                CPLHalfToFloat(static_cast<uint16_t *>(pImage)[i]);
         }
     }
 

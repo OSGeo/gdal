@@ -44,8 +44,8 @@ constexpr int knMIN_BLOCKSIZE = 64;
 constexpr int knDEFAULT_BLOCKSIZE = 512;
 constexpr int knMAX_BLOCKSIZE = 8192;
 
-constexpr GUInt32 RETRY_PER_BAND = 1;
-constexpr GUInt32 RETRY_SPATIAL_SPLIT = 2;
+constexpr uint32_t RETRY_PER_BAND = 1;
+constexpr uint32_t RETRY_SPATIAL_SPLIT = 2;
 
 // Let's limit to 100 MB uncompressed per request
 constexpr int knDEFAULT_SERVER_BYTE_LIMIT = 100 * 1024 * 1024;
@@ -111,7 +111,7 @@ class GDALDAASDataset final : public GDALDataset
     CPLString m_osGetBufferURL;
     int m_nBlockSize = knDEFAULT_BLOCKSIZE;
     Format m_eFormat = Format::RAW;
-    GIntBig m_nServerByteLimit = knDEFAULT_SERVER_BYTE_LIMIT;
+    int64_t m_nServerByteLimit = knDEFAULT_SERVER_BYTE_LIMIT;
     GDALRIOResampleAlg m_eCurrentResampleAlg = GRIORA_NearestNeighbour;
 
     int m_nMainMaskBandIndex = 0;
@@ -156,8 +156,8 @@ class GDALDAASDataset final : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBands,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int /* nBufXSize */, int /* nBufYSize */,
@@ -180,8 +180,8 @@ class GDALDAASRasterBand final : public GDALRasterBand
     CPLErr GetBlocks(int nBlockXOff, int nBlockYOff, int nXBlocks, int nYBlocks,
                      const std::vector<int> &anRequestedBands, void *pBuffer);
 
-    GUInt32 PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
-                           const std::vector<int> &anRequestedBands);
+    uint32_t PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
+                            const std::vector<int> &anRequestedBands);
 
   public:
     GDALDAASRasterBand(GDALDAASDataset *poDS, int nBand,
@@ -190,8 +190,8 @@ class GDALDAASRasterBand final : public GDALRasterBand
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace,
+                     GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int /* nBufXSize */, int /* nBufYSize */,
@@ -1450,13 +1450,13 @@ int GDALDAASRasterBand::GetMaskFlags()
 /*                      CanSpatiallySplit()                             */
 /************************************************************************/
 
-static bool CanSpatiallySplit(GUInt32 nRetryFlags, int nXOff, int nYOff,
+static bool CanSpatiallySplit(uint32_t nRetryFlags, int nXOff, int nYOff,
                               int nXSize, int nYSize, int nBufXSize,
                               int nBufYSize, int nBlockXSize, int nBlockYSize,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              int64_t nPixelSpace, int64_t nLineSpace,
                               int &nXOff1, int &nYOff1, int &nXSize1,
                               int &nYSize1, int &nXOff2, int &nYOff2,
-                              int &nXSize2, int &nYSize2, GSpacing &nDataShift2)
+                              int &nXSize2, int &nYSize2, int64_t &nDataShift2)
 {
     if ((nRetryFlags & RETRY_SPATIAL_SPLIT) && nXSize == nBufXSize &&
         nYSize == nBufYSize && nYSize > nBlockYSize)
@@ -1501,8 +1501,8 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, int nBandCount,
-                                  int *panBandMap, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
+                                  int *panBandMap, int64_t nPixelSpace,
+                                  int64_t nLineSpace, int64_t nBandSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
     m_eCurrentResampleAlg = psExtraArg->eResampleAlg;
@@ -1545,7 +1545,7 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         anRequestedBands.push_back(0);
     for (int i = 1; i <= GetRasterCount(); i++)
         anRequestedBands.push_back(i);
-    GUInt32 nRetryFlags =
+    uint32_t nRetryFlags =
         poBand->PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, anRequestedBands);
     int nBlockXSize, nBlockYSize;
     poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -1557,7 +1557,7 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     int nYOff2 = 0;
     int nXSize2 = 0;
     int nYSize2 = 0;
-    GSpacing nDataShift2 = 0;
+    int64_t nDataShift2 = 0;
     if (CanSpatiallySplit(nRetryFlags, nXOff, nYOff, nXSize, nYSize, nBufXSize,
                           nBufYSize, nBlockXSize, nBlockYSize, nPixelSpace,
                           nLineSpace, nXOff1, nYOff1, nXSize1, nYSize1, nXOff2,
@@ -1671,8 +1671,8 @@ CPLErr GDALDAASRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
@@ -1709,7 +1709,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         anRequestedBands.push_back(0);
     for (int i = 1; i <= poGDS->GetRasterCount(); i++)
         anRequestedBands.push_back(i);
-    GUInt32 nRetryFlags =
+    uint32_t nRetryFlags =
         PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, anRequestedBands);
     int nXOff1 = 0;
     int nYOff1 = 0;
@@ -1719,7 +1719,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     int nYOff2 = 0;
     int nXSize2 = 0;
     int nYSize2 = 0;
-    GSpacing nDataShift2 = 0;
+    int64_t nDataShift2 = 0;
     if (CanSpatiallySplit(nRetryFlags, nXOff, nYOff, nXSize, nYSize, nBufXSize,
                           nBufYSize, nBlockXSize, nBlockYSize, nPixelSpace,
                           nLineSpace, nXOff1, nYOff1, nXSize1, nYSize1, nXOff2,
@@ -1778,7 +1778,7 @@ CPLErr GDALDAASRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
 // Return or'ed flags among 0, RETRY_PER_BAND, RETRY_SPATIAL_SPLIT if the user
 // should try to split the request in smaller chunks
 
-GUInt32
+uint32_t
 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
                                    const std::vector<int> &anRequestedBands)
 {
@@ -1822,7 +1822,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
 
     // If AdviseRead() was called before, and the current requested area is
     // in it, check if we can prefetch the whole advised area
-    const GIntBig nCacheMax = GDALGetCacheMax64() / 2;
+    const int64_t nCacheMax = GDALGetCacheMax64() / 2;
     if (poGDS->m_nXSizeAdvise > 0 && nXOff >= poGDS->m_nXOffAdvise &&
         nYOff >= poGDS->m_nYOffAdvise &&
         nXOff + nXSize <= poGDS->m_nXOffAdvise + poGDS->m_nXSizeAdvise &&
@@ -1836,7 +1836,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
         int nYBlocksAdvise =
             (poGDS->m_nYOffAdvise + poGDS->m_nYSizeAdvise - 1) / nBlockYSize -
             nBlockYOffAdvise + 1;
-        const GIntBig nUncompressedSize = static_cast<GIntBig>(nXBlocksAdvise) *
+        const int64_t nUncompressedSize = static_cast<int64_t>(nXBlocksAdvise) *
                                           nYBlocksAdvise * nBlockXSize *
                                           nBlockYSize * nTotalDataTypeSize;
         if (nUncompressedSize <= nCacheMax &&
@@ -1911,7 +1911,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
     if (nXBlocks > 0 && nYBlocks > 0)
     {
         bool bMustReturn = false;
-        GUInt32 nRetryFlags = 0;
+        uint32_t nRetryFlags = 0;
 
         // Get the blocks if the number of already cached blocks is lesser
         // than 25% of the to be queried blocks
@@ -1930,7 +1930,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
         // Make sure that we have enough cache (with a margin of 50%)
         // and the number of queried pixels isn't too big w.r.t server
         // limit
-        const GIntBig nUncompressedSize = static_cast<GIntBig>(nXBlocks) *
+        const int64_t nUncompressedSize = static_cast<int64_t>(nXBlocks) *
                                           nYBlocks * nBlockXSize * nBlockYSize *
                                           nTotalDataTypeSize;
         if (nUncompressedSize > nCacheMax ||
@@ -1939,8 +1939,8 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
             if (anRequestedBands.size() > 1 && poGDS->GetRasterCount() > 1)
             {
                 const int nThisDTSize = GDALGetDataTypeSizeBytes(eDataType);
-                const GIntBig nUncompressedSizeThisBand =
-                    static_cast<GIntBig>(nXBlocks) * nYBlocks * nBlockXSize *
+                const int64_t nUncompressedSizeThisBand =
+                    static_cast<int64_t>(nXBlocks) * nYBlocks * nBlockXSize *
                     nBlockYSize * nThisDTSize;
                 if (nUncompressedSizeThisBand <= poGDS->m_nServerByteLimit &&
                     nUncompressedSizeThisBand <= nCacheMax)
@@ -2086,21 +2086,21 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     else
     {
         oUL.Add("x",
-                static_cast<int>((static_cast<GIntBig>(nULX) * nMainXSize) /
+                static_cast<int>((static_cast<int64_t>(nULX) * nMainXSize) /
                                  nRasterXSize));
         oUL.Add("y",
-                static_cast<int>((static_cast<GIntBig>(nULY) * nMainYSize) /
+                static_cast<int>((static_cast<int64_t>(nULY) * nMainYSize) /
                                  nRasterYSize));
 
         oLR.Add("x", (nLRX == nRasterXSize)
                          ? nMainXSize
                          : static_cast<int>(
-                               (static_cast<GIntBig>(nLRX) * nMainXSize) /
+                               (static_cast<int64_t>(nLRX) * nMainXSize) /
                                nRasterXSize));
         oLR.Add("y", (nLRY == nRasterYSize)
                          ? nMainYSize
                          : static_cast<int>(
-                               (static_cast<GIntBig>(nLRY) * nMainYSize) /
+                               (static_cast<int64_t>(nLRY) * nMainYSize) /
                                nRasterYSize));
     }
     oBBox.Add("ul", oUL);

@@ -32,6 +32,7 @@
 #include "vrtdataset.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -90,8 +91,8 @@ VRTRawRasterBand::~VRTRawRasterBand()
 CPLErr VRTRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 {
     if (m_poRawRaster == nullptr)
@@ -173,9 +174,9 @@ CPLErr VRTRawRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
                                     const char *pszVRTPath,
-                                    int bRelativeToVRTIn,
-                                    vsi_l_offset nImageOffset, int nPixelOffset,
-                                    int nLineOffset, const char *pszByteOrder)
+                                    int bRelativeToVRTIn, uint64_t nImageOffset,
+                                    int nPixelOffset, int nLineOffset,
+                                    const char *pszByteOrder)
 
 {
     ClearRawLink();
@@ -323,7 +324,7 @@ void VRTRawRasterBand::ClearRawLink()
 
 CPLVirtualMem *VRTRawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                    int *pnPixelSpace,
-                                                   GIntBig *pnLineSpace,
+                                                   int64_t *pnLineSpace,
                                                    char **papszOptions)
 
 {
@@ -386,7 +387,7 @@ VRTRawRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
     int nWordDataSize = GDALGetDataTypeSizeBytes(GetRasterDataType());
 
     const char *pszImageOffset = CPLGetXMLValue(psTree, "ImageOffset", "0");
-    const vsi_l_offset nImageOffset = CPLScanUIntBig(
+    const uint64_t nImageOffset = CPLScanUIntBig(
         pszImageOffset, static_cast<int>(strlen(pszImageOffset)));
 
     int nPixelOffset = nWordDataSize;
@@ -467,7 +468,7 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML(const char *pszVRTPath)
 
     CPLCreateXMLElementAndValue(
         psTree, "ImageOffset",
-        CPLSPrintf(CPL_FRMT_GUIB, m_poRawRaster->GetImgOffset()));
+        CPLSPrintf("%" PRIu64, m_poRawRaster->GetImgOffset()));
 
     CPLCreateXMLElementAndValue(
         psTree, "PixelOffset",

@@ -231,12 +231,12 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
     if (pfFile == NULL)
         return OGRERR_FAILURE;
     VSIFSeekL(pfFile, knApplicationIdPos, SEEK_SET);
-    const GUInt32 nApplicationIdMSB = CPL_MSBWORD32(m_nApplicationId);
+    const uint32_t nApplicationIdMSB = CPL_MSBWORD32(m_nApplicationId);
     szWritten = VSIFWriteL(&nApplicationIdMSB, 1, 4, pfFile);
     if (szWritten == 4)
     {
         VSIFSeekL(pfFile, knUserVersionPos, SEEK_SET);
-        const GUInt32 nVersionMSB = CPL_MSBWORD32(m_nUserVersion);
+        const uint32_t nVersionMSB = CPL_MSBWORD32(m_nUserVersion);
         szWritten = VSIFWriteL(&nVersionMSB, 1, 4, pfFile);
     }
 
@@ -1096,8 +1096,8 @@ bool GDALGeoPackageDataset::ICanIWriteBlock()
 CPLErr GDALGeoPackageDataset::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
     CPLErr eErr = OGRSQLiteBaseDataSource::IRasterIO(
@@ -2349,10 +2349,10 @@ bool GDALGeoPackageDataset::InitRaster(
         return false;
     }
     int nTileMatrixWidth = static_cast<int>(
-        std::min(static_cast<GIntBig>(INT_MAX),
+        std::min(static_cast<int64_t>(INT_MAX),
                  CPLAtoGIntBig(oResult.GetValue(5, nIdxInResult))));
     int nTileMatrixHeight = static_cast<int>(
-        std::min(static_cast<GIntBig>(INT_MAX),
+        std::min(static_cast<int64_t>(INT_MAX),
                  CPLAtoGIntBig(oResult.GetValue(6, nIdxInResult))));
     if (nTileMatrixWidth <= 0 || nTileMatrixHeight <= 0)
     {
@@ -2948,7 +2948,7 @@ bool GDALGeoPackageDataset::OpenRaster(
             }
             else
             {
-                m_usGPKGNull = static_cast<GUInt16>(dfGPKGNoDataValue);
+                m_usGPKGNull = static_cast<uint16_t>(dfGPKGNoDataValue);
                 if (m_eDT == GDT_Int16 && m_usGPKGNull > 32767)
                     dfGPKGNoDataValue = -32768.0;
                 else if (m_eDT == GDT_Float32)

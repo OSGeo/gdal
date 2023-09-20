@@ -59,6 +59,7 @@
 
 #include <vector>
 #include <cassert>
+#include <cinttypes>
 #include <zlib.h>
 #if defined(ZSTD_SUPPORT)
 #include <zstd.h>
@@ -129,10 +130,10 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
     switch (gt)
     {
         TEST_T(GDT_Byte, GByte);
-        TEST_T(GDT_UInt16, GUInt16);
-        TEST_T(GDT_Int16, GInt16);
-        TEST_T(GDT_UInt32, GUInt32);
-        TEST_T(GDT_Int32, GInt32);
+        TEST_T(GDT_UInt16, uint16_t);
+        TEST_T(GDT_Int16, int16_t);
+        TEST_T(GDT_UInt32, uint32_t);
+        TEST_T(GDT_Int32, int32_t);
         TEST_T(GDT_Float32, float);
         TEST_T(GDT_Float64, double);
         default:
@@ -499,7 +500,7 @@ CPLErr MRFRasterBand::SetNoDataValue(double val)
                  "MRF: NoData can be set only during file create");
         return CE_Failure;
     }
-    if (GInt32(poMRFDS->vNoData.size()) < nBand)
+    if (int32_t(poMRFDS->vNoData.size()) < nBand)
         poMRFDS->vNoData.resize(nBand);
     poMRFDS->vNoData[nBand - 1] = val;
     // We also need to set it for this band
@@ -572,13 +573,13 @@ CPLErr MRFRasterBand::FillBlock(void *buffer)
     switch (eDataType)
     {
         case GDT_UInt16:
-            return bf(GUInt16);
+            return bf(uint16_t);
         case GDT_Int16:
-            return bf(GInt16);
+            return bf(int16_t);
         case GDT_UInt32:
-            return bf(GUInt32);
+            return bf(uint32_t);
         case GDT_Int32:
-            return bf(GInt32);
+            return bf(int32_t);
         case GDT_Float32:
             return bf(float);
         case GDT_Float64:
@@ -670,13 +671,13 @@ CPLErr MRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer)
                 CpySI(GByte);
                 break;
             case 2:
-                CpySI(GInt16);
+                CpySI(int16_t);
                 break;
             case 4:
-                CpySI(GInt32);
+                CpySI(int32_t);
                 break;
             case 8:
-                CpySI(GIntBig);
+                CpySI(int64_t);
                 break;
         }
     }
@@ -708,9 +709,9 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     if (poMRFDS->clonedSource)  // This is a clone
         return FetchClonedBlock(xblk, yblk, buffer);
 
-    const GInt32 cstride = img.pagesize.c;  // 1 if band separate
+    const int32_t cstride = img.pagesize.c;  // 1 if band separate
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
-    GUIntBig infooffset = IdxOffset(req, img);
+    uint64_t infooffset = IdxOffset(req, img);
 
     GDALDataset *poSrcDS = nullptr;
     if (nullptr == (poSrcDS = poMRFDS->GetSrcDS()))
@@ -905,7 +906,7 @@ CPLErr MRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         return CE_Failure;
     }
 
-    GUIntBig infooffset = IdxOffset(req, img);
+    uint64_t infooffset = IdxOffset(req, img);
     CPLErr err;
 
     // Does the source have this tile?
@@ -929,21 +930,21 @@ CPLErr MRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     // Need to read the tile from the source
     if (tinfo.size <= 0 || tinfo.size > INT_MAX)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Invalid tile size " CPL_FRMT_GIB, tinfo.size);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Invalid tile size %" PRId64,
+                 tinfo.size);
         return CE_Failure;
     }
     char *buf = static_cast<char *>(VSIMalloc(static_cast<size_t>(tinfo.size)));
     if (buf == nullptr)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate " CPL_FRMT_GIB " bytes", tinfo.size);
+                 "Cannot allocate %" PRId64 " bytes", tinfo.size);
         return CE_Failure;
     }
 
     VSIFSeekL(srcfd, tinfo.offset, SEEK_SET);
     if (tinfo.size !=
-        GIntBig(VSIFReadL(buf, 1, static_cast<size_t>(tinfo.size), srcfd)))
+        int64_t(VSIFReadL(buf, 1, static_cast<size_t>(tinfo.size), srcfd)))
     {
         CPLFree(buf);
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -972,12 +973,12 @@ CPLErr MRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 
 CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 {
-    GInt32 cstride = img.pagesize.c;
+    int32_t cstride = img.pagesize.c;
     ILIdx tinfo;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
     CPLDebug("MRF_IB",
-             "IReadBlock %d,%d,0,%d, level %d, idxoffset " CPL_FRMT_GIB "\n",
-             xblk, yblk, nBand - 1, m_l, IdxOffset(req, img));
+             "IReadBlock %d,%d,0,%d, level %d, idxoffset %" PRId64 "\n", xblk,
+             yblk, nBand - 1, m_l, IdxOffset(req, img));
 
     // If this is a caching file and bypass is on, just do the fetch
     if (poMRFDS->bypass_cache && !poMRFDS->source.empty())
@@ -989,7 +990,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
         if (!poMRFDS->no_errors)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "MRF: Unable to read index at offset " CPL_FRMT_GIB,
+                     "MRF: Unable to read index at offset %" PRId64,
                      IdxOffset(req, img));
             return CE_Failure;
         }
@@ -1009,7 +1010,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
         return FetchBlock(xblk, yblk, buffer);
     }
 
-    CPLDebug("MRF_IB", "Tinfo offset " CPL_FRMT_GIB ", size " CPL_FRMT_GIB "\n",
+    CPLDebug("MRF_IB", "Tinfo offset %" PRId64 ", size %" PRId64 "\n",
              tinfo.offset, tinfo.size);
     // If we have a tile, read it
 
@@ -1032,7 +1033,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
         if (!poMRFDS->no_errors)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Stored tile is too large: " CPL_FRMT_GIB, tinfo.size);
+                     "Stored tile is too large: %" PRId64, tinfo.size);
             return CE_Failure;
         }
         return FillBlock(buffer);
@@ -1048,7 +1049,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     if (data == nullptr)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Could not allocate memory for tile size: " CPL_FRMT_GIB,
+                 "Could not allocate memory for tile size: %" PRId64,
                  tinfo.size);
         return CE_Failure;
     }
@@ -1220,9 +1221,9 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
 CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 {
-    GInt32 cstride = img.pagesize.c;
+    int32_t cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
-    GUIntBig infooffset = IdxOffset(req, img);
+    uint64_t infooffset = IdxOffset(req, img);
 
     CPLDebug("MRF_IB", "IWriteBlock %d,%d,0,%d, level %d, stride %d\n", xblk,
              yblk, nBand, m_l, cstride);
@@ -1302,7 +1303,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     poMRFDS->bdirty = 0;
 
     // Keep track of what bands are empty
-    GUIntBig empties = 0;
+    uint64_t empties = 0;
 
     void *tbuffer = VSIMalloc(img.pageSizeBytes + poMRFDS->pbsize);
 
@@ -1362,13 +1363,13 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 CpySO(GByte);
                 break;
             case 2:
-                CpySO(GInt16);
+                CpySO(int16_t);
                 break;
             case 4:
-                CpySO(GInt32);
+                CpySO(int32_t);
                 break;
             case 8:
-                CpySO(GIntBig);
+                CpySO(int64_t);
                 break;
             default:
             {
@@ -1398,7 +1399,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     // below this test This way works fine, but it does work extra for empty
     // pages
 
-    if (GIntBig(empties) == AllBandMask())
+    if (int64_t(empties) == AllBandMask())
     {
         CPLFree(tbuffer);
         return poMRFDS->WriteTile(nullptr, infooffset, 0);
@@ -1406,8 +1407,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     if (poMRFDS->bdirty != AllBandMask())
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "MRF: IWrite, band dirty mask is " CPL_FRMT_GIB
-                 " instead of " CPL_FRMT_GIB,
+                 "MRF: IWrite, band dirty mask is %" PRId64
+                 " instead of %" PRId64,
                  poMRFDS->bdirty, AllBandMask());
 
     buf_mgr src;
@@ -1501,7 +1502,7 @@ bool MRFRasterBand::TestBlock(int xblk, int yblk)
         return false;
 
     ILIdx tinfo;
-    GInt32 cstride = img.pagesize.c;
+    int32_t cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
 
     if (CE_None != poMRFDS->ReadTileIdx(tinfo, req, img))

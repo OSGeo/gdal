@@ -147,7 +147,7 @@ int GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::NewPolygon(
 #if SIZEOF_VOIDP == 4
         if (nPolyAllocNew >
                 static_cast<int>(std::numeric_limits<size_t>::max() /
-                                 sizeof(GInt32)) ||
+                                 sizeof(int32_t)) ||
             nPolyAllocNew >
                 static_cast<int>(std::numeric_limits<size_t>::max() /
                                  sizeof(DataType)))
@@ -158,8 +158,8 @@ int GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::NewPolygon(
             return -1;
         }
 #endif
-        auto panPolyIdMapNew = static_cast<GInt32 *>(
-            VSI_REALLOC_VERBOSE(panPolyIdMap, nPolyAllocNew * sizeof(GInt32)));
+        auto panPolyIdMapNew = static_cast<int32_t *>(
+            VSI_REALLOC_VERBOSE(panPolyIdMap, nPolyAllocNew * sizeof(int32_t)));
         auto panPolyValueNew = static_cast<DataType *>(VSI_REALLOC_VERBOSE(
             panPolyValue, nPolyAllocNew * sizeof(DataType)));
         if (panPolyIdMapNew == nullptr || panPolyValueNew == nullptr)
@@ -231,8 +231,8 @@ void GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::CompleteMerges()
 
 template <class DataType, class EqualityTest>
 bool GDALRasterPolygonEnumeratorT<DataType, EqualityTest>::ProcessLine(
-    DataType *panLastLineVal, DataType *panThisLineVal, GInt32 *panLastLineId,
-    GInt32 *panThisLineId, int nXSize)
+    DataType *panLastLineVal, DataType *panThisLineVal, int32_t *panLastLineId,
+    int32_t *panThisLineId, int nXSize)
 
 {
     EqualityTest eq;

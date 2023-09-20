@@ -53,30 +53,30 @@ class OGRSXFLayer final : public OGRLayer
     VSILFILE *fpSXF;
     GByte nLayerID;
     std::map<unsigned, CPLString> mnClassificators;
-    std::map<long, vsi_l_offset> mnRecordDesc;
-    std::map<long, vsi_l_offset>::const_iterator oNextIt;
+    std::map<long, uint64_t> mnRecordDesc;
+    std::map<long, uint64_t>::const_iterator oNextIt;
     SXFMapDescription stSXFMapDescription;
-    std::set<GUInt16> snAttributeCodes;
+    std::set<uint16_t> snAttributeCodes;
     int m_nSXFFormatVer;
     CPLString sFIDColumn_;
     CPLMutex **m_hIOMutex;
     double m_dfCoeff;
     virtual OGRFeature *GetNextRawFeature(long nFID);
 
-    GUInt32 TranslateXYH(const SXFRecordDescription &certifInfo,
-                         const char *psBuff, GUInt32 nBufLen, double *dfX,
-                         double *dfY, double *dfH = nullptr);
+    uint32_t TranslateXYH(const SXFRecordDescription &certifInfo,
+                          const char *psBuff, uint32_t nBufLen, double *dfX,
+                          double *dfY, double *dfH = nullptr);
 
     OGRFeature *TranslatePoint(const SXFRecordDescription &certifInfo,
-                               const char *psRecordBuf, GUInt32 nBufLen);
+                               const char *psRecordBuf, uint32_t nBufLen);
     OGRFeature *TranslateText(const SXFRecordDescription &certifInfo,
-                              const char *psBuff, GUInt32 nBufLen);
+                              const char *psBuff, uint32_t nBufLen);
     OGRFeature *TranslatePolygon(const SXFRecordDescription &certifInfo,
-                                 const char *psBuff, GUInt32 nBufLen);
+                                 const char *psBuff, uint32_t nBufLen);
     OGRFeature *TranslateLine(const SXFRecordDescription &certifInfo,
-                              const char *psBuff, GUInt32 nBufLen);
+                              const char *psBuff, uint32_t nBufLen);
     OGRFeature *TranslateVetorAngle(const SXFRecordDescription &certifInfo,
-                                    const char *psBuff, GUInt32 nBufLen);
+                                    const char *psBuff, uint32_t nBufLen);
 
   public:
     OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
@@ -86,8 +86,8 @@ class OGRSXFLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
@@ -95,7 +95,7 @@ class OGRSXFLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -111,7 +111,7 @@ class OGRSXFLayer final : public OGRLayer
     }
     virtual void AddClassifyCode(unsigned nClassCode,
                                  const char *szName = nullptr);
-    virtual bool AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
+    virtual bool AddRecord(long nFID, unsigned nClassCode, uint64_t nOffset,
                            bool bHasSemantic, size_t nSemanticsSize);
 
   private:

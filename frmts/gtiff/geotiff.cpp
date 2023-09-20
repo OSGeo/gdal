@@ -652,9 +652,8 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
         if (nJpegTablesModeIn >= 0)
             TIFFSetField(hTIFFTmp, TIFFTAG_JPEGTABLESMODE, nJpegTablesModeIn);
 
-        GPtrDiff_t nBlockSize = static_cast<GPtrDiff_t>(nInMemImageWidth) *
-                                nInMemImageHeight *
-                                ((nBands <= 4) ? nBands : 1);
+        ptrdiff_t nBlockSize = static_cast<ptrdiff_t>(nInMemImageWidth) *
+                               nInMemImageHeight * ((nBands <= 4) ? nBands : 1);
         if (l_nBitsPerSample == 12)
             nBlockSize = (nBlockSize * 3) / 2;
         std::vector<GByte> abyZeroData(nBlockSize, 0);

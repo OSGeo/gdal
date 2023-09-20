@@ -272,7 +272,7 @@ void GDALMDReaderALOS::LoadMetadata()
     if (nullptr != pszDate)
     {
         char buffer[80];
-        GIntBig timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
+        int64_t timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
@@ -287,7 +287,7 @@ void GDALMDReaderALOS::LoadMetadata()
             const char *pszTime = "00:00:00.000";
 
             char buffer[80];
-            GIntBig timeMid = GetAcquisitionTimeFromString(
+            int64_t timeMid = GetAcquisitionTimeFromString(
                 CPLSPrintf("%s %s", CPLStripQuotes(pszDate).c_str(),
                            CPLStripQuotes(pszTime).c_str()));
             struct tm tmBuf;
@@ -384,7 +384,7 @@ char **GDALMDReaderALOS::LoadRPCTxtFile()
 /**
  * GetAcqisitionTimeFromString()
  */
-GIntBig GDALMDReaderALOS::GetAcquisitionTimeFromString(const char *pszDateTime)
+int64_t GDALMDReaderALOS::GetAcquisitionTimeFromString(const char *pszDateTime)
 {
     if (nullptr == pszDateTime)
         return 0;

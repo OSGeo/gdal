@@ -89,11 +89,11 @@ BuildBandDescArray(json_object *poBands,
                 {
                     eDT = GDT_Int8;
                 }
-                else if (nMin < std::numeric_limits<GInt16>::min())
+                else if (nMin < std::numeric_limits<int16_t>::min())
                 {
                     eDT = GDT_Int32;
                 }
-                else if (nMax > std::numeric_limits<GUInt16>::max())
+                else if (nMax > std::numeric_limits<uint16_t>::max())
                 {
                     eDT = GDT_UInt32;
                 }

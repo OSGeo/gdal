@@ -31,6 +31,7 @@
 #include "ogr_spatialref.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <map>
 #include <string>
@@ -724,8 +725,8 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     std::map<std::string, Collection> oMapCollection;
-    GIntBig nItemIter = 0;
-    GIntBig nMaxItems = CPLAtoGIntBig(CSLFetchNameValueDef(
+    int64_t nItemIter = 0;
+    int64_t nMaxItems = CPLAtoGIntBig(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "MAX_ITEMS", "1000"));
 
     if (CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") == nullptr)
@@ -836,14 +837,14 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
                 nullptr)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Maximum number of items (" CPL_FRMT_GIB
+                         "Maximum number of items (%" PRId64
                          ") allowed to be retrieved has been hit",
                          nMaxItems);
             }
             else
             {
                 CPLDebug("STACIT",
-                         "Maximum number of items (" CPL_FRMT_GIB
+                         "Maximum number of items (%" PRId64
                          ") allowed to be retrieved has been hit",
                          nMaxItems);
             }

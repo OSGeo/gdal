@@ -2133,7 +2133,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
     else if (STARTS_WITH_CI(pszWKTDatum, "MIF ") &&
              (atoi(pszWKTDatum + 4) == 999 || atoi(pszWKTDatum + 4) == 9999))
     {
-        sTABProj.nDatumId = static_cast<GInt16>(atoi(pszWKTDatum + 4));
+        sTABProj.nDatumId = static_cast<int16_t>(atoi(pszWKTDatum + 4));
         char **papszFields =
             CSLTokenizeStringComplex(pszWKTDatum + 4, ",", FALSE, TRUE);
 
@@ -2198,7 +2198,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference *poSpatialRef,
     if (psDatumInfo != nullptr)
     {
         sTABProj.nEllipsoidId = static_cast<GByte>(psDatumInfo->nEllipsoid);
-        sTABProj.nDatumId = static_cast<GInt16>(psDatumInfo->nMapInfoDatumID);
+        sTABProj.nDatumId = static_cast<int16_t>(psDatumInfo->nMapInfoDatumID);
         sTABProj.dDatumShiftX = psDatumInfo->dfShiftX;
         sTABProj.dDatumShiftY = psDatumInfo->dfShiftY;
         sTABProj.dDatumShiftZ = psDatumInfo->dfShiftZ;

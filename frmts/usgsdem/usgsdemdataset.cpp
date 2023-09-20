@@ -117,7 +117,7 @@ static void USGSDEMRefillBuffer(Buffer *psBuffer)
 /*                      USGSDEMGetCurrentFilePos()                      */
 /************************************************************************/
 
-static vsi_l_offset USGSDEMGetCurrentFilePos(const Buffer *psBuffer)
+static uint64_t USGSDEMGetCurrentFilePos(const Buffer *psBuffer)
 {
     return VSIFTellL(psBuffer->fp) - psBuffer->buffer_size +
            psBuffer->cur_index;
@@ -127,9 +127,9 @@ static vsi_l_offset USGSDEMGetCurrentFilePos(const Buffer *psBuffer)
 /*                      USGSDEMSetCurrentFilePos()                      */
 /************************************************************************/
 
-static void USGSDEMSetCurrentFilePos(Buffer *psBuffer, vsi_l_offset nNewPos)
+static void USGSDEMSetCurrentFilePos(Buffer *psBuffer, uint64_t nNewPos)
 {
-    vsi_l_offset nCurPosFP = VSIFTellL(psBuffer->fp);
+    uint64_t nCurPosFP = VSIFTellL(psBuffer->fp);
     if (nNewPos >= nCurPosFP - psBuffer->buffer_size && nNewPos < nCurPosFP)
     {
         psBuffer->cur_index =
@@ -170,7 +170,7 @@ static int USGSDEMReadIntFromBuffer(Buffer *psBuffer, int *pbSuccess = nullptr)
             break;
     }
 
-    GIntBig nVal = 0;
+    int64_t nVal = 0;
     int nSign = 1;
     if (c == '-')
         nSign = -1;
@@ -497,11 +497,11 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
                 if (GetRasterDataType() == GDT_Int16)
                 {
-                    GUInt16 nVal = (fComputedElev < -32768) ? -32768
-                                   : (fComputedElev > 32767)
-                                       ? 32767
-                                       : static_cast<GInt16>(fComputedElev);
-                    reinterpret_cast<GInt16 *>(pImage)[i + iY * GetXSize()] =
+                    uint16_t nVal = (fComputedElev < -32768) ? -32768
+                                    : (fComputedElev > 32767)
+                                        ? 32767
+                                        : static_cast<int16_t>(fComputedElev);
+                    reinterpret_cast<int16_t *>(pImage)[i + iY * GetXSize()] =
                         nVal;
                 }
                 else
@@ -517,8 +517,8 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
             // Seek to the next 1024 byte boundary.
             // Some files have 'junk' profile values after the valid/declared
             // ones
-            vsi_l_offset nCurPos = USGSDEMGetCurrentFilePos(&sBuffer);
-            vsi_l_offset nNewPos = (nCurPos + 1023) / 1024 * 1024;
+            uint64_t nCurPos = USGSDEMGetCurrentFilePos(&sBuffer);
+            uint64_t nNewPos = (nCurPos + 1023) / 1024 * 1024;
             if (nNewPos > nCurPos)
             {
                 USGSDEMSetCurrentFilePos(&sBuffer, nNewPos);
@@ -675,7 +675,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     fVRes = DConvert(InDem, 12);
 
     /* -------------------------------------------------------------------- */
-    /*      Should we treat this as floating point, or GInt16.              */
+    /*      Should we treat this as floating point, or int16_t.              */
     /* -------------------------------------------------------------------- */
     if (nVUnit == 1 || fVRes < 1.0)
         eNaturalDataFormat = GDT_Float32;

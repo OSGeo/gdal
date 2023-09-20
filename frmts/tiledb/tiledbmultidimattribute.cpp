@@ -49,7 +49,7 @@ TileDBAttribute::TileDBAttribute(const std::string &osParentName,
 /*static*/ std::shared_ptr<GDALAttribute>
 TileDBAttribute::Create(const std::shared_ptr<TileDBAttributeHolder> &poParent,
                         const std::string &osName,
-                        const std::vector<GUInt64> &anDimensions,
+                        const std::vector<uint64_t> &anDimensions,
                         const GDALExtendedDataType &oDataType)
 {
     if (anDimensions.size() > 1)
@@ -88,9 +88,9 @@ TileDBAttribute::Create(const std::shared_ptr<TileDBAttributeHolder> &poParent,
 /*                     TileDBAttribute::IRead()                         */
 /************************************************************************/
 
-bool TileDBAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                            const GInt64 *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+bool TileDBAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                            const int64_t *arrayStep,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
@@ -143,9 +143,9 @@ bool TileDBAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                     TileDBAttribute::IWrite()                        */
 /************************************************************************/
 
-bool TileDBAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                             const GInt64 *arrayStep,
-                             const GPtrDiff_t *bufferStride,
+bool TileDBAttribute::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                             const int64_t *arrayStep,
+                             const ptrdiff_t *bufferStride,
                              const GDALExtendedDataType &bufferDataType,
                              const void *pSrcBuffer)
 {

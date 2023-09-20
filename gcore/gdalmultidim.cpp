@@ -30,6 +30,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <queue>
 #include <set>
@@ -92,17 +93,17 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
     {
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override
     {
         return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions);
@@ -161,7 +162,7 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
         return true;
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_poParent->GetBlockSize();
     }
@@ -190,7 +191,7 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override
     {
@@ -303,7 +304,7 @@ GDALIHasAttribute::GetAttributes(CPL_UNUSED CSLConstList papszOptions) const
  */
 std::shared_ptr<GDALAttribute> GDALIHasAttribute::CreateAttribute(
     CPL_UNUSED const std::string &osName,
-    CPL_UNUSED const std::vector<GUInt64> &anDimensions,
+    CPL_UNUSED const std::vector<uint64_t> &anDimensions,
     CPL_UNUSED const GDALExtendedDataType &oDataType,
     CPL_UNUSED CSLConstList papszOptions)
 {
@@ -647,7 +648,7 @@ bool GDALGroup::DeleteGroup(CPL_UNUSED const std::string &osName,
  */
 std::shared_ptr<GDALDimension> GDALGroup::CreateDimension(
     CPL_UNUSED const std::string &osName, CPL_UNUSED const std::string &osType,
-    CPL_UNUSED const std::string &osDirection, CPL_UNUSED GUInt64 nSize,
+    CPL_UNUSED const std::string &osDirection, CPL_UNUSED uint64_t nSize,
     CPL_UNUSED CSLConstList papszOptions)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
@@ -733,9 +734,9 @@ bool GDALGroup::DeleteMDArray(CPL_UNUSED const std::string &osName,
  *
  * Used as a parameter for CopFrom()
  */
-GUInt64 GDALGroup::GetTotalCopyCost() const
+uint64_t GDALGroup::GetTotalCopyCost() const
 {
-    GUInt64 nCost = COPY_COST;
+    uint64_t nCost = COPY_COST;
     nCost += GetAttributes().size() * GDALAttribute::COPY_COST;
 
     auto groupNames = GetGroupNames();
@@ -797,9 +798,10 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
 bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                          GDALDataset *poSrcDS,
                          const std::shared_ptr<GDALGroup> &poSrcGroup,
-                         bool bStrict, GUInt64 &nCurCost,
-                         const GUInt64 nTotalCost, GDALProgressFunc pfnProgress,
-                         void *pProgressData, CSLConstList papszOptions)
+                         bool bStrict, uint64_t &nCurCost,
+                         const uint64_t nTotalCost,
+                         GDALProgressFunc pfnProgress, void *pProgressData,
+                         CSLConstList papszOptions)
 {
     if (pfnProgress == nullptr)
         pfnProgress = GDALDummyProgress;
@@ -1031,19 +1033,19 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                         setDTMinMax(GByte);
                         break;
                     case GDT_Int8:
-                        setDTMinMax(GInt8);
+                        setDTMinMax(int8_t);
                         break;
                     case GDT_UInt16:
-                        setDTMinMax(GUInt16);
+                        setDTMinMax(uint16_t);
                         break;
                     case GDT_Int16:
-                        setDTMinMax(GInt16);
+                        setDTMinMax(int16_t);
                         break;
                     case GDT_UInt32:
-                        setDTMinMax(GUInt32);
+                        setDTMinMax(uint32_t);
                         break;
                     case GDT_Int32:
-                        setDTMinMax(GInt32);
+                        setDTMinMax(int32_t);
                         break;
                     case GDT_UInt64:
                         setDTMinMax(std::uint64_t);
@@ -1661,29 +1663,28 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%d", *static_cast<const GByte *>(pSrc));
                 break;
             case GDT_Int8:
-                str = CPLSPrintf("%d", *static_cast<const GInt8 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const int8_t *>(pSrc));
                 break;
             case GDT_UInt16:
-                str = CPLSPrintf("%d", *static_cast<const GUInt16 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const uint16_t *>(pSrc));
                 break;
             case GDT_Int16:
-                str = CPLSPrintf("%d", *static_cast<const GInt16 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const int16_t *>(pSrc));
                 break;
             case GDT_UInt32:
-                str = CPLSPrintf("%u", *static_cast<const GUInt32 *>(pSrc));
+                str = CPLSPrintf("%u", *static_cast<const uint32_t *>(pSrc));
                 break;
             case GDT_Int32:
-                str = CPLSPrintf("%d", *static_cast<const GInt32 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const int32_t *>(pSrc));
                 break;
             case GDT_UInt64:
-                str =
-                    CPLSPrintf(CPL_FRMT_GUIB,
-                               static_cast<GUIntBig>(
-                                   *static_cast<const std::uint64_t *>(pSrc)));
+                str = CPLSPrintf(
+                    "%" PRIu64, static_cast<uint64_t>(
+                                    *static_cast<const std::uint64_t *>(pSrc)));
                 break;
             case GDT_Int64:
-                str = CPLSPrintf(CPL_FRMT_GIB,
-                                 static_cast<GIntBig>(
+                str = CPLSPrintf("%" PRId64,
+                                 static_cast<int64_t>(
                                      *static_cast<const std::int64_t *>(pSrc)));
                 break;
             case GDT_Float32:
@@ -1694,13 +1695,13 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 break;
             case GDT_CInt16:
             {
-                const GInt16 *src = static_cast<const GInt16 *>(pSrc);
+                const int16_t *src = static_cast<const int16_t *>(pSrc);
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
                 break;
             }
             case GDT_CInt32:
             {
-                const GInt32 *src = static_cast<const GInt32 *>(pSrc);
+                const int32_t *src = static_cast<const int32_t *>(pSrc);
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
                 break;
             }
@@ -1795,15 +1796,15 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
  */
 bool GDALExtendedDataType::CopyValues(const void *pSrc,
                                       const GDALExtendedDataType &srcType,
-                                      GPtrDiff_t nSrcStrideInElts, void *pDst,
+                                      ptrdiff_t nSrcStrideInElts, void *pDst,
                                       const GDALExtendedDataType &dstType,
-                                      GPtrDiff_t nDstStrideInElts,
+                                      ptrdiff_t nDstStrideInElts,
                                       size_t nValues)
 {
     const auto nSrcStrideInBytes =
-        nSrcStrideInElts * static_cast<GPtrDiff_t>(srcType.GetSize());
+        nSrcStrideInElts * static_cast<ptrdiff_t>(srcType.GetSize());
     const auto nDstStrideInBytes =
-        nDstStrideInElts * static_cast<GPtrDiff_t>(dstType.GetSize());
+        nDstStrideInElts * static_cast<ptrdiff_t>(dstType.GetSize());
     if (srcType.GetClass() == GEDTC_NUMERIC &&
         dstType.GetClass() == GEDTC_NUMERIC &&
         nSrcStrideInBytes >= std::numeric_limits<int>::min() &&
@@ -1836,11 +1837,12 @@ bool GDALExtendedDataType::CopyValues(const void *pSrc,
 /************************************************************************/
 //! @cond Doxygen_Suppress
 bool GDALAbstractMDArray::CheckReadWriteParams(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *&arrayStep,
-    const GPtrDiff_t *&bufferStride, const GDALExtendedDataType &bufferDataType,
-    const void *buffer, const void *buffer_alloc_start,
-    size_t buffer_alloc_size, std::vector<GInt64> &tmp_arrayStep,
-    std::vector<GPtrDiff_t> &tmp_bufferStride) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *&arrayStep, const ptrdiff_t *&bufferStride,
+    const GDALExtendedDataType &bufferDataType, const void *buffer,
+    const void *buffer_alloc_start, size_t buffer_alloc_size,
+    std::vector<int64_t> &tmp_arrayStep,
+    std::vector<ptrdiff_t> &tmp_bufferStride) const
 {
     const auto lamda_error = []()
     {
@@ -1889,19 +1891,19 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     bool bufferStride_all_positive = true;
     if (bufferStride == nullptr)
     {
-        GPtrDiff_t stride = 1;
+        ptrdiff_t stride = 1;
         // To compute strides we must proceed from the fastest varying dimension
         // (the last one), and then reverse the result
         for (size_t i = dims.size(); i != 0;)
         {
             --i;
             tmp_bufferStride.push_back(stride);
-            GUInt64 newStride = 0;
+            uint64_t newStride = 0;
             bool bOK;
             try
             {
-                newStride = (CPLSM(static_cast<GUInt64>(stride)) *
-                             CPLSM(static_cast<GUInt64>(count[i])))
+                newStride = (CPLSM(static_cast<uint64_t>(stride)) *
+                             CPLSM(static_cast<uint64_t>(count[i])))
                                 .v();
                 bOK = static_cast<size_t>(newStride) == newStride &&
                       newStride < std::numeric_limits<size_t>::max() / 2;
@@ -1915,7 +1917,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Too big count values");
                 return false;
             }
-            stride = static_cast<GPtrDiff_t>(newStride);
+            stride = static_cast<ptrdiff_t>(newStride);
         }
         std::reverse(tmp_bufferStride.begin(), tmp_bufferStride.end());
         bufferStride = tmp_bufferStride.data();
@@ -1936,10 +1938,10 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
         if (arrayStartIdx[i] >= dims[i]->GetSize())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "arrayStartIdx[%u] = " CPL_FRMT_GUIB " >= " CPL_FRMT_GUIB,
+                     "arrayStartIdx[%u] = %" PRIu64 " >= %" PRIu64,
                      static_cast<unsigned>(i),
-                     static_cast<GUInt64>(arrayStartIdx[i]),
-                     static_cast<GUInt64>(dims[i]->GetSize()));
+                     static_cast<uint64_t>(arrayStartIdx[i]),
+                     static_cast<uint64_t>(dims[i]->GetSize()));
             return false;
         }
         bool bOverflow;
@@ -1947,9 +1949,9 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
         {
             try
             {
-                bOverflow = (CPLSM(static_cast<GUInt64>(arrayStartIdx[i])) +
-                             CPLSM(static_cast<GUInt64>(count[i] - 1)) *
-                                 CPLSM(static_cast<GUInt64>(arrayStep[i])))
+                bOverflow = (CPLSM(static_cast<uint64_t>(arrayStartIdx[i])) +
+                             CPLSM(static_cast<uint64_t>(count[i] - 1)) *
+                                 CPLSM(static_cast<uint64_t>(arrayStep[i])))
                                 .v() >= dims[i]->GetSize();
             }
             catch (...)
@@ -1960,10 +1962,10 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "arrayStartIdx[%u] + (count[%u]-1) * arrayStep[%u] "
-                         ">= " CPL_FRMT_GUIB,
+                         ">= %" PRIu64,
                          static_cast<unsigned>(i), static_cast<unsigned>(i),
                          static_cast<unsigned>(i),
-                         static_cast<GUInt64>(dims[i]->GetSize()));
+                         static_cast<uint64_t>(dims[i]->GetSize()));
                 return false;
             }
         }
@@ -1973,10 +1975,10 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
             {
                 bOverflow =
                     arrayStartIdx[i] <
-                    (CPLSM(static_cast<GUInt64>(count[i] - 1)) *
-                     CPLSM(arrayStep[i] == std::numeric_limits<GInt64>::min()
-                               ? (static_cast<GUInt64>(1) << 63)
-                               : static_cast<GUInt64>(-arrayStep[i])))
+                    (CPLSM(static_cast<uint64_t>(count[i] - 1)) *
+                     CPLSM(arrayStep[i] == std::numeric_limits<int64_t>::min()
+                               ? (static_cast<uint64_t>(1) << 63)
+                               : static_cast<uint64_t>(-arrayStep[i])))
                         .v();
             }
             catch (...)
@@ -2010,15 +2012,15 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
                 lamda_error();
                 return false;
             }
-            GUInt64 nOffset = elementSize;
+            uint64_t nOffset = elementSize;
             for (size_t i = 0; i < dims.size(); i++)
             {
                 try
                 {
-                    nOffset = (CPLSM(static_cast<GUInt64>(nOffset)) +
-                               CPLSM(static_cast<GUInt64>(bufferStride[i])) *
-                                   CPLSM(static_cast<GUInt64>(count[i] - 1)) *
-                                   CPLSM(static_cast<GUInt64>(elementSize)))
+                    nOffset = (CPLSM(static_cast<uint64_t>(nOffset)) +
+                               CPLSM(static_cast<uint64_t>(bufferStride[i])) *
+                                   CPLSM(static_cast<uint64_t>(count[i] - 1)) *
+                                   CPLSM(static_cast<uint64_t>(elementSize)))
                                   .v();
                 }
                 catch (...)
@@ -2132,9 +2134,9 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
  * @return true in case of success.
  */
 bool GDALAbstractMDArray::Read(
-    const GUInt64 *arrayStartIdx, const size_t *count,
-    const GInt64 *arrayStep,         // step in elements
-    const GPtrDiff_t *bufferStride,  // stride in elements
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep,       // step in elements
+    const ptrdiff_t *bufferStride,  // stride in elements
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
     const void *pDstBufferAllocStart, size_t nDstBufferAllocSize) const
 {
@@ -2145,8 +2147,8 @@ bool GDALAbstractMDArray::Read(
         return false;
     }
 
-    std::vector<GInt64> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<int64_t> tmp_arrayStep;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     if (!CheckReadWriteParams(arrayStartIdx, count, arrayStep, bufferStride,
                               bufferDataType, pDstBuffer, pDstBufferAllocStart,
                               nDstBufferAllocSize, tmp_arrayStep,
@@ -2164,8 +2166,8 @@ bool GDALAbstractMDArray::Read(
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
-                                 const GInt64 *, const GPtrDiff_t *,
+bool GDALAbstractMDArray::IWrite(const uint64_t *, const size_t *,
+                                 const int64_t *, const ptrdiff_t *,
                                  const GDALExtendedDataType &, const void *)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "IWrite() not implemented");
@@ -2234,9 +2236,9 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
  *
  * @return true in case of success.
  */
-bool GDALAbstractMDArray::Write(const GUInt64 *arrayStartIdx,
-                                const size_t *count, const GInt64 *arrayStep,
-                                const GPtrDiff_t *bufferStride,
+bool GDALAbstractMDArray::Write(const uint64_t *arrayStartIdx,
+                                const size_t *count, const int64_t *arrayStep,
+                                const ptrdiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 const void *pSrcBuffer,
                                 const void *pSrcBufferAllocStart,
@@ -2249,8 +2251,8 @@ bool GDALAbstractMDArray::Write(const GUInt64 *arrayStartIdx,
         return false;
     }
 
-    std::vector<GInt64> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<int64_t> tmp_arrayStep;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     if (!CheckReadWriteParams(arrayStartIdx, count, arrayStep, bufferStride,
                               bufferDataType, pSrcBuffer, pSrcBufferAllocStart,
                               nSrcBufferAllocSize, tmp_arrayStep,
@@ -2273,18 +2275,18 @@ bool GDALAbstractMDArray::Write(const GUInt64 *arrayStartIdx,
  * and GDALAttributeGetTotalElementsCount().
  *
  */
-GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
+uint64_t GDALAbstractMDArray::GetTotalElementsCount() const
 {
     const auto &dims = GetDimensions();
     if (dims.empty())
         return 1;
-    GUInt64 nElts = 1;
+    uint64_t nElts = 1;
     for (const auto &dim : dims)
     {
         try
         {
-            nElts = (CPLSM(static_cast<GUInt64>(nElts)) *
-                     CPLSM(static_cast<GUInt64>(dim->GetSize())))
+            nElts = (CPLSM(static_cast<uint64_t>(nElts)) *
+                     CPLSM(static_cast<uint64_t>(dim->GetSize())))
                         .v();
         }
         catch (...)
@@ -2313,7 +2315,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * This method is used by GetProcessingChunkSize().
  *
- * Pedantic note: the returned type is GUInt64, so in the highly unlikeley
+ * Pedantic note: the returned type is uint64_t, so in the highly unlikeley
  * theoretical case of a 32-bit platform, this might exceed its size_t
  * allocation capabilities.
  *
@@ -2321,9 +2323,9 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
  *
  * @return the block size, in number of elements along each dimension.
  */
-std::vector<GUInt64> GDALAbstractMDArray::GetBlockSize() const
+std::vector<uint64_t> GDALAbstractMDArray::GetBlockSize() const
 {
-    return std::vector<GUInt64>(GetDimensionCount());
+    return std::vector<uint64_t>(GetDimensionCount());
 }
 
 /************************************************************************/
@@ -2364,7 +2366,7 @@ GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
         const auto sizeDimI =
             std::max(static_cast<size_t>(1),
                      static_cast<size_t>(
-                         std::min(static_cast<GUInt64>(kSIZE_T_MAX),
+                         std::min(static_cast<uint64_t>(kSIZE_T_MAX),
                                   std::min(blockSize[i], dims[i]->GetSize()))));
         anChunkSize.push_back(sizeDimI);
         if (nChunkSize > kSIZE_T_MAX / sizeDimI)
@@ -2423,7 +2425,7 @@ GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
                     DIV_ROUND_UP(nSizeThisDim, anChunkSize[i]);
                 anChunkSize[i] = static_cast<size_t>(std::min(
                     anChunkSize[i] *
-                        std::min(static_cast<GUInt64>(nMul), nBlocksThisDim),
+                        std::min(static_cast<uint64_t>(nMul), nBlocksThisDim),
                     nSizeThisDim));
             }
             nVoxelsFromEnd *= anChunkSize[i];
@@ -2827,7 +2829,7 @@ bool GDALMDArray::SetNoDataValue(uint64_t nNoData)
  * @return true in case of success.
  * @since GDAL 3.7
  */
-bool GDALMDArray::Resize(CPL_UNUSED const std::vector<GUInt64> &anNewDimSizes,
+bool GDALMDArray::Resize(CPL_UNUSED const std::vector<uint64_t> &anNewDimSizes,
                          CPL_UNUSED CSLConstList papszOptions)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
@@ -2992,8 +2994,8 @@ enum class Caller
  *
  * @return true in case of success.
  */
-bool GDALAbstractMDArray::ProcessPerChunk(const GUInt64 *arrayStartIdx,
-                                          const GUInt64 *count,
+bool GDALAbstractMDArray::ProcessPerChunk(const uint64_t *arrayStartIdx,
+                                          const uint64_t *count,
                                           const size_t *chunkSize,
                                           FuncProcessPerChunkType pfnFunc,
                                           void *pUserData)
@@ -3028,18 +3030,18 @@ bool GDALAbstractMDArray::ProcessPerChunk(const GUInt64 *arrayStartIdx,
     }
 
     size_t dimIdx = 0;
-    std::vector<GUInt64> chunkArrayStartIdx(dims.size());
+    std::vector<uint64_t> chunkArrayStartIdx(dims.size());
     std::vector<size_t> chunkCount(dims.size());
     struct Stack
     {
-        GUInt64 nBlockCounter = 0;
-        GUInt64 nBlocksMinusOne = 0;
+        uint64_t nBlockCounter = 0;
+        uint64_t nBlocksMinusOne = 0;
         size_t first_count = 0;  // only used if nBlocks > 1
         Caller return_point = Caller::CALLER_END_OF_LOOP;
     };
     std::vector<Stack> stack(dims.size());
-    GUInt64 iCurChunk = 0;
-    GUInt64 nChunkCount = 1;
+    uint64_t iCurChunk = 0;
+    uint64_t nChunkCount = 1;
     for (size_t i = 0; i < dims.size(); i++)
     {
         const auto nStartBlock = arrayStartIdx[i] / chunkSize[i];
@@ -3138,10 +3140,10 @@ GDALAttribute::GDALAttribute(CPL_UNUSED const std::string &osParentName,
  *
  * This is the same as the C function GDALAttributeGetDimensionsSize().
  */
-std::vector<GUInt64> GDALAttribute::GetDimensionsSize() const
+std::vector<uint64_t> GDALAttribute::GetDimensionsSize() const
 {
     const auto &dims = GetDimensions();
-    std::vector<GUInt64> ret;
+    std::vector<uint64_t> ret;
     ret.reserve(dims.size());
     for (const auto &dim : dims)
         ret.push_back(dim->GetSize());
@@ -3260,7 +3262,7 @@ GDALRawResult GDALAttribute::ReadAsRaw() const
         return GDALRawResult(nullptr, dt, 0);
     const auto &dims = GetDimensions();
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     for (size_t i = 0; i < nDims; i++)
     {
@@ -3294,7 +3296,7 @@ GDALRawResult GDALAttribute::ReadAsRaw() const
 const char *GDALAttribute::ReadAsString() const
 {
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims, 1);
     char *szRet = nullptr;
     if (!Read(startIdx.data(), count.data(), nullptr, nullptr,
@@ -3326,7 +3328,7 @@ const char *GDALAttribute::ReadAsString() const
 int GDALAttribute::ReadAsInt() const
 {
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims, 1);
     int nRet = INT_MIN;
     Read(startIdx.data(), count.data(), nullptr, nullptr,
@@ -3351,7 +3353,7 @@ int GDALAttribute::ReadAsInt() const
 double GDALAttribute::ReadAsDouble() const
 {
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims, 1);
     double dfRet = 0;
     Read(startIdx.data(), count.data(), nullptr, nullptr,
@@ -3377,7 +3379,7 @@ CPLStringList GDALAttribute::ReadAsStringArray() const
         VSI_CALLOC_VERBOSE(static_cast<int>(nElts) + 1, sizeof(char *)));
     const auto &dims = GetDimensions();
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     for (size_t i = 0; i < nDims; i++)
     {
@@ -3412,7 +3414,7 @@ std::vector<int> GDALAttribute::ReadAsIntArray() const
     std::vector<int> res(static_cast<size_t>(nElts));
     const auto &dims = GetDimensions();
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     for (size_t i = 0; i < nDims; i++)
     {
@@ -3442,7 +3444,7 @@ std::vector<double> GDALAttribute::ReadAsDoubleArray() const
     std::vector<double> res(static_cast<size_t>(nElts));
     const auto &dims = GetDimensions();
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     for (size_t i = 0; i < nDims; i++)
     {
@@ -3481,7 +3483,7 @@ bool GDALAttribute::Write(const void *pabyValue, size_t nLen)
     }
     const auto &dims = GetDimensions();
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     for (size_t i = 0; i < nDims; i++)
     {
@@ -3508,7 +3510,7 @@ bool GDALAttribute::Write(const void *pabyValue, size_t nLen)
 bool GDALAttribute::Write(const char *pszValue)
 {
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims, 1);
     return Write(startIdx.data(), count.data(), nullptr, nullptr,
                  GDALExtendedDataType::CreateString(), &pszValue, &pszValue,
@@ -3532,7 +3534,7 @@ bool GDALAttribute::Write(const char *pszValue)
 bool GDALAttribute::WriteInt(int nVal)
 {
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims, 1);
     return Write(startIdx.data(), count.data(), nullptr, nullptr,
                  GDALExtendedDataType::Create(GDT_Int32), &nVal, &nVal,
@@ -3556,7 +3558,7 @@ bool GDALAttribute::WriteInt(int nVal)
 bool GDALAttribute::Write(double dfVal)
 {
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims, 1);
     return Write(startIdx.data(), count.data(), nullptr, nullptr,
                  GDALExtendedDataType::Create(GDT_Float64), &dfVal, &dfVal,
@@ -3586,7 +3588,7 @@ bool GDALAttribute::Write(CSLConstList vals)
         return false;
     }
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     const auto &dims = GetDimensions();
     for (size_t i = 0; i < nDims; i++)
@@ -3620,7 +3622,7 @@ bool GDALAttribute::Write(const double *vals, size_t nVals)
         return false;
     }
     const auto nDims = GetDimensionCount();
-    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<uint64_t> startIdx(1 + nDims, 0);
     std::vector<size_t> count(1 + nDims);
     const auto &dims = GetDimensions();
     for (size_t i = 0; i < nDims; i++)
@@ -3652,7 +3654,7 @@ GDALMDArray::GDALMDArray(CPL_UNUSED const std::string &osParentName,
  *
  * Used as a parameter for CopyFrom()
  */
-GUInt64 GDALMDArray::GetTotalCopyCost() const
+uint64_t GDALMDArray::GetTotalCopyCost() const
 {
     return COPY_COST + GetAttributes().size() * GDALAttribute::COPY_COST +
            GetTotalElementsCount() * GetDataType().GetSize();
@@ -3665,8 +3667,8 @@ GUInt64 GDALMDArray::GetTotalCopyCost() const
 //! @cond Doxygen_Suppress
 
 bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
-                                          bool bStrict, GUInt64 &nCurCost,
-                                          const GUInt64 nTotalCost,
+                                          bool bStrict, uint64_t &nCurCost,
+                                          const uint64_t nTotalCost,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 {
@@ -3768,7 +3770,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
  */
 bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset *poSrcDS,
                            const GDALMDArray *poSrcArray, bool bStrict,
-                           GUInt64 &nCurCost, const GUInt64 nTotalCost,
+                           uint64_t &nCurCost, const uint64_t nTotalCost,
                            GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (pfnProgress == nullptr)
@@ -3801,8 +3803,8 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset *poSrcDS,
     }
     else
     {
-        std::vector<GUInt64> arrayStartIdx(dims.size());
-        std::vector<GUInt64> count(dims.size());
+        std::vector<uint64_t> arrayStartIdx(dims.size());
+        std::vector<uint64_t> count(dims.size());
         for (size_t i = 0; i < dims.size(); i++)
         {
             count[i] = static_cast<size_t>(dims[i]->GetSize());
@@ -3814,15 +3816,15 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset *poSrcDS,
             std::vector<GByte> abyTmp{};
             GDALProgressFunc pfnProgress = nullptr;
             void *pProgressData = nullptr;
-            GUInt64 nCurCost = 0;
-            GUInt64 nTotalCost = 0;
-            GUInt64 nTotalBytesThisArray = 0;
+            uint64_t nCurCost = 0;
+            uint64_t nTotalCost = 0;
+            uint64_t nTotalBytesThisArray = 0;
             bool bStop = false;
 
             static bool f(GDALAbstractMDArray *l_poSrcArray,
-                          const GUInt64 *chunkArrayStartIdx,
-                          const size_t *chunkCount, GUInt64 iCurChunk,
-                          GUInt64 nChunkCount, void *pUserData)
+                          const uint64_t *chunkArrayStartIdx,
+                          const size_t *chunkCount, uint64_t iCurChunk,
+                          uint64_t nChunkCount, void *pUserData)
             {
                 const auto dt(l_poSrcArray->GetDataType());
                 auto data = static_cast<CopyFunc *>(pUserData);
@@ -3882,10 +3884,10 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset *poSrcDS,
         const size_t nMaxChunkSize =
             pszSwathSize
                 ? static_cast<size_t>(
-                      std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
+                      std::min(int64_t(std::numeric_limits<size_t>::max() / 2),
                                CPLAtoGIntBig(pszSwathSize)))
                 : static_cast<size_t>(
-                      std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
+                      std::min(int64_t(std::numeric_limits<size_t>::max() / 2),
                                GDALGetCacheMax64() / 4));
         const auto anChunkSizes(GetProcessingChunkSize(nMaxChunkSize));
         size_t nRealChunkSize = nDTSize;
@@ -3975,14 +3977,14 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
  *
  * @since GDAL 3.2
  */
-bool GDALMDArray::AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+bool GDALMDArray::AdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                              CSLConstList papszOptions) const
 {
     const auto nDimCount = GetDimensionCount();
     if (nDimCount == 0)
         return true;
 
-    std::vector<GUInt64> tmp_arrayStartIdx;
+    std::vector<uint64_t> tmp_arrayStartIdx;
     if (arrayStartIdx == nullptr)
     {
         tmp_arrayStartIdx.resize(nDimCount);
@@ -3996,7 +3998,7 @@ bool GDALMDArray::AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         const auto &dims = GetDimensions();
         for (size_t i = 0; i < nDimCount; i++)
         {
-            const GUInt64 nSize = dims[i]->GetSize() - arrayStartIdx[i];
+            const uint64_t nSize = dims[i]->GetSize() - arrayStartIdx[i];
 #if SIZEOF_VOIDP < 8
             if (nSize != static_cast<size_t>(nSize))
             {
@@ -4009,10 +4011,10 @@ bool GDALMDArray::AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         count = tmp_count.data();
     }
 
-    std::vector<GInt64> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
-    const GInt64 *arrayStep = nullptr;
-    const GPtrDiff_t *bufferStride = nullptr;
+    std::vector<int64_t> tmp_arrayStep;
+    std::vector<ptrdiff_t> tmp_bufferStride;
+    const int64_t *arrayStep = nullptr;
+    const ptrdiff_t *bufferStride = nullptr;
     if (!CheckReadWriteParams(arrayStartIdx, count, arrayStep, bufferStride,
                               GDALExtendedDataType::Create(GDT_Unknown),
                               nullptr, nullptr, 0, tmp_arrayStep,
@@ -4029,7 +4031,7 @@ bool GDALMDArray::AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-bool GDALMDArray::IAdviseRead(const GUInt64 *, const size_t *,
+bool GDALMDArray::IAdviseRead(const uint64_t *, const size_t *,
                               CSLConstList /* papszOptions*/) const
 {
     return true;
@@ -4230,7 +4232,7 @@ bool GDALMDArray::Cache(CSLConstList papszOptions) const
         return false;
     }
 
-    GUInt64 nCost = 0;
+    uint64_t nCost = 0;
     return poCachedArray->CopyFrom(nullptr, this,
                                    false,  // strict
                                    nCost, GetTotalCopyCost(), nullptr, nullptr);
@@ -4240,9 +4242,9 @@ bool GDALMDArray::Cache(CSLConstList papszOptions) const
 /*                               Read()                                 */
 /************************************************************************/
 
-bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
-                       const GInt64 *arrayStep,         // step in elements
-                       const GPtrDiff_t *bufferStride,  // stride in elements
+bool GDALMDArray::Read(const uint64_t *arrayStartIdx, const size_t *count,
+                       const int64_t *arrayStep,       // step in elements
+                       const ptrdiff_t *bufferStride,  // stride in elements
                        const GDALExtendedDataType &bufferDataType,
                        void *pDstBuffer, const void *pDstBufferAllocStart,
                        size_t nDstBufferAllocSize) const
@@ -4305,8 +4307,8 @@ bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
         return false;
     }
 
-    std::vector<GInt64> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<int64_t> tmp_arrayStep;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     if (!array->CheckReadWriteParams(arrayStartIdx, count, arrayStep,
                                      bufferStride, bufferDataType, pDstBuffer,
                                      pDstBufferAllocStart, nDstBufferAllocSize,
@@ -4327,7 +4329,7 @@ bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
 
 bool GDALMDArray::IsTransposedRequest(
     const size_t *count,
-    const GPtrDiff_t *bufferStride) const  // stride in elements
+    const ptrdiff_t *bufferStride) const  // stride in elements
 {
     /*
     For example:
@@ -4369,7 +4371,7 @@ bool GDALMDArray::IsTransposedRequest(
 template <size_t N>
 void CopyToFinalBufferSameDataType(const void *pSrcBuffer, void *pDstBuffer,
                                    size_t nDims, const size_t *count,
-                                   const GPtrDiff_t *bufferStride)
+                                   const ptrdiff_t *bufferStride)
 {
     std::vector<size_t> anStackCount(nDims);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
@@ -4420,7 +4422,7 @@ static void CopyToFinalBuffer(const void *pSrcBuffer,
                               void *pDstBuffer,
                               const GDALExtendedDataType &eDstDataType,
                               size_t nDims, const size_t *count,
-                              const GPtrDiff_t *bufferStride)
+                              const ptrdiff_t *bufferStride)
 {
     const size_t nSrcDataTypeSize(eSrcDataType.GetSize());
     // Use specialized implementation for well-known data types when no
@@ -4586,9 +4588,9 @@ static bool TransposeLast2Dims(void *pDstBuffer,
 // row-major order, and then do the transposition to the final buffer.
 
 bool GDALMDArray::ReadForTransposedRequest(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
-    void *pDstBuffer) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
+    const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     const size_t nDims(GetDimensionCount());
     if (nDims == 0)
@@ -4600,7 +4602,7 @@ bool GDALMDArray::ReadForTransposedRequest(
     for (size_t i = 0; i < nDims; ++i)
         nElts *= count[i];
 
-    std::vector<GPtrDiff_t> tmpBufferStrides(nDims);
+    std::vector<ptrdiff_t> tmpBufferStrides(nDims);
     tmpBufferStrides.back() = 1;
     for (size_t i = nDims - 1; i > 0;)
     {
@@ -4682,8 +4684,8 @@ bool GDALMDArray::ReadForTransposedRequest(
 // arrayStep[] == 1, bufferDataType == GetDataType() and bufferStride[]
 // defines a row-major ordered contiguous buffer.
 bool GDALMDArray::IsStepOneContiguousRowMajorOrderedSameDataType(
-    const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride,
+    const size_t *count, const int64_t *arrayStep,
+    const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType) const
 {
     if (bufferDataType != GetDataType())
@@ -4717,17 +4719,17 @@ bool GDALMDArray::IsStepOneContiguousRowMajorOrderedSameDataType(
 // ordered contiguous buffer, on a temporary buffer. And it will rearrange the
 // content of that temporary buffer onto pDstBuffer.
 bool GDALMDArray::ReadUsingContiguousIRead(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
-    void *pDstBuffer) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
+    const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     const size_t nDims(GetDimensionCount());
-    std::vector<GUInt64> anTmpStartIdx(nDims);
+    std::vector<uint64_t> anTmpStartIdx(nDims);
     std::vector<size_t> anTmpCount(nDims);
     const auto &oType = GetDataType();
     size_t nMemArraySize = oType.GetSize();
-    std::vector<GPtrDiff_t> anTmpStride(nDims);
-    GPtrDiff_t nStride = 1;
+    std::vector<ptrdiff_t> anTmpStride(nDims);
+    ptrdiff_t nStride = 1;
     for (size_t i = nDims; i > 0;)
     {
         --i;
@@ -4753,7 +4755,7 @@ bool GDALMDArray::ReadUsingContiguousIRead(
     if (!pTmpBuffer)
         return false;
     if (!IRead(anTmpStartIdx.data(), anTmpCount.data(),
-               std::vector<GInt64>(nDims, 1).data(),  // steps
+               std::vector<int64_t>(nDims, 1).data(),  // steps
                anTmpStride.data(), oType, pTmpBuffer.get()))
     {
         return false;
@@ -4791,14 +4793,14 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     std::vector<Range>
         m_parentRanges{};  // of size m_poParent->GetDimensionCount()
 
-    mutable std::vector<GUInt64> m_parentStart;
+    mutable std::vector<uint64_t> m_parentStart;
     mutable std::vector<size_t> m_parentCount;
-    mutable std::vector<GInt64> m_parentStep;
-    mutable std::vector<GPtrDiff_t> m_parentStride;
+    mutable std::vector<int64_t> m_parentStep;
+    mutable std::vector<ptrdiff_t> m_parentStride;
 
-    void PrepareParentArrays(const GUInt64 *arrayStartIdx, const size_t *count,
-                             const GInt64 *arrayStep,
-                             const GPtrDiff_t *bufferStride) const;
+    void PrepareParentArrays(const uint64_t *arrayStartIdx, const size_t *count,
+                             const int64_t *arrayStep,
+                             const ptrdiff_t *bufferStride) const;
 
   protected:
     explicit GDALSlicedMDArray(
@@ -4824,17 +4826,17 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     {
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
 
   public:
@@ -4940,9 +4942,9 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     // bool SetScale(double dfScale) override { return
     // m_poParent->SetScale(dfScale); }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
-        std::vector<GUInt64> ret(GetDimensionCount());
+        std::vector<uint64_t> ret(GetDimensionCount());
         const auto parentBlockSize(m_poParent->GetBlockSize());
         for (size_t i = 0; i < m_mapDimIdxToParentDimIdx.size(); ++i)
         {
@@ -4972,9 +4974,10 @@ class GDALSlicedMDArray final : public GDALPamMDArray
 /*                        PrepareParentArrays()                         */
 /************************************************************************/
 
-void GDALSlicedMDArray::PrepareParentArrays(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride) const
+void GDALSlicedMDArray::PrepareParentArrays(const uint64_t *arrayStartIdx,
+                                            const size_t *count,
+                                            const int64_t *arrayStep,
+                                            const ptrdiff_t *bufferStride) const
 {
     const size_t nParentDimCount = m_parentRanges.size();
     for (size_t i = 0; i < nParentDimCount; i++)
@@ -4994,7 +4997,7 @@ void GDALSlicedMDArray::PrepareParentArrays(
                           arrayStartIdx[i] * m_parentRanges[iParent].m_nIncr
                     : m_parentRanges[iParent].m_nStartIdx -
                           arrayStartIdx[i] *
-                              static_cast<GUInt64>(
+                              static_cast<uint64_t>(
                                   -m_parentRanges[iParent].m_nIncr);
             m_parentCount[iParent] = count[i];
             if (arrayStep)
@@ -5017,9 +5020,9 @@ void GDALSlicedMDArray::PrepareParentArrays(
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GDALSlicedMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                              const GInt64 *arrayStep,
-                              const GPtrDiff_t *bufferStride,
+bool GDALSlicedMDArray::IRead(const uint64_t *arrayStartIdx,
+                              const size_t *count, const int64_t *arrayStep,
+                              const ptrdiff_t *bufferStride,
                               const GDALExtendedDataType &bufferDataType,
                               void *pDstBuffer) const
 {
@@ -5033,9 +5036,9 @@ bool GDALSlicedMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                             IWrite()                                  */
 /************************************************************************/
 
-bool GDALSlicedMDArray::IWrite(const GUInt64 *arrayStartIdx,
-                               const size_t *count, const GInt64 *arrayStep,
-                               const GPtrDiff_t *bufferStride,
+bool GDALSlicedMDArray::IWrite(const uint64_t *arrayStartIdx,
+                               const size_t *count, const int64_t *arrayStep,
+                               const ptrdiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                const void *pSrcBuffer)
 {
@@ -5049,7 +5052,7 @@ bool GDALSlicedMDArray::IWrite(const GUInt64 *arrayStartIdx,
 /*                             IAdviseRead()                            */
 /************************************************************************/
 
-bool GDALSlicedMDArray::IAdviseRead(const GUInt64 *arrayStartIdx,
+bool GDALSlicedMDArray::IAdviseRead(const uint64_t *arrayStartIdx,
                                     const size_t *count,
                                     CSLConstList papszOptions) const
 {
@@ -5126,12 +5129,12 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             }
 
             auto nVal = CPLAtoGIntBig(pszIdxSpec);
-            GUInt64 nDimSize = srcDims[nCurSrcDim]->GetSize();
-            if ((nVal >= 0 && static_cast<GUInt64>(nVal) >= nDimSize) ||
-                (nVal < 0 && nDimSize < static_cast<GUInt64>(-nVal)))
+            uint64_t nDimSize = srcDims[nCurSrcDim]->GetSize();
+            if ((nVal >= 0 && static_cast<uint64_t>(nVal) >= nDimSize) ||
+                (nVal < 0 && nDimSize < static_cast<uint64_t>(-nVal)))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Index " CPL_FRMT_GIB " is out of bounds", nVal);
+                         "Index %" PRId64 " is out of bounds", nVal);
                 return nullptr;
             }
             if (nVal < 0)
@@ -5166,10 +5169,10 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             const char *pszEnd = aosRangeTokens[1];
             const char *pszInc = (nRangeTokens == 3) ? aosRangeTokens[2] : "";
             GDALSlicedMDArray::Range range;
-            const GUInt64 nDimSize(srcDims[nCurSrcDim]->GetSize());
+            const uint64_t nDimSize(srcDims[nCurSrcDim]->GetSize());
             range.m_nIncr = EQUAL(pszInc, "") ? 1 : CPLAtoGIntBig(pszInc);
             if (range.m_nIncr == 0 ||
-                range.m_nIncr == std::numeric_limits<GInt64>::min())
+                range.m_nIncr == std::numeric_limits<int64_t>::min())
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid increment");
                 return nullptr;
@@ -5177,7 +5180,7 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             auto startIdx(CPLAtoGIntBig(pszStart));
             if (startIdx < 0)
             {
-                if (nDimSize < static_cast<GUInt64>(-startIdx))
+                if (nDimSize < static_cast<uint64_t>(-startIdx))
                     startIdx = 0;
                 else
                     startIdx = nDimSize + startIdx;
@@ -5192,13 +5195,13 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             auto endIdx(CPLAtoGIntBig(pszEnd));
             if (endIdx < 0)
             {
-                const auto positiveEndIdx = static_cast<GUInt64>(-endIdx);
+                const auto positiveEndIdx = static_cast<uint64_t>(-endIdx);
                 if (nDimSize < positiveEndIdx)
                     endIdx = 0;
                 else
                     endIdx = nDimSize - positiveEndIdx;
             }
-            GUInt64 nEndIdx = endIdx;
+            uint64_t nEndIdx = endIdx;
             nEndIdx = EQUAL(pszEnd, "") ? (!bPosIncr ? 0 : nDimSize) : nEndIdx;
             if ((bPosIncr && range.m_nStartIdx >= nEndIdx) ||
                 (!bPosIncr && range.m_nStartIdx <= nEndIdx))
@@ -5209,7 +5212,7 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
             }
             int inc = (EQUAL(pszEnd, "") && !bPosIncr) ? 1 : 0;
             const auto nAbsIncr = std::abs(range.m_nIncr);
-            const GUInt64 newSize =
+            const uint64_t newSize =
                 bPosIncr
                     ? DIV_ROUND_UP(nEndIdx - range.m_nStartIdx, nAbsIncr)
                     : DIV_ROUND_UP(inc + range.m_nStartIdx - nEndIdx, nAbsIncr);
@@ -5225,11 +5228,10 @@ CreateSlicedArray(const std::shared_ptr<GDALMDArray> &self,
                 {
                     osNewDimName =
                         "subset_" + srcDims[nCurSrcDim]->GetName() +
-                        CPLSPrintf("_" CPL_FRMT_GUIB "_" CPL_FRMT_GIB
-                                   "_" CPL_FRMT_GUIB,
-                                   static_cast<GUIntBig>(range.m_nStartIdx),
-                                   static_cast<GIntBig>(range.m_nIncr),
-                                   static_cast<GUIntBig>(newSize));
+                        CPLSPrintf("_%" PRIu64 "_%" PRId64 "_%" PRIu64,
+                                   static_cast<uint64_t>(range.m_nStartIdx),
+                                   static_cast<int64_t>(range.m_nIncr),
+                                   static_cast<uint64_t>(newSize));
                 }
                 newDims.push_back(std::make_shared<GDALDimension>(
                     std::string(), osNewDimName, srcDims[nCurSrcDim]->GetType(),
@@ -5289,12 +5291,12 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
         m_pabyNoData.resize(m_dt.GetSize());
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override
     {
         return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions);
@@ -5380,7 +5382,7 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
         return m_poParent->GetScale(pbHasScale, peStorageType);
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_poParent->GetBlockSize();
     }
@@ -5390,10 +5392,10 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GDALExtractFieldMDArray::IRead(const GUInt64 *arrayStartIdx,
+bool GDALExtractFieldMDArray::IRead(const uint64_t *arrayStartIdx,
                                     const size_t *count,
-                                    const GInt64 *arrayStep,
-                                    const GPtrDiff_t *bufferStride,
+                                    const int64_t *arrayStep,
+                                    const ptrdiff_t *bufferStride,
                                     const GDALExtendedDataType &bufferDataType,
                                     void *pDstBuffer) const
 {
@@ -5611,7 +5613,7 @@ GDALMDArray::GetView(const std::string &viewExpr, bool bRenameDimensions,
 //! @endcond
 
 std::shared_ptr<GDALMDArray>
-GDALMDArray::GetView(const std::vector<GUInt64> &indices) const
+GDALMDArray::GetView(const std::vector<uint64_t> &indices) const
 {
     std::string osExpr("[");
     bool bFirst = true;
@@ -5620,7 +5622,7 @@ GDALMDArray::GetView(const std::vector<GUInt64> &indices) const
         if (!bFirst)
             osExpr += ',';
         bFirst = false;
-        osExpr += CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(idx));
+        osExpr += CPLSPrintf("%" PRIu64, static_cast<uint64_t>(idx));
     }
     return GetView(osExpr + ']');
 }
@@ -5655,14 +5657,14 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
     std::vector<int> m_anMapNewAxisToOldAxis{};
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
 
-    mutable std::vector<GUInt64> m_parentStart;
+    mutable std::vector<uint64_t> m_parentStart;
     mutable std::vector<size_t> m_parentCount;
-    mutable std::vector<GInt64> m_parentStep;
-    mutable std::vector<GPtrDiff_t> m_parentStride;
+    mutable std::vector<int64_t> m_parentStep;
+    mutable std::vector<ptrdiff_t> m_parentStride;
 
-    void PrepareParentArrays(const GUInt64 *arrayStartIdx, const size_t *count,
-                             const GInt64 *arrayStep,
-                             const GPtrDiff_t *bufferStride) const;
+    void PrepareParentArrays(const uint64_t *arrayStartIdx, const size_t *count,
+                             const int64_t *arrayStep,
+                             const ptrdiff_t *bufferStride) const;
 
     static std::string
     MappingToStr(const std::vector<int> &anMapNewAxisToOldAxis)
@@ -5701,17 +5703,17 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
     {
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
 
   public:
@@ -5822,9 +5824,9 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
     // bool SetScale(double dfScale) override { return
     // m_poParent->SetScale(dfScale); }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
-        std::vector<GUInt64> ret(GetDimensionCount());
+        std::vector<uint64_t> ret(GetDimensionCount());
         const auto parentBlockSize(m_poParent->GetBlockSize());
         for (size_t i = 0; i < m_anMapNewAxisToOldAxis.size(); ++i)
         {
@@ -5855,8 +5857,8 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
 /************************************************************************/
 
 void GDALMDArrayTransposed::PrepareParentArrays(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride) const
 {
     for (size_t i = 0; i < m_anMapNewAxisToOldAxis.size(); ++i)
     {
@@ -5881,9 +5883,9 @@ void GDALMDArrayTransposed::PrepareParentArrays(
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GDALMDArrayTransposed::IRead(const GUInt64 *arrayStartIdx,
-                                  const size_t *count, const GInt64 *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+bool GDALMDArrayTransposed::IRead(const uint64_t *arrayStartIdx,
+                                  const size_t *count, const int64_t *arrayStep,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const
 {
@@ -5897,9 +5899,10 @@ bool GDALMDArrayTransposed::IRead(const GUInt64 *arrayStartIdx,
 /*                            IWrite()                                  */
 /************************************************************************/
 
-bool GDALMDArrayTransposed::IWrite(const GUInt64 *arrayStartIdx,
-                                   const size_t *count, const GInt64 *arrayStep,
-                                   const GPtrDiff_t *bufferStride,
+bool GDALMDArrayTransposed::IWrite(const uint64_t *arrayStartIdx,
+                                   const size_t *count,
+                                   const int64_t *arrayStep,
+                                   const ptrdiff_t *bufferStride,
                                    const GDALExtendedDataType &bufferDataType,
                                    const void *pSrcBuffer)
 {
@@ -5913,7 +5916,7 @@ bool GDALMDArrayTransposed::IWrite(const GUInt64 *arrayStartIdx,
 /*                             IAdviseRead()                            */
 /************************************************************************/
 
-bool GDALMDArrayTransposed::IAdviseRead(const GUInt64 *arrayStartIdx,
+bool GDALMDArrayTransposed::IAdviseRead(const uint64_t *arrayStartIdx,
                                         const size_t *count,
                                         CSLConstList papszOptions) const
 {
@@ -5995,9 +5998,9 @@ GDALMDArray::Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
-                                const size_t *count, const GInt64 *arrayStep,
-                                const GPtrDiff_t *bufferStride,
+bool GDALMDArrayUnscaled::IRead(const uint64_t *arrayStartIdx,
+                                const size_t *count, const int64_t *arrayStep,
+                                const ptrdiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 void *pDstBuffer) const
 {
@@ -6042,8 +6045,8 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
         return true;
     }
 
-    std::vector<GPtrDiff_t> actualBufferStrideVector;
-    const GPtrDiff_t *actualBufferStridePtr = bufferStride;
+    std::vector<ptrdiff_t> actualBufferStrideVector;
+    const ptrdiff_t *actualBufferStridePtr = bufferStride;
     void *pTempBuffer = pDstBuffer;
     if (bTempBufferNeeded)
     {
@@ -6076,8 +6079,8 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
         size_t nIters = 0;
         double *src_ptr = nullptr;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     std::vector<Stack> stack(nDims);
     const size_t nBufferDTSize = bufferDataType.GetSize();
@@ -6086,7 +6089,7 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
         stack[i].src_inc_offset =
             actualBufferStridePtr[i] * (bDTIsComplex ? 2 : 1);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].src_ptr = static_cast<double *>(pTempBuffer);
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
@@ -6159,9 +6162,9 @@ lbl_next_depth:
 /*                             IWrite()                                 */
 /************************************************************************/
 
-bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
-                                 const size_t *count, const GInt64 *arrayStep,
-                                 const GPtrDiff_t *bufferStride,
+bool GDALMDArrayUnscaled::IWrite(const uint64_t *arrayStartIdx,
+                                 const size_t *count, const int64_t *arrayStep,
+                                 const ptrdiff_t *bufferStride,
                                  const GDALExtendedDataType &bufferDataType,
                                  const void *pSrcBuffer)
 {
@@ -6207,7 +6210,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
         }
     }
 
-    std::vector<GPtrDiff_t> tmpBufferStrideVector;
+    std::vector<ptrdiff_t> tmpBufferStrideVector;
     size_t nElts = 1;
     tmpBufferStrideVector.resize(nDims);
     for (size_t i = 0; i < nDims; i++)
@@ -6218,7 +6221,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
         --i;
         tmpBufferStrideVector[i] = tmpBufferStrideVector[i + 1] * count[i + 1];
     }
-    const GPtrDiff_t *tmpBufferStridePtr = tmpBufferStrideVector.data();
+    const ptrdiff_t *tmpBufferStridePtr = tmpBufferStrideVector.data();
     void *pTempBuffer = VSI_MALLOC2_VERBOSE(nDTSize, nElts);
     if (!pTempBuffer)
         return false;
@@ -6228,8 +6231,8 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
         size_t nIters = 0;
         double *dst_ptr = nullptr;
         const GByte *src_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     std::vector<Stack> stack(nDims);
     const size_t nBufferDTSize = bufferDataType.GetSize();
@@ -6238,7 +6241,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
         stack[i].dst_inc_offset =
             tmpBufferStridePtr[i] * (bDTIsComplex ? 2 : 1);
         stack[i].src_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].dst_ptr = static_cast<double *>(pTempBuffer);
     stack[0].src_ptr = static_cast<const GByte *>(pSrcBuffer);
@@ -6413,11 +6416,11 @@ class GDALMDArrayMask final : public GDALPamMDArray
 
     template <typename Type>
     void
-    ReadInternal(const size_t *count, const GPtrDiff_t *bufferStride,
+    ReadInternal(const size_t *count, const ptrdiff_t *bufferStride,
                  const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
                  const void *pTempBuffer,
                  const GDALExtendedDataType &oTmpBufferDT,
-                 const std::vector<GPtrDiff_t> &tmpBufferStrideVector) const;
+                 const std::vector<ptrdiff_t> &tmpBufferStrideVector) const;
 
   protected:
     explicit GDALMDArrayMask(const std::shared_ptr<GDALMDArray> &poParent)
@@ -6429,12 +6432,12 @@ class GDALMDArrayMask final : public GDALPamMDArray
     {
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override
     {
         return m_poParent->AdviseRead(arrayStartIdx, count, papszOptions);
@@ -6471,7 +6474,7 @@ class GDALMDArrayMask final : public GDALPamMDArray
         return m_poParent->GetSpatialRef();
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_poParent->GetBlockSize();
     }
@@ -6695,15 +6698,15 @@ bool GDALMDArrayMask::Init(CSLConstList papszOptions)
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                            const GInt64 *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+bool GDALMDArrayMask::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                            const int64_t *arrayStep,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
     size_t nElts = 1;
     const size_t nDims = GetDimensionCount();
-    std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
+    std::vector<ptrdiff_t> tmpBufferStrideVector(nDims);
     for (size_t i = 0; i < nDims; i++)
         nElts *= count[i];
     if (nDims > 0)
@@ -6749,14 +6752,14 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         {
             size_t nIters = 0;
             GByte *dst_ptr = nullptr;
-            GPtrDiff_t dst_inc_offset = 0;
+            ptrdiff_t dst_inc_offset = 0;
         };
         std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
         const size_t nBufferDTSize = bufferDataType.GetSize();
         for (size_t i = 0; i < nDims; i++)
         {
             stack[i].dst_inc_offset =
-                static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+                static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
         }
         stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
 
@@ -6838,33 +6841,33 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             break;
 
         case GDT_Int8:
-            ReadInternal<GInt8>(count, bufferStride, bufferDataType, pDstBuffer,
-                                pTempBuffer, oTmpBufferDT,
-                                tmpBufferStrideVector);
+            ReadInternal<int8_t>(count, bufferStride, bufferDataType,
+                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                 tmpBufferStrideVector);
             break;
 
         case GDT_UInt16:
-            ReadInternal<GUInt16>(count, bufferStride, bufferDataType,
-                                  pDstBuffer, pTempBuffer, oTmpBufferDT,
-                                  tmpBufferStrideVector);
+            ReadInternal<uint16_t>(count, bufferStride, bufferDataType,
+                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                   tmpBufferStrideVector);
             break;
 
         case GDT_Int16:
-            ReadInternal<GInt16>(count, bufferStride, bufferDataType,
-                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
-                                 tmpBufferStrideVector);
-            break;
-
-        case GDT_UInt32:
-            ReadInternal<GUInt32>(count, bufferStride, bufferDataType,
+            ReadInternal<int16_t>(count, bufferStride, bufferDataType,
                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
                                   tmpBufferStrideVector);
             break;
 
+        case GDT_UInt32:
+            ReadInternal<uint32_t>(count, bufferStride, bufferDataType,
+                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                   tmpBufferStrideVector);
+            break;
+
         case GDT_Int32:
-            ReadInternal<GInt32>(count, bufferStride, bufferDataType,
-                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
-                                 tmpBufferStrideVector);
+            ReadInternal<int32_t>(count, bufferStride, bufferDataType,
+                                  pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                  tmpBufferStrideVector);
             break;
 
         case GDT_UInt64:
@@ -6950,10 +6953,10 @@ template <> bool IsNan<float>(float val)
 
 template <typename Type>
 void GDALMDArrayMask::ReadInternal(
-    const size_t *count, const GPtrDiff_t *bufferStride,
+    const size_t *count, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
     const void *pTempBuffer, const GDALExtendedDataType &oTmpBufferDT,
-    const std::vector<GPtrDiff_t> &tmpBufferStrideVector) const
+    const std::vector<ptrdiff_t> &tmpBufferStrideVector) const
 {
     const size_t nDims = GetDimensionCount();
 
@@ -7067,17 +7070,17 @@ void GDALMDArrayMask::ReadInternal(
         size_t nIters = 0;
         const GByte *src_ptr = nullptr;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
     {
-        stack[i].src_inc_offset = static_cast<GPtrDiff_t>(
-            tmpBufferStrideVector[i] * nTmpBufferDTSize);
+        stack[i].src_inc_offset =
+            static_cast<ptrdiff_t>(tmpBufferStrideVector[i] * nTmpBufferDTSize);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].src_ptr = static_cast<const GByte *>(pTempBuffer);
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
@@ -7232,7 +7235,7 @@ bool GDALMDArray::IsRegularlySpaced(double &dfStart, double &dfIncrement) const
         return false;
     }
 
-    GUInt64 anStart[1] = {0};
+    uint64_t anStart[1] = {0};
     size_t anCount[1] = {nCount};
 
     const auto IsRegularlySpacedInternal =
@@ -7349,8 +7352,8 @@ class GDALMDArrayResampledDatasetRasterBand final : public GDALRasterBand
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                     GSpacing nLineSpaceBuf,
+                     GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                     int64_t nLineSpaceBuf,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -7372,9 +7375,9 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
 
-    std::vector<GUInt64> m_anOffset{};
+    std::vector<uint64_t> m_anOffset{};
     std::vector<size_t> m_anCount{};
-    std::vector<GPtrDiff_t> m_anStride{};
+    std::vector<ptrdiff_t> m_anStride{};
 
     std::string m_osFilenameLong{};
     std::string m_osFilenameLat{};
@@ -7390,9 +7393,9 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
         const auto &dims(m_poArray->GetDimensions());
 
         nRasterYSize = static_cast<int>(
-            std::min(static_cast<GUInt64>(INT_MAX), dims[iYDim]->GetSize()));
+            std::min(static_cast<uint64_t>(INT_MAX), dims[iYDim]->GetSize()));
         nRasterXSize = static_cast<int>(
-            std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
+            std::min(static_cast<uint64_t>(INT_MAX), dims[iXDim]->GetSize()));
 
         m_bHasGT = m_poArray->GuessGeoTransform(m_iXDim, m_iYDim, false,
                                                 m_adfGeoTransform);
@@ -7464,14 +7467,16 @@ GDALMDArrayResampledDatasetRasterBand::GDALMDArrayResampledDatasetRasterBand(
 {
     const auto &poArray(poDSIn->m_poArray);
     const auto blockSize(poArray->GetBlockSize());
-    nBlockYSize = (blockSize[poDSIn->m_iYDim])
-                      ? static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
-                                                  blockSize[poDSIn->m_iYDim]))
-                      : 1;
-    nBlockXSize = blockSize[poDSIn->m_iXDim]
-                      ? static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
-                                                  blockSize[poDSIn->m_iXDim]))
-                      : poDSIn->GetRasterXSize();
+    nBlockYSize =
+        (blockSize[poDSIn->m_iYDim])
+            ? static_cast<int>(std::min(static_cast<uint64_t>(INT_MAX),
+                                        blockSize[poDSIn->m_iYDim]))
+            : 1;
+    nBlockXSize =
+        blockSize[poDSIn->m_iXDim]
+            ? static_cast<int>(std::min(static_cast<uint64_t>(INT_MAX),
+                                        blockSize[poDSIn->m_iXDim]))
+            : poDSIn->GetRasterXSize();
     eDataType = poArray->GetDataType().GetNumericDataType();
     eAccess = poDSIn->eAccess;
 }
@@ -7518,7 +7523,7 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock(int nBlockXOff,
 CPLErr GDALMDArrayResampledDatasetRasterBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
+    int64_t nPixelSpaceBuf, int64_t nLineSpaceBuf,
     GDALRasterIOExtraArg *psExtraArg)
 {
     auto l_poDS(cpl::down_cast<GDALMDArrayResampledDataset *>(poDS));
@@ -7528,15 +7533,15 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IRasterIO(
         nBufferDTSize > 0 && (nPixelSpaceBuf % nBufferDTSize) == 0 &&
         (nLineSpaceBuf % nBufferDTSize) == 0)
     {
-        l_poDS->m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
+        l_poDS->m_anOffset[l_poDS->m_iXDim] = static_cast<uint64_t>(nXOff);
         l_poDS->m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
         l_poDS->m_anStride[l_poDS->m_iXDim] =
-            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize);
+            static_cast<ptrdiff_t>(nPixelSpaceBuf / nBufferDTSize);
 
-        l_poDS->m_anOffset[l_poDS->m_iYDim] = static_cast<GUInt64>(nYOff);
+        l_poDS->m_anOffset[l_poDS->m_iYDim] = static_cast<uint64_t>(nYOff);
         l_poDS->m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
         l_poDS->m_anStride[l_poDS->m_iYDim] =
-            static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize);
+            static_cast<ptrdiff_t>(nLineSpaceBuf / nBufferDTSize);
 
         return poArray->Read(l_poDS->m_anOffset.data(),
                              l_poDS->m_anCount.data(), nullptr,
@@ -7555,7 +7560,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
   private:
     std::shared_ptr<GDALMDArray> m_poParent{};
     std::vector<std::shared_ptr<GDALDimension>> m_apoDims;
-    std::vector<GUInt64> m_anBlockSize;
+    std::vector<uint64_t> m_anBlockSize;
     GDALExtendedDataType m_dt;
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
     std::shared_ptr<GDALMDArray> m_poVarX{};
@@ -7567,7 +7572,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
     GDALMDArrayResampled(
         const std::shared_ptr<GDALMDArray> &poParent,
         const std::vector<std::shared_ptr<GDALDimension>> &apoDims,
-        const std::vector<GUInt64> &anBlockSize)
+        const std::vector<uint64_t> &anBlockSize)
         : GDALAbstractMDArray(std::string(),
                               "Resampled view of " + poParent->GetFullName()),
           GDALPamMDArray(std::string(),
@@ -7580,8 +7585,8 @@ class GDALMDArrayResampled final : public GDALPamMDArray
         CPLAssert(anBlockSize.size() == m_poParent->GetDimensionCount());
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -7625,7 +7630,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
         return m_poSRS;
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_anBlockSize;
     }
@@ -7739,7 +7744,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
     apoNewDims.reserve(apoNewDimsIn.size());
 
-    std::vector<GUInt64> anBlockSize;
+    std::vector<uint64_t> anBlockSize;
     anBlockSize.reserve(apoNewDimsIn.size());
     const auto &anParentBlockSize = poParent->GetBlockSize();
 
@@ -7772,7 +7777,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     auto poNewDimX = apoNewDimsIn[iXDim];
     if (poNewDimX)
     {
-        if (poNewDimX->GetSize() > static_cast<GUInt64>(INT_MAX))
+        if (poNewDimX->GetSize() > static_cast<uint64_t>(INT_MAX))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too big size for X dimension");
@@ -7800,7 +7805,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     bool gotYSpacing = false;
     if (poNewDimY)
     {
-        if (poNewDimY->GetSize() > static_cast<GUInt64>(INT_MAX))
+        if (poNewDimY->GetSize() > static_cast<uint64_t>(INT_MAX))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too big size for Y dimension");
@@ -8077,9 +8082,9 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
 /*                   GDALMDArrayResampled::IRead()                      */
 /************************************************************************/
 
-bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
-                                 const size_t *count, const GInt64 *arrayStep,
-                                 const GPtrDiff_t *bufferStride,
+bool GDALMDArrayResampled::IRead(const uint64_t *arrayStartIdx,
+                                 const size_t *count, const int64_t *arrayStep,
+                                 const ptrdiff_t *bufferStride,
                                  const GDALExtendedDataType &bufferDataType,
                                  void *pDstBuffer) const
 {
@@ -8090,7 +8095,7 @@ bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
     {
         size_t nIters = 0;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     const auto nDims = GetDimensionCount();
     std::vector<Stack> stack(nDims + 1);  // +1 to avoid -Wnull-dereference
@@ -8098,7 +8103,7 @@ bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
     for (size_t i = 0; i < nDims; i++)
     {
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
 
@@ -8208,23 +8213,23 @@ class GDALDatasetFromArray;
 
 class GDALRasterBandFromArray final : public GDALRasterBand
 {
-    std::vector<GUInt64> m_anOffset{};
+    std::vector<uint64_t> m_anOffset{};
     std::vector<size_t> m_anCount{};
-    std::vector<GPtrDiff_t> m_anStride{};
+    std::vector<ptrdiff_t> m_anStride{};
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                     GSpacing nLineSpaceBuf,
+                     GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                     int64_t nLineSpaceBuf,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
     explicit GDALRasterBandFromArray(
         GDALDatasetFromArray *poDSIn,
-        const std::vector<GUInt64> &anOtherDimCoord, double dfDelay,
+        const std::vector<uint64_t> &anOtherDimCoord, double dfDelay,
         time_t nStartTime, bool &bHasWarned);
 
     double GetNoDataValue(int *pbHasNoData) override;
@@ -8260,15 +8265,15 @@ class GDALDatasetFromArray final : public GDALDataset
         nRasterYSize =
             nDimCount < 2
                 ? 1
-                : static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
+                : static_cast<int>(std::min(static_cast<uint64_t>(INT_MAX),
                                             dims[iYDim]->GetSize()));
         nRasterXSize = static_cast<int>(
-            std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
+            std::min(static_cast<uint64_t>(INT_MAX), dims[iXDim]->GetSize()));
         eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
 
         const size_t nNewDimCount = nDimCount >= 2 ? nDimCount - 2 : 0;
-        std::vector<GUInt64> anOtherDimCoord(nNewDimCount);
-        std::vector<GUInt64> anStackIters(nDimCount);
+        std::vector<uint64_t> anOtherDimCoord(nNewDimCount);
+        std::vector<uint64_t> anStackIters(nDimCount);
         std::vector<size_t> anMapNewToOld(nNewDimCount);
         for (size_t i = 0, j = 0; i < nDimCount; ++i)
         {
@@ -8411,21 +8416,23 @@ class GDALDatasetFromArray final : public GDALDataset
 /************************************************************************/
 
 GDALRasterBandFromArray::GDALRasterBandFromArray(
-    GDALDatasetFromArray *poDSIn, const std::vector<GUInt64> &anOtherDimCoord,
+    GDALDatasetFromArray *poDSIn, const std::vector<uint64_t> &anOtherDimCoord,
     double dfDelay, time_t nStartTime, bool &bHasWarned)
 {
     const auto &poArray(poDSIn->m_poArray);
     const auto &dims(poArray->GetDimensions());
     const auto nDimCount(dims.size());
     const auto blockSize(poArray->GetBlockSize());
-    nBlockYSize = (nDimCount >= 2 && blockSize[poDSIn->m_iYDim])
-                      ? static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
-                                                  blockSize[poDSIn->m_iYDim]))
-                      : 1;
-    nBlockXSize = blockSize[poDSIn->m_iXDim]
-                      ? static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
-                                                  blockSize[poDSIn->m_iXDim]))
-                      : poDSIn->GetRasterXSize();
+    nBlockYSize =
+        (nDimCount >= 2 && blockSize[poDSIn->m_iYDim])
+            ? static_cast<int>(std::min(static_cast<uint64_t>(INT_MAX),
+                                        blockSize[poDSIn->m_iYDim]))
+            : 1;
+    nBlockXSize =
+        blockSize[poDSIn->m_iXDim]
+            ? static_cast<int>(std::min(static_cast<uint64_t>(INT_MAX),
+                                        blockSize[poDSIn->m_iXDim]))
+            : poDSIn->GetRasterXSize();
     eDataType = poArray->GetDataType().GetNumericDataType();
     eAccess = poDSIn->eAccess;
     m_anOffset.resize(nDimCount);
@@ -8436,7 +8443,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
         if (i != poDSIn->m_iXDim && !(nDimCount >= 2 && i == poDSIn->m_iYDim))
         {
             std::string dimName(dims[i]->GetName());
-            GUInt64 nIndex = anOtherDimCoord[j];
+            uint64_t nIndex = anOtherDimCoord[j];
             // Detect subset_{orig_dim_name}_{start}_{incr}_{size} names of
             // subsetted dimensions as generated by GetView()
             if (STARTS_WITH(dimName.c_str(), "subset_"))
@@ -8446,7 +8453,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                 if (aosTokens.size() == 5)
                 {
                     dimName = aosTokens[1];
-                    const auto nStartDim = static_cast<GUInt64>(CPLScanUIntBig(
+                    const auto nStartDim = static_cast<uint64_t>(CPLScanUIntBig(
                         aosTokens[2], static_cast<int>(strlen(aosTokens[2]))));
                     const auto nIncrDim = CPLAtoGIntBig(aosTokens[3]);
                     nIndex = nIncrDim > 0 ? nStartDim + nIndex * nIncrDim
@@ -8457,7 +8464,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
             {
                 SetMetadataItem(
                     CPLSPrintf("DIM_%s_INDEX", dimName.c_str()),
-                    CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nIndex)));
+                    CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nIndex)));
             }
             auto indexingVar = dims[i]->GetIndexingVariable();
             if (indexingVar && indexingVar->GetDimensionCount() == 1 &&
@@ -8650,8 +8657,8 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                                           int nYOff, int nXSize, int nYSize,
                                           void *pData, int nBufXSize,
                                           int nBufYSize, GDALDataType eBufType,
-                                          GSpacing nPixelSpaceBuf,
-                                          GSpacing nLineSpaceBuf,
+                                          int64_t nPixelSpaceBuf,
+                                          int64_t nLineSpaceBuf,
                                           GDALRasterIOExtraArg *psExtraArg)
 {
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
@@ -8661,16 +8668,16 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         (nPixelSpaceBuf % nBufferDTSize) == 0 &&
         (nLineSpaceBuf % nBufferDTSize) == 0)
     {
-        m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
+        m_anOffset[l_poDS->m_iXDim] = static_cast<uint64_t>(nXOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
         m_anStride[l_poDS->m_iXDim] =
-            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize);
+            static_cast<ptrdiff_t>(nPixelSpaceBuf / nBufferDTSize);
         if (poArray->GetDimensionCount() >= 2)
         {
-            m_anOffset[l_poDS->m_iYDim] = static_cast<GUInt64>(nYOff);
+            m_anOffset[l_poDS->m_iYDim] = static_cast<uint64_t>(nYOff);
             m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
             m_anStride[l_poDS->m_iYDim] =
-                static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize);
+                static_cast<ptrdiff_t>(nLineSpaceBuf / nBufferDTSize);
         }
         if (eRWFlag == GF_Read)
         {
@@ -8706,7 +8713,7 @@ GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
     if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_STRING)
     {
         bool bOK = false;
-        GUInt64 nStartIndex = 0;
+        uint64_t nStartIndex = 0;
         if (poArray->GetDimensionCount() == 2 &&
             poAttr->GetDimensionCount() == 0)
         {
@@ -8722,7 +8729,7 @@ GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
                     nExtraDimSamples *= apoDims[i]->GetSize();
             }
             if (poAttr->GetDimensionsSize() ==
-                std::vector<GUInt64>{static_cast<GUInt64>(nExtraDimSamples)})
+                std::vector<uint64_t>{static_cast<uint64_t>(nExtraDimSamples)})
             {
                 bOK = true;
             }
@@ -8732,8 +8739,8 @@ GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
         {
             const auto oStringDT = GDALExtendedDataType::CreateString();
             const size_t nCount = 1;
-            const GInt64 arrayStep = 1;
-            const GPtrDiff_t bufferStride = 1;
+            const int64_t arrayStep = 1;
+            const ptrdiff_t bufferStride = 1;
             char *pszValue = nullptr;
             poAttr->Read(&nStartIndex, &nCount, &arrayStep, &bufferStride,
                          oStringDT, &pszValue);
@@ -8810,7 +8817,7 @@ GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim,
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid iXDim and/or iYDim");
         return nullptr;
     }
-    GUInt64 nBands = 1;
+    uint64_t nBands = 1;
     const auto &dims(GetDimensions());
     for (size_t i = 0; i < nDimCount; ++i)
     {
@@ -8886,7 +8893,7 @@ GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim,
 
 CPLErr GDALMDArray::GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
                                   double *pdfMax, double *pdfMean,
-                                  double *pdfStdDev, GUInt64 *pnValidCount,
+                                  double *pdfStdDev, uint64_t *pnValidCount,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 {
@@ -8955,7 +8962,7 @@ CPLErr GDALMDArray::GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
 
 bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
                                     double *pdfMax, double *pdfMean,
-                                    double *pdfStdDev, GUInt64 *pnValidCount,
+                                    double *pdfStdDev, uint64_t *pnValidCount,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData,
                                     CSLConstList papszOptions)
@@ -8968,7 +8975,7 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
         double dfMax = -std::numeric_limits<double>::max();
         double dfMean = 0.0;
         double dfM2 = 0.0;
-        GUInt64 nValidCount = 0;
+        uint64_t nValidCount = 0;
         std::vector<GByte> abyData{};
         std::vector<double> adfData{};
         std::vector<GByte> abyMaskData{};
@@ -8977,9 +8984,9 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
     };
 
     const auto PerChunkFunc = [](GDALAbstractMDArray *,
-                                 const GUInt64 *chunkArrayStartIdx,
-                                 const size_t *chunkCount, GUInt64 iCurChunk,
-                                 GUInt64 nChunkCount, void *pUserData)
+                                 const uint64_t *chunkArrayStartIdx,
+                                 const size_t *chunkCount, uint64_t iCurChunk,
+                                 uint64_t nChunkCount, void *pUserData)
     {
         StatsPerChunkType *data = static_cast<StatsPerChunkType *>(pUserData);
         const GDALMDArray *array = data->array;
@@ -9021,7 +9028,7 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
                             static_cast<int>(oType.GetSize()),
                             &data->adfData[0], GDT_Float64,
                             static_cast<int>(sizeof(double)),
-                            static_cast<GPtrDiff_t>(nVals));
+                            static_cast<ptrdiff_t>(nVals));
         }
         for (size_t i = 0; i < nVals; i++)
         {
@@ -9056,8 +9063,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
     }
 
     const size_t nDims = GetDimensionCount();
-    std::vector<GUInt64> arrayStartIdx(nDims);
-    std::vector<GUInt64> count(nDims);
+    std::vector<uint64_t> arrayStartIdx(nDims);
+    std::vector<uint64_t> count(nDims);
     const auto &poDims = GetDimensions();
     for (size_t i = 0; i < nDims; i++)
     {
@@ -9067,10 +9074,10 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
     const size_t nMaxChunkSize =
         pszSwathSize
             ? static_cast<size_t>(
-                  std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
+                  std::min(int64_t(std::numeric_limits<size_t>::max() / 2),
                            CPLAtoGIntBig(pszSwathSize)))
             : static_cast<size_t>(
-                  std::min(GIntBig(std::numeric_limits<size_t>::max() / 2),
+                  std::min(int64_t(std::numeric_limits<size_t>::max() / 2),
                            GDALGetCacheMax64() / 4));
     StatsPerChunkType sData;
     sData.array = this;
@@ -9118,7 +9125,7 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
 bool GDALMDArray::SetStatistics(bool /* bApproxStats */, double /* dfMin */,
                                 double /* dfMax */, double /* dfMean */,
                                 double /* dfStdDev */,
-                                GUInt64 /* nValidCount */,
+                                uint64_t /* nValidCount */,
                                 CSLConstList /* papszOptions */)
 {
     CPLDebug("GDAL", "Cannot save statistics on a non-PAM MDArray");
@@ -9584,7 +9591,7 @@ GDALDimension::~GDALDimension() = default;
 GDALDimension::GDALDimension(const std::string &osParentName,
                              const std::string &osName,
                              const std::string &osType,
-                             const std::string &osDirection, GUInt64 nSize)
+                             const std::string &osDirection, uint64_t nSize)
     : m_osName(osName),
       m_osFullName(
           !osParentName.empty()
@@ -10574,7 +10581,8 @@ bool GDALGroupDeleteGroup(GDALGroupH hGroup, const char *pszSubGroupName,
  */
 GDALDimensionH GDALGroupCreateDimension(GDALGroupH hGroup, const char *pszName,
                                         const char *pszType,
-                                        const char *pszDirection, GUInt64 nSize,
+                                        const char *pszDirection,
+                                        uint64_t nSize,
                                         CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGroup, __func__, nullptr);
@@ -10651,13 +10659,13 @@ bool GDALGroupDeleteMDArray(GDALGroupH hGroup, const char *pszName,
  */
 GDALAttributeH GDALGroupCreateAttribute(GDALGroupH hGroup, const char *pszName,
                                         size_t nDimensions,
-                                        const GUInt64 *panDimensions,
+                                        const uint64_t *panDimensions,
                                         GDALExtendedDataTypeH hEDT,
                                         CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGroup, __func__, nullptr);
     VALIDATE_POINTER1(hEDT, __func__, nullptr);
-    std::vector<GUInt64> dims;
+    std::vector<uint64_t> dims;
     dims.reserve(nDimensions);
     for (size_t i = 0; i < nDimensions; i++)
         dims.push_back(panDimensions[i]);
@@ -10764,7 +10772,7 @@ const char *GDALMDArrayGetFullName(GDALMDArrayH hArray)
  * This is the same as the C++ method
  * GDALAbstractMDArray::GetTotalElementsCount()
  */
-GUInt64 GDALMDArrayGetTotalElementsCount(GDALMDArrayH hArray)
+uint64_t GDALMDArrayGetTotalElementsCount(GDALMDArrayH hArray)
 {
     VALIDATE_POINTER1(hArray, __func__, 0);
     return hArray->m_poImpl->GetTotalElementsCount();
@@ -10859,9 +10867,9 @@ GDALExtendedDataTypeH GDALMDArrayGetDataType(GDALMDArrayH hArray)
  *
  * @return TRUE in case of success.
  */
-int GDALMDArrayRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
-                    const size_t *count, const GInt64 *arrayStep,
-                    const GPtrDiff_t *bufferStride,
+int GDALMDArrayRead(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
+                    const size_t *count, const int64_t *arrayStep,
+                    const ptrdiff_t *bufferStride,
                     GDALExtendedDataTypeH bufferDataType, void *pDstBuffer,
                     const void *pDstBufferAllocStart,
                     size_t nDstBufferAllocSize)
@@ -10891,9 +10899,9 @@ int GDALMDArrayRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
  *
  * @return TRUE in case of success.
  */
-int GDALMDArrayWrite(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
-                     const size_t *count, const GInt64 *arrayStep,
-                     const GPtrDiff_t *bufferStride,
+int GDALMDArrayWrite(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
+                     const size_t *count, const int64_t *arrayStep,
+                     const ptrdiff_t *bufferStride,
                      GDALExtendedDataTypeH bufferDataType,
                      const void *pSrcBuffer, const void *pSrcBufferAllocStart,
                      size_t nSrcBufferAllocSize)
@@ -10926,7 +10934,7 @@ int GDALMDArrayWrite(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
  *
  * @since GDAL 3.2
  */
-int GDALMDArrayAdviseRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
+int GDALMDArrayAdviseRead(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
                           const size_t *count)
 {
     return GDALMDArrayAdviseReadEx(hArray, arrayStartIdx, count, nullptr);
@@ -10944,7 +10952,7 @@ int GDALMDArrayAdviseRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
  *
  * @since GDAL 3.4
  */
-int GDALMDArrayAdviseReadEx(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
+int GDALMDArrayAdviseReadEx(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
                             const size_t *count, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hArray, __func__, FALSE);
@@ -11020,14 +11028,14 @@ GDALAttributeH *GDALMDArrayGetAttributes(GDALMDArrayH hArray, size_t *pnCount,
 GDALAttributeH GDALMDArrayCreateAttribute(GDALMDArrayH hArray,
                                           const char *pszName,
                                           size_t nDimensions,
-                                          const GUInt64 *panDimensions,
+                                          const uint64_t *panDimensions,
                                           GDALExtendedDataTypeH hEDT,
                                           CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hArray, __func__, nullptr);
     VALIDATE_POINTER1(pszName, __func__, nullptr);
     VALIDATE_POINTER1(hEDT, __func__, nullptr);
-    std::vector<GUInt64> dims;
+    std::vector<uint64_t> dims;
     dims.reserve(nDimensions);
     for (size_t i = 0; i < nDimensions; i++)
         dims.push_back(panDimensions[i]);
@@ -11264,12 +11272,12 @@ int GDALMDArraySetNoDataValueAsUInt64(GDALMDArrayH hArray,
  * @return true in case of success.
  * @since GDAL 3.7
  */
-bool GDALMDArrayResize(GDALMDArrayH hArray, const GUInt64 *panNewDimSizes,
+bool GDALMDArrayResize(GDALMDArrayH hArray, const uint64_t *panNewDimSizes,
                        CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hArray, __func__, false);
     VALIDATE_POINTER1(panNewDimSizes, __func__, false);
-    std::vector<GUInt64> anNewDimSizes(hArray->m_poImpl->GetDimensionCount());
+    std::vector<uint64_t> anNewDimSizes(hArray->m_poImpl->GetDimensionCount());
     for (size_t i = 0; i < anNewDimSizes.size(); ++i)
     {
         anNewDimSizes[i] = panNewDimSizes[i];
@@ -11463,7 +11471,7 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int *pbHasValue,
  *
  * This method is used by GetProcessingChunkSize().
  *
- * Pedantic note: the returned type is GUInt64, so in the highly unlikeley
+ * Pedantic note: the returned type is uint64_t, so in the highly unlikeley
  * theoretical case of a 32-bit platform, this might exceed its size_t
  * allocation capabilities.
  *
@@ -11471,12 +11479,13 @@ double GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int *pbHasValue,
  *
  * @return the block size, in number of elements along each dimension.
  */
-GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
+uint64_t *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
 {
     VALIDATE_POINTER1(hArray, __func__, nullptr);
     VALIDATE_POINTER1(pnCount, __func__, nullptr);
     auto res = hArray->m_poImpl->GetBlockSize();
-    auto ret = static_cast<GUInt64 *>(CPLMalloc(sizeof(GUInt64) * res.size()));
+    auto ret =
+        static_cast<uint64_t *>(CPLMalloc(sizeof(uint64_t) * res.size()));
     for (size_t i = 0; i < res.size(); i++)
     {
         ret[i] = res[i];
@@ -11770,7 +11779,7 @@ OGRSpatialReferenceH GDALMDArrayGetSpatialRef(GDALMDArrayH hArray)
 CPLErr GDALMDArrayGetStatistics(GDALMDArrayH hArray, GDALDatasetH /*hDS*/,
                                 int bApproxOK, int bForce, double *pdfMin,
                                 double *pdfMax, double *pdfMean,
-                                double *pdfStdDev, GUInt64 *pnValidCount,
+                                double *pdfStdDev, uint64_t *pnValidCount,
                                 GDALProgressFunc pfnProgress,
                                 void *pProgressData)
 {
@@ -11796,7 +11805,7 @@ CPLErr GDALMDArrayGetStatistics(GDALMDArrayH hArray, GDALDatasetH /*hDS*/,
 int GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
                                  int bApproxOK, double *pdfMin, double *pdfMax,
                                  double *pdfMean, double *pdfStdDev,
-                                 GUInt64 *pnValidCount,
+                                 uint64_t *pnValidCount,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressData)
 {
@@ -11823,7 +11832,7 @@ int GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
 int GDALMDArrayComputeStatisticsEx(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
                                    int bApproxOK, double *pdfMin,
                                    double *pdfMax, double *pdfMean,
-                                   double *pdfStdDev, GUInt64 *pnValidCount,
+                                   double *pdfStdDev, uint64_t *pnValidCount,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData,
                                    CSLConstList papszOptions)
@@ -12008,7 +12017,7 @@ const char *GDALAttributeGetFullName(GDALAttributeH hAttr)
  * This is the same as the C++ method
  * GDALAbstractMDArray::GetTotalElementsCount()
  */
-GUInt64 GDALAttributeGetTotalElementsCount(GDALAttributeH hAttr)
+uint64_t GDALAttributeGetTotalElementsCount(GDALAttributeH hAttr)
 {
     VALIDATE_POINTER1(hAttr, __func__, 0);
     return hAttr->m_poImpl->GetTotalElementsCount();
@@ -12041,12 +12050,13 @@ size_t GDALAttributeGetDimensionCount(GDALAttributeH hAttr)
  *
  * @return an array of *pnCount values.
  */
-GUInt64 *GDALAttributeGetDimensionsSize(GDALAttributeH hAttr, size_t *pnCount)
+uint64_t *GDALAttributeGetDimensionsSize(GDALAttributeH hAttr, size_t *pnCount)
 {
     VALIDATE_POINTER1(hAttr, __func__, nullptr);
     VALIDATE_POINTER1(pnCount, __func__, nullptr);
     const auto &dims = hAttr->m_poImpl->GetDimensions();
-    auto ret = static_cast<GUInt64 *>(CPLMalloc(sizeof(GUInt64) * dims.size()));
+    auto ret =
+        static_cast<uint64_t *>(CPLMalloc(sizeof(uint64_t) * dims.size()));
     for (size_t i = 0; i < dims.size(); i++)
     {
         ret[i] = dims[i]->GetSize();
@@ -12498,7 +12508,7 @@ const char *GDALDimensionGetDirection(GDALDimensionH hDim)
  *
  * This is the same as the C++ method GDALDimension::GetSize()
  */
-GUInt64 GDALDimensionGetSize(GDALDimensionH hDim)
+uint64_t GDALDimensionGetSize(GDALDimensionH hDim)
 {
     VALIDATE_POINTER1(hDim, __func__, 0);
     return hDim->m_poImpl->GetSize();
@@ -12670,8 +12680,8 @@ const GDALExtendedDataType &GDALAttributeString::GetDataType() const
     return m_dt;
 }
 
-bool GDALAttributeString::IRead(const GUInt64 *, const size_t *, const GInt64 *,
-                                const GPtrDiff_t *,
+bool GDALAttributeString::IRead(const uint64_t *, const size_t *,
+                                const int64_t *, const ptrdiff_t *,
                                 const GDALExtendedDataType &bufferDataType,
                                 void *pDstBuffer) const
 {
@@ -12703,9 +12713,9 @@ GDALAttributeNumeric::GDALAttributeNumeric(const std::string &osParentName,
 {
 }
 
-GDALAttributeNumeric::GDALAttributeNumeric(const std::string &osParentName,
-                                           const std::string &osName,
-                                           const std::vector<GUInt32> &anValues)
+GDALAttributeNumeric::GDALAttributeNumeric(
+    const std::string &osParentName, const std::string &osName,
+    const std::vector<uint32_t> &anValues)
     : GDALAbstractMDArray(osParentName, osName),
       GDALAttribute(osParentName, osName),
       m_dt(GDALExtendedDataType::Create(GDT_UInt32)), m_anValuesUInt32(anValues)
@@ -12726,9 +12736,9 @@ const GDALExtendedDataType &GDALAttributeNumeric::GetDataType() const
     return m_dt;
 }
 
-bool GDALAttributeNumeric::IRead(const GUInt64 *arrayStartIdx,
-                                 const size_t *count, const GInt64 *arrayStep,
-                                 const GPtrDiff_t *bufferStride,
+bool GDALAttributeNumeric::IRead(const uint64_t *arrayStartIdx,
+                                 const size_t *count, const int64_t *arrayStep,
+                                 const ptrdiff_t *bufferStride,
                                  const GDALExtendedDataType &bufferDataType,
                                  void *pDstBuffer) const
 {
@@ -12806,9 +12816,9 @@ void GDALMDArrayRegularlySpaced::AddAttribute(
 }
 
 bool GDALMDArrayRegularlySpaced::IRead(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
-    void *pDstBuffer) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
+    const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     for (size_t i = 0; i < count[0]; i++)
@@ -12825,7 +12835,7 @@ bool GDALMDArrayRegularlySpaced::IRead(
 
 GDALDimensionWeakIndexingVar::GDALDimensionWeakIndexingVar(
     const std::string &osParentName, const std::string &osName,
-    const std::string &osType, const std::string &osDirection, GUInt64 nSize)
+    const std::string &osType, const std::string &osDirection, uint64_t nSize)
     : GDALDimension(osParentName, osName, osType, osDirection, nSize)
 {
 }
@@ -12844,7 +12854,7 @@ bool GDALDimensionWeakIndexingVar::SetIndexingVariable(
     return true;
 }
 
-void GDALDimensionWeakIndexingVar::SetSize(GUInt64 nNewSize)
+void GDALDimensionWeakIndexingVar::SetSize(uint64_t nNewSize)
 {
     m_nSize = nNewSize;
 }
@@ -12866,7 +12876,7 @@ struct GDALPamMultiDim::Private
         double dfMax = 0;
         double dfMean = 0;
         double dfStdDev = 0;
-        GUInt64 nValidCount = 0;
+        uint64_t nValidCount = 0;
     };
 
     struct ArrayInfo
@@ -12994,7 +13004,7 @@ void GDALPamMultiDim::Load()
                     CPLAtofM(CPLGetXMLValue(psStatistics, "Mean", "0"));
                 sStats.dfStdDev =
                     CPLAtofM(CPLGetXMLValue(psStatistics, "StdDev", "0"));
-                sStats.nValidCount = static_cast<GUInt64>(CPLAtoGIntBig(
+                sStats.nValidCount = static_cast<uint64_t>(CPLAtoGIntBig(
                     CPLGetXMLValue(psStatistics, "ValidSampleCount", "0")));
                 d->m_oMapArray[pszName].stats = sStats;
             }
@@ -13087,7 +13097,7 @@ void GDALPamMultiDim::Save()
                 CPLSPrintf("%.18g", kv.second.stats.dfStdDev));
             CPLCreateXMLElementAndValue(
                 psMDArray, "ValidSampleCount",
-                CPLSPrintf(CPL_FRMT_GUIB, kv.second.stats.nValidCount));
+                CPLSPrintf("%" PRIu64, kv.second.stats.nValidCount));
         }
     }
 
@@ -13149,7 +13159,7 @@ void GDALPamMultiDim::SetSpatialRef(const std::string &osArrayFullName,
 CPLErr GDALPamMultiDim::GetStatistics(const std::string &osArrayFullName,
                                       bool bApproxOK, double *pdfMin,
                                       double *pdfMax, double *pdfMean,
-                                      double *pdfStdDev, GUInt64 *pnValidCount)
+                                      double *pdfStdDev, uint64_t *pnValidCount)
 {
     Load();
     auto oIter = d->m_oMapArray.find(osArrayFullName);
@@ -13180,7 +13190,7 @@ CPLErr GDALPamMultiDim::GetStatistics(const std::string &osArrayFullName,
 void GDALPamMultiDim::SetStatistics(const std::string &osArrayFullName,
                                     bool bApproxStats, double dfMin,
                                     double dfMax, double dfMean,
-                                    double dfStdDev, GUInt64 nValidCount)
+                                    double dfStdDev, uint64_t nValidCount)
 {
     Load();
     d->m_bDirty = true;
@@ -13262,7 +13272,7 @@ std::shared_ptr<OGRSpatialReference> GDALPamMDArray::GetSpatialRef() const
 CPLErr GDALPamMDArray::GetStatistics(bool bApproxOK, bool bForce,
                                      double *pdfMin, double *pdfMax,
                                      double *pdfMean, double *pdfStdDev,
-                                     GUInt64 *pnValidCount,
+                                     uint64_t *pnValidCount,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -13286,7 +13296,7 @@ CPLErr GDALPamMDArray::GetStatistics(bool bApproxOK, bool bForce,
 
 bool GDALPamMDArray::SetStatistics(bool bApproxStats, double dfMin,
                                    double dfMax, double dfMean, double dfStdDev,
-                                   GUInt64 nValidCount,
+                                   uint64_t nValidCount,
                                    CSLConstList /* papszOptions */)
 {
     if (!m_poPam)

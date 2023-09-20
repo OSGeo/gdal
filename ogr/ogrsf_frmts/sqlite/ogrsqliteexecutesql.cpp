@@ -836,7 +836,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                 /* Note: the reference file keeps the ownership of the data, so
                  * that */
                 /* it gets released with VSICleanupFileManager() */
-                vsi_l_offset nEmptyDBSizeLarge = 0;
+                uint64_t nEmptyDBSizeLarge = 0;
                 pabyEmptyDB = VSIGetMemFileBuffer(pszCachedFilename,
                                                   &nEmptyDBSizeLarge, FALSE);
                 nEmptyDBSize = static_cast<size_t>(nEmptyDBSizeLarge);

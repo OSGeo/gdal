@@ -67,7 +67,7 @@ _tiffCloseProc(thandle_t fd)
 static toff_t
 _tiffSizeProc(thandle_t fd)
 {
-    vsi_l_offset  old_off;
+    uint64_t  old_off;
     toff_t        file_size;
 
     old_off = VSIFTellL( (VSILFILE *) fd );

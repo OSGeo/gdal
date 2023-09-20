@@ -36,6 +36,7 @@
 #include "mitab.h"
 
 #include <cctype>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -96,7 +97,7 @@ MIFFile::~MIFFile()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int MIFFile::Open(const char *pszFname, TABAccess eAccess,
-                  GBool bTestOpenNoError /*=FALSE*/,
+                  bool bTestOpenNoError /*=FALSE*/,
                   const char *pszCharset /* = NULL */)
 {
     char *pszTmpFname = nullptr;
@@ -353,10 +354,10 @@ int MIFFile::ParseMIFHeader(int *pbIsEmpty)
      * Parse header until we find the "Data" line
      *----------------------------------------------------------------*/
     char **papszToken = nullptr;
-    GBool bColumns = FALSE;
-    GBool bAllColumnsRead = FALSE;
+    bool bColumns = FALSE;
+    bool bAllColumnsRead = FALSE;
     int nColumns = 0;
-    GBool bCoordSys = FALSE;
+    bool bCoordSys = FALSE;
     CPLString osCoordSys;
     int nLineCount = 0;
 
@@ -729,7 +730,7 @@ int MIFFile::AddFields(const char *pszLine)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig MIFFile::GetFeatureCount(int bForce)
+int64_t MIFFile::GetFeatureCount(int bForce)
 {
 
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
@@ -790,8 +791,8 @@ void MIFFile::PreParseFile()
 {
     char **papszToken = nullptr;
 
-    GBool bPLine = FALSE;
-    GBool bText = FALSE;
+    bool bPLine = FALSE;
+    bool bText = FALSE;
 
     if (m_bPreParsed == TRUE)
         return;
@@ -909,7 +910,7 @@ void MIFFile::PreParseFile()
  **********************************************************************/
 int MIFFile::WriteMIFHeader()
 {
-    GBool bFound;
+    bool bFound;
 
     if (m_eAccessMode != TABWrite)
     {
@@ -1136,7 +1137,7 @@ int MIFFile::Close()
  * Returns feature id that follows nPrevId, or -1 if it is the
  * last feature id.  Pass nPrevId=-1 to fetch the first valid feature id.
  **********************************************************************/
-GIntBig MIFFile::GetNextFeatureId(GIntBig nPrevId)
+int64_t MIFFile::GetNextFeatureId(int64_t nPrevId)
 {
     if (m_eAccessMode != TABRead)
     {
@@ -1213,7 +1214,7 @@ int MIFFile::GotoFeature(int nFeatureId)
  * error happened.  In any case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
+TABFeature *MIFFile::GetFeatureRef(int64_t nFeatureId)
 {
     if (m_eAccessMode != TABRead)
     {
@@ -1237,7 +1238,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
         GotoFeature(static_cast<int>(nFeatureId)) != 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "GetFeatureRef() failed: invalid feature id " CPL_FRMT_GIB,
+                 "GetFeatureRef() failed: invalid feature id %" PRId64,
                  nFeatureId);
         return nullptr;
     }
@@ -1618,7 +1619,7 @@ int MIFFile::SetFeatureDefn(
  **********************************************************************/
 int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool bUnique /*=FALSE*/,
+                            bool bIndexed /*=FALSE*/, bool bUnique /*=FALSE*/,
                             int /*bApproxOK*/)
 {
     /*-----------------------------------------------------------------
@@ -1786,10 +1787,10 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------------------
      * Extend array of Indexed/Unique flags
      *----------------------------------------------------------------*/
-    m_pabFieldIndexed = static_cast<GBool *>(CPLRealloc(
-        m_pabFieldIndexed, m_poDefn->GetFieldCount() * sizeof(GBool)));
-    m_pabFieldUnique = static_cast<GBool *>(CPLRealloc(
-        m_pabFieldUnique, m_poDefn->GetFieldCount() * sizeof(GBool)));
+    m_pabFieldIndexed = static_cast<bool *>(CPLRealloc(
+        m_pabFieldIndexed, m_poDefn->GetFieldCount() * sizeof(bool)));
+    m_pabFieldUnique = static_cast<bool *>(
+        CPLRealloc(m_pabFieldUnique, m_poDefn->GetFieldCount() * sizeof(bool)));
     m_pabFieldIndexed[m_poDefn->GetFieldCount() - 1] = bIndexed;
     m_pabFieldUnique[m_poDefn->GetFieldCount() - 1] = bUnique;
 
@@ -1833,7 +1834,7 @@ int MIFFile::SetFieldIndexed(int nFieldId)
  *                       MIFFile::IsFieldIndexed()
  ************************************************************************/
 
-GBool MIFFile::IsFieldIndexed(int nFieldId)
+bool MIFFile::IsFieldIndexed(int nFieldId)
 
 {
     if (m_poDefn == nullptr || m_pabFieldIndexed == nullptr || nFieldId < 0 ||
@@ -1847,7 +1848,7 @@ GBool MIFFile::IsFieldIndexed(int nFieldId)
  *                       MIFFile::IsFieldUnique()
  ************************************************************************/
 
-GBool MIFFile::IsFieldUnique(int nFieldId)
+bool MIFFile::IsFieldUnique(int nFieldId)
 
 {
     if (m_poDefn == nullptr || m_pabFieldUnique == nullptr || nFieldId < 0 ||
@@ -2024,7 +2025,7 @@ int MIFFile::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
  * information is not available.
  **********************************************************************/
 int MIFFile::GetFeatureCountByType(int &numPoints, int &numLines,
-                                   int &numRegions, int &numTexts, GBool bForce)
+                                   int &numRegions, int &numTexts, bool bForce)
 {
     if (m_bPreParsed || bForce)
     {
@@ -2055,7 +2056,7 @@ int MIFFile::GetFeatureCountByType(int &numPoints, int &numLines,
  * bForce=FALSE.
  **********************************************************************/
 int MIFFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
-                       double &dYMax, GBool bForce /*= TRUE*/)
+                       double &dYMax, bool bForce /*= TRUE*/)
 {
     if (m_bBoundsSet == FALSE && bForce == FALSE)
     {

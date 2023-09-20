@@ -64,7 +64,7 @@ class GDALHEIFDataset final : public GDALPamDataset
 #ifdef HAS_CUSTOM_FILE_READER
     heif_reader m_oReader{};
     VSILFILE *m_fpL = nullptr;
-    vsi_l_offset m_nSize = 0;
+    uint64_t m_nSize = 0;
 
     static int64_t GetPositionCbk(void *userdata);
     static int ReadCbk(void *data, size_t size, void *userdata);
@@ -234,8 +234,7 @@ int GDALHEIFDataset::ReadCbk(void *data, size_t size, void *userdata)
 int GDALHEIFDataset::SeekCbk(int64_t position, void *userdata)
 {
     GDALHEIFDataset *poThis = static_cast<GDALHEIFDataset *>(userdata);
-    return VSIFSeekL(poThis->m_fpL, static_cast<vsi_l_offset>(position),
-                     SEEK_SET);
+    return VSIFSeekL(poThis->m_fpL, static_cast<uint64_t>(position), SEEK_SET);
 }
 
 /************************************************************************/
@@ -679,8 +678,8 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
     else
     {
         for (int i = 0; i < nBlockXSize; i++)
-            (static_cast<GUInt16 *>(pImage))[i] =
-                (reinterpret_cast<const GUInt16 *>(
+            (static_cast<uint16_t *>(pImage))[i] =
+                (reinterpret_cast<const uint16_t *>(
                     pSrcData))[nBand - 1 + i * nBands];
     }
 

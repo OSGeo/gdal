@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cinttypes>
+
 static int nDiscarded = 0;
 static int nHits = 0;
 
@@ -642,7 +644,7 @@ void OGROCITableLayer::BuildFullQueryStatement()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGROCITableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGROCITableLayer::GetFeature(int64_t nFeatureId)
 
 {
 
@@ -669,7 +671,7 @@ OGRFeature *OGROCITableLayer::GetFeature(GIntBig nFeatureId)
     oCmd.Append(poFeatureDefn->GetName());
     oCmd.Append(" ");
     oCmd.Appendf(static_cast<int>(50 + strlen(pszFIDName)),
-                 " WHERE \"%s\" = " CPL_FRMT_GIB " ", pszFIDName, nFeatureId);
+                 " WHERE \"%s\" = %" PRId64 " ", pszFIDName, nFeatureId);
 
     CPLFree(pszFields);
 
@@ -700,8 +702,8 @@ OGRFeature *OGROCITableLayer::GetFeature(GIntBig nFeatureId)
     if (poFeature != nullptr && poFeature->GetFID() != nFeatureId)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGROCITableLayer::GetFeature(" CPL_FRMT_GIB
-                 ") ... query returned feature " CPL_FRMT_GIB " instead!",
+                 "OGROCITableLayer::GetFeature(%" PRId64
+                 ") ... query returned feature %" PRId64 " instead!",
                  nFeatureId, poFeature->GetFID());
         delete poFeature;
         return nullptr;
@@ -861,7 +863,7 @@ OGRErr OGROCITableLayer::ISetFeature(OGRFeature *poFeature)
     if (pszFIDName == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGROCITableLayer::ISetFeature(" CPL_FRMT_GIB
+                 "OGROCITableLayer::ISetFeature(%" PRId64
                  ") failed because there is "
                  "no apparent FID column on table %s.",
                  poFeature->GetFID(), poFeatureDefn->GetName());
@@ -872,7 +874,7 @@ OGRErr OGROCITableLayer::ISetFeature(OGRFeature *poFeature)
     if (poFeature->GetFID() == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGROCITableLayer::ISetFeature(" CPL_FRMT_GIB
+                 "OGROCITableLayer::ISetFeature(%" PRId64
                  ") failed because the feature "
                  "has no FID!",
                  poFeature->GetFID());
@@ -891,7 +893,7 @@ OGRErr OGROCITableLayer::ISetFeature(OGRFeature *poFeature)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGROCITableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGROCITableLayer::DeleteFeature(int64_t nFID)
 
 {
     /* -------------------------------------------------------------------- */
@@ -900,7 +902,7 @@ OGRErr OGROCITableLayer::DeleteFeature(GIntBig nFID)
     if (pszFIDName == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGROCITableLayer::DeleteFeature(" CPL_FRMT_GIB
+                 "OGROCITableLayer::DeleteFeature(%" PRId64
                  ") failed because there is "
                  "no apparent FID column on table %s.",
                  nFID, poFeatureDefn->GetName());
@@ -911,7 +913,7 @@ OGRErr OGROCITableLayer::DeleteFeature(GIntBig nFID)
     if (nFID == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGROCITableLayer::DeleteFeature(" CPL_FRMT_GIB
+                 "OGROCITableLayer::DeleteFeature(%" PRId64
                  ") failed for Null FID",
                  nFID);
 
@@ -928,7 +930,7 @@ OGRErr OGROCITableLayer::DeleteFeature(GIntBig nFID)
 
     oCmdText.Appendf(static_cast<int>(strlen(poFeatureDefn->GetName()) +
                                       strlen(pszFIDName) + 100),
-                     "DELETE FROM %s WHERE \"%s\" = " CPL_FRMT_GIB,
+                     "DELETE FROM %s WHERE \"%s\" = %" PRId64,
                      poFeatureDefn->GetName(), pszFIDName, nFID);
 
     if (oCmdStatement.Execute(oCmdText.GetString()) == CE_None)
@@ -1117,7 +1119,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
 
     if (pszFIDName != nullptr)
     {
-        GIntBig nFID;
+        int64_t nFID;
 
         if (bNeedComma)
             strcat(pszCommand + nOffset, ", ");
@@ -1135,7 +1137,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
             nFID = iNextFIDToWrite++;
             poFeature->SetFID(nFID);
         }
-        snprintf(pszCommand + nOffset, nCommandBufSize - nOffset, CPL_FRMT_GIB,
+        snprintf(pszCommand + nOffset, nCommandBufSize - nOffset, "%" PRId64,
                  nFID);
     }
 
@@ -1486,7 +1488,7 @@ int OGROCITableLayer::TestCapability(const char *pszCap)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGROCITableLayer::GetFeatureCount(int bForce)
+int64_t OGROCITableLayer::GetFeatureCount(int bForce)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1860,10 +1862,10 @@ int OGROCITableLayer::AllocAndBindForWrite()
         else if (poFldDefn->GetType() == OFTInteger64)
         {
             papWriteFields[i] =
-                (void *)CPLCalloc(sizeof(GIntBig), nWriteCacheMax);
+                (void *)CPLCalloc(sizeof(int64_t), nWriteCacheMax);
 
             if (poBoundStatement->BindScalar(
-                    szFieldPlaceholderName, papWriteFields[i], sizeof(GIntBig),
+                    szFieldPlaceholderName, papWriteFields[i], sizeof(int64_t),
                     SQLT_INT, papaeWriteFieldInd[i]) != CE_None)
                 return FALSE;
         }
@@ -2088,7 +2090,7 @@ OGRErr OGROCITableLayer::BoundCreateFeature(OGRFeature *poFeature)
                 poFeature->GetFieldAsInteger(i);
 
         else if (poFldDefn->GetType() == OFTInteger64)
-            ((GIntBig *)(papWriteFields[i]))[iCache] =
+            ((int64_t *)(papWriteFields[i]))[iCache] =
                 poFeature->GetFieldAsInteger64(i);
 
         else if (poFldDefn->GetType() == OFTReal)

@@ -187,8 +187,8 @@ void HFAType::Dump(FILE *fp)
 /************************************************************************/
 
 CPLErr HFAType::SetInstValue(const char *pszFieldPath, GByte *pabyData,
-                             GUInt32 nDataOffset, int nDataSize, char chReqType,
-                             void *pValue)
+                             uint32_t nDataOffset, int nDataSize,
+                             char chReqType, void *pValue)
 
 {
     int nArrayIndex = 0;
@@ -261,7 +261,7 @@ CPLErr HFAType::SetInstValue(const char *pszFieldPath, GByte *pabyData,
 /************************************************************************/
 
 int HFAType::GetInstCount(const char *pszFieldPath, GByte *pabyData,
-                          GUInt32 /* nDataOffset */, int nDataSize)
+                          uint32_t /* nDataOffset */, int nDataSize)
 {
     // int nArrayIndex = 0;
     int nNameLen = 0;
@@ -346,7 +346,7 @@ int HFAType::GetInstCount(const char *pszFieldPath, GByte *pabyData,
 /************************************************************************/
 
 bool HFAType::ExtractInstValue(const char *pszFieldPath, GByte *pabyData,
-                               GUInt32 nDataOffset, int nDataSize,
+                               uint32_t nDataOffset, int nDataSize,
                                char chReqType, void *pReqReturn,
                                int *pnRemainingDataSize)
 
@@ -425,7 +425,7 @@ bool HFAType::ExtractInstValue(const char *pszFieldPath, GByte *pabyData,
 /*                           DumpInstValue()                            */
 /************************************************************************/
 
-void HFAType::DumpInstValue(FILE *fpOut, GByte *pabyData, GUInt32 nDataOffset,
+void HFAType::DumpInstValue(FILE *fpOut, GByte *pabyData, uint32_t nDataOffset,
                             int nDataSize, const char *pszPrefix) const
 
 {

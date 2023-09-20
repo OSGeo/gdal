@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -134,8 +135,8 @@ class VSIStdinHandle final : public VSIVirtualHandle
         VSIStdinHandle::Close();
     }
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -200,7 +201,7 @@ size_t VSIStdinHandle::ReadAndCache(void *pUserBuffer, size_t nToRead)
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIStdinHandle::Seek(uint64_t nOffset, int nWhence)
 
 {
     m_bEOF = false;
@@ -225,7 +226,7 @@ int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
             return 0;
         }
 
-        nOffset = static_cast<vsi_l_offset>(-1);
+        nOffset = static_cast<uint64_t>(-1);
     }
     else if (nWhence == SEEK_CUR)
     {
@@ -237,13 +238,13 @@ int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Backward Seek() unsupported on /vsistdin beyond "
-                 "maximum buffer limit (" CPL_FRMT_GUIB " bytes).\n"
+                 "maximum buffer limit (%" PRIu64 " bytes).\n"
                  "This limit can be extended by setting the "
                  "CPL_VSISTDIN_BUFFER_LIMIT "
                  "configuration option to a number of bytes, or by using the "
                  "'/vsistdin?buffer_limit=number_of_bytes' filename.\n"
                  "A limit of -1 means unlimited.",
-                 static_cast<GUIntBig>(gnBufferLimit));
+                 static_cast<uint64_t>(gnBufferLimit));
         return -1;
     }
 
@@ -256,8 +257,8 @@ int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
     if (nOffset == m_nCurOff)
         return 0;
 
-    CPLDebug("VSI", "Forward seek from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB,
-             static_cast<GUIntBig>(m_nCurOff), nOffset);
+    CPLDebug("VSI", "Forward seek from %" PRIu64 " to %" PRIu64,
+             static_cast<uint64_t>(m_nCurOff), nOffset);
 
     char abyTemp[8192] = {};
     m_nCurOff = gnRealPos;
@@ -283,7 +284,7 @@ int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIStdinHandle::Tell()
+uint64_t VSIStdinHandle::Tell()
 {
     return m_nCurOff;
 }
@@ -306,13 +307,13 @@ size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Backward Seek() unsupported on /vsistdin beyond "
-                 "maximum buffer limit (" CPL_FRMT_GUIB " bytes).\n"
+                 "maximum buffer limit (%" PRIu64 " bytes).\n"
                  "This limit can be extended by setting the "
                  "CPL_VSISTDIN_BUFFER_LIMIT "
                  "configuration option to a number of bytes, or by using the "
                  "'/vsistdin?buffer_limit=number_of_bytes' filename.\n"
                  "A limit of -1 means unlimited.",
-                 static_cast<GUIntBig>(gnBufferLimit));
+                 static_cast<uint64_t>(gnBufferLimit));
         return 0;
     }
 

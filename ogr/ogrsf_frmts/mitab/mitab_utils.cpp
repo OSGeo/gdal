@@ -226,7 +226,7 @@ static bool TABAdjustCaseSensitiveFilename(char *pszFname)
  * If none of the extensions worked then the original extension will NOT be
  * restored.
  **********************************************************************/
-GBool TABAdjustFilenameExtension(char *pszFname)
+bool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL sStatBuf;
 
@@ -343,7 +343,7 @@ char **TAB_CSLLoad(const char *pszFname)
  * in which case the caller becomes responsible of freeing both the
  * source and the copy.
  **********************************************************************/
-char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
+char *TABUnEscapeString(char *pszString, bool bSrcIsConst)
 {
     // First check if we need to do any replacement.
     if (pszString == nullptr || strstr(pszString, "\\n") == nullptr)
@@ -582,10 +582,10 @@ int TABUnitIdFromString(const char *pszName)
  *                       TABSaturatedAdd()
  ***********************************************************************/
 
-void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd)
+void TABSaturatedAdd(int32_t &nVal, int32_t nAdd)
 {
-    const GInt32 int_max = std::numeric_limits<GInt32>::max();
-    const GInt32 int_min = std::numeric_limits<GInt32>::min();
+    const int32_t int_max = std::numeric_limits<int32_t>::max();
+    const int32_t int_min = std::numeric_limits<int32_t>::min();
 
     if (nAdd >= 0 && nVal > int_max - nAdd)
         nVal = int_max;
@@ -601,13 +601,13 @@ void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd)
  *                           TABInt16Diff()
  **********************************************************************/
 
-GInt16 TABInt16Diff(int a, int b)
+int16_t TABInt16Diff(int a, int b)
 {
-    GIntBig nDiff = static_cast<GIntBig>(a) - b;
+    int64_t nDiff = static_cast<int64_t>(a) - b;
     // Maybe we should error out instead of saturating ???
     if (nDiff < -32768)
         return -32768;
     if (nDiff > 32767)
         return 32767;
-    return static_cast<GInt16>(nDiff);
+    return static_cast<int16_t>(nDiff);
 }

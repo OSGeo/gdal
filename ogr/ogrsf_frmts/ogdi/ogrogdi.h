@@ -79,14 +79,14 @@ class OGROGDILayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int) override;
+    int64_t GetFeatureCount(int) override;
 
     int TestCapability(const char *) override;
 

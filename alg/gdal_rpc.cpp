@@ -371,7 +371,7 @@ static void RPCTransformPoint(const GDALRPCTransformInfo *psRPCTransformInfo,
     // Make padfTerms aligned on 16-byte boundary for SSE2 aligned loads.
     double *padfTerms =
         adfTermsWithMargin +
-        (reinterpret_cast<GUIntptr_t>(adfTermsWithMargin) % 16) / 8;
+        (reinterpret_cast<uintptr_t>(adfTermsWithMargin) % 16) / 8;
 
     // Avoid dateline issues.
     double diffLong = dfLong - psRPCTransformInfo->sRPC.dfLONG_OFF;
@@ -848,7 +848,7 @@ void *GDALCreateRPCTransformerV2(const GDALRPCInfoV2 *psRPCInfo, int bReversed,
     // loads.
     psTransform->padfCoeffs =
         psTransform->adfDoubles +
-        (reinterpret_cast<GUIntptr_t>(psTransform->adfDoubles) % 16) / 8;
+        (reinterpret_cast<uintptr_t>(psTransform->adfDoubles) % 16) / 8;
     memcpy(psTransform->padfCoeffs, psRPCInfo->adfLINE_NUM_COEFF,
            20 * sizeof(double));
     memcpy(psTransform->padfCoeffs + 20, psRPCInfo->adfLINE_DEN_COEFF,

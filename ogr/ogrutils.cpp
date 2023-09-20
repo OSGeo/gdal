@@ -1007,16 +1007,16 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
               (*pszInput >= '0' && *pszInput <= '9')))
             return FALSE;
         int nYear = atoi(pszInput);
-        if (nYear > std::numeric_limits<GInt16>::max() ||
-            nYear < std::numeric_limits<GInt16>::min())
+        if (nYear > std::numeric_limits<int16_t>::max() ||
+            nYear < std::numeric_limits<int16_t>::min())
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Years < %d or > %d are not supported",
-                     std::numeric_limits<GInt16>::min(),
-                     std::numeric_limits<GInt16>::max());
+                     std::numeric_limits<int16_t>::min(),
+                     std::numeric_limits<int16_t>::max());
             return FALSE;
         }
-        psField->Date.Year = static_cast<GInt16>(nYear);
+        psField->Date.Year = static_cast<int16_t>(nYear);
         if ((pszInput[1] == '-' || pszInput[1] == '/') ||
             (pszInput[1] != '\0' && (pszInput[2] == '-' || pszInput[2] == '/')))
         {
@@ -1221,7 +1221,7 @@ bool OGRParseDateTimeYYYYMMDDTHHMMZ(const char *pszInput, size_t nLen,
         static_cast<unsigned>(pszInput[14] - '0') <= 9 &&
         static_cast<unsigned>(pszInput[15] - '0') <= 9)
     {
-        psField->Date.Year = static_cast<GInt16>(
+        psField->Date.Year = static_cast<int16_t>(
             ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
              (pszInput[2] - '0')) *
                 10 +
@@ -1275,7 +1275,7 @@ bool OGRParseDateTimeYYYYMMDDTHHMMSSZ(const char *pszInput, size_t nLen,
         static_cast<unsigned>(pszInput[17] - '0') <= 9 &&
         static_cast<unsigned>(pszInput[18] - '0') <= 9)
     {
-        psField->Date.Year = static_cast<GInt16>(
+        psField->Date.Year = static_cast<int16_t>(
             ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
              (pszInput[2] - '0')) *
                 10 +
@@ -1334,7 +1334,7 @@ bool OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(const char *pszInput, size_t nLen,
         static_cast<unsigned>(pszInput[21] - '0') <= 9 &&
         static_cast<unsigned>(pszInput[22] - '0') <= 9)
     {
-        psField->Date.Year = static_cast<GInt16>(
+        psField->Date.Year = static_cast<int16_t>(
             ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
              (pszInput[2] - '0')) *
                 10 +
@@ -1426,7 +1426,7 @@ int OGRParseXMLDateTime(const char *pszXMLDateTime, OGRField *psField)
     if (!bRet)
         return FALSE;
 
-    psField->Date.Year = static_cast<GInt16>(year);
+    psField->Date.Year = static_cast<int16_t>(year);
     psField->Date.Month = static_cast<GByte>(month);
     psField->Date.Day = static_cast<GByte>(day);
     psField->Date.Hour = static_cast<GByte>(hour);
@@ -1455,7 +1455,7 @@ int OGRParseRFC822DateTime(const char *pszRFC822DateTime, OGRField *psField)
         return false;
     }
 
-    psField->Date.Year = static_cast<GInt16>(nYear);
+    psField->Date.Year = static_cast<int16_t>(nYear);
     psField->Date.Month = static_cast<GByte>(nMonth);
     psField->Date.Day = static_cast<GByte>(nDay);
     psField->Date.Hour = static_cast<GByte>(nHour);
@@ -1569,7 +1569,7 @@ int OGRGetISO8601DateTime(const OGRField *psField,
                           const OGRISO8601Format &sFormat,
                           char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER])
 {
-    const GInt16 year = psField->Date.Year;
+    const int16_t year = psField->Date.Year;
     const GByte month = psField->Date.Month;
     const GByte day = psField->Date.Day;
     const GByte hour = psField->Date.Hour;

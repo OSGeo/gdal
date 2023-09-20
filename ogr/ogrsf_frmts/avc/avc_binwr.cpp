@@ -133,7 +133,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
 {
     AVCBinFile *psFile;
     char *pszFname = nullptr, *pszExt;
-    GBool bCreateIndex = FALSE;
+    bool bCreateIndex = FALSE;
     int nLen;
 
     /*-----------------------------------------------------------------
@@ -328,7 +328,7 @@ int AVCBinWriteHeader(AVCBinFile *psFile)
 {
     AVCBinHeader sHeader;
     int nStatus = 0;
-    GBool bHeader = TRUE;
+    bool bHeader = TRUE;
 
     memset(&sHeader, 0, sizeof(sHeader));
 
@@ -435,7 +435,7 @@ void AVCBinWriteClose(AVCBinFile *psFile)
          (psFile->eFileType == AVCFileTOL &&
           psFile->nPrecision == AVC_DOUBLE_PREC)))
     {
-        GInt32 n32Size;
+        int32_t n32Size;
         n32Size = psFile->psRawBinFile->nCurPos / 2;
 
         if (psFile->eCoverType == AVCCoverPC)
@@ -477,7 +477,7 @@ void AVCBinWriteClose(AVCBinFile *psFile)
      *----------------------------------------------------------------*/
     if (psFile->psIndexFile)
     {
-        GInt32 n32Size;
+        int32_t n32Size;
         n32Size = psFile->psIndexFile->nCurPos / 2;
 
         if (psFile->eCoverType == AVCCoverPC)
@@ -1388,7 +1388,8 @@ static int _AVCBinWriteArcDir(AVCRawBinFile *psFile, AVCTableDef *psTableDef)
     AVCRawBinWriteInt16(psFile, psTableDef->numFields);
 
     /* Record size must be a multiple of 2 bytes */
-    AVCRawBinWriteInt16(psFile, (GInt16)(((psTableDef->nRecSize + 1) / 2) * 2));
+    AVCRawBinWriteInt16(psFile,
+                        (int16_t)(((psTableDef->nRecSize + 1) / 2) * 2));
 
     /* ??? Unknown values ??? */
     AVCRawBinWritePaddedString(psFile, 16, (GByte *)"                    ");
@@ -1487,7 +1488,7 @@ static int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
     int iEntry, numDirEntries = 0, nTableIndex = 0;
     VSIStatBufL sStatBuf;
     AVCRawBinFile *hRawBinFile;
-    GBool bFound;
+    bool bFound;
     AVCTableDef sEntry;
 
     /*-----------------------------------------------------------------

@@ -94,7 +94,7 @@ class OGRGTFSLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
     OGRErr SetAttributeFilter(const char *) override;
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -368,7 +368,7 @@ OGRErr OGRGTFSLayer::SetAttributeFilter(const char *pszFilter)
 /*                          GetFeatureCount()                          */
 /***********************************************************************/
 
-GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
+int64_t OGRGTFSLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
@@ -411,7 +411,7 @@ class OGRGTFSShapesGeomLayer final : public OGRLayer
     {
         return m_poFeatureDefn;
     }
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 };
 
 /***********************************************************************/
@@ -490,7 +490,7 @@ void OGRGTFSShapesGeomLayer::Prepare()
                 poLS->addPoint(kv2.second.first, kv2.second.second);
             }
             poFeature->SetGeometryDirectly(poLS);
-            poFeature->SetFID(static_cast<GIntBig>(m_apoFeatures.size()));
+            poFeature->SetFID(static_cast<int64_t>(m_apoFeatures.size()));
             m_apoFeatures.emplace_back(std::move(poFeature));
         }
     }
@@ -538,13 +538,13 @@ int OGRGTFSShapesGeomLayer::TestCapability(const char *pszCap)
 /*                          GetFeatureCount()                          */
 /***********************************************************************/
 
-GIntBig OGRGTFSShapesGeomLayer::GetFeatureCount(int bForce)
+int64_t OGRGTFSShapesGeomLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != nullptr || m_poFilterGeom != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
     if (!m_bPrepared)
         Prepare();
-    return static_cast<GIntBig>(m_apoFeatures.size());
+    return static_cast<int64_t>(m_apoFeatures.size());
 }
 
 /***********************************************************************/

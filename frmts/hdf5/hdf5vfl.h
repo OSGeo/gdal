@@ -223,7 +223,7 @@ static herr_t HDF5_vsil_read(H5FD_t *_file, H5FD_mem_t /* type */,
                              void *buf /*out*/)
 {
     HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
-    VSIFSeekL(fh->fp, static_cast<vsi_l_offset>(addr), SEEK_SET);
+    VSIFSeekL(fh->fp, static_cast<uint64_t>(addr), SEEK_SET);
     return VSIFReadL(buf, size, 1, fh->fp) == 1 ? 0 : -1;
 }
 
@@ -232,7 +232,7 @@ static herr_t HDF5_vsil_write(H5FD_t *_file, H5FD_mem_t /* type */,
                               const void *buf /*out*/)
 {
     HDF5_vsil_t *fh = reinterpret_cast<HDF5_vsil_t *>(_file);
-    VSIFSeekL(fh->fp, static_cast<vsi_l_offset>(addr), SEEK_SET);
+    VSIFSeekL(fh->fp, static_cast<uint64_t>(addr), SEEK_SET);
     int ret = VSIFWriteL(buf, size, 1, fh->fp) == 1 ? 0 : -1;
     fh->eof = std::max(fh->eof, static_cast<haddr_t>(VSIFTellL(fh->fp)));
     return ret;

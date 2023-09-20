@@ -30,6 +30,7 @@
 #include "ogr_p.h"
 #include "ogr_pgdump.h"
 #include "ogrgeojsonreader.h"
+#include <cinttypes>
 #include <sstream>
 #include <iomanip>
 
@@ -226,7 +227,7 @@ OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object *poObjIn)
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object *OGRAmigoCloudTableLayer::FetchNewFeatures(GIntBig iNextIn)
+json_object *OGRAmigoCloudTableLayer::FetchNewFeatures(int64_t iNextIn)
 {
     if (!osFIDColName.empty())
     {
@@ -249,7 +250,7 @@ json_object *OGRAmigoCloudTableLayer::FetchNewFeatures(GIntBig iNextIn)
             osSQL += " LIMIT ";
             osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
             osSQL += " OFFSET ";
-            osSQL += CPLSPrintf(CPL_FRMT_GIB, iNextIn);
+            osSQL += CPLSPrintf("%" PRId64, iNextIn);
         }
         return poDS->RunSQL(osSQL);
     }
@@ -564,7 +565,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it =
+    std::map<int64_t, OGRAmigoCloudFID>::iterator it =
         mFIDs.find(poFeature->GetFID());
     if (it != mFIDs.end())
     {
@@ -688,7 +689,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature(OGRFeature *poFeature)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRAmigoCloudTableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRAmigoCloudTableLayer::DeleteFeature(int64_t nFID)
 
 {
     OGRErr eRet = OGRERR_FAILURE;
@@ -709,7 +710,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature(GIntBig nFID)
     if (osFIDColName.empty())
         return OGRERR_FAILURE;
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFID);
+    std::map<int64_t, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFID);
     if (it != mFIDs.end())
     {
         OGRAmigoCloudFID &aFID = it->second;
@@ -816,7 +817,7 @@ void OGRAmigoCloudTableLayer::BuildWhere()
 /*                              GetFeature()                            */
 /************************************************************************/
 
-OGRFeature *OGRAmigoCloudTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRAmigoCloudTableLayer::GetFeature(int64_t nFeatureId)
 {
 
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
@@ -828,7 +829,7 @@ OGRFeature *OGRAmigoCloudTableLayer::GetFeature(GIntBig nFeatureId)
     if (osFIDColName.empty())
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFeatureId);
+    std::map<int64_t, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFeatureId);
     if (it != mFIDs.end())
     {
         OGRAmigoCloudFID &aFID = it->second;
@@ -860,7 +861,7 @@ OGRFeature *OGRAmigoCloudTableLayer::GetFeature(GIntBig nFeatureId)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
+int64_t OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
 {
 
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
@@ -894,7 +895,7 @@ GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
         return OGRAmigoCloudLayer::GetFeatureCount(bForce);
     }
 
-    GIntBig nRet = (GIntBig)json_object_get_int64(poCount);
+    int64_t nRet = (int64_t)json_object_get_int64(poCount);
 
     json_object_put(poObj);
 

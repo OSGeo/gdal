@@ -205,8 +205,8 @@ CPLErr SAGARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         return CE_Failure;
 
     SAGADataset *poGDS = static_cast<SAGADataset *>(poDS);
-    vsi_l_offset offset = static_cast<vsi_l_offset>(m_nBits / 8) *
-                          nRasterXSize * (nRasterYSize - nBlockYOff - 1);
+    uint64_t offset = static_cast<uint64_t>(m_nBits / 8) * nRasterXSize *
+                      (nRasterYSize - nBlockYOff - 1);
 
     if (VSIFSeekL(poGDS->fp, offset, SEEK_SET) != 0)
     {
@@ -244,8 +244,8 @@ CPLErr SAGARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (nBlockYOff < 0 || nBlockYOff > nRasterYSize - 1 || nBlockXOff != 0)
         return CE_Failure;
 
-    const vsi_l_offset offset = static_cast<vsi_l_offset>(m_nBits / 8) *
-                                nRasterXSize * (nRasterYSize - nBlockYOff - 1);
+    const uint64_t offset = static_cast<uint64_t>(m_nBits / 8) * nRasterXSize *
+                            (nRasterYSize - nBlockYOff - 1);
     SAGADataset *poGDS = static_cast<SAGADataset *>(poDS);
     assert(poGDS != nullptr);
 

@@ -53,12 +53,12 @@
 /*  16-bit floating point number to 32-bit one.                         */
 /************************************************************************/
 
-GUInt32 CPLHalfToFloat(GUInt16 iHalf)
+uint32_t CPLHalfToFloat(uint16_t iHalf)
 {
 
-    GUInt32 iSign = (iHalf >> 15) & 0x00000001;
+    uint32_t iSign = (iHalf >> 15) & 0x00000001;
     int iExponent = (iHalf >> 10) & 0x0000001f;
-    GUInt32 iMantissa = iHalf & 0x000003ff;
+    uint32_t iMantissa = iHalf & 0x000003ff;
 
     if (iExponent == 0)
     {
@@ -126,7 +126,7 @@ GUInt32 CPLHalfToFloat(GUInt16 iHalf)
     /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */
-    return (iSign << 31) | (static_cast<GUInt32>(iExponent) << 23) | iMantissa;
+    return (iSign << 31) | (static_cast<uint32_t>(iExponent) << 23) | iMantissa;
 }
 
 /************************************************************************/
@@ -135,12 +135,12 @@ GUInt32 CPLHalfToFloat(GUInt16 iHalf)
 /*  24-bit floating point number to 32-bit one.                         */
 /************************************************************************/
 
-GUInt32 CPLTripleToFloat(GUInt32 iTriple)
+uint32_t CPLTripleToFloat(uint32_t iTriple)
 {
 
-    GUInt32 iSign = (iTriple >> 23) & 0x00000001;
+    uint32_t iSign = (iTriple >> 23) & 0x00000001;
     int iExponent = (iTriple >> 16) & 0x0000007f;
-    GUInt32 iMantissa = iTriple & 0x0000ffff;
+    uint32_t iMantissa = iTriple & 0x0000ffff;
 
     if (iExponent == 0)
     {
@@ -208,18 +208,18 @@ GUInt32 CPLTripleToFloat(GUInt32 iTriple)
     /* -------------------------------------------------------------------- */
 
     /* coverity[overflow_sink] */
-    return (iSign << 31) | (static_cast<GUInt32>(iExponent) << 23) | iMantissa;
+    return (iSign << 31) | (static_cast<uint32_t>(iExponent) << 23) | iMantissa;
 }
 
 /************************************************************************/
 /*                            FloatToHalf()                             */
 /************************************************************************/
 
-GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
+uint16_t CPLFloatToHalf(uint32_t iFloat32, bool &bHasWarned)
 {
-    GUInt32 iSign = (iFloat32 >> 31) & 0x00000001;
-    GUInt32 iExponent = (iFloat32 >> 23) & 0x000000ff;
-    GUInt32 iMantissa = iFloat32 & 0x007fffff;
+    uint32_t iSign = (iFloat32 >> 31) & 0x00000001;
+    uint32_t iExponent = (iFloat32 >> 23) & 0x000000ff;
+    uint32_t iMantissa = iFloat32 & 0x007fffff;
 
     if (iExponent == 255)
     {
@@ -231,7 +231,7 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
             /* --------------------------------------------------------------------
              */
 
-            return static_cast<GUInt16>((iSign << 15) | 0x7C00);
+            return static_cast<uint16_t>((iSign << 15) | 0x7C00);
         }
         else
         {
@@ -241,10 +241,10 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
             /* --------------------------------------------------------------------
              */
             if (iMantissa >> 13)
-                return static_cast<GUInt16>((iSign << 15) | 0x7C00 |
-                                            (iMantissa >> 13));
+                return static_cast<uint16_t>((iSign << 15) | 0x7C00 |
+                                             (iMantissa >> 13));
 
-            return static_cast<GUInt16>((iSign << 15) | 0x7E00);
+            return static_cast<uint16_t>((iSign << 15) | 0x7E00);
         }
     }
 
@@ -253,10 +253,10 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
         // Zero, float32 denormalized number or float32 too small normalized
         // number
         if (13 + 1 + 127 - 15 - iExponent >= 32)
-            return static_cast<GUInt16>(iSign << 15);
+            return static_cast<uint16_t>(iSign << 15);
 
         // Return a denormalized number
-        return static_cast<GUInt16>(
+        return static_cast<uint16_t>(
             (iSign << 15) |
             ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
     }
@@ -272,7 +272,7 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
                 "Value %.8g is beyond range of float16. Converted to %sinf",
                 fVal, (fVal > 0) ? "+" : "-");
         }
-        return static_cast<GUInt16>((iSign << 15) | 0x7C00);  // Infinity
+        return static_cast<uint16_t>((iSign << 15) | 0x7C00);  // Infinity
     }
 
     /* -------------------------------------------------------------------- */
@@ -287,5 +287,5 @@ GUInt16 CPLFloatToHalf(GUInt32 iFloat32, bool &bHasWarned)
     /* -------------------------------------------------------------------- */
 
     // coverity[overflow_sink]
-    return static_cast<GUInt16>((iSign << 15) | (iExponent << 10) | iMantissa);
+    return static_cast<uint16_t>((iSign << 15) | (iExponent << 10) | iMantissa);
 }

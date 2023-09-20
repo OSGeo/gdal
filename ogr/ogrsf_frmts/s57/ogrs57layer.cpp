@@ -235,7 +235,7 @@ OGRErr OGRS57Layer::GetExtent(OGREnvelope *psExtent, int bForce)
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /************************************************************************/
-GIntBig OGRS57Layer::GetFeatureCount(int bForce)
+int64_t OGRS57Layer::GetFeatureCount(int bForce)
 {
 
     if (!TestCapability(OLCFastFeatureCount))
@@ -248,7 +248,7 @@ GIntBig OGRS57Layer::GetFeatureCount(int bForce)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRS57Layer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRS57Layer::GetFeature(int64_t nFeatureId)
 
 {
     S57Reader *poReader = poDS->GetModule(0);  // not multi-reader aware

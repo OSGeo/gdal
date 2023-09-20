@@ -28,6 +28,7 @@
 
 /*! @cond Doxygen_Suppress */
 
+#include <cinttypes>
 #include <vector>
 #include <string>
 
@@ -228,13 +229,13 @@ void CPLJSonStreamingWriter::Add(const char *pszStr)
 void CPLJSonStreamingWriter::Add(std::int64_t nVal)
 {
     EmitCommaIfNeeded();
-    Print(CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nVal)));
+    Print(CPLSPrintf("%" PRId64, static_cast<int64_t>(nVal)));
 }
 
 void CPLJSonStreamingWriter::Add(std::uint64_t nVal)
 {
     EmitCommaIfNeeded();
-    Print(CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
+    Print(CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nVal)));
 }
 
 void CPLJSonStreamingWriter::Add(float fVal, int nPrecision)

@@ -47,11 +47,11 @@ struct ImageHeader
     GByte nIDLength;
     bool bHasColorMap;
     ImageType eImageType;
-    GUInt16 nColorMapFirstIdx;
-    GUInt16 nColorMapLength;
+    uint16_t nColorMapFirstIdx;
+    uint16_t nColorMapLength;
     GByte nColorMapEntrySize;
-    GUInt16 nXOrigin;
-    GUInt16 nYOrigin;
+    uint16_t nXOrigin;
+    uint16_t nYOrigin;
     GByte nPixelDepth;
     GByte nImageDescriptor;
 };
@@ -67,7 +67,7 @@ class GDALTGADataset final : public GDALPamDataset
     struct ScanlineState
     {
         // Offset in the file of the start of the scanline
-        vsi_l_offset nOffset = 0;
+        uint64_t nOffset = 0;
         bool bRemainingPixelsAreRLERun = false;
         // Number of pixels remaining from a previous scanline.
         // See
@@ -272,7 +272,7 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset *poDSIn, int nBandIn,
             for (unsigned i = 0; i < poDSIn->m_sImageHeader.nColorMapLength;
                  ++i)
             {
-                GUInt16 nVal = (abyData[2 * i + 1] << 8) | abyData[2 * i];
+                uint16_t nVal = (abyData[2 * i + 1] << 8) | abyData[2 * i];
                 GDALColorEntry sEntry;
                 sEntry.c1 = ((nVal >> 10) & 31) << 3;
                 sEntry.c2 = ((nVal >> 5) & 31) << 3;
@@ -378,7 +378,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                     {
                         if (poGDS->m_sImageHeader.nPixelDepth == 16)
                         {
-                            const GUInt16 nValue =
+                            const uint16_t nValue =
                                 abyData[0] | (abyData[1] << 8);
                             const GByte nByteVal =
                                 ((nValue >> (5 * (3 - nBand))) & 31) << 3;
@@ -417,7 +417,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                         {
                             for (int i = 0; i < nPixelsToFill; i++)
                             {
-                                const GUInt16 nValue =
+                                const uint16_t nValue =
                                     abyData[2 * i] | (abyData[2 * i + 1] << 8);
                                 static_cast<GByte *>(pImage)[x + i] =
                                     ((nValue >> (5 * (3 - nBand))) & 31) << 3;
@@ -478,9 +478,9 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     if (nBands == 1)
     {
-        vsi_l_offset nOffset =
+        uint64_t nOffset =
             poGDS->m_nImageDataOffset +
-            static_cast<vsi_l_offset>(nLine) * nRasterXSize * nDTSize;
+            static_cast<uint64_t>(nLine) * nRasterXSize * nDTSize;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
         VSIFReadL(pImage, 1, nRasterXSize * nDTSize, poGDS->m_fpImage);
 #ifdef CPL_MSB
@@ -496,9 +496,9 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
         std::vector<GByte> abyData;
         abyData.resize(nBytesPerPixel * nRasterXSize);
-        vsi_l_offset nOffset =
+        uint64_t nOffset =
             poGDS->m_nImageDataOffset +
-            static_cast<vsi_l_offset>(nLine) * nRasterXSize * nBytesPerPixel;
+            static_cast<uint64_t>(nLine) * nRasterXSize * nBytesPerPixel;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
         VSIFReadL(&abyData[0], 1, nRasterXSize * nBytesPerPixel,
                   poGDS->m_fpImage);
@@ -506,7 +506,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         {
             for (int i = 0; i < nRasterXSize; i++)
             {
-                const GUInt16 nValue =
+                const uint16_t nValue =
                     abyData[2 * i] | (abyData[2 * i + 1] << 8);
                 static_cast<GByte *>(pImage)[i] =
                     ((nValue >> (5 * (3 - nBand))) & 31) << 3;
@@ -560,8 +560,8 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
     sHeader.nColorMapEntrySize = poOpenInfo->pabyHeader[7];
     sHeader.nXOrigin = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 8);
     sHeader.nYOrigin = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 10);
-    const GUInt16 nWidth = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 12);
-    const GUInt16 nHeight = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 14);
+    const uint16_t nWidth = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 12);
+    const uint16_t nHeight = CPL_LSBUINT16PTR(poOpenInfo->pabyHeader + 14);
     if (nWidth == 0 || nHeight == 0)
         return nullptr;
     sHeader.nPixelDepth = poOpenInfo->pabyHeader[16];
@@ -604,7 +604,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
                 std::vector<GByte> abyExtendedData(495);
                 VSIFReadL(&abyExtendedData[0], 1, abyExtendedData.size(),
                           poOpenInfo->fpL);
-                const GUInt16 nExtSize = CPL_LSBUINT16PTR(&abyExtendedData[0]);
+                const uint16_t nExtSize = CPL_LSBUINT16PTR(&abyExtendedData[0]);
                 if (nExtSize >= 495)
                 {
                     if (abyExtendedData[2] != ' ' && abyExtendedData[2] != '\0')
@@ -650,7 +650,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
                                                            osComments.c_str());
                     }
 
-                    // const GUInt32 nOffsetToScanlineTable =
+                    // const uint32_t nOffsetToScanlineTable =
                     // CPL_LSBUINT32PTR(&abyExtendedData[490]); Did not find yet
                     // an image using a scanline table
 
@@ -688,7 +688,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
         sHeader.eImageType == RLE_GRAYSCALE ||
         sHeader.eImageType == RLE_TRUE_COLOR)
     {
-        // nHeight is a GUInt16, so well bounded...
+        // nHeight is a uint16_t, so well bounded...
         // coverity[tainted_data]
         poDS->m_aoScanlineState.resize(nHeight);
         poDS->m_aoScanlineState[0].nOffset = poDS->m_nImageDataOffset;

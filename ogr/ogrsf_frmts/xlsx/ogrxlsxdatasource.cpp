@@ -33,6 +33,7 @@
 #include "cpl_vsi_error.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 namespace OGRXLSX
 {
@@ -124,7 +125,7 @@ OGRErr OGRXLSXLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRXLSXLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRXLSXLayer::GetFeature(int64_t nFeatureId)
 {
     Init();
     OGRFeature *poFeature = OGRMemLayer::GetFeature(
@@ -144,7 +145,7 @@ OGRErr OGRXLSXLayer::ISetFeature(OGRFeature *poFeature)
     if (poFeature == nullptr)
         return OGRMemLayer::ISetFeature(poFeature);
 
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
         poFeature->SetFID(nFID - (1 + static_cast<int>(bHasHeaderLine)));
     SetUpdated();
@@ -161,7 +162,7 @@ OGRErr OGRXLSXLayer::ICreateFeature(OGRFeature *poFeature)
 {
     Init();
 
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
     {
         // Compensate what ISetFeature() will do since
@@ -178,7 +179,7 @@ OGRErr OGRXLSXLayer::ICreateFeature(OGRFeature *poFeature)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRXLSXLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRXLSXLayer::DeleteFeature(int64_t nFID)
 {
     Init();
     SetUpdated();
@@ -512,7 +513,7 @@ OGRFieldType OGRXLSXDataSource::GetOGRFieldType(const char *pszValue,
             return OFTString;
         else if (eValueType == CPL_VALUE_INTEGER)
         {
-            GIntBig nVal = CPLAtoGIntBig(pszValue);
+            int64_t nVal = CPLAtoGIntBig(pszValue);
             if (!CPL_INT64_FITS_ON_INT32(nVal))
                 return OFTInteger64;
             else
@@ -568,9 +569,9 @@ static void SetField(OGRFeature *poFeature, int i, const char *pszValue,
         if (std::fabs(dfNumberOfSecsSince1900 -
                       std::round(dfNumberOfSecsSince1900)) < 1e-3)
             dfNumberOfSecsSince1900 = std::round(dfNumberOfSecsSince1900);
-        const GIntBig nUnixTime =
-            static_cast<GIntBig>(dfNumberOfSecsSince1900) -
-            static_cast<GIntBig>(NUMBER_OF_DAYS_BETWEEN_1900_AND_1970) *
+        const int64_t nUnixTime =
+            static_cast<int64_t>(dfNumberOfSecsSince1900) -
+            static_cast<int64_t>(NUMBER_OF_DAYS_BETWEEN_1900_AND_1970) *
                 NUMBER_OF_SECONDS_PER_DAY;
         CPLUnixTimeToYMDHMS(nUnixTime, &sTm);
 
@@ -955,7 +956,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
-                GIntBig nFeatureCount = poCurLayer->GetFeatureCount(false);
+                int64_t nFeatureCount = poCurLayer->GetFeatureCount(false);
                 if (nFeatureCount > 0 &&
                     static_cast<size_t>(
                         apoCurLineValues.size() -
@@ -2185,7 +2186,7 @@ static bool WriteLayer(const char *pszName, OGRLayer *poLayer, int iLayer,
                 else if (eType == OFTInteger64)
                 {
                     VSIFPrintfL(fp, "<c r=\"%s%d\">\n", osCol.c_str(), iRow);
-                    VSIFPrintfL(fp, "<v>" CPL_FRMT_GIB "</v>\n",
+                    VSIFPrintfL(fp, "<v>%" PRId64 "</v>\n",
                                 poFeature->GetFieldAsInteger64(j));
                     VSIFPrintfL(fp, "</c>\n");
                 }
@@ -2211,7 +2212,7 @@ static bool WriteLayer(const char *pszName, OGRLayer *poLayer, int iLayer,
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMinute;
                     brokendowntime.tm_sec = (int)fSecond;
-                    GIntBig nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                    int64_t nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
                     double dfNumberOfDaysSince1900 =
                         (1.0 * nUnixTime / NUMBER_OF_SECONDS_PER_DAY);
                     dfNumberOfDaysSince1900 +=

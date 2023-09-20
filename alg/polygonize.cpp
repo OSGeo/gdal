@@ -130,10 +130,10 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
         static_cast<DataType *>(VSI_MALLOC2_VERBOSE(sizeof(DataType), nXSize));
     DataType *panThisLineVal =
         static_cast<DataType *>(VSI_MALLOC2_VERBOSE(sizeof(DataType), nXSize));
-    GInt32 *panLastLineId =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    GInt32 *panThisLineId =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+    int32_t *panLastLineId =
+        static_cast<int32_t *>(VSI_MALLOC2_VERBOSE(sizeof(int32_t), nXSize));
+    int32_t *panThisLineId =
+        static_cast<int32_t *>(VSI_MALLOC2_VERBOSE(sizeof(int32_t), nXSize));
 
     GByte *pabyMaskLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
 
@@ -254,7 +254,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
 
     OGRPolygonWriter<DataType> oPolygonWriter{hOutLayer, iPixValField,
                                               adfGeoTransform};
-    Polygonizer<GInt32, DataType> oPolygonizer{-1, &oPolygonWriter};
+    Polygonizer<int32_t, DataType> oPolygonizer{-1, &oPolygonWriter};
     TwoArm *paoLastLineArm =
         static_cast<TwoArm *>(VSI_CALLOC_VERBOSE(sizeof(TwoArm), nXSize + 2));
     TwoArm *paoThisLineArm =
@@ -396,7 +396,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
 /* Code from:                                                                 */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
-GBool GDALFloatEquals(float A, float B)
+bool GDALFloatEquals(float A, float B)
 {
     // This function will allow maxUlps-1 floats between A and B.
     const int maxUlps = MAX_ULPS;
@@ -425,14 +425,14 @@ GBool GDALFloatEquals(float A, float B)
         bInt = INT_MIN - bInt;
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
     const int intDiff =
-        abs(static_cast<int>(static_cast<GUIntBig>(static_cast<GIntBig>(aInt) -
-                                                   static_cast<GIntBig>(bInt)) &
+        abs(static_cast<int>(static_cast<uint64_t>(static_cast<int64_t>(aInt) -
+                                                   static_cast<int64_t>(bInt)) &
                              0xFFFFFFFFU));
 #else
     // To make -ftrapv happy we compute the diff on larger type and
     // cast down later.
-    const int intDiff = abs(static_cast<int>(static_cast<GIntBig>(aInt) -
-                                             static_cast<GIntBig>(bInt)));
+    const int intDiff = abs(static_cast<int>(static_cast<int64_t>(aInt) -
+                                             static_cast<int64_t>(bInt)));
 #endif
     if (intDiff <= maxUlps)
         return true;

@@ -63,7 +63,8 @@
  * data in the run array as needed (e.g. to append zero runs to bring
  * the count up to a nice multiple).
  */
-typedef void (*TIFFFaxFillFunc)(unsigned char *, GUInt32 *, GUInt32 *, GUInt32);
+typedef void (*TIFFFaxFillFunc)(unsigned char *, uint32_t *, uint32_t *,
+                                uint32_t);
 
 /* finite state machine codes */
 
@@ -85,7 +86,7 @@ typedef struct
 {                        /* state table entry */
     unsigned char State; /* see above */
     unsigned char Width; /* width of code in bits */
-    GUInt16 Param;       /* unsigned 16-bit run length in bits */
+    uint16_t Param;      /* unsigned 16-bit run length in bits */
 } TIFFFaxTabEnt;
 
 #if 0  /* Unused */
@@ -3296,7 +3297,7 @@ static const unsigned char aig_TIFFNoBitRevTable[256] = {
             }                                                                  \
             else                                                               \
             {                                                                  \
-                BitAcc |= ((GUInt32)bitmap[*cp++]) << BitsAvail;               \
+                BitAcc |= ((uint32_t)bitmap[*cp++]) << BitsAvail;              \
                 BitsAvail += 8;                                                \
             }                                                                  \
         }                                                                      \
@@ -3316,7 +3317,7 @@ static const unsigned char aig_TIFFNoBitRevTable[256] = {
             }                                                                  \
             else                                                               \
             {                                                                  \
-                BitAcc |= ((GUInt32)bitmap[*cp++]) << BitsAvail;               \
+                BitAcc |= ((uint32_t)bitmap[*cp++]) << BitsAvail;              \
                 if ((BitsAvail += 8) < (n))                                    \
                 {                                                              \
                     if (EndOfData())                                           \
@@ -3326,7 +3327,7 @@ static const unsigned char aig_TIFFNoBitRevTable[256] = {
                     }                                                          \
                     else                                                       \
                     {                                                          \
-                        BitAcc |= ((GUInt32)bitmap[*cp++]) << BitsAvail;       \
+                        BitAcc |= ((uint32_t)bitmap[*cp++]) << BitsAvail;      \
                         BitsAvail += 8;                                        \
                     }                                                          \
                 }                                                              \
@@ -3519,18 +3520,18 @@ static const char *StateNames[] = {
  */
 typedef struct
 {
-    int rw_mode;       /* O_RDONLY for decode, else encode */
-    int mode;          /* operating mode */
-    GUInt32 rowbytes;  /* bytes in a decoded scanline */
-    GUInt32 rowpixels; /* pixels in a scanline */
+    int rw_mode;        /* O_RDONLY for decode, else encode */
+    int mode;           /* operating mode */
+    uint32_t rowbytes;  /* bytes in a decoded scanline */
+    uint32_t rowpixels; /* pixels in a scanline */
 
-    GUInt16 cleanfaxdata; /* CleanFaxData tag */
-    GUInt32 badfaxrun;    /* BadFaxRun tag */
-    GUInt32 badfaxlines;  /* BadFaxLines tag */
-    GUInt32 groupoptions; /* Group 3/4 options tag */
-    GUInt32 recvparams;   /* encoded Class 2 session params */
-    char *subaddress;     /* subaddress string */
-    GUInt32 recvtime;     /* time spent receiving (secs) */
+    uint16_t cleanfaxdata; /* CleanFaxData tag */
+    uint32_t badfaxrun;    /* BadFaxRun tag */
+    uint32_t badfaxlines;  /* BadFaxLines tag */
+    uint32_t groupoptions; /* Group 3/4 options tag */
+    uint32_t recvparams;   /* encoded Class 2 session params */
+    char *subaddress;      /* subaddress string */
+    uint32_t recvtime;     /* time spent receiving (secs) */
 } Fax3BaseState;
 #define Fax3State(tif) ((Fax3BaseState *)tif)
 
@@ -3538,13 +3539,13 @@ typedef struct
 {
     Fax3BaseState b;
     const unsigned char *bitmap; /* bit reversal table */
-    GUInt32 data;                /* current i/o byte/word */
+    uint32_t data;               /* current i/o byte/word */
     int bit;                     /* current i/o bit in byte */
     int EOLcnt;                  /* count of EOL codes recognized */
     TIFFFaxFillFunc fill;        /* fill routine */
-    GUInt32 *runs;               /* b&w runs for current/previous row */
-    GUInt32 *refruns;            /* runs for reference line */
-    GUInt32 *curruns;            /* runs for current line */
+    uint32_t *runs;              /* b&w runs for current/previous row */
+    uint32_t *refruns;           /* runs for reference line */
+    uint32_t *curruns;           /* runs for current line */
 } Fax3DecodeState;
 #define DecoderState(tif) ((Fax3DecodeState *)Fax3State(tif))
 
@@ -3582,21 +3583,21 @@ typedef struct
     Fax3DecodeState *sp = DecoderState(tif);                                   \
     int a0;                                   /* reference element */          \
     int lastx = sp->b.rowpixels;              /* last element in row */        \
-    GUInt32 BitAcc;                           /* bit accumulator */            \
+    uint32_t BitAcc;                          /* bit accumulator */            \
     int BitsAvail;                            /* # valid bits in BitAcc */     \
     int RunLength;                            /* length of current run */      \
     unsigned char *cp;                        /* next byte of input data */    \
     unsigned char *ep;                        /* end of input data */          \
-    GUInt32 *pa;                              /* place to stuff next run */    \
-    GUInt32 *thisrun;                         /* current row's run array */    \
+    uint32_t *pa;                             /* place to stuff next run */    \
+    uint32_t *thisrun;                        /* current row's run array */    \
     int EOLcnt;                               /* # EOL codes recognized */     \
     const unsigned char *bitmap = sp->bitmap; /* input data bit reverser */    \
     const TIFFFaxTabEnt *TabEnt
 
 #define DECLARE_STATE_2D(tif, sp, mod)                                         \
     DECLARE_STATE(tif, sp, mod);                                               \
-    int b1;     /* next change on prev line */                                 \
-    GUInt32 *pb /* next run in reference line */
+    int b1;      /* next change on prev line */                                \
+    uint32_t *pb /* next run in reference line */
 
 /**
  * Load any state that may be hanged during decoding.
@@ -3636,7 +3637,7 @@ static void Fax3Unexpected()
 }
 #define unexpected(table, a0) Fax3Unexpected()
 
-static void Fax3BadLength(GUInt32 a0, GUInt32 lastx)
+static void Fax3BadLength(uint32_t a0, uint32_t lastx)
 {
     CPLError(CE_Warning, CPLE_AppDefined, "%s (got %lu, expected %lu)",
              a0 < lastx ? "Premature EOL" : "Line length mismatch",
@@ -3788,14 +3789,14 @@ static void Fax3PrematureEOF()
 /*      runs generated during G3/G4 decoding.                           */
 /************************************************************************/
 
-static void aig_TIFFFax3fillruns(unsigned char *buf, GUInt32 *runs,
-                                 GUInt32 *erun, GUInt32 lastx)
+static void aig_TIFFFax3fillruns(unsigned char *buf, uint32_t *runs,
+                                 uint32_t *erun, uint32_t lastx)
 {
     static const unsigned char _fillmasks[] = {0x00, 0x80, 0xc0, 0xe0, 0xf0,
                                                0xf8, 0xfc, 0xfe, 0xff};
     unsigned char *cp;
-    GUInt32 x, bx, run;
-    GInt32 n, nw;
+    uint32_t x, bx, run;
+    int32_t n, nw;
     long *lp;
 
     if ((erun - runs) & 1)
@@ -3805,7 +3806,7 @@ static void aig_TIFFFax3fillruns(unsigned char *buf, GUInt32 *runs,
     {
         run = runs[0];
         if (x + run > lastx || run > lastx)
-            run = runs[0] = (GUInt32)(lastx - x);
+            run = runs[0] = (uint32_t)(lastx - x);
         if (run)
         {
             cp = buf + (x >> 3);
@@ -3827,7 +3828,7 @@ static void aig_TIFFFax3fillruns(unsigned char *buf, GUInt32 *runs,
                         for (; n && !isAligned(cp, long); n--)
                             *cp++ = 0x00;
                         lp = (long *)(void *)cp;
-                        nw = (GInt32)(n / sizeof(long));
+                        nw = (int32_t)(n / sizeof(long));
                         n -= nw * sizeof(long);
                         do
                         {
@@ -3869,7 +3870,7 @@ static void aig_TIFFFax3fillruns(unsigned char *buf, GUInt32 *runs,
                         for (; n && !isAligned(cp, long); n--)
                             *cp++ = 0xff;
                         lp = (long *)(void *)cp;
-                        nw = (GInt32)(n / sizeof(long));
+                        nw = (int32_t)(n / sizeof(long));
                         n -= nw * sizeof(long);
                         do
                         {
@@ -4027,7 +4028,7 @@ static int Fax3DecodeRLE(Fax3BaseState *tif, unsigned char *buf, int occ,
         {
             int n = BitsAvail - (BitsAvail & ~15);
             ClrBits(n);
-            if (BitsAvail == 0 && !isAligned(cp, GUInt16))
+            if (BitsAvail == 0 && !isAligned(cp, uint16_t))
                 cp++;
         }
         buf += sp->b.rowbytes;
@@ -4084,8 +4085,8 @@ CPLErr DecompressCCITTRLETile(unsigned char *pabySrcData, int nSrcBytes,
     rowbytes = (nBlockXSize + 7) / 8;
     rowpixels = nBlockXSize;
 
-    sp->rowbytes = (GUInt32)rowbytes;
-    sp->rowpixels = (GUInt32)rowpixels;
+    sp->rowbytes = (uint32_t)rowbytes;
+    sp->rowpixels = (uint32_t)rowpixels;
     sp->mode |= FAXMODE_BYTEALIGN;
     /*
      * Allocate any additional space required for decoding/encoding.
@@ -4093,7 +4094,7 @@ CPLErr DecompressCCITTRLETile(unsigned char *pabySrcData, int nSrcBytes,
     {
         Fax3DecodeState *dsp = DecoderState(sp);
 
-        dsp->runs = (GUInt32 *)runs_buf;
+        dsp->runs = (uint32_t *)runs_buf;
         dsp->curruns = dsp->runs;
         dsp->refruns = NULL;
     }
@@ -4109,7 +4110,7 @@ CPLErr DecompressCCITTRLETile(unsigned char *pabySrcData, int nSrcBytes,
 
     if (DecoderState(sp)->refruns)
     { /* init reference line to white */
-        DecoderState(sp)->refruns[0] = (GUInt32)DecoderState(sp)->b.rowpixels;
+        DecoderState(sp)->refruns[0] = (uint32_t)DecoderState(sp)->b.rowpixels;
         DecoderState(sp)->refruns[1] = 0;
     }
 

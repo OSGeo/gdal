@@ -62,6 +62,7 @@
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -145,11 +146,11 @@
 
 #ifndef BUILD_WITHOUT_64BIT_OFFSET
 // Ensure we have working 64 bit API
-static_assert(sizeof(VSI_FTELL64(nullptr)) == sizeof(vsi_l_offset),
+static_assert(sizeof(VSI_FTELL64(nullptr)) == sizeof(uint64_t),
               "File API does not seem to support 64-bit offset. "
               "If you still want to build GDAL without > 4GB file support, "
               "add the -DBUILD_WITHOUT_64BIT_OFFSET define");
-static_assert(sizeof(VSIStatBufL::st_size) == sizeof(vsi_l_offset),
+static_assert(sizeof(VSIStatBufL::st_size) == sizeof(uint64_t),
               "File API does not seem to support 64-bit file size. "
               "If you still want to build GDAL without > 4GB file support, "
               "add the -DBUILD_WITHOUT_64BIT_OFFSET define");
@@ -166,7 +167,7 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioFilesystemHandler)
 
 #ifdef VSI_COUNT_BYTES_READ
-    vsi_l_offset nTotalBytesRead = 0;
+    uint64_t nTotalBytesRead = 0;
     CPLMutex *hMutex = nullptr;
 #endif
 
@@ -186,7 +187,7 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
-    GIntBig GetDiskFreeSpace(const char *pszDirname) override;
+    int64_t GetDiskFreeSpace(const char *pszDirname) override;
     int SupportsSparseFiles(const char *pszPath) override;
 
     bool IsLocal(const char *pszPath) override;
@@ -204,7 +205,7 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 #endif
 
 #ifdef VSI_COUNT_BYTES_READ
-    void AddToTotal(vsi_l_offset nBytes);
+    void AddToTotal(uint64_t nBytes);
 #endif
 };
 
@@ -219,7 +220,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     CPL_DISALLOW_COPY_ASSIGN(VSIUnixStdioHandle)
 
     FILE *fp = nullptr;
-    vsi_l_offset m_nOffset = 0;
+    uint64_t m_nOffset = 0;
     bool bReadOnly = true;
     bool bLastOpWrite = false;
     bool bLastOpRead = false;
@@ -230,31 +231,30 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     // no-op.
     bool bModeAppendReadWrite = false;
 #ifdef VSI_COUNT_BYTES_READ
-    vsi_l_offset nTotalBytesRead = 0;
+    uint64_t nTotalBytesRead = 0;
     VSIUnixStdioFilesystemHandler *poFS = nullptr;
 #endif
   public:
     VSIUnixStdioHandle(VSIUnixStdioFilesystemHandler *poFSIn, FILE *fpIn,
                        bool bReadOnlyIn, bool bModeAppendReadWriteIn);
 
-    int Seek(vsi_l_offset nOffsetIn, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffsetIn, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
     int Flush() override;
     int Close() override;
-    int Truncate(vsi_l_offset nNewSize) override;
+    int Truncate(uint64_t nNewSize) override;
     void *GetNativeFileDescriptor() override
     {
         return reinterpret_cast<void *>(static_cast<uintptr_t>(fileno(fp)));
     }
-    VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                  vsi_l_offset nLength) override;
+    VSIRangeStatus GetRangeStatus(uint64_t nOffset, uint64_t nLength) override;
 #if defined(HAVE_PREAD64) || (defined(HAVE_PREAD_BSD) && SIZEOF_OFF_T == 8)
     bool HasPRead() const override;
     size_t PRead(void * /*pBuffer*/, size_t /* nSize */,
-                 vsi_l_offset /*nOffset*/) const override;
+                 uint64_t /*nOffset*/) const override;
 #endif
 };
 
@@ -302,7 +302,7 @@ int VSIUnixStdioHandle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
+int VSIUnixStdioHandle::Seek(uint64_t nOffsetIn, int nWhence)
 {
     bAtEOF = false;
 
@@ -333,7 +333,7 @@ int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
     }
 
 #if !defined(UNIX_STDIO_64) && SIZEOF_UNSIGNED_LONG == 4
-    if (nOffsetIn > static_cast<vsi_l_offset>(std::numeric_limits<long>::max()))
+    if (nOffsetIn > static_cast<uint64_t>(std::numeric_limits<long>::max()))
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -349,27 +349,23 @@ int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
 
     if (nWhence == SEEK_SET)
     {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",SEEK_SET) = %d",
-                  fp, nOffsetIn, nResult);
+        VSIDebug3("VSIUnixStdioHandle::Seek(%p," PRIu64 ",SEEK_SET) = %d", fp,
+                  nOffsetIn, nResult);
     }
     else if (nWhence == SEEK_END)
     {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",SEEK_END) = %d",
-                  fp, nOffsetIn, nResult);
+        VSIDebug3("VSIUnixStdioHandle::Seek(%p," PRIu64 ",SEEK_END) = %d", fp,
+                  nOffsetIn, nResult);
     }
     else if (nWhence == SEEK_CUR)
     {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",SEEK_CUR) = %d",
-                  fp, nOffsetIn, nResult);
+        VSIDebug3("VSIUnixStdioHandle::Seek(%p," PRIu64 ",SEEK_CUR) = %d", fp,
+                  nOffsetIn, nResult);
     }
     else
     {
-        VSIDebug4("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",%d-Unknown) = %d",
-                  fp, nOffsetIn, nWhence, nResult);
+        VSIDebug4("VSIUnixStdioHandle::Seek(%p," PRIu64 ",%d-Unknown) = %d", fp,
+                  nOffsetIn, nWhence, nResult);
     }
 
 #endif
@@ -405,11 +401,11 @@ int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIUnixStdioHandle::Tell()
+uint64_t VSIUnixStdioHandle::Tell()
 
 {
 #if 0
-    const vsi_l_offset nOffset = VSI_FTELL64( fp );
+    const uint64_t nOffset = VSI_FTELL64( fp );
     const int nError = errno;
 
     VSIDebug2( "VSIUnixStdioHandle::Tell(%p) = %ld",
@@ -483,7 +479,7 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     if (nResult != nCount)
     {
         errno = 0;
-        vsi_l_offset nNewOffset = VSI_FTELL64(fp);
+        uint64_t nNewOffset = VSI_FTELL64(fp);
         if (errno == 0)  // ftell() can fail if we are end of file with a pipe.
             m_nOffset = nNewOffset;
         else
@@ -556,7 +552,7 @@ int VSIUnixStdioHandle::Eof()
 /*                             Truncate()                               */
 /************************************************************************/
 
-int VSIUnixStdioHandle::Truncate(vsi_l_offset nNewSize)
+int VSIUnixStdioHandle::Truncate(uint64_t nNewSize)
 {
     fflush(fp);
     return VSI_FTRUNCATE64(fileno(fp), nNewSize);
@@ -578,12 +574,12 @@ int VSIUnixStdioHandle::Truncate(vsi_l_offset nNewSize)
 #include <errno.h>
 #endif
 
-VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus(vsi_l_offset
+VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus(uint64_t
 #ifdef FS_IOC_FIEMAP
                                                       nOffset
 #endif
                                                   ,
-                                                  vsi_l_offset
+                                                  uint64_t
 #ifdef FS_IOC_FIEMAP
                                                       nLength
 #endif
@@ -653,7 +649,7 @@ bool VSIUnixStdioHandle::HasPRead() const
 /************************************************************************/
 
 size_t VSIUnixStdioHandle::PRead(void *pBuffer, size_t nSize,
-                                 vsi_l_offset nOffset) const
+                                 uint64_t nOffset) const
 {
 #ifdef HAVE_PREAD64
     return pread64(fileno(fp), pBuffer, nSize, nOffset);
@@ -676,10 +672,9 @@ size_t VSIUnixStdioHandle::PRead(void *pBuffer, size_t nSize,
 
 VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
 {
-    CPLDebug(
-        "VSI",
-        "~VSIUnixStdioFilesystemHandler() : nTotalBytesRead = " CPL_FRMT_GUIB,
-        nTotalBytesRead);
+    CPLDebug("VSI",
+             "~VSIUnixStdioFilesystemHandler() : nTotalBytesRead = %" PRIu64,
+             nTotalBytesRead);
 
     if (hMutex != nullptr)
         CPLDestroyMutex(hMutex);
@@ -831,28 +826,28 @@ char **VSIUnixStdioFilesystemHandler::ReadDirEx(const char *pszPath,
 /*                        GetDiskFreeSpace()                            */
 /************************************************************************/
 
-GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace(const char *
+int64_t VSIUnixStdioFilesystemHandler::GetDiskFreeSpace(const char *
 #ifdef HAVE_STATVFS
                                                             pszDirname
 #endif
 )
 {
-    GIntBig nRet = -1;
+    int64_t nRet = -1;
 #ifdef HAVE_STATVFS
 
 #ifdef HAVE_STATVFS64
     struct statvfs64 buf;
     if (statvfs64(pszDirname, &buf) == 0)
     {
-        nRet = static_cast<GIntBig>(buf.f_frsize *
-                                    static_cast<GUIntBig>(buf.f_bavail));
+        nRet = static_cast<int64_t>(buf.f_frsize *
+                                    static_cast<uint64_t>(buf.f_bavail));
     }
 #else
     struct statvfs buf;
     if (statvfs(pszDirname, &buf) == 0)
     {
-        nRet = static_cast<GIntBig>(buf.f_frsize *
-                                    static_cast<GUIntBig>(buf.f_bavail));
+        nRet = static_cast<int64_t>(buf.f_frsize *
+                                    static_cast<uint64_t>(buf.f_bavail));
     }
 #endif
 
@@ -1208,7 +1203,7 @@ begin:
 /*                            AddToTotal()                              */
 /************************************************************************/
 
-void VSIUnixStdioFilesystemHandler::AddToTotal(vsi_l_offset nBytes)
+void VSIUnixStdioFilesystemHandler::AddToTotal(uint64_t nBytes)
 {
     CPLMutexHolder oHolder(&hMutex);
     nTotalBytesRead += nBytes;

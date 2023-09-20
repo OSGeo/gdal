@@ -158,19 +158,19 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
             DumpValue<GByte>(serializer, bytes);
             break;
         case GDT_Int8:
-            DumpValue<GInt8>(serializer, bytes);
+            DumpValue<int8_t>(serializer, bytes);
             break;
         case GDT_Int16:
-            DumpValue<GInt16>(serializer, bytes);
+            DumpValue<int16_t>(serializer, bytes);
             break;
         case GDT_UInt16:
-            DumpValue<GUInt16>(serializer, bytes);
+            DumpValue<uint16_t>(serializer, bytes);
             break;
         case GDT_Int32:
-            DumpValue<GInt32>(serializer, bytes);
+            DumpValue<int32_t>(serializer, bytes);
             break;
         case GDT_UInt32:
-            DumpValue<GUInt32>(serializer, bytes);
+            DumpValue<uint32_t>(serializer, bytes);
             break;
         case GDT_Int64:
             DumpValue<std::int64_t>(serializer, bytes);
@@ -185,10 +185,10 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
             DumpValue<double>(serializer, bytes);
             break;
         case GDT_CInt16:
-            DumpComplexValue<GInt16>(serializer, bytes);
+            DumpComplexValue<int16_t>(serializer, bytes);
             break;
         case GDT_CInt32:
-            DumpComplexValue<GInt32>(serializer, bytes);
+            DumpComplexValue<int32_t>(serializer, bytes);
             break;
         case GDT_CFloat32:
             DumpComplexValue<float>(serializer, bytes);
@@ -528,8 +528,8 @@ static void DumpAttrs(const std::vector<std::shared_ptr<GDALAttribute>> &attrs,
 
 static void DumpArrayRec(std::shared_ptr<GDALMDArray> array,
                          CPLJSonStreamingWriter &serializer, size_t nCurDim,
-                         const std::vector<GUInt64> &dimSizes,
-                         std::vector<GUInt64> &startIdx,
+                         const std::vector<uint64_t> &dimSizes,
+                         std::vector<uint64_t> &startIdx,
                          const GDALMultiDimInfoOptions *psOptions)
 {
     do
@@ -872,8 +872,8 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
         }
         else
         {
-            std::vector<GUInt64> startIdx(dims.size());
-            std::vector<GUInt64> dimSizes;
+            std::vector<uint64_t> startIdx(dims.size());
+            std::vector<uint64_t> dimSizes;
             for (const auto &dim : dims)
                 dimSizes.emplace_back(dim->GetSize());
             DumpArrayRec(array, serializer, 0, dimSizes, startIdx, psOptions);
@@ -886,7 +886,7 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
         double dfMax = 0.0;
         double dfMean = 0.0;
         double dfStdDev = 0.0;
-        GUInt64 nValidCount = 0;
+        uint64_t nValidCount = 0;
         if (array->GetStatistics(false, true, &dfMin, &dfMax, &dfMean,
                                  &dfStdDev, &nValidCount, nullptr,
                                  nullptr) == CE_None)

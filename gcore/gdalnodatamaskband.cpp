@@ -164,12 +164,12 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
 
         case GDT_UInt32:
         {
-            return GDALIsValueInRange<GUInt32>(dfNoDataValue);
+            return GDALIsValueInRange<uint32_t>(dfNoDataValue);
         }
 
         case GDT_Int32:
         {
-            return GDALIsValueInRange<GInt32>(dfNoDataValue);
+            return GDALIsValueInRange<int32_t>(dfNoDataValue);
         }
 
         case GDT_UInt64:
@@ -214,7 +214,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 
     if (nBlockXSize != nXSizeRequest || nBlockYSize != nYSizeRequest)
     {
-        memset(pImage, 0, static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+        memset(pImage, 0, static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -231,8 +231,8 @@ CPLErr GDALNoDataMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag != GF_Read)
@@ -312,8 +312,8 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             case GDT_UInt32:
             {
-                const GUInt32 nNoData = static_cast<GUInt32>(m_dfNoDataValue);
-                const GUInt32 *panSrc = static_cast<const GUInt32 *>(pTemp);
+                const uint32_t nNoData = static_cast<uint32_t>(m_dfNoDataValue);
+                const uint32_t *panSrc = static_cast<const uint32_t *>(pTemp);
 
                 size_t i = 0;
                 for (int iY = 0; iY < nBufYSize; iY++)
@@ -331,8 +331,8 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             case GDT_Int32:
             {
-                const GInt32 nNoData = static_cast<GInt32>(m_dfNoDataValue);
-                const GInt32 *panSrc = static_cast<const GInt32 *>(pTemp);
+                const int32_t nNoData = static_cast<int32_t>(m_dfNoDataValue);
+                const int32_t *panSrc = static_cast<const int32_t *>(pTemp);
 
                 size_t i = 0;
                 for (int iY = 0; iY < nBufYSize; iY++)

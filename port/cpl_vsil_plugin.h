@@ -60,19 +60,19 @@ class VSIPluginFilesystemHandler : public VSIFilesystemHandler
     const char *GetCallbackFilename(const char *pszFilename);
     bool IsValidFilename(const char *pszFilename);
 
-    vsi_l_offset Tell(void *pFile);
-    int Seek(void *pFile, vsi_l_offset nOffset, int nWhence);
+    uint64_t Tell(void *pFile);
+    int Seek(void *pFile, uint64_t nOffset, int nWhence);
     size_t Read(void *pFile, void *pBuffer, size_t nSize, size_t nCount);
     int ReadMultiRange(void *pFile, int nRanges, void **ppData,
-                       const vsi_l_offset *panOffsets, const size_t *panSizes);
-    void AdviseRead(void *pFile, int nRanges, const vsi_l_offset *panOffsets,
+                       const uint64_t *panOffsets, const size_t *panSizes);
+    void AdviseRead(void *pFile, int nRanges, const uint64_t *panOffsets,
                     const size_t *panSizes);
-    VSIRangeStatus GetRangeStatus(void *pFile, vsi_l_offset nOffset,
-                                  vsi_l_offset nLength);
+    VSIRangeStatus GetRangeStatus(void *pFile, uint64_t nOffset,
+                                  uint64_t nLength);
     int Eof(void *pFile);
     size_t Write(void *pFile, const void *pBuffer, size_t nSize, size_t nCount);
     int Flush(void *pFile);
-    int Truncate(void *pFile, vsi_l_offset nNewSize);
+    int Truncate(void *pFile, uint64_t nNewSize);
     int Close(void *pFile);
 
   public:
@@ -115,20 +115,18 @@ class VSIPluginHandle : public VSIVirtualHandle
     VSIPluginHandle(VSIPluginFilesystemHandler *poFS, void *cbData);
     ~VSIPluginHandle() override;
 
-    vsi_l_offset Tell() override;
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
+    uint64_t Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
     size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
-    int ReadMultiRange(int nRanges, void **ppData,
-                       const vsi_l_offset *panOffsets,
+    int ReadMultiRange(int nRanges, void **ppData, const uint64_t *panOffsets,
                        const size_t *panSizes) override;
-    void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+    void AdviseRead(int nRanges, const uint64_t *panOffsets,
                     const size_t *panSizes) override;
-    VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                  vsi_l_offset nLength) override;
+    VSIRangeStatus GetRangeStatus(uint64_t nOffset, uint64_t nLength) override;
     int Eof() override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nCount) override;
     int Flush() override;
-    int Truncate(vsi_l_offset nNewSize) override;
+    int Truncate(uint64_t nNewSize) override;
     int Close() override;
 };
 

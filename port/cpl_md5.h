@@ -13,15 +13,15 @@ CPL_C_END
 
 struct CPLMD5Context
 {
-    GUInt32 buf[4];
-    GUInt32 bits[2];
+    uint32_t buf[4];
+    uint32_t bits[2];
     unsigned char in[64];
 };
 
 void CPLMD5Init(struct CPLMD5Context *context);
 void CPLMD5Update(struct CPLMD5Context *context, const void *buf, size_t len);
 void CPLMD5Final(unsigned char digest[16], struct CPLMD5Context *context);
-void CPLMD5Transform(GUInt32 buf[4], const unsigned char inraw[64]);
+void CPLMD5Transform(uint32_t buf[4], const unsigned char inraw[64]);
 
 #endif  // #ifndef DOXYGEN_SKIP
 

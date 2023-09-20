@@ -57,7 +57,7 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                            GDALProgressFunc, void *,
                            CSLConstList papszOptions) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALDataType, int, int *, int64_t, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -126,7 +126,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IWriteBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -171,7 +171,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     int HasArbitraryOverviews() override;
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int) override;
-    GDALRasterBand *GetRasterSampleOverview(GUIntBig) override;
+    GDALRasterBand *GetRasterSampleOverview(uint64_t) override;
     CPLErr BuildOverviews(const char *, int, const int *, GDALProgressFunc,
                           void *, CSLConstList papszOptions) override;
 
@@ -180,15 +180,15 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                       char **papszOptions) override;
 
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                        GUIntBig *panHistogram, int bIncludeOutOfRange,
+                        uint64_t *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc,
                         void *pProgressData) override;
 
     CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax, int *pnBuckets,
-                               GUIntBig **ppanHistogram, int bForce,
+                               uint64_t **ppanHistogram, int bForce,
                                GDALProgressFunc, void *pProgressData) override;
     CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
-                               GUIntBig *panHistogram) override;
+                               uint64_t *panHistogram) override;
 
     GDALRasterAttributeTable *GetDefaultRAT() override;
     CPLErr SetDefaultRAT(const GDALRasterAttributeTable *) override;
@@ -200,7 +200,7 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     GDALMaskValueRange GetMaskValueRange() const override;
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
-                                     GIntBig *pnLineSpace,
+                                     int64_t *pnLineSpace,
                                      char **papszOptions) override;
 
   private:
@@ -217,7 +217,7 @@ class GDALProxyPoolRasterBand;
 class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 {
   private:
-    GIntBig responsiblePID = -1;
+    int64_t responsiblePID = -1;
 
     mutable char *pszProjectionRef = nullptr;
     mutable OGRSpatialReference *m_poSRS = nullptr;
@@ -354,7 +354,7 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
     GDALColorTable *GetColorTable() override;
     GDALRasterBand *GetOverview(int) override;
     GDALRasterBand *
-    GetRasterSampleOverview(GUIntBig nDesiredSamples) override;  // TODO
+    GetRasterSampleOverview(uint64_t nDesiredSamples) override;  // TODO
     GDALRasterBand *GetMaskBand() override;
 
     CPLErr FlushCache(bool bAtClosing) override;

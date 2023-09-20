@@ -1250,13 +1250,13 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
                         }
                         else if (EQUAL(sStoreType.c_str(), "Int"))
                         {
-                            if (((GInt16 *)pData)[iCol] == dNoDataValue)
-                                ((GInt16 *)pData)[iCol] = shUNDEF;
+                            if (((int16_t *)pData)[iCol] == dNoDataValue)
+                                ((int16_t *)pData)[iCol] = shUNDEF;
                         }
                         else if (EQUAL(sStoreType.c_str(), "Long"))
                         {
-                            if (((GInt32 *)pData)[iCol] == dNoDataValue)
-                                ((GInt32 *)pData)[iCol] = iUNDEF;
+                            if (((int32_t *)pData)[iCol] == dNoDataValue)
+                                ((int32_t *)pData)[iCol] = iUNDEF;
                         }
                         else if (EQUAL(sStoreType.c_str(), "float"))
                         {
@@ -1652,8 +1652,8 @@ CPLErr ILWISRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             for (int iCol = 0; iCol < nBlockXSize; iCol++)
             {
                 double rV = psInfo.bUseValueRange
-                                ? psInfo.vr.rValue(((GInt16 *)pData)[iCol])
-                                : ((GInt16 *)pData)[iCol];
+                                ? psInfo.vr.rValue(((int16_t *)pData)[iCol])
+                                : ((int16_t *)pData)[iCol];
                 SetValue(pImage, iCol, rV);
             }
             break;
@@ -1661,8 +1661,8 @@ CPLErr ILWISRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             for (int iCol = 0; iCol < nBlockXSize; iCol++)
             {
                 double rV = psInfo.bUseValueRange
-                                ? psInfo.vr.rValue(((GInt32 *)pData)[iCol])
-                                : ((GInt32 *)pData)[iCol];
+                                ? psInfo.vr.rValue(((int32_t *)pData)[iCol])
+                                : ((int32_t *)pData)[iCol];
                 SetValue(pImage, iCol, rV);
             }
             break;
@@ -1695,16 +1695,16 @@ void ILWISRasterBand::SetValue(void *pImage, int i, double rV)
             ((GByte *)pImage)[i] = (GByte)rV;
             break;
         case GDT_UInt16:
-            ((GUInt16 *)pImage)[i] = (GUInt16)rV;
+            ((uint16_t *)pImage)[i] = (uint16_t)rV;
             break;
         case GDT_Int16:
-            ((GInt16 *)pImage)[i] = (GInt16)rV;
+            ((int16_t *)pImage)[i] = (int16_t)rV;
             break;
         case GDT_UInt32:
-            ((GUInt32 *)pImage)[i] = (GUInt32)rV;
+            ((uint32_t *)pImage)[i] = (uint32_t)rV;
             break;
         case GDT_Int32:
-            ((GInt32 *)pImage)[i] = (GInt32)rV;
+            ((int32_t *)pImage)[i] = (int32_t)rV;
             break;
         case GDT_Float32:
             ((float *)pImage)[i] = (float)rV;
@@ -1726,16 +1726,16 @@ double ILWISRasterBand::GetValue(void *pImage, int i)
             rV = ((GByte *)pImage)[i];
             break;
         case GDT_UInt16:
-            rV = ((GUInt16 *)pImage)[i];
+            rV = ((uint16_t *)pImage)[i];
             break;
         case GDT_Int16:
-            rV = ((GInt16 *)pImage)[i];
+            rV = ((int16_t *)pImage)[i];
             break;
         case GDT_UInt32:
-            rV = ((GUInt32 *)pImage)[i];
+            rV = ((uint32_t *)pImage)[i];
             break;
         case GDT_Int32:
-            rV = ((GInt32 *)pImage)[i];
+            rV = ((int32_t *)pImage)[i];
             break;
         case GDT_Float32:
             rV = ((float *)pImage)[i];
@@ -1758,10 +1758,10 @@ void ILWISRasterBand::FillWithNoData(void *pImage)
         switch (psInfo.stStoreType)
         {
             case stInt:
-                ((GInt16 *)pImage)[0] = shUNDEF;
+                ((int16_t *)pImage)[0] = shUNDEF;
                 break;
             case stLong:
-                ((GInt32 *)pImage)[0] = iUNDEF;
+                ((int32_t *)pImage)[0] = iUNDEF;
                 break;
             case stFloat:
                 ((float *)pImage)[0] = flUNDEF;
@@ -1831,22 +1831,22 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 break;
             case stInt:
                 for (int iCol = 0; iCol < nXSize; iCol++)
-                    if (((GInt16 *)pData)[iCol] == shUNDEF)
+                    if (((int16_t *)pData)[iCol] == shUNDEF)
                     {
                         double rV = GetValue(pImage, iCol);
-                        ((GInt16 *)pData)[iCol] =
-                            (GInt16)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
-                                                           : rV);
+                        ((int16_t *)pData)[iCol] =
+                            (int16_t)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
+                                                            : rV);
                     }
                 break;
             case stLong:
                 for (int iCol = 0; iCol < nXSize; iCol++)
-                    if (((GInt32 *)pData)[iCol] == iUNDEF)
+                    if (((int32_t *)pData)[iCol] == iUNDEF)
                     {
                         double rV = GetValue(pImage, iCol);
-                        ((GInt32 *)pData)[iCol] =
-                            (GInt32)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
-                                                           : rV);
+                        ((int32_t *)pData)[iCol] =
+                            (int32_t)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
+                                                            : rV);
                     }
                 break;
             case stFloat:
@@ -1879,18 +1879,18 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 for (int iCol = 0; iCol < nXSize; iCol++)
                 {
                     double rV = GetValue(pImage, iCol);
-                    ((GInt16 *)pData)[iCol] =
-                        (GInt16)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
-                                                       : rV);
+                    ((int16_t *)pData)[iCol] =
+                        (int16_t)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
+                                                        : rV);
                 }
                 break;
             case stLong:
                 for (int iCol = 0; iCol < nXSize; iCol++)
                 {
                     double rV = GetValue(pImage, iCol);
-                    ((GInt32 *)pData)[iCol] =
-                        (GInt32)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
-                                                       : rV);
+                    ((int32_t *)pData)[iCol] =
+                        (int32_t)(psInfo.bUseValueRange ? psInfo.vr.iRaw(rV)
+                                                        : rV);
                 }
                 break;
             case stFloat:

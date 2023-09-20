@@ -834,8 +834,8 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
 /*                           GeoJSONPropertyToFieldType()               */
 /************************************************************************/
 
-constexpr GIntBig MY_INT64_MAX = (((GIntBig)0x7FFFFFFF) << 32) | 0xFFFFFFFF;
-constexpr GIntBig MY_INT64_MIN = ((GIntBig)0x80000000) << 32;
+constexpr int64_t MY_INT64_MAX = (((int64_t)0x7FFFFFFF) << 32) | 0xFFFFFFFF;
+constexpr int64_t MY_INT64_MIN = ((int64_t)0x80000000) << 32;
 
 OGRFieldType GeoJSONPropertyToFieldType(json_object *poObject,
                                         OGRFieldSubType &eSubType,
@@ -859,7 +859,7 @@ OGRFieldType GeoJSONPropertyToFieldType(json_object *poObject,
         return OFTReal;
     else if (json_type_int == type)
     {
-        GIntBig nVal = json_object_get_int64(poObject);
+        int64_t nVal = json_object_get_int64(poObject);
         if (!CPL_INT64_FITS_ON_INT32(nVal))
         {
             if (nVal == MY_INT64_MIN || nVal == MY_INT64_MAX)
@@ -934,7 +934,7 @@ OGRFieldType GeoJSONPropertyToFieldType(json_object *poObject,
                 {
                     if (eSubType == OFSTNone && eType == OFTIntegerList)
                     {
-                        GIntBig nVal = json_object_get_int64(poRow);
+                        int64_t nVal = json_object_get_int64(poRow);
                         if (!CPL_INT64_FITS_ON_INT32(nVal))
                             eType = OFTInteger64List;
                     }

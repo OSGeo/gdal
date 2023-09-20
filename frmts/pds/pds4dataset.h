@@ -59,9 +59,9 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
     bool m_bKeepGeomColmuns = false;
     bool m_bDirtyHeader = false;
     VSILFILE *m_fp = nullptr;
-    GIntBig m_nFeatureCount = -1;
-    GIntBig m_nFID = 1;
-    vsi_l_offset m_nOffset = 0;
+    int64_t m_nFeatureCount = -1;
+    int64_t m_nFID = 1;
+    uint64_t m_nOffset = 0;
     CPLStringList m_aosLCO{};
     std::string m_osLineEnding{};
 
@@ -83,7 +83,7 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
     {
         return m_poFeatureDefn;
     }
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 
     const char *GetFileName() const
     {
@@ -159,7 +159,7 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
                         const char *pszFilename);
 
     void ResetReading() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
@@ -337,7 +337,7 @@ class PDS4Dataset final : public RawDataset
     friend class PDS4WrapperRasterBand;
 
     VSILFILE *m_fpImage = nullptr;
-    vsi_l_offset m_nBaseOffset = 0;
+    uint64_t m_nBaseOffset = 0;
     GDALDataset *m_poExternalDS = nullptr;  // external dataset (GeoTIFF)
     OGRSpatialReference m_oSRS{};
     bool m_bGotTransform = false;
@@ -462,7 +462,7 @@ class PDS4RawRasterBand final : public RawRasterBand
 
   public:
     PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
-                      vsi_l_offset l_nImgOffset, int l_nPixelOffset,
+                      uint64_t l_nImgOffset, int l_nPixelOffset,
                       int l_nLineOffset, GDALDataType l_eDataType,
                       RawRasterBand::ByteOrder eByteOrderIn);
     virtual ~PDS4RawRasterBand()
@@ -472,8 +472,8 @@ class PDS4RawRasterBand final : public RawRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;
@@ -532,8 +532,8 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;

@@ -31,6 +31,7 @@
 #include "ogrhanautils.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -1093,7 +1094,7 @@ OGRErr OGRHanaTableLayer::GetExtent(int geomField, OGREnvelope *extent,
 /*                              GetFeatureCount()                       */
 /************************************************************************/
 
-GIntBig OGRHanaTableLayer::GetFeatureCount(int force)
+int64_t OGRHanaTableLayer::GetFeatureCount(int force)
 {
     FlushPendingBatches(false);
 
@@ -1251,7 +1252,7 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature *feature)
             {
                 odbc::Long id = rsIdentity->getLong(1);
                 if (!id.isNull())
-                    feature->SetFID(static_cast<GIntBig>(*id));
+                    feature->SetFID(static_cast<int64_t>(*id));
             }
             rsIdentity->close();
         }
@@ -1271,7 +1272,7 @@ OGRErr OGRHanaTableLayer::ICreateFeature(OGRFeature *feature)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRHanaTableLayer::DeleteFeature(int64_t nFID)
 {
     if (!updateMode_)
     {
@@ -1283,7 +1284,7 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
     if (nFID == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeleteFeature(" CPL_FRMT_GIB
+                 "DeleteFeature(%" PRId64
                  ") failed.  Unable to delete features "
                  "in tables without\n a recognised FID column.",
                  nFID);
@@ -1293,7 +1294,7 @@ OGRErr OGRHanaTableLayer::DeleteFeature(GIntBig nFID)
     if (OGRNullFID == fidFieldIndex_)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeleteFeature(" CPL_FRMT_GIB
+                 "DeleteFeature(%" PRId64
                  ") failed.  Unable to delete features "
                  "in tables without\n a recognised FID column.",
                  nFID);

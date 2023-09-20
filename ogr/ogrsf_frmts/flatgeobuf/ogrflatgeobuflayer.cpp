@@ -792,7 +792,7 @@ OGRErr OGRFlatGeobufLayer::readFeatureOffset(uint64_t index,
     }
 }
 
-OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRFlatGeobufLayer::GetFeature(int64_t nFeatureId)
 {
     if (m_indexNodeSize == 0)
     {
@@ -893,7 +893,7 @@ OGRErr OGRFlatGeobufLayer::readIndex()
     return OGRERR_NONE;
 }
 
-GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
+int64_t OGRFlatGeobufLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr ||
         m_featuresCount == 0)
@@ -993,7 +993,7 @@ OGRErr OGRFlatGeobufLayer::ensureFeatureBuf(uint32_t featureSize)
 
 OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 {
-    GIntBig fid;
+    int64_t fid;
     auto seek = false;
     if (m_queriedSpatialIndex && !m_ignoreSpatialFilter)
     {
@@ -1430,7 +1430,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             break;
         }
 
-        GIntBig fid;
+        int64_t fid;
         auto seek = false;
         if (m_queriedSpatialIndex && !m_ignoreSpatialFilter)
         {
@@ -1980,7 +1980,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
             }
             case OGRFieldType::OFTInteger64:
             {
-                GIntBig nVal = field->Integer64;
+                int64_t nVal = field->Integer64;
                 CPL_LSBPTR64(&nVal);
                 std::copy(reinterpret_cast<const uint8_t *>(&nVal),
                           reinterpret_cast<const uint8_t *>(&nVal + 1),

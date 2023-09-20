@@ -242,8 +242,8 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
     // Rewrite all features
     for (uint32_t iPage = 0; iPage < m_n1024BlocksPresent; ++iPage)
     {
-        const vsi_l_offset nOffsetInTableX =
-            16 + m_nTablxOffsetSize * static_cast<vsi_l_offset>(iPage) * 1024;
+        const uint64_t nOffsetInTableX =
+            16 + m_nTablxOffsetSize * static_cast<uint64_t>(iPage) * 1024;
         VSIFSeekL(oWholeFileRewriter.m_fpOldGdbtablx, nOffsetInTableX,
                   SEEK_SET);
         if (VSIFReadL(abyBufferOffsets.data(), m_nTablxOffsetSize * 1024, 1,

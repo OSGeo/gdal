@@ -124,11 +124,11 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
     {
         return poLayer->GetNextFeature();
     }
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override
     {
         return poLayer->SetNextByIndex(nIndex);
     }
-    virtual OGRFeature *GetFeature(GIntBig nFID) override
+    virtual OGRFeature *GetFeature(int64_t nFID) override
     {
         return poLayer->GetFeature(nFID);
     }
@@ -136,7 +136,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
     {
         return poLayer->GetLayerDefn();
     }
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override
     {
         return poLayer->GetFeatureCount(bForce);
     }

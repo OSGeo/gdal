@@ -34,6 +34,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
 
+#include <cinttypes>
 #include <limits>
 #include <map>
 #include <memory>
@@ -135,8 +136,8 @@ class OGRMongoDBv3Layer final : public OGRLayer
     bool m_bDotAsNestedField = true;
     bool m_bIgnoreSourceID = false;
     bool m_bCreateSpatialIndex = true;
-    GIntBig m_nIndex = 0;
-    GIntBig m_nNextFID = 0;
+    int64_t m_nIndex = 0;
+    int64_t m_nNextFID = 0;
     std::unique_ptr<mongocxx::cursor> m_poCursor{};
     std::unique_ptr<mongocxx::cursor::iterator> m_poIterator{};
 
@@ -190,9 +191,9 @@ class OGRMongoDBv3Layer final : public OGRLayer
     void ResetReading() override;
     const char *GetFIDColumn() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
+    int64_t GetFeatureCount(int bForce) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
     void SetSpatialFilter(OGRGeometry *poGeom) override
     {
@@ -910,7 +911,7 @@ bsoncxx::document::value OGRMongoDBv3Layer::BuildQuery()
 /*                           GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig OGRMongoDBv3Layer::GetFeatureCount(int bForce)
+int64_t OGRMongoDBv3Layer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != nullptr ||
         (m_poFilterGeom != nullptr && !TestCapability(OLCFastSpatialFilter)))
@@ -924,7 +925,7 @@ GIntBig OGRMongoDBv3Layer::GetFeatureCount(int bForce)
 
     try
     {
-        return static_cast<GIntBig>(m_oColl.count_documents(BuildQuery()));
+        return static_cast<int64_t>(m_oColl.count_documents(BuildQuery()));
     }
     catch (const std::exception &ex)
     {
@@ -956,8 +957,8 @@ static CPLString Stringify(const bsoncxx::types::value &val)
     else if (eBSONType == bsoncxx::type::k_int32)
         return CPLSPrintf("%d", val.get_int32().value);
     else if (eBSONType == bsoncxx::type::k_int64)
-        return CPLSPrintf(CPL_FRMT_GIB,
-                          static_cast<GIntBig>(val.get_int64().value));
+        return CPLSPrintf("%" PRId64,
+                          static_cast<int64_t>(val.get_int64().value));
     else if (eBSONType == bsoncxx::type::k_double)
         return CPLSPrintf("%.16g", val.get_double().value);
     else if (eBSONType == bsoncxx::type::k_oid)
@@ -966,9 +967,9 @@ static CPLString Stringify(const bsoncxx::types::value &val)
         return CPLSPrintf("%d", val.get_bool().value);
     else if (eBSONType == bsoncxx::type::k_date)
     {
-        GIntBig secsandmillis = static_cast<GIntBig>(val.get_date().to_int64());
+        int64_t secsandmillis = static_cast<int64_t>(val.get_date().to_int64());
         struct tm tm;
-        GIntBig secs = secsandmillis / 1000;
+        int64_t secs = secsandmillis / 1000;
         int millis = static_cast<int>(secsandmillis % 1000);
         if (millis < 0)
         {
@@ -1082,7 +1083,7 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
         poFeature->SetField(nField, elt.get_int32().value);
     else if (eBSONType == bsoncxx::type::k_int64)
         poFeature->SetField(nField,
-                            static_cast<GIntBig>(elt.get_int64().value));
+                            static_cast<int64_t>(elt.get_int64().value));
     else if (eBSONType == bsoncxx::type::k_double)
         poFeature->SetField(nField, elt.get_double().value);
     else if (eBSONType == bsoncxx::type::k_minkey && eType == OFTReal)
@@ -1094,9 +1095,9 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
     else if (eBSONType == bsoncxx::type::k_maxkey && eType == OFTInteger)
         poFeature->SetField(nField, INT_MAX);
     else if (eBSONType == bsoncxx::type::k_minkey && eType == OFTInteger64)
-        poFeature->SetField(nField, std::numeric_limits<GIntBig>::min());
+        poFeature->SetField(nField, std::numeric_limits<int64_t>::min());
     else if (eBSONType == bsoncxx::type::k_maxkey && eType == OFTInteger64)
-        poFeature->SetField(nField, std::numeric_limits<GIntBig>::max());
+        poFeature->SetField(nField, std::numeric_limits<int64_t>::max());
     else if (eBSONType == bsoncxx::type::k_array)
     {
         auto arrayView = elt.get_array().value;
@@ -1152,7 +1153,7 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
                     panValues[i] = subElt.get_int32().value;
                 else if (eBSONType == bsoncxx::type::k_int64)
                 {
-                    GIntBig nVal = subElt.get_int64().value;
+                    int64_t nVal = subElt.get_int64().value;
                     if (nVal < INT_MIN)
                         panValues[i] = INT_MIN;
                     else if (nVal > INT_MAX)
@@ -1183,8 +1184,8 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
         }
         else if (eType == OFTInteger64List)
         {
-            GIntBig *panValues =
-                static_cast<GIntBig *>(CPLMalloc(nSize * sizeof(GIntBig)));
+            int64_t *panValues =
+                static_cast<int64_t *>(CPLMalloc(nSize * sizeof(int64_t)));
             unsigned int i = 0;
             for (auto &&subElt : arrayView)
             {
@@ -1196,18 +1197,18 @@ static void OGRMongoDBV3ReaderSetField(OGRFeature *poFeature,
                 else if (eBSONType == bsoncxx::type::k_double)
                 {
                     double dfVal = subElt.get_double().value;
-                    if (dfVal < std::numeric_limits<GIntBig>::min())
-                        panValues[i] = std::numeric_limits<GIntBig>::min();
+                    if (dfVal < std::numeric_limits<int64_t>::min())
+                        panValues[i] = std::numeric_limits<int64_t>::min();
                     else if (dfVal > static_cast<double>(
-                                         std::numeric_limits<GIntBig>::max()))
-                        panValues[i] = std::numeric_limits<GIntBig>::max();
+                                         std::numeric_limits<int64_t>::max()))
+                        panValues[i] = std::numeric_limits<int64_t>::max();
                     else
-                        panValues[i] = static_cast<GIntBig>(dfVal);
+                        panValues[i] = static_cast<int64_t>(dfVal);
                 }
                 else if (eBSONType == bsoncxx::type::k_minkey)
-                    panValues[i] = std::numeric_limits<GIntBig>::min();
+                    panValues[i] = std::numeric_limits<int64_t>::min();
                 else if (eBSONType == bsoncxx::type::k_maxkey)
-                    panValues[i] = std::numeric_limits<GIntBig>::max();
+                    panValues[i] = std::numeric_limits<int64_t>::max();
                 else
                     panValues[i] = CPLAtoGIntBig(Stringify(subElt.get_value()));
                 ++i;
@@ -1261,11 +1262,11 @@ OGRMongoDBv3Layer::Translate(const bsoncxx::document::view &doc)
             {
                 double dfV = field.get_double().value;
                 if (dfV >= static_cast<double>(
-                               std::numeric_limits<GIntBig>::min()) &&
+                               std::numeric_limits<int64_t>::min()) &&
                     dfV <= static_cast<double>(
-                               std::numeric_limits<GIntBig>::max()))
+                               std::numeric_limits<int64_t>::max()))
                 {
-                    auto nV = static_cast<GIntBig>(dfV);
+                    auto nV = static_cast<int64_t>(dfV);
                     if (static_cast<double>(nV) == dfV)
                     {
                         poFeature->SetFID(nV);
@@ -1345,7 +1346,7 @@ OGRFeature *OGRMongoDBv3Layer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMongoDBv3Layer::GetFeature(GIntBig nFID)
+OGRFeature *OGRMongoDBv3Layer::GetFeature(int64_t nFID)
 {
     if (!m_bHasEstablishedFeatureDefn)
         EstablishFeatureDefn();
@@ -1388,7 +1389,7 @@ OGRFeature *OGRMongoDBv3Layer::GetFeature(GIntBig nFID)
 /*                             DeleteFeature()                          */
 /************************************************************************/
 
-OGRErr OGRMongoDBv3Layer::DeleteFeature(GIntBig nFID)
+OGRErr OGRMongoDBv3Layer::DeleteFeature(int64_t nFID)
 {
     if (m_poDS->GetAccess() != GA_Update)
     {
@@ -1614,7 +1615,7 @@ void OGRMongoDBv3Layer::SerializeField(bsoncxx::builder::basic::document &b,
     else if (eType == OFTInteger64List)
     {
         int nSize;
-        const GIntBig *panValues =
+        const int64_t *panValues =
             poFeature->GetFieldAsInteger64List(iField, &nSize);
         bsoncxx::builder::basic::array arrayBuilder;
         for (int i = 0; i < nSize; i++)
@@ -1654,8 +1655,8 @@ void OGRMongoDBv3Layer::SerializeField(bsoncxx::builder::basic::document &b,
         tm.tm_hour = nHour;
         tm.tm_min = nMinute;
         tm.tm_sec = static_cast<int>(fSecond);
-        GIntBig millis = 1000 * CPLYMDHMSToUnixTime(&tm) +
-                         static_cast<GIntBig>(1000 * fmod(fSecond, 1));
+        int64_t millis = 1000 * CPLYMDHMSToUnixTime(&tm) +
+                         static_cast<int64_t>(1000 * fmod(fSecond, 1));
         b.append(kvp(osFieldName,
                      bsoncxx::types::b_date(
                          static_cast<std::chrono::milliseconds>(millis))));

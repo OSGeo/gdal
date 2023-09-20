@@ -60,6 +60,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <clocale>
 #include <cmath>
@@ -76,6 +77,7 @@
 #include <xlocale.h>  // for LC_NUMERIC_MASK on MacOS
 #endif
 
+#include <limits>
 #ifdef DEBUG_CONFIG_OPTIONS
 #include <set>
 #endif
@@ -122,7 +124,7 @@ static CPLMutex *hSetLocaleMutex = nullptr;
 // to hide this detail.
 typedef struct
 {
-    GIntBig nPID;  // pid of opening thread.
+    int64_t nPID;  // pid of opening thread.
 } CPLSharedFileInfoExtra;
 
 static volatile CPLSharedFileInfoExtra *pasSharedFileListExtra = nullptr;
@@ -502,14 +504,14 @@ static char *CPLReadLineBuffer(int nRequiredSize)
     /*      If the buffer doesn't exist yet, create it.                     */
     /* -------------------------------------------------------------------- */
     int bMemoryError = FALSE;
-    GUInt32 *pnAlloc =
-        static_cast<GUInt32 *>(CPLGetTLSEx(CTLS_RLBUFFERINFO, &bMemoryError));
+    uint32_t *pnAlloc =
+        static_cast<uint32_t *>(CPLGetTLSEx(CTLS_RLBUFFERINFO, &bMemoryError));
     if (bMemoryError)
         return nullptr;
 
     if (pnAlloc == nullptr)
     {
-        pnAlloc = static_cast<GUInt32 *>(VSI_MALLOC_VERBOSE(200));
+        pnAlloc = static_cast<uint32_t *>(VSI_MALLOC_VERBOSE(200));
         if (pnAlloc == nullptr)
             return nullptr;
         *pnAlloc = 196;
@@ -532,8 +534,8 @@ static char *CPLReadLineBuffer(int nRequiredSize)
             return nullptr;
         }
 
-        GUInt32 *pnAllocNew =
-            static_cast<GUInt32 *>(VSI_REALLOC_VERBOSE(pnAlloc, nNewSize));
+        uint32_t *pnAllocNew =
+            static_cast<uint32_t *>(VSI_REALLOC_VERBOSE(pnAlloc, nNewSize));
         if (pnAllocNew == nullptr)
         {
             VSIFree(pnAlloc);
@@ -971,7 +973,7 @@ unsigned long CPLScanULong(const char *pszString, int nMaxLength)
  * Extract big integer from string.
  *
  * Scan up to a maximum number of characters from a string and convert
- * the result to a GUIntBig.
+ * the result to a uint64_t.
  *
  * @param pszString String containing characters to be scanned. It may be
  * terminated with a null character.
@@ -980,10 +982,10 @@ unsigned long CPLScanULong(const char *pszString, int nMaxLength)
  * of the number. Less characters will be considered if a null character
  * is encountered.
  *
- * @return GUIntBig value, converted from its ASCII form.
+ * @return uint64_t value, converted from its ASCII form.
  */
 
-GUIntBig CPLScanUIntBig(const char *pszString, int nMaxLength)
+uint64_t CPLScanUIntBig(const char *pszString, int nMaxLength)
 {
     CPLAssert(nMaxLength >= 0);
     if (pszString == nullptr)
@@ -1009,7 +1011,7 @@ GUIntBig CPLScanUIntBig(const char *pszString, int nMaxLength)
  * @since GDAL 2.0
  */
 
-GIntBig CPLAtoGIntBig(const char *pszString)
+int64_t CPLAtoGIntBig(const char *pszString)
 {
     return atoll(pszString);
 }
@@ -1017,7 +1019,7 @@ GIntBig CPLAtoGIntBig(const char *pszString)
 #if defined(__MINGW32__) || defined(__sun__)
 
 // mingw atoll() doesn't return ERANGE in case of overflow
-static int CPLAtoGIntBigExHasOverflow(const char *pszString, GIntBig nVal)
+static int CPLAtoGIntBigExHasOverflow(const char *pszString, int64_t nVal)
 {
     if (strlen(pszString) <= 18)
         return FALSE;
@@ -1026,15 +1028,7 @@ static int CPLAtoGIntBigExHasOverflow(const char *pszString, GIntBig nVal)
     if (*pszString == '+')
         pszString++;
     char szBuffer[32] = {};
-/* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat"
-#endif
-    snprintf(szBuffer, sizeof(szBuffer), CPL_FRMT_GIB, nVal);
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
+    snprintf(szBuffer, sizeof(szBuffer), "%" PRId64, nVal);
     return strcmp(szBuffer, pszString) != 0;
 }
 
@@ -1055,10 +1049,10 @@ static int CPLAtoGIntBigExHasOverflow(const char *pszString, GIntBig nVal)
  * @since GDAL 2.0
  */
 
-GIntBig CPLAtoGIntBigEx(const char *pszString, int bWarn, int *pbOverflow)
+int64_t CPLAtoGIntBigEx(const char *pszString, int bWarn, int *pbOverflow)
 {
     errno = 0;
-    GIntBig nVal = strtoll(pszString, nullptr, 10);
+    int64_t nVal = strtoll(pszString, nullptr, 10);
     if (errno == ERANGE
 #if defined(__MINGW32__) || defined(__sun__)
         || CPLAtoGIntBigExHasOverflow(pszString, nVal)
@@ -1074,7 +1068,8 @@ GIntBig CPLAtoGIntBigEx(const char *pszString, int bWarn, int *pbOverflow)
         }
         while (*pszString == ' ')
             pszString++;
-        return (*pszString == '-') ? GINTBIG_MIN : GINTBIG_MAX;
+        return (*pszString == '-') ? std::numeric_limits<int64_t>::min()
+                                   : std::numeric_limits<int64_t>::max();
     }
     else if (pbOverflow)
     {
@@ -1294,7 +1289,7 @@ int CPLPrintStringFill(char *pszDest, const char *pszSrc, int nMaxLen)
 /************************************************************************/
 
 /**
- * Print GInt32 value into specified string buffer. This string will not
+ * Print int32_t value into specified string buffer. This string will not
  * be NULL-terminated.
  *
  * @param pszBuffer Pointer to the destination string buffer. Should be
@@ -1309,7 +1304,7 @@ int CPLPrintStringFill(char *pszDest, const char *pszSrc, int nMaxLen)
  * @return Number of characters printed.
  */
 
-int CPLPrintInt32(char *pszBuffer, GInt32 iValue, int nMaxLen)
+int CPLPrintInt32(char *pszBuffer, int32_t iValue, int nMaxLen)
 {
     if (!pszBuffer)
         return 0;
@@ -1333,7 +1328,7 @@ int CPLPrintInt32(char *pszBuffer, GInt32 iValue, int nMaxLen)
 /************************************************************************/
 
 /**
- * Print GUIntBig value into specified string buffer. This string will not
+ * Print uint64_t value into specified string buffer. This string will not
  * be NULL-terminated.
  *
  * @param pszBuffer Pointer to the destination string buffer. Should be
@@ -1348,7 +1343,7 @@ int CPLPrintInt32(char *pszBuffer, GInt32 iValue, int nMaxLen)
  * @return Number of characters printed.
  */
 
-int CPLPrintUIntBig(char *pszBuffer, GUIntBig iValue, int nMaxLen)
+int CPLPrintUIntBig(char *pszBuffer, uint64_t iValue, int nMaxLen)
 {
     if (!pszBuffer)
         return 0;
@@ -1357,21 +1352,7 @@ int CPLPrintUIntBig(char *pszBuffer, GUIntBig iValue, int nMaxLen)
         nMaxLen = 63;
 
     char szTemp[64] = {};
-
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
-/* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat"
-#pragma GCC diagnostic ignored "-Wformat-extra-args"
-#endif
-    snprintf(szTemp, sizeof(szTemp), "%*I64u", nMaxLen, iValue);
-#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
-#pragma GCC diagnostic pop
-#endif
-#else
-    snprintf(szTemp, sizeof(szTemp), "%*llu", nMaxLen, iValue);
-#endif
+    snprintf(szTemp, sizeof(szTemp), "%*" PRIu64, nMaxLen, iValue);
 
     return CPLPrintString(pszBuffer, szTemp, nMaxLen);
 }
@@ -1571,14 +1552,14 @@ void CPLVerifyConfiguration()
     /* -------------------------------------------------------------------- */
     /*      Verify data types.                                              */
     /* -------------------------------------------------------------------- */
-    CPL_STATIC_ASSERT(sizeof(GInt32) == 4);
-    CPL_STATIC_ASSERT(sizeof(GInt16) == 2);
+    CPL_STATIC_ASSERT(sizeof(int32_t) == 4);
+    CPL_STATIC_ASSERT(sizeof(int16_t) == 2);
     CPL_STATIC_ASSERT(sizeof(GByte) == 1);
 
     /* -------------------------------------------------------------------- */
     /*      Verify byte order                                               */
     /* -------------------------------------------------------------------- */
-    GInt32 nTest = 1;
+    int32_t nTest = 1;
 
 #ifdef CPL_LSB
     if (reinterpret_cast<GByte *>(&nTest)[0] != 1)
@@ -2723,7 +2704,7 @@ FILE *CPLOpenShared(const char *pszFilename, const char *pszAccess,
 {
     const bool bLarge = CPL_TO_BOOL(bLargeIn);
     CPLMutexHolderD(&hSharedFileMutex);
-    const GIntBig nPID = CPLGetPID();
+    const int64_t nPID = CPLGetPID();
 
     /* -------------------------------------------------------------------- */
     /*      Is there an existing file we can use?                           */

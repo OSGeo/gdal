@@ -253,11 +253,11 @@ class LevellerDataset final : public GDALPamDataset
     double m_dLogSpan[2];
 
     VSILFILE *m_fp;
-    vsi_l_offset m_nDataOffset;
+    uint64_t m_nDataOffset;
 
     bool load_from_file(VSILFILE *, const char *);
 
-    static bool locate_data(vsi_l_offset &, size_t &, VSILFILE *, const char *);
+    static bool locate_data(uint64_t &, size_t &, VSILFILE *, const char *);
     static bool get(int &, VSILFILE *, const char *);
     static bool get(size_t &n, VSILFILE *fp, const char *psz)
     {
@@ -514,7 +514,7 @@ CPLErr LevellerRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void *pImage)
 
 {
-    CPLAssert(sizeof(float) == sizeof(GInt32));
+    CPLAssert(sizeof(float) == sizeof(int32_t));
     CPLAssert(nBlockXOff == 0);
     CPLAssert(pImage != nullptr);
 
@@ -558,7 +558,7 @@ CPLErr LevellerRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     if (poGDS->m_version < 6)
     {
-        GInt32 *pi = reinterpret_cast<int *>(pImage);
+        int32_t *pi = reinterpret_cast<int *>(pImage);
         for (size_t i = 0; i < (size_t)nBlockXSize; i++)
             pf[i] = static_cast<float>(pi[i]) / 65536;
     }
@@ -934,7 +934,7 @@ bool LevellerDataset::write(int n)
 
 bool LevellerDataset::write(size_t n)
 {
-    GUInt32 n32 = (GUInt32)n;
+    uint32_t n32 = (uint32_t)n;
     CPL_LSBPTR32(&n32);
     return 1 == VSIFWriteL(&n32, sizeof(n32), 1, m_fp);
 }
@@ -988,8 +988,8 @@ bool LevellerDataset::write_tag(const char *pszTag, const char *psz)
     return false;
 }
 
-bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
-                                  VSILFILE *fp, const char *pszTag)
+bool LevellerDataset::locate_data(uint64_t &offset, size_t &len, VSILFILE *fp,
+                                  const char *pszTag)
 {
     // Locate the file offset of the desired tag's data.
     // If it is not available, return false.
@@ -1014,7 +1014,7 @@ bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
         if (1 != VSIFReadL(descriptor, descriptorLen, 1, fp))
             return false;
 
-        GUInt32 datalen;
+        uint32_t datalen;
         if (1 != VSIFReadL(&datalen, sizeof(datalen), 1, fp))
             return false;
 
@@ -1029,7 +1029,7 @@ bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
         else
         {
             // Seek to next tag.
-            if (0 != VSIFSeekL(fp, (vsi_l_offset)datalen, SEEK_CUR))
+            if (0 != VSIFSeekL(fp, (uint64_t)datalen, SEEK_CUR))
                 return false;
         }
     }
@@ -1041,12 +1041,12 @@ bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
 
 bool LevellerDataset::get(int &n, VSILFILE *fp, const char *psz)
 {
-    vsi_l_offset offset;
+    uint64_t offset;
     size_t len;
 
     if (locate_data(offset, len, fp, psz))
     {
-        GInt32 value;
+        int32_t value;
         if (1 == VSIFReadL(&value, sizeof(value), 1, fp))
         {
             CPL_LSBPTR32(&value);
@@ -1063,7 +1063,7 @@ bool LevellerDataset::get(int &n, VSILFILE *fp, const char *psz)
 
 bool LevellerDataset::get(double &d, VSILFILE *fp, const char *pszTag)
 {
-    vsi_l_offset offset;
+    uint64_t offset;
     size_t len;
 
     if (locate_data(offset, len, fp, pszTag))
@@ -1089,7 +1089,7 @@ bool LevellerDataset::get(char *pszValue, size_t maxchars, VSILFILE *fp,
     // to the *_d tag.
     snprintf(szTag, sizeof(szTag), "%sd", pszTag);
 
-    vsi_l_offset offset;
+    uint64_t offset;
     size_t len;
 
     if (locate_data(offset, len, fp, szTag))
@@ -1248,9 +1248,9 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
     }
 
     // Sanity check: do we have enough pixels?
-    if (static_cast<GUIntBig>(datalen) !=
-        static_cast<GUIntBig>(nRasterXSize) *
-            static_cast<GUIntBig>(nRasterYSize) * sizeof(float))
+    if (static_cast<uint64_t>(datalen) !=
+        static_cast<uint64_t>(nRasterXSize) *
+            static_cast<uint64_t>(nRasterYSize) * sizeof(float))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "File does not have enough data.");

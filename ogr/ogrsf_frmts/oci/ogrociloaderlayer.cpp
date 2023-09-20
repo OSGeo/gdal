@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                         OGROCILoaderLayer()                          */
 /************************************************************************/
@@ -248,7 +250,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Write the FID.                                                  */
     /* -------------------------------------------------------------------- */
-    VSIFPrintf(fpLoader, " " CPL_FRMT_GIB "|", poFeature->GetFID());
+    VSIFPrintf(fpLoader, " %" PRId64 "|", poFeature->GetFID());
 
     /* -------------------------------------------------------------------- */
     /*      Set the geometry                                                */
@@ -386,7 +388,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode(OGRFeature *poFeature)
     /*      Write the FID.                                                  */
     /* -------------------------------------------------------------------- */
     oLine.Append("00000000");
-    oLine.Appendf(32, " " CPL_FRMT_GIB "|", poFeature->GetFID());
+    oLine.Appendf(32, " %" PRId64 "|", poFeature->GetFID());
 
     /* -------------------------------------------------------------------- */
     /*      Set the geometry                                                */
@@ -578,7 +580,7 @@ int OGROCILoaderLayer::TestCapability(const char *pszCap)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGROCILoaderLayer::GetFeatureCount(int /* bForce */)
+int64_t OGROCILoaderLayer::GetFeatureCount(int /* bForce */)
 
 {
     return iNextFIDToWrite - 1;

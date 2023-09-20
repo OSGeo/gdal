@@ -3313,7 +3313,7 @@ OGRFeature *GMLASReader::GetNextFeature(OGRGMLASLayer **ppoBelongingLayer,
             }
         }
 
-        vsi_l_offset nLastOffset = VSIFTellL(m_fp);
+        uint64_t nLastOffset = VSIFTellL(m_fp);
         while (m_poSAXReader->parseNext(m_oToFill))
         {
             if (pfnProgress && VSIFTellL(m_fp) - nLastOffset > 100 * 1024)

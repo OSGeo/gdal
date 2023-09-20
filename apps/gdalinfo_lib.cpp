@@ -32,6 +32,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cinttypes>
 #include <cmath>
 #include <limits>
 #include <stdarg.h>
@@ -1094,7 +1095,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         if (psOptions->bReportHistograms)
         {
             int nBucketCount = 0;
-            GUIntBig *panHistogram = nullptr;
+            uint64_t *panHistogram = nullptr;
 
             if (bJson)
                 eErr = GDALGetDefaultHistogramEx(
@@ -1137,8 +1138,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                         json_object_array_add(poBuckets, poBucket);
                     }
                     else
-                        Concat(osStr, psOptions->bStdoutOutput,
-                               CPL_FRMT_GUIB " ", panHistogram[iBucket]);
+                        Concat(osStr, psOptions->bStdoutOutput, "%" PRIu64 " ",
+                               panHistogram[iBucket]);
                 }
                 if (bJson)
                 {
@@ -1196,8 +1197,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 else
                 {
                     Concat(osStr, psOptions->bStdoutOutput,
-                           "  NoData Value=" CPL_FRMT_GIB "\n",
-                           static_cast<GIntBig>(nNoData));
+                           "  NoData Value=%" PRId64 "\n",
+                           static_cast<int64_t>(nNoData));
                 }
             }
         }
@@ -1228,7 +1229,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                         // way to serialize a uint64_t with libjson-c
                         json_object *poNoDataValue =
                             json_object_new_string(CPLSPrintf(
-                                CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoData)));
+                                "%" PRIu64, static_cast<uint64_t>(nNoData)));
                         json_object_object_add(poBand, "noDataValue",
                                                poNoDataValue);
                     }
@@ -1236,8 +1237,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 else
                 {
                     Concat(osStr, psOptions->bStdoutOutput,
-                           "  NoData Value=" CPL_FRMT_GUIB "\n",
-                           static_cast<GUIntBig>(nNoData));
+                           "  NoData Value=%" PRIu64 "\n",
+                           static_cast<uint64_t>(nNoData));
                 }
             }
         }

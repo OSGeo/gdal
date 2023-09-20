@@ -31,6 +31,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstring>
 
@@ -62,8 +63,8 @@ class GDALVirtualMem
     int nBandCount = 0;
     int *panBandMap = nullptr;
     int nPixelSpace = 0;
-    GIntBig nLineSpace = 0;
-    GIntBig nBandSpace = 0;
+    int64_t nLineSpace = 0;
+    int64_t nBandSpace = 0;
 
     bool bIsCompact = false;
     bool bIsBandSequential = false;
@@ -95,8 +96,8 @@ class GDALVirtualMem
                    const coord_type &nXSize, const coord_type &nYSize,
                    const coord_type &nBufXSize, const coord_type &nBufYSize,
                    GDALDataType eBufType, int nBandCount,
-                   const int *panBandMapIn, int nPixelSpace, GIntBig nLineSpace,
-                   GIntBig nBandSpace);
+                   const int *panBandMapIn, int nPixelSpace, int64_t nLineSpace,
+                   int64_t nBandSpace);
     ~GDALVirtualMem();
 
     static void FillCacheBandSequential(CPLVirtualMem *ctxt, size_t nOffset,
@@ -127,8 +128,8 @@ GDALVirtualMem::GDALVirtualMem(
     const coord_type &nYOffIn, const coord_type & /* nXSize */,
     const coord_type & /* nYSize */, const coord_type &nBufXSizeIn,
     const coord_type &nBufYSizeIn, GDALDataType eBufTypeIn, int nBandCountIn,
-    const int *panBandMapIn, int nPixelSpaceIn, GIntBig nLineSpaceIn,
-    GIntBig nBandSpaceIn)
+    const int *panBandMapIn, int nPixelSpaceIn, int64_t nLineSpaceIn,
+    int64_t nBandSpaceIn)
     : hDS(hDSIn), hBand(hBandIn), nXOff(nXOffIn), nYOff(nYOffIn),
       // TODO(schwehr): Why not used or removed?
       // nXSize(nXSize),
@@ -158,12 +159,12 @@ GDALVirtualMem::GDALVirtualMem(
 
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if (nPixelSpace == nDataTypeSize &&
-        nLineSpace == static_cast<GIntBig>(nBufXSize) * nPixelSpace &&
+        nLineSpace == static_cast<int64_t>(nBufXSize) * nPixelSpace &&
         nBandSpace == nBufYSize * nLineSpace)
         bIsCompact = true;
     else if (nBandSpace == nDataTypeSize &&
              nPixelSpace == nBandCount * nBandSpace &&
-             nLineSpace == static_cast<GIntBig>(nBufXSize) * nPixelSpace)
+             nLineSpace == static_cast<int64_t>(nBufXSize) * nPixelSpace)
         bIsCompact = true;
     else
         bIsCompact = false;
@@ -652,13 +653,13 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                   coord_type nXOff, coord_type nYOff, coord_type nXSize,
                   coord_type nYSize, coord_type nBufXSize, coord_type nBufYSize,
                   GDALDataType eBufType, int nBandCount, int *panBandMap,
-                  int nPixelSpace, GIntBig nLineSpace, GIntBig nBandSpace,
+                  int nPixelSpace, int64_t nLineSpace, int64_t nBandSpace,
                   size_t nCacheSize, size_t nPageSizeHint,
                   int bSingleThreadUsage, CSLConstList /*papszOptions*/)
 {
     CPLVirtualMem *view = nullptr;
     GDALVirtualMem *psParams = nullptr;
-    GUIntBig nReqMem = 0;
+    uint64_t nReqMem = 0;
 
     if (nXSize != nBufXSize || nYSize != nBufYSize)
     {
@@ -694,9 +695,9 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
     if (nPixelSpace == 0)
         nPixelSpace = nDataTypeSize;
     if (nLineSpace == 0)
-        nLineSpace = static_cast<GIntBig>(nBufXSize) * nPixelSpace;
+        nLineSpace = static_cast<int64_t>(nBufXSize) * nPixelSpace;
     if (nBandSpace == 0)
-        nBandSpace = static_cast<GIntBig>(nBufYSize) * nLineSpace;
+        nBandSpace = static_cast<int64_t>(nBufYSize) * nLineSpace;
 
     // OFFSET = offset(x,y,band) = x * nPixelSpace + y * nLineSpace + band *
     // nBandSpace where 0 <= x < nBufXSize and 0 <= y < nBufYSize and 0 <= band
@@ -715,7 +716,7 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
     //      band = (OFFSET - y * nLineSpace - x * nPixelSpace) / nBandSpace
 
     if (nDataTypeSize == 0 || /* to please Coverity. not needed */
-        nLineSpace < static_cast<GIntBig>(nBufXSize) * nPixelSpace ||
+        nLineSpace < static_cast<int64_t>(nBufXSize) * nPixelSpace ||
         (nBandCount > 1 &&
          (nBandSpace == nPixelSpace ||
           (nBandSpace < nPixelSpace &&
@@ -744,10 +745,10 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
         nReqMem = nBandCount * nBandSpace;
     else
         nReqMem = nBufYSize * nLineSpace;
-    if (nReqMem != static_cast<GUIntBig>(static_cast<size_t>(nReqMem)))
+    if (nReqMem != static_cast<uint64_t>(static_cast<size_t>(nReqMem)))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem);
+                 "Cannot reserve %" PRIu64 " bytes", nReqMem);
         return nullptr;
     }
 
@@ -896,8 +897,8 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 CPLVirtualMem *GDALDatasetGetVirtualMem(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, int nPixelSpace, GIntBig nLineSpace,
-    GIntBig nBandSpace, size_t nCacheSize, size_t nPageSizeHint,
+    int nBandCount, int *panBandMap, int nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, size_t nCacheSize, size_t nPageSizeHint,
     int bSingleThreadUsage, CSLConstList papszOptions)
 {
     return GDALGetVirtualMem(hDS, nullptr, eRWFlag, nXOff, nYOff, nXSize,
@@ -1014,7 +1015,7 @@ CPLVirtualMem *GDALDatasetGetVirtualMem(
 CPLVirtualMem *GDALRasterBandGetVirtualMem(
     GDALRasterBandH hBand, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nPixelSpace, GIntBig nLineSpace, size_t nCacheSize,
+    int nPixelSpace, int64_t nLineSpace, size_t nCacheSize,
     size_t nPageSizeHint, int bSingleThreadUsage, CSLConstList papszOptions)
 {
     return GDALGetVirtualMem(nullptr, hBand, eRWFlag, nXOff, nYOff, nXSize,
@@ -1262,13 +1263,13 @@ static CPLVirtualMem *GDALGetTiledVirtualMem(
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     int nTilesPerRow = (nXSize + nTileXSize - 1) / nTileXSize;
     int nTilesPerCol = (nYSize + nTileYSize - 1) / nTileYSize;
-    GUIntBig nReqMem = static_cast<GUIntBig>(nTilesPerRow) * nTilesPerCol *
+    uint64_t nReqMem = static_cast<uint64_t>(nTilesPerRow) * nTilesPerCol *
                        nTileXSize * nTileYSize * nBandCount * nDataTypeSize;
 #if SIZEOF_SIZE_T == 4
-    if (nReqMem != static_cast<GUIntBig>(static_cast<size_t>(nReqMem)))
+    if (nReqMem != static_cast<uint64_t>(static_cast<size_t>(nReqMem)))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot reserve " CPL_FRMT_GUIB " bytes", nReqMem);
+                 "Cannot reserve %" PRIu64 " bytes", nReqMem);
         return nullptr;
     }
 #endif

@@ -77,12 +77,12 @@ class OGRGeoJSONLayer final : public OGRMemLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
     virtual OGRErr CreateField(OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
@@ -118,8 +118,8 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     CPLString sFIDColumn_;
     bool bUpdated_;
     bool bOriginalIdModified_;
-    GIntBig nTotalFeatureCount_;
-    GIntBig nFeatureReadSinceReset_ = 0;
+    int64_t nTotalFeatureCount_;
+    int64_t nFeatureReadSinceReset_ = 0;
 
     bool IngestAll();
     void TerminateAppendSession();
@@ -179,7 +179,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     /** Offset at which the '] }' terminating sequence has already been
      * written by SyncToDisk(). 0 if it has not been written.
      */
-    vsi_l_offset m_nPositionBeforeFCClosed = 0;
+    uint64_t m_nPositionBeforeFCClosed = 0;
 
     bool bWriteBBOX;
     bool bBBOX3D;
@@ -284,7 +284,7 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     //
     char *pszName_;
     char *pszGeoData_;
-    vsi_l_offset nGeoDataLen_;
+    uint64_t nGeoDataLen_;
     OGRGeoJSONLayer **papoLayers_;
     OGRGeoJSONWriteLayer **papoLayersWriter_;
     int nLayers_;

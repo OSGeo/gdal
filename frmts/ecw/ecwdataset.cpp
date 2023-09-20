@@ -289,7 +289,7 @@ CPLErr ECWRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 
 CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
                                           int *pnBuckets,
-                                          GUIntBig **ppanHistogram, int bForce,
+                                          uint64_t **ppanHistogram, int bForce,
                                           GDALProgressFunc f,
                                           void *pProgressData)
 {
@@ -330,12 +330,12 @@ CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         if (bandStats.Histogram != nullptr && bandStats.nHistBucketCount > 0)
         {
             *pnBuckets = bandStats.nHistBucketCount;
-            *ppanHistogram = static_cast<GUIntBig *>(
-                VSIMalloc(bandStats.nHistBucketCount * sizeof(GUIntBig)));
+            *ppanHistogram = static_cast<uint64_t *>(
+                VSIMalloc(bandStats.nHistBucketCount * sizeof(uint64_t)));
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++)
             {
                 (*ppanHistogram)[i] =
-                    static_cast<GUIntBig>(bandStats.Histogram[i]);
+                    static_cast<uint64_t>(bandStats.Histogram[i]);
             }
             // JTO: this is not perfect as You can't tell who wrote the
             // histogram !!! It will offset it unnecessarily for files with
@@ -391,7 +391,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
-                                          int nBuckets, GUIntBig *panHistogram)
+                                          int nBuckets, uint64_t *panHistogram)
 {
     // Only version 3 supports saving statistics.
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand)
@@ -403,7 +403,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
     // determine if there are statistics in PAM file.
     double dummy;
     int dummy_i;
-    GUIntBig *dummy_histogram = nullptr;
+    uint64_t *dummy_histogram = nullptr;
     bool hasPAMDefaultHistogram =
         GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i,
                                                &dummy_histogram, FALSE, nullptr,
@@ -813,8 +813,8 @@ CPLErr ECWRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean,
 CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -896,7 +896,7 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     for (iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++)
     {
         NCSEcwReadStatus eRStatus;
-        GPtrDiff_t iDstLineOff = iDstLine * (GPtrDiff_t)nLineSpace;
+        ptrdiff_t iDstLineOff = iDstLine * (ptrdiff_t)nLineSpace;
         unsigned char *pabySrcBuf;
 
         if (bDirect)
@@ -983,8 +983,8 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Write)
@@ -1850,8 +1850,8 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
                                int nYOff, int nXSize, int nYSize,
                                GByte *pabyData, int nBufXSize, int nBufYSize,
                                GDALDataType eDT, int nBandCount,
-                               int *panBandList, GSpacing nPixelSpace,
-                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               int *panBandList, int64_t nPixelSpace,
+                               int64_t nLineSpace, int64_t nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 {
     int iBand, i;
@@ -2039,8 +2039,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -2067,7 +2067,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nBandSpace == 0)
     {
         nBandSpace =
-            static_cast<GSpacing>(nDataTypeSize) * nBufXSize * nBufYSize;
+            static_cast<int64_t>(nDataTypeSize) * nBufXSize * nBufYSize;
     }
 
     // Use GDAL upsampling if non nearest
@@ -2090,8 +2090,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         CPLErr eErr = IRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyTemp, nXSize, nYSize,
             eBufType, nBandCount, panBandMap, nBufDataTypeSize,
-            (GIntBig)nBufDataTypeSize * nXSize,
-            (GIntBig)nBufDataTypeSize * nXSize * nYSize, &sExtraArgDefault);
+            (int64_t)nBufDataTypeSize * nXSize,
+            (int64_t)nBufDataTypeSize * nXSize * nYSize, &sExtraArgDefault);
 
         if (eErr == CE_None)
         {
@@ -2385,8 +2385,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWDataset::ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
                                      CPL_UNUSED GDALDataType eBufType,
                                      int nBandCount,
-                                     CPL_UNUSED GSpacing nPixelSpace,
-                                     GSpacing nLineSpace, GSpacing nBandSpace,
+                                     CPL_UNUSED int64_t nPixelSpace,
+                                     int64_t nLineSpace, int64_t nBandSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     CPLDebug("ECW", "ReadBandsDirectly(-> %dx%d) - reading lines directly.",
@@ -2441,8 +2441,8 @@ CPLErr ECWDataset::ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
 
 CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType, int nBandCount,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     int i;
@@ -2454,7 +2454,7 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
         (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace &&
         nLineSpace == (nPixelSpace * nBufXSize) &&
         nBandSpace ==
-            (static_cast<GSpacing>(nDataTypeSize) * nBufXSize * nBufYSize);
+            (static_cast<int64_t>(nDataTypeSize) * nBufXSize * nBufYSize);
     if (bDirect)
     {
         return ReadBandsDirectly(pData, nBufXSize, nBufYSize, eBufType,

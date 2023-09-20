@@ -35,6 +35,7 @@
 #include "eeda.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <vector>
 #include <map>
 #include <set>
@@ -121,7 +122,7 @@ class GDALEEDALayer final : public OGRLayer
     json_object *m_poCurPageObj;
     json_object *m_poCurPageAssets;
     int m_nIndexInPage;
-    GIntBig m_nFID;
+    int64_t m_nFID;
     CPLString m_osAttributeFilter{};
     CPLString m_osStartTime{};
     CPLString m_osEndTime{};
@@ -146,7 +147,7 @@ class GDALEEDALayer final : public OGRLayer
     {
         return m_poFeatureDefn;
     }
-    virtual GIntBig GetFeatureCount(int) CPL_OVERRIDE
+    virtual int64_t GetFeatureCount(int) CPL_OVERRIDE
     {
         return -1;
     }
@@ -788,7 +789,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
             poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
         {
             osFilter +=
-                CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[1]->int_value);
+                CPLSPrintf("%" PRId64, poNode->papoSubExpr[1]->int_value);
         }
         else if (poNode->papoSubExpr[1]->field_type == SWQ_FLOAT)
         {
@@ -879,7 +880,7 @@ CPLString GDALEEDALayer::BuildFilter(swq_expr_node *poNode, bool bIsAndTopLevel)
                 poNode->papoSubExpr[i]->field_type == SWQ_INTEGER64)
             {
                 osFilter +=
-                    CPLSPrintf(CPL_FRMT_GIB, poNode->papoSubExpr[i]->int_value);
+                    CPLSPrintf("%" PRId64, poNode->papoSubExpr[i]->int_value);
             }
             else if (poNode->papoSubExpr[i]->field_type == SWQ_FLOAT)
             {

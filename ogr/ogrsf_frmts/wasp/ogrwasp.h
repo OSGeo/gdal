@@ -89,7 +89,7 @@ class OGRWAsPLayer final : public OGRLayer,
     OGRFeatureDefn *poLayerDefn;
     OGRSpatialReference *poSpatialReference;
 
-    vsi_l_offset iOffsetFeatureBegin;
+    uint64_t iOffsetFeatureBegin;
 
     enum OpenMode
     {

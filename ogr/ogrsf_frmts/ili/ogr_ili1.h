@@ -68,10 +68,10 @@ class OGRILI1Layer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetNextFeatureRef();
-    OGRFeature *GetFeatureRef(GIntBig nFid);
+    OGRFeature *GetFeatureRef(int64_t nFid);
     OGRFeature *GetFeatureRef(const char *);
 
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int GeometryAppend(OGRGeometry *poGeometry);

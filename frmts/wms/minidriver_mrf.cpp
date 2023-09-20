@@ -35,6 +35,8 @@
 #include "wmsdriver.h"
 #include "minidriver_mrf.h"
 
+#include <cinttypes>
+
 using namespace WMSMiniDriver_MRF_ns;
 
 // Copied from frmts/mrf
@@ -42,8 +44,8 @@ using namespace WMSMiniDriver_MRF_ns;
 // A tile index record, 16 bytes, big endian
 typedef struct
 {
-    GIntBig offset;
-    GIntBig size;
+    int64_t offset;
+    int64_t size;
 } MRFIdx;
 
 // Number of pages of size psz needed to hold n elements
@@ -60,7 +62,7 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz)
     count.y = pcount(size.y, psz.y);
     count.z = pcount(size.z, psz.z);
     count.c = pcount(size.c, psz.c);
-    count.l = static_cast<GIntBig>(count.x) * count.y * count.z * count.c;
+    count.l = static_cast<int64_t>(count.x) * count.y * count.z * count.c;
     return count;
 }
 
@@ -82,9 +84,8 @@ static size_t pread_curl(void *user_data, void *buff, size_t count,
     // Use a copy of the provided request, which has the options and the URL
     // preset
     WMSHTTPRequest request(*(reinterpret_cast<WMSHTTPRequest *>(user_data)));
-    request.Range.Printf(CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
-                         static_cast<GUIntBig>(offset),
-                         static_cast<GUIntBig>(offset + count - 1));
+    request.Range.Printf("%" PRIu64 "-%" PRIu64, static_cast<uint64_t>(offset),
+                         static_cast<uint64_t>(offset + count - 1));
     WMSHTTPInitializeRequest(&request);
     if (WMSHTTPFetchMulti(&request) != CE_None)
     {
@@ -281,7 +282,7 @@ CPLErr WMSMiniDriver_MRF::EndInit()
         size.y = psy * 128;
     }
 
-    for (GIntBig l = size.l; l >= 0; l--)
+    for (int64_t l = size.l; l >= 0; l--)
     {
         ILSize pagecount = pcount(size, pagesize);
         pages.push_back(pagecount);
@@ -346,7 +347,7 @@ CPLErr WMSMiniDriver_MRF::TiledImageRequest(
     }
     else
     {  // Bundle
-        GIntBig bidx;
+        int64_t bidx;
         memcpy(&bidx, raw_index, sizeof(bidx));
 
 #if defined(CPL_MSB)  // bundle index is LSB
@@ -362,7 +363,7 @@ CPLErr WMSMiniDriver_MRF::TiledImageRequest(
         request.Range =
             "none";  // Signal that this block doesn't exist server-side
     else
-        request.Range.Printf(CPL_FRMT_GUIB "-" CPL_FRMT_GUIB, idx.offset,
+        request.Range.Printf("%" PRIu64 "-%" PRIu64, idx.offset,
                              idx.offset + idx.size - 1);
 
     return CE_None;

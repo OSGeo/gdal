@@ -101,7 +101,7 @@ void OGRTigerLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRTigerLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRTigerLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (nFeatureId < 1 || nFeatureId > nFeatureCount)
@@ -215,7 +215,7 @@ OGRFeatureDefn *OGRTigerLayer::GetLayerDefn()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRTigerLayer::GetFeatureCount(int bForce)
+int64_t OGRTigerLayer::GetFeatureCount(int bForce)
 
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)

@@ -37,8 +37,8 @@
 %{
 /* Returned size is in bytes or 0 if an error occurred. */
 static
-GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
-                                 GIntBig nPixelSpace, GIntBig nLineSpace,
+int64_t ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+                                 int64_t nPixelSpace, int64_t nLineSpace,
                                  int bSpacingShouldBeMultipleOfPixelSize )
 {
     if (buf_xsize <= 0 || buf_ysize <= 0)
@@ -77,7 +77,7 @@ GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
         return 0;
     }
 
-    GIntBig nRet = (GIntBig)(buf_ysize - 1) * nLineSpace + (GIntBig)(buf_xsize - 1) * nPixelSpace + nPixelSize;
+    int64_t nRet = (int64_t)(buf_ysize - 1) * nLineSpace + (int64_t)(buf_xsize - 1) * nPixelSpace + nPixelSize;
 #if SIZEOF_VOIDP == 4
     if (nRet > INT_MAX)
     {
@@ -97,11 +97,11 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
                              int xoff, int yoff, int xsize, int ysize,
                              int buf_xsize, int buf_ysize,
                              GDALDataType buf_type,
-                             GIntBig buf_size, char *buffer,
-                             GIntBig pixel_space, GIntBig line_space,
+                             int64_t buf_size, char *buffer,
+                             int64_t pixel_space, int64_t line_space,
                              GDALRasterIOExtraArg* psExtraArg )
 {
-    GIntBig min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
+    int64_t min_buffer_size = ComputeBandRasterIOSize (buf_xsize, buf_ysize, GDALGetDataTypeSize( buf_type ) / 8,
                                                    pixel_space, line_space, FALSE );
     if ( min_buffer_size == 0 )
       return CE_Failure;
@@ -185,11 +185,11 @@ public:
   }
 
 #ifdef SWIGPYTHON
-  void GetNoDataValueAsInt64( GIntBig *val, int *hasval ) {
+  void GetNoDataValueAsInt64( int64_t *val, int *hasval ) {
     *val = GDALGetRasterNoDataValueAsInt64( self, hasval );
   }
 
-  void GetNoDataValueAsUInt64( GUIntBig *val, int *hasval ) {
+  void GetNoDataValueAsUInt64( uint64_t *val, int *hasval ) {
     *val = GDALGetRasterNoDataValueAsUInt64( self, hasval );
   }
 #endif
@@ -199,11 +199,11 @@ public:
   }
 
 #ifdef SWIGPYTHON
-  CPLErr SetNoDataValueAsInt64( GIntBig v ) {
+  CPLErr SetNoDataValueAsInt64( int64_t v ) {
     return GDALSetRasterNoDataValueAsInt64( self, v );
   }
 
-  CPLErr SetNoDataValueAsUInt64( GUIntBig v ) {
+  CPLErr SetNoDataValueAsUInt64( uint64_t v ) {
     return GDALSetRasterNoDataValueAsUInt64( self, v );
   }
 #endif
@@ -340,8 +340,8 @@ public:
   }
 
 #if defined(SWIGPYTHON)
-%apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
-%apply (GIntBig *optional_GIntBig) { (GIntBig*) };
+%apply (int64_t nLen, char *pBuf) { (int64_t buf_len, char *buf_string) };
+%apply (int64_t *optional_int64_t) { (int64_t*) };
 %apply ( int *optional_int ) {(int*)};
 #if defined(SWIGPYTHON)
 %apply (GDALDataType *optional_GDALDataType) { (GDALDataType *buf_type) };
@@ -350,26 +350,26 @@ public:
 #endif
 %feature( "kwargs" ) WriteRaster;
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      GIntBig buf_len, char *buf_string,
+                      int64_t buf_len, char *buf_string,
                       int *buf_xsize = 0,
                       int *buf_ysize = 0,
                       GDALDataType *buf_type = 0,
-                      GIntBig *buf_pixel_space = 0,
-                      GIntBig *buf_line_space = 0) {
+                      int64_t *buf_pixel_space = 0,
+                      int64_t *buf_line_space = 0) {
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : *buf_type;
-    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int64_t pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int64_t line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
     GDALRasterIOExtraArg* psExtraArg = NULL;
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
                                  nxsize, nysize, ntype, buf_len, buf_string, pixel_space, line_space, psExtraArg );
   }
-%clear (GIntBig buf_len, char *buf_string);
+%clear (int64_t buf_len, char *buf_string);
 %clear (GDALDataType *buf_type);
 %clear (int*);
-%clear (GIntBig*);
+%clear (int64_t*);
 #endif
 
   void FlushCache() {
@@ -425,7 +425,7 @@ public:
   CPLErr GetHistogram( double min=-0.5,
                      double max=255.5,
                      int buckets=256,
-                     GUIntBig *panHistogram = NULL,
+                     uint64_t *panHistogram = NULL,
                      int include_out_of_range = 0,
                      int approx_ok = 1,
                      GDALProgressFunc callback = NULL,
@@ -465,7 +465,7 @@ public:
 #if defined(SWIGPYTHON)
 %feature ("kwargs") GetDefaultHistogram;
 CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buckets_ret = NULL,
-                            GUIntBig **ppanHistogram = NULL, int force = 1,
+                            uint64_t **ppanHistogram = NULL, int force = 1,
                             GDALProgressFunc callback = NULL,
                             void* callback_data=NULL ) {
     return GDALGetDefaultHistogramEx( self, min_ret, max_ret, buckets_ret,
@@ -487,13 +487,13 @@ CPLErr GetDefaultHistogram( double *min_ret=NULL, double *max_ret=NULL, int *buc
 #endif
 
 #if defined(SWIGPYTHON)
-%apply (int nList, GUIntBig* pList) {(int buckets_in, GUIntBig *panHistogram_in)}
+%apply (int nList, uint64_t* pList) {(int buckets_in, uint64_t *panHistogram_in)}
 CPLErr SetDefaultHistogram( double min, double max,
-                            int buckets_in, GUIntBig *panHistogram_in ) {
+                            int buckets_in, uint64_t *panHistogram_in ) {
     return GDALSetDefaultHistogramEx( self, min, max,
                                     buckets_in, panHistogram_in );
 }
-%clear (int buckets_in, GUIntBig *panHistogram_in);
+%clear (int buckets_in, uint64_t *panHistogram_in);
 #else
 #if defined(SWIGJAVA)
 %apply (int nList, int* pList) {(int buckets_in, int *panHistogram_in)}
@@ -569,7 +569,7 @@ CPLErr SetDefaultHistogram( double min, double max,
                                           char **options = NULL )
     {
         int            nPixelSpace;
-        GIntBig        nLineSpace;
+        int64_t        nLineSpace;
         CPLVirtualMem* vmem = GDALGetVirtualMemAuto( self,
                                          eRWFlag,
                                          &nPixelSpace,

@@ -218,13 +218,13 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
 /************************************************************************/
 
 #ifndef HAVE_EXPAT
-GIntBig OGRKMLLayer::GetFeatureCount(int /* bForce */)
+int64_t OGRKMLLayer::GetFeatureCount(int /* bForce */)
 {
     return 0;
 }
 #else
 
-GIntBig OGRKMLLayer::GetFeatureCount(int bForce)
+int64_t OGRKMLLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
@@ -433,7 +433,7 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
         VSIFPrintfL(fp, "\t<Style>");
         if (poPen != nullptr)
         {
-            GBool bDefault = FALSE;
+            bool bDefault = FALSE;
 
             /* Require width to be returned in pixel */
             poPen->SetUnit(OGRSTUPixel);

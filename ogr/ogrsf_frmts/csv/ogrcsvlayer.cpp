@@ -31,6 +31,7 @@
 #include "ogr_csv.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -904,11 +905,11 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     constexpr int STREAMING_LIMIT = 1000 * 1000;
     // Use 1 000 000 as default maximum distance to be compatible with
     // /vsistdin/ caching.
-    vsi_l_offset nBytes = static_cast<vsi_l_offset>(CPLAtoGIntBig(
+    uint64_t nBytes = static_cast<uint64_t>(CPLAtoGIntBig(
         CSLFetchNameValueDef(papszOpenOptions, "AUTODETECT_SIZE_LIMIT",
                              CPLSPrintf("%d", STREAMING_LIMIT))));
     if (nBytes == 0)
-        nBytes = static_cast<vsi_l_offset>(-1);  // unlimited size
+        nBytes = static_cast<uint64_t>(-1);  // unlimited size
     if (bStreaming && (nBytes == 0 || nBytes > STREAMING_LIMIT))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1034,7 +1035,7 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
             bool bIsBoolean = false;
             if (eType == CPL_VALUE_INTEGER)
             {
-                GIntBig nVal = CPLAtoGIntBig(papszTokens[iField]);
+                int64_t nVal = CPLAtoGIntBig(papszTokens[iField]);
                 if (!CPL_INT64_FITS_ON_INT32(nVal))
                     eOGRFieldType = OFTInteger64;
                 else
@@ -1172,8 +1173,8 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
         {
             CPLDebugOnly("CSV",
                          "AutodetectFieldTypes() stopped after "
-                         "reading " CPL_FRMT_GUIB " bytes",
-                         static_cast<GUIntBig>(VSIFTellL(fp)));
+                         "reading %" PRIu64 " bytes",
+                         static_cast<uint64_t>(VSIFTellL(fp)));
             break;
         }
     }
@@ -1321,7 +1322,7 @@ char **OGRCSVLayer::GetNextLineTokens()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRCSVLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRCSVLayer::GetFeature(int64_t nFID)
 {
     if (nFID < 1 || fpCSV == nullptr)
         return nullptr;
@@ -2444,7 +2445,7 @@ void OGRCSVLayer::SetWriteBOM(bool bWriteBOMIn)
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig OGRCSVLayer::GetFeatureCount(int bForce)
+int64_t OGRCSVLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
     {

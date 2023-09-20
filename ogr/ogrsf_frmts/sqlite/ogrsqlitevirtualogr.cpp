@@ -30,6 +30,7 @@
 #include "ogrsqlitevirtualogr.h"
 
 #include <cctype>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -396,9 +397,9 @@ typedef struct
     /* In which case nNextWishedIndex and nCurFeatureIndex */
     /* will be used to avoid useless GetNextFeature() */
     /* Helps in SELECT COUNT(*) FROM xxxx scenarios */
-    GIntBig nFeatureCount;
-    GIntBig nNextWishedIndex;
-    GIntBig nCurFeatureIndex;
+    int64_t nFeatureCount;
+    int64_t nNextWishedIndex;
+    int64_t nCurFeatureIndex;
 
     GByte *pabyGeomBLOB;
     int nGeomBLOBLen;
@@ -1248,8 +1249,9 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
         {
             if (sqlite3_value_type(argv[i]) == SQLITE_INTEGER)
             {
-                osAttributeFilter +=
-                    CPLSPrintf(CPL_FRMT_GIB, sqlite3_value_int64(argv[i]));
+                osAttributeFilter += CPLSPrintf(
+                    "%" PRId64,
+                    static_cast<int64_t>(sqlite3_value_int64(argv[i])));
             }
             else if (sqlite3_value_type(argv[i]) == SQLITE_FLOAT)
             {  // Insure that only Decimal.Points are used, never local settings
@@ -1299,7 +1301,7 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
     {
         pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
 #ifdef DEBUG_OGR2SQLITE
-        CPLDebug("OGR2SQLITE", "GetNextFeature() --> " CPL_FRMT_GIB,
+        CPLDebug("OGR2SQLITE", "GetNextFeature() --> %" PRId64,
                  pMyCursor->poFeature ? pMyCursor->poFeature->GetFID() : -1);
 #endif
     }
@@ -1332,7 +1334,7 @@ static int OGR2SQLITE_Next(sqlite3_vtab_cursor *pCursor)
         pMyCursor->nGeomBLOBLen = -1;
 
 #ifdef DEBUG_OGR2SQLITE
-        CPLDebug("OGR2SQLITE", "GetNextFeature() --> " CPL_FRMT_GIB,
+        CPLDebug("OGR2SQLITE", "GetNextFeature() --> %" PRId64,
                  pMyCursor->poFeature ? pMyCursor->poFeature->GetFID() : -1);
 #endif
     }
@@ -1377,7 +1379,7 @@ static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor *pMyCursor)
                 delete pMyCursor->poFeature;
                 pMyCursor->poFeature = pMyCursor->poLayer->GetNextFeature();
 #ifdef DEBUG_OGR2SQLITE
-                CPLDebug("OGR2SQLITE", "GetNextFeature() --> " CPL_FRMT_GIB,
+                CPLDebug("OGR2SQLITE", "GetNextFeature() --> %" PRId64,
                          pMyCursor->poFeature ? pMyCursor->poFeature->GetFID()
                                               : -1);
 #endif
@@ -1734,7 +1736,8 @@ static OGRFeature *OGR2SQLITE_FeatureFromArgs(OGR2SQLITE_vtab *pMyVTab,
                 poFeature->SetFieldNull(i);
                 break;
             case SQLITE_INTEGER:
-                poFeature->SetField(i, sqlite3_value_int64(argv[iArgc]));
+                poFeature->SetField(
+                    i, static_cast<int64_t>(sqlite3_value_int64(argv[iArgc])));
                 break;
             case SQLITE_FLOAT:
                 poFeature->SetField(i, sqlite3_value_double(argv[iArgc]));
@@ -2558,7 +2561,7 @@ static int OGR2SQLITESpatialIndex_Column(sqlite3_vtab_cursor *pCursor,
 
     if (nCol == 0)
     {
-        CPLDebug("OGR2SQLITE", "--> FID = " CPL_FRMT_GIB, poFeature->GetFID());
+        CPLDebug("OGR2SQLITE", "--> FID = %" PRId64, poFeature->GetFID());
         sqlite3_result_int64(pContext, poFeature->GetFID());
         return SQLITE_OK;
     }

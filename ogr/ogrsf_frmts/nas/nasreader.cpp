@@ -31,6 +31,7 @@
 #include "gmlreader.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -948,7 +949,7 @@ bool NASReader::PrescanForSchema(bool bGetExtents, bool /*bOnlyDetectSRS*/)
 
     for (int i = 0; i < m_nClassCount; i++)
     {
-        CPLDebug("NAS", "%s: " CPL_FRMT_GIB " features.\n",
+        CPLDebug("NAS", "%s: %" PRId64 " features.\n",
                  m_papoClass[i]->GetName(), m_papoClass[i]->GetFeatureCount());
     }
 

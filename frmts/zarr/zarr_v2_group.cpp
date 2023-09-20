@@ -471,7 +471,7 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
         for (const auto &jDim : dims.GetChildren())
         {
             const auto osName = jDim.GetName();
-            const GUInt64 nSize = jDim.ToLong();
+            const uint64_t nSize = jDim.ToLong();
             if (!IsValidName(osName))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1090,7 +1090,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
         return nullptr;
     }
 
-    std::vector<GUInt64> anBlockSize;
+    std::vector<uint64_t> anBlockSize;
     if (!ZarrArray::FillBlockSize(aoDimensions, oDataType, anBlockSize,
                                   papszOptions))
         return nullptr;

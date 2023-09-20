@@ -60,7 +60,7 @@ class OGRKMLLayer final : public OGRLayer
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
     int TestCapability(const char *pszCap) override;
 
     //

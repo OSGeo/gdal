@@ -124,11 +124,11 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
     bool m_bFeatureDefnEstablished;
     OGRPLScenesDataV1FeatureDefn *m_poFeatureDefn;
     OGRSpatialReference *m_poSRS;
-    GIntBig m_nTotalFeatures;
+    int64_t m_nTotalFeatures;
     std::map<CPLString, int> m_oMapPrefixedJSonFieldNameToFieldIdx;
     std::map<int, CPLString> m_oMapFieldIdxToQueryableJSonFieldName;
 
-    GIntBig m_nNextFID;
+    int64_t m_nNextFID;
     bool m_bEOF;
     bool m_bStillInFirstPage;
     CPLString m_osNextURL;
@@ -168,7 +168,7 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual int TestCapability(const char *) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
-    virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
+    virtual int64_t GetFeatureCount(int bForce = FALSE) override;
 
     virtual char **GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,

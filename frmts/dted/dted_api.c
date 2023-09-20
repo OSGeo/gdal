@@ -491,7 +491,7 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)
 /*      organization or a DTED file)                                    */
 /************************************************************************/
 
-int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, GInt16 *panVal)
+int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, int16_t *panVal)
 {
     int nOffset;
     GByte pabyData[2];
@@ -580,12 +580,12 @@ int DTEDReadPoint(DTEDInfo *psDInfo, int nXOff, int nYOff, GInt16 *panVal)
 /*      order starting from the leftmost column (0).                    */
 /************************************************************************/
 
-int DTEDReadProfile(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData)
+int DTEDReadProfile(DTEDInfo *psDInfo, int nColumnOffset, int16_t *panData)
 {
     return DTEDReadProfileEx(psDInfo, nColumnOffset, panData, FALSE);
 }
 
-int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData,
+int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, int16_t *panData,
                       int bVerifyChecksum)
 {
     int nOffset;
@@ -750,7 +750,7 @@ int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData,
 /*                          DTEDWriteProfile()                          */
 /************************************************************************/
 
-int DTEDWriteProfile(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData)
+int DTEDWriteProfile(DTEDInfo *psDInfo, int nColumnOffset, int16_t *panData)
 
 {
     int nOffset;

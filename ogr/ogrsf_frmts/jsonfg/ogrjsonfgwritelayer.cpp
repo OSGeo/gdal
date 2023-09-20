@@ -131,7 +131,7 @@ static const char *GetValueAsDateOrDateTime(const OGRField *psRawValue,
         if (psRawValue->Date.TZFlag > 0)
         {
             // Force to UTC
-            GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
+            int64_t nVal = CPLYMDHMSToUnixTime(&brokenDown);
             nVal -= (psRawValue->Date.TZFlag - 100) * 15 * 60;
             CPLUnixTimeToYMDHMS(nVal, &brokenDown);
         }

@@ -106,7 +106,7 @@ class OGRSVGLayer final : public OGRLayer
     }
     virtual OGRwkbGeometryType GetGeomType() override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 

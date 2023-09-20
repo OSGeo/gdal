@@ -103,7 +103,7 @@
 #include "avc.h"
 #include <ctype.h> /* tolower() */
 
-static GBool _IsStringAlnum(const char *pszFname);
+static bool _IsStringAlnum(const char *pszFname);
 
 /**********************************************************************
  *                          AVCE00WriteOpen()
@@ -445,9 +445,9 @@ void AVCE00WriteClose(AVCE00WritePtr psInfo)
  * accents seem to be accepted, we will only check for chars that
  * could confuse the lib.
  **********************************************************************/
-static GBool _IsStringAlnum(const char *pszFname)
+static bool _IsStringAlnum(const char *pszFname)
 {
-    GBool bOK = TRUE;
+    bool bOK = TRUE;
 
     while (bOK && *pszFname != '\0')
     {

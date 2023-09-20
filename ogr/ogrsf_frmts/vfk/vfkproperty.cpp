@@ -52,7 +52,7 @@ VFKProperty::VFKProperty(int iValue)
 /*!
   \brief Set VFK property (big integer)
 */
-VFKProperty::VFKProperty(GIntBig iValue)
+VFKProperty::VFKProperty(int64_t iValue)
     : m_bIsNull(false), m_iValue(iValue), m_dValue(0.0)
 {
 }

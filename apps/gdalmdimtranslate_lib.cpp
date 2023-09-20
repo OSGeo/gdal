@@ -33,6 +33,7 @@
 #include "gdal_utils_priv.h"
 #include "vrtdataset.h"
 #include <algorithm>
+#include <cinttypes>
 #include <map>
 #include <set>
 
@@ -59,11 +60,11 @@ struct GDALMultiDimTranslateOptions
 /************************************************************************/
 
 static void FindMinMaxIdxNumeric(const GDALMDArray *var, double *pdfTmp,
-                                 const size_t nCount, const GUInt64 nStartIdx,
+                                 const size_t nCount, const uint64_t nStartIdx,
                                  const double dfMin, const double dfMax,
                                  const bool bSlice, bool &bFoundMinIdx,
-                                 GUInt64 &nMinIdx, bool &bFoundMaxIdx,
-                                 GUInt64 &nMaxIdx, bool &bLastWasReversed,
+                                 uint64_t &nMinIdx, bool &bFoundMaxIdx,
+                                 uint64_t &nMaxIdx, bool &bLastWasReversed,
                                  bool &bEmpty, const double EPS)
 {
     if (nCount >= 2)
@@ -194,11 +195,11 @@ static void FindMinMaxIdxNumeric(const GDALMDArray *var, double *pdfTmp,
 /************************************************************************/
 
 static void FindMinMaxIdxString(const GDALMDArray *var, const char **ppszTmp,
-                                const size_t nCount, const GUInt64 nStartIdx,
+                                const size_t nCount, const uint64_t nStartIdx,
                                 const std::string &osMin,
                                 const std::string &osMax, const bool bSlice,
-                                bool &bFoundMinIdx, GUInt64 &nMinIdx,
-                                bool &bFoundMaxIdx, GUInt64 &nMaxIdx,
+                                bool &bFoundMinIdx, uint64_t &nMinIdx,
+                                bool &bFoundMaxIdx, uint64_t &nMaxIdx,
                                 bool &bLastWasReversed, bool &bEmpty)
 {
     bool bFoundNull = false;
@@ -354,10 +355,10 @@ static void FindMinMaxIdxString(const GDALMDArray *var, const char **ppszTmp,
 
 struct DimensionDesc
 {
-    GUInt64 nStartIdx = 0;
-    GUInt64 nStep = 1;
-    GUInt64 nSize = 0;
-    GUInt64 nOriSize = 0;
+    uint64_t nStartIdx = 0;
+    uint64_t nStep = 1;
+    uint64_t nSize = 0;
+    uint64_t nOriSize = 0;
     bool bSlice = false;
 };
 
@@ -372,8 +373,7 @@ GetDimensionDesc(DimensionRemapper &oDimRemapper,
                  const std::shared_ptr<GDALDimension> &poDim)
 {
     std::string osKey(poDim->GetFullName());
-    osKey +=
-        CPLSPrintf("_" CPL_FRMT_GUIB, static_cast<GUIntBig>(poDim->GetSize()));
+    osKey += CPLSPrintf("_%" PRIu64, static_cast<uint64_t>(poDim->GetSize()));
     auto oIter = oDimRemapper.oMap.find(osKey);
     if (oIter != oDimRemapper.oMap.end() &&
         oIter->second.nOriSize == poDim->GetSize())
@@ -460,27 +460,27 @@ GetDimensionDesc(DimensionRemapper &oDimRemapper,
 
             const size_t nDTSize(dt.GetSize());
             const size_t nMaxChunkSize = static_cast<size_t>(std::min(
-                static_cast<GUInt64>(10 * 1000 * 1000), poDim->GetSize()));
+                static_cast<uint64_t>(10 * 1000 * 1000), poDim->GetSize()));
             std::vector<GByte> abyTmp(nDTSize * nMaxChunkSize);
             double *pdfTmp = reinterpret_cast<double *>(&abyTmp[0]);
             const char **ppszTmp = reinterpret_cast<const char **>(&abyTmp[0]);
-            GUInt64 nStartIdx = 0;
+            uint64_t nStartIdx = 0;
             const double EPS = std::max(std::max(1e-10, fabs(dfMin) / 1e10),
                                         fabs(dfMax) / 1e10);
             bool bFoundMinIdx = false;
             bool bFoundMaxIdx = false;
-            GUInt64 nMinIdx = 0;
-            GUInt64 nMaxIdx = 0;
+            uint64_t nMinIdx = 0;
+            uint64_t nMaxIdx = 0;
             bool bLastWasReversed = false;
             bool bEmpty = false;
             while (true)
             {
                 const size_t nCount = static_cast<size_t>(
-                    std::min(static_cast<GUInt64>(nMaxChunkSize),
+                    std::min(static_cast<uint64_t>(nMaxChunkSize),
                              poDim->GetSize() - nStartIdx));
                 if (nCount == 0)
                     break;
-                const GUInt64 anStartId[] = {nStartIdx};
+                const uint64_t anStartId[] = {nStartIdx};
                 const size_t anCount[] = {nCount};
                 if (!var->Read(anStartId, anCount, nullptr, nullptr, dt,
                                &abyTmp[0], nullptr, 0))
@@ -801,18 +801,17 @@ static bool TranslateArray(
             {
                 bHasModifiedDim = true;
                 viewExpr += CPLSPrintf(
-                    CPL_FRMT_GUIB, static_cast<GUInt64>(poDimDesc->nStartIdx));
+                    "%" PRIu64, static_cast<uint64_t>(poDimDesc->nStartIdx));
                 if (!poDimDesc->bSlice)
                 {
                     viewExpr += ':';
-                    viewExpr +=
-                        CPLSPrintf(CPL_FRMT_GUIB,
-                                   static_cast<GUInt64>(poDimDesc->nStartIdx +
-                                                        poDimDesc->nSize *
-                                                            poDimDesc->nStep));
+                    viewExpr += CPLSPrintf(
+                        "%" PRIu64, static_cast<uint64_t>(
+                                        poDimDesc->nStartIdx +
+                                        poDimDesc->nSize * poDimDesc->nStep));
                     viewExpr += ':';
                     viewExpr += CPLSPrintf(
-                        CPL_FRMT_GUIB, static_cast<GUInt64>(poDimDesc->nStep));
+                        "%" PRIu64, static_cast<uint64_t>(poDimDesc->nStep));
                 }
             }
         }
@@ -972,7 +971,7 @@ static bool TranslateArray(
                             range.m_nStartIdx != srcDim->GetSize() - 1)
                         {
                             indexingVarSpec +=
-                                CPLSPrintf(CPL_FRMT_GUIB, range.m_nStartIdx);
+                                CPLSPrintf("%" PRIu64, range.m_nStartIdx);
                         }
                         indexingVarSpec += ':';
                         if (range.m_nIncr > 0)
@@ -980,8 +979,7 @@ static bool TranslateArray(
                             const auto nEndIdx =
                                 range.m_nStartIdx +
                                 range.m_nIncr * srcDim->GetSize();
-                            indexingVarSpec +=
-                                CPLSPrintf(CPL_FRMT_GUIB, nEndIdx);
+                            indexingVarSpec += CPLSPrintf("%" PRIu64, nEndIdx);
                         }
                         else if (range.m_nStartIdx >
                                  -range.m_nIncr * srcDim->GetSize())
@@ -990,11 +988,11 @@ static bool TranslateArray(
                                 range.m_nStartIdx +
                                 range.m_nIncr * srcDim->GetSize();
                             indexingVarSpec +=
-                                CPLSPrintf(CPL_FRMT_GUIB, nEndIdx - 1);
+                                CPLSPrintf("%" PRIu64, nEndIdx - 1);
                         }
                         indexingVarSpec += ':';
                         indexingVarSpec +=
-                            CPLSPrintf(CPL_FRMT_GIB, range.m_nIncr);
+                            CPLSPrintf("%" PRId64, range.m_nIncr);
                         indexingVarSpec += ']';
                     }
                 }
@@ -1069,7 +1067,7 @@ static bool TranslateArray(
     if (!dstArrayVRT)
         return false;
 
-    GUInt64 nCurCost = 0;
+    uint64_t nCurCost = 0;
     dstArray->CopyFromAllExceptValues(srcArray.get(), false, nCurCost, 0,
                                       nullptr, nullptr);
 
@@ -1094,7 +1092,7 @@ static bool TranslateArray(
             const auto &srcDim(srcArrayDims[parentDimIdx]);
             const auto nStartIdx =
                 viewSpec.m_parentRanges[parentDimIdx].m_nStartIdx;
-            if (nStartIdx < static_cast<GUInt64>(INT_MAX))
+            if (nStartIdx < static_cast<uint64_t>(INT_MAX))
             {
                 auto dstAttr = dstArray->CreateAttribute(
                     "DIM_" + srcDim->GetName() + "_INDEX", {},
@@ -1106,8 +1104,8 @@ static bool TranslateArray(
                 auto dstAttr = dstArray->CreateAttribute(
                     "DIM_" + srcDim->GetName() + "_INDEX", {},
                     GDALExtendedDataType::CreateString());
-                dstAttr->Write(CPLSPrintf(CPL_FRMT_GUIB,
-                                          static_cast<GUIntBig>(nStartIdx)));
+                dstAttr->Write(
+                    CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nStartIdx)));
             }
 
             auto srcIndexVar(srcDim->GetIndexingVariable());
@@ -1140,14 +1138,14 @@ static bool TranslateArray(
     }
 
     const auto dimCount(tmpArray->GetDimensionCount());
-    std::vector<GUInt64> anSrcOffset(dimCount);
-    std::vector<GUInt64> anCount(dimCount);
+    std::vector<uint64_t> anSrcOffset(dimCount);
+    std::vector<uint64_t> anCount(dimCount);
     for (size_t i = 0; i < dimCount; ++i)
     {
         anCount[i] = tmpArrayDims[i]->GetSize();
     }
-    std::vector<GUInt64> anStep(dimCount, 1);
-    std::vector<GUInt64> anDstOffset(dimCount);
+    std::vector<uint64_t> anStep(dimCount, 1);
+    std::vector<uint64_t> anDstOffset(dimCount);
     std::unique_ptr<VRTMDArraySourceFromArray> poSource(
         new VRTMDArraySourceFromArray(
             dstArrayVRT.get(), false, false, poSrcDS->GetDescription(),

@@ -1040,8 +1040,8 @@ class netCDFLayer final : public OGRLayer
         unsigned short usVal;
         int nVal;
         unsigned int unVal;
-        GIntBig nVal64;
-        GUIntBig unVal64;
+        int64_t nVal64;
+        uint64_t unVal64;
         float fVal;
         double dfVal;
     } NCDFNoDataUnion;
@@ -1165,7 +1165,7 @@ class netCDFLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 
     virtual int TestCapability(const char *pszCap) override;
 

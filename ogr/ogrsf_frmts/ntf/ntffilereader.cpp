@@ -717,7 +717,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D(NTFRecord *poRecord,
 
     if (nGType == 1)
     {
-        if (14 + 1 + 2 * static_cast<GIntBig>(GetXYLen()) + nZWidth - 1 >
+        if (14 + 1 + 2 * static_cast<int64_t>(GetXYLen()) + nZWidth - 1 >
             INT_MAX)
         {
             return nullptr;
@@ -740,7 +740,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D(NTFRecord *poRecord,
     else if (nGType == 2)
     {
         if (14 +
-                static_cast<GIntBig>(nNumCoord - 1) *
+                static_cast<int64_t>(nNumCoord - 1) *
                     (GetXYLen() * 2 + nZWidth + 2) +
                 1 + 2 * GetXYLen() + nZWidth - 1 >
             INT_MAX)
@@ -755,7 +755,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D(NTFRecord *poRecord,
 
         poGeometry = poLine;
         poLine->setNumPoints(nNumCoord);
-        const GUInt32 nErrorsBefore = CPLGetErrorCounter();
+        const uint32_t nErrorsBefore = CPLGetErrorCounter();
         for (int iCoord = 0; iCoord < nNumCoord; iCoord++)
         {
             const int iStart = 14 + iCoord * (GetXYLen() * 2 + nZWidth + 2);
@@ -1282,7 +1282,7 @@ NTFRecord *NTFFileReader::ReadRecord()
 /*      Return the current file pointer position.                       */
 /************************************************************************/
 
-void NTFFileReader::GetFPPos(vsi_l_offset *pnPos, long *pnFID)
+void NTFFileReader::GetFPPos(uint64_t *pnPos, long *pnFID)
 
 {
     if (poSavedRecord != nullptr)
@@ -1298,7 +1298,7 @@ void NTFFileReader::GetFPPos(vsi_l_offset *pnPos, long *pnFID)
 /*                              SetFPPos()                              */
 /************************************************************************/
 
-int NTFFileReader::SetFPPos(vsi_l_offset nNewPos, long nNewFID)
+int NTFFileReader::SetFPPos(uint64_t nNewPos, long nNewFID)
 
 {
     if (nNewFID == nSavedFeatureId)

@@ -35,6 +35,8 @@
 #include "cpl_aws.h"
 #include "cpl_json.h"
 
+#include <cinttypes>
+
 #ifdef HAVE_CURL
 
 static CPLMutex *hMutex = nullptr;
@@ -865,7 +867,7 @@ CPLString VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         return CPLString();
     }
 
-    GIntBig nStartDate = static_cast<GIntBig>(time(nullptr));
+    int64_t nStartDate = static_cast<int64_t>(time(nullptr));
     const char *pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
     if (pszStartDate)
     {
@@ -883,11 +885,11 @@ CPLString VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
             nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
         }
     }
-    GIntBig nExpiresIn =
+    int64_t nExpiresIn =
         nStartDate +
         atoi(CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600"));
     CPLString osExpires(CSLFetchNameValueDef(
-        papszOptions, "EXPIRES", CPLSPrintf(CPL_FRMT_GIB, nExpiresIn)));
+        papszOptions, "EXPIRES", CPLSPrintf("%" PRId64, nExpiresIn)));
 
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
 

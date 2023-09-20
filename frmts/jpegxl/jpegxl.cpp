@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cstdlib>
 #include <limits>
 
@@ -85,7 +86,7 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALDataType, int, int *, int64_t, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -127,7 +128,7 @@ class JPEGXLRasterBand final : public GDALPamRasterBand
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -548,15 +549,14 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 JxlDecoderGetBoxSizeRaw(m_decoder.get(), &nRawSize);
                 if (nRawSize > nMaxBoxBufferSize)
                 {
-                    CPLError(
-                        CE_Warning, CPLE_OutOfMemory,
-                        "Reading a '%s' box involves at least " CPL_FRMT_GUIB
-                        " bytes, "
-                        "but the current limitation of the "
-                        "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE "
-                        "configuration option is " CPL_FRMT_GUIB " bytes",
-                        szType, static_cast<GUIntBig>(nRawSize),
-                        static_cast<GUIntBig>(nMaxBoxBufferSize));
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Reading a '%s' box involves at least %" PRIu64
+                             " bytes, "
+                             "but the current limitation of the "
+                             "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE "
+                             "configuration option is %" PRIu64 " bytes",
+                             szType, static_cast<uint64_t>(nRawSize),
+                             static_cast<uint64_t>(nMaxBoxBufferSize));
                     continue;
                 }
                 if (nRawSize > abyBoxBuffer.size())
@@ -712,14 +712,14 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
             if (nNewBoxBufferSize > nMaxBoxBufferSize)
             {
                 CPLError(CE_Warning, CPLE_OutOfMemory,
-                         "Reading a '%s' box involves at least " CPL_FRMT_GUIB
+                         "Reading a '%s' box involves at least %" PRIu64
                          " bytes, "
                          "but the current limitation of the "
                          "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE "
-                         "configuration option is " CPL_FRMT_GUIB " bytes",
+                         "configuration option is %" PRIu64 " bytes",
                          osCurrentBox.c_str(),
-                         static_cast<GUIntBig>(nNewBoxBufferSize),
-                         static_cast<GUIntBig>(nMaxBoxBufferSize));
+                         static_cast<uint64_t>(nNewBoxBufferSize),
+                         static_cast<uint64_t>(nMaxBoxBufferSize));
                 osCurrentBox.clear();
                 continue;
             }
@@ -1550,8 +1550,8 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1579,7 +1579,7 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const bool bIsPixelInterleaveBuffer =
             ((nBandSpace == 0 && nBandCount == 1) ||
              nBandSpace == nBufTypeSize) &&
-            nPixelSpace == static_cast<GSpacing>(nBufTypeSize) * nBandCount &&
+            nPixelSpace == static_cast<int64_t>(nBufTypeSize) * nBandCount &&
             nLineSpace == nPixelSpace * nRasterXSize;
 
         const auto eNativeDT = GetRasterBand(1)->GetRasterDataType();
@@ -1607,7 +1607,7 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             GDALCopyWords64(abyDecodedImage.data(), eNativeDT, nNativeDataSize,
                             pData, eBufType, nBufTypeSize,
-                            static_cast<GPtrDiff_t>(nRasterXSize) *
+                            static_cast<ptrdiff_t>(nRasterXSize) *
                                 nRasterYSize * nBandCount);
         }
         else
@@ -1666,8 +1666,8 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr JPEGXLRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1901,7 +1901,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                 {
                     if (nInsertPos)
                     {
-                        GUInt32 nMarkerSize = 0;
+                        uint32_t nMarkerSize = 0;
                         GByte *pabyEXIF =
                             EXIFCreate(papszEXIF, nullptr, 0, 0, 0,  // overview
                                        &nMarkerSize);
@@ -2513,7 +2513,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         if (pszICCProfile && pszICCProfile[0] != '\0')
         {
             char *pEmbedBuffer = CPLStrdup(pszICCProfile);
-            GInt32 nEmbedLen =
+            int32_t nEmbedLen =
                 CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
             if (JXL_ENC_SUCCESS !=
                 JxlEncoderSetICCProfile(encoder.get(),
@@ -2624,7 +2624,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     // Write "Exif" box with EXIF metadata
     if (papszEXIF && bWriteExifMetadata)
     {
-        GUInt32 nMarkerSize = 0;
+        uint32_t nMarkerSize = 0;
         GByte *pabyEXIF = EXIFCreate(papszEXIF, nullptr, 0, 0, 0,  // overview
                                      &nMarkerSize);
         CPLAssert(nMarkerSize > 6 && memcmp(pabyEXIF, "Exif\0\0", 6) == 0);

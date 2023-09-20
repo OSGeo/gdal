@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cinttypes>
+
 /*!
   \brief OGRVFKLayer constructor
 
@@ -128,7 +130,7 @@ OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature *poVfkFeature)
 
   \return number of features
 */
-GIntBig OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
+int64_t OGRVFKLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     /* note that 'nfeatures' is 0 when data are not read from DB */
     int nfeatures = (int)poDataBlock->GetFeatureCount();
@@ -188,7 +190,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
 
   \return pointer to OGRFeature or NULL not found
 */
-OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRVFKLayer::GetFeature(int64_t nFID)
 {
     IVFKFeature *poVFKFeature = poDataBlock->GetFeature(nFID);
 
@@ -204,7 +206,7 @@ OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
     }
 
     CPLAssert(nFID == poVFKFeature->GetFID());
-    CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=" CPL_FRMT_GIB,
+    CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=%" PRId64,
              GetName(), nFID);
 
     return GetFeature(poVFKFeature);

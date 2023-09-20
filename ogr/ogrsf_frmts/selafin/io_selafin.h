@@ -52,7 +52,7 @@ class Header
                       //!< bounding box
     bool bTreeUpdateNeeded;  //!< Tell if the quad tree has to be updated
   public:
-    vsi_l_offset nFileSize;  //!< Size (in bytes) of the file
+    uint64_t nFileSize;  //!< Size (in bytes) of the file
     // size_t nRefCount;   //!< Number of references to this object
     VSILFILE *fp;           //!< Pointer to the file with the layers
     char *pszFilename;      //!< Name of the Selafin file
@@ -266,7 +266,7 @@ int write_integer(VSILFILE *fp, int nData);
  * the file as it should. Default value is false. \return Number of characters
  * in string read
  */
-int read_string(VSILFILE *fp, char *&pszData, vsi_l_offset nFileSize,
+int read_string(VSILFILE *fp, char *&pszData, uint64_t nFileSize,
                 bool bDiscard = false);
 
 /**
@@ -301,7 +301,7 @@ int write_string(VSILFILE *fp, char *pszData, size_t nLength = 0);
  * the file as it should. Default value is false. \return Number of elements in
  * array read, -1 if an error occurred
  */
-int read_intarray(VSILFILE *fp, int *&panData, vsi_l_offset nFileSize,
+int read_intarray(VSILFILE *fp, int *&panData, uint64_t nFileSize,
                   bool bDiscard = false);
 
 /**
@@ -357,7 +357,7 @@ int write_float(VSILFILE *fp, double dfData);
  * the file as it should. Default value is false. \return Number of elements in
  * array read, -1 if an error occurred
  */
-int read_floatarray(VSILFILE *fp, double **papadfData, vsi_l_offset nFileSize,
+int read_floatarray(VSILFILE *fp, double **papadfData, uint64_t nFileSize,
                     bool bDiscard = false);
 
 /**

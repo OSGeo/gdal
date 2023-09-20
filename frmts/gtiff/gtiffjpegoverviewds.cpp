@@ -33,6 +33,8 @@
 
 #include "tifvsi.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                     GTiffJPEGOverviewBand                            */
@@ -126,8 +128,8 @@ CPLErr GTiffJPEGOverviewDS::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       int nXSize, int nYSize, void *pData,
                                       int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
+                                      int *panBandMap, int64_t nPixelSpace,
+                                      int64_t nLineSpace, int64_t nBandSpace,
                                       GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -198,14 +200,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     // Make sure it is available.
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
-    vsi_l_offset nOffset = 0;
-    vsi_l_offset nByteCount = 0;
+    uint64_t nOffset = 0;
+    uint64_t nByteCount = 0;
     bool bErrOccurred = false;
     if (!m_poGDS->m_poParentDS->IsBlockAvailable(nBlockId, &nOffset,
                                                  &nByteCount, &bErrOccurred))
     {
         memset(pImage, 0,
-               static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+               static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                    nDataTypeSize);
         if (bErrOccurred)
             return CE_Failure;
@@ -275,8 +277,8 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                             "<SubfileRegion>"
                             "<Filename relative='0'>%s</Filename>"
                             "<DestinationOffset>%d</DestinationOffset>"
-                            "<SourceOffset>" CPL_FRMT_GUIB "</SourceOffset>"
-                            "<RegionLength>" CPL_FRMT_GUIB "</RegionLength>"
+                            "<SourceOffset>%" PRIu64 "</SourceOffset>"
+                            "<RegionLength>%" PRIu64 "</RegionLength>"
                             "</SubfileRegion></VSISparseFile>",
                             m_poGDS->m_osTmpFilenameJPEGTable.c_str(),
                             static_cast<int>(m_poGDS->m_nJPEGTableSize),
@@ -368,14 +370,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         if (nBlockXOff * nBlockXSize > m_poGDS->GetRasterXSize() - nBufXSize)
         {
             memset(pImage, 0,
-                   static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+                   static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                        nDataTypeSize);
             nBufXSize = m_poGDS->GetRasterXSize() - nBlockXOff * nBlockXSize;
         }
         if (nBlockYOff * nBlockYSize > m_poGDS->GetRasterYSize() - nBufYSize)
         {
             memset(pImage, 0,
-                   static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+                   static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                        nDataTypeSize);
             nBufYSize = m_poGDS->GetRasterYSize() - nBlockYOff * nBlockYSize;
         }
@@ -389,7 +391,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             eErr = l_poDS->GetRasterBand(nSrcBand)->RasterIO(
                 GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pImage,
                 nBufXSize, nBufYSize, eDataType, 0,
-                static_cast<GPtrDiff_t>(nBlockXSize) * nDataTypeSize, nullptr);
+                static_cast<ptrdiff_t>(nBlockXSize) * nDataTypeSize, nullptr);
         }
     }
 

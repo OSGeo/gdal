@@ -217,26 +217,24 @@ GDALDataset *CTable2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Setup the bands.                                                */
     /* -------------------------------------------------------------------- */
-    auto poBand =
-        RawRasterBand::Create(poDS.get(), 1, poDS->fpImage,
-                              160 + 4 +
-                                  static_cast<vsi_l_offset>(nRasterXSize) *
-                                      (nRasterYSize - 1) * 2 * 4,
-                              8, -8 * nRasterXSize, GDT_Float32,
-                              RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
-                              RawRasterBand::OwnFP::NO);
+    auto poBand = RawRasterBand::Create(
+        poDS.get(), 1, poDS->fpImage,
+        160 + 4 +
+            static_cast<uint64_t>(nRasterXSize) * (nRasterYSize - 1) * 2 * 4,
+        8, -8 * nRasterXSize, GDT_Float32,
+        RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+        RawRasterBand::OwnFP::NO);
     if (!poBand)
         return nullptr;
     poBand->SetDescription("Latitude Offset (radians)");
     poDS->SetBand(1, std::move(poBand));
 
-    poBand =
-        RawRasterBand::Create(poDS.get(), 2, poDS->fpImage,
-                              160 + static_cast<vsi_l_offset>(nRasterXSize) *
-                                        (nRasterYSize - 1) * 2 * 4,
-                              8, -8 * nRasterXSize, GDT_Float32,
-                              RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
-                              RawRasterBand::OwnFP::NO);
+    poBand = RawRasterBand::Create(
+        poDS.get(), 2, poDS->fpImage,
+        160 + static_cast<uint64_t>(nRasterXSize) * (nRasterYSize - 1) * 2 * 4,
+        8, -8 * nRasterXSize, GDT_Float32,
+        RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
+        RawRasterBand::OwnFP::NO);
     if (!poBand)
         return nullptr;
     poBand->SetDescription("Longitude Offset (radians)");

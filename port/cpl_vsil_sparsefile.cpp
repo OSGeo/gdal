@@ -56,9 +56,9 @@ class SFRegion
   public:
     CPLString osFilename{};
     VSILFILE *fp = nullptr;
-    GUIntBig nDstOffset = 0;
-    GUIntBig nSrcOffset = 0;
-    GUIntBig nLength = 0;
+    uint64_t nDstOffset = 0;
+    uint64_t nSrcOffset = 0;
+    uint64_t nLength = 0;
     GByte byValue = 0;
     bool bTriedOpen = false;
 };
@@ -84,13 +84,13 @@ class VSISparseFileHandle : public VSIVirtualHandle
     {
     }
 
-    GUIntBig nOverallLength = 0;
-    GUIntBig nCurOffset = 0;
+    uint64_t nOverallLength = 0;
+    uint64_t nCurOffset = 0;
 
     std::vector<SFRegion> aoRegions{};
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -105,7 +105,7 @@ class VSISparseFileHandle : public VSIVirtualHandle
 
 class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
 {
-    std::map<GIntBig, int> oRecOpenCount{};
+    std::map<int64_t, int> oRecOpenCount{};
     CPL_DISALLOW_COPY_ASSIGN(VSISparseFileFilesystemHandler)
 
   public:
@@ -113,8 +113,7 @@ class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
     ~VSISparseFileFilesystemHandler() override = default;
 
     int DecomposePath(const char *pszPath, CPLString &osFilename,
-                      vsi_l_offset &nSparseFileOffset,
-                      vsi_l_offset &nSparseFileSize);
+                      uint64_t &nSparseFileOffset, uint64_t &nSparseFileSize);
 
     // TODO(schwehr): Fix VSISparseFileFilesystemHandler::Stat to not need
     // using.
@@ -170,7 +169,7 @@ int VSISparseFileHandle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSISparseFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSISparseFileHandle::Seek(uint64_t nOffset, int nWhence)
 
 {
     bEOF = false;
@@ -197,7 +196,7 @@ int VSISparseFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSISparseFileHandle::Tell()
+uint64_t VSISparseFileHandle::Tell()
 
 {
     return nCurOffset;
@@ -257,7 +256,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     /*      requests.                                                       */
     /* -------------------------------------------------------------------- */
     size_t nBytesReturnCount = 0;
-    const GUIntBig nEndOffsetOfRegion =
+    const uint64_t nEndOffsetOfRegion =
         aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength;
 
     if (nCurOffset + nBytesRequested > nEndOffsetOfRegion)
@@ -266,7 +265,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             nCurOffset + nBytesRequested - nEndOffsetOfRegion);
         // Recurse to get the rest of the request.
 
-        const GUIntBig nCurOffsetSave = nCurOffset;
+        const uint64_t nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
         bool bEOFSave = bEOF;
         bEOF = false;

@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdalwarper.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -697,8 +698,8 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     {
         return nullptr;
     }
-    const GPtrDiff_t nBandSize =
-        static_cast<GPtrDiff_t>(nWordSize) * nDstXSize * nDstYSize;
+    const ptrdiff_t nBandSize =
+        static_cast<ptrdiff_t>(nWordSize) * nDstXSize * nDstYSize;
 
     /* -------------------------------------------------------------------- */
     /*      Initialize if requested in the options */
@@ -764,13 +765,13 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
         {
             GDALCopyWords64(&adfInitRealImag, GDT_Float64, 0, pBandData,
                             psOptions->eWorkingDataType, nWordSize,
-                            static_cast<GPtrDiff_t>(nDstXSize) * nDstYSize);
+                            static_cast<ptrdiff_t>(nDstXSize) * nDstYSize);
         }
         else
         {
             GDALCopyWords64(&adfInitRealImag, GDT_CFloat64, 0, pBandData,
                             psOptions->eWorkingDataType, nWordSize,
-                            static_cast<GPtrDiff_t>(nDstXSize) * nDstYSize);
+                            static_cast<ptrdiff_t>(nDstXSize) * nDstYSize);
         }
     }
 
@@ -1846,12 +1847,12 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfSrcXExtraSize = dfSrcXExtraSize;
     oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
-    GInt64 nAlloc64 =
+    int64_t nAlloc64 =
         nWordSize *
-        (static_cast<GInt64>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
+        (static_cast<int64_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
         psOptions->nBandCount;
 #if SIZEOF_VOIDP == 4
-    if (nAlloc64 != static_cast<GInt64>(static_cast<size_t>(nAlloc64)))
+    if (nAlloc64 != static_cast<int64_t>(static_cast<size_t>(nAlloc64)))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow : nSrcXSize=%d, nSrcYSize=%d", nSrcXSize,
@@ -1874,7 +1875,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         oWK.papabySrcImage[i] =
             reinterpret_cast<GByte *>(oWK.papabySrcImage[0]) +
             nWordSize *
-                (static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize +
+                (static_cast<ptrdiff_t>(nSrcXSize) * nSrcYSize +
                  WARP_EXTRA_ELTS) *
                 i;
 
@@ -1897,7 +1898,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                 oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
                 psOptions->eWorkingDataType, psOptions->nBandCount,
                 psOptions->panSrcBands, 0, 0,
-                nWordSize * (static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize +
+                nWordSize * (static_cast<ptrdiff_t>(nSrcXSize) * nSrcYSize +
                              WARP_EXTRA_ELTS),
                 nullptr);
         }
@@ -1920,7 +1921,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         oWK.papabyDstImage[i] =
             static_cast<GByte *>(pDataBuf) +
-            i * static_cast<GPtrDiff_t>(nDstXSize) * nDstYSize * nWordSize;
+            i * static_cast<ptrdiff_t>(nDstXSize) * nDstYSize * nWordSize;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1976,8 +1977,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
             if (eErr == CE_None)
             {
-                for (GPtrDiff_t j = 0;
-                     j < static_cast<GPtrDiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize;
+                for (ptrdiff_t j = 0;
+                     j < static_cast<ptrdiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize;
                      j++)
                     oWK.pafUnifiedSrcDensity[j] = 1.0;
             }
@@ -2098,7 +2099,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                              CPLTestBool(pszUnifiedSrcNoData)))
             {
                 auto nMaskBits =
-                    static_cast<GPtrDiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize;
+                    static_cast<ptrdiff_t>(oWK.nSrcXSize) * oWK.nSrcYSize;
 
                 eErr =
                     CreateKernelMask(&oWK, 0 /* not used */, "UnifiedSrcValid");
@@ -2175,11 +2176,11 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     {
         CPLAssert(oWK.panDstValid == nullptr);
 
-        const GPtrDiff_t nMaskBits =
-            static_cast<GPtrDiff_t>(oWK.nDstXSize) * oWK.nDstYSize;
+        const ptrdiff_t nMaskBits =
+            static_cast<ptrdiff_t>(oWK.nDstXSize) * oWK.nDstYSize;
 
         eErr = CreateKernelMask(&oWK, 0 /* not used */, "DstValid");
-        GUInt32 *panBandMask =
+        uint32_t *panBandMask =
             eErr == CE_None ? CPLMaskCreate(nMaskBits, true) : nullptr;
 
         if (eErr == CE_None && panBandMask != nullptr)
@@ -2351,7 +2352,7 @@ CPLErr GDALWarpOperation::CreateKernelMask(GDALWarpKernel *poKernel, int iBand,
     if (EQUAL(pszType, "BandSrcValid"))
     {
         if (poKernel->papanBandSrcValid == nullptr)
-            poKernel->papanBandSrcValid = static_cast<GUInt32 **>(
+            poKernel->papanBandSrcValid = static_cast<uint32_t **>(
                 CPLCalloc(sizeof(void *), poKernel->nBands));
 
         ppMask =
@@ -2410,17 +2411,17 @@ CPLErr GDALWarpOperation::CreateKernelMask(GDALWarpKernel *poKernel, int iBand,
     /* -------------------------------------------------------------------- */
     if (*ppMask == nullptr)
     {
-        const GIntBig nBytes =
+        const int64_t nBytes =
             nBitsPerPixel == 32
-                ? (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts) * 4
-                : (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
+                ? (static_cast<int64_t>(nXSize) * nYSize + nExtraElts) * 4
+                : (static_cast<int64_t>(nXSize) * nYSize + nExtraElts + 31) / 8;
 
         const size_t nByteSize_t = static_cast<size_t>(nBytes);
 #if SIZEOF_VOIDP == 4
-        if (static_cast<GIntBig>(nByteSize_t) != nBytes)
+        if (static_cast<int64_t>(nByteSize_t) != nBytes)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate " CPL_FRMT_GIB " bytes", nBytes);
+                     "Cannot allocate %" PRId64 " bytes", nBytes);
             return CE_Failure;
         }
 #endif

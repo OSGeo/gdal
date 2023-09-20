@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cinttypes>
 #include <set>
 #include <map>
 #include <memory>
@@ -160,7 +161,7 @@ static void VSICURLReadGlobalEnvVariables()
                 DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > 10 * 1024 * 1024)
                 DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = 16384;
 
-            GIntBig nCacheSize = CPLAtoGIntBig(
+            int64_t nCacheSize = CPLAtoGIntBig(
                 CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE", "16384000"));
             if (nCacheSize < DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY ||
                 nCacheSize / DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > INT_MAX)
@@ -507,7 +508,7 @@ int VSICurlHandle::UninstallReadCbk()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSICurlHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSICurlHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (nWhence == SEEK_SET)
     {
@@ -529,7 +530,7 @@ int VSICurlHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
 /************************************************************************/
 
-static GIntBig VSICurlGetTimeStampFromRFC822DateTime(const char *pszDT)
+static int64_t VSICurlGetTimeStampFromRFC822DateTime(const char *pszDT)
 {
     // Sun, 03 Apr 2016 12:07:27 GMT
     if (strlen(pszDT) >= 5 && pszDT[3] == ',' && pszDT[4] == ' ')
@@ -676,11 +677,10 @@ size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                 }
                 osDate.Trim();
 
-                GIntBig nTimestampDate =
+                int64_t nTimestampDate =
                     VSICurlGetTimeStampFromRFC822DateTime(osDate);
 #if DEBUG_VERBOSE
-                CPLDebug("VSICURL", "Timestamp = " CPL_FRMT_GIB,
-                         nTimestampDate);
+                CPLDebug("VSICURL", "Timestamp = %" PRId64, nTimestampDate);
 #endif
                 psStruct->nTimestampDate = nTimestampDate;
             }
@@ -764,7 +764,7 @@ static bool VSICurlIsS3LikeSignedURL(const char *pszURL)
 /*                  VSICurlGetExpiresFromS3LikeSignedURL()              */
 /************************************************************************/
 
-static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
+static int64_t VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 {
     const auto GetParamValue = [pszURL](const char *pszKey) -> const char *
     {
@@ -884,7 +884,7 @@ void VSICURLResetHeaderAndWriterFunctions(CURL *hCurlHandle)
 /*                        Iso8601ToUnixTime()                           */
 /************************************************************************/
 
-static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
+static bool Iso8601ToUnixTime(const char *pszDT, int64_t *pnUnixTime)
 {
     int nYear;
     int nMonth;
@@ -924,7 +924,7 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
     struct PCSigningInfo
     {
         std::string osQueryString{};
-        GIntBig nExpireTimestamp = 0;
+        int64_t nExpireTimestamp = 0;
     };
 
     PCSigningInfo sSigningInfo;
@@ -1036,8 +1036,7 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
 /*                     GetFileSizeOrHeaders()                           */
 /************************************************************************/
 
-vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
-                                                 bool bGetHeaders)
+uint64_t VSICurlHandle::GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders)
 {
     if (oFileProp.bHasComputedFileSize && !bGetHeaders)
         return oFileProp.fileSize;
@@ -1164,9 +1163,8 @@ retry:
                     CPLScanUIntBig(pszContentLength,
                                    static_cast<int>(strlen(pszContentLength)));
                 if (ENABLE_DEBUG)
-                    CPLDebug(poFS->GetDebugKey(),
-                             "GetFileSize(%s)=" CPL_FRMT_GUIB, osURL.c_str(),
-                             oFileProp.fileSize);
+                    CPLDebug(poFS->GetDebugKey(), "GetFileSize(%s)=%" PRIu64,
+                             osURL.c_str(), oFileProp.fileSize);
             }
         }
     }
@@ -1254,7 +1252,7 @@ retry:
             CPLTestBool(
                 CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")))
         {
-            const GIntBig nExpireTimestamp =
+            const int64_t nExpireTimestamp =
                 VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
             if (nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10)
             {
@@ -1301,7 +1299,7 @@ retry:
                 oFileProp.fileSize = 0;
             }
             else
-                oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
+                oFileProp.fileSize = static_cast<uint64_t>(dfSize);
         }
 
         if (sWriteFuncHeaderData.pBuffer != nullptr &&
@@ -1385,7 +1383,7 @@ retry:
                 if (pszContentRange)
                 {
                     oFileProp.eExists = EXIST_YES;
-                    oFileProp.fileSize = static_cast<GUIntBig>(
+                    oFileProp.fileSize = static_cast<uint64_t>(
                         CPLAtoGIntBig(pszContentRange + 1));
                 }
 
@@ -1522,7 +1520,7 @@ retry:
         if (!bAlreadyLogged)
         {
             CPLDebug(poFS->GetDebugKey(),
-                     "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                     "GetFileSize(%s)=%" PRIu64 "  response_code=%d",
                      osURL.c_str(), oFileProp.fileSize,
                      static_cast<int>(response_code));
         }
@@ -1557,7 +1555,7 @@ bool VSICurlHandle::Exists(bool bSetError)
 /*                                  Tell()                              */
 /************************************************************************/
 
-vsi_l_offset VSICurlHandle::Tell()
+uint64_t VSICurlHandle::Tell()
 {
     return curOffset;
 }
@@ -1611,13 +1609,13 @@ struct CurrentDownload
 {
     VSICurlFilesystemHandlerBase *m_poFS = nullptr;
     std::string m_osURL{};
-    vsi_l_offset m_nStartOffset = 0;
+    uint64_t m_nStartOffset = 0;
     int m_nBlocks = 0;
     std::string m_osData{};
     bool m_bDone = false;
 
     CurrentDownload(VSICurlFilesystemHandlerBase *poFS, const char *pszURL,
-                    vsi_l_offset startOffset, int nBlocks)
+                    uint64_t startOffset, int nBlocks)
         : m_poFS(poFS), m_osURL(pszURL), m_nStartOffset(startOffset),
           m_nBlocks(nBlocks)
     {
@@ -1656,7 +1654,7 @@ struct CurrentDownload
 /************************************************************************/
 
 std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
-    const std::string &osURL, vsi_l_offset startOffset, int nBlocks)
+    const std::string &osURL, uint64_t startOffset, int nBlocks)
 {
     std::string osId(osURL);
     osId += '_';
@@ -1696,7 +1694,7 @@ std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
 /************************************************************************/
 
 void VSICurlFilesystemHandlerBase::NotifyStopDownloadRegion(
-    const std::string &osURL, vsi_l_offset startOffset, int nBlocks,
+    const std::string &osURL, uint64_t startOffset, int nBlocks,
     const std::string &osData)
 {
     std::string osId(osURL);
@@ -1731,7 +1729,7 @@ void VSICurlFilesystemHandlerBase::NotifyStopDownloadRegion(
 /*                          DownloadRegion()                            */
 /************************************************************************/
 
-std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
+std::string VSICurlHandle::DownloadRegion(const uint64_t startOffset,
                                           const int nBlocks)
 {
     if (bInterrupted && bStopOnInterruptUntilUninstall)
@@ -1794,8 +1792,9 @@ retry:
     }
 
     char rangeStr[512] = {};
-    snprintf(rangeStr, sizeof(rangeStr), CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
-             startOffset, sWriteFuncHeaderData.nEndOffset);
+    // cppcheck-suppress invalidPrintfArgType_uint
+    snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64, startOffset,
+             sWriteFuncHeaderData.nEndOffset);
 
     if (ENABLE_DEBUG)
         CPLDebug(poFS->GetDebugKey(), "Downloading %s (%s)...", rangeStr,
@@ -2013,7 +2012,7 @@ retry:
 
             if (ENABLE_DEBUG)
                 CPLDebug(poFS->GetDebugKey(),
-                         "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                         "GetFileSize(%s)=%" PRIu64 "  response_code=%d",
                          m_pszURL, oFileProp.fileSize,
                          static_cast<int>(response_code));
 
@@ -2069,7 +2068,7 @@ void VSICurlHandle::UpdateRedirectInfo(
             CPLTestBool(
                 CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")))
         {
-            GIntBig nExpireTimestamp =
+            int64_t nExpireTimestamp =
                 VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
             if (nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10)
             {
@@ -2093,7 +2092,7 @@ void VSICurlHandle::UpdateRedirectInfo(
 /*                      DownloadRegionPostProcess()                     */
 /************************************************************************/
 
-void VSICurlHandle::DownloadRegionPostProcess(const vsi_l_offset startOffset,
+void VSICurlHandle::DownloadRegionPostProcess(const uint64_t startOffset,
                                               const int nBlocks,
                                               const char *pBuffer, size_t nSize)
 {
@@ -2110,7 +2109,7 @@ void VSICurlHandle::DownloadRegionPostProcess(const vsi_l_offset startOffset,
                 static_cast<unsigned int>(nBlocks * knDOWNLOAD_CHUNK_SIZE));
     }
 
-    vsi_l_offset l_startOffset = startOffset;
+    uint64_t l_startOffset = startOffset;
     while (nSize > 0)
     {
 #if DEBUG_VERBOSE
@@ -2151,7 +2150,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
              static_cast<int>(curOffset), static_cast<int>(nBufferRequestSize));
 #endif
 
-    vsi_l_offset iterOffset = curOffset;
+    uint64_t iterOffset = curOffset;
     const int knMAX_REGIONS = GetMaxRegions();
     const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
     while (nBufferRequestSize)
@@ -2163,14 +2162,13 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             if (iterOffset == curOffset)
             {
                 CPLDebug(poFS->GetDebugKey(),
-                         "Request at offset " CPL_FRMT_GUIB
-                         ", after end of file",
+                         "Request at offset %" PRIu64 ", after end of file",
                          iterOffset);
             }
             break;
         }
 
-        const vsi_l_offset nOffsetToDownload =
+        const uint64_t nOffsetToDownload =
             (iterOffset / knDOWNLOAD_CHUNK_SIZE) * knDOWNLOAD_CHUNK_SIZE;
         std::string osRegion;
         std::shared_ptr<std::string> psRegion =
@@ -2198,7 +2196,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
 
             // Ensure that we will request at least the number of blocks
             // to satisfy the remaining buffer size to read.
-            const vsi_l_offset nEndOffsetToDownload =
+            const uint64_t nEndOffsetToDownload =
                 ((iterOffset + nBufferRequestSize + knDOWNLOAD_CHUNK_SIZE - 1) /
                  knDOWNLOAD_CHUNK_SIZE) *
                 knDOWNLOAD_CHUNK_SIZE;
@@ -2234,22 +2232,21 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             }
         }
 
-        const vsi_l_offset nRegionOffset = iterOffset - nOffsetToDownload;
+        const uint64_t nRegionOffset = iterOffset - nOffsetToDownload;
         if (osRegion.size() < nRegionOffset)
         {
             if (iterOffset == curOffset)
             {
                 CPLDebug(poFS->GetDebugKey(),
-                         "Request at offset " CPL_FRMT_GUIB
-                         ", after end of file",
+                         "Request at offset %" PRIu64 ", after end of file",
                          iterOffset);
             }
             break;
         }
 
-        const int nToCopy = static_cast<int>(
-            std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
-                     osRegion.size() - nRegionOffset));
+        const int nToCopy =
+            static_cast<int>(std::min(static_cast<uint64_t>(nBufferRequestSize),
+                                      osRegion.size() - nRegionOffset));
         memcpy(pBuffer, osRegion.data() + nRegionOffset, nToCopy);
         pBuffer = static_cast<char *>(pBuffer) + nToCopy;
         iterOffset += nToCopy;
@@ -2275,7 +2272,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
 /************************************************************************/
 
 int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
-                                  const vsi_l_offset *const panOffsets,
+                                  const uint64_t *const panOffsets,
                                   const size_t *const panSizes)
 {
     if (bInterrupted && bStopOnInterruptUntilUninstall)
@@ -2391,7 +2388,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         asWriteFuncHeaderData[iRequest].nEndOffset = panOffsets[i] + nSize - 1;
 
         char rangeStr[512] = {};
-        snprintf(rangeStr, sizeof(rangeStr), CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+        // cppcheck-suppress invalidPrintfArgType_uint
+        snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                  asWriteFuncHeaderData[iRequest].nStartOffset,
                  asWriteFuncHeaderData[iRequest].nEndOffset);
 
@@ -2452,8 +2450,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         if (ENABLE_DEBUG && asCurlErrors[iRange].szCurlErrBuf[0] != '\0')
         {
             char rangeStr[512] = {};
-            snprintf(rangeStr, sizeof(rangeStr),
-                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            // cppcheck-suppress invalidPrintfArgType_uint
+            snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                      asWriteFuncHeaderData[iReq].nStartOffset,
                      asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -2470,8 +2468,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                     asWriteFuncData[iReq].nSize)
         {
             char rangeStr[512] = {};
-            snprintf(rangeStr, sizeof(rangeStr),
-                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            // cppcheck-suppress invalidPrintfArgType_uint
+            snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                      asWriteFuncHeaderData[iReq].nStartOffset,
                      asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -2541,20 +2539,20 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
 // remove it
 int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                                            void **const ppData,
-                                           const vsi_l_offset *const panOffsets,
+                                           const uint64_t *const panOffsets,
                                            const size_t *const panSizes)
 {
     CPLString osRanges;
     CPLString osFirstRange;
     CPLString osLastRange;
     int nMergedRanges = 0;
-    vsi_l_offset nTotalReqSize = 0;
+    uint64_t nTotalReqSize = 0;
     for (int i = 0; i < nRanges; i++)
     {
         CPLString osCurRange;
         if (i != 0)
             osRanges.append(",");
-        osCurRange = CPLSPrintf(CPL_FRMT_GUIB "-", panOffsets[i]);
+        osCurRange = CPLSPrintf("%" PRIu64 "-", panOffsets[i]);
         while (i + 1 < nRanges &&
                panOffsets[i] + panSizes[i] == panOffsets[i + 1])
         {
@@ -2563,7 +2561,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
         }
         nTotalReqSize += panSizes[i];
         osCurRange.append(
-            CPLSPrintf(CPL_FRMT_GUIB, panOffsets[i] + panSizes[i] - 1));
+            CPLSPrintf("%" PRIu64, panOffsets[i] + panSizes[i] - 1));
         nMergedRanges++;
 
         osRanges += osCurRange;
@@ -2624,9 +2622,9 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                      osRanges.c_str(), m_pszURL);
         else
             CPLDebug(poFS->GetDebugKey(),
-                     "Downloading %s, ..., %s (" CPL_FRMT_GUIB " bytes, %s)...",
+                     "Downloading %s, ..., %s (%" PRIu64 " bytes, %s)...",
                      osFirstRange.c_str(), osLastRange.c_str(),
-                     static_cast<GUIntBig>(nTotalReqSize), m_pszURL);
+                     static_cast<uint64_t>(nTotalReqSize), m_pszURL);
     }
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, osRanges.c_str());
@@ -2707,7 +2705,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     if (nMergedRanges == 1)
     {
         size_t nAccSize = 0;
-        if (static_cast<vsi_l_offset>(nSize) < nTotalReqSize)
+        if (static_cast<uint64_t>(nSize) < nTotalReqSize)
             goto end;
 
         for (int i = 0; i < nRanges; i++)
@@ -2918,8 +2916,7 @@ end:
 /*                              PRead()                                 */
 /************************************************************************/
 
-size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
-                            vsi_l_offset nOffset) const
+size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize, uint64_t nOffset) const
 {
     // Try to use AdviseRead ranges fetched asynchronously
     if (!m_aoAdviseReadRanges.empty())
@@ -2944,7 +2941,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
                 if (nOffset >= nEndOffset)
                     return 0;
                 const size_t nToCopy = static_cast<size_t>(
-                    std::min<vsi_l_offset>(nSize, nEndOffset - nOffset));
+                    std::min<uint64_t>(nSize, nEndOffset - nOffset));
                 memcpy(pBuffer,
                        poRange->abyData.data() +
                            static_cast<size_t>(nOffset - poRange->nStartOffset),
@@ -2995,7 +2992,8 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     sWriteFuncHeaderData.nEndOffset = nOffset + nSize - 1;
 
     char rangeStr[512] = {};
-    snprintf(rangeStr, sizeof(rangeStr), CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+    // cppcheck-suppress invalidPrintfArgType_uint
+    snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
              sWriteFuncHeaderData.nStartOffset,
              sWriteFuncHeaderData.nEndOffset);
 
@@ -3089,7 +3087,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 /*                         AdviseRead()                                 */
 /************************************************************************/
 
-void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+void VSICurlHandle::AdviseRead(int nRanges, const uint64_t *panOffsets,
                                const size_t *panSizes)
 {
     if (!CPLTestBool(
@@ -3102,7 +3100,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
     }
 
     // Give up if we need to allocate too much memory
-    vsi_l_offset nMaxSize = 0;
+    uint64_t nMaxSize = 0;
     for (int i = 0; i < nRanges; ++i)
     {
         if (panSizes[i] > 100 * 1024 * 1024 - nMaxSize)
@@ -3256,8 +3254,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                 m_aoAdviseReadRanges[i]->nSize - 1;
 
             char rangeStr[512] = {};
-            snprintf(rangeStr, sizeof(rangeStr),
-                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            // cppcheck-suppress invalidPrintfArgType_uint
+            snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                      asWriteFuncHeaderData[i].nStartOffset,
                      asWriteFuncHeaderData[i].nEndOffset);
 
@@ -3309,8 +3307,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             if (ENABLE_DEBUG && asCurlErrors[iReq].szCurlErrBuf[0] != '\0')
             {
                 char rangeStr[512] = {};
-                snprintf(rangeStr, sizeof(rangeStr),
-                         CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                // cppcheck-suppress invalidPrintfArgType_uint
+                snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                          asWriteFuncHeaderData[iReq].nStartOffset,
                          asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -3327,8 +3325,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                         asWriteFuncData[iReq].nSize)
             {
                 char rangeStr[512] = {};
-                snprintf(rangeStr, sizeof(rangeStr),
-                         CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                // cppcheck-suppress invalidPrintfArgType_uint
+                snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                          asWriteFuncHeaderData[iReq].nStartOffset,
                          asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -3603,7 +3601,7 @@ VSICurlFilesystemHandlerBase::GetRegionCache()
 
 std::shared_ptr<std::string>
 VSICurlFilesystemHandlerBase::GetRegion(const char *pszURL,
-                                        vsi_l_offset nFileOffsetStart)
+                                        uint64_t nFileOffsetStart)
 {
     CPLMutexHolder oHolder(&hMutex);
 
@@ -3626,7 +3624,7 @@ VSICurlFilesystemHandlerBase::GetRegion(const char *pszURL,
 /************************************************************************/
 
 void VSICurlFilesystemHandlerBase::AddRegion(const char *pszURL,
-                                             vsi_l_offset nFileOffsetStart,
+                                             uint64_t nFileOffsetStart,
                                              size_t nSize, const char *pData)
 {
     CPLMutexHolder oHolder(&hMutex);
@@ -4140,8 +4138,8 @@ static const char *const apszMonths[] = {
 
 static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                                              struct tm &brokendowntime,
-                                             GUIntBig &nFileSize,
-                                             GIntBig &mTime)
+                                             uint64_t &nFileSize,
+                                             int64_t &mTime)
 {
     for (int iMonth = 0; iMonth < 12; iMonth++)
     {
@@ -4431,8 +4429,8 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
             {
                 struct tm brokendowntime;
                 memset(&brokendowntime, 0, sizeof(brokendowntime));
-                GUIntBig nFileSize = 0;
-                GIntBig mTime = 0;
+                uint64_t nFileSize = 0;
+                int64_t mTime = 0;
 
                 VSICurlParseHTMLDateTimeFileSize(pszLine, brokendowntime,
                                                  nFileSize, mTime);
@@ -4471,16 +4469,15 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
                     oFileList.AddString(beginFilename);
                     if (ENABLE_DEBUG_VERBOSE)
                     {
-                        CPLDebug(
-                            GetDebugKey(),
-                            "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB
-                            ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                            nCount, osCachedFilename.c_str(),
-                            bIsDirectory ? 1 : 0, nFileSize,
-                            brokendowntime.tm_year + 1900,
-                            brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
-                            brokendowntime.tm_hour, brokendowntime.tm_min,
-                            brokendowntime.tm_sec);
+                        CPLDebug(GetDebugKey(),
+                                 "File[%d] = %s, is_dir = %d, size = %" PRIu64
+                                 ", time = %04d/%02d/%02d %02d:%02d:%02d",
+                                 nCount, osCachedFilename.c_str(),
+                                 bIsDirectory ? 1 : 0, nFileSize,
+                                 brokendowntime.tm_year + 1900,
+                                 brokendowntime.tm_mon + 1,
+                                 brokendowntime.tm_mday, brokendowntime.tm_hour,
+                                 brokendowntime.tm_min, brokendowntime.tm_sec);
                     }
                     nCount++;
 
@@ -4553,8 +4550,8 @@ mirrors/mplayerhq.hu/MPlayer -rw-r--r--    1 ftp      ftp      725614592 May 13
 */
 
 static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
-                                    bool &bSizeValid, GUIntBig &nSize,
-                                    bool &bIsDirectory, GIntBig &nUnixTime)
+                                    bool &bSizeValid, uint64_t &nSize,
+                                    bool &bIsDirectory, int64_t &nUnixTime)
 {
     char *pszNextToken = pszLine;
     char *pszPermissions = VSICurlGetToken(pszNextToken, &pszNextToken);
@@ -4620,7 +4617,7 @@ static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
         time_t sTime;
         time(&sTime);
         struct tm currentBrokendowntime;
-        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(sTime),
+        CPLUnixTimeToYMDHMS(static_cast<int64_t>(sTime),
                             &currentBrokendowntime);
         brokendowntime.tm_year = currentBrokendowntime.tm_year;
         brokendowntime.tm_hour = atoi(pszHourOrYear);
@@ -4781,9 +4778,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
                     char *pszFilename = nullptr;
                     bool bSizeValid = false;
-                    GUIntBig nFileSize = 0;
+                    uint64_t nFileSize = 0;
                     bool bIsDirectory = false;
-                    GIntBig mUnixTime = 0;
+                    int64_t mUnixTime = 0;
                     if (!VSICurlParseFullFTPLine(pszLine, pszFilename,
                                                  bSizeValid, nFileSize,
                                                  bIsDirectory, mUnixTime))
@@ -4812,7 +4809,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
                             CPLDebug(
                                 GetDebugKey(),
                                 "File[%d] = %s, is_dir = %d, size "
-                                "= " CPL_FRMT_GUIB
+                                "= %" PRIu64
                                 ", time = %04d/%02d/%02d %02d:%02d:%02d",
                                 nCount, pszFilename, bIsDirectory ? 1 : 0,
                                 nFileSize, brokendowntime.tm_year + 1900,
@@ -5310,7 +5307,7 @@ VSIAppendWriteHandle::~VSIAppendWriteHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIAppendWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIAppendWriteHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (!((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
           (nWhence == SEEK_CUR && nOffset == 0) ||
@@ -5329,7 +5326,7 @@ int VSIAppendWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIAppendWriteHandle::Tell()
+uint64_t VSIAppendWriteHandle::Tell()
 {
     return m_nCurOffset;
 }

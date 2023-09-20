@@ -89,7 +89,7 @@ IMapInfoFile::~IMapInfoFile()
  **********************************************************************/
 
 int IMapInfoFile::Open(const char *pszFname, const char *pszAccess,
-                       GBool bTestOpenNoError, const char *pszCharset)
+                       bool bTestOpenNoError, const char *pszCharset)
 {
     // cppcheck-suppress nullPointer
     if (STARTS_WITH_CI(pszAccess, "r"))
@@ -116,8 +116,8 @@ int IMapInfoFile::Open(const char *pszFname, const char *pszAccess,
  *
  * Returns the new object ptr. , or NULL if the open failed.
  **********************************************************************/
-IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname, GBool bUpdate,
-                                      GBool bTestOpenNoError /*=FALSE*/)
+IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname, bool bUpdate,
+                                      bool bTestOpenNoError /*=FALSE*/)
 {
     IMapInfoFile *poFile = nullptr;
     int nLen = 0;
@@ -140,9 +140,9 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname, GBool bUpdate,
          * We have to read the .tab header to find out.
          *------------------------------------------------------------*/
         char *pszAdjFname = CPLStrdup(pszFname);
-        GBool bFoundFields = FALSE;
-        GBool bFoundView = FALSE;
-        GBool bFoundSeamless = FALSE;
+        bool bFoundFields = FALSE;
+        bool bFoundView = FALSE;
+        bool bFoundSeamless = FALSE;
 
         TABAdjustFilenameExtension(pszAdjFname);
         VSILFILE *fp = VSIFOpenL(pszAdjFname, "r");
@@ -199,7 +199,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname, GBool bUpdate,
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
-    GIntBig nFeatureId = 0;
+    int64_t nFeatureId = 0;
 
     while ((nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1)
     {
@@ -411,7 +411,7 @@ OGRErr IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  * to get the wanted (nFeatureId) feature, a NULL value will be
  * returned on error.
  **********************************************************************/
-OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
+OGRFeature *IMapInfoFile::GetFeature(int64_t nFeatureId)
 {
     /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 

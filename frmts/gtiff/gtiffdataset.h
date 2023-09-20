@@ -69,8 +69,8 @@ typedef struct
     char *pszTmpFilename;
     GByte *pabyBuffer;
     GByte *pabyCompressedBuffer;  // Owned by pszTmpFilename.
-    GPtrDiff_t nBufferSize;
-    GPtrDiff_t nCompressedBufferSize;
+    ptrdiff_t nBufferSize;
+    ptrdiff_t nCompressedBufferSize;
     int nHeight;
     int nStripOrTile;
     uint16_t nPredictor;
@@ -160,7 +160,7 @@ class GTiffDataset final : public GDALPamDataset
     CPLMutex *m_hCompressThreadPoolMutex = nullptr;
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-    lru11::Cache<int, std::pair<vsi_l_offset, vsi_l_offset>>
+    lru11::Cache<int, std::pair<uint64_t, uint64_t>>
         m_oCacheStrileToOffsetByteCount{1024};
 #endif
 
@@ -310,8 +310,7 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bWriteCOGLayout : 1;
 
     void ScanDirectories();
-    bool ReadStrile(int nBlockId, void *pOutputBuffer,
-                    GPtrDiff_t nBlockReqSize);
+    bool ReadStrile(int nBlockId, void *pOutputBuffer, ptrdiff_t nBlockReqSize);
     CPLErr LoadBlockBuf(int nBlockId, bool bReadFromDisk = true);
     CPLErr FlushBlockBuf();
 
@@ -329,8 +328,8 @@ class GTiffDataset final : public GDALPamDataset
 
     int GetJPEGOverviewCount();
 
-    bool IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset = nullptr,
-                          vsi_l_offset *pnSize = nullptr,
+    bool IsBlockAvailable(int nBlockId, uint64_t *pnOffset = nullptr,
+                          uint64_t *pnSize = nullptr,
                           bool *pbErrOccurred = nullptr);
 
     void ApplyPamInfo();
@@ -363,7 +362,7 @@ class GTiffDataset final : public GDALPamDataset
     CPLErr CreateInternalMaskOverviews(int nOvrBlockXSize, int nOvrBlockYSize);
     std::tuple<CPLErr, bool> Finalize();
 
-    void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand) const;
+    void DiscardLsb(GByte *pabyBuffer, ptrdiff_t nBytes, int iBand) const;
     void GetDiscardLsbOption(char **papszOptions);
     void InitCompressionThreads(bool bUpdateMode, CSLConstList papszOptions);
     void InitCreationOrOpenOptions(bool bUpdateMode, CSLConstList papszOptions);
@@ -371,8 +370,8 @@ class GTiffDataset final : public GDALPamDataset
     void WaitCompletionForJobIdx(int i);
     void WaitCompletionForBlock(int nBlockId);
     void WriteRawStripOrTile(int nStripOrTile, GByte *pabyCompressedBuffer,
-                             GPtrDiff_t nCompressedBufferSize);
-    bool SubmitCompressionJob(int nStripOrTile, GByte *pabyData, GPtrDiff_t cc,
+                             ptrdiff_t nCompressedBufferSize);
+    bool SubmitCompressionJob(int nStripOrTile, GByte *pabyData, ptrdiff_t cc,
                               int nHeight);
 
     int GuessJPEGQuality(bool &bOutHasQuantizationTable,
@@ -385,14 +384,14 @@ class GTiffDataset final : public GDALPamDataset
     int DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                  int nYSize, void *pData, int nBufXSize, int nBufYSize,
                  GDALDataType eBufType, int nBandCount, int *panBandMap,
-                 GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+                 int64_t nPixelSpace, int64_t nLineSpace, int64_t nBandSpace,
                  GDALRasterIOExtraArg *psExtraArg);
 
     int VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg);
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArg);
 
     void SetStructuralMDFromParent(GTiffDataset *poParentDS);
 
@@ -400,15 +399,15 @@ class GTiffDataset final : public GDALPamDataset
     CPLErr CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                           int nXSize, int nYSize, void *pData, int nBufXSize,
                           int nBufYSize, GDALDataType eBufType, int nBandCount,
-                          int *panBandMap, GSpacing nPixelSpace,
-                          GSpacing nLineSpace, GSpacing nBandSpace);
+                          int *panBandMap, int64_t nPixelSpace,
+                          int64_t nLineSpace, int64_t nBandSpace);
 
     CPLErr CommonDirectIOClassic(FetchBufferDirectIO &oFetcher, int nXOff,
                                  int nYOff, int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, int nBandCount,
-                                 int *panBandMap, GSpacing nPixelSpace,
-                                 GSpacing nLineSpace, GSpacing nBandSpace);
+                                 int *panBandMap, int64_t nPixelSpace,
+                                 int64_t nLineSpace, int64_t nBandSpace);
 
     void LoadGeoreferencingAndPamIfNeeded();
 
@@ -466,15 +465,15 @@ class GTiffDataset final : public GDALPamDataset
     bool IsMultiThreadedReadCompatible() const;
     CPLErr MultiThreadedRead(int nXOff, int nYOff, int nXSize, int nYSize,
                              void *pData, GDALDataType eBufType, int nBandCount,
-                             const int *panBandMap, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace);
+                             const int *panBandMap, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace);
 #endif
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLStringList

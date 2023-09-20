@@ -55,7 +55,7 @@ class GDALMDReaderResursDK1 : public GDALMDReaderBase
 
   protected:
     virtual void LoadMetadata() override;
-    virtual GIntBig
+    virtual int64_t
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
     virtual char **AddXMLNameValueToList(char **papszList, const char *pszName,
                                          const char *pszValue) override;

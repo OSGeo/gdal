@@ -31,6 +31,7 @@
 #include "ogrshape.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -1411,8 +1412,8 @@ void OGRShapeDataSource::RefreshLockFile(void *_self)
             VSIFSeekL(self->m_psLockFile, 0, SEEK_SET);
             CPLString osTime;
             nInc++;
-            osTime.Printf(CPL_FRMT_GUIB ", %u\n",
-                          static_cast<GUIntBig>(time(nullptr)), nInc);
+            osTime.Printf("%" PRIu64 ", %u\n",
+                          static_cast<uint64_t>(time(nullptr)), nInc);
             VSIFWriteL(osTime.data(), 1, osTime.size(), self->m_psLockFile);
             VSIFFlushL(self->m_psLockFile);
         }
@@ -1517,7 +1518,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
     }
 
     CPLString osVSIZipDirname(GetVSIZipPrefixeDir());
-    vsi_l_offset nTotalUncompressedSize = 0;
+    uint64_t nTotalUncompressedSize = 0;
     CPLStringList aosFiles(VSIReadDir(osVSIZipDirname));
     for (int i = 0; i < aosFiles.size(); i++)
     {
@@ -1542,7 +1543,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
     if (EQUAL(pszUseVsimem, "YES") ||
         (EQUAL(pszUseVsimem, "AUTO") && nTotalUncompressedSize > 0 &&
          nTotalUncompressedSize <
-             static_cast<GUIntBig>(CPLGetUsablePhysicalRAM() / 10)))
+             static_cast<uint64_t>(CPLGetUsablePhysicalRAM() / 10)))
     {
         osTemporaryDir = CPLSPrintf("/vsimem/_shapedriver/%p", this);
     }
@@ -1606,7 +1607,7 @@ bool OGRShapeDataSource::RecompressIfNeeded(
         oMapLayerOrder[layerNames[i]] = static_cast<int>(i);
 
     std::vector<CPLString> sortedFiles;
-    vsi_l_offset nTotalUncompressedSize = 0;
+    uint64_t nTotalUncompressedSize = 0;
     for (int i = 0; i < aosFiles.size(); i++)
     {
         sortedFiles.emplace_back(aosFiles[i]);

@@ -342,7 +342,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRODBCLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRODBCLayer::GetFeature(int64_t nFeatureId)
 
 {
     /* This should be implemented directly! */

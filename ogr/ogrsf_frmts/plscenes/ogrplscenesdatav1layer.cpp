@@ -1201,7 +1201,7 @@ bool OGRPLScenesDataV1Layer::SetFieldFromPrefixedJSonFieldName(
         if (eJSonType == json_type_int)
         {
             poFeature->SetField(
-                iField, static_cast<GIntBig>(json_object_get_int64(poVal)));
+                iField, static_cast<int64_t>(json_object_get_int64(poVal)));
         }
         else if (eJSonType == json_type_double)
         {
@@ -1229,7 +1229,7 @@ bool OGRPLScenesDataV1Layer::SetFieldFromPrefixedJSonFieldName(
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
+int64_t OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
 {
     if (m_poDS->GetFilter().empty())
     {
@@ -1299,7 +1299,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
                 CPL_json_object_object_get(poObj, "buckets");
             if (poBuckets && json_object_get_type(poBuckets) == json_type_array)
             {
-                GIntBig nRes = 0;
+                int64_t nRes = 0;
                 const auto nBuckets = json_object_array_length(poBuckets);
                 for (auto i = decltype(nBuckets){0}; i < nBuckets; i++)
                 {
@@ -1328,7 +1328,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
     }
 
     m_bInFeatureCountOrGetExtent = true;
-    GIntBig nRes = OGRLayer::GetFeatureCount(bForce);
+    int64_t nRes = OGRLayer::GetFeatureCount(bForce);
     m_bInFeatureCountOrGetExtent = false;
     return nRes;
 }

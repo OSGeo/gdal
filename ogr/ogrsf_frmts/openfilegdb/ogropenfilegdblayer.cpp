@@ -321,7 +321,7 @@ void OGROpenFileGDBLayer::TryToDetectMultiPatchKind()
     delete poGeom;
 
     int nLastIdx = m_poLyrTable->GetTotalRecordCount() - 1;
-    const GUInt32 nErrorCount = CPLGetErrorCounter();
+    const uint32_t nErrorCount = CPLGetErrorCounter();
     while (nLastIdx > nFirstIdx &&
            m_poLyrTable->GetOffsetInTableForRow(nLastIdx) == 0 &&
            nErrorCount == CPLGetErrorCounter())
@@ -1108,7 +1108,7 @@ static int FillTargetValueFromSrcExpr(OGRFieldDefn *poFieldDefn,
                     sscanf(poSrcValue->string_value, "%02d:%02d:%02d", &nHour,
                            &nMin, &nSec) == 3)
                 {
-                    poTargetValue->Date.Year = static_cast<GInt16>(nYear);
+                    poTargetValue->Date.Year = static_cast<int16_t>(nYear);
                     poTargetValue->Date.Month = static_cast<GByte>(nMonth);
                     poTargetValue->Date.Day = static_cast<GByte>(nDay);
                     poTargetValue->Date.Hour = static_cast<GByte>(nHour);
@@ -1755,7 +1755,7 @@ OGRFeature *OGROpenFileGDBLayer::GetNextFeature()
                 {
                     return nullptr;
                 }
-                int iRow = static_cast<int>(reinterpret_cast<GUIntptr_t>(
+                int iRow = static_cast<int>(reinterpret_cast<uintptr_t>(
                     m_pahFilteredFeatures[m_iCurFeat++]));
                 if (m_poLyrTable->SelectRow(iRow))
                 {
@@ -1839,7 +1839,7 @@ OGRFeature *OGROpenFileGDBLayer::GetNextFeature()
 /*                          GetFeature()                               */
 /***********************************************************************/
 
-OGRFeature *OGROpenFileGDBLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGROpenFileGDBLayer::GetFeature(int64_t nFeatureId)
 {
     if (!BuildLayerDefinition())
         return nullptr;
@@ -1870,7 +1870,7 @@ OGRFeature *OGROpenFileGDBLayer::GetFeature(GIntBig nFeatureId)
 /*                         SetNextByIndex()                            */
 /***********************************************************************/
 
-OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGROpenFileGDBLayer::SetNextByIndex(int64_t nIndex)
 {
     if (m_poAttributeIterator != nullptr || m_poSpatialIndexIterator != nullptr)
         return OGRLayer::SetNextByIndex(nIndex);
@@ -1930,7 +1930,7 @@ OGRErr OGROpenFileGDBLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
 /*                         GetFeatureCount()                           */
 /***********************************************************************/
 
-GIntBig OGROpenFileGDBLayer::GetFeatureCount(int bForce)
+int64_t OGROpenFileGDBLayer::GetFeatureCount(int bForce)
 {
     if (!BuildLayerDefinition())
         return 0;

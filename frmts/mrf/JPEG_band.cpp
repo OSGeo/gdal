@@ -69,6 +69,7 @@
 
 #include "marfa.h"
 #include <setjmp.h>
+#include <cinttypes>
 #include <vector>
 
 CPL_C_START
@@ -400,7 +401,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     int nzeros =
         (cinfo.data_precision == 8)
             ? update_mask(mask, reinterpret_cast<GByte *>(src.buffer), sz.c)
-            : update_mask(mask, reinterpret_cast<GUInt16 *>(src.buffer), sz.c);
+            : update_mask(mask, reinterpret_cast<uint16_t *>(src.buffer), sz.c);
 
     // In case we need to build a Zen chunk
     char *buffer = nullptr;
@@ -667,9 +668,9 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         /* store for all coefficients */
         /* See call to jinit_d_coef_controller() from master_selection() */
         /* in libjpeg */
-        vsi_l_offset nRequiredMemory =
-            static_cast<vsi_l_offset>(cinfo.image_width) * cinfo.image_height *
-            cinfo.num_components * ((cinfo.data_precision + 7) / 8);
+        uint64_t nRequiredMemory = static_cast<uint64_t>(cinfo.image_width) *
+                                   cinfo.image_height * cinfo.num_components *
+                                   ((cinfo.data_precision + 7) / 8);
         /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
         /* to replicate the logic of jinit_d_coef_controller() */
         if (cinfo.progressive_mode)
@@ -685,17 +686,16 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Reading this image would require libjpeg to allocate "
-                     "at least " CPL_FRMT_GUIB " bytes. "
-                     "This is disabled since above the " CPL_FRMT_GUIB
-                     " threshold. "
+                     "at least %" PRIu64 " bytes. "
+                     "This is disabled since above the %" PRIu64 " threshold. "
                      "You may override this restriction by defining the "
                      "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
                      "or recompile GDAL by defining the "
                      "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
-                     "than " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(nRequiredMemory),
-                     static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
-                     static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
+                     "than %" PRIu64,
+                     static_cast<uint64_t>(nRequiredMemory),
+                     static_cast<uint64_t>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
+                     static_cast<uint64_t>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
             jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }
@@ -779,7 +779,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         apply_mask(sJPEGStruct, reinterpret_cast<char *>(dst.buffer),
                    img.pagesize.c);
     else
-        apply_mask(sJPEGStruct, reinterpret_cast<GUInt16 *>(dst.buffer),
+        apply_mask(sJPEGStruct, reinterpret_cast<uint16_t *>(dst.buffer),
                    img.pagesize.c);
 
     return CE_None;
@@ -792,12 +792,12 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 char CHUNK_NAME[] = "Zen";
 size_t CHUNK_NAME_SIZE = strlen(CHUNK_NAME) + 1;
 
-const static GUInt32 JPEG_SIG = 0xe0ffd8ff;  // JPEG 4CC code
-const static GUInt32 BRUN_SIG = 0xd242040a;  // Brunsli 4CC code, native
+const static uint32_t JPEG_SIG = 0xe0ffd8ff;  // JPEG 4CC code
+const static uint32_t BRUN_SIG = 0xd242040a;  // Brunsli 4CC code, native
 
 static bool isbrunsli(const buf_mgr &src)
 {
-    GUInt32 signature;
+    uint32_t signature;
     memcpy(&signature, src.buffer, sizeof(signature));
     if (BRUN_SIG == CPL_LSBWORD32(signature))
         return true;
@@ -808,7 +808,7 @@ bool JPEG_Codec::IsJPEG(const buf_mgr &src)
 {
     if (isbrunsli(src))
         return true;
-    GUInt32 signature;
+    uint32_t signature;
     memcpy(&signature, src.buffer, sizeof(signature));
     if (JPEG_SIG == CPL_LSBWORD32(signature))
         return true;

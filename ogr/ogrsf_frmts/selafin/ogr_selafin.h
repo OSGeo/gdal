@@ -88,7 +88,7 @@ class OGRSelafinLayer final : public OGRLayer
     Selafin::Header *poHeader;
     OGRFeatureDefn *poFeatureDefn;
     OGRSpatialReference *poSpatialRef;
-    GIntBig nCurrentId;
+    int64_t nCurrentId;
 
   public:
     OGRSelafinLayer(const char *pszLayerNameP, int bUpdateP,
@@ -105,15 +105,15 @@ class OGRSelafinLayer final : public OGRLayer
         return nStepNumber;
     }
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     void ResetReading() override;
-    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(int64_t nIndex) override;
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
     int TestCapability(const char *pszCap) override;
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -127,7 +127,7 @@ class OGRSelafinLayer final : public OGRLayer
     OGRErr ReorderFields(int *panMap) override;
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                           int nFlags) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
 };
 
 /************************************************************************/

@@ -471,7 +471,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
 
     if (EQUAL(szLayout, "BIP"))
     {
@@ -481,7 +481,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nItemSize);
+        nBandOffset = static_cast<uint64_t>(nItemSize);
     }
     else if (EQUAL(szLayout, "BSQ"))
     {
@@ -491,7 +491,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
     }
     else /* assume BIL */
     {
@@ -502,15 +502,15 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         nLineOffset = nItemSize * nBands * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
+        nBandOffset = static_cast<uint64_t>(nItemSize) * nCols;
     }
 
     if (poDS->nBands > 1)
     {
         if (nBandOffset >
-                std::numeric_limits<vsi_l_offset>::max() / (poDS->nBands - 1) ||
-            static_cast<vsi_l_offset>(nSkipBytes) >
-                std::numeric_limits<vsi_l_offset>::max() -
+                std::numeric_limits<uint64_t>::max() / (poDS->nBands - 1) ||
+            static_cast<uint64_t>(nSkipBytes) >
+                std::numeric_limits<uint64_t>::max() -
                     nBandOffset * (poDS->nBands - 1))
         {
             return nullptr;

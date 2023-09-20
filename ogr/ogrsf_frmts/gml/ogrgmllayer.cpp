@@ -35,6 +35,9 @@
 #include "ogr_p.h"
 #include "ogr_api.h"
 
+#include <cinttypes>
+#include <limits>
+
 /************************************************************************/
 /*                           OGRGMLLayer()                              */
 /************************************************************************/
@@ -117,9 +120,9 @@ void OGRGMLLayer::ResetReading()
 /*                              Increment()                             */
 /************************************************************************/
 
-static GIntBig Increment(GIntBig nVal)
+static int64_t Increment(int64_t nVal)
 {
-    if (nVal <= GINTBIG_MAX - 1)
+    if (nVal <= std::numeric_limits<int64_t>::max() - 1)
         return nVal + 1;
     return nVal;
 }
@@ -201,7 +204,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
         /*       assigned serially thereafter */
         /* --------------------------------------------------------------------
          */
-        GIntBig nFID = -1;
+        int64_t nFID = -1;
         const char *pszGML_FID = poGMLFeature->GetFID();
         if (bInvalidFIDFound)
         {
@@ -233,7 +236,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             }
             // pszFIDPrefix now contains the prefix or NULL if no prefix is
             // found.
-            if (j < 20 && sscanf(pszGML_FID + i + 1, CPL_FRMT_GIB, &nFID) == 1)
+            if (j < 20 && sscanf(pszGML_FID + i + 1, "%" SCNd64, &nFID) == 1)
             {
                 if (iNextGMLId <= nFID)
                     iNextGMLId = Increment(nFID);
@@ -254,7 +257,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 
             if (strncmp(pszGML_FID, pszFIDPrefix_notnull, nLenPrefix) == 0 &&
                 strlen(pszGML_FID + nLenPrefix) < 20 &&
-                sscanf(pszGML_FID + nLenPrefix, CPL_FRMT_GIB, &nFID) == 1)
+                sscanf(pszGML_FID + nLenPrefix, "%" SCNd64, &nFID) == 1)
             {
                 // fid with the prefix. Using its numerical part.
                 if (iNextGMLId < nFID)
@@ -378,8 +381,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 
                 CPLError(
                     bGoOn ? CE_Warning : CE_Failure, CPLE_AppDefined,
-                    "Geometry of feature " CPL_FRMT_GIB
-                    " %scannot be parsed: %s%s",
+                    "Geometry of feature %" PRId64 " %scannot be parsed: %s%s",
                     nFID, pszGML_FID ? CPLSPrintf("%s ", pszGML_FID) : "",
                     osLastErrorMsg.c_str(),
                     bGoOn ? ". Skipping to next feature."
@@ -458,8 +460,8 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                 case GMLPT_Integer64List:
                 {
                     const int nCount = psGMLProperty->nSubProperties;
-                    GIntBig *panIntList = static_cast<GIntBig *>(
-                        CPLMalloc(sizeof(GIntBig) * nCount));
+                    int64_t *panIntList = static_cast<int64_t *>(
+                        CPLMalloc(sizeof(int64_t) * nCount));
 
                     for (int i = 0; i < nCount; i++)
                         panIntList[i] =
@@ -597,7 +599,7 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRGMLLayer::GetFeatureCount(int bForce)
+int64_t OGRGMLLayer::GetFeatureCount(int bForce)
 
 {
     if (poFClass == nullptr)
@@ -608,7 +610,7 @@ GIntBig OGRGMLLayer::GetFeatureCount(int bForce)
 
     // If the schema is read from a .xsd file, we haven't read
     // the feature count, so compute it now.
-    GIntBig nFeatureCount = poFClass->GetFeatureCount();
+    int64_t nFeatureCount = poFClass->GetFeatureCount();
     if (nFeatureCount < 0)
     {
         nFeatureCount = OGRLayer::GetFeatureCount(bForce);
@@ -752,7 +754,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             poDS->PrintLine(fp, "%s gml:id=\"%s\">", poFeatureDefn->GetName(),
                             poFeature->GetFieldAsString(nGMLIdIndex));
         else
-            poDS->PrintLine(fp, "%s gml:id=\"%s." CPL_FRMT_GIB "\">",
+            poDS->PrintLine(fp, "%s gml:id=\"%s.%" PRId64 "\">",
                             poFeatureDefn->GetName(), poFeatureDefn->GetName(),
                             poFeature->GetFID());
     }
@@ -761,7 +763,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
         nGMLIdIndex = poFeatureDefn->GetFieldIndex("fid");
         if (bUseOldFIDFormat)
         {
-            poDS->PrintLine(fp, "%s fid=\"F" CPL_FRMT_GIB "\">",
+            poDS->PrintLine(fp, "%s fid=\"F%" PRId64 "\">",
                             poFeatureDefn->GetName(), poFeature->GetFID());
         }
         else if (nGMLIdIndex >= 0 &&
@@ -772,7 +774,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
         }
         else
         {
-            poDS->PrintLine(fp, "%s fid=\"%s." CPL_FRMT_GIB "\">",
+            poDS->PrintLine(fp, "%s fid=\"%s.%" PRId64 "\">",
                             poFeatureDefn->GetName(), poFeatureDefn->GetName(),
                             poFeature->GetFID());
         }
@@ -862,13 +864,13 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             {
                 if (poFeatureDefn->GetGeomFieldCount() > 1)
                     papszOptions = CSLAddString(
-                        papszOptions, CPLSPrintf("GMLID=%s.%s." CPL_FRMT_GIB,
+                        papszOptions, CPLSPrintf("GMLID=%s.%s.%" PRId64,
                                                  poFeatureDefn->GetName(),
                                                  poFieldDefn->GetNameRef(),
                                                  poFeature->GetFID()));
                 else
                     papszOptions = CSLAddString(
-                        papszOptions, CPLSPrintf("GMLID=%s.geom." CPL_FRMT_GIB,
+                        papszOptions, CPLSPrintf("GMLID=%s.geom.%" PRId64,
                                                  poFeatureDefn->GetName(),
                                                  poFeature->GetFID()));
             }
@@ -994,7 +996,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             else if (eType == OFTInteger64List)
             {
                 int nCount = 0;
-                const GIntBig *panVals =
+                const int64_t *panVals =
                     poFeature->GetFieldAsInteger64List(iField, &nCount);
                 if (poFieldDefn->GetSubType() == OFSTBoolean)
                 {
@@ -1013,7 +1015,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
                     {
                         GMLWriteField(poDS, fp, bWriteSpaceIndentation,
                                       pszPrefix, bRemoveAppPrefix, poFieldDefn,
-                                      CPLSPrintf(CPL_FRMT_GIB, panVals[i]));
+                                      CPLSPrintf("%" PRId64, panVals[i]));
                     }
                 }
             }

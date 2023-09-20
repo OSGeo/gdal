@@ -1147,7 +1147,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.resFlag = (uChar) is3[46];
          {
              float fTemp;
-             GUInt32 nTemp = is3[47] < 0 ? (-is3[47]) | 0x80000000U : is3[47];
+             uint32_t nTemp = is3[47] < 0 ? (-is3[47]) | 0x80000000U : is3[47];
              memcpy(&fTemp, &nTemp, 4);
              meta->gds.scaleLat1 = fTemp;
          }
@@ -3023,9 +3023,9 @@ void ParseGrid (VSILFILE *fp, gridAttribType *attrib, double **Grib_Data,
 
       if( subNxNy > 100 * 1024 * 1024 )
       {
-          vsi_l_offset curPos = VSIFTellL(fp);
+          uint64_t curPos = VSIFTellL(fp);
           VSIFSeekL(fp, 0, SEEK_END);
-          vsi_l_offset fileSize = VSIFTellL(fp);
+          uint64_t fileSize = VSIFTellL(fp);
           VSIFSeekL(fp, curPos, SEEK_SET);
           // allow a compression ratio of 1:1000
           if( subNxNy / 1000 > fileSize )

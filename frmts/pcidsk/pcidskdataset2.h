@@ -197,7 +197,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRPCIDSKLayer)
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
     OGRFeatureDefn *GetLayerDefn() override
@@ -207,12 +207,12 @@ class OGRPCIDSKLayer final : public OGRLayer,
 
     int TestCapability(const char *) override;
 
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr CreateField(OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    GIntBig GetFeatureCount(int) override;
+    int64_t GetFeatureCount(int) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override

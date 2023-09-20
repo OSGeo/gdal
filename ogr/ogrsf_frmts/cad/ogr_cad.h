@@ -44,7 +44,7 @@ class OGRCADLayer final : public OGRLayer
 {
     OGRFeatureDefn *poFeatureDefn;
     OGRSpatialReference *poSpatialRef;
-    GIntBig nNextFID;
+    int64_t nNextFID;
     CADLayer &poCADLayer;
     int nDWGEncoding;
 
@@ -54,8 +54,8 @@ class OGRCADLayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
-    GIntBig GetFeatureCount(int /* bForce */) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
+    int64_t GetFeatureCount(int /* bForce */) override;
     OGRSpatialReference *GetSpatialRef() override
     {
         return poSpatialRef;

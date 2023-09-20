@@ -293,9 +293,8 @@ bool OGRJSONFGReader::AnalyzeWithStreamingParser(
     if (!oParser.IsTypeKnown() || !oParser.IsFeatureCollection())
     {
         fp->Seek(0, SEEK_END);
-        const vsi_l_offset nFileSize = fp->Tell();
-        const vsi_l_offset nRAM =
-            static_cast<vsi_l_offset>(CPLGetUsablePhysicalRAM());
+        const uint64_t nFileSize = fp->Tell();
+        const uint64_t nRAM = static_cast<uint64_t>(CPLGetUsablePhysicalRAM());
         if (nRAM == 0 || nRAM > nFileSize * 20)
         {
             // Only try full ingestion if we have 20x more RAM than the file
@@ -1069,7 +1068,7 @@ OGRJSONFGReader::ReadFeature(json_object *poObj, const char *pszRequestedLayer,
     json_object *poObjId = CPL_json_object_object_get(poObj, "id");
     if (nullptr != poObjId && oBuildContext.bFeatureLevelIdAsFID)
     {
-        poFeature->SetFID(static_cast<GIntBig>(json_object_get_int64(poObjId)));
+        poFeature->SetFID(static_cast<int64_t>(json_object_get_int64(poObjId)));
     }
 
     /* -------------------------------------------------------------------- */

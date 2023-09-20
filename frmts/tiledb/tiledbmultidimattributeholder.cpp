@@ -41,7 +41,7 @@ TileDBAttributeHolder::~TileDBAttributeHolder() = default;
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> TileDBAttributeHolder::CreateAttributeImpl(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList /*papszOptions*/)
 {
     if (!IIsWritable())

@@ -315,7 +315,7 @@ bool OGRProxiedLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRProxiedLayer::SetNextByIndex(int64_t nIndex)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;
@@ -326,7 +326,7 @@ OGRErr OGRProxiedLayer::SetNextByIndex(GIntBig nIndex)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRProxiedLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRProxiedLayer::GetFeature(int64_t nFID)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return nullptr;
@@ -388,7 +388,7 @@ OGRErr OGRProxiedLayer::IUpdateFeature(OGRFeature *poFeature,
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRProxiedLayer::DeleteFeature(int64_t nFID)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;
@@ -463,7 +463,7 @@ OGRSpatialReference *OGRProxiedLayer::GetSpatialRef()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRProxiedLayer::GetFeatureCount(int bForce)
+int64_t OGRProxiedLayer::GetFeatureCount(int bForce)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return 0;

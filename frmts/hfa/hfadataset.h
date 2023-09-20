@@ -76,8 +76,8 @@ class HFADataset final : public GDALPamDataset
 
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -185,7 +185,7 @@ class HFARasterBand final : public GDALPamRasterBand
                                   CSLConstList papszOptions) override;
 
     virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int *pnBuckets, uint64_t **ppanHistogram,
                                        int bForce, GDALProgressFunc,
                                        void *pProgressData) override;
 

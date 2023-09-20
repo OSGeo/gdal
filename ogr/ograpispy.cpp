@@ -30,6 +30,7 @@
 #include "cpl_multiproc.h"
 #include "ograpispy.h"
 
+#include <cinttypes>
 #include <cstdio>
 #include <map>
 #include <set>
@@ -800,20 +801,20 @@ void OGRAPISpy_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszFilter)
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
+void OGRAPISpy_L_GetFeature(OGRLayerH hLayer, int64_t nFeatureId)
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    fprintf(fpSpyFile, "%s.GetFeature(" CPL_FRMT_GIB ")\n",
+    fprintf(fpSpyFile, "%s.GetFeature(%" PRId64 ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nFeatureId);
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
+void OGRAPISpy_L_SetNextByIndex(OGRLayerH hLayer, int64_t nIndex)
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    fprintf(fpSpyFile, "%s.SetNextByIndex(" CPL_FRMT_GIB ")\n",
+    fprintf(fpSpyFile, "%s.SetNextByIndex(%" PRId64 ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nIndex);
     OGRAPISpyFileClose();
 }
@@ -839,7 +840,7 @@ static void OGRAPISpyDumpFeature(OGRFeatureH hFeat)
                 OGRFeatureDefn::ToHandle(poFeature->GetDefnRef()))
                 .c_str());
     if (poFeature->GetFID() != -1)
-        fprintf(fpSpyFile, "f.SetFID(" CPL_FRMT_GIB ")\n", poFeature->GetFID());
+        fprintf(fpSpyFile, "f.SetFID(%" PRId64 ")\n", poFeature->GetFID());
     for (int i = 0; i < poFeature->GetFieldCount(); i++)
     {
         if (poFeature->IsFieldNull(i))
@@ -1158,11 +1159,11 @@ void OGRAPISpy_L_SetSpatialFilterRectEx(OGRLayerH hLayer, int iGeomField,
     OGRAPISpyFileClose();
 }
 
-void OGRAPISpy_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)
+void OGRAPISpy_L_DeleteFeature(OGRLayerH hLayer, int64_t nFID)
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    fprintf(fpSpyFile, "%s.DeleteFeature(" CPL_FRMT_GIB ")\n",
+    fprintf(fpSpyFile, "%s.DeleteFeature(%" PRId64 ")\n",
             OGRAPISpyGetLayerVar(hLayer).c_str(), nFID);
     OGRAPISpyFileClose();
 }

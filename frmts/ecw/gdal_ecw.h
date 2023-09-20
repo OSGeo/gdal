@@ -38,6 +38,8 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
+#include <cinttypes>
+
 #undef NOISY_DEBUG
 
 #ifdef FRMT_ecw
@@ -285,8 +287,8 @@ class VSIIOStream final : public CNCSJPCIOStream
                                    Origin origin = CURRENT) override
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("ECW", "VSIIOStream::Seek(" CPL_FRMT_GIB ",%d)",
-                 static_cast<GIntBig>(offset), (int)origin);
+        CPLDebug("ECW", "VSIIOStream::Seek(%" PRId64 ",%d)",
+                 static_cast<int64_t>(offset), (int)origin);
 #endif
         bool success = false;
         switch (origin)
@@ -327,8 +329,8 @@ class VSIIOStream final : public CNCSJPCIOStream
             size = Tell();
             Seek(curPos, START);
 #ifdef DEBUG_VERBOSE
-            CPLDebug("ECW", "VSIIOStream::Size()=" CPL_FRMT_GIB,
-                     static_cast<GIntBig>(size));
+            CPLDebug("ECW", "VSIIOStream::Size()=%" PRId64,
+                     static_cast<int64_t>(size));
 #endif
             return size;
         }
@@ -339,8 +341,8 @@ class VSIIOStream final : public CNCSJPCIOStream
     virtual bool Read(INT64 offset, void *buffer, UINT32 count) override
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("ECW", "VSIIOStream::Read(" CPL_FRMT_GIB ",%u)",
-                 static_cast<GIntBig>(offset), count);
+        CPLDebug("ECW", "VSIIOStream::Read(%" PRId64 ",%u)",
+                 static_cast<int64_t>(offset), count);
 #endif
         /* SDK 4.3 doc says it is not supposed to update the file pointer. */
         /* Later versions have no comment... */
@@ -366,8 +368,8 @@ class VSIIOStream final : public CNCSJPCIOStream
         if (VSIFReadL(buffer, count, 1, fpVSIL) != 1)
         {
             CPLDebug("VSIIOSTREAM",
-                     "Read(%d) failed @ " CPL_FRMT_GIB ", ignoring failure.",
-                     count, (VSIFTellL(fpVSIL) - startOfJPData));
+                     "Read(%d) failed @ %" PRId64 ", ignoring failure.", count,
+                     (VSIFTellL(fpVSIL) - startOfJPData));
         }
 
         return true;
@@ -542,8 +544,8 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     void CleanupWindow();
     CPLErr RunDeferredAdviseRead();
     int TryWinRasterIO(GDALRWFlag, int, int, int, int, GByte *, int, int,
-                       GDALDataType, int, int *, GSpacing nPixelSpace,
-                       GSpacing nLineSpace, GSpacing nBandSpace,
+                       GDALDataType, int, int *, int64_t nPixelSpace,
+                       int64_t nLineSpace, int64_t nBandSpace,
                        GDALRasterIOExtraArg *psExtraArg);
     CPLErr LoadNextLine();
 
@@ -586,13 +588,13 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
 
     CPLStringList oECWMetadataList;
     CPLErr ReadBands(void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, int nBandCount,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg);
+                     GDALDataType eBufType, int nBandCount, int64_t nPixelSpace,
+                     int64_t nLineSpace, int64_t nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg);
     CPLErr ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType, int nBandCount,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg);
 
   public:
@@ -611,8 +613,8 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     }
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual char **GetMetadataDomainList() override;
@@ -682,13 +684,13 @@ class ECWRasterBand final : public GDALPamRasterBand
 
     // #if !defined(SDK_CAN_DO_SUPERSAMPLING)
     CPLErr OldIRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                        GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                        GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                         GDALRasterIOExtraArg *psExtraArg);
     // #endif
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -716,11 +718,11 @@ class ECWRasterBand final : public GDALPamRasterBand
     void GetBandIndexAndCountForStatistics(int &bandIndex,
                                            int &bandCount) const;
     virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int *pnBuckets, uint64_t **ppanHistogram,
                                        int bForce, GDALProgressFunc,
                                        void *pProgressData) override;
     virtual CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
-                                       GUIntBig *panHistogram) override;
+                                       uint64_t *panHistogram) override;
     virtual double GetMinimum(int *pbSuccess) override;
     virtual double GetMaximum(int *pbSuccess) override;
     virtual CPLErr GetStatistics(int bApproxOK, int bForce, double *pdfMin,

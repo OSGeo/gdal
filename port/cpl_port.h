@@ -131,6 +131,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stddef.h>  // ptrdiff_t
+#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
@@ -175,8 +177,9 @@
 #endif
 #endif /* __cplusplus */
 
+#if defined(GDAL_USE_OLD_INT_TYPES)
 /*---------------------------------------------------------------------
- *        types for 16 and 32 bits integers, etc...
+ *        Deprecated types for 16 and 32 bits integers, etc...
  *--------------------------------------------------------------------*/
 #if UINT_MAX == 65535
 typedef long GInt32;
@@ -192,20 +195,16 @@ typedef unsigned int GUInt32;
 typedef short GInt16;
 /** Unsigned int16 type */
 typedef unsigned short GUInt16;
-/** Unsigned byte type */
-typedef unsigned char GByte;
 /** Signed int8 type */
 typedef signed char GInt8;
-/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef
- * bool GBool" */
-/* in include/poppler/goo/gtypes.h */
-#ifndef CPL_GBOOL_DEFINED
-/*! @cond Doxygen_Suppress */
-#define CPL_GBOOL_DEFINED
-/*! @endcond */
+
 /** Type for boolean values (alias to int) */
 typedef int GBool;
+
 #endif
+
+/** Unsigned byte type */
+typedef unsigned char GByte;
 
 /*! @cond Doxygen_Suppress */
 #ifdef __cplusplus
@@ -217,9 +216,10 @@ typedef int GBool;
 #endif
 /*! @endcond */
 
-/* -------------------------------------------------------------------- */
-/*      64bit support                                                   */
-/* -------------------------------------------------------------------- */
+#if defined(GDAL_USE_OLD_INT_TYPES)
+/*---------------------------------------------------------------------
+ *        Deprecated types for 64bit integers
+ * -------------------------------------------------------------------- */
 
 /** Large signed integer type (generally 64-bit integer type).
  *  Use GInt64 when exactly 64 bit is needed */
@@ -236,13 +236,6 @@ typedef unsigned long long GUIntBig;
 #define GUINTBIG_MAX                                                           \
     ((CPL_STATIC_CAST(GUIntBig, 0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
-/*! @cond Doxygen_Suppress */
-#define CPL_HAS_GINT64 1
-/*! @endcond */
-
-/* Note: we might want to use instead int64_t / uint64_t if they are available
- */
-
 /** Signed 64 bit integer type */
 typedef GIntBig GInt64;
 /** Unsigned 64 bit integer type */
@@ -255,27 +248,19 @@ typedef GUIntBig GUInt64;
 /** Minimum GUInt64 value */
 #define GUINT64_MAX GUINTBIG_MAX
 
-#if SIZEOF_VOIDP > 8
-#include <stddef.h>  // ptrdiff_t
 /** Integer type large enough to hold the difference between 2 addresses */
 typedef ptrdiff_t GPtrDiff_t;
-#elif SIZEOF_VOIDP == 8
-/** Integer type large enough to hold the difference between 2 addresses */
-typedef GIntBig GPtrDiff_t;
-#else
-/** Integer type large enough to hold the difference between 2 addresses */
-typedef int GPtrDiff_t;
+
 #endif
 
 #ifdef GDAL_COMPILATION
-#include <stdint.h>
-typedef uintptr_t GUIntptr_t;
 #define CPL_IS_ALIGNED(ptr, quant)                                             \
-    ((CPL_REINTERPRET_CAST(GUIntptr_t, CPL_STATIC_CAST(const void *, ptr)) %   \
+    ((CPL_REINTERPRET_CAST(uintptr_t, CPL_STATIC_CAST(const void *, ptr)) %    \
       (quant)) == 0)
 
 #endif
 
+#ifndef GDAL_COMPILATION
 #if (defined(__MSVCRT__) && !(defined(__MINGW64__) && __GNUC__ >= 10)) ||      \
     (defined(WIN32) && defined(_MSC_VER))
 #define CPL_FRMT_GB_WITHOUT_PREFIX "I64"
@@ -288,13 +273,14 @@ typedef uintptr_t GUIntptr_t;
 #define CPL_FRMT_GIB "%" CPL_FRMT_GB_WITHOUT_PREFIX "d"
 /** Printf formatting for GUIntBig */
 #define CPL_FRMT_GUIB "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
+#endif
 
 /*! @cond Doxygen_Suppress */
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
 #define CPL_INT64_FITS_ON_INT32(x) ((x) >= INT_MIN && (x) <= INT_MAX)
 #else
 #define CPL_INT64_FITS_ON_INT32(x)                                             \
-    (CPL_STATIC_CAST(GIntBig, CPL_STATIC_CAST(int, x)) == (x))
+    (CPL_STATIC_CAST(int64_t, CPL_STATIC_CAST(int, x)) == (x))
 #endif
 /*! @endcond */
 
@@ -739,37 +725,37 @@ extern "C++"
 
 /** Byte-swap a 16bit unsigned integer */
 #define CPL_SWAP16(x)                                                          \
-    CPL_STATIC_CAST(GUInt16, (CPL_STATIC_CAST(GUInt16, x) << 8) |              \
-                                 (CPL_STATIC_CAST(GUInt16, x) >> 8))
+    CPL_STATIC_CAST(uint16_t, (CPL_STATIC_CAST(uint16_t, x) << 8) |            \
+                                  (CPL_STATIC_CAST(uint16_t, x) >> 8))
 
 #if defined(HAVE_GCC_BSWAP)
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x)                                                          \
-    CPL_STATIC_CAST(GUInt32, __builtin_bswap32(CPL_STATIC_CAST(GUInt32, x)))
+    CPL_STATIC_CAST(uint32_t, __builtin_bswap32(CPL_STATIC_CAST(uint32_t, x)))
 /** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x)                                                          \
-    CPL_STATIC_CAST(GUInt64, __builtin_bswap64(CPL_STATIC_CAST(GUInt64, x)))
+    CPL_STATIC_CAST(uint64_t, __builtin_bswap64(CPL_STATIC_CAST(uint64_t, x)))
 #elif defined(_MSC_VER)
 #define CPL_SWAP32(x)                                                          \
-    CPL_STATIC_CAST(GUInt32, _byteswap_ulong(CPL_STATIC_CAST(GUInt32, x)))
+    CPL_STATIC_CAST(uint32_t, _byteswap_ulong(CPL_STATIC_CAST(uint32_t, x)))
 #define CPL_SWAP64(x)                                                          \
-    CPL_STATIC_CAST(GUInt64, _byteswap_uint64(CPL_STATIC_CAST(GUInt64, x)))
+    CPL_STATIC_CAST(uint64_t, _byteswap_uint64(CPL_STATIC_CAST(uint64_t, x)))
 #else
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x)                                                          \
-    CPL_STATIC_CAST(GUInt32,                                                   \
-                    ((CPL_STATIC_CAST(GUInt32, x) & 0x000000ffU) << 24) |      \
-                        ((CPL_STATIC_CAST(GUInt32, x) & 0x0000ff00U) << 8) |   \
-                        ((CPL_STATIC_CAST(GUInt32, x) & 0x00ff0000U) >> 8) |   \
-                        ((CPL_STATIC_CAST(GUInt32, x) & 0xff000000U) >> 24))
+    CPL_STATIC_CAST(uint32_t,                                                  \
+                    ((CPL_STATIC_CAST(uint32_t, x) & 0x000000ffU) << 24) |     \
+                        ((CPL_STATIC_CAST(uint32_t, x) & 0x0000ff00U) << 8) |  \
+                        ((CPL_STATIC_CAST(uint32_t, x) & 0x00ff0000U) >> 8) |  \
+                        ((CPL_STATIC_CAST(uint32_t, x) & 0xff000000U) >> 24))
 
 /** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x)                                                          \
-    ((CPL_STATIC_CAST(GUInt64, CPL_SWAP32(CPL_STATIC_CAST(GUInt32, x)))        \
+    ((CPL_STATIC_CAST(uint64_t, CPL_SWAP32(CPL_STATIC_CAST(uint32_t, x)))      \
       << 32) |                                                                 \
-     (CPL_STATIC_CAST(GUInt64,                                                 \
+     (CPL_STATIC_CAST(uint64_t,                                                \
                       CPL_SWAP32(CPL_STATIC_CAST(                              \
-                          GUInt32, CPL_STATIC_CAST(GUInt64, x) >> 32)))))
+                          uint32_t, CPL_STATIC_CAST(uint64_t, x) >> 32)))))
 
 #endif
 
@@ -777,7 +763,7 @@ extern "C++"
 #define CPL_SWAP16PTR(x)                                                       \
     do                                                                         \
     {                                                                          \
-        GUInt16 _n16;                                                          \
+        uint16_t _n16;                                                         \
         void *_lx = x;                                                         \
         memcpy(&_n16, _lx, 2);                                                 \
         CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 ||                    \
@@ -790,7 +776,7 @@ extern "C++"
 #define CPL_SWAP32PTR(x)                                                       \
     do                                                                         \
     {                                                                          \
-        GUInt32 _n32;                                                          \
+        uint32_t _n32;                                                         \
         void *_lx = x;                                                         \
         memcpy(&_n32, _lx, 4);                                                 \
         CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 ||                    \
@@ -803,7 +789,7 @@ extern "C++"
 #define CPL_SWAP64PTR(x)                                                       \
     do                                                                         \
     {                                                                          \
-        GUInt64 _n64;                                                          \
+        uint64_t _n64;                                                         \
         void *_lx = x;                                                         \
         memcpy(&_n64, _lx, 8);                                                 \
         CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 ||                    \
@@ -878,18 +864,18 @@ extern "C++"
      (*((CPL_REINTERPRET_CAST(const GByte *, x)) + 3) << 24))
 
 /** Return a signed Int16 from the 2 bytes ordered in LSB order at address x */
-#define CPL_LSBSINT16PTR(x) CPL_STATIC_CAST(GInt16, CPL_LSBINT16PTR(x))
+#define CPL_LSBSINT16PTR(x) CPL_STATIC_CAST(int16_t, CPL_LSBINT16PTR(x))
 
 /** Return a unsigned Int16 from the 2 bytes ordered in LSB order at address x
  */
-#define CPL_LSBUINT16PTR(x) CPL_STATIC_CAST(GUInt16, CPL_LSBINT16PTR(x))
+#define CPL_LSBUINT16PTR(x) CPL_STATIC_CAST(uint16_t, CPL_LSBINT16PTR(x))
 
 /** Return a signed Int32 from the 4 bytes ordered in LSB order at address x */
-#define CPL_LSBSINT32PTR(x) CPL_STATIC_CAST(GInt32, CPL_LSBINT32PTR(x))
+#define CPL_LSBSINT32PTR(x) CPL_STATIC_CAST(int32_t, CPL_LSBINT32PTR(x))
 
 /** Return a unsigned Int32 from the 4 bytes ordered in LSB order at address x
  */
-#define CPL_LSBUINT32PTR(x) CPL_STATIC_CAST(GUInt32, CPL_LSBINT32PTR(x))
+#define CPL_LSBUINT32PTR(x) CPL_STATIC_CAST(uint32_t, CPL_LSBINT32PTR(x))
 
 /*! @cond Doxygen_Suppress */
 /* Utility macro to explicitly mark intentionally unreferenced parameters. */

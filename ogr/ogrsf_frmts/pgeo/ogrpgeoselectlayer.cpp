@@ -145,7 +145,7 @@ void OGRPGeoSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGeoSelectLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRPGeoSelectLayer::GetFeature(int64_t nFeatureId)
 
 {
     return OGRPGeoLayer::GetFeature(nFeatureId);
@@ -170,7 +170,7 @@ int OGRPGeoSelectLayer::TestCapability(const char *pszCap)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRPGeoSelectLayer::GetFeatureCount(int bForce)
+int64_t OGRPGeoSelectLayer::GetFeatureCount(int bForce)
 
 {
     return OGRPGeoLayer::GetFeatureCount(bForce);

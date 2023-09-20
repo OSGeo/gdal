@@ -609,7 +609,7 @@ struct GetFromInteger64List
         return psRawField->Integer64List.nCount;
     }
 
-    static inline const GIntBig *getValues(const OGRField *psRawField)
+    static inline const int64_t *getValues(const OGRField *psRawField)
     {
         return psRawField->Integer64List.paList;
     }
@@ -2570,7 +2570,7 @@ static size_t FillValidityArrayFromAttrQuery(
                     // unsigned int32
                     oFeature.SetField(
                         iOGRFieldIndex,
-                        static_cast<GIntBig>(static_cast<const uint32_t *>(
+                        static_cast<int64_t>(static_cast<const uint32_t *>(
                             psArray->buffers[1])[nOffsetedIndex]));
                 }
                 else if (format[0] == 'l' && format[1] == '\0')
@@ -2578,7 +2578,7 @@ static size_t FillValidityArrayFromAttrQuery(
                     // signed int64
                     oFeature.SetField(
                         iOGRFieldIndex,
-                        static_cast<GIntBig>(static_cast<const int64_t *>(
+                        static_cast<int64_t>(static_cast<const int64_t *>(
                             psArray->buffers[1])[nOffsetedIndex]));
                 }
                 else if (format[0] == 'L' && format[1] == '\0')
@@ -2770,7 +2770,7 @@ static size_t FillValidityArrayFromAttrQuery(
                 {
                     oFeature.SetField(
                         iOGRFieldIndex,
-                        static_cast<GIntBig>(static_cast<const int64_t *>(
+                        static_cast<int64_t>(static_cast<const int64_t *>(
                             psArray->buffers[1])[nOffsetedIndex]));
                 }
                 else if (STARTS_WITH_CI(format, "tss:"))

@@ -669,7 +669,7 @@ class CPL_DLL OGRFeatureDefn
 class CPL_DLL OGRFeature
 {
   private:
-    GIntBig nFID;
+    int64_t nFID;
     OGRFeatureDefn *poDefn;
     OGRGeometry **papoGeometries;
     OGRField *pauFields;
@@ -715,7 +715,16 @@ class CPL_DLL OGRFeature
         /** Set an integer value to the field. */
         FieldValue &operator=(int nVal);
         /** Set an integer value to the field. */
-        FieldValue &operator=(GIntBig nVal);
+        FieldValue &operator=(int64_t nVal);
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+        //! @cond Doxygen_Suppress
+        inline FieldValue &operator=(long long nVal)
+        {
+            return operator=(static_cast<int64_t>(nVal));
+        }
+        //! @endcond
+#endif
         /** Set a real value to the field. */
         FieldValue &operator=(double dfVal);
         /** Set a string value to the field. */
@@ -725,7 +734,7 @@ class CPL_DLL OGRFeature
         /** Set an array of integer to the field. */
         FieldValue &operator=(const std::vector<int> &oArray);
         /** Set an array of big integer to the field. */
-        FieldValue &operator=(const std::vector<GIntBig> &oArray);
+        FieldValue &operator=(const std::vector<int64_t> &oArray);
         /** Set an array of double to the field. */
         FieldValue &operator=(const std::vector<double> &oArray);
         /** Set an array of strings to the field. */
@@ -796,7 +805,7 @@ class CPL_DLL OGRFeature
          * Only use that method if and only if GetType() == OFTInteger64.
          */
         // cppcheck-suppress functionStatic
-        GIntBig GetInteger64() const
+        int64_t GetInteger64() const
         {
             return GetRawValue()->Integer64;
         }
@@ -830,10 +839,19 @@ class CPL_DLL OGRFeature
         }
         /** Return the field value as 64-bit integer, with potential conversion
          */
-        operator GIntBig() const
+        operator int64_t() const
         {
             return GetAsInteger64();
         }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+        //! @cond Doxygen_Suppress
+        inline operator long long() const
+        {
+            return static_cast<long long>(GetAsInteger64());
+        }
+        //! @endcond
+#endif
         /** Return the field value as double, with potential conversion */
         operator double() const
         {
@@ -851,7 +869,7 @@ class CPL_DLL OGRFeature
         }
         /** Return the field value as 64-bit integer list, with potential
          * conversion */
-        operator const std::vector<GIntBig> &() const
+        operator const std::vector<int64_t> &() const
         {
             return GetAsInteger64List();
         }
@@ -872,7 +890,7 @@ class CPL_DLL OGRFeature
         int GetAsInteger() const;
         /** Return the field value as 64-bit integer, with potential conversion
          */
-        GIntBig GetAsInteger64() const;
+        int64_t GetAsInteger64() const;
         /** Return the field value as double, with potential conversion */
         double GetAsDouble() const;
         /** Return the field value as string, with potential conversion */
@@ -881,7 +899,7 @@ class CPL_DLL OGRFeature
         const std::vector<int> &GetAsIntegerList() const;
         /** Return the field value as 64-bit integer list, with potential
          * conversion */
-        const std::vector<GIntBig> &GetAsInteger64List() const;
+        const std::vector<int64_t> &GetAsInteger64List() const;
         /** Return the field value as double list, with potential conversion */
         const std::vector<double> &GetAsDoubleList() const;
         /** Return the field value as string list, with potential conversion */
@@ -1028,13 +1046,13 @@ class CPL_DLL OGRFeature
     }
 
     int GetFieldAsInteger(int i) const;
-    GIntBig GetFieldAsInteger64(int i) const;
+    int64_t GetFieldAsInteger64(int i) const;
     double GetFieldAsDouble(int i) const;
     const char *GetFieldAsString(int i) const;
     const char *GetFieldAsISO8601DateTime(int i,
                                           CSLConstList papszOptions) const;
     const int *GetFieldAsIntegerList(int i, int *pnCount) const;
-    const GIntBig *GetFieldAsInteger64List(int i, int *pnCount) const;
+    const int64_t *GetFieldAsInteger64List(int i, int *pnCount) const;
     const double *GetFieldAsDoubleList(int i, int *pnCount) const;
     char **GetFieldAsStringList(int i) const;
     GByte *GetFieldAsBinary(int i, int *pnCount) const;
@@ -1069,7 +1087,7 @@ class CPL_DLL OGRFeature
     {
         return pauFields[i].Integer;
     }
-    GIntBig GetFieldAsInteger64Unsafe(int i) const
+    int64_t GetFieldAsInteger64Unsafe(int i) const
     {
         return pauFields[i].Integer64;
     }
@@ -1087,7 +1105,7 @@ class CPL_DLL OGRFeature
     {
         return GetFieldAsInteger(GetFieldIndex(pszFName));
     }
-    GIntBig GetFieldAsInteger64(const char *pszFName) const
+    int64_t GetFieldAsInteger64(const char *pszFName) const
     {
         return GetFieldAsInteger64(GetFieldIndex(pszFName));
     }
@@ -1108,7 +1126,7 @@ class CPL_DLL OGRFeature
     {
         return GetFieldAsIntegerList(GetFieldIndex(pszFName), pnCount);
     }
-    const GIntBig *GetFieldAsInteger64List(const char *pszFName,
+    const int64_t *GetFieldAsInteger64List(const char *pszFName,
                                            int *pnCount) const
     {
         return GetFieldAsInteger64List(GetFieldIndex(pszFName), pnCount);
@@ -1123,11 +1141,29 @@ class CPL_DLL OGRFeature
     }
 
     void SetField(int i, int nValue);
-    void SetField(int i, GIntBig nValue);
+    void SetField(int i, int64_t nValue);
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(int i, long long nValue)
+    {
+        SetField(i, static_cast<int64_t>(nValue));
+    }
+    //! @endcond
+#endif
     void SetField(int i, double dfValue);
     void SetField(int i, const char *pszValue);
     void SetField(int i, int nCount, const int *panValues);
-    void SetField(int i, int nCount, const GIntBig *panValues);
+    void SetField(int i, int nCount, const int64_t *panValues);
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(int i, int nCount, const long long *panValues)
+    {
+        SetField(i, nCount, reinterpret_cast<const int64_t *>(panValues));
+    }
+    //! @endcond
+#endif
     void SetField(int i, int nCount, const double *padfValues);
     void SetField(int i, const char *const *papszValues);
     void SetField(int i, const OGRField *puValue);
@@ -1144,10 +1180,17 @@ class CPL_DLL OGRFeature
         pauFields[i].Set.nMarker2 = 0;
         pauFields[i].Set.nMarker3 = 0;
     }
-    void SetFieldSameTypeUnsafe(int i, GIntBig nValue)
+    void SetFieldSameTypeUnsafe(int i, int64_t nValue)
     {
         pauFields[i].Integer64 = nValue;
     }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    inline void SetFieldSameTypeUnsafe(int i, long long nValue)
+    {
+        SetFieldSameTypeUnsafe(i, static_cast<int64_t>(nValue));
+    }
+#endif
     void SetFieldSameTypeUnsafe(int i, double dfValue)
     {
         pauFields[i].Real = dfValue;
@@ -1162,10 +1205,19 @@ class CPL_DLL OGRFeature
     {
         SetField(GetFieldIndex(pszFName), nValue);
     }
-    void SetField(const char *pszFName, GIntBig nValue)
+    void SetField(const char *pszFName, int64_t nValue)
     {
         SetField(GetFieldIndex(pszFName), nValue);
     }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(const char *pszFName, long long nValue)
+    {
+        SetField(pszFName, static_cast<int64_t>(nValue));
+    }
+    //! @endcond
+#endif
     void SetField(const char *pszFName, double dfValue)
     {
         SetField(GetFieldIndex(pszFName), dfValue);
@@ -1178,10 +1230,21 @@ class CPL_DLL OGRFeature
     {
         SetField(GetFieldIndex(pszFName), nCount, panValues);
     }
-    void SetField(const char *pszFName, int nCount, const GIntBig *panValues)
+    void SetField(const char *pszFName, int nCount, const int64_t *panValues)
     {
         SetField(GetFieldIndex(pszFName), nCount, panValues);
     }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(const char *pszFName, int nCount,
+                         const long long *panValues)
+    {
+        SetField(pszFName, nCount,
+                 reinterpret_cast<const int64_t *>(panValues));
+    }
+    //! @endcond
+#endif
     void SetField(const char *pszFName, int nCount, const double *padfValues)
     {
         SetField(GetFieldIndex(pszFName), nCount, padfValues);
@@ -1202,11 +1265,11 @@ class CPL_DLL OGRFeature
                  fSecond, nTZFlag);
     }
 
-    GIntBig GetFID() const
+    int64_t GetFID() const
     {
         return nFID;
     }
-    virtual OGRErr SetFID(GIntBig nFIDIn);
+    virtual OGRErr SetFID(int64_t nFIDIn);
 
     void DumpReadable(FILE *, CSLConstList papszOptions = nullptr) const;
     std::string DumpReadableAsString(CSLConstList papszOptions = nullptr) const;
@@ -1673,8 +1736,8 @@ class CPL_DLL OGRFeatureQuery
 
     char **FieldCollector(void *, char **);
 
-    static GIntBig *EvaluateAgainstIndices(const swq_expr_node *, OGRLayer *,
-                                           GIntBig &nFIDCount);
+    static int64_t *EvaluateAgainstIndices(const swq_expr_node *, OGRLayer *,
+                                           int64_t &nFIDCount);
 
     static int CanUseIndex(const swq_expr_node *, OGRLayer *);
 
@@ -1693,7 +1756,7 @@ class CPL_DLL OGRFeatureQuery
                    swq_custom_func_registrar *poCustomFuncRegistrar = nullptr);
     int Evaluate(OGRFeature *);
 
-    GIntBig *EvaluateAgainstIndices(OGRLayer *, OGRErr *);
+    int64_t *EvaluateAgainstIndices(OGRLayer *, OGRErr *);
 
     int CanUseIndex(OGRLayer *);
 

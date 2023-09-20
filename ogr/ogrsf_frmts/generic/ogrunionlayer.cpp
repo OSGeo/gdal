@@ -734,7 +734,7 @@ OGRFeature *OGRUnionLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRUnionLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRUnionLayer::GetFeature(int64_t nFeatureId)
 {
     OGRFeature *poFeature = nullptr;
 
@@ -1089,7 +1089,7 @@ void OGRUnionLayer::ApplyAttributeFilterToSrcLayer(int iSubLayer)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRUnionLayer::GetFeatureCount(int bForce)
+int64_t OGRUnionLayer::GetFeatureCount(int bForce)
 {
     if (nFeatureCount >= 0 && m_poFilterGeom == nullptr &&
         m_poAttrQuery == nullptr)
@@ -1100,7 +1100,7 @@ GIntBig OGRUnionLayer::GetFeatureCount(int bForce)
     if (!GetAttrFilterPassThroughValue())
         return OGRLayer::GetFeatureCount(bForce);
 
-    GIntBig nRet = 0;
+    int64_t nRet = 0;
     for (int i = 0; i < nSrcLayers; i++)
     {
         AutoWarpLayerIfNecessary(i);

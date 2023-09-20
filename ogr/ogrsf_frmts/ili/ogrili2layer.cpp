@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "ogr_ili2.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                           OGRILI2Layer()                              */
 /************************************************************************/
@@ -70,7 +72,7 @@ OGRILI2Layer::~OGRILI2Layer()
 
 void OGRILI2Layer::AddFeature(OGRFeature *poFeature)
 {
-    poFeature->SetFID(static_cast<GIntBig>(1 + listFeature.size()));
+    poFeature->SetFID(static_cast<int64_t>(1 + listFeature.size()));
     listFeature.push_back(poFeature);
 }
 
@@ -105,7 +107,7 @@ OGRFeature *OGRILI2Layer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRILI2Layer::GetFeatureCount(int bForce)
+int64_t OGRILI2Layer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
@@ -276,7 +278,7 @@ OGRErr OGRILI2Layer::ICreateFeature(OGRFeature *poFeature)
     }
     else
     {
-        snprintf(szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB,
+        snprintf(szTempBuffer, sizeof(szTempBuffer), "%" PRId64,
                  poFeature->GetFID());
         tid = szTempBuffer;
     }

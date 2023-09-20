@@ -51,6 +51,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <set>
 
 #ifdef HAVE_PDFIUM
@@ -534,10 +535,10 @@ void GDALPDFDumper::Dump(GDALPDFObject *poObj, int nDepth)
     if (poStream != nullptr)
     {
         fprintf(f,
-                "%sHas stream (" CPL_FRMT_GIB
-                " uncompressed bytes, " CPL_FRMT_GIB " raw bytes)\n",
-                osIndent.c_str(), static_cast<GIntBig>(poStream->GetLength()),
-                static_cast<GIntBig>(poStream->GetRawLength()));
+                "%sHas stream (%" PRId64 " uncompressed bytes, %" PRId64
+                " raw bytes)\n",
+                osIndent.c_str(), static_cast<int64_t>(poStream->GetLength()),
+                static_cast<int64_t>(poStream->GetRawLength()));
     }
 }
 
@@ -1016,10 +1017,10 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
         const int nReqXOff = nBlockXOff * nBlockXSize;
         const int nReqYOff = (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize;
-        const GSpacing nPixelSpace = 1;
-        const GSpacing nLineSpace = nBlockXSize;
-        const GSpacing nBandSpace =
-            static_cast<GSpacing>(nBlockXSize) *
+        const int64_t nPixelSpace = 1;
+        const int64_t nLineSpace = nBlockXSize;
+        const int64_t nBandSpace =
+            static_cast<int64_t>(nBlockXSize) *
             ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize);
 
         CPLErr eErr = poGDS->ReadPixels(nReqXOff, nReqYOff, nReqXSize,
@@ -2001,8 +2002,8 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
 /************************************************************************/
 
 CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
-                              int nReqYSize, GSpacing nPixelSpace,
-                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              int nReqYSize, int64_t nPixelSpace,
+                              int64_t nLineSpace, int64_t nBandSpace,
                               GByte *pabyData)
 {
     CPLErr eErr = CE_None;
@@ -2268,7 +2269,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
 
 #ifdef notdef
             // If the requested area is not too small, then try subdividing
-            if ((GIntBig)nReqXSize * nReqYSize * 4 > 1024 * 1024)
+            if ((int64_t)nReqXSize * nReqYSize * 4 > 1024 * 1024)
             {
 #ifdef DEBUG
                 CPLDebug(
@@ -2747,8 +2748,8 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     // Try to pass the request to the most appropriate overview dataset.
@@ -2805,8 +2806,8 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     PDFDataset *poGDS = (PDFDataset *)poDS;
@@ -2902,8 +2903,7 @@ static void PDFDatasetErrorFunction(
     CPLString osError;
 
     if (nPos >= 0)
-        osError.Printf("Pos = " CPL_FRMT_GUIB ", ",
-                       static_cast<GUIntBig>(nPos));
+        osError.Printf("Pos = %" PRIu64 ", ", static_cast<uint64_t>(nPos));
     osError += pszMsg;
     PDFDatasetErrorFunctionCommon(osError);
 }
@@ -4544,7 +4544,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37584
             // https://gitlab.freedesktop.org/poppler/poppler/-/issues/1137
             GByte *pabyRet = nullptr;
-            vsi_l_offset nSize = 0;
+            uint64_t nSize = 0;
             if (VSIIngestFile(fp.get(), pszFilename, &pabyRet, &nSize,
                               10 * 1024 * 1024))
             {

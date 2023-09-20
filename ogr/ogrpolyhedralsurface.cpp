@@ -294,7 +294,7 @@ OGRErr OGRPolyhedralSurface::exportToWkb(OGRwkbByteOrder eByteOrder,
     /*      Set the geometry feature type, ensuring that 3D flag is         */
     /*      preserved.                                                      */
     /* -------------------------------------------------------------------- */
-    GUInt32 nGType = getIsoGeometryType();
+    uint32_t nGType = getIsoGeometryType();
 
     if (OGR_SWAP(eByteOrder))
     {

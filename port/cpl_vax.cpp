@@ -34,9 +34,9 @@ namespace
 typedef struct dbl
 {
     // cppcheck-suppress unusedStructMember
-    GUInt32 hi;
+    uint32_t hi;
     // cppcheck-suppress unusedStructMember
-    GUInt32 lo;
+    uint32_t lo;
 } double64_t;
 }  // namespace
 
@@ -48,13 +48,13 @@ void CPLVaxToIEEEDouble(void *dbl)
 
 {
     double64_t dt;
-    GUInt32 sign;
+    uint32_t sign;
     int exponent;
-    GUInt32 rndbits;
+    uint32_t rndbits;
 
     /* -------------------------------------------------------------------- */
     /*      Arrange the VAX double so that it may be accessed by a          */
-    /*      double64_t structure, (two GUInt32s).                           */
+    /*      double64_t structure, (two uint32_ts).                           */
     /* -------------------------------------------------------------------- */
     {
         const unsigned char *src = static_cast<const unsigned char *>(dbl);
@@ -110,7 +110,7 @@ void CPLVaxToIEEEDouble(void *dbl)
     /* -------------------------------------------------------------------- */
     dt.hi = dt.hi >> 3;
     dt.hi = dt.hi & 0x000fffff;
-    dt.hi = dt.hi | (static_cast<GUInt32>(exponent) << 20) | sign;
+    dt.hi = dt.hi | (static_cast<uint32_t>(exponent) << 20) | sign;
 
 #ifdef CPL_LSB
     /* -------------------------------------------------------------------- */
@@ -154,8 +154,8 @@ void CPLIEEEToVaxDouble(void *dbl)
     memcpy(&dt, dbl, 8);
 #endif
 
-    GInt32 sign = dt.hi & 0x80000000;
-    GInt32 exponent = dt.hi >> 20;
+    int32_t sign = dt.hi & 0x80000000;
+    int32_t exponent = dt.hi >> 20;
     exponent = exponent & 0x000007ff;
 
     /* -------------------------------------------------------------------- */

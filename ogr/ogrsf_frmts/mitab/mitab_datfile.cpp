@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "mitab.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -419,8 +420,8 @@ int TABDATFile::WriteHeader()
     m_poHeaderBlock->WriteByte(9);   // Last update day
 
     m_poHeaderBlock->WriteInt32(m_numRecords);
-    m_poHeaderBlock->WriteInt16(static_cast<GInt16>(m_nFirstRecordPtr));
-    m_poHeaderBlock->WriteInt16(static_cast<GInt16>(m_nRecordSize));
+    m_poHeaderBlock->WriteInt16(static_cast<int16_t>(m_nFirstRecordPtr));
+    m_poHeaderBlock->WriteInt16(static_cast<int16_t>(m_nRecordSize));
 
     m_poHeaderBlock->WriteZeros(20);  // Pad rest with zeros.
 
@@ -1426,7 +1427,7 @@ int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
             }
             else if (m_pasFieldDef[iField].eTABType == TABFLargeInt)
             {
-                snprintf(pabyNewField, sFieldDef.byLength, CPL_FRMT_GIB,
+                snprintf(pabyNewField, sFieldDef.byLength, "%" PRId64,
                          ReadLargeIntField(m_pasFieldDef[iField].byLength));
             }
             else if (m_pasFieldDef[iField].eTABType == TABFFloat)
@@ -1629,7 +1630,7 @@ const char *TABDATFile::ReadCharField(int nWidth)
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-GInt32 TABDATFile::ReadIntegerField(int nWidth)
+int32_t TABDATFile::ReadIntegerField(int nWidth)
 {
     // If current record has been deleted, then return an acceptable
     // default value.
@@ -1659,7 +1660,7 @@ GInt32 TABDATFile::ReadIntegerField(int nWidth)
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-GInt16 TABDATFile::ReadSmallIntField(int nWidth)
+int16_t TABDATFile::ReadSmallIntField(int nWidth)
 {
     // If current record has been deleted, then return an acceptable
     // default value.
@@ -1674,7 +1675,7 @@ GInt16 TABDATFile::ReadSmallIntField(int nWidth)
     }
 
     if (m_eTableType == TABTableDBF)
-        return static_cast<GInt16>(atoi(ReadCharField(nWidth)));
+        return static_cast<int16_t>(atoi(ReadCharField(nWidth)));
 
     return m_poRecordBlock->ReadInt16();
 }
@@ -1689,7 +1690,7 @@ GInt16 TABDATFile::ReadSmallIntField(int nWidth)
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-GInt64 TABDATFile::ReadLargeIntField(int nWidth)
+int64_t TABDATFile::ReadLargeIntField(int nWidth)
 {
     // If current record has been deleted, then return an acceptable
     // default value.
@@ -1704,7 +1705,7 @@ GInt64 TABDATFile::ReadLargeIntField(int nWidth)
     }
 
     if (m_eTableType == TABTableDBF)
-        return static_cast<GIntBig>(CPLAtoGIntBig(ReadCharField(nWidth)));
+        return static_cast<int64_t>(CPLAtoGIntBig(ReadCharField(nWidth)));
 
     return m_poRecordBlock->ReadInt64();
 }
@@ -1886,7 +1887,7 @@ const char *TABDATFile::ReadTimeField(int nWidth)
 int TABDATFile::ReadTimeField(int nWidth, int *nHour, int *nMinute,
                               int *nSecond, int *nMS)
 {
-    GInt32 nS = 0;
+    int32_t nS = 0;
     // If current record has been deleted, then return an acceptable
     // default value.
     if (m_bCurRecordDeletedFlag)
@@ -1967,7 +1968,7 @@ int TABDATFile::ReadDateTimeField(int nWidth, int *nYear, int *nMonth,
                                   int *nDay, int *nHour, int *nMinute,
                                   int *nSecond, int *nMS)
 {
-    GInt32 nS = 0;
+    int32_t nS = 0;
     // If current record has been deleted, then return an acceptable
     // default value.
     if (m_bCurRecordDeletedFlag)
@@ -2099,7 +2100,7 @@ int TABDATFile::WriteCharField(const char *pszStr, int nWidth,
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteIntegerField(GInt32 nValue, TABINDFile *poINDFile,
+int TABDATFile::WriteIntegerField(int32_t nValue, TABINDFile *poINDFile,
                                   int nIndexNo)
 {
     if (m_poRecordBlock == nullptr)
@@ -2129,7 +2130,7 @@ int TABDATFile::WriteIntegerField(GInt32 nValue, TABINDFile *poINDFile,
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteSmallIntField(GInt16 nValue, TABINDFile *poINDFile,
+int TABDATFile::WriteSmallIntField(int16_t nValue, TABINDFile *poINDFile,
                                    int nIndexNo)
 {
     if (m_poRecordBlock == nullptr)
@@ -2159,7 +2160,7 @@ int TABDATFile::WriteSmallIntField(GInt16 nValue, TABINDFile *poINDFile,
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteLargeIntField(GInt64 nValue, TABINDFile *poINDFile,
+int TABDATFile::WriteLargeIntField(int64_t nValue, TABINDFile *poINDFile,
                                    int nIndexNo)
 {
     if (m_poRecordBlock == nullptr)
@@ -2341,7 +2342,7 @@ int TABDATFile::WriteDateField(int nYear, int nMonth, int nDay,
         return -1;
     }
 
-    m_poRecordBlock->WriteInt16(static_cast<GInt16>(nYear));
+    m_poRecordBlock->WriteInt16(static_cast<int16_t>(nYear));
     m_poRecordBlock->WriteByte(static_cast<GByte>(nMonth));
     m_poRecordBlock->WriteByte(static_cast<GByte>(nDay));
 
@@ -2450,7 +2451,7 @@ int TABDATFile::WriteTimeField(const char *pszValue, TABINDFile *poINDFile,
 int TABDATFile::WriteTimeField(int nHour, int nMinute, int nSecond, int nMS,
                                TABINDFile *poINDFile, int nIndexNo)
 {
-    GInt32 nS = -1;
+    int32_t nS = -1;
 
     if (m_poRecordBlock == nullptr)
     {
@@ -2596,7 +2597,7 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay, int nHour,
                                    int nMinute, int nSecond, int nMS,
                                    TABINDFile *poINDFile, int nIndexNo)
 {
-    GInt32 nS = (nHour * 3600 + nMinute * 60 + nSecond) * 1000 + nMS;
+    int32_t nS = (nHour * 3600 + nMinute * 60 + nSecond) * 1000 + nMS;
 
     if (m_poRecordBlock == nullptr)
     {
@@ -2606,7 +2607,7 @@ int TABDATFile::WriteDateTimeField(int nYear, int nMonth, int nDay, int nHour,
         return -1;
     }
 
-    m_poRecordBlock->WriteInt16(static_cast<GInt16>(nYear));
+    m_poRecordBlock->WriteInt16(static_cast<int16_t>(nYear));
     m_poRecordBlock->WriteByte(static_cast<GByte>(nMonth));
     m_poRecordBlock->WriteByte(static_cast<GByte>(nDay));
     m_poRecordBlock->WriteInt32(nS);

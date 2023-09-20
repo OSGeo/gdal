@@ -35,6 +35,8 @@
  **********************************************************************/
 #include "postgisraster.h"
 
+#include <cinttypes>
+
 /**
  * \brief Constructor.
  *
@@ -43,7 +45,7 @@
 PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDSIn,
                                                  int nBandIn,
                                                  GDALDataType eDataTypeIn,
-                                                 GBool bNoDataValueSetIn,
+                                                 bool bNoDataValueSetIn,
                                                  double dfNodata)
     : VRTSourcedRasterBand(poDSIn, nBandIn), pszSchema(poDSIn->pszSchema),
       pszTable(poDSIn->pszTable), pszColumn(poDSIn->pszColumn)
@@ -186,7 +188,7 @@ static int SortTilesByPKID(const void *a, const void *b)
 CPLErr PostGISRasterRasterBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     /**
      * TODO: Write support not implemented yet
@@ -334,7 +336,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(
     sAoi.maxx = 0.0;
     sAoi.maxy = 0.0;
 
-    GIntBig nMemoryRequiredForTiles = 0;
+    int64_t nMemoryRequiredForTiles = 0;
     CPLString osIDsToFetch;
     int nTilesToFetch = 0;
     int nBandDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
@@ -413,21 +415,21 @@ CPLErr PostGISRasterRasterBand::IRasterIO(
     bool bAllBandCaching = false;
     if (nTilesToFetch > 0)
     {
-        GIntBig nCacheMax = GDALGetCacheMax64();
+        int64_t nCacheMax = GDALGetCacheMax64();
         if (nMemoryRequiredForTiles > nCacheMax)
         {
             CPLDebug("PostGIS_Raster",
                      "For best performance, the block cache should be able to "
-                     "store " CPL_FRMT_GIB
+                     "store %" PRId64
                      " bytes for the tiles of the requested window, "
-                     "but it is only " CPL_FRMT_GIB " byte large",
+                     "but it is only %" PRId64 " byte large",
                      nMemoryRequiredForTiles, nCacheMax);
             nTilesToFetch = 0;
         }
 
         if (poRDS->GetRasterCount() > 1 && poRDS->bAssumeMultiBandReadPattern)
         {
-            GIntBig nMemoryRequiredForTilesAllBands =
+            int64_t nMemoryRequiredForTilesAllBands =
                 nMemoryRequiredForTiles * poRDS->GetRasterCount();
             if (nMemoryRequiredForTilesAllBands <= nCacheMax)
             {
@@ -437,7 +439,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(
             {
                 CPLDebug("PostGIS_Raster",
                          "Caching only this band, but not all bands. "
-                         "Cache should be " CPL_FRMT_GIB " byte large for that",
+                         "Cache should be %" PRId64 " byte large for that",
                          nMemoryRequiredForTilesAllBands);
             }
         }

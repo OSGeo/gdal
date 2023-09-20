@@ -170,7 +170,7 @@ class GTAIO final : public gta::custom_io
         }
     }
 
-    vsi_l_offset tell()
+    uint64_t tell()
     {
         return VSIFTellL(fp);
     }
@@ -238,7 +238,7 @@ class GTADataset final : public GDALPamDataset
     GTAIO oGTAIO;
     // GTA information
     gta::header oHeader;
-    vsi_l_offset DataOffset = 0;
+    uint64_t DataOffset = 0;
     // Metadata
     bool bHaveGeoTransform = false;
     double adfGeoTransform[6];

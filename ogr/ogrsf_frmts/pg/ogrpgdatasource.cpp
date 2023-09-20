@@ -155,7 +155,7 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver *psVersion,
     // get Version string
     while (*ptr && *ptr != ' ')
         ptr++;
-    GUInt32 iLen = static_cast<int>(ptr - pszVer);
+    uint32_t iLen = static_cast<int>(ptr - pszVer);
     char szVer[10] = {};
     if (iLen > sizeof(szVer) - 1)
         iLen = sizeof(szVer) - 1;

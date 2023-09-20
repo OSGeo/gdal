@@ -93,8 +93,8 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     int m_iRecord = 0;
     int m_nRecords = 0;
-    vsi_l_offset m_nFileOffset = 0;
-    vsi_l_offset m_nStride = 0;
+    uint64_t m_nFileOffset = 0;
+    uint64_t m_nStride = 0;
     bool m_bError = false;
     bool m_bByteSwapIntegers = false;
     RawRasterBand::ByteOrder m_eBREALByteOrder;
@@ -124,8 +124,8 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
 
   public:
     OGRVICARBinaryPrefixesLayer(VSILFILE *fp, int nRecords,
-                                const CPLJSONObject &oDef,
-                                vsi_l_offset nFileOffset, vsi_l_offset nStride,
+                                const CPLJSONObject &oDef, uint64_t nFileOffset,
+                                uint64_t nStride,
                                 RawRasterBand::ByteOrder eBINTByteOrder,
                                 RawRasterBand::ByteOrder eBREALByteOrder);
     ~OGRVICARBinaryPrefixesLayer();
@@ -179,9 +179,8 @@ OGRVICARBinaryPrefixesLayer::GetTypeFromString(const char *pszStr)
 /************************************************************************/
 
 OGRVICARBinaryPrefixesLayer::OGRVICARBinaryPrefixesLayer(
-    VSILFILE *fp, int nRecords, const CPLJSONObject &oDef,
-    vsi_l_offset nFileOffset, vsi_l_offset nStride,
-    RawRasterBand::ByteOrder eBINTByteOrder,
+    VSILFILE *fp, int nRecords, const CPLJSONObject &oDef, uint64_t nFileOffset,
+    uint64_t nStride, RawRasterBand::ByteOrder eBINTByteOrder,
     RawRasterBand::ByteOrder eBREALByteOrder)
     : m_fp(fp), m_nRecords(nRecords), m_nFileOffset(nFileOffset),
       m_nStride(nStride),
@@ -348,7 +347,7 @@ OGRFeature *OGRVICARBinaryPrefixesLayer::GetNextRawFeature()
                 {
                     CPL_SWAP32PTR(&v);
                 }
-                poFeature->SetField(i, static_cast<GIntBig>(v));
+                poFeature->SetField(i, static_cast<int64_t>(v));
                 break;
             }
             case FIELD_SHORT:
@@ -458,7 +457,7 @@ class VICARRawRasterBand final : public RawRasterBand
 
   public:
     VICARRawRasterBand(VICARDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
-                       vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                       uint64_t nImgOffsetIn, int nPixelOffsetIn,
                        int nLineOffsetIn, GDALDataType eDataTypeIn,
                        ByteOrder eByteOrderIn);
 
@@ -466,8 +465,8 @@ class VICARRawRasterBand final : public RawRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -476,8 +475,7 @@ class VICARRawRasterBand final : public RawRasterBand
 /************************************************************************/
 
 VICARRawRasterBand::VICARRawRasterBand(VICARDataset *poDSIn, int nBandIn,
-                                       VSILFILE *fpRawIn,
-                                       vsi_l_offset nImgOffsetIn,
+                                       VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                        int nPixelOffsetIn, int nLineOffsetIn,
                                        GDALDataType eDataTypeIn,
                                        ByteOrder eByteOrderIn)
@@ -520,8 +518,8 @@ CPLErr VICARRawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr VICARRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -942,22 +940,22 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
         {
             VSIFSeekL(poGDS->fpImage,
                       poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset] -
-                          sizeof(GUInt32),
+                          sizeof(uint32_t),
                       SEEK_SET);
         }
         else
         {
             VSIFSeekL(poGDS->fpImage,
                       poGDS->m_nImageOffsetWithoutNBB +
-                          static_cast<vsi_l_offset>(sizeof(GUInt32)) *
+                          static_cast<uint64_t>(sizeof(uint32_t)) *
                               poGDS->m_nLastRecordOffset,
                       SEEK_SET);
         }
-        GUInt32 nSize;
+        uint32_t nSize;
         VSIFReadL(&nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
         if ((poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
-             nSize <= sizeof(GUInt32)) ||
+             nSize <= sizeof(uint32_t)) ||
             (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 && nSize == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong size at record %d",
@@ -974,7 +972,7 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
     {
         nSize = static_cast<unsigned>(poGDS->m_anRecordOffsets[nRecord + 1] -
                                       poGDS->m_anRecordOffsets[nRecord] -
-                                      sizeof(GUInt32));
+                                      sizeof(uint32_t));
     }
     else
     {
@@ -1044,12 +1042,12 @@ CPLErr VICARBASICRasterBand::IWriteBlock(int /*nXBlock*/, int nYBlock,
         poGDS->m_anRecordOffsets[0] = poGDS->m_nLabelSize;
         if (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
         {
-            poGDS->m_anRecordOffsets[0] += sizeof(GUInt32);
+            poGDS->m_anRecordOffsets[0] += sizeof(uint32_t);
         }
         else
         {
             poGDS->m_anRecordOffsets[0] +=
-                static_cast<vsi_l_offset>(sizeof(GUInt32)) * nRasterYSize;
+                static_cast<uint64_t>(sizeof(uint32_t)) * nRasterYSize;
         }
     }
     if (nYBlock != poGDS->m_nLastRecordOffset)
@@ -1105,26 +1103,26 @@ CPLErr VICARBASICRasterBand::IWriteBlock(int /*nXBlock*/, int nYBlock,
     if (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
     {
         VSIFSeekL(poGDS->fpImage,
-                  poGDS->m_anRecordOffsets[nYBlock] - sizeof(GUInt32),
+                  poGDS->m_anRecordOffsets[nYBlock] - sizeof(uint32_t),
                   SEEK_SET);
-        GUInt32 nSizeToWrite =
-            static_cast<GUInt32>(nCodedSize + sizeof(GUInt32));
+        uint32_t nSizeToWrite =
+            static_cast<uint32_t>(nCodedSize + sizeof(uint32_t));
         CPL_LSBPTR32(&nSizeToWrite);
-        VSIFWriteL(&nSizeToWrite, sizeof(GUInt32), 1, poGDS->fpImage);
+        VSIFWriteL(&nSizeToWrite, sizeof(uint32_t), 1, poGDS->fpImage);
         VSIFWriteL(poGDS->m_abyCodedBuffer.data(), nCodedSize, 1,
                    poGDS->fpImage);
         poGDS->m_anRecordOffsets[nYBlock + 1] =
-            poGDS->m_anRecordOffsets[nYBlock] + nCodedSize + sizeof(GUInt32);
+            poGDS->m_anRecordOffsets[nYBlock] + nCodedSize + sizeof(uint32_t);
     }
     else
     {
         VSIFSeekL(poGDS->fpImage,
                   poGDS->m_nLabelSize +
-                      static_cast<vsi_l_offset>(nYBlock) * sizeof(GUInt32),
+                      static_cast<uint64_t>(nYBlock) * sizeof(uint32_t),
                   SEEK_SET);
-        GUInt32 nSizeToWrite = static_cast<GUInt32>(nCodedSize);
+        uint32_t nSizeToWrite = static_cast<uint32_t>(nCodedSize);
         CPL_LSBPTR32(&nSizeToWrite);
-        VSIFWriteL(&nSizeToWrite, sizeof(GUInt32), 1, poGDS->fpImage);
+        VSIFWriteL(&nSizeToWrite, sizeof(uint32_t), 1, poGDS->fpImage);
         VSIFSeekL(poGDS->fpImage, poGDS->m_anRecordOffsets[nYBlock], SEEK_SET);
         VSIFWriteL(poGDS->m_abyCodedBuffer.data(), nCodedSize, 1,
                    poGDS->fpImage);
@@ -1266,7 +1264,7 @@ int VICARDataset::GetLabelOffset(GDALOpenInfo *poOpenInfo)
     // Some PDS3 images include a VICAR header pointed by ^IMAGE_HEADER.
     // If the user sets GDAL_TRY_PDS3_WITH_VICAR=YES, then we will gracefully
     // hand over the file to the VICAR dataset.
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
     if (CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/") &&
         (nOffset = VICARDataset::GetVICARLabelOffsetFromPDS3(
@@ -1431,9 +1429,9 @@ static void WriteLabelItemValue(std::string &osLabel, const CPLJSONObject &obj)
     else if (eType == CPLJSONObject::Type::Double)
     {
         double dfVal = obj.ToDouble();
-        if (dfVal >= static_cast<double>(std::numeric_limits<GIntBig>::min()) &&
-            dfVal <= static_cast<double>(std::numeric_limits<GIntBig>::max()) &&
-            static_cast<double>(static_cast<GIntBig>(dfVal)) == dfVal)
+        if (dfVal >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
+            dfVal <= static_cast<double>(std::numeric_limits<int64_t>::max()) &&
+            static_cast<double>(static_cast<int64_t>(dfVal)) == dfVal)
         {
             std::string osVal(CPLSPrintf("%.18g", dfVal));
             if (osVal.find('.') == std::string::npos)
@@ -1630,9 +1628,9 @@ void VICARDataset::WriteLabel()
     {
         const int nDTSize =
             GDALGetDataTypeSizeBytes(GetRasterBand(1)->GetRasterDataType());
-        VSIFTruncateL(fpImage, VSIFTellL(fpImage) +
-                                   static_cast<vsi_l_offset>(nRasterXSize) *
-                                       nRasterYSize * nBands * nDTSize);
+        VSIFTruncateL(fpImage,
+                      VSIFTellL(fpImage) + static_cast<uint64_t>(nRasterXSize) *
+                                               nRasterYSize * nBands * nDTSize);
     }
 
     // Patch band offsets to take into account label
@@ -1654,7 +1652,7 @@ void VICARDataset::PatchLabel()
         return;
 
     VSIFSeekL(fpImage, 0, SEEK_END);
-    const vsi_l_offset nFileSize = VSIFTellL(fpImage);
+    const uint64_t nFileSize = VSIFTellL(fpImage);
     VSIFSeekL(fpImage, 0, SEEK_SET);
     std::string osBuffer;
     osBuffer.resize(1024);
@@ -2693,15 +2691,15 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Compute the line offsets.                                        */
     /* -------------------------------------------------------------------- */
 
-    GUInt64 nPixelOffset;
-    GUInt64 nLineOffset;
-    GUInt64 nBandOffset;
-    GUInt64 nImageOffsetWithoutNBB;
-    GUInt64 nNBB;
-    GUInt64 nImageSize;
+    uint64_t nPixelOffset;
+    uint64_t nLineOffset;
+    uint64_t nBandOffset;
+    uint64_t nImageOffsetWithoutNBB;
+    uint64_t nNBB;
+    uint64_t nImageSize;
     if (!GetSpacings(poDS->oKeywords, nPixelOffset, nLineOffset, nBandOffset,
                      nImageOffsetWithoutNBB, nNBB, nImageSize) ||
-        nImageOffsetWithoutNBB > std::numeric_limits<GUInt64>::max() -
+        nImageOffsetWithoutNBB > std::numeric_limits<uint64_t>::max() -
                                      (nNBB + nBandOffset * (nBands - 1)))
     {
         CPLDebug("VICAR", "Invalid spacings found");
@@ -2764,7 +2762,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
                     auto oDef = oRoot.GetObj(pszBLType);
                     if (oDef.IsValid() &&
                         oDef.GetType() == CPLJSONObject::Type::Object &&
-                        static_cast<GUInt64>(oDef.GetInteger("size")) == nNBB)
+                        static_cast<uint64_t>(oDef.GetInteger("size")) == nNBB)
                     {
                         auto poLayer =
                             std::unique_ptr<OGRVICARBinaryPrefixesLayer>(
@@ -2786,7 +2784,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     poDS->m_nImageOffsetWithoutNBB =
-        static_cast<vsi_l_offset>(nImageOffsetWithoutNBB);
+        static_cast<uint64_t>(nImageOffsetWithoutNBB);
 
     CPLString osCompress = poDS->GetKeyword("COMPRESS", "NONE");
     if (EQUAL(osCompress, "BASIC") || EQUAL(osCompress, "BASIC2"))
@@ -2833,12 +2831,12 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->m_eCompress == COMPRESS_BASIC)
         {
             poDS->m_anRecordOffsets[0] =
-                poDS->m_nImageOffsetWithoutNBB + sizeof(GUInt32);
+                poDS->m_nImageOffsetWithoutNBB + sizeof(uint32_t);
         }
         else
         {
             poDS->m_anRecordOffsets[0] =
-                poDS->m_nImageOffsetWithoutNBB + sizeof(GUInt32) * nRecords;
+                poDS->m_nImageOffsetWithoutNBB + sizeof(uint32_t) * nRecords;
         }
     }
     else if (!EQUAL(osCompress, "NONE"))
@@ -2865,8 +2863,8 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             auto poRawBand = cpl::make_unique<VICARRawRasterBand>(
                 poDS.get(), i + 1, poDS->fpImage,
-                static_cast<vsi_l_offset>(nImageOffsetWithoutNBB + nNBB +
-                                          nBandOffset * i),
+                static_cast<uint64_t>(nImageOffsetWithoutNBB + nNBB +
+                                      nBandOffset * i),
                 static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset),
                 eDataType, eByteOrder);
             if (!poRawBand->IsValid())
@@ -3127,22 +3125,22 @@ GDALDataType VICARDataset::GetDataTypeFromFormat(const char *pszFormat)
 /************************************************************************/
 
 bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
-                               GUInt64 &nPixelOffset, GUInt64 &nLineOffset,
-                               GUInt64 &nBandOffset,
-                               GUInt64 &nImageOffsetWithoutNBB, GUInt64 &nNBB,
-                               GUInt64 &nImageSize)
+                               uint64_t &nPixelOffset, uint64_t &nLineOffset,
+                               uint64_t &nBandOffset,
+                               uint64_t &nImageOffsetWithoutNBB, uint64_t &nNBB,
+                               uint64_t &nImageSize)
 {
     const GDALDataType eDataType =
         GetDataTypeFromFormat(keywords.GetKeyword("FORMAT", ""));
     if (eDataType == GDT_Unknown)
         return false;
-    const GUInt64 nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    const uint64_t nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     const char *value = keywords.GetKeyword("ORG", "BSQ");
     // number of bytes of binary prefix before each record
     nNBB = atoi(keywords.GetKeyword("NBB", ""));
-    const GUInt64 nCols64 = atoi(keywords.GetKeyword("NS", ""));
-    const GUInt64 nRows64 = atoi(keywords.GetKeyword("NL", ""));
-    const GUInt64 nBands64 = atoi(keywords.GetKeyword("NB", ""));
+    const uint64_t nCols64 = atoi(keywords.GetKeyword("NS", ""));
+    const uint64_t nRows64 = atoi(keywords.GetKeyword("NL", ""));
+    const uint64_t nBands64 = atoi(keywords.GetKeyword("NB", ""));
     try
     {
         if (EQUAL(value, "BIP"))
@@ -3181,9 +3179,9 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
         return false;
     }
 
-    const GUInt64 nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
-    const GUInt64 nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
-    const GUInt64 nNLB = atoi(keywords.GetKeyword("NLB", ""));
+    const uint64_t nLabelSize = atoi(keywords.GetKeyword("LBLSIZE", ""));
+    const uint64_t nRecordSize = atoi(keywords.GetKeyword("RECSIZE", ""));
+    const uint64_t nNLB = atoi(keywords.GetKeyword("NLB", ""));
     try
     {
         nImageOffsetWithoutNBB =
@@ -3266,14 +3264,14 @@ VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    std::vector<vsi_l_offset> anRecordOffsets;
+    std::vector<uint64_t> anRecordOffsets;
     if (eCompress != COMPRESS_NONE)
     {
-        const GUInt64 nMaxEncodedSize =
-            static_cast<GUInt64>(nXSize) * nPixelOffset +
-            static_cast<GUInt64>(nXSize) * nPixelOffset / 2 + 11;
+        const uint64_t nMaxEncodedSize =
+            static_cast<uint64_t>(nXSize) * nPixelOffset +
+            static_cast<uint64_t>(nXSize) * nPixelOffset / 2 + 11;
         // To avoid potential later int overflows
-        if (nMaxEncodedSize > static_cast<GUInt64>(INT_MAX))
+        if (nMaxEncodedSize > static_cast<uint64_t>(INT_MAX))
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Too large scanline");
             return nullptr;
@@ -3359,8 +3357,7 @@ VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
-    const vsi_l_offset nBandOffset =
-        static_cast<vsi_l_offset>(nLineOffset) * nYSize;
+    const uint64_t nBandOffset = static_cast<uint64_t>(nLineOffset) * nYSize;
     for (int i = 0; i < nBandsIn; i++)
     {
         GDALRasterBand *poBand;
@@ -3448,9 +3445,9 @@ GDALDataset *VICARDataset::CreateCopy(const char *pszFilename,
 /*                     GetVICARLabelOffsetFromPDS3()                    */
 /************************************************************************/
 
-vsi_l_offset
-VICARDataset::GetVICARLabelOffsetFromPDS3(const char *pszHdr, VSILFILE *fp,
-                                          std::string &osVICARHeader)
+uint64_t VICARDataset::GetVICARLabelOffsetFromPDS3(const char *pszHdr,
+                                                   VSILFILE *fp,
+                                                   std::string &osVICARHeader)
 {
     const char *pszPDSVersionID = strstr(pszHdr, "PDS_VERSION_ID");
     int nOffset = 0;
@@ -3467,7 +3464,7 @@ VICARDataset::GetVICARLabelOffsetFromPDS3(const char *pszHdr, VSILFILE *fp,
         if (nRecordBytes > 0 && nImageHeader > 0)
         {
             const auto nImgHeaderOffset =
-                static_cast<vsi_l_offset>(nImageHeader - 1) * nRecordBytes;
+                static_cast<uint64_t>(nImageHeader - 1) * nRecordBytes;
             osVICARHeader.resize(1024);
             size_t nMemb;
             if (VSIFSeekL(fp, nImgHeaderOffset, SEEK_SET) == 0 &&

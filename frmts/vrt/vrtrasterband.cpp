@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "vrtdataset.h"
 
+#include <cinttypes>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -136,7 +137,7 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom(GDALRasterBand *poSrcBand)
 
     GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
     if (poRAT != nullptr &&
-        static_cast<GIntBig>(poRAT->GetColumnCount()) * poRAT->GetRowCount() <
+        static_cast<int64_t>(poRAT->GetColumnCount()) * poRAT->GetRowCount() <
             1024 * 1024)
     {
         SetDefaultRAT(poRAT);
@@ -675,15 +676,15 @@ CPLXMLNode *VRTRasterBand::SerializeToXML(const char *pszVRTPath)
     }
     else if (m_bNoDataSetAsInt64)
     {
-        CPLSetXMLValue(psTree, "NoDataValue",
-                       CPLSPrintf(CPL_FRMT_GIB,
-                                  static_cast<GIntBig>(m_nNoDataValueInt64)));
+        CPLSetXMLValue(
+            psTree, "NoDataValue",
+            CPLSPrintf("%" PRId64, static_cast<int64_t>(m_nNoDataValueInt64)));
     }
     else if (m_bNoDataSetAsUInt64)
     {
         CPLSetXMLValue(psTree, "NoDataValue",
-                       CPLSPrintf(CPL_FRMT_GUIB,
-                                  static_cast<GUIntBig>(m_nNoDataValueUInt64)));
+                       CPLSPrintf("%" PRIu64,
+                                  static_cast<uint64_t>(m_nNoDataValueUInt64)));
     }
 
     if (m_bHideNoDataValue)
@@ -1116,7 +1117,7 @@ GDALColorInterp VRTRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 CPLErr VRTRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                   GUIntBig *panHistogram,
+                                   uint64_t *panHistogram,
                                    int bIncludeOutOfRange, int bApproxOK,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData)
@@ -1130,12 +1131,12 @@ CPLErr VRTRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                                  bIncludeOutOfRange, bApproxOK);
     if (psHistItem != nullptr)
     {
-        GUIntBig *panTempHist = nullptr;
+        uint64_t *panTempHist = nullptr;
 
         if (PamParseHistogram(psHistItem, &dfMin, &dfMax, &nBuckets,
                               &panTempHist, &bIncludeOutOfRange, &bApproxOK))
         {
-            memcpy(panHistogram, panTempHist, sizeof(GUIntBig) * nBuckets);
+            memcpy(panHistogram, panTempHist, sizeof(uint64_t) * nBuckets);
             CPLFree(panTempHist);
             return CE_None;
         }
@@ -1177,7 +1178,7 @@ CPLErr VRTRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 /************************************************************************/
 
 CPLErr VRTRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
-                                          int nBuckets, GUIntBig *panHistogram)
+                                          int nBuckets, uint64_t *panHistogram)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1222,7 +1223,7 @@ CPLErr VRTRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
 
 CPLErr VRTRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
                                           int *pnBuckets,
-                                          GUIntBig **ppanHistogram, int bForce,
+                                          uint64_t **ppanHistogram, int bForce,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 

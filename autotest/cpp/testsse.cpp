@@ -216,7 +216,7 @@ int main()
 #ifndef USE_SSE2_EMULATION
     {
         float input[] = {-1.3f, 1.5f, 40000.3f, 65537.0f};
-        GUInt16 output[4];
+        uint16_t output[4];
         GDALCopy4Words(input, output);
         MY_ASSERT(output[0] == 0);
         MY_ASSERT(output[1] == 2);
@@ -229,7 +229,7 @@ int main()
     {
         float input[] = {-1.3f,    1.5f, 40000.3f, 65537.0f,
                          40000.3f, 1.3f, 65537.0f, -1.3f};
-        GUInt16 output[8];
+        uint16_t output[8];
         GDALCopy8Words(input, output);
         MY_ASSERT(output[0] == 0);
         MY_ASSERT(output[1] == 2);

@@ -35,6 +35,7 @@
 #include "ogr_p.h"
 
 #include <chrono>
+#include <cinttypes>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -1178,7 +1179,7 @@ OGRErr OGRPGTableLayer::SetAttributeFilter(const char *pszQuery)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRPGTableLayer::DeleteFeature(int64_t nFID)
 
 {
     PGconn *hPGConn = poDS->GetPGConn();
@@ -1205,7 +1206,7 @@ OGRErr OGRPGTableLayer::DeleteFeature(GIntBig nFID)
     if (pszFIDColumn == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeleteFeature(" CPL_FRMT_GIB
+                 "DeleteFeature(%" PRId64
                  ") failed.  Unable to delete features in tables without\n"
                  "a recognised FID column.",
                  nFID);
@@ -1215,7 +1216,7 @@ OGRErr OGRPGTableLayer::DeleteFeature(GIntBig nFID)
     /* -------------------------------------------------------------------- */
     /*      Form the statement to drop the record.                          */
     /* -------------------------------------------------------------------- */
-    osCommand.Printf("DELETE FROM %s WHERE %s = " CPL_FRMT_GIB, pszSqlTableName,
+    osCommand.Printf("DELETE FROM %s WHERE %s = %" PRId64, pszSqlTableName,
                      OGRPGEscapeColumnName(pszFIDColumn).c_str(), nFID);
 
     /* -------------------------------------------------------------------- */
@@ -1459,7 +1460,7 @@ OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
     osCommand += " WHERE ";
     osCommand += OGRPGEscapeColumnName(pszFIDColumn);
     osCommand += +" = ";
-    osCommand += CPLString().Printf(CPL_FRMT_GIB, poFeature->GetFID());
+    osCommand += CPLString().Printf("%" PRId64, poFeature->GetFID());
 
     /* -------------------------------------------------------------------- */
     /*      Execute the update.                                             */
@@ -1467,11 +1468,10 @@ OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
     PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
     if (PQresultStatus(hResult) != PGRES_COMMAND_OK)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "UPDATE command for feature " CPL_FRMT_GIB
-                 " failed.\n%s\nCommand: %s",
-                 poFeature->GetFID(), PQerrorMessage(hPGConn),
-                 osCommand.c_str());
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "UPDATE command for feature %" PRId64 " failed.\n%s\nCommand: %s",
+            poFeature->GetFID(), PQerrorMessage(hPGConn), osCommand.c_str());
 
         OGRPGClearResult(hResult);
 
@@ -1514,7 +1514,7 @@ OGRErr OGRPGTableLayer::ICreateFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     /* In case the FID column has also been created as a regular field */
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (iFIDAsRegularColumnIndex >= 0)
     {
         if (nFID == OGRNullFID)
@@ -1878,7 +1878,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     {
         if (bNeedComma)
             osCommand += ", ";
-        osCommand += CPLString().Printf(CPL_FRMT_GIB " ", poFeature->GetFID());
+        osCommand += CPLString().Printf("%" PRId64 " ", poFeature->GetFID());
         bNeedComma = TRUE;
     }
 
@@ -2035,7 +2035,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy(OGRFeature *poFeature)
         !CPLIsUTF8(osCommand.c_str(), static_cast<int>(osCommand.size())))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Non UTF-8 content found when writing feature " CPL_FRMT_GIB
+                 "Non UTF-8 content found when writing feature %" PRId64
                  " of layer %s: %s",
                  poFeature->GetFID(), poFeatureDefn->GetName(),
                  osCommand.c_str());
@@ -3065,7 +3065,7 @@ OGRPGTableLayer::AlterGeomFieldDefn(int iGeomFieldToAlter,
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRPGTableLayer::GetFeature(int64_t nFeatureId)
 
 {
     GetLayerDefn()->GetFieldCount();
@@ -3085,7 +3085,7 @@ OGRFeature *OGRPGTableLayer::GetFeature(GIntBig nFeatureId)
     poDS->SoftStartTransaction();
 
     osCommand.Printf("DECLARE getfeaturecursor %s for "
-                     "SELECT %s FROM %s WHERE %s = " CPL_FRMT_GIB,
+                     "SELECT %s FROM %s WHERE %s = %" PRId64,
                      (poDS->bUseBinaryCursor) ? "BINARY CURSOR" : "CURSOR",
                      osFieldList.c_str(), pszSqlTableName,
                      OGRPGEscapeColumnName(pszFIDColumn).c_str(), nFeatureId);
@@ -3120,18 +3120,17 @@ OGRFeature *OGRPGTableLayer::GetFeature(GIntBig nFeatureId)
 
                 if (nRows > 1)
                 {
-                    CPLError(
-                        CE_Warning, CPLE_AppDefined,
-                        "%d rows in response to the WHERE %s = " CPL_FRMT_GIB
-                        " clause !",
-                        nRows, pszFIDColumn, nFeatureId);
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%d rows in response to the WHERE %s = %" PRId64
+                             " clause !",
+                             nRows, pszFIDColumn, nFeatureId);
                 }
             }
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Attempt to read feature with unknown feature id "
-                         "(" CPL_FRMT_GIB ").",
+                         "(%" PRId64 ").",
                          nFeatureId);
             }
         }
@@ -3159,7 +3158,7 @@ OGRFeature *OGRPGTableLayer::GetFeature(GIntBig nFeatureId)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRPGTableLayer::GetFeatureCount(int bForce)
+int64_t OGRPGTableLayer::GetFeatureCount(int bForce)
 
 {
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
@@ -3177,7 +3176,7 @@ GIntBig OGRPGTableLayer::GetFeatureCount(int bForce)
     /* -------------------------------------------------------------------- */
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
-    GIntBig nCount = 0;
+    int64_t nCount = 0;
 
     osCommand.Printf("SELECT count(*) FROM %s %s", pszSqlTableName,
                      osWHERE.c_str());

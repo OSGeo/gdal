@@ -148,7 +148,7 @@ void GDALMDReaderRapidEye::LoadMetadata()
     if (nullptr != pszDateTime)
     {
         char buffer[80];
-        GIntBig timeMid = GetAcquisitionTimeFromString(pszDateTime);
+        int64_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));

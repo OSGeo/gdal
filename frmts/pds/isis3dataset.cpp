@@ -57,6 +57,8 @@
 #endif
 
 #include <algorithm>
+#include <cinttypes>
+#include <limits>
 #include <map>
 #include <utility>  // pair
 #include <vector>
@@ -124,8 +126,8 @@ class ISIS3Dataset final : public RawDataset
       public:
         CPLString osSrcFilename;
         CPLString osDstFilename;  // empty for same file
-        vsi_l_offset nSrcOffset;
-        vsi_l_offset nSize;
+        uint64_t nSrcOffset;
+        uint64_t nSize;
         CPLString osPlaceHolder;  // empty if not same file
     };
 
@@ -234,9 +236,9 @@ class ISISTiledBand final : public GDALPamRasterBand
     friend class ISIS3Dataset;
 
     VSILFILE *m_fpVSIL;
-    GIntBig m_nFirstTileOffset;
-    GIntBig m_nXTileOffset;
-    GIntBig m_nYTileOffset;
+    int64_t m_nFirstTileOffset;
+    int64_t m_nXTileOffset;
+    int64_t m_nYTileOffset;
     int m_bNativeOrder;
     bool m_bHasOffset;
     bool m_bHasScale;
@@ -248,8 +250,8 @@ class ISISTiledBand final : public GDALPamRasterBand
   public:
     ISISTiledBand(GDALDataset *poDS, VSILFILE *fpVSIL, int nBand,
                   GDALDataType eDT, int nTileXSize, int nTileYSize,
-                  GIntBig nFirstTileOffset, GIntBig nXTileOffset,
-                  GIntBig nYTileOffset, int bNativeOrder);
+                  int64_t nFirstTileOffset, int64_t nXTileOffset,
+                  int64_t nYTileOffset, int bNativeOrder);
     virtual ~ISISTiledBand()
     {
     }
@@ -290,7 +292,7 @@ class ISIS3RawRasterBand final : public RawRasterBand
 
   public:
     ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
-                       vsi_l_offset l_nImgOffset, int l_nPixelOffset,
+                       uint64_t l_nImgOffset, int l_nPixelOffset,
                        int l_nLineOffset, GDALDataType l_eDataType,
                        int l_bNativeOrder);
     virtual ~ISIS3RawRasterBand()
@@ -301,8 +303,8 @@ class ISIS3RawRasterBand final : public RawRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;
@@ -353,8 +355,8 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;
@@ -398,8 +400,8 @@ class ISISMaskBand final : public GDALRasterBand
 
 ISISTiledBand::ISISTiledBand(GDALDataset *poDSIn, VSILFILE *fpVSILIn,
                              int nBandIn, GDALDataType eDT, int nTileXSize,
-                             int nTileYSize, GIntBig nFirstTileOffsetIn,
-                             GIntBig nXTileOffsetIn, GIntBig nYTileOffsetIn,
+                             int nTileYSize, int64_t nFirstTileOffsetIn,
+                             int64_t nXTileOffsetIn, int64_t nYTileOffsetIn,
                              int bNativeOrderIn)
     : m_fpVSIL(fpVSILIn), m_nFirstTileOffset(0), m_nXTileOffset(nXTileOffsetIn),
       m_nYTileOffset(nYTileOffsetIn), m_bNativeOrder(bNativeOrderIn),
@@ -420,15 +422,16 @@ ISISTiledBand::ISISTiledBand(GDALDataset *poDSIn, VSILFILE *fpVSILIn,
     if (m_nXTileOffset == 0 && m_nYTileOffset == 0)
     {
         m_nXTileOffset =
-            static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) * nTileXSize;
-        if (m_nXTileOffset > GINTBIG_MAX / nTileYSize)
+            static_cast<int64_t>(GDALGetDataTypeSizeBytes(eDT)) * nTileXSize;
+        if (m_nXTileOffset > std::numeric_limits<int64_t>::max() / nTileYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return;
         }
         m_nXTileOffset *= nTileYSize;
 
-        if (m_nXTileOffset > GINTBIG_MAX / l_nBlocksPerRow)
+        if (m_nXTileOffset >
+            std::numeric_limits<int64_t>::max() / l_nBlocksPerRow)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return;
@@ -439,10 +442,13 @@ ISISTiledBand::ISISTiledBand(GDALDataset *poDSIn, VSILFILE *fpVSILIn,
     m_nFirstTileOffset = nFirstTileOffsetIn;
     if (nBand > 1)
     {
-        if (m_nYTileOffset > GINTBIG_MAX / (nBand - 1) ||
-            (nBand - 1) * m_nYTileOffset > GINTBIG_MAX / l_nBlocksPerColumn ||
+        if (m_nYTileOffset >
+                std::numeric_limits<int64_t>::max() / (nBand - 1) ||
+            (nBand - 1) * m_nYTileOffset >
+                std::numeric_limits<int64_t>::max() / l_nBlocksPerColumn ||
             m_nFirstTileOffset >
-                GINTBIG_MAX - (nBand - 1) * m_nYTileOffset * l_nBlocksPerColumn)
+                std::numeric_limits<int64_t>::max() -
+                    (nBand - 1) * m_nYTileOffset * l_nBlocksPerColumn)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return;
@@ -466,7 +472,7 @@ CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
             poGDS->WriteLabel();
     }
 
-    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+    const int64_t nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
                             nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const size_t nBlockSize =
@@ -523,15 +529,15 @@ static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
     }
     else if (eDataType == GDT_UInt16)
     {
-        RemapNoDataT(reinterpret_cast<GUInt16 *>(pBuffer), nItems,
-                     static_cast<GUInt16>(dfSrcNoData),
-                     static_cast<GUInt16>(dfDstNoData));
+        RemapNoDataT(reinterpret_cast<uint16_t *>(pBuffer), nItems,
+                     static_cast<uint16_t>(dfSrcNoData),
+                     static_cast<uint16_t>(dfDstNoData));
     }
     else if (eDataType == GDT_Int16)
     {
-        RemapNoDataT(reinterpret_cast<GInt16 *>(pBuffer), nItems,
-                     static_cast<GInt16>(dfSrcNoData),
-                     static_cast<GInt16>(dfDstNoData));
+        RemapNoDataT(reinterpret_cast<int16_t *>(pBuffer), nItems,
+                     static_cast<int16_t>(dfSrcNoData),
+                     static_cast<int16_t>(dfDstNoData));
     }
     else
     {
@@ -586,7 +592,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
                     poGDS->m_dfSrcNoData, m_dfNoData);
     }
 
-    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+    const int64_t nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
                             nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const size_t nBlockSize =
@@ -724,8 +730,7 @@ CPLErr ISISTiledBand::SetNoDataValue(double dfNewNoData)
 /************************************************************************/
 
 ISIS3RawRasterBand::ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand,
-                                       VSILFILE *l_fpRaw,
-                                       vsi_l_offset l_nImgOffset,
+                                       VSILFILE *l_fpRaw, uint64_t l_nImgOffset,
                                        int l_nPixelOffset, int l_nLineOffset,
                                        GDALDataType l_eDataType,
                                        int l_bNativeOrder)
@@ -783,8 +788,8 @@ CPLErr ISIS3RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1033,7 +1038,7 @@ void ISIS3WrapperRasterBand::InitFile()
         const int nBlockSizeBytes =
             nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType);
 
-        GIntBig nLastOffset = 0;
+        int64_t nLastOffset = 0;
         bool bGoOn = true;
         const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
         const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
@@ -1049,7 +1054,7 @@ void ISIS3WrapperRasterBand::InitFile()
                                 CPLSPrintf("BLOCK_OFFSET_%d_%d", x, y), "TIFF");
                     if (pszBlockOffset)
                     {
-                        GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
+                        int64_t nOffset = CPLAtoGIntBig(pszBlockOffset);
                         if (i != 0 || x != 0 || y != 0)
                         {
                             if (nOffset != nLastOffset + nBlockSizeBytes)
@@ -1127,7 +1132,7 @@ CPLErr ISIS3WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
 CPLErr ISIS3WrapperRasterBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
     ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
@@ -1265,15 +1270,15 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
     else if (eSrcDT == GDT_UInt16)
     {
-        FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
-                          HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
+        FillMask<uint16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
+                           HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
     }
     else if (eSrcDT == GDT_Int16)
     {
-        FillMask<GInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2, HIGH_INSTR_SAT2,
-                         HIGH_REPR_SAT2);
+        FillMask<int16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2, HIGH_INSTR_SAT2,
+                          HIGH_REPR_SAT2);
     }
     else
     {
@@ -2235,7 +2240,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
                                     "TIFF");
                             if (pszBlockOffset)
                             {
-                                GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
+                                int64_t nOffset = CPLAtoGIntBig(pszBlockOffset);
                                 if (nOffset !=
                                     nSkipBytes + nBlockNo * nBlockSizeBytes)
                                 {
@@ -2265,7 +2270,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     int nLineOffset = 0;
     int nPixelOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
 
     if (EQUAL(osFormat, "BandSequential"))
     {
@@ -2279,7 +2284,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             return nullptr;
         }
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
 
         poDS->m_sLayout.osRawFilename = osQubeFile;
         if (nBands > 1)
@@ -2289,7 +2294,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->m_sLayout.nImageOffset = nSkipBytes;
         poDS->m_sLayout.nPixelOffset = nPixelOffset;
         poDS->m_sLayout.nLineOffset = nLineOffset;
-        poDS->m_sLayout.nBandOffset = static_cast<GIntBig>(nBandOffset);
+        poDS->m_sLayout.nBandOffset = static_cast<int64_t>(nBandOffset);
     }
     /* else Tiled or external */
 
@@ -3084,7 +3089,7 @@ void ISIS3Dataset::BuildLabel()
             oHistory.Add("StartByte", pszHISTORY_STARTBYTE_PLACEHOLDER);
         else
             oHistory.Add("StartByte", 1);
-        oHistory.Add("Bytes", static_cast<GIntBig>(m_osHistory.size()));
+        oHistory.Add("Bytes", static_cast<int64_t>(m_osHistory.size()));
         if (!m_osExternalFilename.empty())
         {
             CPLString osFilename(CPLGetBasename(GetDescription()));
@@ -3141,9 +3146,8 @@ void ISIS3Dataset::BuildLabel()
             NonPixelSection oSection;
             oSection.osSrcFilename = osLabelSrcFilename;
             oSection.nSrcOffset =
-                static_cast<vsi_l_offset>(oObj.GetInteger("StartByte")) - 1U;
-            oSection.nSize =
-                static_cast<vsi_l_offset>(oObj.GetInteger("Bytes"));
+                static_cast<uint64_t>(oObj.GetInteger("StartByte")) - 1U;
+            oSection.nSize = static_cast<uint64_t>(oObj.GetInteger("Bytes"));
 
             CPLString osName;
             CPLJSONObject oName = oObj.GetObj("Name");
@@ -3234,7 +3238,7 @@ void ISIS3Dataset::BuildHistory()
 
     if (m_oSrcJSonLabel.IsValid() && m_bUseSrcHistory)
     {
-        vsi_l_offset nHistoryOffset = 0;
+        uint64_t nHistoryOffset = 0;
         int nHistorySize = 0;
         CPLString osSrcFilename;
 
@@ -3261,7 +3265,7 @@ void ISIS3Dataset::BuildHistory()
                 if (oStartByte.ToInteger() > 0)
                 {
                     nHistoryOffset =
-                        static_cast<vsi_l_offset>(oStartByte.ToInteger()) - 1U;
+                        static_cast<uint64_t>(oStartByte.ToInteger()) - 1U;
                 }
             }
 
@@ -3291,7 +3295,7 @@ void ISIS3Dataset::BuildHistory()
                 if (VSIFReadL(&osHistory[0], nHistorySize, 1, fpHistory) != 1)
                 {
                     CPLError(CE_Warning, CPLE_FileIO,
-                             "Cannot read %d bytes at offset " CPL_FRMT_GUIB
+                             "Cannot read %d bytes at offset %" PRIu64
                              "of %s: history will not be preserved",
                              nHistorySize, nHistoryOffset,
                              osHistoryFilename.c_str());
@@ -3430,22 +3434,21 @@ void ISIS3Dataset::WriteLabel()
 
     const GDALDataType eType = GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eType);
-    vsi_l_offset nImagePixels = 0;
+    uint64_t nImagePixels = 0;
     if (m_poExternalDS == nullptr)
     {
         if (m_bIsTiled)
         {
             int nBlockXSize = 1, nBlockYSize = 1;
             GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            nImagePixels = static_cast<vsi_l_offset>(nBlockXSize) *
-                           nBlockYSize * nBands *
-                           DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
+            nImagePixels = static_cast<uint64_t>(nBlockXSize) * nBlockYSize *
+                           nBands * DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
                            DIV_ROUND_UP(nRasterYSize, nBlockYSize);
         }
         else
         {
             nImagePixels =
-                static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize * nBands;
+                static_cast<uint64_t>(nRasterXSize) * nRasterYSize * nBands;
         }
     }
 
@@ -3453,15 +3456,14 @@ void ISIS3Dataset::WriteLabel()
     char *pszHistoryStartBytes =
         strstr(pszLabel, pszHISTORY_STARTBYTE_PLACEHOLDER);
 
-    vsi_l_offset nHistoryOffset = 0;
-    vsi_l_offset nLastOffset = 0;
+    uint64_t nHistoryOffset = 0;
+    uint64_t nLastOffset = 0;
     if (pszHistoryStartBytes != nullptr)
     {
         CPLAssert(m_osExternalFilename.empty());
         nHistoryOffset = nLabelSize + nImagePixels * nDTSize;
         nLastOffset = nHistoryOffset + m_osHistory.size();
-        const char *pszStartByte =
-            CPLSPrintf(CPL_FRMT_GUIB, nHistoryOffset + 1);
+        const char *pszStartByte = CPLSPrintf("%" PRIu64, nHistoryOffset + 1);
         CPLAssert(strlen(pszStartByte) <
                   strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
         memcpy(pszHistoryStartBytes, pszStartByte, strlen(pszStartByte));
@@ -3477,8 +3479,7 @@ void ISIS3Dataset::WriteLabel()
             char *pszPlaceHolder =
                 strstr(pszLabel, m_aoNonPixelSections[i].osPlaceHolder.c_str());
             CPLAssert(pszPlaceHolder != nullptr);
-            const char *pszStartByte =
-                CPLSPrintf(CPL_FRMT_GUIB, nLastOffset + 1);
+            const char *pszStartByte = CPLSPrintf("%" PRIu64, nLastOffset + 1);
             nLastOffset += m_aoNonPixelSections[i].nSize;
             CPLAssert(strlen(pszStartByte) <
                       m_aoNonPixelSections[i].osPlaceHolder.size());
@@ -3539,7 +3540,7 @@ void ISIS3Dataset::WriteLabel()
 #ifdef CPL_MSB
             GDALSwapWords(pabyTemp, nDTSize, nMaxPerPage, nDTSize);
 #endif
-            for (vsi_l_offset i = 0; i < nImagePixels; i += nMaxPerPage)
+            for (uint64_t i = 0; i < nImagePixels; i += nMaxPerPage)
             {
                 int n;
                 if (i + nMaxPerPage <= nImagePixels)
@@ -3618,7 +3619,7 @@ void ISIS3Dataset::WriteLabel()
 
         VSIFSeekL(fpSrc, m_aoNonPixelSections[i].nSrcOffset, SEEK_SET);
         GByte abyBuffer[4096];
-        vsi_l_offset nRemaining = m_aoNonPixelSections[i].nSize;
+        uint64_t nRemaining = m_aoNonPixelSections[i].nSize;
         while (nRemaining)
         {
             size_t nToRead = 4096;
@@ -3628,7 +3629,7 @@ void ISIS3Dataset::WriteLabel()
             if (nRead != nToRead)
             {
                 CPLError(CE_Warning, CPLE_FileIO,
-                         "Could not read " CPL_FRMT_GUIB " bytes from %s",
+                         "Could not read %" PRIu64 " bytes from %s",
                          m_aoNonPixelSections[i].nSize,
                          m_aoNonPixelSections[i].osSrcFilename.c_str());
                 break;
@@ -4191,8 +4192,8 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         {
             const int nPixelOffset = GDALGetDataTypeSizeBytes(eType);
             const int nLineOffset = nPixelOffset * nXSize;
-            const vsi_l_offset nBandOffset =
-                static_cast<vsi_l_offset>(nLineOffset) * nYSize;
+            const uint64_t nBandOffset =
+                static_cast<uint64_t>(nLineOffset) * nYSize;
             ISIS3RawRasterBand *poISISBand = new ISIS3RawRasterBand(
                 poDS, i + 1, poDS->m_fpImage,
                 nBandOffset * i,  // nImgOffset, to be

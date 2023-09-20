@@ -142,10 +142,13 @@ int CPL_DLL VSIStat(const char *, VSIStatBuf *) CPL_WARN_UNUSED_RESULT;
 /*      otherwise redefine to use the regular api.                      */
 /* ==================================================================== */
 
+#if defined(GDAL_USE_OLD_INT_TYPES)
 /** Type for a file offset */
-typedef GUIntBig vsi_l_offset;
+typedef uint64_t vsi_l_offset;
+#endif
+
 /** Maximum value for a file offset */
-#define VSI_L_OFFSET_MAX GUINTBIG_MAX
+#define VSI_L_OFFSET_MAX UINT64_MAX
 
 /** Opaque type for a FILE that implements the VSIVirtualHandle API */
 typedef struct VSIVirtualHandle VSILFILE;
@@ -156,21 +159,21 @@ VSILFILE CPL_DLL *VSIFOpenExL(const char *, const char *,
 VSILFILE CPL_DLL *VSIFOpenEx2L(const char *, const char *, int,
                                CSLConstList) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFCloseL(VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
-int CPL_DLL VSIFSeekL(VSILFILE *, vsi_l_offset,
+int CPL_DLL VSIFSeekL(VSILFILE *, uint64_t,
                       int) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
-vsi_l_offset CPL_DLL VSIFTellL(VSILFILE *) CPL_WARN_UNUSED_RESULT;
+uint64_t CPL_DLL VSIFTellL(VSILFILE *) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL VSIRewindL(VSILFILE *);
 size_t CPL_DLL VSIFReadL(void *, size_t, size_t,
                          VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFReadMultiRangeL(int nRanges, void **ppData,
-                                const vsi_l_offset *panOffsets,
+                                const uint64_t *panOffsets,
                                 const size_t *panSizes,
                                 VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 size_t CPL_DLL VSIFWriteL(const void *, size_t, size_t,
                           VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFEofL(VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFTruncateL(VSILFILE *,
-                          vsi_l_offset) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+                          uint64_t) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFFlushL(VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFPrintfL(VSILFILE *, CPL_FORMAT_STRING(const char *),
                         ...) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT
@@ -185,12 +188,12 @@ typedef enum
     VSI_RANGE_STATUS_HOLE     /**< Hole */
 } VSIRangeStatus;
 
-VSIRangeStatus CPL_DLL VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nStart,
-                                           vsi_l_offset nLength);
+VSIRangeStatus CPL_DLL VSIFGetRangeStatusL(VSILFILE *fp, uint64_t nStart,
+                                           uint64_t nLength);
 
 int CPL_DLL VSIIngestFile(VSILFILE *fp, const char *pszFilename,
-                          GByte **ppabyRet, vsi_l_offset *pnSize,
-                          GIntBig nMaxSize) CPL_WARN_UNUSED_RESULT;
+                          GByte **ppabyRet, uint64_t *pnSize,
+                          int64_t nMaxSize) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL VSIOverwriteFile(VSILFILE *fpTarget, const char *pszSourceFilename)
     CPL_WARN_UNUSED_RESULT;
@@ -366,8 +369,8 @@ char CPL_DLL *VSIStrdupVerbose(const char *pszStr, const char *pszFile,
 /** VSI_STRDUP_VERBOSE */
 #define VSI_STRDUP_VERBOSE(pszStr) VSIStrdupVerbose(pszStr, __FILE__, __LINE__)
 
-GIntBig CPL_DLL CPLGetPhysicalRAM(void);
-GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
+int64_t CPL_DLL CPLGetPhysicalRAM(void);
+int64_t CPL_DLL CPLGetUsablePhysicalRAM(void);
 
 /* ==================================================================== */
 /*      Other...                                                        */
@@ -398,9 +401,9 @@ struct VSIDIREntry
     /** File mode. See VSI_ISREG() / VSI_ISDIR() */
     int nMode;
     /** File size */
-    vsi_l_offset nSize;
+    uint64_t nSize;
     /** Last modification time (seconds since 1970/01/01) */
-    GIntBig nMTime;
+    int64_t nMTime;
     /** Whether nMode is known: 0 = unknown, 1 = known. */
     char bModeKnown;
     /** Whether nSize is known: 0 = unknown, 1 = known. */
@@ -431,7 +434,7 @@ int CPL_DLL VSIUnlink(const char *pszFilename);
 int CPL_DLL *VSIUnlinkBatch(CSLConstList papszFiles);
 int CPL_DLL VSIRename(const char *oldpath, const char *newpath);
 int CPL_DLL VSICopyFile(const char *pszSource, const char *pszTarget,
-                        VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                        VSILFILE *fpSource, uint64_t nSourceSize,
                         const char *const *papszOptions,
                         GDALProgressFunc pProgressFunc, void *pProgressData);
 int CPL_DLL VSISync(const char *pszSource, const char *pszTarget,
@@ -441,7 +444,7 @@ int CPL_DLL VSISync(const char *pszSource, const char *pszTarget,
 int CPL_DLL VSIAbortPendingUploads(const char *pszFilename);
 
 char CPL_DLL *VSIStrerror(int);
-GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
+int64_t CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
 void CPL_DLL VSINetworkStatsReset(void);
 char CPL_DLL *VSINetworkStatsGetAsSerializedJSON(char **papszOptions);
@@ -488,13 +491,11 @@ void CPL_DLL VSICleanupFileManager(void);
 bool CPL_DLL VSIDuplicateFileSystemHandler(const char *pszSourceFSName,
                                            const char *pszNewFSName);
 
-VSILFILE CPL_DLL *
-VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
-                     vsi_l_offset nDataLength,
-                     int bTakeOwnership) CPL_WARN_UNUSED_RESULT;
+VSILFILE CPL_DLL *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
+                                       uint64_t nDataLength, int bTakeOwnership)
+    CPL_WARN_UNUSED_RESULT;
 GByte CPL_DLL *VSIGetMemFileBuffer(const char *pszFilename,
-                                   vsi_l_offset *pnDataLength,
-                                   int bUnlinkAndSeize);
+                                   uint64_t *pnDataLength, int bUnlinkAndSeize);
 
 /** Callback used by VSIStdoutSetRedirection() */
 typedef size_t (*VSIWriteFunction)(const void *ptr, size_t size, size_t nmemb,
@@ -566,13 +567,12 @@ typedef void *(*VSIFilesystemPluginOpenCallback)(void *pUserData,
  * Return current position in handle. Mandatory
  * @since GDAL 3.0
  */
-typedef vsi_l_offset (*VSIFilesystemPluginTellCallback)(void *pFile);
+typedef uint64_t (*VSIFilesystemPluginTellCallback)(void *pFile);
 /**
  * Seek to position in handle. Mandatory except for write only handles
  * @since GDAL 3.0
  */
-typedef int (*VSIFilesystemPluginSeekCallback)(void *pFile,
-                                               vsi_l_offset nOffset,
+typedef int (*VSIFilesystemPluginSeekCallback)(void *pFile, uint64_t nOffset,
                                                int nWhence);
 /**
  * Read data from current position, returns the number of blocks correctly read.
@@ -587,14 +587,14 @@ typedef size_t (*VSIFilesystemPluginReadCallback)(void *pFile, void *pBuffer,
  * @since GDAL 3.0
  */
 typedef int (*VSIFilesystemPluginReadMultiRangeCallback)(
-    void *pFile, int nRanges, void **ppData, const vsi_l_offset *panOffsets,
+    void *pFile, int nRanges, void **ppData, const uint64_t *panOffsets,
     const size_t *panSizes);
 /**
  * Get empty ranges. Optional
  * @since GDAL 3.0
  */
 typedef VSIRangeStatus (*VSIFilesystemPluginGetRangeStatusCallback)(
-    void *pFile, vsi_l_offset nOffset, vsi_l_offset nLength);
+    void *pFile, uint64_t nOffset, uint64_t nLength);
 /**
  * Has end of file been reached. Mandatory? for read handles.
  * @since GDAL 3.0
@@ -616,7 +616,7 @@ typedef int (*VSIFilesystemPluginFlushCallback)(void *pFile);
  * Truncate handle. Mandatory (driver dependent?) for write handles
  */
 typedef int (*VSIFilesystemPluginTruncateCallback)(void *pFile,
-                                                   vsi_l_offset nNewSize);
+                                                   uint64_t nNewSize);
 /**
  * Close file handle. Optional
  * @since GDAL 3.0
@@ -638,7 +638,7 @@ typedef int (*VSIFilesystemPluginCloseCallback)(void *pFile);
  * @since GDAL 3.7
  */
 typedef void (*VSIFilesystemPluginAdviseReadCallback)(
-    void *pFile, int nRanges, const vsi_l_offset *panOffsets,
+    void *pFile, int nRanges, const uint64_t *panOffsets,
     const size_t *panSizes);
 
 /**

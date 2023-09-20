@@ -725,7 +725,7 @@ CPLErr MSGRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                     if (nBlockXSize == chunk_width)  // optimized version
                     {
                         for (int i = 0; i < nBlockSize; ++i)
-                            ((GUInt16 *)pImage)[i] = cimg.Get()[y += iStep];
+                            ((uint16_t *)pImage)[i] = cimg.Get()[y += iStep];
                     }
                     else
                     {
@@ -747,7 +747,7 @@ CPLErr MSGRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                                               // thus do not shift!!
                                 iXOffset -= iShift;
                             for (int i = 0; i < chunk_width; ++i)
-                                ((GUInt16 *)pImage)[++iXOffset] =
+                                ((uint16_t *)pImage)[++iXOffset] =
                                     cimg.Get()[y += iStep];
                         }
                     }

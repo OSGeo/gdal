@@ -106,11 +106,11 @@ class OGRXLSXLayer final : public OGRMemLayer
 
     /* For external usage. Mess with FID */
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override
     {
         Init();
         return OGRMemLayer::SetNextByIndex(nIndex);
@@ -124,7 +124,7 @@ class OGRXLSXLayer final : public OGRMemLayer
         return OGRMemLayer::GetLayerDefn();
     }
 
-    GIntBig GetFeatureCount(int bForce) override
+    int64_t GetFeatureCount(int bForce) override
     {
         Init();
         return OGRMemLayer::GetFeatureCount(bForce);

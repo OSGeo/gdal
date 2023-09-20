@@ -30,6 +30,7 @@
 #include "rawdataset.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #ifdef CPL_IS_LSB
@@ -62,7 +63,7 @@ constexpr int CELL_SIZE_FILE = 4;
 
 constexpr int CELL_SIZE_MEM = 8;
 
-constexpr vsi_l_offset HEADER_LENGTH = 132;
+constexpr uint64_t HEADER_LENGTH = 132;
 
 constexpr int32_t NO_DATA = 0x80000000;
 
@@ -535,9 +536,8 @@ CPLErr SIGDEMRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
     {
         return CE_None;
     }
-    const vsi_l_offset nReadStart =
-        HEADER_LENGTH +
-        static_cast<vsi_l_offset>(nBlockSizeBytes) * nBlockIndex;
+    const uint64_t nReadStart =
+        HEADER_LENGTH + static_cast<uint64_t>(nBlockSizeBytes) * nBlockIndex;
 
     // Seek to the correct line.
     if (VSIFSeekL(fpRawL, nReadStart, SEEK_SET) == -1)
@@ -545,8 +545,8 @@ CPLErr SIGDEMRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
         if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed to seek to block %d @ " CPL_FRMT_GUIB ".",
-                     nBlockIndex, nReadStart);
+                     "Failed to seek to block %d @ %" PRIu64 ".", nBlockIndex,
+                     nReadStart);
             return CE_Failure;
         }
         else
@@ -626,9 +626,8 @@ CPLErr SIGDEMRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff,
         pnDestValues++;
     }
 
-    const vsi_l_offset nWriteStart =
-        HEADER_LENGTH +
-        static_cast<vsi_l_offset>(nBlockSizeBytes) * nBlockIndex;
+    const uint64_t nWriteStart =
+        HEADER_LENGTH + static_cast<uint64_t>(nBlockSizeBytes) * nBlockIndex;
 
     if (VSIFSeekL(fpRawL, nWriteStart, SEEK_SET) == -1 ||
         VSIFWriteL(pBlockBuffer, CELL_SIZE_FILE, nRasterXSize, fpRawL) <

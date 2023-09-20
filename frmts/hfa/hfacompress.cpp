@@ -37,7 +37,7 @@
 #include "cpl_vsi.h"
 #include "hfa.h"
 
-HFACompress::HFACompress(void *pData, GUInt32 nBlockSize, EPTType eDataType)
+HFACompress::HFACompress(void *pData, uint32_t nBlockSize, EPTType eDataType)
     : m_pData(pData), m_nBlockSize(nBlockSize),
       m_nBlockCount((nBlockSize * 8) / HFAGetDataTypeBits(eDataType)),
       m_eDataType(eDataType), m_nDataTypeNumBits(HFAGetDataTypeBits(eDataType)),
@@ -47,11 +47,11 @@ HFACompress::HFACompress(void *pData, GUInt32 nBlockSize, EPTType eDataType)
 {
     // Allocate some memory for the count and values - probably too big.
     // About right for worst case scenario.
-    m_pCounts = static_cast<GByte *>(
-        VSI_MALLOC_VERBOSE(m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32)));
+    m_pCounts = static_cast<GByte *>(VSI_MALLOC_VERBOSE(
+        m_nBlockCount * sizeof(uint32_t) + sizeof(uint32_t)));
 
-    m_pValues = static_cast<GByte *>(
-        VSI_MALLOC_VERBOSE(m_nBlockCount * sizeof(GUInt32) + sizeof(GUInt32)));
+    m_pValues = static_cast<GByte *>(VSI_MALLOC_VERBOSE(
+        m_nBlockCount * sizeof(uint32_t) + sizeof(uint32_t)));
 }
 
 HFACompress::~HFACompress()
@@ -62,7 +62,7 @@ HFACompress::~HFACompress()
 }
 
 // Returns the number of bits needed to encode a count.
-static GByte _FindNumBits(GUInt32 range)
+static GByte _FindNumBits(uint32_t range)
 {
     if (range < 0xff)
     {
@@ -77,11 +77,11 @@ static GByte _FindNumBits(GUInt32 range)
     return 32;
 }
 
-// Gets the value from the uncompressed block as a GUInt32 no matter
+// Gets the value from the uncompressed block as a uint32_t no matter
 // the data type.
-GUInt32 HFACompress::valueAsUInt32(GUInt32 iPixel)
+uint32_t HFACompress::valueAsUInt32(uint32_t iPixel)
 {
-    GUInt32 val = 0;
+    uint32_t val = 0;
 
     if (m_nDataTypeNumBits == 8)
     {
@@ -89,11 +89,11 @@ GUInt32 HFACompress::valueAsUInt32(GUInt32 iPixel)
     }
     else if (m_nDataTypeNumBits == 16)
     {
-        val = ((GUInt16 *)m_pData)[iPixel];
+        val = ((uint16_t *)m_pData)[iPixel];
     }
     else if (m_nDataTypeNumBits == 32)
     {
-        val = ((GUInt32 *)m_pData)[iPixel];
+        val = ((uint32_t *)m_pData)[iPixel];
     }
     else if (m_nDataTypeNumBits == 4)
     {
@@ -140,14 +140,14 @@ GUInt32 HFACompress::valueAsUInt32(GUInt32 iPixel)
 //
 // TODO: Minimum value returned as pNumBits is now 8 - Imagine
 // can handle 1, 2, and 4 bits as well.
-GUInt32 HFACompress::findMin(GByte *pNumBits)
+uint32_t HFACompress::findMin(GByte *pNumBits)
 {
-    GUInt32 u32Min = valueAsUInt32(0);
-    GUInt32 u32Max = u32Min;
+    uint32_t u32Min = valueAsUInt32(0);
+    uint32_t u32Max = u32Min;
 
-    for (GUInt32 count = 1; count < m_nBlockCount; count++)
+    for (uint32_t count = 1; count < m_nBlockCount; count++)
     {
-        GUInt32 u32Val = valueAsUInt32(count);
+        uint32_t u32Val = valueAsUInt32(count);
         if (u32Val < u32Min)
             u32Min = u32Val;
         else if (u32Val > u32Max)
@@ -161,8 +161,8 @@ GUInt32 HFACompress::findMin(GByte *pNumBits)
 
 // Codes the count in the way expected by Imagine - i.e. the lower 2 bits
 // specify how many bytes the count takes up.
-void HFACompress::makeCount(GUInt32 count, GByte *pCounter,
-                            GUInt32 *pnSizeCount)
+void HFACompress::makeCount(uint32_t count, GByte *pCounter,
+                            uint32_t *pnSizeCount)
 {
     // Because Imagine stores the number of bits used in the lower 2 bits of the
     // data it restricts what we can use.
@@ -201,9 +201,9 @@ void HFACompress::makeCount(GUInt32 count, GByte *pCounter,
 }
 
 // Encodes the value depending on the number of bits we are using.
-void HFACompress::encodeValue(GUInt32 val, GUInt32 repeat)
+void HFACompress::encodeValue(uint32_t val, uint32_t repeat)
 {
-    GUInt32 nSizeCount = 0;
+    uint32_t nSizeCount = 0;
 
     makeCount(repeat, m_pCurrCount, &nSizeCount);
     m_pCurrCount += nSizeCount;
@@ -216,19 +216,19 @@ void HFACompress::encodeValue(GUInt32 val, GUInt32 repeat)
     else if (m_nNumBits == 16)
     {
         // Only storing 16 bits per value as the range is small.
-        *(GUInt16 *)m_pCurrValues = GUInt16(val - m_nMin);
+        *(uint16_t *)m_pCurrValues = uint16_t(val - m_nMin);
 #ifndef CPL_MSB
         CPL_SWAP16PTR(m_pCurrValues);
 #endif  // ndef CPL_MSB
-        m_pCurrValues += sizeof(GUInt16);
+        m_pCurrValues += sizeof(uint16_t);
     }
     else
     {
-        *(GUInt32 *)m_pCurrValues = GUInt32(val - m_nMin);
+        *(uint32_t *)m_pCurrValues = uint32_t(val - m_nMin);
 #ifndef CPL_MSB
         CPL_SWAP32PTR(m_pCurrValues);
 #endif  // ndef CPL_MSB
-        m_pCurrValues += sizeof(GUInt32);
+        m_pCurrValues += sizeof(uint32_t);
     }
 }
 
@@ -236,7 +236,7 @@ void HFACompress::encodeValue(GUInt32 val, GUInt32 repeat)
 // if the compression fails - i.e. compressed block bigger than input.
 bool HFACompress::compressBlock()
 {
-    GUInt32 nLastUnique = 0;
+    uint32_t nLastUnique = 0;
 
     // Check we know about the datatype to be compressed.
     // If we can't compress it we should return false so that
@@ -260,10 +260,10 @@ bool HFACompress::compressBlock()
     m_nMin = findMin(&m_nNumBits);
 
     // Go through the block.
-    GUInt32 u32Last = valueAsUInt32(0);
-    for (GUInt32 count = 1; count < m_nBlockCount; count++)
+    uint32_t u32Last = valueAsUInt32(0);
+    for (uint32_t count = 1; count < m_nBlockCount; count++)
     {
-        const GUInt32 u32Val = valueAsUInt32(count);
+        const uint32_t u32Val = valueAsUInt32(count);
         if (u32Val != u32Last)
         {
             // The values have changed - i.e. a run has come to and end.
@@ -286,8 +286,8 @@ bool HFACompress::compressBlock()
     m_nNumRuns++;
 
     // Set the size variables.
-    m_nSizeCounts = static_cast<GUInt32>(m_pCurrCount - m_pCounts);
-    m_nSizeValues = static_cast<GUInt32>(m_pCurrValues - m_pValues);
+    m_nSizeCounts = static_cast<uint32_t>(m_pCurrCount - m_pCounts);
+    m_nSizeValues = static_cast<uint32_t>(m_pCurrValues - m_pValues);
 
     // The 13 is for the header size - maybe this should live with some
     // constants somewhere?

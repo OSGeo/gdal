@@ -136,7 +136,7 @@ class OGRVRTLayer final : public OGRLayer
     OGRFeatureDefn *GetSrcLayerDefn();
     void ClipAndAssignSRS(OGRFeature *poFeature);
 
-    GIntBig nFeatureCount;
+    int64_t nFeatureCount;
 
     bool bError;
 
@@ -164,13 +164,13 @@ class OGRVRTLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -188,7 +188,7 @@ class OGRVRTLayer final : public OGRLayer
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual OGRErr SyncToDisk() override;
 

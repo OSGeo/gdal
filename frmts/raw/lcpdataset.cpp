@@ -57,8 +57,8 @@ class LCPDataset final : public RawDataset
     CPLString osPrjFilename{};
     OGRSpatialReference m_oSRS{};
 
-    static CPLErr ClassifyBandData(GDALRasterBand *poBand, GInt32 &nNumClasses,
-                                   GInt32 *panClasses);
+    static CPLErr ClassifyBandData(GDALRasterBand *poBand, int32_t &nNumClasses,
+                                   int32_t *panClasses);
 
     CPL_DISALLOW_COPY_ASSIGN(LCPDataset)
 
@@ -812,8 +812,8 @@ GDALDataset *LCPDataset::Open(GDALOpenInfo *poOpenInfo)
 /*  calculate them by default.                                          */
 /************************************************************************/
 
-CPLErr LCPDataset::ClassifyBandData(GDALRasterBand *poBand, GInt32 &nNumClasses,
-                                    GInt32 *panClasses)
+CPLErr LCPDataset::ClassifyBandData(GDALRasterBand *poBand,
+                                    int32_t &nNumClasses, int32_t *panClasses)
 {
     CPLAssert(poBand);
     CPLAssert(panClasses);
@@ -821,10 +821,10 @@ CPLErr LCPDataset::ClassifyBandData(GDALRasterBand *poBand, GInt32 &nNumClasses,
     const int nXSize = poBand->GetXSize();
     const int nYSize = poBand->GetYSize();
 
-    GInt16 *panValues =
-        static_cast<GInt16 *>(CPLMalloc(sizeof(GInt16) * nXSize));
-    constexpr int MIN_VAL = std::numeric_limits<GInt16>::min();
-    constexpr int MAX_VAL = std::numeric_limits<GInt16>::max();
+    int16_t *panValues =
+        static_cast<int16_t *>(CPLMalloc(sizeof(int16_t) * nXSize));
+    constexpr int MIN_VAL = std::numeric_limits<int16_t>::min();
+    constexpr int MAX_VAL = std::numeric_limits<int16_t>::max();
     constexpr int RANGE_VAL = MAX_VAL - MIN_VAL + 1;
     GByte *pabyFlags = static_cast<GByte *>(CPLCalloc(1, RANGE_VAL));
 
@@ -933,7 +933,7 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     // defined units.  This is a bit cumbersome, but the user should
     // be allowed to specify none to get default units/options.  Use
     // default units every chance we get.
-    GInt16 panMetadata[LCP_MAX_BANDS] = {
+    int16_t panMetadata[LCP_MAX_BANDS] = {
         0,  // 0 ELEVATION_UNIT
         0,  // 1 SLOPE_UNIT
         2,  // 2 ASPECT_UNIT
@@ -1340,12 +1340,12 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     double *padfMax = static_cast<double *>(CPLMalloc(sizeof(double) * nBands));
 
     // Initialize these arrays to zeros
-    GInt32 *panFound =
-        static_cast<GInt32 *>(VSIMalloc2(sizeof(GInt32), nBands));
-    memset(panFound, 0, sizeof(GInt32) * nBands);
-    GInt32 *panClasses = static_cast<GInt32 *>(
-        VSIMalloc3(sizeof(GInt32), nBands, LCP_MAX_CLASSES));
-    memset(panClasses, 0, sizeof(GInt32) * nBands * LCP_MAX_CLASSES);
+    int32_t *panFound =
+        static_cast<int32_t *>(VSIMalloc2(sizeof(int32_t), nBands));
+    memset(panFound, 0, sizeof(int32_t) * nBands);
+    int32_t *panClasses = static_cast<int32_t *>(
+        VSIMalloc3(sizeof(int32_t), nBands, LCP_MAX_CLASSES));
+    memset(panClasses, 0, sizeof(int32_t) * nBands * LCP_MAX_CLASSES);
 
     if (bCalculateStats)
     {
@@ -1397,7 +1397,7 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     /*      Write the header                                                */
     /* -------------------------------------------------------------------- */
 
-    GInt32 nTemp = bHaveCrownFuels ? 21 : 20;
+    int32_t nTemp = bHaveCrownFuels ? 21 : 20;
     CPL_LSBPTR32(&nTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
     nTemp = bHaveGroundFuels ? 21 : 20;
@@ -1405,7 +1405,7 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
 
     const int nXSize = poSrcDS->GetRasterXSize();
-    nTemp = static_cast<GInt32>(dfLatitude + 0.5);
+    nTemp = static_cast<int32_t>(dfLatitude + 0.5);
     CPL_LSBPTR32(&nTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
     dfLongitude = adfSrcGeoTransform[0] + adfSrcGeoTransform[1] * nXSize;
@@ -1441,10 +1441,10 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
             {
                 CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 3340, SEEK_SET));
             }
-            nTemp = static_cast<GInt32>(padfMin[i]);
+            nTemp = static_cast<int32_t>(padfMin[i]);
             CPL_LSBPTR32(&nTemp);
             CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
-            nTemp = static_cast<GInt32>(padfMax[i]);
+            nTemp = static_cast<int32_t>(padfMax[i]);
             CPL_LSBPTR32(&nTemp);
             CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
             if (bClassifyData)
@@ -1480,10 +1480,10 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 4164, SEEK_SET));
 
     /* Image size */
-    nTemp = static_cast<GInt32>(nXSize);
+    nTemp = static_cast<int32_t>(nXSize);
     CPL_LSBPTR32(&nTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
-    nTemp = static_cast<GInt32>(nYSize);
+    nTemp = static_cast<int32_t>(nYSize);
     CPL_LSBPTR32(&nTemp);
     CPL_IGNORE_RET_VAL(VSIFWriteL(&nTemp, 4, 1, fp));
 
@@ -1563,7 +1563,8 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
     /*      Loop over image, copying image data.                            */
     /* -------------------------------------------------------------------- */
 
-    GInt16 *panScanline = static_cast<GInt16 *>(VSIMalloc3(2, nBands, nXSize));
+    int16_t *panScanline =
+        static_cast<int16_t *>(VSIMalloc3(2, nBands, nXSize));
 
     if (!pfnProgress(0.0, nullptr, pProgressData))
     {

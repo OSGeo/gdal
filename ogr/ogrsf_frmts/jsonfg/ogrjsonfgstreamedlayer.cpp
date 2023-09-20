@@ -28,6 +28,8 @@
 
 #include "ogr_jsonfg.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*             OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer()         */
 /************************************************************************/
@@ -100,10 +102,10 @@ void OGRJSONFGStreamedLayer::ResetReading()
 
 OGRFeature *OGRJSONFGStreamedLayer::EnsureUniqueFID(OGRFeature *poFeat)
 {
-    GIntBig nFID = poFeat->GetFID();
+    int64_t nFID = poFeat->GetFID();
     if (nFID == OGRNullFID)
     {
-        nFID = static_cast<GIntBig>(oSetUsedFIDs_.size());
+        nFID = static_cast<int64_t>(oSetUsedFIDs_.size());
         while (oSetUsedFIDs_.find(nFID) != oSetUsedFIDs_.end())
         {
             ++nFID;
@@ -114,14 +116,14 @@ OGRFeature *OGRJSONFGStreamedLayer::EnsureUniqueFID(OGRFeature *poFeat)
         if (!bOriginalIdModified_)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Several features with id = " CPL_FRMT_GIB " have "
+                     "Several features with id = %" PRId64 " have "
                      "been found. Altering it to be unique. "
                      "This warning will not be emitted anymore for "
                      "this layer",
                      nFID);
             bOriginalIdModified_ = true;
         }
-        nFID = static_cast<GIntBig>(oSetUsedFIDs_.size());
+        nFID = static_cast<int64_t>(oSetUsedFIDs_.size());
         while (oSetUsedFIDs_.find(nFID) != oSetUsedFIDs_.end())
         {
             ++nFID;
@@ -196,7 +198,7 @@ int OGRJSONFGStreamedLayer::TestCapability(const char *pszCap)
 /*                           GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig OGRJSONFGStreamedLayer::GetFeatureCount(int bForce)
+int64_t OGRJSONFGStreamedLayer::GetFeatureCount(int bForce)
 {
     if (!m_poFilterGeom && !m_poAttrQuery && nFeatureCount_ >= 0)
         return nFeatureCount_;

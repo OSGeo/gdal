@@ -75,7 +75,7 @@ class GDALOverviewDataset final : public GDALDataset
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALDataType, int, int *, int64_t, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -113,7 +113,7 @@ class GDALOverviewBand final : public GDALProxyRasterBand
     GDALRasterBand *RefUnderlyingRasterBand(bool bForceOpen) const override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -309,8 +309,8 @@ CPLErr GDALOverviewDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       int nXSize, int nYSize, void *pData,
                                       int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
+                                      int *panBandMap, int64_t nPixelSpace,
+                                      int64_t nLineSpace, int64_t nBandSpace,
                                       GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -687,8 +687,8 @@ GDALRasterBand *GDALOverviewBand::GetMaskBand()
 CPLErr GDALOverviewBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 {
     // Try to pass the request to the most appropriate overview.

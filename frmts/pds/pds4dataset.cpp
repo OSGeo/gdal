@@ -36,6 +36,7 @@
 #include "ogreditablelayer.h"
 #include "pds4dataset.h"
 
+#include <cinttypes>
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
@@ -192,10 +193,12 @@ CPLErr PDS4WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr PDS4WrapperRasterBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr PDS4WrapperRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
+                                        int nYOff, int nXSize, int nYSize,
+                                        void *pData, int nBufXSize,
+                                        int nBufYSize, GDALDataType eBufType,
+                                        int64_t nPixelSpace, int64_t nLineSpace,
+                                        GDALRasterIOExtraArg *psExtraArg)
 
 {
     PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
@@ -214,8 +217,7 @@ CPLErr PDS4WrapperRasterBand::IRasterIO(
 /************************************************************************/
 
 PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
-                                     VSILFILE *l_fpRaw,
-                                     vsi_l_offset l_nImgOffset,
+                                     VSILFILE *l_fpRaw, uint64_t l_nImgOffset,
                                      int l_nPixelOffset, int l_nLineOffset,
                                      GDALDataType l_eDataType,
                                      RawRasterBand::ByteOrder eByteOrderIn)
@@ -328,8 +330,8 @@ CPLErr PDS4RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr PDS4RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType eBufType, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -445,28 +447,28 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
     else if (eSrcDT == GDT_Int8)
     {
-        FillMask<GInt8>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        m_adfConstants);
+        FillMask<int8_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                         m_adfConstants);
     }
     else if (eSrcDT == GDT_UInt16)
     {
-        FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          m_adfConstants);
+        FillMask<uint16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, m_adfConstants);
     }
     else if (eSrcDT == GDT_Int16)
     {
-        FillMask<GInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         m_adfConstants);
+        FillMask<int16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          m_adfConstants);
     }
     else if (eSrcDT == GDT_UInt32)
     {
-        FillMask<GUInt32>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          m_adfConstants);
+        FillMask<uint32_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, m_adfConstants);
     }
     else if (eSrcDT == GDT_Int32)
     {
-        FillMask<GInt32>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         m_adfConstants);
+        FillMask<int32_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          m_adfConstants);
     }
     else if (eSrcDT == GDT_Float32)
     {
@@ -1729,7 +1731,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 CPLGetXMLValue(psSubIter, "name", nullptr);
             const char *pszArrayId =
                 CPLGetXMLValue(psSubIter, "local_identifier", nullptr);
-            vsi_l_offset nOffset = static_cast<vsi_l_offset>(
+            uint64_t nOffset = static_cast<uint64_t>(
                 CPLAtoGIntBig(CPLGetXMLValue(psSubIter, "offset", "0")));
 
             const char *pszAxisIndexOrder =
@@ -1910,17 +1912,17 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             }
 
             // Compute pixel, line and band spacing
-            vsi_l_offset nSpacing = GDALGetDataTypeSizeBytes(eDT);
+            uint64_t nSpacing = GDALGetDataTypeSizeBytes(eDT);
             int nPixelOffset = 0;
             int nLineOffset = 0;
-            vsi_l_offset nBandOffset = 0;
+            uint64_t nBandOffset = 0;
             int nCountPreviousDim = 1;
             for (int i = nDIM - 1; i >= 0; i--)
             {
                 if (szOrder[i] == 'S')
                 {
                     if (nSpacing >
-                        static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
+                        static_cast<uint64_t>(INT_MAX / nCountPreviousDim))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
@@ -1933,7 +1935,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 else if (szOrder[i] == 'L')
                 {
                     if (nSpacing >
-                        static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
+                        static_cast<uint64_t>(INT_MAX / nCountPreviousDim))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
@@ -2047,10 +2049,10 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             {
                 auto poBand = cpl::make_unique<PDS4RawRasterBand>(
                     poDS.get(), i + 1, poDS->m_fpImage,
-                    (bBottomToTop) ? nOffset + nBandOffset * i +
-                                         static_cast<vsi_l_offset>(nLines - 1) *
-                                             nLineOffset
-                                   : nOffset + nBandOffset * i,
+                    (bBottomToTop)
+                        ? nOffset + nBandOffset * i +
+                              static_cast<uint64_t>(nLines - 1) * nLineOffset
+                        : nOffset + nBandOffset * i,
                     nPixelOffset, (bBottomToTop) ? -nLineOffset : nLineOffset,
                     eDT,
                     bLSBOrder ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
@@ -3101,7 +3103,7 @@ bool PDS4Dataset::InitImageFile()
             m_poExternalDS->FlushCache(false);
 
             // Check that blocks are effectively written in expected order.
-            GIntBig nLastOffset = 0;
+            int64_t nLastOffset = 0;
             for (int i = 0; i < nBands; i++)
             {
                 for (int y = 0; y < l_nBlocksPerColumn; y++)
@@ -3111,7 +3113,7 @@ bool PDS4Dataset::InitImageFile()
                             CPLSPrintf("BLOCK_OFFSET_%d_%d", 0, y), "TIFF");
                     if (pszBlockOffset)
                     {
-                        GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
+                        int64_t nOffset = CPLAtoGIntBig(pszBlockOffset);
                         if (i != 0 || y != 0)
                         {
                             if (nOffset != nLastOffset + nBlockSizeBytes)
@@ -3159,7 +3161,7 @@ bool PDS4Dataset::InitImageFile()
             m_poExternalDS->FlushCache(false);
 
             // Check that blocks are effectively written in expected order.
-            GIntBig nLastOffset = 0;
+            int64_t nLastOffset = 0;
             for (int y = 0; y < l_nBlocksPerColumn; y++)
             {
                 const char *pszBlockOffset =
@@ -3167,7 +3169,7 @@ bool PDS4Dataset::InitImageFile()
                         CPLSPrintf("BLOCK_OFFSET_%d_%d", 0, y), "TIFF");
                 if (pszBlockOffset)
                 {
-                    GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
+                    int64_t nOffset = CPLAtoGIntBig(pszBlockOffset);
                     if (y != 0)
                     {
                         if (nOffset != nLastOffset + nBlockSizeBytes * nBands)
@@ -3199,15 +3201,14 @@ bool PDS4Dataset::InitImageFile()
     const double dfNoData = GetRasterBand(1)->GetNoDataValue(&bHasNoData);
     const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-    const vsi_l_offset nFileSize = static_cast<vsi_l_offset>(nRasterXSize) *
-                                   nRasterYSize * nBands * nDTSize;
+    const uint64_t nFileSize =
+        static_cast<uint64_t>(nRasterXSize) * nRasterYSize * nBands * nDTSize;
     if (dfNoData == 0 || !bHasNoData)
     {
         if (VSIFTruncateL(m_fpImage, nFileSize) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot create file of size " CPL_FRMT_GUIB " bytes",
-                     nFileSize);
+                     "Cannot create file of size %" PRIu64 " bytes", nFileSize);
             return false;
         }
     }
@@ -3229,14 +3230,14 @@ bool PDS4Dataset::InitImageFile()
             GDALSwapWords(pData, nDTSize, nRasterXSize, nDTSize);
         }
 #endif
-        for (vsi_l_offset i = 0;
-             i < static_cast<vsi_l_offset>(nRasterYSize) * nBands; i++)
+        for (uint64_t i = 0; i < static_cast<uint64_t>(nRasterYSize) * nBands;
+             i++)
         {
             size_t nBytesWritten = VSIFWriteL(pData, 1, nLineSize, m_fpImage);
             if (nBytesWritten != nLineSize)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Cannot create file of size " CPL_FRMT_GUIB " bytes",
+                         "Cannot create file of size %" PRIu64 " bytes",
                          nFileSize);
                 VSIFree(pData);
                 return false;
@@ -3336,7 +3337,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
                                     pszLocalIdentifier);
     }
 
-    GUIntBig nOffset = m_nBaseOffset;
+    uint64_t nOffset = m_nBaseOffset;
     if (m_poExternalDS)
     {
         const char *pszOffset =
@@ -3347,7 +3348,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
     }
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psArray, (osPrefix + "offset").c_str(),
-                                    CPLSPrintf(CPL_FRMT_GUIB, nOffset)),
+                                    CPLSPrintf("%" PRIu64, nOffset)),
         "unit", "byte");
     CPLCreateXMLElementAndValue(psArray, (osPrefix + "axes").c_str(),
                                 (bIsArray2D) ? "2" : "3");
@@ -4017,8 +4018,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
                 CPLAddXMLAttributeAndValue(
                     CPLCreateXMLElementAndValue(
                         psHeader, (osPrefix + "object_length").c_str(),
-                        CPLSPrintf(CPL_FRMT_GUIB,
-                                   static_cast<GUIntBig>(m_nBaseOffset))),
+                        CPLSPrintf("%" PRIu64,
+                                   static_cast<uint64_t>(m_nBaseOffset))),
                     "unit", "byte");
                 CPLCreateXMLElementAndValue(
                     psHeader, (osPrefix + "parsing_standard_id").c_str(),
@@ -4342,7 +4343,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     const int nItemSize = GDALGetDataTypeSizeBytes(eType);
     int nLineOffset, nPixelOffset;
-    vsi_l_offset nBandOffset;
+    uint64_t nBandOffset;
 
     const char *pszInterleave =
         aosOptions.FetchNameValueDef("INTERLEAVE", "BSQ");
@@ -4367,7 +4368,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
             return nullptr;
         }
         nLineOffset = nPixelOffset * nXSize;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nYSize;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nYSize;
     }
     else if (EQUAL(pszInterleave, "BIL"))
     {
@@ -4378,7 +4379,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
             return nullptr;
         }
         nLineOffset = nItemSize * nBandsIn * nXSize;
-        nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nXSize;
+        nBandOffset = static_cast<uint64_t>(nItemSize) * nXSize;
     }
     else
     {
@@ -4417,7 +4418,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
 
     GDALDataset *poExternalDS = nullptr;
     VSILFILE *fpImage = nullptr;
-    vsi_l_offset nBaseOffset = 0;
+    uint64_t nBaseOffset = 0;
     bool bIsLSB = true;
     CPLString osHeaderParsingStandard;
     const bool bCreateLabelOnly =
@@ -4466,7 +4467,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         nBaseOffset = sLayout.nImageOffset;
         nPixelOffset = static_cast<int>(sLayout.nPixelOffset);
         nLineOffset = static_cast<int>(sLayout.nLineOffset);
-        nBandOffset = static_cast<vsi_l_offset>(sLayout.nBandOffset);
+        nBandOffset = static_cast<uint64_t>(sLayout.nBandOffset);
         bIsLSB = sLayout.bLittleEndianOrder;
         auto poSrcDriver = poSrcDS->GetDriver();
         if (poSrcDriver)

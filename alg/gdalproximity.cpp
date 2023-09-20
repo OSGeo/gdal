@@ -44,7 +44,7 @@
 
 CPL_CVSID("$Id$")
 
-static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
+static CPLErr ProcessProximityLine(int32_t *panSrcScanline, int *panNearX,
                                    int *panNearY, int bForward, int iLine,
                                    int nXSize, double nMaxDist,
                                    float *pafProximity,
@@ -267,7 +267,7 @@ CPLErr CPL_STDCALL GDALComputeProximity(GDALRasterBandH hSrcBand,
     float *pafProximity = nullptr;
     int *panNearX = nullptr;
     int *panNearY = nullptr;
-    GInt32 *panSrcScanline = nullptr;
+    int32_t *panSrcScanline = nullptr;
     bool bTempFileAlreadyDeleted = false;
 
     if (eProxType == GDT_Byte || eProxType == GDT_UInt16 ||
@@ -305,7 +305,7 @@ CPLErr CPL_STDCALL GDALComputeProximity(GDALRasterBandH hSrcBand,
     panNearX = static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nXSize));
     panNearY = static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nXSize));
     panSrcScanline =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+        static_cast<int32_t *>(VSI_MALLOC2_VERBOSE(sizeof(int32_t), nXSize));
 
     if (pafProximity == nullptr || panNearX == nullptr || panNearY == nullptr ||
         panSrcScanline == nullptr)
@@ -464,7 +464,7 @@ static double SquareDistance(double dfX1, double dfX2, double dfY1, double dfY2)
 /*                        ProcessProximityLine()                        */
 /************************************************************************/
 
-static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
+static CPLErr ProcessProximityLine(int32_t *panSrcScanline, int *panNearX,
                                    int *panNearY, int bForward, int iLine,
                                    int nXSize, double dfMaxDist,
                                    float *pafProximity,

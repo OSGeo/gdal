@@ -165,7 +165,7 @@ void GDALMDReaderKompsat::LoadMetadata()
             pszTime = "000000.000000";
 
         char buffer[80];
-        GIntBig timeMid =
+        int64_t timeMid =
             GetAcquisitionTimeFromString(CPLSPrintf("%sT%s", pszDate, pszTime));
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
@@ -265,7 +265,7 @@ char **GDALMDReaderKompsat::ReadTxtToList()
 /**
  * GetAcqisitionTimeFromString()
  */
-GIntBig
+int64_t
 GDALMDReaderKompsat::GetAcquisitionTimeFromString(const char *pszDateTime)
 {
     if (nullptr == pszDateTime)

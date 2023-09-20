@@ -87,7 +87,7 @@ class OGRIdrisiLayer final : public OGRLayer,
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 };
 
 /************************************************************************/

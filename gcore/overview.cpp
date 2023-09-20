@@ -135,7 +135,7 @@ static CPLErr GDALResampleChunk_NearT(
 
         const T *const pSrcScanline =
             pChunk +
-            (static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize) -
+            (static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize) -
             nChunkXOff;
 
         /* --------------------------------------------------------------------
@@ -177,9 +177,9 @@ static CPLErr GDALResampleChunk_Near(
     else if (eWrkDataType == GDT_UInt16)
         return GDALResampleChunk_NearT(
             dfXRatioDstToSrc, dfYRatioDstToSrc, eWrkDataType,
-            static_cast<const GInt16 *>(pChunk), nChunkXOff, nChunkXSize,
+            static_cast<const int16_t *>(pChunk), nChunkXOff, nChunkXSize,
             nChunkYOff, nDstXOff, nDstXOff2, nDstYOff, nDstYOff2,
-            reinterpret_cast<GInt16 **>(ppDstBuffer));
+            reinterpret_cast<int16_t **>(ppDstBuffer));
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk_NearT(
             dfXRatioDstToSrc, dfYRatioDstToSrc, eWrkDataType,
@@ -265,22 +265,22 @@ static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
         }
         else if (dt == GDT_Int8)
         {
-            if (dfNoDataValue == std::numeric_limits<GInt8>::max())
-                dfReplacementVal = std::numeric_limits<GInt8>::max() - 1;
+            if (dfNoDataValue == std::numeric_limits<int8_t>::max())
+                dfReplacementVal = std::numeric_limits<int8_t>::max() - 1;
             else
                 dfReplacementVal = dfNoDataValue + 1;
         }
         else if (dt == GDT_UInt16)
         {
-            if (dfNoDataValue == std::numeric_limits<GUInt16>::max())
-                dfReplacementVal = std::numeric_limits<GUInt16>::max() - 1;
+            if (dfNoDataValue == std::numeric_limits<uint16_t>::max())
+                dfReplacementVal = std::numeric_limits<uint16_t>::max() - 1;
             else
                 dfReplacementVal = dfNoDataValue + 1;
         }
         else if (dt == GDT_Int16)
         {
-            if (dfNoDataValue == std::numeric_limits<GInt16>::max())
-                dfReplacementVal = std::numeric_limits<GInt16>::max() - 1;
+            if (dfNoDataValue == std::numeric_limits<int16_t>::max())
+                dfReplacementVal = std::numeric_limits<int16_t>::max() - 1;
             else
                 dfReplacementVal = dfNoDataValue + 1;
         }
@@ -289,7 +289,7 @@ static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
             // Be careful to limited precision of float
             dfReplacementVal = dfNoDataValue + 1;
             double dfVal = dfNoDataValue;
-            if (dfReplacementVal >= std::numeric_limits<GUInt32>::max() - 128)
+            if (dfReplacementVal >= std::numeric_limits<uint32_t>::max() - 128)
             {
                 while (dfReplacementVal == dfNoDataValue)
                 {
@@ -311,7 +311,7 @@ static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
             // Be careful to limited precision of float
             dfReplacementVal = dfNoDataValue + 1;
             double dfVal = dfNoDataValue;
-            if (dfReplacementVal >= std::numeric_limits<GInt32>::max() - 64)
+            if (dfReplacementVal >= std::numeric_limits<int32_t>::max() - 64)
             {
                 while (dfReplacementVal == dfNoDataValue)
                 {
@@ -397,17 +397,17 @@ template <> inline GByte ComputeIntegerRMS_4values<GByte, int>(int sumSquares)
 }
 
 template <>
-inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
+inline uint16_t ComputeIntegerRMS_4values<uint16_t, double>(double sumSquares)
 {
     const double sumDivWeight = sumSquares * 0.25;
-    GUInt16 rms = static_cast<GUInt16>(std::sqrt(sumDivWeight));
+    uint16_t rms = static_cast<uint16_t>(std::sqrt(sumDivWeight));
 
     // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
     // Naive version:
     // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
     // Optimized version for integer case and weight == 4
-    if (static_cast<GUInt32>(rms) * (rms + 1) <
-        static_cast<GUInt32>(sumDivWeight + 0.25))
+    if (static_cast<uint32_t>(rms) * (rms + 1) <
+        static_cast<uint32_t>(sumDivWeight + 0.25))
         rms += 1;
     return rms;
 }
@@ -1364,7 +1364,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                     // regular x and y src spacing.
                     const T *pSrcScanlineShifted =
                         pChunk + pasSrcX[0].nLeftXOffShifted +
-                        static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) *
+                        static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) *
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
@@ -1431,7 +1431,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                               eWrkDataType == GDT_Float64);
                     const T *pSrcScanlineShifted =
                         pChunk + pasSrcX[0].nLeftXOffShifted +
-                        static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) *
+                        static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) *
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
@@ -1512,7 +1512,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                     {
                         auto pChunkShifted =
                             pChunk +
-                            static_cast<GPtrDiff_t>(nSrcYOff) * nChunkXSize;
+                            static_cast<ptrdiff_t>(nSrcYOff) * nChunkXSize;
                         int nCounterY = nSrcYOff2 - nSrcYOff - 1;
                         double dfWeightY = dfBottomWeight;
                         while (true)
@@ -1592,12 +1592,12 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                     }
                     else
                     {
-                        GPtrDiff_t nCount = 0;
+                        ptrdiff_t nCount = 0;
                         for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                         {
                             const auto pChunkShifted =
                                 pChunk +
-                                static_cast<GPtrDiff_t>(iY) * nChunkXSize;
+                                static_cast<ptrdiff_t>(iY) * nChunkXSize;
 
                             double dfTotalLine = 0;
                             double dfTotalWeightLine = 0;
@@ -1669,7 +1669,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                         if (nCount == 0 ||
                             (bPropagateNoData &&
                              nCount <
-                                 static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) *
+                                 static_cast<ptrdiff_t>(nSrcYOff2 - nSrcYOff) *
                                      (nSrcXOff2 - nSrcXOff)))
                         {
                             pDstScanline[iDstPixel] = tNoDataValue;
@@ -1727,16 +1727,16 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                 const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
                 const int nSrcXOff2 = pasSrcX[iDstPixel].nRightXOffShifted;
 
-                GPtrDiff_t nTotalR = 0;
-                GPtrDiff_t nTotalG = 0;
-                GPtrDiff_t nTotalB = 0;
-                GPtrDiff_t nCount = 0;
+                ptrdiff_t nTotalR = 0;
+                ptrdiff_t nTotalG = 0;
+                ptrdiff_t nTotalB = 0;
+                ptrdiff_t nCount = 0;
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
-                        const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *
+                        const T val = pChunk[iX + static_cast<ptrdiff_t>(iY) *
                                                       nChunkXSize];
                         // cppcheck-suppress unsignedLessThanZero
                         if (val < 0 || val >= colorEntries.size())
@@ -1765,7 +1765,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
 
                 if (nCount == 0 ||
                     (bPropagateNoData &&
-                     nCount < static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) *
+                     nCount < static_cast<ptrdiff_t>(nSrcYOff2 - nSrcYOff) *
                                   (nSrcXOff2 - nSrcXOff)))
                 {
                     pDstScanline[iDstPixel] = tNoDataValue;
@@ -1829,10 +1829,10 @@ static CPLErr GDALResampleChunk_AverageOrRMS(
         if (EQUAL(pszResampling, "RMS"))
         {
             // Use double as accumulation type, because UInt32 could overflow
-            return GDALResampleChunk_AverageOrRMS_T<GUInt16, double,
+            return GDALResampleChunk_AverageOrRMS_T<uint16_t, double,
                                                     GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-                static_cast<const GUInt16 *>(pChunk), pabyChunkNodataMask,
+                static_cast<const uint16_t *>(pChunk), pabyChunkNodataMask,
                 nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
                 nDstXOff2, nDstYOff, nDstYOff2, poOverview, ppDstBuffer,
                 pszResampling, bHasNoData, dfNoDataValue, poColorTable,
@@ -1840,10 +1840,10 @@ static CPLErr GDALResampleChunk_AverageOrRMS(
         }
         else
         {
-            return GDALResampleChunk_AverageOrRMS_T<GUInt16, GUInt32,
+            return GDALResampleChunk_AverageOrRMS_T<uint16_t, uint32_t,
                                                     GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-                static_cast<const GUInt16 *>(pChunk), pabyChunkNodataMask,
+                static_cast<const uint16_t *>(pChunk), pabyChunkNodataMask,
                 nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
                 nDstXOff2, nDstYOff, nDstYOff2, poOverview, ppDstBuffer,
                 pszResampling, bHasNoData, dfNoDataValue, poColorTable,
@@ -2052,7 +2052,7 @@ static CPLErr GDALResampleChunk_Gauss(
             if (poColorTable == nullptr)
             {
                 double dfTotal = 0.0;
-                GInt64 nCount = 0;
+                int64_t nCount = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -2064,12 +2064,12 @@ static CPLErr GDALResampleChunk_Gauss(
                     {
                         const double val =
                             padfSrcScanline[iX - nChunkXOff +
-                                            static_cast<GPtrDiff_t>(iY -
-                                                                    nSrcYOff) *
+                                            static_cast<ptrdiff_t>(iY -
+                                                                   nSrcYOff) *
                                                 nChunkXSize];
                         if (pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX - nChunkXOff +
-                                                      static_cast<GPtrDiff_t>(
+                                                      static_cast<ptrdiff_t>(
                                                           iY - nSrcYOff) *
                                                           nChunkXSize])
                         {
@@ -2091,10 +2091,10 @@ static CPLErr GDALResampleChunk_Gauss(
             }
             else
             {
-                GInt64 nTotalR = 0;
-                GInt64 nTotalG = 0;
-                GInt64 nTotalB = 0;
-                GInt64 nTotalWeight = 0;
+                int64_t nTotalR = 0;
+                int64_t nTotalG = 0;
+                int64_t nTotalB = 0;
+                int64_t nTotalWeight = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -2106,8 +2106,8 @@ static CPLErr GDALResampleChunk_Gauss(
                     {
                         const double val =
                             padfSrcScanline[iX - nChunkXOff +
-                                            static_cast<GPtrDiff_t>(iY -
-                                                                    nSrcYOff) *
+                                            static_cast<ptrdiff_t>(iY -
+                                                                   nSrcYOff) *
                                                 nChunkXSize];
                         if (val < 0 || val >= colorEntries.size())
                             continue;
@@ -2116,11 +2116,11 @@ static CPLErr GDALResampleChunk_Gauss(
                         if (colorEntries[idx].c4)
                         {
                             const int nWeight = panLineWeight[i];
-                            nTotalR += static_cast<GInt64>(
+                            nTotalR += static_cast<int64_t>(
                                 colorEntries[idx].c1 * nWeight);
-                            nTotalG += static_cast<GInt64>(
+                            nTotalG += static_cast<int64_t>(
                                 colorEntries[idx].c2 * nWeight);
-                            nTotalB += static_cast<GInt64>(
+                            nTotalB += static_cast<int64_t>(
                                 colorEntries[idx].c3 * nWeight);
                             nTotalWeight += nWeight;
                         }
@@ -2218,12 +2218,12 @@ static CPLErr GDALResampleChunk_Mode_T(
 
         const T *const paSrcScanline =
             pChunk +
-            (static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
+            (static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
         const GByte *pabySrcScanlineNodataMask = nullptr;
         if (pabyChunkNodataMask != nullptr)
             pabySrcScanlineNodataMask =
                 pabyChunkNodataMask +
-                static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
+                static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
 
         T *const paDstScanline = pDstBuffer + (iDstLine - nDstYOff) * nDstXSize;
         /* --------------------------------------------------------------------
@@ -2309,8 +2309,8 @@ static CPLErr GDALResampleChunk_Mode_T(
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
-                    const GPtrDiff_t iTotYOff =
-                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize -
+                    const ptrdiff_t iTotYOff =
+                        static_cast<ptrdiff_t>(iY - nSrcYOff) * nChunkXSize -
                         nChunkXOff;
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
@@ -2367,8 +2367,8 @@ static CPLErr GDALResampleChunk_Mode_T(
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
-                    const GPtrDiff_t iTotYOff =
-                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize -
+                    const ptrdiff_t iTotYOff =
+                        static_cast<ptrdiff_t>(iY - nSrcYOff) * nChunkXSize -
                         nChunkXOff;
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
@@ -2432,12 +2432,12 @@ static CPLErr GDALResampleChunk_Mode(
     }
     else if (eWrkDataType == GDT_UInt16)
     {
-        return GDALResampleChunk_Mode_T<GUInt16>(
+        return GDALResampleChunk_Mode_T<uint16_t>(
             dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-            static_cast<const GUInt16 *>(pChunk), pabyChunkNodataMask,
+            static_cast<const uint16_t *>(pChunk), pabyChunkNodataMask,
             nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
             nDstXOff2, nDstYOff, nDstYOff2,
-            static_cast<GUInt16 *>(*ppDstBuffer), bHasNoData, dfNoDataValue,
+            static_cast<uint16_t *>(*ppDstBuffer), bHasNoData, dfNoDataValue,
             poColorTable, eSrcDataType);
     }
     else if (eWrkDataType == GDT_Float32)
@@ -2808,8 +2808,10 @@ inline double GDALResampleConvolutionHorizontal<GByte>(
 }
 
 template <>
-inline double GDALResampleConvolutionHorizontal<GUInt16>(
-    const GUInt16 *pChunk, const double *padfWeightsAligned, int nSrcPixelCount)
+inline double
+GDALResampleConvolutionHorizontal<uint16_t>(const uint16_t *pChunk,
+                                            const double *padfWeightsAligned,
+                                            int nSrcPixelCount)
 {
     return GDALResampleConvolutionHorizontalSSE2(pChunk, padfWeightsAligned,
                                                  nSrcPixelCount);
@@ -2864,8 +2866,8 @@ inline void GDALResampleConvolutionHorizontalWithMask<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontalWithMask<GUInt16>(
-    const GUInt16 *pChunk, const GByte *pabyMask,
+inline void GDALResampleConvolutionHorizontalWithMask<uint16_t>(
+    const uint16_t *pChunk, const GByte *pabyMask,
     const double *padfWeightsAligned, int nSrcPixelCount, double &dfVal,
     double &dfWeightSum)
 {
@@ -2939,9 +2941,9 @@ inline void GDALResampleConvolutionHorizontal_3rows<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontal_3rows<GUInt16>(
-    const GUInt16 *pChunkRow1, const GUInt16 *pChunkRow2,
-    const GUInt16 *pChunkRow3, const double *padfWeightsAligned,
+inline void GDALResampleConvolutionHorizontal_3rows<uint16_t>(
+    const uint16_t *pChunkRow1, const uint16_t *pChunkRow2,
+    const uint16_t *pChunkRow3, const double *padfWeightsAligned,
     int nSrcPixelCount, double &dfRes1, double &dfRes2, double &dfRes3)
 {
     GDALResampleConvolutionHorizontal_3rows_SSE2(
@@ -3005,9 +3007,9 @@ inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
-    const GUInt16 *pChunkRow1, const GUInt16 *pChunkRow2,
-    const GUInt16 *pChunkRow3, const double *padfWeightsAligned,
+inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<uint16_t>(
+    const uint16_t *pChunkRow1, const uint16_t *pChunkRow2,
+    const uint16_t *pChunkRow3, const double *padfWeightsAligned,
     int nSrcPixelCount, double &dfRes1, double &dfRes2, double &dfRes3)
 {
     GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
@@ -3058,10 +3060,10 @@ inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<GUInt16>(
-    const GUInt16 *pChunkRow1, const GUInt16 *pChunkRow2,
-    const GUInt16 *pChunkRow3, const double *padfWeightsAligned, double &dfRes1,
-    double &dfRes2, double &dfRes3)
+inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<uint16_t>(
+    const uint16_t *pChunkRow1, const uint16_t *pChunkRow2,
+    const uint16_t *pChunkRow3, const double *padfWeightsAligned,
+    double &dfRes1, double &dfRes2, double &dfRes3)
 {
     GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
         pChunkRow1, pChunkRow2, pChunkRow3, padfWeightsAligned, dfRes1, dfRes2,
@@ -3094,7 +3096,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         GetReplacementValueIfNoData(dstDataType, bHasNoData, dfNoDataValue);
     // cppcheck-suppress unreadVariable
     const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
-    const auto nNodataValueInt64 = static_cast<GInt64>(dfNoDataValue);
+    const auto nNodataValueInt64 = static_cast<int64_t>(dfNoDataValue);
 
     // TODO: we should have some generic function to do this.
     Twork fDstMin = -std::numeric_limits<Twork>::max();
@@ -3106,30 +3108,30 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     }
     else if (dstDataType == GDT_Int8)
     {
-        fDstMin = std::numeric_limits<GInt8>::min();
-        fDstMax = std::numeric_limits<GInt8>::max();
+        fDstMin = std::numeric_limits<int8_t>::min();
+        fDstMax = std::numeric_limits<int8_t>::max();
     }
     else if (dstDataType == GDT_UInt16)
     {
-        fDstMin = std::numeric_limits<GUInt16>::min();
-        fDstMax = std::numeric_limits<GUInt16>::max();
+        fDstMin = std::numeric_limits<uint16_t>::min();
+        fDstMax = std::numeric_limits<uint16_t>::max();
     }
     else if (dstDataType == GDT_Int16)
     {
-        fDstMin = std::numeric_limits<GInt16>::min();
-        fDstMax = std::numeric_limits<GInt16>::max();
+        fDstMin = std::numeric_limits<int16_t>::min();
+        fDstMax = std::numeric_limits<int16_t>::max();
     }
     else if (dstDataType == GDT_UInt32)
     {
-        fDstMin = static_cast<Twork>(std::numeric_limits<GUInt32>::min());
-        fDstMax = static_cast<Twork>(std::numeric_limits<GUInt32>::max());
+        fDstMin = static_cast<Twork>(std::numeric_limits<uint32_t>::min());
+        fDstMax = static_cast<Twork>(std::numeric_limits<uint32_t>::max());
     }
     else if (dstDataType == GDT_Int32)
     {
         // cppcheck-suppress unreadVariable
-        fDstMin = static_cast<Twork>(std::numeric_limits<GInt32>::min());
+        fDstMin = static_cast<Twork>(std::numeric_limits<int32_t>::min());
         // cppcheck-suppress unreadVariable
-        fDstMax = static_cast<Twork>(std::numeric_limits<GInt32>::max());
+        fDstMax = static_cast<Twork>(std::numeric_limits<int32_t>::max());
     }
 
     auto replaceValIfNodata = [bHasNoData, isIntegerDT, fDstMin, fDstMax,
@@ -3148,7 +3150,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             fClamped = fDstMax;
         if (isIntegerDT)
         {
-            if (nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)))
+            if (nNodataValueInt64 == static_cast<int64_t>(std::round(fClamped)))
             {
                 // Do not use the nodata value
                 return static_cast<Twork>(dfReplacementVal);
@@ -3277,8 +3279,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             {
                 for (; iSrcLineOff + 2 < nHeight; iSrcLineOff += 3)
                 {
-                    const GPtrDiff_t j =
-                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                    const ptrdiff_t j =
+                        static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -3304,8 +3306,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             {
                 for (; iSrcLineOff + 2 < nHeight; iSrcLineOff += 3)
                 {
-                    const GPtrDiff_t j =
-                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                    const ptrdiff_t j =
+                        static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -3332,8 +3334,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             {
                 for (; iSrcLineOff + 2 < nHeight; iSrcLineOff += 3)
                 {
-                    const GPtrDiff_t j =
-                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                    const ptrdiff_t j =
+                        static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -3357,8 +3359,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             }
             for (; iSrcLineOff < nHeight; ++iSrcLineOff)
             {
-                const GPtrDiff_t j =
-                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                const ptrdiff_t j =
+                    static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                     (nSrcPixelStart - nChunkXOff);
                 const double dfVal = GDALResampleConvolutionHorizontal(
                     pChunk + j, padfWeights, nSrcPixelCount);
@@ -3371,8 +3373,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         {
             for (int iSrcLineOff = 0; iSrcLineOff < nHeight; ++iSrcLineOff)
             {
-                const GPtrDiff_t j =
-                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                const ptrdiff_t j =
+                    static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                     (nSrcPixelStart - nChunkXOff);
 
                 if (bKernelWithNegativeWeights)
@@ -3735,9 +3737,9 @@ static CPLErr GDALResampleChunk_Convolution(
             bHasNoData, dfNoDataValue, pfnFilterFunc, pfnFilterFunc4Values,
             nKernelRadius, bKernelWithNegativeWeights, fMaxVal);
     else if (eWrkDataType == GDT_UInt16)
-        return GDALResampleChunk_ConvolutionT<GUInt16, float, GDT_Float32>(
+        return GDALResampleChunk_ConvolutionT<uint16_t, float, GDT_Float32>(
             dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-            static_cast<const GUInt16 *>(pChunk), 1, pabyChunkNodataMask,
+            static_cast<const uint16_t *>(pChunk), 1, pabyChunkNodataMask,
             nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
             nDstXOff2, nDstYOff, nDstYOff2, poOverview, *ppDstBuffer,
             bHasNoData, dfNoDataValue, pfnFilterFunc, pfnFilterFunc4Values,
@@ -3890,13 +3892,13 @@ static CPLErr GDALResampleChunkC32R(int nSrcWidth, int nSrcHeight,
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
                         const double dfR =
-                            pafSrcScanline[iX * 2 + static_cast<GPtrDiff_t>(
+                            pafSrcScanline[iX * 2 + static_cast<ptrdiff_t>(
                                                         iY - nSrcYOff) *
                                                         nSrcWidth * 2];
                         const double dfI =
                             pafSrcScanline[iX * 2 +
-                                           static_cast<GPtrDiff_t>(iY -
-                                                                   nSrcYOff) *
+                                           static_cast<ptrdiff_t>(iY -
+                                                                  nSrcYOff) *
                                                nSrcWidth * 2 +
                                            1];
                         dfTotalR += dfR;
@@ -3943,13 +3945,13 @@ static CPLErr GDALResampleChunkC32R(int nSrcWidth, int nSrcHeight,
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
                         const double dfR =
-                            pafSrcScanline[iX * 2 + static_cast<GPtrDiff_t>(
+                            pafSrcScanline[iX * 2 + static_cast<ptrdiff_t>(
                                                         iY - nSrcYOff) *
                                                         nSrcWidth * 2];
                         const double dfI =
                             pafSrcScanline[iX * 2 +
-                                           static_cast<GPtrDiff_t>(iY -
-                                                                   nSrcYOff) *
+                                           static_cast<ptrdiff_t>(iY -
+                                                                  nSrcYOff) *
                                                nSrcWidth * 2 +
                                            1];
 
@@ -3987,11 +3989,11 @@ static CPLErr GDALResampleChunkC32R(int nSrcWidth, int nSrcHeight,
                     {
                         // TODO(schwehr): Maybe use std::complex?
                         dfTotalR +=
-                            pafSrcScanline[iX * 2 + static_cast<GPtrDiff_t>(
+                            pafSrcScanline[iX * 2 + static_cast<ptrdiff_t>(
                                                         iY - nSrcYOff) *
                                                         nSrcWidth * 2];
                         dfTotalI += pafSrcScanline[iX * 2 +
-                                                   static_cast<GPtrDiff_t>(
+                                                   static_cast<ptrdiff_t>(
                                                        iY - nSrcYOff) *
                                                        nSrcWidth * 2 +
                                                    1];
@@ -4457,7 +4459,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         nFullResYChunk = std::max(nFullResYChunk, 2 * nMaxOvrFactor);
         nMaxChunkYSizeQueried =
             nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
-        return static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eWrkDataType)) *
+        return static_cast<int64_t>(GDALGetDataTypeSizeBytes(eWrkDataType)) *
                nMaxChunkYSizeQueried * nWidth;
     };
 
@@ -4745,8 +4747,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             if (eWrkDataType == GDT_Float32)
             {
                 float *pafChunk = static_cast<float *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pafChunk[i] == 1.0)
@@ -4756,8 +4758,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Byte)
             {
                 GByte *pabyChunk = static_cast<GByte *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pabyChunk[i] == 1)
@@ -4766,9 +4768,9 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             }
             else if (eWrkDataType == GDT_UInt16)
             {
-                GUInt16 *pasChunk = static_cast<GUInt16 *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                uint16_t *pasChunk = static_cast<uint16_t *>(pChunk);
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pasChunk[i] == 1)
@@ -4778,8 +4780,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Float64)
             {
                 double *padfChunk = static_cast<double *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (padfChunk[i] == 1.0)
@@ -4796,8 +4798,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             if (eWrkDataType == GDT_Float32)
             {
                 float *pafChunk = static_cast<float *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pafChunk[i] == 1.0)
@@ -4809,8 +4811,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Byte)
             {
                 GByte *pabyChunk = static_cast<GByte *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pabyChunk[i] == 1)
@@ -4821,9 +4823,9 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             }
             else if (eWrkDataType == GDT_UInt16)
             {
-                GUInt16 *pasChunk = static_cast<GUInt16 *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                uint16_t *pasChunk = static_cast<uint16_t *>(pChunk);
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pasChunk[i] == 1)
@@ -4835,8 +4837,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Float64)
             {
                 double *padfChunk = static_cast<double *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (padfChunk[i] == 1.0)
@@ -5265,7 +5267,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             const int nFullResXChunkQueried =
                 nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
 
-            if (static_cast<GIntBig>(nFullResXChunkQueried) *
+            if (static_cast<int64_t>(nFullResXChunkQueried) *
                     nFullResYChunkQueried * nBands *
                     GDALGetDataTypeSizeBytes(eWrkDataType) >
                 nChunkMaxSize)
@@ -5689,7 +5691,7 @@ CPLErr CPL_STDCALL GDALComputeBandStats(GDALRasterBandH hSrcBand,
     double dfSum = 0.0;
     double dfSum2 = 0.0;
     int iLine = 0;
-    GIntBig nSamples = 0;
+    int64_t nSamples = 0;
 
     do
     {

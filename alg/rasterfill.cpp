@@ -342,8 +342,8 @@ static CPLErr GDALMultiFilter(GDALRasterBandH hTargetBand,
 /************************************************************************/
 
 inline void QUAD_CHECK(double &dfQuadDist, float &fQuadValue, int target_x,
-                       GUInt32 target_y, int origin_x, int origin_y,
-                       float fTargetValue, GUInt32 nNoDataVal)
+                       uint32_t target_y, int origin_x, int origin_y,
+                       float fTargetValue, uint32_t nNoDataVal)
 {
     if (target_y != nNoDataVal)
     {
@@ -427,7 +427,7 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
 
     // Special "x" pixel values identifying pixels as special.
     GDALDataType eType = GDT_UInt16;
-    GUInt32 nNoDataVal = 65535;
+    uint32_t nNoDataVal = 65535;
 
     if (nXSize > 65533 || nYSize > 65533)
     {
@@ -594,12 +594,12 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
     /*      Allocate buffers for last scanline and this scanline.           */
     /* -------------------------------------------------------------------- */
 
-    GUInt32 *panLastY =
-        static_cast<GUInt32 *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(GUInt32)));
-    GUInt32 *panThisY =
-        static_cast<GUInt32 *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(GUInt32)));
-    GUInt32 *panTopDownY =
-        static_cast<GUInt32 *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(GUInt32)));
+    uint32_t *panLastY =
+        static_cast<uint32_t *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(uint32_t)));
+    uint32_t *panThisY =
+        static_cast<uint32_t *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(uint32_t)));
+    uint32_t *panTopDownY =
+        static_cast<uint32_t *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(uint32_t)));
     float *pafLastValue =
         static_cast<float *>(VSI_CALLOC_VERBOSE(nXSize, sizeof(float)));
     float *pafThisValue =

@@ -32,6 +32,7 @@
 #include "ogr_cad.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <iomanip>
 #include <sstream>
 
@@ -158,7 +159,7 @@ OGRCADLayer::OGRCADLayer(CADLayer &poCADLayer_, OGRSpatialReference *poSR,
     poFeatureDefn->Reference();
 }
 
-GIntBig OGRCADLayer::GetFeatureCount(int bForce)
+int64_t OGRCADLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
@@ -208,7 +209,7 @@ OGRFeature *OGRCADLayer::GetNextFeature()
     return nullptr;
 }
 
-OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRCADLayer::GetFeature(int64_t nFID)
 {
     if (poCADLayer.getGeometryCount() <= static_cast<size_t>(nFID) || nFID < 0)
     {
@@ -223,7 +224,7 @@ OGRFeature *OGRCADLayer::GetFeature(GIntBig nFID)
         GetLastErrorCode() != CADErrorCodes::SUCCESS)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Failed to get geometry with ID = " CPL_FRMT_GIB
+                 "Failed to get geometry with ID = %" PRId64
                  " from layer \"%s\". Libopencad errorcode: %d",
                  nFID, poCADLayer.getName().c_str(), GetLastErrorCode());
         return nullptr;

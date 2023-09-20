@@ -123,14 +123,14 @@ bool OGRLayerDecorator::GetArrowStream(struct ArrowArrayStream *out_stream,
     return m_poDecoratedLayer->GetArrowStream(out_stream, papszOptions);
 }
 
-OGRErr OGRLayerDecorator::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRLayerDecorator::SetNextByIndex(int64_t nIndex)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
     return m_poDecoratedLayer->SetNextByIndex(nIndex);
 }
 
-OGRFeature *OGRLayerDecorator::GetFeature(GIntBig nFID)
+OGRFeature *OGRLayerDecorator::GetFeature(int64_t nFID)
 {
     if (!m_poDecoratedLayer)
         return nullptr;
@@ -172,7 +172,7 @@ OGRErr OGRLayerDecorator::IUpdateFeature(OGRFeature *poFeature,
         nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
 }
 
-OGRErr OGRLayerDecorator::DeleteFeature(GIntBig nFID)
+OGRErr OGRLayerDecorator::DeleteFeature(int64_t nFID)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
@@ -207,7 +207,7 @@ OGRSpatialReference *OGRLayerDecorator::GetSpatialRef()
     return m_poDecoratedLayer->GetSpatialRef();
 }
 
-GIntBig OGRLayerDecorator::GetFeatureCount(int bForce)
+int64_t OGRLayerDecorator::GetFeatureCount(int bForce)
 {
     if (!m_poDecoratedLayer)
         return 0;

@@ -358,7 +358,7 @@ int SDTSRasterReader::Open(SDTS_CATD *poCATD, SDTS_IREF *poIREF,
   @param nYOffset Y block offset into the file.  Normally the scanline offset
   from top of raster for scanline organized raster files.
 
-  @param pData pointer to GInt16 (signed short) buffer of data into which to
+  @param pData pointer to int16_t (signed short) buffer of data into which to
   read the raster.
 
   @return TRUE on success and FALSE on error.
@@ -467,8 +467,8 @@ int SDTSRasterReader::GetBlock(CPL_UNUSED int nXOffset, int nYOffset,
     {
         for (int i = 0; i < nXSize; i++)
         {
-            reinterpret_cast<GInt16 *>(pData)[i] =
-                CPL_MSBWORD16(reinterpret_cast<GInt16 *>(pData)[i]);
+            reinterpret_cast<int16_t *>(pData)[i] =
+                CPL_MSBWORD16(reinterpret_cast<int16_t *>(pData)[i]);
         }
     }
     else

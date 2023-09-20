@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -955,10 +956,10 @@ void GDALPansharpenOperation::WeightedBrovey<GByte, GByte>(
 }
 
 template <>
-void GDALPansharpenOperation::WeightedBrovey<GUInt16, GUInt16>(
-    const GUInt16 *pPanBuffer, const GUInt16 *pUpsampledSpectralBuffer,
-    GUInt16 *pDataBuf, size_t nValues, size_t nBandValues,
-    GUInt16 nMaxValue) const
+void GDALPansharpenOperation::WeightedBrovey<uint16_t, uint16_t>(
+    const uint16_t *pPanBuffer, const uint16_t *pUpsampledSpectralBuffer,
+    uint16_t *pDataBuf, size_t nValues, size_t nBandValues,
+    uint16_t nMaxValue) const
 {
     WeightedBroveyGByteOrUInt16(pPanBuffer, pUpsampledSpectralBuffer, pDataBuf,
                                 nValues, nBandValues, nMaxValue);
@@ -981,32 +982,32 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
 
         case GDT_UInt16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           static_cast<GUInt16 *>(pDataBuf), nValues,
+                           static_cast<uint16_t *>(pDataBuf), nValues,
                            nBandValues, nMaxValue);
             break;
 
 #ifndef LIMIT_TYPES
         case GDT_Int8:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           static_cast<GInt8 *>(pDataBuf), nValues, nBandValues,
-                           nMaxValue);
+                           static_cast<int8_t *>(pDataBuf), nValues,
+                           nBandValues, nMaxValue);
             break;
 
         case GDT_Int16:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           static_cast<GInt16 *>(pDataBuf), nValues,
+                           static_cast<int16_t *>(pDataBuf), nValues,
                            nBandValues, nMaxValue);
             break;
 
         case GDT_UInt32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           static_cast<GUInt32 *>(pDataBuf), nValues,
+                           static_cast<uint32_t *>(pDataBuf), nValues,
                            nBandValues, nMaxValue);
             break;
 
         case GDT_Int32:
             WeightedBrovey(pPanBuffer, pUpsampledSpectralBuffer,
-                           static_cast<GInt32 *>(pDataBuf), nValues,
+                           static_cast<int32_t *>(pDataBuf), nValues,
                            nBandValues, nMaxValue);
             break;
 
@@ -1060,34 +1061,34 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
             break;
 
         case GDT_UInt16:
-            WeightedBrovey3<WorkDataType, GUInt16, FALSE>(
+            WeightedBrovey3<WorkDataType, uint16_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
-                static_cast<GUInt16 *>(pDataBuf), nValues, nBandValues, 0);
+                static_cast<uint16_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
 #ifndef LIMIT_TYPES
         case GDT_Int8:
-            WeightedBrovey3<WorkDataType, GInt8, FALSE>(
+            WeightedBrovey3<WorkDataType, int8_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
-                static_cast<GInt8 *>(pDataBuf), nValues, nBandValues, 0);
+                static_cast<int8_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_Int16:
-            WeightedBrovey3<WorkDataType, GInt16, FALSE>(
+            WeightedBrovey3<WorkDataType, int16_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
-                static_cast<GInt16 *>(pDataBuf), nValues, nBandValues, 0);
+                static_cast<int16_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_UInt32:
-            WeightedBrovey3<WorkDataType, GUInt32, FALSE>(
+            WeightedBrovey3<WorkDataType, uint32_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
-                static_cast<GUInt32 *>(pDataBuf), nValues, nBandValues, 0);
+                static_cast<uint32_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_Int32:
-            WeightedBrovey3<WorkDataType, GInt32, FALSE>(
+            WeightedBrovey3<WorkDataType, int32_t, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer,
-                static_cast<GInt32 *>(pDataBuf), nValues, nBandValues, 0);
+                static_cast<int32_t *>(pDataBuf), nValues, nBandValues, 0);
             break;
 
         case GDT_UInt64:
@@ -1408,7 +1409,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         static_cast<int>(iNextStartLine - iStartLine);
                     pasJobs[i].nBandCount = psOptions->nInputSpectralBands;
                     pasJobs[i].nBandSpace =
-                        static_cast<GSpacing>(nXSize) * nYSize * nDataTypeSize;
+                        static_cast<int64_t>(nXSize) * nYSize * nDataTypeSize;
 #ifdef DEBUG_TIMING
                     pasJobs[i].ptv = &tv;
 #endif
@@ -1487,25 +1488,25 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                 else if (eWorkDataType == GDT_UInt16)
                 {
                     ClampValues(
-                        reinterpret_cast<GUInt16 *>(pUpsampledSpectralBuffer) +
+                        reinterpret_cast<uint16_t *>(pUpsampledSpectralBuffer) +
                             static_cast<size_t>(i) * nXSize * nYSize,
                         static_cast<size_t>(nXSize) * nYSize,
-                        static_cast<GUInt16>((1 << nBitDepth) - 1));
+                        static_cast<uint16_t>((1 << nBitDepth) - 1));
                 }
 #ifndef LIMIT_TYPES
                 else if (eWorkDataType == GDT_UInt32)
                 {
-                    ClampValues(reinterpret_cast<GUInt32*>(pUpsampledSpectralBuffer) +
+                    ClampValues(reinterpret_cast<uint32_t*>(pUpsampledSpectralBuffer) +
                                 static_cast<size_t>(i) * nXSize * nYSize,
                                 static_cast<size_t>(nXSize)*nYSize,
-                                (static_cast<GUInt32>((1 << nBitDepth)-1));
+                                (static_cast<uint32_t>((1 << nBitDepth)-1));
                 }
 #endif
             }
         }
     }
 
-    GUInt32 nMaxValue = (1 << nBitDepth) - 1;
+    uint32_t nMaxValue = (1 << nBitDepth) - 1;
 
     double *padfTempBuffer = nullptr;
     GDALDataType eBufDataTypeOri = eBufDataType;
@@ -1618,11 +1619,11 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, nullptr);
-    const GIntBig launch_time =
-        static_cast<GIntBig>(psJob->ptv->tv_sec) * 1000000 +
-        static_cast<GIntBig>(psJob->ptv->tv_usec);
-    const GIntBig start_job = static_cast<GIntBig>(tv.tv_sec) * 1000000 +
-                              static_cast<GIntBig>(tv.tv_usec);
+    const int64_t launch_time =
+        static_cast<int64_t>(psJob->ptv->tv_sec) * 1000000 +
+        static_cast<int64_t>(psJob->ptv->tv_usec);
+    const int64_t start_job = static_cast<int64_t>(tv.tv_sec) * 1000000 +
+                              static_cast<int64_t>(tv.tv_usec);
 #endif
 
 #if 0
@@ -1648,11 +1649,11 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
     gettimeofday(&tv_end, nullptr);
-    const GIntBig end = static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
-                        static_cast<GIntBig>(tv_end.tv_usec);
+    const int64_t end = static_cast<int64_t>(tv_end.tv_sec) * 1000000 +
+                        static_cast<int64_t>(tv_end.tv_usec);
     if (start_job - launch_time > 500)
-        /*ok*/ printf("Resample: Delay before start=" CPL_FRMT_GIB
-                      ", completion time=" CPL_FRMT_GIB "\n",
+        /*ok*/ printf("Resample: Delay before start=%" PRId64
+                      ", completion time=%" PRId64 "\n",
                       start_job - launch_time, end - start_job);
 #endif
 }
@@ -1668,11 +1669,11 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, nullptr);
-    const GIntBig launch_time =
-        static_cast<GIntBig>(psJob->ptv->tv_sec) * 1000000 +
-        static_cast<GIntBig>(psJob->ptv->tv_usec);
-    const GIntBig start_job = static_cast<GIntBig>(tv.tv_sec) * 1000000 +
-                              static_cast<GIntBig>(tv.tv_usec);
+    const int64_t launch_time =
+        static_cast<int64_t>(psJob->ptv->tv_sec) * 1000000 +
+        static_cast<int64_t>(psJob->ptv->tv_usec);
+    const int64_t start_job = static_cast<int64_t>(tv.tv_sec) * 1000000 +
+                              static_cast<int64_t>(tv.tv_usec);
 #endif
 
 #if 0
@@ -1689,11 +1690,11 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
     gettimeofday(&tv_end, nullptr);
-    const GIntBig end = static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
-                        static_cast<GIntBig>(tv_end.tv_usec);
+    const int64_t end = static_cast<int64_t>(tv_end.tv_sec) * 1000000 +
+                        static_cast<int64_t>(tv_end.tv_usec);
     if (start_job - launch_time > 500)
-        /*ok*/ printf("Pansharpen: Delay before start=" CPL_FRMT_GIB
-                      ", completion time=" CPL_FRMT_GIB "\n",
+        /*ok*/ printf("Pansharpen: Delay before start=%" PRId64
+                      ", completion time=%" PRId64 "\n",
                       start_job - launch_time, end - start_job);
 #endif
 }
@@ -1705,7 +1706,8 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 CPLErr GDALPansharpenOperation::PansharpenChunk(
     GDALDataType eWorkDataType, GDALDataType eBufDataType,
     const void *pPanBuffer, const void *pUpsampledSpectralBuffer,
-    void *pDataBuf, size_t nValues, size_t nBandValues, GUInt32 nMaxValue) const
+    void *pDataBuf, size_t nValues, size_t nBandValues,
+    uint32_t nMaxValue) const
 {
     CPLErr eErr = CE_None;
 
@@ -1721,39 +1723,39 @@ CPLErr GDALPansharpenOperation::PansharpenChunk(
 
         case GDT_UInt16:
             eErr = WeightedBrovey(
-                static_cast<const GUInt16 *>(pPanBuffer),
-                static_cast<const GUInt16 *>(pUpsampledSpectralBuffer),
+                static_cast<const uint16_t *>(pPanBuffer),
+                static_cast<const uint16_t *>(pUpsampledSpectralBuffer),
                 pDataBuf, eBufDataType, nValues, nBandValues,
-                static_cast<GUInt16>(nMaxValue));
+                static_cast<uint16_t>(nMaxValue));
             break;
 
 #ifndef LIMIT_TYPES
         case GDT_Int8:
             eErr = WeightedBrovey(
-                static_cast<const GInt8 *>(pPanBuffer),
-                static_cast<const GInt8 *>(pUpsampledSpectralBuffer), pDataBuf,
+                static_cast<const int8_t *>(pPanBuffer),
+                static_cast<const int8_t *>(pUpsampledSpectralBuffer), pDataBuf,
                 eBufDataType, nValues, nBandValues);
             break;
 
         case GDT_Int16:
             eErr = WeightedBrovey(
-                static_cast<const GInt16 *>(pPanBuffer),
-                static_cast<const GInt16 *>(pUpsampledSpectralBuffer), pDataBuf,
-                eBufDataType, nValues, nBandValues);
+                static_cast<const int16_t *>(pPanBuffer),
+                static_cast<const int16_t *>(pUpsampledSpectralBuffer),
+                pDataBuf, eBufDataType, nValues, nBandValues);
             break;
 
         case GDT_UInt32:
             eErr = WeightedBrovey(
-                static_cast<const GUInt32 *>(pPanBuffer),
-                static_cast<const GUInt32 *>(pUpsampledSpectralBuffer),
+                static_cast<const uint32_t *>(pPanBuffer),
+                static_cast<const uint32_t *>(pUpsampledSpectralBuffer),
                 pDataBuf, eBufDataType, nValues, nBandValues, nMaxValue);
             break;
 
         case GDT_Int32:
             eErr = WeightedBrovey(
-                static_cast<const GInt32 *>(pPanBuffer),
-                static_cast<const GInt32 *>(pUpsampledSpectralBuffer), pDataBuf,
-                eBufDataType, nValues, nBandValues);
+                static_cast<const int32_t *>(pPanBuffer),
+                static_cast<const int32_t *>(pUpsampledSpectralBuffer),
+                pDataBuf, eBufDataType, nValues, nBandValues);
             break;
 
         case GDT_UInt64:

@@ -49,12 +49,12 @@ VSIPluginHandle::~VSIPluginHandle()
     }
 }
 
-int VSIPluginHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIPluginHandle::Seek(uint64_t nOffset, int nWhence)
 {
     return poFS->Seek(cbData, nOffset, nWhence);
 }
 
-vsi_l_offset VSIPluginHandle::Tell()
+uint64_t VSIPluginHandle::Tell()
 {
     return poFS->Tell(cbData);
 }
@@ -78,20 +78,20 @@ int VSIPluginHandle::Close()
 }
 
 int VSIPluginHandle::ReadMultiRange(int nRanges, void **ppData,
-                                    const vsi_l_offset *panOffsets,
+                                    const uint64_t *panOffsets,
                                     const size_t *panSizes)
 {
     return poFS->ReadMultiRange(cbData, nRanges, ppData, panOffsets, panSizes);
 }
 
-void VSIPluginHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+void VSIPluginHandle::AdviseRead(int nRanges, const uint64_t *panOffsets,
                                  const size_t *panSizes)
 {
     poFS->AdviseRead(cbData, nRanges, panOffsets, panSizes);
 }
 
-VSIRangeStatus VSIPluginHandle::GetRangeStatus(vsi_l_offset nOffset,
-                                               vsi_l_offset nLength)
+VSIRangeStatus VSIPluginHandle::GetRangeStatus(uint64_t nOffset,
+                                               uint64_t nLength)
 {
     return poFS->GetRangeStatus(cbData, nOffset, nLength);
 }
@@ -106,7 +106,7 @@ int VSIPluginHandle::Flush()
     return poFS->Flush(cbData);
 }
 
-int VSIPluginHandle::Truncate(vsi_l_offset nNewSize)
+int VSIPluginHandle::Truncate(uint64_t nNewSize)
 {
     return poFS->Truncate(cbData, nNewSize);
 }
@@ -190,8 +190,7 @@ int VSIPluginFilesystemHandler::Stat(const char *pszFilename,
     return nRet;
 }
 
-int VSIPluginFilesystemHandler::Seek(void *pFile, vsi_l_offset nOffset,
-                                     int nWhence)
+int VSIPluginFilesystemHandler::Seek(void *pFile, uint64_t nOffset, int nWhence)
 {
     if (m_cb->seek != nullptr)
     {
@@ -202,7 +201,7 @@ int VSIPluginFilesystemHandler::Seek(void *pFile, vsi_l_offset nOffset,
     return -1;
 }
 
-vsi_l_offset VSIPluginFilesystemHandler::Tell(void *pFile)
+uint64_t VSIPluginFilesystemHandler::Tell(void *pFile)
 {
     if (m_cb->tell != nullptr)
     {
@@ -236,8 +235,8 @@ int VSIPluginFilesystemHandler::HasOptimizedReadMultiRange(
 }
 
 VSIRangeStatus VSIPluginFilesystemHandler::GetRangeStatus(void *pFile,
-                                                          vsi_l_offset nOffset,
-                                                          vsi_l_offset nLength)
+                                                          uint64_t nOffset,
+                                                          uint64_t nLength)
 {
     if (m_cb->get_range_status != nullptr)
     {
@@ -248,7 +247,7 @@ VSIRangeStatus VSIPluginFilesystemHandler::GetRangeStatus(void *pFile,
 
 int VSIPluginFilesystemHandler::ReadMultiRange(void *pFile, int nRanges,
                                                void **ppData,
-                                               const vsi_l_offset *panOffsets,
+                                               const uint64_t *panOffsets,
                                                const size_t *panSizes)
 {
     if (m_cb->read_multi_range == nullptr)
@@ -272,7 +271,7 @@ int VSIPluginFilesystemHandler::ReadMultiRange(void *pFile, int nRanges,
                                       panSizes);
     }
 
-    vsi_l_offset *mOffsets = new vsi_l_offset[nMergedRanges];
+    uint64_t *mOffsets = new uint64_t[nMergedRanges];
     size_t *mSizes = new size_t[nMergedRanges];
     char **mData = new char *[nMergedRanges];
 
@@ -331,7 +330,7 @@ int VSIPluginFilesystemHandler::ReadMultiRange(void *pFile, int nRanges,
 }
 
 void VSIPluginFilesystemHandler::AdviseRead(void *pFile, int nRanges,
-                                            const vsi_l_offset *panOffsets,
+                                            const uint64_t *panOffsets,
                                             const size_t *panSizes)
 {
     if (m_cb->advise_read != nullptr)
@@ -393,7 +392,7 @@ int VSIPluginFilesystemHandler::Flush(void *pFile)
     return -1;
 }
 
-int VSIPluginFilesystemHandler::Truncate(void *pFile, vsi_l_offset nNewSize)
+int VSIPluginFilesystemHandler::Truncate(void *pFile, uint64_t nNewSize)
 {
     if (m_cb->truncate != nullptr)
     {

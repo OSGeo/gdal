@@ -39,6 +39,7 @@
 #include "ogr_geometry.h"
 #include "commonutils.h"
 
+#include <cinttypes>
 #include <set>
 
 /*! output format */
@@ -69,7 +70,7 @@ struct GDALVectorInfoOptions
     bool bVerbose = true;
     bool bSuperQuiet = false;
     bool bSummaryOnly = false;
-    GIntBig nFetchFID = OGRNullFID;
+    int64_t nFetchFID = OGRNullFID;
     std::string osWKTFormat = "WKT2";
     std::string osFieldDomain{};
     CPLStringList aosOptions{};
@@ -340,7 +341,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                     else
                     {
                         Concat(osRet, psOptions->bStdoutOutput,
-                               "  Minimum value: " CPL_FRMT_GIB "%s\n",
+                               "  Minimum value: %" PRId64 "%s\n",
                                sMin.Integer64,
                                bMinIsIncluded ? "" : " (excluded)");
                     }
@@ -355,7 +356,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                     else
                     {
                         Concat(osRet, psOptions->bStdoutOutput,
-                               "  Maximum value: " CPL_FRMT_GIB "%s\n",
+                               "  Maximum value: %" PRId64 "%s\n",
                                sMax.Integer64,
                                bMaxIsIncluded ? "" : " (excluded)");
                     }
@@ -1017,7 +1018,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
             else
             {
                 Concat(osRet, psOptions->bStdoutOutput,
-                       "Feature Count: " CPL_FRMT_GIB "\n",
+                       "Feature Count: %" PRId64 "\n",
                        poLayer->GetFeatureCount());
             }
         }
@@ -1438,8 +1439,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
         if (poFeature == nullptr)
         {
             Concat(osRet, psOptions->bStdoutOutput,
-                   "Unable to locate feature id " CPL_FRMT_GIB
-                   " on this layer.\n",
+                   "Unable to locate feature id %" PRId64 " on this layer.\n",
                    psOptions->nFetchFID);
         }
         else

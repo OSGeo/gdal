@@ -113,8 +113,8 @@ class PDSDataset final : public RawDataset
                                    CSLConstList papszOptions) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
@@ -257,8 +257,8 @@ CPLErr PDSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -774,13 +774,13 @@ bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 /*                        PDSConvertFromHex()                           */
 /************************************************************************/
 
-static GUInt32 PDSConvertFromHex(const char *pszVal)
+static uint32_t PDSConvertFromHex(const char *pszVal)
 {
     if (!STARTS_WITH_CI(pszVal, "16#"))
         return 0;
 
     pszVal += 3;
-    GUInt32 nVal = 0;
+    uint32_t nVal = 0;
     while (*pszVal != '#' && *pszVal != '\0')
     {
         nVal <<= 4;
@@ -1156,7 +1156,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
             strlen(pszMissing) >= 3 + 8 + 1 && pszMissing[3 + 8] == '#' &&
             (eDataType == GDT_Float32 || eDataType == GDT_Float64))
         {
-            GUInt32 nVal = PDSConvertFromHex(pszMissing);
+            uint32_t nVal = PDSConvertFromHex(pszMissing);
             float fVal;
             memcpy(&fVal, &nVal, 4);
             dfNoData = fVal;
@@ -1218,9 +1218,9 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     int nLineOffset = nLinePrefixBytes;
 
     int nPixelOffset;
-    vsi_l_offset nBandOffset;
+    uint64_t nBandOffset;
 
-    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<GInt64>(x)); };
+    const auto CPLSM64 = [](int x) { return CPLSM(static_cast<int64_t>(x)); };
 
     try
     {
@@ -1236,7 +1236,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
             nPixelOffset = nItemSize;
             nLineOffset =
                 (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nBandOffset = static_cast<vsi_l_offset>(
+            nBandOffset = static_cast<uint64_t>(
                 (CPLSM64(nLineOffset) * CPLSM64(nRows) +
                  CPLSM64(nSuffixLines) *
                      (CPLSM64(nCols) + CPLSM64(nSuffixItems)) *
@@ -1266,8 +1266,8 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     {
         auto poBand = RawRasterBand::Create(
             this, i + 1, fpImage,
-            nSkipBytes + static_cast<vsi_l_offset>(nBandOffset) * i,
-            nPixelOffset, nLineOffset, eDataType,
+            nSkipBytes + static_cast<uint64_t>(nBandOffset) * i, nPixelOffset,
+            nLineOffset, eDataType,
             chByteOrder == 'I' || chByteOrder == 'L'
                 ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
                 : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,

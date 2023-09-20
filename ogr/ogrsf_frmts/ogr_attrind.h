@@ -48,13 +48,13 @@ class CPL_DLL OGRAttrIndex
   public:
     virtual ~OGRAttrIndex();
 
-    virtual GIntBig GetFirstMatch(OGRField *psKey) = 0;
-    virtual GIntBig *GetAllMatches(OGRField *psKey) = 0;
-    virtual GIntBig *GetAllMatches(OGRField *psKey, GIntBig *panFIDList,
+    virtual int64_t GetFirstMatch(OGRField *psKey) = 0;
+    virtual int64_t *GetAllMatches(OGRField *psKey) = 0;
+    virtual int64_t *GetAllMatches(OGRField *psKey, int64_t *panFIDList,
                                    int *nFIDCount, int *nLength) = 0;
 
-    virtual OGRErr AddEntry(OGRField *psKey, GIntBig nFID) = 0;
-    virtual OGRErr RemoveEntry(OGRField *psKey, GIntBig nFID) = 0;
+    virtual OGRErr AddEntry(OGRField *psKey, int64_t nFID) = 0;
+    virtual OGRErr RemoveEntry(OGRField *psKey, int64_t nFID) = 0;
 
     virtual OGRErr Clear() = 0;
 };

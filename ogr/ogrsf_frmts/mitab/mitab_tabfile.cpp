@@ -35,6 +35,7 @@
 #include "mitab.h"
 
 #include <cctype>
+#include <cinttypes>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -198,7 +199,7 @@ TABFile::~TABFile()
 /*                         GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig TABFile::GetFeatureCount(int bForce)
+int64_t TABFile::GetFeatureCount(int bForce)
 {
 
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr || bForce)
@@ -283,7 +284,7 @@ void TABFile::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::Open(const char *pszFname, TABAccess eAccess,
-                  GBool bTestOpenNoError /*=FALSE*/, int nBlockSizeForCreate,
+                  bool bTestOpenNoError /*=FALSE*/, int nBlockSizeForCreate,
                   const char *pszCharset /* = NULL */)
 {
     char *pszTmpFname = nullptr;
@@ -627,11 +628,11 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
+int TABFile::ParseTABFileFirstPass(bool bTestOpenNoError)
 {
     int iLine, numLines, numFields = 0;
     char **papszTok = nullptr;
-    GBool bInsideTableDef = FALSE, bFoundTableFields = FALSE;
+    bool bInsideTableDef = FALSE, bFoundTableFields = FALSE;
 
     if (m_eAccessMode == TABWrite)
     {
@@ -1313,7 +1314,7 @@ int TABFile::Close()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode /*=TRUE*/)
+int TABFile::SetQuickSpatialIndexMode(bool bQuickSpatialIndexMode /*=TRUE*/)
 {
     if (m_eAccessMode != TABWrite || m_poMAPFile == nullptr)
     {
@@ -1332,7 +1333,7 @@ int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode /*=TRUE*/)
  * Returns feature id that follows nPrevId, or -1 if it is the
  * last feature id.  Pass nPrevId=-1 to fetch the first valid feature id.
  **********************************************************************/
-GIntBig TABFile::GetNextFeatureId(GIntBig nPrevId)
+int64_t TABFile::GetNextFeatureId(int64_t nPrevId)
 {
     if (m_bLastOpWasWrite)
         ResetReading();
@@ -1463,7 +1464,7 @@ int TABFile::GetNextFeatureId_Spatial(int nPrevId)
  * and a warning will be produced with code TAB_WarningFeatureTypeNotSupported
  * CPLGetLastErrorNo() should be used to detect that case.
  **********************************************************************/
-TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
+TABFeature *TABFile::GetFeatureRef(int64_t nFeatureId)
 {
     CPLErrorReset();
 
@@ -1498,7 +1499,7 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "Valid .MAP record " CPL_FRMT_GIB
+                "Valid .MAP record %" PRId64
                 " found, but .DAT is marked as deleted. File likely corrupt",
                 nFeatureId);
         }
@@ -1567,7 +1568,7 @@ TABFeature *TABFile::GetFeatureRef(GIntBig nFeatureId)
  *
  * Standard OGR DeleteFeature implementation.
  **********************************************************************/
-OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
+OGRErr TABFile::DeleteFeature(int64_t nFeatureId)
 {
     CPLErrorReset();
 
@@ -1596,7 +1597,7 @@ OGRErr TABFile::DeleteFeature(GIntBig nFeatureId)
         m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr)
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
-                 "DeleteFeature() failed: invalid feature id " CPL_FRMT_GIB,
+                 "DeleteFeature() failed: invalid feature id %" PRId64,
                  nFeatureId);*/
         return OGRERR_NON_EXISTING_FEATURE;
     }
@@ -1789,13 +1790,13 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    GIntBig nFeatureId = poFeature->GetFID();
+    int64_t nFeatureId = poFeature->GetFID();
     if (nFeatureId != OGRNullFID)
     {
         if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "CreateFeature() failed: invalid feature id " CPL_FRMT_GIB,
+                     "CreateFeature() failed: invalid feature id %" PRId64,
                      nFeatureId);
             return OGRERR_FAILURE;
         }
@@ -1806,7 +1807,7 @@ OGRErr TABFile::CreateFeature(TABFeature *poFeature)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "CreateFeature() failed: cannot re-write already existing "
-                     "feature " CPL_FRMT_GIB,
+                     "feature %" PRId64,
                      nFeatureId);
             return OGRERR_FAILURE;
         }
@@ -1845,7 +1846,7 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    GIntBig nFeatureId = poFeature->GetFID();
+    int64_t nFeatureId = poFeature->GetFID();
     if (nFeatureId == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1855,7 +1856,7 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
     if (nFeatureId <= 0 || nFeatureId > m_nLastFeatureId)
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
-                    "SetFeature() failed: invalid feature id " CPL_FRMT_GIB,
+                    "SetFeature() failed: invalid feature id %" PRId64,
                     nFeatureId);*/
         return OGRERR_NON_EXISTING_FEATURE;
     }
@@ -1881,7 +1882,7 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
     if (m_poDATFile->GetRecordBlock(static_cast<int>(nFeatureId)) == nullptr)
     {
         /*CPLError(CE_Failure, CPLE_IllegalArg,
-                 "SetFeature() failed: invalid feature id " CPL_FRMT_GIB,
+                 "SetFeature() failed: invalid feature id %" PRId64,
                  nFeatureId);*/
         delete poTABFeature;
         return OGRERR_NON_EXISTING_FEATURE;
@@ -1896,8 +1897,7 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
             /* Optimization: if old and new features are the same, do nothing */
             if (poOldFeature->Equal(poFeature))
             {
-                CPLDebug("MITAB", "Un-modified object " CPL_FRMT_GIB,
-                         nFeatureId);
+                CPLDebug("MITAB", "Un-modified object %" PRId64, nFeatureId);
                 delete poTABFeature;
                 delete poOldFeature;
                 return OGRERR_NONE;
@@ -1918,14 +1918,14 @@ OGRErr TABFile::ISetFeature(OGRFeature *poFeature)
                      EQUAL(pszOldStyle, pszNewStyle)))
                 {
                     CPLDebug("MITAB",
-                             "Rewrite only attributes for object " CPL_FRMT_GIB,
+                             "Rewrite only attributes for object %" PRId64,
                              nFeatureId);
                     if (poTABFeature->WriteRecordToDATFile(
                             m_poDATFile, m_poINDFile, m_panIndexNo) != 0)
                     {
                         CPLError(CE_Failure, CPLE_FileIO,
                                  "Failed writing attributes for feature "
-                                 "id " CPL_FRMT_GIB " in %s",
+                                 "id %" PRId64 " in %s",
                                  nFeatureId, m_pszFname);
                         delete poTABFeature;
                         delete poOldFeature;
@@ -2096,7 +2096,7 @@ int TABFile::SetFeatureDefn(
  **********************************************************************/
 int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/,
+                            bool bIndexed /*=FALSE*/, bool /*bUnique=FALSE*/,
                             int /*bApproxOK*/)
 {
     if (m_eAccessMode == TABRead || m_poDATFile == nullptr)
@@ -2383,7 +2383,7 @@ int TABFile::SetFieldIndexed(int nFieldId)
  *
  * Returns TRUE if field is indexed, or FALSE otherwise.
  ************************************************************************/
-GBool TABFile::IsFieldIndexed(int nFieldId)
+bool TABFile::IsFieldIndexed(int nFieldId)
 {
     return GetFieldIndexNumber(nFieldId) > 0 ? TRUE : FALSE;
 }
@@ -2492,7 +2492,7 @@ int TABFile::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
-                       double &dYMax, GBool /*bForce = TRUE*/)
+                       double &dYMax, bool /*bForce = TRUE*/)
 {
     if (m_poMAPFile)
     {
@@ -2585,7 +2585,7 @@ OGRErr TABFile::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce)
  **********************************************************************/
 int TABFile::GetFeatureCountByType(int &numPoints, int &numLines,
                                    int &numRegions, int &numTexts,
-                                   GBool /* bForce = TRUE*/)
+                                   bool /* bForce = TRUE*/)
 {
     TABMAPHeaderBlock *poHeader = nullptr;
 

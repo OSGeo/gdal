@@ -38,6 +38,7 @@
 #include "ogrsqliteutility.h"
 #include "rasterlite2_header.h"
 
+#include <cinttypes>
 #include <cstring>
 #include <algorithm>
 
@@ -261,7 +262,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "rl2_resolve_base_resolution_from_dbms() failed / "
-                     "Invalid section: " CPL_FRMT_GIB,
+                     "Invalid section: %" PRId64,
                      m_nSectionId);
             return false;
         }
@@ -274,7 +275,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "rl2_resolve_full_section_from_dbms() failed / "
-                     "Invalid section: " CPL_FRMT_GIB,
+                     "Invalid section: %" PRId64,
                      m_nSectionId);
             return false;
         }
@@ -1088,7 +1089,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
         nOutPixel = RL2_PIXEL_GRAYSCALE;
     }
 
-    const GIntBig nSectionId = poGDS->GetSectionId();
+    const int64_t nSectionId = poGDS->GetSectionId();
     if (nSectionId >= 0 &&
         (poGDS->IsRL2MixedResolutions() || poGDS->GetParentDS() == nullptr))
     {
@@ -1253,7 +1254,7 @@ static rl2PixelPtr CreateNoData(unsigned char nSampleType,
                     break;
                 case RL2_SAMPLE_UINT16:
                     rl2_set_pixel_sample_uint16(
-                        pxl, 0, GetNoDataValue<GUInt16>(poSrcDS, 1, 0));
+                        pxl, 0, GetNoDataValue<uint16_t>(poSrcDS, 1, 0));
                     break;
                 default:
                     CPLAssert(false);
@@ -1273,11 +1274,11 @@ static rl2PixelPtr CreateNoData(unsigned char nSampleType,
                     break;
                 case RL2_SAMPLE_UINT16:
                     rl2_set_pixel_sample_uint16(
-                        pxl, 0, GetNoDataValue<GUInt16>(poSrcDS, 1, 0));
+                        pxl, 0, GetNoDataValue<uint16_t>(poSrcDS, 1, 0));
                     rl2_set_pixel_sample_uint16(
-                        pxl, 1, GetNoDataValue<GUInt16>(poSrcDS, 2, 0));
+                        pxl, 1, GetNoDataValue<uint16_t>(poSrcDS, 2, 0));
                     rl2_set_pixel_sample_uint16(
-                        pxl, 2, GetNoDataValue<GUInt16>(poSrcDS, 3, 0));
+                        pxl, 2, GetNoDataValue<uint16_t>(poSrcDS, 3, 0));
                     break;
                 default:
                     CPLAssert(false);
@@ -1297,19 +1298,19 @@ static rl2PixelPtr CreateNoData(unsigned char nSampleType,
                     break;
                 case RL2_SAMPLE_INT16:
                     rl2_set_pixel_sample_int16(
-                        pxl, GetNoDataValue<GInt16>(poSrcDS, 1, 0));
+                        pxl, GetNoDataValue<int16_t>(poSrcDS, 1, 0));
                     break;
                 case RL2_SAMPLE_UINT16:
                     rl2_set_pixel_sample_uint16(
-                        pxl, 0, GetNoDataValue<GUInt16>(poSrcDS, 1, 0));
+                        pxl, 0, GetNoDataValue<uint16_t>(poSrcDS, 1, 0));
                     break;
                 case RL2_SAMPLE_INT32:
                     rl2_set_pixel_sample_int32(
-                        pxl, GetNoDataValue<GInt32>(poSrcDS, 1, 0));
+                        pxl, GetNoDataValue<int32_t>(poSrcDS, 1, 0));
                     break;
                 case RL2_SAMPLE_UINT32:
                     rl2_set_pixel_sample_uint32(
-                        pxl, GetNoDataValue<GUInt32>(poSrcDS, 1, 0));
+                        pxl, GetNoDataValue<uint32_t>(poSrcDS, 1, 0));
                     break;
                 case RL2_SAMPLE_FLOAT:
                     rl2_set_pixel_sample_float(
@@ -1337,7 +1338,7 @@ static rl2PixelPtr CreateNoData(unsigned char nSampleType,
                     for (unsigned int nb = 0; nb < nBandCount; nb++)
                         rl2_set_pixel_sample_uint16(
                             pxl, nb,
-                            GetNoDataValue<GUInt16>(poSrcDS, nb + 1, 0));
+                            GetNoDataValue<uint16_t>(poSrcDS, nb + 1, 0));
                     break;
                 default:
                     CPLAssert(false);
@@ -1420,8 +1421,8 @@ static int RasterLite2Callback(void *data, double dfTileMinX, double dfTileMinY,
                    nDTSize);
     }
 
-    const GSpacing nPixelSpacing = static_cast<GSpacing>(nDTSize) * nBands;
-    const GSpacing nLineSpacing = nPixelSpacing * (nXOff2 - nXOff);
+    const int64_t nPixelSpacing = static_cast<int64_t>(nDTSize) * nBands;
+    const int64_t nLineSpacing = nPixelSpacing * (nXOff2 - nXOff);
     CPLErr eErr = pCbkData->poSrcDS->RasterIO(
         GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pabyBuffer, nReqXSize,
         nReqYSize, eDT, nBands, nullptr, nPixelSpacing, nLineSpacing, nDTSize,

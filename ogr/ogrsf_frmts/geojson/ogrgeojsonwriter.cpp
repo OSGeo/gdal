@@ -45,6 +45,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cinttypes>
 
 static json_object *
 json_object_new_float_with_significant_figures(float fVal,
@@ -768,7 +769,7 @@ void OGRGeoJSONWriteId(const OGRFeature *poFeature, json_object *poObj,
         {
             json_object_object_add(poObj, "id",
                                    json_object_new_string(CPLSPrintf(
-                                       CPL_FRMT_GIB, poFeature->GetFID())));
+                                       "%" PRId64, poFeature->GetFID())));
         }
         else
         {
@@ -960,7 +961,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
         else if (OFTInteger64List == eType)
         {
             int nSize = 0;
-            const GIntBig *panList =
+            const int64_t *panList =
                 poFeature->GetFieldAsInteger64List(nField, &nSize);
             poObjProp = json_object_new_array();
             for (int i = 0; i < nSize; i++)

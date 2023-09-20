@@ -385,10 +385,10 @@ class CPL_DLL GDALWarpKernel
 
     /** Array of nBands validity mask of size (nSrcXSize * nSrcYSize +
      * WARP_EXTRA_ELTS) / 8 */
-    GUInt32 **papanBandSrcValid;
+    uint32_t **papanBandSrcValid;
     /** Unified validity mask of size (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS)
      * / 8 */
-    GUInt32 *panUnifiedSrcValid;
+    uint32_t *panUnifiedSrcValid;
     /** Unified source density of size nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS
      */
     float *pafUnifiedSrcDensity;
@@ -400,7 +400,7 @@ class CPL_DLL GDALWarpKernel
     /** Array of nBands destination images of size nDstXSize * nDstYSize */
     GByte **papabyDstImage;
     /** Validify mask of size (nDstXSize * nDstYSize) / 8 */
-    GUInt32 *panDstValid;
+    uint32_t *panDstValid;
     /** Destination density of size nDstXSize * nDstYSize */
     float *pafDstDensity;
 

@@ -362,6 +362,11 @@ else ()
   check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)
 endif ()
 
+message(STATUS "checking if long long and int64_t are aliased")
+check_cxx_source_compiles(
+  "#include <cstdint>\nvoid f(long long) {}\nvoid f(int64_t) {}\nint main() { static_assert(sizeof(long long) == sizeof(int64_t), \"check\"); return 0; }"
+  GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES)
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(MACOSX_FRAMEWORK ${GDAL_ENABLE_MACOSX_FRAMEWORK})
 else ()

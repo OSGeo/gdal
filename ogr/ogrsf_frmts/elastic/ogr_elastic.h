@@ -107,8 +107,8 @@ class OGRElasticLayer final : public OGRLayer
     CPLString m_osPrecision{};
 
     CPLString m_osScrollID{};
-    GIntBig m_iCurID = 0;
-    GIntBig m_nNextFID = -1;  // for creation
+    int64_t m_iCurID = 0;
+    int64_t m_nNextFID = -1;  // for creation
     int m_iCurFeatureInPage = 0;
     std::vector<OGRFeature *> m_apoCachedFeatures{};
     bool m_bEOF = false;
@@ -130,9 +130,9 @@ class OGRElasticLayer final : public OGRLayer
     //! Timestamp after which the query must be terminated
     double m_dfEndTimeStamp = 0;
 
-    GIntBig m_nReadFeaturesSinceResetReading = 0;
-    GIntBig m_nSingleQueryTerminateAfter = 0;
-    GIntBig m_nFeatureIterationTerminateAfter = 0;
+    int64_t m_nReadFeaturesSinceResetReading = 0;
+    int64_t m_nSingleQueryTerminateAfter = 0;
+    int64_t m_nFeatureIterationTerminateAfter = 0;
     CPLString m_osSingleQueryTerminateAfter;
 
     bool m_bUseSingleQueryParams = false;
@@ -200,7 +200,7 @@ class OGRElasticLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override
     {
@@ -248,7 +248,7 @@ class OGRElasticLayer final : public OGRLayer
     {
         m_osFID = m_osFIDIn;
     }
-    void SetNextFID(GIntBig nNextFID)
+    void SetNextFID(int64_t nNextFID)
     {
         m_nNextFID = nNextFID;
     }
@@ -305,7 +305,7 @@ class OGRElasticAggregationLayer final
     }
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRElasticAggregationLayer)
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
     int TestCapability(const char *) override;
 
     using OGRLayer::SetSpatialFilter;

@@ -104,7 +104,7 @@ class OGRDXFBlocksLayer final : public OGRLayer
 
     OGRFeatureDefn *poFeatureDefn;
 
-    GIntBig iNextFID;
+    int64_t iNextFID;
 
     std::map<CPLString, DXFBlockDefinition>::iterator oIt;
     CPLString osBlockName;
@@ -457,7 +457,7 @@ class OGRDXFLayer final : public OGRLayer
     OGRDXFDataSource *poDS;
 
     OGRFeatureDefn *poFeatureDefn;
-    GIntBig iNextFID;
+    int64_t iNextFID;
 
     std::set<CPLString> oIgnoredEntities;
 
@@ -518,7 +518,7 @@ class OGRDXFLayer final : public OGRLayer
                            int nControlPoints, std::vector<double> &adfKnots,
                            int nKnots, std::vector<double> &adfWeights);
     static OGRGeometry *SimplifyBlockGeometry(OGRGeometryCollection *);
-    OGRDXFFeature *InsertBlockInline(GUInt32 nInitialErrorCounter,
+    OGRDXFFeature *InsertBlockInline(uint32_t nInitialErrorCounter,
                                      const CPLString &osBlockName,
                                      OGRDXFInsertTransformer oTransformer,
                                      OGRDXFFeature *const poFeature,
@@ -907,7 +907,7 @@ class OGRDXFWriterDS final : public OGRDataSource
     OGRDXFDataSource oHeaderDS;
     char **papszLayersToCreate;
 
-    vsi_l_offset nHANDSEEDOffset;
+    uint64_t nHANDSEEDOffset;
 
     std::vector<int> anDefaultLayerCode;
     std::vector<CPLString> aosDefaultLayerText;

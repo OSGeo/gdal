@@ -99,11 +99,11 @@ class VSIHdfsHandle final : public VSIVirtualHandle
                   bool bReadOnly);
     ~VSIHdfsHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
-    vsi_l_offset Length();
+    uint64_t Length();
     int Eof() override;
     int Flush() override;
     int Close() override;
@@ -120,7 +120,7 @@ VSIHdfsHandle::~VSIHdfsHandle()
     Close();
 }
 
-int VSIHdfsHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIHdfsHandle::Seek(uint64_t nOffset, int nWhence)
 {
     bEOF = false;
     switch (nWhence)
@@ -137,7 +137,7 @@ int VSIHdfsHandle::Seek(vsi_l_offset nOffset, int nWhence)
     }
 }
 
-vsi_l_offset VSIHdfsHandle::Tell()
+uint64_t VSIHdfsHandle::Tell()
 {
     return hdfsTell(poFilesystem, poFile);
 }
@@ -191,14 +191,14 @@ size_t VSIHdfsHandle::Write(const void *, size_t, size_t)
     return -1;
 }
 
-vsi_l_offset VSIHdfsHandle::Length()
+uint64_t VSIHdfsHandle::Length()
 {
     hdfsFileInfo *poInfo = hdfsGetPathInfo(poFilesystem, oFilename.c_str());
     if (poInfo != nullptr)
     {
         tOffset nSize = poInfo->mSize;
         hdfsFreeFileInfo(poInfo, 1);
-        return static_cast<vsi_l_offset>(nSize);
+        return static_cast<uint64_t>(nSize);
     }
     return -1;
 }

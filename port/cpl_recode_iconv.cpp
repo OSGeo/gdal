@@ -261,7 +261,7 @@ char *CPLRecodeFromWCharIconv(const wchar_t *pwszSource,
             (reinterpret_cast<short *>(pszIconvSrcBuf))[iSrc] =
                 static_cast<short>(pwszSource[iSrc]);
         else if (nTargetCharWidth == 4)
-            (reinterpret_cast<GInt32 *>(pszIconvSrcBuf))[iSrc] =
+            (reinterpret_cast<int32_t *>(pszIconvSrcBuf))[iSrc] =
                 pwszSource[iSrc];
     }
 

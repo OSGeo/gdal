@@ -102,14 +102,14 @@ class VSIStdoutHandle final : public VSIVirtualHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIStdoutHandle)
 
-    vsi_l_offset m_nOffset = 0;
+    uint64_t m_nOffset = 0;
 
   public:
     VSIStdoutHandle() = default;
     ~VSIStdoutHandle() override = default;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -121,7 +121,7 @@ class VSIStdoutHandle final : public VSIVirtualHandle
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIStdoutHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIStdoutHandle::Seek(uint64_t nOffset, int nWhence)
 
 {
     if (nOffset == 0 && (nWhence == SEEK_END || nWhence == SEEK_CUR))
@@ -136,7 +136,7 @@ int VSIStdoutHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIStdoutHandle::Tell()
+uint64_t VSIStdoutHandle::Tell()
 {
     return m_nOffset;
 }
@@ -277,8 +277,8 @@ class VSIStdoutRedirectHandle final : public VSIVirtualHandle
     explicit VSIStdoutRedirectHandle(VSIVirtualHandle *poHandle);
     ~VSIStdoutRedirectHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -308,7 +308,7 @@ VSIStdoutRedirectHandle::~VSIStdoutRedirectHandle()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIStdoutRedirectHandle::Seek(vsi_l_offset /* nOffset */, int /* nWhence */)
+int VSIStdoutRedirectHandle::Seek(uint64_t /* nOffset */, int /* nWhence */)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Seek() unsupported on /vsistdout_redirect");
@@ -319,7 +319,7 @@ int VSIStdoutRedirectHandle::Seek(vsi_l_offset /* nOffset */, int /* nWhence */)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIStdoutRedirectHandle::Tell()
+uint64_t VSIStdoutRedirectHandle::Tell()
 {
     return m_poHandle->Tell();
 }

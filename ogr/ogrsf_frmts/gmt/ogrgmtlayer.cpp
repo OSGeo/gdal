@@ -67,7 +67,7 @@ OGRGmtLayer::OGRGmtLayer(const char *pszFilename, VSILFILE *fp,
         CPLString osWKT;
         CPLString osProj4;
         CPLString osEPSG;
-        vsi_l_offset nStartOfLine = 0;
+        uint64_t nStartOfLine = 0;
 
         VSIFSeekL(m_fp, 0, SEEK_SET);
 
@@ -393,7 +393,7 @@ bool OGRGmtLayer::ScanAheadForHole()
 
 {
     const CPLString osSavedLine = osLine;
-    const vsi_l_offset nSavedLocation = VSIFTellL(m_fp);
+    const uint64_t nSavedLocation = VSIFTellL(m_fp);
 
     while (ReadLine() && osLine[0] == '#')
     {
@@ -423,7 +423,7 @@ bool OGRGmtLayer::NextIsFeature()
 
 {
     const CPLString osSavedLine = osLine;
-    const vsi_l_offset nSavedLocation = VSIFTellL(m_fp);
+    const uint64_t nSavedLocation = VSIFTellL(m_fp);
     bool bReturn = false;
 
     ReadLine();

@@ -31,6 +31,7 @@
 #include "gtiffdataset.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #include "cpl_vsi_virtual.h"
@@ -185,7 +186,7 @@ CPLErr GTiffRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
         GDALCopyWords64(pabyThisImage, eDataType, nWordBytes, pabyOut,
                         eDataType, nWordBytes * nBands,
-                        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                        static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
 
         if (poBlock != nullptr)
         {
@@ -806,16 +807,16 @@ CPLErr GTiffRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
         if (bOtherBandHasNoData && nOtherNoData != nNoData)
         {
             ReportError(CE_Warning, CPLE_AppDefined,
-                        "Setting nodata to " CPL_FRMT_GIB
+                        "Setting nodata to %" PRId64
                         " on band %d, but band %d has nodata "
-                        "at " CPL_FRMT_GIB
+                        "at %" PRId64
                         ". The TIFFTAG_GDAL_NODATA only support one value "
-                        "per dataset. This value of " CPL_FRMT_GIB
+                        "per dataset. This value of %" PRId64
                         " will be used for all bands "
                         "on re-opening",
-                        static_cast<GIntBig>(nNoData), nBand, nOtherBand,
-                        static_cast<GIntBig>(nOtherNoData),
-                        static_cast<GIntBig>(nNoData));
+                        static_cast<int64_t>(nNoData), nBand, nOtherBand,
+                        static_cast<int64_t>(nOtherNoData),
+                        static_cast<int64_t>(nNoData));
         }
     }
 
@@ -886,16 +887,16 @@ CPLErr GTiffRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
         if (bOtherBandHasNoData && nOtherNoData != nNoData)
         {
             ReportError(CE_Warning, CPLE_AppDefined,
-                        "Setting nodata to " CPL_FRMT_GUIB
+                        "Setting nodata to %" PRIu64
                         " on band %d, but band %d has nodata "
-                        "at " CPL_FRMT_GUIB
+                        "at %" PRIu64
                         ". The TIFFTAG_GDAL_NODATA only support one value "
-                        "per dataset. This value of " CPL_FRMT_GUIB
+                        "per dataset. This value of %" PRIu64
                         " will be used for all bands "
                         "on re-opening",
-                        static_cast<GUIntBig>(nNoData), nBand, nOtherBand,
-                        static_cast<GUIntBig>(nOtherNoData),
-                        static_cast<GUIntBig>(nNoData));
+                        static_cast<uint64_t>(nNoData), nBand, nOtherBand,
+                        static_cast<uint64_t>(nOtherNoData),
+                        static_cast<uint64_t>(nNoData));
         }
     }
 
@@ -1021,8 +1022,7 @@ CPLErr GTiffRasterBand::DeleteNoDataValue()
 void GTiffRasterBand::NullBlock(void *pData)
 
 {
-    const GPtrDiff_t nWords =
-        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+    const ptrdiff_t nWords = static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
     const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
 
     int l_bNoDataSet = FALSE;

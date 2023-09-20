@@ -275,7 +275,7 @@ extern "C"
         GCExtent *frame;
         OGRFeatureDefnH _poFeaDefn;
         long id;
-        vsi_l_offset _foff;  /* offset 1st feature */
+        uint64_t _foff;      /* offset 1st feature */
         unsigned long _flin; /* 1st ligne 1st feature */
         unsigned long _nFeatures;
         GCTypeKind knd;
@@ -318,7 +318,7 @@ extern "C"
         char *ext;
         VSILFILE *H;
         GCExportFileMetadata *header;
-        vsi_l_offset coff;
+        uint64_t coff;
         unsigned long clin;
         unsigned long nbObjects;
         GCAccessMode mode;

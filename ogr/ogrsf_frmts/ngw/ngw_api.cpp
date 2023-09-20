@@ -31,6 +31,7 @@
 
 #include "cpl_http.h"
 
+#include <cinttypes>
 #include <limits>
 
 namespace NGWAPI
@@ -70,7 +71,7 @@ std::string GetTMS(const std::string &osUrl, const std::string &osResourceId)
 
 std::string
 GetFeaturePage(const std::string &osUrl, const std::string &osResourceId,
-               GIntBig nStart, int nCount, const std::string &osFields,
+               int64_t nStart, int nCount, const std::string &osFields,
                const std::string &osWhere, const std::string &osSpatialWhere,
                const std::string &osExtensions, bool IsGeometryIgnored)
 {
@@ -557,7 +558,7 @@ void FillResmeta(CPLJSONObject &oRoot, char **papszMetadata)
                 std::string osSuffix = osItemName.substr(nSuffixPos);
                 if (osSuffix == ".d")
                 {
-                    GInt64 nVal = CPLAtoGIntBig(osItemValue.c_str());
+                    int64_t nVal = CPLAtoGIntBig(osItemValue.c_str());
                     oResMetaItems.Add(osItemName.substr(0, nSuffixPos), nVal);
                     continue;
                 }
@@ -613,7 +614,7 @@ bool DeleteFeature(const std::string &osUrl, const std::string &osResourceId,
     return bResult;
 }
 
-GIntBig CreateFeature(const std::string &osUrl, const std::string &osResourceId,
+int64_t CreateFeature(const std::string &osUrl, const std::string &osResourceId,
                       const std::string &osFeatureJson, char **papszHTTPOptions)
 {
     CPLErrorReset();
@@ -634,7 +635,7 @@ GIntBig CreateFeature(const std::string &osUrl, const std::string &osResourceId,
     CSLDestroy(papszHTTPOptions);
 
     CPLJSONObject oRoot = oCreateFeatureReq.GetRoot();
-    GIntBig nOutFID = OGRNullFID;
+    int64_t nOutFID = OGRNullFID;
     if (oRoot.IsValid())
     {
         if (bResult)
@@ -656,7 +657,7 @@ GIntBig CreateFeature(const std::string &osUrl, const std::string &osResourceId,
         CPLError(CE_Failure, CPLE_AppDefined, "Create new feature failed");
     }
 
-    CPLDebug("NGW", "CreateFeature new FID: " CPL_FRMT_GIB, nOutFID);
+    CPLDebug("NGW", "CreateFeature new FID: %" PRId64, nOutFID);
     return nOutFID;
 }
 
@@ -693,12 +694,12 @@ bool UpdateFeature(const std::string &osUrl, const std::string &osResourceId,
     return bResult;
 }
 
-std::vector<GIntBig> PatchFeatures(const std::string &osUrl,
+std::vector<int64_t> PatchFeatures(const std::string &osUrl,
                                    const std::string &osResourceId,
                                    const std::string &osFeaturesJson,
                                    char **papszHTTPOptions)
 {
-    std::vector<GIntBig> aoFIDs;
+    std::vector<int64_t> aoFIDs;
     CPLErrorReset();
     std::string osPayloadInt = "POSTFIELDS=" + osFeaturesJson;
 
@@ -724,7 +725,7 @@ std::vector<GIntBig> PatchFeatures(const std::string &osUrl,
             CPLJSONArray aoJSONIDs = oRoot.ToArray();
             for (int i = 0; i < aoJSONIDs.Size(); ++i)
             {
-                GIntBig nOutFID = aoJSONIDs[i].GetLong("id", OGRNullFID);
+                int64_t nOutFID = aoJSONIDs[i].GetLong("id", OGRNullFID);
                 aoFIDs.push_back(nOutFID);
             }
         }

@@ -300,7 +300,7 @@ void OGRMySQLResultLayer::ResetReading()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRMySQLResultLayer::GetFeatureCount(int bForce)
+int64_t OGRMySQLResultLayer::GetFeatureCount(int bForce)
 
 {
     // I wonder if we could do anything smart here...

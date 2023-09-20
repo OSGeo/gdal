@@ -743,7 +743,7 @@ class ERSRasterBand final : public RawRasterBand
 {
   public:
     ERSRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                  vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                  uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder);
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
@@ -755,7 +755,7 @@ class ERSRasterBand final : public RawRasterBand
 /************************************************************************/
 
 ERSRasterBand::ERSRasterBand(GDALDataset *poDSIn, int nBandIn,
-                             VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                             VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                              int nPixelOffsetIn, int nLineOffsetIn,
                              GDALDataType eDataTypeIn, int bNativeOrderIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
@@ -949,7 +949,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*     Get the HeaderOffset if it exists in the header                  */
     /* -------------------------------------------------------------------- */
-    GIntBig nHeaderOffset = 0;
+    int64_t nHeaderOffset = 0;
     const char *pszHeaderOffset = poHeader->Find("HeaderOffset");
     if (pszHeaderOffset != nullptr)
     {
@@ -1081,7 +1081,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                 return nullptr;
             }
             if (nHeaderOffset >
-                std::numeric_limits<GIntBig>::max() -
+                std::numeric_limits<int64_t>::max() -
                     (nBands - 1) * iWordSize * poDS->nRasterXSize)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1420,8 +1420,8 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    GUIntBig nSize =
-        nXSize * (GUIntBig)nYSize * nBandsIn * (GDALGetDataTypeSize(eType) / 8);
+    uint64_t nSize =
+        nXSize * (uint64_t)nYSize * nBandsIn * (GDALGetDataTypeSize(eType) / 8);
     GByte byZero = 0;
     if (VSIFSeekL(fpBin, nSize - 1, SEEK_SET) != 0 ||
         VSIFWriteL(&byZero, 1, 1, fpBin) != 1)

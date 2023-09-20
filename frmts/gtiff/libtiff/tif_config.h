@@ -64,9 +64,9 @@
 
 /* Signed size type */
 #ifdef _WIN64
-#  define TIFF_SSIZE_T GIntBig
-#  define TIFF_SSIZE_FORMAT CPL_FRMT_GB_WITHOUT_PREFIX "d"
-#  define TIFF_SIZE_FORMAT CPL_FRMT_GB_WITHOUT_PREFIX "u"
+#  define TIFF_SSIZE_T int64_t
+#  define TIFF_SSIZE_FORMAT "I64d"
+#  define TIFF_SIZE_FORMAT "I64u"
 #else
 #  define TIFF_SSIZE_T signed long
 #  define TIFF_SSIZE_FORMAT "ld"

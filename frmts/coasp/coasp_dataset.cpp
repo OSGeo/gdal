@@ -316,8 +316,8 @@ CPLErr COASPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 
     /* 8 bytes per pixel: 4 bytes I, 4 bytes Q */
-    const vsi_l_offset nByteNum =
-        static_cast<vsi_l_offset>(poDS->GetRasterXSize()) * 8 * nBlockYOff;
+    const uint64_t nByteNum =
+        static_cast<uint64_t>(poDS->GetRasterXSize()) * 8 * nBlockYOff;
 
     VSIFSeekL(this->fp, nByteNum, SEEK_SET);
     int nReadSize =

@@ -69,7 +69,7 @@ class OGRVFKLayer : public OGRLayer
     ~OGRVFKLayer();
 
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig) override;
+    OGRFeature *GetFeature(int64_t) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -80,7 +80,7 @@ class OGRVFKLayer : public OGRLayer
 
     int TestCapability(const char *) override;
 
-    GIntBig GetFeatureCount(int = TRUE) override;
+    int64_t GetFeatureCount(int = TRUE) override;
 };
 
 /************************************************************************/

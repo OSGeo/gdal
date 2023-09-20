@@ -52,12 +52,12 @@ int main(int argc, char **argv)
     GDALDatasetH hSrcDS;
     int iY, iX, nOutLevel = 0, nXSize, nYSize, iArg, nFillDist = 0;
     void *pStream;
-    GInt16 *panData;
+    int16_t *panData;
     const char *pszFilename = NULL;
     GDALRasterBandH hSrcBand;
     double adfGeoTransform[6];
     int bEnableTrim = FALSE;
-    GInt16 noDataValue = 0;
+    int16_t noDataValue = 0;
     int bHasNoData;
 
     /* -------------------------------------------------------------------- */
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
     hSrcBand = GDALGetRasterBand(hSrcDS, 1);
 
-    noDataValue = (GInt16)GDALGetRasterNoDataValue(hSrcBand, &bHasNoData);
+    noDataValue = (int16_t)GDALGetRasterNoDataValue(hSrcBand, &bHasNoData);
 
     nXSize = GDALGetRasterXSize(hSrcDS);
     nYSize = GDALGetRasterYSize(hSrcDS);
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
     /* -------------------------------------------------------------------- */
     /*      Process all the profiles.                                       */
     /* -------------------------------------------------------------------- */
-    panData = (GInt16 *)malloc(sizeof(GInt16) * nXSize);
+    panData = (int16_t *)malloc(sizeof(int16_t) * nXSize);
 
     for (iY = 0; iY < nYSize; iY++)
     {

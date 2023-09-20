@@ -50,13 +50,13 @@
 #include "rmfdataset.h"
 
 // Code marks that there is no predecessor in the string
-constexpr GUInt32 NO_PRED = 0xFFFF;
+constexpr uint32_t NO_PRED = 0xFFFF;
 
 // We are using 12-bit codes in this particular implementation
-constexpr GUInt32 TABSIZE = 4096U;
-constexpr GUInt32 STACKSIZE = TABSIZE;
+constexpr uint32_t TABSIZE = 4096U;
+constexpr uint32_t STACKSIZE = TABSIZE;
 
-constexpr GUInt32 NOT_FND = 0xFFFF;
+constexpr uint32_t NOT_FND = 0xFFFF;
 
 /************************************************************************/
 /*                           LZWStringTab                               */
@@ -65,8 +65,8 @@ constexpr GUInt32 NOT_FND = 0xFFFF;
 typedef struct
 {
     bool bUsed;
-    GUInt32 iNext;         // hi bit is 'used' flag
-    GUInt32 iPredecessor;  // 12 bit code
+    uint32_t iNext;         // hi bit is 'used' flag
+    uint32_t iPredecessor;  // 12 bit code
     GByte iFollower;
 } LZWStringTab;
 
@@ -75,7 +75,7 @@ typedef struct
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static GUInt32 UnsanitizedMul(GUInt32 a, GUInt32 b)
+static uint32_t UnsanitizedMul(uint32_t a, uint32_t b)
 {
     return a * b;
 }
@@ -85,7 +85,7 @@ static int UnsignedByteToSignedByte(GByte byVal)
     return byVal >= 128 ? byVal - 256 : byVal;
 }
 
-static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, GByte bFollow)
+static void LZWUpdateTab(LZWStringTab *poCodeTab, uint32_t iPred, GByte bFollow)
 {
     /* -------------------------------------------------------------------- */
     /* Hash uses the 'mid-square' algorithm. I.E. for a hash val of n bits  */
@@ -95,12 +95,12 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, GByte bFollow)
     /* elsewhere                                                            */
     /* -------------------------------------------------------------------- */
     const int iFollow = UnsignedByteToSignedByte(bFollow);
-    GUInt32 nLocal = CPLUnsanitizedAdd<GUInt32>(iPred, iFollow) | 0x0800;
+    uint32_t nLocal = CPLUnsanitizedAdd<uint32_t>(iPred, iFollow) | 0x0800;
     nLocal = (UnsanitizedMul(nLocal, nLocal) >> 6) &
              0x0FFF;  // middle 12 bits of result
 
     // If string is not used
-    GUInt32 nNext = nLocal;
+    uint32_t nNext = nLocal;
     if (poCodeTab[nLocal].bUsed)
     {
         // If collision has occurred
@@ -137,7 +137,7 @@ static LZWStringTab *LZWCreateTab()
 
     memset(poCodeTab, 0, TABSIZE * sizeof(LZWStringTab));
 
-    for (GUInt32 iCode = 0; iCode < 256; ++iCode)
+    for (uint32_t iCode = 0; iCode < 256; ++iCode)
         LZWUpdateTab(poCodeTab, NO_PRED, static_cast<GByte>(iCode));
 
     return poCodeTab;
@@ -147,11 +147,11 @@ static LZWStringTab *LZWCreateTab()
 /*                            LZWFindIndex()                            */
 /************************************************************************/
 
-static GUInt32 LZWFindIndex(const LZWStringTab *poCodeTab, GUInt32 iPred,
-                            GByte bFollow)
+static uint32_t LZWFindIndex(const LZWStringTab *poCodeTab, uint32_t iPred,
+                             GByte bFollow)
 {
     const int iFollow = UnsignedByteToSignedByte(bFollow);
-    GUInt32 nLocal = CPLUnsanitizedAdd<GUInt32>(iPred, iFollow) | 0x0800;
+    uint32_t nLocal = CPLUnsanitizedAdd<uint32_t>(iPred, iFollow) | 0x0800;
     nLocal = (UnsanitizedMul(nLocal, nLocal) >> 6) &
              0x0FFF;  // middle 12 bits of result
 
@@ -173,7 +173,7 @@ static GUInt32 LZWFindIndex(const LZWStringTab *poCodeTab, GUInt32 iPred,
 /*                             LZWPutCode()                             */
 /************************************************************************/
 
-static bool LZWPutCode(GUInt32 iCode, GUInt32 &iTmp, bool &bBitsleft,
+static bool LZWPutCode(uint32_t iCode, uint32_t &iTmp, bool &bBitsleft,
                        GByte *&pabyCurrent, const GByte *const pabyOutEnd)
 {
     if (bBitsleft)
@@ -204,24 +204,24 @@ static bool LZWPutCode(GUInt32 iCode, GUInt32 &iTmp, bool &bBitsleft,
 /*                           LZWReadStream()                            */
 /************************************************************************/
 
-static size_t LZWReadStream(const GByte *pabyIn, GUInt32 nSizeIn,
-                            GByte *pabyOut, GUInt32 nSizeOut,
+static size_t LZWReadStream(const GByte *pabyIn, uint32_t nSizeIn,
+                            GByte *pabyOut, uint32_t nSizeOut,
                             LZWStringTab *poCodeTab)
 {
     GByte *const pabyOutBegin = pabyOut;
 
     // The first code is always known
-    GUInt32 iCode = (*pabyIn++ << 4) & 0xFF0;
+    uint32_t iCode = (*pabyIn++ << 4) & 0xFF0;
     nSizeIn--;
     iCode += (*pabyIn >> 4) & 0x00F;
-    GUInt32 iOldCode = iCode;
+    uint32_t iOldCode = iCode;
     bool bBitsleft = true;
 
     GByte iFinChar = poCodeTab[iCode].iFollower;
     nSizeOut--;
     *pabyOut++ = iFinChar;
 
-    GUInt32 nCount = TABSIZE - 256;
+    uint32_t nCount = TABSIZE - 256;
 
     // Decompress the input buffer
     while (nSizeIn > 0)
@@ -247,7 +247,7 @@ static size_t LZWReadStream(const GByte *pabyIn, GUInt32 nSizeIn,
             bBitsleft = TRUE;
         }
 
-        const GUInt32 iInCode = iCode;
+        const uint32_t iInCode = iCode;
         GByte bLastChar = 0;  // TODO(schwehr): Why not nLastChar?
 
         // Do we have unknown code?
@@ -261,7 +261,7 @@ static size_t LZWReadStream(const GByte *pabyIn, GUInt32 nSizeIn,
 
         GByte abyStack[STACKSIZE] = {};
         GByte *pabyTail = abyStack + STACKSIZE;
-        GUInt32 nStackCount = 0;
+        uint32_t nStackCount = 0;
 
         while (poCodeTab[iCode].iPredecessor != NO_PRED)
         {
@@ -319,9 +319,9 @@ static size_t LZWReadStream(const GByte *pabyIn, GUInt32 nSizeIn,
 /*                           LZWDecompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::LZWDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
-                                 GByte *pabyOut, GUInt32 nSizeOut, GUInt32,
-                                 GUInt32)
+size_t RMFDataset::LZWDecompress(const GByte *pabyIn, uint32_t nSizeIn,
+                                 GByte *pabyOut, uint32_t nSizeOut, uint32_t,
+                                 uint32_t)
 {
     if (pabyIn == nullptr || pabyOut == nullptr || nSizeIn < 2)
         return 0;
@@ -338,16 +338,16 @@ size_t RMFDataset::LZWDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
 /*                             LZWWriteStream()                         */
 /************************************************************************/
 
-static size_t LZWWriteStream(const GByte *pabyIn, GUInt32 nSizeIn,
-                             GByte *pabyOut, GUInt32 nSizeOut,
+static size_t LZWWriteStream(const GByte *pabyIn, uint32_t nSizeIn,
+                             GByte *pabyOut, uint32_t nSizeOut,
                              LZWStringTab *poCodeTab)
 {
-    GUInt32 iCode;
+    uint32_t iCode;
     iCode = LZWFindIndex(poCodeTab, NO_PRED, *pabyIn++);
     nSizeIn--;
 
-    GUInt32 nCount = TABSIZE - 256;
-    GUInt32 iTmp = 0;
+    uint32_t nCount = TABSIZE - 256;
+    uint32_t iTmp = 0;
     bool bBitsleft = true;
     GByte *pabyCurrent = pabyOut;
     GByte *pabyOutEnd = pabyOut + nSizeOut;
@@ -357,7 +357,7 @@ static size_t LZWWriteStream(const GByte *pabyIn, GUInt32 nSizeIn,
         const GByte bCurrentCode = *pabyIn++;
         nSizeIn--;
 
-        GUInt32 iNextCode = LZWFindIndex(poCodeTab, iCode, bCurrentCode);
+        uint32_t iNextCode = LZWFindIndex(poCodeTab, iCode, bCurrentCode);
         if (iNextCode != NOT_FND)
         {
             iCode = iNextCode;
@@ -399,9 +399,9 @@ static size_t LZWWriteStream(const GByte *pabyIn, GUInt32 nSizeIn,
 /*                             LZWCompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::LZWCompress(const GByte *pabyIn, GUInt32 nSizeIn,
-                               GByte *pabyOut, GUInt32 nSizeOut, GUInt32,
-                               GUInt32, const RMFDataset *)
+size_t RMFDataset::LZWCompress(const GByte *pabyIn, uint32_t nSizeIn,
+                               GByte *pabyOut, uint32_t nSizeOut, uint32_t,
+                               uint32_t, const RMFDataset *)
 {
     if (pabyIn == nullptr || pabyOut == nullptr || nSizeIn == 0)
         return 0;

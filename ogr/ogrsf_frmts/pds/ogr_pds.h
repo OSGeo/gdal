@@ -99,11 +99,11 @@ class OGRPDSLayer final : public OGRLayer,
 
     virtual int TestCapability(const char *) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
 };
 
 }  // namespace OGRPDS

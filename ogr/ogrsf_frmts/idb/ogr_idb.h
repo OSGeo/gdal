@@ -75,7 +75,7 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -115,7 +115,7 @@ class OGRIDBTableLayer final : public OGRIDBLayer
                       int bUpdate);
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
@@ -125,7 +125,7 @@ class OGRIDBTableLayer final : public OGRIDBLayer
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 #endif
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
@@ -150,9 +150,9 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
     virtual ~OGRIDBSelectLayer();
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,

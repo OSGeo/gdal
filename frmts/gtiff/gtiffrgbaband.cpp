@@ -74,7 +74,7 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     m_poGDS->Crystalize();
 
     const auto nBlockBufSize =
-        4 * static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+        4 * static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
     const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
@@ -182,12 +182,12 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     for (int iDestLine = 0; iDestLine < nThisBlockYSize; ++iDestLine)
     {
         const auto nSrcOffset =
-            static_cast<GPtrDiff_t>(nThisBlockYSize - iDestLine - 1) *
+            static_cast<ptrdiff_t>(nThisBlockYSize - iDestLine - 1) *
             nBlockXSize * 4;
 
         GDALCopyWords(m_poGDS->m_pabyBlockBuf + nBO + nSrcOffset, GDT_Byte, 4,
                       static_cast<GByte *>(pImage) +
-                          static_cast<GPtrDiff_t>(iDestLine) * nBlockXSize,
+                          static_cast<ptrdiff_t>(iDestLine) * nBlockXSize,
                       GDT_Byte, 1, nBlockXSize);
     }
 

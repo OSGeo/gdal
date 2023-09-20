@@ -33,6 +33,7 @@
 #include "gribdataset.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -213,7 +214,7 @@ void GRIBRasterBand::FindMetaData()
 /*      Scan after the official start of the message to find its        */
 /*      true starting offset.                                           */
 /************************************************************************/
-vsi_l_offset GRIBRasterBand::FindTrueStart(VSILFILE *fp, vsi_l_offset start)
+uint64_t GRIBRasterBand::FindTrueStart(VSILFILE *fp, uint64_t start)
 {
     // GRIB messages can be preceded by "garbage". GRIB2Inventory()
     // does not return the offset to the real start of the message
@@ -299,7 +300,7 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
         return;
     }
 
-    GUInt32 nSectSize = 0;
+    uint32_t nSectSize = 0;
     if (abyHead[4] == 1)
     {
         memcpy(&nSectSize, abyHead, 4);
@@ -502,11 +503,11 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                 return;
             }
 
-            GUInt16 nCoordCount = 0;
+            uint16_t nCoordCount = 0;
             memcpy(&nCoordCount, pabyBody + 6 - 1, 2);
             CPL_MSBPTR16(&nCoordCount);
 
-            GUInt16 nPDTN = 0;
+            uint16_t nPDTN = 0;
             memcpy(&nPDTN, pabyBody + 8 - 1, 2);
             CPL_MSBPTR16(&nPDTN);
 
@@ -570,9 +571,9 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                             if (nEltSize == 4)
                             {
                                 m_anPDSTemplateAssembledValues.push_back(
-                                    static_cast<GUInt32>(pdstempl[i]));
+                                    static_cast<uint32_t>(pdstempl[i]));
                                 osValues += CPLSPrintf(
-                                    "%u", static_cast<GUInt32>(pdstempl[i]));
+                                    "%u", static_cast<uint32_t>(pdstempl[i]));
                             }
                             else
                             {
@@ -639,7 +640,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
     VSIFReadL(abyHead, 5, 1, poGDS->fp);
 
     // Skip to section 5
-    GUInt32 nSectSize = 0;
+    uint32_t nSectSize = 0;
     while (abyHead[4] != 5)
     {
         memcpy(&nSectSize, abyHead, 4);
@@ -662,7 +663,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
             memcpy(pabyBody, abyHead, 5);
             VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
 
-            GUInt16 nDRTN = 0;
+            uint16_t nDRTN = 0;
             memcpy(&nDRTN, pabyBody + 10 - 1, 2);
             CPL_MSBPTR16(&nDRTN);
 
@@ -679,7 +680,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
                 GDALRasterBand::SetMetadataItem(
                     "DRS_REF_VALUE", CPLSPrintf("%.10f", fRef), "GRIB");
 
-                GUInt16 nBinaryScaleFactorUnsigned;
+                uint16_t nBinaryScaleFactorUnsigned;
                 memcpy(&nBinaryScaleFactorUnsigned, pabyBody + 16 - 1, 2);
                 CPL_MSBPTR16(&nBinaryScaleFactorUnsigned);
                 const int nBSF =
@@ -689,7 +690,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
                 GDALRasterBand::SetMetadataItem("DRS_BINARY_SCALE_FACTOR",
                                                 CPLSPrintf("%d", nBSF), "GRIB");
 
-                GUInt16 nDecimalScaleFactorUnsigned;
+                uint16_t nDecimalScaleFactorUnsigned;
                 memcpy(&nDecimalScaleFactorUnsigned, pabyBody + 18 - 1, 2);
                 CPL_MSBPTR16(&nDecimalScaleFactorUnsigned);
                 const int nDSF =
@@ -827,8 +828,8 @@ CPLErr GRIBRasterBand::LoadData()
             // all bands that have been accessed.
             if (poGDS->nCachedBytes > poGDS->nCachedBytesThreshold)
             {
-                GUIntBig nMinCacheSize =
-                    1 + static_cast<GUIntBig>(poGDS->nRasterXSize) *
+                uint64_t nMinCacheSize =
+                    1 + static_cast<uint64_t>(poGDS->nRasterXSize) *
                             poGDS->nRasterYSize * poGDS->nBands *
                             GDALGetDataTypeSizeBytes(eDataType) / 1024 / 1024;
                 CPLDebug("GRIB",
@@ -836,7 +837,7 @@ CPLErr GRIBRasterBand::LoadData()
                          "Caching only one band at a time from now, which can "
                          "negatively affect performance. Consider "
                          "increasing GRIB_CACHEMAX to a higher value (in MB), "
-                         "at least " CPL_FRMT_GUIB " in that instance",
+                         "at least %" PRIu64 " in that instance",
                          nMinCacheSize);
                 for (int i = 0; i < poGDS->nBands; i++)
                 {
@@ -883,7 +884,7 @@ CPLErr GRIBRasterBand::LoadData()
             return CE_Failure;
         }
 
-        poGDS->nCachedBytes += static_cast<GIntBig>(nGribDataXSize) *
+        poGDS->nCachedBytes += static_cast<int64_t>(nGribDataXSize) *
                                nGribDataYSize * sizeof(double);
         poGDS->poLastUsedBand = this;
 
@@ -1044,7 +1045,7 @@ double GRIBRasterBand::GetNoDataValue(int *pbSuccess)
 /*                            ReadGribData()                            */
 /************************************************************************/
 
-void GRIBRasterBand::ReadGribData(VSILFILE *fp, vsi_l_offset start, int subgNum,
+void GRIBRasterBand::ReadGribData(VSILFILE *fp, uint64_t start, int subgNum,
                                   double **data, grib_MetaData **metaData)
 {
     // Initialization, for calling the ReadGrib2Record function.
@@ -1261,7 +1262,7 @@ GRIBDataset::GRIBDataset()
     : fp(nullptr), nCachedBytes(0),
       // Switch caching strategy once 100 MB threshold is reached.
       // Why 100 MB? --> Why not.
-      nCachedBytesThreshold(static_cast<GIntBig>(atoi(
+      nCachedBytesThreshold(static_cast<int64_t>(atoi(
                                 CPLGetConfigOption("GRIB_CACHEMAX", "100"))) *
                             1024 * 1024),
       bCacheOnlyOneBand(FALSE), nSplitAndSwapColumn(0), poLastUsedBand(nullptr)
@@ -1531,7 +1532,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
 struct GRIBSharedResource
 {
     VSILFILE *m_fp = nullptr;
-    vsi_l_offset m_nOffsetCurData = static_cast<vsi_l_offset>(-1);
+    uint64_t m_nOffsetCurData = static_cast<uint64_t>(-1);
     std::vector<double> m_adfCurData{};
     std::string m_osFilename;
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
@@ -1539,7 +1540,7 @@ struct GRIBSharedResource
     GRIBSharedResource(const std::string &osFilename, VSILFILE *fp);
     ~GRIBSharedResource();
 
-    const std::vector<double> &LoadData(vsi_l_offset nOffset, int subgNum);
+    const std::vector<double> &LoadData(uint64_t nOffset, int subgNum);
 
     const std::shared_ptr<GDALPamMultiDim> &GetPAM()
     {
@@ -1613,7 +1614,7 @@ class GRIBArray final : public GDALPamMDArray
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
-    std::vector<vsi_l_offset> m_anOffsets{};
+    std::vector<uint64_t> m_anOffsets{};
     std::vector<int> m_anSubgNums{};
     std::vector<double> m_adfTimes{};
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
@@ -1624,8 +1625,8 @@ class GRIBArray final : public GDALPamMDArray
               const std::shared_ptr<GRIBSharedResource> &poShared);
 
   protected:
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -1641,7 +1642,7 @@ class GRIBArray final : public GDALPamMDArray
 
     void Init(GRIBGroup *poGroup, GRIBDataset *poDS, GRIBRasterBand *poBand,
               inventoryType *psInv);
-    void ExtendTimeDim(vsi_l_offset nOffset, int subgNum, double dfValidTime);
+    void ExtendTimeDim(uint64_t nOffset, int subgNum, double dfValidTime);
     void Finalize(GRIBGroup *poGroup, inventoryType *psInv);
 
     bool IsWritable() const override
@@ -1762,7 +1763,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
             auto poVar = oIterX->second->GetIndexingVariable();
             if (poVar)
             {
-                GUInt64 nStart = 0;
+                uint64_t nStart = 0;
                 size_t nCount = 1;
                 double dfVal = 0;
                 poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt, &dfVal);
@@ -1776,7 +1777,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
                 poVar = oIterY->second->GetIndexingVariable();
                 if (poVar)
                 {
-                    GUInt64 nStart = 0;
+                    uint64_t nStart = 0;
                     size_t nCount = 1;
                     double dfVal = 0;
                     poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt,
@@ -1946,8 +1947,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
 /*                         ExtendTimeDim()                              */
 /************************************************************************/
 
-void GRIBArray::ExtendTimeDim(vsi_l_offset nOffset, int subgNum,
-                              double dfValidTime)
+void GRIBArray::ExtendTimeDim(uint64_t nOffset, int subgNum, double dfValidTime)
 {
     m_anOffsets.push_back(nOffset);
     m_anSubgNums.push_back(subgNum);
@@ -1990,7 +1990,7 @@ void GRIBArray::Finalize(GRIBGroup *poGroup, inventoryType *psInv)
             auto poVar = poDim->GetIndexingVariable();
             if (poVar)
             {
-                GUInt64 nStart = 0;
+                uint64_t nStart = 0;
                 size_t nCount = 1;
                 double dfStartTime = 0;
                 poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt,
@@ -2027,10 +2027,10 @@ void GRIBArray::Finalize(GRIBGroup *poGroup, inventoryType *psInv)
         poDimTime->SetIndexingVariable(var);
         poGroup->AddArray(var);
 
-        GUInt64 nStart = 0;
+        uint64_t nStart = 0;
         size_t nCount = m_adfTimes.size();
         var->SetUnit("sec UTC");
-        const GUInt64 anStart[] = {nStart};
+        const uint64_t anStart[] = {nStart};
         const size_t anCount[] = {nCount};
         var->Write(anStart, anCount, nullptr, nullptr, var->GetDataType(),
                    &m_adfTimes[0]);
@@ -2053,7 +2053,7 @@ void GRIBArray::Finalize(GRIBGroup *poGroup, inventoryType *psInv)
 /*                              LoadData()                              */
 /************************************************************************/
 
-const std::vector<double> &GRIBSharedResource::LoadData(vsi_l_offset nOffset,
+const std::vector<double> &GRIBSharedResource::LoadData(uint64_t nOffset,
                                                         int subgNum)
 {
     if (m_nOffsetCurData == nOffset)
@@ -2116,8 +2116,8 @@ const std::vector<double> &GRIBSharedResource::LoadData(vsi_l_offset nOffset,
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GRIBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                      const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+bool GRIBArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                      const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {

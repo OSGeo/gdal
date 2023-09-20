@@ -60,7 +60,7 @@ enum JP2_ENUM
 typedef struct
 {
     VSILFILE *fp_;
-    vsi_l_offset nBaseOffset;
+    uint64_t nBaseOffset;
 } JP2File;
 
 /************************************************************************/
@@ -90,8 +90,8 @@ struct JP2DatasetBase
     }
     std::string m_osFilename;
     VSILFILE *fp_ = nullptr; /* Large FILE API */
-    vsi_l_offset nCodeStreamStart = 0;
-    vsi_l_offset nCodeStreamLength = 0;
+    uint64_t nCodeStreamStart = 0;
+    uint64_t nCodeStreamLength = 0;
 
     int nRedIndex = 0;
     int nGreenIndex = 1;
@@ -165,11 +165,11 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual GIntBig GetEstimatedRAMUsage() override;
+    virtual int64_t GetEstimatedRAMUsage() override;
 
     CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                            const int *panOverviewList, int nListBands,
@@ -218,7 +218,7 @@ class JP2OPJLikeRasterBand final : public GDALPamRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual GDALColorInterp GetColorInterpretation() override;

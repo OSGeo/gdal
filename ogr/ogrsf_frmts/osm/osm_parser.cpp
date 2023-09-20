@@ -29,6 +29,7 @@
 #include "osm_parser.h"
 #include "gpb.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -139,13 +140,13 @@ struct _OSMContext
     OSMMember *pasMembers;
     unsigned int nMembersAllocated;
 
-    GIntBig *panNodeRefs;
+    int64_t *panNodeRefs;
     unsigned int nNodeRefsAllocated;
 
     int nGranularity;
     int nDateGranularity;
-    GIntBig nLatOffset;
-    GIntBig nLonOffset;
+    int64_t nLatOffset;
+    int64_t nLonOffset;
 
     // concatenated protocol buffer messages BLOB_OSMDATA, or single
     // BLOB_OSMHEADER
@@ -196,7 +197,7 @@ struct _OSMContext
     double dfTop;
     double dfBottom;
 
-    GUIntBig nBytesRead;
+    uint64_t nBytesRead;
 
     NotifyNodesFunc pfnNotifyNodes;
     NotifyWayFunc pfnNotifyWay;
@@ -305,25 +306,25 @@ static bool ReadHeaderBBox(const GByte *pabyData, const GByte *pabyDataLimit,
 
             if (nKey == MAKE_KEY(HEADERBBOX_IDX_LEFT, WT_VARINT))
             {
-                GIntBig nLeft = 0;
+                int64_t nLeft = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nLeft);
                 psCtxt->dfLeft = nLeft * 1e-9;
             }
             else if (nKey == MAKE_KEY(HEADERBBOX_IDX_RIGHT, WT_VARINT))
             {
-                GIntBig nRight = 0;
+                int64_t nRight = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nRight);
                 psCtxt->dfRight = nRight * 1e-9;
             }
             else if (nKey == MAKE_KEY(HEADERBBOX_IDX_TOP, WT_VARINT))
             {
-                GIntBig nTop = 0;
+                int64_t nTop = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nTop);
                 psCtxt->dfTop = nTop * 1e-9;
             }
             else if (nKey == MAKE_KEY(HEADERBBOX_IDX_BOTTOM, WT_VARINT))
             {
-                GIntBig nBottom = 0;
+                int64_t nBottom = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nBottom);
                 psCtxt->dfBottom = nBottom * 1e-9;
             }
@@ -539,13 +540,13 @@ static bool ReadStringTable(const GByte *pabyData, const GByte *pabyDataLimit,
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static GIntBig AddWithOverflowAccepted(GIntBig a, GIntBig b)
+static int64_t AddWithOverflowAccepted(int64_t a, int64_t b)
 {
     // Assumes complement-to-two signed integer representation and that
     // the compiler will safely cast a negative number to unsigned and a
     // big unsigned to negative integer.
-    return static_cast<GIntBig>(static_cast<GUIntBig>(a) +
-                                static_cast<GUIntBig>(b));
+    return static_cast<int64_t>(static_cast<uint64_t>(a) +
+                                static_cast<uint64_t>(b));
 }
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -725,11 +726,11 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
                 apabyData[DENSEINFO_IDX_USER_SID - 1];
             /* GByte* pabyDataVisible = apabyData[DENSEINFO_IDX_VISIBLE - 1]; */
 
-            GIntBig nID = 0;
-            GIntBig nLat = 0;
-            GIntBig nLon = 0;
-            GIntBig nTimeStamp = 0;
-            GIntBig nChangeset = 0;
+            int64_t nID = 0;
+            int64_t nLat = 0;
+            int64_t nLon = 0;
+            int64_t nTimeStamp = 0;
+            int64_t nChangeset = 0;
             int nUID = 0;
             unsigned int nUserSID = 0;
             int nTags = 0;
@@ -746,7 +747,7 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
 
             while (pabyDataIDs < pabyDataIDsLimit)
             {
-                GIntBig nDelta1, nDelta2;
+                int64_t nDelta1, nDelta2;
                 int nKVIndexStart = nTags;
 
                 READ_VARSINT64_NOCHECK(pabyDataIDs, pabyDataIDsLimit, nDelta1);
@@ -841,8 +842,8 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
                         pszStrBuf + panStrOff[nUserSID];
                 /* pasNodes[nNodes].sInfo.nVisible = nVisible; */
                 nNodes++;
-                /* printf("nLat = " CPL_FRMT_GIB "\n", nLat); printf("nLon = "
-                 * CPL_FRMT_GIB "\n", nLon); */
+                /* printf("nLat = %" PRId64 "\n", nLat); printf("nLon = "
+                 * PRId64 "\n", nLon); */
             }
 
             psCtxt->pfnNotifyNodes(nNodes, pasNodes, psCtxt, psCtxt->user_data);
@@ -971,7 +972,7 @@ static bool ReadNode(const GByte *pabyData, const GByte *pabyDataLimit,
             }
             else if (nKey == MAKE_KEY(NODE_IDX_LAT, WT_VARINT))
             {
-                GIntBig nLat = 0;
+                int64_t nLat = 0;
                 READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLat);
                 sNode.dfLat =
                     0.000000001 * (psCtxt->nLatOffset +
@@ -979,7 +980,7 @@ static bool ReadNode(const GByte *pabyData, const GByte *pabyDataLimit,
             }
             else if (nKey == MAKE_KEY(NODE_IDX_LON, WT_VARINT))
             {
-                GIntBig nLon = 0;
+                int64_t nLon = 0;
                 READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLon);
                 sNode.dfLon =
                     0.000000001 * (psCtxt->nLonOffset +
@@ -1183,7 +1184,7 @@ static bool ReadWay(const GByte *pabyData, const GByte *pabyDataLimit,
             }
             else if (nKey == MAKE_KEY(WAY_IDX_REFS, WT_DATA))
             {
-                GIntBig nRefVal = 0;
+                int64_t nRefVal = 0;
                 unsigned int nSize = 0;
                 const GByte *pabyDataNewLimit = nullptr;
                 if (sWay.nRefs != 0)
@@ -1194,9 +1195,9 @@ static bool ReadWay(const GByte *pabyData, const GByte *pabyDataLimit,
                 {
                     psCtxt->nNodeRefsAllocated =
                         std::max(psCtxt->nNodeRefsAllocated * 2, nSize);
-                    GIntBig *panNodeRefsNew = (GIntBig *)VSI_REALLOC_VERBOSE(
+                    int64_t *panNodeRefsNew = (int64_t *)VSI_REALLOC_VERBOSE(
                         psCtxt->panNodeRefs,
-                        psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
+                        psCtxt->nNodeRefsAllocated * sizeof(int64_t));
                     if (panNodeRefsNew == nullptr)
                         THROW_OSM_PARSING_EXCEPTION;
                     psCtxt->panNodeRefs = panNodeRefsNew;
@@ -1205,7 +1206,7 @@ static bool ReadWay(const GByte *pabyData, const GByte *pabyDataLimit,
                 pabyDataNewLimit = pabyData + nSize;
                 while (pabyData < pabyDataNewLimit)
                 {
-                    GIntBig nDeltaRef = 0;
+                    int64_t nDeltaRef = 0;
                     READ_VARSINT64_NOCHECK(pabyData, pabyDataNewLimit,
                                            nDeltaRef);
                     nRefVal = AddWithOverflowAccepted(nRefVal, nDeltaRef);
@@ -1384,7 +1385,7 @@ static bool ReadRelation(const GByte *pabyData, const GByte *pabyDataLimit,
             else if (nKey == MAKE_KEY(RELATION_IDX_MEMIDS, WT_DATA))
             {
                 unsigned int nIter = 0;
-                GIntBig nMemID = 0;
+                int64_t nMemID = 0;
                 if (sRelation.nMembers == 0)
                     THROW_OSM_PARSING_EXCEPTION;
                 // unsigned int nSize = 0;
@@ -1393,7 +1394,7 @@ static bool ReadRelation(const GByte *pabyData, const GByte *pabyDataLimit,
 
                 for (; nIter < sRelation.nMembers; nIter++)
                 {
-                    GIntBig nDeltaMemID = 0;
+                    int64_t nDeltaMemID = 0;
                     READ_VARSINT64(pabyData, pabyDataLimit, nDeltaMemID);
                     nMemID = AddWithOverflowAccepted(nMemID, nDeltaMemID);
 
@@ -2117,7 +2118,7 @@ static const char *OSM_AddString(OSMContext *psCtxt, const char *pszStr)
 /*                            OSM_Atoi64()                              */
 /************************************************************************/
 
-static GIntBig OSM_Atoi64(const char *pszString)
+static int64_t OSM_Atoi64(const char *pszString)
 {
     return atoll(pszString);
 }
@@ -2368,7 +2369,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Too many nodes referenced in way " CPL_FRMT_GIB,
+                         "Too many nodes referenced in way %" PRId64,
                          psCtxt->sWay.nID);
             }
         }
@@ -2389,7 +2390,7 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot allocate enough memory to store members of "
-                         "relation " CPL_FRMT_GIB,
+                         "relation %" PRId64,
                          psCtxt->sRelation.nID);
                 return;
             }
@@ -2441,15 +2442,14 @@ static void XMLCALL OSM_XML_startElementCbk(void *pUserData,
             {
                 if (psCtxt->bInNode)
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Too many tags in node " CPL_FRMT_GIB,
+                             "Too many tags in node %" PRId64,
                              psCtxt->pasNodes[0].nID);
                 else if (psCtxt->bInWay)
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Too many tags in way " CPL_FRMT_GIB,
-                             psCtxt->sWay.nID);
+                             "Too many tags in way %" PRId64, psCtxt->sWay.nID);
                 else if (psCtxt->bInRelation)
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Too many tags in relation " CPL_FRMT_GIB,
+                             "Too many tags in relation %" PRId64,
                              psCtxt->sRelation.nID);
                 return;
             }
@@ -2739,8 +2739,8 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
             sizeof(OSMMember) * psCtxt->nMembersAllocated);
 
         psCtxt->nNodeRefsAllocated = 10000;
-        psCtxt->panNodeRefs = (GIntBig *)VSI_MALLOC_VERBOSE(
-            sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
+        psCtxt->panNodeRefs = (int64_t *)VSI_MALLOC_VERBOSE(
+            sizeof(int64_t) * psCtxt->nNodeRefsAllocated);
 
         if (psCtxt->pszStrBuf == nullptr || psCtxt->pasNodes == nullptr ||
             psCtxt->pasTags == nullptr || psCtxt->pasMembers == nullptr ||
@@ -2874,7 +2874,7 @@ OSMRetCode OSM_ProcessBlock(OSMContext *psCtxt)
 /*                          OSM_GetBytesRead()                          */
 /************************************************************************/
 
-GUIntBig OSM_GetBytesRead(OSMContext *psCtxt)
+uint64_t OSM_GetBytesRead(OSMContext *psCtxt)
 {
     return psCtxt->nBytesRead;
 }

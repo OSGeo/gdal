@@ -115,7 +115,7 @@ class CPL_DLL CPLJSONObject
     void Add(const std::string &osName, const char *pszValue);
     void Add(const std::string &osName, double dfValue);
     void Add(const std::string &osName, int nValue);
-    void Add(const std::string &osName, GInt64 nValue);
+    void Add(const std::string &osName, int64_t nValue);
     void Add(const std::string &osName, uint64_t nValue);
     void Add(const std::string &osName, const CPLJSONArray &oValue);
     void Add(const std::string &osName, const CPLJSONObject &oValue);
@@ -127,7 +127,7 @@ class CPL_DLL CPLJSONObject
     void Set(const std::string &osName, const char *pszValue);
     void Set(const std::string &osName, double dfValue);
     void Set(const std::string &osName, int nValue);
-    void Set(const std::string &osName, GInt64 nValue);
+    void Set(const std::string &osName, int64_t nValue);
     void Set(const std::string &osName, uint64_t nValue);
     void Set(const std::string &osName, bool bValue);
     void SetNull(const std::string &osName);
@@ -144,12 +144,12 @@ class CPL_DLL CPLJSONObject
                           const std::string &osDefault = "") const;
     double GetDouble(const std::string &osName, double dfDefault = 0.0) const;
     int GetInteger(const std::string &osName, int nDefault = 0) const;
-    GInt64 GetLong(const std::string &osName, GInt64 nDefault = 0) const;
+    int64_t GetLong(const std::string &osName, int64_t nDefault = 0) const;
     bool GetBool(const std::string &osName, bool bDefault = false) const;
     std::string ToString(const std::string &osDefault = "") const;
     double ToDouble(double dfDefault = 0.0) const;
     int ToInteger(int nDefault = 0) const;
-    GInt64 ToLong(GInt64 nDefault = 0) const;
+    int64_t ToLong(int64_t nDefault = 0) const;
     bool ToBool(bool bDefault = false) const;
     CPLJSONArray ToArray() const;
     std::string Format(PrettyFormat eFormat) const;
@@ -241,7 +241,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     void Add(const char *pszValue);
     void Add(double dfValue);
     void Add(int nValue);
-    void Add(GInt64 nValue);
+    void Add(int64_t nValue);
     void Add(uint64_t nValue);
     void Add(bool bValue);
     CPLJSONObject operator[](int nIndex);

@@ -568,7 +568,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char *pszResampling,
             /* --------------------------------------------------------------------
              */
 
-            vsi_l_offset nDataLength;
+            uint64_t nDataLength;
             GByte *pabyData = VSIGetMemFileBuffer(osTempFileName.c_str(),
                                                   &nDataLength, FALSE);
 

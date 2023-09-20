@@ -30,6 +30,8 @@
 #include "cpl_conv.h"
 #include "ogr_odbc.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                          OGRODBCTableLayer()                         */
 /************************************************************************/
@@ -300,7 +302,7 @@ void OGRODBCTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRODBCTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRODBCTableLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (pszFIDColumn == nullptr)
@@ -313,7 +315,7 @@ OGRFeature *OGRODBCTableLayer::GetFeature(GIntBig nFeatureId)
     poStmt = new CPLODBCStatement(poDS->GetSession(), m_nStatementFlags);
     poStmt->Append("SELECT * FROM ");
     poStmt->Append(EscapeAndQuoteIdentifier(poFeatureDefn->GetName()));
-    poStmt->Appendf(" WHERE %s = " CPL_FRMT_GIB,
+    poStmt->Appendf(" WHERE %s = %" PRId64,
                     EscapeAndQuoteIdentifier(pszFIDColumn).c_str(), nFeatureId);
 
     if (!poStmt->ExecuteSQL())
@@ -372,7 +374,7 @@ int OGRODBCTableLayer::TestCapability(const char *pszCap)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRODBCTableLayer::GetFeatureCount(int bForce)
+int64_t OGRODBCTableLayer::GetFeatureCount(int bForce)
 
 {
     if (m_poFilterGeom != nullptr)

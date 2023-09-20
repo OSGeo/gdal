@@ -161,7 +161,7 @@ class OGROSMLayer final : public OGRLayer
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressData);
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 
     virtual OGRErr SetAttributeFilter(const char *pszAttrQuery) override;
 
@@ -255,7 +255,7 @@ class OGROSMLayer final : public OGRLayer
         m_bHasAllTags = bIn;
     }
 
-    void SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID, bool bIsWayID,
+    void SetFieldsFromTags(OGRFeature *poFeature, int64_t nID, bool bIsWayID,
                            unsigned int nTags, OSMTag *pasTags,
                            OSMInfo *psInfo);
 
@@ -326,7 +326,7 @@ typedef struct
 
 typedef struct
 {
-    GIntBig nOff;
+    int64_t nOff;
     /* Note: only one of nth bucket pabyBitmap or panSectorSize must be free'd
      */
     union
@@ -346,8 +346,8 @@ typedef struct
 
 typedef struct
 {
-    GIntBig nWayID;
-    GIntBig
+    int64_t nWayID;
+    int64_t
         *panNodeRefs; /* point to a sub-array of OGROSMDataSource.anReqIds */
     unsigned int nRefs;
     unsigned int nTags;
@@ -452,10 +452,10 @@ class OGROSMDataSource final : public OGRDataSource
     bool m_bCompressNodes = false;
 
     unsigned int m_nUnsortedReqIds = 0;
-    GIntBig *m_panUnsortedReqIds = nullptr;
+    int64_t *m_panUnsortedReqIds = nullptr;
 
     unsigned int m_nReqIds = 0;
-    GIntBig *m_panReqIds = nullptr;
+    int64_t *m_panReqIds = nullptr;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
     bool m_bEnableHashedIndex = true;
@@ -490,10 +490,10 @@ class OGROSMDataSource final : public OGRDataSource
     CPLString m_osNodesFilename{};
     bool m_bInMemoryNodesFile = false;
     bool m_bMustUnlinkNodesFile = true;
-    GIntBig m_nNodesFileSize = 0;
+    int64_t m_nNodesFileSize = 0;
     VSILFILE *m_fpNodes = nullptr;
 
-    GIntBig m_nPrevNodeId = -INT_MAX;
+    int64_t m_nPrevNodeId = -INT_MAX;
     int m_nBucketOld = -1;
     int m_nOffInBucketReducedOld = -1;
     GByte *m_pabySector = nullptr;
@@ -502,9 +502,9 @@ class OGROSMDataSource final : public OGRDataSource
 
     bool m_bNeedsToSaveWayInfo = false;
 
-    static const GIntBig FILESIZE_NOT_INIT = -2;
-    static const GIntBig FILESIZE_INVALID = -1;
-    GIntBig m_nFileSize = FILESIZE_NOT_INIT;
+    static const int64_t FILESIZE_NOT_INIT = -2;
+    static const int64_t FILESIZE_INVALID = -1;
+    int64_t m_nFileSize = FILESIZE_NOT_INIT;
 
     void CompressWay(bool bIsArea, unsigned int nTags, IndexedKVP *pasTags,
                      int nPoints, LonLat *pasLonLatPairs, OSMInfo *psInfo,
@@ -527,14 +527,14 @@ class OGROSMDataSource final : public OGRDataSource
     bool FlushCurrentSectorNonCompressedCase();
     bool IndexPointCustom(OSMNode *psNode);
 
-    void IndexWay(GIntBig nWayID, bool bIsArea, unsigned int nTags,
+    void IndexWay(int64_t nWayID, bool bIsArea, unsigned int nTags,
                   IndexedKVP *pasTags, LonLat *pasLonLatPairs, int nPairs,
                   OSMInfo *psInfo);
 
     bool StartTransactionCacheDB();
     bool CommitTransactionCacheDB();
 
-    int FindNode(GIntBig nID);
+    int FindNode(int64_t nID);
     void ProcessWaysBatch();
 
     void ProcessPolygonsStandalone();
@@ -546,7 +546,7 @@ class OGROSMDataSource final : public OGRDataSource
     void LookupNodesCustomNonCompressedCase();
 
     unsigned int
-    LookupWays(std::map<GIntBig, std::pair<int, void *>> &aoMapWays,
+    LookupWays(std::map<int64_t, std::pair<int, void *>> &aoMapWays,
                OSMRelation *psRelation);
 
     OGRGeometry *BuildMultiPolygon(OSMRelation *psRelation,

@@ -172,8 +172,7 @@ CPLErr DDSRasterBand::IReadBlock(int, int nYBlock, void *pImage)
     {
         auto nFileOffset =
             strlen(DDS_SIGNATURE) + sizeof(crnlib::DDSURFACEDESC2) +
-            static_cast<vsi_l_offset>(poGDS->nCompressedSizePerStripe) *
-                nYBlock;
+            static_cast<uint64_t>(poGDS->nCompressedSizePerStripe) * nYBlock;
         VSIFSeekL(poGDS->fp, nFileOffset, SEEK_SET);
         if (VSIFReadL(poGDS->pCompressedBuffer, poGDS->nCompressedSizePerStripe,
                       1, poGDS->fp) != 1)
@@ -269,8 +268,8 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
            sizeof(ddsDesc));
 #ifdef CPL_MSB
     {
-        GUInt32 *ddsDescAsUInt32 = reinterpret_cast<GUInt32 *>(&ddsDesc);
-        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(GUInt32); ++i)
+        uint32_t *ddsDescAsUInt32 = reinterpret_cast<uint32_t *>(&ddsDesc);
+        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(uint32_t); ++i)
         {
             CPL_LSBPTR32(&ddsDescAsUInt32[i]);
         }
@@ -341,8 +340,8 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
     const uint32_t num_blocks_y =
         (ddsDesc.dwHeight + cDXTBlockSize - 1) / cDXTBlockSize;
     const uint32_t compressed_size_per_row = num_blocks_x * bytesPerBlock;
-    const vsi_l_offset nCompressedDataSize =
-        static_cast<vsi_l_offset>(compressed_size_per_row) * num_blocks_y;
+    const uint64_t nCompressedDataSize =
+        static_cast<uint64_t>(compressed_size_per_row) * num_blocks_y;
 
     VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
     if (VSIFTellL(poOpenInfo->fpL) < strlen(DDS_SIGNATURE) +
@@ -646,8 +645,8 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
 
 #ifdef CPL_MSB
     {
-        GUInt32 *ddsDescAsUInt32 = reinterpret_cast<GUInt32 *>(&ddsDesc);
-        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(GUInt32); ++i)
+        uint32_t *ddsDescAsUInt32 = reinterpret_cast<uint32_t *>(&ddsDesc);
+        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(uint32_t); ++i)
         {
             CPL_LSBPTR32(&ddsDescAsUInt32[i]);
         }

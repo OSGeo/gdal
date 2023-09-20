@@ -93,8 +93,8 @@ class STACTADataset final : public GDALPamDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr FlushCache(bool bAtClosing) override;
 };
@@ -116,7 +116,7 @@ class STACTARasterBand final : public GDALRasterBand
                      GDALRasterBand *poProtoBand);
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
     GDALColorInterp GetColorInterpretation() override
     {
@@ -162,8 +162,8 @@ class STACTARawDataset final : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -185,8 +185,8 @@ class STACTARawRasterBand final : public GDALRasterBand
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace,
+                     GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     GDALColorInterp GetColorInterpretation() override
     {

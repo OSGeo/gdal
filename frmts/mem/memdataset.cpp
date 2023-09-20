@@ -32,6 +32,7 @@
 #include "memmultidim.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
@@ -74,8 +75,7 @@ GDALRasterBandH MEMCreateRasterBand(GDALDataset *poDS, int nBand,
 
 GDALRasterBandH MEMCreateRasterBandEx(GDALDataset *poDS, int nBand,
                                       GByte *pabyData, GDALDataType eType,
-                                      GSpacing nPixelOffset,
-                                      GSpacing nLineOffset,
+                                      int64_t nPixelOffset, int64_t nLineOffset,
                                       int bAssumeOwnership)
 
 {
@@ -111,7 +111,7 @@ MEMRasterBand::MEMRasterBand(GByte *pabyDataIn, GDALDataType eTypeIn,
 
 MEMRasterBand::MEMRasterBand(GDALDataset *poDSIn, int nBandIn,
                              GByte *pabyDataIn, GDALDataType eTypeIn,
-                             GSpacing nPixelOffsetIn, GSpacing nLineOffsetIn,
+                             int64_t nPixelOffsetIn, int64_t nLineOffsetIn,
                              int bAssumeOwnership, const char *pszPixelType)
     : GDALPamRasterBand(FALSE), pabyData(pabyDataIn),
       nPixelOffset(nPixelOffsetIn), nLineOffset(nLineOffsetIn),
@@ -221,8 +221,8 @@ CPLErr MEMRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 CPLErr MEMRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                                GSpacing nLineSpaceBuf,
+                                GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                                int64_t nLineSpaceBuf,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if (nXSize != nBufXSize || nYSize != nBufYSize)
@@ -240,28 +240,26 @@ CPLErr MEMRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         for (int iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALCopyWords(pabyData +
-                              nLineOffset *
-                                  static_cast<GPtrDiff_t>(iLine + nYOff) +
-                              nXOff * nPixelOffset,
-                          eDataType, static_cast<int>(nPixelOffset),
-                          static_cast<GByte *>(pData) +
-                              nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
-                          eBufType, static_cast<int>(nPixelSpaceBuf), nXSize);
+            GDALCopyWords(
+                pabyData + nLineOffset * static_cast<ptrdiff_t>(iLine + nYOff) +
+                    nXOff * nPixelOffset,
+                eDataType, static_cast<int>(nPixelOffset),
+                static_cast<GByte *>(pData) +
+                    nLineSpaceBuf * static_cast<ptrdiff_t>(iLine),
+                eBufType, static_cast<int>(nPixelSpaceBuf), nXSize);
         }
     }
     else
     {
         for (int iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALCopyWords(static_cast<GByte *>(pData) +
-                              nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
-                          eBufType, static_cast<int>(nPixelSpaceBuf),
-                          pabyData +
-                              nLineOffset *
-                                  static_cast<GPtrDiff_t>(iLine + nYOff) +
-                              nXOff * nPixelOffset,
-                          eDataType, static_cast<int>(nPixelOffset), nXSize);
+            GDALCopyWords(
+                static_cast<GByte *>(pData) +
+                    nLineSpaceBuf * static_cast<ptrdiff_t>(iLine),
+                eBufType, static_cast<int>(nPixelSpaceBuf),
+                pabyData + nLineOffset * static_cast<ptrdiff_t>(iLine + nYOff) +
+                    nXOff * nPixelOffset,
+                eDataType, static_cast<int>(nPixelOffset), nXSize);
         }
     }
     return CE_None;
@@ -275,8 +273,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
-                             GSpacing nBandSpaceBuf,
+                             int64_t nPixelSpaceBuf, int64_t nLineSpaceBuf,
+                             int64_t nBandSpaceBuf,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     const int eBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
@@ -290,8 +288,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             GDALDataType eDT = GDT_Unknown;
             GByte *pabyData = nullptr;
-            GSpacing nPixelOffset = 0;
-            GSpacing nLineOffset = 0;
+            int64_t nPixelOffset = 0;
+            int64_t nLineOffset = 0;
             int eDTSize = 0;
             for (int iBandIndex = 0; iBandIndex < nBandCount; iBandIndex++)
             {
@@ -307,7 +305,7 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nPixelOffset = poBand->nPixelOffset;
                     nLineOffset = poBand->nLineOffset;
                     eDTSize = GDALGetDataTypeSizeBytes(eDT);
-                    if (nPixelOffset != static_cast<GSpacing>(nBands) * eDTSize)
+                    if (nPixelOffset != static_cast<int64_t>(nBands) * eDTSize)
                         return false;
                 }
                 else if (poBand->GetRasterDataType() != eDT ||
@@ -324,8 +322,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const auto IsBandSeparatedDataset = [this, nBandCount, panBandMap]()
         {
             GDALDataType eDT = GDT_Unknown;
-            GSpacing nPixelOffset = 0;
-            GSpacing nLineOffset = 0;
+            int64_t nPixelOffset = 0;
+            int64_t nLineOffset = 0;
             int eDTSize = 0;
             for (int iBandIndex = 0; iBandIndex < nBandCount; iBandIndex++)
             {
@@ -360,8 +358,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 cpl::down_cast<MEMRasterBand *>(papoBands[0]);
             const GDALDataType eDT = poFirstBand->GetRasterDataType();
             GByte *pabyData = poFirstBand->pabyData;
-            const GSpacing nPixelOffset = poFirstBand->nPixelOffset;
-            const GSpacing nLineOffset = poFirstBand->nLineOffset;
+            const int64_t nPixelOffset = poFirstBand->nPixelOffset;
+            const int64_t nLineOffset = poFirstBand->nLineOffset;
             const int eDTSize = GDALGetDataTypeSizeBytes(eDT);
             if (eRWFlag == GF_Read)
             {
@@ -739,7 +737,7 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
 
 {
     const int nBandId = GetRasterCount() + 1;
-    const GSpacing nPixelSize = GDALGetDataTypeSizeBytes(eType);
+    const int64_t nPixelSize = GDALGetDataTypeSizeBytes(eType);
 
     /* -------------------------------------------------------------------- */
     /*      Do we need to allocate the memory ourselves?  This is the       */
@@ -747,7 +745,7 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
     /* -------------------------------------------------------------------- */
     if (CSLFetchNameValue(papszOptions, "DATAPOINTER") == nullptr)
     {
-        const GSpacing nTmp = nPixelSize * GetRasterXSize();
+        const int64_t nTmp = nPixelSize * GetRasterXSize();
         GByte *pData =
 #if SIZEOF_VOIDP == 4
             (nTmp > INT_MAX) ? nullptr :
@@ -775,14 +773,14 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
         pszDataPointer, static_cast<int>(strlen(pszDataPointer))));
 
     const char *pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
-    GSpacing nPixelOffset;
+    int64_t nPixelOffset;
     if (pszOption == nullptr)
         nPixelOffset = nPixelSize;
     else
         nPixelOffset = CPLAtoGIntBig(pszOption);
 
     pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
-    GSpacing nLineOffset;
+    int64_t nLineOffset;
     if (pszOption == nullptr)
         nLineOffset = GetRasterXSize() * static_cast<size_t>(nPixelOffset);
     else
@@ -1154,7 +1152,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
-    GSpacing nPixelOffset;
+    int64_t nPixelOffset;
     if (pszOption == nullptr)
         nPixelOffset = GDALGetDataTypeSizeBytes(eType);
     else
@@ -1162,7 +1160,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
-    GSpacing nLineOffset = 0;
+    int64_t nLineOffset = 0;
     if (pszOption == nullptr)
         nLineOffset = poDS->nRasterXSize * static_cast<size_t>(nPixelOffset);
     else
@@ -1170,7 +1168,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     pszOption = CSLFetchNameValue(papszOptions, "BANDOFFSET");
-    GSpacing nBandOffset = 0;
+    int64_t nBandOffset = 0;
     if (pszOption == nullptr)
         nBandOffset = nLineOffset * static_cast<size_t>(poDS->nRasterYSize);
     else
@@ -1261,20 +1259,21 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     const int nWordSize = GDALGetDataTypeSize(eType) / 8;
     if (nBandsIn > 0 && nWordSize > 0 &&
         (nBandsIn > INT_MAX / nWordSize ||
-         (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBandsIn)))
+         (int64_t)nXSize * nYSize >
+             std::numeric_limits<int64_t>::max() / (nWordSize * nBandsIn)))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Multiplication overflow");
         return nullptr;
     }
 
-    const GUIntBig nGlobalBigSize =
-        static_cast<GUIntBig>(nWordSize) * nBandsIn * nXSize * nYSize;
+    const uint64_t nGlobalBigSize =
+        static_cast<uint64_t>(nWordSize) * nBandsIn * nXSize * nYSize;
     const size_t nGlobalSize = static_cast<size_t>(nGlobalBigSize);
 #if SIZEOF_VOIDP == 4
-    if (static_cast<GUIntBig>(nGlobalSize) != nGlobalBigSize)
+    if (static_cast<uint64_t>(nGlobalSize) != nGlobalBigSize)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate " CPL_FRMT_GUIB " bytes on this platform.",
+                 "Cannot allocate %" PRIu64 " bytes on this platform.",
                  nGlobalBigSize);
         return nullptr;
     }
@@ -1549,7 +1548,7 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(
         MEMMDArray::Create(GetFullName(), osName, aoDimensions, oType));
 
     GByte *pabyData = nullptr;
-    std::vector<GPtrDiff_t> anStrides;
+    std::vector<ptrdiff_t> anStrides;
     if (pData)
     {
         pabyData = static_cast<GByte *>(pData);
@@ -1566,7 +1565,7 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(
             for (int i = 0; i < aosStrides.size(); i++)
             {
                 const auto nStride = CPLAtoGIntBig(aosStrides[i]);
-                anStrides.push_back(static_cast<GPtrDiff_t>(nStride));
+                anStrides.push_back(static_cast<ptrdiff_t>(nStride));
             }
         }
     }
@@ -1700,7 +1699,7 @@ MEMGroup::GetDimensions(CSLConstList) const
 
 std::shared_ptr<GDALAttribute>
 MEMGroup::CreateAttribute(const std::string &osName,
-                          const std::vector<GUInt64> &anDimensions,
+                          const std::vector<uint64_t> &anDimensions,
                           const GDALExtendedDataType &oDataType, CSLConstList)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -1909,9 +1908,9 @@ void MEMAbstractMDArray::FreeArray()
 /************************************************************************/
 
 bool MEMAbstractMDArray::Init(GByte *pData,
-                              const std::vector<GPtrDiff_t> &anStrides)
+                              const std::vector<ptrdiff_t> &anStrides)
 {
-    GUInt64 nTotalSize = m_oType.GetSize();
+    uint64_t nTotalSize = m_oType.GetSize();
     if (!m_aoDims.empty())
     {
         if (anStrides.empty())
@@ -1937,7 +1936,7 @@ bool MEMAbstractMDArray::Init(GByte *pData,
                          "Illegal dimension size 0");
                 return false;
             }
-            if (nTotalSize > std::numeric_limits<GUInt64>::max() / nDimSize)
+            if (nTotalSize > std::numeric_limits<uint64_t>::max() / nDimSize)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
                 return false;
@@ -1950,9 +1949,8 @@ bool MEMAbstractMDArray::Init(GByte *pData,
     }
 
     // We restrict the size of the allocation so that all elements can be
-    // indexed by GPtrDiff_t
-    if (nTotalSize >
-        static_cast<size_t>(std::numeric_limits<GPtrDiff_t>::max()))
+    // indexed by ptrdiff_t
+    if (nTotalSize > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
         return false;
@@ -1977,8 +1975,7 @@ bool MEMAbstractMDArray::Init(GByte *pData,
 
 template <int N>
 inline static void FastCopy(size_t nIters, GByte *dstPtr, const GByte *srcPtr,
-                            GPtrDiff_t dst_inc_offset,
-                            GPtrDiff_t src_inc_offset)
+                            ptrdiff_t dst_inc_offset, ptrdiff_t src_inc_offset)
 {
     if (nIters >= 8)
     {
@@ -2030,12 +2027,11 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
         bBothAreNumericDT &&
         srcType.GetNumericDataType() == dstType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? srcType.GetSize() : 0;
-    const bool bCanUseMemcpyLastDim =
-        bSameNumericDT &&
-        stack[nDimsMinus1].src_inc_offset ==
-            static_cast<GPtrDiff_t>(nSameDTSize) &&
-        stack[nDimsMinus1].dst_inc_offset ==
-            static_cast<GPtrDiff_t>(nSameDTSize);
+    const bool bCanUseMemcpyLastDim = bSameNumericDT &&
+                                      stack[nDimsMinus1].src_inc_offset ==
+                                          static_cast<ptrdiff_t>(nSameDTSize) &&
+                                      stack[nDimsMinus1].dst_inc_offset ==
+                                          static_cast<ptrdiff_t>(nSameDTSize);
     const size_t nCopySizeLastDim =
         bCanUseMemcpyLastDim ? nSameDTSize * count[nDimsMinus1] : 0;
     const bool bNeedsFreeDynamicMemory =
@@ -2099,7 +2095,7 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
                                 static_cast<int>(src_inc_offset), dstPtr,
                                 dstType.GetNumericDataType(),
                                 static_cast<int>(dst_inc_offset),
-                                static_cast<GPtrDiff_t>(nIters));
+                                static_cast<ptrdiff_t>(nIters));
                 return;
             }
 
@@ -2207,9 +2203,9 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
 /*                                   IRead()                            */
 /************************************************************************/
 
-bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
-                               const size_t *count, const GInt64 *arrayStep,
-                               const GPtrDiff_t *bufferStride,
+bool MEMAbstractMDArray::IRead(const uint64_t *arrayStartIdx,
+                               const size_t *count, const int64_t *arrayStep,
+                               const ptrdiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                void *pDstBuffer) const
 {
@@ -2225,15 +2221,15 @@ bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
     }
     std::vector<StackReadWrite> stack(nDims);
     const auto nBufferDTSize = bufferDataType.GetSize();
-    GPtrDiff_t startSrcOffset = 0;
+    ptrdiff_t startSrcOffset = 0;
     for (size_t i = 0; i < nDims; i++)
     {
         startSrcOffset +=
-            static_cast<GPtrDiff_t>(arrayStartIdx[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStartIdx[i] * m_anStrides[i]);
         stack[i].src_inc_offset =
-            static_cast<GPtrDiff_t>(arrayStep[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStep[i] * m_anStrides[i]);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].src_ptr = m_pabyArray + startSrcOffset;
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
@@ -2246,9 +2242,9 @@ bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
 /*                                IWrite()                              */
 /************************************************************************/
 
-bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
-                                const size_t *count, const GInt64 *arrayStep,
-                                const GPtrDiff_t *bufferStride,
+bool MEMAbstractMDArray::IWrite(const uint64_t *arrayStartIdx,
+                                const size_t *count, const int64_t *arrayStep,
+                                const ptrdiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 const void *pSrcBuffer)
 {
@@ -2272,15 +2268,15 @@ bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
     }
     std::vector<StackReadWrite> stack(nDims);
     const auto nBufferDTSize = bufferDataType.GetSize();
-    GPtrDiff_t startDstOffset = 0;
+    ptrdiff_t startDstOffset = 0;
     for (size_t i = 0; i < nDims; i++)
     {
         startDstOffset +=
-            static_cast<GPtrDiff_t>(arrayStartIdx[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStartIdx[i] * m_anStrides[i]);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(arrayStep[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStep[i] * m_anStrides[i]);
         stack[i].src_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
 
     stack[0].dst_ptr = m_pabyArray + startDstOffset;
@@ -2403,7 +2399,7 @@ MEMMDArray::GetAttributes(CSLConstList) const
 
 std::shared_ptr<GDALAttribute>
 MEMMDArray::CreateAttribute(const std::string &osName,
-                            const std::vector<GUInt64> &anDimensions,
+                            const std::vector<uint64_t> &anDimensions,
                             const GDALExtendedDataType &oDataType, CSLConstList)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -2508,13 +2504,13 @@ MEMMDArray::GetCoordinateVariables() const
 /*                            Resize()                                  */
 /************************************************************************/
 
-bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
                         CSLConstList /* papszOptions */)
 {
     return Resize(anNewDimSizes, /*bResizeOtherArrays=*/true);
 }
 
-bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
                         bool bResizeOtherArrays)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -2544,7 +2540,7 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
     auto &dims = GetDimensions();
     std::vector<size_t> anDecreasedDimIdx;
     std::vector<size_t> anGrownDimIdx;
-    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    std::map<GDALDimension *, uint64_t> oMapDimToSize;
     for (size_t i = 0; i < nDimCount; ++i)
     {
         auto oIter = oMapDimToSize.find(dims[i].get());
@@ -2590,7 +2586,7 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
     const auto ResizeOtherArrays = [this, &anNewDimSizes, nDimCount, &dims]()
     {
         std::set<MEMMDArray *> oSetArrays;
-        std::map<GDALDimension *, GUInt64> oMapNewSize;
+        std::map<GDALDimension *, uint64_t> oMapNewSize;
         for (size_t i = 0; i < nDimCount; ++i)
         {
             if (anNewDimSizes[i] != dims[i]->GetSize())
@@ -2616,7 +2612,7 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         for (auto *poArray : oSetArrays)
         {
             const auto &apoOtherDims = poArray->GetDimensions();
-            std::vector<GUInt64> anOtherArrayNewDimSizes(
+            std::vector<uint64_t> anOtherArrayNewDimSizes(
                 poArray->GetDimensionCount());
             for (size_t i = 0; i < anOtherArrayNewDimSizes.size(); ++i)
             {
@@ -2697,18 +2693,18 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         anGrownDimIdx[0] == 0)
     {
         CPLAssert(m_nTotalSize % dims[0]->GetSize() == 0);
-        GUInt64 nNewTotalSize64 = m_nTotalSize / dims[0]->GetSize();
+        uint64_t nNewTotalSize64 = m_nTotalSize / dims[0]->GetSize();
         if (nNewTotalSize64 >
-            std::numeric_limits<GUInt64>::max() / anNewDimSizes[0])
+            std::numeric_limits<uint64_t>::max() / anNewDimSizes[0])
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
             return false;
         }
         nNewTotalSize64 *= anNewDimSizes[0];
         // We restrict the size of the allocation so that all elements can be
-        // indexed by GPtrDiff_t
+        // indexed by ptrdiff_t
         if (nNewTotalSize64 >
-            static_cast<size_t>(std::numeric_limits<GPtrDiff_t>::max()))
+            static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()))
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
             return false;
@@ -2756,10 +2752,10 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         Create(std::string(), std::string(), aoNewDims, GetDataType());
     if (!poTempMDArray->Init())
         return false;
-    std::vector<GUInt64> arrayStartIdx(nDimCount);
+    std::vector<uint64_t> arrayStartIdx(nDimCount);
     std::vector<size_t> count(nDimCount);
-    std::vector<GInt64> arrayStep(nDimCount, 1);
-    std::vector<GPtrDiff_t> bufferStride(nDimCount);
+    std::vector<int64_t> arrayStep(nDimCount, 1);
+    std::vector<ptrdiff_t> bufferStride(nDimCount);
     for (size_t i = nDimCount; i > 0;)
     {
         --i;
@@ -2767,8 +2763,8 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
             bufferStride[i] = 1;
         else
         {
-            bufferStride[i] = static_cast<GPtrDiff_t>(bufferStride[i + 1] *
-                                                      dims[i + 1]->GetSize());
+            bufferStride[i] = static_cast<ptrdiff_t>(bufferStride[i + 1] *
+                                                     dims[i + 1]->GetSize());
         }
         const auto nCount = std::min(anNewDimSizes[i], dims[i]->GetSize());
         count[i] = static_cast<size_t>(nCount);
@@ -2869,7 +2865,7 @@ void MEMMDArray::NotifyChildrenOfDeletion()
 /************************************************************************/
 
 static std::vector<std::shared_ptr<GDALDimension>>
-BuildDimensions(const std::vector<GUInt64> &anDimensions)
+BuildDimensions(const std::vector<uint64_t> &anDimensions)
 {
     std::vector<std::shared_ptr<GDALDimension>> res;
     for (size_t i = 0; i < anDimensions.size(); i++)
@@ -2887,7 +2883,7 @@ BuildDimensions(const std::vector<GUInt64> &anDimensions)
 
 MEMAttribute::MEMAttribute(const std::string &osParentName,
                            const std::string &osName,
-                           const std::vector<GUInt64> &anDimensions,
+                           const std::vector<uint64_t> &anDimensions,
                            const GDALExtendedDataType &oType)
     : GDALAbstractMDArray(osParentName, osName),
       MEMAbstractMDArray(osParentName, osName, BuildDimensions(anDimensions),
@@ -2902,7 +2898,7 @@ MEMAttribute::MEMAttribute(const std::string &osParentName,
 
 std::shared_ptr<MEMAttribute>
 MEMAttribute::Create(const std::string &osParentName, const std::string &osName,
-                     const std::vector<GUInt64> &anDimensions,
+                     const std::vector<uint64_t> &anDimensions,
                      const GDALExtendedDataType &oType)
 {
     auto attr(std::shared_ptr<MEMAttribute>(
@@ -2917,9 +2913,11 @@ MEMAttribute::Create(const std::string &osParentName, const std::string &osName,
 /*                        MEMAttribute::Create()                        */
 /************************************************************************/
 
-std::shared_ptr<MEMAttribute> MEMAttribute::Create(
-    const std::shared_ptr<MEMGroup> &poParentGroup, const std::string &osName,
-    const std::vector<GUInt64> &anDimensions, const GDALExtendedDataType &oType)
+std::shared_ptr<MEMAttribute>
+MEMAttribute::Create(const std::shared_ptr<MEMGroup> &poParentGroup,
+                     const std::string &osName,
+                     const std::vector<uint64_t> &anDimensions,
+                     const GDALExtendedDataType &oType)
 {
     const std::string osParentName =
         (poParentGroup && poParentGroup->GetName().empty())
@@ -2941,9 +2939,11 @@ std::shared_ptr<MEMAttribute> MEMAttribute::Create(
 /*                        MEMAttribute::Create()                        */
 /************************************************************************/
 
-std::shared_ptr<MEMAttribute> MEMAttribute::Create(
-    const std::shared_ptr<MEMMDArray> &poParentArray, const std::string &osName,
-    const std::vector<GUInt64> &anDimensions, const GDALExtendedDataType &oType)
+std::shared_ptr<MEMAttribute>
+MEMAttribute::Create(const std::shared_ptr<MEMMDArray> &poParentArray,
+                     const std::string &osName,
+                     const std::vector<uint64_t> &anDimensions,
+                     const GDALExtendedDataType &oType)
 {
     auto attr(
         Create(poParentArray->GetFullName(), osName, anDimensions, oType));
@@ -2988,7 +2988,7 @@ bool MEMAttribute::Rename(const std::string &osNewName)
 
 MEMDimension::MEMDimension(const std::string &osParentName,
                            const std::string &osName, const std::string &osType,
-                           const std::string &osDirection, GUInt64 nSize)
+                           const std::string &osDirection, uint64_t nSize)
     : GDALDimensionWeakIndexingVar(osParentName, osName, osType, osDirection,
                                    nSize)
 {
@@ -3020,7 +3020,7 @@ void MEMDimension::UnRegisterUsingArray(MEMMDArray *poArray)
 std::shared_ptr<MEMDimension>
 MEMDimension::Create(const std::shared_ptr<MEMGroup> &poParentGroup,
                      const std::string &osName, const std::string &osType,
-                     const std::string &osDirection, GUInt64 nSize)
+                     const std::string &osDirection, uint64_t nSize)
 {
     auto newDim(std::make_shared<MEMDimension>(
         poParentGroup->GetFullName(), osName, osType, osDirection, nSize));
@@ -3034,7 +3034,7 @@ MEMDimension::Create(const std::shared_ptr<MEMGroup> &poParentGroup,
 
 std::shared_ptr<GDALDimension>
 MEMGroup::CreateDimension(const std::string &osName, const std::string &osType,
-                          const std::string &osDirection, GUInt64 nSize,
+                          const std::string &osDirection, uint64_t nSize,
                           CSLConstList)
 {
     if (osName.empty())

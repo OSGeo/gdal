@@ -38,14 +38,14 @@ this file is only about 3k of object code.  */
 
 #include "cpl_string.h"
 
-static GUInt32 getu32(const unsigned char *addr)
+static uint32_t getu32(const unsigned char *addr)
 {
-    return ((((static_cast<GUInt32>(addr[3]) << 8) | addr[2]) << 8) | addr[1])
+    return ((((static_cast<uint32_t>(addr[3]) << 8) | addr[2]) << 8) | addr[1])
                << 8 |
            addr[0];
 }
 
-static void putu32(GUInt32 data, unsigned char *addr)
+static void putu32(uint32_t data, unsigned char *addr)
 {
     addr[0] = static_cast<unsigned char>(data & 0xff);
     addr[1] = static_cast<unsigned char>((data >> 8) & 0xff);
@@ -83,11 +83,11 @@ void CPLMD5Update(struct CPLMD5Context *context, const void *buf, size_t len)
     }
 
     // Update bitcount
-    GUInt32 t = context->bits[0];
+    uint32_t t = context->bits[0];
     if ((context->bits[0] =
-             (t + (static_cast<GUInt32>(len) << 3)) & 0xffffffff) < t)
+             (t + (static_cast<uint32_t>(len) << 3)) & 0xffffffff) < t)
         context->bits[1]++; /* Carry from low to high */
-    context->bits[1] += static_cast<GUInt32>(len >> 29);
+    context->bits[1] += static_cast<uint32_t>(len >> 29);
 
     t = (t >> 3) & 0x3f; /* Bytes already in shsInfo->data */
 
@@ -190,16 +190,16 @@ void CPLMD5Final(unsigned char digest[16], struct CPLMD5Context *context)
  * the data and converts bytes into longwords for this routine.
  */
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-void CPLMD5Transform(GUInt32 buf[4], const unsigned char inraw[64])
+void CPLMD5Transform(uint32_t buf[4], const unsigned char inraw[64])
 {
-    GUInt32 in[16];
+    uint32_t in[16];
     for (int i = 0; i < 16; ++i)
         in[i] = getu32(inraw + 4 * i);
 
-    GUInt32 a = buf[0];
-    GUInt32 b = buf[1];
-    GUInt32 c = buf[2];
-    GUInt32 d = buf[3];
+    uint32_t a = buf[0];
+    uint32_t b = buf[1];
+    uint32_t c = buf[2];
+    uint32_t d = buf[3];
 
     MD5STEP(F1, a, b, c, d, in[0] + 0xd76aa478, 7);
     MD5STEP(F1, d, a, b, c, in[1] + 0xe8c7b756, 12);

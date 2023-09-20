@@ -35,8 +35,8 @@
 
 #include "ogr_geometry.h"
 
-GBool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing);
-GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly);
+bool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing);
+bool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly);
 int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint);
 int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint);
 int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint);

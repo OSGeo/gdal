@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
-    const void *poOptions, GUInt32 nPoints,
+    const void *poOptions, uint32_t nPoints,
     CPL_UNUSED const double *unused_padfX,
     CPL_UNUSED const double *unused_padfY,
     CPL_UNUSED const double *unused_padfZ, double dfXPoint, double dfYPoint,

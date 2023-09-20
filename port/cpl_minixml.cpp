@@ -2184,7 +2184,7 @@ int CPLSerializeXMLTreeToFile(const CPLXMLNode *psTree, const char *pszFilename)
     if (pszDoc == nullptr)
         return FALSE;
 
-    const vsi_l_offset nLength = strlen(pszDoc);
+    const uint64_t nLength = strlen(pszDoc);
 
     /* -------------------------------------------------------------------- */
     /*      Create file.                                                    */

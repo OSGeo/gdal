@@ -65,7 +65,7 @@ class OGRILI2Layer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 

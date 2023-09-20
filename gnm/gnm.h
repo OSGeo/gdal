@@ -439,11 +439,11 @@ class CPL_DLL GNMGenericNetwork : public GNMNetwork
     virtual CPLErr LoadNetworkLayer(const char *pszLayername) = 0;
     virtual CPLErr DeleteNetworkLayers() = 0;
     virtual void ConnectPointsByMultiline(
-        GIntBig nFID, const OGRMultiLineString *poMultiLineString,
+        int64_t nFID, const OGRMultiLineString *poMultiLineString,
         const std::vector<OGRLayer *> &paPointLayers, double dfTolerance,
         double dfCost, double dfInvCost, GNMDirection eDir);
     virtual void
-    ConnectPointsByLine(GIntBig nFID, const OGRLineString *poLineString,
+    ConnectPointsByLine(int64_t nFID, const OGRLineString *poLineString,
                         const std::vector<OGRLayer *> &paPointLayers,
                         double dfTolerance, double dfCost, double dfInvCost,
                         GNMDirection eDir);
@@ -509,9 +509,9 @@ class GNMGenericLayer : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
 
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual const char *GetName() override;
     virtual OGRwkbGeometryType GetGeomType() override;
@@ -521,7 +521,7 @@ class GNMGenericLayer : public OGRLayer
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) override;
@@ -590,7 +590,7 @@ class GNMGenericLayer : public OGRLayer
                  void *pProgressArg = nullptr);
 
     /** GetFeaturesRead */
-    GIntBig GetFeaturesRead();
+    int64_t GetFeaturesRead();
 
     /** AttributeFilterEvaluationNeedsGeometry */
     int AttributeFilterEvaluationNeedsGeometry();
@@ -610,7 +610,7 @@ class GNMGenericLayer : public OGRLayer
     CPLString m_soLayerName;
     OGRLayer *m_poLayer;
     GNMGenericNetwork *m_poNetwork;
-    std::map<GNMGFID, GIntBig> m_mnFIDMap;
+    std::map<GNMGFID, int64_t> m_mnFIDMap;
     //! @endcond
 };
 
@@ -716,10 +716,10 @@ class OGRGNMWrappedResultLayer : public OGRLayer
     // OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual int TestCapability(const char *pszCap) override;
     virtual OGRErr CreateField(OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

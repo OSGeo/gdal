@@ -54,6 +54,14 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/pcraster/libcsf/*)
+	  continue
+	  ;;
+
+	*ogr/ogrsf_frmts/cad/libopencad/*)
+	  continue
+	  ;;
+
 	*ogr/ogrsf_frmts/flatgeobuf/flatbuffers/*)
 	  continue
 	  ;;

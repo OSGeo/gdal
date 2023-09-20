@@ -318,8 +318,8 @@ CPLErr JPIPKAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr JPIPKAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType eBufType, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1142,8 +1142,8 @@ CPLErr JPIPKAKDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, int nBandCount,
-                                 int *panBandMap, GSpacing nPixelSpace,
-                                 GSpacing nLineSpace, GSpacing nBandSpace,
+                                 int *panBandMap, int64_t nPixelSpace,
+                                 int64_t nLineSpace, int64_t nBandSpace,
                                  GDALRasterIOExtraArg *psExtraArg)
 
 {

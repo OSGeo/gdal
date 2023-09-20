@@ -257,7 +257,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT(OGRFeature *poFeature)
     if (poTool && poTool->GetType() == OGRSTCSymbol)
     {
         OGRStyleSymbol *poSymbol = (OGRStyleSymbol *)poTool;
-        GBool bDefault;
+        bool bDefault;
 
         if (poSymbol->Color(bDefault) != nullptr && !bDefault)
             WriteValue(62, ColorStringToDXFColor(poSymbol->Color(bDefault)));
@@ -360,7 +360,7 @@ OGRErr OGRDXFWriterLayer::WritePOINT(OGRFeature *poFeature)
     if (poTool && poTool->GetType() == OGRSTCPen)
     {
         OGRStylePen *poPen = (OGRStylePen *)poTool;
-        GBool bDefault;
+        bool bDefault;
 
         if (poPen->Color(bDefault) != nullptr && !bDefault)
             WriteValue(62, ColorStringToDXFColor(poPen->Color(bDefault)));
@@ -442,7 +442,7 @@ CPLString OGRDXFWriterLayer::TextEscape(const char *pszInput)
 std::map<CPLString, CPLString>
 OGRDXFWriterLayer::PrepareTextStyleDefinition(OGRStyleLabel *poLabelTool)
 {
-    GBool bDefault;
+    bool bDefault;
 
     std::map<CPLString, CPLString> oTextStyleDef;
 
@@ -453,11 +453,11 @@ OGRDXFWriterLayer::PrepareTextStyleDefinition(OGRStyleLabel *poLabelTool)
     if (!bDefault)
         oTextStyleDef["Font"] = pszFontName;
 
-    const GBool bBold = poLabelTool->Bold(bDefault);
+    const bool bBold = poLabelTool->Bold(bDefault);
     if (!bDefault)
         oTextStyleDef["Bold"] = bBold ? "1" : "0";
 
-    const GBool bItalic = poLabelTool->Italic(bDefault);
+    const bool bItalic = poLabelTool->Italic(bDefault);
     if (!bDefault)
         oTextStyleDef["Italic"] = bItalic ? "1" : "0";
 
@@ -504,7 +504,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
     if (poTool && poTool->GetType() == OGRSTCLabel)
     {
         OGRStyleLabel *poLabel = (OGRStyleLabel *)poTool;
-        GBool bDefault;
+        bool bDefault;
 
         /* --------------------------------------------------------------------
          */
@@ -640,7 +640,7 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition(OGRStylePen *poPen)
     /* -------------------------------------------------------------------- */
     /*      Fetch pattern.                                                  */
     /* -------------------------------------------------------------------- */
-    GBool bDefault;
+    bool bDefault;
     const char *pszPattern = poPen->Pattern(bDefault);
 
     if (bDefault || strlen(pszPattern) == 0)
@@ -824,7 +824,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
     if (poTool && poTool->GetType() == OGRSTCPen)
     {
         OGRStylePen *poPen = (OGRStylePen *)poTool;
-        GBool bDefault;
+        bool bDefault;
 
         if (poPen->Color(bDefault) != nullptr && !bDefault)
             WriteValue(62, ColorStringToDXFColor(poPen->Color(bDefault)));
@@ -1097,7 +1097,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
     if (poTool && poTool->GetType() == OGRSTCBrush)
     {
         OGRStyleBrush *poBrush = (OGRStyleBrush *)poTool;
-        GBool bDefault;
+        bool bDefault;
 
         if (poBrush->ForeColor(bDefault) != nullptr && !bDefault)
             WriteValue(62, ColorStringToDXFColor(poBrush->ForeColor(bDefault)));
@@ -1112,7 +1112,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH(OGRFeature *poFeature, OGRGeometry *poGeom)
     if (poTool && poTool->GetType() == OGRSTCPen)
     {
         OGRStylePen *poPen = (OGRStylePen *)poTool;
-        GBool bDefault;
+        bool bDefault;
 
         if (poPen->Color(bDefault) != NULL && !bDefault)
             WriteValue(62, ColorStringToDXFColor(poPen->Color(bDefault)));

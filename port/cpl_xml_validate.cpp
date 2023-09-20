@@ -950,13 +950,13 @@ static char *CPLLoadContentFromFile(const char *pszFilename)
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
-    vsi_l_offset nSize = VSIFTellL(fp);
+    uint64_t nSize = VSIFTellL(fp);
     if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
-    if (static_cast<vsi_l_offset>(static_cast<int>(nSize)) != nSize ||
+    if (static_cast<uint64_t>(static_cast<int>(nSize)) != nSize ||
         nSize > INT_MAX - 1)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -1078,7 +1078,7 @@ int CPLValidateXML(const char *pszXMLFilename, const char *pszXSDFilename,
                      pszXMLFilename);
             return FALSE;
         }
-        const vsi_l_offset nRead =
+        const uint64_t nRead =
             VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fpXML);
         szHeader[nRead] = '\0';
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpXML));
@@ -1123,7 +1123,7 @@ int CPLValidateXML(const char *pszXMLFilename, const char *pszXSDFilename,
                      pszXSDFilename);
             return FALSE;
         }
-        const vsi_l_offset nRead =
+        const uint64_t nRead =
             VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fpXSD);
         szHeader[nRead] = '\0';
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpXSD));

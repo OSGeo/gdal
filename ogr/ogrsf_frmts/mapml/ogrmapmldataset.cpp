@@ -30,6 +30,7 @@
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 
+#include <cinttypes>
 #include <map>
 #include <memory>
 #include <set>
@@ -91,7 +92,7 @@ class OGRMapMLReaderLayer final
     // not to be destroyed
     CPLXMLNode *m_psBody = nullptr;
     CPLXMLNode *m_psCurNode = nullptr;
-    GIntBig m_nFID = 1;
+    int64_t m_nFID = 1;
 
     OGRFeature *GetNextRawFeature();
 
@@ -162,7 +163,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
 {
     OGRMapMLWriterDataset *m_poDS = nullptr;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
-    GIntBig m_nFID = 1;
+    int64_t m_nFID = 1;
     std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
 
     void writeLineStringCoordinates(CPLXMLNode *psContainer,
@@ -350,7 +351,7 @@ OGRMapMLReaderLayer::OGRMapMLReaderLayer(OGRMapMLReaderDataset *poDS,
                                 OGRFieldType eType = OFTString;
                                 if (eValType == CPL_VALUE_INTEGER)
                                 {
-                                    const GIntBig nVal =
+                                    const int64_t nVal =
                                         CPLAtoGIntBig(pszValue);
                                     if (nVal < INT_MIN || nVal > INT_MAX)
                                         eType = OFTInteger64;
@@ -1256,14 +1257,14 @@ void OGRMapMLWriterLayer::writeGeometry(CPLXMLNode *psContainer,
 OGRErr OGRMapMLWriterLayer::ICreateFeature(OGRFeature *poFeature)
 {
     CPLXMLNode *psFeature = CPLCreateXMLNode(nullptr, CXT_Element, "feature");
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID < 0)
     {
         nFID = m_nFID;
         m_nFID++;
     }
     const CPLString osFID(
-        CPLSPrintf("%s." CPL_FRMT_GIB, m_poFeatureDefn->GetName(), nFID));
+        CPLSPrintf("%s.%" PRId64, m_poFeatureDefn->GetName(), nFID));
     CPLAddXMLAttributeAndValue(psFeature, "id", osFID.c_str());
     CPLAddXMLAttributeAndValue(psFeature, "class", m_poFeatureDefn->GetName());
 

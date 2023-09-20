@@ -120,8 +120,8 @@ class GRIBDataset final : public GDALPamDataset
     // Calculate and store once as GetGeoTransform may be called multiple times.
     double adfGeoTransform[6];
 
-    GIntBig nCachedBytes;
-    GIntBig nCachedBytesThreshold;
+    int64_t nCachedBytes;
+    int64_t nCachedBytesThreshold;
     int bCacheOnlyOneBand;
 
     // Split&Swap: transparent rewrap around the prime meridian instead of the
@@ -162,7 +162,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
 
     void UncacheData();
 
-    static void ReadGribData(VSILFILE *, vsi_l_offset, int, double **,
+    static void ReadGribData(VSILFILE *, uint64_t, int, double **,
                              grib_MetaData **);
 
   private:
@@ -170,9 +170,9 @@ class GRIBRasterBand final : public GDALPamRasterBand
     void FindNoDataGrib2(bool bSeekToStart = true);
     void FindMetaData();
     // Heuristic search for the start of the message
-    static vsi_l_offset FindTrueStart(VSILFILE *, vsi_l_offset);
+    static uint64_t FindTrueStart(VSILFILE *, uint64_t);
 
-    vsi_l_offset start;
+    uint64_t start;
     int subgNum;
     char *longFstLevel;
 
@@ -198,7 +198,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
     std::string m_osProductionStatus{};
     std::string m_osType{};
     int m_nPDTN = -1;
-    std::vector<GUInt32> m_anPDSTemplateAssembledValues{};
+    std::vector<uint32_t> m_anPDSTemplateAssembledValues{};
     bool bLoadedPDS = false;
     bool bLoadedMetadata = false;
 };

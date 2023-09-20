@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #include "clock.h"
@@ -135,13 +136,13 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv)
       delta = (Inv[i].validTime - Inv[i].refTime) / 3600.;
       delta = myRound (delta, 2);
       if (Inv[i].comment == nullptr) {
-         printf ("%u.%u, " CPL_FRMT_GUIB ", %d, %s, %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %" PRIu64 ", %d, %s, %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].shortFstLevel,
                  refTime, validTime, delta);
          fflush (stdout);
       } else {
-         printf ("%u.%u, " CPL_FRMT_GUIB ", %d, %s=\"%s\", %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %" PRIu64 ", %d, %s=\"%s\", %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].comment,
                  Inv[i].shortFstLevel, refTime, validTime, delta);
@@ -279,9 +280,9 @@ static int GRIB2SectToBuffer (VSILFILE *fp,
    if (*buffLen < *secLen) {
       if( *secLen > 100 * 1024 * 1024 )
       {
-          vsi_l_offset curPos = VSIFTellL(fp);
+          uint64_t curPos = VSIFTellL(fp);
           VSIFSeekL(fp, 0, SEEK_END);
-          vsi_l_offset fileSize = VSIFTellL(fp);
+          uint64_t fileSize = VSIFTellL(fp);
           VSIFSeekL(fp, curPos, SEEK_SET);
           if( *secLen > fileSize )
           {
@@ -970,7 +971,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
                     int numMsg, int *MsgNum)
 {
-   vsi_l_offset offset = 0; /* Where we are in the file. */
+   uint64_t offset = 0; /* Where we are in the file. */
    sInt4 msgNum;        /* Which GRIB2 message we are on. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    uInt4 secLen;        /* Length of current section. */
@@ -994,7 +995,7 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
                          * in the file.  If not found, is not a GRIB file. */
    char c;               /* Determine if end of the file without fileLen. */
 #ifdef DEBUG
-   vsi_l_offset fileLen; /* Length of the GRIB2 file. */
+   uint64_t fileLen; /* Length of the GRIB2 file. */
 #endif
    unsigned short int center, subcenter; /* Who produced it. */
    uChar mstrVersion;   /* The master table version (is it 255?) */
@@ -1064,7 +1065,7 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
             VSIFSeekL (fp, 0L, SEEK_END);
             fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
+            printf ("There were %" PRIu64 " trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);
@@ -1255,7 +1256,7 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
 int GRIB2RefTime (const char *filename, double *refTime)
 {
    VSILFILE * fp = nullptr;
-   vsi_l_offset offset = 0; /* Where we are in the file. */
+   uint64_t offset = 0; /* Where we are in the file. */
    sInt4 msgNum;        /* Which GRIB2 message we are on. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    uInt4 secLen;        /* Length of current section. */
@@ -1276,7 +1277,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
                          * in the file.  If not found, is not a GRIB file. */
    char c;               /* Determine if end of the file without fileLen. */
 #ifdef DEBUG
-   vsi_l_offset fileLen; /* Length of the GRIB2 file. */
+   uint64_t fileLen; /* Length of the GRIB2 file. */
 #endif
    const char *ptr;           /* used to find the file extension. */
    double refTime1;
@@ -1331,7 +1332,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             VSIFSeekL(fp, 0L, SEEK_END);
             fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
+            printf ("There were %" PRIu64 " trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);

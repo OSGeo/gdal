@@ -1810,98 +1810,98 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(jstype) (double *arrayIn, size_t arraySize)  "double[]"
 
 /***************************************************
- * Typemaps for GIntBig
+ * Typemaps for int64_t
  ***************************************************/
 
-%typemap(in) (GIntBig)
+%typemap(in) (int64_t)
 {
-  /* %typemap(in) (GIntBig) */
-  $1 = (GIntBig) $input;
+  /* %typemap(in) (int64_t) */
+  $1 = (int64_t) $input;
 }
 
-%typemap(out) (GIntBig)
+%typemap(out) (int64_t)
 {
-  /* %typemap(out) (GIntBig) */
+  /* %typemap(out) (int64_t) */
   $result = (jlong) $1;
 }
 
-%typemap(jni) (GIntBig) "jlong"
-%typemap(jtype) (GIntBig) "long"
-%typemap(jstype) (GIntBig) "long"
-%typemap(javain) (GIntBig) "$javainput"
-%typemap(javaout) (GIntBig) {
+%typemap(jni) (int64_t) "jlong"
+%typemap(jtype) (int64_t) "long"
+%typemap(jstype) (int64_t) "long"
+%typemap(javain) (int64_t) "$javainput"
+%typemap(javaout) (int64_t) {
   return $jnicall;
 }
 
 /***************************************************
- * Typemaps for GUIntBig
+ * Typemaps for uint64_t
  ***************************************************/
 
-%typemap(in) (GUIntBig)
+%typemap(in) (uint64_t)
 {
-  /* %typemap(in) (GUIntBig) */
-  $1 = (GUIntBig) $input;
+  /* %typemap(in) (uint64_t) */
+  $1 = (uint64_t) $input;
 }
 
-%typemap(out) (GUIntBig)
+%typemap(out) (uint64_t)
 {
-  /* %typemap(out) (GUIntBig) */
+  /* %typemap(out) (uint64_t) */
   $result = (jlong) $1;
 }
 
-%typemap(jni) (GUIntBig) "jlong"
-%typemap(jtype) (GUIntBig) "long"
-%typemap(jstype) (GUIntBig) "long"
-%typemap(javain) (GUIntBig) "$javainput"
-%typemap(javaout) (GUIntBig) {
+%typemap(jni) (uint64_t) "jlong"
+%typemap(jtype) (uint64_t) "long"
+%typemap(jstype) (uint64_t) "long"
+%typemap(javain) (uint64_t) "$javainput"
+%typemap(javaout) (uint64_t) {
   return $jnicall;
 }
 
 /***************************************************
- * Typemaps for GInt64
+ * Typemaps for int64_t
  ***************************************************/
 
-%typemap(in) (GInt64)
+%typemap(in) (int64_t)
 {
-  /* %typemap(in) (GInt64) */
-  $1 = (GInt64) $input;
+  /* %typemap(in) (int64_t) */
+  $1 = (int64_t) $input;
 }
 
-%typemap(out) (GInt64)
+%typemap(out) (int64_t)
 {
-  /* %typemap(out) (GInt64) */
+  /* %typemap(out) (int64_t) */
   $result = (jlong) $1;
 }
 
-%typemap(jni) (GInt64) "jlong"
-%typemap(jtype) (GInt64) "long"
-%typemap(jstype) (GInt64) "long"
-%typemap(javain) (GInt64) "$javainput"
-%typemap(javaout) (GInt64) {
+%typemap(jni) (int64_t) "jlong"
+%typemap(jtype) (int64_t) "long"
+%typemap(jstype) (int64_t) "long"
+%typemap(javain) (int64_t) "$javainput"
+%typemap(javaout) (int64_t) {
   return $jnicall;
 }
 
 /***************************************************
- * Typemaps for GUInt64
+ * Typemaps for uint64_t
  ***************************************************/
 
-%typemap(in) (GUInt64)
+%typemap(in) (uint64_t)
 {
-  /* %typemap(in) (GUInt64) */
-  $1 = (GUInt64) $input;
+  /* %typemap(in) (uint64_t) */
+  $1 = (uint64_t) $input;
 }
 
-%typemap(out) (GUInt64)
+%typemap(out) (uint64_t)
 {
-  /* %typemap(out) (GUInt64) */
+  /* %typemap(out) (uint64_t) */
   $result = (jlong) $1;
 }
 
-%typemap(jni) (GUInt64) "jlong"
-%typemap(jtype) (GUInt64) "long"
-%typemap(jstype) (GUInt64) "long"
-%typemap(javain) (GUInt64) "$javainput"
-%typemap(javaout) (GUInt64) {
+%typemap(jni) (uint64_t) "jlong"
+%typemap(jtype) (uint64_t) "long"
+%typemap(jstype) (uint64_t) "long"
+%typemap(javain) (uint64_t) "$javainput"
+%typemap(javaout) (uint64_t) {
   return $jnicall;
 }
 
@@ -2289,108 +2289,108 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     return $jnicall;
 }
 
-/***** int, GInt64* typemaps *******************************/
+/***** int, int64_t* typemaps *******************************/
 
-%typemap(in, numinputs=1) (int nList, GInt64 *pList)
+%typemap(in, numinputs=1) (int nList, int64_t *pList)
 {
-  /* %typemap(in, numinputs=1) (int nList, GInt64 *pList) */
+  /* %typemap(in, numinputs=1) (int nList, int64_t *pList) */
   if ($input)
   {
     $1 = jenv->GetArrayLength($input);
     if ($1 == 0)
-       $2 = (GInt64 *) NULL;
+       $2 = (int64_t *) NULL;
     else
-       $2 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
+       $2 = (int64_t *) jenv->GetLongArrayElements($input, NULL);
   }
   else {
     $1 = 0;
-    $2 = (GInt64 *) NULL;
+    $2 = (int64_t *) NULL;
   }
 }
 
-%typemap(freearg) (int nList, GInt64 *pList)
+%typemap(freearg) (int nList, int64_t *pList)
 {
-  /* %typemap(freearg) (int nList, GInt64 *pList) */
+  /* %typemap(freearg) (int nList, int64_t *pList) */
   if ($2) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
   }
 }
 
-%typemap(jni) (int nList, GInt64 *pList) "jlongArray"
-%typemap(jtype) (int nList, GInt64 *pList) "long[]"
-%typemap(jstype) (int nList, GInt64 *pList) "long[]"
-%typemap(javain) (int nList, GInt64 *pList) "$javainput"
-%typemap(javaout) (int nList, GInt64 *pList) {
+%typemap(jni) (int nList, int64_t *pList) "jlongArray"
+%typemap(jtype) (int nList, int64_t *pList) "long[]"
+%typemap(jstype) (int nList, int64_t *pList) "long[]"
+%typemap(javain) (int nList, int64_t *pList) "$javainput"
+%typemap(javaout) (int nList, int64_t *pList) {
     return $jnicall;
 }
 
-/***** int, GUInt64* typemaps *******************************/
+/***** int, uint64_t* typemaps *******************************/
 
-%typemap(in, numinputs=1) (int nList, GUInt64 *pList)
+%typemap(in, numinputs=1) (int nList, uint64_t *pList)
 {
-  /* %typemap(in, numinputs=1) (int nList, GUInt64 *pList) */
+  /* %typemap(in, numinputs=1) (int nList, uint64_t *pList) */
   if ($input)
   {
     $1 = jenv->GetArrayLength($input);
     if ($1 == 0)
-       $2 = (GUInt64 *) NULL;
+       $2 = (uint64_t *) NULL;
     else
-       $2 = (GUInt64 *) jenv->GetLongArrayElements($input, NULL);
+       $2 = (uint64_t *) jenv->GetLongArrayElements($input, NULL);
   }
   else {
     $1 = 0;
-    $2 = (GUInt64 *) NULL;
+    $2 = (uint64_t *) NULL;
   }
 }
 
-%typemap(freearg) (int nList, GUInt64 *pList)
+%typemap(freearg) (int nList, uint64_t *pList)
 {
-  /* %typemap(freearg) (int nList, GUInt64 *pList) */
+  /* %typemap(freearg) (int nList, uint64_t *pList) */
   if ($2) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
   }
 }
 
-%typemap(jni) (int nList, GUInt64 *pList) "jlongArray"
-%typemap(jtype) (int nList, GUInt64 *pList) "long[]"
-%typemap(jstype) (int nList, GUInt64 *pList) "long[]"
-%typemap(javain) (int nList, GUInt64 *pList) "$javainput"
-%typemap(javaout) (int nList, GUInt64 *pList) {
+%typemap(jni) (int nList, uint64_t *pList) "jlongArray"
+%typemap(jtype) (int nList, uint64_t *pList) "long[]"
+%typemap(jstype) (int nList, uint64_t *pList) "long[]"
+%typemap(javain) (int nList, uint64_t *pList) "$javainput"
+%typemap(javaout) (int nList, uint64_t *pList) {
     return $jnicall;
 }
 
-/***** int, GUIntBig* typemaps *******************************/
+/***** int, uint64_t* typemaps *******************************/
 
-%typemap(in, numinputs=1) (int nList, GUIntBig *pList)
+%typemap(in, numinputs=1) (int nList, uint64_t *pList)
 {
-  /* %typemap(in, numinputs=1) (int nList, GUIntBig *pList) */
+  /* %typemap(in, numinputs=1) (int nList, uint64_t *pList) */
   if ($input)
   {
     $1 = jenv->GetArrayLength($input);
     if ($1 == 0)
-       $2 = (GUIntBig *) NULL;
+       $2 = (uint64_t *) NULL;
     else
-       $2 = (GUIntBig *) jenv->GetLongArrayElements($input, NULL);
+       $2 = (uint64_t *) jenv->GetLongArrayElements($input, NULL);
   }
   else {
     $1 = 0;
-    $2 = (GUIntBig *) NULL;
+    $2 = (uint64_t *) NULL;
   }
 }
 
-%typemap(freearg) (int nList, GUIntBig *pList)
+%typemap(freearg) (int nList, uint64_t *pList)
 {
-  /* %typemap(freearg) (int nList, GUIntBig *pList) */
+  /* %typemap(freearg) (int nList, uint64_t *pList) */
   if ($2) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
   }
 }
 
-%typemap(jni) (int nList, GUIntBig *pList) "jlongArray"
-%typemap(jtype) (int nList, GUIntBig *pList) "long[]"
-%typemap(jstype) (int nList, GUIntBig *pList) "long[]"
-%typemap(javain) (int nList, GUIntBig *pList) "$javainput"
-%typemap(javaout) (int nList, GUIntBig *pList) {
+%typemap(jni) (int nList, uint64_t *pList) "jlongArray"
+%typemap(jtype) (int nList, uint64_t *pList) "long[]"
+%typemap(jstype) (int nList, uint64_t *pList) "long[]"
+%typemap(javain) (int nList, uint64_t *pList) "$javainput"
+%typemap(javaout) (int nList, uint64_t *pList) {
     return $jnicall;
 }
 

@@ -82,8 +82,8 @@ CPLErr STACTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr STACTARasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 {
     auto poGDS = cpl::down_cast<STACTADataset *>(poDS);
@@ -111,8 +111,8 @@ CPLErr STACTADataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if ((nBufXSize < nXSize || nBufYSize < nYSize) &&
@@ -232,7 +232,7 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       int nXSize, int nYSize, void *pData,
                                       int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType,
-                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      int64_t nPixelSpace, int64_t nLineSpace,
                                       GDALRasterIOExtraArg *psExtraArg)
 {
     CPLDebugOnly("STACTA", "Band %d RasterIO: %d,%d,%d,%d->%d,%d", nBand, nXOff,
@@ -247,12 +247,12 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nXOffMod = std::max(0, nXOff - nRadiusX);
     const int nYOffMod = std::max(0, nYOff - nRadiusY);
     const int nXSizeMod = static_cast<int>(std::min(
-                              nXOff + nXSize + static_cast<GIntBig>(nRadiusX),
-                              static_cast<GIntBig>(nRasterXSize))) -
+                              nXOff + nXSize + static_cast<int64_t>(nRadiusX),
+                              static_cast<int64_t>(nRasterXSize))) -
                           nXOffMod;
     const int nYSizeMod = static_cast<int>(std::min(
-                              nYOff + nYSize + static_cast<GIntBig>(nRadiusY),
-                              static_cast<GIntBig>(nRasterYSize))) -
+                              nYOff + nYSize + static_cast<int64_t>(nRadiusY),
+                              static_cast<int64_t>(nRasterYSize))) -
                           nYOffMod;
 
     const bool bRequestFitsInSingleMetaTile =
@@ -288,8 +288,8 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
                                    GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
+                                   int *panBandMap, int64_t nPixelSpace,
+                                   int64_t nLineSpace, int64_t nBandSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 {
     CPLDebugOnly("STACTA", "Dataset RasterIO: %d,%d,%d,%d->%d,%d", nXOff, nYOff,
@@ -307,12 +307,12 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nXOffMod = std::max(0, nXOff - nRadiusX);
     const int nYOffMod = std::max(0, nYOff - nRadiusY);
     const int nXSizeMod = static_cast<int>(std::min(
-                              nXOff + nXSize + static_cast<GIntBig>(nRadiusX),
-                              static_cast<GIntBig>(nRasterXSize))) -
+                              nXOff + nXSize + static_cast<int64_t>(nRadiusX),
+                              static_cast<int64_t>(nRasterXSize))) -
                           nXOffMod;
     const int nYSizeMod = static_cast<int>(std::min(
-                              nYOff + nYSize + static_cast<GIntBig>(nRadiusY),
-                              static_cast<GIntBig>(nRasterYSize))) -
+                              nYOff + nYSize + static_cast<int64_t>(nRadiusY),
+                              static_cast<int64_t>(nRasterYSize))) -
                           nYOffMod;
 
     const bool bRequestFitsInSingleMetaTile =
@@ -386,7 +386,7 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // it entirely to minimize the number of network requests
     const bool bDownloadWholeMetaTile =
         m_poMasterDS->m_bDownloadWholeMetaTile ||
-        (static_cast<GIntBig>(m_nMetaTileWidth) * m_nMetaTileHeight * nBands *
+        (static_cast<int64_t>(m_nMetaTileWidth) * m_nMetaTileHeight * nBands *
              nDTSize <
          128 * 1024);
 
@@ -463,7 +463,7 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                             return CE_Failure;
                         }
                         GByte *pabyBuf = nullptr;
-                        vsi_l_offset nSize = 0;
+                        uint64_t nSize = 0;
                         if (!VSIIngestFile(fp, nullptr, &pabyBuf, &nSize, -1))
                         {
                             VSIFCloseL(fp);

@@ -400,7 +400,7 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
     virtual ~OGROCILoaderLayer();
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override
     {
@@ -494,7 +494,7 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     virtual ~OGROCITableLayer();
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
@@ -505,11 +505,11 @@ class OGROCITableLayer final : public OGROCIWritableLayer
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,

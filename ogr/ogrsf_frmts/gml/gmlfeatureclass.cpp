@@ -31,6 +31,7 @@
 #include "gmlreader.h"
 
 #include <cmath>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -330,7 +331,7 @@ size_t GMLFeatureClass::GetElementNameLen() const
 /*                         GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig GMLFeatureClass::GetFeatureCount()
+int64_t GMLFeatureClass::GetFeatureCount()
 {
     return m_nFeatureCount;
 }
@@ -339,7 +340,7 @@ GIntBig GMLFeatureClass::GetFeatureCount()
 /*                          SetFeatureCount()                           */
 /************************************************************************/
 
-void GMLFeatureClass::SetFeatureCount(GIntBig nNewCount)
+void GMLFeatureClass::SetFeatureCount(int64_t nNewCount)
 
 {
     m_nFeatureCount = nNewCount;
@@ -899,7 +900,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         {
             char szValue[128] = {};
 
-            snprintf(szValue, sizeof(szValue), CPL_FRMT_GIB, m_nFeatureCount);
+            snprintf(szValue, sizeof(szValue), "%" PRId64, m_nFeatureCount);
             CPLCreateXMLElementAndValue(psDSI, "FeatureCount", szValue);
         }
 

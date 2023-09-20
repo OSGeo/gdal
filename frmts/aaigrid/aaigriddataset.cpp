@@ -112,8 +112,8 @@ AAIGRasterBand::AAIGRasterBand(AAIGDataset *poDSIn, int nDataStart)
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 
-    panLineOffset = static_cast<GUIntBig *>(
-        VSI_CALLOC_VERBOSE(poDSIn->nRasterYSize, sizeof(GUIntBig)));
+    panLineOffset = static_cast<uint64_t *>(
+        VSI_CALLOC_VERBOSE(poDSIn->nRasterYSize, sizeof(uint64_t)));
     if (panLineOffset == nullptr)
     {
         return;
@@ -218,8 +218,8 @@ CPLErr AAIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                         DoubleToFloatClamp(CPLAtofM(szToken));
             }
             else
-                reinterpret_cast<GInt32 *>(pImage)[iPixel] =
-                    static_cast<GInt32>(atoi(szToken));
+                reinterpret_cast<int32_t *>(pImage)[iPixel] =
+                    static_cast<int32_t>(atoi(szToken));
         }
 
         iPixel++;
@@ -309,7 +309,7 @@ AAIGDataset::~AAIGDataset()
 /*                                Tell()                                */
 /************************************************************************/
 
-GUIntBig AAIGDataset::Tell() const
+uint64_t AAIGDataset::Tell() const
 {
     return nBufferOffset + nOffsetInBuffer;
 }
@@ -318,7 +318,7 @@ GUIntBig AAIGDataset::Tell() const
 /*                                Seek()                                */
 /************************************************************************/
 
-int AAIGDataset::Seek(GUIntBig nNewOffset)
+int AAIGDataset::Seek(uint64_t nNewOffset)
 
 {
     nOffsetInBuffer = sizeof(achReadBuf);

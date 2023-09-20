@@ -38,6 +38,7 @@
 #include "ogrlibkmlstyle.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <set>
 
 using kmldom::CameraPtr;
@@ -550,10 +551,9 @@ OGRErr OGRLIBKMLLayer::ICreateFeature(OGRFeature *poOgrFeat)
         }
         else
         {
-            const char *pszId =
-                CPLSPrintf("%s." CPL_FRMT_GIB,
-                           OGRLIBKMLGetSanitizedNCName(GetName()).c_str(),
-                           poOgrFeat->GetFID());
+            const char *pszId = CPLSPrintf(
+                "%s.%" PRId64, OGRLIBKMLGetSanitizedNCName(GetName()).c_str(),
+                poOgrFeat->GetFID());
             poOgrFeat->SetFID(nFeatures);
             poKmlFeature->set_id(pszId);
         }
@@ -594,7 +594,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature(OGRFeature *poOgrFeat)
     m_poKmlUpdate->add_updateoperation(poChange);
 
     const char *pszId = CPLSPrintf(
-        "%s." CPL_FRMT_GIB, OGRLIBKMLGetSanitizedNCName(GetName()).c_str(),
+        "%s.%" PRId64, OGRLIBKMLGetSanitizedNCName(GetName()).c_str(),
         poOgrFeat->GetFID());
     poKmlFeature->set_targetid(pszId);
 
@@ -616,7 +616,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature(OGRFeature *poOgrFeat)
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::DeleteFeature(GIntBig nFIDIn)
+OGRErr OGRLIBKMLLayer::DeleteFeature(int64_t nFIDIn)
 {
     if (!bUpdate || !m_poKmlUpdate)
         return OGRERR_UNSUPPORTED_OPERATION;
@@ -627,9 +627,8 @@ OGRErr OGRLIBKMLLayer::DeleteFeature(GIntBig nFIDIn)
     PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
     poDelete->add_feature(poKmlPlacemark);
 
-    const char *pszId =
-        CPLSPrintf("%s." CPL_FRMT_GIB,
-                   OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFIDIn);
+    const char *pszId = CPLSPrintf(
+        "%s.%" PRId64, OGRLIBKMLGetSanitizedNCName(GetName()).c_str(), nFIDIn);
     poKmlPlacemark->set_targetid(pszId);
 
     /***** mark as updated *****/
@@ -650,7 +649,7 @@ OGRErr OGRLIBKMLLayer::DeleteFeature(GIntBig nFIDIn)
 
 ******************************************************************************/
 
-GIntBig OGRLIBKMLLayer::GetFeatureCount(int bForce)
+int64_t OGRLIBKMLLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
     {

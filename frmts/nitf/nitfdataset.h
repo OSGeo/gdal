@@ -71,10 +71,10 @@ class NITFDataset final : public GDALPamDataset
 
     GDALDataset *poJ2KDataset;
     int bJP2Writing;
-    vsi_l_offset m_nImageOffset = 0;
+    uint64_t m_nImageOffset = 0;
     int m_nIMIndex = 0;
     int m_nImageCount = 0;
-    vsi_l_offset m_nICOffset = 0;
+    uint64_t m_nICOffset = 0;
 
     GDALDataset *poJPEGDataset;
 
@@ -100,11 +100,11 @@ class NITFDataset final : public GDALPamDataset
     bool InitializeTREMetadata(bool bValidate);
     void InitializeImageStructureMetadata();
 
-    GIntBig *panJPEGBlockOffset;
+    int64_t *panJPEGBlockOffset;
     GByte *pabyJPEGBlock;
     int nQLevel;
 
-    int ScanJPEGQLevel(GUIntBig *pnDataStart, bool *pbError);
+    int ScanJPEGQLevel(uint64_t *pnDataStart, bool *pbError);
     CPLErr ScanJPEGBlocks();
     CPLErr ReadJPEGBlock(int, int);
     void CheckGeoSDEInfo();
@@ -146,8 +146,8 @@ class NITFDataset final : public GDALPamDataset
                               char **papszOptions) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -248,8 +248,8 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -300,7 +300,7 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual int HasArbitraryOverviews() override;
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
-    virtual GDALRasterBand *GetRasterSampleOverview(GUIntBig) override;
+    virtual GDALRasterBand *GetRasterSampleOverview(uint64_t) override;
     virtual CPLErr BuildOverviews(const char *, int, const int *,
                                   GDALProgressFunc, void *,
                                   CSLConstList papszOptions) override;
@@ -310,15 +310,15 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                               char **papszOptions) override;
 
     /*virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                        int nBuckets, GUIntBig * panHistogram,
+                        int nBuckets, uint64_t * panHistogram,
                         int bIncludeOutOfRange, int bApproxOK,
                         GDALProgressFunc, void *pProgressData );
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets, GUIntBig **
+                                        int *pnBuckets, uint64_t **
     ppanHistogram, int bForce, GDALProgressFunc, void *pProgressData); virtual
     CPLErr SetDefaultHistogram( double dfMin, double dfMax, int nBuckets,
-    GUIntBig *panHistogram );*/
+    uint64_t *panHistogram );*/
 
     /*virtual const GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );*/

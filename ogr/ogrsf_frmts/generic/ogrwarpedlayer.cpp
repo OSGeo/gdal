@@ -231,7 +231,7 @@ OGRFeature *OGRWarpedLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRWarpedLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRWarpedLayer::GetFeature(int64_t nFID)
 {
     OGRFeature *poFeature = m_poDecoratedLayer->GetFeature(nFID);
     if (poFeature != nullptr)
@@ -359,7 +359,7 @@ OGRSpatialReference *OGRWarpedLayer::GetSpatialRef()
 /*                           GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig OGRWarpedLayer::GetFeatureCount(int bForce)
+int64_t OGRWarpedLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr)
         return m_poDecoratedLayer->GetFeatureCount(bForce);

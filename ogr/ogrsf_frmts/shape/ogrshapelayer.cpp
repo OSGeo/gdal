@@ -30,6 +30,7 @@
 #include "ogrshape.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -731,10 +732,10 @@ bool OGRShapeLayer::ScanIndices()
         // terminate with OGRNullFID).
         if (panMatchingFIDs == nullptr)
         {
-            panMatchingFIDs = static_cast<GIntBig *>(
-                CPLMalloc(sizeof(GIntBig) * (nSpatialFIDCount + 1)));
+            panMatchingFIDs = static_cast<int64_t *>(
+                CPLMalloc(sizeof(int64_t) * (nSpatialFIDCount + 1)));
             for (int i = 0; i < nSpatialFIDCount; i++)
-                panMatchingFIDs[i] = static_cast<GIntBig>(panSpatialFIDs[i]);
+                panMatchingFIDs[i] = static_cast<int64_t>(panSpatialFIDs[i]);
             panMatchingFIDs[nSpatialFIDCount] = OGRNullFID;
         }
         // Cull attribute index matches based on those in the spatial index
@@ -867,7 +868,7 @@ OGRErr OGRShapeLayer::SetAttributeFilter(const char *pszAttributeFilter)
 /*      ourselves in it.                                                */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRShapeLayer::SetNextByIndex(int64_t nIndex)
 
 {
     if (!TouchLayer())
@@ -1028,7 +1029,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRShapeLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRShapeLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (!TouchLayer() || nFeatureId > INT_MAX)
@@ -1087,7 +1088,7 @@ OGRErr OGRShapeLayer::ISetFeature(OGRFeature *poFeature)
     if (!StartUpdate("SetFeature"))
         return OGRERR_FAILURE;
 
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID < 0 || (hSHP != nullptr && nFID >= hSHP->nRecords) ||
         (hDBF != nullptr && nFID >= hDBF->nRecords))
     {
@@ -1141,7 +1142,7 @@ OGRErr OGRShapeLayer::ISetFeature(OGRFeature *poFeature)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRShapeLayer::DeleteFeature(int64_t nFID)
 
 {
     if (!StartUpdate("DeleteFeature"))
@@ -1595,7 +1596,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
+int64_t OGRShapeLayer::GetFeatureCount(int bForce)
 
 {
     // Check if the spatial filter is non-trivial.
@@ -1648,7 +1649,7 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
         if (!AttributeFilterEvaluationNeedsGeometry())
             poFeatureDefn->SetGeometryIgnored(TRUE);
 
-        GIntBig nRet = OGRLayer::GetFeatureCount(bForce);
+        int64_t nRet = OGRLayer::GetFeatureCount(bForce);
 
         poFeatureDefn->SetGeometryIgnored(bSaveGeometryIgnored);
         return nRet;
@@ -2445,7 +2446,8 @@ int OGRShapeLayer::ResetGeomType(int nNewGeomType)
         hSHP->sHooks.FRead(abyHeader, 100, 1, hSHP->fpSHP) != 1)
         return FALSE;
 
-    *(reinterpret_cast<GInt32 *>(abyHeader + 32)) = CPL_LSBWORD32(nNewGeomType);
+    *(reinterpret_cast<int32_t *>(abyHeader + 32)) =
+        CPL_LSBWORD32(nNewGeomType);
 
     if (hSHP->sHooks.FSeek(hSHP->fpSHP, 0, SEEK_SET) != 0 ||
         hSHP->sHooks.FWrite(abyHeader, 100, 1, hSHP->fpSHP) != 1)
@@ -2463,7 +2465,8 @@ int OGRShapeLayer::ResetGeomType(int nNewGeomType)
         hSHP->sHooks.FRead(abyHeader, 100, 1, hSHP->fpSHX) != 1)
         return FALSE;
 
-    *(reinterpret_cast<GInt32 *>(abyHeader + 32)) = CPL_LSBWORD32(nNewGeomType);
+    *(reinterpret_cast<int32_t *>(abyHeader + 32)) =
+        CPL_LSBWORD32(nNewGeomType);
 
     if (hSHP->sHooks.FSeek(hSHP->fpSHX, 0, SEEK_SET) != 0 ||
         hSHP->sHooks.FWrite(abyHeader, 100, 1, hSHP->fpSHX) != 1)
@@ -3389,8 +3392,8 @@ void OGRShapeLayer::TruncateDBF()
         return;
 
     hDBF->sHooks.FSeek(hDBF->fp, 0, SEEK_END);
-    vsi_l_offset nOldSize = hDBF->sHooks.FTell(hDBF->fp);
-    vsi_l_offset nNewSize =
+    uint64_t nOldSize = hDBF->sHooks.FTell(hDBF->fp);
+    uint64_t nNewSize =
         hDBF->nRecordLength * static_cast<SAOffset>(hDBF->nRecords) +
         hDBF->nHeaderLength;
     if (hDBF->bWriteEndOfFileChar)
@@ -3398,8 +3401,7 @@ void OGRShapeLayer::TruncateDBF()
     if (nNewSize < nOldSize)
     {
         CPLDebug("SHAPE",
-                 "Truncating DBF file from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB
-                 " bytes",
+                 "Truncating DBF file from %" PRIu64 " to %" PRIu64 " bytes",
                  nOldSize, nNewSize);
         VSIFTruncateL(VSI_SHP_GetVSIL(hDBF->fp), nNewSize);
     }

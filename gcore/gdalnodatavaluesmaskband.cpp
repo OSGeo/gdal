@@ -86,7 +86,7 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 /************************************************************************/
 
 template <class T>
-static void FillOutBuffer(GPtrDiff_t nBlockOffsetPixels, int nBands,
+static void FillOutBuffer(ptrdiff_t nBlockOffsetPixels, int nBands,
                           const void *pabySrc, const double *padfNodataValues,
                           void *pImage)
 {
@@ -96,7 +96,7 @@ static void FillOutBuffer(GPtrDiff_t nBlockOffsetPixels, int nBands,
         paNoData[iBand] = static_cast<T>(padfNodataValues[iBand]);
     }
 
-    for (GPtrDiff_t i = 0; i < nBlockOffsetPixels; i++)
+    for (ptrdiff_t i = 0; i < nBlockOffsetPixels; i++)
     {
         int nCountNoData = 0;
         for (int iBand = 0; iBand < nBands; ++iBand)
@@ -191,16 +191,16 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
                    nBlockYSize);
     }
 
-    const GPtrDiff_t nBlockOffsetPixels =
-        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
-    const GPtrDiff_t nBandOffsetByte = nWrkDTSize * nBlockOffsetPixels;
+    const ptrdiff_t nBlockOffsetPixels =
+        static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
+    const ptrdiff_t nBandOffsetByte = nWrkDTSize * nBlockOffsetPixels;
     for (int iBand = 0; iBand < nBands; ++iBand)
     {
         const CPLErr eErr = poDS->GetRasterBand(iBand + 1)->RasterIO(
             GF_Read, nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
             nXSizeRequest, nYSizeRequest, pabySrc + iBand * nBandOffsetByte,
             nXSizeRequest, nYSizeRequest, eWrkDT, 0,
-            static_cast<GSpacing>(nBlockXSize) * nWrkDTSize, nullptr);
+            static_cast<int64_t>(nBlockXSize) * nWrkDTSize, nullptr);
         if (eErr != CE_None)
             return eErr;
     }
@@ -219,15 +219,15 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 
         case GDT_UInt32:
         {
-            FillOutBuffer<GUInt32>(nBlockOffsetPixels, nBands, pabySrc,
-                                   padfNodataValues, pImage);
+            FillOutBuffer<uint32_t>(nBlockOffsetPixels, nBands, pabySrc,
+                                    padfNodataValues, pImage);
         }
         break;
 
         case GDT_Int32:
         {
-            FillOutBuffer<GInt32>(nBlockOffsetPixels, nBands, pabySrc,
-                                  padfNodataValues, pImage);
+            FillOutBuffer<int32_t>(nBlockOffsetPixels, nBands, pabySrc,
+                                   padfNodataValues, pImage);
         }
         break;
 

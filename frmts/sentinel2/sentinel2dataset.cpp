@@ -236,7 +236,7 @@ class SENTINEL2AlphaBand final : public VRTSourcedRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType,
 #ifdef GDAL_DCAP_RASTER
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg
 #else
                              int nPixelSpace, int nLineSpace
@@ -266,7 +266,7 @@ CPLErr SENTINEL2AlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nBufXSize, int nBufYSize,
                                      GDALDataType eBufType,
 #ifdef GDAL_DCAP_RASTER
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     int64_t nPixelSpace, int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg
 #else
                                      int nPixelSpace, int nLineSpace
@@ -287,7 +287,7 @@ CPLErr SENTINEL2AlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         const char *pszNBITS = GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
         const int nBits = (pszNBITS) ? atoi(pszNBITS) : 16;
-        const GUInt16 nMaxVal = (GUInt16)((1 << nBits) - 1);
+        const uint16_t nMaxVal = (uint16_t)((1 << nBits) - 1);
 
         // Replace pixels matching m_nSaturatedVal and m_nNodataVal by 0
         // and others by the maxVal.
@@ -298,9 +298,9 @@ CPLErr SENTINEL2AlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 // Optimized path for likely most common case
                 if (eBufType == GDT_UInt16)
                 {
-                    GUInt16 *panPtr =
-                        (GUInt16 *)((GByte *)pData + iY * nLineSpace +
-                                    iX * nPixelSpace);
+                    uint16_t *panPtr =
+                        (uint16_t *)((GByte *)pData + iY * nLineSpace +
+                                     iX * nPixelSpace);
                     if (*panPtr == 0 || *panPtr == m_nSaturatedVal ||
                         *panPtr == m_nNodataVal)
                     {
@@ -2976,7 +2976,7 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                         if (EQUAL(oChildBox.GetType(), "ihdr"))
                         {
                             GByte *pabyData = oChildBox.ReadBoxData();
-                            GIntBig nLength = oChildBox.GetDataLength();
+                            int64_t nLength = oChildBox.GetDataLength();
                             if (pabyData != nullptr && nLength >= 4 + 4 + 2 + 1)
                             {
                                 bRet = true;

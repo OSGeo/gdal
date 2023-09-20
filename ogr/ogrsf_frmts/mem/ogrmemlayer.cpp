@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_mem.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstring>
 #include <algorithm>
@@ -98,13 +99,13 @@ OGRMemLayer::~OGRMemLayer()
 {
     if (m_nFeaturesRead > 0 && m_poFeatureDefn != nullptr)
     {
-        CPLDebug("Mem", CPL_FRMT_GIB " features read on layer '%s'.",
+        CPLDebug("Mem", "%" PRId64 " features read on layer '%s'.",
                  m_nFeaturesRead, m_poFeatureDefn->GetName());
     }
 
     if (m_papoFeatures != nullptr)
     {
-        for (GIntBig i = 0; i < m_nMaxFeatureCount; i++)
+        for (int64_t i = 0; i < m_nMaxFeatureCount; i++)
         {
             if (m_papoFeatures[i] != nullptr)
                 delete m_papoFeatures[i];
@@ -179,7 +180,7 @@ OGRFeature *OGRMemLayer::GetNextFeature()
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRMemLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRMemLayer::SetNextByIndex(int64_t nIndex)
 
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr ||
@@ -198,7 +199,7 @@ OGRErr OGRMemLayer::SetNextByIndex(GIntBig nIndex)
 /*                         GetFeatureRef()                              */
 /************************************************************************/
 
-OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
+OGRFeature *OGRMemLayer::GetFeatureRef(int64_t nFeatureId)
 
 {
     if (nFeatureId < 0)
@@ -225,7 +226,7 @@ OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMemLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRMemLayer::GetFeature(int64_t nFeatureId)
 
 {
     const OGRFeature *poFeature = GetFeatureRef(nFeatureId);
@@ -246,7 +247,7 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     // If we don't have a FID, find one available
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID == OGRNullFID)
     {
         if (m_papoFeatures != nullptr)
@@ -330,14 +331,14 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
     {
         if (nFID >= m_nMaxFeatureCount)
         {
-            const GIntBig nNewCount = std::max(
+            const int64_t nNewCount = std::max(
                 m_nMaxFeatureCount + m_nMaxFeatureCount / 3 + 10, nFID + 1);
-            if (static_cast<GIntBig>(static_cast<size_t>(sizeof(OGRFeature *)) *
+            if (static_cast<int64_t>(static_cast<size_t>(sizeof(OGRFeature *)) *
                                      nNewCount) !=
-                static_cast<GIntBig>(sizeof(OGRFeature *)) * nNewCount)
+                static_cast<int64_t>(sizeof(OGRFeature *)) * nNewCount)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate array of " CPL_FRMT_GIB " elements",
+                         "Cannot allocate array of %" PRId64 " elements",
                          nNewCount);
                 delete poFeatureCloned;
                 return OGRERR_FAILURE;
@@ -518,7 +519,7 @@ OGRErr OGRMemLayer::IUpdateFeature(OGRFeature *poFeature,
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRMemLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRMemLayer::DeleteFeature(int64_t nFID)
 
 {
     if (!m_bUpdatable)
@@ -566,7 +567,7 @@ OGRErr OGRMemLayer::DeleteFeature(GIntBig nFID)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRMemLayer::GetFeatureCount(int bForce)
+int64_t OGRMemLayer::GetFeatureCount(int bForce)
 
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
@@ -780,7 +781,7 @@ OGRErr OGRMemLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                 if (poFeature->IsFieldSetAndNotNull(iField) &&
                     !poFeature->IsFieldNull(iField))
                 {
-                    const GIntBig nVal = poFieldRaw->Integer;
+                    const int64_t nVal = poFieldRaw->Integer;
                     poFieldRaw->Integer64 = nVal;
                 }
             }
@@ -970,7 +971,7 @@ OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
 
     int *panRemap = static_cast<int *>(
         CPLMalloc(sizeof(int) * m_poFeatureDefn->GetGeomFieldCount()));
-    for (GIntBig i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+    for (int64_t i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
     {
         if (i < m_poFeatureDefn->GetGeomFieldCount() - 1)
             panRemap[i] = static_cast<int>(i);
@@ -1001,12 +1002,12 @@ OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
 
 class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
 {
-    GIntBig m_iCurIdx;
-    GIntBig m_nMaxFeatureCount;
+    int64_t m_iCurIdx;
+    int64_t m_nMaxFeatureCount;
     OGRFeature **m_papoFeatures;
 
   public:
-    OGRMemLayerIteratorArray(GIntBig nMaxFeatureCount,
+    OGRMemLayerIteratorArray(int64_t nMaxFeatureCount,
                              OGRFeature **papoFeatures)
         : m_iCurIdx(0), m_nMaxFeatureCount(nMaxFeatureCount),
           m_papoFeatures(papoFeatures)
@@ -1036,8 +1037,8 @@ class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
 
 class OGRMemLayerIteratorMap final : public IOGRMemLayerFeatureIterator
 {
-    typedef std::map<GIntBig, OGRFeature *> FeatureMap;
-    typedef std::map<GIntBig, OGRFeature *>::iterator FeatureIterator;
+    typedef std::map<int64_t, OGRFeature *> FeatureMap;
+    typedef std::map<int64_t, OGRFeature *>::iterator FeatureIterator;
 
     FeatureMap &m_oMapFeatures;
     FeatureIterator m_oIter;

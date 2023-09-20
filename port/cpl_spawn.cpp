@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "cpl_spawn.h"
 
+#include <cinttypes>
 #include <cstring>
 
 #include "cpl_config.h"
@@ -138,14 +139,14 @@ int CPLSpawn(const char *const papszArgv[], VSILFILE *fin, VSILFILE *fout,
 
     CPL_FILE_HANDLE err_child = CPLSpawnAsyncGetErrorFileHandle(sp);
     CPLString osName;
-    osName.Printf("/vsimem/child_stderr_" CPL_FRMT_GIB, CPLGetPID());
+    osName.Printf("/vsimem/child_stderr_%" PRId64, CPLGetPID());
     VSILFILE *ferr = VSIFOpenL(osName.c_str(), "w");
 
     FillFileFromPipe(err_child, ferr);
     CPLSpawnAsyncCloseErrorFileHandle(sp);
 
     CPL_IGNORE_RET_VAL(VSIFCloseL(ferr));
-    vsi_l_offset nDataLength = 0;
+    uint64_t nDataLength = 0;
     GByte *pData = VSIGetMemFileBuffer(osName.c_str(), &nDataLength, TRUE);
     if (nDataLength > 0)
         pData[nDataLength - 1] = '\0';

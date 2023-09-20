@@ -126,8 +126,8 @@ class OGCAPIDataset final : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     int CloseDependentDatasets() override;
@@ -174,7 +174,7 @@ class OGCAPIMapWrapperBand final : public GDALRasterBand
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImage) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -197,7 +197,7 @@ class OGCAPITilesWrapperBand final : public GDALRasterBand
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImage) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -295,7 +295,7 @@ class OGCAPITiledLayer final
         return m_poFeatureDefn->GetGeomType();
     }
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGCAPITiledLayer)
-    GIntBig GetFeatureCount(int /* bForce */) override
+    int64_t GetFeatureCount(int /* bForce */) override
     {
         return -1;
     }
@@ -309,7 +309,7 @@ class OGCAPITiledLayer final
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     int TestCapability(const char *) override;
 };
 
@@ -649,7 +649,7 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
     SetRootURLFromURL(osURLProcess);
 
     GByte *pabyContent = nullptr;
-    vsi_l_offset nSize = 0;
+    uint64_t nSize = 0;
     if (!VSIIngestFile(poOpenInfo->fpL, nullptr, &pabyContent, &nSize,
                        1024 * 1024))
         return false;
@@ -1423,10 +1423,12 @@ CPLErr OGCAPIMapWrapperBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr OGCAPIMapWrapperBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr OGCAPIMapWrapperBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                       int nXSize, int nYSize, void *pData,
+                                       int nBufXSize, int nBufYSize,
+                                       GDALDataType eBufType,
+                                       int64_t nPixelSpace, int64_t nLineSpace,
+                                       GDALRasterIOExtraArg *psExtraArg)
 {
     OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     return poGDS->m_poWMSDS->GetRasterBand(nBand)->RasterIO(
@@ -2145,7 +2147,7 @@ CPLErr OGCAPITilesWrapperBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr OGCAPITilesWrapperBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
 
@@ -2207,8 +2209,8 @@ CPLErr OGCAPIDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if (!m_apoDatasetsCropped.empty())
@@ -2418,7 +2420,7 @@ OGRFeature *OGCAPITiledLayer::BuildFeature(OGRFeature *poSrcFeature, int nX,
     nX = (nX / nCoalesce) * nCoalesce;
 
     OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
-    const GIntBig nFID = nY * m_oTileMatrix.mMatrixWidth + nX +
+    const int64_t nFID = nY * m_oTileMatrix.mMatrixWidth + nX +
                          poSrcFeature->GetFID() * m_oTileMatrix.mMatrixWidth *
                              m_oTileMatrix.mMatrixHeight;
     auto poGeom = poSrcFeature->StealGeometry();
@@ -2518,13 +2520,13 @@ OGRFeature *OGCAPITiledLayer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGCAPITiledLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGCAPITiledLayer::GetFeature(int64_t nFID)
 {
     if (nFID < 0)
         return nullptr;
-    const GIntBig nFIDInTile =
+    const int64_t nFIDInTile =
         nFID / (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
-    const GIntBig nTileID =
+    const int64_t nTileID =
         nFID % (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
     const int nY = static_cast<int>(nTileID / m_oTileMatrix.mMatrixWidth);
     const int nX = static_cast<int>(nTileID % m_oTileMatrix.mMatrixWidth);

@@ -91,7 +91,7 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
     {
         CPLJSONObject oItem = oArray[i];
         std::string osName = oItem.GetString("name");
-        GInt64 nSize = oItem.GetLong("bytes");
+        int64_t nSize = oItem.GetLong("bytes");
         std::string osLastModified = oItem.GetString("last_modified");
         CPLString osSubdir = oItem.GetString("subdir");
         bool bHasCount = oItem.GetLong("count", -1) >= 0;
@@ -120,7 +120,7 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
                     FileProp prop;
                     prop.eExists = EXIST_YES;
                     prop.bHasComputedFileSize = true;
-                    prop.fileSize = static_cast<GUIntBig>(nSize);
+                    prop.fileSize = static_cast<uint64_t>(nSize);
                     prop.bIsDirectory = false;
                     prop.mTime = 0;
                     int nYear, nMonth, nDay, nHour, nMin, nSec;

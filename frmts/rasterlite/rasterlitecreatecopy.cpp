@@ -649,7 +649,7 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             /*      Insert new entry into raster table */
             /* --------------------------------------------------------------------
              */
-            vsi_l_offset nDataLength = 0;
+            uint64_t nDataLength = 0;
             GByte *pabyData = VSIGetMemFileBuffer(osTempFileName.c_str(),
                                                   &nDataLength, FALSE);
 

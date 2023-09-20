@@ -75,7 +75,7 @@ class GDALGPKGMBTilesLikePseudoDataset
     double m_dfOffset = 0.0;
     double m_dfScale = 1.0;
     double m_dfPrecision = 1.0;
-    GUInt16 m_usGPKGNull = 0;
+    uint16_t m_usGPKGNull = 0;
     int m_nZoomLevel = -1;
     GByte *m_pabyCachedTiles = nullptr;
     CachedTileDesc m_asCachedTilesDesc[4];
@@ -106,7 +106,7 @@ class GDALGPKGMBTilesLikePseudoDataset
     CPLString m_osTempDBFilename{};
     time_t m_nLastSpaceCheckTimestamp = 0;
     bool m_bForceTempDBCompaction = false;
-    GIntBig m_nAge = 0;
+    int64_t m_nAge = 0;
 
     int m_nTileInsertionCount = 0;
 
@@ -115,10 +115,10 @@ class GDALGPKGMBTilesLikePseudoDataset
   private:
     bool m_bInWriteTile = false;
     CPLErr WriteTileInternal(); /* should only be called by WriteTile() */
-    GIntBig GetTileId(int nRow, int nCol);
+    int64_t GetTileId(int nRow, int nCol);
     bool DeleteTile(int nRow, int nCol);
-    bool DeleteFromGriddedTileAncillary(GIntBig nTileId);
-    void GetTileOffsetAndScale(GIntBig nTileId, double &dfTileOffset,
+    bool DeleteFromGriddedTileAncillary(int64_t nTileId);
+    void GetTileOffsetAndScale(int64_t nTileId, double &dfTileOffset,
                                double &dfTileScale);
     void FillBuffer(GByte *pabyData, size_t nPixels);
     void FillEmptyTile(GByte *pabyData);

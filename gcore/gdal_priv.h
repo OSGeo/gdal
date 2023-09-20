@@ -405,12 +405,12 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual CPLErr
     IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType,
-              int, int *, GSpacing, GSpacing, GSpacing,
+              int, int *, int64_t, int64_t, int64_t,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     CPLErr
     BlockBasedRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                       GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                       GDALDataType, int, int *, int64_t, int64_t, int64_t,
                        GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
     CPLErr BlockBasedFlushCache(bool bAtClosing);
 
@@ -418,16 +418,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                       int nYSize, void *pData, int nBufXSize, int nBufYSize,
                       GDALDataType eBufType, int nBandCount, int *panBandMap,
-                      GSpacing nPixelSpace, GSpacing nLineSpace,
-                      GSpacing nBandSpace,
+                      int64_t nPixelSpace, int64_t nLineSpace,
+                      int64_t nBandSpace,
                       GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     CPLErr
     RasterIOResampled(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                       int nYSize, void *pData, int nBufXSize, int nBufYSize,
                       GDALDataType eBufType, int nBandCount, int *panBandMap,
-                      GSpacing nPixelSpace, GSpacing nLineSpace,
-                      GSpacing nBandSpace,
+                      int64_t nPixelSpace, int64_t nLineSpace,
+                      int64_t nBandSpace,
                       GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     CPLErr ValidateRasterIOOrAdviseReadParameters(
@@ -439,8 +439,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, GSpacing nPixelSpace,
-                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               int *panBandMap, int64_t nPixelSpace,
+                               int64_t nLineSpace, int64_t nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg, int *pbTried);
 
     void ShareLockWithParentDataset(GDALDataset *poParentDataset);
@@ -536,7 +536,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual CPLErr FlushCache(bool bAtClosing = false);
 
-    virtual GIntBig GetEstimatedRAMUsage();
+    virtual int64_t GetEstimatedRAMUsage();
 
     virtual const OGRSpatialReference *GetSpatialRef() const;
     virtual CPLErr SetSpatialRef(const OGRSpatialReference *poSRS);
@@ -596,17 +596,17 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         GDALDataType eDataType = GDT_Unknown;
         bool bLittleEndianOrder = false;
 
-        vsi_l_offset nImageOffset = 0;
-        GIntBig nPixelOffset = 0;
-        GIntBig nLineOffset = 0;
-        GIntBig nBandOffset = 0;
+        uint64_t nImageOffset = 0;
+        int64_t nPixelOffset = 0;
+        int64_t nLineOffset = 0;
+        int64_t nBandOffset = 0;
     };
 
     virtual bool GetRawBinaryLayout(RawBinaryLayout &);
     //! @endcond
 
     CPLErr RasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                    GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                    GDALDataType, int, int *, int64_t, int64_t, int64_t,
                     GDALRasterIOExtraArg *psExtraArg
 #ifndef DOXYGEN_SKIP
                         OPTIONAL_OUTSIDE_GDAL(nullptr)
@@ -1075,9 +1075,9 @@ class CPL_DLL GDALRasterBlock
     /** Return the block size in bytes
      * @return block size.
      */
-    GPtrDiff_t GetBlockSize() const
+    ptrdiff_t GetBlockSize() const
     {
-        return static_cast<GPtrDiff_t>(nXSize) * nYSize *
+        return static_cast<ptrdiff_t>(nXSize) * nYSize *
                GDALGetDataTypeSizeBytes(eType);
     }
 
@@ -1316,13 +1316,13 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     CPLErr
     RasterIOResampled(GDALRWFlag, int, int, int, int, void *, int, int,
-                      GDALDataType, GSpacing, GSpacing,
+                      GDALDataType, int64_t, int64_t,
                       GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     int EnterReadWrite(GDALRWFlag eRWFlag);
     void LeaveReadWrite();
     void InitRWLock();
-    void SetValidPercent(GUIntBig nSampleCount, GUIntBig nValidCount);
+    void SetValidPercent(uint64_t nSampleCount, uint64_t nValidCount);
 
     //! @endcond
 
@@ -1332,7 +1332,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual CPLErr
     IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType,
-              GSpacing, GSpacing,
+              int64_t, int64_t,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
@@ -1341,14 +1341,14 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     //! @cond Doxygen_Suppress
     CPLErr
     OverviewRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     CPLErr TryOverviewRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, GSpacing nPixelSpace,
-                               GSpacing nLineSpace,
+                               GDALDataType eBufType, int64_t nPixelSpace,
+                               int64_t nLineSpace,
                                GDALRasterIOExtraArg *psExtraArg, int *pbTried);
 
     int InitBlockInfo();
@@ -1387,7 +1387,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALAccess GetAccess();
 
     CPLErr RasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                    GDALDataType, GSpacing, GSpacing,
+                    GDALDataType, int64_t, int64_t,
                     GDALRasterIOExtraArg *psExtraArg
 #ifndef DOXYGEN_SKIP
                         OPTIONAL_OUTSIDE_GDAL(nullptr)
@@ -1459,7 +1459,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
-    virtual GDALRasterBand *GetRasterSampleOverview(GUIntBig);
+    virtual GDALRasterBand *GetRasterSampleOverview(uint64_t);
     virtual CPLErr BuildOverviews(const char *pszResampling, int nOverviews,
                                   const int *panOverviewList,
                                   GDALProgressFunc pfnProgress,
@@ -1471,16 +1471,16 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                               GDALDataType eBufType, char **papszOptions);
 
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc,
                                 void *pProgressData);
 
     virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int *pnBuckets, uint64_t **ppanHistogram,
                                        int bForce, GDALProgressFunc,
                                        void *pProgressData);
     virtual CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
-                                       GUIntBig *panHistogram);
+                                       uint64_t *panHistogram);
 
     virtual GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT(const GDALRasterAttributeTable *poRAT);
@@ -1493,7 +1493,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
-                      GIntBig *pnLineSpace,
+                      int64_t *pnLineSpace,
                       char **papszOptions) CPL_WARN_UNUSED_RESULT;
 
     int GetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
@@ -1588,7 +1588,7 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
   protected:
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -1649,7 +1649,7 @@ class GDALRescaledAlphaBand : public GDALRasterBand
   protected:
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -2193,9 +2193,9 @@ class CPL_DLL GDALExtendedDataType
 
     static bool CopyValues(const void *pSrc,
                            const GDALExtendedDataType &srcType,
-                           GPtrDiff_t nSrcStrideInElts, void *pDst,
+                           ptrdiff_t nSrcStrideInElts, void *pDst,
                            const GDALExtendedDataType &dstType,
-                           GPtrDiff_t nDstStrideInElts, size_t nValues);
+                           ptrdiff_t nDstStrideInElts, size_t nValues);
 
   private:
     GDALExtendedDataType(size_t nMaxStringLength,
@@ -2292,7 +2292,7 @@ class CPL_DLL GDALIHasAttribute
 
     virtual std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr);
 
@@ -2396,7 +2396,7 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     virtual std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
-                    const std::string &osDirection, GUInt64 nSize,
+                    const std::string &osDirection, uint64_t nSize,
                     CSLConstList papszOptions = nullptr);
 
     virtual std::shared_ptr<GDALMDArray> CreateMDArray(
@@ -2408,13 +2408,13 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     virtual bool DeleteMDArray(const std::string &osName,
                                CSLConstList papszOptions = nullptr);
 
-    GUInt64 GetTotalCopyCost() const;
+    uint64_t GetTotalCopyCost() const;
 
     virtual bool CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                           GDALDataset *poSrcDS,
                           const std::shared_ptr<GDALGroup> &poSrcGroup,
-                          bool bStrict, GUInt64 &nCurCost,
-                          const GUInt64 nTotalCost,
+                          bool bStrict, uint64_t &nCurCost,
+                          const uint64_t nTotalCost,
                           GDALProgressFunc pfnProgress, void *pProgressData,
                           CSLConstList papszOptions = nullptr);
 
@@ -2448,7 +2448,7 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     //! @endcond
 
     //! @cond Doxygen_Suppress
-    static constexpr GUInt64 COPY_COST = 1000;
+    static constexpr uint64_t COPY_COST = 1000;
     //! @endcond
 };
 
@@ -2482,29 +2482,29 @@ class CPL_DLL GDALAbstractMDArray
 
     bool CheckValidAndErrorOutIfNot() const;
 
-    bool CheckReadWriteParams(const GUInt64 *arrayStartIdx, const size_t *count,
-                              const GInt64 *&arrayStep,
-                              const GPtrDiff_t *&bufferStride,
+    bool CheckReadWriteParams(const uint64_t *arrayStartIdx,
+                              const size_t *count, const int64_t *&arrayStep,
+                              const ptrdiff_t *&bufferStride,
                               const GDALExtendedDataType &bufferDataType,
                               const void *buffer,
                               const void *buffer_alloc_start,
                               size_t buffer_alloc_size,
-                              std::vector<GInt64> &tmp_arrayStep,
-                              std::vector<GPtrDiff_t> &tmp_bufferStride) const;
+                              std::vector<int64_t> &tmp_arrayStep,
+                              std::vector<ptrdiff_t> &tmp_bufferStride) const;
 
     virtual bool
-    IRead(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const GInt64 *arrayStep,         // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    IRead(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const = 0;
 
     virtual bool
-    IWrite(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
-           const size_t *count,             // array of size GetDimensionCount()
-           const GInt64 *arrayStep,         // step in elements
-           const GPtrDiff_t *bufferStride,  // stride in elements
+    IWrite(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+           const size_t *count,            // array of size GetDimensionCount()
+           const int64_t *arrayStep,       // step in elements
+           const ptrdiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer);
 
     void BaseRename(const std::string &osNewName);
@@ -2541,7 +2541,7 @@ class CPL_DLL GDALAbstractMDArray
         return m_osFullName;
     }
 
-    GUInt64 GetTotalElementsCount() const;
+    uint64_t GetTotalElementsCount() const;
 
     virtual size_t GetDimensionCount() const;
 
@@ -2550,7 +2550,7 @@ class CPL_DLL GDALAbstractMDArray
 
     virtual const GDALExtendedDataType &GetDataType() const = 0;
 
-    virtual std::vector<GUInt64> GetBlockSize() const;
+    virtual std::vector<uint64_t> GetBlockSize() const;
 
     virtual std::vector<size_t>
     GetProcessingChunkSize(size_t nMaxChunkMemory) const;
@@ -2573,32 +2573,32 @@ class CPL_DLL GDALAbstractMDArray
      */
     typedef bool (*FuncProcessPerChunkType)(
                         GDALAbstractMDArray *array,
-                        const GUInt64 *chunkArrayStartIdx,
+                        const uint64_t *chunkArrayStartIdx,
                         const size_t *chunkCount,
-                        GUInt64 iCurChunk,
-                        GUInt64 nChunkCount,
+                        uint64_t iCurChunk,
+                        uint64_t nChunkCount,
                         void *pUserData);
     /* clang-format on */
 
-    virtual bool ProcessPerChunk(const GUInt64 *arrayStartIdx,
-                                 const GUInt64 *count, const size_t *chunkSize,
+    virtual bool ProcessPerChunk(const uint64_t *arrayStartIdx,
+                                 const uint64_t *count, const size_t *chunkSize,
                                  FuncProcessPerChunkType pfnFunc,
                                  void *pUserData);
 
     virtual bool
-    Read(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
-         const size_t *count,             // array of size GetDimensionCount()
-         const GInt64 *arrayStep,         // step in elements
-         const GPtrDiff_t *bufferStride,  // stride in elements
+    Read(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+         const size_t *count,            // array of size GetDimensionCount()
+         const int64_t *arrayStep,       // step in elements
+         const ptrdiff_t *bufferStride,  // stride in elements
          const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
          const void *pDstBufferAllocStart = nullptr,
          size_t nDstBufferAllocSize = 0) const;
 
     bool
-    Write(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const GInt64 *arrayStep,         // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    Write(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer,
           const void *pSrcBufferAllocStart = nullptr,
           size_t nSrcBufferAllocSize = 0);
@@ -2697,7 +2697,7 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
     //! @endcond
 
   public:
-    std::vector<GUInt64> GetDimensionsSize() const;
+    std::vector<uint64_t> GetDimensionsSize() const;
 
     GDALRawResult ReadAsRaw() const;
     const char *ReadAsString() const;
@@ -2716,7 +2716,7 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
     bool Write(const double *, size_t);
 
     //! @cond Doxygen_Suppress
-    static constexpr GUInt64 COPY_COST = 100;
+    static constexpr uint64_t COPY_COST = 100;
     //! @endcond
 };
 
@@ -2732,8 +2732,8 @@ class CPL_DLL GDALAttributeString final : public GDALAttribute
     std::string m_osValue;
 
   protected:
-    bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
-               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+    bool IRead(const uint64_t *, const size_t *, const int64_t *,
+               const ptrdiff_t *, const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
   public:
@@ -2759,11 +2759,11 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
     GDALExtendedDataType m_dt;
     int m_nValue = 0;
     double m_dfValue = 0;
-    std::vector<GUInt32> m_anValuesUInt32{};
+    std::vector<uint32_t> m_anValuesUInt32{};
 
   protected:
-    bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
-               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+    bool IRead(const uint64_t *, const size_t *, const int64_t *,
+               const ptrdiff_t *, const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
   public:
@@ -2773,7 +2773,7 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
                          const std::string &osName, int nValue);
     GDALAttributeNumeric(const std::string &osParentName,
                          const std::string &osName,
-                         const std::vector<GUInt32> &anValues);
+                         const std::vector<uint32_t> &anValues);
 
     const std::vector<std::shared_ptr<GDALDimension>> &
     GetDimensions() const override;
@@ -2803,19 +2803,19 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 {
     friend class GDALMDArrayResampled;
     std::shared_ptr<GDALMDArray>
-    GetView(const std::vector<GUInt64> &indices) const;
+    GetView(const std::vector<uint64_t> &indices) const;
 
     inline std::shared_ptr<GDALMDArray>
-    atInternal(std::vector<GUInt64> &indices) const
+    atInternal(std::vector<uint64_t> &indices) const
     {
         return GetView(indices);
     }
 
-    template <typename... GUInt64VarArg>
+    template <typename... uint64_tVarArg>
     // cppcheck-suppress functionStatic
     inline std::shared_ptr<GDALMDArray>
-    atInternal(std::vector<GUInt64> &indices, GUInt64 idx,
-               GUInt64VarArg... tail) const
+    atInternal(std::vector<uint64_t> &indices, uint64_t idx,
+               uint64_tVarArg... tail) const
     {
         indices.push_back(idx);
         return atInternal(indices, tail...);
@@ -2828,7 +2828,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     //! @cond Doxygen_Suppress
     GDALMDArray(const std::string &osParentName, const std::string &osName);
 
-    virtual bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    virtual bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                              CSLConstList papszOptions) const;
 
     virtual bool IsCacheable() const
@@ -2838,7 +2838,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 
     virtual bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
                                double dfMean, double dfStdDev,
-                               GUInt64 nValidCount, CSLConstList papszOptions);
+                               uint64_t nValidCount, CSLConstList papszOptions);
 
     static std::string MassageName(const std::string &inputName);
 
@@ -2847,36 +2847,36 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 
     // Returns if bufferStride values express a transposed view of the array
     bool IsTransposedRequest(const size_t *count,
-                             const GPtrDiff_t *bufferStride) const;
+                             const ptrdiff_t *bufferStride) const;
 
     // Should only be called if IsTransposedRequest() returns true
-    bool ReadForTransposedRequest(const GUInt64 *arrayStartIdx,
-                                  const size_t *count, const GInt64 *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+    bool ReadForTransposedRequest(const uint64_t *arrayStartIdx,
+                                  const size_t *count, const int64_t *arrayStep,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
 
     bool IsStepOneContiguousRowMajorOrderedSameDataType(
-        const size_t *count, const GInt64 *arrayStep,
-        const GPtrDiff_t *bufferStride,
+        const size_t *count, const int64_t *arrayStep,
+        const ptrdiff_t *bufferStride,
         const GDALExtendedDataType &bufferDataType) const;
 
     // Should only be called if IsStepOneContiguousRowMajorOrderedSameDataType()
     // returns false
-    bool ReadUsingContiguousIRead(const GUInt64 *arrayStartIdx,
-                                  const size_t *count, const GInt64 *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+    bool ReadUsingContiguousIRead(const uint64_t *arrayStartIdx,
+                                  const size_t *count, const int64_t *arrayStep,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
 
     //! @endcond
 
   public:
-    GUInt64 GetTotalCopyCost() const;
+    uint64_t GetTotalCopyCost() const;
 
     virtual bool CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
-                          bool bStrict, GUInt64 &nCurCost,
-                          const GUInt64 nTotalCost,
+                          bool bStrict, uint64_t &nCurCost,
+                          const uint64_t nTotalCost,
                           GDALProgressFunc pfnProgress, void *pProgressData);
 
     /** Return whether an array is writable. */
@@ -2925,7 +2925,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 
     bool SetNoDataValue(uint64_t nNoData);
 
-    virtual bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+    virtual bool Resize(const std::vector<uint64_t> &anNewDimSizes,
                         CSLConstList papszOptions);
 
     virtual double GetOffset(bool *pbHasOffset = nullptr,
@@ -2955,12 +2955,12 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
      */
     // sphinx 4.1.0 / breathe 4.30.0 don't like typename...
     //! @cond Doxygen_Suppress
-    template <typename... GUInt64VarArg>
+    template <typename... uint64_tVarArg>
     //! @endcond
     // cppcheck-suppress functionStatic
-    std::shared_ptr<GDALMDArray> at(GUInt64 idx, GUInt64VarArg... tail) const
+    std::shared_ptr<GDALMDArray> at(uint64_t idx, uint64_tVarArg... tail) const
     {
-        std::vector<GUInt64> indices;
+        std::vector<uint64_t> indices;
         indices.push_back(idx);
         return atInternal(indices, tail...);
     }
@@ -2991,13 +2991,13 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 
     virtual CPLErr GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
                                  double *pdfMax, double *pdfMean,
-                                 double *padfStdDev, GUInt64 *pnValidCount,
+                                 double *padfStdDev, uint64_t *pnValidCount,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressData);
 
     virtual bool ComputeStatistics(bool bApproxOK, double *pdfMin,
                                    double *pdfMax, double *pdfMean,
-                                   double *pdfStdDev, GUInt64 *pnValidCount,
+                                   double *pdfStdDev, uint64_t *pnValidCount,
                                    GDALProgressFunc, void *pProgressData,
                                    CSLConstList papszOptions);
 
@@ -3006,7 +3006,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const;
 
-    bool AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool AdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                     CSLConstList papszOptions = nullptr) const;
 
     bool IsRegularlySpaced(double &dfStart, double &dfIncrement) const;
@@ -3017,26 +3017,26 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     bool Cache(CSLConstList papszOptions = nullptr) const;
 
     bool
-    Read(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
-         const size_t *count,             // array of size GetDimensionCount()
-         const GInt64 *arrayStep,         // step in elements
-         const GPtrDiff_t *bufferStride,  // stride in elements
+    Read(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+         const size_t *count,            // array of size GetDimensionCount()
+         const int64_t *arrayStep,       // step in elements
+         const ptrdiff_t *bufferStride,  // stride in elements
          const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
          const void *pDstBufferAllocStart = nullptr,
          size_t nDstBufferAllocSize = 0) const override final;
 
     //! @cond Doxygen_Suppress
-    static constexpr GUInt64 COPY_COST = 1000;
+    static constexpr uint64_t COPY_COST = 1000;
 
     bool CopyFromAllExceptValues(const GDALMDArray *poSrcArray, bool bStrict,
-                                 GUInt64 &nCurCost, const GUInt64 nTotalCost,
+                                 uint64_t &nCurCost, const uint64_t nTotalCost,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressData);
     struct Range
     {
-        GUInt64 m_nStartIdx;
-        GInt64 m_nIncr;
-        explicit Range(GUInt64 nStartIdx = 0, GInt64 nIncr = 0)
+        uint64_t m_nStartIdx;
+        int64_t m_nIncr;
+        explicit Range(uint64_t nStartIdx = 0, int64_t nIncr = 0)
             : m_nStartIdx(nStartIdx), m_nIncr(nIncr)
         {
         }
@@ -3063,9 +3063,9 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 //! @cond Doxygen_Suppress
 bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
                             size_t iDimX, size_t iDimY,
-                            const GUInt64 *arrayStartIdx, const size_t *count,
-                            const GInt64 *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const uint64_t *arrayStartIdx, const size_t *count,
+                            const int64_t *arrayStep,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pBuffer);
 //! @endcond
@@ -3086,8 +3086,8 @@ class CPL_DLL GDALMDArrayRegularlySpaced : public GDALMDArray
     std::string m_osEmptyFilename{};
 
   protected:
-    bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
-               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+    bool IRead(const uint64_t *, const size_t *, const int64_t *,
+               const ptrdiff_t *, const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
   public:
@@ -3145,7 +3145,7 @@ class CPL_DLL GDALDimension
     //! @cond Doxygen_Suppress
     GDALDimension(const std::string &osParentName, const std::string &osName,
                   const std::string &osType, const std::string &osDirection,
-                  GUInt64 nSize);
+                  uint64_t nSize);
     //! @endcond
 
     virtual ~GDALDimension();
@@ -3198,7 +3198,7 @@ class CPL_DLL GDALDimension
      *
      * This is the same as the C function GDALDimensionGetSize()
      */
-    GUInt64 GetSize() const
+    uint64_t GetSize() const
     {
         return m_nSize;
     }
@@ -3222,7 +3222,7 @@ class CPL_DLL GDALDimension
     std::string m_osFullName;
     std::string m_osType;
     std::string m_osDirection;
-    GUInt64 m_nSize;
+    uint64_t m_nSize;
 
     void BaseRename(const std::string &osNewName);
 
@@ -3242,14 +3242,15 @@ class CPL_DLL GDALDimensionWeakIndexingVar : public GDALDimension
     GDALDimensionWeakIndexingVar(const std::string &osParentName,
                                  const std::string &osName,
                                  const std::string &osType,
-                                 const std::string &osDirection, GUInt64 nSize);
+                                 const std::string &osDirection,
+                                 uint64_t nSize);
 
     std::shared_ptr<GDALMDArray> GetIndexingVariable() const override;
 
     bool SetIndexingVariable(
         std::shared_ptr<GDALMDArray> poIndexingVariable) override;
 
-    void SetSize(GUInt64 nNewSize);
+    void SetSize(uint64_t nNewSize);
 };
 //! @endcond
 
@@ -3705,8 +3706,8 @@ void GDALNullifyOpenDatasetsList();
 CPLMutex **GDALGetphDMMutex();
 CPLMutex **GDALGetphDLMutex();
 void GDALNullifyProxyPoolSingleton();
-void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
-GIntBig GDALGetResponsiblePIDForCurrentThread();
+void GDALSetResponsiblePIDForCurrentThread(int64_t responsiblePID);
+int64_t GDALGetResponsiblePIDForCurrentThread();
 
 CPLString GDALFindAssociatedFile(const char *pszBasename, const char *pszExt,
                                  CSLConstList papszSiblingFiles, int nFlags);

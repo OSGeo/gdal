@@ -612,7 +612,7 @@ void OGRFeatherLayer::InvalidateCachedBatches()
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig OGRFeatherLayer::GetFeatureCount(int bForce)
+int64_t OGRFeatherLayer::GetFeatureCount(int bForce)
 {
     if (m_poRecordBatchFileReader != nullptr && m_poAttrQuery == nullptr &&
         m_poFilterGeom == nullptr)
@@ -642,7 +642,7 @@ GIntBig OGRFeatherLayer::GetFeatureCount(int bForce)
 
         if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
         {
-            GIntBig nFeatures = 0;
+            int64_t nFeatures = 0;
             ResetReading();
             if (!m_poBatch)
                 ReadNextBatchStream();

@@ -1355,7 +1355,7 @@ CPLString OGRGMLASLayer::CreateLinkForAttrToOtherLayer(
     // Find a relevant location of the field metadata layer into which to
     // insert the new feature (same as above, we could potentially insert just
     // at the end)
-    GIntBig nFieldsMetadataIdxPos = -1;
+    int64_t nFieldsMetadataIdxPos = -1;
     poFieldsMetadataLayer->ResetReading();
     OGRFeature *poFeature;
     while ((poFeature = poFieldsMetadataLayer->GetNextFeature()) != nullptr)
@@ -1379,7 +1379,7 @@ CPLString OGRGMLASLayer::CreateLinkForAttrToOtherLayer(
     poFieldsMetadataLayer->ResetReading();
 
     // Move down all features beyond that insertion point
-    for (GIntBig nFID = poFieldsMetadataLayer->GetFeatureCount() - 1;
+    for (int64_t nFID = poFieldsMetadataLayer->GetFeatureCount() - 1;
          nFID >= nFieldsMetadataIdxPos; nFID--)
     {
         poFeature = poFieldsMetadataLayer->GetFeature(nFID);

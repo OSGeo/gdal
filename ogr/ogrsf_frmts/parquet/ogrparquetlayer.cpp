@@ -756,7 +756,7 @@ OGRParquetLayer::ComputeGeometryColumnType(int iGeomCol, int iParquetCol) const
 /*                       GetFeatureExplicitFID()                        */
 /************************************************************************/
 
-OGRFeature *OGRParquetLayer::GetFeatureExplicitFID(GIntBig nFID)
+OGRFeature *OGRParquetLayer::GetFeatureExplicitFID(int64_t nFID)
 {
     std::shared_ptr<arrow::RecordBatchReader> poRecordBatchReader;
 
@@ -828,7 +828,7 @@ OGRFeature *OGRParquetLayer::GetFeatureExplicitFID(GIntBig nFID)
 /*                         GetFeatureByIndex()                          */
 /************************************************************************/
 
-OGRFeature *OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
+OGRFeature *OGRParquetLayer::GetFeatureByIndex(int64_t nFID)
 {
 
     if (nFID < 0)
@@ -900,7 +900,7 @@ OGRFeature *OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRParquetLayer::GetFeature(int64_t nFID)
 {
     if (!m_osFIDColumn.empty())
     {
@@ -1183,15 +1183,15 @@ bool OGRParquetLayer::ReadNextBatch()
                         {
 #if 0
                             CPLDebug("PARQUET",
-                                     "Group %d, field %s, min = " CPL_FRMT_GIB
-                                     ", max = " CPL_FRMT_GIB,
+                                     "Group %d, field %s, min = %" PRId64
+                                     ", max = %" PRId64,
                                      iRowGroup,
                                      iOGRField == OGR_FID_INDEX
                                          ? m_osFIDColumn.c_str()
                                          : m_poFeatureDefn->GetFieldDefn(iOGRField)
                                                ->GetNameRef(),
-                                     static_cast<GIntBig>(sMin.Integer64),
-                                     static_cast<GIntBig>(sMax.Integer64));
+                                     static_cast<int64_t>(sMin.Integer64),
+                                     static_cast<int64_t>(sMax.Integer64));
 #endif
                             res = IsConstraintPossible(
                                 constraint.nOperation,
@@ -1565,7 +1565,7 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
+int64_t OGRParquetLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
     {
@@ -1788,7 +1788,7 @@ bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRParquetLayer::SetNextByIndex(int64_t nIndex)
 {
     if (nIndex < 0)
         return OGRERR_FAILURE;

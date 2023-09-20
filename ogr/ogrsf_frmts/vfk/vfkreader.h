@@ -75,14 +75,14 @@ class VFKProperty
   private:
     bool m_bIsNull;
 
-    GIntBig m_iValue;
+    int64_t m_iValue;
     double m_dValue;
     CPLString m_strValue;
 
   public:
     VFKProperty();
     explicit VFKProperty(int);
-    explicit VFKProperty(GIntBig);
+    explicit VFKProperty(int64_t);
     explicit VFKProperty(double);
     explicit VFKProperty(const char *);
     explicit VFKProperty(CPLString const &);
@@ -100,7 +100,7 @@ class VFKProperty
     {
         return static_cast<int>(m_iValue);
     }
-    GIntBig GetValueI64() const
+    int64_t GetValueI64() const
     {
         return m_iValue;
     }
@@ -118,7 +118,7 @@ class IVFKFeature
 {
   protected:
     IVFKDataBlock *m_poDataBlock;
-    GIntBig m_nFID;
+    int64_t m_nFID;
     OGRwkbGeometryType m_nGeometryType;
     bool m_bGeometry;
     bool m_bValid;
@@ -133,11 +133,11 @@ class IVFKFeature
     explicit IVFKFeature(IVFKDataBlock *);
     virtual ~IVFKFeature();
 
-    GIntBig GetFID() const
+    int64_t GetFID() const
     {
         return m_nFID;
     }
-    void SetFID(GIntBig);
+    void SetFID(int64_t);
     void SetGeometryType(OGRwkbGeometryType);
 
     bool IsValid() const
@@ -180,7 +180,7 @@ class VFKFeature : public IVFKFeature
     bool LoadGeometryPolygon() override;
 
   public:
-    VFKFeature(IVFKDataBlock *, GIntBig);
+    VFKFeature(IVFKDataBlock *, int64_t);
 
     bool SetProperties(const char *);
     const VFKProperty *GetProperty(int) const;
@@ -211,7 +211,7 @@ class VFKFeatureSQLite : public IVFKFeature
 
   public:
     explicit VFKFeatureSQLite(IVFKDataBlock *);
-    VFKFeatureSQLite(IVFKDataBlock *, int, GIntBig);
+    VFKFeatureSQLite(IVFKDataBlock *, int, int64_t);
     explicit VFKFeatureSQLite(const VFKFeature *);
 
     OGRErr LoadProperties(OGRFeature *) override;
@@ -289,7 +289,7 @@ class IVFKDataBlock
     // TODO: Make m_poReader const.
     IVFKReader *m_poReader;
 
-    GIntBig m_nRecordCount[3];
+    int64_t m_nRecordCount[3];
 
     bool AppendLineToRing(PointListArray *, const OGRLineString *, bool,
                           bool = false);
@@ -319,10 +319,10 @@ class IVFKDataBlock
     void SetProperties(const char *);
     int GetPropertyIndex(const char *) const;
 
-    GIntBig GetFeatureCount(bool = true);
+    int64_t GetFeatureCount(bool = true);
     void SetFeatureCount(int, bool = false);
     IVFKFeature *GetFeatureByIndex(int) const;
-    IVFKFeature *GetFeature(GIntBig);
+    IVFKFeature *GetFeature(int64_t);
     void AddFeature(IVFKFeature *);
 
     void ResetReading(int iIdx = -1);
@@ -365,11 +365,11 @@ class VFKDataBlock : public IVFKDataBlock
     {
     }
 
-    VFKFeature *GetFeature(int, GUIntBig, VFKFeatureList *poList = nullptr);
-    VFKFeatureList GetFeatures(int, GUIntBig);
-    VFKFeatureList GetFeatures(int, int, GUIntBig);
+    VFKFeature *GetFeature(int, uint64_t, VFKFeatureList *poList = nullptr);
+    VFKFeatureList GetFeatures(int, uint64_t);
+    VFKFeatureList GetFeatures(int, int, uint64_t);
 
-    GIntBig GetFeatureCount(const char *, const char *);
+    int64_t GetFeatureCount(const char *, const char *);
 
     OGRErr LoadProperties() override
     {
@@ -405,7 +405,7 @@ class VFKDataBlockSQLite : public IVFKDataBlock
 
     static bool IsRingClosed(const OGRLinearRing *);
     void UpdateVfkBlocks(int);
-    void UpdateFID(GIntBig, const std::vector<int> &);
+    void UpdateFID(int64_t, const std::vector<int> &);
 
     friend class VFKFeatureSQLite;
 
@@ -413,10 +413,10 @@ class VFKDataBlockSQLite : public IVFKDataBlock
     VFKDataBlockSQLite(const char *, const IVFKReader *);
 
     const char *GetKey() const;
-    IVFKFeature *GetFeature(GIntBig);
-    VFKFeatureSQLite *GetFeature(const char *, GUIntBig, bool = false);
-    VFKFeatureSQLite *GetFeature(const char **, GUIntBig *, int, bool = false);
-    VFKFeatureSQLiteList GetFeatures(const char **, GUIntBig *, int);
+    IVFKFeature *GetFeature(int64_t);
+    VFKFeatureSQLite *GetFeature(const char *, uint64_t, bool = false);
+    VFKFeatureSQLite *GetFeature(const char **, uint64_t *, int, bool = false);
+    VFKFeatureSQLiteList GetFeatures(const char **, uint64_t *, int);
 
     int GetGeometrySQLType() const;
 

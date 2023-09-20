@@ -32,6 +32,7 @@
 #include "gtiffjpegoverviewds.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <map>
 #include <set>
@@ -58,7 +59,7 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 /************************************************************************/
 
 CPLErr GTiffRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                     GUIntBig *panHistogram,
+                                     uint64_t *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
@@ -74,7 +75,7 @@ CPLErr GTiffRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 /************************************************************************/
 
 CPLErr GTiffRasterBand::GetDefaultHistogram(
-    double *pdfMin, double *pdfMax, int *pnBuckets, GUIntBig **ppanHistogram,
+    double *pdfMin, double *pdfMax, int *pnBuckets, uint64_t **ppanHistogram,
     int bForce, GDALProgressFunc pfnProgress, void *pProgressData)
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
@@ -96,8 +97,8 @@ CPLErr GTiffRasterBand::GetDefaultHistogram(
 int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, GSpacing nPixelSpace,
-                              GSpacing nLineSpace,
+                              GDALDataType eBufType, int64_t nPixelSpace,
+                              int64_t nLineSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 {
     const int nDTSizeBits = GDALGetDataTypeSizeBits(eDataType);
@@ -134,7 +135,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         const int nDTSize = nDTSizeBits / 8;
         const size_t nTempBufferForCommonDirectIOSize = static_cast<size_t>(
-            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize * nDTSize *
+            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize * nDTSize *
             (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? m_poGDS->nBands
                                                              : 1));
         if (m_poGDS->m_pTempBufferForCommonDirectIO == nullptr)
@@ -171,8 +172,8 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // TODO(schwehr): Make ppData be GByte**.
     void **ppData =
         static_cast<void **>(VSI_MALLOC_VERBOSE(nReqYSize * sizeof(void *)));
-    vsi_l_offset *panOffsets = static_cast<vsi_l_offset *>(
-        VSI_MALLOC_VERBOSE(nReqYSize * sizeof(vsi_l_offset)));
+    uint64_t *panOffsets = static_cast<uint64_t *>(
+        VSI_MALLOC_VERBOSE(nReqYSize * sizeof(uint64_t)));
     size_t *panSizes =
         static_cast<size_t *>(VSI_MALLOC_VERBOSE(nReqYSize * sizeof(size_t)));
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -222,7 +223,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             eErr = -1;
 
         panOffsets[iLine] +=
-            (nXOff + static_cast<vsi_l_offset>(nYOffsetInBlock) * nBlockXSize) *
+            (nXOff + static_cast<uint64_t>(nYOffsetInBlock) * nBlockXSize) *
             nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
     }
@@ -315,7 +316,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 CPLVirtualMem *GTiffRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                   int *pnPixelSpace,
-                                                  GIntBig *pnLineSpace,
+                                                  int64_t *pnLineSpace,
                                                   char **papszOptions)
 {
     const char *pszImpl = CSLFetchNameValueDef(
@@ -377,7 +378,7 @@ void GTiffRasterBand::DropReferenceVirtualMem(void *pUserData)
 
 CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
                                                           int *pnPixelSpace,
-                                                          GIntBig *pnLineSpace,
+                                                          int64_t *pnLineSpace,
                                                           char **papszOptions)
 {
     int nLineSize = nBlockXSize * GDALGetDataTypeSizeBytes(eDataType);
@@ -391,8 +392,8 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         if (m_poGDS->m_pBaseMapping != nullptr)
         {
             // Offset between the base mapping and the requested mapping.
-            vsi_l_offset nOffset = static_cast<vsi_l_offset>(nBand - 1) *
-                                   GDALGetDataTypeSizeBytes(eDataType);
+            uint64_t nOffset = static_cast<uint64_t>(nBand - 1) *
+                               GDALGetDataTypeSizeBytes(eDataType);
 
             GTiffRasterBand **ppoSelf = static_cast<GTiffRasterBand **>(
                 CPLCalloc(1, sizeof(GTiffRasterBand *)));
@@ -422,7 +423,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
 
     VSILFILE *fp = VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF));
 
-    vsi_l_offset nLength = static_cast<vsi_l_offset>(nRasterYSize) * nLineSize;
+    uint64_t nLength = static_cast<uint64_t>(nRasterYSize) * nLineSize;
 
     if (!(CPLIsVirtualMemFileMapAvailable() &&
           VSIFGetNativeFileDescriptorL(fp) != nullptr &&
@@ -456,8 +457,8 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         return nullptr;
     }
 
-    GPtrDiff_t nBlockSize = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
-                            GDALGetDataTypeSizeBytes(eDataType);
+    ptrdiff_t nBlockSize = static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
+                           GDALGetDataTypeSizeBytes(eDataType);
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
         nBlockSize *= m_poGDS->nBands;
 
@@ -487,7 +488,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
             }
             if (VSIFSeekL(fp, 0, SEEK_END) != 0)
                 return nullptr;
-            vsi_l_offset nBaseOffset = VSIFTellL(fp);
+            uint64_t nBaseOffset = VSIFTellL(fp);
 
             // Just write one tile with libtiff to put it in appropriate state.
             GByte *pabyData =
@@ -508,8 +509,8 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
             CPLAssert(panByteCounts[0] == static_cast<toff_t>(nBlockSize));
 
             // Now simulate the writing of other blocks.
-            const vsi_l_offset nDataSize =
-                static_cast<vsi_l_offset>(nBlockSize) * nBlocks;
+            const uint64_t nDataSize =
+                static_cast<uint64_t>(nBlockSize) * nBlocks;
             if (VSIFTruncateL(fp, nBaseOffset + nDataSize) != 0)
                 return nullptr;
 
@@ -527,7 +528,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         }
     }
 
-    GIntBig nBlockSpacing = 0;
+    int64_t nBlockSpacing = 0;
     bool bCompatibleSpacing = true;
     toff_t nPrevOffset = 0;
     for (i = 0; i < m_poGDS->m_nBlocksPerBand; ++i)
@@ -545,11 +546,11 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         }
         if (i > 0)
         {
-            const GIntBig nCurSpacing = nCurOffset - nPrevOffset;
+            const int64_t nCurSpacing = nCurOffset - nPrevOffset;
             if (i == 1)
             {
                 if (nCurSpacing !=
-                    static_cast<GIntBig>(nBlockYSize) * nLineSize)
+                    static_cast<int64_t>(nBlockYSize) * nLineSize)
                 {
                     bCompatibleSpacing = false;
                     break;
@@ -570,7 +571,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         return nullptr;
     }
 
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
     {
         CPLAssert(m_poGDS->m_pBaseMapping == nullptr);
@@ -615,7 +616,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
 /************************************************************************/
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-static bool CheckTrailer(const GByte *strileData, vsi_l_offset nStrileSize)
+static bool CheckTrailer(const GByte *strileData, uint64_t nStrileSize)
 {
     GByte abyTrailer[4];
     memcpy(abyTrailer, strileData + nStrileSize, 4);
@@ -673,8 +674,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
     const int nBlockCount = nBlocksPerRow * nBlocksPerColumn;
     struct StrileData
     {
-        vsi_l_offset nOffset;
-        vsi_l_offset nByteCount;
+        uint64_t nOffset;
+        uint64_t nByteCount;
         bool bTryMask;
     };
     std::map<int, StrileData> oMapStrileToOffsetByteCount;
@@ -686,8 +687,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
     // array, and retrieve the size in the leader 4 bytes that come before the
     // payload.
     auto OptimizedRetrievalOfOffsetSize =
-        [&](int nBlockId, vsi_l_offset &nOffset, vsi_l_offset &nSize,
-            size_t nTotalSize, size_t nMaxRawBlockCacheSize)
+        [&](int nBlockId, uint64_t &nOffset, uint64_t &nSize, size_t nTotalSize,
+            size_t nMaxRawBlockCacheSize)
     {
         bool bTryMask = m_poGDS->m_bMaskInterleavedWithImagery;
         nOffset = TIFFGetStrileOffset(m_poGDS->m_hTIFF, nBlockId);
@@ -775,13 +776,13 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
     // m_poDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount, when there is a
     // mask) from the temporary oMapStrileToOffsetByteCount.
     auto FillCacheStrileToOffsetByteCount =
-        [&](const std::vector<vsi_l_offset> &anOffsets,
+        [&](const std::vector<uint64_t> &anOffsets,
             const std::vector<size_t> &anSizes,
             const std::vector<void *> &apData)
     {
         CPLAssert(m_poGDS->m_bLeaderSizeAsUInt4);
         size_t i = 0;
-        vsi_l_offset nLastOffset = 0;
+        uint64_t nLastOffset = 0;
         for (const auto &entry : oMapStrileToOffsetByteCount)
         {
             const auto nBlockId = entry.first;
@@ -791,7 +792,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             {
                 // Sparse tile
                 m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                    nBlockId, std::pair<vsi_l_offset, vsi_l_offset>(0, 0));
+                    nBlockId, std::pair<uint64_t, uint64_t>(0, 0));
                 continue;
             }
 
@@ -810,7 +811,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             CPLAssert(i < anOffsets.size());
             CPLAssert(nOffset >= anOffsets[i]);
             CPLAssert(nOffset + nSize <= anOffsets[i] + anSizes[i]);
-            GUInt32 nSizeFromLeader;
+            uint32_t nSizeFromLeader;
             memcpy(&nSizeFromLeader,
                    // cppcheck-suppress containerOutOfBounds
                    static_cast<GByte *>(apData[i]) + nOffset - anOffsets[i],
@@ -845,17 +846,17 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             }
 
             {
-                const vsi_l_offset nRealOffset = nOffset + nLeaderSize;
-                const vsi_l_offset nRealSize = nSizeFromLeader;
+                const uint64_t nRealOffset = nOffset + nLeaderSize;
+                const uint64_t nRealSize = nSizeFromLeader;
 #ifdef DEBUG_VERBOSE
                 CPLDebug("GTiff",
-                         "Block %d found at offset " CPL_FRMT_GUIB
-                         " with size " CPL_FRMT_GUIB,
+                         "Block %d found at offset %" PRIu64
+                         " with size %" PRIu64,
                          nBlockId, nRealOffset, nRealSize);
 #endif
                 m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                    nBlockId, std::pair<vsi_l_offset, vsi_l_offset>(nRealOffset,
-                                                                    nRealSize));
+                    nBlockId,
+                    std::pair<uint64_t, uint64_t>(nRealOffset, nRealSize));
             }
 
             // Processing of mask
@@ -868,12 +869,12 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             }
 
             bOK = false;
-            const vsi_l_offset nMaskOffsetWithLeader =
+            const uint64_t nMaskOffsetWithLeader =
                 nOffset + nLeaderSize + nSizeFromLeader + nTrailerSize;
             if (nMaskOffsetWithLeader + nLeaderSize <=
                 anOffsets[i] + anSizes[i])
             {
-                GUInt32 nMaskSizeFromLeader;
+                uint32_t nMaskSizeFromLeader;
                 memcpy(&nMaskSizeFromLeader,
                        static_cast<GByte *>(apData[i]) + nMaskOffsetWithLeader -
                            anOffsets[i],
@@ -902,20 +903,20 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 }
                 if (bOK)
                 {
-                    const vsi_l_offset nRealOffset = nOffset + nLeaderSize +
-                                                     nSizeFromLeader +
-                                                     nTrailerSize + nLeaderSize;
-                    const vsi_l_offset nRealSize = nMaskSizeFromLeader;
+                    const uint64_t nRealOffset = nOffset + nLeaderSize +
+                                                 nSizeFromLeader +
+                                                 nTrailerSize + nLeaderSize;
+                    const uint64_t nRealSize = nMaskSizeFromLeader;
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GTiff",
-                             "Mask of block %d found at offset " CPL_FRMT_GUIB
-                             " with size " CPL_FRMT_GUIB,
+                             "Mask of block %d found at offset %" PRIu64
+                             " with size %" PRIu64,
                              nBlockId, nRealOffset, nRealSize);
 #endif
 
                     m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.insert(
-                        nBlockId, std::pair<vsi_l_offset, vsi_l_offset>(
-                                      nRealOffset, nRealSize));
+                        nBlockId,
+                        std::pair<uint64_t, uint64_t>(nRealOffset, nRealSize));
                 }
             }
             if (!bOK)
@@ -933,7 +934,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
     thandle_t th = TIFFClientdata(m_poGDS->m_hTIFF);
     if (!VSI_TIFFHasCachedRanges(th))
     {
-        std::vector<std::pair<vsi_l_offset, size_t>> aOffsetSize;
+        std::vector<std::pair<uint64_t, size_t>> aOffsetSize;
         size_t nTotalSize = 0;
         const unsigned int nMaxRawBlockCacheSize = atoi(
             CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE", "10485760"));
@@ -951,8 +952,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 int nBlockId = iX + iY * nBlocksPerRow;
                 if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
                     nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
-                vsi_l_offset nOffset = 0;
-                vsi_l_offset nSize = 0;
+                uint64_t nOffset = 0;
+                uint64_t nSize = 0;
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
                 if ((m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ||
@@ -977,12 +978,12 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                     {
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GTiff",
-                                 "Precaching for block (%d, %d), " CPL_FRMT_GUIB
-                                 "-" CPL_FRMT_GUIB,
+                                 "Precaching for block (%d, %d), %" PRIu64
+                                 "-%" PRIu64,
                                  iX, iY, nOffset,
                                  nOffset + static_cast<size_t>(nSize) - 1);
 #endif
-                        aOffsetSize.push_back(std::pair<vsi_l_offset, size_t>(
+                        aOffsetSize.push_back(std::pair<uint64_t, size_t>(
                             nOffset, static_cast<size_t>(nSize)));
                         nTotalSize += static_cast<size_t>(nSize);
                     }
@@ -1001,7 +1002,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             pBufferedData = VSI_MALLOC_VERBOSE(nTotalSize);
             if (pBufferedData)
             {
-                std::vector<vsi_l_offset> anOffsets;
+                std::vector<uint64_t> anOffsets;
                 std::vector<size_t> anSizes;
                 std::vector<void *> apData;
                 anOffsets.push_back(aOffsetSize[0].first);
@@ -1032,8 +1033,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                         anSizes.push_back(nChunkSize);
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GTiff",
-                                 "Requesting range [" CPL_FRMT_GUIB
-                                 "-" CPL_FRMT_GUIB "]",
+                                 "Requesting range [%" PRIu64 "-%" PRIu64 "]",
                                  anOffsets.back(),
                                  anOffsets.back() + anSizes.back() - 1);
 #endif
@@ -1048,10 +1048,9 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 // terminate last block
                 anSizes.push_back(nChunkSize);
 #ifdef DEBUG_VERBOSE
-                CPLDebug(
-                    "GTiff",
-                    "Requesting range [" CPL_FRMT_GUIB "-" CPL_FRMT_GUIB "]",
-                    anOffsets.back(), anOffsets.back() + anSizes.back() - 1);
+                CPLDebug("GTiff", "Requesting range [%" PRIu64 "-%" PRIu64 "]",
+                         anOffsets.back(),
+                         anOffsets.back() + anSizes.back() - 1);
 #endif
 
                 VSILFILE *fp = VSI_TIFFGetVSILFile(th);
@@ -1103,7 +1102,7 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     const int iYBlockEnd = (nYOff + nYSize - 1) / nBlockYSize;
     int nStatus = 0;
     VSILFILE *fp = VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF));
-    GIntBig nPixelsData = 0;
+    int64_t nPixelsData = 0;
     for (int iY = iYBlockStart; iY <= iYBlockEnd; ++iY)
     {
         for (int iX = iXBlockStart; iX <= iXBlockEnd; ++iX)
@@ -1113,8 +1112,8 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
             if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
                 nBlockId =
                     nBlockIdBand0 + (nBand - 1) * m_poGDS->m_nBlocksPerBand;
-            vsi_l_offset nOffset = 0;
-            vsi_l_offset nLength = 0;
+            uint64_t nOffset = 0;
+            uint64_t nLength = 0;
             bool bHasData = false;
             if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nLength))
             {
@@ -1157,7 +1156,7 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
                         ? INT_MAX
                         : (iY + 1) * nBlockYSize;
 
-                nPixelsData += (static_cast<GIntBig>(
+                nPixelsData += (static_cast<int64_t>(
                                     std::min(nXBlockRight, nXOff + nXSize)) -
                                 std::max(iX * nBlockXSize, nXOff)) *
                                (std::min(nYBlockBottom, nYOff + nYSize) -
@@ -1174,7 +1173,7 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     }
     if (pdfDataPct)
         *pdfDataPct =
-            100.0 * nPixelsData / (static_cast<GIntBig>(nXSize) * nYSize);
+            100.0 * nPixelsData / (static_cast<int64_t>(nXSize) * nYSize);
     return nStatus;
 }
 
@@ -1187,16 +1186,15 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     m_poGDS->Crystalize();
 
-    GPtrDiff_t nBlockBufSize = 0;
+    ptrdiff_t nBlockBufSize = 0;
     if (TIFFIsTiled(m_poGDS->m_hTIFF))
     {
-        nBlockBufSize = static_cast<GPtrDiff_t>(TIFFTileSize(m_poGDS->m_hTIFF));
+        nBlockBufSize = static_cast<ptrdiff_t>(TIFFTileSize(m_poGDS->m_hTIFF));
     }
     else
     {
         CPLAssert(nBlockXOff == 0);
-        nBlockBufSize =
-            static_cast<GPtrDiff_t>(TIFFStripSize(m_poGDS->m_hTIFF));
+        nBlockBufSize = static_cast<ptrdiff_t>(TIFFStripSize(m_poGDS->m_hTIFF));
     }
 
     const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
@@ -1214,7 +1212,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             (nBlockBufSize / nBlockYSize) *
             (nBlockYSize -
              static_cast<int>(
-                 (static_cast<GIntBig>(nBlockYOff + 1) * nBlockYSize) %
+                 (static_cast<int64_t>(nBlockYOff + 1) * nBlockYSize) %
                  nRasterYSize));
     }
 
@@ -1222,7 +1220,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     /*      Handle the case of a strip or tile that doesn't exist yet.      */
     /*      Just set to zeros and return.                                   */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
     bool bErrOccurred = false;
     if (nBlockId != m_poGDS->m_nLoadedBlock &&
         !m_poGDS->IsBlockAvailable(nBlockId, &nOffset, nullptr, &bErrOccurred))
@@ -1241,11 +1239,11 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         if (nOffset < VSIFTellL(m_poGDS->m_fpL))
         {
             ReportError(CE_Failure, CPLE_NotSupported,
-                        "Trying to load block %d at offset " CPL_FRMT_GUIB
-                        " whereas current pos is " CPL_FRMT_GUIB
+                        "Trying to load block %d at offset %" PRIu64
+                        " whereas current pos is %" PRIu64
                         " (backward read not supported)",
-                        nBlockId, static_cast<GUIntBig>(nOffset),
-                        static_cast<GUIntBig>(VSIFTellL(m_poGDS->m_fpL)));
+                        nBlockId, static_cast<uint64_t>(nOffset),
+                        static_cast<uint64_t>(VSIFTellL(m_poGDS->m_fpL)));
             return CE_Failure;
         }
     }
@@ -1277,7 +1275,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         if (eErr != CE_None)
         {
             memset(pImage, 0,
-                   static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+                   static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                        GDALGetDataTypeSizeBytes(eDataType));
             return eErr;
         }
@@ -1289,7 +1287,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             ((eDataType == GDT_Byte && m_poGDS->m_nBitsPerSample == 8) ||
              (eDataType == GDT_Int16 && m_poGDS->m_nBitsPerSample == 16) ||
              (eDataType == GDT_UInt16 && m_poGDS->m_nBitsPerSample == 16)) &&
-            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                     GDALGetDataTypeSizeBytes(eDataType) <
                 GDALGetCacheMax64() / m_poGDS->nBands)
         {
@@ -1341,7 +1339,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
             GDALCopyWords64(pabyImage, eDataType, m_poGDS->nBands * nWordBytes,
                             pImage, eDataType, nWordBytes,
-                            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
 
             eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
         }
@@ -1407,7 +1405,7 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands(int nBlockXOff, int nBlockYOff)
         m_poGDS->nBands <
             128 &&  // avoid caching for datasets with too many bands
         !m_poGDS->m_bLoadingOtherBands &&
-        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+        static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                 GDALGetDataTypeSizeBytes(eDataType) <
             GDALGetCacheMax64() / m_poGDS->nBands)
     {
@@ -1556,8 +1554,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
         if (EQUAL(pszName, "IFD_OFFSET"))
         {
-            return CPLSPrintf(CPL_FRMT_GUIB,
-                              static_cast<GUIntBig>(m_poGDS->m_nDirOffset));
+            return CPLSPrintf("%" PRIu64,
+                              static_cast<uint64_t>(m_poGDS->m_nDirOffset));
         }
 
         if (sscanf(pszName, "BLOCK_OFFSET_%d_%d", &nBlockXOff, &nBlockYOff) ==
@@ -1573,13 +1571,13 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
                 nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
             }
 
-            vsi_l_offset nOffset = 0;
+            uint64_t nOffset = 0;
             if (!m_poGDS->IsBlockAvailable(nBlockId, &nOffset))
             {
                 return nullptr;
             }
 
-            return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nOffset));
+            return CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nOffset));
         }
 
         if (sscanf(pszName, "BLOCK_SIZE_%d_%d", &nBlockXOff, &nBlockYOff) == 2)
@@ -1594,13 +1592,13 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
                 nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
             }
 
-            vsi_l_offset nByteCount = 0;
+            uint64_t nByteCount = 0;
             if (!m_poGDS->IsBlockAvailable(nBlockId, nullptr, &nByteCount))
             {
                 return nullptr;
             }
 
-            return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nByteCount));
+            return CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nByteCount));
         }
     }
     else if (pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_"))

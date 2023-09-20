@@ -35,8 +35,8 @@
 
 #include "cpl_port.h"
 
-struct tm CPL_DLL *CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet);
-GIntBig CPL_DLL CPLYMDHMSToUnixTime(const struct tm *brokendowntime);
+struct tm CPL_DLL *CPLUnixTimeToYMDHMS(int64_t unixTime, struct tm *pRet);
+int64_t CPL_DLL CPLYMDHMSToUnixTime(const struct tm *brokendowntime);
 
 int CPL_DLL CPLParseRFC822DateTime(const char *pszRFC822DateTime, int *pnYear,
                                    int *pnMonth, int *pnDay, int *pnHour,

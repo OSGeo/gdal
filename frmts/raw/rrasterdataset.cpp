@@ -66,7 +66,7 @@ class RRASTERDataset final : public RawDataset
     static bool ComputeSpacings(const CPLString &osBandOrder, int nCols,
                                 int nRows, int l_nBands, GDALDataType eDT,
                                 int &nPixelOffset, int &nLineOffset,
-                                vsi_l_offset &nBandOffset);
+                                uint64_t &nBandOffset);
     void RewriteHeader();
 
     CPL_DISALLOW_COPY_ASSIGN(RRASTERDataset)
@@ -132,9 +132,8 @@ class RRASTERRasterBand final : public RawRasterBand
 
   public:
     RRASTERRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                      vsi_l_offset nImgOffset, int nPixelOffset,
-                      int nLineOffset, GDALDataType eDataType,
-                      int bNativeOrder);
+                      uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
+                      GDALDataType eDataType, int bNativeOrder);
 
     void SetMinMax(double dfMin, double dfMax);
     double GetMinimum(int *pbSuccess = nullptr) override;
@@ -154,7 +153,7 @@ class RRASTERRasterBand final : public RawRasterBand
   protected:
     CPLErr IWriteBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -163,8 +162,7 @@ class RRASTERRasterBand final : public RawRasterBand
 /************************************************************************/
 
 RRASTERRasterBand::RRASTERRasterBand(GDALDataset *poDSIn, int nBandIn,
-                                     VSILFILE *fpRawIn,
-                                     vsi_l_offset nImgOffsetIn,
+                                     VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                      int nPixelOffsetIn, int nLineOffsetIn,
                                      GDALDataType eDataTypeIn,
                                      int bNativeOrderIn)
@@ -320,7 +318,7 @@ CPLErr RRASTERRasterBand::SetNoDataValue(double dfNoData)
 
 template <class T>
 static void GetMinMax(const T *buffer, int nBufXSize, int nBufYSize,
-                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      int64_t nPixelSpace, int64_t nLineSpace,
                       double dfNoDataValue, double &dfMin, double &dfMax)
 {
     for (int iY = 0; iY < nBufYSize; iY++)
@@ -338,7 +336,7 @@ static void GetMinMax(const T *buffer, int nBufXSize, int nBufYSize,
 }
 
 static void GetMinMax(const void *pBuffer, GDALDataType eDT, int nBufXSize,
-                      int nBufYSize, GSpacing nPixelSpace, GSpacing nLineSpace,
+                      int nBufYSize, int64_t nPixelSpace, int64_t nLineSpace,
                       double dfNoDataValue, double &dfMin, double &dfMax)
 {
     switch (eDT)
@@ -348,26 +346,27 @@ static void GetMinMax(const void *pBuffer, GDALDataType eDT, int nBufXSize,
                       nPixelSpace, nLineSpace, dfNoDataValue, dfMin, dfMax);
             break;
         case GDT_Int8:
-            GetMinMax(static_cast<const GInt8 *>(pBuffer), nBufXSize, nBufYSize,
-                      nPixelSpace, nLineSpace, dfNoDataValue, dfMin, dfMax);
+            GetMinMax(static_cast<const int8_t *>(pBuffer), nBufXSize,
+                      nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
+                      dfMax);
             break;
         case GDT_UInt16:
-            GetMinMax(static_cast<const GUInt16 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const uint16_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
         case GDT_Int16:
-            GetMinMax(static_cast<const GInt16 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const int16_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
         case GDT_UInt32:
-            GetMinMax(static_cast<const GUInt32 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const uint32_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
         case GDT_Int32:
-            GetMinMax(static_cast<const GInt32 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const int32_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
@@ -412,8 +411,8 @@ CPLErr RRASTERRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 CPLErr RRASTERRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType eBufType, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -497,7 +496,7 @@ void RRASTERDataset::InitImageIfNeeded()
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
     if (dfNoDataValue == 0.0)
     {
-        VSIFTruncateL(m_fpImage, static_cast<vsi_l_offset>(nRasterXSize) *
+        VSIFTruncateL(m_fpImage, static_cast<uint64_t>(nRasterXSize) *
                                      nRasterYSize * nBands * nDTSize);
     }
     else
@@ -505,8 +504,8 @@ void RRASTERDataset::InitImageIfNeeded()
         GByte abyNoDataValue[16];
         GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, abyNoDataValue, eDT, 0,
                       1);
-        for (GUIntBig i = 0;
-             i < static_cast<GUIntBig>(nRasterXSize) * nRasterYSize * nBands;
+        for (uint64_t i = 0;
+             i < static_cast<uint64_t>(nRasterXSize) * nRasterYSize * nBands;
              i++)
         {
             VSIFWriteL(abyNoDataValue, 1, nDTSize, m_fpImage);
@@ -968,7 +967,7 @@ int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
 bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
                                      int nRows, int l_nBands, GDALDataType eDT,
                                      int &nPixelOffset, int &nLineOffset,
-                                     vsi_l_offset &nBandOffset)
+                                     uint64_t &nBandOffset)
 {
     nPixelOffset = 0;
     nLineOffset = 0;
@@ -984,7 +983,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
             return false;
         }
         nLineOffset = nPixelSize * nCols * l_nBands;
-        nBandOffset = static_cast<vsi_l_offset>(nPixelSize) * nCols;
+        nBandOffset = static_cast<uint64_t>(nPixelSize) * nCols;
     }
     else if (EQUAL(osBandOrder, "BIP"))
     {
@@ -1007,7 +1006,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
         }
         nPixelOffset = nPixelSize;
         nLineOffset = nPixelSize * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
     }
     else if (l_nBands > 1)
     {
@@ -1184,7 +1183,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     if (!ComputeSpacings(osBandOrder, nCols, nRows, l_nBands, eDT, nPixelOffset,
                          nLineOffset, nBandOffset))
     {
@@ -1450,7 +1449,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
 
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     CPLString osBandOrder(
         CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BIL"));
     if (!ComputeSpacings(osBandOrder, nXSize, nYSize, nBandsIn, eType,

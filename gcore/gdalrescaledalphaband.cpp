@@ -93,10 +93,12 @@ CPLErr GDALRescaledAlphaBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr GDALRescaledAlphaBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALRescaledAlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
+                                        int nYOff, int nXSize, int nYSize,
+                                        void *pData, int nBufXSize,
+                                        int nBufYSize, GDALDataType eBufType,
+                                        int64_t nPixelSpace, int64_t nLineSpace,
+                                        GDALRasterIOExtraArg *psExtraArg)
 {
     // Optimization in common use case.
     // This avoids triggering the block cache on this band, which helps
@@ -106,7 +108,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
     {
         if (pTemp == nullptr)
         {
-            pTemp = VSI_MALLOC2_VERBOSE(sizeof(GUInt16), nRasterXSize);
+            pTemp = VSI_MALLOC2_VERBOSE(sizeof(uint16_t), nRasterXSize);
             if (pTemp == nullptr)
             {
                 return CE_Failure;
@@ -121,7 +123,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                 return eErr;
 
             GByte *pabyImage = static_cast<GByte *>(pData) + j * nLineSpace;
-            GUInt16 *pSrc = static_cast<GUInt16 *>(pTemp);
+            uint16_t *pSrc = static_cast<uint16_t *>(pTemp);
 
             for (int i = 0; i < nBufXSize; i++)
             {

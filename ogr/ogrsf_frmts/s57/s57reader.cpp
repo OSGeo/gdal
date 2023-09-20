@@ -1834,11 +1834,11 @@ bool S57Reader::FetchLine(DDFRecord *poSRecord, int iStartVertex,
 
             for (int i = 0; i < nVCount; i++)
             {
-                GInt32 nYCOO = 0;
+                int32_t nYCOO = 0;
                 memcpy(&nYCOO, pachData, 4);
                 pachData += 4;
 
-                GInt32 nXCOO = 0;
+                int32_t nXCOO = 0;
                 memcpy(&nXCOO, pachData, 4);
                 pachData += 4;
 
@@ -3534,8 +3534,8 @@ OGRErr S57Reader::GetExtent(OGREnvelope *psExtent, int bForce)
 
                 for (int i = 0; i < nVCount; i++)
                 {
-                    GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4 * (i * 3 + 1));
-                    GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4 * (i * 3 + 0));
+                    int32_t nX = CPL_LSBSINT32PTR(pabyData + 4 * (i * 3 + 1));
+                    int32_t nY = CPL_LSBSINT32PTR(pabyData + 4 * (i * 3 + 0));
 
                     if (bGotExtents)
                     {
@@ -3565,9 +3565,9 @@ OGRErr S57Reader::GetExtent(OGREnvelope *psExtent, int bForce)
 
                 for (int i = 0; i < nVCount; i++)
                 {
-                    const GInt32 nX =
+                    const int32_t nX =
                         CPL_LSBSINT32PTR(pabyData + 4 * (i * 2 + 1));
-                    const GInt32 nY =
+                    const int32_t nY =
                         CPL_LSBSINT32PTR(pabyData + 4 * (i * 2 + 0));
 
                     if (bGotExtents)

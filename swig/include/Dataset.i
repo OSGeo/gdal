@@ -31,9 +31,9 @@
 %{
 /* Returned size is in bytes or 0 if an error occurred. */
 static
-GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+int64_t ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                 int nBands, int* bandMap, int nBandMapArrayLength,
-                                GIntBig nPixelSpace, GIntBig nLineSpace, GIntBig nBandSpace,
+                                int64_t nPixelSpace, int64_t nLineSpace, int64_t nBandSpace,
                                 int bSpacingShouldBeMultipleOfPixelSize )
 {
     if (buf_xsize <= 0 || buf_ysize <= 0)
@@ -88,7 +88,7 @@ GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize
         return 0;
     }
 
-    GIntBig nRet = (GIntBig)(buf_ysize - 1) * nLineSpace + (GIntBig)(buf_xsize - 1) * nPixelSpace + (GIntBig)(nBands - 1) * nBandSpace + nPixelSize;
+    int64_t nRet = (int64_t)(buf_ysize - 1) * nLineSpace + (int64_t)(buf_xsize - 1) * nPixelSpace + (int64_t)(nBands - 1) * nBandSpace + nPixelSize;
 #if SIZEOF_VOIDP == 4
     if (nRet > INT_MAX)
     {
@@ -468,8 +468,8 @@ public:
 
 #if defined(SWIGPYTHON)
 %feature("kwargs") WriteRaster;
-%apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
-%apply (GIntBig *optional_GIntBig) { (GIntBig*) };
+%apply (int64_t nLen, char *pBuf) { (int64_t buf_len, char *buf_string) };
+%apply (int64_t *optional_int64_t) { (int64_t*) };
 %apply (int *optional_int) { (int*) };
 #if defined(SWIGPYTHON)
 %apply (GDALDataType *optional_GDALDataType) { (GDALDataType *buf_type) };
@@ -478,11 +478,11 @@ public:
 #endif
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
-                      GIntBig buf_len, char *buf_string,
+                      int64_t buf_len, char *buf_string,
                       int *buf_xsize = 0, int *buf_ysize = 0,
                       GDALDataType *buf_type = 0,
                       int band_list = 0, int *pband_list = 0,
-                      GIntBig* buf_pixel_space = 0, GIntBig* buf_line_space = 0, GIntBig* buf_band_space = 0) {
+                      int64_t* buf_pixel_space = 0, int64_t* buf_line_space = 0, int64_t* buf_band_space = 0) {
     CPLErr eErr;
     int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
@@ -496,11 +496,11 @@ public:
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
 
-    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-    GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
+    int64_t pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int64_t line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int64_t band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
-    GIntBig min_buffer_size =
+    int64_t min_buffer_size =
       ComputeDatasetRasterIOSize (nxsize, nysize, GDALGetDataTypeSize( ntype ) / 8,
                                   band_list ? band_list : GDALGetRasterCount(self), pband_list, band_list,
                                   pixel_space, line_space, band_space, FALSE);
@@ -524,8 +524,8 @@ public:
 %clear (int band_list, int *pband_list );
 %clear (GDALDataType *buf_type);
 %clear (int*);
-%clear (GIntBig*);
-%clear (GIntBig buf_len, char *buf_string);
+%clear (int64_t*);
+%clear (int64_t buf_len, char *buf_string);
 #endif
 
 %apply (int *optional_int) { (GDALDataType *buf_type) };

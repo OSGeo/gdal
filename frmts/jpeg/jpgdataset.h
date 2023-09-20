@@ -75,9 +75,9 @@ CPL_C_END
 // TIFF header.
 typedef struct
 {
-    GUInt16 tiff_magic;    // Magic number (defines byte order).
-    GUInt16 tiff_version;  // TIFF version number.
-    GUInt32 tiff_diroff;   // byte offset to first directory.
+    uint16_t tiff_magic;    // Magic number (defines byte order).
+    uint16_t tiff_version;  // TIFF version number.
+    uint32_t tiff_diroff;   // byte offset to first directory.
 } TIFFHeader;
 
 // Ok to use setjmp().
@@ -177,7 +177,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     GDAL_GCP *pasGCPList;
 
     VSILFILE *m_fpImage;
-    GUIntBig nSubfileOffset;
+    uint64_t nSubfileOffset;
 
     int nLoadedScanline;
     GByte *m_pabyScanline;
@@ -255,8 +255,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual ~JPGDatasetCommon();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr GetGeoTransform(double *) override;

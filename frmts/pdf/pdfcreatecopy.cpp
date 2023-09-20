@@ -41,6 +41,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cinttypes>
 #include <utility>
 #include <vector>
 
@@ -186,7 +187,7 @@ int GDALPDFUpdateWriter::ParseTrailerAndXRef()
 {
     VSIFSeekL(m_fp, 0, SEEK_END);
     char szBuf[1024 + 1];
-    vsi_l_offset nOffset = VSIFTellL(m_fp);
+    uint64_t nOffset = VSIFTellL(m_fp);
 
     if (nOffset > 128)
         nOffset -= 128;
@@ -462,9 +463,9 @@ GDALPDFObjectNum GDALPDFBaseWriter::AllocNewObject()
 /************************************************************************/
 
 void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
-                                                 vsi_l_offset nLastStartXRef)
+                                                 uint64_t nLastStartXRef)
 {
-    vsi_l_offset nOffsetXREF = VSIFTellL(m_fp);
+    uint64_t nOffsetXREF = VSIFTellL(m_fp);
     VSIFPrintfL(m_fp, "xref\n");
 
     char buffer[16];
@@ -487,8 +488,7 @@ void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
                 size_t iEnd = i + nCount;
                 for (; i < iEnd; i++)
                 {
-                    snprintf(buffer, sizeof(buffer),
-                             "%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+                    snprintf(buffer, sizeof(buffer), "%010" PRIu64,
                              m_asXRefEntries[i].nOffset);
                     VSIFPrintfL(m_fp, "%s %05d %c \n", buffer,
                                 m_asXRefEntries[i].nGen,
@@ -507,8 +507,7 @@ void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
         VSIFPrintfL(m_fp, "0000000000 65535 f \n");
         for (size_t i = 0; i < m_asXRefEntries.size(); i++)
         {
-            snprintf(buffer, sizeof(buffer),
-                     "%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+            snprintf(buffer, sizeof(buffer), "%010" PRIu64,
                      m_asXRefEntries[i].nOffset);
             VSIFPrintfL(m_fp, "%s %05d n \n", buffer, m_asXRefEntries[i].nGen);
         }
@@ -525,7 +524,7 @@ void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
     VSIFPrintfL(m_fp, "%s\n", oDict.Serialize().c_str());
 
     VSIFPrintfL(m_fp,
-                "startxref\n" CPL_FRMT_GUIB "\n"
+                "startxref\n%" PRIu64 "\n"
                 "%%%%EOF\n",
                 nOffsetXREF);
 }
@@ -608,7 +607,7 @@ void GDALPDFBaseWriter::EndObjWithStream()
     m_fp = m_fpBack;
     m_fpBack = nullptr;
 
-    vsi_l_offset nStreamEnd = VSIFTellL(m_fp);
+    uint64_t nStreamEnd = VSIFTellL(m_fp);
     if (m_fpGZip)
         VSIFPrintfL(m_fp, "\n");
     m_fpGZip = nullptr;
@@ -2435,7 +2434,7 @@ static void CalculateText(const CPLString &osText, CPLString &osFont,
     // Character widths of Helvetica, Win-1252 characters 32 to 255
     // Helvetica bold, oblique and bold oblique have their own widths,
     // but for now we will put up with these widths on all Helvetica variants
-    constexpr GUInt16 anHelveticaCharWidths[] = {
+    constexpr uint16_t anHelveticaCharWidths[] = {
         569,  569,  727,  1139, 1139, 1821, 1366, 391,  682,  682,  797,  1196,
         569,  682,  569,  569,  1139, 1139, 1139, 1139, 1139, 1139, 1139, 1139,
         1139, 1139, 569,  569,  1196, 1196, 1196, 1139, 2079, 1366, 1366, 1479,
@@ -2459,7 +2458,7 @@ static void CalculateText(const CPLString &osText, CPLString &osFont,
     // Character widths of Times-Roman, Win-1252 characters 32 to 255
     // Times bold, italic and bold italic have their own widths,
     // but for now we will put up with these widths on all Times variants
-    constexpr GUInt16 anTimesCharWidths[] = {
+    constexpr uint16_t anTimesCharWidths[] = {
         512,  682,  836,  1024, 1024, 1706, 1593, 369,  682,  682,  1024, 1155,
         512,  682,  512,  569,  1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024,
         1024, 1024, 569,  569,  1155, 1155, 1155, 909,  1886, 1479, 1366, 1366,
@@ -2480,7 +2479,7 @@ static void CalculateText(const CPLString &osText, CPLString &osFont,
         569,  569,  569,  569,  1024, 1024, 1024, 1024, 1024, 1024, 1024, 1124,
         1024, 1024, 1024, 1024, 1024, 1024, 1024, 1024};
 
-    const GUInt16 *panCharacterWidths = nullptr;
+    const uint16_t *panCharacterWidths = nullptr;
 
     if (STARTS_WITH_CI(osFont, "times") ||
         osFont.find("Serif", 0) != std::string::npos)
@@ -3152,8 +3151,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteAttributes(
     if (iField >= 0)
         osOutFeatureName = OGR_F_GetFieldAsString(hFeat, iField);
     else
-        osOutFeatureName =
-            CPLSPrintf("feature" CPL_FRMT_GIB, OGR_F_GetFID(hFeat));
+        osOutFeatureName = CPLSPrintf("feature%" PRId64, OGR_F_GetFID(hFeat));
 
     auto nFeatureUserProperties = AllocNewObject();
     StartObj(nFeatureUserProperties);
@@ -4411,7 +4409,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
 
         GDALClose(poJPEGDS);
 
-        vsi_l_offset nJPEGDataSize = 0;
+        uint64_t nJPEGDataSize = 0;
         GByte *pabyJPEGData = VSIGetMemFileBuffer(szTmp, &nJPEGDataSize, TRUE);
         VSIFWriteL(pabyJPEGData, static_cast<size_t>(nJPEGDataSize), 1, m_fp);
         CPLFree(pabyJPEGData);

@@ -29,6 +29,8 @@
 #include "ogr_vdv.h"
 #include "cpl_conv.h"
 #include "cpl_time.h"
+
+#include <cinttypes>
 #include <map>
 
 #ifndef STARTS_WITH_CI
@@ -182,7 +184,7 @@ void OGRIDFDataSource::Parse()
 
     VSIStatBufL sStatBuf;
     bool bGPKG = false;
-    vsi_l_offset nFileSize = 0;
+    uint64_t nFileSize = 0;
     bool bSpatialIndex = false;
     if (VSIStatL(m_osFilename, &sStatBuf) == 0 &&
         sStatBuf.st_size > CPLAtoGIntBig(CPLGetConfigOption(
@@ -256,8 +258,8 @@ void OGRIDFDataSource::Parse()
         {
         }
     };
-    std::map<GIntBig, Point> oMapNode;  // map from NODE_ID to Point
-    std::map<GIntBig, OGRLineString *>
+    std::map<int64_t, Point> oMapNode;  // map from NODE_ID to Point
+    std::map<int64_t, OGRLineString *>
         oMapLinkCoordinate;  // map from LINK_ID to OGRLineString*
     CPLString osTablename, osAtr, osFrm;
     int iX = -1, iY = -1, iZ = -1;
@@ -271,7 +273,7 @@ void OGRIDFDataSource::Parse()
 
     // We assume that layers are in the order Node, Link, LinkCoordinate
 
-    GUIntBig nLineCount = 0;
+    uint64_t nLineCount = 0;
     while (true)
     {
         if (nFileSize)
@@ -279,7 +281,7 @@ void OGRIDFDataSource::Parse()
             ++nLineCount;
             if ((nLineCount % 32768) == 0)
             {
-                const vsi_l_offset nPos = VSIFTellL(m_fpL);
+                const uint64_t nPos = VSIFTellL(m_fpL);
                 CPLDebug("IDF", "Reading progress: %.2f %%",
                          100.0 * nPos / nFileSize);
             }
@@ -446,11 +448,11 @@ void OGRIDFDataSource::Parse()
             }
             else if (eLayerType == LAYER_LINK && iFromNode >= 0 && iToNode >= 0)
             {
-                GIntBig nFromNode = poFeature->GetFieldAsInteger64(iFromNode);
-                GIntBig nToNode = poFeature->GetFieldAsInteger64(iToNode);
-                std::map<GIntBig, Point>::iterator oIterFrom =
+                int64_t nFromNode = poFeature->GetFieldAsInteger64(iFromNode);
+                int64_t nToNode = poFeature->GetFieldAsInteger64(iToNode);
+                std::map<int64_t, Point>::iterator oIterFrom =
                     oMapNode.find(nFromNode);
-                std::map<GIntBig, Point>::iterator oIterTo =
+                std::map<int64_t, Point>::iterator oIterTo =
                     oMapNode.find(nToNode);
                 if (oIterFrom != oMapNode.end() && oIterTo != oMapNode.end())
                 {
@@ -493,8 +495,8 @@ void OGRIDFDataSource::Parse()
                     poFDefn->GetGeomFieldDefn(0)->GetSpatialRef());
                 poFeature->SetGeometryDirectly(poGeom);
 
-                GIntBig nCurLinkID = poFeature->GetFieldAsInteger64(iLinkID);
-                std::map<GIntBig, OGRLineString *>::iterator
+                int64_t nCurLinkID = poFeature->GetFieldAsInteger64(iLinkID);
+                std::map<int64_t, OGRLineString *>::iterator
                     oMapLinkCoordinateIter =
                         oMapLinkCoordinate.find(nCurLinkID);
                 if (oMapLinkCoordinateIter == oMapLinkCoordinate.end())
@@ -542,8 +544,8 @@ void OGRIDFDataSource::Parse()
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
             for (auto &&poFeat : poLinkLyr)
             {
-                GIntBig nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
-                std::map<GIntBig, OGRLineString *>::iterator
+                int64_t nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
+                std::map<int64_t, OGRLineString *>::iterator
                     oMapLinkCoordinateIter = oMapLinkCoordinate.find(nLinkID);
                 OGRGeometry *poGeom = poFeat->GetGeometryRef();
                 if (poGeom &&
@@ -592,7 +594,7 @@ void OGRIDFDataSource::Parse()
 
     m_poTmpDS->CommitTransaction();
 
-    std::map<GIntBig, OGRLineString *>::iterator oMapLinkCoordinateIter =
+    std::map<int64_t, OGRLineString *>::iterator oMapLinkCoordinateIter =
         oMapLinkCoordinate.begin();
     for (; oMapLinkCoordinateIter != oMapLinkCoordinate.end();
          ++oMapLinkCoordinateIter)
@@ -718,8 +720,8 @@ void OGRVDVDataSource::DetectLayers()
     char chNextExpected3 = 'e';
     bool bInTableName = false;
     CPLString osTableName;
-    GIntBig nFeatureCount = 0;
-    vsi_l_offset nStartOffset = 0;
+    int64_t nFeatureCount = 0;
+    uint64_t nStartOffset = 0;
     OGRVDVLayer *poLayer = nullptr;
     bool bFirstBuffer = true;
     bool bRecodeFromLatin1 = false;
@@ -859,7 +861,7 @@ void OGRVDVDataSource::DetectLayers()
 
 OGRVDVLayer::OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL,
                          bool bOwnFP, bool bRecodeFromLatin1,
-                         vsi_l_offset nStartOffset)
+                         uint64_t nStartOffset)
     : m_fpL(fpL), m_bOwnFP(bOwnFP), m_bRecodeFromLatin1(bRecodeFromLatin1),
       m_nStartOffset(nStartOffset), m_nCurOffset(0), m_nTotalFeatureCount(0),
       m_nFID(0), m_bEOF(false), m_iLongitudeVDV452(-1), m_iLatitudeVDV452(-1)
@@ -868,7 +870,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL,
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
     SetDescription(osTableName);
-    vsi_l_offset nCurOffset = VSIFTellL(fpL);
+    uint64_t nCurOffset = VSIFTellL(fpL);
     VSIFSeekL(m_fpL, m_nStartOffset, SEEK_SET);
     CPLString osAtr, osFrm;
 
@@ -1141,7 +1143,7 @@ int OGRVDVLayer::TestCapability(const char *pszCap)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRVDVLayer::GetFeatureCount(int bForce)
+int64_t OGRVDVLayer::GetFeatureCount(int bForce)
 {
     if (m_nTotalFeatureCount == 0 || m_poFilterGeom != nullptr ||
         m_poAttrQuery != nullptr)
@@ -1452,7 +1454,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 m_poFeatureDefn->GetFieldDefn(i)->GetType();
             if (eType == OFTInteger || eType == OFTInteger64)
             {
-                bOK &= VSIFPrintfL(m_fpL, CPL_FRMT_GIB,
+                bOK &= VSIFPrintfL(m_fpL, "%" PRId64,
                                    poFeature->GetFieldAsInteger64(i)) > 0;
             }
             else
@@ -1518,7 +1520,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature *poFeature)
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRVDVWriterLayer::GetFeatureCount(int)
+int64_t OGRVDVWriterLayer::GetFeatureCount(int)
 {
     return m_nFeatureCount >= 0 ? m_nFeatureCount : 0;
 }
@@ -1609,7 +1611,7 @@ void OGRVDVWriterLayer::StopAsCurrentLayer()
         if (m_fpL != nullptr)
         {
             WriteSchemaIfNeeded();
-            VSIFPrintfL(m_fpL, "end; " CPL_FRMT_GIB "\n", m_nFeatureCount);
+            VSIFPrintfL(m_fpL, "end; %" PRId64 "\n", m_nFeatureCount);
         }
     }
 }
@@ -1843,8 +1845,8 @@ OGRLayer *OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
         {
             // Find last non-empty line in the file
             VSIFSeekL(fpL, 0, SEEK_END);
-            vsi_l_offset nFileSize = VSIFTellL(fpL);
-            vsi_l_offset nOffset = nFileSize;
+            uint64_t nFileSize = VSIFTellL(fpL);
+            uint64_t nOffset = nFileSize;
             bool bTerminatingEOL = true;
             while (nOffset > 0)
             {

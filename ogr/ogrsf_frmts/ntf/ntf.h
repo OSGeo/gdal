@@ -245,9 +245,9 @@ class NTFFileReader
     double dfScale;
     double dfPaperToGround;
 
-    vsi_l_offset nStartPos;
-    vsi_l_offset nPreSavedPos;
-    vsi_l_offset nPostSavedPos;
+    uint64_t nStartPos;
+    uint64_t nPreSavedPos;
+    uint64_t nPostSavedPos;
     NTFRecord *poSavedRecord;
 
     long nSavedFeatureId;
@@ -282,7 +282,7 @@ class NTFFileReader
 
     OGRNTFRasterLayer *poRasterLayer;
 
-    vsi_l_offset *panColumnOffset;
+    uint64_t *panColumnOffset;
 
     int bCacheLines;
     int nLineCacheSize;
@@ -300,8 +300,8 @@ class NTFFileReader
     {
         return fp;
     }
-    void GetFPPos(vsi_l_offset *pnPos, long *pnFeatureId);
-    int SetFPPos(vsi_l_offset nPos, long nFeatureId);
+    void GetFPPos(uint64_t *pnPos, long *pnFeatureId);
+    int SetFPPos(uint64_t nPos, long nFeatureId);
     void Reset();
     void SetBaseFID(long nFeatureId);
 
@@ -442,7 +442,7 @@ class OGRNTFLayer final : public OGRLayer
     OGRNTFDataSource *poDS;
 
     int iCurrentReader;
-    vsi_l_offset nCurrentPos;
+    uint64_t nCurrentPos;
     long nCurrentFID;
 
   public:
@@ -455,7 +455,7 @@ class OGRNTFLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
 
 #ifdef notdef
-    OGRFeature *GetFeature(GIntBig nFeatureId);
+    OGRFeature *GetFeature(int64_t nFeatureId);
     OGRErr ISetFeature(OGRFeature *poFeature);
     OGRErr ICreateFeature(OGRFeature *poFeature);
 #endif
@@ -466,7 +466,7 @@ class OGRNTFLayer final : public OGRLayer
     }
 
 #ifdef notdef
-    GIntBig GetFeatureCount(int);
+    int64_t GetFeatureCount(int);
 #endif
 
     int TestCapability(const char *) override;
@@ -486,7 +486,7 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
 
     OGRNTFDataSource *poDS;
 
-    GIntBig iCurrentFC;
+    int64_t iCurrentFC;
 
   public:
     explicit OGRNTFFeatureClassLayer(OGRNTFDataSource *poDS);
@@ -505,14 +505,14 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int = TRUE) override;
+    int64_t GetFeatureCount(int = TRUE) override;
 
     int TestCapability(const char *) override;
 };
@@ -531,10 +531,10 @@ class OGRNTFRasterLayer final : public OGRLayer
     float *pafColumn;
     int iColumnOffset;
 
-    GIntBig iCurrentFC;
+    int64_t iCurrentFC;
 
     int nDEMSample;
-    GIntBig nFeatureCount;
+    int64_t nFeatureCount;
 
   public:
     OGRNTFRasterLayer(OGRNTFDataSource *poDS, NTFFileReader *poReaderIn);
@@ -553,14 +553,14 @@ class OGRNTFRasterLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int = TRUE) override;
+    int64_t GetFeatureCount(int = TRUE) override;
 
     int TestCapability(const char *) override;
 };
@@ -580,7 +580,7 @@ class OGRNTFDataSource final : public OGRDataSource
 
     int iCurrentFC;
     int iCurrentReader;
-    vsi_l_offset nCurrentPos;
+    uint64_t nCurrentPos;
     long nCurrentFID;
 
     int nNTFFileCount;

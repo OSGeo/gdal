@@ -29,6 +29,8 @@
 
 #include "ogr_ngw.h"
 
+#include <cinttypes>
+
 /*
  * CheckRequestResult()
  */
@@ -227,7 +229,7 @@ static CPLJSONObject FeatureToJson(OGRFeature *poFeature)
                 case OFTInteger64:
                     oFieldsJson.Add(
                         poFieldDefn->GetNameRef(),
-                        static_cast<GInt64>(
+                        static_cast<int64_t>(
                             poFeature->GetFieldAsInteger64(iField)));
                     break;
                 case OFTReal:
@@ -299,7 +301,7 @@ static std::string FeatureToJsonString(OGRFeature *poFeature)
 /*
  * FreeMap()
  */
-static void FreeMap(std::map<GIntBig, OGRFeature *> &moFeatures)
+static void FreeMap(std::map<int64_t, OGRFeature *> &moFeatures)
 {
     for (auto &oPair : moFeatures)
     {
@@ -552,7 +554,7 @@ OGRNGWLayer::OGRNGWLayer(const std::string &osResourceIdIn,
                          OGRNGWDataset *poDSIn,
                          const NGWAPI::Permissions &stPermissionsIn,
                          OGRFeatureDefn *poFeatureDefnIn,
-                         GIntBig nFeatureCountIn, const OGREnvelope &stExtentIn)
+                         int64_t nFeatureCountIn, const OGREnvelope &stExtentIn)
     : osResourceId(osResourceIdIn), poDS(poDSIn),
       stPermissions(stPermissionsIn), bFetchedPermissions(true),
       poFeatureDefn(poFeatureDefnIn), nFeatureCount(nFeatureCountIn),
@@ -725,13 +727,13 @@ bool OGRNGWLayer::FillFeatures(const std::string &osUrl)
 /*
  * SetNextByIndex()
  */
-OGRErr OGRNGWLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRNGWLayer::SetNextByIndex(int64_t nIndex)
 {
     SyncToDisk();
     if (nIndex < 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Feature index must be greater or equal 0. Got " CPL_FRMT_GIB,
+                 "Feature index must be greater or equal 0. Got %" PRId64,
                  nIndex);
         return OGRERR_FAILURE;
     }
@@ -741,7 +743,7 @@ OGRErr OGRNGWLayer::SetNextByIndex(GIntBig nIndex)
         if (nPageStart > nIndex && nIndex <= nPageStart - poDS->GetPageSize())
         {
             if (moFeatures.empty() ||
-                static_cast<GIntBig>(moFeatures.size()) <= nIndex)
+                static_cast<int64_t>(moFeatures.size()) <= nIndex)
             {
                 oNextPos = moFeatures.end();
             }
@@ -778,7 +780,7 @@ OGRErr OGRNGWLayer::SetNextByIndex(GIntBig nIndex)
         }
 
         if (moFeatures.empty() ||
-            static_cast<GIntBig>(moFeatures.size()) <= nIndex)
+            static_cast<int64_t>(moFeatures.size()) <= nIndex)
         {
             oNextPos = moFeatures.end();
         }
@@ -895,7 +897,7 @@ OGRFeature *OGRNGWLayer::GetNextFeature()
 /*
  * GetFeature()
  */
-OGRFeature *OGRNGWLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRNGWLayer::GetFeature(int64_t nFID)
 {
     // Check feature in cache.
     if (moFeatures[nFID] != nullptr)
@@ -1055,7 +1057,7 @@ void OGRNGWLayer::FillFields(const CPLJSONArray &oFields)
 /*
  * GetMaxFeatureCount()
  */
-GIntBig OGRNGWLayer::GetMaxFeatureCount(bool bForce)
+int64_t OGRNGWLayer::GetMaxFeatureCount(bool bForce)
 {
     if (nFeatureCount < 0 || bForce)
     {
@@ -1082,7 +1084,7 @@ GIntBig OGRNGWLayer::GetMaxFeatureCount(bool bForce)
 /*
  * GetFeatureCount()
  */
-GIntBig OGRNGWLayer::GetFeatureCount(int bForce)
+int64_t OGRNGWLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
@@ -1274,7 +1276,7 @@ std::string OGRNGWLayer::CreateNGWResourceJson()
     oResource.Add("cls", "vector_layer");
     CPLJSONObject oResourceParent("parent", oResource);
     oResourceParent.Add("id",
-                        static_cast<GIntBig>(std::stol(poDS->GetResourceId())));
+                        static_cast<int64_t>(std::stol(poDS->GetResourceId())));
     oResource.Add("display_name", GetName());
     const char *pszKeyName = GetMetadataItem("keyname");
     if (pszKeyName)
@@ -1352,8 +1354,8 @@ OGRErr OGRNGWLayer::SyncFeatures()
     }
 
     CPLJSONArray oFeatureJsonArray;
-    std::vector<GIntBig> aoPatchedFIDs;
-    for (GIntBig nFID : soChangedIds)
+    std::vector<int64_t> aoPatchedFIDs;
+    for (int64_t nFID : soChangedIds)
     {
         if (moFeatures[nFID] != nullptr)
         {
@@ -1383,9 +1385,9 @@ OGRErr OGRNGWLayer::SyncFeatures()
             else  // Just update identifiers.
             {
                 int nCounter = 0;
-                for (GIntBig nFID : aoPatchedFIDs)
+                for (int64_t nFID : aoPatchedFIDs)
                 {
-                    GIntBig nNewFID = osIDs[nCounter++];
+                    int64_t nNewFID = osIDs[nCounter++];
                     OGRFeature *poFeature = moFeatures[nFID];
                     poFeature->SetFID(nNewFID);
                     moFeatures.erase(nFID);
@@ -1444,7 +1446,7 @@ OGRErr OGRNGWLayer::SyncToDisk()
 /*
  * DeleteFeature()
  */
-OGRErr OGRNGWLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRNGWLayer::DeleteFeature(int64_t nFID)
 {
     CPLErrorReset();
     if (nFID < 0)
@@ -1458,7 +1460,7 @@ OGRErr OGRNGWLayer::DeleteFeature(GIntBig nFID)
             return OGRERR_NONE;
         }
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Feature with id " CPL_FRMT_GIB " not found.", nFID);
+                 "Feature with id %" PRId64 " not found.", nFID);
         return OGRERR_FAILURE;
     }
     else
@@ -1483,7 +1485,7 @@ OGRErr OGRNGWLayer::DeleteFeature(GIntBig nFID)
             return OGRERR_FAILURE;
         }
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Delete feature " CPL_FRMT_GIB " operation is not permitted.",
+                 "Delete feature %" PRId64 " operation is not permitted.",
                  nFID);
         return OGRERR_FAILURE;
     }
@@ -1537,7 +1539,7 @@ OGRErr OGRNGWLayer::ISetFeature(OGRFeature *poFeature)
             if (poFeature->GetFID() < 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot update not existing feature " CPL_FRMT_GIB,
+                         "Cannot update not existing feature %" PRId64,
                          poFeature->GetFID());
                 return OGRERR_FAILURE;
             }
@@ -1565,7 +1567,7 @@ OGRErr OGRNGWLayer::ISetFeature(OGRFeature *poFeature)
             if (poFeature->GetFID() < 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot update not existing feature " CPL_FRMT_GIB,
+                         "Cannot update not existing feature %" PRId64,
                          poFeature->GetFID());
                 return OGRERR_FAILURE;
             }
@@ -1576,7 +1578,7 @@ OGRErr OGRNGWLayer::ISetFeature(OGRFeature *poFeature)
                 FeatureToJsonString(poFeature), poDS->GetHeaders());
             if (bResult)
             {
-                CPLDebug("NGW", "ISetFeature with FID " CPL_FRMT_GIB,
+                CPLDebug("NGW", "ISetFeature with FID %" PRId64,
                          poFeature->GetFID());
 
                 OGRFeature::DestroyFeature(moFeatures[poFeature->GetFID()]);
@@ -1603,7 +1605,7 @@ OGRErr OGRNGWLayer::ICreateFeature(OGRFeature *poFeature)
 {
     if (poDS->IsBatchMode())
     {
-        GIntBig nNewFID = -1;
+        int64_t nNewFID = -1;
         if (!soChangedIds.empty())
         {
             nNewFID = *(soChangedIds.begin()) - 1;
@@ -1626,7 +1628,7 @@ OGRErr OGRNGWLayer::ICreateFeature(OGRFeature *poFeature)
             SyncToDisk();  // For create new layer if not yet created.
         if (eResult == OGRERR_NONE)
         {
-            GIntBig nNewFID = NGWAPI::CreateFeature(
+            int64_t nNewFID = NGWAPI::CreateFeature(
                 poDS->GetUrl(), osResourceId, FeatureToJsonString(poFeature),
                 poDS->GetHeaders());
             if (nNewFID >= 0)
@@ -1847,7 +1849,7 @@ OGRNGWLayer *OGRNGWLayer::Clone() const
 /*
  * GetNewFeaturesCount()
  */
-GIntBig OGRNGWLayer::GetNewFeaturesCount() const
+int64_t OGRNGWLayer::GetNewFeaturesCount() const
 {
     if (soChangedIds.empty())
     {

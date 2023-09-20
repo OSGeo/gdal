@@ -59,10 +59,10 @@ typedef CSF_SIGNED_SPECIFIER char INT1;
 typedef unsigned             char UINT1;
 
 #ifdef USE_IN_GDAL
-typedef GInt16   INT2;
-typedef GInt32   INT4;
-typedef GUInt16  UINT2;
-typedef GUInt32  UINT4;
+typedef int16_t   INT2;
+typedef int32_t   INT4;
+typedef uint16_t  UINT2;
+typedef uint32_t  UINT4;
 #else
 typedef CSF_SIGNED_SPECIFIER short                        int  INT2;
 typedef CSF_SIGNED_SPECIFIER CSF_4BYTE_INT_SIZE_SPECIFIER int  INT4;

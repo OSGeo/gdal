@@ -59,8 +59,8 @@ class WEBPDataset final : public GDALPamDataset
     virtual ~WEBPDataset();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual char **GetMetadataDomainList() override;
@@ -213,7 +213,7 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
         while (true)
         {
             char szHeader[5];
-            GUInt32 nChunkSize;
+            uint32_t nChunkSize;
 
             if (VSIFReadL(szHeader, 1, 4, fpImage) != 4 ||
                 VSIFReadL(&nChunkSize, 1, 4, fpImage) != 4)
@@ -248,8 +248,8 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
                 if (pszXMP == nullptr)
                     break;
 
-                if (static_cast<GUInt32>(VSIFReadL(pszXMP, 1, nChunkSize,
-                                                   fpImage)) != nChunkSize)
+                if (static_cast<uint32_t>(VSIFReadL(pszXMP, 1, nChunkSize,
+                                                    fpImage)) != nChunkSize)
                 {
                     VSIFree(pszXMP);
                     break;
@@ -301,9 +301,8 @@ CPLErr WEBPDataset::Uncompress()
         return CE_Failure;
 
     VSIFSeekL(fpImage, 0, SEEK_END);
-    vsi_l_offset nSizeLarge = VSIFTellL(fpImage);
-    if (nSizeLarge !=
-        static_cast<vsi_l_offset>(static_cast<uint32_t>(nSizeLarge)))
+    uint64_t nSizeLarge = VSIFTellL(fpImage);
+    if (nSizeLarge != static_cast<uint64_t>(static_cast<uint32_t>(nSizeLarge)))
         return CE_Failure;
     VSIFSeekL(fpImage, 0, SEEK_SET);
     uint32_t nSize = static_cast<uint32_t>(nSizeLarge);
@@ -343,8 +342,8 @@ CPLErr WEBPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, int nBandCount,
-                              int *panBandMap, GSpacing nPixelSpace,
-                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              int *panBandMap, int64_t nPixelSpace,
+                              int64_t nLineSpace, int64_t nBandSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 
 {

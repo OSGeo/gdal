@@ -73,7 +73,7 @@
  * Returns -1 on error, i.e. if it encounters an unsupported field type.
  **********************************************************************/
 int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
-                          GBool bMapType40ToDouble)
+                          bool bMapType40ToDouble)
 {
     int i, nType, nBufSize = 0;
 
@@ -194,10 +194,10 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef)
  * For now I simply try to fopen() the file ... would it be more
  * efficient to use stat() ???
  **********************************************************************/
-GBool AVCFileExists(const char *pszPath, const char *pszName)
+bool AVCFileExists(const char *pszPath, const char *pszName)
 {
     char *pszBuf;
-    GBool bFileExists = FALSE;
+    bool bFileExists = FALSE;
     VSILFILE *fp;
 
     pszBuf = (char *)CPLMalloc(strlen(pszPath) + strlen(pszName) + 1);
@@ -237,7 +237,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     VSIStatBufL sStatBuf;
     char *pszTmpPath = nullptr;
     int nTotalLen, iTmpPtr;
-    GBool bValidPath;
+    bool bValidPath;
 
     /*-----------------------------------------------------------------
      * First check if the filename is OK as is.

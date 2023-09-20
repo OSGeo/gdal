@@ -62,10 +62,10 @@ class DataSet
         if (ridx < 0)
             ridx += nrec;
 
-        GUInt32 mjd[3];
+        uint32_t mjd[3];
         EnvisatFile_ReadDatasetRecordChunk(&envfile, index, ridx, mjd, 0, 12);
 
-#define INT32(x) ((GInt32)CPL_MSBWORD32(x))
+#define INT32(x) ((int32_t)CPL_MSBWORD32(x))
 
         return TimeDelta(INT32(mjd[0]), INT32(mjd[1]), INT32(mjd[2]));
 

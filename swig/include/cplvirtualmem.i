@@ -52,7 +52,7 @@ typedef struct
     int                  nTileXSize;
     int                  nTileYSize;
     int            nPixelSpace; /* if bAuto == TRUE */
-    GIntBig        nLineSpace; /* if bAuto == TRUE */
+    int64_t        nLineSpace; /* if bAuto == TRUE */
 } CPLVirtualMemShadow;
 
 %}

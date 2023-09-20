@@ -46,22 +46,22 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemLayer)
 
-    typedef std::map<GIntBig, OGRFeature *> FeatureMap;
-    typedef std::map<GIntBig, OGRFeature *>::iterator FeatureIterator;
+    typedef std::map<int64_t, OGRFeature *> FeatureMap;
+    typedef std::map<int64_t, OGRFeature *>::iterator FeatureIterator;
 
     OGRFeatureDefn *m_poFeatureDefn;
 
-    GIntBig m_nFeatureCount;
+    int64_t m_nFeatureCount;
 
-    GIntBig m_iNextReadFID;
-    GIntBig m_nMaxFeatureCount;  // Max size of papoFeatures.
+    int64_t m_iNextReadFID;
+    int64_t m_nMaxFeatureCount;  // Max size of papoFeatures.
     OGRFeature **m_papoFeatures;
     bool m_bHasHoles;
 
     FeatureMap m_oMapFeatures;
     FeatureIterator m_oMapFeaturesIter;
 
-    GIntBig m_iNextCreateFID;
+    int64_t m_iNextCreateFID;
 
     bool m_bUpdatable;
     bool m_bAdvertizeUTF8;
@@ -74,7 +74,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     // doesn't change.
     IOGRMemLayerFeatureIterator *GetIterator();
 
-    OGRFeature *GetFeatureRef(GIntBig nFeatureId);
+    OGRFeature *GetFeatureRef(int64_t nFeatureId);
 
   public:
     // Clone poSRS if not nullptr
@@ -84,9 +84,9 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
@@ -95,14 +95,14 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int) override;
+    int64_t GetFeatureCount(int) override;
 
     virtual OGRErr CreateField(OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -151,7 +151,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
         m_bUpdated = bUpdated;
     }
 
-    GIntBig GetNextReadFID()
+    int64_t GetNextReadFID()
     {
         return m_iNextReadFID;
     }

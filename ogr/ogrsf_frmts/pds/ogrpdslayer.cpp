@@ -783,7 +783,7 @@ int OGRPDSLayer::TestCapability(const char *pszCap)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRPDSLayer::GetFeatureCount(int bForce)
+int64_t OGRPDSLayer::GetFeatureCount(int bForce)
 {
     if (TestCapability(OLCFastFeatureCount))
         return nRecords;
@@ -795,7 +795,7 @@ GIntBig OGRPDSLayer::GetFeatureCount(int bForce)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPDSLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRPDSLayer::GetFeature(int64_t nFID)
 {
     if (nFID < 0 || nFID >= nRecords)
         return nullptr;
@@ -809,7 +809,7 @@ OGRFeature *OGRPDSLayer::GetFeature(GIntBig nFID)
 /*                         SetNextByIndex()                             */
 /************************************************************************/
 
-OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRPDSLayer::SetNextByIndex(int64_t nIndex)
 {
     if (!TestCapability(OLCFastSetNextByIndex))
         return OGRLayer::SetNextByIndex(nIndex);

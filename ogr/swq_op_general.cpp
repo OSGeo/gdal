@@ -33,6 +33,7 @@
 #include "ogr_swq.h"
 
 #include <cctype>
+#include <cinttypes>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
@@ -1242,7 +1243,7 @@ static void SWQAutoConvertStringToNumeric(swq_expr_node *poNode)
 
                 // Should also fill the integer value in this case.
                 poSubNode->int_value =
-                    static_cast<GIntBig>(poSubNode->float_value);
+                    static_cast<int64_t>(poSubNode->float_value);
                 poSubNode->field_type = SWQ_FLOAT;
             }
         }
@@ -1582,7 +1583,7 @@ swq_expr_node *SWQCastEvaluator(swq_expr_node *node,
 
                 case SWQ_FLOAT:
                     poRetNode->int_value =
-                        static_cast<GIntBig>(poSrcNode->float_value);
+                        static_cast<int64_t>(poSrcNode->float_value);
                     break;
 
                 default:
@@ -1660,7 +1661,7 @@ swq_expr_node *SWQCastEvaluator(swq_expr_node *node,
                 case SWQ_INTEGER:
                 case SWQ_BOOLEAN:
                 case SWQ_INTEGER64:
-                    osRet.Printf(CPL_FRMT_GIB, poSrcNode->int_value);
+                    osRet.Printf("%" PRId64, poSrcNode->int_value);
                     break;
 
                 case SWQ_FLOAT:

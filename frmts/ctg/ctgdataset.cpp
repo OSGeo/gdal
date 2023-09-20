@@ -303,8 +303,8 @@ int CTGDataset::ReadImagery()
         }
         int nX = atoi(ExtractField(szField, szLine, 3, 8)) - nCellSize / 2;
         int nY = atoi(ExtractField(szField, szLine, 11, 8)) + nCellSize / 2;
-        GIntBig nDiffX = static_cast<GIntBig>(nX) - nNWEasting;
-        GIntBig nDiffY = static_cast<GIntBig>(nNWNorthing) - nY;
+        int64_t nDiffX = static_cast<int64_t>(nX) - nNWEasting;
+        int64_t nDiffY = static_cast<int64_t>(nNWNorthing) - nY;
         if (nDiffX < 0 || (nDiffX % nCellSize) != 0 || nDiffY < 0 ||
             (nDiffY % nCellSize) != 0)
         {
@@ -313,8 +313,8 @@ int CTGDataset::ReadImagery()
                      nLine, szLine);
             return FALSE;
         }
-        GIntBig nCellX = nDiffX / nCellSize;
-        GIntBig nCellY = nDiffY / nCellSize;
+        int64_t nCellX = nDiffX / nCellSize;
+        int64_t nCellY = nDiffY / nCellSize;
         if (nCellX >= nRasterXSize || nCellY >= nRasterYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

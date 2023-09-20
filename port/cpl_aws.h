@@ -46,7 +46,7 @@
 CPLString CPLGetLowerCaseHexSHA256(const void *pabyData, size_t nBytes);
 CPLString CPLGetLowerCaseHexSHA256(const CPLString &osStr);
 
-CPLString CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp);
+CPLString CPLGetAWS_SIGN4_Timestamp(int64_t timestamp);
 
 CPLString CPLAWSURLEncode(const CPLString &osURL, bool bEncodeSlash = true);
 

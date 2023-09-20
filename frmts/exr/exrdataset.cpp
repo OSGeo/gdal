@@ -515,7 +515,7 @@ IoInt64Type GDALEXRIOStream::tellg()
 
 void GDALEXRIOStream::seekg(IoInt64Type pos)
 {
-    VSIFSeekL(m_fp, static_cast<vsi_l_offset>(pos), SEEK_SET);
+    VSIFSeekL(m_fp, static_cast<uint64_t>(pos), SEEK_SET);
 }
 
 /************************************************************************/
@@ -1029,7 +1029,7 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
         {
             const int previewWidth = 100;
             const int previewHeight = std::max(
-                1, static_cast<int>(static_cast<GIntBig>(previewWidth) *
+                1, static_cast<int>(static_cast<int64_t>(previewWidth) *
                                     nYSize / nXSize));
             std::vector<PreviewRgba> pixels(previewWidth * previewHeight);
             if (poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, &pixels[0],
@@ -1070,10 +1070,10 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
 
         std::vector<half> bufferHalf;
         std::vector<float> bufferFloat;
-        std::vector<GUInt32> bufferUInt;
+        std::vector<uint32_t> bufferUInt;
         const size_t pixelTypeSize = (pixelType == HALF) ? 2 : 4;
         const GDALDataType eDT = (pixelType == UINT) ? GDT_UInt32 : GDT_Float32;
-        const GSpacing nDTSize = GDALGetDataTypeSizeBytes(eDT);
+        const int64_t nDTSize = GDALGetDataTypeSizeBytes(eDT);
 
         const bool bTiled =
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));
@@ -1444,7 +1444,7 @@ class GDALEXRWritableDataset final : public GDALPamDataset
     bool m_bTriedWritingHeader = false;
     std::vector<half> m_bufferHalf{};
     std::vector<float> m_bufferFloat{};
-    std::vector<GUInt32> m_bufferUInt{};
+    std::vector<uint32_t> m_bufferUInt{};
     size_t m_nBufferEltSize = 0;
     char *m_pSliceBuffer = nullptr;
 
@@ -1877,7 +1877,7 @@ CPLErr GDALEXRWritableRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                                 ? static_cast<void *>(&poGDS->m_bufferFloat[0])
                                 : static_cast<void *>(dstPtr),
                             eDstDT, GDALGetDataTypeSizeBytes(eDstDT),
-                            static_cast<GPtrDiff_t>(nPixelsInBlock));
+                            static_cast<ptrdiff_t>(nPixelsInBlock));
             if (poGDS->m_pixelType == HALF)
             {
                 if (poGDS->m_bRescaleDiv255)

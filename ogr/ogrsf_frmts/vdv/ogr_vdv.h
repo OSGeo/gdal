@@ -68,10 +68,10 @@ class OGRVDVLayer final : public OGRLayer
     VSILFILE *m_fpL;
     bool m_bOwnFP;
     bool m_bRecodeFromLatin1;
-    vsi_l_offset m_nStartOffset;
-    vsi_l_offset m_nCurOffset;
-    GIntBig m_nTotalFeatureCount;
-    GIntBig m_nFID;
+    uint64_t m_nStartOffset;
+    uint64_t m_nCurOffset;
+    int64_t m_nTotalFeatureCount;
+    int64_t m_nFID;
     OGRFeatureDefn *m_poFeatureDefn;
     bool m_bEOF;
     int m_iLongitudeVDV452;
@@ -79,19 +79,19 @@ class OGRVDVLayer final : public OGRLayer
 
   public:
     OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL, bool bOwnFP,
-                bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
+                bool bRecodeFromLatin1, uint64_t nStartOffset);
     virtual ~OGRVDVLayer();
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
     virtual int TestCapability(const char *pszCap) override;
 
-    void SetFeatureCount(GIntBig nTotalFeatureCount)
+    void SetFeatureCount(int64_t nTotalFeatureCount)
     {
         m_nTotalFeatureCount = nTotalFeatureCount;
     }
@@ -146,7 +146,7 @@ class OGRVDVWriterLayer final : public OGRLayer
     bool m_bWritePossible;
     VSILFILE *m_fpL;
     bool m_bOwnFP;
-    GIntBig m_nFeatureCount;
+    int64_t m_nFeatureCount;
     OGRVDV452Table *m_poVDV452Table;
     CPLString m_osVDV452Lang;
     bool m_bProfileStrict;
@@ -173,7 +173,7 @@ class OGRVDVWriterLayer final : public OGRLayer
     virtual OGRErr CreateField(OGRFieldDefn *poFieldDefn,
                                int bApproxOK = TRUE) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
     void StopAsCurrentLayer();
 };
