@@ -92,7 +92,9 @@ def ogr_virtualogr_run_sql(sql_statement):
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     gdal.ErrorReset()
-    with gdal.quiet_errors():
+    with gdal.quiet_errors(), gdaltest.config_option(
+        "OGR_SQLITE_DIALECT_ALLOW_CREATE_VIRTUAL_TABLE", "YES"
+    ):
         sql_lyr = ds.ExecuteSQL(sql_statement, dialect="SQLITE")
     success = gdal.GetLastErrorMsg() == ""
     ds.ReleaseResultSet(sql_lyr)
