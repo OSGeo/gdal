@@ -41,7 +41,7 @@ Description
 each of them having one or several vector layers, and copy them in
 a target dataset.
 
-There are essential two modes:
+There are essentially two modes:
 
 *  the default one, where each input vector layer, is copied as a
    separate layer into the target dataset
@@ -89,7 +89,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
     -  ``{AUTO_NAME}``: equivalent to ``{DS_BASENAME}_{LAYER_NAME}`` if both
        values are different, or ``{LAYER_NAME}`` when they are identical
-       (case of shapefile). 'different
+       (case of shapefile).
     -  ``{DS_NAME}``: name of the source dataset
     -  ``{DS_BASENAME}``: base name of the source dataset
     -  ``{DS_INDEX}``: index of the source dataset
