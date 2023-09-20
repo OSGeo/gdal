@@ -309,6 +309,15 @@ The following open options are available:
       geotransform has been found, and that geotransform is within the bounds
       -180,360 -90,90, if YES assume OGC:CRS84.
 
+-  .. oo:: PRESERVE_AXIS_UNIT_IN_CRS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.8
+
+      Whether unusual linear axis unit (km) should be kept as such, instead of
+      being normalized to metre. The default is NO, ie that are being normalized
+      to metre (previous GDAL versions kept the original unit)
+
 
 Creation Issues
 ---------------

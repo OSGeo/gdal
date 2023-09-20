@@ -510,7 +510,9 @@ def test_netcdf_9():
 
 def test_netcdf_10():
 
-    ds = gdal.Open("data/netcdf/cf_no_sphere.nc")
+    ds = gdal.OpenEx(
+        "data/netcdf/cf_no_sphere.nc", open_options=["PRESERVE_AXIS_UNIT_IN_CRS=YES"]
+    )
 
     prj = ds.GetProjection()
 
@@ -6397,3 +6399,22 @@ def test_netcdf_NASA_L2_Ocean():
         "Y_BAND": "1",
         "Y_DATASET": 'NETCDF:"data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/latitude',
     }
+
+
+###############################################################################
+# test opening a EUMETSAT OSI SAF product with a proj4_string and
+# geospatial_bounds_crs attributes
+
+
+def test_netcdf_proj4string_geospatial_bounds_crs():
+
+    # Simplified version of https://thredds.met.no/thredds/catalog/osisaf/met.no/reprocessed/ice/drift_455m_files/merged/2020/12/catalog.html?dataset=osisaf/met.no/reprocessed/ice/drift_455m_files/merged/2020/12/ice_drift_nh_ease2-750_cdr-v1p0_24h-202012211200.nc
+    ds = gdal.Open(
+        'NETCDF:"data/netcdf/ice_drift_nh_ease2-750_cdr-v1p0_24h-202012211200_simplified.nc":t0'
+    )
+    assert ds.GetMetadataItem("xc#units") is None
+    assert ds.GetMetadataItem("yc#units") is None
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-5400000.0, 75000.0, 0.0, 5400000.0, 0.0, -75000.0)
+    )
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "6931"
