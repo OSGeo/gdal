@@ -258,9 +258,8 @@ typedef ptrdiff_t GPtrDiff_t;
 #endif
 
 #ifdef GDAL_COMPILATION
-typedef uintptr_t GUIntptr_t;
 #define CPL_IS_ALIGNED(ptr, quant)                                             \
-    ((CPL_REINTERPRET_CAST(GUIntptr_t, CPL_STATIC_CAST(const void *, ptr)) %   \
+    ((CPL_REINTERPRET_CAST(uintptr_t, CPL_STATIC_CAST(const void *, ptr)) %    \
       (quant)) == 0)
 
 #endif

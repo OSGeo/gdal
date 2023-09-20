@@ -4824,7 +4824,7 @@ static void ComputeStatisticsByteNoNodata(ptrdiff_t nBlockPixels,
         aby32ByteUnaligned[32 + 32 + 32 + (COMPUTE_OTHER_STATS ? 32 + 32 : 0)];
     GByte *paby32ByteAligned =
         aby32ByteUnaligned +
-        (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
+        (32 - (reinterpret_cast<uintptr_t>(aby32ByteUnaligned) % 32));
     GByte *pabyMin = paby32ByteAligned;
     GByte *pabyMax = paby32ByteAligned + 32;
     uint32_t *panSum =
@@ -4989,7 +4989,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
             GByte aby32ByteUnaligned[32 + 32 + 32 + 32 + 32];
             GByte *paby32ByteAligned =
                 aby32ByteUnaligned +
-                (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
+                (32 - (reinterpret_cast<uintptr_t>(aby32ByteUnaligned) % 32));
             GByte *pabyMin = paby32ByteAligned;
             GByte *pabyMax = paby32ByteAligned + 32;
             uint32_t *panSum =

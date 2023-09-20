@@ -70,9 +70,9 @@
 #include <emmintrin.h>
 #define CAST_PCT(x) reinterpret_cast<GByte *>(x)
 #define ALIGN_INT_ARRAY_ON_16_BYTE(x)                                          \
-    (((reinterpret_cast<GUIntptr_t>(x) % 16) != 0)                             \
+    (((reinterpret_cast<uintptr_t>(x) % 16) != 0)                              \
          ? reinterpret_cast<int *>(reinterpret_cast<GByte *>(x) + 16 -         \
-                                   (reinterpret_cast<GUIntptr_t>(x) % 16))     \
+                                   (reinterpret_cast<uintptr_t>(x) % 16))      \
          : (x))
 #else
 #define CAST_PCT(x) x

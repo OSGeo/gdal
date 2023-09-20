@@ -1755,7 +1755,7 @@ OGRFeature *OGROpenFileGDBLayer::GetNextFeature()
                 {
                     return nullptr;
                 }
-                int iRow = static_cast<int>(reinterpret_cast<GUIntptr_t>(
+                int iRow = static_cast<int>(reinterpret_cast<uintptr_t>(
                     m_pahFilteredFeatures[m_iCurFeat++]));
                 if (m_poLyrTable->SelectRow(iRow))
                 {
