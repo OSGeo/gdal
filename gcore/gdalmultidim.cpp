@@ -8195,6 +8195,9 @@ lbl_next_depth:
  * Currently this method can only resample along the last 2 dimensions, unless
  * orthorectifying a NASA EMIT dataset.
  *
+ * For NASA EMIT netCDF datasets, if apoNewDims[] and poTargetSRS is NULL, the
+ * geometry lookup table (GLT) is used for fast orthorectification.
+ *
  * @param apoNewDims New dimensions. Its size should be GetDimensionCount().
  *                   apoNewDims[i] can be NULL to let the method automatically
  *                   determine it.
