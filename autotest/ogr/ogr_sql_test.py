@@ -776,8 +776,6 @@ def test_ogr_sql_28():
         "SELECT MAX(foo) FROM my_layer",
         "SELECT SUM(foo) FROM my_layer",
         "SELECT AVG(foo) FROM my_layer",
-        "SELECT MIN(strfield) FROM my_layer",
-        "SELECT MAX(strfield) FROM my_layer",
         "SELECT SUM(strfield) FROM my_layer",
         "SELECT AVG(strfield) FROM my_layer",
         "SELECT AVG(intfield, intfield) FROM my_layer",
@@ -1523,3 +1521,17 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
     ) as sql_lyr:
         sql_lyr.SetAttributeFilter("0")
         assert sql_lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Verify a select mixing a count(*) with something else works without errors
+
+
+def test_ogr_sql_min_max_string_field(data_ds):
+
+    gdal.ErrorReset()
+
+    with data_ds.ExecuteSQL("select min(PRFEDEA), max(PRFEDEA) from poly") as sql_lyr:
+        feat = sql_lyr.GetNextFeature()
+        assert feat["MIN_PRFEDEA"] == "35043369"
+        assert feat["MAX_PRFEDEA"] == "35043423"
