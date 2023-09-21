@@ -1597,15 +1597,23 @@ def test_ogr_parquet_arrow_stream_numpy():
     assert batches[1]["string"][1] == b"d"
     assert numpy.array_equal(batch["list_boolean"][0], numpy.array([]))
     assert numpy.array_equal(batch["list_boolean"][1], numpy.array([False]))
+
     assert numpy.array_equal(
-        batch["fixed_size_list_boolean"][0], numpy.array([True, False])
+        batches[0]["fixed_size_list_boolean"][0], numpy.array([True, False])
     )
     assert numpy.array_equal(
-        batches[1]["fixed_size_list_boolean"][0], numpy.array([True, False])
+        batches[0]["fixed_size_list_boolean"][1], numpy.array([False, True])
     )
     assert numpy.array_equal(
-        batches[1]["fixed_size_list_boolean"][1], numpy.array([False, True])
+        batches[0]["fixed_size_list_boolean"][2], numpy.array([True, False])
     )
+    assert numpy.array_equal(
+        batches[1]["fixed_size_list_boolean"][0], numpy.array([False, True])
+    )
+    assert numpy.array_equal(
+        batches[1]["fixed_size_list_boolean"][1], numpy.array([True, False])
+    )
+
     assert numpy.array_equal(batch["fixed_size_list_uint8"][0], numpy.array([0, 1]))
     assert numpy.array_equal(batch["list_uint64"][1], numpy.array([0])), batch[
         "list_uint64"
@@ -1623,6 +1631,28 @@ def test_ogr_parquet_arrow_stream_numpy():
     )
     assert numpy.array_equal(
         batches[1]["list_string"][1], numpy.array([b"A", b"BC", b"CDE", b"DEFG"])
+    )
+
+    assert numpy.array_equal(batches[0]["list_uint8"][0], numpy.array([]))
+    assert numpy.array_equal(batches[0]["list_uint8"][1], numpy.array([0]))
+    assert numpy.array_equal(batches[0]["list_uint8"][2], numpy.array([]))
+    assert numpy.array_equal(batches[1]["list_uint8"][0], numpy.array([0, 4, 5]))
+    assert numpy.array_equal(batches[1]["list_uint8"][1], numpy.array([0, 7, 8, 9]))
+
+    assert numpy.array_equal(
+        batches[0]["fixed_size_list_uint8"][0], numpy.array([0, 1])
+    )
+    assert numpy.array_equal(
+        batches[0]["fixed_size_list_uint8"][1], numpy.array([2, 3])
+    )
+    assert numpy.array_equal(
+        batches[0]["fixed_size_list_uint8"][2], numpy.array([4, 5])
+    )
+    assert numpy.array_equal(
+        batches[1]["fixed_size_list_uint8"][0], numpy.array([6, 7])
+    )
+    assert numpy.array_equal(
+        batches[1]["fixed_size_list_uint8"][1], numpy.array([8, 9])
     )
 
     ignored_fields = ["geometry"]
