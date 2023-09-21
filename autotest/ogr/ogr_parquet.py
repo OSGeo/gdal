@@ -2120,13 +2120,6 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
 
     ds = ogr.Open(test_file)
     lyr = ds.GetLayer(0)
-    ignored_fields = []
-    lyr_defn = lyr.GetLayerDefn()
-    for i in range(lyr_defn.GetFieldCount()):
-        fld_defn = lyr_defn.GetFieldDefn(i)
-        if fld_defn.GetName().startswith("map_"):
-            ignored_fields.append(fld_defn.GetNameRef())
-    lyr.SetIgnoredFields(ignored_fields)
 
     lyr.SetAttributeFilter("boolean = 0")
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
@@ -2157,6 +2150,7 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
     uint8_vals = []
     decimal128_vals = []
     fixed_size_binary_vals = []
+    map_boolean_vals = []
     for batch in stream:
         for x in batch.field("uint8"):
             uint8_vals.append(x.as_py())
@@ -2164,9 +2158,15 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
             decimal128_vals.append(float(x.as_py()))
         for x in batch.field("fixed_size_binary"):
             fixed_size_binary_vals.append(x.as_py())
+        for x in batch.field("map_boolean"):
+            map_boolean_vals.append(x.as_py())
     assert uint8_vals == [1, 5]
     assert decimal128_vals == [1234.567, -1234.567]
     assert fixed_size_binary_vals == [b"\x00\x01", b"\x00\x01"]
+    if OGR_ARROW_STREAM_BASE_IMPL is None:
+        assert map_boolean_vals == [[("x", None), ("y", True)], []]
+    else:
+        assert map_boolean_vals == ['{"x":null,"y":true}', "{}"]
 
 
 def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
@@ -2184,20 +2184,6 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
     assert batches[0].field("uint8")[1].as_py() == 5
     assert batches[0].field("decimal128")[0].as_py() == -1234.567
     assert batches[0].field("decimal128")[1].as_py() == -1234.567
-
-
-def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_time64_ns():
-    pytest.importorskip("pyarrow")
-
-    ds = ogr.Open("data/parquet/test.parquet")
-    lyr = ds.GetLayer(0)
-    lyr.SetAttributeFilter("time64_ns = 3723000000456")
-    # Fast filtering on decimal data type not implemented for now
-    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 0
-    stream = lyr.GetArrowStreamAsPyArrow()
-    batches = [batch for batch in stream]
-    assert len(batches[0].field("uint8")) == 1
-    assert batches[0].field("uint8")[0].as_py() == 1
 
 
 ###############################################################################

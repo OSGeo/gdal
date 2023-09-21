@@ -2051,17 +2051,18 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
         return true;
     }
 
-    // List
+    // Lists or maps
     if (strcmp(schema->format, "+l") == 0 ||
         strcmp(schema->format, "+L") == 0 ||
-        strncmp(schema->format, "+w:", strlen("+w:")) == 0)
+        strncmp(schema->format, "+w:", strlen("+w:")) == 0 ||
+        strcmp(schema->format, "+m") == 0)
     {
         if (!IsHandledSchema(/* bTopLevel = */ false, schema->children[0],
                              osPrefix, bHasAttrQuery, aosUsedFields))
         {
             return false;
         }
-        // For now, we can't filter on lists
+        // For now, we can't filter on lists or maps
         if (aosUsedFields.FindString((osPrefix + schema->name).c_str()) >= 0)
         {
             CPLDebug("OGR",
@@ -2555,6 +2556,18 @@ CompactFixedSizeListArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
+/*                       CompactListArray()                             */
+/************************************************************************/
+
+static bool CompactMapArray(const struct ArrowSchema *schema,
+                            struct ArrowArray *array, size_t iStart,
+                            const std::vector<bool> &abyValidityFromFilters)
+{
+    return CompactListArray<uint32_t>(schema, array, iStart,
+                                      abyValidityFromFilters);
+}
+
+/************************************************************************/
 /*                           CompactArray()                             */
 /************************************************************************/
 
@@ -2578,6 +2591,12 @@ static bool CompactArray(const struct ArrowSchema *schema,
     {
         if (!CompactListArray<uint64_t>(schema, array, iStart,
                                         abyValidityFromFilters))
+            return false;
+    }
+    else if (strcmp(format, "+m") == 0)
+    {
+        // Map
+        if (!CompactMapArray(schema, array, iStart, abyValidityFromFilters))
             return false;
     }
     else if (strncmp(format, "+w:", strlen("+w:")) == 0)
