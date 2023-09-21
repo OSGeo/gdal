@@ -1518,7 +1518,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             for( npy_intp j = 0; j < dims; j++ )
             {
                 PyObject* subObj = PyBytes_FromStringAndSize(
-                        ((const char*)arrayField->buffers[1]) + static_cast<size_t>(arrayField->offset) + j * nLength,
+                        ((const char*)arrayField->buffers[1]) + static_cast<size_t>(arrayField->offset + j) * nLength,
                         nLength);
                 memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
                        &subObj,

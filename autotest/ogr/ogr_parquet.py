@@ -1723,6 +1723,12 @@ def test_ogr_parquet_arrow_stream_numpy():
     assert numpy.array_equal(batches[1]["list_uint8"][0], numpy.array([0, 4, 5]))
     assert numpy.array_equal(batches[1]["list_uint8"][1], numpy.array([0, 7, 8, 9]))
 
+    assert batches[0]["fixed_size_binary"][0] == b"\x00\x01"
+    assert batches[0]["fixed_size_binary"][1] == b"\x00\x00"
+    assert batches[0]["fixed_size_binary"][2] == b"\x01\x01"
+    assert batches[1]["fixed_size_binary"][0] == b"\x01\x00"
+    assert batches[1]["fixed_size_binary"][1] == b"\x00\x01"
+
     assert numpy.array_equal(
         batches[0]["fixed_size_list_uint8"][0], numpy.array([0, 1])
     )
@@ -1856,7 +1862,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     assert batch["float64"][0] == 4.5
     assert batch["string"][0] == b"c"
     assert batch["large_string"][0] == b"c"
-    assert batch["fixed_size_binary"][0] == b"\x00\x01"
+    assert batch["fixed_size_binary"][0] == b"\x01\x00"
     assert batch["timestamp_ms_gmt"][0] == numpy.datetime64("2019-01-01T14:00:00.500")
     assert batch["time32_s"][0] == datetime.time(0, 0, 4)
     assert batch["time32_ms"][0] == datetime.time(0, 0, 0, 4000)
