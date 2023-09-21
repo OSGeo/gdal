@@ -124,44 +124,58 @@ MAIN_START(argc, argv)
         /*      Open data source. */
         /* --------------------------------------------------------------------
          */
-        GDALDataset *poDS = GDALDataset::Open(
-            psOptionsForBinary->osFilename.c_str(),
-            ((psOptionsForBinary->bReadOnly ||
-              psOptionsForBinary->osSQLStatement.empty()) &&
-                     !psOptionsForBinary->bUpdate
-                 ? GDAL_OF_READONLY
-                 : GDAL_OF_UPDATE) |
-                GDAL_OF_VECTOR,
-            nullptr, psOptionsForBinary->aosOpenOptions.List(), nullptr);
-        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
-            !psOptionsForBinary->bUpdate &&
-            psOptionsForBinary->osSQLStatement.empty())
+        int nFlags = GDAL_OF_VECTOR;
+        bool bMayRetryUpdateMode = false;
+        if (psOptionsForBinary->bUpdate)
+            nFlags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+        else if (psOptionsForBinary->bReadOnly)
+            nFlags |= GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR;
+        else if (psOptionsForBinary->osSQLStatement.empty())
         {
-            // In some cases (empty geopackage for example), opening in
-            // read-only mode fails, so retry in update mode
+            nFlags |= GDAL_OF_READONLY;
             if (GDALIdentifyDriverEx(psOptionsForBinary->osFilename.c_str(),
                                      GDAL_OF_VECTOR, nullptr, nullptr))
             {
+                bMayRetryUpdateMode = true;
+            }
+            else
+            {
+                // And an error Will be emitted
+                nFlags |= GDAL_OF_VERBOSE_ERROR;
+            }
+        }
+        else
+            nFlags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+        GDALDataset *poDS = GDALDataset::Open(
+            psOptionsForBinary->osFilename.c_str(), nFlags, nullptr,
+            psOptionsForBinary->aosOpenOptions.List(), nullptr);
+
+        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
+            !psOptionsForBinary->bUpdate)
+        {
+            if (psOptionsForBinary->osSQLStatement.empty() &&
+                bMayRetryUpdateMode)
+            {
+                // In some cases (empty geopackage for example), opening in
+                // read-only mode fails, so retry in update mode
                 poDS = GDALDataset::Open(
                     psOptionsForBinary->osFilename.c_str(),
                     GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
                     psOptionsForBinary->aosOpenOptions.List(), nullptr);
             }
-        }
-        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
-            !psOptionsForBinary->bUpdate &&
-            !psOptionsForBinary->osSQLStatement.empty())
-        {
-            poDS = GDALDataset::Open(psOptionsForBinary->osFilename.c_str(),
-                                     GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
-                                     psOptionsForBinary->aosOpenOptions.List(),
-                                     nullptr);
-            if (poDS != nullptr && psOptionsForBinary->bVerbose)
+            else if (!psOptionsForBinary->osSQLStatement.empty())
             {
-                printf("Had to open data source read-only.\n");
+                poDS = GDALDataset::Open(
+                    psOptionsForBinary->osFilename.c_str(),
+                    GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
+                    psOptionsForBinary->aosOpenOptions.List(), nullptr);
+                if (poDS != nullptr && psOptionsForBinary->bVerbose)
+                {
+                    printf("Had to open data source read-only.\n");
 #ifdef __AFL_HAVE_MANUAL_CONTROL
-                psOptionsForBinary->bReadOnly = true;
+                    psOptionsForBinary->bReadOnly = true;
 #endif
+                }
             }
         }
 

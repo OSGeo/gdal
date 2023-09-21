@@ -36,7 +36,7 @@ import ogrtest
 import pytest
 import test_cli_utilities
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_ogrinfo_path() is None, reason="ogrinfo not available"
@@ -708,3 +708,17 @@ def test_ogrinfo_failed_sql(ogrinfo_path):
         ogrinfo_path + ' ../ogr/data/poly.shp -sql "SELECT bla"'
     )
     assert "ERROR ret code = 1" in err
+
+
+###############################################################################
+# Test opening an empty geopackage
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogrinfo_empty_gpkg(ogrinfo_path, tmp_path):
+
+    filename = str(tmp_path / "empty.gpkg")
+    ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+
+    (ret, err) = gdaltest.runexternal_out_and_err(ogrinfo_path + f" {filename}")
+    assert err is None or err == "", "got error/warning"
