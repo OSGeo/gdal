@@ -58,8 +58,9 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * fine tuning which drivers are needed at runtime.
  * 
  * @see GDALDriverManager::AutoLoadDrivers()
+ * @since GDAL 3.8
 */
-void CPL_DLL CPL_STDCALL GDALRegisterPlugins(void)
+void CPL_DLL GDALRegisterPlugins(void)
 {
     auto poDriverManager = GetGDALDriverManager();
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
