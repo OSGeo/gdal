@@ -448,8 +448,8 @@ jobs:
     - name: Remove conflicting libraries
       shell: bash -l {0}
       run: |
-          rm -rf C:/Strawberry
-          rm -rf "C:/Program Files/OpenSSL/lib"
+          rm -rf C:/Strawberry || /bin/true
+          rm -rf "C:/Program Files/OpenSSL/lib" || /bin/true
 
     - name: Configure
       shell: bash -l {0}

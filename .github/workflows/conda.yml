@@ -59,7 +59,7 @@ jobs:
       shell: bash -l {0}
       if: matrix.platform == 'windows-latest'
       run: |
-          rm -rf C:/Strawberry
+          rm -rf C:/Strawberry || /bin/true
 
     - name: Setup
       shell: bash -l {0}
