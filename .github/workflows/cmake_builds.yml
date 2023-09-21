@@ -446,10 +446,10 @@ jobs:
         mv install install-pdfium
 
     - name: Remove conflicting libraries
-      shell: cmd
+      shell: bash -l {0}
       run: |
-          rd /s /q C:\Strawberry
-          rd /s /q "C:\Program Files\OpenSSL\lib"
+          rm -rf C:/Strawberry
+          rm -rf "C:/Program Files/OpenSSL/lib"
 
     - name: Configure
       shell: bash -l {0}
