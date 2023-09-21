@@ -1663,6 +1663,12 @@ def test_ogr_parquet_arrow_stream_numpy():
         "fixed_size_list_float32",
         "fixed_size_list_float64",
         "fixed_size_list_string",
+        "struct_field.a",
+        "struct_field.b",
+        "struct_field.c.d",
+        "struct_field.c.f",
+        "struct_field.h",
+        "struct_field.i",
         "dict",
         "geometry",
     }
@@ -1744,6 +1750,10 @@ def test_ogr_parquet_arrow_stream_numpy():
     assert numpy.array_equal(
         batches[1]["fixed_size_list_uint8"][1], numpy.array([8, 9])
     )
+
+    assert batches[0]["struct_field.a"][0] == 1
+    assert batches[0]["struct_field.a"][1] == 1
+    assert batches[0]["struct_field.b"][0] == 2.5
 
     ignored_fields = ["geometry"]
     lyr_defn = lyr.GetLayerDefn()
