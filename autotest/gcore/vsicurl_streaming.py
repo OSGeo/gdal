@@ -32,6 +32,7 @@ import time
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -41,7 +42,7 @@ pytestmark = pytest.mark.require_curl()
 #
 
 
-def test_vsicurl_streaming_1():
+def test_vsicurl_streaming_real_resource():
     # Occasionally fails on Travis graviton2 configuration
     gdaltest.skip_on_travis()
 
@@ -126,3 +127,90 @@ def test_vsicurl_streaming_1():
         pytest.fail()
 
     gdal.VSIFCloseL(fp)
+
+
+###############################################################################
+#
+
+
+@pytest.fixture(scope="module")
+def webserver_port():
+
+    webserver_process, webserver_port = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    try:
+        if webserver_port == 0:
+            pytest.skip()
+        yield webserver_port
+    finally:
+        gdal.VSICurlClearCache()
+
+        webserver.server_stop(webserver_process, webserver_port)
+
+
+###############################################################################
+#
+
+
+def test_vsicurl_streaming_ring_buffer_saturation(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    def method(request):
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(200)
+        request.send_header("Content-Length", 2 * 1024 * 1024)
+        request.end_headers()
+        request.wfile.write(("x" * (2 * 1024 * 1024)).encode("ascii"))
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test.bin", custom_method=method)
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            f"/vsicurl_streaming/http://localhost:{webserver_port}/test.bin", "rb"
+        )
+        try:
+            assert f
+            assert gdal.VSIFReadL(1, 1, f) == b"x"
+            time.sleep(0.5)
+            read = gdal.VSIFReadL(1, 1024 * 1024 - 1, f)
+            if read != b"x" * (
+                1024 * 1024 - 1
+            ):  # do not use assertion as pytest is really slow
+                assert False
+            read = gdal.VSIFReadL(1, 1024 * 1024, f)
+            if read != b"x" * (1024 * 1024):
+                assert False
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
+#
+
+
+def test_vsicurl_streaming_partial_read(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    def method(request):
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(200)
+        request.send_header("Content-Length", 128 * 1024)
+        request.end_headers()
+        request.wfile.write(("x" * (128 * 1024)).encode("ascii"))
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test.bin", custom_method=method)
+
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            f"/vsicurl_streaming/http://localhost:{webserver_port}/test.bin", "rb"
+        )
+        try:
+            assert f
+            assert gdal.VSIFReadL(1, 1, f) == b"x"
+        finally:
+            gdal.VSIFCloseL(f)
