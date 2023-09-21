@@ -1205,19 +1205,20 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                 Py_DECREF(dict);
                 Py_RETURN_NONE;
             }
-            if( arrayField->children[0]->n_buffers != 2 )
+            const struct ArrowArray* psChildArray = arrayField->children[0];
+            if( psChildArray->n_buffers != 2 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field %s: arrayField->children[0]->n_buffers != 2",
+                         "Field %s: psChildArray->n_buffers != 2",
                          schemaField->name);
                 Py_DECREF(dict);
                 Py_RETURN_NONE;
             }
             const int nLength = atoi(arrowType + strlen("+w:"));
-            if( arrayField->children[0]->length < nLength * arrayField->length )
+            if( psChildArray->length < nLength * arrayField->length )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field %s: arrayField->children[0]->length < nLength * arrayField->length",
+                         "Field %s: psChildArray->length < nLength * arrayField->length",
                          schemaField->name);
                 Py_DECREF(dict);
                 Py_RETURN_NONE;
@@ -1232,8 +1233,8 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                     subObj = PyArray_SimpleNew(1, &nvalues, NPY_BOOL);
                     for( npy_intp k = 0; k < nvalues; k++ )
                     {
-                        size_t srcOffset = static_cast<size_t>(arrayField->children[0]->offset + j * nLength + k);
-                        uint8_t val = (((uint8_t*)arrayField->children[0]->buffers[1])[srcOffset / 8]  >> (srcOffset % 8)) & 1;
+                        size_t srcOffset = static_cast<size_t>(psChildArray->offset + (j + arrayField->offset) * nLength + k);
+                        uint8_t val = (((uint8_t*)psChildArray->buffers[1])[srcOffset / 8]  >> (srcOffset % 8)) & 1;
                         *(uint8_t*)PyArray_GETPTR1((PyArrayObject *) subObj, k) = val;
                     }
                 }
@@ -1241,7 +1242,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                 {
                     subObj = PyArray_SimpleNewFromData(
                         1, &nvalues, typenum,
-                        (char*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset) + j * nLength * sizeOfType);
+                        (char*)psChildArray->buffers[1] + static_cast<size_t>((psChildArray->offset + (j + arrayField->offset) * nLength) * sizeOfType));
                     /* Keep a reference to the owner object */
 #if NPY_API_VERSION >= 0x00000007
                     PyArray_SetBaseObject((PyArrayObject *) subObj, pointerArrayKeeper);
