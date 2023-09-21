@@ -1115,3 +1115,24 @@ def test_gdal_translate_scale_and_unscale_incompatible(gdal_translate_path):
         + " -a_scale 0.0001 -a_offset 0.1 -unscale ../gcore/data/byte.tif /vsimem/out.tif"
     )
     assert "-a_scale/-a_offset are not applied by -unscale" in err
+
+
+###############################################################################
+# Test -dmo option
+
+
+def test_gdal_translate_dmo_option(gdal_translate_path, tmp_path):
+
+    dst_vrt = str(tmp_path / "test_dmo.vrt")
+
+    gdaltest.runexternal(
+        f"{gdal_translate_path} -dmo NEW_DOMAIN:META-TAG=value ../gcore/data/byte.tif {dst_vrt}"
+    )
+
+    ds = gdal.Open(dst_vrt)
+    assert ds is not None
+
+    md = ds.GetMetadata("NEW_DOMAIN")
+    assert "META-TAG" in md, "Did not get META-TAG"
+
+    ds = None
