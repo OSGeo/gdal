@@ -93,7 +93,7 @@ jobs:
       - name: Remove conflicting libraries
         shell: bash -l {0}
         run: |
-            rm -rf C:/Strawberry
+            rm -rf C:/Strawberry || /bin/true
 
       - name: Detect AVX2
         shell: bash
