@@ -1639,6 +1639,12 @@ def test_ogr_parquet_arrow_stream_numpy():
     assert numpy.array_equal(batches[1]["list_uint8"][0], numpy.array([0, 4, 5]))
     assert numpy.array_equal(batches[1]["list_uint8"][1], numpy.array([0, 7, 8, 9]))
 
+    assert batches[0]["fixed_size_binary"][0] == b"\x00\x01"
+    assert batches[0]["fixed_size_binary"][1] == b"\x00\x00"
+    assert batches[0]["fixed_size_binary"][2] == b"\x01\x01"
+    assert batches[1]["fixed_size_binary"][0] == b"\x01\x00"
+    assert batches[1]["fixed_size_binary"][1] == b"\x00\x01"
+
     assert numpy.array_equal(
         batches[0]["fixed_size_list_uint8"][0], numpy.array([0, 1])
     )
