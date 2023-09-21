@@ -1339,6 +1339,8 @@ def test_ogr_parquet_multiple_geom_columns():
         "1 = 1",
         "boolean = boolean",
         "FID = 1",
+        '"struct_field.a" = 1',
+        '"struct_field.a" = 0',
     ],
 )
 def test_ogr_parquet_attribute_filter(filter):
@@ -1824,21 +1826,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     lyr_defn = lyr.GetLayerDefn()
     for i in range(lyr_defn.GetFieldCount()):
         fld_defn = lyr_defn.GetFieldDefn(i)
-        if (
-            fld_defn.GetName().startswith("map_")
-            or fld_defn.GetName().startswith("struct_")
-            or fld_defn.GetType()
-            not in (
-                ogr.OFTInteger,
-                ogr.OFTInteger64,
-                ogr.OFTReal,
-                ogr.OFTString,
-                ogr.OFTBinary,
-                ogr.OFTTime,
-                ogr.OFTDate,
-                ogr.OFTDateTime,
-            )
-        ):
+        if fld_defn.GetName().startswith("map_"):
             ignored_fields.append(fld_defn.GetNameRef())
     lyr.SetIgnoredFields(ignored_fields)
     lyr.SetSpatialFilterRect(-10, -10, 10, 10)
@@ -1849,6 +1837,36 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     for batch in stream:
         fc += len(batch["uint8"])
     assert fc == 4
+
+    lyr.SetSpatialFilterRect(4, 2, 4, 2)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["geometry"]) == 1
+    assert batch["uint8"][0] == 5
+    assert numpy.array_equal(
+        batch["fixed_size_list_boolean"][0], numpy.array([True, False])
+    )
+    assert numpy.array_equal(batch["fixed_size_list_uint8"][0], numpy.array([8, 9]))
+    assert numpy.array_equal(batch["fixed_size_list_uint16"][0], numpy.array([8, 9]))
+    assert numpy.array_equal(
+        batch["fixed_size_list_string"][0], numpy.array([b"i", b"j"])
+    )
+    assert numpy.array_equal(
+        batch["list_boolean"][0], numpy.array([True, False, True, False])
+    )
+    assert numpy.array_equal(batch["list_uint8"][0], numpy.array([0, 7, 8, 9]))
+    assert numpy.array_equal(batch["list_uint16"][0], numpy.array([0, 7, 8, 9]))
+    assert numpy.array_equal(
+        batch["list_string"][0], numpy.array([b"A", b"BC", b"CDE", b"DEFG"])
+    )
+    assert (
+        ogr.CreateGeometryFromWkb(batch["geometry"][0]).ExportToWkt() == "POINT (4 2)"
+    )
+    assert batch["fixed_size_binary"][0] == b"\x00\x01"
 
     lyr.SetSpatialFilterRect(3, 2, 3, 2)
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
@@ -1881,6 +1899,24 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     assert batch["date64"][0] == numpy.datetime64("1970-01-01")
     assert bytes(batch["binary"][0]) == b"\00\01"
     assert bytes(batch["large_binary"][0]) == b"\00\01"
+    assert batch["struct_field.a"][0] == 1
+    assert batch["struct_field.c.d"][0] == b"e"
+    assert numpy.array_equal(
+        batch["fixed_size_list_boolean"][0], numpy.array([False, True])
+    )
+    assert numpy.array_equal(batch["fixed_size_list_uint8"][0], numpy.array([6, 7]))
+    assert numpy.array_equal(batch["fixed_size_list_uint16"][0], numpy.array([6, 7]))
+    assert numpy.array_equal(
+        batch["fixed_size_list_string"][0], numpy.array([b"g", b"h"])
+    )
+    assert numpy.array_equal(
+        batch["list_boolean"][0], numpy.array([False, False, True])
+    )
+    assert numpy.array_equal(batch["list_uint8"][0], numpy.array([0, 4, 5]))
+    assert numpy.array_equal(batch["list_uint16"][0], numpy.array([0, 4, 5]))
+    assert numpy.array_equal(
+        batch["list_string"][0], numpy.array([b"A", b"BC", b"CDE"])
+    )
     assert (
         ogr.CreateGeometryFromWkb(batch["geometry"][0]).ExportToWkt() == "POINT (3 2)"
     )
@@ -2052,21 +2088,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
     lyr_defn = lyr.GetLayerDefn()
     for i in range(lyr_defn.GetFieldCount()):
         fld_defn = lyr_defn.GetFieldDefn(i)
-        if (
-            fld_defn.GetName().startswith("map_")
-            or fld_defn.GetName().startswith("struct_")
-            or fld_defn.GetType()
-            not in (
-                ogr.OFTInteger,
-                ogr.OFTInteger64,
-                ogr.OFTReal,
-                ogr.OFTString,
-                ogr.OFTBinary,
-                ogr.OFTTime,
-                ogr.OFTDate,
-                ogr.OFTDateTime,
-            )
-        ):
+        if fld_defn.GetName().startswith("map_"):
             ignored_fields.append(fld_defn.GetNameRef())
     lyr.SetIgnoredFields(ignored_fields)
     lyr.SetAttributeFilter(filter)
@@ -2102,21 +2124,7 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
     lyr_defn = lyr.GetLayerDefn()
     for i in range(lyr_defn.GetFieldCount()):
         fld_defn = lyr_defn.GetFieldDefn(i)
-        if (
-            fld_defn.GetName().startswith("map_")
-            or fld_defn.GetName().startswith("struct_")
-            or fld_defn.GetType()
-            not in (
-                ogr.OFTInteger,
-                ogr.OFTInteger64,
-                ogr.OFTReal,
-                ogr.OFTString,
-                ogr.OFTBinary,
-                ogr.OFTTime,
-                ogr.OFTDate,
-                ogr.OFTDateTime,
-            )
-        ):
+        if fld_defn.GetName().startswith("map_"):
             ignored_fields.append(fld_defn.GetNameRef())
     lyr.SetIgnoredFields(ignored_fields)
 
@@ -2206,21 +2214,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_and_attribute_filter():
     lyr_defn = lyr.GetLayerDefn()
     for i in range(lyr_defn.GetFieldCount()):
         fld_defn = lyr_defn.GetFieldDefn(i)
-        if (
-            fld_defn.GetName().startswith("map_")
-            or fld_defn.GetName().startswith("struct_")
-            or fld_defn.GetType()
-            not in (
-                ogr.OFTInteger,
-                ogr.OFTInteger64,
-                ogr.OFTReal,
-                ogr.OFTString,
-                ogr.OFTBinary,
-                ogr.OFTTime,
-                ogr.OFTDate,
-                ogr.OFTDateTime,
-            )
-        ):
+        if fld_defn.GetName().startswith("map_"):
             ignored_fields.append(fld_defn.GetNameRef())
     lyr.SetIgnoredFields(ignored_fields)
     lyr.SetAttributeFilter("uint8 = 4 or uint8 = 5")
