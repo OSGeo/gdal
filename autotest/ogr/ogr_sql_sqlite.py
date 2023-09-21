@@ -2405,3 +2405,24 @@ def testogr_sql_sqlite_named_FID_column():
         assert [f["myfid"] for f in sql_lyr] == [30]
 
     ds.ExecuteSQL("DELETE FROM test WHERE myfid = 30", dialect="SQLITE")
+
+
+###############################################################################
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "DROP TABLE test",
+        "ALTER TABLE test DROP COLUMN test",
+        "CREATE INDEX my_idx ON test(foo)",
+        "DROP INDEX my_idx",
+        "CREATE VIEW v AS SELECT * FROM test",
+    ],
+)
+def test_ogr_sql_sqlite_unsupported(sql):
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    with pytest.raises(Exception):
+        ds.ExecuteSQL(sql, dialect="SQLite")
