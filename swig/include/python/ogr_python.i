@@ -77,6 +77,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 %extend OGRDataSourceShadow {
   %pythoncode {
+
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
@@ -103,9 +104,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         return self
 
     def __exit__(self, *args):
-        self._invalidate_layers()
-        self.Destroy()
-        self.this = None
+        self.Close()
 
     def __del__(self):
         self._invalidate_layers()
@@ -177,6 +176,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 %feature("pythonappend") CopyLayer %{
     self._add_layer_ref(val)
+%}
+
+%feature("pythonappend") Close %{
+    self.thisown = 0
+    self.this = None
+    self._invalidate_layers()
+    return val
 %}
 
 %feature("shadow") DeleteLayer %{

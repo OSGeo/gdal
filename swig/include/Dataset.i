@@ -288,6 +288,10 @@ public:
     }
   }
 
+  CPLErr Close() {
+     return GDALClose(self);
+  }
+
   GDALDriverShadow* GetDriver() {
     return (GDALDriverShadow*) GDALGetDatasetDriver( self );
   }

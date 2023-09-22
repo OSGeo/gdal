@@ -7,5 +7,15 @@ data will be written to disk.
 "
 
 %extend GDALDatasetShadow {
+
+%feature("docstring")  Close "
+Closes opened dataset and releases allocated resources.
+
+This method can be used to force the dataset to close
+when one more references to the dataset are still
+reachable. If Close is never called, the dataset will
+be closed automatically during garbage collection.
+"
+
 }
 

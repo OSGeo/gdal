@@ -871,8 +871,13 @@ public:
   char const *name;
 %mutable;
 
+
   ~OGRDataSourceShadow() {
     OGRReleaseDataSource(self);
+  }
+
+  CPLErr Close() {
+    return GDALClose(self);
   }
 
   int GetRefCount() {
