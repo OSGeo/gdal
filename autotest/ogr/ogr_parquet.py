@@ -222,9 +222,9 @@ def _check_test_parquet(
     assert f["float64"] == 1.5
     assert f["string"] == "abcd"
     assert f["large_string"] == "abcd"
-    assert f["timestamp_ms_gmt"] == "2019/01/01 14:00:00+00"
-    assert f["timestamp_ms_gmt_plus_2"] == "2019/01/01 14:00:00+02"
-    assert f["timestamp_ms_gmt_minus_0215"] == "2019/01/01 14:00:00-0215"
+    assert f["timestamp_ms_gmt"] == "2019/01/01 14:00:00.500+00"
+    assert f["timestamp_ms_gmt_plus_2"] == "2019/01/01 14:00:00.500+02"
+    assert f["timestamp_ms_gmt_minus_0215"] == "2019/01/01 14:00:00.500-0215"
     assert f["timestamp_s_no_tz"] == "2019/01/01 14:00:00"
     assert f["time32_s"] == "01:02:03"
     assert f["time32_ms"] == "01:02:03.456"
@@ -1084,8 +1084,8 @@ def test_ogr_parquet_statistics():
             "timestamp_ms_gmt",
             "DateTime",
             "None",
-            "2019/01/01 14:00:00+00",
-            "2019/01/01 14:00:00+00",
+            "2019/01/01 14:00:00.500+00",
+            "2019/01/01 14:00:00.500+00",
         ),
     ]
 

@@ -95,7 +95,12 @@ def generate_test_parquet():
     timestamp_ms_gmt_plus_2 = pa.array(
         [
             pd.Timestamp(
-                year=2019, month=1, day=1, hour=14, nanosecond=500 * 1e6, tz=gmt_plus_2
+                year=2019,
+                month=1,
+                day=1,
+                hour=14,
+                microsecond=500 * 1000,
+                tz=gmt_plus_2,
             )
         ]
         * 5,
@@ -103,7 +108,11 @@ def generate_test_parquet():
     )
     gmt = datetime.timezone(datetime.timedelta(hours=0))
     timestamp_ms_gmt = pa.array(
-        [pd.Timestamp(year=2019, month=1, day=1, hour=14, nanosecond=500 * 1e6, tz=gmt)]
+        [
+            pd.Timestamp(
+                year=2019, month=1, day=1, hour=14, microsecond=500 * 1000, tz=gmt
+            )
+        ]
         * 5,
         type=pa.timestamp("ms", tz=gmt),
     )
@@ -115,7 +124,7 @@ def generate_test_parquet():
                 month=1,
                 day=1,
                 hour=14,
-                nanosecond=500 * 1e6,
+                microsecond=500 * 1000,
                 tz=gmt_minus_0215,
             )
         ]
@@ -123,7 +132,7 @@ def generate_test_parquet():
         type=pa.timestamp("ms", tz=gmt_minus_0215),
     )
     timestamp_s_no_tz = pa.array(
-        [pd.Timestamp(year=2019, month=1, day=1, hour=14, nanosecond=500 * 1e6)] * 5,
+        [pd.Timestamp(year=2019, month=1, day=1, hour=14)] * 5,
         type=pa.timestamp("s"),
     )
     time32_s = pa.array([3600 + 120 + 3, None, 3, 4, 5], type=pa.time32("s"))
@@ -140,7 +149,10 @@ def generate_test_parquet():
     duration_ms = pa.array([1, 2, 3, 4, 5], type=pa.duration("ms"))
     binary = pa.array([b"\x00\x01"] * 5, type=pa.binary())
     large_binary = pa.array([b"\x00\x01"] * 5, type=pa.large_binary())
-    fixed_size_binary = pa.array([b"\x00\x01"] * 5, type=pa.binary(2))
+    fixed_size_binary = pa.array(
+        [b"\x00\x01", b"\x00\x00", b"\x01\x01", b"\x01\x00", b"\x00\x01"],
+        type=pa.binary(2),
+    )
     decimal128 = pa.array(
         [
             decimal.Decimal("1234.567"),
@@ -372,7 +384,7 @@ def generate_test_parquet():
         type=pa.map_(pa.string(), pa.string()),
     )
 
-    indices = pa.array([0, 1, 2, None, 2])
+    indices = pa.array([0, 1, 2, None, 2], type=pa.int32())
     dictionary = pa.array(["foo", "bar", "baz"])
     dict = pa.DictionaryArray.from_arrays(indices, dictionary)
 
@@ -490,7 +502,12 @@ def generate_test_parquet():
         HERE / "ogr/data/parquet/test.parquet",
         compression="NONE",
         row_group_size=3,
+        version="1.0",
     )
+
+    import pyarrow.feather as feather
+
+    feather.write_feather(table, HERE / "ogr/data/arrow/test.feather")
 
 
 def generate_all_geoms_parquet():
