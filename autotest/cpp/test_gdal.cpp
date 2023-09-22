@@ -58,6 +58,12 @@ TEST_F(test_gdal, driver_manager)
     ASSERT_TRUE(nullptr != drv_mgr);
 }
 
+// Test that GDALRegisterPlugins can be called
+TEST_F(test_gdal, register_plugins)
+{
+    GDALRegisterPlugins();
+}
+
 // Test number of registered GDAL drivers
 TEST_F(test_gdal, number_of_registered_drivers)
 {

@@ -877,6 +877,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
                             UpdateRelationship()*/
 
 void CPL_DLL CPL_STDCALL GDALAllRegister(void);
+void CPL_DLL GDALRegisterPlugins(void);
 
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreate(GDALDriverH hDriver, const char *, int, int, int, GDALDataType,
