@@ -7456,7 +7456,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                      GDALRasterBandFromArray()                       */
+/*                   GDALMDArrayResampledDatasetRasterBand()            */
 /************************************************************************/
 
 GDALMDArrayResampledDatasetRasterBand::GDALMDArrayResampledDatasetRasterBand(
