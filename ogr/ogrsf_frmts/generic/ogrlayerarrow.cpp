@@ -2028,19 +2028,50 @@ ParseArrowMetadata(const char *pabyMetadata)
 }
 
 /************************************************************************/
-/*                  OGRLayer::CanPostFilterArrowArray()                 */
+/*                            IsHandledSchema()                         */
 /************************************************************************/
 
-/** Whether the PostFilterArrowArray() can work on the schema to remove
- * rows that aren't selected by the spatial or attribute filter.
- */
-bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
+static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
+                            const std::string &osPrefix, bool bHasAttrQuery,
+                            const CPLStringList &aosUsedFields)
 {
-    if (strcmp(schema->format, "+s") != 0)
+    if (strcmp(schema->format, "+s") == 0)
     {
-        CPLDebug("OGR", "Unexpected top level schema->format = %s",
-                 schema->format);
-        return false;
+        for (int64_t i = 0; i < schema->n_children; ++i)
+        {
+            if (!IsHandledSchema(/* bTopLevel = */ false,
+                                 schema->children[static_cast<size_t>(i)],
+                                 bTopLevel ? std::string()
+                                           : osPrefix + schema->name + ".",
+                                 bHasAttrQuery, aosUsedFields))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Lists or maps
+    if (strcmp(schema->format, "+l") == 0 ||
+        strcmp(schema->format, "+L") == 0 ||
+        strncmp(schema->format, "+w:", strlen("+w:")) == 0 ||
+        strcmp(schema->format, "+m") == 0)
+    {
+        if (!IsHandledSchema(/* bTopLevel = */ false, schema->children[0],
+                             osPrefix, bHasAttrQuery, aosUsedFields))
+        {
+            return false;
+        }
+        // For now, we can't filter on lists or maps
+        if (aosUsedFields.FindString((osPrefix + schema->name).c_str()) >= 0)
+        {
+            CPLDebug("OGR",
+                     "Field %s has unhandled format '%s' for an "
+                     "attribute to filter on",
+                     (osPrefix + schema->name).c_str(), schema->format);
+            return false;
+        }
+        return true;
     }
 
     const char *const apszHandledFormats[] = {
@@ -2068,6 +2099,27 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
         "ttn",  //time64 [nanoseconds]
     };
 
+    for (const char *pszHandledFormat : apszHandledFormats)
+    {
+        if (strcmp(schema->format, pszHandledFormat) == 0)
+        {
+            return true;
+        }
+    }
+
+    // For now, we can't filter on decimal128/decimal256 fields
+    if (bHasAttrQuery && strncmp(schema->format, "d:", 2) == 0)
+    {
+        if (aosUsedFields.FindString((osPrefix + schema->name).c_str()) >= 0)
+        {
+            CPLDebug("OGR",
+                     "Field %s has unhandled format '%s' for an "
+                     "attribute to filter on",
+                     (osPrefix + schema->name).c_str(), schema->format);
+            return false;
+        }
+    }
+
     const char *const apszHandledFormatsPrefix[] = {
         "d:",    // decimal128, decimal256
         "w:",    // fixed width binary
@@ -2077,51 +2129,36 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
         "tsn:",  // timestamp [nanoseconds] with timezone
     };
 
-    for (int64_t i = 0; i < schema->n_children; ++i)
+    for (const char *pszHandledFormat : apszHandledFormatsPrefix)
     {
-        const auto fieldSchema = schema->children[i];
-        bool bFound = false;
-        for (const char *pszHandledFormat : apszHandledFormats)
+        if (strncmp(schema->format, pszHandledFormat,
+                    strlen(pszHandledFormat)) == 0)
         {
-            if (strcmp(fieldSchema->format, pszHandledFormat) == 0)
-            {
-                bFound = true;
-                break;
-            }
+            return true;
         }
-        if (!bFound)
-        {
-            // For now, we can't filter on decimal128/decimal256 fields
-            if (m_poAttrQuery && strncmp(fieldSchema->format, "d:", 2) == 0)
-            {
-                const CPLStringList aosUsedFields(
-                    m_poAttrQuery->GetUsedFields());
-                if (aosUsedFields.FindString(fieldSchema->name) >= 0)
-                {
-                    CPLDebug("OGR",
-                             "Field %s has unhandled format '%s' for an "
-                             "attribute to filter on",
-                             fieldSchema->name, fieldSchema->format);
-                    return false;
-                }
-            }
+    }
 
-            for (const char *pszHandledFormat : apszHandledFormatsPrefix)
-            {
-                if (strncmp(fieldSchema->format, pszHandledFormat,
-                            strlen(pszHandledFormat)) == 0)
-                {
-                    bFound = true;
-                    break;
-                }
-            }
-        }
-        if (!bFound)
-        {
-            CPLDebug("OGR", "Field %s has unhandled format '%s'",
-                     fieldSchema->name, fieldSchema->format);
-            return false;
-        }
+    CPLDebug("OGR", "Field %s has unhandled format '%s'",
+             (osPrefix + schema->name).c_str(), schema->format);
+    return false;
+}
+
+/************************************************************************/
+/*                  OGRLayer::CanPostFilterArrowArray()                 */
+/************************************************************************/
+
+/** Whether the PostFilterArrowArray() can work on the schema to remove
+ * rows that aren't selected by the spatial or attribute filter.
+ */
+bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
+{
+    if (!IsHandledSchema(
+            /* bTopLevel=*/true, schema, std::string(),
+            m_poAttrQuery != nullptr,
+            m_poAttrQuery ? CPLStringList(m_poAttrQuery->GetUsedFields())
+                          : CPLStringList()))
+    {
+        return false;
     }
 
     if (m_poFilterGeom)
@@ -2198,23 +2235,25 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
 /************************************************************************/
 
 static void
-CompactValidityBuffer(struct ArrowArray *array,
+CompactValidityBuffer(struct ArrowArray *array, size_t iStart,
                       const std::vector<bool> &abyValidityFromFilters)
 {
     if (array->null_count == 0)
         return;
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
     uint8_t *pabyValidity =
         static_cast<uint8_t *>(const_cast<void *>(array->buffers[0]));
-    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
-    for (size_t i = 0, j = 0; i < nLength; ++i)
+    for (size_t i = 0, j = iStart + nOffset; i < nLength; ++i)
     {
         if (abyValidityFromFilters[i])
         {
-            if (TestBit(pabyValidity, i + nOffset))
-                SetBit(pabyValidity, j + nOffset);
+            if (TestBit(pabyValidity, i + iStart + nOffset))
+                SetBit(pabyValidity, j);
             else
-                UnsetBit(pabyValidity, j + nOffset);
+                UnsetBit(pabyValidity, j);
 
             ++j;
         }
@@ -2225,34 +2264,33 @@ CompactValidityBuffer(struct ArrowArray *array,
 /*                       CompactBoolArray()                             */
 /************************************************************************/
 
-static void CompactBoolArray(struct ArrowArray *array,
+static void CompactBoolArray(struct ArrowArray *array, size_t iStart,
                              const std::vector<bool> &abyValidityFromFilters)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 2);
-    CPLAssert(static_cast<size_t>(array->length) ==
-              abyValidityFromFilters.size());
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
 
-    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     uint8_t *pabyData =
         static_cast<uint8_t *>(const_cast<void *>(array->buffers[1]));
-    size_t j = 0;
+    size_t j = iStart + nOffset;
     for (size_t i = 0; i < nLength; ++i)
     {
         if (abyValidityFromFilters[i])
         {
-            if (TestBit(pabyData, i + nOffset))
-                SetBit(pabyData, j + nOffset);
+            if (TestBit(pabyData, i + iStart + nOffset))
+                SetBit(pabyData, j);
             else
-                UnsetBit(pabyData, j + nOffset);
+                UnsetBit(pabyData, j);
 
             ++j;
         }
     }
 
-    CompactValidityBuffer(array, abyValidityFromFilters);
-    array->length = j;
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -2261,30 +2299,29 @@ static void CompactBoolArray(struct ArrowArray *array,
 
 template <class T>
 static void
-CompactPrimitiveArray(struct ArrowArray *array,
+CompactPrimitiveArray(struct ArrowArray *array, size_t iStart,
                       const std::vector<bool> &abyValidityFromFilters)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 2);
-    CPLAssert(static_cast<size_t>(array->length) ==
-              abyValidityFromFilters.size());
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
 
-    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     T *paData =
         static_cast<T *>(const_cast<void *>(array->buffers[1])) + nOffset;
-    size_t j = 0;
+    size_t j = iStart;
     for (size_t i = 0; i < nLength; ++i)
     {
         if (abyValidityFromFilters[i])
         {
-            paData[j] = paData[i];
+            paData[j] = paData[i + iStart];
             ++j;
         }
     }
 
-    CompactValidityBuffer(array, abyValidityFromFilters);
-    array->length = j;
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -2293,29 +2330,29 @@ CompactPrimitiveArray(struct ArrowArray *array,
 
 template <class OffsetType>
 static void
-CompactStringOrBinaryArray(struct ArrowArray *array,
+CompactStringOrBinaryArray(struct ArrowArray *array, size_t iStart,
                            const std::vector<bool> &abyValidityFromFilters)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 3);
-    CPLAssert(static_cast<size_t>(array->length) ==
-              abyValidityFromFilters.size());
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
 
-    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     OffsetType *panOffsets =
         static_cast<OffsetType *>(const_cast<void *>(array->buffers[1])) +
         nOffset;
     GByte *pabyData =
         static_cast<GByte *>(const_cast<void *>(array->buffers[2]));
-    size_t j = 0;
+    size_t j = iStart;
     OffsetType nCurOffset = panOffsets[0];
     for (size_t i = 0; i < nLength; ++i)
     {
         if (abyValidityFromFilters[i])
         {
-            const auto nStartOffset = panOffsets[i];
-            const auto nEndOffset = panOffsets[i + 1];
+            const auto nStartOffset = panOffsets[i + iStart];
+            const auto nEndOffset = panOffsets[i + iStart + 1];
             panOffsets[j] = nCurOffset;
             const auto nSize = static_cast<size_t>(nEndOffset - nStartOffset);
             if (nSize)
@@ -2332,8 +2369,7 @@ CompactStringOrBinaryArray(struct ArrowArray *array,
     }
     panOffsets[j] = nCurOffset;
 
-    CompactValidityBuffer(array, abyValidityFromFilters);
-    array->length = j;
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -2341,20 +2377,19 @@ CompactStringOrBinaryArray(struct ArrowArray *array,
 /************************************************************************/
 
 static void
-CompactFixedWidthArray(struct ArrowArray *array, int nWidth,
+CompactFixedWidthArray(struct ArrowArray *array, int nWidth, size_t iStart,
                        const std::vector<bool> &abyValidityFromFilters)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 2);
-    CPLAssert(static_cast<size_t>(array->length) ==
-              abyValidityFromFilters.size());
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
 
-    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     GByte *pabyData =
         static_cast<GByte *>(const_cast<void *>(array->buffers[1]));
-    size_t j = 0;
-    size_t nStartOffset = nOffset * nWidth;
+    size_t nStartOffset = (iStart + nOffset) * nWidth;
     size_t nCurOffset = nStartOffset;
     for (size_t i = 0; i < nLength; ++i, nStartOffset += nWidth)
     {
@@ -2365,12 +2400,302 @@ CompactFixedWidthArray(struct ArrowArray *array, int nWidth,
                 memcpy(pabyData + nCurOffset, pabyData + nStartOffset, nWidth);
             }
             nCurOffset += nWidth;
-            ++j;
         }
     }
 
-    CompactValidityBuffer(array, abyValidityFromFilters);
-    array->length = j;
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+}
+
+/************************************************************************/
+/*                       CompactStructArray()                           */
+/************************************************************************/
+
+static bool CompactArray(const struct ArrowSchema *schema,
+                         struct ArrowArray *array, size_t iStart,
+                         const std::vector<bool> &abyValidityFromFilters);
+
+static bool CompactStructArray(const struct ArrowSchema *schema,
+                               struct ArrowArray *array, size_t iStart,
+                               const std::vector<bool> &abyValidityFromFilters)
+{
+    for (int64_t iField = 0; iField < array->n_children; ++iField)
+    {
+        const auto psChildSchema = schema->children[iField];
+        const auto psChildArray = array->children[iField];
+        if (!CompactArray(psChildSchema, psChildArray, iStart,
+                          abyValidityFromFilters))
+            return false;
+    }
+
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+
+    return true;
+}
+
+/************************************************************************/
+/*                       CompactListArray()                             */
+/************************************************************************/
+
+template <class OffsetType>
+static bool CompactListArray(const struct ArrowSchema *schema,
+                             struct ArrowArray *array, size_t iStart,
+                             const std::vector<bool> &abyValidityFromFilters)
+{
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
+    CPLAssert(array->n_children == 1);
+    CPLAssert(array->n_buffers == 2);
+
+    const auto psChildSchema = schema->children[0];
+    const auto psChildArray = array->children[0];
+
+    const size_t nLength = abyValidityFromFilters.size();
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    OffsetType *panOffsets =
+        static_cast<OffsetType *>(const_cast<void *>(array->buffers[1])) +
+        nOffset;
+
+    if (panOffsets[iStart + nLength] > panOffsets[iStart])
+    {
+        std::vector<bool> abyChildValidity(
+            static_cast<size_t>(panOffsets[iStart + nLength] -
+                                panOffsets[iStart]),
+            true);
+        size_t j = iStart;
+        OffsetType nCurOffset = panOffsets[iStart];
+        for (size_t i = 0; i < nLength; ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                const auto nSize = panOffsets[i + 1] - panOffsets[i];
+                panOffsets[j] = nCurOffset;
+                nCurOffset += nSize;
+                ++j;
+            }
+            else
+            {
+                const auto nStartOffset = panOffsets[i];
+                const auto nEndOffset = panOffsets[i + 1];
+                if (nStartOffset != nEndOffset)
+                {
+                    if (nStartOffset >=
+                        panOffsets[iStart] + abyChildValidity.size())
+                    {
+                        // shouldn't happen in sane arrays...
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "nStartOffset >= panOffsets[iStart] + "
+                                 "abyChildValidity.size()");
+                        return false;
+                    }
+                    // nEndOffset might be equal to abyChildValidity.size()
+                    if (nEndOffset >
+                        panOffsets[iStart] + abyChildValidity.size())
+                    {
+                        // shouldn't happen in sane arrays...
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "nEndOffset > panOffsets[iStart] + "
+                                 "abyChildValidity.size()");
+                        return false;
+                    }
+                    for (auto k = nStartOffset - panOffsets[iStart];
+                         k < nEndOffset - panOffsets[iStart]; ++k)
+                        abyChildValidity[static_cast<size_t>(k)] = false;
+                }
+            }
+        }
+        panOffsets[j] = nCurOffset;
+
+        if (!CompactArray(psChildSchema, psChildArray,
+                          static_cast<size_t>(panOffsets[iStart]),
+                          abyChildValidity))
+            return false;
+    }
+
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+
+    return true;
+}
+
+/************************************************************************/
+/*                     CompactFixedSizeListArray()                      */
+/************************************************************************/
+
+static bool
+CompactFixedSizeListArray(const struct ArrowSchema *schema,
+                          struct ArrowArray *array, size_t N, size_t iStart,
+                          const std::vector<bool> &abyValidityFromFilters)
+{
+    CPLAssert(static_cast<size_t>(array->length) >=
+              iStart + abyValidityFromFilters.size());
+    CPLAssert(array->n_children == 1);
+
+    const auto psChildSchema = schema->children[0];
+    const auto psChildArray = array->children[0];
+
+    const size_t nLength = abyValidityFromFilters.size();
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    std::vector<bool> abyChildValidity(N * nLength, true);
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        if (!abyValidityFromFilters[i])
+        {
+            const size_t nStartOffset = i * N;
+            const size_t nEndOffset = (i + 1) * N;
+            for (size_t k = nStartOffset; k < nEndOffset; ++k)
+                abyChildValidity[k] = false;
+        }
+    }
+
+    if (!CompactArray(psChildSchema, psChildArray, (iStart + nOffset) * N,
+                      abyChildValidity))
+        return false;
+
+    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+
+    return true;
+}
+
+/************************************************************************/
+/*                       CompactListArray()                             */
+/************************************************************************/
+
+static bool CompactMapArray(const struct ArrowSchema *schema,
+                            struct ArrowArray *array, size_t iStart,
+                            const std::vector<bool> &abyValidityFromFilters)
+{
+    return CompactListArray<uint32_t>(schema, array, iStart,
+                                      abyValidityFromFilters);
+}
+
+/************************************************************************/
+/*                           CompactArray()                             */
+/************************************************************************/
+
+static bool CompactArray(const struct ArrowSchema *schema,
+                         struct ArrowArray *array, size_t iStart,
+                         const std::vector<bool> &abyValidityFromFilters)
+{
+    const char *format = schema->format;
+    if (strcmp(format, "+s") == 0)
+    {
+        if (!CompactStructArray(schema, array, iStart, abyValidityFromFilters))
+            return false;
+    }
+    else if (strcmp(format, "+l") == 0)
+    {
+        if (!CompactListArray<uint32_t>(schema, array, iStart,
+                                        abyValidityFromFilters))
+            return false;
+    }
+    else if (strcmp(format, "+L") == 0)
+    {
+        if (!CompactListArray<uint64_t>(schema, array, iStart,
+                                        abyValidityFromFilters))
+            return false;
+    }
+    else if (strcmp(format, "+m") == 0)
+    {
+        // Map
+        if (!CompactMapArray(schema, array, iStart, abyValidityFromFilters))
+            return false;
+    }
+    else if (strncmp(format, "+w:", strlen("+w:")) == 0)
+    {
+        const int N = atoi(format + strlen("+w:"));
+        if (N <= 0)
+            return false;
+        if (!CompactFixedSizeListArray(schema, array, static_cast<size_t>(N),
+                                       iStart, abyValidityFromFilters))
+            return false;
+    }
+    else if (strcmp(format, "b") == 0)
+    {
+        CompactBoolArray(array, iStart, abyValidityFromFilters);
+    }
+    else if (strcmp(format, "c") == 0 || strcmp(format, "C") == 0)
+    {
+        CompactPrimitiveArray<uint8_t>(array, iStart, abyValidityFromFilters);
+    }
+    else if (strcmp(format, "s") == 0 || strcmp(format, "S") == 0 ||
+             strcmp(format, "e") == 0)
+    {
+        CompactPrimitiveArray<uint16_t>(array, iStart, abyValidityFromFilters);
+    }
+    else if (strcmp(format, "i") == 0 || strcmp(format, "I") == 0 ||
+             strcmp(format, "f") == 0 || strcmp(format, "tdD") == 0 ||
+             strcmp(format, "tts") == 0 || strcmp(format, "ttm") == 0)
+    {
+        CompactPrimitiveArray<uint32_t>(array, iStart, abyValidityFromFilters);
+    }
+    else if (strcmp(format, "l") == 0 || strcmp(format, "L") == 0 ||
+             strcmp(format, "g") == 0 || strcmp(format, "tdm") == 0 ||
+             strcmp(format, "ttu") == 0 || strcmp(format, "ttn") == 0 ||
+             strncmp(format, "ts", 2) == 0)
+    {
+        CompactPrimitiveArray<uint64_t>(array, iStart, abyValidityFromFilters);
+    }
+    else if (strcmp(format, "z") == 0 || strcmp(format, "u") == 0)
+    {
+        CompactStringOrBinaryArray<uint32_t>(array, iStart,
+                                             abyValidityFromFilters);
+    }
+    else if (strcmp(format, "Z") == 0 || strcmp(format, "U") == 0)
+    {
+        CompactStringOrBinaryArray<uint64_t>(array, iStart,
+                                             abyValidityFromFilters);
+    }
+    else if (strncmp(format, "w:", 2) == 0)
+    {
+        const int nWidth = atoi(format + 2);
+        CompactFixedWidthArray(array, nWidth, iStart, abyValidityFromFilters);
+    }
+    else if (strncmp(format, "d:", 2) == 0)
+    {
+        // d:19,10     ==> decimal128 [precision 19, scale 10]
+        // d:19,10,NNN ==> decimal bitwidth = NNN [precision 19, scale 10]
+        int nWidth = 128 / 8;  // 128 bit
+        const char *pszComma = strchr(format + 2, ',');
+        if (pszComma)
+        {
+            pszComma = strchr(pszComma + 1, ',');
+            if (pszComma)
+            {
+                nWidth = atoi(pszComma + 1);
+                if ((nWidth % 8) != 0)
+                {
+                    // shouldn't happen for well-format schemas
+                    nWidth = 0;
+                }
+                else
+                    nWidth /= 8;
+            }
+        }
+        else
+        {
+            // shouldn't happen for well-format schemas
+            nWidth = 0;
+        }
+        if (nWidth == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unexpected error in PostFilterArrowArray(): unhandled "
+                     "field format: %s",
+                     format);
+
+            return false;
+        }
+        CompactFixedWidthArray(array, nWidth, iStart, abyValidityFromFilters);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unexpected error in CompactArray(): unhandled "
+                 "field format: %s",
+                 format);
+        return false;
+    }
+
+    return true;
 }
 
 /************************************************************************/
@@ -2465,6 +2790,36 @@ static void ArrowTimestampToOGRDateTime(int64_t nTimestamp,
 }
 
 /************************************************************************/
+/*                 BuildMapFieldNameToArrowPath()                       */
+/************************************************************************/
+
+static void
+BuildMapFieldNameToArrowPath(const struct ArrowSchema *schema,
+                             std::map<std::string, std::vector<int>> &oMap,
+                             const std::string &osPrefix,
+                             std::vector<int> &anArrowPath)
+{
+    for (int64_t i = 0; i < schema->n_children; ++i)
+    {
+        auto psChild = schema->children[i];
+        anArrowPath.push_back(static_cast<int>(i));
+        if (strcmp(psChild->format, "s+") == 0)
+        {
+            std::string osNewPrefix(osPrefix);
+            osNewPrefix += psChild->name;
+            osNewPrefix += ".";
+            BuildMapFieldNameToArrowPath(psChild, oMap, osNewPrefix,
+                                         anArrowPath);
+        }
+        else
+        {
+            oMap[osPrefix + psChild->name] = anArrowPath;
+        }
+        anArrowPath.pop_back();
+    }
+}
+
+/************************************************************************/
 /*                 FillValidityArrayFromAttrQuery()                     */
 /************************************************************************/
 
@@ -2477,348 +2832,378 @@ static size_t FillValidityArrayFromAttrQuery(
     auto poFeatureDefn = const_cast<OGRLayer *>(poLayer)->GetLayerDefn();
     OGRFeature oFeature(poFeatureDefn);
 
-    // Establish a map from Arrow schema field indices to OGR field indices
-    // for fields that are useful for the attribute query evaluation
+    std::map<std::string, std::vector<int>> oMapFieldNameToArrowPath;
+    std::vector<int> anArrowPathTmp;
+    BuildMapFieldNameToArrowPath(schema, oMapFieldNameToArrowPath,
+                                 std::string(), anArrowPathTmp);
+
+    struct UsedFieldsInfo
+    {
+        int iOGRFieldIndex{};
+        std::vector<int> anArrowPath{};
+    };
+    std::vector<UsedFieldsInfo> aoUsedFieldsInfo;
+
     const CPLStringList aosUsedFields(poAttrQuery->GetUsedFields());
-    std::vector<int> anMapUsedFieldsInSchemaToOgrField(
-        static_cast<size_t>(schema->n_children), -1);
     for (int i = 0; i < aosUsedFields.size(); ++i)
     {
-        for (size_t j = 0; j < anMapUsedFieldsInSchemaToOgrField.size(); ++j)
+        int iOGRFieldIndex = poFeatureDefn->GetFieldIndex(aosUsedFields[i]);
+        if (iOGRFieldIndex >= 0)
         {
-            if (anMapUsedFieldsInSchemaToOgrField[j] < 0 &&
-                strcmp(aosUsedFields[i], schema->children[j]->name) == 0)
+            const auto oIter = oMapFieldNameToArrowPath.find(aosUsedFields[i]);
+            if (oIter != oMapFieldNameToArrowPath.end())
             {
-                anMapUsedFieldsInSchemaToOgrField[j] =
-                    poFeatureDefn->GetFieldIndex(aosUsedFields[i]);
-                break;
+                UsedFieldsInfo info;
+                info.iOGRFieldIndex = iOGRFieldIndex;
+                info.anArrowPath = oIter->second;
+                aoUsedFieldsInfo.push_back(info);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find %s in oMapFieldNameToArrowPath",
+                         aosUsedFields[i]);
             }
         }
     }
+
     const size_t nLength = abyValidityFromFilters.size();
     for (size_t iRow = 0; iRow < nLength; ++iRow)
     {
         if (!abyValidityFromFilters[iRow])
             continue;
-        for (size_t iArrayField = 0;
-             iArrayField < anMapUsedFieldsInSchemaToOgrField.size();
-             ++iArrayField)
+        for (const auto &sInfo : aoUsedFieldsInfo)
         {
-            const int iOGRFieldIndex =
-                anMapUsedFieldsInSchemaToOgrField[iArrayField];
-            if (iOGRFieldIndex >= 0)
+            const int iOGRFieldIndex = sInfo.iOGRFieldIndex;
+            const struct ArrowSchema *psSchemaField = schema;
+            const struct ArrowArray *psArray = array;
+            bool bSkip = false;
+            for (size_t i = 0; i < sInfo.anArrowPath.size(); ++i)
             {
-                const auto psSchemaField = schema->children[iArrayField];
-                const auto psArray = array->children[iArrayField];
-                const char *format = psSchemaField->format;
-                const uint8_t *pabyValidity =
-                    psArray->null_count == 0
-                        ? nullptr
-                        : static_cast<uint8_t *>(
-                              const_cast<void *>(psArray->buffers[0]));
-                const size_t nOffsetedIndex =
-                    static_cast<size_t>(iRow + psArray->offset);
-                if (pabyValidity && !TestBit(pabyValidity, nOffsetedIndex))
+                const int iChild = sInfo.anArrowPath[i];
+                if (i > 0)
                 {
-                    oFeature.SetFieldNull(iOGRFieldIndex);
-                }
-                else if (format[0] == 'b' && format[1] == '\0')
-                {
-                    // Boolean
-                    oFeature.SetField(iOGRFieldIndex,
-                                      TestBit(static_cast<const uint8_t *>(
-                                                  psArray->buffers[1]),
-                                              nOffsetedIndex));
-                }
-                else if (format[0] == 'c' && format[1] == '\0')
-                {
-                    // signed int8
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const int8_t *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 'C' && format[1] == '\0')
-                {
-                    // unsigned int8
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const uint8_t *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 's' && format[1] == '\0')
-                {
-                    // signed int16
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const int16_t *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 'S' && format[1] == '\0')
-                {
-                    // unsigned int16
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const uint16_t *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 'i' && format[1] == '\0')
-                {
-                    // signed int32
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const int32_t *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 'I' && format[1] == '\0')
-                {
-                    // unsigned int32
-                    oFeature.SetField(
-                        iOGRFieldIndex,
-                        static_cast<GIntBig>(static_cast<const uint32_t *>(
-                            psArray->buffers[1])[nOffsetedIndex]));
-                }
-                else if (format[0] == 'l' && format[1] == '\0')
-                {
-                    // signed int64
-                    oFeature.SetField(
-                        iOGRFieldIndex,
-                        static_cast<GIntBig>(static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex]));
-                }
-                else if (format[0] == 'L' && format[1] == '\0')
-                {
-                    // unsigned int64
-                    oFeature.SetField(
-                        iOGRFieldIndex,
-                        static_cast<double>(static_cast<const uint64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex]));
-                }
-                else if (format[0] == 'e' && format[1] == '\0')
-                {
-                    // half-float
-                    const auto nFloat16AsUInt16 = static_cast<const uint16_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    const auto nFloat16AsUInt32 =
-                        CPLHalfToFloat(nFloat16AsUInt16);
-                    float f;
-                    memcpy(&f, &nFloat16AsUInt32, sizeof(f));
-                    oFeature.SetField(iOGRFieldIndex, f);
-                }
-                else if (format[0] == 'f' && format[1] == '\0')
-                {
-                    // float32
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const float *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 'g' && format[1] == '\0')
-                {
-                    // float64
-                    oFeature.SetField(iOGRFieldIndex,
-                                      static_cast<const double *>(
-                                          psArray->buffers[1])[nOffsetedIndex]);
-                }
-                else if (format[0] == 'u' && format[1] == '\0')
-                {
-                    // UTF-8 string
-                    const auto nOffset = static_cast<const uint32_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    const auto nNextOffset = static_cast<const uint32_t *>(
-                        psArray->buffers[1])[nOffsetedIndex + 1];
-                    const GByte *pabyData =
-                        static_cast<const GByte *>(psArray->buffers[2]);
-                    const uint32_t nSize = nNextOffset - nOffset;
-                    char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
-                    memcpy(pszStr, pabyData + nOffset, nSize);
-                    pszStr[nSize] = 0;
-                    oFeature.SetFieldSameTypeUnsafe(iOGRFieldIndex, pszStr);
-                }
-                else if (format[0] == 'U' && format[1] == '\0')
-                {
-                    // Large UTF-8 string
-                    const auto nOffset = static_cast<const uint64_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    const auto nNextOffset = static_cast<const uint64_t *>(
-                        psArray->buffers[1])[nOffsetedIndex + 1];
-                    const GByte *pabyData =
-                        static_cast<const GByte *>(psArray->buffers[2]);
-                    const uint64_t nSize64 = nNextOffset - nOffset;
-                    if (nSize64 > static_cast<uint64_t>(
-                                      std::numeric_limits<int32_t>::max()))
+                    const uint8_t *pabyValidity =
+                        psArray->null_count == 0
+                            ? nullptr
+                            : static_cast<uint8_t *>(
+                                  const_cast<void *>(psArray->buffers[0]));
+                    const size_t nOffsetedIndex =
+                        static_cast<size_t>(iRow + psArray->offset);
+                    if (pabyValidity && !TestBit(pabyValidity, nOffsetedIndex))
                     {
-                        abyValidityFromFilters.clear();
-                        abyValidityFromFilters.resize(nLength);
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Unexpected error in PostFilterArrowArray(): too "
-                            "large string");
-                        return 0;
+                        bSkip = true;
+                        oFeature.SetFieldNull(iOGRFieldIndex);
+                        break;
                     }
-                    const size_t nSize = static_cast<size_t>(nSize64);
-                    char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
-                    memcpy(pszStr, pabyData + static_cast<size_t>(nOffset),
-                           nSize);
-                    pszStr[nSize] = 0;
-                    oFeature.SetFieldSameTypeUnsafe(iOGRFieldIndex, pszStr);
                 }
-                else if (format[0] == 'z' && format[1] == '\0')
-                {
-                    // Binary
-                    const auto nOffset = static_cast<const uint32_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    const auto nNextOffset = static_cast<const uint32_t *>(
-                        psArray->buffers[1])[nOffsetedIndex + 1];
-                    const GByte *pabyData =
-                        static_cast<const GByte *>(psArray->buffers[2]);
-                    const uint32_t nSize = nNextOffset - nOffset;
-                    if (nSize > static_cast<size_t>(
-                                    std::numeric_limits<int32_t>::max()))
-                    {
-                        abyValidityFromFilters.clear();
-                        abyValidityFromFilters.resize(nLength);
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Unexpected error in PostFilterArrowArray(): too "
-                            "large binary");
-                        return 0;
-                    }
-                    oFeature.SetField(iOGRFieldIndex, static_cast<int>(nSize),
-                                      pabyData + nOffset);
-                }
-                else if (format[0] == 'Z' && format[1] == '\0')
-                {
-                    // Large binary
-                    const auto nOffset = static_cast<const uint64_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    const auto nNextOffset = static_cast<const uint64_t *>(
-                        psArray->buffers[1])[nOffsetedIndex + 1];
-                    const GByte *pabyData =
-                        static_cast<const GByte *>(psArray->buffers[2]);
-                    const uint64_t nSize = nNextOffset - nOffset;
-                    if (nSize > static_cast<uint64_t>(
-                                    std::numeric_limits<int32_t>::max()))
-                    {
-                        abyValidityFromFilters.clear();
-                        abyValidityFromFilters.resize(nLength);
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Unexpected error in PostFilterArrowArray(): too "
-                            "large binary");
-                        return 0;
-                    }
-                    oFeature.SetField(iOGRFieldIndex, static_cast<int>(nSize),
-                                      pabyData + nOffset);
-                }
-                else if (format[0] == 'w' && format[1] == ':')
-                {
-                    // Fixed with binary
-                    const int nWidth = atoi(format + 2);
-                    oFeature.SetField(
-                        iOGRFieldIndex, nWidth,
-                        static_cast<const GByte *>(psArray->buffers[1]) +
-                            nOffsetedIndex * nWidth);
-                }
-                else if (strcmp(format, "tdD") == 0)
-                {
-                    // date32[days]
-                    // number of days since Epoch
-                    int64_t timestamp =
-                        static_cast<int64_t>(static_cast<const uint32_t *>(
-                            psArray->buffers[1])[nOffsetedIndex]) *
-                        3600 * 24;
-                    struct tm dt;
-                    CPLUnixTimeToYMDHMS(timestamp, &dt);
-                    oFeature.SetField(iOGRFieldIndex, dt.tm_year + 1900,
-                                      dt.tm_mon + 1, dt.tm_mday, 0, 0, 0);
-                }
-                else if (strcmp(format, "tdm") == 0)
-                {
-                    // date64[milliseconds]
-                    // number of milliseconds since Epoch
-                    int64_t timestamp =
-                        static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex] /
-                        1000;
-                    struct tm dt;
-                    CPLUnixTimeToYMDHMS(timestamp, &dt);
-                    oFeature.SetField(iOGRFieldIndex, dt.tm_year + 1900,
-                                      dt.tm_mon + 1, dt.tm_mday, 0, 0, 0);
-                }
-                else if (strcmp(format, "tts") == 0)
-                {
-                    // time32 [seconds]
-                    int32_t value = static_cast<const int32_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    const int nHour = value / 3600;
-                    const int nMinute = (value / 60) % 60;
-                    const int nSecond = value % 60;
-                    oFeature.SetField(iOGRFieldIndex, 0, 0, 0, nHour, nMinute,
-                                      static_cast<float>(nSecond));
-                }
-                else if (strcmp(format, "ttm") == 0)
-                {
-                    // time32 [milliseconds]
-                    int32_t value = static_cast<const int32_t *>(
-                        psArray->buffers[1])[nOffsetedIndex];
-                    double floatingPart = (value % 1000) / 1e3;
-                    value /= 1000;
-                    const int nHour = value / 3600;
-                    const int nMinute = (value / 60) % 60;
-                    const int nSecond = value % 60;
-                    oFeature.SetField(
-                        iOGRFieldIndex, 0, 0, 0, nHour, nMinute,
-                        static_cast<float>(nSecond + floatingPart));
-                }
-                else if (strcmp(format, "ttu") == 0 ||  // time64 [microseconds]
-                         strcmp(format, "ttn") == 0)    // time64 [nanoseconds]
-                {
-                    oFeature.SetField(
-                        iOGRFieldIndex,
-                        static_cast<GIntBig>(static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex]));
-                }
-                else if (STARTS_WITH_CI(format, "tss:"))
-                {
-                    // timestamp [seconds] with timezone
-                    ArrowTimestampToOGRDateTime(
-                        static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex],
-                        1, format + strlen("tss:"), oFeature, iOGRFieldIndex);
-                }
-                else if (STARTS_WITH_CI(format, "tsm:"))
-                {
-                    //  timestamp [milliseconds] with timezone
-                    ArrowTimestampToOGRDateTime(
-                        static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex],
-                        1000, format + strlen("tsm:"), oFeature,
-                        iOGRFieldIndex);
-                }
-                else if (STARTS_WITH_CI(format, "tsu:"))
-                {
-                    //  timestamp [microseconds] with timezone
-                    ArrowTimestampToOGRDateTime(
-                        static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex],
-                        1000 * 1000, format + strlen("tsu:"), oFeature,
-                        iOGRFieldIndex);
-                }
-                else if (STARTS_WITH_CI(format, "tsn:"))
-                {
-                    //  timestamp [nanoseconds] with timezone
-                    ArrowTimestampToOGRDateTime(
-                        static_cast<const int64_t *>(
-                            psArray->buffers[1])[nOffsetedIndex],
-                        1000 * 1000 * 1000, format + strlen("tsn:"), oFeature,
-                        iOGRFieldIndex);
-                }
-                else
+
+                psSchemaField = psSchemaField->children[iChild];
+                psArray = psArray->children[iChild];
+            }
+            if (bSkip)
+                continue;
+
+            const char *format = psSchemaField->format;
+            const uint8_t *pabyValidity =
+                psArray->null_count == 0
+                    ? nullptr
+                    : static_cast<uint8_t *>(
+                          const_cast<void *>(psArray->buffers[0]));
+            const size_t nOffsetedIndex =
+                static_cast<size_t>(iRow + psArray->offset);
+            if (pabyValidity && !TestBit(pabyValidity, nOffsetedIndex))
+            {
+                oFeature.SetFieldNull(iOGRFieldIndex);
+            }
+            else if (format[0] == 'b' && format[1] == '\0')
+            {
+                // Boolean
+                oFeature.SetField(
+                    iOGRFieldIndex,
+                    TestBit(static_cast<const uint8_t *>(psArray->buffers[1]),
+                            nOffsetedIndex));
+            }
+            else if (format[0] == 'c' && format[1] == '\0')
+            {
+                // signed int8
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const int8_t *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 'C' && format[1] == '\0')
+            {
+                // unsigned int8
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const uint8_t *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 's' && format[1] == '\0')
+            {
+                // signed int16
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const int16_t *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 'S' && format[1] == '\0')
+            {
+                // unsigned int16
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const uint16_t *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 'i' && format[1] == '\0')
+            {
+                // signed int32
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const int32_t *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 'I' && format[1] == '\0')
+            {
+                // unsigned int32
+                oFeature.SetField(
+                    iOGRFieldIndex,
+                    static_cast<GIntBig>(static_cast<const uint32_t *>(
+                        psArray->buffers[1])[nOffsetedIndex]));
+            }
+            else if (format[0] == 'l' && format[1] == '\0')
+            {
+                // signed int64
+                oFeature.SetField(
+                    iOGRFieldIndex,
+                    static_cast<GIntBig>(static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex]));
+            }
+            else if (format[0] == 'L' && format[1] == '\0')
+            {
+                // unsigned int64
+                oFeature.SetField(
+                    iOGRFieldIndex,
+                    static_cast<double>(static_cast<const uint64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex]));
+            }
+            else if (format[0] == 'e' && format[1] == '\0')
+            {
+                // half-float
+                const auto nFloat16AsUInt16 = static_cast<const uint16_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                const auto nFloat16AsUInt32 = CPLHalfToFloat(nFloat16AsUInt16);
+                float f;
+                memcpy(&f, &nFloat16AsUInt32, sizeof(f));
+                oFeature.SetField(iOGRFieldIndex, f);
+            }
+            else if (format[0] == 'f' && format[1] == '\0')
+            {
+                // float32
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const float *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 'g' && format[1] == '\0')
+            {
+                // float64
+                oFeature.SetField(iOGRFieldIndex,
+                                  static_cast<const double *>(
+                                      psArray->buffers[1])[nOffsetedIndex]);
+            }
+            else if (format[0] == 'u' && format[1] == '\0')
+            {
+                // UTF-8 string
+                const auto nOffset = static_cast<const uint32_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                const auto nNextOffset = static_cast<const uint32_t *>(
+                    psArray->buffers[1])[nOffsetedIndex + 1];
+                const GByte *pabyData =
+                    static_cast<const GByte *>(psArray->buffers[2]);
+                const uint32_t nSize = nNextOffset - nOffset;
+                char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
+                memcpy(pszStr, pabyData + nOffset, nSize);
+                pszStr[nSize] = 0;
+                oFeature.SetFieldSameTypeUnsafe(iOGRFieldIndex, pszStr);
+            }
+            else if (format[0] == 'U' && format[1] == '\0')
+            {
+                // Large UTF-8 string
+                const auto nOffset = static_cast<const uint64_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                const auto nNextOffset = static_cast<const uint64_t *>(
+                    psArray->buffers[1])[nOffsetedIndex + 1];
+                const GByte *pabyData =
+                    static_cast<const GByte *>(psArray->buffers[2]);
+                const uint64_t nSize64 = nNextOffset - nOffset;
+                if (nSize64 >
+                    static_cast<uint64_t>(std::numeric_limits<int32_t>::max()))
                 {
                     abyValidityFromFilters.clear();
                     abyValidityFromFilters.resize(nLength);
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Unexpected error in PostFilterArrowArray(): unhandled "
-                        "field format: %s",
-                        format);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unexpected error in PostFilterArrowArray(): too "
+                             "large string");
                     return 0;
                 }
+                const size_t nSize = static_cast<size_t>(nSize64);
+                char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
+                memcpy(pszStr, pabyData + static_cast<size_t>(nOffset), nSize);
+                pszStr[nSize] = 0;
+                oFeature.SetFieldSameTypeUnsafe(iOGRFieldIndex, pszStr);
+            }
+            else if (format[0] == 'z' && format[1] == '\0')
+            {
+                // Binary
+                const auto nOffset = static_cast<const uint32_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                const auto nNextOffset = static_cast<const uint32_t *>(
+                    psArray->buffers[1])[nOffsetedIndex + 1];
+                const GByte *pabyData =
+                    static_cast<const GByte *>(psArray->buffers[2]);
+                const uint32_t nSize = nNextOffset - nOffset;
+                if (nSize >
+                    static_cast<size_t>(std::numeric_limits<int32_t>::max()))
+                {
+                    abyValidityFromFilters.clear();
+                    abyValidityFromFilters.resize(nLength);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unexpected error in PostFilterArrowArray(): too "
+                             "large binary");
+                    return 0;
+                }
+                oFeature.SetField(iOGRFieldIndex, static_cast<int>(nSize),
+                                  pabyData + nOffset);
+            }
+            else if (format[0] == 'Z' && format[1] == '\0')
+            {
+                // Large binary
+                const auto nOffset = static_cast<const uint64_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                const auto nNextOffset = static_cast<const uint64_t *>(
+                    psArray->buffers[1])[nOffsetedIndex + 1];
+                const GByte *pabyData =
+                    static_cast<const GByte *>(psArray->buffers[2]);
+                const uint64_t nSize = nNextOffset - nOffset;
+                if (nSize >
+                    static_cast<uint64_t>(std::numeric_limits<int32_t>::max()))
+                {
+                    abyValidityFromFilters.clear();
+                    abyValidityFromFilters.resize(nLength);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unexpected error in PostFilterArrowArray(): too "
+                             "large binary");
+                    return 0;
+                }
+                oFeature.SetField(iOGRFieldIndex, static_cast<int>(nSize),
+                                  pabyData + nOffset);
+            }
+            else if (format[0] == 'w' && format[1] == ':')
+            {
+                // Fixed with binary
+                const int nWidth = atoi(format + 2);
+                oFeature.SetField(
+                    iOGRFieldIndex, nWidth,
+                    static_cast<const GByte *>(psArray->buffers[1]) +
+                        nOffsetedIndex * nWidth);
+            }
+            else if (strcmp(format, "tdD") == 0)
+            {
+                // date32[days]
+                // number of days since Epoch
+                int64_t timestamp =
+                    static_cast<int64_t>(static_cast<const uint32_t *>(
+                        psArray->buffers[1])[nOffsetedIndex]) *
+                    3600 * 24;
+                struct tm dt;
+                CPLUnixTimeToYMDHMS(timestamp, &dt);
+                oFeature.SetField(iOGRFieldIndex, dt.tm_year + 1900,
+                                  dt.tm_mon + 1, dt.tm_mday, 0, 0, 0);
+            }
+            else if (strcmp(format, "tdm") == 0)
+            {
+                // date64[milliseconds]
+                // number of milliseconds since Epoch
+                int64_t timestamp = static_cast<const int64_t *>(
+                                        psArray->buffers[1])[nOffsetedIndex] /
+                                    1000;
+                struct tm dt;
+                CPLUnixTimeToYMDHMS(timestamp, &dt);
+                oFeature.SetField(iOGRFieldIndex, dt.tm_year + 1900,
+                                  dt.tm_mon + 1, dt.tm_mday, 0, 0, 0);
+            }
+            else if (strcmp(format, "tts") == 0)
+            {
+                // time32 [seconds]
+                int32_t value = static_cast<const int32_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                const int nHour = value / 3600;
+                const int nMinute = (value / 60) % 60;
+                const int nSecond = value % 60;
+                oFeature.SetField(iOGRFieldIndex, 0, 0, 0, nHour, nMinute,
+                                  static_cast<float>(nSecond));
+            }
+            else if (strcmp(format, "ttm") == 0)
+            {
+                // time32 [milliseconds]
+                int32_t value = static_cast<const int32_t *>(
+                    psArray->buffers[1])[nOffsetedIndex];
+                double floatingPart = (value % 1000) / 1e3;
+                value /= 1000;
+                const int nHour = value / 3600;
+                const int nMinute = (value / 60) % 60;
+                const int nSecond = value % 60;
+                oFeature.SetField(iOGRFieldIndex, 0, 0, 0, nHour, nMinute,
+                                  static_cast<float>(nSecond + floatingPart));
+            }
+            else if (strcmp(format, "ttu") == 0 ||  // time64 [microseconds]
+                     strcmp(format, "ttn") == 0)    // time64 [nanoseconds]
+            {
+                oFeature.SetField(
+                    iOGRFieldIndex,
+                    static_cast<GIntBig>(static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex]));
+            }
+            else if (STARTS_WITH_CI(format, "tss:"))
+            {
+                // timestamp [seconds] with timezone
+                ArrowTimestampToOGRDateTime(
+                    static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex],
+                    1, format + strlen("tss:"), oFeature, iOGRFieldIndex);
+            }
+            else if (STARTS_WITH_CI(format, "tsm:"))
+            {
+                //  timestamp [milliseconds] with timezone
+                ArrowTimestampToOGRDateTime(
+                    static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex],
+                    1000, format + strlen("tsm:"), oFeature, iOGRFieldIndex);
+            }
+            else if (STARTS_WITH_CI(format, "tsu:"))
+            {
+                //  timestamp [microseconds] with timezone
+                ArrowTimestampToOGRDateTime(
+                    static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex],
+                    1000 * 1000, format + strlen("tsu:"), oFeature,
+                    iOGRFieldIndex);
+            }
+            else if (STARTS_WITH_CI(format, "tsn:"))
+            {
+                //  timestamp [nanoseconds] with timezone
+                ArrowTimestampToOGRDateTime(
+                    static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsetedIndex],
+                    1000 * 1000 * 1000, format + strlen("tsn:"), oFeature,
+                    iOGRFieldIndex);
+            }
+            else
+            {
+                abyValidityFromFilters.clear();
+                abyValidityFromFilters.resize(nLength);
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Unexpected error in PostFilterArrowArray(): unhandled "
+                    "field format: %s",
+                    format);
+                return 0;
             }
         }
         if (poAttrQuery->Evaluate(&oFeature))
@@ -2876,7 +3261,7 @@ void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
     }
 
     std::vector<bool> abyValidityFromFilters;
-    const size_t nLength = static_cast<size_t>(array->children[0]->length);
+    const size_t nLength = static_cast<size_t>(array->length);
     const size_t nCountIntersectingGeom =
         m_poFilterGeom ? (strcmp(schema->children[iGeomField]->format, "z") == 0
                               ? FillValidityArrayFromWKBArray<uint32_t>(
@@ -2901,109 +3286,16 @@ void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
         return;
     }
 
-    array->length = nCountIntersecting;
+    if (!CompactStructArray(schema, array, 0, abyValidityFromFilters))
+    {
+        array->release(array);
+        memset(array, 0, sizeof(*array));
+    }
 
     for (int64_t iField = 0; iField < array->n_children; ++iField)
     {
-        const auto psSchemaField = schema->children[iField];
-        const auto psArray = array->children[iField];
-        const char *format = psSchemaField->format;
-
-        if (strcmp(format, "b") == 0)
-        {
-            CompactBoolArray(psArray, abyValidityFromFilters);
-        }
-        else if (strcmp(format, "c") == 0 || strcmp(format, "C") == 0)
-        {
-            CompactPrimitiveArray<uint8_t>(psArray, abyValidityFromFilters);
-        }
-        else if (strcmp(format, "s") == 0 || strcmp(format, "S") == 0 ||
-                 strcmp(format, "e") == 0)
-        {
-            CompactPrimitiveArray<uint16_t>(psArray, abyValidityFromFilters);
-        }
-        else if (strcmp(format, "i") == 0 || strcmp(format, "I") == 0 ||
-                 strcmp(format, "f") == 0 || strcmp(format, "tdD") == 0 ||
-                 strcmp(format, "tts") == 0 || strcmp(format, "ttm") == 0)
-        {
-            CompactPrimitiveArray<uint32_t>(psArray, abyValidityFromFilters);
-        }
-        else if (strcmp(format, "l") == 0 || strcmp(format, "L") == 0 ||
-                 strcmp(format, "g") == 0 || strcmp(format, "tdm") == 0 ||
-                 strcmp(format, "ttu") == 0 || strcmp(format, "ttn") == 0 ||
-                 strncmp(format, "ts", 2) == 0)
-        {
-            CompactPrimitiveArray<uint64_t>(psArray, abyValidityFromFilters);
-        }
-        else if (strcmp(format, "z") == 0 || strcmp(format, "u") == 0)
-        {
-            CompactStringOrBinaryArray<uint32_t>(psArray,
-                                                 abyValidityFromFilters);
-        }
-        else if (strcmp(format, "Z") == 0 || strcmp(format, "U") == 0)
-        {
-            CompactStringOrBinaryArray<uint64_t>(psArray,
-                                                 abyValidityFromFilters);
-        }
-        else if (strncmp(format, "w:", 2) == 0)
-        {
-            const int nWidth = atoi(format + 2);
-            CompactFixedWidthArray(psArray, nWidth, abyValidityFromFilters);
-        }
-        else if (strncmp(format, "d:", 2) == 0)
-        {
-            // d:19,10     ==> decimal128 [precision 19, scale 10]
-            // d:19,10,NNN ==> decimal bitwidth = NNN [precision 19, scale 10]
-            int nWidth = 128 / 8;  // 128 bit
-            const char *pszComma = strchr(format + 2, ',');
-            if (pszComma)
-            {
-                pszComma = strchr(pszComma + 1, ',');
-                if (pszComma)
-                {
-                    nWidth = atoi(pszComma + 1);
-                    if ((nWidth % 8) != 0)
-                    {
-                        // shouldn't happen for well-format schemas
-                        nWidth = 0;
-                    }
-                    else
-                        nWidth /= 8;
-                }
-            }
-            else
-            {
-                // shouldn't happen for well-format schemas
-                nWidth = 0;
-            }
-            if (nWidth == 0)
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Unexpected error in PostFilterArrowArray(): unhandled "
-                    "field format: %s",
-                    format);
-
-                array->release(array);
-                memset(array, 0, sizeof(*array));
-
-                break;
-            }
-            CompactFixedWidthArray(psArray, nWidth, abyValidityFromFilters);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unexpected error in PostFilterArrowArray(): unhandled "
-                     "field format: %s",
-                     format);
-
-            array->release(array);
-            memset(array, 0, sizeof(*array));
-
-            break;
-        }
-
-        CPLAssert(psArray->length == array->length);
+        const auto psChildArray = array->children[iField];
+        psChildArray->length = nCountIntersecting;
     }
+    array->length = nCountIntersecting;
 }
