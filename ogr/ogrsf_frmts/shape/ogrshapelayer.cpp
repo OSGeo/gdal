@@ -2382,6 +2382,29 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
             memmove(papszLines[0], papszLines[0] + 3,
                     strlen(papszLines[0] + 3) + 1);
         }
+        if (STARTS_WITH_CI(papszLines[0], "GEOGCS["))
+        {
+            // Strip AXIS[] in GEOGCS to address use case of
+            // https://github.com/OSGeo/gdal/issues/8452
+            std::string osVal;
+            for (CSLConstList papszIter = papszLines; *papszIter; ++papszIter)
+                osVal += *papszIter;
+            OGR_SRSNode oSRSNode;
+            const char *pszVal = osVal.c_str();
+            if (oSRSNode.importFromWkt(&pszVal) == OGRERR_NONE)
+            {
+                oSRSNode.StripNodes("AXIS");
+                char *pszWKT = nullptr;
+                oSRSNode.exportToWkt(&pszWKT);
+                if (pszWKT)
+                {
+                    CSLDestroy(papszLines);
+                    papszLines =
+                        static_cast<char **>(CPLCalloc(2, sizeof(char *)));
+                    papszLines[0] = pszWKT;
+                }
+            }
+        }
         if (poSRSNonConst->importFromESRI(papszLines) != OGRERR_NONE)
         {
             delete poSRSNonConst;

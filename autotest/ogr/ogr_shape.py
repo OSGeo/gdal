@@ -5643,3 +5643,34 @@ def test_ogr_shape_write_non_planar_polygon(tmp_vsimem):
         f,
         "POLYGON Z ((516113.631069 5041435.137874 137.334,515998.390418 5041476.527121 137.288,516141.2239 5041542.465874 137.614,516113.631069 5041435.137874 137.334),(516041.808551 5041476.527121 137.418,516098.617322 5041456.644051 137.451,516111.602184 5041505.337284 137.322,516041.808551 5041476.527121 137.418))",
     )
+
+
+###############################################################################
+
+
+def test_ogr_shape_prj_with_wrong_axis_order(tmp_vsimem):
+
+    layer_name = "test_ogr_shape_prj_with_wrong_axis_order"
+    filename = tmp_vsimem / f"{layer_name}.shp"
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    with shape_drv.CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon25D)
+    prj = """GEOGCS["WGS 84",
+    DATUM["World Geodetic System 1984",
+        SPHEROID["WGS 84", 6378137.0, 298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich", 0.0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree", 0.017453292519943295],
+    AXIS["Geodetic longitude", EAST],
+    AXIS["Geodetic latitude", NORTH],
+    AUTHORITY["EPSG","4326"]]
+    """
+    gdal.FileFromMemBuffer(tmp_vsimem / f"{layer_name}.prj", prj)
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    # Axis order has been changed
+    assert lyr.GetSpatialRef().GetAxisName(None, 0) == "Latitude"
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
