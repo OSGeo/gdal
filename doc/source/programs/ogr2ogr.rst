@@ -394,6 +394,8 @@ output coordinate system or even reprojecting the features during translation.
     This is an alternate way to using the CAST operator of OGR SQL, that may
     avoid typing a long SQL query. Note that this does not influence the field
     types used by the source driver, and is only an afterwards conversion.
+    Also note that this option is without effects on fields whose presence and
+    type is hard-coded in the output driver (e.g KML, GPX)
 
 .. option:: -mapFieldType srctype|All=dsttype,...
 
@@ -406,6 +408,8 @@ output coordinate system or even reprojecting the features during translation.
     typing a long SQL query. This is a generalization of -fieldTypeToString.
     Note that this does not influence the field types used by the source
     driver, and is only an afterwards conversion.
+    Also note that this option is without effects on fields whose presence and
+    type is hard-coded in the output driver (e.g KML, GPX)
 
 .. option:: -dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]
 
