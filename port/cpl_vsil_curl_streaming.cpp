@@ -300,6 +300,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     size_t nHeaderSize = 0;
     vsi_l_offset nBodySize = 0;
     int nHTTPCode = 0;
+    char m_szCurlErrBuf[CURL_ERROR_SIZE + 1];
+    bool m_bErrorOccured = false;
 
     void AcquireMutex();
     void ReleaseMutex();
@@ -384,6 +386,8 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS,
     ReleaseMutex();
     hCondProducer = CPLCreateCond();
     hCondConsumer = CPLCreateCond();
+
+    memset(m_szCurlErrBuf, 0, sizeof(m_szCurlErrBuf));
 }
 
 /************************************************************************/
@@ -910,11 +914,10 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
 
         AcquireMutex();
 
-        if (eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
+        if (nHTTPCode == 0 &&
             strchr(reinterpret_cast<char *>(pabyHeaderData), '\n') != nullptr &&
             STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData), "HTTP/"))
         {
-            nHTTPCode = 0;
             const char *pszSpace =
                 strchr(const_cast<const char *>(
                            reinterpret_cast<char *>(pabyHeaderData)),
@@ -925,7 +928,8 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
             // If moved permanently/temporarily, go on.
-            if (!(InterpretRedirect() &&
+            if (eExists == EXIST_UNKNOWN &&
+                !(InterpretRedirect() &&
                   (nHTTPCode == 301 || nHTTPCode == 302)))
             {
                 eExists = nHTTPCode == 200 ? EXIST_YES : EXIST_NO;
@@ -1035,9 +1039,9 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlStreamingHandleReceivedBytes);
 
-    char szCurlErrBuf[CURL_ERROR_SIZE + 1] = {};
-    szCurlErrBuf[0] = '\0';
-    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
+    m_szCurlErrBuf[0] = '\0';
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
+                               m_szCurlErrBuf);
 
     void *old_handler = CPLHTTPIgnoreSigPipe();
     CURLcode eRet = curl_easy_perform(hCurlHandle);
@@ -1051,7 +1055,18 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
-    if (!bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize)
+    m_bErrorOccured = eRet != CURLE_OK;
+    if (m_bErrorOccured)
+    {
+        // For autotest purposes only !
+        const char *pszSimulatedCurlError = CPLGetConfigOption(
+            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR", nullptr);
+        if (pszSimulatedCurlError)
+            snprintf(m_szCurlErrBuf, sizeof(m_szCurlErrBuf), "%s",
+                     pszSimulatedCurlError);
+    }
+
+    if (!bAskDownloadEnd && eRet == CURLE_OK && !bHasComputedFileSize)
     {
         FileProp cachedFileProp;
         m_poFS->GetCachedFileProp(m_pszURL, cachedFileProp);
@@ -1093,6 +1108,7 @@ void VSICurlStreamingHandle::StartDownload()
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
     nRingBufferFileOffset = 0;
+    m_bErrorOccured = false;
     hThread = CPLCreateJoinableThread(VSICurlDownloadInThread, this);
 }
 
@@ -1125,6 +1141,9 @@ void VSICurlStreamingHandle::StopDownload()
 
     oRingBuffer.Reset();
     bDownloadStopped = FALSE;
+    m_bErrorOccured = false;
+    nRingBufferFileOffset = 0;
+    bEOF = false;
 }
 
 /************************************************************************/
@@ -1166,12 +1185,17 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
 size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
                                     size_t const nMemb)
 {
-    GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
     const size_t nBufferRequestSize = nSize * nMemb;
     const vsi_l_offset curOffsetOri = curOffset;
     const vsi_l_offset nRingBufferFileOffsetOri = nRingBufferFileOffset;
     if (nBufferRequestSize == 0)
         return 0;
+
+    int nRetryCount = 0;
+    double dfRetryDelay = 0;
+
+retry:
+    GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
     size_t nRemaining = nBufferRequestSize;
 
     AcquireMutex();
@@ -1229,6 +1253,8 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
     }
 
     // Has a Seek() being done since the last Read()?
+    bool bErrorOccured = false;
+
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
     {
         // Backward seek: Need to restart the download from the beginning.
@@ -1274,6 +1300,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
                 while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
                 const int bBufferEmpty = (oRingBuffer.GetSize() == 0);
+                bErrorOccured = m_bErrorOccured;
                 ReleaseMutex();
 
                 if (bBufferEmpty && !bDownloadInProgress)
@@ -1283,21 +1310,21 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
 
         CPLFree(pabyTmp);
 
-        if (nBytesToSkip != 0)
+        if (nBytesToSkip != 0 && !bErrorOccured)
         {
             bEOF = true;
             return 0;
         }
     }
 
-    if (!bEOF && nRemaining > 0)
+    if (!bEOF && nRemaining > 0 && !bErrorOccured)
     {
         StartDownload();
         CPLAssert(curOffset == nRingBufferFileOffset);
     }
 
     // Fill the destination buffer from the ring buffer.
-    while (!bEOF && nRemaining > 0)
+    while (!bEOF && nRemaining > 0 && !bErrorOccured)
     {
         AcquireMutex();
         size_t nToRead = oRingBuffer.GetSize();
@@ -1327,6 +1354,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
             while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                 CPLCondWait(hCondProducer, hRingBufferMutex);
             const bool bBufferEmpty = oRingBuffer.GetSize() == 0;
+            bErrorOccured = m_bErrorOccured;
             ReleaseMutex();
 
             if (bBufferEmpty && !bDownloadInProgress)
@@ -1363,8 +1391,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
                               reinterpret_cast<char *>(pabyHeaderData), true))
         {
             curOffset = 0;
-            nRingBufferFileOffset = 0;
-            bEOF = false;
+
             AcquireMutex();
             eExists = EXIST_UNKNOWN;
             bHasComputedFileSize = false;
@@ -1379,7 +1406,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
             cachedFileProp.eExists = EXIST_UNKNOWN;
             m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
 
-            nRet = Read(pBuffer, nSize, nMemb);
+            goto retry;
         }
         else
         {
@@ -1389,6 +1416,37 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
         }
 
         CPLFree(pabyErrorBuffer);
+    }
+
+    if (bErrorOccured)
+    {
+        const int nMaxRetry = atoi(CPLGetConfigOption(
+            "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
+        // coverity[tainted_data]
+        if (dfRetryDelay == 0)
+            dfRetryDelay = CPLAtof(
+                CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                   CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+
+        // Look if we should attempt a retry
+        AcquireMutex();
+        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+            static_cast<int>(nHTTPCode), dfRetryDelay, nullptr, m_szCurlErrBuf);
+        ReleaseMutex();
+        if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+        {
+            StopDownload();
+
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "HTTP error code: %d - %s. "
+                     "Retrying again in %.1f secs",
+                     static_cast<int>(nHTTPCode), m_pszURL, dfRetryDelay);
+            CPLSleep(dfRetryDelay);
+            dfRetryDelay = dfNewRetryDelay;
+            nRetryCount++;
+            curOffset = curOffsetOri;
+            goto retry;
+        }
     }
 
     return nRet;
