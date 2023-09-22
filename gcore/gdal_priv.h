@@ -2973,7 +2973,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
 
-    std::shared_ptr<GDALMDArray>
+    virtual std::shared_ptr<GDALMDArray>
     GetResampled(const std::vector<std::shared_ptr<GDALDimension>> &apoNewDims,
                  GDALRIOResampleAlg resampleAlg,
                  const OGRSpatialReference *poTargetSRS,

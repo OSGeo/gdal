@@ -602,7 +602,7 @@ static bool ParseArraySpec(const std::string &arraySpec, std::string &srcName,
                            std::string &dstName, int &band,
                            std::vector<int> &anTransposedAxis,
                            std::string &viewExpr,
-                           GDALExtendedDataType &outputType)
+                           GDALExtendedDataType &outputType, bool &bResampled)
 {
     if (!STARTS_WITH(arraySpec.c_str(), "name=") &&
         !STARTS_WITH(arraySpec.c_str(), "band="))
@@ -695,6 +695,10 @@ static bool ParseArraySpec(const std::string &arraySpec, std::string &srcName,
                 outputType = GDALExtendedDataType::Create(eDT);
             }
         }
+        else if (STARTS_WITH(token.c_str(), "resample="))
+        {
+            bResampled = CPLTestBool(token.c_str() + strlen("resample="));
+        }
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -710,7 +714,9 @@ static bool ParseArraySpec(const std::string &arraySpec, std::string &srcName,
 /************************************************************************/
 
 static bool TranslateArray(
-    DimensionRemapper &oDimRemapper, const std::string &arraySpec,
+    DimensionRemapper &oDimRemapper,
+    const std::shared_ptr<GDALMDArray> &poSrcArrayIn,
+    const std::string &arraySpec,
     const std::shared_ptr<GDALGroup> &poSrcRootGroup,
     const std::shared_ptr<GDALGroup> &poSrcGroup,
     const std::shared_ptr<GDALGroup> &poDstRootGroup,
@@ -724,14 +730,16 @@ static bool TranslateArray(
     int band = -1;
     std::vector<int> anTransposedAxis;
     std::string viewExpr;
+    bool bResampled = false;
     GDALExtendedDataType outputType(GDALExtendedDataType::Create(GDT_Unknown));
     if (!ParseArraySpec(arraySpec, srcArrayName, dstArrayName, band,
-                        anTransposedAxis, viewExpr, outputType))
+                        anTransposedAxis, viewExpr, outputType, bResampled))
     {
         return false;
     }
 
     std::shared_ptr<GDALMDArray> srcArray;
+    bool bSrcArrayAccessibleThroughSrcGroup = true;
     if (poSrcRootGroup && poSrcGroup)
     {
         if (!srcArrayName.empty() && srcArrayName[0] == '/')
@@ -740,9 +748,17 @@ static bool TranslateArray(
             srcArray = poSrcGroup->OpenMDArray(srcArrayName);
         if (!srcArray)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find array %s",
-                     srcArrayName.c_str());
-            return false;
+            if (poSrcArrayIn && poSrcArrayIn->GetFullName() == arraySpec)
+            {
+                bSrcArrayAccessibleThroughSrcGroup = false;
+                srcArray = poSrcArrayIn;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find array %s",
+                         srcArrayName.c_str());
+                return false;
+            }
         }
     }
     else
@@ -754,6 +770,17 @@ static bool TranslateArray(
     }
 
     auto tmpArray = srcArray;
+
+    if (bResampled)
+    {
+        tmpArray =
+            tmpArray->GetResampled(std::vector<std::shared_ptr<GDALDimension>>(
+                                       tmpArray->GetDimensionCount()),
+                                   GRIORA_NearestNeighbour, nullptr, nullptr);
+        if (!tmpArray)
+            return false;
+    }
+
     if (!anTransposedAxis.empty())
     {
         tmpArray = tmpArray->Transpose(anTransposedAxis);
@@ -1013,7 +1040,7 @@ static bool TranslateArray(
         {
             if (poSrcRootGroup)
             {
-                if (!TranslateArray(oDimRemapper, indexingVarSpec,
+                if (!TranslateArray(oDimRemapper, srcIndexVar, indexingVarSpec,
                                     poSrcRootGroup, poSrcGroup, poDstRootGroup,
                                     poDstGroup, poSrcDS, mapSrcToDstDims,
                                     mapDstDimFullNames, psOptions))
@@ -1072,6 +1099,8 @@ static bool TranslateArray(
     GUInt64 nCurCost = 0;
     dstArray->CopyFromAllExceptValues(srcArray.get(), false, nCurCost, 0,
                                       nullptr, nullptr);
+    if (bResampled)
+        dstArray->SetSpatialRef(tmpArray->GetSpatialRef().get());
 
     if (idxSliceSpec >= 0)
     {
@@ -1139,23 +1168,39 @@ static bool TranslateArray(
         }
     }
 
-    const auto dimCount(tmpArray->GetDimensionCount());
-    std::vector<GUInt64> anSrcOffset(dimCount);
-    std::vector<GUInt64> anCount(dimCount);
-    for (size_t i = 0; i < dimCount; ++i)
+    double dfStart = 0.0;
+    double dfIncrement = 0.0;
+    if (!bSrcArrayAccessibleThroughSrcGroup &&
+        tmpArray->IsRegularlySpaced(dfStart, dfIncrement))
     {
-        anCount[i] = tmpArrayDims[i]->GetSize();
+        auto poSource = cpl::make_unique<VRTMDArraySourceRegularlySpaced>(
+            dfStart, dfIncrement);
+        dstArrayVRT->AddSource(std::move(poSource));
     }
-    std::vector<GUInt64> anStep(dimCount, 1);
-    std::vector<GUInt64> anDstOffset(dimCount);
-    std::unique_ptr<VRTMDArraySourceFromArray> poSource(
-        new VRTMDArraySourceFromArray(
-            dstArrayVRT.get(), false, false, poSrcDS->GetDescription(),
-            band < 0 ? srcArray->GetFullName() : std::string(),
-            band >= 1 ? CPLSPrintf("%d", band) : std::string(),
-            std::move(anTransposedAxis), viewExpr, std::move(anSrcOffset),
-            std::move(anCount), std::move(anStep), std::move(anDstOffset)));
-    dstArrayVRT->AddSource(std::move(poSource));
+    else
+    {
+        const auto dimCount(tmpArray->GetDimensionCount());
+        std::vector<GUInt64> anSrcOffset(dimCount);
+        std::vector<GUInt64> anCount(dimCount);
+        for (size_t i = 0; i < dimCount; ++i)
+        {
+            anCount[i] = tmpArrayDims[i]->GetSize();
+        }
+        std::vector<GUInt64> anStep(dimCount, 1);
+        std::vector<GUInt64> anDstOffset(dimCount);
+        std::unique_ptr<VRTMDArraySourceFromArray> poSource(
+            new VRTMDArraySourceFromArray(
+                dstArrayVRT.get(), false, false, poSrcDS->GetDescription(),
+                band < 0 ? srcArray->GetFullName() : std::string(),
+                band >= 1 ? CPLSPrintf("%d", band) : std::string(),
+                std::move(anTransposedAxis),
+                bResampled ? (viewExpr.empty() ? std::string("resample=true")
+                                               : "resample=true," + viewExpr)
+                           : viewExpr,
+                std::move(anSrcOffset), std::move(anCount), std::move(anStep),
+                std::move(anDstOffset)));
+        dstArrayVRT->AddSource(std::move(poSource));
+    }
 
     return true;
 }
@@ -1245,8 +1290,8 @@ static bool CopyGroup(
     auto arrayNames = poSrcGroup->GetMDArrayNames();
     for (const auto &name : arrayNames)
     {
-        if (!TranslateArray(oDimRemapper, name, poSrcRootGroup, poSrcGroup,
-                            poDstRootGroup, poDstGroup, poSrcDS,
+        if (!TranslateArray(oDimRemapper, nullptr, name, poSrcRootGroup,
+                            poSrcGroup, poDstRootGroup, poDstGroup, poSrcDS,
                             mapSrcToDstDims, mapDstDimFullNames, psOptions))
         {
             return false;
@@ -1431,10 +1476,10 @@ static bool TranslateInternal(std::shared_ptr<GDALGroup> &poDstRootGroup,
     {
         for (const auto &arraySpec : psOptions->aosArraySpec)
         {
-            if (!TranslateArray(oDimRemapper, arraySpec, poSrcRootGroup,
-                                poSrcRootGroup, poDstRootGroup, poDstRootGroup,
-                                poSrcDS, mapSrcToDstDims, mapDstDimFullNames,
-                                psOptions))
+            if (!TranslateArray(oDimRemapper, nullptr, arraySpec,
+                                poSrcRootGroup, poSrcRootGroup, poDstRootGroup,
+                                poDstRootGroup, poSrcDS, mapSrcToDstDims,
+                                mapDstDimFullNames, psOptions))
             {
                 return false;
             }
@@ -1482,8 +1527,10 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
         std::string viewExpr;
         GDALExtendedDataType outputType(
             GDALExtendedDataType::Create(GDT_Unknown));
+        bool bResampled = false;
         ParseArraySpec(psOptions->aosArraySpec[0], srcArrayName, dstArrayName,
-                       band, anTransposedAxis, viewExpr, outputType);
+                       band, anTransposedAxis, viewExpr, outputType,
+                       bResampled);
         srcArray = poRG->OpenMDArray(dstArrayName);
     }
     else
