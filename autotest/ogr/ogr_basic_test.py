@@ -975,6 +975,34 @@ def test_datasource_use_after_close_2():
         ds2.GetLayer(0)
 
 
+def test_datasource_use_after_destroy():
+    ds = ogr.Open("data/poly.shp")
+
+    ds2 = ds
+
+    ds.Destroy()
+
+    with pytest.raises(Exception):
+        ds.GetLayer(0)
+
+    with pytest.raises(Exception):
+        ds2.GetLayer(0)
+
+
+def test_datasource_use_after_release():
+    ds = ogr.Open("data/poly.shp")
+
+    ds2 = ds
+
+    ds.Release()
+
+    with pytest.raises(Exception):
+        ds.GetLayer(0)
+
+    with pytest.raises(Exception):
+        ds2.GetLayer(0)
+
+
 def test_layer_use_after_datasource_close_1():
     with ogr.Open("data/poly.shp") as ds:
         lyr = ds.GetLayer(0)
@@ -1010,3 +1038,25 @@ def test_layer_use_after_datasource_close_3(tmp_path):
     # Make sure ds.__exit__() has invalidated "lyr2" so we don't crash here
     with pytest.raises(Exception):
         lyr2.GetFeatureCount()
+
+
+def test_layer_use_after_datasource_destroy():
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
+
+    ds.Destroy()
+
+    # Make sure ds.Destroy() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
+def test_layer_use_after_datasource_release():
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
+
+    ds.Release()
+
+    # Make sure ds.Release() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()

@@ -82,11 +82,15 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
       self.thisown = 0
+      self.this = None
+      self._invalidate_layers()
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
       self.thisown = 0
+      self.this = None
+      self._invalidate_layers()
 
     def Reference(self):
       "For backwards compatibility only."
