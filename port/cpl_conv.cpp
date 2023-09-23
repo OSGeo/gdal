@@ -3022,7 +3022,8 @@ int CPLUnlinkTree(const char *pszPath)
 int CPLCopyFile(const char *pszNewPath, const char *pszOldPath)
 
 {
-    return VSICopyFile(pszOldPath, pszNewPath, nullptr, 0, nullptr, nullptr,
+    return VSICopyFile(pszOldPath, pszNewPath, nullptr,
+                       static_cast<vsi_l_offset>(-1), nullptr, nullptr,
                        nullptr);
 }
 

@@ -3495,6 +3495,44 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
 
 
 ###############################################################################
+# Test vsisync() failure
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_sync_failed(aws_test_config, webserver_port):
+
+    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+
+    # S3 to local: S3 file is older -> download
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        206,
+        {
+            "Content-Length": "3",
+            "Content-Range": "bytes 0-2/3",
+            "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
+        },
+        "foo",
+    )
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        200,
+        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
+        "fo",  # only returns 2 bytes instead of 3
+    )
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception,
+            match="Copying of /vsis3/out/testsync.txt to /vsimem/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+        ):
+            gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/")
+
+
+###############################################################################
 # Test vsisync() with SYNC_STRATEGY=OVERWRITE
 
 
