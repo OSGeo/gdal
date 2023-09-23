@@ -213,6 +213,39 @@ OGRArrowLayer::IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType)
 }
 
 /************************************************************************/
+/*                      GetTZFlagFromTimezone()                         */
+/************************************************************************/
+
+static int GetTZFlagFromTimezone(const std::string &osTZ)
+{
+    int nTZFlag = 0;
+    if (osTZ == "UTC" || osTZ == "Etc/UTC")
+    {
+        nTZFlag = OGR_TZFLAG_UTC;
+    }
+    else if (osTZ.size() == 6 && (osTZ[0] == '+' || osTZ[0] == '-') &&
+             osTZ[3] == ':')
+    {
+        int nTZHour = atoi(osTZ.c_str() + 1);
+        int nTZMin = atoi(osTZ.c_str() + 4);
+        if (nTZHour >= 0 && nTZHour <= 14 && nTZMin >= 0 && nTZMin < 60 &&
+            (nTZMin % 15) == 0)
+        {
+            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
+            if (osTZ[0] == '+')
+            {
+                nTZFlag = OGR_TZFLAG_UTC + nTZFlag;
+            }
+            else
+            {
+                nTZFlag = OGR_TZFLAG_UTC - nTZFlag;
+            }
+        }
+    }
+    return nTZFlag;
+}
+
+/************************************************************************/
 /*                        MapArrowTypeToOGR()                           */
 /************************************************************************/
 
@@ -284,8 +317,13 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
             break;
 
         case arrow::Type::TIMESTAMP:
+        {
+            const auto timestampType =
+                static_cast<arrow::TimestampType *>(type.get());
             eType = OFTDateTime;
+            oField.SetTZFlag(GetTZFlagFromTimezone(timestampType->timezone()));
             break;
+        }
 
         case arrow::Type::TIME32:
             eType = OFTTime;
@@ -1413,7 +1451,7 @@ static SetPointsOfLineType GetSetPointsOfLine(bool bHasZ, bool bHasM)
 inline void
 OGRArrowLayer::TimestampToOGR(int64_t timestamp,
                               const arrow::TimestampType *timestampType,
-                              OGRField *psField)
+                              int nTZFlag, OGRField *psField)
 {
     const auto unit = timestampType->unit();
     double floatingPart = 0;
@@ -1432,32 +1470,10 @@ OGRArrowLayer::TimestampToOGR(int64_t timestamp,
         floatingPart = (timestamp % (1000 * 1000 * 1000)) / 1e9;
         timestamp /= 1000 * 1000 * 1000;
     }
-    int nTZFlag = 0;
-    const auto osTZ = timestampType->timezone();
-    if (osTZ == "UTC" || osTZ == "Etc/UTC")
+    if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
     {
-        nTZFlag = 100;
-    }
-    else if (osTZ.size() == 6 && (osTZ[0] == '+' || osTZ[0] == '-') &&
-             osTZ[3] == ':')
-    {
-        int nTZHour = atoi(osTZ.c_str() + 1);
-        int nTZMin = atoi(osTZ.c_str() + 4);
-        if (nTZHour >= 0 && nTZHour <= 14 && nTZMin >= 0 && nTZMin < 60 &&
-            (nTZMin % 15) == 0)
-        {
-            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
-            if (osTZ[0] == '+')
-            {
-                nTZFlag = 100 + nTZFlag;
-                timestamp += nTZHour * 3600 + nTZMin * 60;
-            }
-            else
-            {
-                nTZFlag = 100 - nTZFlag;
-                timestamp -= nTZHour * 3600 + nTZMin * 60;
-            }
-        }
+        const int TZOffset = (nTZFlag - OGR_TZFLAG_UTC) * 15;
+        timestamp += TZOffset * 60;
     }
     struct tm dt;
     CPLUnixTimeToYMDHMS(timestamp, &dt);
@@ -1733,7 +1749,9 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 sField.Set.nMarker1 = OGRUnsetMarker;
                 sField.Set.nMarker2 = OGRUnsetMarker;
                 sField.Set.nMarker3 = OGRUnsetMarker;
-                TimestampToOGR(timestamp, timestampType, &sField);
+                TimestampToOGR(timestamp, timestampType,
+                               m_poFeatureDefn->GetFieldDefn(i)->GetTZFlag(),
+                               &sField);
                 poFeature->SetField(i, &sField);
                 break;
             }
