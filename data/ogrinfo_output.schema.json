@@ -149,6 +149,10 @@
         },
         "comment": {
           "type": "string"
+        },
+        "timezone": {
+          "type": "string",
+          "pattern": "^(localtime|(mixed timezones)|UTC|((\\+|-)[0-9][0-9]:[0-9][0-9]))$"
         }
       },
       "required": [
@@ -209,7 +213,14 @@
           }
         },
         "coordinateSystem": {
-          "$ref": "#/definitions/coordinateSystem"
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/coordinateSystem"
+            }
+          ]
         },
         "supportedSRSList": {
           "type": "array",

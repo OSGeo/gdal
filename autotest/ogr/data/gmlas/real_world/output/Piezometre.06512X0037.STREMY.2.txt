@@ -534,7 +534,7 @@ reporttolegalact_legalact_nilreason: String (0.0)
 reporttolegalact_legalact_owns: Integer(Boolean) (0.0) DEFAULT 'false'
 reporttolegalact_legalact_legislationcitation_pkid: String (0.0)
 reporttolegalact_reportdate_nilreason: String (0.0)
-reporttolegalact_reportdate: DateTime (0.0)
+reporttolegalact_reportdate: DateTime
 reporttolegalact_reportedenvelope_nilreason: String (0.0)
 reporttolegalact_reportedenvelope_nil: Integer(Boolean) (0.0)
 reporttolegalact_reportedenvelope: String (0.0)
@@ -2280,11 +2280,11 @@ OGRFeature(_ogr_fields_metadata):508
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = The method for identifying a temporal position is specific to each temporal reference system.  gml:TimePositionType supports the description of temporal position according to the subtypes described in ISO 19108.
-Values based on calendars and clocks use lexical formats that are based on ISO 8601, as described in XML Schema Part 2:2001. A decimal value may be used with coordinate systems such as GPS time or UNIX time. A URI may be used to provide a reference to some era in an ordinal reference system . 
+Values based on calendars and clocks use lexical formats that are based on ISO 8601, as described in XML Schema Part 2:2001. A decimal value may be used with coordinate systems such as GPS time or UNIX time. A URI may be used to provide a reference to some era in an ordinal reference system .
 In common with many of the components modelled as data types in the ISO 19100 series of International Standards, the corresponding GML component has simple content. However, the content model gml:TimePositionType is defined in several steps.
 Three XML attributes appear on gml:TimePositionType:
-A time value shall be associated with a temporal reference system through the frame attribute that provides a URI reference that identifies a description of the reference system. Following ISO 19108, the Gregorian calendar with UTC is the default reference system, but others may also be used. Components for describing temporal reference systems are described in 14.4, but it is not required that the reference system be described in this, as the reference may refer to anything that may be indentified with a URI.  
-For time values using a calendar containing more than one era, the (optional) calendarEraName attribute provides the name of the calendar era.  
+A time value shall be associated with a temporal reference system through the frame attribute that provides a URI reference that identifies a description of the reference system. Following ISO 19108, the Gregorian calendar with UTC is the default reference system, but others may also be used. Components for describing temporal reference systems are described in 14.4, but it is not required that the reference system be described in this, as the reference may refer to anything that may be indentified with a URI.
+For time values using a calendar containing more than one era, the (optional) calendarEraName attribute provides the name of the calendar era.
 Inexact temporal positions may be expressed using the optional indeterminatePosition attribute.  This takes a value from an enumeration.
 
 OGRFeature(_ogr_fields_metadata):509
@@ -2377,11 +2377,11 @@ OGRFeature(_ogr_fields_metadata):517
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = The method for identifying a temporal position is specific to each temporal reference system.  gml:TimePositionType supports the description of temporal position according to the subtypes described in ISO 19108.
-Values based on calendars and clocks use lexical formats that are based on ISO 8601, as described in XML Schema Part 2:2001. A decimal value may be used with coordinate systems such as GPS time or UNIX time. A URI may be used to provide a reference to some era in an ordinal reference system . 
+Values based on calendars and clocks use lexical formats that are based on ISO 8601, as described in XML Schema Part 2:2001. A decimal value may be used with coordinate systems such as GPS time or UNIX time. A URI may be used to provide a reference to some era in an ordinal reference system .
 In common with many of the components modelled as data types in the ISO 19100 series of International Standards, the corresponding GML component has simple content. However, the content model gml:TimePositionType is defined in several steps.
 Three XML attributes appear on gml:TimePositionType:
-A time value shall be associated with a temporal reference system through the frame attribute that provides a URI reference that identifies a description of the reference system. Following ISO 19108, the Gregorian calendar with UTC is the default reference system, but others may also be used. Components for describing temporal reference systems are described in 14.4, but it is not required that the reference system be described in this, as the reference may refer to anything that may be indentified with a URI.  
-For time values using a calendar containing more than one era, the (optional) calendarEraName attribute provides the name of the calendar era.  
+A time value shall be associated with a temporal reference system through the frame attribute that provides a URI reference that identifies a description of the reference system. Following ISO 19108, the Gregorian calendar with UTC is the default reference system, but others may also be used. Components for describing temporal reference systems are described in 14.4, but it is not required that the reference system be described in this, as the reference may refer to anything that may be indentified with a URI.
+For time values using a calendar containing more than one era, the (optional) calendarEraName attribute provides the name of the calendar era.
 Inexact temporal positions may be expressed using the optional indeterminatePosition attribute.  This takes a value from an enumeration.
 
 OGRFeature(_ogr_fields_metadata):518
@@ -2553,7 +2553,7 @@ OGRFeature(_ogr_fields_metadata):5558
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = -- Definition --
-The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique. 
+The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique.
 
 -- Description --
 NOTE The maximum length has been selected to allow for time stamps based on ISO 8601, for example, "2007-02-12T12:12:12+05:30" as the version identifier.
@@ -3273,11 +3273,11 @@ A georeferenced object directly collecting or processing data about objects whos
 -- Description --
 NOTE 1: An EnvironmentalMonitoringFacility is not a facility in the common INSPIRE sense realised by the Generic Conceptual Model class ActivtiyComplex.
 
-NOTE 2: Laboratories are not EnvironmentalMonitoringFacilities from an INSPIRE perspective as the exact location of the laboratory does not add further information to the measurement. 
+NOTE 2: Laboratories are not EnvironmentalMonitoringFacilities from an INSPIRE perspective as the exact location of the laboratory does not add further information to the measurement.
 The methodology used in the laboratory should be provided with observational data.
 The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):22
@@ -3389,8 +3389,8 @@ operational activity period
 -- Definition --
 Corresponds to a period during which the EnvironmentalMonitoringFacility has been up and running.
 The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):52
@@ -3399,7 +3399,7 @@ OGRFeature(_ogr_layers_metadata):52
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_pkid_name (String) = id
   layer_documentation (String) = gml:TimePeriod acts as a one-dimensional geometric primitive that represents an identifiable extent in time.
-The location in of a gml:TimePeriod is described by the temporal positions of the instants at which it begins and ends. The length of the period is equal to the temporal distance between the two bounding temporal positions. 
+The location in of a gml:TimePeriod is described by the temporal positions of the instants at which it begins and ends. The length of the period is equal to the temporal distance between the two bounding temporal positions.
 Both beginning and end may be described in terms of their direct position using gml:TimePositionType which is an XML Schema simple content type, or by reference to an indentifiable time instant using gml:TimeInstantPropertyType.
 Alternatively a limit of a gml:TimePeriod may use the conventional GML property model to make a reference to a time instant described elsewhere, or a limit may be indicated as a direct position.
 

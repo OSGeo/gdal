@@ -45,15 +45,15 @@ act_core_name_nilreason: String (0.0)
 act_core_name_nil: Integer(Boolean) (0.0)
 act_core_name: String (0.0)
 validfrom_nilreason: String (0.0)
-validfrom: DateTime (0.0)
+validfrom: DateTime
 validto_nilreason: String (0.0)
 validto_nil: Integer(Boolean) (0.0)
-validto: DateTime (0.0)
+validto: DateTime
 beginlifespanversion_nilreason: String (0.0)
-beginlifespanversion: DateTime (0.0)
+beginlifespanversion: DateTime
 endlifespanversion_nilreason: String (0.0)
 endlifespanversion_nil: Integer(Boolean) (0.0)
-endlifespanversion: DateTime (0.0)
+endlifespanversion: DateTime
 riverbasindistrict_anyattributes: String (0.0)
 riverbasindistrict: String (0.0)
 hostingsite_href: String (0.0)
@@ -1087,7 +1087,7 @@ OGRFeature(_ogr_fields_metadata):17
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = -- Definition --
-The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique. 
+The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique.
 
 -- Description --
 NOTE The maximum length has been selected to allow for time stamps based on ISO 8601, for example, "2007-02-12T12:12:12+05:30" as the version identifier.
@@ -1346,8 +1346,8 @@ OGRFeature(_ogr_fields_metadata):36
   field_min_occurs (Integer) = 0
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
-  field_documentation (String) = -- Definition -- 
-Code identifier and/or name assigned to the basin district of a watercourse. 
+  field_documentation (String) = -- Definition --
+Code identifier and/or name assigned to the basin district of a watercourse.
 
 -- Description --
 NOTE  Information required (not registered in the Hydrography Theme) according to Article 3(1) of Directive 2000/60/EC of the European Parliament and of the Council of 23 October 2000 establishing
@@ -3048,7 +3048,7 @@ OGRFeature(_ogr_fields_metadata):357
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = -- Definition --
-The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique. 
+The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique.
 
 -- Description --
 NOTE The maximum length has been selected to allow for time stamps based on ISO 8601, for example, "2007-02-12T12:12:12+05:30" as the version identifier.
@@ -3088,7 +3088,7 @@ identifier scheme
 Identifier defining the scheme used to assign the identifier.
 
 -- Description --
-NOTE 1: Reporting requirements for different environmental legislation mandate that each spatial object is assigned an identifier conforming to specific lexical rules. 
+NOTE 1: Reporting requirements for different environmental legislation mandate that each spatial object is assigned an identifier conforming to specific lexical rules.
 
 NOTE 2: These rules are often inconsistent so a spatial object may be assigned multiple identifiers which are used for object referencing to link information to the spatial object.
 
@@ -3723,7 +3723,7 @@ OGRFeature(_ogr_fields_metadata):438
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = -- Definition --
-The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique. 
+The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique.
 
 -- Description --
 NOTE The maximum length has been selected to allow for time stamps based on ISO 8601, for example, "2007-02-12T12:12:12+05:30" as the version identifier.
@@ -3763,7 +3763,7 @@ identifier scheme
 Identifier defining the scheme used to assign the identifier.
 
 -- Description --
-NOTE 1: Reporting requirements for different environmental legislation mandate that each spatial object is assigned an identifier conforming to specific lexical rules. 
+NOTE 1: Reporting requirements for different environmental legislation mandate that each spatial object is assigned an identifier conforming to specific lexical rules.
 
 NOTE 2: These rules are often inconsistent so a spatial object may be assigned multiple identifiers which are used for object referencing to link information to the spatial object.
 
@@ -4324,7 +4324,7 @@ OGRFeature(_ogr_fields_metadata):1014
   field_max_occurs (Integer) = 1
   field_category (String) = REGULAR
   field_documentation (String) = -- Definition --
-The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique. 
+The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique.
 
 -- Description --
 NOTE The maximum length has been selected to allow for time stamps based on ISO 8601, for example, "2007-02-12T12:12:12+05:30" as the version identifier.
@@ -4685,8 +4685,8 @@ OGRFeature(_ogr_layers_metadata):0
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_pkid_name (String) = id
   layer_documentation (String) = The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):4
@@ -4702,7 +4702,7 @@ function
 
 Activities performed by the activity complex. Function is described by the activity and potentially complemented with information about inputs and outputs as result of it.
 
--- Description -- 
+-- Description --
 NOTE  The Activity described as part of the Function &ldquo;Activity Complex&rdquo; should be recorded using a controlled vocabulary where a particular controlled vocabulary is in use within a given context, such as SIC codes in the UK, it is acceptable to use these, however, the preferred choice for European interoperability is whenever possible NACE [NACE].
 
 OGRFeature(_ogr_layers_metadata):5
@@ -4763,8 +4763,8 @@ OGRFeature(_ogr_layers_metadata):25
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_pkid_name (String) = id
   layer_documentation (String) = The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):30
@@ -4807,8 +4807,8 @@ OGRFeature(_ogr_layers_metadata):35
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_pkid_name (String) = id
   layer_documentation (String) = The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):40
@@ -4826,8 +4826,8 @@ OGRFeature(_ogr_layers_metadata):43
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_pkid_name (String) = id
   layer_documentation (String) = The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):49
@@ -4845,8 +4845,8 @@ OGRFeature(_ogr_layers_metadata):50
   layer_category (String) = TOP_LEVEL_ELEMENT
   layer_pkid_name (String) = id
   layer_documentation (String) = The basic feature model is given by the gml:AbstractFeatureType.
-The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
-The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType.
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location.
 The value of the gml:location property describes the extent, position or relative location of the feature.
 
 OGRFeature(_ogr_layers_metadata):106
