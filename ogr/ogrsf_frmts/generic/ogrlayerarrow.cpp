@@ -75,8 +75,11 @@ inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
 static void OGRLayerDefaultReleaseSchema(struct ArrowSchema *schema)
 {
     CPLAssert(schema->release != nullptr);
-    if (STARTS_WITH(schema->format, "w:"))
+    if (STARTS_WITH(schema->format, "w:") ||
+        STARTS_WITH(schema->format, "tsm:"))
+    {
         CPLFree(const_cast<char *>(schema->format));
+    }
     CPLFree(const_cast<char *>(schema->name));
     CPLFree(const_cast<char *>(schema->metadata));
     for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
@@ -318,8 +321,44 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
                 break;
 
             case OFTDateTime:
-                psChild->format = "tsm:";
+            {
+                const char *pszPrefix = "tsm:";
+                const char *pszTZOverride =
+                    m_aosArrowArrayStreamOptions.FetchNameValueDef("TIMEZONE",
+                                                                   "");
+                const int nTZFlag = poFieldDefn->GetTZFlag();
+                if (nTZFlag == OGR_TZFLAG_MIXED_TZ ||
+                    nTZFlag == OGR_TZFLAG_UTC || EQUAL(pszTZOverride, "UTC"))
+                {
+                    psChild->format = CPLStrdup(CPLSPrintf("%sUTC", pszPrefix));
+                }
+                else if (nTZFlag == OGR_TZFLAG_UNKNOWN ||
+                         nTZFlag == OGR_TZFLAG_LOCALTIME)
+                {
+                    psChild->format = CPLStrdup(pszPrefix);
+                }
+                else
+                {
+                    char chSign;
+                    const int nOffset = (nTZFlag - OGR_TZFLAG_UTC) * 15;
+                    int nHours =
+                        static_cast<int>(nOffset / 60);  // Round towards zero.
+                    const int nMinutes = std::abs(nOffset - nHours * 60);
+
+                    if (nOffset < 0)
+                    {
+                        chSign = '-';
+                        nHours = std::abs(nHours);
+                    }
+                    else
+                    {
+                        chSign = '+';
+                    }
+                    psChild->format = CPLStrdup(CPLSPrintf(
+                        "%s%c%02d:%02d", pszPrefix, chSign, nHours, nMinutes));
+                }
                 break;
+            }
         }
 
         if (item_format)
@@ -1251,7 +1290,7 @@ static bool FillDateArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillDateArray()                               */
+/*                        FillTimeArray()                               */
 /************************************************************************/
 
 static bool FillTimeArray(struct ArrowArray *psChild,
@@ -1305,7 +1344,7 @@ static bool FillTimeArray(struct ArrowArray *psChild,
 static bool
 FillDateTimeArray(struct ArrowArray *psChild,
                   std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                  const bool bIsNullable, const int i)
+                  const bool bIsNullable, const int i, int nFieldTZFlag)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
@@ -1329,9 +1368,26 @@ FillDateTimeArray(struct ArrowArray *psChild,
             brokenDown.tm_hour = psRawField->Date.Hour;
             brokenDown.tm_min = psRawField->Date.Minute;
             brokenDown.tm_sec = static_cast<int>(psRawField->Date.Second);
-            panValues[iFeat] =
+            auto nVal =
                 CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
                 (static_cast<int>(psRawField->Date.Second * 1000 + 0.5) % 1000);
+            if (nFieldTZFlag > OGR_TZFLAG_MIXED_TZ &&
+                psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+            {
+                // Convert for psRawField->Date.TZFlag to nFieldTZFlag
+                const int TZOffset =
+                    (psRawField->Date.TZFlag - nFieldTZFlag) * 15;
+                nVal -= TZOffset * 60 * 1000;
+            }
+            else if (nFieldTZFlag == OGR_TZFLAG_MIXED_TZ &&
+                     psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+            {
+                // Convert for psRawField->Date.TZFlag to UTC
+                const int TZOffset =
+                    (psRawField->Date.TZFlag - OGR_TZFLAG_UTC) * 15;
+                nVal -= TZOffset * 60 * 1000;
+            }
+            panValues[iFeat] = nVal;
         }
         else if (bIsNullable)
         {
@@ -1630,7 +1686,8 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *,
 
             case OFTDateTime:
             {
-                if (!FillDateTimeArray(psChild, apoFeatures, bIsNullable, i))
+                if (!FillDateTimeArray(psChild, apoFeatures, bIsNullable, i,
+                                       poFieldDefn->GetTZFlag()))
                     goto error;
                 break;
             }

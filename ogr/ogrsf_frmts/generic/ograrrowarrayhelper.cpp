@@ -69,6 +69,9 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
     mapOGRFieldToArrowField.resize(nFieldCount, -1);
     mapOGRGeomFieldToArrowField.resize(nGeomFieldCount, -1);
     abNullableFields.resize(nFieldCount);
+    anTZFlags.resize(nFieldCount);
+    const char *pszTZOverride =
+        aosArrowArrayStreamOptions.FetchNameValueDef("TIMEZONE", "");
 
     if (bIncludeFID)
     {
@@ -78,6 +81,8 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
     {
         const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
         abNullableFields[i] = CPL_TO_BOOL(poFieldDefn->IsNullable());
+        anTZFlags[i] = EQUAL(pszTZOverride, "UTC") ? OGR_TZFLAG_UTC
+                                                   : poFieldDefn->GetTZFlag();
         if (!poFieldDefn->IsIgnored())
         {
             mapOGRFieldToArrowField[i] = nChildren;

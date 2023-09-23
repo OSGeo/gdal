@@ -7620,6 +7620,33 @@ def test_ogr_gpkg_alter_geom_field_defn():
 
 
 ###############################################################################
+# Test GetArrowStreamAsPyArrow()
+
+
+def test_ogr_gpkg_arrow_stream_pyarrow_timezone(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(tmp_vsimem / "test_ogr_gpkg_arrow_stream_pyarrow.gpkg")
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789+01:00")
+    lyr.CreateFeature(f)
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "UTC"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1653996896789]
+
+
+###############################################################################
 # Test GetArrowStreamAsNumPy()
 
 
