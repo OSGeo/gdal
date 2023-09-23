@@ -77,7 +77,8 @@ OGRFieldType CPL_DLL GeoJSONPropertyToFieldType(json_object *poObject,
 /*                      GeoJSONStringPropertyToFieldType                */
 /************************************************************************/
 
-OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject);
+OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
+                                              int &nTZFlag);
 
 /************************************************************************/
 /*                           OGRGeoJSONGetGeometryName                  */
