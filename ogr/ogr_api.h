@@ -390,6 +390,8 @@ int CPL_DLL OGR_Fld_GetWidth(OGRFieldDefnH);
 void CPL_DLL OGR_Fld_SetWidth(OGRFieldDefnH, int);
 int CPL_DLL OGR_Fld_GetPrecision(OGRFieldDefnH);
 void CPL_DLL OGR_Fld_SetPrecision(OGRFieldDefnH, int);
+int CPL_DLL OGR_Fld_GetTZFlag(OGRFieldDefnH);
+void CPL_DLL OGR_Fld_SetTZFlag(OGRFieldDefnH, int);
 void CPL_DLL OGR_Fld_Set(OGRFieldDefnH, const char *, OGRFieldType, int, int,
                          OGRJustification);
 int CPL_DLL OGR_Fld_IsIgnored(OGRFieldDefnH hDefn);
