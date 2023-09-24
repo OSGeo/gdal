@@ -213,39 +213,6 @@ OGRArrowLayer::IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType)
 }
 
 /************************************************************************/
-/*                      GetTZFlagFromTimezone()                         */
-/************************************************************************/
-
-static int GetTZFlagFromTimezone(const std::string &osTZ)
-{
-    int nTZFlag = 0;
-    if (osTZ == "UTC" || osTZ == "Etc/UTC")
-    {
-        nTZFlag = OGR_TZFLAG_UTC;
-    }
-    else if (osTZ.size() == 6 && (osTZ[0] == '+' || osTZ[0] == '-') &&
-             osTZ[3] == ':')
-    {
-        int nTZHour = atoi(osTZ.c_str() + 1);
-        int nTZMin = atoi(osTZ.c_str() + 4);
-        if (nTZHour >= 0 && nTZHour <= 14 && nTZMin >= 0 && nTZMin < 60 &&
-            (nTZMin % 15) == 0)
-        {
-            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
-            if (osTZ[0] == '+')
-            {
-                nTZFlag = OGR_TZFLAG_UTC + nTZFlag;
-            }
-            else
-            {
-                nTZFlag = OGR_TZFLAG_UTC - nTZFlag;
-            }
-        }
-    }
-    return nTZFlag;
-}
-
-/************************************************************************/
 /*                        MapArrowTypeToOGR()                           */
 /************************************************************************/
 
@@ -321,7 +288,17 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
             const auto timestampType =
                 static_cast<arrow::TimestampType *>(type.get());
             eType = OFTDateTime;
-            oField.SetTZFlag(GetTZFlagFromTimezone(timestampType->timezone()));
+            const auto osTZ = timestampType->timezone();
+            int nTZFlag = OGRTimezoneToTZFlag(osTZ.c_str(), false);
+            if (nTZFlag == OGR_TZFLAG_UNKNOWN && !osTZ.empty())
+            {
+                CPLDebug(GetDriverUCName().c_str(),
+                         "Field %s has unrecognized timezone %s. "
+                         "UTC datetime will be used instead.",
+                         field->name().c_str(), osTZ.c_str());
+                nTZFlag = OGR_TZFLAG_UTC;
+            }
+            oField.SetTZFlag(nTZFlag);
             break;
         }
 
