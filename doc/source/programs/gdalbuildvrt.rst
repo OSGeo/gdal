@@ -37,7 +37,7 @@ Description
 This program builds a VRT (Virtual Dataset) that is a mosaic of the list of
 input GDAL datasets. The list of input GDAL datasets can be specified at the end
 of the command line, or put in a text file (one filename per line) for very long lists,
-or it can be a MapServer tileindex (see \ref gdaltindex utility). In the later case, all
+or it can be a MapServer tileindex (see :ref:`gdaltindex` utility). In the later case, all
 entries in the tile index will be added to the VRT.
 
 With -separate, each files goes into a separate band in the VRT dataset. Otherwise,

@@ -350,7 +350,7 @@ It has following parameters:
 Data metrics
 ------------
 
-Besides the interpolation functionality \ref gdal_grid can be used to compute
+Besides the interpolation functionality :program:`gdal_grid` can be used to compute
 some data metrics using the specified window and output grid geometry. These
 metrics are:
 
@@ -414,9 +414,9 @@ Reading comma separated values
 ------------------------------
 
 Often you have a text file with a list of comma separated XYZ values to work
-with (so called CSV file). You can easily use that kind of data source in \ref
-gdal_grid. All you need is create a virtual dataset header (VRT) for you CSV
-file and use it as input datasource for \ref gdal_grid. You can find details
+with (so called CSV file). You can easily use that kind of data source in
+:program:`gdal_grid`. All you need is create a virtual dataset header (VRT) for you CSV
+file and use it as input datasource for :program:`gdal_grid`. You can find details
 on VRT format at :ref:`vector.vrt` description page.
 
 Here is a small example. Let we have a CSV file called *dem.csv*
@@ -446,7 +446,7 @@ content:
 
 This description specifies so called 2.5D geometry with three coordinates X, Y
 and Z. Z value will be used for interpolation. Now you can use *dem.vrt*
-with all OGR programs (start with \ref ogrinfo to test that everything works
+with all OGR programs (start with :ref:`ogrinfo` to test that everything works
 fine). The datasource will contain single layer called *"dem"* filled
 with point features constructed from values in CSV file. Using this technique
 you can handle CSV files with more than three columns, switch columns, etc.
