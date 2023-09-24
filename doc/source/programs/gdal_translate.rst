@@ -273,10 +273,10 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -a_gt <gt(0)> <gt(1)> <gt(2)> <gt(3)> <gt(4)> <gt(5)>
 
-    Assign/override the geotransform :ref:`geotransforms_tut` of the output file.
+    Assign/override the geotransform of the output file.
     This assigns the geotransform to the output file, ignoring what would have been
     derived from the source file. So this does not cause reprojection to the
-    specified SRS.
+    specified SRS. See :ref:`geotransforms_tut`.
     This is mutually exclusive with :option:`-a_ullr`
 
     .. versionadded:: 3.8
