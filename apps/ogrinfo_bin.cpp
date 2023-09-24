@@ -40,27 +40,31 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 {
-    printf("Usage: ogrinfo [--help] [--help-general]\n"
-           "               [-json] [-ro] [-q] [-where "
-           "restricted_where|@filename]\n"
-           "               [-spat xmin ymin xmax ymax] [-geomfield field] "
-           "[-fid fid]\n"
-           "               [-sql statement|@filename] [-dialect sql_dialect] "
-           "[-al] [-rl]\n"
-           "               [-so|-features] [-fields={YES/NO}]]\n"
-           "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
-           "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
-           "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
-           "WKT1|WKT2|...]\n"
-           "               [-fielddomain name]\n"
-           "               datasource_name [layer [layer ...]]\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: ogrinfo [--help] [--help-general]\n"
+            "               [-json] [-ro] [-q] [-where "
+            "<restricted_where>|@f<ilename>]\n"
+            "               [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield "
+            "<field>] "
+            "[-fid <fid>]\n"
+            "               [-sql <statement>|@<filename>] [-dialect "
+            "<sql_dialect>] "
+            "[-al] [-rl]\n"
+            "               [-so|-features] [-fields={YES|NO}]]\n"
+            "               [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] "
+            "[-oo <NAME>=<VALUE>]...\n"
+            "               [-nomd] [-listmdd] [-mdd {<domain>|all}]...\n"
+            "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
+            "WKT1|WKT2|<other_values>]\n"
+            "               [-fielddomain <name>]\n"
+            "               <datasource_name> [<layer> [<layer> ...]]\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -94,7 +98,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
     argv = CSLAddString(argv, "-stdout");
@@ -105,10 +109,10 @@ MAIN_START(argc, argv)
     GDALVectorInfoOptions *psOptions =
         GDALVectorInfoOptionsNew(argv + 1, psOptionsForBinary.get());
     if (psOptions == nullptr)
-        Usage();
+        Usage(true);
 
     if (psOptionsForBinary->osFilename.empty())
-        Usage("No datasource specified.");
+        Usage(true, "No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */

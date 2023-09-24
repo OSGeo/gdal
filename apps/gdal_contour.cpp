@@ -51,17 +51,18 @@ static bool ArgIsNumeric(const char *pszArg)
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: gdal_contour [--help] [--help-general]\n"
         "                    [-b <band>] [-a <attribute_name>] [-amin "
         "<attribute_name>] [-amax <attribute_name>]\n"
-        "                    [-3d] [-inodata] [-snodata n] [-f <formatname>] "
+        "                    [-3d] [-inodata] [-snodata <n>] [-f <formatname>] "
         "[-i <interval>]\n"
-        "                    [[-dsco <NAME=VALUE>] ...] [[-lco <NAME=VALUE>] "
-        "...]\n"
+        "                    [-dsco <NAME>=<VALUE>]... "
+        "[-lco <NAME>=<VALUE>]...\n"
         "                    [-off <offset>] [-fl <level> <level>...] [-e "
         "<exp_base>]\n"
         "                    [-nln <outlayername>] [-q] [-p]\n"
@@ -70,7 +71,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 static void CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
@@ -92,8 +93,8 @@ static void CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
     do                                                                         \
     {                                                                          \
         if (i + nExtraArg >= argc)                                             \
-            Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i],     \
-                             nExtraArg));                                      \
+            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
+                                   argv[i], nExtraArg));                       \
     } while (false)
 
 MAIN_START(argc, argv)
@@ -152,7 +153,7 @@ MAIN_START(argc, argv)
             return 0;
         }
         else if (EQUAL(argv[i], "--help"))
-            Usage();
+            Usage(false);
         else if (EQUAL(argv[i], "-a"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -196,8 +197,8 @@ MAIN_START(argc, argv)
         else if (EQUAL(argv[i], "-fl"))
         {
             if (i >= argc - 1)
-                Usage(CPLSPrintf("%s option requires at least 1 argument",
-                                 argv[i]));
+                Usage(true, CPLSPrintf("%s option requires at least 1 argument",
+                                       argv[i]));
             while (i < argc - 1 &&
                    nFixedLevelCount < static_cast<int>(sizeof(adfFixedLevels) /
                                                        sizeof(double)) &&
@@ -263,22 +264,22 @@ MAIN_START(argc, argv)
             pszDstFilename = argv[i];
         }
         else
-            Usage("Too many command options.");
+            Usage(true, "Too many command options.");
     }
 
     if (dfInterval == 0.0 && nFixedLevelCount == 0 && dfExpBase == 0.0)
     {
-        Usage("Neither -i nor -fl nor -e are specified.");
+        Usage(true, "Neither -i nor -fl nor -e are specified.");
     }
 
     if (pszSrcFilename == nullptr)
     {
-        Usage("Missing source filename.");
+        Usage(true, "Missing source filename.");
     }
 
     if (pszDstFilename == nullptr)
     {
-        Usage("Missing destination filename.");
+        Usage(true, "Missing destination filename.");
     }
 
     if (strcmp(pszDstFilename, "/vsistdout/") == 0 ||

@@ -21,38 +21,39 @@ Generate a shaded relief map from any GDAL-supported elevation raster:
 
 .. code-block::
 
-    gdaldem hillshade input_dem output_hillshade
-                [-z ZFactor (default=1)] [-s scale* (default=1)]
-                [-az Azimuth (default=315)] [-alt Altitude (default=45)]
-                [-alg Horn|ZevenbergenThorne] [-combined | -multidirectional | -igor]
-                [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+     gdaldem hillshade <input_dem> <output_hillshade>
+                 [-z <zfactor>] [-s <scale>]
+                 [-az <azimuth>] [-alt <altitude>]
+                 [-alg ZevenbergenThorne] [-combined | -multidirectional | -igor]
+                 [-compute_edges] [-b <Band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
 Generate a slope map from any GDAL-supported elevation raster:
 
 .. code-block::
 
-    gdaldem slope input_dem output_slope_map
-                [-p use percent slope (default=degrees)] [-s scale* (default=1)]
-                [-alg Horn|ZevenbergenThorne]
-                [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+     gdaldem slope <input_dem> <output_slope_map>
+                 [-p] [-s <scale>]
+                 [-alg ZevenbergenThorne]
+                 [-compute_edges] [-b <band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
 Generate an aspect map from any GDAL-supported elevation raster,
 outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth:
 
 .. code-block::
 
-    gdaldem aspect input_dem output_aspect_map
-                [-trigonometric] [-zero_for_flat]
-                [-alg Horn|ZevenbergenThorne]
-                [-compute_edges] [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+     gdaldem aspect <input_dem> <output_aspect_map>
+                 [-trigonometric] [-zero_for_flat]
+                 [-alg ZevenbergenThorne]
+                 [-compute_edges] [-b <band>] [-of format] [-co <NAME>=<VALUE>]... [-q]
 
 Generate a color relief map from any GDAL-supported elevation raster:
 
 .. code-block::
 
-    gdaldem color-relief input_dem color_text_file output_color_relief_map
-                [-alpha] [-exact_color_entry | -nearest_color_entry]
-                [-b Band (default=1)] [-of format] [-co "NAME=VALUE"]* [-q]
+    gdaldem color-relief <input_dem> <color_text_file> <output_color_relief_map>
+                 [-alpha] [-exact_color_entry | -nearest_color_entry]
+                 [-b <band>] [-of format] [-co <NAME>=<VALUE>]... [-q]
+
     where color_text_file contains lines of the format "elevation_value red green blue"
 
 Generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster:
@@ -67,15 +68,15 @@ Generate a Topographic Position Index (TPI) map from any GDAL-supported elevatio
 
 .. code-block::
 
-    gdaldem TPI input_dem output_TPI_map
-                [-compute_edges] [-b Band (default=1)] [-of format] [-q]
+     gdaldem TPI <input_dem> <output_TPI_map>
+                 [-compute_edges] [-b <band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
 Generate a roughness map from any GDAL-supported elevation raster:
 
 .. code-block::
 
-    gdaldem roughness input_dem output_roughness_map
-                [-compute_edges] [-b Band (default=1)] [-of format] [-q]
+     gdaldem roughness <input_dem> <output_roughness_map>
+                 [-compute_edges] [-b <band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
 Description
 -----------
@@ -126,11 +127,11 @@ The following general options are available:
 
 .. include:: options/help_and_help_general.rst
 
-.. option:: input_dem
+.. option:: <input_dem>
 
     The input DEM raster to be processed
 
-.. option:: output_xxx_map
+.. option:: <output_xxx_map>
 
     The output raster produced
 

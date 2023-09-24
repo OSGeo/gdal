@@ -19,13 +19,13 @@ Synopsis
 
     ogr_layer_algebra.py [--help] [--help-general]
                         Union|Intersection|SymDifference|Identity|Update|Clip|Erase
-                        -input_ds name [-input_lyr name]
-                        -method_ds [-method_lyr name]
-                        -output_ds name [-output_lyr name] [-overwrite]
-                        [-opt NAME=VALUE]*
-                        [-f format_name] [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
-                        [-input_fields NONE|ALL|fld1,fl2,...fldN] [-method_fields NONE|ALL|fld1,fl2,...fldN]
-                        [-nlt geom_type] [-a_srs srs_def]
+                        -input_ds <path> [-input_lyr <name>]
+                        -method_ds <path> [-method_lyr <name>]
+                        -output_ds <path> [-output_lyr <name>] [-overwrite]
+                        [-opt <NAME>=<VALUE>]...
+                        [-f <format_name>] [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+                        [-input_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}] [-method_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}]
+                        [-nlt <geom_type>] [-a_srs <srs_def>]
 
 Description
 -----------
@@ -104,7 +104,7 @@ input source , a method source and generates the output of the operation in the 
 
     Indicates whether the ``output_ds`` have to be overwritten with the generated result of ogr_layer_algebra
 
-.. option:: -opt <NAME=VALUE>
+.. option:: -opt <NAME>=<VALUE>
 
     Attributes for which the operation has to run on ``input_ds`` and ``method_ds``
 
@@ -114,20 +114,20 @@ input source , a method source and generates the output of the operation in the 
     the format is guessed from the extension (previously was ESRI Shapefile).
     Use the short format name
 
-.. option:: -dsco <NAME=VALUE>
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco <NAME=VALUE>
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 
-.. option:: -input_fields <NONE|ALL|fld1,fld2,fld3...>
+.. option:: -input_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}
 
     Comma-delimited list of fields from input layer to copy to the output layer ,
     if eligible according to the operation
 
-.. option:: -method_fields <NONE|ALL|fld1,fld2,fld3...>
+.. option:: -method_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}
 
     Comma-delimited list of fields from method layer to copy to the output layer ,
     if eligible according to the operation

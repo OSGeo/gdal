@@ -36,22 +36,24 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdalmdimtranslate [--help] [--help-general]\n"
-           "                         [-if format]* [-of format]\n"
-           "                         [-co \"NAME=VALUE\"]*\n"
-           "                         [-array <array_spec>]*\n"
-           "                         [-group <group_spec>]* \n"
-           "                         [-subset <subset_spec>]* \n"
-           "                         [-scaleaxes <scaleaxes_spec>] \n"
-           "                         [-oo NAME=VALUE]*\n"
-           "                         <src_filename> <dst_filename>\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: gdalmdimtranslate [--help] [--help-general]\n"
+            "                         [-if <format>]... [-of <format>]\n"
+            "                         [-co <NAME>=<VALUE>]...\n"
+            "                         [-array <array_spec>]...\n"
+            "                         [-group <group_spec>]...\n"
+            "                         [-subset <subset_spec>]...\n"
+            "                         [-scaleaxes <scaleaxes_spec>]\n"
+            "                         [-oo <NAME>=<VALUE>]...\n"
+            "                         <src_filename> <dst_filename>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-    exit(1);
+
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -86,7 +88,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
 
@@ -98,7 +100,7 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
     }
 
     if (!(sOptionsForBinary.bQuiet))
@@ -108,10 +110,10 @@ MAIN_START(argc, argv)
     }
 
     if (sOptionsForBinary.osSource.empty())
-        Usage("No input file specified.");
+        Usage(true, "No input file specified.");
 
     if (sOptionsForBinary.osDest.empty())
-        Usage("No output file specified.");
+        Usage(true, "No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
@@ -144,7 +146,7 @@ MAIN_START(argc, argv)
         GDALMultiDimTranslate(sOptionsForBinary.osDest.c_str(), hDstDS, 1,
                               &hInDS, psOptions, &bUsageError);
     if (bUsageError == TRUE)
-        Usage();
+        Usage(true);
     int nRetCode = hRetDS ? 0 : 1;
 
     if (GDALClose(hRetDS) != CE_None)

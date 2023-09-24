@@ -37,26 +37,27 @@
 #include <memory>
 #include <vector>
 
-static void Usage()
+static void Usage(bool bIsError)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: gdal_create [--help] [--help-general]\n"
         "       [-of <format>]\n"
-        "       [-outsize <xsize< <ysize>]\n"
+        "       [-outsize <xsize> <ysize>]\n"
         "       [-bands <count>]\n"
-        "       [-burn <value>]*\n"
+        "       [-burn <value>]...\n"
         "       [-ot "
         "{Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
         "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
         "       [-a_srs <srs_def>] [-a_ullr <ulx> <uly> <lrx> <lry>] "
         "[-a_nodata <value>]\n"
-        "       [-mo \"META-TAG=VALUE\"]* [-q]\n"
-        "       [-co \"NAME=VALUE\"]*\n"
+        "       [-mo <META-TAG>=<VALUE>]... [-q]\n"
+        "       [-co <NAME>=<VALUE>]...\n"
         "       [-if <input_dataset>]\n"
         "       <out_dataset>\n");
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -124,7 +125,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
         else if (i < argc - 1 &&
                  (EQUAL(argv[i], "-of") || EQUAL(argv[i], "-f")))
@@ -237,7 +238,7 @@ MAIN_START(argc, argv)
             CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
                      argv[i]);
             CSLDestroy(argv);
-            Usage();
+            Usage(true);
         }
         else if (pszFilename == nullptr)
         {
@@ -248,13 +249,13 @@ MAIN_START(argc, argv)
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many command options '%s'", argv[i]);
             CSLDestroy(argv);
-            Usage();
+            Usage(true);
         }
     }
     if (pszFilename == nullptr)
     {
         CSLDestroy(argv);
-        Usage();
+        Usage(true);
     }
 
     double adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};

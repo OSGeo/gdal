@@ -19,14 +19,14 @@ Synopsis
 
 
     gdal_footprint [--help] [--help-general]
-       [-b band]* [-combine_bands union|intersection]
-       [-oo NAME=VALUE]* [-ovr <index>]
-       [-srcnodata \"value [value...]\"]
+       [-b <band>]... [-combine_bands union|intersection]
+       [-oo <NAME>=<VALUE>]... [-ovr <index>]
+       [-srcnodata "<value>[ <value>]..."]
        [-t_cs pixel|georef] [-t_srs <srs_def>] [-split_polys]
        [-convex_hull] [-densify <value>] [-simplify <value>]
        [-min_ring_area <value>] [-max_points <value>|unlimited]
-       [-of ogr_format] [-lyr_name dst_layername]
-       [-dsco name=value]* [-lco name=value]* [-q] [-overwrite]
+       [-of <ogr_format>] [-lyr_name <dst_layername>]
+       [-dsco <name>=<value>]... [-lco <name>=<value>]... [-overwrite] [-q]
        <src_filename> <dst_filename>
 
 
@@ -69,7 +69,7 @@ proper mask bands.
    used. The index is 0-based, that is 0 means the first overview level.
    This option is mutually exclusive with :option:`-srcnodata`.
 
-.. option:: -srcnodata "<value> [<value>...]"
+.. option:: -srcnodata "<value>[ <value>]..."
 
     Set nodata values for input bands (different values can be supplied for each band).
     If a single value is specified, it applies to all selected bands.
@@ -139,7 +139,7 @@ proper mask bands.
 
     Suppress progress monitor and other non-error output.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 
@@ -148,11 +148,11 @@ proper mask bands.
     Select the output format. Use the short format name. Guessed from the
     file extension if not specified
 
-.. option:: -lco NAME=VALUE
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 
-.. option:: -dsco NAME=VALUE
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 

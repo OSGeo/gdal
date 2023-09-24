@@ -52,54 +52,65 @@ typedef enum
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(bool bIsError)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: ogrtindex [--help] [--help-general]\n"
-        "                 [-lnum n]... [-lname name]... [-f output_format]\n"
+        "                 [-lnum <n>]... [-lname <name>]... [-f "
+        "<output_format>]\n"
         "                 [-write_absolute_path] [-skip_different_projection]\n"
-        "                 [-t_srs target_srs]\n"
-        "                 [-src_srs_name field_name] [-src_srs_format "
-        "[AUTO|WKT|EPSG|PROJ]\n"
+        "                 [-t_srs <target_srs>]\n"
+        "                 [-src_srs_name <field_name>] [-src_srs_format "
+        "{AUTO|WKT|EPSG|PROJ}]\n"
         "                 [-accept_different_schemas]\n"
-        "                 output_dataset src_dataset...\n");
-    printf("\n");
-    printf("  -lnum n: Add layer number 'n' from each source file\n"
-           "           in the tile index.\n");
-    printf("  -lname name: Add the layer named 'name' from each source file\n"
-           "               in the tile index.\n");
-    printf("  -f output_format: Select an output format name.\n");
-    printf("  -tileindex field_name: The name to use for the dataset name.\n"
-           "                         Defaults to LOCATION.\n");
-    printf(
+        "                 <output_dataset> <src_dataset> <src_dataset>...\n");
+    fprintf(bIsError ? stderr : stdout, "\n");
+    fprintf(bIsError ? stderr : stdout,
+            "  -lnum n: Add layer number 'n' from each source file\n"
+            "           in the tile index.\n");
+    fprintf(bIsError ? stderr : stdout,
+            "  -lname name: Add the layer named 'name' from each source file\n"
+            "               in the tile index.\n");
+    fprintf(bIsError ? stderr : stdout,
+            "  -f output_format: Select an output format name.\n");
+    fprintf(bIsError ? stderr : stdout,
+            "  -tileindex field_name: The name to use for the dataset name.\n"
+            "                         Defaults to LOCATION.\n");
+    fprintf(
+        bIsError ? stderr : stdout,
         "  -write_absolute_path: Filenames are written with absolute paths.\n");
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "  -skip_different_projection: Only layers with same projection ref \n"
         "        as layers already inserted in the tileindex will be "
         "inserted.\n");
-    printf("  -accept_different_schemas: by default ogrtindex checks that all "
-           "layers inserted\n"
-           "                             into the index have the same "
-           "attribute schemas. If you\n"
-           "                             specify this option, this test will "
-           "be disabled. Be aware that\n"
-           "                             resulting index may be incompatible "
-           "with MapServer!\n");
-    printf("  - If -t_srs is specified, geometries of input files will be "
-           "transformed to the desired\n"
-           "    target coordinate reference system.\n"
-           "    Note that using this option generates files that are NOT "
-           "compatible with MapServer < 7.2.\n"
-           "  - Simple rectangular polygons are generated in the same "
-           "coordinate reference system\n"
-           "    as the vectors, or in target reference system if the -t_srs "
-           "option is used.\n");
-    printf("\n");
-    printf("If no -lnum or -lname arguments are given it is assumed that\n"
-           "all layers in source datasets should be added to the tile index\n"
-           "as independent records.\n");
-    exit(1);
+    fprintf(bIsError ? stderr : stdout,
+            "  -accept_different_schemas: by default ogrtindex checks that all "
+            "layers inserted\n"
+            "                             into the index have the same "
+            "attribute schemas. If you\n"
+            "                             specify this option, this test will "
+            "be disabled. Be aware that\n"
+            "                             resulting index may be incompatible "
+            "with MapServer!\n");
+    fprintf(bIsError ? stderr : stdout,
+            "  - If -t_srs is specified, geometries of input files will be "
+            "transformed to the desired\n"
+            "    target coordinate reference system.\n"
+            "    Note that using this option generates files that are NOT "
+            "compatible with MapServer < 7.2.\n"
+            "  - Simple rectangular polygons are generated in the same "
+            "coordinate reference system\n"
+            "    as the vectors, or in target reference system if the -t_srs "
+            "option is used.\n");
+    fprintf(bIsError ? stderr : stdout, "\n");
+    fprintf(bIsError ? stderr : stdout,
+            "If no -lnum or -lname arguments are given it is assumed that\n"
+            "all layers in source datasets should be added to the tile index\n"
+            "as independent records.\n");
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -150,7 +161,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
-            Usage();
+            Usage(false);
         }
         else if (iArg < nArgc - 1 && (EQUAL(papszArgv[iArg], "-f") ||
                                       EQUAL(papszArgv[iArg], "-of")))
@@ -205,7 +216,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (papszArgv[iArg][0] == '-')
         {
-            Usage();
+            Usage(true);
         }
         else if (pszOutputName == nullptr)
         {
@@ -218,14 +229,14 @@ MAIN_START(nArgc, papszArgv)
     }
 
     if (pszOutputName == nullptr || nFirstSourceDataset == -1)
-        Usage();
+        Usage(true);
 
     if (bSrcSRSFormatSpecified && pszSrcSRSName == nullptr)
     {
         fprintf(stderr,
                 "-src_srs_name must be specified when -src_srs_format is "
                 "specified.\n");
-        Usage();
+        Usage(true);
     }
 
     /* -------------------------------------------------------------------- */

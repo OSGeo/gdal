@@ -25,11 +25,11 @@ Synopsis
           [-l|--list]
           [--optimize-from=<input.zip>]
           [--validate]
-          [--enable-sozip=auto/yes/no]
-          [--sozip-chunk-size=value]
-          [--sozip-min-file-size=value]
-          [--content-type=value]
-          zip_filename [filename]*
+          [--enable-sozip={auto|yes|no}]
+          [--sozip-chunk-size=<value>]
+          [--sozip-min-file-size=<value>]
+          [--content-type=<value>]
+          <zip_filename> [<filename>]...
 
 
 Description
@@ -94,20 +94,20 @@ The :program:`sozip` utility can be used to:
     :option:`--enable-sozip`, :option:`--sozip-chunk-size` and
     :option:`--sozip-min-file-size` may be used in that mode.
 
-.. option:: --enable-sozip=auto/yes/no
+.. option:: --enable-sozip={auto|yes|no}
 
     In ``auto`` mode, a file is seek-optimized only if its size is above the
     value of :option:`--sozip-chunk-size`.
     In ``yes`` mode, all input files will be seek-optimized.
     In ``no`` mode, no input files will be seek-optimized.
 
-.. option:: --sozip-chunk-size
+.. option:: --sozip-chunk-size=<value>
 
     Chunk size for a seek-optimized file. Defaults to 32768 bytes. The value
     is specified in bytes, or K and M suffix can be respectively used to
     specify a value in kilo-bytes or mega-bytes.
 
-.. option:: --sozip-min-file-size
+.. option:: --sozip-min-file-size=<value>
 
     Minimum file size to decide if a file should be seek-optimized, in
     --enable-sozip=auto mode. Defaults to 1 MB byte. The value

@@ -16,20 +16,20 @@ Synopsis
 .. code-block::
 
     gdalbuildvrt [--help] [--help-general]
-                [-tileindex field_name]
-                [-resolution {highest|lowest|average|user}]
-                [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]
-                [-separate] [-b band]* [-sd subdataset]
-                [-allow_projection_difference] [-q]
-                [-addalpha] [-hidenodata]
-                [-srcnodata "value [value...]"] [-vrtnodata "value [value...]"]
-                [-ignore_srcmaskband]
-                [-a_srs srs_def]
-                [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
-                [-oo NAME=VALUE]*
-                [-input_file_list my_list.txt] [-overwrite]
-                [-strict | -non_strict]
-                <output.vrt> [<gdalfile>]*
+                 [-tileindex <field_name>]
+                 [-resolution {highest|lowest|average|user}]
+                 [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-tap]
+                 [-separate] [-b <band>]... [-sd <subdataset>]
+                 [-allow_projection_difference] [-q]
+                 [-addalpha] [-hidenodata]
+                 [-srcnodata "<value>[ <value>]..."] [-vrtnodata "<value>[ <value>]..."
+                 [-ignore_srcmaskband]
+                 [-a_srs <srs_def>]
+                 [-r {nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]
+                 [-oo <NAME>=<VALUE>]...
+                 [-input_file_list <filename>] [-overwrite]
+                 [-strict | -non_strict]
+                 <output_filename.vrt> <input_raster> [<input_raster>]...
 
 Description
 -----------
@@ -96,7 +96,7 @@ changed in later versions.
     such that the aligned extent includes the minimum extent.
     Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
 
-.. option:: -te xmin ymin xmax ymax
+.. option:: -te <xmin> <ymin> <xmax> <ymax>
 
     Set georeferenced extents of VRT file. The values must be expressed in georeferenced units.
     If not specified, the extent of the VRT is the minimum bounding box of the set of source rasters.
@@ -117,7 +117,7 @@ changed in later versions.
     dataset which doesn't report nodata value but is transparent in areas with no
     data.
 
-.. option:: -srcnodata <value> [<value>...]
+.. option:: -srcnodata "<value>[ <value>]..."
 
     Set nodata values for input bands (different values can be supplied for each band). If
     more than one value is supplied all values should be quoted to keep them
@@ -152,7 +152,7 @@ changed in later versions.
     number (starting from 1). This is an alternative of giving the full subdataset
     name as an input.
 
-.. option:: -vrtnodata <value> [<value>...]
+.. option:: -vrtnodata "<value>[ <value>]..."
 
     Set nodata values at the VRT band level (different values can be supplied for each band).  If more
     than one value is supplied all values should be quoted to keep them together
@@ -178,17 +178,17 @@ changed in later versions.
     Override the projection for the output file.  The <srs_def> may be any of the usual GDAL/OGR forms,
     complete WKT, PROJ.4, EPSG:n or a file containing the WKT. No reprojection is done.
 
-.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}
+.. option:: -r {nearest|bilinear|cubic|cubicspline|lanczos|average|mode}
 
-    Select a resampling algorithm.
+    Select a resampling algorithm. Nearest is the default
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 
     .. versionadded:: 2.2
 
-.. option:: -input_file_list <mylist.txt>
+.. option:: -input_file_list <filename>
 
     To specify a text file with an input filename on each line
 

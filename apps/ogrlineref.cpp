@@ -74,37 +74,42 @@ typedef struct _curve_data
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-static void Usage(const char *pszAdditionalMsg,
+static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
                   bool bShort = true) CPL_NO_RETURN;
 
-static void Usage(const char *pszAdditionalMsg, bool bShort)
+static void Usage(bool bIsError, const char *pszAdditionalMsg, bool bShort)
 {
     OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf("Usage: ogrlineref [--help] [--help-general] [-progress] [-quiet]\n"
-           "               [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco "
-           "NAME=VALUE]...]\n"
-           "               [-create]\n"
-           "               [-l src_line_datasource_name] [-ln layer_name] [-lf "
-           "field_name]\n"
-           "               [-p src_repers_datasource_name] [-pn layer_name] "
-           "[-pm pos_field_name] [-pf field_name]\n"
-           "               [-r src_parts_datasource_name] [-rn layer_name]\n"
-           "               [-o dst_datasource_name] [-on layer_name]  [-of "
-           "field_name] [-s step]\n"
-           "               [-get_pos] [-x long] [-y lat]\n"
-           "               [-get_coord] [-m position] \n"
-           "               [-get_subline] [-mb position] [-me position]\n");
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: ogrlineref [--help] [--help-general] [-progress] [-quiet]\n"
+        "               [-f <format_name>] [-dsco <NAME>=<VALUE>]... [-lco "
+        "<NAME>=<VALUE>]...\n"
+        "               [-create]\n"
+        "               [-l <src_line_datasource_name>] [-ln <layer_name>] "
+        "[-lf "
+        "<field_name>]\n"
+        "               [-p <src_repers_datasource_name>] [-pn <layer_name>] "
+        "[-pm <pos_field_name>] [-pf <field_name>]\n"
+        "               [-r <src_parts_datasource_name>] [-rn <layer_name>]\n"
+        "               [-o <dst_datasource_name>] [-on <layer_name>] [-of "
+        "<field_name>] [-s <step>]\n"
+        "               [-get_pos] [-x <long>] [-y <lat>]\n"
+        "               [-get_coord] [-m <position>] \n"
+        "               [-get_subline] [-mb <position>] [-me <position>]\n");
 
     if (bShort)
     {
-        printf("\nNote: ogrlineref --long-usage for full help.\n");
+        fprintf(bIsError ? stderr : stdout,
+                "\nNote: ogrlineref --long-usage for full help.\n");
         if (pszAdditionalMsg)
             fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
         exit(1);
     }
 
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "\n -f format_name: output file format name, possible values are:\n");
 
     for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
@@ -113,40 +118,37 @@ static void Usage(const char *pszAdditionalMsg, bool bShort)
 
         if (CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
                                              GDAL_DCAP_CREATE, "FALSE")))
-            printf("     -f \"%s\"\n", poDriver->GetDescription());
+            fprintf(bIsError ? stderr : stdout, "     -f \"%s\"\n",
+                    poDriver->GetDescription());
     }
 
-    printf(" -progress: Display progress on terminal. Only works if input "
-           "layers have the \n"
-           "                                          \"fast feature count\" "
-           "capability\n"
-           " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
-           " -lco  NAME=VALUE: Layer creation option (format specific)\n"
-           " -l src_line_datasource_name: Datasource of line path name\n"
-           " -ln layer_name: Layer name in datasource (optional)\n"
-           " -lf field_name: Field name for unique paths in layer (optional)\n"
-           " -p src_repers_datasource_name: Datasource of repers name\n"
-           " -pn layer_name: Layer name in datasource (optional)\n"
-           " -pm pos_field_name: Line position field name\n"
-           " -pf field_name: Field name for correspondence repers of separate "
-           "paths in layer (optional)\n"
-           " -r src_parts_datasource_name: Parts datasource name\n"
-           " -rn layer_name: Layer name in datasource (optional)\n"
-           " -o dst_datasource_name: Parts datasource name\n"
-           " -on layer_name: Layer name in datasource (optional)\n"
-           " -of field_name: Field name for correspondence parts of separate "
-           "paths in layer (optional)\n"
-           " -s step: part size in m\n");
+    fprintf(bIsError ? stderr : stdout,
+            " -progress: Display progress on terminal. Only works if input "
+            "layers have the \n"
+            "                                          \"fast feature count\" "
+            "capability\n"
+            " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
+            " -lco  NAME=VALUE: Layer creation option (format specific)\n"
+            " -l src_line_datasource_name: Datasource of line path name\n"
+            " -ln layer_name: Layer name in datasource (optional)\n"
+            " -lf field_name: Field name for unique paths in layer (optional)\n"
+            " -p src_repers_datasource_name: Datasource of repers name\n"
+            " -pn layer_name: Layer name in datasource (optional)\n"
+            " -pm pos_field_name: Line position field name\n"
+            " -pf field_name: Field name for correspondence repers of separate "
+            "paths in layer (optional)\n"
+            " -r src_parts_datasource_name: Parts datasource name\n"
+            " -rn layer_name: Layer name in datasource (optional)\n"
+            " -o dst_datasource_name: Parts datasource name\n"
+            " -on layer_name: Layer name in datasource (optional)\n"
+            " -of field_name: Field name for correspondence parts of separate "
+            "paths in layer (optional)\n"
+            " -s step: part size in m\n");
 
     if (pszAdditionalMsg)
         fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
 
-    exit(1);
-}
-
-static void Usage(bool bShort = true)
-{
-    Usage(nullptr, bShort);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -1262,8 +1264,8 @@ static OGRErr GetCoordinates(OGRLayer *const poPkLayer, double dfPos,
     do                                                                         \
     {                                                                          \
         if (iArg + nExtraArg >= nArgc)                                         \
-            Usage(CPLSPrintf("%s option requires %d argument(s)",              \
-                             papszArgv[iArg], nExtraArg));                     \
+            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
+                                   papszArgv[iArg], nExtraArg));               \
     } while (false)
 
 MAIN_START(nArgc, papszArgv)
@@ -1338,11 +1340,11 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
-            Usage();
+            Usage(false);
         }
         else if (EQUAL(papszArgv[iArg], "--long-usage"))
         {
-            Usage(false);
+            Usage(false, nullptr, false);
         }
 
         else if (EQUAL(papszArgv[iArg], "-q") ||
@@ -1548,7 +1550,8 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (papszArgv[iArg][0] == '-')
         {
-            Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
+            Usage(true,
+                  CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         }
     }
 
@@ -1556,15 +1559,15 @@ MAIN_START(nArgc, papszArgv)
     {
 #ifdef HAVE_GEOS
         if (pszOutputDataSource == nullptr)
-            Usage("no output datasource provided");
+            Usage(true, "no output datasource provided");
         else if (pszLineDataSource == nullptr)
-            Usage("no path datasource provided");
+            Usage(true, "no path datasource provided");
         else if (pszPicketsDataSource == nullptr)
-            Usage("no repers datasource provided");
+            Usage(true, "no repers datasource provided");
         else if (pszPicketsMField == nullptr)
-            Usage("no position field provided");
+            Usage(true, "no position field provided");
         else if (dfStep == -100000000.0)
-            Usage("no step provided");
+            Usage(true, "no step provided");
 
         /* --------------------------------------------------------------------
          */
@@ -1745,9 +1748,9 @@ MAIN_START(nArgc, papszArgv)
     {
 #ifdef HAVE_GEOS
         if (pszPartsDataSource == nullptr)
-            Usage("no parts datasource provided");
+            Usage(true, "no parts datasource provided");
         else if (dfX == -100000000.0 || dfY == -100000000.0)
-            Usage("no coordinates provided");
+            Usage(true, "no coordinates provided");
 
         GDALDataset *poPartsDS = GDALDataset::FromHandle(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
@@ -1799,9 +1802,9 @@ MAIN_START(nArgc, papszArgv)
     else if (stOper == op_get_coord)
     {
         if (pszPartsDataSource == nullptr)
-            Usage("no parts datasource provided");
+            Usage(true, "no parts datasource provided");
         else if (dfPos == -100000000.0)
-            Usage("no position provided");
+            Usage(true, "no position provided");
 
         GDALDataset *poPartsDS = GDALDataset::FromHandle(
             OGROpen(pszPartsDataSource, FALSE, nullptr));
@@ -1847,13 +1850,13 @@ MAIN_START(nArgc, papszArgv)
     else if (stOper == op_get_subline)
     {
         if (pszOutputDataSource == nullptr)
-            Usage("no output datasource provided");
+            Usage(true, "no output datasource provided");
         else if (pszPartsDataSource == nullptr)
-            Usage("no parts datasource provided");
+            Usage(true, "no parts datasource provided");
         else if (dfPosBeg == -100000000.0)
-            Usage("no begin position provided");
+            Usage(true, "no begin position provided");
         else if (dfPosEnd == -100000000.0)
-            Usage("no end position provided");
+            Usage(true, "no end position provided");
 
         // Open data source.
         GDALDataset *poPartsDS = GDALDataset::FromHandle(
@@ -1951,7 +1954,7 @@ MAIN_START(nArgc, papszArgv)
     }
     else
     {
-        Usage("no operation provided");
+        Usage(true, "no operation provided");
     }
 
     CSLDestroy(papszArgv);

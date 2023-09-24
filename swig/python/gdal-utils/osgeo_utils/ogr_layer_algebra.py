@@ -37,20 +37,21 @@ from osgeo import gdal, ogr, osr
 ###############################################################################
 
 
-def Usage():
+def Usage(isError):
     print(
         """
 Usage: ogr_layer_algebra.py [--help] [--help-general]
                             Union|Intersection|SymDifference|Identity|Update|Clip|Erase
-                            -input_ds name [-input_lyr name]
-                            -method_ds [-method_lyr name]
-                            -output_ds name [-output_lyr name] [-overwrite]
-                            [-opt NAME=VALUE]*
-                            [-f format_name] [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
-                            [-input_fields NONE|ALL|fld1,fl2,...fldN] [-method_fields NONE|ALL|fld1,fl2,...fldN]
-                            [-nlt geom_type] [-a_srs srs_def]"""
+                            -input_ds <path> [-input_lyr <name>]
+                            -method_ds <path> [-method_lyr <name>]
+                            -output_ds <path> [-output_lyr name] [-overwrite]
+                            [-opt <NAME>=<VALUE>]...
+                            [-f <format_name>] [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+                            [-input_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}] [-method_fields {NONE|ALL|<fld1>,<fl2>,...<fldN>}]
+                            [-nlt <geom_type>] [-a_srs <srs_def>]""",
+        file=sys.stderr if isError else sys.stdout,
     )
-    return 2
+    return 2 if isError else 0
 
 
 ###############################################################################
@@ -78,7 +79,7 @@ def CreateLayer(
 
     output_lyr = output_ds.CreateLayer(output_lyr_name, srs, geom_type, lco)
     if output_lyr is None:
-        print('Cannot create layer "%s"' % output_lyr_name)
+        print('Cannot create layer "%s"' % output_lyr_name, file=sys.stderr)
         return None
 
     if input_fields == "ALL" and method_fields == "ALL":
@@ -102,7 +103,8 @@ def CreateLayer(
             if output_lyr.CreateField(fld_defn) != 0:
                 print(
                     'Cannot create field "%s" in layer "%s"'
-                    % (fld_defn.GetName(), output_lyr.GetName())
+                    % (fld_defn.GetName(), output_lyr.GetName()),
+                    file=sys.stderr,
                 )
 
     elif input_fields != "NONE":
@@ -111,7 +113,9 @@ def CreateLayer(
             idx = layer_defn.GetFieldIndex(fld)
             if idx < 0:
                 print(
-                    'Cannot find field "%s" in layer "%s"' % (fld, layer_defn.GetName())
+                    'Cannot find field "%s" in layer "%s"'
+                    % (fld, layer_defn.GetName()),
+                    file=sys.stderr,
                 )
                 continue
             fld_defn = layer_defn.GetFieldDefn(idx)
@@ -121,7 +125,8 @@ def CreateLayer(
             if output_lyr.CreateField(fld_defn) != 0:
                 print(
                     'Cannot create field "%s" in layer "%s"'
-                    % (fld, output_lyr.GetName())
+                    % (fld, output_lyr.GetName()),
+                    file=sys.stderr,
                 )
 
     if method_fields == "ALL":
@@ -134,7 +139,8 @@ def CreateLayer(
             if output_lyr.CreateField(fld_defn) != 0:
                 print(
                     'Cannot create field "%s" in layer "%s"'
-                    % (fld_defn.GetName(), output_lyr.GetName())
+                    % (fld_defn.GetName(), output_lyr.GetName()),
+                    file=sys.stderr,
                 )
 
     elif method_fields != "NONE":
@@ -143,7 +149,9 @@ def CreateLayer(
             idx = layer_defn.GetFieldIndex(fld)
             if idx < 0:
                 print(
-                    'Cannot find field "%s" in layer "%s"' % (fld, layer_defn.GetName())
+                    'Cannot find field "%s" in layer "%s"'
+                    % (fld, layer_defn.GetName()),
+                    file=sys.stderr,
                 )
                 continue
             fld_defn = layer_defn.GetFieldDefn(idx)
@@ -153,7 +161,8 @@ def CreateLayer(
             if output_lyr.CreateField(fld_defn) != 0:
                 print(
                     'Cannot create field "%s" in layer "%s"'
-                    % (fld, output_lyr.GetName())
+                    % (fld, output_lyr.GetName()),
+                    file=sys.stderr,
                 )
 
     return output_lyr
@@ -163,11 +172,6 @@ def CreateLayer(
 
 
 def main(argv=sys.argv):
-    version_num = int(gdal.VersionInfo("VERSION_NUM"))
-    if version_num < 1100000:
-        print("ERROR: Python bindings of GDAL 1.10 or later required")
-        return 1
-
     driver_name = "ESRI Shapefile"
     quiet = False
     input_ds_name = None
@@ -197,7 +201,7 @@ def main(argv=sys.argv):
         arg = argv[i]
 
         if arg == "--help":
-            return Usage()
+            return Usage(isError=False)
 
         elif arg == "-f" and i + 1 < len(argv):
             i = i + 1
@@ -296,7 +300,7 @@ def main(argv=sys.argv):
             elif EQUAL(val, "MULTIPOLYGON25D"):
                 geom_type = ogr.wkbMultiPolygon25D
             else:
-                print("-nlt %s: type not recognised." % val)
+                print("-nlt %s: type not recognised." % val, file=sys.stderr)
                 return 1
 
         elif arg == "-a_srs" and i + 1 < len(argv):
@@ -331,7 +335,7 @@ def main(argv=sys.argv):
             quiet = True
 
         else:
-            return Usage()
+            return Usage(isError=True)
 
         i = i + 1
 
@@ -341,7 +345,7 @@ def main(argv=sys.argv):
         or output_ds_name is None
         or op_str is None
     ):
-        return Usage()
+        return Usage(isError=True)
 
     if method_fields is None:
         if op_str in ("Update", "Clip", "Erase"):
@@ -351,47 +355,50 @@ def main(argv=sys.argv):
 
     if input_fields == "NONE" and method_fields == "NONE":
         print(
-            "Warning: -input_fields NONE and -method_fields NONE results in all fields being added"
+            "Warning: -input_fields NONE and -method_fields NONE results in all fields being added",
+            file=sys.stderr,
         )
 
     # Input layer
     input_ds = ogr.Open(input_ds_name)
     if input_ds is None:
-        print("Cannot open input dataset : %s" % input_ds_name)
+        print("Cannot open input dataset : %s" % input_ds_name, file=sys.stderr)
         return 1
 
     if input_lyr_name is None:
         cnt = input_ds.GetLayerCount()
         if cnt != 1:
             print(
-                "Input datasource has not a single layer, so you should specify its name with -input_lyr"
+                "Input datasource has not a single layer, so you should specify its name with -input_lyr",
+                file=sys.stderr,
             )
             return 1
         input_lyr = input_ds.GetLayer(0)
     else:
         input_lyr = input_ds.GetLayerByName(input_lyr_name)
     if input_lyr is None:
-        print('Cannot find input layer "%s"' % input_lyr_name)
+        print('Cannot find input layer "%s"' % input_lyr_name, file=sys.stderr)
         return 1
 
     # Method layer
     method_ds = ogr.Open(method_ds_name)
     if method_ds is None:
-        print("Cannot open method dataset : %s" % method_ds_name)
+        print("Cannot open method dataset : %s" % method_ds_name, file=sys.stderr)
         return 1
 
     if method_lyr_name is None:
         cnt = method_ds.GetLayerCount()
         if cnt != 1:
             print(
-                "Method datasource has not a single layer, so you should specify its name with -method_lyr"
+                "Method datasource has not a single layer, so you should specify its name with -method_lyr",
+                file=sys.stderr,
             )
             return 1
         method_lyr = method_ds.GetLayer(0)
     else:
         method_lyr = method_ds.GetLayerByName(method_lyr_name)
     if method_lyr is None:
-        print('Cannot find method layer "%s"' % method_lyr_name)
+        print('Cannot find method layer "%s"' % method_lyr_name, file=sys.stderr)
         return 1
 
     # SRS
@@ -399,20 +406,27 @@ def main(argv=sys.argv):
         if not EQUAL(srs_name, "NULL") and not EQUAL(srs_name, "NONE"):
             srs = osr.SpatialReference()
             if srs.SetFromUserInput(srs_name) != 0:
-                print("Failed to process SRS definition: %s" % srs_name)
+                print(
+                    "Failed to process SRS definition: %s" % srs_name, file=sys.stderr
+                )
                 return 1
     else:
         srs = input_lyr.GetSpatialRef()
         srs2 = method_lyr.GetSpatialRef()
         if srs is None and srs2 is not None:
-            print("Warning: input layer has no SRS defined, but method layer has one.")
+            print(
+                "Warning: input layer has no SRS defined, but method layer has one.",
+                file=sys.stderr,
+            )
         elif srs is not None and srs2 is None:
             print(
-                "Warning: input layer has a SRS defined, but method layer has not one."
+                "Warning: input layer has a SRS defined, but method layer has not one.",
+                file=sys.stderr,
             )
         elif srs is not None and srs2 is not None and srs.IsSame(srs2) != 1:
             print(
-                "Warning: input and method layers have SRS defined, but they are not identical. No on-the-fly reprojection will be done."
+                "Warning: input and method layers have SRS defined, but they are not identical. No on-the-fly reprojection will be done.",
+                file=sys.stderr,
             )
 
     # Result layer
@@ -424,18 +438,19 @@ def main(argv=sys.argv):
         if output_ds is not None:
             print(
                 'Output datasource "%s" exists, but cannot be opened in update mode'
-                % output_ds_name
+                % output_ds_name,
+                file=sys.stderr,
             )
             return 1
 
         drv = ogr.GetDriverByName(driver_name)
         if drv is None:
-            print("Cannot find driver %s" % driver_name)
+            print("Cannot find driver %s" % driver_name, file=sys.stderr)
             return 1
 
         output_ds = drv.CreateDataSource(output_ds_name, options=dsco)
         if output_ds is None:
-            print('Cannot create datasource "%s"' % output_ds_name)
+            print('Cannot create datasource "%s"' % output_ds_name, file=sys.stderr)
             return 1
 
         # Special case
@@ -447,7 +462,7 @@ def main(argv=sys.argv):
             output_lyr_name = os.path.splitext(os.path.basename(output_ds_name))[0]
 
         if output_lyr_name is None:
-            print("-output_lyr should be specified")
+            print("-output_lyr should be specified", file=sys.stderr)
             return 1
 
         output_lyr = CreateLayer(
@@ -471,7 +486,8 @@ def main(argv=sys.argv):
             cnt = output_ds.GetLayerCount()
             if cnt != 1:
                 print(
-                    "Result datasource has not a single layer, so you should specify its name with -output_lyr"
+                    "Result datasource has not a single layer, so you should specify its name with -output_lyr",
+                    file=sys.stderr,
                 )
                 return 1
             output_lyr = output_ds.GetLayer(0)
@@ -490,7 +506,8 @@ def main(argv=sys.argv):
                 ):
                     print(
                         'Cannot create layer "%s" in a shapefile called "%s"'
-                        % (output_lyr_name, output_ds_name)
+                        % (output_lyr_name, output_ds_name),
+                        file=sys.stderr,
                     )
                     return 1
 
@@ -518,7 +535,10 @@ def main(argv=sys.argv):
                     break
             if iLayer != cnt:
                 if output_ds.DeleteLayer(iLayer) != 0:
-                    print("DeleteLayer() failed when overwrite requested.")
+                    print(
+                        "DeleteLayer() failed when overwrite requested.",
+                        file=sys.stderr,
+                    )
                     return 1
 
                 output_lyr = CreateLayer(
@@ -547,7 +567,7 @@ def main(argv=sys.argv):
     output_ds = None
 
     if ret != 0:
-        print("An error occurred during %s operation" % op_str)
+        print("An error occurred during %s operation" % op_str, file=sys.stderr)
         return 1
 
     return 0

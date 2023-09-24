@@ -364,18 +364,32 @@ class file_info(object):
 
 
 # =============================================================================
-def Usage():
-    print("Usage: gdal_merge.py [--help] [--help-general]")
-    print("                     [-o out_filename] [-of out_format] [-co NAME=VALUE]*")
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: gdal_merge.py [--help] [--help-general]", file=f)
     print(
-        "                     [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]"
+        "                     [-o <out_filename>] [-of <out_format>] [-co <NAME>=<VALUE>]...",
+        file=f,
     )
-    print('                     [-ul_lr ulx uly lrx lry] [-init "value [value...]"]')
-    print("                     [-n nodata_value] [-a_nodata output_nodata_value]")
-    print("                     [-ot datatype] [-createonly] input_files")
-    print("                     [--help-general]")
-    print("")
-    return 2
+    print(
+        "                     [-ps <pixelsize_x> <pixelsize_y>] [-tap] [-separate] [-q] [-v] [-pct]",
+        file=f,
+    )
+    print(
+        '                     [-ul_lr <ulx> <uly> <lrx> <lry>] [-init "<value>[ <value>]..."]',
+        file=f,
+    )
+    print(
+        "                     [-n <nodata_value>] [-a_nodata <output_nodata_value>]",
+        file=f,
+    )
+    print(
+        "                     [-ot <datatype>] [-createonly] <input_file> [<input_file>]...",
+        file=f,
+    )
+    print("                     [--help-general]", file=f)
+    print("", file=f)
+    return 2 if isError else 0
 
 
 def gdal_merge(argv=None):
@@ -410,7 +424,7 @@ def gdal_merge(argv=None):
         arg = argv[i]
 
         if arg == "--help":
-            return Usage()
+            return Usage(isError=False)
 
         elif arg == "-o":
             i = i + 1
@@ -480,7 +494,7 @@ def gdal_merge(argv=None):
 
         elif arg[:1] == "-":
             print("Unrecognized command option: %s" % arg)
-            return Usage()
+            return Usage(isError=True)
 
         else:
             names.append(arg)
@@ -489,7 +503,7 @@ def gdal_merge(argv=None):
 
     if not names:
         print("No input files selected.")
-        return Usage()
+        return Usage(isError=True)
 
     if driver_name is None:
         driver_name = GetOutputDriverFor(out_file)

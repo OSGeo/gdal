@@ -16,11 +16,12 @@ Synopsis
 .. code-block::
 
     gdaltransform [--help] [--help-general]
-        [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
-        [-s_coord_epoch epoch] [-t_coord_epoch epoch]
-        [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc]
-        [-gcp pixel line easting northing [elevation]]* [-output_xy]
+        [-i] [-s_srs <srs_def>] [-t_srs <srs_def>] [-to >NAME>=<VALUE>]...
+        [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]
+        [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc]
+        [-gcp <pixel> <line> <easting> <northing> [elevation]]... [-output_xy]
         [srcfile [dstfile]]
+
 
 Description
 -----------
@@ -80,7 +81,7 @@ projection,including GCP-based transformations.
 
     .. versionadded:: 3.0
 
-.. option:: -to NAME=VALUE
+.. option:: -to <NAME>=<VALUE>
 
     set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
 

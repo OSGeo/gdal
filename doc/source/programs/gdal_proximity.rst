@@ -16,12 +16,12 @@ Synopsis
 .. code-block::
 
     gdal_proximity.py [--help] [--help-general]
-                      <srcfile> <dstfile> [-srcband n] [-dstband n]
-                      [-of format] [-co name=value]*
+                      <srcfile> <dstfile> [-srcband <n>] [-dstband <n>]
+                      [-of <format>] [-co <name>=<value>]...
                       [-ot Byte/UInt16/UInt32/Float32/etc]
-                      [-values n,n,n] [-distunits PIXEL/GEO]
-                      [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
-                      [-fixed-buf-val n]
+                      [-values <n>,<n>,<n>] [-distunits {PIXEL|GEO}]
+                      [-maxdist <n>] [-nodata <n>] [-use_input_nodata {YES|NO}]
+                      [-fixed-buf-val <n>]
 
 Description
 -----------
@@ -68,7 +68,7 @@ raster for which the raster pixel value is in the set of target pixel values.
     A list of target pixel values in the source image to be considered target
     pixels. If not specified, all non-zero pixels will be considered target pixels.
 
-.. option:: -distunits PIXEL|GEO
+.. option:: -distunits {PIXEL|GEO}
 
     Indicate whether distances generated should be in pixel or georeferenced
     coordinates (default PIXEL).
@@ -85,7 +85,7 @@ raster for which the raster pixel value is in the set of target pixel values.
 
     Specify a nodata value to use for the destination proximity raster.
 
-.. option:: -use_input_nodata YES/NO
+.. option:: -use_input_nodata {YES|NO}
 
     Indicate whether nodata pixels in the input raster should be nodata in the output raster (default NO).
 

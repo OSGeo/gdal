@@ -39,26 +39,27 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: sozip [--help] [--help-general] [--quiet|--verbose]\n"
-           "             [[-g|--grow] | [--overwrite]]\n"
-           "             [-r|--recurse-paths]\n"
-           "             [-j|--junk]\n"
-           "             [-l|--list]\n"
-           "             [--validate]\n"
-           "             [--optimize-from=input.zip]\n"
-           "             [--enable-sozip=auto/yes/no]\n"
-           "             [--sozip-chunk-size=value]\n"
-           "             [--sozip-min-file-size=value]\n"
-           "             [--content-type=value]\n"
-           "             zip_filename [filename]*\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: sozip [--help] [--help-general] [--quiet|--verbose]\n"
+            "             [[-g|--grow] | [--overwrite]]\n"
+            "             [-r|--recurse-paths]\n"
+            "             [-j|--junk]\n"
+            "             [-l|--list]\n"
+            "             [--validate]\n"
+            "             [--optimize-from=input.zip]\n"
+            "             [--enable-sozip={auto|yes|no}]\n"
+            "             [--sozip-chunk-size=<value>]\n"
+            "             [--sozip-min-file-size=<value>]\n"
+            "             [--content-type=<value>]\n"
+            "             <zip_filename> [<filename>]...\n");
 
     if (pszErrorMsg)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -393,7 +394,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (strcmp(papszArgv[iArg], "--help") == 0)
         {
-            Usage();
+            Usage(false);
         }
         else if (strcmp(papszArgv[iArg], "--quiet") == 0)
         {
@@ -489,7 +490,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (papszArgv[iArg][0] == '-')
         {
-            Usage(CPLSPrintf("Unhandled option %s", papszArgv[iArg]));
+            Usage(true, CPLSPrintf("Unhandled option %s", papszArgv[iArg]));
         }
         else if (pszZipFilename == nullptr)
         {
@@ -503,7 +504,7 @@ MAIN_START(nArgc, papszArgv)
 
     if (!pszZipFilename)
     {
-        Usage("Missing zip filename");
+        Usage(true, "Missing zip filename");
         return 1;
     }
 
@@ -511,20 +512,21 @@ MAIN_START(nArgc, papszArgv)
             (pszOptimizeFrom != nullptr ? 1 : 0) >
         1)
     {
-        Usage("--validate, --list, --optimize-from and create/append modes are "
+        Usage(true,
+              "--validate, --list, --optimize-from and create/append modes are "
               "mutually exclusive");
         return 1;
     }
 
     if (!bList && !bValidate && pszOptimizeFrom == nullptr && aosFiles.empty())
     {
-        Usage("Missing source filename(s)");
+        Usage(true, "Missing source filename(s)");
         return 1;
     }
 
     if (!EQUAL(CPLGetExtension(pszZipFilename), "zip"))
     {
-        Usage("Extension of zip filename should be .zip");
+        Usage(true, "Extension of zip filename should be .zip");
         return 1;
     }
 

@@ -16,15 +16,15 @@ Synopsis
 .. code-block::
 
     ogrlineref [--help] [--help-general] [-progress] [-quiet]
-           [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE]...]
-           [-create]
-           [-l src_line_datasource_name] [-ln layer_name] [-lf field_name]
-           [-p src_repers_datasource_name] [-pn layer_name] [-pm pos_field_name] [-pf field_name]
-           [-r src_parts_datasource_name] [-rn layer_name]
-           [-o dst_datasource_name] [-on layer_name]  [-of field_name] [-s step]
-           [-get_pos] [-x long] [-y lat]
-           [-get_coord] [-m position]
-           [-get_subline] [-mb position] [-me position]
+               [-f <format_name>] [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+               [-create]
+               [-l <src_line_datasource_name>] [-ln <layer_name>] [-lf <field_name>]
+               [-p <src_repers_datasource_name>] [-pn <layer_name>] [-pm <pos_field_name>] [-pf <field_name>]
+               [-r <src_parts_datasource_name>] [-rn <layer_name>]
+               [-o <dst_datasource_name>] [-on <layer_name>] [-of <field_name>] [-s <step>]
+               [-get_pos] [-x <long>] [-y <lat>]
+               [-get_coord] [-m <position>]
+               [-get_subline] [-mb <position>] [-me <position>]
 
 Description
 -----------
@@ -63,11 +63,11 @@ Also some information is written to the stdout.
 
     Select an output format name. The default is to create a shapefile.
 
-.. option:: -dsco <NAME=VALUE>
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco <NAME=VALUE>
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific).
 

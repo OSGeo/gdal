@@ -55,7 +55,7 @@ def Usage():
     print("                       [-system_f name] [-system_t name] [-version version]")
     print("                       [-major_f axis] [-minor_f axis]")
     print("                       [-major_t axis] [-minor_t axis]")
-    print("                       [-negate] [src_file.los]* dst_file.gsb ")
+    print("                       [-negate] [src_file.los]... dst_file.gsb ")
     print("")
     print(" -a: append to existing NTv2 file.")
     print(" -auto: process a whole directory of nad27/hpgn los/las files.")

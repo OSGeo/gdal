@@ -23,7 +23,7 @@ Synopsis
                  -ox <observer_x> -oy <observer_y>
                  [-vv <visibility>] [-iv <invisibility>]
                  [-ov <out_of_range>] [-cc <curvature_coef>]
-                 [[-co NAME=VALUE] ...]
+                 [-co <NAME>=<VALUE>]...
                  [-q] [-om <output mode>]
                  <src_filename> <dst_filename>
 

@@ -39,20 +39,23 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: gdaladdo [--help] [--help-general]\n"
         "                [-r "
-        "{nearest,average,rms,gauss,cubic,cubicspline,lanczos,average_mp,"
-        "average_magphase,mode}]\n"
-        "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [-minsize val]\n"
+        "{nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_mp|"
+        "average_magphase|mode}]\n"
+        "                [-ro] [-clean] [-q] [-oo <NAME>=<VALUE>]... [-minsize "
+        "<val>]\n"
         "                [--partial-refresh-from-source-timestamp]\n"
-        "                [--partial-refresh-from-projwin ulx uly lrx lry]\n"
+        "                [--partial-refresh-from-projwin <ulx> <uly> <lrx> "
+        "<lry>]\n"
         "                [--partial-refresh-from-source-extent "
-        "filename1,...,filenameN]\n"
-        "                <filename> [levels]\n"
+        "<filename1>[,<filenameN>]...]\n"
+        "                <filename> [<levels>]...\n"
         "\n"
         "  -r : choice of resampling method (default: nearest)\n"
         "  -ro : open the dataset in read-only mode, in order to generate\n"
@@ -88,7 +91,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -608,8 +611,8 @@ static bool PartialRefreshFromProjWin(
     do                                                                         \
     {                                                                          \
         if (iArg + nExtraArg >= nArgc)                                         \
-            Usage(CPLSPrintf("%s option requires %d argument(s)",              \
-                             papszArgv[iArg], nExtraArg));                     \
+            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
+                                   papszArgv[iArg], nExtraArg));               \
     } while (false)
 
 MAIN_START(nArgc, papszArgv)
@@ -671,7 +674,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
-            Usage();
+            Usage(false);
         }
         else if (EQUAL(papszArgv[iArg], "-r"))
         {
@@ -698,9 +701,8 @@ MAIN_START(nArgc, papszArgv)
             const int nBand = atoi(pszBand);
             if (nBand < 1)
             {
-                printf("Unrecognizable band number (%s).\n",
-                       papszArgv[iArg + 1]);
-                Usage();
+                Usage(true, CPLSPrintf("Unrecognizable band number (%s).\n",
+                                       papszArgv[iArg + 1]));
             }
             iArg++;
 
@@ -743,7 +745,8 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (papszArgv[iArg][0] == '-')
         {
-            Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
+            Usage(true,
+                  CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         }
         else if (pszFilename == nullptr)
         {
@@ -763,19 +766,19 @@ MAIN_START(nArgc, papszArgv)
         }
         else
         {
-            Usage("Too many command options.");
+            Usage(true, "Too many command options.");
         }
     }
 
     if (pszFilename == nullptr)
-        Usage("No datasource specified.");
+        Usage(true, "No datasource specified.");
 
     if (((bClean) ? 1 : 0) + ((bPartialRefreshFromSourceTimestamp) ? 1 : 0) +
             ((bPartialRefreshFromProjWin) ? 1 : 0) +
             ((bPartialRefreshFromSourceExtent) ? 1 : 0) >
         1)
     {
-        Usage("Mutually exclusive options used");
+        Usage(true, "Mutually exclusive options used");
     }
 
     /* -------------------------------------------------------------------- */

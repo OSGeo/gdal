@@ -16,12 +16,12 @@ Synopsis
 .. code-block::
 
     gdaladdo [--help] [--help-general]
-             [-r {nearest,average,rms,bilinear,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
-             [-b band]* [-minsize val]
+             [-r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_mp|average_magphase|mode}]
+             [-ro] [-clean] [-q] [-oo <NAME>=<VALUE>]... [-minsize <val>]
              [--partial-refresh-from-source-timestamp]
              [--partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>]
-             [--partial-refresh-from-source-extent <filename1,...,filenameN>]
-             [-ro] [-clean] [-oo NAME=VALUE]* <filename> [levels]
+             [--partial-refresh-from-source-extent <filename1>[,<filenameN>]...]
+             <filename> [<levels>]...
 
 Description
 -----------
@@ -33,11 +33,11 @@ most supported file formats with one of several downsampling algorithms.
 
 .. include:: options/help_and_help_general.rst
 
-.. option:: -r {nearest (default),average,rms,gauss,cubic,cubicspline,lanczos,average_magphase,mode}
+.. option:: -r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_magphase|mode}
 
     Select a resampling algorithm.
 
-    ``nearest`` applies a nearest neighbour (simple sampling) resampler
+    ``nearest`` applies a nearest neighbour (simple sampling) resampler (default)
 
     ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
 
@@ -75,7 +75,7 @@ most supported file formats with one of several downsampling algorithms.
 
     remove all overviews.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 
@@ -110,7 +110,7 @@ most supported file formats with one of several downsampling algorithms.
     By default all existing overview levels will be refreshed, unless explicit
     levels are specified.
 
-.. option:: --partial-refresh-from-source-extent <filename1,...,filenameN>
+.. option:: --partial-refresh-from-source-extent <filename1>[,<filenameN>]...
 
     .. versionadded:: 3.8
 

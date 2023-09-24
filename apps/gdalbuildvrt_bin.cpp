@@ -37,30 +37,33 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr) CPL_NO_RETURN;
+static void Usage(bool bIsError,
+                  const char *pszErrorMsg = nullptr) CPL_NO_RETURN;
 
-static void Usage(const char *pszErrorMsg)
+static void Usage(bool bIsError, const char *pszErrorMsg)
 
 {
     fprintf(
-        stdout, "%s",
+        bIsError ? stderr : stdout, "%s",
         "Usage: gdalbuildvrt [--help] [--help-general]\n"
-        "                    [-tileindex field_name]\n"
+        "                    [-tileindex <field_name>]\n"
         "                    [-resolution {highest|lowest|average|user}]\n"
-        "                    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]\n"
-        "                    [-separate] [-b band]* [-sd subdataset]\n"
+        "                    [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> "
+        "<yres>] [-tap]\n"
+        "                    [-separate] [-b <band>]... [-sd <subdataset>]\n"
         "                    [-allow_projection_difference] [-q]\n"
         "                    [-addalpha] [-hidenodata]\n"
-        "                    [-srcnodata \"value [value...]\"] [-vrtnodata "
-        "\"value [value...]\"] \n"
+        "                    [-srcnodata \"<value>[ <value>]...\"] [-vrtnodata "
+        "\"<value>[ <value>]...\"\n"
         "                    [-ignore_srcmaskband]\n"
-        "                    [-a_srs srs_def]\n"
+        "                    [-a_srs <srs_def>]\n"
         "                    [-r "
-        "{nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
-        "                    [-oo NAME=VALUE]*\n"
-        "                    [-input_file_list my_list.txt] [-overwrite]\n"
+        "{nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]\n"
+        "                    [-oo <NAME>=<VALUE>]...\n"
+        "                    [-input_file_list <filename>] [-overwrite]\n"
         "                    [-strict | -non_strict]\n"
-        "                    output.vrt [gdalfile]*\n"
+        "                    <output_filename.vrt> <input_raster> "
+        "[<input_raster>]...\n"
         "\n"
         "e.g.\n"
         "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
@@ -98,7 +101,7 @@ static void Usage(const char *pszErrorMsg)
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -156,7 +159,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage(nullptr);
+            Usage(false, nullptr);
         }
     }
 
@@ -169,12 +172,12 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage(nullptr);
+        Usage(true, nullptr);
     }
 
     if (psOptionsForBinary->pszDstFilename == nullptr)
     {
-        Usage("No target filename specified.");
+        Usage(true, "No target filename specified.");
     }
 
     if (!(psOptionsForBinary->bQuiet))
@@ -208,7 +211,7 @@ MAIN_START(argc, argv)
                     psOptionsForBinary->pszDstFilename,
                     GDALGetDriverShortName(hDriver),
                     psOptionsForBinary->pszDstFilename);
-                Usage();
+                Usage(true);
             }
         }
     }
@@ -218,7 +221,7 @@ MAIN_START(argc, argv)
         psOptionsForBinary->pszDstFilename, psOptionsForBinary->nSrcFiles,
         nullptr, psOptionsForBinary->papszSrcFiles, psOptions, &bUsageError);
     if (bUsageError)
-        Usage();
+        Usage(true);
     int nRetCode = (hOutDS) ? 0 : 1;
 
     GDALBuildVRTOptionsFree(psOptions);

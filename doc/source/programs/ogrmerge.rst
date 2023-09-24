@@ -16,12 +16,12 @@ Synopsis
 .. code-block::
 
     ogrmerge.py [--help] [--help-general]
-                -o <out_dsname> <src_dsname> [<src_dsname>]*
-                [-f format] [-single] [-nln layer_name_template]
+                -o <out_dsname> <src_dsname> [<src_dsname>]...
+                [-f format] [-single] [-nln <layer_name_template>]
                 [-update | -overwrite_ds] [-append | -overwrite_layer]
-                [-src_geom_type geom_type_name[,geom_type_name]*]
-                [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
-                [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]
+                [-src_geom_type <geom_type_name>[,<geom_type_name>]...]
+                [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+                [-s_srs <srs_def>] [-t_srs <srs_def> | -a_srs <srs_def>]
                 [-progress] [-skipfailures] [--help-general]
 
 Options specific to the :ref:`-single <ogrmerge_single_option>` option:
@@ -29,8 +29,8 @@ Options specific to the :ref:`-single <ogrmerge_single_option>` option:
 .. code-block::
 
                 [-field_strategy FirstLayer|Union|Intersection]
-                [-src_layer_field_name name]
-                [-src_layer_field_content layer_name_template]
+                [-src_layer_field_name <name>]
+                [-src_layer_field_content <layer_name_template>]
 
 Description
 -----------
@@ -116,7 +116,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
     already exist, replace their content with the one of the input
     layer.
 
-.. option:: -src_geom_type <geom_type_name[,geom_type_name]\*]>
+.. option:: -src_geom_type <geom_type_name>[,<geom_type_name>]...
 
     Only take into account input layers whose geometry type match the
     type(s) specified. Valid values for geom_type_name are GEOMETRY,
@@ -124,11 +124,11 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
     GEOMETRYCOLLECTION, CIRCULARSTRING, CURVEPOLYGON, MULTICURVE,
     MULTISURFACE, CURVE, SURFACE, TRIANGLE, POLYHEDRALSURFACE and TIN.
 
-.. option:: -dsco <NAME=VALUE>
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco <NAME=VALUE>
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 

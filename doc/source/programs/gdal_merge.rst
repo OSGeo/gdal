@@ -16,11 +16,11 @@ Synopsis
 .. code-block::
 
     gdal_merge.py [--help] [--help-general]
-                  [-o out_filename] [-of out_format] [-co NAME=VALUE]*
-                  [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]
-                  [-ul_lr ulx uly lrx lry] [-init "value [value...]"]
-                  [-n nodata_value] [-a_nodata output_nodata_value]
-                  [-ot datatype] [-createonly] input_files
+                  [-o <out_filename>] [-of <out_format>] [-co <NAME>=<VALUE>]...
+                  [-ps <pixelsize_x> <pixelsize_y>] [-tap] [-separate] [-q] [-v] [-pct]
+                  [-ul_lr <ulx> <uly> <lrx> <lry>] [-init "<value>[ <value>]..."]
+                  [-n <nodata_value>] [-a_nodata <output_nodata_value>]
+                  [-ot <datatype>] [-createonly] <intput_file> [<intput_file>]...
 
 Description
 -----------

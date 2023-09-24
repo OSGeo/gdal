@@ -16,12 +16,12 @@ Synopsis
 .. code-block::
 
     gnmanalyse [--help] [--help-general] [-q] [-quiet] [--long-usage]
-            [dijkstra <start_gfid> <end_gfid> [[-alo NAME=VALUE] ...]]]
-            [kpaths <start_gfid> <end_gfid> <k> [[-alo NAME=VALUE] ...]]]
-            [resource [[-alo NAME=VALUE] ...]]]
-            [-ds <ds_name>][-f <ds_format>][-l <layer_name>]
-            [[-dsco NAME=VALUE] ...][-lco NAME=VALUE]
-            <gnm_name>
+               [dijkstra <start_gfid> <end_gfid [-alo <NAME>=<VALUE>]...]
+               [kpaths <start_gfid> <end_gfid> <k> [-alo <NAME>=<VALUE>]...]
+               [resource [-alo <NAME>=<VALUE>]...]
+               [-ds <ds_name>][-f <ds_format>][-l <layer_name>]
+               [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+               <gnm_name>
 
 Description
 -----------
@@ -60,14 +60,14 @@ The :program:`gnmanalyse` program provides analysing capabilities of geographica
 
     The network to work with (path and name).
 
-.. option:: -dsco NAME=VALUE
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco NAME=VALUE
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 
-.. option:: -alo NAME=VALUE
+.. option:: -alo <NAME>=<VALUE>
 
     Algorithm option (format specific)
