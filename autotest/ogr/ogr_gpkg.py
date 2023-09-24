@@ -7645,6 +7645,14 @@ def test_ogr_gpkg_arrow_stream_pyarrow_timezone(tmp_vsimem):
             values.append(x.value)
     assert values == [1654000496789, 1653996896789]
 
+    stream = lyr.GetArrowStreamAsPyArrow(["TIMEZONE=+01:00"])
+    assert stream.schema.field("datetime").type.tz == "+01:00"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1653996896789]
+
 
 ###############################################################################
 # Test GetArrowStreamAsNumPy()

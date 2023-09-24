@@ -31,6 +31,7 @@
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
 #include "ogr_wkb.h"
+#include "ogr_p.h"
 
 #include "cpl_float.h"
 #include "cpl_time.h"
@@ -324,38 +325,36 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
             {
                 const char *pszPrefix = "tsm:";
                 const char *pszTZOverride =
-                    m_aosArrowArrayStreamOptions.FetchNameValueDef("TIMEZONE",
-                                                                   "");
-                const int nTZFlag = poFieldDefn->GetTZFlag();
-                if (nTZFlag == OGR_TZFLAG_MIXED_TZ ||
-                    nTZFlag == OGR_TZFLAG_UTC || EQUAL(pszTZOverride, "UTC"))
-                {
-                    psChild->format = CPLStrdup(CPLSPrintf("%sUTC", pszPrefix));
-                }
-                else if (nTZFlag == OGR_TZFLAG_UNKNOWN ||
-                         nTZFlag == OGR_TZFLAG_LOCALTIME)
+                    m_aosArrowArrayStreamOptions.FetchNameValue("TIMEZONE");
+                if (pszTZOverride && EQUAL(pszTZOverride, "unknown"))
                 {
                     psChild->format = CPLStrdup(pszPrefix);
                 }
+                else if (pszTZOverride)
+                {
+                    psChild->format = CPLStrdup(
+                        (std::string(pszPrefix) + pszTZOverride).c_str());
+                }
                 else
                 {
-                    char chSign;
-                    const int nOffset = (nTZFlag - OGR_TZFLAG_UTC) * 15;
-                    int nHours =
-                        static_cast<int>(nOffset / 60);  // Round towards zero.
-                    const int nMinutes = std::abs(nOffset - nHours * 60);
-
-                    if (nOffset < 0)
+                    const int nTZFlag = poFieldDefn->GetTZFlag();
+                    if (nTZFlag == OGR_TZFLAG_MIXED_TZ ||
+                        nTZFlag == OGR_TZFLAG_UTC)
                     {
-                        chSign = '-';
-                        nHours = std::abs(nHours);
+                        psChild->format =
+                            CPLStrdup(CPLSPrintf("%sUTC", pszPrefix));
+                    }
+                    else if (nTZFlag == OGR_TZFLAG_UNKNOWN ||
+                             nTZFlag == OGR_TZFLAG_LOCALTIME)
+                    {
+                        psChild->format = CPLStrdup(pszPrefix);
                     }
                     else
                     {
-                        chSign = '+';
+                        psChild->format = CPLStrdup(
+                            (pszPrefix + OGRTZFlagToTimezone(nTZFlag, "UTC"))
+                                .c_str());
                     }
-                    psChild->format = CPLStrdup(CPLSPrintf(
-                        "%s%c%02d:%02d", pszPrefix, chSign, nHours, nMinutes));
                 }
                 break;
             }
@@ -2024,6 +2023,17 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
 YES.</li>
  * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
  *     a ArrowArray batch. Defaults to 65 536.</li>
+ * <li>TIMEZONE="unknown", "UTC", "(+|:)HH:MM" or any other value supported by
+ *     Arrow. (GDAL >= 3.8)
+ *     Override the timezone flag nominally provided by
+ *     OGRFieldDefn::GetTZFlag(), and used for the Arrow field timezone
+ *     declaration, with a user specified timezone.
+ *     Note that datetime values in Arrow arrays are always stored in UTC, and
+ *     that the time zone flag used by GDAL to convert to UTC is the one of the
+ *     OGRField::Date::TZFlag member at the OGRFeature level. The conversion
+ *     to UTC of a OGRField::Date is only done if both the timezone indicated by
+ *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
+ *     this TIMEZONE option) are not unknown.</li>
  * </ul>
  *
  * The Arrow/Parquet drivers recognize the following option:

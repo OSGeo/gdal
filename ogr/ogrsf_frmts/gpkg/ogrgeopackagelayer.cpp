@@ -514,7 +514,10 @@ bool OGRGeoPackageLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
     aosOptions.Assign(CSLDuplicate(papszOptions), true);
     // GeoPackage are assumed to be in UTC. Even if another timezone is used,
     // we'll do the conversion to UTC
-    aosOptions.SetNameValue("TIMEZONE", "UTC");
+    if (aosOptions.FetchNameValue("TIMEZONE") == nullptr)
+    {
+        aosOptions.SetNameValue("TIMEZONE", "UTC");
+    }
     return OGRLayer::GetArrowStream(out_stream, aosOptions.List());
 }
 

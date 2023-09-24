@@ -4409,6 +4409,7 @@ def test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone(tmp_vsimem):
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
+
     stream = lyr.GetArrowStreamAsPyArrow()
     assert stream.schema.field("datetime").type.tz == "UTC"
     values = []
@@ -4416,6 +4417,18 @@ def test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone(tmp_vsimem):
         for x in batch.field("datetime"):
             values.append(x.value)
     assert values == [None, 1654000496789, None, 1653996896789, 1654004096789]
+
+    for tz in ["UTC", "+01:00", "-01:00", "Europe/Paris", "unknown"]:
+        stream = lyr.GetArrowStreamAsPyArrow(["TIMEZONE=" + tz])
+        if tz == "unknown":
+            assert stream.schema.field("datetime").type.tz is None
+        else:
+            assert stream.schema.field("datetime").type.tz == tz
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [None, 1654000496789, None, 1653996896789, 1654004096789]
 
 
 ###############################################################################
