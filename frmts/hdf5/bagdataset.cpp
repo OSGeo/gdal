@@ -1360,7 +1360,6 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                         nRefinementIndexase + super_x;
                     if (!poGDS->CacheRefinementValues(nRefinementIndex))
                     {
-                        H5Sclose(memspaceVarresMD);
                         return CE_Failure;
                     }
 
