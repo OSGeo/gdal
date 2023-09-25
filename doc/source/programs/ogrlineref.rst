@@ -29,9 +29,9 @@ Synopsis
 Description
 -----------
 
-The :program:`ogrlineref` program can be used for:
+The :program:`ogrlineref` program can be used to:
 
--  create linear reference file from input data
+-  create a linear reference file from input data
 
 -  return the "linear referenced" distance for the projection of the
    input coordinates (point) on the path
@@ -43,9 +43,9 @@ The :program:`ogrlineref` program can be used for:
    begin and end distances
 
 The :program:`ogrlineref` creates a linear reference - a file containing
-a segments of special length (e.g. 1 km in reference units) and get coordinates,
+a segments of special length (e.g. 1 km in reference units) and gets coordinates,
 linear referenced distances or sublines (subpaths) from this file.
-The utility not required the ``M`` or ``Z`` values in geometry.
+The utility does not require the ``M`` or ``Z`` components in the geometry.
 The results can be stored in any OGR supported format.
 Also some information is written to the stdout.
 
