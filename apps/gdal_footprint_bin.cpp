@@ -37,23 +37,25 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdal_footprint [--help] [--help-general]\n"
-           "       [-b band]* [-combine_bands union|intersection]\n"
-           "       [-oo NAME=VALUE]* [-ovr <index>]\n"
-           "       [-srcnodata \"value [value...]\"]\n"
-           "       [-t_cs pixel|georef] [-t_srs <srs_def>] [-split_polys]\n"
-           "       [-convex_hull] [-densify <value>] [-simplify <value>]\n"
-           "       [-min_ring_area <value>] [-max_points <value>|unlimited]\n"
-           "       [-of ogr_format] [-lyr_name dst_layername]\n"
-           "       [-dsco name=value]* [-lco name=value]* [-overwrite] [-q]\n"
-           "       <src_filename> <dst_filename>\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: gdal_footprint [--help] [--help-general]\n"
+            "       [-b <band>]... [-combine_bands union|intersection]\n"
+            "       [-oo <NAME>=<VALUE>]... [-ovr <index>]\n"
+            "       [-srcnodata \"<value>[ <value>]...\"]\n"
+            "       [-t_cs pixel|georef] [-t_srs <srs_def>] [-split_polys]\n"
+            "       [-convex_hull] [-densify <value>] [-simplify <value>]\n"
+            "       [-min_ring_area <value>] [-max_points <value>|unlimited]\n"
+            "       [-of <ogr_format>] [-lyr_name <dst_layername>]\n"
+            "       [-dsco <name>=<value>]... [-lco <name>=<value>]... "
+            "[-overwrite] [-q]\n"
+            "       <src_filename> <dst_filename>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -88,7 +90,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
 
@@ -100,7 +102,7 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
     }
 
     if (!(sOptionsForBinary.bQuiet))
@@ -109,10 +111,10 @@ MAIN_START(argc, argv)
     }
 
     if (sOptionsForBinary.osSource.empty())
-        Usage("No input file specified.");
+        Usage(true, "No input file specified.");
 
     if (!sOptionsForBinary.bDestSpecified)
-        Usage("No output file specified.");
+        Usage(true, "No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
@@ -218,7 +220,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hRetDS = GDALFootprint(sOptionsForBinary.osDest.c_str(),
                                         hDstDS, hInDS, psOptions, &bUsageError);
     if (bUsageError == TRUE)
-        Usage();
+        Usage(true);
     int nRetCode = hRetDS ? 0 : 1;
 
     GDALClose(hInDS);

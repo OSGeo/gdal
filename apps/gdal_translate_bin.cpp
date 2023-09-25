@@ -38,38 +38,41 @@
 /*                               Usage()                                */
 /* ******************************************************************** */
 
-static void Usage(const char *pszErrorMsg = nullptr,
-                  int bShort = TRUE) CPL_NO_RETURN;
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr,
+                  bool bShort = true) CPL_NO_RETURN;
 
-static void Usage(const char *pszErrorMsg, int bShort)
+static void Usage(bool bIsError, const char *pszErrorMsg, bool bShort)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: gdal_translate [--help] [--help-general] [--long-usage]\n"
         "       [-ot "
         "{Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
         "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
-        "       [-if format]* [-of format]\n"
-        "       [-b band] [-mask band] [-expand {gray|rgb|rgba}]\n"
-        "       [-outsize xsize[%%]|0 ysize[%%]|0] [-tr xres yres]\n"
-        "       [-ovr level|AUTO|AUTO-n|NONE]\n"
+        "       [-if <format>]... [-of <format>]\n"
+        "       [-b <band>] [-mask <band>] [-expand {gray|rgb|rgba}]\n"
+        "       [-outsize <xsize>[%%]|0 <ysize>[%%]|0] [-tr <xres> <yres>]\n"
+        "       [-ovr <level>|AUTO|AUTO-<n>|NONE]\n"
         "       [-r "
         "{nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
-        "       [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* "
-        "[-exponent[_bn] exp_val]*\n"
-        "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"
-        "       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]\n"
-        "       [-a_srs srs_def] [-a_coord_epoch epoch]\n"
-        "       [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
-        "       [-a_gt gt0 gt1 gt2 gt3 gt4 gt5]\n"
-        "       [-a_scale value] [-a_offset value]\n"
-        "       [-nogcp] [-gcp pixel line easting northing [elevation]]*\n"
+        "       [-unscale] [-scale[_bn] [<src_min> <src_max> [<dst_min> "
+        "<dst_max>]]]... "
+        "[-exponent[_bn] <exp_val>]...\n"
+        "       [-srcwin <xoff> <yoff> <xsize> <ysize>] [-epo] [-eco]\n"
+        "       [-projwin <ulx> <uly> <lrx> <lry>] [-projwin_srs <srs_def>]\n"
+        "       [-a_srs <srs_def>] [-a_coord_epoch <epoch>]\n"
+        "       [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_nodata <value>]\n"
+        "       [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]\n"
+        "       [-a_scale <value>] [-a_offset <value>]\n"
+        "       [-nogcp] [-gcp <pixel> <line> <easting> <northing> "
+        "[<elevation>]]...\n"
         "       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]\n"
         "       |-colorinterp {red|green|blue|alpha|gray|undefined},...]\n"
-        "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
-        "       [-co \"NAME=VALUE\"]* [-stats] [-norat] [-noxmp]\n"
-        "       [-oo NAME=VALUE]*\n"
-        "       src_dataset dst_dataset\n");
+        "       [-mo <META-TAG>=<VALUE>]... [-q] [-sds]\n"
+        "       [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]\n"
+        "       [-oo <NAME>=<VALUE>]...\n"
+        "       <src_dataset> <dst_dataset>\n");
 
     if (!bShort)
     {
@@ -96,7 +99,7 @@ static void Usage(const char *pszErrorMsg, int bShort)
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -161,11 +164,11 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage(nullptr);
+            Usage(false, nullptr);
         }
         else if (EQUAL(argv[i], "--long-usage"))
         {
-            Usage(nullptr, FALSE);
+            Usage(false, nullptr, FALSE);
         }
     }
 
@@ -196,17 +199,17 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage(nullptr);
+        Usage(true, nullptr);
     }
 
     if (psOptionsForBinary->pszSource == nullptr)
     {
-        Usage("No source dataset specified.");
+        Usage(true, "No source dataset specified.");
     }
 
     if (psOptionsForBinary->pszDest == nullptr)
     {
-        Usage("No target dataset specified.");
+        Usage(true, "No target dataset specified.");
     }
 
     if (strcmp(psOptionsForBinary->pszDest, "/vsistdout/") == 0)
@@ -374,7 +377,7 @@ MAIN_START(argc, argv)
         }
 
         if (bUsageError == TRUE)
-            Usage();
+            Usage(true);
         GDALClose(hDataset);
         GDALTranslateOptionsFree(psOptions);
         GDALTranslateOptionsForBinaryFree(psOptionsForBinary);
@@ -390,7 +393,7 @@ MAIN_START(argc, argv)
     hOutDS = GDALTranslate(psOptionsForBinary->pszDest, hDataset, psOptions,
                            &bUsageError);
     if (bUsageError == TRUE)
-        Usage();
+        Usage(true);
     int nRetCode = hOutDS ? 0 : 1;
 
     /* Close hOutDS before hDataset for the -f VRT case */

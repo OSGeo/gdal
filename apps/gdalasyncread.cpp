@@ -43,12 +43,12 @@ static void Usage()
     printf("Usage: gdalasyncread [--help] [--help-general]\n"
            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
            "             CInt16/CInt32/CFloat32/CFloat64}]\n"
-           "       [-of format] [-b band]\n"
-           "       [-outsize xsize[%%] ysize[%%]]\n"
-           "       [-srcwin xoff yoff xsize ysize]\n"
-           "       [-co \"NAME=VALUE\"]* [-ao \"NAME=VALUE\"]\n"
-           "       [-to timeout] [-multi]\n"
-           "       src_dataset dst_dataset\n\n");
+           "       [-of <format>] [-b <band>]\n"
+           "       [-outsize <xsize>[%%] <ysize>[%%]]\n"
+           "       [-srcwin <xoff> <yoff> <xsize> <ysize>]\n"
+           "       [-co <NAME>=<VALUE>]... [-ao <NAME>=<VALUE>]...\n"
+           "       [-to <timeout>] [-multi]\n"
+           "       <src_dataset> <dst_dataset>\n\n");
 
     printf("%s\n\n", GDALVersionInfo("--version"));
     printf("The following format drivers are configured and support output:\n");

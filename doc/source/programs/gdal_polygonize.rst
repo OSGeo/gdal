@@ -16,9 +16,9 @@ Synopsis
 .. code-block::
 
     gdal_polygonize.py [--help] [--help-general]
-                       [-8] [-o name=value]* [-nomask] [-mask filename] <raster_file> [-b band]
-                       [-q] [-f ogr_format] [-lco name=value]* [-overwrite]
-                       <out_file> [layer] [fieldname]
+                       [-8] [-o <name>=<value>]... [-nomask] [-mask <filename>] <raster_file> [-b <band>]
+                       [-q] [-f <ogr_format>] [-lco <name>=<value>]... [-overwrite]
+                       <out_file> [<layer>] [<fieldname>]
 
 Description
 -----------
@@ -69,13 +69,13 @@ details on the algorithm.
     GDAL 2.3, if not specified, the format is guessed from the extension (previously
     was GML). Use the short format name
 
-.. option:: -o NAME=VALUE
+.. option:: -o <NAME>=<VALUE>
 
     .. versionadded:: 3.7
 
     Polygonize option. See ::cpp:func:`GDALPolygonize` documentation.
 
-.. option:: -lco NAME=VALUE
+.. option:: -lco <NAME>=<VALUE>
 
     .. versionadded:: 3.7
 

@@ -38,15 +38,16 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(bool bIsError)
 
 {
-    printf("Usage: gdalmanage [--help] [--help-general]\n"
-           "    or gdalmanage identify [-r|-fr] [-u] files*\n"
-           "    or gdalmanage copy [-f driver] oldname newname\n"
-           "    or gdalmanage rename [-f driver] oldname newname\n"
-           "    or gdalmanage delete [-f driver] datasetname\n");
-    exit(1);
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: gdalmanage [--help] [--help-general]\n"
+            "    or gdalmanage identify [-r|-fr] [-u] <files>*\n"
+            "    or gdalmanage copy [-f <driver>] <oldname> <newname>\n"
+            "    or gdalmanage rename [-f <driver>] <oldname> <newname>\n"
+            "    or gdalmanage delete [-f <driver>] <datasetname>\n");
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -116,7 +117,7 @@ static void Identify(int nArgc, char **papszArgv)
         else if (EQUAL(papszArgv[0], "-u"))
             bReportFailures = true;
         else
-            Usage();
+            Usage(true);
 
         papszArgv++;
         nArgc--;
@@ -142,7 +143,7 @@ static void Delete(GDALDriverH hDriver, int nArgc, char **papszArgv)
 
 {
     if (nArgc != 1)
-        Usage();
+        Usage(true);
 
     GDALDeleteDataset(hDriver, papszArgv[0]);
 }
@@ -156,7 +157,7 @@ static void Copy(GDALDriverH hDriver, int nArgc, char **papszArgv,
 
 {
     if (nArgc != 2)
-        Usage();
+        Usage(true);
 
     if (EQUAL(pszOperation, "copy"))
         GDALCopyDatasetFiles(hDriver, papszArgv[1], papszArgv[0]);
@@ -192,8 +193,16 @@ MAIN_START(argc, argv)
     if (argc < 1)
         exit(-argc);
 
+    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
+    {
+        if (EQUAL(argv[i], "--help"))
+        {
+            Usage(false);
+        }
+    }
+
     if (argc < 3)
-        Usage();
+        Usage(true);
 
     if (EQUAL(argv[1], "--utility_version"))
     {
@@ -242,7 +251,7 @@ MAIN_START(argc, argv)
         Delete(hDriver, nRemainingArgc, papszRemainingArgv);
 
     else
-        Usage();
+        Usage(true);
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup                                                         */

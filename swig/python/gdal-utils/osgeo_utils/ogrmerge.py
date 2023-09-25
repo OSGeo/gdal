@@ -41,31 +41,38 @@ from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
-def Usage():
-    print("Usage: ogrmerge.py [--help] [--help-general]")
-    print("            -o <out_dsname> <src_dsname> [<src_dsname>]*")
-    print("            [-f format] [-single] [-nln layer_name_template]")
-    print("            [-update | -overwrite_ds] [-append | -overwrite_layer]")
-    print("            [-src_geom_type geom_type_name[,geom_type_name]*]")
-    print("            [-dsco NAME=VALUE]* [-lco NAME=VALUE]*")
-    print("            [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]")
-    print("            [-progress] [-skipfailures] [--help-general]")
-    print("")
-    print("Options specific to -single:")
-    print("            [-field_strategy FirstLayer|Union|Intersection]")
-    print("            [-src_layer_field_name name]")
-    print("            [-src_layer_field_content layer_name_template]")
-    print("")
-    print("* layer_name_template can contain the following substituable " "variables:")
-    print("     {AUTO_NAME}  : {DS_BASENAME}_{LAYER_NAME} if they are " "different")
-    print("                    or {LAYER_NAME} if they are identical")
-    print("     {DS_NAME}    : name of the source dataset")
-    print("     {DS_BASENAME}: base name of the source dataset")
-    print("     {DS_INDEX}   : index of the source dataset")
-    print("     {LAYER_NAME} : name of the source layer")
-    print("     {LAYER_INDEX}: index of the source layer")
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: ogrmerge.py [--help] [--help-general]", file=f)
+    print("            -o <out_dsname> <src_dsname> [<src_dsname>]...", file=f)
+    print("            [-f <format>] [-single] [-nln <layer_name_template>]", file=f)
+    print("            [-update | -overwrite_ds] [-append | -overwrite_layer]", file=f)
+    print("            [-src_geom_type <geom_type_name>[,<geom_type_name>]...]", file=f)
+    print("            [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...", file=f)
+    print("            [-s_srs <srs_def>] [-t_srs <srs_def>|-a_srs <srs_def>]", file=f)
+    print("            [-progress] [-skipfailures] [--help-general]", file=f)
+    print("", file=f)
+    print("Options specific to -single:", file=f)
+    print("            [-field_strategy {FirstLayer|Union|Intersection}]", file=f)
+    print("            [-src_layer_field_name <name>]", file=f)
+    print("            [-src_layer_field_content <layer_name_template>]", file=f)
+    print("", file=f)
+    print(
+        "* layer_name_template can contain the following substituable " "variables:",
+        file=f,
+    )
+    print(
+        "     {AUTO_NAME}  : {DS_BASENAME}_{LAYER_NAME} if they are " "different",
+        file=f,
+    )
+    print("                    or {LAYER_NAME} if they are identical", file=f)
+    print("     {DS_NAME}    : name of the source dataset", file=f)
+    print("     {DS_BASENAME}: base name of the source dataset", file=f)
+    print("     {DS_INDEX}   : index of the source dataset", file=f)
+    print("     {LAYER_NAME} : name of the source layer", file=f)
+    print("     {LAYER_INDEX}: index of the source layer", file=f)
 
-    return 2
+    return 2 if isError else 0
 
 
 #############################################################################
@@ -163,7 +170,7 @@ class XMLWriter(object):
 def process(argv, progress=None, progress_arg=None):
 
     if not argv:
-        return Usage()
+        return Usage(isError=True)
 
     dst_filename = None
     driver_name = None
@@ -191,7 +198,7 @@ def process(argv, progress=None, progress_arg=None):
     while i < len(argv):
         arg = argv[i]
         if arg == "--help":
-            return Usage()
+            return Usage(isError=False)
         elif (arg == "-f" or arg == "-of") and i + 1 < len(argv):
             i = i + 1
             driver_name = argv[i]
@@ -250,12 +257,15 @@ def process(argv, progress=None, progress_arg=None):
             for src_geom_type_name in src_geom_type_names:
                 src_geom_type = _GetGeomType(src_geom_type_name)
                 if src_geom_type is None:
-                    print("ERROR: Unrecognized geometry type: %s" % src_geom_type_name)
+                    print(
+                        "ERROR: Unrecognized geometry type: %s" % src_geom_type_name,
+                        file=sys.stderr,
+                    )
                     return 1
                 src_geom_types.append(src_geom_type)
         elif arg[0] == "-":
-            print("ERROR: Unrecognized argument : %s" % arg)
-            return Usage()
+            print("ERROR: Unrecognized argument : %s" % arg, file=sys.stderr)
+            return Usage(isError=True)
         else:
             if "*" in arg:
                 src_datasets += glob.glob(arg)
@@ -264,7 +274,7 @@ def process(argv, progress=None, progress_arg=None):
         i = i + 1
 
     if dst_filename is None:
-        print("Missing -o")
+        print("Missing -o", file=sys.stderr)
         return 1
 
     return ogrmerge(
@@ -331,7 +341,8 @@ def _build_layer_name_non_single_mode(
             print(
                 "ERROR: Layer name template %s "
                 "includes {DS_BASENAME} "
-                "but %s is not a file" % (layer_name_template, src_dsname)
+                "but %s is not a file" % (layer_name_template, src_dsname),
+                file=sys.stderr,
             )
             return None
     layer_name = layer_name.replace("{DS_NAME}", "%s" % src_dsname)
@@ -501,7 +512,7 @@ def _gpkg_ogrmerge(
     driver_name = "GPKG"
     drv = gdal.GetDriverByName(driver_name)
     if drv is None:
-        print("ERROR: Invalid driver: %s" % driver_name)
+        print("ERROR: Invalid driver: %s" % driver_name, file=sys.stderr)
         return 1
     dst_ds = drv.Create(dst_filename, 0, 0, 0, gdal.GDT_Unknown, dsco)
     if dst_ds is None:
@@ -543,7 +554,7 @@ def _gpkg_ogrmerge(
     for src_ds_idx, src_dsname in enumerate(src_datasets):
         src_ds = ogr.Open(src_dsname)
         if src_ds is None:
-            print("ERROR: Cannot open %s" % src_dsname)
+            print("ERROR: Cannot open %s" % src_dsname, file=sys.stderr)
             if skip_failures:
                 continue
             return 1
@@ -712,7 +723,8 @@ def _gpkg_ogrmerge(
             if src_feature_count >= 0 and num_rows_inserted != src_feature_count:
                 print(
                     "Warning: %d rows inserted into %s whereas %d expected"
-                    % (num_rows_inserted, lyr.GetName(), src_feature_count)
+                    % (num_rows_inserted, lyr.GetName(), src_feature_count),
+                    file=sys.stderr,
                 )
             dst_ds.ExecuteSQL(
                 "INSERT OR REPLACE INTO gpkg_ogr_contents VALUES('%s',%d)"
@@ -856,10 +868,10 @@ def ogrmerge(
     lco = lco or []
     if update:
         if driver_name is not None:
-            print("ERROR: -f incompatible with -update")
+            print("ERROR: -f incompatible with -update", file=sys.stderr)
             return 1
         if dsco:
-            print("ERROR: -dsco incompatible with -update")
+            print("ERROR: -dsco incompatible with -update", file=sys.stderr)
             return 1
         driver_name = ""
     else:
@@ -878,12 +890,13 @@ def ogrmerge(
     ):
         print(
             "ERROR: Non-single layer mode incompatible with non-directory "
-            "shapefile output"
+            "shapefile output",
+            file=sys.stderr,
         )
         return 1
 
     if not src_datasets:
-        print("ERROR: No source datasets")
+        print("ERROR: No source datasets", file=sys.stderr)
         return 1
 
     if layer_name_template is None:
@@ -912,7 +925,10 @@ def ogrmerge(
                     for src_lyr in src_ds:
                         if src_lyr.GetLayerDefn().GetGeomFieldCount() > 1:
                             # shouldn't happen for now...
-                            print("Code is not ready for multi-geometry column GPKG")
+                            print(
+                                "Code is not ready for multi-geometry column GPKG",
+                                file=sys.stderr,
+                            )
                             return False
                 else:
                     return False
@@ -950,7 +966,8 @@ def ogrmerge(
             if not update and not overwrite_ds:
                 print(
                     "ERROR: Destination dataset already exists, "
-                    + "but -update nor -overwrite_ds are specified"
+                    + "but -update nor -overwrite_ds are specified",
+                    file=sys.stderr,
                 )
                 return 1
             if overwrite_ds:
@@ -962,12 +979,12 @@ def ogrmerge(
                 else:
                     drv.Delete(dst_filename)
         elif update:
-            print("ERROR: Destination dataset does not exist")
+            print("ERROR: Destination dataset does not exist", file=sys.stderr)
             return 1
         if dst_ds is None:
             drv = gdal.GetDriverByName(driver_name)
             if drv is None:
-                print("ERROR: Invalid driver: %s" % driver_name)
+                print("ERROR: Invalid driver: %s" % driver_name, file=sys.stderr)
                 return 1
             dst_ds = drv.Create(dst_filename, 0, 0, 0, gdal.GDT_Unknown, dsco)
             if dst_ds is None:
@@ -978,14 +995,15 @@ def ogrmerge(
         if gdal.VSIStatL(dst_filename) and not overwrite_ds:
             print(
                 "ERROR: Destination dataset already exists, "
-                + "but -overwrite_ds are specified"
+                + "but -overwrite_ds are specified",
+                file=sys.stderr,
             )
             return 1
         vrt_filename = dst_filename
 
     f = gdal.VSIFOpenL(vrt_filename, "wb")
     if f is None:
-        print("ERROR: Cannot create %s" % vrt_filename)
+        print("ERROR: Cannot create %s" % vrt_filename, file=sys.stderr)
         return 1
 
     writer = XMLWriter(f)
@@ -998,7 +1016,7 @@ def ogrmerge(
         for src_ds_idx, src_dsname in enumerate(src_datasets):
             src_ds = ogr.Open(src_dsname)
             if src_ds is None:
-                print("ERROR: Cannot open %s" % src_dsname)
+                print("ERROR: Cannot open %s" % src_dsname, file=sys.stderr)
                 if skip_failures:
                     continue
                 gdal.VSIFCloseL(f)
@@ -1097,7 +1115,7 @@ def ogrmerge(
         for src_ds_idx, src_dsname in enumerate(src_datasets):
             src_ds = ogr.Open(src_dsname)
             if src_ds is None:
-                print("ERROR: Cannot open %s" % src_dsname)
+                print("ERROR: Cannot open %s" % src_dsname, file=sys.stderr)
                 if skip_failures:
                     continue
                 gdal.VSIFCloseL(f)

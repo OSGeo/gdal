@@ -16,17 +16,16 @@ Synopsis
 .. code-block::
 
     gnmmanage [--help] [--help-general] [-q] [-quiet] [--long-usage]
-            [info]
-            [create [-f <format_name>] [-t_srs <srs_name>] [-dsco NAME=VALUE]... ]
-            [import src_dataset_name] [-l layer_name]
-            [connect <gfid_src> <gfid_tgt> <gfid_con> [-c <cost>] [-ic <inv_cost>] [-dir <dir>]]
-            [disconnect <gfid_src> <gfid_tgt> <gfid_con>]
-            [rule <rule_str>]
-            [autoconnect <tolerance>]
-            [delete]
-            [change [-bl gfid][-unbl gfid][-unblall]]
-            <gnm_name> [<layer> [<layer> ...]]
-
+              [info]
+              [create [-f <format_name>] [-t_srs <srs_name>] [-dsco <NAME>=<VALUE>]... ]
+              [import <src_dataset_name>] [-l <layer_name>]
+              [connect <gfid_src> <gfid_tgt> <gfid_con> [-c <cost>] [-ic <inv_cost>] [-dir <dir>]]
+              [disconnect <gfid_src> <gfid_tgt> <gfid_con>]
+              [rule <rule_str>]
+              [autoconnect <tolerance>]
+              [delete]
+              [change [-bl <gfid>][-unbl <gfid>][-unblall]]
+              <gnm_name> [<layer> [<layer>]...]
 
 Description
 -----------
@@ -53,7 +52,7 @@ The :program:`gnmmanage` program can perform various managing operations on geog
 
         Spatial reference input.
 
-    .. option:: -dsco NAME=VALUE
+    .. option:: -dsco <NAME>=<VALUE>
 
         Network creation option set as pair name=value.
 
@@ -61,9 +60,9 @@ The :program:`gnmmanage` program can perform various managing operations on geog
 
     Import layer with dataset name to copy.
 
-    .. option:: -l layer_name
+    .. option:: -l <layer_name>
 
-    Layer name in dataset. If unset, 0 layer is copied.
+        Layer name in dataset. If unset, 0 layer is copied.
 
 .. option:: connect <gfid_src> <gfid_tgt> <gfid_con>
 

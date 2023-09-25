@@ -35,25 +35,30 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: gdal_grid [--help] [--help-general]\n"
-        "    [-oo NAME=VALUE]*\n"
+        "    [-oo <NAME>=<VALUE>]...\n"
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]\n"
-        "    [-zfield field_name] [-z_increase increase_value] [-z_multiply "
-        "multiply_value]\n"
-        "    [-a_srs srs_def] [-spat xmin ymin xmax ymax]\n"
-        "    [-clipsrc <xmin ymin xmax ymax>|WKT|datasource|spat_extent]\n"
-        "    [-clipsrcsql sql_statement] [-clipsrclayer layer]\n"
-        "    [-clipsrcwhere expression]\n"
-        "    [-l layername]* [-where expression] [-sql select_statement]\n"
-        "    [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize "
-        "ysize]\n"
-        "    [-a algorithm[:parameter1=value1]*]"
+        "    [-of <format>] [-co <NAME>=<VALUE>]...\n"
+        "    [-zfield <field_name>] [-z_increase <increase_value>] "
+        "[-z_multiply "
+        "<multiply_value>]\n"
+        "    [-a_srs <srs_def>] [-spat <xmin> <ymin> <xmax> <ymax>]\n"
+        "    [-clipsrc <xmin> <ymin> <xmax> "
+        "<ymax>|<WKT>|<datasource>|spat_extent]\n"
+        "    [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]\n"
+        "    [-clipsrcwhere <expression>]\n"
+        "    [-l <layername>]... [-where <expression>] [-sql "
+        "<select_statement>]\n"
+        "    [-txe <xmin> <xmax>] [-tye <ymin> <ymax>] [-tr <xres> <yres>] "
+        "[-outsize <xsize> "
+        "<ysize>]\n"
+        "    [-a <algorithm>[:<parameter1>=<value1>]...]"
         "    [-q]\n"
         "    <src_datasource> <dst_filename>\n"
         "\n"
@@ -88,7 +93,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     GDALDestroyDriverManager();
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -123,7 +128,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
 
@@ -135,7 +140,7 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
     }
 
     if (!(sOptionsForBinary.bQuiet))
@@ -144,9 +149,9 @@ MAIN_START(argc, argv)
     }
 
     if (sOptionsForBinary.osSource.empty())
-        Usage("No input file specified.");
+        Usage(true, "No input file specified.");
     if (!sOptionsForBinary.bDestSpecified)
-        Usage("No output file specified.");
+        Usage(true, "No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
@@ -163,7 +168,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hOutDS = GDALGrid(sOptionsForBinary.osDest.c_str(), hInDS,
                                    psOptions, &bUsageError);
     if (bUsageError == TRUE)
-        Usage();
+        Usage(true);
     int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hInDS);

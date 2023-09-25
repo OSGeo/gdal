@@ -34,25 +34,38 @@ import sys
 from osgeo import gdal, osr
 
 
-def Usage():
-    print("Usage: gdal_edit [--help] [--help-general] [-ro] [-a_srs srs_def]")
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: gdal_edit [--help] [--help-general] [-ro] [-a_srs <srs_def>]", file=f)
     print(
-        "                 [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]"
+        "                 [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_ulurll <ulx> <uly> <urx> <ury> <llx> <lly>]",
+        file=f,
     )
     print(
-        "                 [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]"
+        "                 [-tr <xres> <yres>] [-unsetgt] [-unsetrpc] [-a_nodata <value>] [-unsetnodata]",
+        file=f,
     )
-    print("                 [-offset value] [-scale value] [-units value]")
-    print("                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*")
-    print("                 [-unsetstats] [-stats] [-approx_stats]")
-    print("                 [-setstats min max mean stddev]")
-    print("                 [-gcp pixel line easting northing [elevation]]*")
     print(
-        '                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname'
+        "                 [-offset <value>] [-scale <value>] [-units <value>]", file=f
     )
-    print("")
-    print("Edit in place various information of an existing GDAL dataset.")
-    return 2
+    print(
+        "                 [-colorinterp_<X> {red|green|blue|alpha|gray|undefined]]...",
+        file=f,
+    )
+    print("                 [-unsetstats] [-stats] [-approx_stats]", file=f)
+    print("                 [-setstats <min> <max> <mean> <stddev>]", file=f)
+    print(
+        "                 [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...",
+        file=f,
+    )
+    print(
+        "                 [-unsetmd] [-oo <NAME>=<VALUE>]... [-mo <META-TAG>=<VALUE>]...",
+        file=f,
+    )
+    print("                 <dataset_name>", file=f)
+    print("", file=f)
+    print("Edit in place various information of an existing GDAL dataset.", file=f)
+    return 2 if isError else 0
 
 
 def ArgIsNumeric(s):
@@ -112,7 +125,7 @@ def gdal_edit(argv):
     argc = len(argv)
     while i < argc:
         if argv[i] == "--help":
-            return Usage()
+            return Usage(isError=False)
         elif argv[i] == "-ro":
             ro = True
         elif argv[i] == "-a_srs" and i < len(argv) - 1:
@@ -242,26 +255,27 @@ def gdal_edit(argv):
             elif val.lower() == "undefined":
                 val = gdal.GCI_Undefined
             else:
-                sys.stderr.write(
+                print(
                     "Unsupported color interpretation %s.\n" % val
-                    + "Only red, green, blue, alpha, gray, undefined are supported.\n"
+                    + "Only red, green, blue, alpha, gray, undefined are supported.\n",
+                    file=sys.stderr,
                 )
-                return Usage()
+                return Usage(isError=True)
             colorinterp[band] = val
             i = i + 1
         elif argv[i][0] == "-":
-            sys.stderr.write("Unrecognized option : %s\n" % argv[i])
-            return Usage()
+            print("Unrecognized option : %s\n" % argv[i], file=sys.stderr)
+            return Usage(isError=True)
         elif datasetname is None:
             datasetname = argv[i]
         else:
-            sys.stderr.write("Unexpected option : %s\n" % argv[i])
-            return Usage()
+            print("Unexpected option : %s\n" % argv[i], file=sys.stderr)
+            return Usage(isError=True)
 
         i = i + 1
 
     if datasetname is None:
-        return Usage()
+        return Usage(isError=True)
 
     if (
         srs is None
@@ -282,9 +296,9 @@ def gdal_edit(argv):
         and offset is None
         and not unsetrpc
     ):
-        print("No option specified")
-        print("")
-        return Usage()
+        print("No option specified", file=sys.stderr)
+        print("", file=sys.stderr)
+        return Usage(isError=True)
 
     exclusive_option = 0
     if lry is not None:
@@ -296,19 +310,25 @@ def gdal_edit(argv):
     if unsetgt:
         exclusive_option = exclusive_option + 1
     if exclusive_option > 1:
-        print("-a_ullr, -a_ulurll, -tr and -unsetgt options are exclusive.")
-        print("")
-        return Usage()
+        print(
+            "-a_ullr, -a_ulurll, -tr and -unsetgt options are exclusive.",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+        return Usage(isError=True)
 
     if unsetstats and stats:
-        print("-unsetstats and either -stats or -approx_stats options are exclusive.")
-        print("")
-        return Usage()
+        print(
+            "-unsetstats and either -stats or -approx_stats options are exclusive.",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+        return Usage(isError=True)
 
     if unsetnodata and nodata:
-        print("-unsetnodata and -nodata options are exclusive.")
-        print("")
-        return Usage()
+        print("-unsetnodata and -nodata options are exclusive.", file=sys.stderr)
+        print("", file=sys.stderr)
+        return Usage(isError=True)
 
     if open_options is not None:
         if ro:
@@ -330,20 +350,22 @@ def gdal_edit(argv):
             scale = scale * ds.RasterCount
         elif len(scale) != ds.RasterCount:
             print(
-                "If more than one scale value is provided, their number must match the number of bands."
+                "If more than one scale value is provided, their number must match the number of bands.",
+                file=sys.stderr,
             )
-            print("")
-            return Usage()
+            print("", file=sys.stderr)
+            return Usage(isError=True)
 
     if offset:
         if len(offset) == 1:
             offset = offset * ds.RasterCount
         elif len(offset) != ds.RasterCount:
             print(
-                "If more than one offset value is provided, their number must match the number of bands."
+                "If more than one offset value is provided, their number must match the number of bands.",
+                file=sys.stderr,
             )
-            print("")
-            return Usage()
+            print("", file=sys.stderr)
+            return Usage(isError=True)
 
     wkt = None
     if srs == "" or srs == "None":
@@ -351,7 +373,7 @@ def gdal_edit(argv):
     elif srs is not None:
         sr = osr.SpatialReference()
         if sr.SetFromUserInput(srs) != 0:
-            print("Failed to process SRS definition: %s" % srs)
+            print("Failed to process SRS definition: %s" % srs, file=sys.stderr)
             return -1
         wkt = sr.ExportToWkt()
         if not gcp_list:

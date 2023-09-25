@@ -19,17 +19,17 @@ Synopsis
 
 
     gdal_create [--help] [--help-general]
-       [-of format]
-       [-outsize xsize ysize]
-       [-bands count]
-       [-burn value]*
+       [-of <format>]
+       [-outsize <xsize> <ysize>]
+       [-bands <count>]
+       [-burn <value>]...
        [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
-       [-mo "META-TAG=VALUE"]* [-q]
-       [-co "NAME=VALUE"]*
-       [-if input_dataset]
-       out_dataset
+       [-a_srs <srs_def>] [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_nodata <value>]
+       [-mo <META-TAG>=<VALUE>]... [-q]
+       [-co <NAME>=<VALUE>]...
+       [-if <input_dataset>]
+       <out_dataset>
 
 Description
 -----------
@@ -75,7 +75,7 @@ like creating a PDF file from a XML composition file.
 
     Assign a specified nodata value to output bands.
 
-.. option:: -mo META-TAG=VALUE
+.. option:: -mo <META-TAG>=<VALUE>
 
     Passes a metadata key and value to set on the output dataset if possible.
 

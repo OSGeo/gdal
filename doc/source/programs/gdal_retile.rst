@@ -16,17 +16,17 @@ Synopsis
 .. code-block::
 
     gdal_retile.py [--help] [--help-general]
-                   [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeight]
-                   [-overlap val_in_pixel]
+                   [-v] [-co <NAME>=<VALUE>]... [-of <out_format>] [-ps <pixelWidth> <pixelHeight>]
+                   [-overlap <val_in_pixel>]
                    [-ot  {Byte/Int8/Int16/UInt16/UInt32/Int32/Float32/Float64/
                            CInt16/CInt32/CFloat32/CFloat64}]'
-                   [ -tileIndex tileIndexName [-tileIndexField tileIndexFieldName]]
-                   [ -csv fileName [-csvDelim delimiter]]
-                   [-s_srs srs_def]  [-pyramidOnly]
-                   [-r {near/bilinear/cubic/cubicspline/lanczos}]
-                   -levels numberoflevels
+                   [ -tileIndex <tileIndexName> [-tileIndexField <tileIndexFieldName>]]
+                   [-csv <fileName> [-csvDelim <delimiter>]]
+                   [-s_srs <srs_def>]  [-pyramidOnly]
+                   [-r {near|bilinear|cubic|cubicspline|lanczos}]
+                   -levels <numberoflevels>
                    [-useDirForEachRow] [-resume]
-                   -targetDir TileDirectory input_files
+                   -targetDir <TileDirectory> <input_file> <input_file>...
 
 Description
 -----------
@@ -63,7 +63,7 @@ If your number of input tiles exhausts the command line buffer, use the general
     Pixel size to be used for the
     output file.  If not specified, 256 x 256 is the default
 
-.. option:: -overlap< <val_in_pixel>
+.. option:: -overlap <val_in_pixel>
 
     Overlap in pixels between consecutive tiles. If not specified, 0 is the default
 

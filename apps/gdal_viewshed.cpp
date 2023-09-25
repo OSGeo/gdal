@@ -40,25 +40,27 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdal_viewshed [--help] [--help-general]\n"
-           "                     [-b <band>]\n"
-           "                     [-a_nodata <value>] [-f <formatname>]\n"
-           "                     [-oz <observer_height>] [-tz <target_height>] "
-           "[-md <max_distance>]\n"
-           "                     -ox <observer_x> -oy <observer_y>\n"
-           "                     [-vv <visibility>] [-iv <invisibility>]\n"
-           "                     [-ov <out_of_range>] [-cc <curvature_coef>]\n"
-           "                     [[-co NAME=VALUE] ...]\n"
-           "                     [-q] [-om <output mode>]\n"
-           "                     <src_filename> <dst_filename>\n");
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: gdal_viewshed [--help] [--help-general]\n"
+        "                     [-b <band>]\n"
+        "                     [-a_nodata <value>] [-f <formatname>]\n"
+        "                     [-oz <observer_height>] [-tz <target_height>] "
+        "[-md <max_distance>]\n"
+        "                     -ox <observer_x> -oy <observer_y>\n"
+        "                     [-vv <visibility>] [-iv <invisibility>]\n"
+        "                     [-ov <out_of_range>] [-cc <curvature_coef>]\n"
+        "                     [-co <NAME>=<VALUE>]...\n"
+        "                     [-q] [-om <output mode>]\n"
+        "                     <src_filename> <dst_filename>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 static double CPLAtofTaintedSuppressed(const char *pszVal)
@@ -75,8 +77,8 @@ static double CPLAtofTaintedSuppressed(const char *pszVal)
     do                                                                         \
     {                                                                          \
         if (i + nExtraArg >= argc)                                             \
-            Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i],     \
-                             nExtraArg));                                      \
+            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
+                                   argv[i], nExtraArg));                       \
     } while (false)
 
 MAIN_START(argc, argv)
@@ -124,7 +126,7 @@ MAIN_START(argc, argv)
             return 0;
         }
         else if (EQUAL(argv[i], "--help"))
-            Usage();
+            Usage(false);
         else if (EQUAL(argv[i], "-f") || EQUAL(argv[i], "-of"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -212,27 +214,27 @@ MAIN_START(argc, argv)
             pszDstFilename = argv[i];
         }
         else
-            Usage("Too many command options.");
+            Usage(true, "Too many command options.");
     }
 
     if (pszSrcFilename == nullptr)
     {
-        Usage("Missing source filename.");
+        Usage(true, "Missing source filename.");
     }
 
     if (pszDstFilename == nullptr)
     {
-        Usage("Missing destination filename.");
+        Usage(true, "Missing destination filename.");
     }
 
     if (!bObserverXSpecified)
     {
-        Usage("Missing -ox.");
+        Usage(true, "Missing -ox.");
     }
 
     if (!bObserverYSpecified)
     {
-        Usage("Missing -oy.");
+        Usage(true, "Missing -oy.");
     }
 
     if (!bQuiet)
@@ -264,7 +266,7 @@ MAIN_START(argc, argv)
         }
         else
         {
-            Usage("-om must be either NORMAL, DEM or GROUND");
+            Usage(true, "-om must be either NORMAL, DEM or GROUND");
         }
     }
 

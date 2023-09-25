@@ -37,10 +37,10 @@
 static void Usage()
 {
     printf("Usage: gdalflattenmask [--help] [--help-general] [-of "
-           "output_format] \n"
-           "                       [-co \"NAME=VALUE\"]* [-set_alpha] "
-           "[-a_nodata val] \n"
-           "                       srcdatasetname dstdatasetname\n"
+           "<output_format>] \n"
+           "                       [-co <NAME>=<VALUE>]... [-set_alpha] "
+           "[-a_nodata <val>] \n"
+           "                       <srcdatasetname> <dstdatasetname>\n"
            "\n"
            "This utility is intended to produce a new file that merges regular "
            "data\n"

@@ -38,21 +38,24 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdalinfo [--help] [--help-general]\n"
-           "                [-json] [-mm] [-stats | -approx_stats] [-hist]\n"
-           "                [-nogcp] [-nomd] [-norat] [-noct] [-nofl]\n"
-           "                [-checksum] [-listmdd] [-mdd domain|`all`]\n"
-           "                [-proj4] [-wkt_format WKT1|WKT2|...]*\n"
-           "                [-sd subdataset] [-oo NAME=VALUE]* [-if format]*\n"
-           "                datasetname\n");
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: gdalinfo [--help] [--help-general]\n"
+        "                [-json] [-mm] [-stats | -approx_stats] [-hist]\n"
+        "                [-nogcp] [-nomd] [-norat] [-noct] [-nofl]\n"
+        "                [-checksum] [-listmdd] [-mdd <domain>|all]\n"
+        "                [-proj4] [-wkt_format {WKT1|WKT2|<other_format>}]...\n"
+        "                [-sd <subdataset>] [-oo <NAME>=<VALUE>]... [-if "
+        "<format>]...\n"
+        "                <datasetname>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -108,7 +111,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
     argv = CSLAddString(argv, "-stdout");
@@ -119,10 +122,10 @@ MAIN_START(argc, argv)
     GDALInfoOptions *psOptions =
         GDALInfoOptionsNew(argv + 1, psOptionsForBinary);
     if (psOptions == nullptr)
-        Usage();
+        Usage(true);
 
     if (psOptionsForBinary->pszFilename == nullptr)
-        Usage("No datasource specified.");
+        Usage(true, "No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */

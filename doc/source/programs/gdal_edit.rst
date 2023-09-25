@@ -15,15 +15,16 @@ Synopsis
 
 .. code-block::
 
-    gdal_edit [--help] [--help-general] [-ro] [-a_srs srs_def]
-            [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]
-            [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]
+    gdal_edit [--help] [--help-general] [-ro] [-a_srs <srs_def>]
+            [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_ulurll <ulx> <uly> <urx> <ury> <llx> <lly>]
+            [-tr <xres> <yres>] [-unsetgt] [-unsetrpc] [-a_nodata <value>] [-unsetnodata]
             [-unsetstats] [-stats] [-approx_stats]
-            [-setstats min max mean stddev]
-            [-scale value] [-offset value] [-units value]
-            [-colorinterp_X red|green|blue|alpha|gray|undefined]*
-            [-gcp pixel line easting northing [elevation]]*
-            [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
+            [-setstats <min> <max> <mean> <stddev>]
+            [-scale <value>] [-offset <value>] [-units <value>]
+            [-colorinterp_<X> {red|green|blue|alpha|gray|undefined}]...
+            [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
+            [-unsetmd] [-oo <NAME>=<VALUE>]... [-mo <META-TAG>=<VALUE>]...
+            <datasetname>
 
 Description
 -----------
@@ -57,11 +58,11 @@ It works only with raster formats that support update access to existing dataset
     coordinate system will be removed (for TIFF/GeoTIFF, might not be well
     supported besides that).
 
-.. option:: -a_ullr ulx uly lrx lry:
+.. option:: -a_ullr  <ulx> <uly> <lrx> <lry>
 
     Assign/override the georeferenced bounds of the dataset.
 
-.. option:: -a_ulurll ulx uly urx ury llx lly:
+.. option:: -a_ulurll <ulx> <uly> <urx> <ury> <llx> <lly>
 
     Assign/override the georeferenced bounds of the dataset from three points:
     upper-left, upper-right and lower-left. Unlike :option:`-a_ullr`, this also
@@ -96,7 +97,7 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 2.0
 
-.. option:: -setstats min max mean stddev
+.. option:: -setstats <min> <max> <mean> <stddev>
 
     Store user-defined values for band statistics (minimum, maximum,
     mean and standard deviation). If any of the values is set to None,
@@ -154,14 +155,14 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 3.1
 
-.. option:: -colorinterp_X red|green|blue|alpha|gray|undefined
+.. option:: -colorinterp_<X> {red|green|blue|alpha|gray|undefined}
 
     Change the color interpretation of band X (where X is a valid band
     number, starting at 1).
 
     .. versionadded:: 2.3
 
-.. option:: -gcp pixel line easting northing [elevation]
+.. option:: -gcp pixel <line> <easting> <northing> [<elevation>]
 
     Add the indicated ground control point to the dataset.
     This option may be provided multiple times to provide a set of GCPs.
@@ -173,13 +174,13 @@ It works only with raster formats that support update access to existing dataset
 
     .. versionadded:: 2.0
 
-.. option:: -mo META-TAG=VALUE
+.. option:: -mo <META-TAG>=<VALUE>
 
     Passes a metadata key and value to set on the output dataset if possible.
     This metadata is added to the existing metadata items, unless :option:`-unsetmd`
     is also specified.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Open option (format specific).
 

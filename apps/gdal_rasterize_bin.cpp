@@ -36,30 +36,33 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         "Usage: gdal_rasterize [--help] [--help-general]\n"
-        "       [-b band]* [-i] [-at]\n"
-        "       [-oo NAME=VALUE]*\n"
-        "       {[-burn value]* | [-a attribute_name] | [-3d]} [-add]\n"
-        "       [-l layername]* [-where expression] "
-        "[-sql select_statement|@filename]\n"
-        "       [-dialect dialect] [-of format] [-a_srs srs_def] [-to "
-        "\"NAME=VALUE\"]*\n"
-        "       [-co \"NAME=VALUE\"]* [-a_nodata value] [-init value]*\n"
-        "       [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width "
-        "height]\n"
+        "       [-b <band>]... [-i] [-at]\n"
+        "       [-oo <NAME>=<VALUE>]...\n"
+        "       {[-burn <value>]... | [-a <attribute_name>] | [-3d]} [-add]\n"
+        "       [-l <layername>]... [-where <expression>] "
+        "[-sql <select_statement>|@<filename>]\n"
+        "       [-dialect <dialect>] [-of <format>] [-a_srs <srs_def>] [-to "
+        "<NAME>=<VALUE>]...\n"
+        "       [-co <NAME>=<VALUE>]... [-a_nodata <value>] [-init "
+        "<value>]...\n"
+        "       [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-tap] "
+        "[-ts <width> "
+        "<height>]\n"
         "       [-ot "
         "{Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
         "             CInt16/CInt32/CFloat32/CFloat64}] [-optim "
-        "{[AUTO]/VECTOR/RASTER}] [-q]\n"
+        "{AUTO|VECTOR|RASTER}] [-q]\n"
         "       <src_datasource> <dst_filename>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -94,7 +97,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
 
@@ -106,7 +109,7 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
     }
 
     if (!(sOptionsForBinary.bQuiet))
@@ -115,10 +118,10 @@ MAIN_START(argc, argv)
     }
 
     if (sOptionsForBinary.osSource.empty())
-        Usage("No input file specified.");
+        Usage(true, "No input file specified.");
 
     if (!sOptionsForBinary.bDestSpecified)
-        Usage("No output file specified.");
+        Usage(true, "No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
@@ -186,7 +189,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hRetDS = GDALRasterize(sOptionsForBinary.osDest.c_str(),
                                         hDstDS, hInDS, psOptions, &bUsageError);
     if (bUsageError == TRUE)
-        Usage();
+        Usage(true);
     int nRetCode = hRetDS ? 0 : 1;
 
     GDALClose(hInDS);

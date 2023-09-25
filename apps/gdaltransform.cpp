@@ -56,21 +56,24 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdaltransform [--help] [--help-general]\n"
-           "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
-           "    [-s_coord_epoch epoch] [-t_coord_epoch epoch]\n"
-           "    [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc] \n"
-           "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n"
-           "    [srcfile [dstfile]]\n"
-           "\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: gdaltransform [--help] [--help-general]\n"
+            "    [-i] [-s_srs <srs_def>] [-t_srs <srs_def>] [-to "
+            ">NAME>=<VALUE>]...\n"
+            "    [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]\n"
+            "    [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc] \n"
+            "    [-gcp <pixel> <line> <easting> <northing> [elevation]]... "
+            "[-output_xy]\n"
+            "    [srcfile [dstfile]]\n"
+            "\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -106,8 +109,8 @@ static bool IsValidSRS(const char *pszUserInput)
     do                                                                         \
     {                                                                          \
         if (i + nExtraArg >= argc)                                             \
-            Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i],     \
-                             nExtraArg));                                      \
+            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
+                                   argv[i], nExtraArg));                       \
     } while (false)
 
 MAIN_START(argc, argv)
@@ -160,7 +163,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
         else if (EQUAL(argv[i], "-t_srs"))
         {
@@ -277,7 +280,7 @@ MAIN_START(argc, argv)
         }
         else if (argv[i][0] == '-')
         {
-            Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
+            Usage(true, CPLSPrintf("Unknown option name '%s'", argv[i]));
         }
         else if (pszSrcFilename == nullptr)
         {
@@ -289,7 +292,7 @@ MAIN_START(argc, argv)
         }
         else
         {
-            Usage("Too many command options.");
+            Usage(true, "Too many command options.");
         }
     }
 

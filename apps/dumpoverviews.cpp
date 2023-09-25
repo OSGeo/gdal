@@ -41,7 +41,7 @@ static bool DumpBand(GDALDatasetH hBaseDS, GDALRasterBandH hBand,
 static void Usage()
 
 {
-    printf("Usage: dumpoverviews [-masks] <filename> [overview]*\n");
+    printf("Usage: dumpoverviews [-masks] <filename> [<overview>]...\n");
     exit(1);
 }
 

@@ -86,9 +86,9 @@ When called without arguments script should return a message prefixed
 'Usage: ` and use return code ``2``.::
 
     » gdal_edit
-    Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def]
+    Usage: gdal_edit [--help-general] [-ro] [-a_srs <srs_def>]
         ...
-        [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
+        [-unsetmd] [-oo <NAME>=<VALUE>]... [-mo <META-TAG>=<VALUE>]... <datasetname>
 
     Edit in place various information of an existing GDAL dataset.
 

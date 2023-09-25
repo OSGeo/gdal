@@ -83,7 +83,7 @@ class DataSetCache(object):
             return self.dict[name]
         result = gdal.Open(name)
         if result is None:
-            print("Error opening: %s" % NameError)
+            print("Error opening: %s" % NameError, file=sys.stderr)
             return 1
         if len(self.queue) == self.cacheSize:
             toRemove = self.queue.pop(0)
@@ -555,7 +555,7 @@ def createPyramidTile(
         t_fh = g.MemDriver.Create("", width, height, bands, bt)
 
     if t_fh is None:
-        print("Creation failed, terminating gdal_tile.")
+        print("Creation failed, terminating gdal_tile.", file=sys.stderr)
         return 1
 
     t_fh.SetGeoTransform(geotransform)
@@ -575,7 +575,10 @@ def createPyramidTile(
     # reproject source filehandle to target filehandle
     res = gdal.ReprojectImage(s_fh, t_fh, None, None, g.ResamplingMethod)
     if res != 0:
-        print("Reprojection failed for %s, error %d" % (temp_tilename, res))
+        print(
+            "Reprojection failed for %s, error %d" % (temp_tilename, res),
+            file=sys.stderr,
+        )
         return 1
 
     levelMosaicInfo.closeDataSet(s_fh)
@@ -674,7 +677,7 @@ def createTile(
         t_fh = g.MemDriver.Create("", width, height, bands, bt)
 
     if t_fh is None:
-        print("Creation failed, terminating gdal_tile.")
+        print("Creation failed, terminating gdal_tile.", file=sys.stderr)
         return 1
 
     t_fh.SetGeoTransform(geotransform)
@@ -725,7 +728,7 @@ def createTile(
 def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
     OGRDriver = ogr.GetDriverByName(driverName)
     if OGRDriver is None:
-        print("ESRI Shapefile driver not found")
+        print("ESRI Shapefile driver not found", file=sys.stderr)
         return 1
 
     OGRDataSource = OGRDriver.Open(dsName)
@@ -737,22 +740,22 @@ def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
 
     OGRDataSource = OGRDriver.CreateDataSource(dsName)
     if OGRDataSource is None:
-        print("Could not open datasource " + dsName)
+        print("Could not open datasource " + dsName, file=sys.stderr)
         return 1
 
     OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
     if OGRLayer is None:
-        print("Could not create Layer")
+        print("Could not create Layer", file=sys.stderr)
         return 1
 
     OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
     if OGRFieldDefn is None:
-        print("Could not create FieldDefn for " + fieldName)
+        print("Could not create FieldDefn for " + fieldName, file=sys.stderr)
         return 1
 
     OGRFieldDefn.SetWidth(256)
     if OGRLayer.CreateField(OGRFieldDefn) != 0:
-        print("Could not create Field for " + fieldName)
+        print("Could not create Field for " + fieldName, file=sys.stderr)
         return 1
 
     return OGRDataSource
@@ -762,7 +765,7 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     OGRLayer = OGRDataSource.GetLayer()
     OGRFeature = ogr.Feature(OGRLayer.GetLayerDefn())
     if OGRFeature is None:
-        print("Could not create Feature")
+        print("Could not create Feature", file=sys.stderr)
         return 1
 
     OGRFeature.SetField(TileIndexFieldName, location)
@@ -780,7 +783,7 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     )
     OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
     if OGRGeometry is None:
-        print("Could not create Geometry")
+        print("Could not create Geometry", file=sys.stderr)
         return 1
 
     OGRFeature.SetGeometryDirectly(OGRGeometry)
@@ -920,20 +923,21 @@ def UsageFormat():
 # =============================================================================
 
 
-def Usage():
-    print("Usage: gdal_retile.py [--help] [--help-general]")
-    print("        [-v] [-q] [-co NAME=VALUE]* [-of out_format]")
-    print("        [-ps pixelWidth pixelHeight]")
-    print("        [-overlap val_in_pixel]")
-    print("        [-ot  {Byte/Int8/Int16/UInt16/UInt32/Int32/Float32/Float64/")
-    print("               CInt16/CInt32/CFloat32/CFloat64}]")
-    print("        [ -tileIndex tileIndexName [-tileIndexField fieldName]]")
-    print("        [ -csv fileName [-csvDelim delimiter]]")
-    print("        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels")
-    print("        [-r {near/bilinear/cubic/cubicspline/lanczos}]")
-    print("        [-useDirForEachRow] [-resume]")
-    print("        -targetDir TileDirectory input_files")
-    return 2
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: gdal_retile.py [--help] [--help-general]", file=f)
+    print("        [-v] [-q] [-co <NAME>=<VALUE>]... [-of <out_format>]", file=f)
+    print("        [-ps <pixelWidth> <pixelHeight>]", file=f)
+    print("        [-overlap <val_in_pixel>]", file=f)
+    print("        [-ot  {Byte|Int8|Int16|UInt16|UInt32|Int32|Float32|Float64|", file=f)
+    print("               CInt16|CInt32|CFloat32|CFloat64}]", file=f)
+    print("        [-tileIndex <tileIndexName> [-tileIndexField <fieldName>]]", file=f)
+    print("        [-csv <fileName> [-csvDelim <delimiter>]]", file=f)
+    print("        [-s_srs <srs_def>]  [-pyramidOnly] -levels <numberoflevels>", file=f)
+    print("        [-r {near|bilinear|cubic|cubicspline|lanczos}]", file=f)
+    print("        [-useDirForEachRow] [-resume]", file=f)
+    print("        -targetDir <TileDirectory> <input_file> [<input_file>]...", file=f)
+    return 2 if isError else 0
 
 
 def main(args=None, g=None):
@@ -952,7 +956,7 @@ def main(args=None, g=None):
         arg = argv[i]
 
         if arg == "--help":
-            return Usage()
+            return Usage(isError=False)
         elif arg == "-of" or arg == "-f":
             i += 1
             g.Format = argv[i]
@@ -960,7 +964,7 @@ def main(args=None, g=None):
             i += 1
             g.BandType = gdal.GetDataTypeByName(argv[i])
             if g.BandType == gdal.GDT_Unknown:
-                print("Unknown GDAL data type: %s" % argv[i])
+                print("Unknown GDAL data type: %s" % argv[i], file=sys.stderr)
                 return 1
         elif arg == "-co":
             i += 1
@@ -976,7 +980,7 @@ def main(args=None, g=None):
             g.TargetDir = argv[i]
 
             if not os.path.exists(g.TargetDir):
-                print("TargetDir " + g.TargetDir + " does not exist")
+                print("TargetDir " + g.TargetDir + " does not exist", file=sys.stderr)
                 return 1
             if g.TargetDir[len(g.TargetDir) - 1 :] != os.sep:
                 g.TargetDir = g.TargetDir + os.sep
@@ -1046,8 +1050,8 @@ def main(args=None, g=None):
         elif arg == "-resume":
             g.Resume = True
         elif arg[:1] == "-":
-            print("Unrecognized command option: %s" % arg)
-            return Usage()
+            print("Unrecognized command option: %s" % arg, file=sys.stderr)
+            return Usage(isError=True)
 
         else:
             g.Names.append(arg)
@@ -1055,18 +1059,21 @@ def main(args=None, g=None):
 
     if not g.Names:
         print("No input files selected.")
-        return Usage()
+        return Usage(isError=True)
 
     if g.TileWidth == 0 or g.TileHeight == 0:
-        print("Invalid tile dimension %d,%d" % (g.TileWidth, g.TileHeight))
+        print(
+            "Invalid tile dimension %d,%d" % (g.TileWidth, g.TileHeight),
+            file=sys.stderr,
+        )
         return 1
     if g.TileWidth - g.Overlap <= 0 or g.TileHeight - g.Overlap <= 0:
-        print("Overlap too big w.r.t tile height/width")
+        print("Overlap too big w.r.t tile height/width", file=sys.stderr)
         return 1
 
     if g.TargetDir is None:
-        print("Missing Directory for Tiles -targetDir")
-        return Usage()
+        print("Missing Directory for Tiles -targetDir", file=sys.stderr)
+        return Usage(isError=True)
 
     # create level 0 directory if needed
     if g.UseDirForEachRow and not g.PyramidOnly:
@@ -1082,14 +1089,17 @@ def main(args=None, g=None):
                 continue
             os.mkdir(leveldir)
             if not os.path.exists(leveldir):
-                print("Cannot create level dir: %s" % leveldir)
+                print("Cannot create level dir: %s" % leveldir, file=sys.stderr)
                 return 1
             if g.Verbose:
-                print("Created level dir: %s" % leveldir)
+                print("Created level dir: %s" % leveldir, file=sys.stderr)
 
     g.Driver = gdal.GetDriverByName(g.Format)
     if g.Driver is None:
-        print("Format driver %s not found, pick a supported driver." % g.Format)
+        print(
+            "Format driver %s not found, pick a supported driver." % g.Format,
+            file=sys.stderr,
+        )
         return UsageFormat()
 
     DriverMD = g.Driver.GetMetadata()
@@ -1099,7 +1109,7 @@ def main(args=None, g=None):
 
     tileIndexDS = getTileIndexFromFiles(g)
     if tileIndexDS is None:
-        print("Error building tile index")
+        print("Error building tile index", file=sys.stderr)
         return 1
     minfo = mosaic_info(g.Names[0], tileIndexDS)
     ti = tile_info(minfo.xsize, minfo.ysize, g.TileWidth, g.TileHeight, g.Overlap)
@@ -1107,7 +1117,7 @@ def main(args=None, g=None):
     if g.Source_SRS is None and minfo.projection:
         g.Source_SRS = osr.SpatialReference()
         if g.Source_SRS.SetFromUserInput(minfo.projection) != 0:
-            print("invalid projection  " + minfo.projection)
+            print("invalid projection  " + minfo.projection, file=sys.stderr)
             return 1
 
     if g.Verbose:

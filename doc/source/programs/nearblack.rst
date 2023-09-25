@@ -16,10 +16,10 @@ Synopsis
 .. code-block::
 
     nearblack [--help] [--help-general]
-              [-of format] [-white | [-color c1,c2,c3...cn]*]
+              [-of <format>] [-white | [-color <c1>,<c2>,<c3>...<cn>]...]
               [-near <dist>] [-nb <non_black_pixels>]
-              [-setalpha] [-setmask] [-o <outfile>] [-q] [-alg twopasses|floodfill]
-              [-co "NAME=VALUE"]* <infile>
+              [-setalpha] [-setmask] [-alg twopasses|floodfill]
+              [-o <outfile>] [-q] [-co <NAME>=<VALUE>]... <infile>
 
 Description
 -----------
@@ -45,7 +45,7 @@ if either alpha band or mask band is not set.
     was ERDAS Imagine .img).
     Use the short format name (GTiff for GeoTIFF for example).
 
-.. option:: -co `"NAME=VALUE"`
+.. option:: -co <NAME>=<VALUE>
 
     Passes a creation option to the output format driver.  Multiple
     :option:`-co` options may be listed. See :ref:`raster_drivers` format
@@ -57,7 +57,7 @@ if either alpha band or mask band is not set.
 
     Search for nearly white (255) pixels instead of nearly black pixels.
 
-.. option:: -color <c1,c2,c3...cn>
+.. option:: -color <c1>,<c2>,<c3>...<cn>
 
     Search for pixels near the specified color. May be specified multiple times.
     When -color is specified, the pixels that are considered as the collar are set to 0.

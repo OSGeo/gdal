@@ -17,9 +17,10 @@ Synopsis
 
     Usage: gdallocationinfo [--help] [--help-general]
                             [-xml] [-lifonly] [-valonly]
-                            [-b band]* [-overview overview_level]
-                            [-l_srs srs_def] [-geoloc] [-wgs84]
-                            [-oo NAME=VALUE]* srcfile [x y]
+                            [-b <band>]... [-overview <overview_level>]
+                            [-l_srs <srs_def>] [-geoloc] [-wgs84]
+                            [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
+
 
 Description
 -----------
@@ -69,7 +70,7 @@ reporting options are provided.
 
     Indicates input x,y points are WGS84 long, lat.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 

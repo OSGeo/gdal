@@ -16,13 +16,13 @@ Synopsis
 .. code-block::
 
     gdal2xyz [--help] [--help-general]
-        [-skip factor]
-        [-srcwin xoff yoff xsize ysize]
-        [-b band]* [-allbands]
+        [-skip <factor>]
+        [-srcwin <xoff> <yoff> <xsize> <ysize>]
+        [-b <band>]... [-allbands]
         [-skipnodata]
         [-csv]
-        [-srcnodata value] [-dstnodata value]
-        src_dataset [dst_dataset]
+        [-srcnodata <value>] [-dstnodata <value>]
+        <src_dataset> [<dst_dataset>]
 
 Description
 -----------

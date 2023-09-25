@@ -65,7 +65,7 @@ def Usage():
     print(
         """
 Usage: gdal_lut.py src_file [-srcband] [dst_file] [-dstband] -lutfile filename
-                   [-of format] [-co name=value]*
+                   [-of format] [-co name=value]...
 
 If dst_file is not specified, the result will be applied back to src_file.
 The text file specified with -lutfile should have one line per LUT entry

@@ -35,18 +35,20 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 {
-    printf("nearblack [--help] [--help-general]\n"
-           "          [-of format] [-white | [-color c1,c2,c3...cn]*]\n"
-           "          [-near dist] [-nb non_black_pixels]\n"
-           "          [-setalpha] [-setmask] [-alg twopasses|floodfill]\n"
-           "          [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: nearblack [--help] [--help-general]\n"
+            "          [-of <format>] [-white | [-color "
+            "<c1>,<c2>,<c3>...<cn>]...]\n"
+            "          [-near <dist>] [-nb <non_black_pixels>]\n"
+            "          [-setalpha] [-setmask] [-alg twopasses|floodfill]\n"
+            "          [-o <outfile>] [-q] [-co <NAME>=<VALUE>]... <infile>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -108,7 +110,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
 
@@ -120,7 +122,7 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
     }
 
     if (!(psOptionsForBinary->bQuiet))
@@ -129,7 +131,7 @@ MAIN_START(argc, argv)
     }
 
     if (psOptionsForBinary->pszInFile == nullptr)
-        Usage("No input file specified.");
+        Usage(true, "No input file specified.");
 
     if (psOptionsForBinary->pszOutFile == nullptr)
         psOptionsForBinary->pszOutFile =
@@ -161,7 +163,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hRetDS = GDALNearblack(psOptionsForBinary->pszOutFile, hOutDS,
                                         hInDS, psOptions, &bUsageError);
     if (bUsageError)
-        Usage();
+        Usage(true);
     int nRetCode = hRetDS ? 0 : 1;
 
     if (GDALClose(hInDS) != CE_None)

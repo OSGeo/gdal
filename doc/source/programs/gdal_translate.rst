@@ -16,28 +16,28 @@ Synopsis
 .. code-block::
 
 
-    gdal_translate [--help] [--help-general]
-        [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
-                CInt16/CInt32/CFloat32/CFloat64}] [-strict]
-        [-if format]* [-of format]
-        [-b band]* [-mask band] [-expand {gray|rgb|rgba}]
-        [-outsize xsize[%]|0 ysize[%]|0] [-tr xres yres]
-        [-ovr level|AUTO|AUTO-n|NONE]
-        [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,rms,mode}]
-        [-unscale] [-scale[_bn] [src_min src_max [dst_min dst_max]]]* [-exponent[_bn] exp_val]*
-        [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
-        [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
-        [-a_srs srs_def] [-a_coord_epoch <epoch>]
-        [-a_ullr ulx uly lrx lry] [-a_nodata value]
-        [-a_gt gt0 gt1 gt2 gt3 gt4 gt5]
-        [-a_scale value] [-a_offset value]
-        [-nogcp] [-gcp pixel line easting northing [elevation]]*
-        |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
-        |-colorinterp {red|green|blue|alpha|gray|undefined},...]
-        [-mo "META-TAG=VALUE"]* [-q] [-sds]
-        [-co "NAME=VALUE"]* [-stats] [-norat] [-noxmp]
-        [-oo NAME=VALUE]*
-        src_dataset dst_dataset
+    gdal_translate [--help] [--help-general] [--long-usage]
+       [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
+             CInt16/CInt32/CFloat32/CFloat64}] [-strict]
+       [-if <format>]... [-of <format>]
+       [-b <band>] [-mask <band>] [-expand {gray|rgb|rgba}]
+       [-outsize <xsize>[%]|0 <ysize>[%]|0] [-tr <xres> <yres>]
+       [-ovr <level>|AUTO|AUTO-<n>|NONE]
+       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]
+       [-unscale] [-scale[_bn] [<src_min> <src_max> [<dst_min> <dst_max>]]]... [-exponent[_bn] <exp_val>]...
+       [-srcwin <xoff> <yoff> <xsize> <ysize>] [-epo] [-eco]
+       [-projwin <ulx> <uly> <lrx> <lry>] [-projwin_srs <srs_def>]
+       [-a_srs <srs_def>] [-a_coord_epoch <epoch>]
+       [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_nodata <value>]
+       [-a_gt <gt0> <gt1> <gt2> <gt3> <gt4> <gt5>]
+       [-a_scale <value>] [-a_offset <value>]
+       [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
+       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
+       |-colorinterp {red|green|blue|alpha|gray|undefined},...]
+       [-mo <META-TAG>=<VALUE>]... [-q] [-sds]
+       [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
+       [-oo <NAME>=<VALUE>]...
+       <src_dataset> <dst_dataset>
 
 Description
 -----------
@@ -100,7 +100,7 @@ resampling, and rescaling pixels in the process.
     Both must be positive values. This is mutually exclusive with
     :option:`-outsize`, :option:`-a_ullr`, and :option:`-a_gt`.
 
-.. option:: -ovr <level|AUTO|AUTO-n|NONE>
+.. option:: -ovr {<level>|AUTO|AUTO-<n>|NONE}
 
     .. versionadded:: 3.6
 
@@ -122,11 +122,11 @@ resampling, and rescaling pixels in the process.
     Similarly when using :option:`-outsize` with percentage values, they refer to the size
     of the full resolution source dataset.
 
-.. option:: -r {nearest (default),bilinear,cubic,cubicspline,lanczos,average,rms,mode}
+.. option:: -r {nearest|bilinear|cubic|cubicspline|lanczos|average|rms|mode}
 
     Select a resampling algorithm.
 
-    ``nearest`` applies a nearest neighbour (simple sampling) resampler
+    ``nearest`` (default) applies a nearest neighbour (simple sampling) resampler
 
     ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
 
@@ -142,7 +142,7 @@ resampling, and rescaling pixels in the process.
 
     ``mode`` selects the value which appears most often of all the sampled points.
 
-.. option:: -scale [src_min src_max [dst_min dst_max]]
+.. option:: -scale [<src_min> <src_max> [<dst_min> <dst_max>]]
 
     Rescale the input pixels values from the range **src_min** to **src_max**
     to the range **dst_min** to **dst_max**.
@@ -296,18 +296,18 @@ resampling, and rescaling pixels in the process.
 
     .. versionadded:: 2.3
 
-.. option:: -colorinterp <red|green|blue|alpha|gray|undefined[,red|green|blue|alpha|gray|undefined]*>
+.. option:: -colorinterp {red|green|blue|alpha|gray|undefined},...
 
     Override the color interpretation of all specified bands. For
     example -colorinterp red,green,blue,alpha for a 4 band output dataset.
 
     .. versionadded:: 2.3
 
-.. option:: -mo META-TAG=VALUE
+.. option:: -mo <META-TAG>=<VALUE>
 
     Passes a metadata key and value to set on the output dataset if possible.
 
-.. option:: -co <NAME=VALUE>
+.. option:: -co <NAME>=<VALUE>
 
     .. WARNING: if modifying the 2 below paragraphs, please edit options/co.rst too
 
@@ -367,7 +367,7 @@ resampling, and rescaling pixels in the process.
 
     Do not copy the GCPs in the source dataset to the output dataset.
 
-.. option:: -gcp <pixel> <line> <easting> <northing> <elevation>
+.. option:: -gcp <pixel> <line> <easting> <northing> [<elevation>]
 
     Add the indicated ground control point to the output dataset.  This option
     may be provided multiple times to provide a set of GCPs.
@@ -395,7 +395,7 @@ resampling, and rescaling pixels in the process.
 
     .. versionadded:: 3.2
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 

@@ -41,70 +41,69 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf(
+    fprintf(
+        bIsError ? stderr : stdout,
         " Usage: [--help] [--help-general]\n"
         " - To generate a shaded relief map from any GDAL-supported elevation "
         "raster : \n\n"
-        "     gdaldem hillshade input_dem output_hillshade \n"
-        "                 [-z ZFactor (default=1)] [-s scale* (default=1)] \n"
-        "                 [-az Azimuth (default=315)] [-alt Altitude "
-        "(default=45)]\n"
+        "     gdaldem hillshade <input_dem> <output_hillshade> \n"
+        "                 [-z <zfactor>] [-s <scale>] \n"
+        "                 [-az <azimuth>] [-alt <altitude>]\n"
         "                 [-alg ZevenbergenThorne] [-combined | "
         "-multidirectional | -igor]\n"
-        "                 [-compute_edges] [-b Band (default=1)] [-of format] "
-        "[-co \"NAME=VALUE\"]* [-q]\n"
+        "                 [-compute_edges] [-b <Band>] [-of <format>] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "\n"
         " - To generates a slope map from any GDAL-supported elevation raster "
         ":\n\n"
-        "     gdaldem slope input_dem output_slope_map \n"
-        "                 [-p use percent slope (default=degrees)] [-s scale* "
-        "(default=1)]\n"
+        "     gdaldem slope <input_dem> <output_slope_map> \n"
+        "                 [-p] [-s <scale>]\n"
         "                 [-alg ZevenbergenThorne]\n"
-        "                 [-compute_edges] [-b Band (default=1)] [-of format] "
-        "[-co \"NAME=VALUE\"]* [-q]\n"
+        "                 [-compute_edges] [-b <band>] [-of <format>] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "\n"
         " - To generate an aspect map from any GDAL-supported elevation "
         "raster\n"
         "   Outputs a 32-bit float tiff with pixel values from 0-360 "
         "indicating azimuth :\n\n"
-        "     gdaldem aspect input_dem output_aspect_map \n"
+        "     gdaldem aspect <input_dem> <output_aspect_map> \n"
         "                 [-trigonometric] [-zero_for_flat]\n"
         "                 [-alg ZevenbergenThorne]\n"
-        "                 [-compute_edges] [-b Band (default=1)] [-of format] "
-        "[-co \"NAME=VALUE\"]* [-q]\n"
+        "                 [-compute_edges] [-b <band>] [-of format] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "\n"
         " - To generate a color relief map from any GDAL-supported elevation "
         "raster\n"
-        "     gdaldem color-relief input_dem color_text_file "
-        "output_color_relief_map\n"
+        "     gdaldem color-relief <input_dem> <color_text_file> "
+        "<output_color_relief_map>\n"
         "                 [-alpha] [-exact_color_entry | "
         "-nearest_color_entry]\n"
-        "                 [-b Band (default=1)] [-of format] [-co "
-        "\"NAME=VALUE\"]* [-q]\n"
+        "                 [-b <band>] [-of format] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "     where color_text_file contains lines of the format "
         "\"elevation_value red green blue\"\n"
         "\n"
         " - To generate a Terrain Ruggedness Index (TRI) map from any "
         "GDAL-supported elevation raster\n"
-        "     gdaldem TRI input_dem output_TRI_map\n"
+        "     gdaldem TRI <input_dem> <output_TRI_map>\n"
         "                 [-alg Wilson|Riley]\n"
-        "                 [-compute_edges] [-b Band (default=1)] [-of format] "
-        "[-co \"NAME=VALUE\"]* [-q]\n"
+        "                 [-compute_edges] [-b <band>] [-of <format>] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "\n"
         " - To generate a Topographic Position Index (TPI) map from any "
         "GDAL-supported elevation raster\n"
-        "     gdaldem TPI input_dem output_TPI_map\n"
-        "                 [-compute_edges] [-b Band (default=1)] [-of format] "
-        "[-co \"NAME=VALUE\"]* [-q]\n"
+        "     gdaldem TPI <input_dem> <output_TPI_map>\n"
+        "                 [-compute_edges] [-b <band>] [-of <format>] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "\n"
         " - To generate a roughness map from any GDAL-supported elevation "
         "raster\n"
-        "     gdaldem roughness input_dem output_roughness_map\n"
-        "                 [-compute_edges] [-b Band (default=1)] [-of format] "
-        "[-co \"NAME=VALUE\"]* [-q]\n"
+        "     gdaldem roughness <input_dem> <output_roughness_map>\n"
+        "                 [-compute_edges] [-b <band>] [-of <format>] "
+        "[-co <NAME>=<VALUE>]... [-q]\n"
         "\n"
         " Notes : \n"
         "   Scale is the ratio of vertical units to horizontal\n"
@@ -114,7 +113,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -165,7 +164,7 @@ MAIN_START(argc, argv)
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 2)
     {
-        Usage("Not enough arguments.");
+        Usage(true, "Not enough arguments.");
     }
 
     if (EQUAL(argv[1], "--utility_version") ||
@@ -178,7 +177,7 @@ MAIN_START(argc, argv)
         return 0;
     }
     else if (EQUAL(argv[1], "--help"))
-        Usage();
+        Usage(false);
 
     GDALDEMProcessingOptionsForBinary *psOptionsForBinary =
         GDALDEMProcessingOptionsForBinaryNew();
@@ -189,7 +188,7 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
     }
 
     if (!(psOptionsForBinary->bQuiet))
@@ -200,16 +199,16 @@ MAIN_START(argc, argv)
 
     if (psOptionsForBinary->pszSrcFilename == nullptr)
     {
-        Usage("Missing source.");
+        Usage(true, "Missing source.");
     }
     if (EQUAL(psOptionsForBinary->pszProcessing, "color-relief") &&
         psOptionsForBinary->pszColorFilename == nullptr)
     {
-        Usage("Missing color file.");
+        Usage(true, "Missing color file.");
     }
     if (psOptionsForBinary->pszDstFilename == nullptr)
     {
-        Usage("Missing destination.");
+        Usage(true, "Missing destination.");
     }
 
     // Open Dataset and get raster band.
@@ -230,7 +229,7 @@ MAIN_START(argc, argv)
         psOptionsForBinary->pszProcessing, psOptionsForBinary->pszColorFilename,
         psOptions, &bUsageError);
     if (bUsageError)
-        Usage();
+        Usage(true);
     const int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hSrcDataset);

@@ -18,16 +18,16 @@ Synopsis
     gdal_grid [--help] [--help-general]
               [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
               CInt16/CInt32/CFloat32/CFloat64}]
-              [-oo NAME=VALUE]*
-              [-of format] [-co "NAME=VALUE"]
-              [-zfield field_name] [-z_increase increase_value] [-z_multiply multiply_value]
-              [-a_srs srs_def] [-spat xmin ymin xmax ymax]
-              [-clipsrc <xmin ymin xmax ymax>|WKT|datasource|spat_extent]
-              [-clipsrcsql sql_statement] [-clipsrclayer layer]
-              [-clipsrcwhere expression]
-              [-l layername]* [-where expression] [-sql select_statement]
-              [-txe xmin xmax] [-tye ymin ymax] [-tr xres yres] [-outsize xsize ysize]
-              [-a algorithm[:parameter1=value1]*] [-q]
+              [-oo <NAME>=<VALUE>]...
+              [-of <format>] [-co <NAME>=<VALUE>]...
+              [-zfield <field_name>] [-z_increase <increase_value>] [-z_multiply <multiply_value>]
+              [-a_srs <srs_def>] [-spat <xmin> <ymin> <xmax> <ymax>]
+              [-clipsrc <xmin> <ymin> <xmax> <ymax>|<WKT>|<datasource>|spat_extent]
+              [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]
+              [-clipsrcwhere <expression>]
+              [-l <layername>]... [-where <expression>] [-sql <select_statement>]
+              [-txe <xmin> <xmax>] [-tye <ymin> <ymax>] [-tr <xres> <yres>] [-outsize <xsize> <ysize>]
+              [-a {<algorithm>[[:<parameter1>=<value1>]...]}] [-q]
               <src_datasource> <dst_filename>
 
 Description
@@ -65,7 +65,7 @@ computer.
 
     .. versionadded:: 3.2
 
-.. option:: -outsize <xsize ysize>
+.. option:: -outsize <xsize> <ysize>
 
     Set the size of the output file in pixels and lines.
     Note that :option:`-outsize` cannot be used with :option:`-tr`
@@ -98,7 +98,7 @@ computer.
     elevation to depth. The result value will be (Z value + Z increase value) * Z multiply value.
     The default value is 1.
 
-.. option:: -a <[algorithm[:parameter1=value1][:parameter2=value2]...]>
+.. option:: -a {<algorithm>[[:<parameter1>=<value1>]...]}
 
     Set the interpolation algorithm or data metric name and (optionally)
     its parameters. See the `Interpolation algorithms`_ and `Data metrics`_
@@ -110,7 +110,7 @@ computer.
     to select only features contained within the bounding box described by
     (xmin, ymin) - (xmax, ymax).
 
-.. option:: -clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent
+.. option:: -clipsrc [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent
 
     Adds a spatial filter to select only features contained within the
     specified bounding box (expressed in source SRS), WKT geometry (POLYGON or
@@ -149,7 +149,7 @@ computer.
     An SQL statement to be evaluated against the datasource to produce a
     virtual layer of features to be processed.
 
-.. option:: -oo <NAME=VALUE>
+.. option:: -oo <NAME>=<VALUE>
 
     .. versionadded:: 3.7
 

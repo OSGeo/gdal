@@ -18,12 +18,14 @@ Synopsis
 .. code-block::
 
     gdal_pansharpen [--help] [--help-general]
-                    pan_dataset {spectral_dataset[,band=num]}+ out_dataset
-                    [-of format] [-b band]* [-w weight_val]*
-                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
-                    [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]
-                    [-spat_adjust {union,intersection,none,nonewithoutwarning}]
-                    [-co NAME=VALUE]* [-q]
+                    <pan_dataset>
+                    <spectral_dataset>[,band=<num>] [<spectral_dataset>[,band=<num>]]...
+                    <out_dataset>
+                    [-of <format>] [-b <band>]... [-w <weight_val>]...
+                    [-r {nearest|bilinear|cubic|cubicspline|lanczos|average}]
+                    [-threads {ALL_CPUS|<number>}] [-bitdepth <val>] [-nodata <val>]
+                    [-spat_adjust {union|intersection|none|nonewithoutwarning}]
+                    [-co <NAME>=<VALUE>]... [-q]
 
 Description
 -----------
@@ -36,7 +38,7 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
 .. include:: options/help_and_help_general.rst
 
-.. option:: -of <format>:
+.. option:: -of <format>
 
     Select the output format. Starting with GDAL 2.3, if not specified,
     the format is guessed from the extension (previously was ``GTiff``). Use
@@ -54,14 +56,14 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
     Specify a weight for the computation of the pseudo panchromatic
     value. There must be as many -w switches as input spectral bands.
 
-.. option:: -r {nearest,bilinear,cubic (default),cubicspline,lanczos,average}
+.. option:: -r {nearest|bilinear|cubic|cubicspline|lanczos|average}
 
-    Select a resampling algorithm.
+    Select a resampling algorithm. ``cubic`` is the default.
 
-.. option:: -threads {ALL_CPUS,number}
+.. option:: -threads {ALL_CPUS|<number>}
 
     Specify number of threads to use to do the resampling and
-    pan-sharpening itself. Can be an integer number or ALL_CPUS.
+    pan-sharpening itself. Can be an integer number or ``ALL_CPUS``.
 
 .. option:: -bitdepth <val>
 
@@ -75,10 +77,11 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
     pan-sharpening computation itself. If not set, deduced from the
     input bands, provided they have a consistent setting.
 
-.. option:: -spat_adjust {union(default),intersection,none,nonewithoutwarning}
+.. option:: -spat_adjust {union|intersection|none|nonewithoutwarning}
 
     Select behavior when bands have not the same extent. See
     *SpatialExtentAdjustment* documentation in :ref:`gdal_vrttut_pansharpen`
+    ``union`` is the default.
 
 .. include:: options/co.rst
 
@@ -90,7 +93,7 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
     Dataset with panchromatic band (first band will be used).
 
-.. option:: <spectral_dataset>[,band=num]
+.. option:: <spectral_dataset>[,band=<num>]
 
     Dataset with one or several spectral bands. If the band option is
     not specified, all bands of the datasets are taken into account.
