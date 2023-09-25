@@ -1521,11 +1521,6 @@ def test_ogr2ogr_lib_transaction_size(transaction_size):
     )
 
     try:
-        # A transaction size of 0 is invalid
-        if transaction_size == 0:
-            assert ds is None
-            return
-
         assert ds is not None
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 10, "wrong feature count"
