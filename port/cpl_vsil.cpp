@@ -32,6 +32,7 @@
 #include "cpl_vsi.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstring>
@@ -519,7 +520,7 @@ int VSIRename(const char *oldpath, const char *newpath)
  * @param pszTarget Target filename.  UTF-8 encoded. Must not be NULL
  * @param fpSource File handle on the source file. May be NULL if pszSource is
  * not NULL.
- * @param nSourceSize Size of the source file. Only used for progress callback.
+ * @param nSourceSize Size of the source file. Pass -1 if unknown.
  * If set to -1, and progress callback is used, VSIStatL() will be used on
  * pszSource to retrieve the source size.
  * @param papszOptions Null terminated list of options, or NULL.
@@ -1340,6 +1341,16 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
         {
             break;
         }
+    }
+
+    if (nSourceSize != static_cast<vsi_l_offset>(-1) && nOffset != nSourceSize)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Copying of %s to %s failed: %" PRIu64 " bytes were copied "
+                 "whereas %" PRIu64 " were expected",
+                 pszSource, pszTarget, static_cast<uint64_t>(nOffset),
+                 static_cast<uint64_t>(nSourceSize));
+        ret = -1;
     }
 
     if (VSIFCloseL(fpOut) != 0)
