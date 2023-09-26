@@ -422,6 +422,11 @@ def test_bag_vr_resampled():
                 "metadata": {},
                 "min": -10.0,
                 "noDataValue": 1000000.0,
+                "overviews": [
+                    {"checksum": 681, "size": [18, 12]},
+                    {"checksum": 340, "size": [9, 6]},
+                    {"checksum": 65529, "size": [6, 4]},
+                ],
                 "type": "Float32",
             },
             {
@@ -434,6 +439,11 @@ def test_bag_vr_resampled():
                 "metadata": {},
                 "min": 0.0,
                 "noDataValue": 1000000.0,
+                "overviews": [
+                    {"checksum": 1344, "size": [18, 12]},
+                    {"checksum": 420, "size": [9, 6]},
+                    {"checksum": 60, "size": [6, 4]},
+                ],
                 "type": "Float32",
             },
         ],
@@ -484,9 +494,9 @@ def test_bag_vr_resampled():
     # Test overviews
     with gdaltest.config_option("GDAL_BAG_MIN_OVR_SIZE", "4"):
         ds = gdal.OpenEx("data/bag/test_vr.bag", open_options=["MODE=RESAMPLED_GRID"])
-    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert ds.GetRasterBand(1).GetOverviewCount() == 3
     assert ds.GetRasterBand(1).GetOverview(-1) is None
-    assert ds.GetRasterBand(1).GetOverview(2) is None
+    assert ds.GetRasterBand(1).GetOverview(3) is None
 
     ovr = ds.GetRasterBand(1).GetOverview(0)
     cs = ovr.Checksum()

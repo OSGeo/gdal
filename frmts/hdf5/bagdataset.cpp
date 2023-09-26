@@ -173,7 +173,7 @@ class BAGDataset final : public GDALPamDataset
     double m_dfResFilterMin = 0;
     double m_dfResFilterMax = std::numeric_limits<double>::infinity();
 
-    void InitOverviewDS(BAGDataset *poParentDS, int nOvrFactor);
+    void InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize);
 
     bool m_bMetadataWritten = false;
     CPLStringList m_aosCreationOptions{};
@@ -193,6 +193,7 @@ class BAGDataset final : public GDALPamDataset
   public:
     BAGDataset();
     BAGDataset(BAGDataset *poParentDS, int nOvrFactor);
+    BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize);
     virtual ~BAGDataset();
 
     virtual CPLErr GetGeoTransform(double *) override;
@@ -1793,10 +1794,17 @@ BAGDataset::BAGDataset()
 
 BAGDataset::BAGDataset(BAGDataset *poParentDS, int nOvrFactor)
 {
-    InitOverviewDS(poParentDS, nOvrFactor);
+    const int nXSize = poParentDS->nRasterXSize / nOvrFactor;
+    const int nYSize = poParentDS->nRasterYSize / nOvrFactor;
+    InitOverviewDS(poParentDS, nXSize, nYSize);
 }
 
-void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nOvrFactor)
+BAGDataset::BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize)
+{
+    InitOverviewDS(poParentDS, nXSize, nYSize);
+}
+
+void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
 {
     m_ePopulation = poParentDS->m_ePopulation;
     m_bMask = poParentDS->m_bMask;
@@ -1805,8 +1813,8 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nOvrFactor)
     m_poSharedResources = poParentDS->m_poSharedResources;
     m_poRootGroup = poParentDS->m_poRootGroup;
     m_oSRS = poParentDS->m_oSRS;
-    nRasterXSize = poParentDS->nRasterXSize / nOvrFactor;
-    nRasterYSize = poParentDS->nRasterYSize / nOvrFactor;
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
     adfGeoTransform[0] = poParentDS->adfGeoTransform[0];
     adfGeoTransform[1] = poParentDS->adfGeoTransform[1] *
                          poParentDS->nRasterXSize / nRasterXSize;
@@ -2172,18 +2180,17 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 
     // Fetch the elevation dataset and attach as a band.
     int nNextBand = 1;
-    const hid_t hElevation = H5Dopen(GetHDF5Handle(), "/BAG_root/elevation");
-    if (hElevation < 0)
-    {
-        return false;
-    }
 
     BAGRasterBand *poElevBand = new BAGRasterBand(this, nNextBand);
 
-    if (!poElevBand->Initialize(hElevation, "elevation"))
     {
-        delete poElevBand;
-        return false;
+        const hid_t hElevation =
+            H5Dopen(GetHDF5Handle(), "/BAG_root/elevation");
+        if (hElevation < 0 || !poElevBand->Initialize(hElevation, "elevation"))
+        {
+            delete poElevBand;
+            return false;
+        }
     }
 
     m_nLowResWidth = poElevBand->nRasterXSize;
@@ -2641,27 +2648,57 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                                          "IMAGE_STRUCTURE");
         }
 
-        // Mostly for autotest purposes
-        const int nMinOvrSize = std::max(
-            1, atoi(CPLGetConfigOption("GDAL_BAG_MIN_OVR_SIZE", "256")));
+        const bool bCanUseLowResAsOvr = nRasterXSize > m_nLowResWidth &&
+                                        nRasterYSize > m_nLowResHeight &&
+                                        GetRasterCount() > 1;
+        const int nMinOvrSize =
+            bCanUseLowResAsOvr ? 1 + std::min(m_nLowResWidth, m_nLowResHeight)
+                               : 256;
         for (int nOvrFactor = 2; nRasterXSize / nOvrFactor >= nMinOvrSize &&
                                  nRasterYSize / nOvrFactor >= nMinOvrSize;
              nOvrFactor *= 2)
         {
-            BAGDataset *poOvrDS = new BAGDataset(this, nOvrFactor);
+            auto poOvrDS = cpl::make_unique<BAGDataset>(this, nOvrFactor);
 
             for (int i = 1; i <= GetRasterCount(); i++)
             {
-                poOvrDS->SetBand(i, new BAGResampledBand(poOvrDS, i, bHasNoData,
+                poOvrDS->SetBand(i, new BAGResampledBand(poOvrDS.get(), i,
+                                                         bHasNoData,
                                                          fNoDataValue, false));
             }
 
-            if (poOvrDS->GetRasterCount() > 1)
+            m_apoOverviewDS.emplace_back(std::move(poOvrDS));
+        }
+
+        // Use the low resolution grid as the last overview level
+        if (bCanUseLowResAsOvr)
+        {
+            auto poOvrDS = cpl::make_unique<BAGDataset>(this, m_nLowResWidth,
+                                                        m_nLowResHeight);
+
+            poElevBand = new BAGRasterBand(poOvrDS.get(), 1);
+            const hid_t hElevation =
+                H5Dopen(GetHDF5Handle(), "/BAG_root/elevation");
+            if (hElevation < 0 ||
+                !poElevBand->Initialize(hElevation, "elevation"))
             {
-                poOvrDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                                      "IMAGE_STRUCTURE");
+                delete poElevBand;
+                return false;
             }
-            m_apoOverviewDS.push_back(std::unique_ptr<BAGDataset>(poOvrDS));
+            poOvrDS->SetBand(1, poElevBand);
+
+            const hid_t hUncertainty =
+                H5Dopen(GetHDF5Handle(), "/BAG_root/uncertainty");
+            BAGRasterBand *poUBand = new BAGRasterBand(poOvrDS.get(), 2);
+            if (hUncertainty < 0 ||
+                !poUBand->Initialize(hUncertainty, "uncertainty"))
+            {
+                delete poUBand;
+                return false;
+            }
+            poOvrDS->SetBand(2, poUBand);
+
+            m_apoOverviewDS.emplace_back(std::move(poOvrDS));
         }
     }
     else if (bOpenSuperGrid)
