@@ -125,6 +125,8 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 #define MM_NOM_CAMP_PRIMER_CARACTER_    0x04
 
 #define MM_MAX_AMPLADA_CAMP_N_DBF       21
+#define MM_MAX_AMPLADA_CAMP_C_DBF       500  // But it can be modified on the fly
+#define MM_MAX_AMPLADA_CAMP_D_DBF       10
 
 #define MM_PRIVATE_POINT_DB_FIELDS      1
 #define MM_PRIVATE_ARC_DB_FIELDS        5

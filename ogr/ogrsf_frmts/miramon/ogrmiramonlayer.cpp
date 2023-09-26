@@ -45,7 +45,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
       nRegionOffset(0),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
       papszKeyedValues(nullptr), bValidFile(false), hMMFeature(),
-      hMiraMonLayer(), pMMHeader()
+      hMiraMonLayer(), pMMHeader(), hLayerDB()
 {
     if (m_fp == nullptr)
         return;

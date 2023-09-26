@@ -1,5 +1,5 @@
-#ifndef __MMSTRUCT_H
-#define __MMSTRUCT_H
+#ifndef __MM_GDAL_DRIVER_STRUCTS_H
+#define __MM_GDAL_DRIVER_STRUCTS_H
 /* -------------------------------------------------------------------- */
 /*      Necessary functions to read/write a MiraMon Vector File         */
 /* -------------------------------------------------------------------- */
@@ -314,8 +314,8 @@ struct MiraMonRecord
 
 struct MiraMonDataBaseField
 {
-    char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF];
-    char pszFieldDescription[MM_MAX_BYTES_FIELD_DESC];
+    char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF+1];
+    char pszFieldDescription[MM_MAX_BYTES_FIELD_DESC+1];
     enum FieldType eFieldType; // See enum FieldType
     unsigned __int32 nFieldSize; // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
     unsigned __int32 nNumberOfDecimals; // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
@@ -655,4 +655,4 @@ enum TreatmentVariable {MMTVQuantitativeContinuous, MMTVOrdinal, MMTVCategorical
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif
-#endif //__MMSTRUCT_H
+#endif //__MM_GDAL_DRIVER_STRUCTS_H

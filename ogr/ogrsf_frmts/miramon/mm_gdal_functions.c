@@ -1245,6 +1245,239 @@ char *p;
 		free_function(p);
 }
 
+#ifdef TODO
+// This function assumes that all the file is saved in disk and closed.
+int MMChangeCFieldWidthDBF(struct MM_BASE_DADES_XP * base_dades_XP,
+							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
+							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada)
+{
+char *registre, *blancs=NULL;
+MM_TIPUS_BYTES_PER_CAMP_DBF l_glop1, l_glop2, i_glop2;
+MM_NUMERATOR_RECORD i_reg, nfitx;
+int canvi_amplada;
+signed __int32 j;
+MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
+char ModeLectura_previ[4];
+enum GESTIO_MEMORIA_ACCES_FITXER AccesFitxer_previ;
+size_t retorn_fwrite;
+int retorn_TruncaFitxer;
+
+char sz_data_a_convertir[11];	// Si aquesta és la conversió desitjada (cas CANVIA_C8_A_C10_I_CANVIA_DATA_A_FORMAT_USUARI)
+								// rebrà una data 20181122 i la convertirà en 22-11-2018.
+char sz_data_en_blanc[10];	// És simplement un bloc que es copiarà: no cal que estigui finalitzat amb \0 i per això
+							// només té 10 bytes d'ample.
+void *ptr;
+
+BOOL error_sprintf_EOF=FALSE, error_sprintf_n_decimals=FALSE;
+int retorn_printf;
+
+    if(base_dades_XP->Camp[quincamp].TipusDeCamp!='C')
+        return 0;
+	
+	canvi_amplada = novaamplada - base_dades_XP->Camp[quincamp].BytesPerCamp;
+	
+    /* Càlcul sobre els registres. */
+	if (base_dades_XP->nfitxes != 0)
+	{
+		l_glop1 = base_dades_XP->Camp[quincamp].BytesAcumulats;
+		i_glop2 = l_glop1 + base_dades_XP->Camp[quincamp].BytesPerCamp;
+		if (quincamp == base_dades_XP->ncamps-1)
+			l_glop2 = 0;
+		else
+			l_glop2 = base_dades_XP->BytesPerFitxa -
+					base_dades_XP->Camp[quincamp + 1].BytesAcumulats;
+
+		if ((registre = calloc_function(base_dades_XP->BytesPerFitxa)) == NULL)
+		{
+            error_message_function("Not enough memory");
+			return 1;
+		}
+        registre[base_dades_XP->BytesPerFitxa-1]=MarcaFinalDeCadena;
+
+        if ((blancs = (char *) MM_malloc(novaamplada)) == NULL)
+        {
+            error_message_function("Not enough memory");
+            MM_free (registre);
+            return 1;
+        }
+        memset(blancs, ' ', novaamplada);
+        
+		nfitx = base_dades_XP->nfitxes;
+        #ifdef _MSC_VER
+        #pragma warning( disable : 4127 )
+        #endif
+        for (i_reg = (canvi_amplada<0 ? 0 : nfitx-1); TRUE; )
+        #ifdef _MSC_VER
+        #pragma warning( default : 4127 )
+        #endif
+        {
+            if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
+            {
+                if( 0!=fseek_mem(base_dades_XP->pfBaseDades_mem, 
+                               (base_dades_XP->OffsetPrimeraFitxa +
+                               (OFFSET_FITXER)i_reg * base_dades_XP->BytesPerFitxa),
+                               SEEK_SET)
+                       ||
+                    1!=fread_mem(registre, base_dades_XP->BytesPerFitxa,
+                                1, base_dades_XP->pfBaseDades_mem)
+                        ||
+                    0!=fseek_mem(base_dades_XP->pfBaseDades_mem, 
+                                (base_dades_XP->OffsetPrimeraFitxa +
+                                (OFFSET_FITXER)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada)),
+                                SEEK_SET)
+                        ||
+                    1!=fwrite_mem(registre, l_glop1, 1, base_dades_XP->pfBaseDades_mem))
+                {
+                    if (blancs) MM_free(blancs);
+                    MM_free (registre);
+                    ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+                    return 1;
+                }
+            }
+            else
+            {
+                if( 0!=fseek_64(base_dades_XP->pfBaseDades,
+                               base_dades_XP->OffsetPrimeraFitxa +
+                               (OFFSET_FITXER)i_reg * base_dades_XP->BytesPerFitxa,
+                               SEEK_SET)
+                       ||
+                    1!=fread_64(registre, base_dades_XP->BytesPerFitxa,
+                                1, base_dades_XP->pfBaseDades)
+                        ||
+                    0!=fseek_64(base_dades_XP->pfBaseDades,
+                                base_dades_XP->OffsetPrimeraFitxa +
+                                (OFFSET_FITXER)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada),
+                                SEEK_SET)
+                        ||
+                    1!=fwrite_64(registre, l_glop1, 1, base_dades_XP->pfBaseDades))
+                {
+                    if (blancs) MM_free(blancs);
+                    MM_free (registre);
+                    ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+                    return 1;
+                }
+            }
+
+            
+            switch (base_dades_XP->Camp[quincamp].TipusDeCamp)
+            {
+                case 'C':
+                    if (que_fer_amb_reformatat_decimals==CANVIA_C8_A_C10_I_CANVIA_DATA_A_FORMAT_USUARI)
+                    {
+                        memcpy(sz_data_a_convertir,
+                           registre + l_glop1, base_dades_XP->Camp[quincamp].BytesPerCamp);
+                        Data_Num_dBase_a_Normal(sz_data_a_convertir);
+                        if (*sz_data_a_convertir==*CadenaBuida)
+                        {	// Criteri de Data_Num_dBase_a_Normal(), útil per al MiraD, de retornar una
+                            // cadena buida si el registre era buit. Per tant, he d'omplir amb el
+                            // camp amb blancs.
+                            ptr=sz_data_en_blanc;
+                        }
+                        else
+                            ptr=sz_data_a_convertir;
+
+                        if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
+                            retorn_fwrite=fwrite_mem(ptr, novaamplada, 1, base_dades_XP->pfBaseDades_mem);
+                        else
+                            retorn_fwrite=fwrite_64(ptr, novaamplada, 1, base_dades_XP->pfBaseDades);
+                    }
+                    else
+                    {
+                        memcpy(blancs,
+                           registre + l_glop1,
+                            ( canvi_amplada<0 ? novaamplada :
+                                   base_dades_XP->Camp[quincamp].BytesPerCamp));
+                        if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
+                            retorn_fwrite=fwrite_mem(blancs, novaamplada, 1, base_dades_XP->pfBaseDades_mem);
+                        else
+                            retorn_fwrite=fwrite_64(blancs, novaamplada, 1, base_dades_XP->pfBaseDades);
+                    }
+                    if(1!=retorn_fwrite)
+                    {
+                        if (blancs) MM_free(blancs);
+                        MM_free (registre);
+                        ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+                        return 1;
+                    }
+                    break;
+            }
+            if(l_glop2)  //Si l_glop2==0 estem a l'últim camp i no cal fer res
+            {
+                if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
+                    retorn_fwrite=fwrite_mem(registre + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades_mem);
+                else
+                    retorn_fwrite=fwrite_64(registre + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades);
+                if(1!=retorn_fwrite)
+                {
+                    if (blancs) MM_free(blancs);
+                    MM_free (registre);
+                    ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+                    return 1;
+                }
+            }
+
+            if (canvi_amplada<0)
+            {
+                if (i_reg+1 == nfitx)
+                    break;
+                i_reg++;
+            }
+            else
+            {
+                
+                if (i_reg == 0)
+                    break;
+                i_reg--;
+            }
+        }  /* Bucle de moure registres. */
+
+        if (error_sprintf_EOF)
+        	ErrorMsg("Some value(s) could not be written properly."); // ·$· A passar a stb:
+            	
+		if (error_sprintf_n_decimals)
+        	ErrorMsg("Some value(s) was written with less decimal places than required because of field width."); // ·$· A passar a stb:
+            	
+
+		if (blancs) MM_free(blancs);
+		MM_free(registre);
+
+		if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
+            retorn_TruncaFitxer=TruncaFitxer_mem(base_dades_XP->pfBaseDades_mem,
+					  (base_dades_XP->OffsetPrimeraFitxa +
+					  (OFFSET_FITXER)base_dades_XP->nfitxes *(base_dades_XP->BytesPerFitxa+canvi_amplada)));
+        else
+            retorn_TruncaFitxer=TruncaFitxer_64(base_dades_XP->pfBaseDades,
+					  base_dades_XP->OffsetPrimeraFitxa +
+					  (OFFSET_FITXER)base_dades_XP->nfitxes *(base_dades_XP->BytesPerFitxa+canvi_amplada));
+		if (canvi_amplada<0 && retorn_TruncaFitxer)
+		{
+            ErrorMsg(stb(0, Error_en_repos_fitxer));
+			return 1;
+		}
+	} /* Fi de registres de != 0*/
+
+    if (canvi_amplada!=0)
+    {
+		base_dades_XP->Camp[quincamp].BytesPerCamp = novaamplada;
+        base_dades_XP->BytesPerFitxa+=canvi_amplada;
+        for (i_camp=(TIPUS_NUMERADOR_CAMP_DBF)(quincamp+1); i_camp< base_dades_XP->ncamps; i_camp++)
+            base_dades_XP->Camp[i_camp].BytesAcumulats+=canvi_amplada;
+    }
+	base_dades_XP->Camp[quincamp].DecimalsSiEsFloat = nou_decimals;
+
+	DonaData(&(base_dades_XP->dia), &(base_dades_XP->mes), &(base_dades_XP->any));
+
+	/* Actualitzar la capçalera */
+	if ((ActualitzaTotaCapca(base_dades_XP, ACTUALITZA_FITXER_SI_PREEXISTENT)) == FALSE)
+	{
+    	ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+		return 1;
+	}
+    
+	return 0;
+} /* Fi de CanviaAmpladaCampDBF() */
+#endif // TO_DO
+
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif
