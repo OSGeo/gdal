@@ -530,6 +530,8 @@ def test_plmosaic_16(tmp_vsimem, valid_mosaic):
 # Open with explicit MOSAIC dataset open option
 
 
+@pytest.mark.require_driver("PNG")
+@pytest.mark.require_driver("WMS")
 def test_plmosaic_17(tmp_path, valid_mosaic):
 
     cache_path = str(tmp_path / "plmosaic_cache")
@@ -809,6 +811,8 @@ def test_plmosaic_20(valid_mosaic):
 # Try use_tiles
 
 
+@pytest.mark.require_driver("PNG")
+@pytest.mark.require_driver("WMS")
 def test_plmosaic_21(valid_mosaic):
 
     with gdal.config_option("PL_URL", valid_mosaic):
