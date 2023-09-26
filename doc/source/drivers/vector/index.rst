@@ -67,6 +67,7 @@ Vector drivers
    lvbag
    mapml
    memory
+   miramon
    mitab
    mongodbv3
    mssqlspatial

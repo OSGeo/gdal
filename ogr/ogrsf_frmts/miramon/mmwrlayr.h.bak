@@ -1,0 +1,58 @@
+#ifndef __MMWRLAYR_H
+#define __MMWRLAYR_H
+
+/* -------------------------------------------------------------------- */
+/*      Necessary functions to read/write a MiraMon Vector File         */
+/* -------------------------------------------------------------------- */
+#include "mmStruct.h"
+
+#ifdef APLICACIO_MM32
+    #include "memo.h"
+    #include "F64_str.h"	//For FILE_64
+    #include "FILE_64.h"	// Per a fseek_64(),...
+    #include "bd_xp.h"	    //For MAX_LON_CAMP_DBF
+    //#include "LbTopStr.h"	// For struct GEOMETRIC_I_TOPOLOGIC_POL
+    //#include "str_snyd.h"   // For struct SNY_TRANSFORMADOR_GEODESIA
+    #define calloc_function(a) MM_calloc(a)
+    #define fopen_function(f,a) fopen_64(f,a)
+    #define fclose_function(f) fclose_64(f)
+    #define fwrite_function(p,s,r,f) fwrite_64(p,s,r,f)
+    #define fread_function(p,s,r,f) fread_64(p,s,r,f)
+    #define fseek_function(f,s,g) fseek_64(f,s,g)
+    #define strdup_function(p)  strdup(p)
+    #define error_message_function puts
+    #define info_message_function puts
+#else
+    #define calloc_function(a) CPLCalloc(1,a)
+    #define fopen_function(f,a) VSIFOpenL(f,a)
+    #define fclose_function(f) VSIFCloseL(f)
+    #define fwrite_function(p,s,r,f) VSIFWriteL(p,s,r,f)
+    #define fread_function(p,s,r,f) VSIFReadL(p,s,r,f)
+    #define fseek_function(f,s,g) VSIFSeekL(f,s,g)
+    #define strdup_function(p)  CPLStrdup(p)
+    #define error_message_function puts
+    #define info_message_function puts
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Functions                                                       */
+/* -------------------------------------------------------------------- */
+// Layer
+struct MiraMonLayerInfo * MMCreateLayer(char *pzFileName, __int32 LayerVersion, 
+            int eLT, unsigned __int64 nElemCount, struct MiraMonDataBase *attributes);
+int FreeMMLayer(struct MiraMonLayerInfo *hMiraMonLayer);
+int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer);
+int MMReadHeader(VSILFILE *pF, struct MiraMonLayerInfo *hMiraMonLayer, 
+                    struct MM_TH *pMMHeader);
+
+/*BOOL_CHAR FlushMMLayer(struct MiraMonLayer *hMiraMonLayer);
+void ExtendMMLayer(struct MiraMonLayer *hMiraMonLayer);
+void RepackMMLayer(struct MiraMonLayer *hMiraMonLayer);
+
+// Feature: encapsulates the definition of a whole feature, that is a 
+// geometry and a set of attributes. 
+void CheckNewMMFeature(struct MiraMonLayer *hMiraMonLayer, struct MiraMonFeature *hMiraMonFeature);
+*/
+int AddMMFeature(struct MiraMonLayerInfo *hMiraMonLayer, struct MiraMonFeature *hMiraMonFeature);
+
+#endif //__MMWRLAYR_H
