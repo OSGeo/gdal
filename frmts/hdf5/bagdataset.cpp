@@ -31,6 +31,7 @@
 #include "hdf5dataset.h"
 #include "gh5_convenience.h"
 
+#include "cpl_mem_cache.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "gdal_alg.h"
@@ -164,10 +165,8 @@ class BAGDataset final : public GDALPamDataset
 
     unsigned m_nSuperGridRefinementStartIndex = 0;
 
-    unsigned m_nCachedRefinementStartIndex = 0;
-    unsigned m_nCachedRefinementCount = 0;
-    std::vector<float> m_aCachedRefinementValues;
-    bool CacheRefinementValues(unsigned nRefinementIndex);
+    lru11::Cache<unsigned, std::vector<float>> m_oCacheRefinementValues;
+    const float *GetRefinementValues(unsigned nRefinementIndex);
 
     bool GetMeanSupergridsResolution(double &dfResX, double &dfResY);
 
@@ -1359,16 +1358,15 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                     const unsigned nRefinementIndex =
                         nRefinementIndexase + super_x;
-                    if (!poGDS->CacheRefinementValues(nRefinementIndex))
+                    const auto *pafRefValues =
+                        poGDS->GetRefinementValues(nRefinementIndex);
+                    if (!pafRefValues)
                     {
                         eErr = CE_Failure;
                         goto end;
                     }
 
-                    const unsigned nOffInArray =
-                        nRefinementIndex - poGDS->m_nCachedRefinementStartIndex;
-                    float depth =
-                        poGDS->m_aCachedRefinementValues[2 * nOffInArray];
+                    float depth = pafRefValues[0];
                     if (depth == fNoDataValue)
                     {
                         if (depthsPtr[nTargetIdx] == fNoSuperGridValue)
@@ -1391,9 +1389,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                         }
                         counts[nTargetIdx]++;
 
-                        auto uncrt =
-                            poGDS->m_aCachedRefinementValues[2 * nOffInArray +
-                                                             1];
+                        auto uncrt = pafRefValues[1];
                         auto &target_uncrt_ptr = uncrtPtr[nTargetIdx];
                         if (uncrt > target_uncrt_ptr ||
                             target_uncrt_ptr == fNoDataValue)
@@ -1411,9 +1407,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                              depthsPtr[nTargetIdx] == fNoSuperGridValue)
                     {
                         depthsPtr[nTargetIdx] = depth;
-                        uncrtPtr[nTargetIdx] =
-                            poGDS->m_aCachedRefinementValues[2 * nOffInArray +
-                                                             1];
+                        uncrtPtr[nTargetIdx] = pafRefValues[1];
                     }
                 }
             }
@@ -3136,59 +3130,55 @@ void BAGDataset::GetVarresRefinementChunkSize(unsigned &nChunkSize)
 }
 
 /************************************************************************/
-/*                        CacheRefinementValues()                       */
+/*                        GetRefinementValues()                         */
 /************************************************************************/
 
-bool BAGDataset::CacheRefinementValues(unsigned nRefinementIndex)
+const float *BAGDataset::GetRefinementValues(unsigned nRefinementIndex)
 {
-    if (!(nRefinementIndex >= m_nCachedRefinementStartIndex &&
-          nRefinementIndex <
-              m_nCachedRefinementStartIndex + m_nCachedRefinementCount))
+    unsigned nStartIndex = (nRefinementIndex / m_nChunkSizeVarresRefinement) *
+                           m_nChunkSizeVarresRefinement;
+    const auto vPtr = m_oCacheRefinementValues.getPtr(nStartIndex);
+    if (vPtr)
+        return vPtr->data() + 2 * (nRefinementIndex - nStartIndex);
+
+    const unsigned nCachedRefinementCount = std::min(
+        m_nChunkSizeVarresRefinement, m_nRefinementsSize - nStartIndex);
+    std::vector<float> values(2 * nCachedRefinementCount);
+
+    hsize_t countVarresRefinements[2] = {
+        static_cast<hsize_t>(1), static_cast<hsize_t>(nCachedRefinementCount)};
+    const hid_t memspaceVarresRefinements =
+        H5Screate_simple(2, countVarresRefinements, nullptr);
+    H5OFFSET_TYPE mem_offset[2] = {static_cast<H5OFFSET_TYPE>(0),
+                                   static_cast<H5OFFSET_TYPE>(0)};
+    if (H5Sselect_hyperslab(memspaceVarresRefinements, H5S_SELECT_SET,
+                            mem_offset, nullptr, countVarresRefinements,
+                            nullptr) < 0)
     {
-        m_nCachedRefinementStartIndex =
-            (nRefinementIndex / m_nChunkSizeVarresRefinement) *
-            m_nChunkSizeVarresRefinement;
-        m_nCachedRefinementCount =
-            std::min(m_nChunkSizeVarresRefinement,
-                     m_nRefinementsSize - m_nCachedRefinementStartIndex);
-        m_aCachedRefinementValues.resize(2 * m_nCachedRefinementCount);
-
-        hsize_t countVarresRefinements[2] = {
-            static_cast<hsize_t>(1),
-            static_cast<hsize_t>(m_nCachedRefinementCount)};
-        const hid_t memspaceVarresRefinements =
-            H5Screate_simple(2, countVarresRefinements, nullptr);
-        H5OFFSET_TYPE mem_offset[2] = {static_cast<H5OFFSET_TYPE>(0),
-                                       static_cast<H5OFFSET_TYPE>(0)};
-        if (H5Sselect_hyperslab(memspaceVarresRefinements, H5S_SELECT_SET,
-                                mem_offset, nullptr, countVarresRefinements,
-                                nullptr) < 0)
-        {
-            H5Sclose(memspaceVarresRefinements);
-            return false;
-        }
-
-        H5OFFSET_TYPE offsetRefinement[2] = {
-            static_cast<H5OFFSET_TYPE>(0),
-            static_cast<H5OFFSET_TYPE>(m_nCachedRefinementStartIndex)};
-        if (H5Sselect_hyperslab(m_hVarresRefinementsDataspace, H5S_SELECT_SET,
-                                offsetRefinement, nullptr,
-                                countVarresRefinements, nullptr) < 0)
-        {
-            H5Sclose(memspaceVarresRefinements);
-            return false;
-        }
-        if (H5Dread(m_hVarresRefinements, m_hVarresRefinementsNative,
-                    memspaceVarresRefinements, m_hVarresRefinementsDataspace,
-                    H5P_DEFAULT, m_aCachedRefinementValues.data()) < 0)
-        {
-            H5Sclose(memspaceVarresRefinements);
-            return false;
-        }
         H5Sclose(memspaceVarresRefinements);
+        return nullptr;
     }
 
-    return true;
+    H5OFFSET_TYPE offsetRefinement[2] = {
+        static_cast<H5OFFSET_TYPE>(0), static_cast<H5OFFSET_TYPE>(nStartIndex)};
+    if (H5Sselect_hyperslab(m_hVarresRefinementsDataspace, H5S_SELECT_SET,
+                            offsetRefinement, nullptr, countVarresRefinements,
+                            nullptr) < 0)
+    {
+        H5Sclose(memspaceVarresRefinements);
+        return nullptr;
+    }
+    if (H5Dread(m_hVarresRefinements, m_hVarresRefinementsNative,
+                memspaceVarresRefinements, m_hVarresRefinementsDataspace,
+                H5P_DEFAULT, values.data()) < 0)
+    {
+        H5Sclose(memspaceVarresRefinements);
+        return nullptr;
+    }
+    H5Sclose(memspaceVarresRefinements);
+    const auto &vRef =
+        m_oCacheRefinementValues.insert(nStartIndex, std::move(values));
+    return vRef.data() + 2 * (nRefinementIndex - nStartIndex);
 }
 
 /************************************************************************/
