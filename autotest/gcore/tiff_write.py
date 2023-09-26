@@ -49,6 +49,15 @@ def module_disable_exceptions():
         yield
 
 
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_cleanup():
+    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
+
+    yield
+
+    del gdaltest.tiff_drv
+
+
 ###############################################################################
 
 
@@ -74,7 +83,6 @@ def _check_cog(filename, check_tiled=True, full_check=False):
 
 def test_tiff_write_1():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
     assert gdaltest.tiff_drv is not None, "GTiff driver not found!"
 
     drv_md = gdaltest.tiff_drv.GetMetadata()
@@ -332,7 +340,7 @@ def test_tiff_write_9():
 
     src_ds = gdal.Open("data/byte.tif")
     new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_9.tif", src_ds, options=["NBITS=5"])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         new_ds = None
 
     new_ds = gdal.Open("tmp/test_9.tif")
@@ -354,7 +362,7 @@ def test_tiff_write_10():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize_1bit2b.tif", 2, 5918, options=["NBITS=1", "INTERLEAVE=BAND"]
     )
-    return ut.testCreate(out_bands=2)
+    ut.testCreate(out_bands=2)
 
 
 ###############################################################################
@@ -366,7 +374,7 @@ def test_tiff_write_11():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize1bit.tif", 1, 5918, options=["NBITS=1", "COMPRESS=CCITTFAX4"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -430,7 +438,7 @@ def test_tiff_write_14():
 
     tst = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -580,7 +588,7 @@ def test_tiff_write_17():
 
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open(tmpfilename)
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
     ds = None
 
     # Modify the RPC
@@ -592,7 +600,7 @@ def test_tiff_write_17():
     ds = None
 
     ds = gdal.Open(tmpfilename)
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), modified_rpc)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), modified_rpc)
     ds = None
 
     # Unset the RPC
@@ -614,8 +622,7 @@ def test_tiff_write_17():
 
 def test_tiff_write_17_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
-        ret = test_tiff_write_17()
-    return ret
+        test_tiff_write_17()
 
 
 ###############################################################################
@@ -646,7 +653,7 @@ def test_tiff_write_18():
     # Open the dataset, and confirm the RPC/IMD data is still intact.
     ds = gdal.Open("tmp/tw_18.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     imd_md = ds.GetMetadata("IMD")
     assert (
@@ -720,8 +727,7 @@ def test_tiff_write_imd_with_space_in_values():
 
 def test_tiff_write_18_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
-        ret = test_tiff_write_18()
-    return ret
+        test_tiff_write_18()
 
 
 ###############################################################################
@@ -765,7 +771,7 @@ def test_tiff_write_rpc_txt():
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open("tmp/tiff_write_rpc_txt.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
 
@@ -804,7 +810,7 @@ def test_tiff_write_rpc_in_pam():
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open("tmp/tiff_write_rpc_in_pam.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
 
@@ -1651,8 +1657,7 @@ def test_tiff_write_46():
 def test_tiff_write_47():
 
     with gdaltest.SetCacheMax(0):
-        ret = test_tiff_write_3()
-    return ret
+        test_tiff_write_3()
 
 
 ###############################################################################
@@ -2107,7 +2112,7 @@ def test_tiff_write_60():
 
     for options_tuple in tuples:
         # Create case
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.tiff_drv.Create(
                 "tmp/tiff_write_60.tif",
                 10,
@@ -2118,7 +2123,7 @@ def test_tiff_write_60():
         ds.SetGeoTransform(gt)
         ds = None
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open("tmp/tiff_write_60.tif")
         assert ds.GetGeoTransform() == gt, "case1: %s != %s" % (
             ds.GetGeoTransform(),
@@ -2132,7 +2137,7 @@ def test_tiff_write_60():
 
         # CreateCopy case
         src_ds = gdal.Open("data/byte.tif")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.tiff_drv.CreateCopy(
                 "tmp/tiff_write_60.tif",
                 src_ds,
@@ -2225,7 +2230,7 @@ def test_tiff_write_62():
 
 def test_tiff_write_63():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.Create(
             "tmp/bigtiff.tif", 150000, 150000, 1, options=["BIGTIFF=NO"]
         )
@@ -2567,7 +2572,7 @@ def test_tiff_write_74():
 
     with gdal.config_option("CPL_ACCUM_ERROR_MSG", "ON"):
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
 
             try:
                 ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
@@ -3021,7 +3026,7 @@ def test_tiff_write_81():
 def test_tiff_write_82():
 
     src_ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "tmp/tiff_write_82.tif", src_ds, options=["PIXELTYPE=SIGNEDBYTE"]
         )
@@ -4634,7 +4639,7 @@ def test_tiff_write_114():
 
     tst = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
 
 
 ###############################################################################
@@ -4924,7 +4929,7 @@ def test_tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
         )
@@ -4952,7 +4957,7 @@ def test_tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
         )
@@ -4984,7 +4989,7 @@ def test_tiff_write_121():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_121.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
         )
@@ -5253,12 +5258,12 @@ def test_tiff_write_124():
 
     ds = gdaltest.tiff_drv.Create("/vsimem/tiff_write_124.tif", 1, 1, 3, gdal.GDT_Byte)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Test "SetColorTable() can only be called on band 1"
         ret = ds.GetRasterBand(2).SetColorTable(gdal.ColorTable())
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Test "SetColorTable() not supported for multi-sample TIFF files"
         ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
     assert ret != 0
@@ -5268,13 +5273,13 @@ def test_tiff_write_124():
     ds = gdaltest.tiff_drv.Create(
         "/vsimem/tiff_write_124.tif", 1, 1, 1, gdal.GDT_UInt32
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
         ret = ds.GetRasterBand(1).SetColorTable(gdal.ColorTable())
     assert ret != 0
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Test "SetColorTable() only supported for Byte or UInt16 bands in TIFF format."
         ds = gdaltest.tiff_drv.Create(
             "/vsimem/tiff_write_124.tif",
@@ -5310,7 +5315,7 @@ def test_tiff_write_125():
     ds = gdal.Open("/vsimem/tiff_write_125.tif")
     # Will not open on 32-bit due to overflow
     if ds is not None:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds.GetRasterBand(1).ReadBlock(0, 0)
 
     ds = gdal.GetDriverByName("GTiff").Create(
@@ -5331,7 +5336,7 @@ def test_tiff_write_125():
     ds = gdal.Open("/vsimem/tiff_write_125.tif")
     # Will not open on 32-bit due to overflow
     if ds is not None:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds.GetRasterBand(1).ReadBlock(0, 0)
 
     gdal.Unlink("/vsimem/tiff_write_125.tif")
@@ -5889,25 +5894,25 @@ def test_tiff_write_133():
     src_ds.GetRasterBand(3).Fill(184)
 
     src_ds.FlushCache()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.SetProjection(srs.ExportToWkt())
     assert ret != 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.SetGeoTransform([1, 2, 0, 3, 0, -4])
     assert ret != 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.SetMetadataItem("FOO", "BAZ")
     assert ret != 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.SetMetadata({})
     assert ret != 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.GetRasterBand(1).SetMetadataItem("FOO", "BAZ")
     assert ret != 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.GetRasterBand(1).SetMetadata({})
     assert ret != 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = src_ds.GetRasterBand(1).SetNoDataValue(0)
     assert ret != 0
 
@@ -5933,7 +5938,7 @@ def test_tiff_write_133():
 
     ds.FlushCache()
     for y in range(1000):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             got_data = ds.ReadRaster(0, y, 1024, 1)
         assert got_data is None
     ds = None
@@ -6014,7 +6019,7 @@ def test_tiff_write_133():
         gdaltest.tiff_drv.Delete("/vsimem/tiff_write_133_dst.tif")
 
     # Compression not supported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tiff_write_133_dst.tif",
             src_ds,
@@ -6028,7 +6033,7 @@ def test_tiff_write_133():
     )
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.tiff_drv.CreateCopy(
             "/foo/bar", src_ds, options=["STREAMABLE_OUTPUT=YES"]
         )
@@ -6082,7 +6087,7 @@ def test_tiff_write_133():
         options=["STREAMABLE_OUTPUT=YES", "BLOCKYSIZE=1"],
     )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.WriteRaster(0, 999, 1024, 1, "a" * (3 * 1024))
         ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
@@ -6097,7 +6102,7 @@ def test_tiff_write_133():
         options=["STREAMABLE_OUTPUT=YES", "TILED=YES"],
     )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.WriteRaster(256, 256, 256, 256, "a" * (3 * 256 * 256))
         ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
@@ -6429,7 +6434,7 @@ def test_tiff_write_134():
 
     # Error cases
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.tiff_drv.Create(
             "/vsimem/tiff_write_134.tif",
             1,
@@ -6439,7 +6444,7 @@ def test_tiff_write_134():
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Too many elements
         gdaltest.tiff_drv.Create(
             "/vsimem/tiff_write_134.tif", 1, 1, options=["DISCARD_LSB=1,2"]
@@ -6447,7 +6452,7 @@ def test_tiff_write_134():
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Too many elements
         gdaltest.tiff_drv.Create(
             "/vsimem/tiff_write_134.tif", 1, 1, options=["DISCARD_LSB=1", "NBITS=7"]
@@ -6830,7 +6835,7 @@ def test_tiff_write_140():
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     # Should emit a warning
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
     assert gdal.GetLastErrorMsg() != ""
     assert ret == 0
@@ -6851,7 +6856,7 @@ def test_tiff_write_140():
     )
     # Should emit a warning mentioning ALPHA creation option.
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
     assert gdal.GetLastErrorMsg().find("ALPHA") >= 0
     assert ret == 0
@@ -6929,7 +6934,7 @@ def test_tiff_write_142():
 
 def test_tiff_write_143():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.Create(
             "/vsimem/tiff_write_143.tif", 1000000000, 1000000000
         )
@@ -7065,7 +7070,7 @@ def test_tiff_write_145():
         creation_options = options.get("creation_options", [])
         gdal.Unlink(filename)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.tiff_drv.Create(
                 filename, xsize, ysize, bands, datatype, options=creation_options
             )
@@ -7277,7 +7282,7 @@ def test_tiff_write_150():
     ds = gdal.Open("tmp/tiled_bad_offset.tif", gdal.GA_Update)
     ds.GetRasterBand(1).Fill(0)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
     ds = None
@@ -7693,7 +7698,7 @@ def test_tiff_write_157():
         0x47800000,  # 65536 --> converted to infinity
     )
     ds.GetRasterBand(1).WriteRaster(0, 0, 18, 1, vals, buf_type=gdal.GDT_Float32)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.FlushCache()
     ds = None
 
@@ -7899,7 +7904,7 @@ def test_tiff_write_161():
 
     ds = gdal.Open("/vsimem/tiff_write_161.tif", gdal.GA_Update)
     src_ds = gdal.Open("data/gcps.vrt")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.SetGCPs(src_ds.GetGCPs(), "") == 0
     assert ds.GetGeoTransform(can_return_null=True) is None
     ds = None
@@ -7907,7 +7912,7 @@ def test_tiff_write_161():
     ds = gdal.Open("/vsimem/tiff_write_161.tif", gdal.GA_Update)
     assert ds.GetGCPs()
     assert ds.GetGeoTransform(can_return_null=True) is None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.SetGeoTransform([0, 1, 2, 3, 4, 5]) == 0
     assert ds.GetGeoTransform() == (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
     assert not ds.GetGCPs()
@@ -8005,7 +8010,7 @@ def test_tiff_write_165():
     ret = ds.GetRasterBand(1).SetNoDataValue(100)
     assert ret == 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(2).SetNoDataValue(200)
     assert gdal.GetLastErrorMsg() != "", "warning expected, but not emitted"
     assert ret == 0
@@ -8173,7 +8178,7 @@ def test_tiff_write_168_ccitfax3():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize1bit.tif", 1, 5918, options=["NBITS=1", "COMPRESS=CCITTFAX3"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8185,7 +8190,7 @@ def test_tiff_write_169_ccitrle():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize1bit.tif", 1, 5918, options=["NBITS=1", "COMPRESS=CCITTRLE"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8195,7 +8200,7 @@ def test_tiff_write_169_ccitrle():
 def test_tiff_write_170_invalid_compresion():
 
     src_ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("GTiff").CreateCopy(
             "/vsimem/out.tif", src_ds, options=["COMPRESS=INVALID"]
         )
@@ -8213,7 +8218,7 @@ def test_tiff_write_171_zstd():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=ZSTD", "ZSTD_LEVEL=1"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8230,7 +8235,7 @@ def test_tiff_write_171_zstd_predictor():
         4672,
         options=["COMPRESS=ZSTD", "ZSTD_LEVEL=1", "PREDICTOR=2"],
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8380,7 +8385,7 @@ def test_tiff_write_172_geometadata_tiff_rsid():
 def test_tiff_write_173_lerc():
 
     ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8393,7 +8398,7 @@ def test_tiff_write_174_lerc_deflate():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_DEFLATE"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8406,7 +8411,7 @@ def test_tiff_write_174_lerc_deflate_with_level():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_DEFLATE", "ZLEVEL=1"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8417,7 +8422,7 @@ def test_tiff_write_174_lerc_deflate_with_level():
 def test_tiff_write_175_lerc_zstd():
 
     ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_ZSTD"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8430,7 +8435,7 @@ def test_tiff_write_175_lerc_zstd_with_level():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_ZSTD", "ZSTD_LEVEL=1"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8443,7 +8448,7 @@ def test_tiff_write_176_lerc_max_z_error():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4529, options=["COMPRESS=LERC", "MAX_Z_ERROR=1"]
     )
-    return ut.testCreateCopy(skip_preclose_test=1)
+    ut.testCreateCopy(skip_preclose_test=1)
 
 
 ###############################################################################
@@ -8530,7 +8535,7 @@ def test_tiff_write_179_lerc_data_types():
         assert cs == 4672
 
     filename_tmp = filename + ".tmp.tif"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Translate(
             filename_tmp, "data/byte.tif", creationOptions=["PIXELTYPE=SIGNEDBYTE"]
         )
@@ -8543,7 +8548,7 @@ def test_tiff_write_179_lerc_data_types():
     assert cs == 1046
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Translate(filename, "data/cfloat32.tif", creationOptions=["COMPRESS=LERC"])
     assert gdal.GetLastErrorMsg() != ""
     gdal.Unlink(filename)
@@ -8643,6 +8648,81 @@ def test_tiff_write_lerc_overview(external_ovr, compression):
     assert checksums[1][0] == checksums[2][0]
     assert checksums[1][1] != checksums[2][1]
     assert checksums[1][2] != checksums[2][2]
+
+
+###############################################################################
+# Test MAX_Z_ERROR_OVERVIEW creation option
+
+
+@pytest.mark.parametrize("z_error", [0, 1.5])
+@pytest.mark.require_creation_option("GTiff", "LERC")
+def test_tiff_write_lerc_max_z_error_overview(tmp_vsimem, z_error):
+
+    src_ds = gdal.Open("../gdrivers/data/utm.tif")
+    data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 256, 256)
+
+    fname = str(tmp_vsimem / "test_tiff_write_lerc_max_z_error_overview.tif")
+    options = ["COMPRESS=LERC"]
+    if z_error > 0:
+        options.append(f"MAX_Z_ERROR={z_error}")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        fname,
+        256,
+        256,
+        1,
+        options=options,
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+    ds.BuildOverviews("AVERAGE", overviewlist=[2])
+    ds = None
+    ds = gdal.Open(fname)
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")) == z_error
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR_OVERVIEW", "_DEBUG_")) == z_error
+    assert (
+        float(
+            ds.GetRasterBand(1)
+            .GetOverview(0)
+            .GetDataset()
+            .GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")
+        )
+        == z_error
+    )
+    ref_cs_main = ds.GetRasterBand(1).Checksum()
+    ref_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    fname = str(tmp_vsimem / "test_tiff_write_lerc_max_z_error_overview.tif")
+    options = ["COMPRESS=LERC", "MAX_Z_ERROR_OVERVIEW=2.5"]
+    if z_error > 0:
+        options.append(f"MAX_Z_ERROR={z_error}")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        fname,
+        256,
+        256,
+        1,
+        options=options,
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+    ds.BuildOverviews("AVERAGE", overviewlist=[2])
+    ds = None
+    ds = gdal.Open(fname)
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")) == z_error
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR_OVERVIEW", "_DEBUG_")) == 2.5
+    assert (
+        float(
+            ds.GetRasterBand(1)
+            .GetOverview(0)
+            .GetDataset()
+            .GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")
+        )
+        == 2.5
+    )
+    got_cs_main = ds.GetRasterBand(1).Checksum()
+    got_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    assert got_cs_main == ref_cs_main
+    assert got_cs_ovr != ref_cs_ovr
 
 
 ###############################################################################
@@ -8968,7 +9048,7 @@ def test_tiff_write_overviews_mask_no_ovr_on_mask():
 
     ds = gdal.Open(tmpfile)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.BuildOverviews("NEAR", overviewlist=[2])
     assert (
         "Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band."
@@ -8981,7 +9061,7 @@ def test_tiff_write_overviews_mask_no_ovr_on_mask():
     tmpfile2 = "/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif"
     src_ds = gdal.Open(tmpfile)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.tiff_drv.CreateCopy(
             tmpfile2, src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
         )
@@ -9181,7 +9261,7 @@ def test_tiff_write_too_many_tiles():
     src_ds = gdal.Open(
         '<VRTDataset rasterXSize="40000000" rasterYSize="40000000"><VRTRasterBand dataType="Byte" band="1"/></VRTDataset>'
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tmp.tif", src_ds, options=["TILED=YES"]
         )
@@ -9194,7 +9274,7 @@ def test_tiff_write_too_many_tiles():
         src_ds = gdal.Open("/vsimem/test_tiff_write_too_many_tiles.vrt")
         gdal.ErrorReset()
         with gdaltest.config_option("GDAL_TIFF_OVR_BLOCKSIZE", "128"):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 src_ds.BuildOverviews("NEAR", [2])
         assert "File too large regarding tile size" in gdal.GetLastErrorMsg()
 
@@ -9207,7 +9287,7 @@ def test_tiff_write_too_many_tiles():
 def test_tiff_write_jpeg_incompatible_of_paletted():
 
     src_ds = gdal.Open("data/test_average_palette.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdaltest.tiff_drv.CreateCopy(
             "/vsimem/tmp.tif", src_ds, options=["COMPRESS=JPEG"]
         )
@@ -9419,7 +9499,7 @@ def test_tiff_write_jpegxl_byte_single_band(lossless, writeImageStructureMetadat
 def test_tiff_write_jpegxl_byte_three_band():
 
     ut = gdaltest.GDALTest("GTiff", "rgbsmall.tif", 1, 21212, options=["COMPRESS=JXL"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -9430,7 +9510,7 @@ def test_tiff_write_jpegxl_byte_three_band():
 def test_tiff_write_jpegxl_uint16_single_band():
 
     ut = gdaltest.GDALTest("GTiff", "uint16.tif", 1, 4672, options=["COMPRESS=JXL"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -9990,7 +10070,7 @@ def test_tiff_write_setcolortable_read_only_overriding_tifftags():
 def test_tiff_write_incompatible_predictor(dt, options):
 
     filename = "/vsimem/out.tif"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("GTiff").Create(
                 filename, 1, 1, 1, dt, options + ["COMPRESS=LZW"]
@@ -10029,7 +10109,7 @@ def test_tiff_write_predictor_2_float64():
 def test_tiff_write_uint64():
 
     ut = gdaltest.GDALTest("GTiff", "gtiff/uint64_full_range.tif", 1, 1)
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -10063,7 +10143,7 @@ def test_tiff_write_uint64_nodata():
 def test_tiff_write_int64():
 
     ut = gdaltest.GDALTest("GTiff", "gtiff/int64_full_range.tif", 1, 65535)
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -11231,5 +11311,103 @@ def test_tiff_write_dataset_block_cache_bypass_optim_non_triggered():
     gdal.Unlink(tmpfilename)
 
 
-def test_tiff_write_cleanup():
-    gdaltest.tiff_drv = None
+def test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam():
+
+    filename = "/vsimem/test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.GetRasterBand(1).SetScale(0.01)
+    ds = None
+    ds = gdal.Open(filename)
+    # this goes into PAM
+    ds.GetRasterBand(1).SetMetadataItem("foo", "bar")
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetScale() == 0.01
+    assert ds.GetRasterBand(1).GetMetadataItem("foo") == "bar"
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete(filename)
+
+
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 6, 0),
+    reason="libtiff internal or >=4.6.0 needed",
+)
+@pytest.mark.require_creation_option("GTiff", "WEBP")
+def test_tiff_write_webp_lossless_exact():
+
+    filename = "/vsimem/test_tiff_write_webp_lossless_exact.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename,
+        10,
+        10,
+        4,
+        options=["PHOTOMETRIC=RGB", "ALPHA=YES", "COMPRESS=WEBP", "WEBP_LOSSLESS=YES"],
+    )
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(2).Fill(2)
+    ds.GetRasterBand(3).Fill(3)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [100, 200, 300, 0]
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete(filename)
+
+
+###############################################################################
+def test_tiff_write_copy_mdd():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetMetadataItem("FOO", "BAR")
+    src_ds.SetMetadataItem("BAR", "BAZ", "OTHER_DOMAIN")
+    src_ds.SetMetadataItem("should_not", "be_copied", "IMAGE_STRUCTURE")
+
+    filename = "/vsimem/test_tiff_write_copy_mdd.tif"
+
+    gdal.GetDriverByName("GTiff").CreateCopy(filename, src_ds)
+    ds = gdal.Open(filename)
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
+    )
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
+    assert ds.GetMetadata_Dict("IMAGE_STRUCTURE") == {"INTERLEAVE": "BAND"}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["COPY_SRC_MDD=NO"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["COPY_SRC_MDD=YES"]
+    )
+    ds = gdal.Open(filename)
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS", "OTHER_DOMAIN"]
+    )
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    assert ds.GetMetadata_Dict("IMAGE_STRUCTURE") == {"INTERLEAVE": "BAND"}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["SRC_MDD=OTHER_DOMAIN"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["SRC_MDD=", "SRC_MDD=OTHER_DOMAIN"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.Unlink(filename)

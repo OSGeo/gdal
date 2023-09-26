@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.17
+ARG ALPINE_VERSION=3.18
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -44,23 +44,8 @@ RUN apk add --no-cache \
     apache-arrow-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
+    libaec-dev \
     && mkdir -p /build_thirdparty/usr/lib
-
-# Build szip
-ARG SZIP_VERSION=2.1.1
-RUN if test "${SZIP_VERSION}" != ""; then ( \
-    wget -q https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/src/szip-${SZIP_VERSION}.tar.gz \
-    && tar xzf szip-${SZIP_VERSION}.tar.gz \
-    && rm -f szip-${SZIP_VERSION}.tar.gz \
-    && cd szip-${SZIP_VERSION} \
-    && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libsz*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf szip-${SZIP_VERSION} \
-    ); fi
 
 # Build hdf4
 ARG HDF4_VERSION=4.2.16
@@ -142,10 +127,32 @@ RUN mkdir proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
+# Build freexl
+ARG FREEXL_VERSION=2.0.0
+RUN if test "${FREEXL_VERSION}" != ""; then ( \
+    wget -q https://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
+    && tar xzf freexl-${FREEXL_VERSION}.tar.gz \
+    && rm -f freexl-${FREEXL_VERSION}.tar.gz \
+    && apk add --no-cache minizip-dev \
+    && cd freexl-${FREEXL_VERSION} \
+    && wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -O config.guess \
+    && chmod +x config.guess \
+    && wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -O config.sub \
+    && chmod +x config.sub \
+    && ./configure --prefix=/usr --disable-static \
+    && make -j$(nproc) \
+    && rm -f /usr/lib/libfreexl.* \
+    && make install \
+    && cp -P /usr/lib/libfreexl.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf freexl-${FREEXL_VERSION} \
+    ); fi
+
 # Build spatialite
-ARG SPATIALITE_VERSION=5.0.1
+ARG SPATIALITE_VERSION=5.1.0
 RUN if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
-    wget -q http://www.gaia-gis.it/gaia-sins/libspatialite-${SPATIALITE_VERSION}.tar.gz \
+    wget -q https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
@@ -224,6 +231,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
         -DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
         -DIconv_LIBRARY=/usr/lib/libiconv.so \
+        -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && (make -j$(nproc) multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -275,7 +283,7 @@ RUN apk add --no-cache \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre2 libpq libxml2 portablexdr openjpeg \
         netcdf hdf5 freexl \
-        openexr libheif xerces-c geos cfitsio minizip \
+        openexr-libopenexr imath libheif xerces-c geos cfitsio minizip \
         lz4-libs blosc libdeflate brotli-libs liburiparser \
         libarchive \
         kealib libjxl \
@@ -285,6 +293,7 @@ RUN apk add --no-cache \
         unixodbc \
         libpq \
         apache-arrow \
+        libaec \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

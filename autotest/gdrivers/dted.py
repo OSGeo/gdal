@@ -46,7 +46,7 @@ pytestmark = pytest.mark.require_driver("DTED")
 def test_dted_1():
 
     tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 49187)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -92,7 +92,7 @@ def test_dted_3():
 
     prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
-    return tst.testCreateCopy(check_gt=1, check_srs=prj)
+    tst.testCreateCopy(check_gt=1, check_srs=prj)
 
 
 ###############################################################################
@@ -102,7 +102,7 @@ def test_dted_3():
 def test_dted_4():
 
     tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 305, 5, 5, 5, 5)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -175,7 +175,7 @@ def test_dted_7():
     ds = gdal.Open("data/dted/n43_wgs72.dt0")
 
     # a warning is issued
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         prj = ds.GetProjection()
 
     assert gdal.GetLastErrorMsg() is not None, "An expected warning was not emitted"
@@ -254,7 +254,7 @@ def test_dted_9():
 def test_dted_10():
 
     tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 49187)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -311,7 +311,7 @@ def test_dted_12():
 def test_dted_13():
 
     tst = gdaltest.GDALTest("dted", "dted/n43_partial_cols.dt0", 1, 56006)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -322,7 +322,7 @@ def test_dted_13():
 def test_dted_14():
 
     tst = gdaltest.GDALTest("dted", "dted/n43_sparse_cols.dt0", 1, 56369)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -333,8 +333,7 @@ def test_dted_15():
 
     with gdal.config_option("GDAL_DTED_SINGLE_BLOCK", "YES"):
         tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 49187)
-        ret = tst.testOpen()
-    return ret
+        tst.testOpen()
 
 
 def test_dted_16():

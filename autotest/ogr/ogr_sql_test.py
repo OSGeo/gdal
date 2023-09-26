@@ -122,6 +122,16 @@ def test_ogr_sql_execute_sql(use_gdal):
         os.unlink("tmp/test_ogr_sql_execute_sql.shx")
 
 
+@pytest.mark.require_driver("SQLite")
+def test_ogr_sql_execute_sql_empty_database(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(tmp_vsimem / "test.sqlite")
+
+    with ds.ExecuteSQL("SELECT sqlite_version() AS version") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert type(f["version"]) is str
+
+
 ###############################################################################
 # Test invalid use of ReleaseResultSet()
 
@@ -135,28 +145,33 @@ def test_ogr_sql_invalid_release_result_set(use_gdal):
         ds.ReleaseResultSet(lyr)
 
 
+@pytest.fixture
+def data_ds():
+    with ogr.Open("data") as ds:
+        yield ds
+
+
 ###############################################################################
 # Test a simple query with a where clause.
 
 
-def test_ogr_sql_1():
-    gdaltest.ds = ogr.Open("data")
-    gdaltest.lyr = gdaltest.ds.GetLayerByName("poly")
+def test_ogr_sql_1(data_ds):
+    lyr = data_ds.GetLayerByName("poly")
 
-    gdaltest.lyr.SetAttributeFilter("eas_id < 167")
+    lyr.SetAttributeFilter("eas_id < 167")
 
-    count = gdaltest.lyr.GetFeatureCount()
+    count = lyr.GetFeatureCount()
     assert count == 3, (
         "Got wrong count with GetFeatureCount() - %d, expecting 3" % count
     )
 
-    gdaltest.lyr.SetAttributeFilter("")
-    count = gdaltest.lyr.GetFeatureCount()
+    lyr.SetAttributeFilter("")
+    count = lyr.GetFeatureCount()
     assert count == 10, (
         "Got wrong count with GetFeatureCount() - %d, expecting 10" % count
     )
 
-    with gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE eas_id < 167") as sql_lyr:
+    with data_ds.ExecuteSQL("SELECT * FROM poly WHERE eas_id < 167") as sql_lyr:
         assert sql_lyr.GetFeatureCount(force=0) < 0
         assert sql_lyr.GetFeatureCount(force=1) == 3
 
@@ -165,69 +180,69 @@ def test_ogr_sql_1():
 # Test DISTINCT handling
 
 
-def test_ogr_sql_2():
+def test_ogr_sql_2(data_ds):
 
     expect = [168, 169, 166, 158, 165]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select distinct eas_id from poly where eas_id < 170"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
 # Test ORDER BY handling
 
 
-def test_ogr_sql_3():
+def test_ogr_sql_3(data_ds):
 
     expect = [158, 165, 166, 168, 169]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select distinct eas_id from poly where eas_id < 170 order by eas_id"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
 # Test ORDER BY DESC handling
 
 
-def test_ogr_sql_3_desc():
+def test_ogr_sql_3_desc(data_ds):
 
     expect = [169, 168, 166, 165, 158]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select distinct eas_id from poly where eas_id < 170 order by eas_id desc"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
 # Test DISTINCT and ORDER BY on strings.
 
 
-def test_ogr_sql_4():
+def test_ogr_sql_4(data_ds):
 
     expect = ["_158_", "_165_", "_166_", "_168_", "_170_", "_171_", "_179_"]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select distinct name from idlink order by name asc"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "name", expect)
+        ogrtest.check_features_against_list(sql_lyr, "name", expect)
 
 
 ###############################################################################
 # Test column functions.
 
 
-def test_ogr_sql_5():
+def test_ogr_sql_5(data_ds):
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select max(eas_id), min(eas_id), avg(eas_id), sum(eas_id), count(eas_id) from idlink"
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
@@ -242,55 +257,53 @@ def test_ogr_sql_5():
 # Test simple COUNT() function.
 
 
-def test_ogr_sql_6():
+def test_ogr_sql_6(data_ds):
 
     expect = [10]
 
-    with gdaltest.ds.ExecuteSQL("select count(*) from poly") as sql_lyr:
-        assert ogrtest.check_features_against_list(sql_lyr, "count_*", expect)
+    with data_ds.ExecuteSQL("select count(*) from poly") as sql_lyr:
+        ogrtest.check_features_against_list(sql_lyr, "count_*", expect)
 
 
 ###############################################################################
 # Verify that selecting the FID works properly.
 
 
-def test_ogr_sql_7():
+def test_ogr_sql_7(data_ds):
 
     expect = [7, 8]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select eas_id, fid from poly where eas_id in (158,165)"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "fid", expect)
+        ogrtest.check_features_against_list(sql_lyr, "fid", expect)
 
 
 ###############################################################################
 # Verify that wildcard expansion works properly.
 
 
-def test_ogr_sql_8():
+def test_ogr_sql_8(data_ds):
 
     expect = ["35043369", "35043408"]
 
-    with gdaltest.ds.ExecuteSQL(
-        "select * from poly where eas_id in (158,165)"
-    ) as sql_lyr:
-        assert ogrtest.check_features_against_list(sql_lyr, "PRFEDEA", expect)
+    with data_ds.ExecuteSQL("select * from poly where eas_id in (158,165)") as sql_lyr:
+        ogrtest.check_features_against_list(sql_lyr, "PRFEDEA", expect)
 
 
 ###############################################################################
 # Verify that quoted table names work.
 
 
-def test_ogr_sql_9():
+def test_ogr_sql_9(data_ds):
 
     expect = ["35043369", "35043408"]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         'select * from "poly" where eas_id in (158,165)'
     ) as sql_lyr:
-        assert ogrtest.check_features_against_list(sql_lyr, "PRFEDEA", expect)
+        ogrtest.check_features_against_list(sql_lyr, "PRFEDEA", expect)
 
 
 ###############################################################################
@@ -357,7 +370,7 @@ def test_ogr_sql_11():
 
     ds = ogr.Open("data/shp/empty.shp")
     with ds.ExecuteSQL("select max(eas_id) from empty") as sql_lyr:
-        assert ogrtest.check_features_against_list(sql_lyr, "max_eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "max_eas_id", expect)
 
 
 ###############################################################################
@@ -370,33 +383,22 @@ def test_ogr_sql_12():
 
     ds = ogr.Open("data/shp/empty.shp")
     with ds.ExecuteSQL("select distinct eas_id from empty") as sql_lyr:
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
 # Verify selection of, and on ogr_geometry.
 
 
-def test_ogr_sql_13():
+def test_ogr_sql_13(data_ds):
 
-    expect = [
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-        "POLYGON",
-    ]
+    expect = ["POLYGON"] * 10
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select ogr_geometry from poly where ogr_geometry = 'POLYGON'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "ogr_geometry", expect)
+        ogrtest.check_features_against_list(sql_lyr, "ogr_geometry", expect)
 
 
 ###############################################################################
@@ -415,22 +417,22 @@ def test_ogr_sql_14():
         "select ogr_style from small where ogr_geom_wkt LIKE 'POLYGON%'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "ogr_style", expect)
+        ogrtest.check_features_against_list(sql_lyr, "ogr_style", expect)
 
 
 ###############################################################################
 # Verify that selecting with filtering by FID works properly.
 
 
-def test_ogr_sql_15():
+def test_ogr_sql_15(data_ds):
 
     expect = [7]
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select fid,eas_id,prfedea from poly where fid = %d" % expect[0]
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "fid", expect)
+        ogrtest.check_features_against_list(sql_lyr, "fid", expect)
 
 
 ###############################################################################
@@ -443,7 +445,7 @@ def test_ogr_sql_16():
     ds = ogr.Open("data/mitab/small.mif")
     with ds.ExecuteSQL("select fid from small where owner < 'H'") as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "fid", expect)
+        ogrtest.check_features_against_list(sql_lyr, "fid", expect)
 
 
 ###############################################################################
@@ -473,17 +475,17 @@ def test_ogr_sql_17():
         assert fld_def.GetWidth() == 7, "got wrong data field width"
         assert fld_def.GetPrecision() == 3, "got wrong data field precision"
 
-        assert ogrtest.check_features_against_list(sql_lyr, "fid", expect)
+        ogrtest.check_features_against_list(sql_lyr, "fid", expect)
 
 
 ###############################################################################
 # Test empty request string
 
 
-def test_ogr_sql_19():
+def test_ogr_sql_19(data_ds):
 
-    with gdaltest.error_handler():
-        assert gdaltest.ds.ExecuteSQL("") is None
+    with gdal.quiet_errors():
+        assert data_ds.ExecuteSQL("") is None
 
 
 ###############################################################################
@@ -656,7 +658,7 @@ def test_ogr_sql_27():
         "ORDER BY timestamp DESC"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "name", ["foo5", "foo4"])
+        ogrtest.check_features_against_list(sql_lyr, "name", ["foo5", "foo4"])
 
 
 ###############################################################################
@@ -774,8 +776,6 @@ def test_ogr_sql_28():
         "SELECT MAX(foo) FROM my_layer",
         "SELECT SUM(foo) FROM my_layer",
         "SELECT AVG(foo) FROM my_layer",
-        "SELECT MIN(strfield) FROM my_layer",
-        "SELECT MAX(strfield) FROM my_layer",
         "SELECT SUM(strfield) FROM my_layer",
         "SELECT AVG(strfield) FROM my_layer",
         "SELECT AVG(intfield, intfield) FROM my_layer",
@@ -820,7 +820,7 @@ def test_ogr_sql_28():
     for query in queries:
         gdal.ErrorReset()
         # print query
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL(query)
         if sql_lyr is not None:
             ds.ReleaseResultSet(sql_lyr)
@@ -865,11 +865,11 @@ def test_ogr_sql_29():
 # Verify a select mixing a count(*) with something else works without errors
 
 
-def test_ogr_sql_30():
+def test_ogr_sql_30(data_ds):
 
     gdal.ErrorReset()
 
-    with gdaltest.ds.ExecuteSQL("select min(eas_id), count(*) from poly") as sql_lyr:
+    with data_ds.ExecuteSQL("select min(eas_id), count(*) from poly") as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         val_count = feat.GetField(1)
 
@@ -882,13 +882,11 @@ def test_ogr_sql_30():
 # Regression test for #4022
 
 
-def test_ogr_sql_31():
+def test_ogr_sql_31(data_ds):
 
     gdal.ErrorReset()
 
-    with gdaltest.ds.ExecuteSQL(
-        "select min(eas_id) from poly where area = 0"
-    ) as sql_lyr:
+    with data_ds.ExecuteSQL("select min(eas_id) from poly where area = 0") as sql_lyr:
 
         feat = sql_lyr.GetNextFeature()
         val = feat.GetField(0)
@@ -902,11 +900,11 @@ def test_ogr_sql_31():
 # Regression test for #4022 (same as above, but with dialect = 'OGRSQL')
 
 
-def test_ogr_sql_32():
+def test_ogr_sql_32(data_ds):
 
     gdal.ErrorReset()
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select min(eas_id) from poly where area = 0", dialect="OGRSQL"
     ) as sql_lyr:
 
@@ -985,9 +983,9 @@ def test_ogr_sql_33():
 # Test implicit conversion from string to numeric (#4259)
 
 
-def test_ogr_sql_34():
+def test_ogr_sql_34(data_ds):
 
-    with gdaltest.ds.ExecuteSQL(
+    with data_ds.ExecuteSQL(
         "select count(*) from poly where eas_id in ('165')"
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
@@ -995,9 +993,9 @@ def test_ogr_sql_34():
 
         assert val == 1
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
-            gdaltest.ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
+            data_ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
             is None
         )
 
@@ -1006,12 +1004,12 @@ def test_ogr_sql_34():
 # Test huge SQL queries (#4262)
 
 
-def test_ogr_sql_35():
+def test_ogr_sql_35(data_ds):
 
     cols = "area"
     for _ in range(10):
         cols = cols + "," + cols
-    with gdaltest.ds.ExecuteSQL("select %s from poly" % cols) as sql_lyr:
+    with data_ds.ExecuteSQL("select %s from poly" % cols) as sql_lyr:
         count_cols = sql_lyr.GetLayerDefn().GetFieldCount()
 
     assert count_cols == 1024
@@ -1131,9 +1129,9 @@ def test_ogr_sql_37():
 # Test "SELECT MAX(OGR_GEOM_AREA) FROM XXXX" (#4633)
 
 
-def test_ogr_sql_38():
+def test_ogr_sql_38(data_ds):
 
-    with gdaltest.ds.ExecuteSQL("SELECT MAX(OGR_GEOM_AREA) FROM poly") as sql_lyr:
+    with data_ds.ExecuteSQL("SELECT MAX(OGR_GEOM_AREA) FROM poly") as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         val = feat.GetFieldAsDouble(0)
         assert val == pytest.approx(1634833.39062, abs=1e-5)
@@ -1143,9 +1141,9 @@ def test_ogr_sql_38():
 # Test ORDER BY on a float special field
 
 
-def test_ogr_sql_39():
+def test_ogr_sql_39(data_ds):
 
-    with gdaltest.ds.ExecuteSQL("SELECT * FROM poly ORDER BY OGR_GEOM_AREA") as sql_lyr:
+    with data_ds.ExecuteSQL("SELECT * FROM poly ORDER BY OGR_GEOM_AREA") as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         val = feat.GetFieldAsDouble(0)
         assert val == pytest.approx(5268.813, abs=1e-5)
@@ -1155,9 +1153,9 @@ def test_ogr_sql_39():
 # Test ORDER BY on a int special field
 
 
-def test_ogr_sql_40():
+def test_ogr_sql_40(data_ds):
 
-    with gdaltest.ds.ExecuteSQL("SELECT * FROM poly ORDER BY FID DESC") as sql_lyr:
+    with data_ds.ExecuteSQL("SELECT * FROM poly ORDER BY FID DESC") as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat.GetFID() == 9
 
@@ -1166,9 +1164,9 @@ def test_ogr_sql_40():
 # Test ORDER BY on a string special field
 
 
-def test_ogr_sql_41():
+def test_ogr_sql_41(data_ds):
 
-    with gdaltest.ds.ExecuteSQL("SELECT * FROM poly ORDER BY OGR_GEOMETRY") as sql_lyr:
+    with data_ds.ExecuteSQL("SELECT * FROM poly ORDER BY OGR_GEOMETRY") as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat.GetFID() == 0
 
@@ -1177,15 +1175,15 @@ def test_ogr_sql_41():
 # Test comparing to empty string
 
 
-def test_ogr_sql_42():
+def test_ogr_sql_42(data_ds):
 
-    lyr = gdaltest.ds.GetLayerByName("poly")
+    lyr = data_ds.GetLayerByName("poly")
     lyr.SetAttributeFilter("prfedea <> ''")
     feat = lyr.GetNextFeature()
     lyr.SetAttributeFilter(None)
     assert feat is not None
 
-    with gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE prfedea <> ''") as sql_lyr:
+    with data_ds.ExecuteSQL("SELECT * FROM poly WHERE prfedea <> ''") as sql_lyr:
         assert sql_lyr.GetNextFeature() is not None
 
 
@@ -1193,10 +1191,10 @@ def test_ogr_sql_42():
 # Test escape sequences
 
 
-def test_ogr_sql_43():
+def test_ogr_sql_43(data_ds):
 
     sql = "SELECT '\"' as a, '\\'' as b, '''' as c FROM poly"
-    with gdaltest.ds.ExecuteSQL(sql) as sql_lyr:
+    with data_ds.ExecuteSQL(sql) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["a"] == '"'
         assert feat["b"] == "'"
@@ -1207,15 +1205,15 @@ def test_ogr_sql_43():
 # Test hstore_get_value()
 
 
-def test_ogr_sql_44():
+def test_ogr_sql_44(data_ds):
 
     # Invalid parameters
     for sql in [
         "SELECT hstore_get_value('a') FROM poly",
         "SELECT hstore_get_value(1, 1) FROM poly",
     ]:
-        with gdaltest.error_handler():
-            sql_lyr = gdaltest.ds.ExecuteSQL(sql)
+        with gdal.quiet_errors():
+            sql_lyr = data_ds.ExecuteSQL(sql)
         assert sql_lyr is None, sql
 
     # Invalid hstore syntax or empty result
@@ -1235,7 +1233,7 @@ def test_ogr_sql_44():
         "SELECT hstore_get_value('\"a\" => \"', 'a') FROM poly",
         "SELECT hstore_get_value('\"a\" => \"\" z', 'a') FROM poly",
     ]:
-        with gdaltest.ds.ExecuteSQL(sql) as sql_lyr:
+        with data_ds.ExecuteSQL(sql) as sql_lyr:
             f = sql_lyr.GetNextFeature()
             assert not f.IsFieldSetAndNotNull(0), sql
 
@@ -1251,7 +1249,7 @@ def test_ogr_sql_44():
         ("SELECT hstore_get_value(' \"a\" => \"b\" ', 'a') FROM poly", "b"),
         ('SELECT hstore_get_value(\' "a\\"b" => "b" \', \'a"b\') FROM poly', "b"),
     ]:
-        with gdaltest.ds.ExecuteSQL(sql) as sql_lyr:
+        with data_ds.ExecuteSQL(sql) as sql_lyr:
             f = sql_lyr.GetNextFeature()
             assert f.GetField(0) == expected, sql
 
@@ -1338,7 +1336,7 @@ def test_ogr_sql_46():
         "select max('id') from 'test'",
         "select id as 'id2' from 'test'",
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL("select * from 'test'")
         assert sql_lyr is None, sql
 
@@ -1398,7 +1396,7 @@ def test_ogr_sql_48():
 # Test arithmetic expressions
 
 
-def test_ogr_sql_49():
+def test_ogr_sql_49(data_ds):
 
     # expressions and expected result
     expressions = [
@@ -1414,10 +1412,10 @@ def test_ogr_sql_49():
     ]
 
     for expression, expected in expressions:
-        with gdaltest.ds.ExecuteSQL(
+        with data_ds.ExecuteSQL(
             "select {} as result from poly limit 1".format(expression)
         ) as sql_lyr:
-            assert ogrtest.check_features_against_list(sql_lyr, "result", [expected])
+            ogrtest.check_features_against_list(sql_lyr, "result", [expected])
 
 
 ###############################################################################
@@ -1526,8 +1524,14 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
 
 
 ###############################################################################
+# Verify a select mixing a count(*) with something else works without errors
 
 
-def test_ogr_sql_cleanup():
-    gdaltest.lyr = None
-    gdaltest.ds = None
+def test_ogr_sql_min_max_string_field(data_ds):
+
+    gdal.ErrorReset()
+
+    with data_ds.ExecuteSQL("select min(PRFEDEA), max(PRFEDEA) from poly") as sql_lyr:
+        feat = sql_lyr.GetNextFeature()
+        assert feat["MIN_PRFEDEA"] == "35043369"
+        assert feat["MAX_PRFEDEA"] == "35043423"

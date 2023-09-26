@@ -19,6 +19,7 @@ env =
 gdal_version = @GDAL_VERSION_NO_DEV_SUFFIX@
 
 markers =
+    random_order: Indicates whether tests can be run non-sequentially
     require_curl: Skip test(s) if curl support is absent
     require_creation_option: Skip test(s) if required creation option is not available
     require_driver: Skip test(s) if driver isn't present

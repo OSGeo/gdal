@@ -32,7 +32,7 @@ import os
 import gdaltest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 
 ###############################################################################
@@ -363,7 +363,7 @@ def test_ogr_wkbwkt_test_broken_geom():
         "CURVEPOLYGON Z((0 1,2 3)",
     ]
     for wkt in list_broken:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             geom = ogr.CreateGeometryFromWkt(wkt)
         assert geom is None, "geom %s instantiated but not expected" % wkt
 
@@ -610,7 +610,7 @@ def test_ogr_wkbwkt_test_import_bad_multipoint_wkb():
         0,
         0,
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkb(wkb)
     assert geom is None
 
@@ -656,7 +656,7 @@ def test_ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 
     wkt = "GEOMETRYCOLLECTION (" * 32 + "GEOMETRYCOLLECTION EMPTY" + ")" * 32
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkt(wkt)
     assert geom is None, "expected None"
 
@@ -679,7 +679,7 @@ def test_ogr_wkbwkt_test_geometrycollection_wkb_recursion():
 
     wkb = struct.pack("B" * 0) + wkb_repeat * 32 + wkb_end
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkb(wkb)
     assert geom is None, "expected None"
 
@@ -714,7 +714,7 @@ def test_ogr_wkt_inf_nan():
 
 def test_ogr_wkt_multicurve_compoundcurve_corrupted():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt("MULTICURVE(COMPOUNDCURVE")
     assert g is None
 
@@ -725,7 +725,7 @@ def test_ogr_wkt_multicurve_compoundcurve_corrupted():
 
 def test_ogr_wkt_multipolygon_corrupted():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt("MULTIPOLYGON(POLYGON((N")
     assert g is None
 

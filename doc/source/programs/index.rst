@@ -4,6 +4,19 @@
 Programs
 ================================================================================
 
+General
+-------
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   argument_syntax
+
+.. only:: html
+
+    - :ref:`argument_syntax`
+
 Raster programs
 ---------------
 
@@ -46,6 +59,7 @@ Raster programs
    gdalcompare
    gdal_viewshed
    gdal_create
+   gdal_footprint
 
 .. only:: html
 
@@ -84,6 +98,7 @@ Raster programs
     - :ref:`gdalcompare`: Compare two images.
     - :ref:`gdal_viewshed`: Compute a visibility mask for a raster.
     - :ref:`gdal_create`: Create a raster file (without source dataset).
+    - :ref:`gdal_footprint`: Compute footprint of a raster.
 
 Multidimensional Raster programs
 --------------------------------

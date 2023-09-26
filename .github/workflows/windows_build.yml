@@ -58,7 +58,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set environment
         shell: pwsh
@@ -90,11 +90,10 @@ jobs:
             echo LIB=%LIB%>> %GITHUB_ENV%
             echo LIBPATH=%LIBPATH%>> %GITHUB_ENV%
 
-      # C:/Strawberry/c/lib contains x64 libraries
       - name: Remove conflicting libraries
-        shell: cmd
+        shell: bash -l {0}
         run: |
-            rd /s /q C:\Strawberry\c\lib
+            rm -rf C:/Strawberry || /bin/true
 
       - name: Detect AVX2
         shell: bash

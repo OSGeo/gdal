@@ -53,6 +53,8 @@ map_ogr_geom_type_to_geoparquet = {
     ogr.wkbGeometryCollection25D: "GeometryCollection Z",
 }
 
+map_remote_resources = {}
+
 
 class GeoParquetValidator(object):
     def __init__(self, filename, check_data=False, local_schema=None):
@@ -95,6 +97,48 @@ class GeoParquetValidator(object):
                 subgeom = g.GetGeometryRef(idx)
                 self._check_counterclockwise(subgeom, row)
 
+    def _validate(self, schema, instance):
+        import jsonschema
+
+        if sys.version_info >= (3, 8):
+            from importlib.metadata import version
+
+            jsonschema_version = version("jsonschema")
+        else:
+            from pkg_resources import get_distribution
+
+            jsonschema_version = get_distribution("jsonschema").version
+
+        def versiontuple(v):
+            return tuple(map(int, (v.split("."))))
+
+        # jsonschema 4.18 deprecates automatic resolution of "$ref" for security
+        # reason. Use a custom retrieve method.
+        # Cf https://python-jsonschema.readthedocs.io/en/latest/referencing/#automatically-retrieving-resources-over-http
+        if versiontuple(jsonschema_version) >= (4, 18):
+            from referencing import Registry, Resource
+
+            def retrieve_remote_file(uri: str):
+                if not uri.startswith("http://") and not uri.startswith("https://"):
+                    raise Exception(f"Cannot retrieve {uri}")
+                import urllib
+
+                global map_remote_resources
+                if uri not in map_remote_resources:
+                    response = urllib.request.urlopen(uri).read()
+                    map_remote_resources[uri] = response
+                else:
+                    response = map_remote_resources[uri]
+                return Resource.from_contents(json.loads(response))
+
+            registry = Registry(retrieve=retrieve_remote_file)
+            validator_cls = jsonschema.validators.validator_for(schema)
+            validator_cls(schema, registry=registry).validate(instance)
+
+        else:
+            # jsonschema < 4.18
+            jsonschema.validate(instance=instance, schema=schema)
+
     def _check(self):
 
         global geoparquet_schemas
@@ -104,6 +148,8 @@ class GeoParquetValidator(object):
 
         try:
             import jsonschema
+
+            jsonschema.validate
         except ImportError:
             return self._error(
                 "jsonschema Python module not available. Try 'pip install jsonschema'"
@@ -145,38 +191,27 @@ class GeoParquetValidator(object):
                 )
 
             schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
-            if schema_url in geoparquet_schemas:
-                schema_j = geoparquet_schemas[schema_url]
-            else:
-                stat_res = gdal.VSIStatL("/vsicurl/" + schema_url)
-                if stat_res is None:
+            if schema_url not in geoparquet_schemas:
+                import urllib
+
+                try:
+                    response = urllib.request.urlopen(schema_url).read()
+                except Exception as e:
                     return self._error(
-                        f"Cannot download GeoParquet JSON schema from {schema_url}"
-                    )
-                f = gdal.VSIFOpenL("/vsicurl_streaming/" + schema_url, "rb")
-                if f is None:
-                    return self._error(
-                        f"Cannot download GeoParquet JSON schema from {schema_url}"
-                    )
-                schema = gdal.VSIFReadL(1, stat_res.size, f)
-                gdal.VSIFCloseL(f)
-                if len(schema) < stat_res.size:
-                    return self._error(
-                        f"Cannot download GeoParquet JSON schema from {schema_url}"
+                        f"Cannot download GeoParquet JSON schema from {schema_url}. Exception = {repr(e)}"
                     )
 
                 try:
-                    schema_j = json.loads(schema)
+                    geoparquet_schemas[schema_url] = json.loads(response)
                 except Exception as e:
                     return self._error(
-                        f"GeoParquet schema at {schema_url} is not valid JSON. Schema content = '{schema}'. Exception = '%s' "
-                        % (str(e))
+                        f"Failed to read GeoParquet schema at {schema_url} as JSON. Schema content = '{response}'. Exception = {repr(e)}"
                     )
 
-                geoparquet_schemas[schema_url] = schema_j
+            schema_j = geoparquet_schemas[schema_url]
 
         try:
-            jsonschema.validate(instance=geo_j, schema=schema_j)
+            self._validate(schema_j, geo_j)
         except Exception as e:
             self._error(
                 "'geo' metadata item fails to validate its schema: %s'" % str(e)

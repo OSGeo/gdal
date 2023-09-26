@@ -253,13 +253,14 @@ The following creation options (specific to vector, or common with
 raster) are available:
 
 -  .. dsco:: VERSION
-      :choices: AUTO, 1.0, 1.1, 1.2, 1.3
+      :choices: AUTO, 1.0, 1.1, 1.2, 1.3, 1.4
       :Since: 2.2
 
       Set GeoPackage version
       (for application_id and user_version fields). In AUTO mode, this will
       be equivalent to 1.2 starting with GDAL 2.3.
       1.3 is available starting with GDAL 3.3
+      1.4 is available starting with GDAL 3.7.1
 
 -  .. dsco:: ADD_GPKG_OGR_CONTENTS
       :choices: YES, NO
@@ -281,6 +282,36 @@ raster) are available:
       Pedantically, non-UTC time zones are not currently supported
       by GeoPackage v1.3 (see https://github.com/opengeospatial/geopackage/issues/530).
       When using UTC format, with a unspecified timezone, UTC will be assumed.
+
+-  .. dsco:: CRS_WKT_EXTENSION
+      :choices: YES, NO
+      :default: NO
+      :since: 3.8
+
+      Defines whether to add the ``definition_12_063`` column to the
+      ``gpkg_spatial_ref_sys`` system table, according to
+      http://www.geopackage.org/spec/#extension_crs_wkt . The default is NO,
+      unless the tile gridded coverage extension is used.
+      With VERSION >= 1.4, a ``epoch`` column is also added.
+      WKT strings in ``definition_12_063`` will follow the
+      `WKT2:2015 standard <https://docs.ogc.org/is/12-063r5/12-063r5.html>`__
+      when possible, but may use the
+      `WKT2:2019 standard <https://docs.ogc.org/is/18-010r7/18-010r7.html>`__
+      for specific cases (dynamic CRS with coordinate epoch).
+      This option generally does not need to be specified, as the driver will
+      automatically update the ``gpkg_spatial_ref_sys`` table when needed, but
+      it may be useful to create GeoPackage datasets matching the expections of
+      other software or profiles (such as the DGIWG-GPKG profile).
+
+-  .. co:: METADATA_TABLES
+      :choices: YES, NO
+      :since: 3.8
+
+      Defines whether to add the metadata system tables.
+      By default, they are created on demand.
+      If NO is specified, they are not created, even if metadata is set.
+      If YES is specified, they are always created.
+
 
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
 documentation page.
@@ -374,6 +405,19 @@ The following layer creation options are available:
       gpkg_extensions table. Starting with GDAL 3.3, OGR_ASPATIAL is no longer
       available on creation.
 
+-  .. lco:: DATETIME_PRECISION
+      :choices: AUTO, MILLISECOND, SECOND, MINUTE
+      :default: AUTO
+      :since: 3.8
+
+      Determines the level of detail for datetime fields.
+      Starting with GeoPackage 1.4, three variants of datetime formats are supported:
+      truncated at minute (``MINUTE``), truncated at second (``SECOND``) or
+      including milliseconds (``MILLISECOND``).
+      In ``AUTO`` mode and GeoPackage 1.4, milliseconds are included only if non-zero.
+      Selecting modes ``MINUTE`` or ``SECOND`` will raise a warning with GeoPackage < 1.4.
+
+
 Configuration options
 ---------------------
 
@@ -464,17 +508,36 @@ really a primary key.
 
 For example:
 
-::
+.. code-block:: sql
 
-   CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, foo.geom, ... FROM foo JOIN another_table ON foo.some_id = another_table.other_id
-   INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 4326)
-   INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0)
+   CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, foo.geom FROM foo JOIN another_table ON foo.some_id = another_table.other_id;
+   INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 4326);
+   INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0);
 
 This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA
 option and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option.
 Starting with GDAL 2.3, this can be easily verified if the
 SQLITE_HAS_COLUMN_METADATA=YES driver metadata item is declared (for
 example with "ogrinfo --format GPKG").
+
+Starting with GDAL 3.7.1, it is possible to define a geometry column as the
+result of a Spatialite spatial function. Note however that this is an extension
+likely to be non-interoperable with other software that does not activate Spatialite
+for the SQLite3 database connection. Such geometry column should be registered
+into the ``gpkg_extensions`` using the ``gdal_spatialite_computed_geom_column``
+extension name (cf :ref:`vector.gpkg_spatialite_computed_geom_column`), like below:
+
+.. code-block:: sql
+
+   CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, AsGBP(ST_Multi(foo.geom)) FROM foo;
+   INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES (
+       'my_view', 'my_view', 'features', 4326);
+   INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES (
+       'my_view', 'my_geom', 'MULTIPOLYGON', 4326, 0, 0);
+   INSERT INTO gpkg_extensions (table_name, column_name, extension_name, definition, scope) VALUES (
+       'my_view', 'my_geom', 'gdal_spatialite_computed_geom_column',
+       'https://gdal.org/drivers/vector/gpkg_spatialite_computed_geom_column.html', 'read-write');
+
 
 Coordinate Reference Systems
 ----------------------------
@@ -520,6 +583,9 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.geopackage_aspatial`
      - No
      - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
+   * - :ref:`vector.gpkg_spatialite_computed_geom_column`
+     - No
+     - Yes, starting with GDAL 3.7.1
 
 Compressed files
 ----------------
@@ -607,3 +673,4 @@ See Also
    :hidden:
 
    geopackage_aspatial
+   gpkg_spatialite_computed_geom_column

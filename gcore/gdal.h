@@ -518,6 +518,12 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
+/** Capability set by a driver that implements the VectorTranslateFrom() API.
+ *
+ * @since GDAL 3.8
+ */
+#define GDAL_DCAP_VECTOR_TRANSLATE_FROM "DCAP_VECTOR_TRANSLATE_FROM"
+
 /** Capability set by a driver that implements the CreateCopy() API, but with
  * multidimensional raster as input and output.
  *
@@ -731,6 +737,13 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_UPDATE_RELATIONSHIP "DCAP_UPDATE_RELATIONSHIP"
 
+/** Capability set by drivers whose FlushCache() implementation returns a
+ * dataset that can be opened afterwards and seen in a consistent state, without
+ * requiring the dataset on which FlushCache() has been called to be closed.
+ * @since GDAL 3.8
+ */
+#define GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE "DCAP_FLUSHCACHE_CONSISTENT_STATE"
+
 /** List of (space separated) flags indicating the features of relationships are
  * supported by the driver.
  *
@@ -864,6 +877,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
                             UpdateRelationship()*/
 
 void CPL_DLL CPL_STDCALL GDALAllRegister(void);
+void CPL_DLL GDALRegisterPlugins(void);
 
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreate(GDALDriverH hDriver, const char *, int, int, int, GDALDataType,
@@ -2240,6 +2254,10 @@ int CPL_DLL GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH,
                                          double *pdfStdDev,
                                          GUInt64 *pnValidCount,
                                          GDALProgressFunc, void *pProgressData);
+int CPL_DLL GDALMDArrayComputeStatisticsEx(
+    GDALMDArrayH hArray, GDALDatasetH, int bApproxOK, double *pdfMin,
+    double *pdfMax, double *pdfMean, double *pdfStdDev, GUInt64 *pnValidCount,
+    GDALProgressFunc, void *pProgressData, CSLConstList papszOptions);
 GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
                                              size_t nNewDimCount,
                                              const GDALDimensionH *pahNewDims,

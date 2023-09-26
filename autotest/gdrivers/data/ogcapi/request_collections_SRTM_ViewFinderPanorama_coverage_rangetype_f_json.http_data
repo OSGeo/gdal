@@ -1,0 +1,26 @@
+HTTP/1.1 200 OK
+Date: Tue, 20 Jun 2023 10:38:15 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Expires: Tue, 18 Jun 2024 06:29:02 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Length: 281
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Age: 101352
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json
+
+{
+   "type" : "DataRecord",
+   "field" : [
+      {
+         "type" : "Quantity",
+         "name" : "Elevation",
+         "description" : "Elevation",
+         "encodingInfo" : {
+            "dataType" : "http://www.opengis.net/def/dataType/OGC/0/float32"
+         }
+      }
+   ]
+}

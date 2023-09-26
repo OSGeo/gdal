@@ -3328,7 +3328,7 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
     CPLString osSQL = pszSQLCommand;
     OGRSQLiteSelectLayer *poLayer = new OGRSQLiteSelectLayer(
         this, osSQL, hSQLStmt, bUseStatementForGetNextFeature, bEmptyLayer,
-        true);
+        true, /*bCanReopenBaseDS=*/true);
 
     if (poSpatialFilter != nullptr &&
         poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
@@ -3504,7 +3504,7 @@ OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
     int nSRSId = m_nUndefinedSRID;
     const char *pszSRID = CSLFetchNameValue(papszOptions, "SRID");
 
-    if (pszSRID != nullptr)
+    if (pszSRID != nullptr && pszSRID[0] != '\0')
     {
         nSRSId = atoi(pszSRID);
         if (nSRSId > 0)

@@ -416,7 +416,7 @@ if (GDAL_USE_JPEG AND (JPEG_LIBRARY MATCHES ".*turbojpeg\.(so|lib)"))
       "JPEG_LIBRARY should point to a library with libjpeg ABI, not TurboJPEG. See https://libjpeg-turbo.org/About/TurboJPEG for the difference"
     )
 endif ()
-if (TARGET JPEG::JPEG)
+if (GDAL_USE_JPEG AND TARGET JPEG::JPEG)
   set(EXPECTED_JPEG_LIB_VERSION "" CACHE STRING "Expected libjpeg version number")
   mark_as_advanced(GDAL_CHECK_PACKAGE_${name}_NAMES)
   if (EXPECTED_JPEG_LIB_VERSION)
@@ -712,6 +712,9 @@ gdal_check_package(Blosc "Blosc compression" CAN_DISABLE)
 
 define_find_package2(ARCHIVE archive.h archive)
 gdal_check_package(ARCHIVE "Multi-format archive and compression library library (used for /vsi7z/" CAN_DISABLE)
+
+define_find_package2(LIBAEC libaec.h aec)
+gdal_check_package(LIBAEC "Adaptive Entropy Coding implementing Golomb-Rice algorithm (used by GRIB)" CAN_DISABLE)
 
 define_find_package2(JXL jxl/decode.h jxl PKGCONFIG_NAME libjxl)
 gdal_check_package(JXL "JPEG-XL compression" CAN_DISABLE)

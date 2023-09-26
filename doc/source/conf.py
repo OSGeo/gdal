@@ -411,6 +411,13 @@ man_pages = [
         [author_evenr],
         1,
     ),
+    (
+        "programs/gdal_footprint",
+        "gdal_footprint",
+        "Compute footprint of a raster.",
+        [author_evenr],
+        1,
+    ),
 ]
 
 

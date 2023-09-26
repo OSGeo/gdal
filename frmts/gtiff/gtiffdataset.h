@@ -173,6 +173,7 @@ class GTiffDataset final : public GDALPamDataset
 
     double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
     double m_dfMaxZError = 0.0;
+    double m_dfMaxZErrorOverview = 0.0;
     uint32_t m_anLercAddCompressionAndVersion[2]{0, 0};
 #if HAVE_JXL
     bool m_bJXLLossless = true;
@@ -525,9 +526,10 @@ class GTiffDataset final : public GDALPamDataset
 
     // Only needed by createcopy and close code.
     static void WriteRPC(GDALDataset *, TIFF *, int, GTiffProfile, const char *,
-                         char **, bool bWriteOnlyInPAMIfNeeded = false);
+                         CSLConstList papszCreationOptions,
+                         bool bWriteOnlyInPAMIfNeeded = false);
     static bool WriteMetadata(GDALDataset *, TIFF *, bool, GTiffProfile,
-                              const char *, char **,
+                              const char *, CSLConstList papszCreationOptions,
                               bool bExcludeRPBandIMGFileWriting = false);
     static void WriteNoDataValue(TIFF *, double);
     static void WriteNoDataValue(TIFF *, int64_t);

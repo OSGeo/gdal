@@ -29,8 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import gdaltest
 import pytest
 
@@ -48,60 +46,52 @@ def setup():
     with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
         yield
 
-    try:
-        os.remove("tmp/spatialite_test.db")
-    except OSError:
-        pass
 
-    try:
-        os.remove("tmp/byte.sqlite")
-    except OSError:
-        pass
+def has_spatialite():
+    drv = ogr.GetDriverByName("SQLite")
+    return drv is not None and "SPATIALITE" in drv.GetMetadataItem(
+        "DMD_CREATIONOPTIONLIST"
+    )
 
-    try:
-        os.remove("tmp/byte.tif.tst")
-    except OSError:
-        pass
 
-    try:
-        os.remove("tmp/rgbsmall.tif.tst")
-    except OSError:
-        pass
+def sqlite_supports_rtree(tmp_path):
+    # Test if SQLite3 supports rtrees
+    ds2 = ogr.GetDriverByName("SQLite").CreateDataSource(
+        str(tmp_path / "testrtree.sqlite")
+    )
+    gdal.ErrorReset()
+    ds2.ExecuteSQL("CREATE VIRTUAL TABLE testrtree USING rtree(id,minX,maxX,minY,maxY)")
+
+    return "rtree" not in gdal.GetLastErrorMsg()
+
+
+def sqlite_supports_rasterlite():
+
+    gdal.ErrorReset()
+    gdal.Open("data/rasterlite/rasterlite.sqlite")
+
+    return "unsupported file format" not in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
 # Test opening a rasterlite DB without overviews
 
 
-def test_rasterlite_2():
+def test_rasterlite_2(tmp_path):
 
-    # Test if SQLite3 supports rtrees
-    try:
-        os.remove("tmp/testrtree.sqlite")
-    except OSError:
-        pass
-    ds2 = ogr.GetDriverByName("SQLite").CreateDataSource("tmp/testrtree.sqlite")
-    gdal.ErrorReset()
-    ds2.ExecuteSQL("CREATE VIRTUAL TABLE testrtree USING rtree(id,minX,maxX,minY,maxY)")
-    ds2.Destroy()
-    try:
-        os.remove("tmp/testrtree.sqlite")
-    except OSError:
-        pass
-    if gdal.GetLastErrorMsg().find("rtree") != -1:
-        gdaltest.rasterlite_drv = None
+    if not sqlite_supports_rtree(tmp_path):
         pytest.skip(
             "Please upgrade your sqlite3 library to be able to read Rasterlite DBs (needs rtree support)!"
         )
 
-    gdal.ErrorReset()
+    if not sqlite_supports_rasterlite():
+        pytest.skip(
+            "Please upgrade your sqlite3 library to be able to read Rasterlite DBs!"
+        )
+
     ds = gdal.Open("data/rasterlite/rasterlite.sqlite")
+
     if ds is None:
-        if gdal.GetLastErrorMsg().find("unsupported file format") != -1:
-            gdaltest.rasterlite_drv = None
-            pytest.skip(
-                "Please upgrade your sqlite3 library to be able to read Rasterlite DBs!"
-            )
         pytest.fail()
 
     assert ds.RasterCount == 3, "expected 3 bands"
@@ -139,8 +129,8 @@ def test_rasterlite_2():
         0.0,
         -180.0 / ds.RasterYSize,
     )
-    for i in range(6):
-        assert gt[i] == pytest.approx(expected_gt[i], abs=1e-15)
+
+    gdaltest.check_geotransform(gt, expected_gt, 1e-15)
 
     ds = None
 
@@ -251,42 +241,42 @@ def test_rasterlite_5():
     ds = None
 
 
-def has_spatialite():
-    drv = ogr.GetDriverByName("SQLite")
-    return drv is not None and "SPATIALITE" in drv.GetMetadataItem(
-        "DMD_CREATIONOPTIONLIST"
-    )
-
-
 ###############################################################################
 # Test CreateCopy()
 
 
-@pytest.mark.skipif(not has_spatialite(), reason="spatialite not available")
-def test_rasterlite_6():
+@pytest.fixture()
+def byte_sqlite(tmp_path):
+    byte_sqlite_path = str(tmp_path / "byte.sqlite")
+    byte_sqlite_dsn = f"RASTERLITE:{byte_sqlite_path},table=byte"
 
-    # Test now CreateCopy()
-    src_ds = gdal.Open("data/byte.tif")
-    ds = gdal.GetDriverByName("RASTERLITE").CreateCopy(
-        "RASTERLITE:tmp/byte.sqlite,table=byte", src_ds
-    )
+    with gdal.Open("data/byte.tif") as src_ds:
+        ds = gdal.GetDriverByName("RASTERLITE").CreateCopy(byte_sqlite_dsn, src_ds)
+        assert ds is not None
+        del ds
+
+    return byte_sqlite_dsn
+
+
+@pytest.mark.skipif(not has_spatialite(), reason="spatialite not available")
+def test_rasterlite_6(byte_sqlite):
+
+    # Test result of CreateCopy()
+    ds = gdal.Open(byte_sqlite)
     assert ds is not None
 
-    assert (
-        ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
-    ), "Wrong checksum"
+    with gdal.Open("data/byte.tif") as src_ds:
+        assert (
+            ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+        ), "Wrong checksum"
 
+        expected_gt = src_ds.GetGeoTransform()
     gt = ds.GetGeoTransform()
-    expected_gt = src_ds.GetGeoTransform()
-    for i in range(6):
-        assert not abs(gt[i] - expected_gt[i] > 1e-5), "Expected : %s\nGot : %s" % (
-            expected_gt,
-            gt,
-        )
 
-    assert ds.GetProjectionRef().find("NAD27 / UTM zone 11N") != -1, "Wrong SRS"
+    gdaltest.check_geotransform(gt, expected_gt, 1e-5)
 
-    src_ds = None
+    assert "NAD27 / UTM zone 11N" in ds.GetProjectionRef(), "Wrong SRS"
+
     ds = None
 
 
@@ -295,9 +285,9 @@ def test_rasterlite_6():
 
 
 @pytest.mark.skipif(not has_spatialite(), reason="spatialite not available")
-def test_rasterlite_7():
+def test_rasterlite_7(byte_sqlite):
 
-    ds = gdal.Open("tmp/byte.sqlite", gdal.GA_Update)
+    ds = gdal.Open(byte_sqlite, gdal.GA_Update)
 
     # Resampling method is not taken into account
     ds.BuildOverviews("NEAREST", overviewlist=[2, 4])
@@ -312,7 +302,7 @@ def test_rasterlite_7():
 
     # Reopen and test
     ds = None
-    ds = gdal.Open("tmp/byte.sqlite")
+    ds = gdal.Open(byte_sqlite)
 
     assert (
         ds.GetRasterBand(1).GetOverview(0).Checksum() == 1192
@@ -322,15 +312,10 @@ def test_rasterlite_7():
         ds.GetRasterBand(1).GetOverview(1).Checksum() == 233
     ), "Wrong checksum for overview 1"
 
+    ###############################################################################
+    # Test CleanOverviews()
 
-###############################################################################
-# Test CleanOverviews()
-
-
-@pytest.mark.skipif(not has_spatialite(), reason="spatialite not available")
-def test_rasterlite_8():
-
-    ds = gdal.Open("tmp/byte.sqlite", gdal.GA_Update)
+    ds = gdal.Open(byte_sqlite, gdal.GA_Update)
 
     ds.BuildOverviews(overviewlist=[])
 
@@ -342,18 +327,16 @@ def test_rasterlite_8():
 
 
 @pytest.mark.skipif(not has_spatialite(), reason="spatialite not available")
-def test_rasterlite_11():
+def test_rasterlite_11(byte_sqlite):
 
-    ds = gdal.Open("tmp/byte.sqlite", gdal.GA_Update)
-
-    ds.BuildOverviews(overviewlist=[])
+    ds = gdal.Open(byte_sqlite, gdal.GA_Update)
 
     # Resampling method is not taken into account
     ds.BuildOverviews("AVERAGE", overviewlist=[2, 4])
 
     # Reopen and test
     ds = None
-    ds = gdal.Open("tmp/byte.sqlite")
+    ds = gdal.Open(byte_sqlite)
 
     assert (
         ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152

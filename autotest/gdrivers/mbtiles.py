@@ -41,6 +41,28 @@ pytestmark = pytest.mark.require_driver("MBTILES")
 
 
 ###############################################################################
+#
+
+
+@pytest.mark.require_curl()
+@pytest.fixture(scope="module")
+def server():
+
+    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    if port == 0:
+        pytest.skip()
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    webserver.server_stop(process, port)
+
+
+###############################################################################
 # Basic test
 
 
@@ -126,7 +148,7 @@ def test_mbtiles_2():
 def test_mbtiles_3():
 
     # Check that we have SQLite VFS support
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/mbtiles_3.db")
     if ds is None:
         pytest.skip()
@@ -138,7 +160,9 @@ def test_mbtiles_3():
     )
     if ds is None:
         # Just skip. The service isn't perfectly reliable sometimes
-        pytest.skip()
+        pytest.skip(
+            "Cannot access http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles"
+        )
 
     # long=2,lat=49 in WGS 84 --> x=222638,y=6274861 in Google Mercator
     locationInfo = ds.GetRasterBand(1).GetMetadataItem(
@@ -146,8 +170,7 @@ def test_mbtiles_3():
     )
     if locationInfo is None or locationInfo.find("France") == -1:
         print(locationInfo)
-        if gdaltest.skip_on_travis():
-            pytest.skip()
+        gdaltest.skip_on_travis()
         pytest.fail("did not get expected LocationInfo")
 
     locationInfo2 = (
@@ -157,8 +180,7 @@ def test_mbtiles_3():
     )
     if locationInfo2 != locationInfo:
         print(locationInfo2)
-        if gdaltest.skip_on_travis():
-            pytest.skip()
+        gdaltest.skip_on_travis()
         pytest.fail("did not get expected LocationInfo on overview")
 
 
@@ -167,33 +189,14 @@ def test_mbtiles_3():
 
 
 @pytest.mark.require_curl()
-def test_mbtiles_start_webserver():
-
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-
-###############################################################################
-#
-
-
-@pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_http_jpeg_three_bands():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_mbtiles_http_jpeg_three_bands(server):
 
     handler = webserver.FileHandler(
         {"/world_l1.mbtiles": open("data/mbtiles/world_l1.mbtiles", "rb").read()}
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.Open(
-            "/vsicurl/http://localhost:%d/world_l1.mbtiles" % gdaltest.webserver_port
-        )
+        ds = gdal.Open("/vsicurl/http://localhost:%d/world_l1.mbtiles" % server.port)
     assert ds is not None
 
 
@@ -203,18 +206,13 @@ def test_mbtiles_http_jpeg_three_bands():
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_http_jpeg_single_band():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_mbtiles_http_jpeg_single_band(server):
 
     handler = webserver.FileHandler(
         {"/byte_jpeg.mbtiles": open("data/mbtiles/byte_jpeg.mbtiles", "rb").read()}
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.Open(
-            "/vsicurl/http://localhost:%d/byte_jpeg.mbtiles" % gdaltest.webserver_port
-        )
+        ds = gdal.Open("/vsicurl/http://localhost:%d/byte_jpeg.mbtiles" % server.port)
     assert ds is not None
 
 
@@ -224,30 +222,14 @@ def test_mbtiles_http_jpeg_single_band():
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_http_png():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_mbtiles_http_png(server):
 
     handler = webserver.FileHandler(
         {"/byte.mbtiles": open("data/mbtiles/byte.mbtiles", "rb").read()}
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.Open(
-            "/vsicurl/http://localhost:%d/byte.mbtiles" % gdaltest.webserver_port
-        )
+        ds = gdal.Open("/vsicurl/http://localhost:%d/byte.mbtiles" % server.port)
     assert ds is not None
-
-
-###############################################################################
-#
-
-
-@pytest.mark.require_curl()
-def test_mbtiles_stop_webserver():
-
-    if gdaltest.webserver_port != 0:
-        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################
@@ -498,7 +480,7 @@ def test_mbtiles_9():
     ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/mbtiles_9.mbtiles")
     assert ds.RasterXSize == 256 and ds.RasterYSize == 256
     assert ds.GetGeoTransform()[0] == pytest.approx(-13110479.091473430395126, abs=1e-6)
@@ -562,7 +544,7 @@ def test_mbtiles_create():
 
     filename = "/vsimem/mbtiles_create.mbtiles"
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.Open(filename) is None
 
     # Nominal case
@@ -575,18 +557,18 @@ def test_mbtiles_create():
     ds.SetProjection(src_ds.GetProjectionRef())
 
     # Cannot modify geotransform once set"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     assert ret != 0
     ds = None
 
     ds = gdal.Open("data/mbtiles/byte.mbtiles")
     # SetGeoTransform() not supported on read-only dataset"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     assert ret != 0
     # SetProjection() not supported on read-only dataset
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetProjection(src_ds.GetProjectionRef())
     assert ret != 0
     ds = None
@@ -594,7 +576,7 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Only EPSG:3857 supported on MBTiles dataset
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetProjection('LOCAL_CS["foo"]')
     assert ret != 0
     ds = None
@@ -602,7 +584,7 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Only north-up non rotated geotransform supported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     assert ret != 0
     ds = None
@@ -610,9 +592,81 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Could not find an appropriate zoom level that matches raster pixel size
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     assert ret != 0
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test read support of WEBP compressed dataset
+
+
+@pytest.mark.require_driver("WEBP")
+def test_mbtiles_webp_read():
+
+    ds = gdal.Open("data/mbtiles/world_l1_webp.mbtiles")
+    assert ds is not None
+
+    assert ds.RasterCount == 4, "expected 4 bands"
+    assert ds.RasterXSize == 512 and ds.RasterYSize == 510, "bad dimensions"
+    assert ds.GetRasterBand(1).Checksum() == 37747
+    assert ds.GetRasterBand(2).Checksum() == 54303
+    assert ds.GetRasterBand(3).Checksum() == 13117
+    assert ds.GetRasterBand(4).Checksum() == 58907
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (
+        -20037508.342789244,
+        78271.516964020484,
+        0.0,
+        19971868.880408563,
+        0.0,
+        -78271.516964020484,
+    )
+    assert gt == pytest.approx(expected_gt, rel=1e-15), "bad gt"
+
+    ds = None
+
+
+###############################################################################
+# Test write support of WEBP compressed dataset
+
+
+@pytest.mark.require_driver("WEBP")
+def test_mbtiles_webp_write():
+
+    # Test options
+    src_ds = gdal.Open("data/byte.tif")
+    options = []
+    options += ["TILE_FORMAT=WEBP"]
+    options += ["QUALITY=50"]
+    options += ["NAME=webp_mbtiles_name"]
+    options += ["DESCRIPTION=webp_mbtiles_dsc"]
+    options += ["TYPE=baselayer"]
+    options += ["WRITE_BOUNDS=no"]
+    gdaltest.mbtiles_drv.CreateCopy(
+        "/vsimem/mbtiles_webp_write.mbtiles", src_ds, options=options
+    )
+    src_ds = None
+
+    ds = gdal.Open("/vsimem/mbtiles_webp_write.mbtiles")
+    got_cs = ds.GetRasterBand(1).Checksum()
+    assert got_cs != 0
+    got_md = ds.GetMetadata()
+    expected_md = {
+        "ZOOM_LEVEL": "11",
+        "minzoom": "11",
+        "maxzoom": "11",
+        "format": "webp",
+        "version": "1.3",
+        "type": "baselayer",
+        "name": "webp_mbtiles_name",
+        "description": "webp_mbtiles_dsc",
+    }
+    assert got_md == expected_md
+    ds = None
+
+    gdal.Unlink("/vsimem/mbtiles_webp_write.mbtiles")

@@ -20,6 +20,8 @@ RUN apt-get update -y \
     curl \
     git \
     gnupg \
+    lcov \
+    libaec-dev \
     libarmadillo-dev \
     libblosc-dev \
     libboost-dev \
@@ -106,7 +108,7 @@ RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}
   | tar xz -C /usr/local --strip-components=1
 
 # Build tiledb (requires CMake 3.21)
-ENV TILEDB_VERSION=2.9.4
+ENV TILEDB_VERSION=2.15.3
 RUN mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
@@ -132,7 +134,7 @@ RUN git clone https://github.com/libjxl/libjxl.git --recursive \
     && git checkout ${JXL_TREEISH} \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF .. \
     && make -j$(nproc) \
     && make -j$(nproc) install \
     && cd ../.. \
@@ -179,12 +181,12 @@ RUN mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_7/releases/download/pdfium_5461_v1/install-ubuntu2004-rev5461.tar.gz \
-  && tar -xzf install-ubuntu2004-rev5461.tar.gz \
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_8/releases/download/pdfium_5952_v1/install-ubuntu2004-rev5952.tar.gz \
+  && tar -xzf install-ubuntu2004-rev5952.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev5461.tar.gz install
+  && rm -rf install-ubuntu2004-rev5952.tar.gz install
 
 # HANA: client side
 # Install hdbsql tool
@@ -246,3 +248,4 @@ RUN ldconfig
 
 COPY requirements.txt /tmp/
 RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN python3 -m pip install cfchecker

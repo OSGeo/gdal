@@ -27,6 +27,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
+
 import gdaltest
 import pytest
 
@@ -41,6 +43,18 @@ def test_ogrinfo_lib_1():
     ds = gdal.OpenEx("../ogr/data/poly.shp")
 
     ret = gdal.VectorInfo(ds)
+    assert "ESRI Shapefile" in ret
+
+
+def test_ogrinfo_lib_1_str():
+
+    ret = gdal.VectorInfo("../ogr/data/poly.shp")
+    assert "ESRI Shapefile" in ret
+
+
+def test_ogrinfo_lib_1_path():
+
+    ret = gdal.VectorInfo(pathlib.Path("../ogr/data/poly.shp"))
     assert "ESRI Shapefile" in ret
 
 
@@ -764,3 +778,65 @@ def test_ogrinfo_lib_json_geom_NO():
     assert ret["layers"][0]["features"] == [
         {"type": "Feature", "fid": 0, "properties": {"prop0": 42}, "geometry": None}
     ]
+
+
+###############################################################################
+# Test field domains
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogrinfo_lib_fielddomains():
+
+    ret = gdal.VectorInfo("../ogr/data/gpkg/domains.gpkg", format="json")
+    assert ret["domains"] == {
+        "enum_domain": {
+            "type": "coded",
+            "fieldType": "Integer",
+            "splitPolicy": "default value",
+            "mergePolicy": "default value",
+            "codedValues": {"1": "one", "2": None},
+        },
+        "glob_domain": {
+            "type": "glob",
+            "fieldType": "String",
+            "splitPolicy": "default value",
+            "mergePolicy": "default value",
+            "glob": "*",
+        },
+        "range_domain_int": {
+            "type": "range",
+            "fieldType": "Integer",
+            "splitPolicy": "default value",
+            "mergePolicy": "default value",
+            "minValue": 1,
+            "minValueIncluded": True,
+            "maxValue": 2,
+            "maxValueIncluded": False,
+        },
+        "range_domain_int64": {
+            "type": "range",
+            "fieldType": "Integer64",
+            "splitPolicy": "default value",
+            "mergePolicy": "default value",
+            "minValue": -1234567890123,
+            "minValueIncluded": False,
+            "maxValue": 1234567890123,
+            "maxValueIncluded": True,
+        },
+        "range_domain_real": {
+            "type": "range",
+            "fieldType": "Real",
+            "splitPolicy": "default value",
+            "mergePolicy": "default value",
+            "minValue": 1.5,
+            "minValueIncluded": True,
+            "maxValue": 2.5,
+            "maxValueIncluded": True,
+        },
+        "range_domain_real_inf": {
+            "type": "range",
+            "fieldType": "Real",
+            "splitPolicy": "default value",
+            "mergePolicy": "default value",
+        },
+    }

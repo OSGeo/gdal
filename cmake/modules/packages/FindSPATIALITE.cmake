@@ -55,8 +55,8 @@ mark_as_advanced(SPATIALITE_LIBRARY SPATIALITE_INCLUDE_DIR)
 if(SPATIALITE_LIBRARY AND SPATIALITE_INCLUDE_DIR
    AND NOT SPATIALITE_VERSION_STRING)
     file(STRINGS "${SPATIALITE_INCLUDE_DIR}/spatialite.h" _spatialite_h_ver
-         REGEX "^[ \t]version[ \t]([0-9]+\\.[0-9]+),.*")
-    string(REGEX REPLACE "[ \t]version[ \t]([0-9]+\\.[0-9]+),.*" "\\1" _spatialite_h_ver ${_spatialite_h_ver})
+         REGEX "^[ \t]version[ \t]([0-9]+\\.[0-9]+)[,.].*")
+    string(REGEX REPLACE "[ \t]version[ \t]([0-9]+\\.[0-9]+)[,.].*" "\\1" _spatialite_h_ver "${_spatialite_h_ver}")
     set(SPATIALITE_VERSION_STRING "${_spatialite_h_ver}")
 endif()
 

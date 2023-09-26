@@ -2861,6 +2861,10 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
                     }
                 }
             }
+            else
+            {
+                *ppoGeom = new OGRPolygon();
+            }
         }  // Polygon.
 
         /* --------------------------------------------------------------------

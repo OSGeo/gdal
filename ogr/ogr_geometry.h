@@ -2194,6 +2194,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
 
     OGRErr addCurve(const OGRCurve *, double dfToleranceEps = 1e-14);
     OGRErr addCurveDirectly(OGRCurve *, double dfToleranceEps = 1e-14);
+    OGRErr addCurve(std::unique_ptr<OGRCurve>, double dfToleranceEps = 1e-14);
     OGRCurve *stealCurve(int);
     virtual OGRPointIterator *getPointIterator() const override;
 
@@ -2432,6 +2433,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     virtual OGRErr addRing(OGRCurve *);
     virtual OGRErr addRingDirectly(OGRCurve *);
+    OGRErr addRing(std::unique_ptr<OGRCurve>);
 
     OGRCurve *getExteriorRingCurve();
     const OGRCurve *getExteriorRingCurve() const;
@@ -2856,6 +2858,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual void setMeasured(OGRBoolean bIsMeasured) override;
     virtual OGRErr addGeometry(const OGRGeometry *);
     virtual OGRErr addGeometryDirectly(OGRGeometry *);
+    OGRErr addGeometry(std::unique_ptr<OGRGeometry> geom);
     virtual OGRErr removeGeometry(int iIndex, int bDelete = TRUE);
 
     virtual void
@@ -3312,6 +3315,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     hasCurveGeometry(int bLookForNonLinear = FALSE) const override;
     virtual OGRErr addGeometry(const OGRGeometry *);
     OGRErr addGeometryDirectly(OGRGeometry *poNewGeom);
+    OGRErr addGeometry(std::unique_ptr<OGRGeometry> poNewGeom);
+
     int getNumGeometries() const;
     OGRPolygon *getGeometryRef(int i);
     const OGRPolygon *getGeometryRef(int i) const;
@@ -3439,6 +3444,10 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
 
     // IWks Interface.
     virtual OGRErr addGeometry(const OGRGeometry *) override;
+
+#ifndef DOXYGEN_XML
+    using OGRPolyhedralSurface::addGeometry;
+#endif
 
     /** Return pointer of this in upper class */
     inline OGRPolyhedralSurface *toUpperClass()

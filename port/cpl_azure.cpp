@@ -32,6 +32,7 @@
 #include "cpl_time.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsi_virtual.h"
 
 #include <mutex>
 
@@ -177,11 +178,13 @@ GetAzureBlobHeaders(const CPLString &osVerb,
 /*                     VSIAzureBlobHandleHelper()                       */
 /************************************************************************/
 VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
-    const CPLString &osEndpoint, const CPLString &osBucket,
-    const CPLString &osObjectKey, const CPLString &osStorageAccount,
-    const CPLString &osStorageKey, const CPLString &osSAS,
-    const CPLString &osAccessToken, bool bFromManagedIdentities)
-    : m_osURL(BuildURL(osEndpoint, osBucket, osObjectKey, osSAS)),
+    const std::string &osPathForOption, const CPLString &osEndpoint,
+    const CPLString &osBucket, const CPLString &osObjectKey,
+    const CPLString &osStorageAccount, const CPLString &osStorageKey,
+    const CPLString &osSAS, const CPLString &osAccessToken,
+    bool bFromManagedIdentities)
+    : m_osPathForOption(osPathForOption),
+      m_osURL(BuildURL(osEndpoint, osBucket, osObjectKey, osSAS)),
       m_osEndpoint(osEndpoint), m_osBucket(osBucket),
       m_osObjectKey(osObjectKey), m_osStorageAccount(osStorageAccount),
       m_osStorageKey(osStorageKey), m_osSAS(osSAS),
@@ -225,41 +228,70 @@ static CPLString AzureCSGetParameter(const CPLString &osStr, const char *pszKey,
 }
 
 /************************************************************************/
-/*                GetConfigurationFromManagedIdentities()               */
+/*                         CPLAzureCachedToken                          */
 /************************************************************************/
 
 std::mutex gMutex;
-static CPLString gosAccessToken;
-static GIntBig gnGlobalExpiration = 0;
-
-static bool GetConfigurationFromManagedIdentities(CPLString &osAccessToken)
+struct CPLAzureCachedToken
 {
-    std::lock_guard<std::mutex> guard(gMutex);
-    time_t nCurTime;
-    time(&nCurTime);
-    // Try to reuse credentials if they are still valid, but
-    // keep one minute of margin...
-    if (!gosAccessToken.empty() && nCurTime < gnGlobalExpiration - 60)
-    {
-        osAccessToken = gosAccessToken;
-        return true;
-    }
+    std::string osAccessToken{};
+    GIntBig nExpiresOn = 0;
+};
+static std::map<std::string, CPLAzureCachedToken> goMapIMDSURLToCachedToken;
 
+/************************************************************************/
+/*                GetConfigurationFromIMDSCredentials()                 */
+/************************************************************************/
+
+static bool
+GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
+                                    CPLString &osAccessToken)
+{
     // coverity[tainted_data]
     const CPLString osRootURL(CPLGetConfigOption("CPL_AZURE_VM_API_ROOT_URL",
                                                  "http://169.254.169.254"));
     if (osRootURL == "disabled")
         return false;
 
+    std::string osURLResource("/metadata/identity/oauth2/"
+                              "token?api-version=2018-02-01&resource=https%"
+                              "3A%2F%2Fstorage.azure.com%2F");
+    const char *pszObjectId = VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AZURE_IMDS_OBJECT_ID", nullptr);
+    if (pszObjectId)
+        osURLResource += "&object_id=" + CPLAWSURLEncode(pszObjectId, false);
+    const char *pszClientId = VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AZURE_IMDS_CLIENT_ID", nullptr);
+    if (pszClientId)
+        osURLResource += "&client_id=" + CPLAWSURLEncode(pszClientId, false);
+    const char *pszMsiResId = VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AZURE_IMDS_MSI_RES_ID", nullptr);
+    if (pszMsiResId)
+        osURLResource += "&msi_res_id=" + CPLAWSURLEncode(pszMsiResId, false);
+
+    std::lock_guard<std::mutex> guard(gMutex);
+
+    // Look for cached token corresponding to this IMDS request URL
+    auto oIter = goMapIMDSURLToCachedToken.find(osURLResource);
+    if (oIter != goMapIMDSURLToCachedToken.end())
+    {
+        const auto &oCachedToken = oIter->second;
+        time_t nCurTime;
+        time(&nCurTime);
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if (nCurTime < oCachedToken.nExpiresOn - 60)
+        {
+            osAccessToken = oCachedToken.osAccessToken;
+            return true;
+        }
+    }
+
     // Fetch credentials
     CPLStringList oResponse;
     const char *const apszOptions[] = {"HEADERS=Metadata: true", nullptr};
     CPLHTTPResult *psResult =
-        CPLHTTPFetch((osRootURL + "/metadata/identity/oauth2/"
-                                  "token?api-version=2018-02-01&resource=https%"
-                                  "3A%2F%2Fstorage.azure.com%2F")
-                         .c_str(),
-                     apszOptions);
+        CPLHTTPFetch((osRootURL + osURLResource).c_str(), apszOptions);
     if (psResult)
     {
         if (psResult->nStatus == 0 && psResult->pabyData != nullptr)
@@ -281,13 +313,164 @@ static bool GetConfigurationFromManagedIdentities(CPLString &osAccessToken)
         CPLAtoGIntBig(oResponse.FetchNameValueDef("expires_on", ""));
     if (!osAccessToken.empty() && nExpiresOn > 0)
     {
-        gosAccessToken = osAccessToken;
-        gnGlobalExpiration = nExpiresOn;
-        CPLDebug("AZURE", "Storing credentials until " CPL_FRMT_GIB,
-                 gnGlobalExpiration);
+        CPLAzureCachedToken cachedToken;
+        cachedToken.osAccessToken = osAccessToken;
+        cachedToken.nExpiresOn = nExpiresOn;
+        goMapIMDSURLToCachedToken[osURLResource] = cachedToken;
+        CPLDebug("AZURE", "Storing credentials for %s until " CPL_FRMT_GIB,
+                 osURLResource.c_str(), nExpiresOn);
     }
 
     return !osAccessToken.empty();
+}
+
+/************************************************************************/
+/*                 GetConfigurationFromWorkloadIdentity()               */
+/************************************************************************/
+
+// Last timestamp AZURE_FEDERATED_TOKEN_FILE was read
+static GIntBig gnLastReadFederatedTokenFile = 0;
+static std::string gosFederatedToken{};
+
+// Azure Active Directory Workload Identity, typically for Azure Kubernetes
+// Cf https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/identity/azure-identity/azure/identity/_credentials/workload_identity.py
+static bool GetConfigurationFromWorkloadIdentity(CPLString &osAccessToken)
+{
+    const std::string AZURE_CLIENT_ID(
+        CPLGetConfigOption("AZURE_CLIENT_ID", ""));
+    const std::string AZURE_TENANT_ID(
+        CPLGetConfigOption("AZURE_TENANT_ID", ""));
+    const std::string AZURE_AUTHORITY_HOST(
+        CPLGetConfigOption("AZURE_AUTHORITY_HOST", ""));
+    const std::string AZURE_FEDERATED_TOKEN_FILE(
+        CPLGetConfigOption("AZURE_FEDERATED_TOKEN_FILE", ""));
+    if (AZURE_CLIENT_ID.empty() || AZURE_TENANT_ID.empty() ||
+        AZURE_AUTHORITY_HOST.empty() || AZURE_FEDERATED_TOKEN_FILE.empty())
+    {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> guard(gMutex);
+
+    time_t nCurTime;
+    time(&nCurTime);
+
+    // Look for cached token corresponding to this request URL
+    const std::string osURL(AZURE_AUTHORITY_HOST + AZURE_TENANT_ID +
+                            "/oauth2/v2.0/token");
+    auto oIter = goMapIMDSURLToCachedToken.find(osURL);
+    if (oIter != goMapIMDSURLToCachedToken.end())
+    {
+        const auto &oCachedToken = oIter->second;
+        // Try to reuse credentials if they are still valid, but
+        // keep one minute of margin...
+        if (nCurTime < oCachedToken.nExpiresOn - 60)
+        {
+            osAccessToken = oCachedToken.osAccessToken;
+            return true;
+        }
+    }
+
+    // Ingest content of AZURE_FEDERATED_TOKEN_FILE if last time was more than
+    // 600 seconds.
+    if (nCurTime - gnLastReadFederatedTokenFile > 600)
+    {
+        auto fp = VSIVirtualHandleUniquePtr(
+            VSIFOpenL(AZURE_FEDERATED_TOKEN_FILE.c_str(), "rb"));
+        if (!fp)
+        {
+            CPLDebug("AZURE", "Cannot open AZURE_FEDERATED_TOKEN_FILE = %s",
+                     AZURE_FEDERATED_TOKEN_FILE.c_str());
+            return false;
+        }
+        fp->Seek(0, SEEK_END);
+        const auto nSize = fp->Tell();
+        if (nSize == 0 || nSize > 100 * 1024)
+        {
+            CPLDebug(
+                "AZURE",
+                "Invalid size for AZURE_FEDERATED_TOKEN_FILE = " CPL_FRMT_GUIB,
+                static_cast<GUIntBig>(nSize));
+            return false;
+        }
+        fp->Seek(0, SEEK_SET);
+        gosFederatedToken.resize(static_cast<size_t>(nSize));
+        if (fp->Read(&gosFederatedToken[0], gosFederatedToken.size(), 1) != 1)
+        {
+            CPLDebug("AZURE", "Cannot read AZURE_FEDERATED_TOKEN_FILE");
+            return false;
+        }
+        gnLastReadFederatedTokenFile = nCurTime;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Prepare POST request.                                           */
+    /* -------------------------------------------------------------------- */
+    CPLStringList aosOptions;
+
+    aosOptions.AddString(
+        "HEADERS=Content-Type: application/x-www-form-urlencoded");
+
+    std::string osItem("POSTFIELDS=client_assertion=");
+    osItem += CPLAWSURLEncode(gosFederatedToken);
+    osItem += "&client_assertion_type=urn:ietf:params:oauth:client-assertion-"
+              "type:jwt-bearer";
+    osItem += "&client_id=";
+    osItem += CPLAWSURLEncode(AZURE_CLIENT_ID);
+    osItem += "&grant_type=client_credentials";
+    osItem += "&scope=https://storage.azure.com/.default";
+    aosOptions.AddString(osItem.c_str());
+
+    /* -------------------------------------------------------------------- */
+    /*      Submit request by HTTP.                                         */
+    /* -------------------------------------------------------------------- */
+    CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), aosOptions.List());
+    if (!psResult)
+        return false;
+
+    if (!psResult->pabyData || psResult->pszErrBuf)
+    {
+        if (psResult->pszErrBuf)
+            CPLDebug("AZURE", "%s", psResult->pszErrBuf);
+        if (psResult->pabyData)
+            CPLDebug("AZURE", "%s", psResult->pabyData);
+
+        CPLDebug("AZURE",
+                 "Fetching OAuth2 access code from workload identity failed.");
+        CPLHTTPDestroyResult(psResult);
+        return false;
+    }
+
+    CPLStringList oResponse =
+        CPLParseKeyValueJson(reinterpret_cast<char *>(psResult->pabyData));
+    CPLHTTPDestroyResult(psResult);
+
+    osAccessToken = oResponse.FetchNameValueDef("access_token", "");
+    const int nExpiresIn = atoi(oResponse.FetchNameValueDef("expires_in", ""));
+    if (!osAccessToken.empty() && nExpiresIn > 0)
+    {
+        CPLAzureCachedToken cachedToken;
+        cachedToken.osAccessToken = osAccessToken;
+        cachedToken.nExpiresOn = nCurTime + nExpiresIn;
+        goMapIMDSURLToCachedToken[osURL] = cachedToken;
+        CPLDebug("AZURE", "Storing credentials for %s until " CPL_FRMT_GIB,
+                 osURL.c_str(), cachedToken.nExpiresOn);
+    }
+
+    return !osAccessToken.empty();
+}
+
+/************************************************************************/
+/*                GetConfigurationFromManagedIdentities()               */
+/************************************************************************/
+
+static bool
+GetConfigurationFromManagedIdentities(const std::string &osPathForOption,
+                                      CPLString &osAccessToken)
+{
+    if (GetConfigurationFromWorkloadIdentity(osAccessToken))
+        return true;
+    return GetConfigurationFromIMDSCredentials(osPathForOption, osAccessToken);
 }
 
 /************************************************************************/
@@ -297,8 +480,9 @@ static bool GetConfigurationFromManagedIdentities(CPLString &osAccessToken)
 void VSIAzureBlobHandleHelper::ClearCache()
 {
     std::lock_guard<std::mutex> guard(gMutex);
-    gosAccessToken.clear();
-    gnGlobalExpiration = 0;
+    goMapIMDSURLToCachedToken.clear();
+    gnLastReadFederatedTokenFile = 0;
+    gosFederatedToken.clear();
 }
 
 /************************************************************************/
@@ -361,9 +545,10 @@ static bool ParseStorageConnectionString(
 /************************************************************************/
 
 static bool GetConfigurationFromCLIConfigFile(
-    const std::string &osServicePrefix, bool &bUseHTTPS, CPLString &osEndpoint,
-    CPLString &osStorageAccount, CPLString &osStorageKey, CPLString &osSAS,
-    CPLString &osAccessToken, bool &bFromManagedIdentities)
+    const std::string &osPathForOption, const std::string &osServicePrefix,
+    bool &bUseHTTPS, CPLString &osEndpoint, CPLString &osStorageAccount,
+    CPLString &osStorageKey, CPLString &osSAS, CPLString &osAccessToken,
+    bool &bFromManagedIdentities)
 {
 #ifdef _WIN32
     const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
@@ -471,7 +656,8 @@ static bool GetConfigurationFromCLIConfigFile(
         }
 
         CPLString osTmpAccessToken;
-        if (GetConfigurationFromManagedIdentities(osTmpAccessToken))
+        if (GetConfigurationFromManagedIdentities(osPathForOption,
+                                                  osTmpAccessToken))
         {
             bFromManagedIdentities = true;
             return true;
@@ -554,7 +740,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                     }
 
                     CPLString osTmpAccessToken;
-                    if (GetConfigurationFromManagedIdentities(osTmpAccessToken))
+                    if (GetConfigurationFromManagedIdentities(osPathForOption,
+                                                              osTmpAccessToken))
                     {
                         bFromManagedIdentities = true;
                         return true;
@@ -574,8 +761,9 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
     }
 
     if (GetConfigurationFromCLIConfigFile(
-            osServicePrefix, bUseHTTPS, osEndpoint, osStorageAccount,
-            osStorageKey, osSAS, osAccessToken, bFromManagedIdentities))
+            osPathForOption, osServicePrefix, bUseHTTPS, osEndpoint,
+            osStorageAccount, osStorageKey, osSAS, osAccessToken,
+            bFromManagedIdentities))
     {
         return true;
     }
@@ -649,9 +837,9 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
         osObjectKey = osBucketObject.substr(nSlashPos + 1);
     }
 
-    return new VSIAzureBlobHandleHelper(osEndpoint, osBucket, osObjectKey,
-                                        osStorageAccount, osStorageKey, osSAS,
-                                        osAccessToken, bFromManagedIdentities);
+    return new VSIAzureBlobHandleHelper(
+        osPathForOption, osEndpoint, osBucket, osObjectKey, osStorageAccount,
+        osStorageKey, osSAS, osAccessToken, bFromManagedIdentities);
 }
 
 /************************************************************************/
@@ -709,7 +897,8 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
         CPLString osAccessToken;
         if (m_bFromManagedIdentities)
         {
-            if (!GetConfigurationFromManagedIdentities(osAccessToken))
+            if (!GetConfigurationFromManagedIdentities(m_osPathForOption,
+                                                       osAccessToken))
                 return nullptr;
         }
         else

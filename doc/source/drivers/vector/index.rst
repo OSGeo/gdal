@@ -61,6 +61,7 @@ Vector drivers
    idrisi
    ili
    jml
+   jsonfg
    kml
    libkml
    lvbag
@@ -89,6 +90,7 @@ Vector drivers
    pgeo
    pg
    plscenes
+   pmtiles
    s57
    sdts
    selafin

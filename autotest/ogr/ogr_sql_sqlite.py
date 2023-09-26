@@ -74,6 +74,19 @@ def require_ogr_sql_sqlite():
     ds.ReleaseResultSet(sql_lyr)
     assert sql_lyr is not None
 
+    with gdal.quiet_errors():
+        ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+            "/vsimem/foo.db", options=["SPATIALITE=YES"]
+        )
+        ogrtest.has_spatialite = ds is not None
+        if ogrtest.has_spatialite:
+            sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+            feat = sql_lyr.GetNextFeature()
+            gdaltest.spatialite_version = feat.GetFieldAsString(0)
+            ds.ReleaseResultSet(sql_lyr)
+        ds = None
+        gdal.Unlink("/vsimem/foo.db")
+
 
 ###############################################################################
 # Tests that don't involve geometry
@@ -587,20 +600,6 @@ def test_ogr_sql_sqlite_4():
 
 
 def test_ogr_sql_sqlite_5():
-
-    with gdaltest.error_handler():
-        ds = ogr.GetDriverByName("SQLite").CreateDataSource(
-            "/vsimem/foo.db", options=["SPATIALITE=YES"]
-        )
-        ogrtest.has_spatialite = ds is not None
-        if ogrtest.has_spatialite:
-            sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
-            feat = sql_lyr.GetNextFeature()
-            gdaltest.spatialite_version = feat.GetFieldAsString(0)
-            ds.ReleaseResultSet(sql_lyr)
-        ds = None
-        gdal.Unlink("/vsimem/foo.db")
-
     if ogrtest.has_spatialite is False:
         pytest.skip("Spatialite not available")
 
@@ -625,7 +624,7 @@ def test_ogr_sql_sqlite_5():
 def test_ogr_sql_sqlite_6():
 
     if ogrtest.has_spatialite is False:
-        pytest.skip()
+        pytest.skip("Spatialite not available")
 
     with gdal.config_option("OGR_SQLITE_DIALECT_USE_SPATIALITE", "NO"):
 
@@ -693,18 +692,14 @@ def test_ogr_sql_sqlite_8():
 
     expect = [171, 172, 173, 179]
 
-    sql_lyr = ds.ExecuteSQL(
+    with ds.ExecuteSQL(
         "SELECT p.*, il.name FROM poly p "
         + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) '
         + "WHERE eas_id > 170 ORDER BY eas_id",
         dialect="SQLite",
-    )
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
-
-    ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -785,17 +780,17 @@ def test_ogr_sql_sqlite_12():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
 
     # Invalid SQL
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("qdfdfdf", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
 
     # Non existing external datasource
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("SELECT * FROM 'foo'.'bar'", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
 
     # Non existing layer in existing external datasource
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("SELECT * FROM 'data'.'azertyuio'", dialect="SQLite")
     ds.ReleaseResultSet(sql_lyr)
 
@@ -825,7 +820,7 @@ def test_ogr_sql_sqlite_13():
     feat = None
 
     # Test with invalid parameter
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)", dialect="SQLite")
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -834,7 +829,7 @@ def test_ogr_sql_sqlite_13():
     assert geom is None
 
     # Test on non existing layer
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')", dialect="SQLite")
     feat = sql_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -1015,7 +1010,7 @@ def ogr_sql_sqlite_14_and_15(sql):
 def test_ogr_sql_sqlite_14():
 
     if ogrtest.has_spatialite is False:
-        pytest.skip()
+        pytest.skip("Spatialite not available")
 
     sql = (
         "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE "
@@ -1034,7 +1029,7 @@ def test_ogr_sql_sqlite_14():
 def test_ogr_sql_sqlite_15():
 
     if ogrtest.has_spatialite is False:
-        pytest.skip()
+        pytest.skip("Spatialite not available")
 
     if int(gdaltest.spatialite_version[0 : gdaltest.spatialite_version.find(".")]) < 3:
         pytest.skip()
@@ -1716,7 +1711,7 @@ def test_ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate()", dialect="SQLite")
     if sql_lyr is not None:
         ds.ReleaseResultSet(sql_lyr)
@@ -1732,7 +1727,7 @@ def test_ogr_sql_sqlite_24():
     ds.ReleaseResultSet(sql_lyr)
 
     # Error case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate()", dialect="SQLite")
     if sql_lyr is not None:
         ds.ReleaseResultSet(sql_lyr)
@@ -1999,18 +1994,15 @@ def test_ogr_sql_sqlite_27():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, "2013/01/01 00:00:00")
     lyr.CreateFeature(feat)
-    lyr = ds.ExecuteSQL("SELECT MIN(DATE), MAX(DATE) from test", dialect="SQLite")
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDateTime
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
-    tr = ogrtest.check_features_against_list(lyr, "MIN(DATE)", ["2013/01/01 00:00:00"])
-    lyr.ResetReading()
-    tr2 = ogrtest.check_features_against_list(lyr, "MAX(DATE)", ["2013/12/31 23:59:59"])
 
-    ds.ReleaseResultSet(lyr)
-
-    assert tr
-
-    assert tr2
+    with ds.ExecuteSQL(
+        "SELECT MIN(DATE), MAX(DATE) from test", dialect="SQLite"
+    ) as lyr:
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDateTime
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
+        ogrtest.check_features_against_list(lyr, "MIN(DATE)", ["2013/01/01 00:00:00"])
+        lyr.ResetReading()
+        ogrtest.check_features_against_list(lyr, "MAX(DATE)", ["2013/12/31 23:59:59"])
 
 
 ###############################################################################
@@ -2023,7 +2015,7 @@ def test_ogr_sql_sqlite_28():
 
     # Invalid parameters
     for sql in ["SELECT hstore_get_value('a')"]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL(sql, dialect="SQLite")
         assert sql_lyr is None, sql
 
@@ -2181,12 +2173,12 @@ def test_ogr_sql_sqlite_st_makevalid():
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         make_valid_available = g.MakeValid() is not None
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     sql = "SELECT ST_MakeValid(ST_GeomFromText('POLYGON ((0 0,1 1,1 0,0 1,0 0))'))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ds.ExecuteSQL(sql, dialect="SQLite")
     if sql_lyr is None:
         assert not make_valid_available
@@ -2197,13 +2189,10 @@ def test_ogr_sql_sqlite_st_makevalid():
     ds.ReleaseResultSet(sql_lyr)
 
     if make_valid_available:
-        assert (
-            ogrtest.check_feature_geometry(
-                ogr.CreateGeometryFromWkt(wkt),
-                "MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))",
-            )
-            == 0
-        ), wkt
+        ogrtest.check_feature_geometry(
+            ogr.CreateGeometryFromWkt(wkt),
+            "MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))",
+        )
 
 
 ###############################################################################
@@ -2323,3 +2312,117 @@ def test_ogr_sql_sqlite_json_each():
     fc = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
     assert fc == 0
+
+
+###############################################################################
+@pytest.mark.parametrize("driver", ["memory", "shape"])
+def testogr_sql_sqlite_spatial_filter(driver):
+
+    filename = None
+    if driver == "memory":
+        ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    elif driver == "shape":
+        filename = "/vsimem/test.shp"
+        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename)
+    else:
+        assert False
+    lyr = ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+    f = None
+
+    if driver == "shape":
+        ds = None
+        ds = ogr.Open(filename, update=1)
+
+    spatialFilter = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 10,10 10,10 0,0 0))")
+    with ds.ExecuteSQL(
+        "SELECT * FROM test", spatialFilter=spatialFilter, dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f.GetFID() for f in sql_lyr] == [0]
+
+    spatialFilter = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    with ds.ExecuteSQL(
+        "SELECT * FROM test", spatialFilter=spatialFilter, dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f.GetFID() for f in sql_lyr] == []
+
+    ds = None
+    if driver == "shape":
+        ds = ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filename)
+
+
+###############################################################################
+@gdaltest.enable_exceptions()
+def testogr_sql_sqlite_named_FID_column():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", options=["FID=myfid"])
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(20)
+    lyr.CreateFeature(f)
+    f = None
+
+    with ds.ExecuteSQL("SELECT myfid, * FROM test", dialect="SQLITE") as sql_lyr:
+        assert [f["myfid"] for f in sql_lyr] == [10, 20]
+
+    with ds.ExecuteSQL(
+        "SELECT rowid FROM test WHERE myfid = 20", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["rowid"] for f in sql_lyr] == [20]
+
+    ds.ExecuteSQL("INSERT INTO test (foo) VALUES ('bar')", dialect="SQLITE")
+
+    with ds.ExecuteSQL(
+        "SELECT myfid, * FROM test WHERE foo = 'bar'", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["foo"] for f in sql_lyr] == ["bar"]
+
+    ds.ExecuteSQL("INSERT INTO test (foo, myfid) VALUES ('baz', 30)", dialect="SQLITE")
+
+    with ds.ExecuteSQL(
+        "SELECT myfid, * FROM test WHERE foo = 'baz'", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["myfid"] for f in sql_lyr] == [30]
+
+    with pytest.raises(Exception):
+        # Value provided through ROWID and myfid are different
+        ds.ExecuteSQL(
+            "INSERT INTO test (foo, myfid, rowid) VALUES ('baz', 40, 41)",
+            dialect="SQLITE",
+        )
+
+    ds.ExecuteSQL("UPDATE test SET foo = 'baz2' WHERE myfid = 30", dialect="SQLITE")
+
+    with ds.ExecuteSQL(
+        "SELECT myfid, * FROM test WHERE foo = 'baz2'", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["myfid"] for f in sql_lyr] == [30]
+
+    ds.ExecuteSQL("DELETE FROM test WHERE myfid = 30", dialect="SQLITE")
+
+
+###############################################################################
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "DROP TABLE test",
+        "ALTER TABLE test DROP COLUMN test",
+        "CREATE INDEX my_idx ON test(foo)",
+        "DROP INDEX my_idx",
+        "CREATE VIEW v AS SELECT * FROM test",
+    ],
+)
+def test_ogr_sql_sqlite_unsupported(sql):
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    with pytest.raises(Exception):
+        ds.ExecuteSQL(sql, dialect="SQLite")

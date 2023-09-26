@@ -30,6 +30,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/gif/giflib/*)
+	  continue
+	  ;;
+
 	*frmts/zlib/contrib/infback9/*)
 	  continue
 	  ;;
@@ -55,6 +59,10 @@ for f in $FILES; do
 	  ;;
 
 	*ogr/ogrsf_frmts/geojson/libjson*)
+	  continue
+	  ;;
+
+	*ogr/ogrsf_frmts/pmtiles/pmtiles/*)
 	  continue
 	  ;;
 

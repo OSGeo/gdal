@@ -31,7 +31,6 @@
 ###############################################################################
 
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -40,14 +39,10 @@ from osgeo import gdal
 # Create a raster attribute table.
 
 
-def test_rat_1():
+@pytest.fixture()
+def test_rat():
 
-    gdaltest.saved_rat = None
-
-    try:
-        rat = gdal.RasterAttributeTable()
-    except Exception:
-        pytest.skip()
+    rat = gdal.RasterAttributeTable()
 
     rat.CreateColumn("Value", gdal.GFT_Integer, gdal.GFU_MinMax)
     rat.CreateColumn("Count", gdal.GFT_Integer, gdal.GFU_PixelCount)
@@ -60,7 +55,12 @@ def test_rat_1():
     rat.SetValueAsInt(2, 0, 12)
     rat.SetValueAsInt(2, 1, 90)
 
-    rat2 = rat.Clone()
+    return rat
+
+
+def test_rat_1(test_rat):
+
+    rat2 = test_rat.Clone()
 
     assert rat2.GetColumnCount() == 2, "wrong column count"
 
@@ -76,21 +76,16 @@ def test_rat_1():
 
     assert rat2.GetValueAsInt(1, 1) == 200, "wrong field value."
 
-    gdaltest.saved_rat = rat
-
 
 ###############################################################################
 # Save a RAT in a file, written to .aux.xml, read it back and check it.
 
 
 @pytest.mark.require_driver("PNM")
-def test_rat_2():
-
-    if gdaltest.saved_rat is None:
-        pytest.skip()
+def test_rat_2(test_rat):
 
     ds = gdal.GetDriverByName("PNM").Create("tmp/rat_2.pnm", 100, 90, 1, gdal.GDT_Byte)
-    ds.GetRasterBand(1).SetDefaultRAT(gdaltest.saved_rat)
+    ds.GetRasterBand(1).SetDefaultRAT(test_rat)
 
     ds = None
 
@@ -122,8 +117,6 @@ def test_rat_2():
     assert rat is None, "expected a NULL RAT."
 
     gdal.GetDriverByName("PNM").Delete("tmp/rat_2.pnm")
-
-    gdaltest.saved_rat = None
 
 
 ###############################################################################

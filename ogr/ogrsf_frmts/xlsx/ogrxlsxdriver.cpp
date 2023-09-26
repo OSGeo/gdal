@@ -164,7 +164,8 @@ static GDALDataset *OGRXLSXDriverOpen(GDALOpenInfo *poOpenInfo)
     osTmpFilename = CPLSPrintf("%s/xl/styles.xml", osPrefixedFilename.c_str());
     VSILFILE *fpStyles = VSIFOpenL(osTmpFilename, "rb");
 
-    OGRXLSXDataSource *poDS = new OGRXLSXDataSource();
+    OGRXLSXDataSource *poDS =
+        new OGRXLSXDataSource(poOpenInfo->papszOpenOptions);
 
     if (!poDS->Open(pszFilename, osPrefixedFilename.c_str(), fpWorkbook,
                     fpWorkbookRels, fpSharedStrings, fpStyles,
@@ -214,7 +215,7 @@ static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
     /* -------------------------------------------------------------------- */
     /*      Try to create datasource.                                       */
     /* -------------------------------------------------------------------- */
-    OGRXLSXDataSource *poDS = new OGRXLSXDataSource();
+    OGRXLSXDataSource *poDS = new OGRXLSXDataSource(nullptr);
 
     if (!poDS->Create(pszName, papszOptions))
     {
@@ -258,6 +259,26 @@ void RegisterOGRXLSX()
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='FIELD_TYPES' type='string-select' "
+        "description='If set to STRING, all fields will be of type String. "
+        "Otherwise the driver autodetects the field type from field content.' "
+        "default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>STRING</Value>"
+        "  </Option>"
+        "  <Option name='HEADERS' type='string-select' "
+        "description='Defines if the first line should be considered as "
+        "containing the name of the fields.' "
+        "default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>FORCE</Value>"
+        "    <Value>DISABLE</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGRXLSXDriverIdentify;
     poDriver->pfnOpen = OGRXLSXDriverOpen;

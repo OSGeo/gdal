@@ -72,4 +72,4 @@ def test_ndf_1():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt=gt, gt_epsilon=0.0001, check_prj=wkt)
+    tst.testOpen(check_gt=gt, gt_epsilon=0.0001, check_prj=wkt)

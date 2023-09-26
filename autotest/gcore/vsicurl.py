@@ -598,7 +598,7 @@ def test_vsicurl_test_retry():
         )
         assert f is not None
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             data = gdal.VSIFReadL(1, 3, f).decode("ascii")
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)

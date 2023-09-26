@@ -1157,6 +1157,29 @@ void GTiffDataset::ScanDirectories()
                     m_papoOverviewDS[m_nOverviewCount - 1] = poODS;
                     poODS->m_poBaseDS = this;
                     poODS->m_bIsOverview = true;
+
+                    // Propagate a few compression related settings that are
+                    // no preserved at the TIFF tag level, but may be set in
+                    // the GDAL_METADATA tag in the IMAGE_STRUCTURE domain
+                    // Note: this might not be totally reflecting the reality
+                    // if users have created overviews with different settings
+                    // but this is probably better than the default ones
+                    poODS->m_nWebPLevel = m_nWebPLevel;
+                    // below is not a copy & paste error: we transfer the
+                    // m_dfMaxZErrorOverview overview of the parent to
+                    // m_dfMaxZError of the overview
+                    poODS->m_dfMaxZError = m_dfMaxZErrorOverview;
+                    poODS->m_dfMaxZErrorOverview = m_dfMaxZErrorOverview;
+#if HAVE_JXL
+                    poODS->m_bJXLLossless = m_bJXLLossless;
+                    poODS->m_fJXLDistance = m_fJXLDistance;
+                    poODS->m_fJXLAlphaDistance = m_fJXLAlphaDistance;
+                    poODS->m_nJXLEffort = m_nJXLEffort;
+#endif
+                    // Those ones are not serialized currently..
+                    // poODS->m_nZLevel = m_nZLevel;
+                    // poODS->m_nLZMAPreset = m_nLZMAPreset;
+                    // poODS->m_nZSTDLevel = m_nZSTDLevel;
                 }
             }
             // Embedded mask of the main image.

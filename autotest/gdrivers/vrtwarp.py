@@ -45,51 +45,42 @@ from osgeo import gdal
 def test_vrtwarp_1():
 
     tst = gdaltest.GDALTest("VRT", "vrt/rgb_warp.vrt", 2, 21504)
-    return tst.testOpen(check_filelist=False)
+    tst.testOpen(check_filelist=False)
 
 
 ###############################################################################
 # Create a new VRT warp in the temp directory.
 
 
-def test_vrtwarp_2():
+def test_vrtwarp_2(tmp_path):
 
-    try:
-        os.remove("tmp/warp.vrt")
-    except OSError:
-        pass
+    warp_vrt = str(tmp_path / "warp.vrt")
 
     gcp_ds = gdal.OpenShared("data/rgb_gcp.vrt", gdal.GA_ReadOnly)
 
-    gdaltest.vrtwarp_ds = gdal.AutoCreateWarpedVRT(gcp_ds)
+    vrtwarp_ds = gdal.AutoCreateWarpedVRT(gcp_ds)
 
     gcp_ds = None
 
-    checksum = gdaltest.vrtwarp_ds.GetRasterBand(2).Checksum()
+    checksum = vrtwarp_ds.GetRasterBand(2).Checksum()
     expected = 21504
     assert checksum == expected, "Got checksum of %d instead of expected %d." % (
         checksum,
         expected,
     )
 
+    # Force the VRT warp file to be written to disk and close it.  Reopen, and
+    # verify checksum.
 
-###############################################################################
-# Force the VRT warp file to be written to disk and close it.  Reopen, and
-# verify checksum.
+    vrtwarp_ds.SetDescription(warp_vrt)
+    vrtwarp_ds = None
 
+    vrtwarp_ds = gdal.Open(warp_vrt, gdal.GA_ReadOnly)
 
-def test_vrtwarp_3():
-
-    gdaltest.vrtwarp_ds.SetDescription("tmp/warp.vrt")
-    gdaltest.vrtwarp_ds = None
-
-    gdaltest.vrtwarp_ds = gdal.Open("tmp/warp.vrt", gdal.GA_ReadOnly)
-
-    checksum = gdaltest.vrtwarp_ds.GetRasterBand(2).Checksum()
+    checksum = vrtwarp_ds.GetRasterBand(2).Checksum()
     expected = 21504
 
     gdaltest.vrtwarp_ds = None
-    gdal.GetDriverByName("VRT").Delete("tmp/warp.vrt")
 
     assert checksum == expected, "Got checksum of %d instead of expected %d." % (
         checksum,

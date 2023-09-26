@@ -41,6 +41,42 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 #endif
 
 /************************************************************************/
+/*                          GDALRegisterPlugins()                       */
+/*                                                                      */
+/*      Register drivers and support code available as a plugin.        */
+/************************************************************************/
+
+/**
+ * \brief Register drivers and support code available as a plugin.
+ * 
+ * This function will call GDALDriverManager::AutoLoadDrivers() to
+ * register all drivers or supporting code (for example VRT pixelfunctions
+ * or VSI adapters) that have not been compiled into the GDAL core but instead
+ * are made available through GDAL's plugin mechanism.
+ * 
+ * This method is intended to be called instead of GDALAllRegister() when
+ * fine tuning which drivers are needed at runtime.
+ * 
+ * @see GDALDriverManager::AutoLoadDrivers()
+ * @since GDAL 3.8
+*/
+void CPL_DLL GDALRegisterPlugins(void)
+{
+    auto poDriverManager = GetGDALDriverManager();
+    // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
+    poDriverManager->AutoLoadDrivers();
+    poDriverManager->AutoLoadPythonDrivers();
+
+    /* -------------------------------------------------------------------- */
+    /*      Deregister any drivers explicitly marked as suppressed by the   */
+    /*      GDAL_SKIP environment variable.                                 */
+    /* -------------------------------------------------------------------- */
+    poDriverManager->AutoSkipDrivers();
+
+    poDriverManager->ReorderDrivers();
+}
+
+/************************************************************************/
 /*                          GDALAllRegister()                           */
 /*                                                                      */
 /*      Register all identifiably supported formats.                    */

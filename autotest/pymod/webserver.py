@@ -254,10 +254,13 @@ class SequentialHandler(object):
             request.send_response(req_resp.code)
             for k in req_resp.headers:
                 request.send_header(k, req_resp.headers[k])
-            if req_resp.add_content_length_header:
+            if (
+                req_resp.add_content_length_header
+                and "Content-Length" not in req_resp.headers
+            ):
                 if req_resp.body:
                     request.send_header("Content-Length", len(req_resp.body))
-                elif "Content-Length" not in req_resp.headers:
+                else:
                     request.send_header("Content-Length", "0")
             request.end_headers()
             if req_resp.body:

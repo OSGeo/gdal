@@ -126,24 +126,38 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
             return false;
     }
 
-    ++m_iRecordBatch;
-
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
-    auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
-    if (!status.ok())
+    do
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
-                 status.message().c_str());
+        ++m_iRecordBatch;
+
         poNextBatch.reset();
-    }
-    if (poNextBatch == nullptr)
-    {
-        m_poBatch.reset();
-        return false;
-    }
+        auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
+        if (!status.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
+                     status.message().c_str());
+            poNextBatch.reset();
+        }
+        if (poNextBatch == nullptr)
+        {
+            m_poBatch.reset();
+            return false;
+        }
+    } while (poNextBatch->num_rows() == 0);
+
     SetBatch(poNextBatch);
 
     return true;
+}
+
+/************************************************************************/
+/*                     InvalidateCachedBatches()                        */
+/************************************************************************/
+
+void OGRParquetDatasetLayer::InvalidateCachedBatches()
+{
+    ResetReading();
 }
 
 /************************************************************************/
@@ -171,10 +185,10 @@ OGRErr OGRParquetDatasetLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 }
 
 /************************************************************************/
-/*                         GetFastExtent()                              */
+/*                         FastGetExtent()                              */
 /************************************************************************/
 
-bool OGRParquetDatasetLayer::GetFastExtent(int iGeomField,
+bool OGRParquetDatasetLayer::FastGetExtent(int iGeomField,
                                            OGREnvelope *psExtent) const
 {
     const auto oIter = m_oMapExtents.find(iGeomField);
@@ -204,7 +218,7 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         return OGRERR_FAILURE;
     }
 
-    if (GetFastExtent(iGeomField, psExtent))
+    if (FastGetExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
     }

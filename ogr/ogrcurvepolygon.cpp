@@ -432,6 +432,30 @@ OGRErr OGRCurvePolygon::addRingDirectlyInternal(OGRCurve *poNewRing,
 }
 
 /************************************************************************/
+/*                             addRing()                                */
+/************************************************************************/
+
+/**
+ * \brief Add a ring to a polygon.
+ *
+ * If the polygon has no external ring (it is empty) this will be used as
+ * the external ring, otherwise it is used as an internal ring.
+ *
+ * This method has no SFCOM analog.
+ *
+ * @param poNewRing ring to be added to the polygon.
+ * @return OGRERR_NONE in case of success
+ */
+OGRErr OGRCurvePolygon::addRing(std::unique_ptr<OGRCurve> poNewRing)
+{
+    OGRCurve *poNewRingPtr = poNewRing.release();
+    OGRErr eErr = addRingDirectlyInternal(poNewRingPtr, TRUE);
+    if (eErr != OGRERR_NONE)
+        delete poNewRingPtr;
+    return eErr;
+}
+
+/************************************************************************/
 /*                              WkbSize()                               */
 /*                                                                      */
 /*      Return the size of this object in well known binary             */

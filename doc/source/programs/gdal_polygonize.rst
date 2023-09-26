@@ -15,8 +15,10 @@ Synopsis
 
 .. code-block::
 
-    gdal_polygonize.py [-8] [-o name=value]* [-nomask] [-mask filename] <raster_file> [-b band]
-                       [-q] [-f ogr_format] [-lco name=value]* <out_file> [layer] [fieldname]
+    gdal_polygonize.py [--help] [--help-general]
+                       [-8] [-o <name>=<value>]... [-nomask] [-mask <filename>] <raster_file> [-b <band>]
+                       [-q] [-f <ogr_format>] [-lco <name>=<value>]... [-overwrite]
+                       <out_file> [<layer>] [<fieldname>]
 
 Description
 -----------
@@ -25,13 +27,15 @@ the raster sharing a common pixel value.  Each polygon is created with an
 attribute indicating the pixel value of that polygon.  A raster mask
 may also be provided to determine which pixels are eligible for processing.
 
-The utility will create the output vector datasource if it does not already
-exist, defaulting to GML format.
+The utility will create the output vector datasource if it does not already exist,
+otherwise it will try to append to an existing one.
 
 The utility is based on the ::cpp:func:`GDALPolygonize` function which has additional
 details on the algorithm.
 
 .. program:: gdal_polygonize
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -8
 
@@ -65,17 +69,23 @@ details on the algorithm.
     GDAL 2.3, if not specified, the format is guessed from the extension (previously
     was GML). Use the short format name
 
-.. option:: -o NAME=VALUE
+.. option:: -o <NAME>=<VALUE>
 
     .. versionadded:: 3.7
 
     Polygonize option. See ::cpp:func:`GDALPolygonize` documentation.
 
-.. option:: -lco NAME=VALUE
+.. option:: -lco <NAME>=<VALUE>
 
     .. versionadded:: 3.7
 
     Layer creation option (format specific)
+
+.. option:: -overwrite
+
+    .. versionadded:: 3.8
+
+    Overwrite the output layer if it already exists.
 
 .. option:: <out_file>
 

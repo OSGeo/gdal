@@ -656,7 +656,7 @@ def test_ecw_16():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest("JP2ECW", "jpeg2000/byte.jp2", 1, 50054)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -716,9 +716,8 @@ def test_ecw_18():
     tst = gdaltest.GDALTest(
         "JP2ECW", "/vsigzip/data/jpeg2000/byte.jp2.gz", 1, 50054, filename_absolute=1
     )
-    ret = tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
     gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
-    return ret
 
 
 ###############################################################################

@@ -36,6 +36,8 @@
 
 #include <cstdint>
 
+#include <set>
+
 #include "gdal_alg.h"
 #include "ogr_spatialref.h"
 
@@ -73,6 +75,8 @@ typedef struct
     } burnValues;
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
+    bool bFillSetVisitedPoints;
+    std::set<uint64_t> *poSetVisitedPoints;
 } GDALRasterizeInfo;
 
 typedef enum
@@ -104,14 +108,15 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
                                 const double *padfX, const double *padfY,
                                 const double *padfVariant,
                                 llPointFunc pfnPointFunc, void *pCBData,
-                                int bAvoidBurningSamePoints,
+                                bool bAvoidBurningSamePoints,
                                 bool bIntersectOnly);
 
 void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize,
                                int nPartCount, const int *panPartSize,
                                const double *padfX, const double *padfY,
                                const double *padfVariant,
-                               llScanlineFunc pfnScanlineFunc, void *pCBData);
+                               llScanlineFunc pfnScanlineFunc, void *pCBData,
+                               bool bAvoidBurningSamePoints);
 
 CPL_C_END
 

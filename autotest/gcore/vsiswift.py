@@ -74,12 +74,12 @@ def test_vsiswift_real_server_errors():
 
     # Nothing set
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiswift/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("SWIFT_STORAGE_URL") >= 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiswift_streaming/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("SWIFT_STORAGE_URL") >= 0
 
@@ -87,14 +87,14 @@ def test_vsiswift_real_server_errors():
 
     # Missing SWIFT_AUTH_TOKEN
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiswift/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("SWIFT_AUTH_TOKEN") >= 0
 
     gdal.SetConfigOption("SWIFT_AUTH_TOKEN", "SWIFT_AUTH_TOKEN")
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiswift/foo/bar.baz")
     if f is not None:
         if f is not None:
@@ -102,7 +102,7 @@ def test_vsiswift_real_server_errors():
         pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiswift_streaming/foo/bar.baz")
     assert f is None, gdal.VSIGetLastErrorMsg()
 
@@ -797,7 +797,7 @@ def test_vsiswift_fake_unlink():
     )
     handler.add("DELETE", "/v1/AUTH_something/foo/bar", 400, {"Connection": "close"})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsiswift/foo/bar")
     assert ret == -1
 

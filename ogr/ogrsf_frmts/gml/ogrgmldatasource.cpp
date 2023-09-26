@@ -643,13 +643,16 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
 
     poReader->SetSourceFile(pszFilename);
-    static_cast<GMLReader *>(poReader)->SetIsWFSJointLayer(bIsWFSJointLayer);
+    auto poGMLReader = cpl::down_cast<GMLReader *>(poReader);
+    poGMLReader->SetIsWFSJointLayer(bIsWFSJointLayer);
     bEmptyAsNull =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "EMPTY_AS_NULL", true);
-    static_cast<GMLReader *>(poReader)->SetEmptyAsNull(bEmptyAsNull);
-    static_cast<GMLReader *>(poReader)->SetReportAllAttributes(CPLFetchBool(
+    poGMLReader->SetEmptyAsNull(bEmptyAsNull);
+    poGMLReader->SetReportAllAttributes(CPLFetchBool(
         poOpenInfo->papszOpenOptions, "GML_ATTRIBUTES_TO_OGR_FIELDS",
         CPLTestBool(CPLGetConfigOption("GML_ATTRIBUTES_TO_OGR_FIELDS", "NO"))));
+    poGMLReader->SetUseBBOX(
+        CPLFetchBool(poOpenInfo->papszOpenOptions, "USE_BBOX", false));
 
     // Find <gml:description>, <gml:name> and <gml:boundedBy> and if it is
     // a standalone geometry

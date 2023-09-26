@@ -85,67 +85,51 @@ def test_pam_1():
 
 
 ###############################################################################
-# Verify that we can write XML to a new file.
+# Verify that we can write XML to a new file and read it back.
 
 
 @pytest.mark.require_driver("PNM")
 def test_pam_2():
 
     driver = gdal.GetDriverByName("PNM")
-    ds = driver.Create("tmp/pam.pgm", 10, 10)
-    band = ds.GetRasterBand(1)
 
-    band.SetMetadata({"other": "red", "key": "value"})
+    with driver.Create("tmp/pam.pgm", 10, 10) as ds:
+        band = ds.GetRasterBand(1)
 
-    expected_xml = """<?xml version="2.0"?>
+        band.SetMetadata({"other": "red", "key": "value"})
+
+        expected_xml = """<?xml version="2.0"?>
 <TestXML>Value</TestXML>
 """
 
-    band.SetMetadata([expected_xml], "xml:test")
+        band.SetMetadata([expected_xml], "xml:test")
 
-    band.SetNoDataValue(100)
+        band.SetNoDataValue(100)
 
-    ds = None
+    with gdal.Open("tmp/pam.pgm") as ds:
 
+        band = ds.GetRasterBand(1)
+        base_md = band.GetMetadata()
 
-###############################################################################
-# Check that we can read PAM metadata for existing PNM file.
+        assert base_md == {"other": "red", "key": "value"}
 
+        xml_md = band.GetMetadata("xml:test")
 
-@pytest.mark.require_driver("PNM")
-def test_pam_3():
+        assert len(xml_md) == 1, "xml:test metadata missing"
 
-    ds = gdal.Open("tmp/pam.pgm")
+        assert isinstance(xml_md, list), "xml:test metadata not returned as list."
 
-    band = ds.GetRasterBand(1)
-    base_md = band.GetMetadata()
-    assert (
-        len(base_md) == 2 and base_md["other"] == "red" and base_md["key"] == "value"
-    ), "Default domain metadata missing"
+        assert xml_md[0] == expected_xml, "xml does not match"
 
-    xml_md = band.GetMetadata("xml:test")
+        assert band.GetNoDataValue() == 100, "nodata not saved via pam"
 
-    assert len(xml_md) == 1, "xml:test metadata missing"
+    with gdal.Open("tmp/pam.pgm", gdal.GA_Update) as ds:
+        assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
 
-    assert isinstance(xml_md, list), "xml:test metadata not returned as list."
-
-    expected_xml = """<?xml version="2.0"?>
-<TestXML>Value</TestXML>
-"""
-
-    assert xml_md[0] == expected_xml, "xml does not match"
-
-    assert band.GetNoDataValue() == 100, "nodata not saved via pam"
-
-    ds = None
-    ds = gdal.Open("tmp/pam.pgm", gdal.GA_Update)
-    assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
-    ds = None
-
-    ds = gdal.Open("tmp/pam.pgm")
-    assert (
-        ds.GetRasterBand(1).GetNoDataValue() is None
-    ), "got nodata value whereas none was expected"
+    with gdal.Open("tmp/pam.pgm") as ds:
+        assert (
+            ds.GetRasterBand(1).GetNoDataValue() is None
+        ), "got nodata value whereas none was expected"
 
 
 ###############################################################################
@@ -388,7 +372,7 @@ def test_pam_11():
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     assert stats[0] == 74, "did not get expected minimum"
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = None
     error_msg = gdal.GetLastErrorMsg()
     assert error_msg.startswith(
@@ -499,15 +483,16 @@ def test_pam_metadata_preserved():
 #
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_esri_GeodataXform_gcp():
 
-    ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_pam_esri_GeodataXform_gcp.tif", 20, 20, 1
+    ds = gdal.GetDriverByName("PNM").Create(
+        "/vsimem/test_pam_esri_GeodataXform_gcp.pgm", 20, 20, 1
     )
     ds = None
 
     gdal.FileFromMemBuffer(
-        "/vsimem/test_pam_esri_GeodataXform_gcp.tif.aux.xml",
+        "/vsimem/test_pam_esri_GeodataXform_gcp.pgm.aux.xml",
         """<PAMDataset>
   <Metadata domain="xml:ESRI" format="xml">
     <GeodataXform xsi:type="typens:PolynomialXform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.3">
@@ -547,12 +532,12 @@ def test_pam_esri_GeodataXform_gcp():
 </PAMDataset>""",
     )
 
-    ds = gdal.Open("/vsimem/test_pam_esri_GeodataXform_gcp.tif")
+    ds = gdal.Open("/vsimem/test_pam_esri_GeodataXform_gcp.pgm")
     gcps = ds.GetGCPs()
     sr_gt = ds.GetSpatialRef()
     sr_gcp = ds.GetGCPSpatialRef()
 
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/test_pam_esri_GeodataXform_gcp.tif")
+    gdal.GetDriverByName("PNM").Delete("/vsimem/test_pam_esri_GeodataXform_gcp.pgm")
 
     assert len(gcps) == 3
     assert gcps[0].GCPPixel == 1
@@ -569,6 +554,26 @@ def test_pam_esri_GeodataXform_gcp():
     assert sr_gcp is not None
 
     ds = None
+
+
+###############################################################################
+# Test that we can retrieve geotransform from xml:ESRI domain
+# (use case of https://github.com/qgis/QGIS/issues/53125)
+
+
+def test_pam_esri_GeodataXform_geotransform():
+
+    ds = gdal.Open("data/arcgis_geodataxform_coeffx_coeffy.tif")
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            102628.65660518478,
+            0.6905638991215965,
+            -0.024369509776131858,
+            900995.5960716272,
+            -0.024369509776131858,
+            -0.6905638991215965,
+        )
+    )
 
 
 ###############################################################################

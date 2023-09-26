@@ -430,12 +430,6 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSetLayers,
                                osModifiedSQL);
         }
-        else if (STARTS_WITH_CI(pszSQLCommand, "DROP TABLE "))
-        {
-            pszSQLCommand += strlen("DROP TABLE") + 1;
-            OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSetLayers,
-                               osModifiedSQL);
-        }
         else
             pszSQLCommand++;
     }
@@ -498,7 +492,7 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
     OGRSQLiteExecuteSQLLayer(char *pszTmpDBName, OGRSQLiteDataSource *poDS,
                              const CPLString &osSQL, sqlite3_stmt *hStmt,
                              bool bUseStatementForGetNextFeature,
-                             bool bEmptyLayer);
+                             bool bEmptyLayer, bool bCanReopenBaseDS);
     virtual ~OGRSQLiteExecuteSQLLayer();
 };
 
@@ -509,9 +503,10 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
 OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
     char *pszTmpDBNameIn, OGRSQLiteDataSource *poDSIn, const CPLString &osSQL,
     sqlite3_stmt *hStmtIn, bool bUseStatementForGetNextFeature,
-    bool bEmptyLayer)
+    bool bEmptyLayer, bool bCanReopenBaseDS)
     : OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
-                           bUseStatementForGetNextFeature, bEmptyLayer, true),
+                           bUseStatementForGetNextFeature, bEmptyLayer, true,
+                           bCanReopenBaseDS),
       pszTmpDBName(pszTmpDBNameIn)
 {
 }
@@ -788,6 +783,38 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
 {
     while (*pszStatement != '\0' && isspace(*pszStatement))
         pszStatement++;
+
+    if (STARTS_WITH_CI(pszStatement, "ALTER TABLE ") ||
+        STARTS_WITH_CI(pszStatement, "DROP TABLE ") ||
+        STARTS_WITH_CI(pszStatement, "CREATE INDEX ") ||
+        STARTS_WITH_CI(pszStatement, "DROP INDEX "))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SQL command not supported with SQLite dialect. "
+                 "Use OGRSQL dialect instead.");
+        return nullptr;
+    }
+    else if (STARTS_WITH_CI(pszStatement, "CREATE VIRTUAL TABLE ") &&
+             CPLTestBool(CPLGetConfigOption(
+                 "OGR_SQLITE_DIALECT_ALLOW_CREATE_VIRTUAL_TABLE", "NO")))
+    {
+        // for ogr_virtualogr.py::ogr_virtualogr_run_sql() only. This is
+        // just a convenient way of testing VirtualOGR() with
+        // CREATE VIRTUAL TABLE ... USING VirtualOGR(...)
+        // but there is no possible use of that given we run that into
+        // an ephemeral database.
+    }
+    else if (!STARTS_WITH_CI(pszStatement, "SELECT ") &&
+             !STARTS_WITH_CI(pszStatement, "WITH ") &&
+             !STARTS_WITH_CI(pszStatement, "EXPLAIN ") &&
+             !STARTS_WITH_CI(pszStatement, "INSERT ") &&
+             !STARTS_WITH_CI(pszStatement, "UPDATE ") &&
+             !STARTS_WITH_CI(pszStatement, "DELETE ") &&
+             !STARTS_WITH_CI(pszStatement, "REPLACE "))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported SQL command.");
+        return nullptr;
+    }
 
     char *pszTmpDBName = (char *)CPLMalloc(256);
     char szPtr[32];
@@ -1101,9 +1128,13 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     /* -------------------------------------------------------------------- */
     /*      Create layer.                                                   */
     /* -------------------------------------------------------------------- */
+
+    auto poDrv = poDS->GetDriver();
+    const bool bCanReopenBaseDS =
+        !(poDrv && EQUAL(poDrv->GetDescription(), "Memory"));
     OGRSQLiteSelectLayer *poLayer = new OGRSQLiteExecuteSQLLayer(
         pszTmpDBName, poSQLiteDS, pszStatement, hSQLStmt,
-        bUseStatementForGetNextFeature, bEmptyLayer);
+        bUseStatementForGetNextFeature, bEmptyLayer, bCanReopenBaseDS);
 
     if (poSpatialFilter != nullptr)
         poLayer->SetSpatialFilter(0, poSpatialFilter);

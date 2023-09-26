@@ -438,12 +438,22 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures,
 
     if (poDS->IsPagingAllowed() && !bRequestHits)
     {
-        osURL = CPLURLAddKVP(
-            osURL, "STARTINDEX",
-            CPLSPrintf("%d", nPagingStartIndex + poDS->GetBaseStartIndex()));
         nRequestMaxFeatures = poDS->GetPageSize();
+        /* If the feature count is known and is less than the page size, we don't
+         * need to do paging. Skipping the pagination parameters improves compatibility
+         * with remote datasources that don't have a primary key.
+         * Without a primary key, the WFS server can't support paging, since there
+         * is no natural sort order defined. */
+        if (nFeatures < 0 ||
+            (nRequestMaxFeatures && nFeatures > nRequestMaxFeatures))
+        {
+            osURL =
+                CPLURLAddKVP(osURL, "STARTINDEX",
+                             CPLSPrintf("%d", nPagingStartIndex +
+                                                  poDS->GetBaseStartIndex()));
+            bPagingActive = true;
+        }
         nFeatureCountRequested = nRequestMaxFeatures;
-        bPagingActive = true;
     }
 
     if (nRequestMaxFeatures)
@@ -668,7 +678,6 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures,
 
         if (bHasIgnoredField && !osPropertyName.empty())
         {
-            osPropertyName = "(" + osPropertyName + ")";
             osURL = CPLURLAddKVP(osURL, "PROPERTYNAME",
                                  WFS_EscapeURL(osPropertyName));
         }
@@ -1181,8 +1190,8 @@ OGRFeatureDefn *OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn *poSrcFDefn)
         bUnsetWidthPrecision = true;
     }
 
-    CPLString osPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
-    const char *pszPropertyName = osPropertyName.c_str();
+    const CPLStringList aosPropertyName(CSLTokenizeString2(
+        CPLURLGetValue(pszBaseURL, "PROPERTYNAME"), "(,)", 0));
 
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
     if (poSrcFDefn->GetGeomFieldCount() > 0)
@@ -1190,10 +1199,10 @@ OGRFeatureDefn *OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn *poSrcFDefn)
             poSrcFDefn->GetGeomFieldDefn(0)->GetNameRef());
     for (int i = 0; i < poSrcFDefn->GetFieldCount(); i++)
     {
-        if (pszPropertyName[0] != 0)
+        if (!aosPropertyName.empty())
         {
-            if (strstr(pszPropertyName,
-                       poSrcFDefn->GetFieldDefn(i)->GetNameRef()) != nullptr)
+            if (aosPropertyName.FindString(
+                    poSrcFDefn->GetFieldDefn(i)->GetNameRef()) >= 0)
                 poFeatureDefn->AddFieldDefn(poSrcFDefn->GetFieldDefn(i));
             else
                 bGotApproximateLayerDefn = true;

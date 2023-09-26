@@ -42,7 +42,7 @@ def test_terragen_1():
 
     tst = gdaltest.GDALTest("terragen", "terragen/float32.ter", 1, 1128)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

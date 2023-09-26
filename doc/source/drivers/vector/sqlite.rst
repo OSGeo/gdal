@@ -356,15 +356,15 @@ Layer creation options
 
 -  .. lco:: COMPRESS_GEOM
       :choices: YES, NO
+      :default: NO
 
       If the format of
       the geometry BLOB is of the SpatiaLite flavor, this option can be
       used to control if the compressed format for geometries (LINESTRINGs,
       POLYGONs) must be used. This format is understood by Spatialite v2.4
       (or any subsequent version). Default to NO. Note: when updating an
-      existing Spatialite DB, the ``COMPRESS_GEOM``
-      configuration option can be set to produce similar results for
-      appended/overwritten features.
+      existing Spatialite DB, the :config:`COMPRESS_GEOM` configuration option
+      can be set to produce similar results for appended/overwritten features.
 
 -  .. lco:: SRID
 
@@ -483,6 +483,14 @@ available:
      :ref:`here <target_user_virtual_file_systems_file_caching>`.
      Be aware that no file locking will occur if this option is activated, so
      concurrent edits may lead to database corruption.
+
+- .. config:: COMPRESS_GEOM
+     :choices: YES, NO
+     :default: NO
+
+     Equivalent of :lco:`COMPRESS_GEOM` layer creation option for use when
+     updating or appending to an existing layer.
+
 
 .. _target_drivers_vector_sqlite_performance_hints:
 

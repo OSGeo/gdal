@@ -52,7 +52,7 @@ def test_osr_ct_1():
     ll_srs.SetWellKnownGeogCS("WGS84")
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ct = osr.CoordinateTransformation(ll_srs, utm_srs)
         if gdal.GetLastErrorMsg().find("Unable to load PROJ.4") != -1:
             pytest.skip("PROJ.4 missing, transforms not available.")
@@ -88,6 +88,21 @@ def test_osr_ct_2():
         result[0] == pytest.approx(452772.06, abs=0.01)
         and result[1] == pytest.approx(3540544.89, abs=0.01)
         and result[2] == pytest.approx(0.0, abs=0.01)
+    ), "Wrong LL to UTM result"
+
+    result = ct.TransformPoint([32.0, -117.5, 10.0])
+    assert (
+        result[0] == pytest.approx(452772.06, abs=0.01)
+        and result[1] == pytest.approx(3540544.89, abs=0.01)
+        and result[2] == 10
+    ), "Wrong LL to UTM result"
+
+    result = ct.TransformPoint([32.0, -117.5, 10.0, 2000.0])
+    assert (
+        result[0] == pytest.approx(452772.06, abs=0.01)
+        and result[1] == pytest.approx(3540544.89, abs=0.01)
+        and result[2] == 10
+        and result[3] == 2000
     ), "Wrong LL to UTM result"
 
 
@@ -544,7 +559,7 @@ def test_osr_ct_options_accuracy():
     t.SetFromUserInput("EPSG:4258")  # ETRS89
     options = osr.CoordinateTransformationOptions()
     options.SetDesiredAccuracy(0.05)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with osr.ExceptionMgr(useExceptions=False):
             ct = osr.CoordinateTransformation(s, t, options)
     with pytest.raises(Exception):
@@ -563,7 +578,7 @@ def test_osr_ct_options_ballpark_disallowed():
     t.SetFromUserInput("EPSG:4258")  # ETRS89
     options = osr.CoordinateTransformationOptions()
     options.SetBallparkAllowed(False)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with osr.ExceptionMgr(useExceptions=False):
             ct = osr.CoordinateTransformation(s, t, options)
     with pytest.raises(Exception):
@@ -654,7 +669,7 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
     assert y == pytest.approx(150, abs=1e-10)
 
     # Not properly supported currently
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         osr.CoordinateTransformation(t_2020, t_2030)
 
 
@@ -753,3 +768,35 @@ def test_osr_ct_OGR_CT_PREFER_OFFICIAL_SRS_DEF():
         x, y, _ = ct.TransformPoint(826158.063, 2405844.125, 0)
         assert abs(x - 9.867) < 0.001, x
         assert abs(y - 71.125) < 0.001, y
+
+
+###############################################################################
+# Test NAD83(CSRS)v7 change of epoch
+
+
+@pytest.mark.require_proj(9, 4)
+def test_osr_ct_point_motion_operation():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(8254)  # NAD83(CSRS)v7 3D
+    s.SetCoordinateEpoch(2002)
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(8254)  # NAD83(CSRS)v7 3D
+    t.SetCoordinateEpoch(2010)
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, z = ct.TransformPoint(60.5, -79.5)
+    assert abs(x - 60.49999994) < 1e-8, x
+    assert abs(y - -79.49999963) < 1e-8, y
+    assert abs(z - 0.060) < 1e-3, z
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(22717)  # "NAD83(CSRS)v7 / UTM zone 17N"
+    t.SetCoordinateEpoch(2010)
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, z = ct.TransformPoint(60.5, -79.5)
+    assert abs(x - 582395.993) < 1e-3, x
+    assert abs(y - 6708035.973) < 1e-3, y
+    assert abs(z - 0.060) < 1e-3, z

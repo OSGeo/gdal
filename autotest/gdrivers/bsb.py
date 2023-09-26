@@ -33,27 +33,17 @@ import pytest
 
 from osgeo import gdal, osr
 
-###############################################################################
-# Test driver availability
-
-
-def test_bsb_0():
-    gdaltest.bsb_dr = gdal.GetDriverByName("BSB")
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
-
+pytestmark = pytest.mark.require_driver("BSB")
 
 ###############################################################################
 # Test Read
 
 
 def test_bsb_1():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall.kap", 1, 30321)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -61,16 +51,14 @@ def test_bsb_1():
 
 
 def test_bsb_2():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
-    md = gdaltest.bsb_dr.GetMetadata()
+    md = gdal.GetDriverByName("BSB").GetMetadata()
     if "DMD_CREATIONDATATYPES" not in md:
         pytest.skip()
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall.kap", 1, 30321)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -81,12 +69,10 @@ def test_bsb_2():
 
 
 def test_bsb_3():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_index.kap", 1, 30321)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -96,12 +82,10 @@ def test_bsb_3():
 
 
 def test_bsb_4():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_with_line_break.kap", 1, 30321)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -109,8 +93,6 @@ def test_bsb_4():
 
 
 def test_bsb_5():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated.kap", 1, -1)
 
@@ -123,8 +105,6 @@ def test_bsb_5():
 
 
 def test_bsb_6():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_truncated2.kap", 1, -1)
 
@@ -136,8 +116,6 @@ def test_bsb_6():
 
 
 def test_bsb_tmerc():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     ds = gdal.Open("data/bsb/transverse_mercator.kap")
     gt = ds.GetGeoTransform()
@@ -202,8 +180,6 @@ def test_bsb_tmerc():
 
 
 def test_bsb_cutline():
-    if gdaltest.bsb_dr is None:
-        pytest.skip()
 
     ds = gdal.Open("data/bsb/australia4c.kap")
     assert (

@@ -83,7 +83,7 @@ class DataSetCache(object):
             return self.dict[name]
         result = gdal.Open(name)
         if result is None:
-            print("Error opening: %s" % NameError)
+            print("Error opening: %s" % NameError, file=sys.stderr)
             return 1
         if len(self.queue) == self.cacheSize:
             toRemove = self.queue.pop(0)
@@ -136,6 +136,7 @@ class mosaic_info(object):
         Initialize mosaic_info from filename
 
         filename -- Name of file to read.
+        inputDS -- OGR DataSet representing the tile index
 
         """
         self.TempDriver = gdal.GetDriverByName("MEM")
@@ -144,9 +145,12 @@ class mosaic_info(object):
         self.ogrTileIndexDS = inputDS
 
         self.ogrTileIndexDS.GetLayer().ResetReading()
+        # grab the first feature of the temporary tile index created
         feature = self.ogrTileIndexDS.GetLayer().GetNextFeature()
+        # the first field is the filename
         imgLocation = feature.GetField(0)
 
+        # get the first tile that exists, extract metadata abut mosaic
         fhInputTile = self.cache.get(imgLocation)
 
         self.bands = fhInputTile.RasterCount
@@ -182,20 +186,27 @@ class mosaic_info(object):
         del self.ogrTileIndexDS
 
     def getDataSet(self, minx, miny, maxx, maxy):
+        """
+        Find a gdal dataset representing a subset of a mosaic, based on a bounding box. Might overlap multiple tiles of the mosaic
 
+        returns GDALDataset or None
+        """
         self.ogrTileIndexDS.GetLayer().ResetReading()
         self.ogrTileIndexDS.GetLayer().SetSpatialFilterRect(minx, miny, maxx, maxy)
         features = []
         envelope = None
+        # Find the envelope of all features in the dataset
         while True:
             feature = self.ogrTileIndexDS.GetLayer().GetNextFeature()
             if feature is None:
                 break
             features.append(feature)
+            # on first iteration get envelope of the first feature
             if envelope is None:
                 envelope = feature.GetGeometryRef().GetEnvelope()
             else:
                 featureEnv = feature.GetGeometryRef().GetEnvelope()
+                # then expand the envelop as needed based on other features
                 envelope = (
                     min(featureEnv[0], envelope[0]),
                     max(featureEnv[1], envelope[1]),
@@ -206,7 +217,7 @@ class mosaic_info(object):
         if envelope is None:
             return None
 
-        # enlarge to query rect if necessary
+        # get overlap
         envelope = (
             min(minx, envelope[0]),
             max(maxx, envelope[1]),
@@ -232,6 +243,7 @@ class mosaic_info(object):
                 t_band.Fill(self.nodata)
                 t_band.SetNoDataValue(self.nodata)
 
+        # for each tile in the index, find its overlap (if any) with the requested bbox, then add it to the returned GDAL dataset if needed.
         for feature in features:
             featureName = feature.GetField(0)
             sourceDS = self.cache.get(featureName)
@@ -489,7 +501,13 @@ def _renameDataset(g, oldName, newName):
 def createPyramidTile(
     g, levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS, feature_only
 ):
+    """
+    Create an individual tile for the pyramids.
 
+    The levelMosaicInfo object contains data about the mosaic at a given pyramid level.
+
+    Returns None if successful and return 1 if there is an error
+    """
     temp_tilename = _createTempFileName(tileName)
 
     sx = levelMosaicInfo.scaleX * 2
@@ -505,19 +523,21 @@ def createPyramidTile(
             sy,
         ]
     )
-
-    if OGRDS is not None:
+    # if -resume flag and the tile is present, add it to the index and exit function
+    if feature_only:
         points = dec.pointsFor(width, height)
         addFeature(g.TileIndexFieldName, OGRDS, tileName, points[0], points[1])
-
-    if feature_only:
         return
 
     s_fh = levelMosaicInfo.getDataSet(
         dec.ulx, dec.uly + height * dec.scaleY, dec.ulx + width * dec.scaleX, dec.uly
     )
+    # if there is no data in that tile area return None
     if s_fh is None:
         return
+    # add the new pyramid tile to the index
+    points = dec.pointsFor(width, height)
+    addFeature(g.TileIndexFieldName, OGRDS, tileName, points[0], points[1])
 
     if g.BandType is None:
         bt = levelMosaicInfo.band_type
@@ -528,13 +548,14 @@ def createPyramidTile(
 
     bands = levelMosaicInfo.bands
 
+    # create target dataset
     if g.MemDriver is None:
         t_fh = g.Driver.Create(temp_tilename, width, height, bands, bt, g.CreateOptions)
     else:
         t_fh = g.MemDriver.Create("", width, height, bands, bt)
 
     if t_fh is None:
-        print("Creation failed, terminating gdal_tile.")
+        print("Creation failed, terminating gdal_tile.", file=sys.stderr)
         return 1
 
     t_fh.SetGeoTransform(geotransform)
@@ -551,13 +572,18 @@ def createPyramidTile(
             t_band.Fill(levelMosaicInfo.nodata)
             t_band.SetNoDataValue(levelMosaicInfo.nodata)
 
+    # reproject source filehandle to target filehandle
     res = gdal.ReprojectImage(s_fh, t_fh, None, None, g.ResamplingMethod)
     if res != 0:
-        print("Reprojection failed for %s, error %d" % (temp_tilename, res))
+        print(
+            "Reprojection failed for %s, error %d" % (temp_tilename, res),
+            file=sys.stderr,
+        )
         return 1
 
     levelMosaicInfo.closeDataSet(s_fh)
 
+    # move the temporary dataset to the final location and path
     if g.MemDriver is None:
         t_fh.FlushCache()
     else:
@@ -587,8 +613,18 @@ def createTile(
     g, minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_only
 ):
     """
+    Create add a vector feature representing the tile to the index, then recreate the
 
-    Create tile
+    Args:
+        g (RetileGlobals): object with global script variables
+        minfo (mosaic_info): mosiac_info object
+        offsetX (int): The offset in the X direction.
+        offsetY (int): The offset in the Y direction.
+        width (int): The width of the tile.
+        height (int): The height of the tile.
+        tilename (str): The name of the tile.
+        OGRDS (DataSource): The OGR DataSource object containing the tile index
+        feature_only (bool): Whether to only generate features.
 
     """
     temp_tilename = _createTempFileName(tilename)
@@ -611,12 +647,11 @@ def createTile(
         dec.scaleY,
     ]
 
-    if OGRDS is not None:
+    # if -resume flag and the tile is present, add it to the index and exit function
+    if feature_only:
         dec2 = AffineTransformDecorator(geotransform)
         points = dec2.pointsFor(width, height)
         addFeature(g.TileIndexFieldName, OGRDS, tilename, points[0], points[1])
-
-    if feature_only:
         return
 
     s_fh = minfo.getDataSet(
@@ -625,8 +660,14 @@ def createTile(
         dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
         dec.uly + offsetY * dec.scaleY,
     )
+    # if there is no data in that tile area return None
     if s_fh is None:
         return
+
+    # add the tile to the tile index
+    dec2 = AffineTransformDecorator(geotransform)
+    points = dec2.pointsFor(width, height)
+    addFeature(g.TileIndexFieldName, OGRDS, tilename, points[0], points[1])
 
     bands = minfo.bands
 
@@ -636,7 +677,7 @@ def createTile(
         t_fh = g.MemDriver.Create("", width, height, bands, bt)
 
     if t_fh is None:
-        print("Creation failed, terminating gdal_tile.")
+        print("Creation failed, terminating gdal_tile.", file=sys.stderr)
         return 1
 
     t_fh.SetGeoTransform(geotransform)
@@ -687,7 +728,7 @@ def createTile(
 def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
     OGRDriver = ogr.GetDriverByName(driverName)
     if OGRDriver is None:
-        print("ESRI Shapefile driver not found")
+        print("ESRI Shapefile driver not found", file=sys.stderr)
         return 1
 
     OGRDataSource = OGRDriver.Open(dsName)
@@ -699,22 +740,22 @@ def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
 
     OGRDataSource = OGRDriver.CreateDataSource(dsName)
     if OGRDataSource is None:
-        print("Could not open datasource " + dsName)
+        print("Could not open datasource " + dsName, file=sys.stderr)
         return 1
 
     OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
     if OGRLayer is None:
-        print("Could not create Layer")
+        print("Could not create Layer", file=sys.stderr)
         return 1
 
     OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
     if OGRFieldDefn is None:
-        print("Could not create FieldDefn for " + fieldName)
+        print("Could not create FieldDefn for " + fieldName, file=sys.stderr)
         return 1
 
     OGRFieldDefn.SetWidth(256)
     if OGRLayer.CreateField(OGRFieldDefn) != 0:
-        print("Could not create Field for " + fieldName)
+        print("Could not create Field for " + fieldName, file=sys.stderr)
         return 1
 
     return OGRDataSource
@@ -724,7 +765,7 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     OGRLayer = OGRDataSource.GetLayer()
     OGRFeature = ogr.Feature(OGRLayer.GetLayerDefn())
     if OGRFeature is None:
-        print("Could not create Feature")
+        print("Could not create Feature", file=sys.stderr)
         return 1
 
     OGRFeature.SetField(TileIndexFieldName, location)
@@ -742,7 +783,7 @@ def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
     )
     OGRGeometry = ogr.CreateGeometryFromWkt(wkt, OGRLayer.GetSpatialRef())
     if OGRGeometry is None:
-        print("Could not create Geometry")
+        print("Could not create Geometry", file=sys.stderr)
         return 1
 
     OGRFeature.SetGeometryDirectly(OGRGeometry)
@@ -771,6 +812,9 @@ def buildPyramid(g, minfo, createdTileIndexDS, tileWidth, tileHeight, overlap):
 
 
 def buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level):
+    """
+    Build the pyramids at level N and returns an OGR dataset of the tile index at that level
+    """
     yRange = list(range(1, levelOutputTileInfo.countTilesY + 1))
     xRange = list(range(1, levelOutputTileInfo.countTilesX + 1))
 
@@ -879,20 +923,21 @@ def UsageFormat():
 # =============================================================================
 
 
-def Usage():
-    print("Usage: gdal_retile.py ")
-    print("        [-v] [-q] [-co NAME=VALUE]* [-of out_format]")
-    print("        [-ps pixelWidth pixelHeight]")
-    print("        [-overlap val_in_pixel]")
-    print("        [-ot  {Byte/Int8/Int16/UInt16/UInt32/Int32/Float32/Float64/")
-    print("               CInt16/CInt32/CFloat32/CFloat64}]")
-    print("        [ -tileIndex tileIndexName [-tileIndexField fieldName]]")
-    print("        [ -csv fileName [-csvDelim delimiter]]")
-    print("        [-s_srs srs_def]  [-pyramidOnly] -levels numberoflevels")
-    print("        [-r {near/bilinear/cubic/cubicspline/lanczos}]")
-    print("        [-useDirForEachRow] [-resume]")
-    print("        -targetDir TileDirectory input_files")
-    return 2
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: gdal_retile.py [--help] [--help-general]", file=f)
+    print("        [-v] [-q] [-co <NAME>=<VALUE>]... [-of <out_format>]", file=f)
+    print("        [-ps <pixelWidth> <pixelHeight>]", file=f)
+    print("        [-overlap <val_in_pixel>]", file=f)
+    print("        [-ot  {Byte|Int8|Int16|UInt16|UInt32|Int32|Float32|Float64|", file=f)
+    print("               CInt16|CInt32|CFloat32|CFloat64}]", file=f)
+    print("        [-tileIndex <tileIndexName> [-tileIndexField <fieldName>]]", file=f)
+    print("        [-csv <fileName> [-csvDelim <delimiter>]]", file=f)
+    print("        [-s_srs <srs_def>]  [-pyramidOnly] -levels <numberoflevels>", file=f)
+    print("        [-r {near|bilinear|cubic|cubicspline|lanczos}]", file=f)
+    print("        [-useDirForEachRow] [-resume]", file=f)
+    print("        -targetDir <TileDirectory> <input_file> [<input_file>]...", file=f)
+    return 2 if isError else 0
 
 
 def main(args=None, g=None):
@@ -910,14 +955,16 @@ def main(args=None, g=None):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-of" or arg == "-f":
+        if arg == "--help":
+            return Usage(isError=False)
+        elif arg == "-of" or arg == "-f":
             i += 1
             g.Format = argv[i]
         elif arg == "-ot":
             i += 1
             g.BandType = gdal.GetDataTypeByName(argv[i])
             if g.BandType == gdal.GDT_Unknown:
-                print("Unknown GDAL data type: %s" % argv[i])
+                print("Unknown GDAL data type: %s" % argv[i], file=sys.stderr)
                 return 1
         elif arg == "-co":
             i += 1
@@ -933,7 +980,7 @@ def main(args=None, g=None):
             g.TargetDir = argv[i]
 
             if not os.path.exists(g.TargetDir):
-                print("TargetDir " + g.TargetDir + " does not exist")
+                print("TargetDir " + g.TargetDir + " does not exist", file=sys.stderr)
                 return 1
             if g.TargetDir[len(g.TargetDir) - 1 :] != os.sep:
                 g.TargetDir = g.TargetDir + os.sep
@@ -1003,8 +1050,8 @@ def main(args=None, g=None):
         elif arg == "-resume":
             g.Resume = True
         elif arg[:1] == "-":
-            print("Unrecognized command option: %s" % arg)
-            return Usage()
+            print("Unrecognized command option: %s" % arg, file=sys.stderr)
+            return Usage(isError=True)
 
         else:
             g.Names.append(arg)
@@ -1012,18 +1059,21 @@ def main(args=None, g=None):
 
     if not g.Names:
         print("No input files selected.")
-        return Usage()
+        return Usage(isError=True)
 
     if g.TileWidth == 0 or g.TileHeight == 0:
-        print("Invalid tile dimension %d,%d" % (g.TileWidth, g.TileHeight))
+        print(
+            "Invalid tile dimension %d,%d" % (g.TileWidth, g.TileHeight),
+            file=sys.stderr,
+        )
         return 1
     if g.TileWidth - g.Overlap <= 0 or g.TileHeight - g.Overlap <= 0:
-        print("Overlap too big w.r.t tile height/width")
+        print("Overlap too big w.r.t tile height/width", file=sys.stderr)
         return 1
 
     if g.TargetDir is None:
-        print("Missing Directory for Tiles -targetDir")
-        return Usage()
+        print("Missing Directory for Tiles -targetDir", file=sys.stderr)
+        return Usage(isError=True)
 
     # create level 0 directory if needed
     if g.UseDirForEachRow and not g.PyramidOnly:
@@ -1039,14 +1089,17 @@ def main(args=None, g=None):
                 continue
             os.mkdir(leveldir)
             if not os.path.exists(leveldir):
-                print("Cannot create level dir: %s" % leveldir)
+                print("Cannot create level dir: %s" % leveldir, file=sys.stderr)
                 return 1
             if g.Verbose:
-                print("Created level dir: %s" % leveldir)
+                print("Created level dir: %s" % leveldir, file=sys.stderr)
 
     g.Driver = gdal.GetDriverByName(g.Format)
     if g.Driver is None:
-        print("Format driver %s not found, pick a supported driver." % g.Format)
+        print(
+            "Format driver %s not found, pick a supported driver." % g.Format,
+            file=sys.stderr,
+        )
         return UsageFormat()
 
     DriverMD = g.Driver.GetMetadata()
@@ -1056,7 +1109,7 @@ def main(args=None, g=None):
 
     tileIndexDS = getTileIndexFromFiles(g)
     if tileIndexDS is None:
-        print("Error building tile index")
+        print("Error building tile index", file=sys.stderr)
         return 1
     minfo = mosaic_info(g.Names[0], tileIndexDS)
     ti = tile_info(minfo.xsize, minfo.ysize, g.TileWidth, g.TileHeight, g.Overlap)
@@ -1064,7 +1117,7 @@ def main(args=None, g=None):
     if g.Source_SRS is None and minfo.projection:
         g.Source_SRS = osr.SpatialReference()
         if g.Source_SRS.SetFromUserInput(minfo.projection) != 0:
-            print("invalid projection  " + minfo.projection)
+            print("invalid projection  " + minfo.projection, file=sys.stderr)
             return 1
 
     if g.Verbose:

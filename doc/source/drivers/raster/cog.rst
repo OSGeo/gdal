@@ -84,11 +84,20 @@ General creation options
       * For ZSTD, 22 is the slowest/higher compression rate. The default is 9.
 
 -  .. co:: MAX_Z_ERROR
+      :choices: <threshold>
       :default: 0
 
       Set the maximum error threshold on values
       for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0
       (lossless).
+
+-  .. co:: MAX_Z_ERROR_OVERVIEW
+      :choices: <threshold>
+      :since: 3.8
+
+      Set the maximum error threshold on values
+      for LERC/LERC_DEFLATE/LERC_ZSTD compression, on overviews.
+      The default is the value of :co:`MAX_Z_ERROR`
 
 -  .. co:: QUALITY
       :choices: <integer>
@@ -325,6 +334,17 @@ General creation options
      On the reading side, the presence of a omitted tile after a non-empty one
      may cause optimized readers to have to issue an extra GET request to the
      TileByteCounts array.
+
+- .. co:: STATISTICS
+     :choices: AUTO, YES, NO
+     :default: AUTO
+     :since: 3.7
+
+     Whether band statistics should be included in the output file.
+     In ``AUTO`` mode, they will be included only if available in the source
+     dataset.
+     If setting to ``YES``, they will always be included.
+     If setting to ``NO``, they will be never included.
 
 Reprojection related creation options
 *************************************

@@ -1479,6 +1479,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
     CPLString osTarget = CPLResetExtension(pszBaseFilename, pszExt);
 
     if (papszSiblingFiles == nullptr ||
+        // cppcheck-suppress knownConditionTrueFalse
         !GDALCanReliablyUseSiblingFileList(osTarget.c_str()))
     {
         VSIStatBufL sStatBuf;
@@ -1951,7 +1952,9 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
 
     const char *pszTAB = CPLResetExtension(pszBaseFilename, "tab");
 
-    if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszTAB))
+    if (papszSiblingFiles &&
+        // cppcheck-suppress knownConditionTrueFalse
+        GDALCanReliablyUseSiblingFileList(pszTAB))
     {
         int iSibling = CSLFindString(papszSiblingFiles, CPLGetFilename(pszTAB));
         if (iSibling >= 0)
@@ -2205,7 +2208,9 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
 
     const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);
 
-    if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszTFW))
+    if (papszSiblingFiles &&
+        // cppcheck-suppress knownConditionTrueFalse
+        GDALCanReliablyUseSiblingFileList(pszTFW))
     {
         const int iSibling =
             CSLFindString(papszSiblingFiles, CPLGetFilename(pszTFW));
@@ -3058,14 +3063,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                                             int nOptions)
 
 {
-    char **papszReturn = nullptr;
+    CPLStringList aosReturn;
     int iArg;
     char **papszArgv = *ppapszArgv;
 
     /* -------------------------------------------------------------------- */
     /*      Preserve the program name.                                      */
     /* -------------------------------------------------------------------- */
-    papszReturn = CSLAddString(papszReturn, papszArgv[0]);
+    aosReturn.AddString(papszArgv[0]);
 
     /* ==================================================================== */
     /*      Loop over all arguments.                                        */
@@ -3080,7 +3085,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         if (EQUAL(papszArgv[iArg], "--version"))
         {
             printf("%s\n", GDALVersionInfo("--version")); /*ok*/
-            CSLDestroy(papszReturn);
             return 0;
         }
 
@@ -3092,7 +3096,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         else if (EQUAL(papszArgv[iArg], "--build"))
         {
             printf("%s", GDALVersionInfo("BUILD_INFO")); /*ok*/
-            CSLDestroy(papszReturn);
             return 0;
         }
 
@@ -3104,7 +3107,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         else if (EQUAL(papszArgv[iArg], "--license"))
         {
             printf("%s\n", GDALVersionInfo("LICENSE")); /*ok*/
-            CSLDestroy(papszReturn);
             return 0;
         }
 
@@ -3120,7 +3122,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
                     "--config option given without a key and value argument.");
-                CSLDestroy(papszReturn);
                 return -1;
             }
 
@@ -3140,7 +3141,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "--mempreload option given without directory path.");
-                CSLDestroy(papszReturn);
                 return -1;
             }
 
@@ -3149,7 +3149,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "--mempreload given invalid or empty directory.");
-                CSLDestroy(papszReturn);
                 return -1;
             }
 
@@ -3179,7 +3178,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to copy %s to /vsimem", osOldPath.c_str());
-                    CSLDestroy(papszReturn);
                     return -1;
                 }
             }
@@ -3199,7 +3197,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "--debug option given without debug level.");
-                CSLDestroy(papszReturn);
                 return -1;
             }
 
@@ -3218,7 +3215,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "--optfile option given without filename.");
-                CSLDestroy(papszReturn);
                 return -1;
             }
 
@@ -3229,14 +3225,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unable to open optfile '%s'.\n%s",
                          papszArgv[iArg + 1], VSIStrerror(errno));
-                CSLDestroy(papszReturn);
                 return -1;
             }
 
             const char *pszLine;
+            CPLStringList aosArgvOptfile;
             // dummy value as first argument to please
             // GDALGeneralCmdLineProcessor()
-            char **papszArgvOptfile = CSLAddString(nullptr, "");
+            aosArgvOptfile.AddString("");
             bool bHasOptfile = false;
             while ((pszLine = CPLReadLineL(fpOptFile)) != nullptr)
             {
@@ -3254,14 +3250,15 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                                  "--optfile not supported in a option file");
                         bHasOptfile = true;
                     }
-                    papszArgvOptfile =
-                        CSLAddString(papszArgvOptfile, papszTokens[i]);
+                    aosArgvOptfile.AddStringDirectly(papszTokens[i]);
+                    papszTokens[i] = nullptr;
                 }
                 CSLDestroy(papszTokens);
             }
 
             VSIFCloseL(fpOptFile);
 
+            char **papszArgvOptfile = aosArgvOptfile.StealList();
             if (!bHasOptfile)
             {
                 char **papszArgvOptfileBefore = papszArgvOptfile;
@@ -3269,7 +3266,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                                                 &papszArgvOptfile,
                                                 nOptions) < 0)
                 {
-                    CSLDestroy(papszReturn);
                     CSLDestroy(papszArgvOptfile);
                     return -1;
                 }
@@ -3279,7 +3275,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             char **papszIter = papszArgvOptfile + 1;
             while (*papszIter)
             {
-                papszReturn = CSLAddString(papszReturn, *papszIter);
+                aosReturn.AddString(*papszIter);
                 ++papszIter;
             }
             CSLDestroy(papszArgvOptfile);
@@ -3369,7 +3365,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                        GDALGetDriverLongName(hDriver));
             }
 
-            CSLDestroy(papszReturn);
             return 0;
         }
 
@@ -3382,8 +3377,6 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
         {
             GDALDriverH hDriver;
             char **papszMD;
-
-            CSLDestroy(papszReturn);
 
             if (iArg + 1 >= nArgc)
             {
@@ -3584,7 +3577,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                    "(i.e. en_US.UTF-8)\n");
             printf("  --help-general: report detailed help on general " /*ok*/
                    "options.\n");
-            CSLDestroy(papszReturn);
+
             return 0;
         }
 
@@ -3617,13 +3610,14 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
          */
         else
         {
-            papszReturn = CSLAddString(papszReturn, papszArgv[iArg]);
+            aosReturn.AddString(papszArgv[iArg]);
         }
     }
 
-    *ppapszArgv = papszReturn;
+    const int nSize = aosReturn.size();
+    *ppapszArgv = aosReturn.StealList();
 
-    return CSLCount(*ppapszArgv);
+    return nSize;
 }
 
 /************************************************************************/

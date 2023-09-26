@@ -30,7 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import numbers
 import os
 import re
 import shutil
@@ -46,62 +45,46 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("WCS")
 
 ###############################################################################
-# Verify we have the driver.
-
-
-def test_wcs_1():
-
-    # NOTE - mloskot:
-    # This is a dirty hack checking if remote WCS service is online.
-    # Nothing genuine but helps to keep the buildbot waterfall green.
-    srv = "http://demo.opengeo.org/geoserver/wcs?"
-    if gdaltest.gdalurlopen(srv) is None:
-        gdaltest.wcs_drv = None
-
-    gdaltest.wcs_ds = None
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
-
-
-###############################################################################
 # Open the GeoServer WCS service.
 
 
-def wcs_2():
+@pytest.fixture(scope="module")
+def geoserver_ds(tmp_path_factory):
 
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
+    wcs_fname = str(tmp_path_factory.mktemp("tmp") / "geoserver.wcs")
 
     # first, copy to tmp directory.
-    open("tmp/geoserver.wcs", "w").write(open("data/geoserver.wcs").read())
+    shutil.copy("data/geoserver.wcs", wcs_fname)
 
-    gdaltest.wcs_ds = None
-    gdaltest.wcs_ds = gdal.Open("tmp/geoserver.wcs")
+    try:
+        with gdal.config_option("GDAL_HTTP_CONNECTTIMEOUT", "3"):
+            return gdal.Open(wcs_fname)
+    except RuntimeError:
+        import xml.etree.ElementTree as ET
 
-    if gdaltest.wcs_ds is not None:
-        return
-    pytest.fail("open failed.")
+        tree = ET.parse(wcs_fname)
+
+        srv = next(tree.iter("ServiceURL")).text
+
+        pytest.skip(f"Could not connect to {srv}")
 
 
 ###############################################################################
 # Check various things about the configuration.
 
 
-def test_wcs_3():
-
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        pytest.skip()
+def test_wcs_3(geoserver_ds):
 
     assert (
-        gdaltest.wcs_ds.RasterXSize == 983
-        and gdaltest.wcs_ds.RasterYSize == 598
-        and gdaltest.wcs_ds.RasterCount == 3
+        geoserver_ds.RasterXSize == 983
+        and geoserver_ds.RasterYSize == 598
+        and geoserver_ds.RasterCount == 3
     ), "wrong size or bands"
 
-    wkt = gdaltest.wcs_ds.GetProjectionRef()
+    wkt = geoserver_ds.GetProjectionRef()
     assert wkt[:14] == 'GEOGCS["WGS 84', "Got wrong SRS: " + wkt
 
-    gt = gdaltest.wcs_ds.GetGeoTransform()
+    gt = geoserver_ds.GetGeoTransform()
     expected_gt = (
         -130.85167999999999,
         0.070036907426246159,
@@ -110,13 +93,10 @@ def test_wcs_3():
         0.0,
         -0.055867725752508368,
     )
-    for i in range(6):
-        assert gt[i] == pytest.approx(expected_gt[i], abs=0.00001), "wrong geotransform"
-
-    assert gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() >= 1, "no overviews!"
+    gdaltest.check_geotransform(gt, expected_gt)
 
     assert (
-        gdaltest.wcs_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        geoserver_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     ), "wrong band data type"
 
 
@@ -124,12 +104,9 @@ def test_wcs_3():
 # Check checksum
 
 
-def test_wcs_4():
+def test_wcs_4(geoserver_ds):
 
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        pytest.skip()
-
-    cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
+    cs = geoserver_ds.GetRasterBand(1).Checksum()
     assert cs == 58765, "Wrong checksum: " + str(cs)
 
 
@@ -271,7 +248,6 @@ def read_urls():
 
 
 do_log = False
-wcs_6_ok = True
 
 
 def compare_urls(a, b):
@@ -312,6 +288,10 @@ def compare_urls(a, b):
 
 
 class WCSHTTPHandler(BaseHTTPRequestHandler):
+    def __init__(self, *args):
+        self.urls = read_urls()
+        super().__init__(*args)
+
     def log_request(self, code=",", size=","):
         # pylint: disable=unused-argument
         pass
@@ -322,38 +302,36 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def Respond(self, request, brand, version, test):
+        fname = "data/wcs/"
+        if request == "GetCapabilities":
+            # *2 and Simple* are different coverages from same server
+            brand = brand.replace("2", "")
+            brand = brand.replace("Simple", "")
+        if request == "GetCoverage" and test == "scaled":
+            suffix = ".tiff"
+            self.Headers("image/tiff")
+            fname += brand + "-" + version + "-scaled" + suffix
+        elif request == "GetCoverage" and test == "non_scaled":
+            suffix = ".tiff"
+            self.Headers("image/tiff")
+            fname += brand + "-" + version + "-non_scaled" + suffix
+        elif request == "GetCoverage":
+            suffix = ".tiff"
+            self.Headers("image/tiff")
+            fname += brand + "-" + version + suffix
+        else:
+            suffix = ".xml"
+            self.Headers("application/xml")
+            fname += request + "-" + brand + "-" + version + suffix
+
         try:
-            fname = "data/wcs/"
-            if request == "GetCapabilities":
-                # *2 and Simple* are different coverages from same server
-                brand = brand.replace("2", "")
-                brand = brand.replace("Simple", "")
-            if request == "GetCoverage" and test == "scaled":
-                suffix = ".tiff"
-                self.Headers("image/tiff")
-                fname += brand + "-" + version + "-scaled" + suffix
-            elif request == "GetCoverage" and test == "non_scaled":
-                suffix = ".tiff"
-                self.Headers("image/tiff")
-                fname += brand + "-" + version + "-non_scaled" + suffix
-            elif request == "GetCoverage":
-                suffix = ".tiff"
-                self.Headers("image/tiff")
-                fname += brand + "-" + version + suffix
-            else:
-                suffix = ".xml"
-                self.Headers("application/xml")
-                fname += request + "-" + brand + "-" + version + suffix
-            f = open(fname, "rb")
-            content = f.read()
-            f.close()
+            with open(fname, "rb") as f:
+                content = f.read()
             self.wfile.write(content)
         except IOError:
             self.send_error(
                 404, "File Not Found: " + request + " " + brand + " " + version
             )
-            global wcs_6_ok
-            wcs_6_ok = False
 
     def do_GET(self):
         if do_log:
@@ -373,18 +351,13 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             test = query2["test"][0]
 
         key = server + "-" + version
-        if key in urls and test in urls[key]:
+        if key in self.urls and test in self.urls[key]:
             _, got = self.path.split("SERVICE=WCS")
             got = re.sub(r"\&test=.*", "", got)
-            _, have = urls[key][test].split("SERVICE=WCS")
+            _, have = self.urls[key][test].split("SERVICE=WCS")
             have += "&server=" + server
-            if compare_urls(got, have):
-                ok = "ok"
-            else:
-                ok = "not ok\ngot:  " + got + "\nhave: " + have
-                global wcs_6_ok
-                wcs_6_ok = False
-            print("test " + server + " " + test + " WCS " + version + " " + ok)
+
+            assert compare_urls(got, have)
 
         self.Respond(request, server, version, test)
 
@@ -492,102 +465,114 @@ def setupFct():
 ###############################################################################
 
 
-def test_wcs_6():
-    driver = gdal.GetDriverByName("WCS")
-    if driver is None:
-        pytest.skip()
-    # Generating various URLs from the driver and comparing them to ones
-    # that have worked.
-    first_call = True
-    size = 60
-    cache = "CACHE=wcs_cache"
-    global urls
-    urls = read_urls()
+@pytest.fixture(scope="module")
+def wcs_server():
     (process, port) = webserver.launch(handler=WCSHTTPHandler)
+
     url = "http://127.0.0.1:" + str(port)
-    setup = setupFct()
-    servers = []
-    for server in setup:
-        servers.append(server)
-    for server in sorted(servers):
-        for i, v in enumerate(setup[server]["Versions"]):
-            version = (
-                str(int(v / 100)) + "." + str(int(v % 100 / 10)) + "." + str((v % 10))
-            )
-            if not server + "-" + version in urls:
-                print("Error: " + server + "-" + version + " not in urls")
-                global wcs_6_ok
-                wcs_6_ok = False
-                continue
-            options = [cache]
-            if first_call:
-                options.append("CLEAR_CACHE")
-                first_call = False
-            query = "server=" + server + "&version=" + version
-            ds = gdal.OpenEx(
-                utf8_path="WCS:" + url + "/?" + query, open_options=options
-            )
 
-            coverage = setup[server]["Coverage"]
-            if isinstance(coverage, list):
-                coverage = coverage[i]
-            if isinstance(coverage, numbers.Number):
-                coverage = str(coverage)
-            query += "&coverage=" + coverage
+    yield url
 
-            options = [cache]
-            if isinstance(setup[server]["Options"], list):
-                oo = setup[server]["Options"][i]
-            else:
-                oo = setup[server]["Options"]
-            oo = oo.split()
-            for o in oo:
-                if o != "-oo":
-                    options.append(o)
-            options.append("GetCoverageExtra=test=none")
-            ds = gdal.OpenEx(
-                utf8_path="WCS:" + url + "/?" + query, open_options=options
-            )
-            ds = 0
-            options = [cache]
-            options.append("GetCoverageExtra=test=scaled")
-            options.append("INTERLEAVE=PIXEL")
-            ds = gdal.OpenEx(
-                utf8_path="WCS:" + url + "/?" + query, open_options=options
-            )
-            if not ds:
-                print("OpenEx failed: WCS:" + url + "/?" + query)
-                wcs_6_ok = False
-                break
-            projwin = setup[server]["Projwin"].replace("-projwin ", "").split()
-            for i, c in enumerate(projwin):
-                projwin[i] = int(c)
-            options = [cache]
-            tmpfile = "tmp/" + server + version + ".tiff"
-            gdal.Translate(tmpfile, ds, projWin=projwin, width=size, options=options)
-            os.remove(tmpfile)
-
-            if os.path.isfile(
-                "data/wcs/" + server + "-" + version + "-non_scaled.tiff"
-            ):
-                options = [cache]
-                options.append("GetCoverageExtra=test=non_scaled")
-                options.append("INTERLEAVE=PIXEL")
-                ds = gdal.OpenEx(
-                    utf8_path="WCS:" + url + "/?" + query, open_options=options
-                )
-                if not ds:
-                    print("OpenEx failed: WCS:" + url + "/?" + query)
-                    wcs_6_ok = False
-                    break
-                options = [cache]
-                gdal.Translate(tmpfile, ds, srcWin=[0, 0, 2, 2], options=options)
-                os.remove(tmpfile)
-            else:
-                print(server + " " + version + " non_scaled skipped (no response file)")
     webserver.server_stop(process, port)
 
-    assert wcs_6_ok
+
+@gdaltest.disable_exceptions()
+@pytest.mark.parametrize(
+    "server,version",
+    [
+        (server, version)
+        for server, x in setupFct().items()
+        for version in x["Versions"]
+    ],
+)
+def test_wcs_6(wcs_server, tmp_path, server, version):
+
+    cache_dir = str(tmp_path / "wcs_cache")
+
+    # Generating various URLs from the driver and comparing them to ones
+    # that have worked.
+    size = 60
+    cache = f"CACHE={cache_dir}"
+    urls = read_urls()
+    url = wcs_server
+    setup = setupFct()
+
+    i = setup[server]["Versions"].index(version)
+
+    version = (
+        str(int(version / 100))
+        + "."
+        + str(int(version % 100 / 10))
+        + "."
+        + str((version % 10))
+    )
+    if not server + "-" + version in urls:
+        pytest.fail("Error: " + server + "-" + version + " not in urls")
+
+    options = [cache]
+
+    # 1. Open without requesting a specific coverage
+    query = "server=" + server + "&version=" + version
+    ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+    assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+
+    # 2. Open and request a specific coverage
+    coverage = setup[server]["Coverage"]
+    if isinstance(coverage, list):
+        coverage = coverage[i]
+    query += f"&coverage={coverage}"
+
+    options = [cache]
+    if isinstance(setup[server]["Options"], list):
+        oo = setup[server]["Options"][i]
+    else:
+        oo = setup[server]["Options"]
+    oo = oo.split()
+    for o in oo:
+        if o != "-oo":
+            options.append(o)
+    options.append("GetCoverageExtra=test=none")
+    gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+    assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+    ds = None
+
+    # 3. Open and request a specific coverage, scaled
+    options = [cache]
+    options.append("GetCoverageExtra=test=scaled")
+    options.append("INTERLEAVE=PIXEL")
+    ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+
+    assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+
+    projwin = [
+        int(x) for x in setup[server]["Projwin"].replace("-projwin ", "").split()
+    ]
+    options = [cache]
+
+    tmpfile = tmp_path / f"{server}{version}.tiff"
+    gdal.Translate(str(tmpfile), ds, projWin=projwin, width=size, options=options)
+
+    assert tmpfile.exists()
+
+    # 4. Open and request a specific coverage, non-scaled
+    if os.path.isfile("data/wcs/" + server + "-" + version + "-non_scaled.tiff"):
+        tmpfile_non_scaled = tmp_path / f"{server}{version}-non_scaled.tiff"
+
+        options = [cache]
+        options.append("GetCoverageExtra=test=non_scaled")
+        options.append("INTERLEAVE=PIXEL")
+        ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+
+        assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
+
+        options = [cache]
+        gdal.Translate(
+            str(tmpfile_non_scaled), ds, srcWin=[0, 0, 2, 2], options=options
+        )
+
+        assert tmpfile_non_scaled.exists()
+    else:
+        print(server + " " + version + " non_scaled skipped (no response file)")
 
 
 ###############################################################################
@@ -598,19 +583,3 @@ def test_wcs_6():
 # parsing Capabilities and DescribeCoverage: test data in metadata and service files?
 
 ###############################################################################
-
-
-def test_wcs_cleanup():
-
-    gdaltest.wcs_drv = None
-    gdaltest.wcs_ds = None
-
-    try:
-        os.remove("tmp/geoserver.wcs")
-    except OSError:
-        pass
-
-    try:
-        shutil.rmtree("wcs_cache")
-    except OSError:
-        pass

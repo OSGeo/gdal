@@ -38,11 +38,26 @@ from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("SRP")
 
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    yield
+
+    try:
+        os.unlink("data/srp/USRP_PCB0/TRANSH01.THF.aux.xml")
+    except OSError:
+        pass
+
+
 ###############################################################################
 # Read USRP dataset with PCB=0
 
 
-def test_srp_1(filename="srp/USRP_PCB0/FKUSRP01.IMG"):
+@pytest.mark.parametrize("pcb", (0, 4, 8))
+def test_srp_1(pcb):
+
+    filename = f"srp/USRP_PCB{pcb}/FKUSRP01.IMG"
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32600 + 17)
@@ -81,30 +96,13 @@ def test_srp_1(filename="srp/USRP_PCB0/FKUSRP01.IMG"):
 
 
 ###############################################################################
-# Read USRP dataset with PCB=4
-
-
-def test_srp_2():
-    return test_srp_1("srp/USRP_PCB4/FKUSRP01.IMG")
-
-
-###############################################################################
-# Read USRP dataset with PCB=8
-
-
-def test_srp_3():
-    return test_srp_1("srp/USRP_PCB8/FKUSRP01.IMG")
-
-
-###############################################################################
 # Read from TRANSH01.THF file.
 
 
 def test_srp_4():
 
     tst = gdaltest.GDALTest("SRP", "srp/USRP_PCB0/TRANSH01.THF", 1, 24576)
-    ret = tst.testOpen()
-    return ret
+    tst.testOpen()
 
 
 ###############################################################################
@@ -152,16 +150,3 @@ def test_srp_6():
         filename_absolute=1,
     )
     tst.testOpen()
-
-
-###############################################################################
-# Cleanup
-
-
-def test_srp_cleanup():
-
-    # FIXME ?
-    os.unlink("data/srp/USRP_PCB0/TRANSH01.THF.aux.xml")
-
-
-###############################################################################

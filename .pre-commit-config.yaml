@@ -28,7 +28,7 @@ repos:
                 autotest/ogr/data/
               )
     -   repo: https://github.com/pre-commit/mirrors-clang-format
-        rev: 'v15.0.4'
+        rev: 'v15.0.7'
         hooks:
         -   id: clang-format
             exclude: >
@@ -53,5 +53,6 @@ repos:
                 frmts/grib/degrib/g2clib|
                 ogr/ogrsf_frmts/cad/libopencad/|
                 ogr/ogrsf_frmts/geojson/libjson/|
-                ogr/ogrsf_frmts/flatgeobuf/flatbuffers/
+                ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
+                ogr/ogrsf_frmts/pmtiles/pmtiles/
               )

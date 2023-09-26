@@ -1,10 +1,10 @@
 <GDAL_WMS>
     <Service name="WMS">
         <Version>1.1.1</Version>
-        <ServerUrl>http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?</ServerUrl>
+        <ServerUrl>http://sedac.ciesin.columbia.edu/geoserver/wms?</ServerUrl>
         <SRS>EPSG:4326</SRS>
         <ImageFormat>image/jpeg</ImageFormat>
-        <Layers>GPWv3_1990_Pop_Density_tif</Layers>
+        <Layers>gpw-v3:gpw-v3-population-density_1990</Layers>
         <Styles></Styles>
     </Service>
     <DataWindow>

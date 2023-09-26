@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-2A_Datastrip_Metadata.xsd" xmlns:dimap="https://psd-14.sentinel2.eo.esa.int/DICO/PDI-V14/PDGS/dimap/" targetNamespace="https://psd-14.sentinel2.eo.esa.int/PSD/S2_PDI_Level-2A_Datastrip_Metadata.xsd" elementFormDefault="qualified" version="12">
+	<xs:import namespace="https://psd-14.sentinel2.eo.esa.int/DICO/PDI-V14/PDGS/dimap/" schemaLocation="DICO/PDI-V14/PDGS/dimap/dimap2A.xsd"/>
+	<xs:element name="Level-2A_DataStrip_ID" type="Level-2A_Datastrip">
+		<xs:annotation>
+			<xs:documentation>Instance of the DIMAP_Level-2A_DataStrip_ID</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="Level-2A_Datastrip">
+		<xs:sequence>
+			<xs:element name="General_Info" type="dimap:A_GENERAL_INFO_DSL1CL2A"/>
+			<xs:element name="Image_Data_Info" type="dimap:AN_IMAGE_DATA_INFO_DSL1C_DSL2A"/>
+			<xs:element name="Satellite_Ancillary_Data_Info" type="dimap:AN_ANCILLARY_DATA_DSL0"/>
+			<xs:element name="Quality_Indicators_Info" type="dimap:A_QUALITY_INDICATORS_INFO_DSL1B_DSL1C_DSL2A"/>
+			<xs:element name="Auxiliary_Data_Info" type="dimap:AN_AUXILIARY_DATA_INFO_DSL1C_DSL2A"/>
+		</xs:sequence>
+		<xs:attribute name="DatastripIdentifier" type="dimap:A_DATASTRIP_ID"/>
+	</xs:complexType>
+</xs:schema>

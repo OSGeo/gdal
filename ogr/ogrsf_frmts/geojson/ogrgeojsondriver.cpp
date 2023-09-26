@@ -724,6 +724,9 @@ void RegisterOGRGeoJSON()
         "description='Auto-generate feature ids' />"
         "  <Option name='WRITE_NON_FINITE_VALUES' type='boolean' "
         "description='Whether to write NaN / Infinity values' default='NO'/>"
+        "  <Option name='AUTODETECT_JSON_STRINGS' type='boolean' "
+        "description='Whether to try to interpret string fields as JSON "
+        "arrays or objects' default='YES'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
@@ -734,6 +737,7 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE, "YES");
 
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;

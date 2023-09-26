@@ -62,7 +62,7 @@ def test_ilwis_1():
 
     gt = (795480, 20, 0, 8090520, 0, -20)
 
-    return tst.testOpen(check_gt=gt, check_prj=srs)
+    tst.testOpen(check_gt=gt, check_prj=srs)
 
 
 ###############################################################################
@@ -73,7 +73,7 @@ def test_ilwis_2():
 
     tst = gdaltest.GDALTest("ilwis", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(check_srs=1, check_gt=1, new_filename="tmp/byte.mpr")
+    tst.testCreateCopy(check_srs=1, check_gt=1, new_filename="tmp/byte.mpr")
 
 
 ###############################################################################
@@ -84,7 +84,7 @@ def test_ilwis_3():
 
     tst = gdaltest.GDALTest("ilwis", "hfa/float.img", 1, 23529)
 
-    return tst.testCreate(new_filename="tmp/float.mpr", out_bands=1)
+    tst.testCreate(new_filename="tmp/float.mpr", out_bands=1)
 
 
 ###############################################################################
@@ -95,7 +95,7 @@ def test_ilwis_4():
 
     tst = gdaltest.GDALTest("ilwis", "rgbsmall.tif", 2, 21053)
 
-    return tst.testCreate(new_filename="tmp/rgb.mpl", check_minmax=0, out_bands=3)
+    tst.testCreate(new_filename="tmp/rgb.mpl", check_minmax=0, out_bands=3)
 
 
 ###############################################################################
@@ -106,7 +106,7 @@ def test_ilwis_5():
 
     tst = gdaltest.GDALTest("ilwis", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(
+    tst.testCreateCopy(
         check_srs=1, check_gt=1, vsimem=1, new_filename="/vsimem/ilwis/byte.mpr"
     )
 

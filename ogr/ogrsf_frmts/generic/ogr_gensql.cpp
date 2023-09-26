@@ -1941,8 +1941,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     swq_select *psSelectInfo = static_cast<swq_select *>(pSelectInfo);
     const int nOrderItems = psSelectInfo->order_specs;
 
-    if (!(psSelectInfo->order_specs > 0 &&
-          psSelectInfo->query_mode == SWQM_RECORDSET && nOrderItems != 0))
+    if (!(nOrderItems > 0 && psSelectInfo->query_mode == SWQM_RECORDSET))
         return;
 
     if (bOrderByValid)

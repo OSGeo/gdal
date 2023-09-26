@@ -1241,18 +1241,19 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
 
             else
             {
-                if (m_poReader->IsConsistentSingleGeomElemPath())
+                if (!poClass->IsSchemaLocked() &&
+                    poClass->IsConsistentSingleGeomElemPath())
                 {
                     const std::string &osGeomElemPath =
-                        m_poReader->GetSingleGeomElemPath();
+                        poClass->GetSingleGeomElemPath();
                     if (osGeomElemPath.empty())
                     {
-                        m_poReader->SetSingleGeomElemPath(poState->osPath);
+                        poClass->SetSingleGeomElemPath(poState->osPath);
                     }
                     else if (poState->osPath != osGeomElemPath)
                     {
-                        m_poReader->SetConsistentSingleGeomElemPath(false);
-                        m_poReader->SetSingleGeomElemPath(std::string());
+                        poClass->SetConsistentSingleGeomElemPath(false);
+                        poClass->SetSingleGeomElemPath(std::string());
                     }
                 }
                 bReadGeometry = true;
@@ -1274,7 +1275,13 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
             return startElementGeometry(pszName, nLenName, attr);
         }
     }
-    else if (nLenName == 9 && strcmp(pszName, "boundedBy") == 0)
+    else if (nLenName == 9 && strcmp(pszName, "boundedBy") == 0 &&
+             // We ignore the UseBBOX() flag for CityGML, since CityGML
+             // has elements like bldg:boundedBy, which are not a simple
+             // rectangular bbox. This is needed to read properly
+             // autotest/ogr/data/gml/citygml_lod2_713_5322.xml
+             // (this is a workaround of not being namespace aware)
+             (eAppSchemaType == APPSCHEMA_CITYGML || m_poReader->UseBBOX()))
     {
         m_inBoundedByDepth = m_nDepth;
 

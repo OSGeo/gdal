@@ -41,7 +41,7 @@ void Usage()
     int iDriver;
     int nDriverCount;
 
-    printf("Usage: gdal2ogr [--help-general] [-f format_name]\n"
+    printf("Usage: gdal2ogr [--help] [--help-general] [-f format_name]\n"
            "                [-b band_number] [-l dest_layer_name]\n"
            "                [-t type]\n"
            "                gdal_datasource_src_name ogr_datasource_dst_name\n"
@@ -104,7 +104,9 @@ int main(int argc, char *argv[])
     /* -------------------------------------------------------------------- */
     for (i = 1; i < argc; i++)
     {
-        if (EQUAL(argv[i], "-b") && i < argc - 1)
+        if (EQUAL(argv[i], "--help")
+            Usage();
+        else if (EQUAL(argv[i], "-b") && i < argc - 1)
             iBand = atoi(argv[++i]);
         else if (EQUAL(argv[i], "-f") && i < argc - 1)
             pszFormat = argv[++i];

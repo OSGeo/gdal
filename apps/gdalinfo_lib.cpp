@@ -404,6 +404,13 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 json_object *poEPSG = json_object_new_int64(atoi(pszAuthCode));
                 json_object_object_add(poStac, "proj:epsg", poEPSG);
             }
+            else
+            {
+                // Setting it to null is mandated by the
+                // https://github.com/stac-extensions/projection#projepsg
+                // when setting proj:projjson or proj:wkt2
+                json_object_object_add(poStac, "proj:epsg", nullptr);
+            }
             {
                 // PROJJSON requires PROJ >= 6.2
                 CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);

@@ -39,6 +39,12 @@ from osgeo import gdal
 
 # given fmt and nodata, encodes a value as bytes
 
+###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def module_disable_exceptions():
+    with gdaltest.config_option("GDAL_ENABLE_DEPRECATED_DRIVER_ARG", "YES"):
+        yield
+
 
 def pack(fmt, nodata, value):
     if value is None:

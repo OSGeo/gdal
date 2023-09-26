@@ -32,10 +32,9 @@ jobs:
       CONTAINER_NAME: gdal-deps
       CONTAINER_TAG: ${{ matrix.container }}-${{ github.base_ref || github.ref_name }}
       CACHE_CONTAINER_TAG: ${{ matrix.container }}-master
-      GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
 
     permissions:
-      contents: read
+      contents: write  # for Git to git push
       packages: write
 
     strategy:
@@ -84,6 +83,13 @@ jobs:
             build_script: build.sh
             test_script: test.sh
 
+          - name: Ubuntu 20.04, coverage
+            id: coverage
+            travis_branch: ubuntu_2004
+            container: ubuntu_20.04
+            build_script: build.sh
+            test_script: test.sh
+
           - name: Ubuntu 20.04, Intel compiler
             id: icc
             container: icc
@@ -120,14 +126,17 @@ jobs:
           CONTAINER_TAG_CLEAN=$(echo ${CONTAINER_TAG} | tr -d -c "[:alnum:].-")
           echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}"
           echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
+          CACHE_CONTAINER_TAG_CLEAN=$(echo ${CACHE_CONTAINER_TAG} | tr -d -c "[:alnum:].-")
+          echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}"
+          echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
           echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN}"  >>${GITHUB_ENV}
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -141,9 +150,9 @@ jobs:
         if: "(github.repository_owner != 'OSGeo' || github.event_name == 'pull_request') && !contains(github.event.head_commit.message, '[skip cache]')"
         run: |
           docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} || true
-          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG} || true
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} || true
           docker pull ${CONTAINER_NAME_FULL} || true
-          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
 
       - name: Prepare build context
         run: |
@@ -154,8 +163,19 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: |
+          # FIXME: for some reason, the fedora rawhide container pushed by
+          # master job is corrupted (looks like it contains an outdated layer
+          # symlinking libssl.so.3 to an older version of the actual file),
+          # once it is pushed. But in the job that generates it,
+          # compilation & tests work fine. It looks like some weird caching
+          # issue
+          if test "${{ matrix.container }}" = "fedora_rawhide"; then
+            DOCKER_BUILD_CACHE_FROM=""
+          else
+            BUILD_ARG_INLINE_CACHE="--build-arg BUILDKIT_INLINE_CACHE=1"
+          fi
           docker build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            ${BUILD_ARG_INLINE_CACHE} \
             ${DOCKER_BUILD_CACHE_FROM} \
             -t ${CONTAINER_NAME_FULL} \
             -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
@@ -189,8 +209,11 @@ jobs:
 
       - name: Prepare ccache
         run: |
+          mkdir -p ${{ github.workspace }}/.ccache
+          chmod -R a+rw ${{ github.workspace }}/.ccache
           docker run --rm \
-            -v ${{ github.workspace }}/.ccache:/root/.ccache \
+            -v ${{ github.workspace }}/.ccache:/.ccache \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             ${CONTAINER_NAME_FULL} \
             sh -c "ccache -M 1G && ccache -sp && ccache -z"
 
@@ -199,7 +222,7 @@ jobs:
       - name: Build
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"; then
-            BUILD_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
+            BUILD_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
           else
             BUILD_CMD="sh -c 'cmake .. && make -j$(nproc)'"
           fi
@@ -207,16 +230,19 @@ jobs:
           mkdir -p build-${{ matrix.id }}
           docker run --name gdal-build \
             --rm \
-            -v $(pwd):/${GDAL_SOURCE_DIR}:rw \
-            -v ${{ github.workspace }}/.ccache:/root/.ccache:rw \
-            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
+            -v $(pwd):$(pwd):rw \
+            -v ${{ github.workspace }}/.ccache:/.ccache:rw \
+            --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
             ${BUILD_CMD}
 
       - name: Summarize ccache
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}/.ccache:/root/.ccache \
+            -v ${{ github.workspace }}/.ccache:/.ccache \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             ${CONTAINER_NAME_FULL} \
             ccache -s
 
@@ -238,24 +264,36 @@ jobs:
           TRAVIS_BRANCH: ${{ matrix.travis_branch }}
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"; then
-            TEST_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
+            TEST_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
           else
-            TEST_CMD="ctest -V"
+            TEST_CMD="ctest -V -j $(nproc)"
           fi
+
+          # For cache
+          mkdir .gdal
 
           docker run \
             -e CI \
             -e GITHUB_WORKFLOW \
             -e TRAVIS \
             -e TRAVIS_BRANCH \
+            -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             --security-opt seccomp=unconfined \
             --add-host=host.docker.internal:host-gateway \
             --rm \
-            -v $(pwd):${GDAL_SOURCE_DIR} \
-            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            -v $(pwd)/.gdal:/.gdal \
+            -v $(pwd):$(pwd) \
+            --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
             ${TEST_CMD}
 
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        if: ${{ matrix.id == 'coverage' }}
+        with:
+          format: lcov
+          file: build-coverage/gdal_filtered.info
 
       - name: Push build environment
         if: github.event_name == 'push'
@@ -265,3 +303,45 @@ jobs:
         run: |
           docker push ${CONTAINER_NAME_FULL}
 
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ matrix.id == 'coverage' }}
+        with:
+          name: coverage_index.html
+          path: build-${{ matrix.id }}/coverage_html/index.html
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ matrix.id == 'coverage' }}
+        with:
+          name: HTML
+          path: build-${{ matrix.id }}/coverage_html/*
+
+      - name: Deploy ssh key (for coverage)
+        if: ${{ matrix.id == 'coverage' && github.event_name == 'push' && github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
+        shell: bash -l {0}
+        run: |
+          mkdir $HOME/.ssh && echo "${{ secrets.GDAL_TEST_COVERAGE_RESULTS_SSH_KEY }}" > $HOME/.ssh/id_rsa
+          chmod 700 $HOME/.ssh && chmod 600 $HOME/.ssh/id_rsa
+          ssh-keyscan -t rsa github.com >> $HOME/.ssh/known_hosts
+          eval `ssh-agent -s`
+          ssh-add $HOME/.ssh/id_rsa
+
+      - name: Deploy to https://github.com/OSGeo/gdal-test-coverage-results
+        if: ${{ matrix.id == 'coverage' && github.event_name == 'push' && github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
+        shell: bash -l {0}
+        run: |
+          set -x
+          set -e
+          mkdir -p output_html/coverage_html
+          cp -r $GITHUB_WORKSPACE/build-${{ matrix.id }}/coverage_html/* output_html/coverage_html/
+          cd output_html
+          git init
+          git config user.email "gdal-test-coverage-results-bot@example.com"
+          git config user.name "GDAL test coverage results bot"
+          git remote add origin git@github.com:gdalautotest-coverage-results/gdalautotest-coverage-results.github.io
+          git remote -v
+          echo "Results of coverage of GDAL autotest See https://gdalautotest-coverage-results.github.io/coverage_html/index.html" > README.md
+          git add -A
+          git commit -m "Update with OSGeo/gdal commit $GITHUB_SHA"
+          git push -f origin master

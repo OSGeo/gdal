@@ -315,13 +315,23 @@ CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
     return NULL;
   }
   Py_ssize_t size = PySequence_Size(pySeq);
-  if( size != (int)size ) {
-    PyErr_SetString(PyExc_TypeError, "too big sequence");
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(int) ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
     *pnSize = -1;
     return NULL;
   }
   *pnSize = (int)size;
-  int* ret = (int*) malloc(*pnSize*sizeof(int));
+  int* ret = (int*) malloc((*pnSize)*sizeof(int));
+  if( !ret ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pnSize = -1;
+    return NULL;
+  }
   for( int i = 0; i<*pnSize; i++ ) {
     PyObject *o = PySequence_GetItem(pySeq,i);
     if ( !PyArg_Parse(o,"i",&ret[i]) ) {
@@ -355,120 +365,186 @@ CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
   free($2);
 }
 
+%fragment("CreateCGIntBigListFromSequence","header") %{
+static GIntBig*
+CreateCGIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(GIntBig) ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  GIntBig* ret = (GIntBig*) malloc((*pnSize)*sizeof(GIntBig));
+  if( !ret ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pnSize = -1;
+    return NULL;
+  }
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"L",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+%}
+
 /*
  *  Typemap for counted arrays of GIntBig <- PySequence
  */
-%typemap(in,numinputs=1) (int nList, GIntBig* pList)
+%typemap(in,numinputs=1,fragment="CreateCGIntBigListFromSequence") (int nList, GIntBig* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, GIntBig* pList)*/
-  /* check if is List */
-  if ( !PySequence_Check($input) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
+  $2 = CreateCGIntBigListFromSequence($input, &$1);
+  if( $1 < 0 ) {
     SWIG_fail;
-  }
-  Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
-    PyErr_SetString(PyExc_TypeError, "too big sequence");
-    SWIG_fail;
-  }
-  $1 = (int)size;
-  $2 = (GIntBig*) malloc($1*sizeof(GIntBig));
-  for( int i = 0; i<$1; i++ ) {
-    PyObject *o = PySequence_GetItem($input,i);
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(o,"L",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      Py_DECREF(o);
-      SWIG_fail;
-    }
-    $2[i] = (GIntBig)val;
-    Py_DECREF(o);
   }
 }
 
 %typemap(freearg) (int nList, GIntBig* pList)
 {
   /* %typemap(freearg) (int nList, GIntBig* pList) */
-  if ($2) {
-    free((void*) $2);
-  }
+  free($2);
 }
+
+%fragment("CreateCGUIntBigListFromSequence","header") %{
+static GUIntBig*
+CreateCGUIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(GUIntBig) ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  GUIntBig* ret = (GUIntBig*) malloc((*pnSize)*sizeof(GUIntBig));
+  if( !ret ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pnSize = -1;
+    return NULL;
+  }
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"K",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+%}
 
 /*
  *  Typemap for counted arrays of GUIntBig <- PySequence
  */
-%typemap(in,numinputs=1) (int nList, GUIntBig* pList)
+%typemap(in,numinputs=1,fragment="CreateCGUIntBigListFromSequence") (int nList, GUIntBig* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList)*/
-  /* check if is List */
-  if ( !PySequence_Check($input) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
+  $2 = CreateCGUIntBigListFromSequence($input, &$1);
+  if( $1 < 0 ) {
     SWIG_fail;
-  }
-  Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
-    PyErr_SetString(PyExc_TypeError, "too big sequence");
-    SWIG_fail;
-  }
-  $1 = (int)size;
-  $2 = (GUIntBig*) malloc($1*sizeof(GUIntBig));
-  for( int i = 0; i<$1; i++ ) {
-    PyObject *o = PySequence_GetItem($input,i);
-    PY_LONG_LONG val;
-    if ( !PyArg_Parse(o,"K",&val) ) {
-      PyErr_SetString(PyExc_TypeError, "not an integer");
-      Py_DECREF(o);
-      SWIG_fail;
-    }
-    $2[i] = (GUIntBig)val;
-    Py_DECREF(o);
   }
 }
 
 %typemap(freearg) (int nList, GUIntBig* pList)
 {
   /* %typemap(freearg) (int nList, GUIntBig* pList) */
-  if ($2) {
-    free((void*) $2);
-  }
+  free($2);
 }
+
+%fragment("CreateCDoubleListFromSequence","header") %{
+static double*
+CreateCDoubleListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(double) ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  double* ret = (double*) malloc((*pnSize)*sizeof(double));
+  if( !ret ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pnSize = -1;
+    return NULL;
+  }
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"d",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an number");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+%}
 
 /*
  *  Typemap for counted arrays of doubles <- PySequence
  */
-%typemap(in,numinputs=1) (int nList, double* pList)
+%typemap(in,numinputs=1,fragment="CreateCDoubleListFromSequence") (int nList, double* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, double* pList)*/
-  /* check if is List */
-  if ( !PySequence_Check($input) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
+  $2 = CreateCDoubleListFromSequence($input, &$1);
+  if( $1 < 0 ) {
     SWIG_fail;
-  }
-  Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
-    PyErr_SetString(PyExc_TypeError, "too big sequence");
-    SWIG_fail;
-  }
-  $1 = (int)size;
-  $2 = (double*) malloc($1*sizeof(double));
-  for( int i = 0; i<$1; i++ ) {
-    PyObject *o = PySequence_GetItem($input,i);
-    if ( !PyArg_Parse(o,"d",&$2[i]) ) {
-      PyErr_SetString(PyExc_TypeError, "not a number");
-      Py_DECREF(o);
-      SWIG_fail;
-    }
-    Py_DECREF(o);
   }
 }
 
 %typemap(freearg) (int nList, double* pList)
 {
   /* %typemap(freearg) (int nList, double* pList) */
-  if ($2) {
-    free((void*) $2);
-  }
+  free($2);
 }
+
 %fragment("CreateTupleFromIntegerArray","header") %{
 static PyObject *
 CreateTupleFromDoubleArray( int *first, unsigned int size ) {
@@ -557,54 +633,68 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 
-
-%typemap(in,numinputs=1) (int nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
-{
-  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+%fragment("GetBufferAsCharPtrIntSize","header") %{
+static bool
+GetBufferAsCharPtrIntSize( PyObject* input, int *nLen, char **pBuf, int *alloc, bool *viewIsValid, Py_buffer *view ) {
   {
-    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    if (PyObject_GetBuffer(input, view, PyBUF_SIMPLE) == 0)
     {
-      if( view.len > INT_MAX ) {
-        PyBuffer_Release(&view);
-        SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      if( view->len > INT_MAX ) {
+        PyBuffer_Release(view);
+        PyErr_SetString(PyExc_RuntimeError, "too large buffer (>2GB)" );
+        return false;
       }
-      viewIsValid = true;
-      $1 = (int) view.len;
-      $2 = ($2_ltype) view.buf;
-      goto ok;
+      *viewIsValid = true;
+      *nLen = (int) view->len;
+      *pBuf = (char*) view->buf;
+      return true;
     }
     else
     {
-        PyErr_Clear();
+      PyErr_Clear();
     }
   }
-  if (PyUnicode_Check($input))
+  if (PyUnicode_Check(input))
   {
     size_t safeLen = 0;
     int ret;
     try {
-      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+      ret = SWIG_AsCharPtrAndSize(input, pBuf, &safeLen, alloc);
     }
     catch( const std::exception& )
     {
-      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+      PyErr_SetString(PyExc_MemoryError, "out of memory");
+      return false;
     }
     if (!SWIG_IsOK(ret)) {
-      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      PyErr_SetString(PyExc_RuntimeError, "invalid Unicode string" );
+      return false;
     }
 
     if (safeLen) safeLen--;
     if( safeLen > INT_MAX ) {
-      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+      PyErr_SetString(PyExc_RuntimeError, "too large buffer (>2GB)" );
+      return false;
     }
-    $1 = (int) safeLen;
+    *nLen = (int) safeLen;
+    return true;
   }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
-    SWIG_fail;
+    PyErr_SetString(PyExc_RuntimeError, "not a unicode string, bytes, bytearray or memoryview");
+    return false;
   }
-  ok: ;
+}
+%}
+
+%typemap(in,numinputs=1,fragment="GetBufferAsCharPtrIntSize") (int nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
+{
+  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  char* ptr = NULL;
+  if( !GetBufferAsCharPtrIntSize($input, &$1, &ptr, &alloc, &viewIsValid, &view) ) {
+      SWIG_fail;
+  }
+  $2 = ($2_ltype)ptr;
 }
 
 %typemap(freearg) (int nLen, char *pBuf )
@@ -619,46 +709,59 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 
-%typemap(in,numinputs=1) (size_t nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
-{
-  /* %typemap(in,numinputs=1) (size_t nLen, char *pBuf ) */
+%fragment("GetBufferAsCharPtrSizetSize","header") %{
+static bool
+GetBufferAsCharPtrSizetSize( PyObject* input, size_t *nLen, char **pBuf, int *alloc, bool *viewIsValid, Py_buffer *view ) {
   {
-    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    if (PyObject_GetBuffer(input, view, PyBUF_SIMPLE) == 0)
     {
-      viewIsValid = true;
-      $1 = view.len;
-      $2 = ($2_ltype) view.buf;
-      goto ok;
+      *viewIsValid = true;
+      *nLen = view->len;
+      *pBuf = (char*) view->buf;
+      return true;
     }
     else
     {
-        PyErr_Clear();
+      PyErr_Clear();
     }
   }
-  if (PyUnicode_Check($input))
+  if (PyUnicode_Check(input))
   {
     size_t safeLen = 0;
     int ret;
     try {
-      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+      ret = SWIG_AsCharPtrAndSize(input, pBuf, &safeLen, alloc);
     }
     catch( const std::exception& )
     {
-      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+      PyErr_SetString(PyExc_MemoryError, "out of memory");
+      return false;
     }
     if (!SWIG_IsOK(ret)) {
-      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      PyErr_SetString(PyExc_RuntimeError, "invalid Unicode string" );
+      return false;
     }
 
     if (safeLen) safeLen--;
-    $1 = safeLen;
+    *nLen = safeLen;
+    return true;
   }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
-    SWIG_fail;
+    PyErr_SetString(PyExc_RuntimeError, "not a unicode string, bytes, bytearray or memoryview");
+    return false;
   }
-  ok: ;
+}
+%}
+
+%typemap(in,numinputs=1,fragment="GetBufferAsCharPtrSizetSize") (size_t nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
+{
+  /* %typemap(in,numinputs=1) (size_t nLen, char *pBuf ) */
+  char* ptr = NULL;
+  if( !GetBufferAsCharPtrSizetSize($input, &$1, &ptr, &alloc, &viewIsValid, &view) ) {
+      SWIG_fail;
+  }
+  $2 = ($2_ltype)ptr;
 }
 
 %typemap(freearg) (size_t nLen, char *pBuf )
@@ -672,47 +775,59 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
 }
 
-
-%typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
-{
-  /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+%fragment("GetBufferAsCharPtrGIntBigSize","header") %{
+static bool
+GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int *alloc, bool *viewIsValid, Py_buffer *view ) {
   {
-    if (PyObject_GetBuffer($input, &view, PyBUF_SIMPLE) == 0)
+    if (PyObject_GetBuffer(input, view, PyBUF_SIMPLE) == 0)
     {
-      viewIsValid = true;
-      $1 = view.len;
-      $2 = ($2_ltype) view.buf;
-      goto ok;
+      *viewIsValid = true;
+      *nLen = view->len;
+      *pBuf = (char*) view->buf;
+      return true;
     }
     else
     {
-        PyErr_Clear();
+      PyErr_Clear();
     }
   }
-  if (PyUnicode_Check($input))
+  if (PyUnicode_Check(input))
   {
     size_t safeLen = 0;
     int ret;
     try {
-      ret = SWIG_AsCharPtrAndSize($input, (char**) &$2, &safeLen, &alloc);
+      ret = SWIG_AsCharPtrAndSize(input, pBuf, &safeLen, alloc);
     }
     catch( const std::exception& )
     {
-      SWIG_exception_fail( SWIG_MemoryError, "out of memory");
+      PyErr_SetString(PyExc_MemoryError, "out of memory");
+      return false;
     }
     if (!SWIG_IsOK(ret)) {
-      SWIG_exception( SWIG_RuntimeError, "invalid Unicode string" );
+      PyErr_SetString(PyExc_RuntimeError, "invalid Unicode string" );
+      return false;
     }
 
     if (safeLen) safeLen--;
-    $1 = (GIntBig) safeLen;
+    *nLen = (GIntBig)safeLen;
+    return true;
   }
   else
   {
-    PyErr_SetString(PyExc_TypeError, "not a unicode string, bytes, bytearray or memoryview");
-    SWIG_fail;
+    PyErr_SetString(PyExc_RuntimeError, "not a unicode string, bytes, bytearray or memoryview");
+    return false;
   }
-  ok: ;
+}
+%}
+
+%typemap(in,numinputs=1,fragment="GetBufferAsCharPtrGIntBigSize") (GIntBig nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
+{
+  /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+  char* ptr = NULL;
+  if( !GetBufferAsCharPtrGIntBigSize($input, &$1, &ptr, &alloc, &viewIsValid, &view) ) {
+      SWIG_fail;
+  }
+  $2 = ($2_ltype)ptr;
 }
 
 %typemap(freearg) (GIntBig nLen, char *pBuf )
@@ -728,14 +843,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 
 /* required for GDALAsyncReader */
 
-%typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject)
+%typemap(in,numinputs=1) (size_t nLenKeepObject, char *pBufKeepObject, void* pyObject)
 {
-  /* %typemap(in,numinputs=1) (int nLenKeepObject, char *pBufKeepObject, void* pyObject) */
+  /* %typemap(in,numinputs=1) (size_t nLenKeepObject, char *pBufKeepObject, void* pyObject) */
   if (PyBytes_Check($input))
   {
     Py_ssize_t safeLen = 0;
     PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
-    $1 = (int) safeLen;
+    $1 = safeLen;
     $3 = $input;
   }
   else
@@ -762,6 +877,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(argout) (int *nLen, const int **pList ) */
   Py_DECREF($result);
   PyObject *out = PyList_New( *$1 );
+  if( !out ) {
+      SWIG_fail;
+  }
   for( int i=0; i<*$1; i++ ) {
     PyObject *val = PyInt_FromLong( (*$2)[i] );
     PyList_SetItem( out, i, val );
@@ -784,6 +902,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(argout) (int *nLen, const GIntBig **pList ) */
   Py_DECREF($result);
   PyObject *out = PyList_New( *$1 );
+  if( !out ) {
+      SWIG_fail;
+  }
   for( int i=0; i<*$1; i++ ) {
     char szTmp[32];
     sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
@@ -809,6 +930,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(argout) (int *nLen, const double **pList ) */
   Py_DECREF($result);
   PyObject *out = PyList_New( *$1 );
+  if( !out ) {
+      SWIG_fail;
+  }
   for( int i=0; i<*$1; i++ ) {
     PyObject *val = PyFloat_FromDouble( (*$2)[i] );
     PyList_SetItem( out, i, val );
@@ -852,12 +976,20 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     SWIG_fail;
   }
   Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
+  if( size > (Py_ssize_t)INT_MAX ) {
     PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(GDAL_GCP) ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
     SWIG_fail;
   }
   $1 = (int)size;
   tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
+  if( !tmpGCPList ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    SWIG_fail;
+  }
   $2 = tmpGCPList;
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
@@ -867,17 +999,14 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
       Py_DECREF(o);
       SWIG_fail;
     }
-    memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
-    ++tmpGCPList;
+    memcpy( tmpGCPList + i, item, sizeof( GDAL_GCP ) );
     Py_DECREF(o);
   }
 }
 %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
   /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
-  if ($2) {
-    free( (void*) $2 );
-  }
+  free( $2 );
 }
 
 /*
@@ -916,63 +1045,67 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
    $1 = &ce;
 }
 
+
+%fragment("GDALPythonObjectFromCStrAndSize","header") %{
+/* Return a PyObject* from a C String */
+static PyObject* GDALPythonObjectFromCStrAndSize(const char *pszStr, size_t nLen)
+{
+  const unsigned char* pszIter = (const unsigned char*) pszStr;
+  for( size_t i = 0; i < nLen; ++i)
+  {
+    if (pszIter[i] > 127)
+    {
+        PyObject* pyObj = PyUnicode_DecodeUTF8(pszStr, nLen, "strict");
+        if (pyObj != NULL && !PyErr_Occurred())
+            return pyObj;
+        PyErr_Clear();
+        return PyBytes_FromStringAndSize(pszStr, nLen);
+    }
+  }
+  return PyUnicode_FromStringAndSize(pszStr, nLen);
+}
+%}
+
+%fragment("GetCSLStringAsPyDict","header",fragment="GDALPythonObjectFromCStrAndSize") %{
+static PyObject*
+GetCSLStringAsPyDict( char **stringarray, bool bFreeCSL ) {
+  PyObject* dict = PyDict_New();
+  if ( stringarray != NULL ) {
+    for (char** iter = stringarray; *iter; ++iter ) {
+      const char* pszSep = strchr( *iter, '=' );
+      if ( pszSep != NULL) {
+        const char* keyptr = *iter;
+        const char* valptr = pszSep + 1;
+        PyObject *nm = GDALPythonObjectFromCStrAndSize( keyptr, (size_t)(pszSep - keyptr) );
+        PyObject *val = GDALPythonObjectFromCStr( valptr );
+        PyDict_SetItem(dict, nm, val );
+        Py_DECREF(nm);
+        Py_DECREF(val);
+      }
+    }
+  }
+  if( bFreeCSL )
+    CSLDestroy(stringarray);
+  return dict;
+}
+%}
+
 /*
  * Typemap char ** -> dict
  */
-%typemap(out) char **dict
+%typemap(out,fragment="GetCSLStringAsPyDict") char **dict
 {
   /* %typemap(out) char **dict */
-  char **stringarray = $1;
-  $result = PyDict_New();
-  if ( stringarray != NULL ) {
-    while (*stringarray != NULL ) {
-      char const *valptr;
-      char *keyptr;
-      const char* pszSep = strchr( *stringarray, '=' );
-      if ( pszSep != NULL) {
-        keyptr = CPLStrdup(*stringarray);
-        keyptr[pszSep - *stringarray] = '\0';
-        valptr = pszSep + 1;
-        PyObject *nm = GDALPythonObjectFromCStr( keyptr );
-        PyObject *val = GDALPythonObjectFromCStr( valptr );
-        PyDict_SetItem($result, nm, val );
-        Py_DECREF(nm);
-        Py_DECREF(val);
-        CPLFree( keyptr );
-      }
-      stringarray++;
-    }
-  }
+  $result = GetCSLStringAsPyDict($1, false);
 }
 
 /*
  * Typemap char ** -> dict and CSLDestroy()
  */
-%typemap(out) char **dictAndCSLDestroy
+%typemap(out,fragment="GetCSLStringAsPyDict") char **dictAndCSLDestroy
 {
   /* %typemap(out) char **dict */
-  char **stringarray = $1;
-  $result = PyDict_New();
-  if ( stringarray != NULL ) {
-    while (*stringarray != NULL ) {
-      char const *valptr;
-      char *keyptr;
-      const char* pszSep = strchr( *stringarray, '=' );
-      if ( pszSep != NULL) {
-        keyptr = CPLStrdup(*stringarray);
-        keyptr[pszSep - *stringarray] = '\0';
-        valptr = pszSep + 1;
-        PyObject *nm = GDALPythonObjectFromCStr( keyptr );
-        PyObject *val = GDALPythonObjectFromCStr( valptr );
-        PyDict_SetItem($result, nm, val );
-        Py_DECREF(nm);
-        Py_DECREF(val);
-        CPLFree( keyptr );
-      }
-      stringarray++;
-    }
-  }
-  CSLDestroy($1);
+  $result = GetCSLStringAsPyDict($1, true);
 }
 
 /*
@@ -988,107 +1121,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* (see #4816) */
   $1 = ((PyMapping_Check($input) || PySequence_Check($input) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize($input, 0, NULL, 0)) ) ? 1 : 0;
 }
-%typemap(in) char **dict
-{
-  /* %typemap(in) char **dict */
-  $1 = NULL;
-  if ( PySequence_Check( $input ) ) {
-    Py_ssize_t size = PySequence_Size($input);
-    if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
-        SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem($input,i);
-      int bFreeStr;
-      char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
-      if ( pszStr == NULL ) {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-      }
-      $1 = CSLAddString( $1, pszStr );
-      GDALPythonFreeCStr(pszStr, bFreeStr);
-      Py_DECREF(pyObj);
-    }
-  }
-  else if ( PyMapping_Check( $input ) ) {
-    /* We need to use the dictionary form. */
-    Py_ssize_t size = PyMapping_Length( $input );
-    if ( size > 0 && size == (int)size) {
-      PyObject *item_list = PyMapping_Items( $input );
-      for( int i=0; i<(int)size; i++ ) {
-        PyObject *it = PySequence_GetItem( item_list, i );
 
-        PyObject *k, *v;
-        if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
-          Py_DECREF(it);
-          Py_DECREF(item_list);
-          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
-          SWIG_fail;
-        }
-
-        PyObject* kStr = PyObject_Str(k);
-        if( PyErr_Occurred() )
-        {
-            Py_DECREF(it);
-            Py_DECREF(item_list);
-            SWIG_fail;
-        }
-
-        PyObject* vStr;
-        if( PyBytes_Check(v) )
-        {
-            vStr = v;
-            Py_INCREF(vStr);
-        }
-        else
-        {
-            vStr = PyObject_Str(v);
-            if( PyErr_Occurred() )
-            {
-                Py_DECREF(it);
-                Py_DECREF(kStr);
-                Py_DECREF(item_list);
-                SWIG_fail;
-            }
-        }
-
-        int bFreeK, bFreeV;
-        char* pszK = GDALPythonObjectToCStr(kStr, &bFreeK);
-        char* pszV = GDALPythonObjectToCStr(vStr, &bFreeV);
-        if( pszK == NULL || pszV == NULL )
-        {
-            GDALPythonFreeCStr(pszK, bFreeK);
-            GDALPythonFreeCStr(pszV, bFreeV);
-            Py_DECREF(kStr);
-            Py_DECREF(vStr);
-            Py_DECREF(it);
-            Py_DECREF(item_list);
-            PyErr_SetString(PyExc_TypeError,"Cannot get key/value as string");
-            SWIG_fail;
-        }
-        $1 = CSLAddNameValue( $1, pszK, pszV );
-
-        GDALPythonFreeCStr(pszK, bFreeK);
-        GDALPythonFreeCStr(pszV, bFreeV);
-        Py_DECREF(kStr);
-        Py_DECREF(vStr);
-        Py_DECREF(it);
-      }
-      Py_DECREF(item_list);
-    }
-  }
-  else {
-    PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
-    SWIG_fail;
-  }
-}
-%typemap(freearg) char **dict
-{
-  /* %typemap(freearg) char **dict */
-  CSLDestroy( $1 );
-}
 
 %fragment("CSLFromPySequence","header") %{
 /************************************************************************/
@@ -1106,12 +1139,20 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
   }
 
   Py_ssize_t size = PySequence_Size(pySeq);
-  if( size != (int)size ) {
+  if( size > (Py_ssize_t)(INT_MAX - 1) ) {
     PyErr_SetString(PyExc_TypeError, "too big sequence");
     *pbErr = TRUE;
     return NULL;
   }
-  char** papszRet = NULL;
+  if( size == 0 ) {
+    return NULL;
+  }
+  char** papszRet = (char**) VSICalloc((int)size + 1, sizeof(char*));
+  if( !papszRet ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pbErr = TRUE;
+    return NULL;
+  }
   for (int i = 0; i < (int)size; i++) {
     PyObject* pyObj = PySequence_GetItem(pySeq,i);
     if (PyUnicode_Check(pyObj))
@@ -1128,11 +1169,11 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         return NULL;
       }
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-      papszRet = CSLAddString( papszRet, pszStr );
+      papszRet[i] = VSIStrdup(pszStr);
       Py_XDECREF(pyUTF8Str);
     }
     else if (PyBytes_Check(pyObj))
-      papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
+      papszRet[i] = VSIStrdup(PyBytes_AsString(pyObj));
     else
     {
         Py_DECREF(pyObj);
@@ -1142,73 +1183,185 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         return NULL;
     }
     Py_DECREF(pyObj);
+    if( !papszRet[i] )
+    {
+        PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+        CSLDestroy(papszRet);
+        *pbErr = TRUE;
+        return NULL;
+    }
   }
   return papszRet;
 }
 %}
 
-/*
- * Typemap maps char** arguments from Python Sequence Object
- */
-%typemap(in,fragment="CSLFromPySequence") char **options
+%fragment("CSLFromPyMapping","header") %{
+static char **CSLFromPyMapping( PyObject *pyObj, int *pbErr )
+
 {
-  /* %typemap(in) char **options */
-  int bErr = FALSE;
-  $1 = CSLFromPySequence($input, &bErr);
-  if( bErr )
-  {
+    char** retCSL = NULL;
+    Py_ssize_t size = PyMapping_Length( pyObj );
+    if ( size > 0 && size == (int)size) {
+      PyObject *item_list = PyMapping_Items( pyObj );
+      for( int i=0; i<(int)size; i++ ) {
+        PyObject *it = PySequence_GetItem( item_list, i );
+
+        PyObject *k, *v;
+        if ( ! PyArg_ParseTuple( it, "OO", &k, &v ) ) {
+          Py_DECREF(it);
+          Py_DECREF(item_list);
+          PyErr_SetString(PyExc_TypeError,"Cannot retrieve key/value");
+          CSLDestroy(retCSL);
+          *pbErr = TRUE;
+          return NULL;
+        }
+
+        PyObject* kStr = PyObject_Str(k);
+        if( PyErr_Occurred() )
+        {
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            CSLDestroy(retCSL);
+            *pbErr = TRUE;
+            return NULL;
+        }
+
+        PyObject* vStr;
+        if( PyBytes_Check(v) )
+        {
+            vStr = v;
+            Py_INCREF(vStr);
+        }
+        else
+        {
+            vStr = PyObject_Str(v);
+            if( PyErr_Occurred() )
+            {
+                Py_DECREF(it);
+                Py_DECREF(kStr);
+                Py_DECREF(item_list);
+                CSLDestroy(retCSL);
+                *pbErr = TRUE;
+                return NULL;
+            }
+        }
+
+        int bFreeK, bFreeV;
+        char* pszK = GDALPythonObjectToCStr(kStr, &bFreeK);
+        char* pszV = GDALPythonObjectToCStr(vStr, &bFreeV);
+        if( pszK == NULL || pszV == NULL )
+        {
+            GDALPythonFreeCStr(pszK, bFreeK);
+            GDALPythonFreeCStr(pszV, bFreeV);
+            Py_DECREF(kStr);
+            Py_DECREF(vStr);
+            Py_DECREF(it);
+            Py_DECREF(item_list);
+            PyErr_SetString(PyExc_TypeError,"Cannot get key/value as string");
+            CSLDestroy(retCSL);
+            *pbErr = TRUE;
+            return NULL;
+        }
+        retCSL = CSLAddNameValue( retCSL, pszK, pszV );
+
+        GDALPythonFreeCStr(pszK, bFreeK);
+        GDALPythonFreeCStr(pszV, bFreeV);
+        Py_DECREF(kStr);
+        Py_DECREF(vStr);
+        Py_DECREF(it);
+      }
+      Py_DECREF(item_list);
+    }
+    *pbErr = FALSE;
+    return retCSL;
+}
+%}
+
+%typemap(in, fragment="CSLFromPySequence,CSLFromPyMapping") char **dict
+{
+  /* %typemap(in) char **dict */
+  $1 = NULL;
+  if ( PySequence_Check( $input ) ) {
+    int bErr = FALSE;
+    $1 = CSLFromPySequence($input, &bErr);
+    if ( bErr )
+    {
+        SWIG_fail;
+    }
+  }
+  else if ( PyMapping_Check( $input ) ) {
+    int bErr = FALSE;
+    $1 = CSLFromPyMapping($input, &bErr);
+    if ( bErr )
+    {
+        SWIG_fail;
+    }
+  }
+  else {
+    PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
     SWIG_fail;
   }
 }
-%typemap(freearg) char **options
+%typemap(freearg) char **dict
 {
-  /* %typemap(freearg) char **options */
+  /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
 }
 
+%apply char **dict { char **options};
+
+
+%fragment("CSLToList","header") %{
+static PyObject* CSLToList( char** stringarray, bool *pbErr )
+{
+  PyObject* res;
+  if ( stringarray == NULL ) {
+    res = Py_None;
+    Py_INCREF( res );
+  }
+  else {
+    int len = CSLCount( stringarray );
+    res = PyList_New( len );
+    if( !res ) {
+      *pbErr = true;
+      return res;
+    }
+    for ( int i = 0; i < len; ++i ) {
+      PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
+      PyList_SetItem(res, i, o );
+    }
+  }
+  *pbErr = false;
+  return res;
+}
+%}
 
 /*
  * Typemap converts an array of strings into a list of strings
  * with the assumption that the called object maintains ownership of the
  * array of strings.
  */
-%typemap(out) char **options
+%typemap(out,fragment="CSLToList") char **options
 {
   /* %typemap(out) char **options -> ( string ) */
-  char **stringarray = $1;
-  if ( stringarray == NULL ) {
-    $result = Py_None;
-    Py_INCREF( $result );
-  }
-  else {
-    int len = CSLCount( stringarray );
-    $result = PyList_New( len );
-    for ( int i = 0; i < len; ++i ) {
-      PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
-      PyList_SetItem($result, i, o );
-    }
+  bool bErr = false;
+  $result = CSLToList($1, &bErr);
+  if( bErr ) {
+    SWIG_fail;
   }
 }
 
 /* Almost same as %typemap(out) char **options */
 /* but we CSLDestroy the char** pointer at the end */
-%typemap(out) char **CSL
+%typemap(out,fragment="CSLToList") char **CSL
 {
   /* %typemap(out) char **CSL -> ( string ) */
-  char **stringarray = $1;
-  if ( stringarray == NULL ) {
-    $result = Py_None;
-    Py_INCREF( $result );
-  }
-  else {
-    int len = CSLCount( stringarray );
-    $result = PyList_New( len );
-    for ( int i = 0; i < len; ++i ) {
-      PyObject *o = GDALPythonObjectFromCStr( stringarray[i] );
-      PyList_SetItem($result, i, o );
-    }
-  }
+  bool bErr = false;
+  $result = CSLToList($1, &bErr);
   CSLDestroy($1);
+  if( bErr ) {
+    SWIG_fail;
+  }
 }
 
 
@@ -1625,12 +1778,20 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
     SWIG_fail;
   }
   Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(type*) ) {
     PyErr_SetString(PyExc_TypeError, "too big sequence");
     SWIG_fail;
   }
   $1 = (int)size;
-  $2 = (type**) CPLMalloc($1*sizeof(type*));
+  $2 = (type**) VSIMalloc($1*sizeof(type*));
+  if( !$2) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    SWIG_fail;
+  }
 
   for( int i = 0; i<$1; i++ ) {
 
@@ -1680,12 +1841,17 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
   if( requested_buckets != $1 )
   {
     $1 = requested_buckets;
-    if (requested_buckets <= 0 || requested_buckets > (int)(INT_MAX / sizeof(GUIntBig)))
+    if (requested_buckets <= 0 || (size_t)requested_buckets > SIZE_MAX / sizeof(GUIntBig))
     {
         PyErr_SetString( PyExc_RuntimeError, "Bad value for buckets" );
         SWIG_fail;
     }
-    $2 = (GUIntBig *) VSIRealloc($2, sizeof(GUIntBig) * requested_buckets);
+    void* tmp = VSIRealloc($2, sizeof(GUIntBig) * requested_buckets);
+    if( !tmp) {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+    }
+    $2 = (GUIntBig *)tmp;
   }
   if ($2 == NULL)
   {
@@ -1711,6 +1877,9 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
   }
   else {
     $result = PyList_New( $1 );
+    if( !$result ) {
+      SWIG_fail;
+    }
     for ( int i = 0; i < $1; ++i ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, integerarray[i]);
@@ -1746,6 +1915,9 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
   if (panHistogram)
   {
       psList = PyList_New(buckets_val);
+      if( !psList ) {
+          SWIG_fail;
+      }
       for( i = 0; i < buckets_val; i++ )
         PyList_SetItem(psList, i, Py_BuildValue("K", panHistogram[i] ));
 
@@ -1892,6 +2064,9 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   /* %typemap(argout)  (int nCount, double *x, double *y, double *z) */
   Py_DECREF($result);
   PyObject *out = PyList_New( $1 );
+  if( !out ) {
+      SWIG_fail;
+  }
   for( int i=0; i< $1; i++ ) {
     PyObject *tuple = PyTuple_New( 3 );
     PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
@@ -2042,6 +2217,9 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   /* %typemap(argout)  (int nCount, double *x, double *y, double *z, double *t) */
   Py_DECREF($result);
   PyObject *out = PyList_New( $1 );
+  if( !out ) {
+    SWIG_fail;
+  }
   int foundTime = foundTime$argnum;
   for( int i=0; i< $1; i++ ) {
     PyObject *tuple = PyTuple_New( foundTime ? 4 : 3 );
@@ -2104,7 +2282,14 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   /* %typemap(argout)  (int nCount, double *x, double *y, double *z, int* panSuccess) */
   Py_DECREF($result);
   PyObject *xyz = PyList_New( $1 );
+  if( !xyz ) {
+      SWIG_fail;
+  }
   PyObject *success = PyList_New( $1 );
+  if( !success ) {
+      Py_DECREF(xyz);
+      SWIG_fail;
+  }
   for( int i=0; i< $1; i++ ) {
     PyObject *tuple = PyTuple_New( 3 );
     PyTuple_SetItem( tuple, 0, PyFloat_FromDouble( ($2)[i] ) );
@@ -2151,6 +2336,9 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   else
   {
     PyObject *xyz = PyList_New( nPointCount );
+    if( !xyz ) {
+        SWIG_fail;
+    }
     int nDimensions = (*$3 != NULL) ? 3 : 2;
     for( int i=0; i< nPointCount; i++ ) {
         PyObject *tuple = PyTuple_New( nDimensions );
@@ -2175,10 +2363,18 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(in) (const char *utf8_path) (int bToFree = 0)
 {
     /* %typemap(in) (const char *utf8_path) */
-    $1 = GDALPythonObjectToCStr( $input, &bToFree );
+    if (PyUnicode_Check($input) || PyBytes_Check($input))
+    {
+        $1 = GDALPythonObjectToCStr( $input, &bToFree );
+    }
+    else
+    {
+        $1 = GDALPythonPathToCStr($input, &bToFree);
+
+    }
     if ($1 == NULL)
     {
-        PyErr_SetString( PyExc_RuntimeError, "not a string" );
+        PyErr_SetString( PyExc_RuntimeError, "not a string or os.PathLike" );
         SWIG_fail;
     }
 }
@@ -2385,18 +2581,26 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     Py_DECREF($result);
 
     $result = PyList_New( *($2));
+    if( !$result ) {
+      SWIG_fail;
+    }
     for( int i = 0; i < *($2); i++ )
     {
         PyObject *tuple = PyTuple_New( 2 );
+        OSRReference((*($1))[i]);
         PyTuple_SetItem( tuple, 0,
             SWIG_NewPointerObj(SWIG_as_voidptr((*($1))[i]), SWIGTYPE_p_OSRSpatialReferenceShadow, 1 ) );
         PyTuple_SetItem( tuple, 1, PyInt_FromLong((*($3))[i]) );
         PyList_SetItem( $result, i, tuple );
     }
-    CPLFree( *($1) );
-    CPLFree( *($3) );
 }
 
+%typemap(freearg) (OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL)
+{
+    /* %typemap(freearg) (OOSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
+    OSRFreeSRSArray( *($1) );
+    CPLFree( *($3) );
+}
 
 /*
  * Typemap argout for GetCRSInfoListFromDatabase()
@@ -2451,19 +2655,23 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(argout) (GDALAttributeHS*** pattrs, size_t* pnCount)
 {
   /* %typemap(argout) (GDALAttributeHS*** pattrs, size_t* pnCount) */
-  PyObject *list = PyList_New( *$2 );
-  for( size_t i = 0; i < *$2; i++ ) {
-    PyList_SetItem(list, i,
-       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALAttributeHS,SWIG_POINTER_OWN) );
-  }
   Py_DECREF($result);
-  $result = list;
+  $result = PyList_New( *$2 );
+  if( !$result ) {
+    SWIG_fail;
+  }
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem($result, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALAttributeHS,SWIG_POINTER_OWN) );
+    /* We have borrowed the GDALAttributeHS */
+    (*$1)[i] = NULL;
+  }
 }
 
 %typemap(freearg) (GDALAttributeHS*** pattrs, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALAttributeHS*** pattrs, size_t* pnCount) */
-  CPLFree(*$1);
+  GDALReleaseAttributes(*$1, *$2);
 }
 
 OBJECT_LIST_INPUT(GDALDimensionHS);
@@ -2478,12 +2686,20 @@ OBJECT_LIST_INPUT(GDALDimensionHS);
     SWIG_fail;
   }
   Py_ssize_t size = PySequence_Size($input);
-  if( size != (int)size ) {
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(type*) ) {
     PyErr_SetString(PyExc_TypeError, "too big sequence");
     SWIG_fail;
   }
   $1 = (int)size;
-  $2 = (type**) CPLMalloc($1*sizeof(type*));
+  $2 = (type**) VSIMalloc($1*sizeof(type*));
+  if( !$2) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    SWIG_fail;
+  }
 
   for( int i = 0; i<$1; i++ ) {
 
@@ -2526,19 +2742,23 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(argout) (GDALDimensionHS*** pdims, size_t* pnCount)
 {
   /* %typemap(argout) (GDALDimensionHS*** pdims, size_t* pnCount) */
-  PyObject *list = PyList_New( *$2 );
-  for( size_t i = 0; i < *$2; i++ ) {
-    PyList_SetItem(list, i,
-       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALDimensionHS,SWIG_POINTER_OWN) );
-  }
   Py_DECREF($result);
-  $result = list;
+  $result = PyList_New( *$2 );
+  if( !$result ) {
+    SWIG_fail;
+  }
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem($result, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALDimensionHS,SWIG_POINTER_OWN) );
+    /* We have borrowed the GDALDimensionHS */
+    (*$1)[i] = NULL;
+  }
 }
 
 %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALDimensionHS*** pdims, size_t* pnCount) */
-  CPLFree(*$1);
+  GDALReleaseDimensions(*$1, *$2);
 }
 
 
@@ -2554,19 +2774,23 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(argout) (GDALMDArrayHS*** parrays, size_t* pnCount)
 {
   /* %typemap(argout) (GDALMDArrayHS*** parrays, size_t* pnCount) */
-  PyObject *list = PyList_New( *$2 );
-  for( size_t i = 0; i < *$2; i++ ) {
-    PyList_SetItem(list, i,
-       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALMDArrayHS,SWIG_POINTER_OWN) );
-  }
   Py_DECREF($result);
-  $result = list;
+  $result = PyList_New( *$2 );
+  if( !$result ) {
+    SWIG_fail;
+  }
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem($result, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALMDArrayHS,SWIG_POINTER_OWN) );
+    /* We have borrowed the GDALMDArrayHS */
+    (*$1)[i] = NULL;
+  }
 }
 
 %typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALMDArrayHS*** parrays, size_t* pnCount) */
-  CPLFree(*$1);
+  GDALReleaseArrays(*$1, *$2);
 }
 
 /*
@@ -2581,15 +2805,17 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(argout) (GUIntBig** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (GUIntBig** pvals, size_t* pnCount) */
-  PyObject *list = PyList_New( *$2 );
+  Py_DECREF($result);
+  $result = PyList_New( *$2 );
+  if( !$result ) {
+    SWIG_fail;
+  }
   for( size_t i = 0; i < *$2; i++ ) {
       char szTmp[32];
       sprintf(szTmp, CPL_FRMT_GUIB, (*$1)[i]);
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
-      PyList_SetItem(list, i, o );
+      PyList_SetItem($result, i, o );
   }
-  Py_DECREF($result);
-  $result = list;
 }
 
 %typemap(freearg) (GUIntBig** pvals, size_t* pnCount)
@@ -2610,13 +2836,15 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(argout) (int** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (int** pvals, size_t* pnCount) */
-  PyObject *out = PyTuple_New( *$2 );
+  Py_DECREF($result);
+  $result = PyTuple_New( *$2 );
+  if( !$result ) {
+    SWIG_fail;
+  }
   for( unsigned int i=0; i<*$2; i++ ) {
     PyObject *val = PyInt_FromLong( (*$1)[i] );
-    PyTuple_SetItem( out, i, val );
+    PyTuple_SetItem( $result, i, val );
   }
-  Py_DECREF($result);
-  $result = out;
 }
 
 %typemap(freearg) (int** pvals, size_t* pnCount)
@@ -2660,19 +2888,23 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 %typemap(argout) (GDALEDTComponentHS*** pcomps, size_t* pnCount)
 {
   /* %typemap(argout) (GDALEDTComponentHS*** pcomps, size_t* pnCount) */
-  PyObject *list = PyList_New( *$2 );
-  for( size_t i = 0; i < *$2; i++ ) {
-    PyList_SetItem(list, i,
-       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALEDTComponentHS,SWIG_POINTER_OWN) );
-  }
   Py_DECREF($result);
-  $result = list;
+  $result = PyList_New( *$2 );
+  if( !$result ) {
+    SWIG_fail;
+  }
+  for( size_t i = 0; i < *$2; i++ ) {
+    PyList_SetItem($result, i,
+       SWIG_NewPointerObj((void*)(*$1)[i],SWIGTYPE_p_GDALEDTComponentHS,SWIG_POINTER_OWN) );
+    /* We have borrowed the GDALEDTComponentHS */
+    (*$1)[i] = NULL;
+  }
 }
 
 %typemap(freearg) (GDALEDTComponentHS*** pcomps, size_t* pnCount)
 {
   /* %typemap(freearg) (GDALEDTComponentHS*** pcomps, size_t* pnCount) */
-  CPLFree(*$1);
+  GDALExtendedDataTypeFreeComponents(*$1, *$2);
 }
 
 OBJECT_LIST_INPUT(GDALEDTComponentHS)
@@ -2776,7 +3008,11 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
         SWIG_exception_fail(SWIG_ValueError,"Expected dict.");
     }
     Py_ssize_t size = PyMapping_Length( $input );
-    $1 = (OGRCodedValue*)CPLCalloc(size+1, sizeof(OGRCodedValue) );
+    $1 = (OGRCodedValue*)VSICalloc(size+1, sizeof(OGRCodedValue) );
+    if( !$1 ) {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+    }
 
     PyObject *item_list = PyMapping_Items( $input );
     if( item_list == NULL )
@@ -2967,6 +3203,9 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   else
   {
     $result = PyList_New(nEntryCount);
+    if( !$result ) {
+      SWIG_fail;
+    }
     for(int i = 0; i < nEntryCount; ++ i)
     {
       OSRReference(pRet[i]);

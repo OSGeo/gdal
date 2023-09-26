@@ -26,6 +26,7 @@ add_library(
   ogrsf_generic OBJECT
   ogrsfdriverregistrar.cpp
   ogrlayer.cpp
+  ogrlayerarrow.cpp
   ogrdatasource.cpp
   ogrsfdriver.cpp
   # handled in parent directory. ogrregisterall.cpp

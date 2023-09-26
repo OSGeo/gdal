@@ -15,42 +15,45 @@ Synopsis
 
 .. code-block::
 
-    ogr2ogr [--help-general] [-skipfailures] [-append | -upsert] [-update]
-            [-select field_list] [-where restricted_where|@filename]
-            [-progress] [-sql <sql statement>|@filename] [-dialect dialect]
-            [-preserve_fid] [-fid FID] [-limit nb_features]
-            [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]
-            [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] [-ct string]
-            [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]
-            dst_datasource_name src_datasource_name
-            [-lco NAME=VALUE] [-nln name]
-            [-nlt type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
-            [-dim XY|XYZ|XYM|XYZM|2|3|layer_dim] [layer [layer ...]]
+    ogr2ogr [--help] [--help-general]
+            [-skipfailures] [-append | -upsert] [-update]
+            [-select <field_list>] [-where <restricted_where>|@<filename>]
+            [-progress] [-sql <sql statement>|@<filename>] [-dialect <dialect>]
+            [-preserve_fid] [-fid <FID>] [-limit <nb_features>]
+            [-spat <xmin> <ymin> <xmax> <ymax>] [-spat_srs <srs_def>] [-geomfield <field>]
+            [-a_srs <srs_def>] [-t_srs <srs_def>] [-s_srs <srs_def>] [-ct <string>]
+            [-f <format_name>] [-overwrite] [-dsco <NAME>=<VALUE>]...
+            [-lco <NAME>=<VALUE>]... [-nln <name>]
+            [-nlt <type>|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
+            [-dim XY|XYZ|XYM|XYZM|<layer_dim>]
+            <dst_datasource_name> <src_datasource_name>
+            [<layer> [<layer>...]]
 
             # Advanced options
-            [-gt n]
-            [[-oo NAME=VALUE] ...] [[-doo NAME=VALUE] ...]
-            [-clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent]
-            [-clipsrcsql sql_statement] [-clipsrclayer layer]
-            [-clipsrcwhere expression]
-            [-clipdst [xmin ymin xmax ymax]|WKT|datasource]
-            [-clipdstsql sql_statement] [-clipdstlayer layer]
-            [-clipdstwhere expression]
-            [-wrapdateline] [-datelineoffset val]
-            [[-simplify tolerance] | [-segmentize max_dist]]
+            [-gt n] [-ds_transaction]
+            [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...
+            [-clipsrc {[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent}]
+            [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]
+            [-clipsrcwhere <expression>]
+            [-clipdst {[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>}]
+            [-clipdstsql <sql_statement>] [-clipdstlayer <layer>]
+            [-clipdstwhere <expression>]
+            [-wrapdateline][-datelineoffset <val>]
+            [[-simplify <tolerance>] | [-segmentize <max_dist>]]
             [-makevalid]
             [-addfields] [-unsetFid] [-emptyStrAsNull]
             [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
-            [-fieldTypeToString All|(type1[,type2]*)] [-unsetFieldWidth]
-            [-mapFieldType type1|All=type2[,type3=type4]*]
-            [-dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]]
-            [-fieldmap identity | index1[,index2]*]
-            [-splitlistfields] [-maxsubfields val]
+            [-fieldTypeToString {All|{<type1>[,<type2>]}...}] [-unsetFieldWidth]
+            [-mapFieldType {<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}]
+            [-dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}]
+            [-fieldmap {identity|{<index1>[,<index2>]...}]
+            [-splitlistfields] [-maxsubfields <val>]
             [-resolveDomains]
-            [-explodecollections] [-zfield field_name]
-            [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
-            [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | [-a_coord_epoch epoch]]
-            [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
+            [-explodecollections] [-zfield <field_name>]
+            [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]]... [-order <n> | -tps]
+            [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] [-a_coord_epoch <epoch>]
+            [-nomd] [-mo <META-TAG>=<VALUE>]... [-noNativeData]
+
 
 Description
 -----------
@@ -132,7 +135,7 @@ output coordinate system or even reprojecting the features during translation.
     The :ref:`sql_sqlite_dialect` dialect can be select with the ``SQLITE``
     and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
 
-.. option:: -where restricted_where
+.. option:: -where <restricted_where>
 
     Attribute query (like SQL WHERE). Starting with GDAL 2.1, the ``@filename``
     syntax can be used to indicate that the content is in the pointed filename.
@@ -156,11 +159,11 @@ output coordinate system or even reprojecting the features during translation.
 
     Name of the geometry field on which the spatial filter operates on.
 
-.. option:: -dsco NAME=VALUE
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco NAME=VALUE
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 
@@ -237,7 +240,7 @@ output coordinate system or even reprojecting the features during translation.
     output SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
     is used. It is also mutually exclusive with  :option:`-a_coord_epoch`.
 
-    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -s_srs <srs_def>
@@ -256,7 +259,7 @@ output coordinate system or even reprojecting the features during translation.
     source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
     is used.
 
-    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
@@ -278,7 +281,7 @@ output coordinate system or even reprojecting the features during translation.
     column will be used and source feature IDs will be attempted to be
     preserved. This behavior can be disabled by setting ``-unsetFid``.
 
-.. option:: -fid fid
+.. option:: -fid <fid>
 
     If provided, only the feature with the specified feature id will be
     processed.  Operates exclusive of the spatial or attribute queries. Note: if
@@ -286,19 +289,19 @@ output coordinate system or even reprojecting the features during translation.
     use the fact the 'fid' is a special field recognized by OGR SQL. So,
     `-where "fid in (1,3,5)"` would select features 1, 3 and 5.
 
-.. option:: -limit nb_features
+.. option:: -limit <nb_features>
 
     Limit the number of features per layer.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Input dataset open option (format specific).
 
-.. option:: -doo NAME=VALUE
+.. option:: -doo <NAME>=<VALUE>
 
     Destination dataset open option (format specific), only valid in -update mode.
 
-.. option:: -gt n
+.. option:: -gt <n>
 
     Group n features per transaction (default 100 000). Increase the value for
     better performance when writing into DBMS drivers that have transaction
@@ -311,7 +314,7 @@ output coordinate system or even reprojecting the features during translation.
     mechanism), especially for drivers such as FileGDB that only support
     dataset level transaction in emulation mode.
 
-.. option:: -clipsrc [xmin ymin xmax ymax]|WKT|datasource|spat_extent
+.. option:: -clipsrc [<xmin> <ymin> <xmax> <ymax>]|WKT|<datasource>|spat_extent
 
     Clip geometries to one of the following:
 
@@ -335,7 +338,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Restrict desired geometries from the source clip layer based on an attribute query.
 
-.. option:: -clipdst [<xmin> <ymin> <xmax> <ymax>]|WKT|datasource
+.. option:: -clipdst [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>
 
     Clip geometries to one of the following:
 
@@ -385,29 +388,34 @@ output coordinate system or even reprojecting the features during translation.
 
     .. versionadded: 3.1 (requires GEOS 3.8 or later)
 
-.. option:: -fieldTypeToString type1,...
+.. option:: -fieldTypeToString All|<type1>[,<type2>]...
 
     Converts any field of the specified type to a field of type string in the
-    destination layer. Valid types are : Integer, Integer64, Real, String,
-    Date, Time, DateTime, Binary, IntegerList, Integer64List, RealList,
-    StringList. Special value All can be used to convert all fields to strings.
+    destination layer. Valid types are : ``Integer``, ``Integer64``, ``Real``, ``String``,
+    ``Date``, ``Time``, ``DateTime``, ``Binary``, ``IntegerList``, ``Integer64List``, ``RealList``,
+    ``StringList``. Special value ``All`` can be used to convert all fields to strings.
     This is an alternate way to using the CAST operator of OGR SQL, that may
     avoid typing a long SQL query. Note that this does not influence the field
     types used by the source driver, and is only an afterwards conversion.
+    Also note that this option is without effects on fields whose presence and
+    type is hard-coded in the output driver (e.g KML, GPX)
 
-.. option:: -mapFieldType srctype|All=dsttype,...
+.. option:: -mapFieldType {<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}
 
     Converts any field of the specified type to another type. Valid types are :
-    Integer, Integer64, Real, String, Date, Time, DateTime, Binary,
-    IntegerList, Integer64List, RealList, StringList. Types can also include
-    subtype between parenthesis, such as Integer(Boolean), Real(Float32), ...
-    Special value All can be used to convert all fields to another type. This
+    ``Integer``, ``Integer64``, ``Real``, ``String``,
+    ``Date``, ``Time``, ``DateTime``, ``Binary``, ``IntegerList``, ``Integer64List``, ``RealList``,
+    ``StringList``. Types can also include
+    subtype between parenthesis, such as ``Integer(Boolean)``, ``Real(Float32)``, ...
+    Special value ``All`` can be used to convert all fields to another type. This
     is an alternate way to using the CAST operator of OGR SQL, that may avoid
     typing a long SQL query. This is a generalization of -fieldTypeToString.
     Note that this does not influence the field types used by the source
     driver, and is only an afterwards conversion.
+    Also note that this option is without effects on fields whose presence and
+    type is hard-coded in the output driver (e.g KML, GPX)
 
-.. option:: -dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]
+.. option:: -dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}
 
     .. versionadded: 3.7
 
@@ -440,7 +448,7 @@ output coordinate system or even reprojecting the features during translation.
 
     Uses the specified field to fill the Z coordinate of geometries.
 
-.. option:: -gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> <elevation>
+.. option:: -gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]
 
     Add the indicated ground control point. This option may be provided
     multiple times to provide a set of GCPs.
@@ -515,7 +523,7 @@ output coordinate system or even reprojecting the features during translation.
     To disable copying of metadata from source dataset and layers into target
     dataset and layers, when supported by output driver.
 
-.. option:: -mo META-TAG=VALUE
+.. option:: -mo <META-TAG>=<VALUE>
 
     Passes a metadata key and value to set on the output dataset, when
     supported by output driver.

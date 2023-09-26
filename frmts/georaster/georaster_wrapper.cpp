@@ -1993,8 +1993,8 @@ bool GeoRasterWrapper::GetDataBlock(int nBand, int nLevel, int nXOffset,
 
         GByte *pabyData = (GByte *)pData;
 
-        unsigned long ii = 0;
-        unsigned long jj = nStart * nGDALCellBytes;
+        size_t ii = 0;
+        size_t jj = static_cast<size_t>(nStart) * nGDALCellBytes;
 
         for (ii = 0; ii < nGDALBlockBytes; ii += nSize, jj += nIncr)
         {
@@ -2131,8 +2131,8 @@ bool GeoRasterWrapper::SetDataBlock(int nBand, int nLevel, int nXOffset,
             nSize *= nColumnBlockSize;
         }
 
-        unsigned long ii = 0;
-        unsigned long jj = nStart * nGDALCellBytes;
+        size_t ii = 0;
+        size_t jj = static_cast<size_t>(nStart) * nGDALCellBytes;
 
         for (ii = 0; ii < nGDALBlockBytes; ii += nSize, jj += nIncr)
         {

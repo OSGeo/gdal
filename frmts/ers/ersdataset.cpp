@@ -881,6 +881,7 @@ int ERSProxyRasterBand::GetOverviewCount()
 GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
+    // cppcheck-suppress knownConditionTrueFalse
     if (GetRecLevel())
     {
         CPLError(CE_Failure, CPLE_AppDefined,

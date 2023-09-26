@@ -155,10 +155,9 @@ def test_osr_pci_3():
     )
 
     wkt = srs.ExportToWkt()
-    if wkt.find('PARAMETER["false_northing",0]') == -1:
-        gdaltest.post_reason("did not default to northern hemisphere!")
-        print(wkt)
-        return "fail"
+    assert (
+        'PARAMETER["false_northing",0]' in wkt
+    ), "did not default to northern hemisphere!"
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -186,10 +185,7 @@ def test_osr_pci_3():
     )
 
     wkt = srs.ExportToWkt()
-    if wkt.find('PARAMETER["false_northing",10000000]') == -1:
-        gdaltest.post_reason("did get northern hemisphere!")
-        print(wkt)
-        return "fail"
+    assert 'PARAMETER["false_northing",10000000]' in wkt, "did get northern hemisphere!"
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -217,10 +213,7 @@ def test_osr_pci_3():
     )
 
     wkt = srs.ExportToWkt()
-    if wkt.find('PARAMETER["false_northing",0]') == -1:
-        gdaltest.post_reason("did get southern hemisphere!")
-        print(wkt)
-        return "fail"
+    assert 'PARAMETER["false_northing",0]' in wkt, "did get southern hemisphere!"
 
 
 ###############################################################################

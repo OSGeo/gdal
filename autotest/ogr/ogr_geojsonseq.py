@@ -218,7 +218,7 @@ def test_ogr_geojsonseq_seq_geometries():
 @gdaltest.disable_exceptions()
 def test_ogr_geojsonseq_seq_geometries_with_errors():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(
             """{"type":"Point","coordinates":[2,49]}
     {"type":"Point","coordinates":[3,50]}
@@ -314,7 +314,7 @@ def test_ogr_geojsonseq_feature_large():
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0"):
         assert ogr.Open(filename) is not None
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0.1"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ogr.Open(filename) is None
     gdal.Unlink(filename)
 

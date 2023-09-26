@@ -264,6 +264,19 @@ class CPL_DLL VSIFilesystemHandler
         return osFilename;
     }
 
+    /** Return the canonical filename.
+     *
+     * May be implemented by case-insensitive filesystems
+     * (currently Win32 and MacOSX)
+     * to return the filename with its actual case (i.e. the one that would
+     * be used when listing the content of the directory).
+     */
+    virtual std::string
+    GetCanonicalFilename(const std::string &osFilename) const
+    {
+        return osFilename;
+    }
+
     virtual bool IsLocal(const char * /* pszPath */)
     {
         return true;
@@ -467,6 +480,9 @@ VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
                                         size_t nSOZIPIndexEltSize,
                                         std::vector<uint8_t> *panSOZIPIndex);
 
-VSIVirtualHandle *VSICreateUploadOnCloseFile(VSIVirtualHandle *poBaseHandle);
+VSIVirtualHandle *
+VSICreateUploadOnCloseFile(VSIVirtualHandleUniquePtr &&poWritableHandle,
+                           VSIVirtualHandleUniquePtr &&poTmpFile,
+                           const std::string &osTmpFilename);
 
 #endif /* ndef CPL_VSI_VIRTUAL_H_INCLUDED */

@@ -53,26 +53,15 @@ def module_disable_exceptions():
 # Perform simple read test.
 
 
-def test_jpeg_1():
+def test_jpeg_1(jpeg_version):
 
-    ds = gdal.Open("data/jpeg/albania.jpg")
-    assert ds.GetMetadataItem("JPEG_QUALITY", "IMAGE_STRUCTURE") == "80"
-    cs = ds.GetRasterBand(2).Checksum()
-    if cs == 34296:
-        gdaltest.jpeg_version = "9b"
-    elif cs == 34298:
-        gdaltest.jpeg_version = "8"
-    else:
-        gdaltest.jpeg_version = "pre8"
-    ds = None
-
-    if gdaltest.jpeg_version == "9b":
+    if jpeg_version == "9b":
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 34296)
-    elif gdaltest.jpeg_version == "8":
+    elif jpeg_version == "8":
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 34298)
     else:
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 17016)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -383,9 +372,9 @@ def test_jpeg_9():
 # Check reading a 12-bit JPEG
 
 
-def test_jpeg_10():
+def test_jpeg_10(jpeg_version):
 
-    if gdaltest.jpeg_version == "9b":  # Fails for some reason
+    if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -415,9 +404,9 @@ def test_jpeg_10():
 # Check creating a 12-bit JPEG
 
 
-def test_jpeg_11():
+def test_jpeg_11(jpeg_version):
 
-    if gdaltest.jpeg_version == "9b":  # Fails for some reason
+    if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -484,9 +473,9 @@ def test_jpeg_13():
 # Test writing to /vsistdout/
 
 
-def test_jpeg_14():
+def test_jpeg_14(jpeg_version):
 
-    if gdaltest.jpeg_version == "9b":  # Fails for some reason
+    if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -527,7 +516,7 @@ def test_jpeg_15():
 # Test overview support
 
 
-def test_jpeg_16():
+def test_jpeg_16(jpeg_version):
 
     shutil.copy("data/jpeg/albania.jpg", "tmp/albania.jpg")
     gdal.Unlink("tmp/albania.jpg.ovr")
@@ -540,7 +529,7 @@ def test_jpeg_16():
     # "Internal" overview
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg_version in ("8", "9b"):
+    if jpeg_version in ("8", "9b"):
         expected_cs = 34218
     else:
         expected_cs = 31892
@@ -551,7 +540,7 @@ def test_jpeg_16():
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     # Check updated checksum
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg_version in ("8", "9b"):
+    if jpeg_version in ("8", "9b"):
         expected_cs = 33698
     else:
         expected_cs = 32460
@@ -563,7 +552,7 @@ def test_jpeg_16():
     ds = gdal.Open("tmp/albania.jpg")
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg_version in ("8", "9b"):
+    if jpeg_version in ("8", "9b"):
         expected_cs = 33698
     else:
         expected_cs = 32460
@@ -1004,7 +993,7 @@ def test_jpeg_25():
 def test_jpeg_26():
 
     src_ds = gdal.GetDriverByName("Mem").Create("", 70000, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("JPEG").CreateCopy("/vsimem/jpeg_26.jpg", src_ds)
     assert ds is None
     gdal.Unlink("/vsimem/jpeg_26.jpg")
@@ -1022,7 +1011,7 @@ def test_jpeg_27_max_memory():
     # Should error out with 'Reading this image would require
     # libjpeg to allocate at least...'
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         os.environ["JPEGMEM"] = "10M"
         with gdal.config_option("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "1000"):
             ds = gdal.Open(
@@ -1101,7 +1090,7 @@ def test_jpeg_28():
     src_ds.SetMetadataItem("EXIF_CompressedBitsPerPixel", "nan")  # invalid RATIONAL
     src_ds.SetMetadataItem("EXIF_ApertureValue", "-1")  # invalid RATIONAL
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     src_ds = None
     assert gdal.VSIStatL(tmpfilename + ".aux.xml") is None
@@ -1184,7 +1173,7 @@ def test_jpeg_28():
     src_ds.SetMetadataItem("EXIF_ExifVersion", "0231")
     src_ds.SetMetadataItem("EXIF_invalid", "foo")
     src_ds.SetMetadataItem("FOO", "BAR")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     src_ds = None
     assert gdal.VSIStatL(tmpfilename + ".aux.xml") is not None
@@ -1196,7 +1185,7 @@ def test_jpeg_28():
     # Too much content for EXIF
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetMetadataItem("EXIF_UserComment", "x" * 65535)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = None
@@ -1361,15 +1350,15 @@ def test_jpeg_flir_raw():
 
 def test_jpeg_flir_error_flir_subds():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("JPEG:foo.jpg")
         assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("JPEG:foo.jpg:BAR")
         assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("JPEG:data/jpeg/masked.jpg:FLIR_RAW_THERMAL_IMAGE")
         assert ds is None
 
@@ -1403,7 +1392,7 @@ def test_jpeg_write_cmyk():
 def test_jpeg_write_4band_not_cmyk():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 8, 8, 4)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy("/vsimem/out.jpg", src_ds)
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("JPEG").Delete("/vsimem/out.jpg")
@@ -1538,9 +1527,64 @@ def test_jpeg_read_lossless_16bit():
         is None
     ):
         pytest.skip("lossless jpeg not supported")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/jpeg/uint16_lossless.jpg")
         assert ds is None
+
+
+###############################################################################
+def test_jpeg_copy_mdd():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetMetadataItem("FOO", "BAR")
+    src_ds.SetMetadataItem("BAR", "BAZ", "OTHER_DOMAIN")
+    src_ds.SetMetadataItem("should_not", "be_copied", "IMAGE_STRUCTURE")
+
+    filename = "/vsimem/test_jpeg_copy_mdd.jpg"
+
+    gdal.GetDriverByName("JPEG").CreateCopy(filename, src_ds)
+    ds = gdal.Open(filename)
+    assert set(ds.GetMetadataDomainList()) == set(["", "DERIVED_SUBDATASETS"])
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
+    ds = None
+
+    gdal.GetDriverByName("JPEG").CreateCopy(
+        filename, src_ds, options=["COPY_SRC_MDD=NO"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
+    ds = None
+
+    gdal.GetDriverByName("JPEG").CreateCopy(
+        filename, src_ds, options=["COPY_SRC_MDD=YES"]
+    )
+    ds = gdal.Open(filename)
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "DERIVED_SUBDATASETS", "OTHER_DOMAIN"]
+    )
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.GetDriverByName("JPEG").CreateCopy(
+        filename, src_ds, options=["SRC_MDD=OTHER_DOMAIN"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.GetDriverByName("JPEG").CreateCopy(
+        filename, src_ds, options=["SRC_MDD=", "SRC_MDD=OTHER_DOMAIN"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.Unlink(filename)
 
 
 ###############################################################################

@@ -1,0 +1,148 @@
+HTTP/1.1 200 OK
+Date: Tue, 20 Jun 2023 10:38:09 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Expires: Wed, 12 Jun 2024 14:20:54 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Length: 6393
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Age: 591435
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json
+
+{
+   "title" : "ne_10m_lakes_europe",
+   "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldCRS84Quad",
+   "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+   "dataType" : "vector",
+   "tileMatrixSetLimits" : [
+      { "tileMatrix" : "0", "minTileRow" : 0, "maxTileRow" : 0, "minTileCol" : 0, "maxTileCol" : 1 },
+      { "tileMatrix" : "1", "minTileRow" : 0, "maxTileRow" : 1, "minTileCol" : 0, "maxTileCol" : 3 },
+      { "tileMatrix" : "2", "minTileRow" : 0, "maxTileRow" : 3, "minTileCol" : 0, "maxTileCol" : 7 },
+      { "tileMatrix" : "3", "minTileRow" : 0, "maxTileRow" : 7, "minTileCol" : 0, "maxTileCol" : 15 },
+      { "tileMatrix" : "4", "minTileRow" : 0, "maxTileRow" : 15, "minTileCol" : 0, "maxTileCol" : 31 },
+      { "tileMatrix" : "5", "minTileRow" : 0, "maxTileRow" : 31, "minTileCol" : 0, "maxTileCol" : 63 },
+      { "tileMatrix" : "6", "minTileRow" : 0, "maxTileRow" : 63, "minTileCol" : 0, "maxTileCol" : 127 }
+   ],
+   "links" : [
+      {
+         "rel" : "self",
+         "type" : "application/json",
+         "title" : "The JSON representation of the WorldCRS84Quad vector tileset for NaturalEarth:physical:ne_10m_lakes_europe",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad?f=json"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/plain",
+         "title" : "The ECON representation of the WorldCRS84Quad vector tileset for NaturalEarth:physical:ne_10m_lakes_europe",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad?f=econ"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/html",
+         "title" : "The HTML representation of the WorldCRS84Quad vector tileset for NaturalEarth:physical:ne_10m_lakes_europe",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad?=html"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "application/json+tile",
+         "title" : "The TileJSON representation of the WorldCRS84Quad vector tileset for NaturalEarth:physical:ne_10m_lakes_europe",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad?f=tilejson"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+         "type" : "application/json",
+         "title" : "WorldCRS84QuadTileMatrixSet definition (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/geodata",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
+      },
+      {
+         "rel" : "item",
+         "type" : "application/vnd.gnosis-map-tile",
+         "title" : "WorldCRS84Quad vector tiles for NaturalEarth:physical:ne_10m_lakes_europe (as GNOSIS Map Tiles)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.gmt",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "application/vnd.mapbox-vector-tile",
+         "title" : "WorldCRS84Quad vector tiles for NaturalEarth:physical:ne_10m_lakes_europe (as Mapbox Vector Tiles)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.mvt",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "application/geo+json",
+         "title" : "WorldCRS84Quad vector tiles for NaturalEarth:physical:ne_10m_lakes_europe (as GeoJSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.json",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "application/vnd.ogc.fg+json",
+         "title" : "WorldCRS84Quad vector tiles for NaturalEarth:physical:ne_10m_lakes_europe (as F&G GeoJSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.fgjson",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "text/mapml",
+         "title" : "WorldCRS84Quad vector tiles for NaturalEarth:physical:ne_10m_lakes_europe (as MapML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.mapml",
+         "templated" : true
+      }
+   ],
+   "layers" : [
+      {
+         "id" : "ne_10m_lakes_europe",
+         "dataType" : "vector",
+         "geometryDimension" : 2,
+         "minScaleDenominator" : 4367830.1877243574709,
+         "minCellSize" : 0.010986328125,
+         "maxTileMatrix" : "6",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/geodata",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
+            }
+         ],
+         "propertiesSchema" : {
+            "type" : "object",
+            "properties" : { "altitude" : {
+               "type" : "integer"
+            }, "featurecla" : {
+               "type" : "string"
+            }, "funkyname" : {
+               "type" : "integer"
+            }, "id" : {
+               "type" : "integer"
+            }, "lge_id" : {
+               "type" : "string"
+            }, "lke_type" : {
+               "type" : "string"
+            }, "name" : {
+               "type" : "string"
+            }, "note" : {
+               "type" : "string"
+            }, "objectid" : {
+               "type" : "integer"
+            }, "pfafstette" : {
+               "type" : "integer"
+            }, "scalerank" : {
+               "type" : "integer"
+            } }
+         }
+      }
+   ],
+   "centerPoint" : {
+      "coordinates" : [ 0, 0.000102911832 ],
+      "tileMatrix" : "3",
+      "scaleDenominator" : 34942641.501794859767,
+      "cellSize" : 0.087890625,
+      "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+   }
+}

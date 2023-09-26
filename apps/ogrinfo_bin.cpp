@@ -40,26 +40,31 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 {
-    printf("Usage: ogrinfo [--help-general] [-json] [-ro] [-q] [-where "
-           "restricted_where|@filename]\n"
-           "               [-spat xmin ymin xmax ymax] [-geomfield field] "
-           "[-fid fid]\n"
-           "               [-sql statement|@filename] [-dialect sql_dialect] "
-           "[-al] [-rl]\n"
-           "               [-so|-features] [-fields={YES/NO}]]\n"
-           "               [-geom={YES/NO/SUMMARY}] [[-oo NAME=VALUE] ...]\n"
-           "               [-nomd] [-listmdd] [-mdd domain|`all`]*\n"
-           "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
-           "WKT1|WKT2|...]\n"
-           "               [-fielddomain name]\n"
-           "               datasource_name [layer [layer ...]]\n");
+    fprintf(bIsError ? stderr : stdout,
+            "Usage: ogrinfo [--help] [--help-general]\n"
+            "               [-json] [-ro] [-q] [-where "
+            "<restricted_where>|@f<ilename>]\n"
+            "               [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield "
+            "<field>] "
+            "[-fid <fid>]\n"
+            "               [-sql <statement>|@<filename>] [-dialect "
+            "<sql_dialect>] "
+            "[-al] [-rl]\n"
+            "               [-so|-features] [-fields={YES|NO}]]\n"
+            "               [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] "
+            "[-oo <NAME>=<VALUE>]...\n"
+            "               [-nomd] [-listmdd] [-mdd {<domain>|all}]...\n"
+            "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
+            "WKT1|WKT2|<other_values>]\n"
+            "               [-fielddomain <name>]\n"
+            "               <datasource_name> [<layer> [<layer> ...]]\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -93,7 +98,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
     argv = CSLAddString(argv, "-stdout");
@@ -104,10 +109,10 @@ MAIN_START(argc, argv)
     GDALVectorInfoOptions *psOptions =
         GDALVectorInfoOptionsNew(argv + 1, psOptionsForBinary.get());
     if (psOptions == nullptr)
-        Usage();
+        Usage(true);
 
     if (psOptionsForBinary->osFilename.empty())
-        Usage("No datasource specified.");
+        Usage(true, "No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */
@@ -123,44 +128,58 @@ MAIN_START(argc, argv)
         /*      Open data source. */
         /* --------------------------------------------------------------------
          */
-        GDALDataset *poDS = GDALDataset::Open(
-            psOptionsForBinary->osFilename.c_str(),
-            ((psOptionsForBinary->bReadOnly ||
-              psOptionsForBinary->osSQLStatement.empty()) &&
-                     !psOptionsForBinary->bUpdate
-                 ? GDAL_OF_READONLY
-                 : GDAL_OF_UPDATE) |
-                GDAL_OF_VECTOR,
-            nullptr, psOptionsForBinary->aosOpenOptions.List(), nullptr);
-        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
-            !psOptionsForBinary->bUpdate &&
-            psOptionsForBinary->osSQLStatement.empty())
+        int nFlags = GDAL_OF_VECTOR;
+        bool bMayRetryUpdateMode = false;
+        if (psOptionsForBinary->bUpdate)
+            nFlags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+        else if (psOptionsForBinary->bReadOnly)
+            nFlags |= GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR;
+        else if (psOptionsForBinary->osSQLStatement.empty())
         {
-            // In some cases (empty geopackage for example), opening in
-            // read-only mode fails, so retry in update mode
+            nFlags |= GDAL_OF_READONLY;
             if (GDALIdentifyDriverEx(psOptionsForBinary->osFilename.c_str(),
                                      GDAL_OF_VECTOR, nullptr, nullptr))
             {
+                bMayRetryUpdateMode = true;
+            }
+            else
+            {
+                // And an error Will be emitted
+                nFlags |= GDAL_OF_VERBOSE_ERROR;
+            }
+        }
+        else
+            nFlags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
+        GDALDataset *poDS = GDALDataset::Open(
+            psOptionsForBinary->osFilename.c_str(), nFlags, nullptr,
+            psOptionsForBinary->aosOpenOptions.List(), nullptr);
+
+        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
+            !psOptionsForBinary->bUpdate)
+        {
+            if (psOptionsForBinary->osSQLStatement.empty() &&
+                bMayRetryUpdateMode)
+            {
+                // In some cases (empty geopackage for example), opening in
+                // read-only mode fails, so retry in update mode
                 poDS = GDALDataset::Open(
                     psOptionsForBinary->osFilename.c_str(),
                     GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
                     psOptionsForBinary->aosOpenOptions.List(), nullptr);
             }
-        }
-        if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
-            !psOptionsForBinary->bUpdate &&
-            !psOptionsForBinary->osSQLStatement.empty())
-        {
-            poDS = GDALDataset::Open(psOptionsForBinary->osFilename.c_str(),
-                                     GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
-                                     psOptionsForBinary->aosOpenOptions.List(),
-                                     nullptr);
-            if (poDS != nullptr && psOptionsForBinary->bVerbose)
+            else if (!psOptionsForBinary->osSQLStatement.empty())
             {
-                printf("Had to open data source read-only.\n");
+                poDS = GDALDataset::Open(
+                    psOptionsForBinary->osFilename.c_str(),
+                    GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
+                    psOptionsForBinary->aosOpenOptions.List(), nullptr);
+                if (poDS != nullptr && psOptionsForBinary->bVerbose)
+                {
+                    printf("Had to open data source read-only.\n");
 #ifdef __AFL_HAVE_MANUAL_CONTROL
-                psOptionsForBinary->bReadOnly = true;
+                    psOptionsForBinary->bReadOnly = true;
 #endif
+                }
             }
         }
 
@@ -178,6 +197,8 @@ MAIN_START(argc, argv)
 
             if (pszGDALVectorInfoOutput)
                 printf("%s", pszGDALVectorInfoOutput);
+            else
+                nRet = 1;
 
             CPLFree(pszGDALVectorInfoOutput);
         }

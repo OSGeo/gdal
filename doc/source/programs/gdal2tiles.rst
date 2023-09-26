@@ -16,12 +16,13 @@ Synopsis
 .. code-block::
 
 
-    gdal2tiles.py [-p profile] [-r resampling] [-s srs] [-z zoom]
-                  [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u url]
-                  [-w webviewer] [-t title] [-c copyright]
-                  [--processes=NB_PROCESSES] [--mpi] [--xyz]
-                  [--tilesize=PIXELS] [--tmscompatible]
-                  [-g googlekey] [-b bingkey] input_file [output_dir] [COMMON_OPTIONS]
+    gdal2tiles.py [--help] [--help-general]
+                  [-p <profile>] [-r resampling] [-s <srs>] [-z <zoom>]
+                  [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u <url>]
+                  [-w <webviewer>] [-t <title>] [-c <copyright>]
+                  [--processes=<NB_PROCESSES>] [--mpi] [--xyz]
+                  [--tilesize=<PIXELS>] [--tmscompatible]
+                  [-g <googlekey] [-b <bingkey>] <input_file> [<output_dir>] [<COMMON_OPTIONS>]
 
 Description
 -----------
@@ -51,6 +52,8 @@ can publish a picture without proper georeferencing too.
 
 
 .. program:: gdal2tiles
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -p <PROFILE>, --profile=<PROFILE>
 

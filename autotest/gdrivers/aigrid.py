@@ -46,7 +46,7 @@ pytestmark = pytest.mark.require_driver("AIG")
 def test_aigrid_1():
 
     tst = gdaltest.GDALTest("AIG", "aigrid/abc3x1", 1, 3)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -108,7 +108,7 @@ def test_aigrid_3():
 def test_aigrid_4():
 
     tst = gdaltest.GDALTest("AIG", "aigrid/ABC3X1UC", 1, 3)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -270,7 +270,7 @@ def test_aigrid_online_2():
     tst = gdaltest.GDALTest(
         "AIG", "tmp/cache/ai_bug/ai_bug/hdr.adf", 1, 16018, filename_absolute=1
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

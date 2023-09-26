@@ -38,7 +38,7 @@ pytestmark = pytest.mark.require_driver("PRF")
 def test_prf_1():
 
     tst = gdaltest.GDALTest("prf", "./PRF/ph.prf", 1, 43190)
-    return tst.testOpen(check_gt=(1, 2, 3, -7, 5, 6))
+    tst.testOpen(check_gt=(1, 2, 3, -7, 5, 6))
 
 
 def test_prf_2():
@@ -88,7 +88,18 @@ def test_prf_3():
 def test_prf_4():
 
     tst = gdaltest.GDALTest("prf", "./PRF/dem.x-dem", 1, 0)
-    return tst.testOpen(check_gt=(1.5, 1.0, 0.0, 9329.0, 0.0, -2.0))
+    tst.testOpen(check_gt=(1.5, 1.0, 0.0, 9329.0, 0.0, -2.0))
+
+
+def test_prf_5():
+
+    ds = gdal.Open("./data/PRF/ph.prf")
+
+    assert (
+        ds.GetSpatialRef().GetAuthorityCode("PROJCS") == "32601"
+    ), "Invalid spatial reference"
+
+    ds = None
 
 
 ###############################################################################

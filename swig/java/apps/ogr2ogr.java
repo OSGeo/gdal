@@ -267,10 +267,10 @@ public class ogr2ogr
             else if (args[iArg].equalsIgnoreCase("-spat") && iArg + 4 < args.length)
             {
                 Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
-                double xmin = new Double(args[++iArg]).doubleValue();
-                double ymin = new Double(args[++iArg]).doubleValue();
-                double xmax = new Double(args[++iArg]).doubleValue();
-                double ymax = new Double(args[++iArg]).doubleValue();
+                double xmin = Double.parseDouble(args[++iArg]);
+                double ymin = Double.parseDouble(args[++iArg]);
+                double xmax = Double.parseDouble(args[++iArg]);
+                double ymax = Double.parseDouble(args[++iArg]);
                 oRing.AddPoint(xmin, ymin);
                 oRing.AddPoint(xmin, ymax);
                 oRing.AddPoint(xmax, ymax);
@@ -295,12 +295,12 @@ public class ogr2ogr
             else if( args[iArg].equalsIgnoreCase("-simplify") && iArg < args.length-1 )
             {
                 eGeomOp = GeomOperation.SIMPLIFY_PRESERVE_TOPOLOGY;
-                dfGeomOpParam = new Double(args[++iArg]).doubleValue();
+                dfGeomOpParam = Double.parseDouble(args[++iArg]);
             }
             else if( args[iArg].equalsIgnoreCase("-segmentize") && iArg < args.length-1 )
             {
                 eGeomOp = GeomOperation.SEGMENTIZE;
-                dfGeomOpParam = new Double(args[++iArg]).doubleValue();
+                dfGeomOpParam = Double.parseDouble(args[++iArg]);
             }
             else if( args[iArg].equalsIgnoreCase("-fieldTypeToString") && iArg < args.length-1 )
             {
@@ -349,10 +349,10 @@ public class ogr2ogr
                 if ( IsNumber(args[iArg+1]) && iArg < args.length - 4 )
                 {
                     Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
-                    double xmin = new Double(args[++iArg]).doubleValue();
-                    double ymin = new Double(args[++iArg]).doubleValue();
-                    double xmax = new Double(args[++iArg]).doubleValue();
-                    double ymax = new Double(args[++iArg]).doubleValue();
+                    double xmin = Double.parseDouble(args[++iArg]);
+                    double ymin = Double.parseDouble(args[++iArg]);
+                    double xmax = Double.parseDouble(args[++iArg]);
+                    double ymax = Double.parseDouble(args[++iArg]);
                     oRing.AddPoint(xmin, ymin);
                     oRing.AddPoint(xmin, ymax);
                     oRing.AddPoint(xmax, ymax);
@@ -403,10 +403,10 @@ public class ogr2ogr
                 if ( IsNumber(args[iArg+1]) && iArg < args.length - 4 )
                 {
                     Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
-                    double xmin = new Double(args[++iArg]).doubleValue();
-                    double ymin = new Double(args[++iArg]).doubleValue();
-                    double xmax = new Double(args[++iArg]).doubleValue();
-                    double ymax = new Double(args[++iArg]).doubleValue();
+                    double xmin = Double.parseDouble(args[++iArg]);
+                    double ymin = Double.parseDouble(args[++iArg]);
+                    double xmax = Double.parseDouble(args[++iArg]);
+                    double ymax = Double.parseDouble(args[++iArg]);
                     oRing.AddPoint(xmin, ymin);
                     oRing.AddPoint(xmin, ymax);
                     oRing.AddPoint(xmax, ymax);

@@ -182,6 +182,12 @@ by the HFA driver:
       can be specified by setting this
       configuration option to a power- of-two value between 32 and 2048.
 
+-  .. config:: USE_SPILL
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use a spill file when creating a new overview.
+
 See Also
 --------
 

@@ -375,15 +375,15 @@ void RegisterOGRCSV()
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
-#if 0
-"  <Option name='SEPARATOR' type='string-select' description='field separator' default='AUTO'>"
-"    <Value>AUTO</Value>"
-"    <Value>COMMA</Value>"
-"    <Value>SEMICOLON</Value>"
-"    <Value>TAB</Value>"
-"    <Value>SPACE</Value>"
-"  </Option>"
-#endif
+        "  <Option name='SEPARATOR' type='string-select' "
+        "description='field separator' default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>COMMA</Value>"
+        "    <Value>SEMICOLON</Value>"
+        "    <Value>TAB</Value>"
+        "    <Value>SPACE</Value>"
+        "    <Value>PIPE</Value>"
+        "  </Option>"
         "  <Option name='MERGE_SEPARATOR' type='boolean' description='whether "
         "to merge consecutive separators' default='NO'/>"
         "  <Option name='AUTODETECT_TYPE' type='boolean' description='whether "

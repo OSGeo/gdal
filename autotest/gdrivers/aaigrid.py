@@ -48,7 +48,7 @@ pytestmark = pytest.mark.require_driver("AAIGRID")
 def test_aaigrid_1():
 
     tst = gdaltest.GDALTest("aaigrid", "aaigrid/pixel_per_line.asc", 1, 1123)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -119,7 +119,7 @@ def test_aaigrid_3():
 
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
-    return tst.testCreateCopy(check_gt=1, check_srs=prj)
+    tst.testCreateCopy(check_gt=1, check_srs=prj)
 
 
 ###############################################################################
@@ -129,7 +129,7 @@ def test_aaigrid_3():
 def test_aaigrid_4():
 
     tst = gdaltest.GDALTest("aaigrid", "aaigrid/pixel_per_line.asc", 1, 187, 5, 5, 5, 5)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -166,7 +166,7 @@ def test_aaigrid_5():
     UNIT["METERS",1]]
     """
 
-    return tst.testOpen(check_prj=prj)
+    tst.testOpen(check_prj=prj)
 
 
 ###############################################################################
@@ -205,7 +205,7 @@ def test_aaigrid_7():
 
     tst = gdaltest.GDALTest("AAIGRID", "aaigrid/nonsquare.vrt", 1, 12481)
 
-    return tst.testCreateCopy(check_gt=1)
+    tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################
@@ -216,7 +216,7 @@ def test_aaigrid_8():
 
     tst = gdaltest.GDALTest("AAIGRID", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################

@@ -1,10 +1,5 @@
 FROM fedora:rawhide
 
-# To be removed
-# Workaround a bug where the initial /etc/dnf/dnf.conf file contains
-# just the "tsflags=nodocs" line
-RUN printf '[main]\ngpgcheck=True\ninstallonly_limit=3\nclean_requirements_on_remove=True\nbest=False\nskip_if_unavailable=True\ntsflags=nodocs' > /etc/dnf/dnf.conf
-
 RUN dnf upgrade -y
 RUN dnf install -y --setopt=install_weak_deps=False proj-devel
 RUN dnf install -y clang make diffutils ccache cmake \
@@ -21,9 +16,11 @@ RUN dnf install -y clang make diffutils ccache cmake \
       mdbtools-devel mdbtools-odbc unixODBC-devel \
       armadillo-devel qhull-devel \
       hdf-devel hdf5-devel netcdf-devel \
-      mongo-cxx-driver-devel libpq-devel \
+      libpq-devel \
       python3-pip python3-devel python3-lxml swig \
       glibc-gconv-extra
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+# One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
+RUN python3 -m pip install "jsonschema<4.18"
+RUN python3 -m pip install -r /tmp/requirements.txt

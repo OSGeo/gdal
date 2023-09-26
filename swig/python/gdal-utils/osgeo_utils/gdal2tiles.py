@@ -1016,7 +1016,10 @@ def setup_input_srs(
 
     if options.s_srs:
         input_srs = osr.SpatialReference()
-        input_srs.SetFromUserInput(options.s_srs)
+        try:
+            input_srs.SetFromUserInput(options.s_srs)
+        except RuntimeError:
+            raise ValueError("Invalid value for --s_srs option")
         input_srs_wkt = input_srs.ExportToWkt()
     else:
         input_srs_wkt = input_dataset.GetProjection()
@@ -1086,10 +1089,18 @@ def reproject_dataset(
         ):
             from_gt = from_dataset.GetGeoTransform(can_return_null=True)
             if from_gt and from_gt[2] == 0 and from_gt[4] == 0 and from_gt[5] < 0:
+                minlon = from_gt[0]
+                maxlon = from_gt[0] + from_dataset.RasterXSize * from_gt[1]
                 maxlat = from_gt[3]
                 minlat = from_gt[3] + from_dataset.RasterYSize * from_gt[5]
                 MAX_LAT = 85.0511287798066
                 adjustBounds = False
+                if minlon < -180.0:
+                    minlon = -180.0
+                    adjustBounds = True
+                if maxlon > 180.0:
+                    maxlon = 180.0
+                    adjustBounds = True
                 if maxlat > MAX_LAT:
                     maxlat = MAX_LAT
                     adjustBounds = True
@@ -1098,15 +1109,14 @@ def reproject_dataset(
                     adjustBounds = True
                 if adjustBounds:
                     ct = osr.CoordinateTransformation(from_srs, to_srs)
-                    west, south = ct.TransformPoint(from_gt[0], minlat)[:2]
-                    east, north = ct.TransformPoint(
-                        from_gt[0] + from_dataset.RasterXSize * from_gt[1], maxlat
-                    )[:2]
+                    west, south = ct.TransformPoint(minlon, minlat)[:2]
+                    east, north = ct.TransformPoint(maxlon, maxlat)[:2]
                     return gdal.Warp(
                         "",
                         from_dataset,
                         format="VRT",
                         outputBounds=[west, south, east, north],
+                        srcSRS=from_srs.ExportToWkt(),
                         dstSRS="EPSG:3857",
                     )
 

@@ -1257,6 +1257,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     H5Sclose(memspaceVarresMD);
 
+    CPLErr eErr = CE_None;
     for (int y = nLowResMinIdxY; y <= nLowResMaxIdxY; y++)
     {
         for (int x = nLowResMinIdxX; x <= nLowResMaxIdxX; x++)
@@ -1360,8 +1361,8 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                         nRefinementIndexase + super_x;
                     if (!poGDS->CacheRefinementValues(nRefinementIndex))
                     {
-                        H5Sclose(memspaceVarresMD);
-                        return CE_Failure;
+                        eErr = CE_Failure;
+                        goto end;
                     }
 
                     const unsigned nOffInArray =
@@ -1430,13 +1431,14 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
     }
 
+end:
     if (poBlock != nullptr)
     {
         poBlock->DropLock();
         poBlock = nullptr;
     }
 
-    return CE_None;
+    return eErr;
 }
 
 static GDALRasterAttributeTable *

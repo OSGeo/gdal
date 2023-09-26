@@ -48,7 +48,7 @@ OGRGeoPackageSelectLayer::OGRGeoPackageSelectLayer(
     if (bUseStatementForGetNextFeature)
     {
         m_poQueryStatement = hStmtIn;
-        bDoStep = false;
+        m_bDoStep = false;
     }
     else
     {
@@ -101,8 +101,8 @@ OGRErr OGRGeoPackageSelectLayer::ResetStatement()
 {
     ClearStatement();
 
-    iNextShapeId = 0;
-    bDoStep = true;
+    m_iNextShapeId = 0;
+    m_bDoStep = true;
 
 #ifdef DEBUG
     CPLDebug("OGR_GPKG", "prepare_v2(%s)", poBehavior->m_osSQLCurrent.c_str());

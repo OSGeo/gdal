@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "conformsTo" : [ "[ogc-json-fg-1-0.1:core]" ],
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": { "type": "Point", "coordinates": [2, 49] },
+      "properties": { "foo": 1 },
+      "place": null,
+      "time": null
+    }
+  ],
+  "featureType": "type1"
+}

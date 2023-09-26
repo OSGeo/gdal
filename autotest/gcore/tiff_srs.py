@@ -135,7 +135,7 @@ def test_srs_read_compd_cs():
 def test_tiff_srs_weird_mercator_2sp():
 
     ds = gdal.Open("data/weird_mercator_2sp.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         wkt = ds.GetProjectionRef()
     assert gdal.GetLastErrorMsg() != "", "warning expected"
     sr2 = osr.SpatialReference()
@@ -936,7 +936,7 @@ def test_tiff_srs_read_getspatialref_getgcpspatialref():
 
 def test_tiff_srs_read_VerticalUnitsGeoKey_private_range():
     ds = gdal.Open("data/gtiff/VerticalUnitsGeoKey_private_range.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sr = ds.GetSpatialRef()
     assert sr.GetName() == "NAD83 / UTM zone 16N"
     assert gdal.GetLastErrorMsg() != ""
@@ -946,7 +946,7 @@ def test_tiff_srs_read_invalid_semimajoraxis_compound():
     ds = gdal.Open("data/gtiff/invalid_semimajoraxis_compound.tif")
     # Check that it doesn't crash. PROJ >= 8.2.0 will return a NULL CRS
     # whereas previous versions will return a non-NULL one
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetSpatialRef()
 
 
@@ -978,7 +978,7 @@ def test_tiff_srs_try_write_derived_geographic():
 
 def test_tiff_srs_read_GeogGeodeticDatumGeoKey_reserved_range():
     ds = gdal.Open("data/gtiff/GeogGeodeticDatumGeoKey_reserved.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sr = ds.GetSpatialRef()
     assert sr.GetName() == "WGS 84 / Pseudo-Mercator"
     assert gdal.GetLastErrorMsg() != ""
@@ -997,7 +997,7 @@ def test_tiff_srs_read_invalid_GeogAngularUnitSizeGeoKey():
     # That file has GeogAngularUnitSizeGeoKey = 0
     ds = gdal.Open("data/gtiff/invalid_GeogAngularUnitSizeGeoKey.tif")
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() != ""
 
@@ -1007,7 +1007,7 @@ def test_tiff_srs_read_inconsistent_invflattening():
     # which are inconsistent with the ones from the ellipsoid of the datum
     ds = gdal.Open("data/gtiff/inconsistent_invflattening.tif")
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() != ""
     assert srs.GetAuthorityCode(None) == "28992"
@@ -1153,10 +1153,8 @@ def test_tiff_srs_read_esri_pcs_gcs_ellipsoid_names():
     assert 'ELLIPSOID["Bessel 1841"' in wkt
 
 
+@pytest.mark.require_proj(9, 0)
 def test_tiff_srs_write_projected_3d():
-
-    if osr.GetPROJVersionMajor() < 9:
-        pytest.skip()
 
     filename = "/vsimem/test_tiff_srs_write_projected_3d.tif"
     srs = osr.SpatialReference()
@@ -1168,6 +1166,30 @@ def test_tiff_srs_write_projected_3d():
     gdal.ErrorReset()
     ds = None
     assert gdal.GetLastErrorMsg() == ""
+    assert gdal.VSIStatL(filename + ".aux.xml") is not None
+
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert got_srs.IsSame(srs)
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+@pytest.mark.require_proj(9, 0)
+def test_tiff_srs_write_projected_3d_built_as_pseudo_compound():
+
+    filename = "/vsimem/test_tiff_srs_write_projected_3d_built_as_pseudo_compound.tif"
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:6340+6319")
+
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    gdal.ErrorReset()
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+    assert gdal.VSIStatL(filename + ".aux.xml") is not None
 
     ds = gdal.Open(filename)
     gdal.ErrorReset()
@@ -1289,3 +1311,59 @@ def test_tiff_srs_read_compound_with_VerticalCitationGeoKey_only():
         wkt
         == """COMPD_CS["TestMS",GEOGCS["NAD83(2011)",DATUM["NAD83_National_Spatial_Reference_System_2011",SPHEROID["GRS 1980",6378137,298.257222101004,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","1116"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","6318"]],VERT_CS["NAVD88 height",VERT_DATUM["North American Vertical Datum 1988",2005,AUTHORITY["EPSG","5103"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Up",UP]]]"""
     )
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        7415,  # Amersfoort / RD New + NAP height
+        9707,  # WGS 84 + EGM96 height
+    ],
+)
+@pytest.mark.require_proj(
+    7, 2
+)  # not necessarily the minimum version, but 9707 doesn't exist in PROJ 6.x
+def test_tiff_srs_read_compound_with_EPSG_code(code):
+
+    """Test bugfix for https://github.com/OSGeo/gdal/issues/7982"""
+
+    filename = "/vsimem/test_tiff_srs_read_compound_with_EPSG_code.tif"
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(code)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    assert got_srs.GetAuthorityCode(None) == str(code)
+    assert got_srs.IsSame(srs)
+    ds = None
+    gdal.Unlink(filename)
+
+
+def test_tiff_srs_read_compound_without_EPSG_code():
+
+    """Test case where identification of code for CompoundCRS (added for
+    bugfix of https://github.com/OSGeo/gdal/issues/7982) doesn't trigger"""
+
+    filename = "/vsimem/test_tiff_srs_read_compound_without_EPSG_code.tif"
+    srs = osr.SpatialReference()
+    # WGS 84 + NAP height, unlikely to have a EPSG code ever
+    srs.SetFromUserInput("EPSG:4326+5709")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    assert got_srs.GetAuthorityCode(None) is None
+    assert got_srs.GetAuthorityCode("GEOGCS") == "4326"
+    assert got_srs.GetAuthorityCode("VERT_CS") == "5709"
+    assert got_srs.IsSame(srs)
+    ds = None
+    gdal.Unlink(filename)

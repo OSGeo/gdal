@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
+import pathlib
 import struct
 
 import gdaltest
@@ -65,15 +67,17 @@ def test_gdalmdimtranslate_multidim_to_mem():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_multidim_to_classic():
+def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
 
     assert gdal.MultiDimTranslate(
-        tmpfile, "data/mdim.vrt", arraySpecs=["/my_subgroup/array_in_subgroup"]
+        tmpfile,
+        pathlib.Path("data/mdim.vrt"),
+        arraySpecs=["/my_subgroup/array_in_subgroup"],
     )
 
     gdal.Unlink(tmpfile)
@@ -852,6 +856,70 @@ def test_gdalmdimtranslate_dims_with_same_name_different_size():
     gdal.Unlink(srcfile)
 
 
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdimtranslate_array_with_view():
+    ds = gdal.MultiDimTranslate(
+        "",
+        "../gdrivers/data/netcdf/byte_no_cf.nc",
+        arraySpecs=["name=Band1,view=[::2,::4]"],
+        format="MEM",
+    )
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("Band1")
+    dims = ar.GetDimensions()
+    assert dims[0].GetSize() == 10
+    assert dims[1].GetSize() == 5
+
+
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdimtranslate_array_resample():
+    ds = gdal.MultiDimTranslate(
+        "",
+        "../gdrivers/data/netcdf/fake_EMIT.nc",
+        arraySpecs=["name=reflectance,resample=true"],
+        format="MEM",
+    )
+    rg = ds.GetRootGroup()
+    resampled_ar = rg.OpenMDArray("reflectance")
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "lat"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "lon"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "bands"
+    assert dims[2].GetSize() == 2
+    assert resampled_ar.GetDataType() == gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    assert resampled_ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert struct.unpack("f" * (3 * 3 * 2), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        -30.0,
+        40.0,
+        -40.0,
+        -9999.0,
+        -9999.0,
+        10.0,
+        -10.0,
+        20.0,
+        -20.0,
+    )
+
+    lat = dims[0].GetIndexingVariable()
+    assert lat
+    assert struct.unpack("d" * 3, lat.Read()) == (3.5, 2.5, 1.5)
+
+    lon = dims[1].GetIndexingVariable()
+    assert lon
+    assert struct.unpack("d" * 3, lon.Read()) == (1.5, 2.5, 3.5)
+
+
 def XXXX_test_all():
     while True:
         test_gdalmdimtranslate_no_arg()
@@ -864,3 +932,21 @@ def XXXX_test_all():
         test_gdalmdimtranslate_two_groups()
         test_gdalmdimtranslate_subset()
         test_gdalmdimtranslate_scaleaxes()
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdalmdimtranslate_dict_arguments():
+
+    opt = gdal.MultiDimTranslateOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    co_idx = opt.index("-co")
+
+    assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

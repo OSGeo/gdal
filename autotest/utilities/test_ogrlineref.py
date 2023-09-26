@@ -49,38 +49,36 @@ pytestmark = [
 ]
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def ogrlineref_path():
     return test_cli_utilities.get_ogrlineref_path()
 
 
-###############################################################################
-# create test
+@pytest.fixture(scope="module")
+def parts_shp(ogrlineref_path, tmp_path_factory):
 
-
-def test_ogrlineref_1(ogrlineref_path):
-
-    if os.path.exists("tmp/parts.shp"):
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/parts.shp")
+    parts_shp_fname = str(tmp_path_factory.mktemp("tmp") / "parts.shp")
 
     _, err = gdaltest.runexternal_out_and_err(
         ogrlineref_path
-        + " -create -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.shp -s 1000"
+        + f" -create -l data/path.shp -p data/mstones.shp -pm pos -o {parts_shp_fname} -s 1000"
     )
     assert err is None or err == "", 'got error/warning: "%s"' % err
 
-    ds = ogr.Open("tmp/parts.shp")
-    assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 9
+    with ogr.Open(parts_shp_fname) as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 9
+
+    yield parts_shp_fname
 
 
 ###############################################################################
 # get_pos test
 
 
-def test_ogrlineref_2(ogrlineref_path):
+def test_ogrlineref_2(ogrlineref_path, parts_shp):
 
     ret = gdaltest.runexternal(
-        ogrlineref_path + " -get_pos -r tmp/parts.shp -x -1.4345 -y 51.9497 -quiet"
+        ogrlineref_path + f" -get_pos -r {parts_shp} -x -1.4345 -y 51.9497 -quiet"
     ).strip()
 
     expected = "15977.724709"
@@ -91,10 +89,10 @@ def test_ogrlineref_2(ogrlineref_path):
 # get_coord test
 
 
-def test_ogrlineref_3(ogrlineref_path):
+def test_ogrlineref_3(ogrlineref_path, parts_shp):
 
     ret = gdaltest.runexternal(
-        ogrlineref_path + " -get_coord -r tmp/parts.shp -m 15977.724709 -quiet"
+        ogrlineref_path + f" -get_coord -r {parts_shp} -m 15977.724709 -quiet"
     ).strip()
 
     expected = "-1.435097,51.950080,0.000000"
@@ -105,48 +103,32 @@ def test_ogrlineref_3(ogrlineref_path):
 # get_subline test
 
 
-def test_ogrlineref_4(ogrlineref_path):
+def test_ogrlineref_4(ogrlineref_path, parts_shp, tmp_path):
 
-    if os.path.exists("tmp/subline.shp"):
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/subline.shp")
+    output_shp = str(tmp_path / "subline.shp")
 
     gdaltest.runexternal(
-        ogrlineref_path
-        + " -get_subline -r tmp/parts.shp -mb 13300 -me 17400 -o tmp/subline.shp"
+        f"{ogrlineref_path} -get_subline -r {parts_shp} -mb 13300 -me 17400 -o {output_shp}"
     )
 
-    ds = ogr.Open("tmp/subline.shp")
+    ds = ogr.Open(output_shp)
     assert ds is not None, "ds is None"
 
     feature_count = ds.GetLayer(0).GetFeatureCount()
     assert feature_count == 1, "feature count %d != 1" % feature_count
     ds = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/subline.shp")
-
 
 ###############################################################################
 # test kml
 
 
-def test_ogrlineref_5(ogrlineref_path):
+def test_ogrlineref_5(ogrlineref_path, tmp_path):
 
-    if os.path.exists("tmp/parts.kml"):
-        ogr.GetDriverByName("KML").DeleteDataSource("tmp/parts.kml")
+    parts_kml = str(tmp_path / "parts.kml")
 
     gdaltest.runexternal_out_and_err(
-        ogrlineref_path
-        + ' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o tmp/parts.kml -s 222'
+        f'{ogrlineref_path} -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o {parts_kml} -s 222'
     )
-    if os.path.exists("tmp/parts.kml"):
-        return
 
-    pytest.fail()
-
-
-def test_ogrlineref_cleanup():
-
-    if os.path.exists("tmp/parts.shp"):
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/parts.shp")
-    if os.path.exists("tmp/parts.kml"):
-        ogr.GetDriverByName("KML").DeleteDataSource("tmp/parts.kml")
+    assert os.path.exists(parts_kml)

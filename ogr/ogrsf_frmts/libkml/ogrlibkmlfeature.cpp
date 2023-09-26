@@ -457,7 +457,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
 
             ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
 
-            poKmlPhotoOverlay->set_point(AsPoint(poKmlElement));
+            poKmlPhotoOverlay->set_point(AsPoint(std::move(poKmlElement)));
         }
     }
 

@@ -94,6 +94,25 @@ Layer creation options
 
       Type of the 'id' member of Feature objects.
 
+-  .. lco:: WRITE_NON_FINITE_VALUES
+      :choices: YES, NO
+      :default: NO
+      :since: 3.8
+
+      Whether to write
+      NaN / Infinity values. Such values are not allowed in strict JSon
+      mode, but some JSon parsers (libjson-c >= 0.12 for example) can
+      understand them as they are allowed by ECMAScript.
+
+-  .. lco:: AUTODETECT_JSON_STRINGS
+      :choices: YES, NO
+      :default: YES
+      :since: 3.8
+
+      Whether to try to interpret string fields as JSON arrays or objects
+      if they start and end with brackets and braces, even if they do
+      not have their subtype set to JSON.
+
 See Also
 --------
 

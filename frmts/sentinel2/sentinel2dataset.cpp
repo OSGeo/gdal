@@ -3405,6 +3405,51 @@ void SENTINEL2Dataset::AddL1CL2ABandMetadata(
                 }
             }
         }
+
+        CPLXMLNode *psOL = CPLGetXMLNode(
+            psIC, (eLevel == SENTINEL2_L1C) ? "Radiometric_Offset_List"
+                                            : "BOA_ADD_OFFSET_VALUES_LIST");
+        if (psOL != nullptr)
+        {
+            for (CPLXMLNode *psIter = psOL->psChild; psIter != nullptr;
+                 psIter = psIter->psNext)
+            {
+                if (psIter->eType != CXT_Element ||
+                    !EQUAL(psIter->pszValue, (eLevel == SENTINEL2_L1C)
+                                                 ? "RADIO_ADD_OFFSET"
+                                                 : "BOA_ADD_OFFSET"))
+                {
+                    continue;
+                }
+                const char *pszBandId =
+                    CPLGetXMLValue(psIter, "band_id", nullptr);
+                const char *pszValue = CPLGetXMLValue(psIter, nullptr, nullptr);
+                if (pszBandId != nullptr && pszValue != nullptr)
+                {
+                    int nIdx = atoi(pszBandId);
+                    if (nIdx >= 0 && nIdx < (int)NB_BANDS)
+                    {
+                        for (int i = 0; i < nBands; i++)
+                        {
+                            GDALRasterBand *poBand = GetRasterBand(i + 1);
+                            const char *pszBandName =
+                                poBand->GetMetadataItem("BANDNAME");
+                            if (pszBandName != nullptr &&
+                                EQUAL(asBandDesc[nIdx].pszBandName,
+                                      pszBandName))
+                            {
+                                poBand->GDALRasterBand::SetMetadataItem(
+                                    (eLevel == SENTINEL2_L1C)
+                                        ? "RADIO_ADD_OFFSET"
+                                        : "BOA_ADD_OFFSET",
+                                    pszValue);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /* -------------------------------------------------------------------- */

@@ -56,4 +56,4 @@ def test_xpm(downloadURL, fileName, checksum, download_size):
 
 def test_xpm_1():
     tst = gdaltest.GDALTest("XPM", "byte.tif", 1, 4583)
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)

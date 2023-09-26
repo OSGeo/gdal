@@ -80,6 +80,9 @@ def skip_if_unreachable(url, try_read=False):
 
 
 def test_http_1():
+    # Regularly fails on Travis graviton2 configuration
+    gdaltest.skip_on_travis()
+
     url = "http://gdal.org/gdalicon.png"
     tst = gdaltest.GDALTest("PNG", url, 1, 7617, filename_absolute=1)
     try:
@@ -98,8 +101,10 @@ def test_http_1():
 def test_http_2():
     url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif"
     tst = gdaltest.GDALTest("GTiff", "/vsicurl/" + url, 1, 4672, filename_absolute=1)
-    ret = tst.testOpen()
-    if ret == "fail":
+
+    try:
+        tst.testOpen()
+    except Exception:
         skip_if_unreachable(url)
         pytest.fail()
 
@@ -122,8 +127,7 @@ def test_http_3():
 
 def test_http_4():
     # Too unreliable
-    if gdaltest.skip_on_travis():
-        pytest.skip()
+    gdaltest.skip_on_travis()
 
     url = "ftp://download.osgeo.org/gdal/data/gtiff/utm.tif"
     ds = gdal.Open("/vsicurl/" + url)
@@ -158,7 +162,7 @@ def test_http_6():
 
 def test_http_ssl_verifystatus():
     with gdaltest.config_option("GDAL_HTTP_SSL_VERIFYSTATUS", "YES"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # For now this URL doesn't support OCSP stapling...
             gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
     last_err = gdal.GetLastErrorMsg()
@@ -188,7 +192,7 @@ def test_http_ssl_verifystatus():
 
 def test_http_use_capi_store():
     if sys.platform != "win32":
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             return test_http_use_capi_store_sub()
 
     # Prints this to stderr in many cases (but doesn't error)

@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import os
 import shutil
 import struct
@@ -42,18 +43,20 @@ from osgeo import gdal, osr
 # Simple test
 
 
-def test_gdal_translate_lib_1():
+def test_gdal_translate_lib_1(tmp_path):
+
+    dst_tif = tmp_path / "test1.tif"
 
     ds = gdal.Open("../gcore/data/byte.tif")
 
-    ds = gdal.Translate("tmp/test1.tif", ds)
+    ds = gdal.Translate(dst_tif, ds)
     assert ds is not None, "got error/warning"
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
     ds = None
 
-    ds = gdal.Open("tmp/test1.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -71,12 +74,14 @@ def mycallback(pct, msg, user_data):
     return 1
 
 
-def test_gdal_translate_lib_2():
+def test_gdal_translate_lib_2(tmp_path):
+
+    dst_tif = str(tmp_path / "test2.tif")
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
     tab = [0]
     ds = gdal.Translate(
-        "tmp/test2.tif", src_ds, format="GTiff", callback=mycallback, callback_data=tab
+        dst_tif, src_ds, format="GTiff", callback=mycallback, callback_data=tab
     )
     assert ds is not None
 
@@ -91,10 +96,12 @@ def test_gdal_translate_lib_2():
 # Test outputType option
 
 
-def test_gdal_translate_lib_3():
+def test_gdal_translate_lib_3(tmp_path):
+
+    dst_tif = str(tmp_path / "test3.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test3.tif", ds, outputType=gdal.GDT_Int16)
+    ds = gdal.Translate(dst_tif, ds, outputType=gdal.GDT_Int16)
     assert ds is not None
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16, "Bad data type"
@@ -108,11 +115,13 @@ def test_gdal_translate_lib_3():
 # Test bandList option
 
 
-def test_gdal_translate_lib_4():
+def test_gdal_translate_lib_4(tmp_path):
+
+    dst_tif = str(tmp_path / "test4.tif")
 
     ds = gdal.Open("../gcore/data/rgbsmall.tif")
 
-    ds = gdal.Translate("tmp/test4.tif", ds, bandList=[3, 2, 1])
+    ds = gdal.Translate(dst_tif, ds, bandList=[3, 2, 1])
     assert ds is not None, "got error/warning"
 
     assert ds.GetRasterBand(1).Checksum() == 21349, "Bad checksum"
@@ -129,10 +138,12 @@ def test_gdal_translate_lib_4():
 
 
 @pytest.mark.require_driver("GIF")
-def test_gdal_translate_lib_5():
+def test_gdal_translate_lib_5(tmp_path):
+
+    dst_tif = str(tmp_path / "test5.tif")
 
     ds = gdal.Open("../gdrivers/data/gif/bug407.gif")
-    ds = gdal.Translate("tmp/test5.tif", ds, rgbExpand="rgb")
+    ds = gdal.Translate(dst_tif, ds, rgbExpand="rgb")
     assert ds is not None
 
     assert (
@@ -160,10 +171,12 @@ def test_gdal_translate_lib_5():
 # Test oXSizePixel and oYSizePixel option
 
 
-def test_gdal_translate_lib_6():
+def test_gdal_translate_lib_6(tmp_path):
+
+    dst_tif = str(tmp_path / "test6.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test6.tif", ds, width=40, height=40)
+    ds = gdal.Translate(dst_tif, ds, width=40, height=40)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 18784, "Bad checksum"
@@ -175,10 +188,12 @@ def test_gdal_translate_lib_6():
 # Test oXSizePct and oYSizePct option
 
 
-def test_gdal_translate_lib_7():
+def test_gdal_translate_lib_7(tmp_path):
+
+    dst_tif = str(tmp_path / "test7.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test7.tif", ds, widthPct=200.0, heightPct=200.0)
+    ds = gdal.Translate(dst_tif, ds, widthPct=200.0, heightPct=200.0)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 18784, "Bad checksum"
@@ -190,7 +205,9 @@ def test_gdal_translate_lib_7():
 # Test outputSRS and GCPs options
 
 
-def test_gdal_translate_lib_8():
+def test_gdal_translate_lib_8(tmp_path):
+
+    dst_tif = str(tmp_path / "test8.tif")
 
     gcpList = [
         gdal.GCP(440720.000, 3751320.000, 0, 0, 0),
@@ -199,7 +216,7 @@ def test_gdal_translate_lib_8():
         gdal.GCP(440720.000, 3750120.000, 0, 0, 20),
     ]
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test8.tif", ds, outputSRS="EPSG:26711", GCPs=gcpList)
+    ds = gdal.Translate(dst_tif, ds, outputSRS="EPSG:26711", GCPs=gcpList)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -216,10 +233,12 @@ def test_gdal_translate_lib_8():
 # Test nodata option
 
 
-def test_gdal_translate_lib_9():
+def test_gdal_translate_lib_9(tmp_path):
+
+    dst_tif = str(tmp_path / "test9.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test9.tif", ds, noData=1)
+    ds = gdal.Translate(dst_tif, ds, noData=1)
     assert ds is not None
 
     assert ds.GetRasterBand(1).GetNoDataValue() == 1, "Bad nodata value"
@@ -263,10 +282,12 @@ def test_gdal_translate_lib_nodata_int64():
 # Test srcWin option
 
 
-def test_gdal_translate_lib_10():
+def test_gdal_translate_lib_10(tmp_path):
+
+    dst_tif = str(tmp_path / "test10.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test10.tif", ds, srcWin=[0, 0, 1, 1])
+    ds = gdal.Translate(dst_tif, ds, srcWin=[0, 0, 1, 1])
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 2, "Bad checksum"
@@ -278,21 +299,23 @@ def test_gdal_translate_lib_10():
 # Test projWin option
 
 
-def test_gdal_translate_lib_11():
+def test_gdal_translate_lib_11(tmp_path):
+
+    dst_tif = str(tmp_path / "test11.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
     ds = gdal.Translate(
-        "tmp/test11.tif", ds, projWin=[440720.000, 3751320.000, 441920.000, 3750120.000]
+        dst_tif, ds, projWin=[440720.000, 3751320.000, 441920.000, 3750120.000]
     )
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -301,11 +324,13 @@ def test_gdal_translate_lib_11():
 # Test outputBounds option
 
 
-def test_gdal_translate_lib_12():
+def test_gdal_translate_lib_12(tmp_path):
+
+    dst_tif = str(tmp_path / "test12.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
     ds = gdal.Translate(
-        "tmp/test12.tif",
+        dst_tif,
         ds,
         outputBounds=[440720.000, 3751320.000, 441920.000, 3750120.000],
     )
@@ -313,11 +338,47 @@ def test_gdal_translate_lib_12():
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
+
+    ds = None
+
+
+###############################################################################
+# Test outputGeotransform option
+
+
+def test_gdal_translate_lib_outputGeotransform(tmp_vsimem):
+
+    dst_tif = str(tmp_vsimem / "test_gdal_translate_lib_outputGeotransform.tif")
+
+    with pytest.raises(
+        Exception, match="outputBounds and outputGeotransform are mutually exclusive"
+    ):
+        gdal.Translate(
+            dst_tif,
+            gdal.Open("../gcore/data/byte.tif"),
+            outputBounds=[440720.000, 3751320.000, 441920.000, 3750120.000],
+            outputGeotransform=[1.25, 2, 3, 4, 5, 6],
+        )
+
+    ds = gdal.Translate(
+        dst_tif,
+        gdal.Open("../gcore/data/byte.tif"),
+        outputGeotransform=[1.25, 2, 3, 4, 5, 6],
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
+
+    gdaltest.check_geotransform(
+        (1.25, 2, 3, 4, 5, 6),
+        ds.GetGeoTransform(),
+        1e-9,
+    )
 
     ds = None
 
@@ -326,7 +387,7 @@ def test_gdal_translate_lib_12():
 # Test metadataOptions
 
 
-def test_gdal_translate_lib_13():
+def test_gdal_translate_lib_13(tmp_path):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
@@ -355,10 +416,12 @@ def test_gdal_translate_lib_13():
 # Test creationOptions
 
 
-def test_gdal_translate_lib_14():
+def test_gdal_translate_lib_14(tmp_path):
+
+    dst_tif = str(tmp_path / "test14.tif")
 
     ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.Translate("tmp/test14.tif", ds, creationOptions=["COMPRESS=LZW"])
+    ds = gdal.Translate(dst_tif, ds, creationOptions=["COMPRESS=LZW"])
     assert ds is not None
 
     md = ds.GetMetadata("IMAGE_STRUCTURE")
@@ -451,6 +514,19 @@ def test_gdal_translate_lib_102():
 
 
 ###############################################################################
+# Test -scale preserves [0,255] input range
+
+
+def test_gdal_translate_lib_scale_0_255_input_range():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
+    expected_data = struct.pack("B" * 3, 0, 254, 255)
+    src_ds.WriteRaster(0, 0, 3, 1, expected_data)
+    ds = gdal.Translate("", src_ds, options="-of MEM -scale")
+    assert ds.ReadRaster() == expected_data
+
+
+###############################################################################
 # Test that -projwin with nearest neighbor resampling uses integer source
 # pixel boundaries (#6610)
 
@@ -467,11 +543,11 @@ def test_gdal_translate_lib_103():
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
 
 ###############################################################################
@@ -542,7 +618,7 @@ def test_gdal_translate_lib_colorinterp():
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
 
     # More bands specified than available and a unknown color interpretation
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Translate(
             "", src_ds, options="-f MEM -colorinterp alpha,red,undefined,foo"
         )
@@ -558,7 +634,7 @@ def test_gdal_translate_lib_colorinterp():
 
     # Test invalid colorinterp_
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.Translate("", src_ds, options="-f MEM -colorinterp_0 alpha")
 
     # Test colorinterp on a source mask band
@@ -578,10 +654,12 @@ def test_gdal_translate_lib_colorinterp():
 # Test nogcp options
 
 
-def test_gdal_translate_lib_110():
+def test_gdal_translate_lib_110(tmp_path):
+
+    dst_tif = str(tmp_path / "test110.tif")
 
     ds = gdal.Open("../gcore/data/byte_gcp.tif")
-    ds = gdal.Translate("tmp/test110.tif", ds, nogcp="True")
+    ds = gdal.Translate(dst_tif, ds, nogcp="True")
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -596,29 +674,33 @@ def test_gdal_translate_lib_110():
 # Test noxmp options
 
 
-def test_gdal_translate_lib_111():
+def test_gdal_translate_lib_111(tmp_path):
+
+    dst_tif = str(tmp_path / "test111noxmp.tif")
+    dst2_tif = str(tmp_path / "test111notcopied.tif")
+    dst3_tif = str(tmp_path / "test111.tif")
 
     ds = gdal.Open("../gdrivers/data/gtiff/byte_with_xmp.tif")
-    new_ds = gdal.Translate("tmp/test111noxmp.tif", ds, options="-noxmp")
+    new_ds = gdal.Translate(dst_tif, ds, options="-noxmp")
     assert new_ds is not None
     xmp = new_ds.GetMetadata("xml:XMP")
     new_ds = None
     assert xmp is None
 
     # codepath if some other options are set is different, creating a VRTdataset
-    new_ds = gdal.Translate("tmp/test111notcopied.tif", ds, nogcp="True")
+    new_ds = gdal.Translate(dst2_tif, ds, nogcp="True")
     assert new_ds is not None
     new_ds = None
-    new_ds = gdal.Open("tmp/test111notcopied.tif")
+    new_ds = gdal.Open(dst2_tif)
     xmp = new_ds.GetMetadata("xml:XMP")
     new_ds = None
     assert "W5M0MpCehiHzreSzNTczkc9d" in xmp[0], "Wrong output file without XMP"
 
     # normal codepath calling CreateCopy directly
-    new_ds = gdal.Translate("tmp/test111.tif", ds)
+    new_ds = gdal.Translate(dst3_tif, ds)
     assert new_ds is not None
     new_ds = None
-    new_ds = gdal.Open("tmp/test111.tif")
+    new_ds = gdal.Open(dst3_tif)
     xmp = new_ds.GetMetadata("xml:XMP")
     new_ds = None
     assert "W5M0MpCehiHzreSzNTczkc9d" in xmp[0], "Wrong output file without XMP"
@@ -626,19 +708,22 @@ def test_gdal_translate_lib_111():
     ds = None
 
 
-def test_gdal_translate_lib_112():
+def test_gdal_translate_lib_112(tmp_path):
+
+    dst_tif = str(tmp_path / "test112noxmp.tif")
+    dst2_tif = str(tmp_path / "test112.tif")
 
     ds = gdal.Open("../gdrivers/data/gtiff/byte_with_xmp.tif")
-    new_ds = gdal.Translate("tmp/test112noxmp.tif", ds, options="-of COG -noxmp")
+    new_ds = gdal.Translate(dst_tif, ds, options="-of COG -noxmp")
     assert new_ds is not None
     xmp = new_ds.GetMetadata("xml:XMP")
     new_ds = None
     assert xmp is None
 
-    new_ds = gdal.Translate("tmp/test112.tif", ds, format="COG")
+    new_ds = gdal.Translate(dst2_tif, ds, format="COG")
     assert new_ds is not None
     new_ds = None
-    new_ds = gdal.Open("tmp/test112.tif")
+    new_ds = gdal.Open(dst2_tif)
     xmp = new_ds.GetMetadata("xml:XMP")
     new_ds = None
     assert "W5M0MpCehiHzreSzNTczkc9d" in xmp[0], "Wrong output file without XMP"
@@ -830,26 +915,23 @@ def test_gdal_translate_lib_resampling_methods(resampleAlg, resampleAlgStr):
 # overwritten (https://github.com/OSGeo/gdal/issues/5633)
 
 
-def test_gdal_translate_lib_not_delete_shared_auxiliary_files():
+def test_gdal_translate_lib_not_delete_shared_auxiliary_files(tmp_path):
+
+    img_foo_r1c1_jp2 = str(tmp_path / "IMG_foo_R1C1.JP2")
+    img_foo_r1c1_tif = str(tmp_path / "IMG_foo_R1C1.tif")
+    dim_foo_xml = str(tmp_path / "DIM_foo.XML")
 
     # Yes, we do intend to copy a .TIF as a fake .JP2
-    shutil.copy(
-        "../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF", "tmp/IMG_foo_R1C1.JP2"
-    )
-    shutil.copy("../gdrivers/data/dimap2/bundle/DIM_foo.XML", "tmp/DIM_foo.XML")
+    shutil.copy("../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF", img_foo_r1c1_jp2)
+    shutil.copy("../gdrivers/data/dimap2/bundle/DIM_foo.XML", dim_foo_xml)
 
-    gdal.Translate("tmp/IMG_foo_R1C1.tif", "tmp/IMG_foo_R1C1.JP2")
+    gdal.Translate(img_foo_r1c1_tif, img_foo_r1c1_jp2)
 
-    os.unlink("tmp/IMG_foo_R1C1.IMD")
+    os.unlink(f"{tmp_path}/IMG_foo_R1C1.IMD")
 
-    gdal.Translate("tmp/IMG_foo_R1C1.tif", "tmp/IMG_foo_R1C1.JP2")
+    gdal.Translate(img_foo_r1c1_tif, img_foo_r1c1_jp2)
 
-    assert os.path.exists("tmp/DIM_foo.XML")
-
-    os.unlink("tmp/IMG_foo_R1C1.JP2")
-    os.unlink("tmp/IMG_foo_R1C1.tif")
-    os.unlink("tmp/IMG_foo_R1C1.IMD")
-    os.unlink("tmp/DIM_foo.XML")
+    assert os.path.exists(f"{tmp_path}/DIM_foo.XML")
 
 
 ###############################################################################
@@ -892,7 +974,7 @@ def test_gdal_translate_lib_overview_level():
         src_ds.BuildOverviews("AVERAGE", [2])
         src_ds.BuildOverviews("NONE", [4])
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with pytest.raises(Exception):
                 assert gdal.Translate("", src_ds, format="MEM", overviewLevel="invalid")
 
@@ -1040,16 +1122,72 @@ def test_gdal_translate_lib_no_input_band():
 
 
 ###############################################################################
-# Cleanup
+# Test -scale and -unscape
 
 
-def test_gdal_translate_lib_cleanup():
-    for i in range(14):
-        try:
-            os.remove("tmp/test" + str(i + 1) + ".tif")
-        except OSError:
-            pass
-        try:
-            os.remove("tmp/test" + str(i + 1) + ".tif.aux.xml")
-        except OSError:
-            pass
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_scale_and_unscale_incompatible():
+
+    with pytest.raises(
+        Exception, match=r"-scale and -unscale cannot be used as the same time"
+    ):
+        gdal.Translate(
+            "",
+            gdal.Open("../gcore/data/byte.tif"),
+            format="MEM",
+            scaleParams=[[0, 255, 0, 65535]],
+            unscale=True,
+            outputType=gdal.GDT_UInt16,
+        )
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdal_translate_lib_dict_arguments():
+
+    opt = gdal.TranslateOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+        metadataOptions=collections.OrderedDict(
+            (("AREA_OR_POINT", "Area"), ("TIFFTAG_XRESOLUTION", 123))
+        ),
+    )
+
+    co_idx = opt.index("-co")
+
+    assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+    mo_idx = opt.index("-mo")
+
+    assert opt[mo_idx : mo_idx + 4] == [
+        "-mo",
+        "AREA_OR_POINT=Area",
+        "-mo",
+        "TIFFTAG_XRESOLUTION=123",
+    ]
+
+
+###############################################################################
+# Test -ovr and RPC (https://github.com/OSGeo/gdal/issues/8386)
+
+
+def test_gdal_translate_ovr_rpc():
+
+    src_ds = gdal.Translate("", "../gcore/data/byte_rpc.tif", format="MEM")
+    src_ds.BuildOverviews("NEAR", [2])
+    ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0)
+    src_rpc = src_ds.GetMetadata("RPC")
+    ovr_rpc = ds.GetMetadata("RPC")
+    assert ovr_rpc
+    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(0.5 * float(src_rpc["LINE_OFF"]))
+    assert float(ovr_rpc["LINE_SCALE"]) == pytest.approx(
+        0.5 * float(src_rpc["LINE_SCALE"])
+    )
+    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(0.5 * float(src_rpc["SAMP_OFF"]))
+    assert float(ovr_rpc["SAMP_SCALE"]) == pytest.approx(
+        0.5 * float(src_rpc["SAMP_SCALE"])
+    )

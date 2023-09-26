@@ -15,14 +15,14 @@ Synopsis
 
 .. code-block::
 
-    gdal2xyz [-help]
-        [-skip factor]
-        [-srcwin xoff yoff xsize ysize]
-        [-b band]* [-allbands]
+    gdal2xyz [--help] [--help-general]
+        [-skip <factor>]
+        [-srcwin <xoff> <yoff> <xsize> <ysize>]
+        [-b <band>]... [-allbands]
         [-skipnodata]
         [-csv]
-        [-srcnodata value] [-dstnodata value]
-        src_dataset [dst_dataset]
+        [-srcnodata <value>] [-dstnodata <value>]
+        <src_dataset> [<dst_dataset>]
 
 Description
 -----------
@@ -36,6 +36,8 @@ for example:
     * Return the output as numpy arrays.
 
 .. program:: gdal2xyz
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -skip
 

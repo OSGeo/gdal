@@ -508,9 +508,10 @@ void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
     if (!CPL_INT64_FITS_ON_INT32(nFID))
         SetMetadataItem(OLMD_FID64, "YES");
 
+    const bool bIsUpdatable = IsUpdatable();
     SetUpdatable(true);  // Temporary toggle on updatable flag.
     CPL_IGNORE_RET_VAL(OGRMemLayer::SetFeature(poFeature));
-    SetUpdatable(poDS_->IsUpdatable());
+    SetUpdatable(bIsUpdatable);
     SetUpdated(false);
 }
 
@@ -526,22 +527,20 @@ void OGRGeoJSONLayer::DetectGeometryType()
     ResetReading();
     bool bFirstGeometry = true;
     OGRwkbGeometryType eLayerGeomType = wkbUnknown;
-    OGRFeature *poFeature = nullptr;
-    while ((poFeature = GetNextFeature()) != nullptr)
+    for (const auto &poFeature : *this)
     {
-        OGRGeometry *poGeometry = poFeature->GetGeometryRef();
+        const OGRGeometry *poGeometry = poFeature->GetGeometryRef();
         if (nullptr != poGeometry)
         {
             OGRwkbGeometryType eGeomType = poGeometry->getGeometryType();
-            if (!OGRGeoJSONUpdateLayerGeomType(this, bFirstGeometry, eGeomType,
+            if (!OGRGeoJSONUpdateLayerGeomType(bFirstGeometry, eGeomType,
                                                eLayerGeomType))
             {
-                delete poFeature;
                 break;
             }
         }
-        delete poFeature;
     }
+    GetLayerDefn()->SetGeomType(eLayerGeomType);
 
     ResetReading();
 }

@@ -333,9 +333,7 @@ def test_pdf_1(poppler_or_pdfium):
             "POLYGON ((338304.150125828920864 4896673.639421294443309,338304.177293475600891 4933414.799376524984837,382774.271384406310972 4933414.546264361590147,382774.767329963855445 4896674.273581005632877,338304.150125828920864 4896673.639421294443309))"
         )
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        print(neatline)
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom)
 
 
 ###############################################################################
@@ -344,14 +342,12 @@ def test_pdf_1(poppler_or_pdfium):
 
 def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -360,14 +356,12 @@ def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
 
 def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["DPI=300"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -379,14 +373,12 @@ def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
         )
-        ret = tst.testCreateCopy(
+        tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
-
-    return ret
 
 
 ###############################################################################
@@ -398,14 +390,12 @@ def test_pdf_ogcbp_dpi_300(poppler_or_pdfium):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
         )
-        ret = tst.testCreateCopy(
+        tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
-
-    return ret
 
 
 def test_pdf_ogcbp_lcc(poppler_or_pdfium):
@@ -453,14 +443,12 @@ def test_pdf_ogcbp_lcc(poppler_or_pdfium):
 
 def test_pdf_no_compression(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["COMPRESS=NONE"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -609,26 +597,22 @@ def test_pdf_jpeg_compression_rgba(poppler_or_pdfium):
 
 def test_pdf_predictor_2(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "utm.tif", 1, None, options=["PREDICTOR=2"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 def test_pdf_predictor_2_rgb(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "rgbsmall.tif", 1, None, options=["PREDICTOR=2"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -639,28 +623,24 @@ def test_pdf_tiled(poppler_or_pdfium):
     tst = gdaltest.GDALTest(
         "PDF", "utm.tif", 1, None, options=["COMPRESS=DEFLATE", "TILED=YES"]
     )
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 def test_pdf_tiled_128(poppler_or_pdfium):
     tst = gdaltest.GDALTest(
         "PDF", "utm.tif", 1, None, options=["BLOCKXSIZE=128", "BLOCKYSIZE=128"]
     )
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -671,14 +651,12 @@ def test_pdf_tiled_128(poppler_or_pdfium):
 def test_pdf_color_table(poppler_or_pdfium):
 
     tst = gdaltest.GDALTest("PDF", "small_world_pct.tif", 1, None)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -1023,13 +1001,7 @@ def _pdf_update_gcps(poppler_or_pdfium):
     expected_geom = ogr.Geometry(ogr.wkbPolygon)
     expected_geom.AddGeometry(expected_lr)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1158,10 +1130,7 @@ def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
         "POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))"
     )
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1221,13 +1190,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     # Test SetMetadataItem()
     ds = gdal.Open(out_filename, gdal.GA_Update)
@@ -1265,13 +1228,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1509,6 +1466,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
 # Test adding a OGR datasource
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr(poppler_or_pdfium):
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
     data = """id,foo,WKT,style
@@ -1613,6 +1571,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
 # Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr_with_reprojection(poppler_or_pdfium):
 
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
@@ -1807,7 +1766,7 @@ def test_pdf_write_huge(poppler_or_pdfium):
         ds = None
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=["DPI=72"])
         msg = gdal.GetLastErrorMsg()
         assert msg != ""
@@ -1821,7 +1780,7 @@ def test_pdf_write_huge(poppler_or_pdfium):
     for option in ["LEFT_MARGIN=14400", "TOP_MARGIN=14400"]:
         src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=[option])
         msg = gdal.GetLastErrorMsg()
         assert msg != ""
@@ -1854,12 +1813,9 @@ def test_pdf_overviews(poppler_or_pdfium):
     before = ds.GetRasterBand(1).GetOverviewCount()
     ds.GetRasterBand(1).GetOverview(-1)
     ds.GetRasterBand(1).GetOverview(10)
-    if before >= 1:
-        assert pdf_is_pdfium(), "No overview expected at this point!"
-        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == 5934
-    elif pdf_is_pdfium():
-        pytest.fail("Overview expected at this point!")
+    assert before >= 1
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    assert cs == 5934
     ds.BuildOverviews("NONE", [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
     assert after == 1
@@ -1879,12 +1835,12 @@ def test_pdf_password(poppler_or_pdfium_or_podofo):
     # owner_password
 
     # No password
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/pdf/byte_enc.pdf")
     assert ds is None
 
     # Wrong password
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/pdf/byte_enc.pdf", open_options=["USER_PWD=wrong_password"]
         )
@@ -1950,15 +1906,15 @@ def test_pdf_multipage(poppler_or_pdfium_or_podofo):
     ds2 = gdal.Open("PDF:2:data/pdf/byte_and_rgbsmall_2pages.pdf")
     assert ds2.RasterXSize == 50, "wrong width"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds3 = gdal.Open("PDF:0:data/pdf/byte_and_rgbsmall_2pages.pdf")
     assert ds3 is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds3 = gdal.Open("PDF:3:data/pdf/byte_and_rgbsmall_2pages.pdf")
     assert ds3 is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("PDF:1:/does/not/exist.pdf")
     assert ds is None
 
@@ -2014,6 +1970,7 @@ def test_pdf_pam_georef(poppler_or_pdfium):
 # Test XML composition
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_composition():
 
     xml_content = """<PDFComposition>
@@ -2248,7 +2205,7 @@ def test_pdf_composition_error_pdf_content_missing_filename(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2275,7 +2232,7 @@ def test_pdf_composition_error_pdf_content_non_existing(poppler_or_pdfium_or_pod
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2304,7 +2261,7 @@ def test_pdf_composition_error_pdf_content_missing_contents(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2333,7 +2290,7 @@ def test_pdf_composition_error_pdf_content_missing_contents_stream(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2344,6 +2301,7 @@ def test_pdf_composition_error_pdf_content_missing_contents_stream(
         )
     assert not out_ds
     assert gdal.GetLastErrorMsg() in (
+        "Missing Contents",
         "Missing Contents stream",
         "data/pdf/missing_stream.pdf is not a valid PDF file",
     )
@@ -2365,7 +2323,7 @@ def test_pdf_composition_error_pdf_content_missing_resources(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2720,7 +2678,7 @@ def test_pdf_composition_outline():
 def test_pdf_composition_error_missing_file():
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2739,7 +2697,7 @@ def test_pdf_composition_error_missing_page():
     xml_content = """<PDFComposition></PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2758,7 +2716,7 @@ def test_pdf_composition_error_missing_page_width():
     xml_content = """<PDFComposition><Page/></PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2777,7 +2735,7 @@ def test_pdf_composition_error_missing_page_content():
     xml_content = """<PDFComposition><Page><Width>1</Width><Height>1</Height></Page></PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2801,7 +2759,7 @@ def test_pdf_composition_error_invalid_layer_missing_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2825,7 +2783,7 @@ def test_pdf_composition_error_invalid_layer_missing_name():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2850,7 +2808,7 @@ def test_pdf_composition_error_duplicate_layer_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2879,7 +2837,7 @@ def test_pdf_composition_error_referencing_invalid_layer_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2915,7 +2873,7 @@ def test_pdf_composition_error_missing_srs():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2949,7 +2907,7 @@ def test_pdf_composition_error_missing_control_point():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2985,7 +2943,7 @@ def test_pdf_composition_error_missing_attribute_in_control_point():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3024,7 +2982,7 @@ def test_pdf_composition_error_invalid_bbox():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3050,7 +3008,7 @@ def test_pdf_composition_error_missing_dataset_attribute():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3076,7 +3034,7 @@ def test_pdf_composition_error_invalid_dataset():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3107,7 +3065,7 @@ def test_pdf_composition_duplicate_page_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3141,7 +3099,7 @@ def test_pdf_composition_outline_item_gotopage_action_missing_page_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3175,7 +3133,7 @@ def test_pdf_composition_outline_item_gotopage_action_pointing_to_invalid_page_i
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3212,7 +3170,7 @@ def test_pdf_composition_outline_item_setlayerstate_missing_layer_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3246,7 +3204,7 @@ def test_pdf_composition_outline_item_setlayerstate_pointing_to_invalid_layer_id
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,

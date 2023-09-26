@@ -81,12 +81,12 @@ def test_misc_2():
 @pytest.mark.require_driver("PAUX")
 def test_misc_3():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenShared("../gdrivers/data/paux/small16.aux")
     ds.GetRasterBand(1).Checksum()
     cache_size = gdal.GetCacheUsed()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds2 = gdal.OpenShared("../gdrivers/data/paux/small16.aux")
     ds2.GetRasterBand(1).Checksum()
     cache_size2 = gdal.GetCacheUsed()
@@ -104,7 +104,7 @@ def test_misc_3():
 
 def test_misc_4():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         # Test a few invalid argument
         drv = gdal.GetDriverByName("GTiff")
@@ -205,7 +205,7 @@ def _misc_5_internal(drv, datatype, nBands):
 
 def test_misc_5():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         try:
             shutil.rmtree("tmp/tmp")
@@ -382,7 +382,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                                     error_detected = True
                             if not error_detected:
                                 msg = (
-                                    "write error not decteded with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d"
+                                    "write error not detected with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d"
                                     % (
                                         drv.ShortName,
                                         nBands,
@@ -391,7 +391,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                                     )
                                 )
                                 print(msg)
-                                gdaltest.post_reason(msg)
 
                             fl = gdal.ReadDirRecursive("/vsimem/test_truncate")
                             if fl is not None:
@@ -458,7 +457,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
 def test_misc_6():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         try:
             shutil.rmtree("tmp/tmp")
@@ -482,10 +481,7 @@ def test_misc_6():
             datatype = gdal.GDT_Byte
             setDriversDone = set()
             for nBands in range(6):
-                ret = misc_6_internal(datatype, nBands, setDriversDone)
-                if ret != "success":
-                    gdal.PopErrorHandler()
-                    return ret
+                misc_6_internal(datatype, nBands, setDriversDone)
 
             nBands = 1
             for datatype in (
@@ -500,10 +496,7 @@ def test_misc_6():
                 gdal.GDT_CFloat32,
                 gdal.GDT_CFloat64,
             ):
-                ret = misc_6_internal(datatype, nBands, setDriversDone)
-                if ret != "success":
-                    gdal.PopErrorHandler()
-                    return ret
+                misc_6_internal(datatype, nBands, setDriversDone)
 
 
 ###############################################################################
@@ -676,7 +669,7 @@ def test_misc_12():
             )
 
             # Test to detect crashes
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ds = drv.CreateCopy("/nonexistingpath" + get_filename(drv, ""), src_ds)
             if ds is None and gdal.GetLastErrorMsg() == "":
                 gdal.Unlink("/vsimem/misc_12_src.tif")
@@ -727,7 +720,7 @@ def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("ESRI Shapefile").CreateCopy(
             "/vsimem/out.shp", ds
         )
@@ -735,7 +728,7 @@ def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None
 
@@ -867,6 +860,110 @@ def test_misc_15():
     finally:
         gdal.SetErrorHandler("CPLDefaultErrorHandler")
         gdal.SetConfigOption("CPL_DEBUG", prev_debug)
+
+
+###############################################################################
+# Test config option context managers
+
+
+def test_misc_config_context_mgrs_1():
+    # Make sure that config_options context manager does not convert a
+    # global config option to a thread-local config option
+
+    try:
+        gdal.SetConfigOption("A", "1")
+
+        assert gdal.GetConfigOption("A") == "1"
+        assert gdal.GetThreadLocalConfigOption("A") is None
+
+        # temporarily set new thread-local value for A
+        with gdal.config_option("A", "2", thread_local=True):
+            assert gdal.GetConfigOption("A") == "2"
+            assert gdal.GetThreadLocalConfigOption("A") == "2"
+
+        # value of A is restored, and thread-local value is unset
+        assert gdal.GetConfigOption("A") == "1"
+        assert gdal.GetThreadLocalConfigOption("A") is None
+
+    finally:
+        gdal.SetConfigOption("A", None)
+
+
+def test_misc_config_context_mgrs_2():
+    # Make sure that config_options context manager does not convert a
+    # thread-local config option to a global config option
+
+    try:
+        gdal.SetThreadLocalConfigOption("B", "5")
+        assert gdal.GetConfigOption("B") == "5"
+        assert gdal.GetThreadLocalConfigOption("B") == "5"
+
+        # temporarily set new global value for B
+        # this has no effect, because the thread-local value overrides it
+        with gdal.config_option("B", "6", thread_local=False):
+            assert gdal.GetConfigOption("B") == "5"
+            assert gdal.GetThreadLocalConfigOption("B") == "5"
+
+        # value of B is restored
+        assert gdal.GetThreadLocalConfigOption("B") == "5"
+
+        gdal.SetThreadLocalConfigOption("B", None)
+        assert gdal.GetConfigOption("B") is None
+
+    finally:
+        gdal.SetThreadLocalConfigOption("B", None)
+
+
+def test_misc_config_context_mgrs_3():
+    # Make sure that config_options correctly restores state when
+    # a configuration option is set in both thread-local and global
+    # contexts.
+
+    try:
+        gdal.SetConfigOption("C", "GLOBAL")
+        gdal.SetThreadLocalConfigOption("C", "TL")
+
+        # temporarily set new global value for C
+        # this has no effect, because the thread-local value overrides it
+        with gdal.config_option("C", "XX", thread_local=False):
+            assert gdal.GetConfigOption("C") == "TL"
+            assert gdal.GetThreadLocalConfigOption("C") == "TL"
+
+        # value of C is restored
+        assert gdal.GetThreadLocalConfigOption("C") == "TL"
+
+        # clear thread-local value of C, exposing global value
+        gdal.SetThreadLocalConfigOption("C", None)
+        assert gdal.GetConfigOption("C") == "GLOBAL"
+
+    finally:
+        gdal.SetConfigOption("C", None)
+        gdal.SetThreadLocalConfigOption("C", None)
+
+
+###############################################################################
+# Test GetConfigOptions
+
+
+def test_misc_get_config_options():
+
+    assert gdal.GetConfigOptions() == {}
+
+    try:
+        gdal.SetConfigOption("A", "1")
+
+        assert gdal.GetConfigOptions() == {"A": "1"}
+
+        gdal.SetConfigOption("B", "2")
+
+        with gdal.config_options({"A": "9", "C": "8"}):
+            assert gdal.GetConfigOptions() == {"A": "9", "B": "2", "C": "8"}
+
+        assert gdal.GetConfigOptions() == {"A": "1", "B": "2"}
+
+    finally:
+        gdal.SetConfigOption("A", None)
+        gdal.SetConfigOption("B", None)
 
 
 ###############################################################################

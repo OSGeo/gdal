@@ -39,6 +39,21 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("KMLSUPEROVERLAY")
 
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    yield
+
+    with gdaltest.disable_exceptions():
+        gdal.Unlink("/vsimem/0/0/0.png")
+        gdal.Unlink("/vsimem/0/0/0.kml")
+        gdal.Unlink("/vsimem/0/0")
+        gdal.Unlink("/vsimem/0")
+        gdal.Unlink("/vsimem/kmlout.kml")
+        gdal.Unlink("/vsimem/kmlout.kmz")
+
+
 ###############################################################################
 # Test CreateCopy() to a KMZ file
 
@@ -49,7 +64,7 @@ def test_kmlsuperoverlay_1():
         "KMLSUPEROVERLAY", "small_world.tif", 1, 30111, options=["FORMAT=PNG"]
     )
 
-    return tst.testCreateCopy(new_filename="/vsimem/kmlout.kmz")
+    tst.testCreateCopy(new_filename="/vsimem/kmlout.kmz")
 
 
 ###############################################################################
@@ -62,7 +77,7 @@ def test_kmlsuperoverlay_2():
         "KMLSUPEROVERLAY", "small_world.tif", 1, 30111, options=["FORMAT=PNG"]
     )
 
-    return tst.testCreateCopy(new_filename="/vsimem/kmlout.kml")
+    tst.testCreateCopy(new_filename="/vsimem/kmlout.kml")
 
 
 ###############################################################################
@@ -484,17 +499,3 @@ def test_kmlsuperoverlay_8():
     shutil.rmtree("tmp/2")
     shutil.rmtree("tmp/3")
     os.remove("tmp/tmp.kml")
-
-
-###############################################################################
-# Cleanup
-
-
-def test_kmlsuperoverlay_cleanup():
-
-    gdal.Unlink("/vsimem/0/0/0.png")
-    gdal.Unlink("/vsimem/0/0/0.kml")
-    gdal.Unlink("/vsimem/0/0")
-    gdal.Unlink("/vsimem/0")
-    gdal.Unlink("/vsimem/kmlout.kml")
-    gdal.Unlink("/vsimem/kmlout.kmz")

@@ -136,21 +136,18 @@ def test_gdallocationinfo_5(gdallocationinfo_path):
 # Test -overview
 
 
-def test_gdallocationinfo_6(gdallocationinfo_path):
+def test_gdallocationinfo_6(gdallocationinfo_path, tmp_path):
+
+    tmp_tif = str(tmp_path / "test_gdallocationinfo_6.tif")
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.GetDriverByName("GTiff").CreateCopy(
-        "tmp/test_gdallocationinfo_6.tif", src_ds
-    )
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(tmp_tif, src_ds)
     ds.BuildOverviews("AVERAGE", overviewlist=[2])
     ds = None
     src_ds = None
 
-    ret = gdaltest.runexternal(
-        gdallocationinfo_path + " tmp/test_gdallocationinfo_6.tif 10 10 -overview 1"
-    )
+    ret = gdaltest.runexternal(f"{gdallocationinfo_path} {tmp_tif} 10 10 -overview 1")
 
-    gdal.GetDriverByName("GTiff").Delete("tmp/test_gdallocationinfo_6.tif")
     expected_ret = """Value: 130"""
     assert expected_ret in ret
 

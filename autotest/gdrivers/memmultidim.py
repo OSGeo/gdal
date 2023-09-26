@@ -88,7 +88,7 @@ def test_mem_md_subgroup():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateGroup("")  # unnamed group not supported
     with pytest.raises(ValueError):
         assert not rg.CreateGroup(None)
@@ -127,7 +127,7 @@ def test_mem_md_array_unnamed_array():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     edt = gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateMDArray("", [], edt)
 
 
@@ -139,7 +139,7 @@ def test_mem_md_array_duplicated_array_name():
     assert rg.CreateMDArray(
         "same_name", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateMDArray(
             "same_name", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
         )
@@ -263,7 +263,7 @@ def test_mem_md_array_single_dim():
     assert myarray.SetNoDataValue(1) == gdal.CE_None
     assert myarray.GetNoDataValue() == 1
     assert myarray.SetNoDataValueRaw(struct.pack("B", 127)) == gdal.CE_None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert myarray.SetNoDataValueRaw(struct.pack("h", 127)) != gdal.CE_None
     assert struct.unpack("B", myarray.GetNoDataValueAsRaw()) == (127,)
 
@@ -304,7 +304,7 @@ def test_mem_md_array_single_dim():
 
     assert myarray.DeleteNoDataValue() == gdal.CE_None
     assert myarray.GetNoDataValueAsDouble() is None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert myarray.GetNoDataValueAsString() is None
 
     assert myarray.SetUnit("foo") == gdal.CE_None
@@ -381,7 +381,7 @@ def test_mem_md_datatypes():
         "y", 4, gdal.ExtendedDataType.Create(gdal.GDT_Int32)
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.ExtendedDataType.CreateCompound("mytype", 8, []) is None
         assert (
             gdal.ExtendedDataType.CreateCompound("mytype", 2000 * 1000 * 1000, [comp0])
@@ -406,7 +406,7 @@ def test_mem_md_datatypes():
     assert not compound_dt.Equals(dt_byte)
     assert not dt_byte.Equals(compound_dt)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Too short size
         assert not gdal.ExtendedDataType.CreateCompound("mytype", 7, [comp0, comp1])
 
@@ -475,7 +475,7 @@ def test_mem_md_array_compoundtype():
     assert len(got_data) == 8
     assert struct.unpack("i" * 2, got_data) == (1000000, -1000000)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not myarray.GetView('["z')
         assert not myarray.GetView('["z"')
         assert not myarray.GetView('["z"]')
@@ -510,7 +510,7 @@ def test_mem_md_array_compoundtype():
     assert len(got_data) == 8
     assert struct.unpack("i" * 2, got_data) == (1000000, -1000000)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not y_ar.GetView('["y"]')
 
     assert y_ar.AdviseRead() == gdal.CE_None
@@ -680,7 +680,7 @@ def test_mem_md_array_read_write_errors():
     assert myarray
 
     assert myarray.Read([0, 0, 0], [1, 1, 1], [1, 1, 1], [0, 0, 0])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         # Invalid number of values in array_idx array
         assert not myarray.Read([0, 0], [1, 1, 1], [1, 1, 1], [0, 0, 0])
@@ -728,7 +728,7 @@ def test_mem_md_array_read_write_errors():
 
     data = struct.pack("d" * 1, 25.0)
     float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert myarray.Write("", [1, 2, 3], [1, 1, 1]) == gdal.CE_Failure
         assert (
             myarray.Write(data[0:7], [1, 2, 3], [1, 1, 1], buffer_datatype=float64dt)
@@ -742,7 +742,7 @@ def test_mem_md_invalid_dims():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     assert rg.CreateDimension("dim1", None, None, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # empty name
         assert not rg.CreateDimension("", None, None, 1)
         # existing dim
@@ -774,7 +774,7 @@ def test_mem_md_array_too_large():
     ds = drv.CreateMultiDimensional("myds")
     rg = ds.GetRootGroup()
     dim = rg.CreateDimension("dim0", None, None, (1 << 64) - 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateMDArray(
             "myarray", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
         )
@@ -788,7 +788,7 @@ def test_mem_md_array_too_large_overflow_dim():
     dim0 = rg.CreateDimension("dim0", None, None, 1 << 25)
     dim1 = rg.CreateDimension("dim1", None, None, 1 << 25)
     dim2 = rg.CreateDimension("dim2", None, None, 1 << 25)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateMDArray(
             "myarray", [dim0, dim1, dim2], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
         )
@@ -835,7 +835,7 @@ def test_mem_md_group_attribute_single_numeric():
     rg = ds.GetRootGroup()
 
     float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateAttribute("", [1], float64dt)  # unnamed attr not supported
     with pytest.raises(ValueError):
         assert not rg.CreateAttribute(None, [1], float64dt)
@@ -863,7 +863,7 @@ def test_mem_md_group_attribute_single_numeric():
     assert attr.Read() == 2
     assert attr.Write([2.25]) == gdal.CE_None
     assert attr.Read() == 2.25
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert attr.Write([]) != gdal.CE_None
         assert attr.Write([1, 2]) != gdal.CE_None
 
@@ -951,7 +951,7 @@ def test_mem_md_array_attribute():
     )
 
     float64dt = gdal.ExtendedDataType.Create(gdal.GDT_Float64)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not myarray.CreateAttribute(
             "", [1], float64dt
         )  # unnamed attr not supported
@@ -977,7 +977,7 @@ def test_mem_md_array_slice():
 
     ar = rg.CreateMDArray("nodim", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
     assert ar.Write(struct.pack("B", 1)) == gdal.CE_None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar[:]
 
     ar = rg.CreateMDArray(
@@ -994,7 +994,7 @@ def test_mem_md_array_slice():
     )
     assert attr.Write(1) == gdal.CE_None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.GetView("")
         assert not ar.GetView("x")
         assert not ar.GetView("[")
@@ -1284,11 +1284,11 @@ def test_mem_md_array_as_classic_dataset():
     dim_y.SetIndexingVariable(dim_y_var)
 
     ar = rg.CreateMDArray("nodim", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.AsClassicDataset(0, 0)
 
     ar = rg.CreateMDArray("1d", [dim_x], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.AsClassicDataset(1, 0)
     ds = ar.AsClassicDataset(0, 0)
     assert ds.RasterXSize == 3
@@ -1311,7 +1311,7 @@ def test_mem_md_array_as_classic_dataset():
     ar = rg.CreateMDArray(
         "2d_string", [dim_y, dim_x], gdal.ExtendedDataType.CreateString()
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.AsClassicDataset(0, 1)
 
     # 2D
@@ -1324,7 +1324,7 @@ def test_mem_md_array_as_classic_dataset():
     attr.Write(1.25)
     attr = ar.CreateAttribute("attr_strings", [2], gdal.ExtendedDataType.CreateString())
     attr.Write(["foo", "bar"])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.AsClassicDataset(0, 0)
         assert not ar.AsClassicDataset(0, 2)
         assert not ar.AsClassicDataset(2, 0)
@@ -1471,7 +1471,7 @@ def test_mem_md_array_transpose():
     data = array.array("H", list(range(24))).tobytes()
     assert ar.Write(data) == gdal.CE_None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.Transpose([])  # 0 axis
         assert not ar.Transpose([0, 1])  # missing axis
         assert not ar.Transpose([0, 1, 2, 3])  # too many axis
@@ -1931,7 +1931,7 @@ def test_mem_md_array_get_mask():
         "myarray_string", [dim0], gdal.ExtendedDataType.CreateString()
     )
     # Non-numeric array unsupported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not myarray.GetMask()
 
     myarray = rg.CreateMDArray(
@@ -1943,7 +1943,7 @@ def test_mem_md_array_get_mask():
     mask = myarray.GetMask()
     assert mask.GetOffset() is None
     assert mask.GetScale() is None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert mask.Write(mask.Read()) == gdal.CE_Failure
     assert mask.GetNoDataValueAsRaw() is None
     assert mask.GetSpatialRef() is None
@@ -1978,6 +1978,7 @@ def test_mem_md_array_get_mask():
 
     # Test no data value
     myarray.SetNoDataValueDouble(10)
+    mask = myarray.GetMask()
     expected_data = [1] * 24
     expected_data[10] = 0
     assert [x for x in struct.unpack("B" * 24, mask.Read())] == expected_data
@@ -2025,6 +2026,7 @@ def test_mem_md_array_get_mask():
     assert attr.Write(2) == gdal.CE_None
     attr = myarray.CreateAttribute("valid_max", [1], bytedt)
     assert attr.Write(22) == gdal.CE_None
+    mask = myarray.GetMask()
     expected_data = [1] * 24
     expected_data[0] = 0
     expected_data[1] = 0
@@ -2102,6 +2104,153 @@ def test_mem_md_array_get_mask():
         assert [
             x for x in struct.unpack("B" * 2, mask.Read())
         ] == expected, myarray.GetName()
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_array_get_mask_unmask_flags_option_flag_values_only():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    myarray = rg.CreateMDArray(
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+
+    with pytest.raises(Exception, match="no flag_meanings attribute"):
+        myarray.GetMask(["UNMASK_FLAGS=bar"])
+
+    flag_meanings = myarray.CreateAttribute(
+        "flag_meanings", [], gdal.ExtendedDataType.CreateString()
+    )
+
+    with pytest.raises(Exception, match="Cannot read flag_meanings attribute"):
+        myarray.GetMask(["UNMASK_FLAGS=bar"])
+
+    flag_meanings.Write("one two _255")
+    with pytest.raises(
+        Exception, match="Cannot find flag_values and/or flag_masks attribute"
+    ):
+        myarray.GetMask(["UNMASK_FLAGS=one"])
+
+    flag_values = myarray.CreateAttribute(
+        "flag_values", [1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    with pytest.raises(
+        Exception,
+        match="Number of values in flag_values attribute is different from the one in flag_meanings",
+    ):
+        myarray.GetMask(["UNMASK_FLAGS=one"])
+
+    myarray.DeleteAttribute("flag_values")
+    flag_values = myarray.CreateAttribute(
+        "flag_values", [3], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_values.Write(array.array("h", [1, 2, 255]))
+
+    with pytest.raises(Exception, match="Cannot fing flag three in flag_meanings"):
+        myarray.GetMask(["UNMASK_FLAGS=three"])
+
+    data = array.array("h", list(range(2 * 3))).tobytes()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=two"])
+    assert array.array("B", mask.Read()).tolist() == [0, 0, 1, 0, 0, 0]
+    assert array.array(
+        "h", mask.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Int16))
+    ).tolist() == [0, 0, 1, 0, 0, 0]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=two,one"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 1, 0, 0, 0]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=_255"])
+    assert array.array("B", mask.Read()).tolist() == [0, 0, 0, 0, 0, 0]
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_array_get_mask_unmask_flags_option_flag_masks_only():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    myarray = rg.CreateMDArray(
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+
+    flag_meanings = myarray.CreateAttribute(
+        "flag_meanings", [], gdal.ExtendedDataType.CreateString()
+    )
+    flag_meanings.Write("bit_0 bit_1 bit_7")
+
+    flag_masks = myarray.CreateAttribute(
+        "flag_masks", [1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    with pytest.raises(
+        Exception,
+        match="Number of values in flag_masks attribute is different from the one in flag_meanings",
+    ):
+        myarray.GetMask(["UNMASK_FLAGS=one"])
+
+    myarray.DeleteAttribute("flag_masks")
+    flag_masks = myarray.CreateAttribute(
+        "flag_masks", [3], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_masks.Write(array.array("h", [1 << 0, 1 << 1, 1 << 7]))
+
+    data = array.array("h", list(range(2 * 3))).tobytes()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=bit_0"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 0, 1, 0, 1]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=bit_1"])
+    assert array.array("B", mask.Read()).tolist() == [0, 0, 1, 1, 0, 0]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=bit_1,bit_0"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 1, 1, 0, 1]
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_array_get_mask_unmask_flags_option_flag_values_and_masks():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    myarray = rg.CreateMDArray(
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+
+    flag_meanings = myarray.CreateAttribute(
+        "flag_meanings", [], gdal.ExtendedDataType.CreateString()
+    )
+    flag_meanings.Write("valid invalid_1 invalid_2 invalid_3")
+
+    flag_values = myarray.CreateAttribute(
+        "flag_values", [4], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_values.Write(array.array("h", [1, (1 << 1), (2 << 1), (3 << 1)]))
+
+    flag_masks = myarray.CreateAttribute(
+        "flag_masks", [4], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_masks.Write(array.array("h", [1, 6, 6, 6]))
+
+    data = array.array("h", [1, (1 << 1), (2 << 1), (3 << 1), 1, 1]).tobytes()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=valid"])
+    assert array.array("B", mask.Read()).tolist() == [1, 0, 0, 0, 1, 1]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=invalid_1"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 0, 0, 0, 0]
 
 
 def test_mem_md_array_resolvemdarray():
@@ -2353,7 +2502,7 @@ def test_mem_md_getcoordinatevariables():
     assert len(coordVars) == 3
 
     assert coordinates.WriteString("other non_existing") == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         coordVars = ar.GetCoordinateVariables()
         assert len(coordVars) == 1
 
@@ -2367,7 +2516,7 @@ def test_mem_md_resize_dim_wrong_new_size(new_size):
     xDim = rg.CreateDimension("x", None, None, 4)
     v = rg.CreateMDArray("v", [xDim], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
     v.Write(struct.pack("d" * 4, 1, 2, 3, 4))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert v.Resize(new_size) == gdal.CE_Failure
 
 
@@ -2379,7 +2528,7 @@ def test_mem_md_resize_dim_wrong_too_big_allocation_before_malloc():
     xDim = rg.CreateDimension("x", None, None, 4)
     v = rg.CreateMDArray("v", [xDim], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
     v.Write(struct.pack("d" * 4, 1, 2, 3, 4))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert v.Resize([1 << 63]) == gdal.CE_Failure
 
 
@@ -2393,7 +2542,7 @@ def test_mem_md_resize_dim_wrong_too_big_allocation_at_malloc():
     v = rg.CreateMDArray("v", [xDim], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
     v.Write(struct.pack("d" * 4, 1, 2, 3, 4))
     sizeof_double = 8
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert v.Resize([sys.maxsize // sizeof_double]) == gdal.CE_Failure
 
 
@@ -2490,7 +2639,7 @@ def test_mem_md_resize_arbitrary_dim(new_size, new_values):
     v.Write(struct.pack("d" * 8, 1, 2, 3, 4, 5, 6, 7, 8))
     v2.Write(struct.pack("d" * 8, 1, 2, 3, 4, 5, 6, 7, 8))
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert v.Resize([1, 1 << 63, xDim.GetSize()]) == gdal.CE_Failure
 
     assert v.Resize([1, new_size, xDim.GetSize()]) == gdal.CE_None
@@ -2562,7 +2711,7 @@ def test_mem_md_resize_dim_referenced_twice_error():
     v = rg.CreateMDArray(
         "v", [xDim, xDim], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert v.Resize([2, 3]) == gdal.CE_Failure
         assert v.Resize([3, 2]) == gdal.CE_Failure
 

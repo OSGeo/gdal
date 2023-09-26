@@ -10156,6 +10156,53 @@ public class ogr:public static Geometry ForceToMultiPoint(Geometry geom)
  */
 public class ogr:public static Geometry ForceToMultiLineString(Geometry geom)
 
+/** Creates a new coded field domain.
+ *
+ * This is the same as the C++ method OGRCodedFieldDomain::OGRCodedFieldDomain()
+ *
+ * @param name           Domain name. Should not be NULL.
+ * @param description    Domain description (can be NULL)
+ * @param type           Field type. Generally numeric. Potentially OFTDateTime
+ * @param subtype        Field subtype.
+ * @param enumeration    Enumeration as (code, value) pairs. Should not be
+ *                       NULL. The enumeration will be copied.
+ *
+ * @return new field domain.
+ * @since Java bindings 3.8.0
+ */
+public class ogr:public static FieldDomain CreateCodedFieldDomain(String name, String description, int type, int subtype, java.util.HashMap<String, String> enumeration)
+
+
+/**
+ * Definition of a field domain.
+ *
+ * A field domain is a set of constraints that apply to one or several fields.
+ *
+ * This is a concept found in
+ * <a href="https://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/an-overview-of-attribute-domains.htm">File
+ * Geodatabase</a> or GeoPackage (using the <a href="http://www.geopackage.org/spec/#extension_schema">schema extension</a>)
+ * for example.
+ *
+ * A field domain can be:
+ * <ul>
+ * <li>OGRCodedFieldDomain: an enumerated list of (code, value) tuples.</li>
+ * <li>OGRRangeFieldDomain: a range constraint (min, max).</li>
+ * <li>OGRGlobFieldDomain: a glob expression.</li>
+ * </ul>
+ *
+ * @since GDAL 3.3
+ */
+public class FieldDomain
+
+/** Get the enumeration as (code, value) pairs.
+ *
+ * This is the same as the C++ method OGRCodedFieldDomain::GetEnumeration()
+ *
+ * @return the (code, value) pairs, or nullptr in case of error.
+ * @since Java bindings 3.8.0
+ */
+public class FieldDomain:public java.util.HashMap<String, String> GetEnumeration()
+
 /* Class SpatialReference */
 
 /**
@@ -11567,7 +11614,7 @@ public class SpatialReference:public int SetProjection(String name)
  * <p>
  * Adds a new PARAMETER under the PROJCS with the indicated name and value.
  * <p>
- * Please check <a href="http://www.remotesensing.org/geotiff/proj_list">http://www.remotesensing.org/geotiff/proj_list</a> pages for
+ * Please check <a href="https://gdal.org/proj_list">https://gdal.org/proj_list</a> pages for
  * legal parameter names for specific projections.
  *
  * @param name the parameter name, which should be selected from

@@ -43,7 +43,7 @@ def test_pnm_1():
 
     tst = gdaltest.GDALTest("PNM", "pnm/byte.pgm", 1, 4672)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -54,7 +54,7 @@ def test_pnm_2():
 
     tst = gdaltest.GDALTest("PNM", "pnm/byte.pgm", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -65,7 +65,7 @@ def test_pnm_3():
 
     tst = gdaltest.GDALTest("PNM", "pnm/rgbsmall.ppm", 2, 21053)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -76,14 +76,14 @@ def test_pnm_4():
 
     tst = gdaltest.GDALTest("PNM", "pnm/rgbsmall.ppm", 2, 21053)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 @pytest.mark.parametrize("nbands", [1, 3])
 @gdaltest.disable_exceptions()
 def test_pnm_write_non_standard_extension(nbands):
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("PNM").Create("foo.foo", 1, 1, nbands)
     assert gdal.GetLastErrorType() != 0
     gdal.Unlink("foo.foo")

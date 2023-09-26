@@ -188,10 +188,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                            CSLConstList papszOptions) override;
 
     // "semi private" methods.
-    void MarkPamDirty()
-    {
-        nPamFlags |= GPF_DIRTY;
-    }
+    void MarkPamDirty();
     GDALDatasetPamInfo *GetPamInfo()
     {
         return psPam;
@@ -413,8 +410,8 @@ class CPL_DLL GDALPamMDArray : public GDALMDArray
                    const std::shared_ptr<GDALPamMultiDim> &poPam);
 
     bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
-                       double dfMean, double dfStdDev,
-                       GUInt64 nValidCount) override;
+                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       CSLConstList papszOptions) override;
 
   public:
     const std::shared_ptr<GDALPamMultiDim> &GetPAM() const

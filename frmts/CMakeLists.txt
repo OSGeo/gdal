@@ -82,7 +82,6 @@ gdal_optional_format(grib "WMO General Regularly-distributed Information in Bina
 gdal_optional_format(bmp "Microsoft Windows Device Independent Bitmap")
 gdal_optional_format(tga "TGA")
 gdal_optional_format(stacta "STACTA")
-gdal_optional_format(ogcapi "OGCAPI")
 
 # optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
@@ -114,6 +113,7 @@ gdal_dependent_format(fits "FITS Driver" "GDAL_USE_CFITSIO")
 gdal_dependent_format(hdf5 "Hierarchical Data Format Release 5 (HDF5)" "GDAL_USE_HDF5")
 gdal_dependent_format(plmosaic "PLMosaic (Planet Labs Mosaics API)" "GDAL_USE_CURL")
 gdal_dependent_format(wms "Web Map Services" "GDAL_USE_CURL")
+gdal_dependent_format(ogcapi "OGCAPI" "GDAL_USE_CURL")
 gdal_dependent_format(gta "Generic Tagged Arrays" "GDAL_USE_GTA")
 gdal_dependent_format(webp "WebP" "GDAL_USE_WEBP")
 gdal_dependent_format(hdf4 "Hierarchical Data Format Release 4 (HDF4)" "GDAL_USE_HDF4")

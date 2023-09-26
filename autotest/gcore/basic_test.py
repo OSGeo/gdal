@@ -61,7 +61,7 @@ def matches_non_existing_error_msg(msg):
 
 
 def test_basic_test_1():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("non_existing_ds", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -90,7 +90,7 @@ def test_basic_test_strace_non_existing_file():
 
 
 def test_basic_test_2():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("non_existing_ds", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -98,7 +98,7 @@ def test_basic_test_2():
 
 
 def test_basic_test_3():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -106,7 +106,7 @@ def test_basic_test_3():
 
 
 def test_basic_test_4():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -114,13 +114,18 @@ def test_basic_test_4():
 
 
 def test_basic_test_5():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/doctype.xml", gdal.GA_ReadOnly)
     last_error = gdal.GetLastErrorMsg()
     expected = "`data/doctype.xml' not recognized as a supported file format"
     if ds is None and expected in last_error:
         return
     pytest.fail()
+
+
+def test_basic_test_5bis():
+    with pytest.raises(RuntimeError, match="not a string"):
+        gdal.Open(12345)
 
 
 ###############################################################################
@@ -293,7 +298,7 @@ def test_basic_test_11():
     ds = gdal.OpenEx("data/byte.tif", allowed_drivers=["PNG"])
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx("data/byte.tif", open_options=["FOO"])
     assert ds is not None
 
@@ -319,7 +324,7 @@ def test_basic_test_11():
     ds = gdal.OpenEx("non existing")
     assert ds is None and gdal.GetLastErrorMsg() == ""
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx("non existing", gdal.OF_VERBOSE_ERROR)
     assert ds is None and gdal.GetLastErrorMsg() != ""
 
@@ -414,7 +419,7 @@ def test_basic_test_14():
     ds.SetMetadata(["foo=bar"])
     assert ds.GetMetadata_List() == ["foo=bar"]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             ds.SetMetadata([5])
 
@@ -424,7 +429,7 @@ def test_basic_test_14():
     ds.SetMetadata({"foo": b"baz"})
     assert ds.GetMetadata_List() == ["foo=baz"]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             ds.SetMetadata({"foo": b"zero_byte_in_string\0"})
 
@@ -490,24 +495,24 @@ def test_basic_test_15():
     mem_driver = gdal.GetDriverByName("MEM")
 
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.GetDriverByName("MEM").CreateCopy(
                 "", gdal.GetDriverByName("MEM").Create("", 1, 1), callback="foo"
             )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = mem_driver.CreateCopy(
             "", mem_driver.Create("", 1, 1), callback=basic_test_15_cbk_no_argument
         )
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = mem_driver.CreateCopy(
             "", mem_driver.Create("", 1, 1), callback=basic_test_15_cbk_no_ret
         )
     assert ds is not None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = mem_driver.CreateCopy(
             "", mem_driver.Create("", 1, 1), callback=basic_test_15_cbk_bad_ret
         )
@@ -526,12 +531,68 @@ def test_basic_test_16():
 
     gdal.ErrorReset()
     gdal.Translate("/vsimem/temp.tif", "data/byte.tif", options="-co BLOCKYSIZE=10")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             "/vsimem/temp.tif", gdal.OF_UPDATE, open_options=["@NUM_THREADS=INVALID"]
         )
     gdal.Unlink("/vsimem/temp.tif")
     assert "Invalid value for NUM_THREADS: INVALID" in gdal.GetLastErrorMsg()
+
+
+def test_basic_dict_open_options():
+
+    ds1 = gdal.Open("data/byte.tif")
+
+    ds2 = gdal.OpenEx("data/byte.tif", open_options={"GEOREF_SOURCES": "TABFILE"})
+
+    assert ds1.GetGeoTransform() != ds2.GetGeoTransform()
+
+
+@pytest.mark.parametrize(
+    "create_tfw", (True, False, "TRUE", "FALSE", "YES", "NO", "ON", "OFF")
+)
+def test_basic_dict_create_options(tmp_vsimem, create_tfw):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "test_basic_dict_create_options.tif",
+        1,
+        1,
+        options={"TFW": create_tfw},
+    ) as ds:
+        gt = (0.0, 5.0, 0.0, 5.0, 0.0, -5.0)
+        ds.SetGeoTransform(gt)
+
+    if create_tfw in (True, "TRUE", "YES", "ON"):
+        assert (
+            gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_options.tfw") is not None
+        )
+    else:
+        assert gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_options.tfw") is None
+
+
+@pytest.mark.parametrize("create_tfw", (True, False))
+def test_basic_dict_create_copy_options(tmp_vsimem, create_tfw):
+
+    src_ds = gdal.Open("data/byte.tif")
+
+    with gdal.GetDriverByName("GTiff").CreateCopy(
+        tmp_vsimem / "test_basic_dict_create_copy_options.tif",
+        src_ds,
+        options={"TFW": create_tfw},
+    ) as ds:
+        gt = (0.0, 5.0, 0.0, 5.0, 0.0, -5.0)
+        ds.SetGeoTransform(gt)
+
+    if create_tfw:
+        assert (
+            gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_copy_options.tfw")
+            is not None
+        )
+    else:
+        assert (
+            gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_copy_options.tfw")
+            is None
+        )
 
 
 def test_gdal_getspatialref():
@@ -759,7 +820,7 @@ def test_basic_test_DontUseExceptions():
 
 
 def test_create_context_manager(tmp_path):
-    fname = str(tmp_path / "out.tif")
+    fname = tmp_path / "out.tif"
 
     drv = gdal.GetDriverByName("GTiff")
     with drv.Create(fname, xsize=10, ysize=10, bands=1, eType=gdal.GDT_Float32) as ds:
@@ -771,3 +832,67 @@ def test_create_context_manager(tmp_path):
 
     ds_in = gdal.Open(fname)
     assert ds_in.GetRasterBand(1).Checksum() != 0
+
+
+def test_band_use_after_dataset_close_1():
+    ds = gdal.Open("data/byte.tif")
+    band = ds.GetRasterBand(1)
+    del ds
+
+    # Make sure "del ds" has invalidated "band" so we don't crash here
+    with pytest.raises(Exception):
+        band.Checksum()
+
+
+def test_band_use_after_dataset_close_2():
+    with gdal.Open("data/byte.tif") as ds:
+        band = ds.GetRasterBand(1)
+
+    # Make sure ds.__exit__() has invalidated "band" so we don't crash here
+    with pytest.raises(Exception):
+        band.Checksum()
+
+
+def test_mask_band_use_after_dataset_close():
+    with gdal.Open("data/byte.tif") as ds:
+        m1 = ds.GetRasterBand(1).GetMaskBand()
+        m2 = m1.GetMaskBand()
+
+    # Make sure ds.__exit__() invalidation has propagated to mask bands
+    with pytest.raises(Exception):
+        m1.Checksum()
+
+    with pytest.raises(Exception):
+        m2.Checksum()
+
+
+def test_ovr_band_use_after_dataset_close():
+    with gdal.Open("data/byte_with_ovr.tif") as ds:
+        ovr = ds.GetRasterBand(1).GetOverview(1)
+
+    # Make sure ds.__exit__() invalidation has propagated to overviews
+
+    with pytest.raises(Exception):
+        ovr.Checksum()
+
+
+@pytest.mark.slow()
+def test_checksum_more_than_2billion_pixels():
+
+    filename = "/vsimem/test_checksum_more_than_2billion_pixels.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename,
+        50000,
+        50000,
+        options=["SPARSE_OK=YES"],
+    )
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    assert ds.GetRasterBand(1).Checksum() == 63744
+    ds = None
+    gdal.Unlink(filename)
+
+
+def test_tmp_vsimem(tmp_vsimem):
+    assert isinstance(tmp_vsimem, os.PathLike)
+
+    assert gdal.VSIStatL(tmp_vsimem) is not None

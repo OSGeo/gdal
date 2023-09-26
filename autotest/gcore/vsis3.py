@@ -255,13 +255,13 @@ def test_vsis3_1(aws_test_config):
     with gdaltest.config_options({"AWS_SECRET_ACCESS_KEY": ""}, thread_local=False):
         gdal.ErrorReset()
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/foo/bar")
         assert f is None
         assert gdal.VSIGetLastErrorMsg().find("AWS_SECRET_ACCESS_KEY") >= 0
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/foo/bar")
         assert f is None
         assert gdal.VSIGetLastErrorMsg().find("AWS_SECRET_ACCESS_KEY") >= 0
@@ -272,7 +272,7 @@ def test_vsis3_1(aws_test_config):
     ):
         # Missing AWS_ACCESS_KEY_ID
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/foo/bar")
         assert f is None
         assert gdal.VSIGetLastErrorMsg().find("AWS_ACCESS_KEY_ID") >= 0
@@ -287,7 +287,7 @@ def test_vsis3_1(aws_test_config):
         # ERROR 1: The AWS Access Key Id you provided does not exist in our
         # records.
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/foo/bar.baz")
         if f is not None or gdal.VSIGetLastErrorMsg() == "":
             if f is not None:
@@ -297,7 +297,7 @@ def test_vsis3_1(aws_test_config):
             pytest.fail(gdal.VSIGetLastErrorMsg())
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/foo/bar.baz")
         assert f is None and gdal.VSIGetLastErrorMsg() != ""
 
@@ -305,7 +305,9 @@ def test_vsis3_1(aws_test_config):
 ###############################################################################
 
 
-def get_s3_fake_bucket_resource_method(request):
+def get_s3_fake_bucket_resource_method(
+    request, with_security_token_AWS_SESSION_TOKEN=False
+):
     request.protocol_version = "HTTP/1.1"
 
     if "Authorization" not in request.headers:
@@ -324,18 +326,27 @@ def get_s3_fake_bucket_resource_method(request):
         "x-amz-date,Signature="
         "9f623b7ffce76188a456c70fb4813eb31969e88d130d6b4d801b3accbf050d6c"
     )
-    expected_authorization_8082 = (
+    expected_authorization_8080_AWS_SESSION_TOKEN = (
         "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/"
         "s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;"
         "x-amz-security-token,Signature="
         "a78e2d484679a19bec940a72d40c7fda37d1651a8ab82a6ed8fd7be46a53afb1"
     )
+    expected_authorization_8081_AWS_SESSION_TOKEN = (
+        "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/"
+        "s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;"
+        "x-amz-security-token,Signature="
+        "008300e66bf58b81c57a61581f91fc70e545717ec9f2ab08a8c3e8446d75a7f3"
+    )
     actual_authorization = request.headers["Authorization"]
-    if actual_authorization not in (
-        expected_authorization_8080,
-        expected_authorization_8081,
-        expected_authorization_8082,
-    ):
+    if with_security_token_AWS_SESSION_TOKEN:
+        expected_list = [
+            expected_authorization_8080_AWS_SESSION_TOKEN,
+            expected_authorization_8081_AWS_SESSION_TOKEN,
+        ]
+    else:
+        expected_list = [expected_authorization_8080, expected_authorization_8081]
+    if actual_authorization not in expected_list:
         sys.stderr.write("Bad Authorization: '%s'\n" % str(actual_authorization))
         request.send_response(403)
         return
@@ -348,11 +359,20 @@ def get_s3_fake_bucket_resource_method(request):
     request.wfile.write("""foo""".encode("ascii"))
 
 
+def get_s3_fake_bucket_resource_method_with_security_token(request):
+    return get_s3_fake_bucket_resource_method(
+        request, with_security_token_AWS_SESSION_TOKEN=True
+    )
+
+
 ###############################################################################
 # Test with a fake AWS server
 
 
 def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_port):
+
+    gdal.VSICurlClearCache()
+
     signed_url = gdal.GetSignedURL("/vsis3/s3_fake_bucket/resource")
     expected_url_8080 = (
         "http://127.0.0.1:8080/s3_fake_bucket/resource"
@@ -642,7 +662,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/non_xml_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("bla") >= 0
 
@@ -662,7 +682,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/invalid_xml_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<oops>") >= 0
 
@@ -682,7 +702,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/no_code_in_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error/>") >= 0
 
@@ -705,7 +725,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read(
                 "/vsis3_streaming/s3_fake_bucket"
                 "/no_region_in_AuthorizationHeaderMalformed_error"
@@ -731,7 +751,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read(
                 "/vsis3_streaming/s3_fake_bucket"
                 "/no_endpoint_in_PermanentRedirect_error"
@@ -757,7 +777,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/no_message_in_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error>") >= 0
 
@@ -816,7 +836,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         "/vsis3/s3_fake_bucket_with_requester_pays", {"AWS_REQUEST_PAYER": "requester"}
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = open_for_read("/vsis3/s3_fake_bucket_with_requester_pays/resource")
                 assert f is not None
                 data = gdal.VSIFReadL(1, 3, f).decode("ascii")
@@ -926,7 +946,7 @@ def test_vsis3_open_after_config_option_change(aws_test_config, webserver_port):
     handler.add("GET", "/test_vsis3_change_config_options/?delimiter=%2F", 403)
     handler.add("GET", "/test_vsis3_change_config_options/test.bin", 403)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/test_vsis3_change_config_options/test.bin")
         assert f is None
 
@@ -1100,7 +1120,13 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    expected_dir_contents = ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
+
+    assert (
+        gdal.ReadDir("/vsis3_streaming/s3_fake_bucket2/a_dir with_space")
+        == expected_dir_contents
+    )
 
     assert (
         gdal.VSIStatL(
@@ -1117,7 +1143,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     # Same as above: cached
     dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir(
@@ -1136,7 +1162,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     )
 
     dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
 
     # Test partial clear of the cache
     gdal.VSICurlPartialClearCache("/vsis3/s3_fake_bucket2/a_dir with_space")
@@ -1886,7 +1912,7 @@ def test_vsis3_opendir_synthetize_missing_directory(aws_test_config, webserver_p
 
 def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3", "wb")
     assert f is None
 
@@ -1953,7 +1979,7 @@ def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/empty_file.bin", "wb")
         assert f is not None
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFSeekL(f, 1, 0)
         assert ret != 0
         gdal.VSIFCloseL(f)
@@ -1963,7 +1989,7 @@ def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/empty_file.bin", "wb")
         assert f is not None
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFReadL(1, 1, f)
         assert not ret
         gdal.VSIFCloseL(f)
@@ -1975,7 +2001,7 @@ def test_vsis3_4(aws_test_config, webserver_port):
         f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/empty_file_error.bin", "wb")
         assert f is not None
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFCloseL(f)
     assert gdal.GetLastErrorMsg() != ""
 
@@ -2155,7 +2181,7 @@ def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
         handler.add("PUT", "/s3_fake_bucket3/put_with_retry.bin", 502)
         handler.add("PUT", "/s3_fake_bucket3/put_with_retry.bin", custom_method=method)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 gdal.VSIFCloseL(f)
 
@@ -2166,7 +2192,7 @@ def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
 
 def test_vsis3_5(aws_test_config, webserver_port):
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsis3/foo")
     assert ret != 0
 
@@ -2202,7 +2228,7 @@ def test_vsis3_5(aws_test_config, webserver_port):
     handler.add("GET", "/s3_delete_bucket/delete_file_error", 200)
     handler.add("DELETE", "/s3_delete_bucket/delete_file_error", 403)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsis3/s3_delete_bucket/delete_file_error")
     assert ret != 0
 
@@ -2530,6 +2556,9 @@ def test_vsis3_rmdir_recursive_no_batch_deletion(aws_test_config, webserver_port
 # Test multipart upload with a fake AWS server
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
+)
 def test_vsis3_6(aws_test_config, webserver_port):
     with gdaltest.config_option("VSIS3_CHUNK_SIZE", "1", thread_local=False):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -2700,7 +2729,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
             ):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == 0
             gdal.ErrorReset()
@@ -2767,7 +2796,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
             ):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None, filename
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == 0, filename
             gdal.ErrorReset()
@@ -2807,11 +2836,11 @@ def test_vsis3_6(aws_test_config, webserver_port):
         ):  # 1 MB
             f = gdal.VSIFOpenL(filename, "wb")
         assert f is not None, filename
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == 0, filename
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFCloseL(f)
         assert gdal.GetLastErrorMsg() != "", filename
 
@@ -2866,7 +2895,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == size, filename
             gdal.ErrorReset()
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != "", filename
 
@@ -2875,6 +2904,9 @@ def test_vsis3_6(aws_test_config, webserver_port):
 # Test multipart upload with retry logic
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
+)
 def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
 
     with gdaltest.config_options(
@@ -2921,7 +2953,7 @@ def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
             {},
         )
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == size
@@ -2944,7 +2976,7 @@ def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
             {},
         )
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 gdal.VSIFCloseL(f)
 
@@ -3220,12 +3252,12 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
 
     options = ["SYNC_STRATEGY=ETAG"]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         handler = webserver.SequentialHandler()
         with webserver.install_http_handler(handler):
             assert not gdal.Sync("/i_do/not/exist", "/vsis3/", options=options)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         handler = webserver.SequentialHandler()
         handler.add("GET", "/do_not/exist", 404)
         handler.add("GET", "/do_not/?delimiter=%2F&max-keys=100&prefix=exist%2F", 404)
@@ -3460,6 +3492,44 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
         )
 
     gdal.Unlink("/vsimem/testsync.txt")
+
+
+###############################################################################
+# Test vsisync() failure
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_sync_failed(aws_test_config, webserver_port):
+
+    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+
+    # S3 to local: S3 file is older -> download
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        206,
+        {
+            "Content-Length": "3",
+            "Content-Range": "bytes 0-2/3",
+            "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
+        },
+        "foo",
+    )
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        200,
+        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
+        "fo",  # only returns 2 bytes instead of 3
+    )
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception,
+            match="Copying of /vsis3/out/testsync.txt to /vsimem/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+        ):
+            gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/")
 
 
 ###############################################################################
@@ -3931,7 +4001,7 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
         thread_local=False,
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert not gdal.Sync(
                     "/vsimem/test",
                     "/vsis3/test_bucket",
@@ -4023,11 +4093,11 @@ def test_vsis3_metadata(aws_test_config, webserver_port):
         assert gdal.SetFileMetadata("/vsis3/test_metadata/foo.txt", {}, "TAGS")
 
     # Error case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.GetFileMetadata("/vsis3/test_metadata/foo.txt", "UNSUPPORTED") == {}
 
     # Error case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.SetFileMetadata(
             "/vsis3/test_metadata/foo.txt", {}, "UNSUPPORTED"
         )
@@ -4070,7 +4140,7 @@ def test_vsis3_random_write(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b") is None
 
     with gdaltest.config_option(
@@ -4107,7 +4177,7 @@ def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("PUT", "/random_write/test.bin", 400, {})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert gdal.VSIFCloseL(f) != 0
 
 
@@ -4130,7 +4200,7 @@ def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("POST", "/random_write/test.bin?uploads", 400, {})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert gdal.VSIFCloseL(f) != 0
 
 
@@ -4163,6 +4233,76 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
     handler.add("PUT", "/random_write/test.tif", 200, {})
     with webserver.install_http_handler(handler):
         ds = None
+
+
+###############################################################################
+# Test r+ access
+
+
+def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    with gdal.quiet_errors():
+        assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b") is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/random_write/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents>
+                    <Key>test.bin</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>1</Size>
+                </Contents>
+            </ListBucketResult>
+            """,
+    )
+    handler.add("GET", "/random_write/test.bin", 200, {}, "f")
+    handler.add("PUT", "/random_write/test.bin", 200, {}, expected_body=b"foo")
+    with webserver.install_http_handler(handler), gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
+        f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
+        assert f
+        assert gdal.VSIFSeekL(f, 1, 0) == 0
+        assert gdal.VSIFWriteL("oo", 2, 1, f) == 1
+        assert gdal.VSIFCloseL(f) == 0
+
+
+###############################################################################
+# Test r+ access
+
+
+def test_vsis3_random_write_on_existing_file_that_does_not_exist(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/random_write/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents/>
+            </ListBucketResult>
+            """,
+    )
+    with webserver.install_http_handler(handler), gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
+        f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
+        assert f is None
 
 
 ###############################################################################
@@ -4448,7 +4588,7 @@ aws_secret_access_key = bar
     )
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(options, thread_local=False):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         assert gdal.GetLastErrorMsg() != ""
@@ -4515,7 +4655,7 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
     handler.add(
         "GET",
         "/s3_fake_bucket/resource",
-        custom_method=get_s3_fake_bucket_resource_method,
+        custom_method=get_s3_fake_bucket_resource_method_with_security_token,
     )
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(options, thread_local=False):
@@ -4859,7 +4999,7 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
             with gdaltest.config_option(
                 "CPL_AWS_EC2_API_ROOT_URL", invalid_url, thread_local=False
             ):
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     f = open_for_read("/vsis3/s3_fake_bucket/bar")
         assert f is None
 
@@ -4869,8 +5009,35 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
 
 
 def test_vsis3_read_credentials_assumed_role(aws_test_config, webserver_port):
-    if webserver_port != 8080:
-        pytest.skip("Expected results coded from webserver port = 8080")
+
+    if webserver_port == 8080:
+        expected_signature1 = (
+            "3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4"
+        )
+        expected_signature2 = (
+            "d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403"
+        )
+        expected_signature3 = (
+            "9716b5928ed350263c9492159dccbdc9aac321cfea383d7f67bd8b4c7ca33463"
+        )
+        expected_signature4 = (
+            "27e28bd4dad95495b851b54ff875b8ebcec6e0f6f5e4adf045153bd0d7958fbb"
+        )
+    elif webserver_port == 8081:
+        expected_signature1 = (
+            "07c7dbd1115cbe87c6f8817d69c722d1b943b12fe3da8e20916a2bec2b02ea6e"
+        )
+        expected_signature2 = (
+            "9db8e06522b6bad431787bd8268248e4f5ae755eeae906ada71ce8641b76998d"
+        )
+        expected_signature3 = (
+            "e560358eaf19d00b98ffea4fb23b0b6572a5b946ad915105dfb8b40ce6d8ed1b"
+        )
+        expected_signature4 = (
+            "ef71ab77159f30793c320cd053081605084b3ac7f30f470b0a6fb499df2d4c77"
+        )
+    else:
+        pytest.skip("Expected results coded for webserver_port = 8080 or 8081")
 
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
@@ -4921,7 +5088,7 @@ role_session_name = my_role_session_name
         {},
         expired_xml_response,
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature=3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
             "X-Amz-Date": "20150101T000000Z",
         },
     )
@@ -4932,7 +5099,7 @@ role_session_name = my_role_session_name
         {},
         expired_xml_response,
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature=3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
             "X-Amz-Date": "20150101T000000Z",
         },
     )
@@ -4943,7 +5110,7 @@ role_session_name = my_role_session_name
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature2}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -4979,7 +5146,7 @@ role_session_name = my_role_session_name
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=9716b5928ed350263c9492159dccbdc9aac321cfea383d7f67bd8b4c7ca33463",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature3}",
             "X-Amz-Security-Token": "ANOTHER_TEMP_SESSION_TOKEN",
         },
     )
@@ -5000,7 +5167,7 @@ role_session_name = my_role_session_name
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=27e28bd4dad95495b851b54ff875b8ebcec6e0f6f5e4adf045153bd0d7958fbb",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature4}",
             "X-Amz-Security-Token": "ANOTHER_TEMP_SESSION_TOKEN",
         },
     )
@@ -5021,6 +5188,30 @@ role_session_name = my_role_session_name
 def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_file(
     aws_test_config, webserver_port
 ):
+
+    if webserver_port == 8080:
+        expected_signature1 = (
+            "d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403"
+        )
+        expected_signature2 = (
+            "d5abb4e09ad29ad3810cfe21702e7e2e9071798c441acaed9613d62ed8600556"
+        )
+        expected_signature3 = (
+            "a158ddb8b5fd40fd5226c0ca28c14620863b8157c870e7e96ff841662aaef79a"
+        )
+    elif webserver_port == 8081:
+        expected_signature1 = (
+            "9db8e06522b6bad431787bd8268248e4f5ae755eeae906ada71ce8641b76998d"
+        )
+        expected_signature2 = (
+            "467838ad283d0f3af9635bc432137504c73ff32a8091dfc1ac98fc11958d91e1"
+        )
+        expected_signature3 = (
+            "d88e0aaaf375cf9f2f065287186455d7aea8f298fb8762011381cd03369c78e0"
+        )
+    else:
+        pytest.skip("Expected results coded for webserver_port = 8080 or 8081")
+
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -5104,7 +5295,7 @@ source_profile = foo
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature1}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -5138,7 +5329,7 @@ source_profile = foo
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5abb4e09ad29ad3810cfe21702e7e2e9071798c441acaed9613d62ed8600556",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature2}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -5150,7 +5341,7 @@ source_profile = foo
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=a158ddb8b5fd40fd5226c0ca28c14620863b8157c870e7e96ff841662aaef79a",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature3}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -5204,7 +5395,7 @@ def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
         "GDAL_DISABLE_READDIR_ON_OPEN", "YES", thread_local=False
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 gdal.Open("/vsis3/test_bucket/non_existing.tif")
     assert gdal.GetLastErrorMsg() == "HTTP response code: 404"
 
@@ -5398,7 +5589,7 @@ def test_vsis3_extra_1():
         # Invalid bucket : "The specified bucket does not exist"
         gdal.ErrorReset()
         f = open_for_read("/vsis3/not_existing_bucket/foo")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
         assert gdal.VSIGetLastErrorMsg() != ""

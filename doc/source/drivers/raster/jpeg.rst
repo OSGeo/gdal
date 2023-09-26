@@ -167,14 +167,15 @@ to the JPEG file.
       file (with the extension .wld).
 
 -  .. co:: QUALITY
-      :choices: 10-100
+      :choices: 1-100
       :default: 75
 
-      By default the quality flag is set to 75, but this
-      option can be used to select other values. Values must be in the
-      range 10-100. Low values result in higher compression ratios, but
-      poorer image quality. Values above 95 are not meaningfully better
-      quality but can but substantially larger.
+      Set the JPEG quality.
+
+      Low values result in higher compression ratios, but poorer image quality
+      with strong blocking artifacts.
+      Values above 95 are not meaningfully better quality but can be
+      substantially larger.
 
 -  .. co:: LOSSLESS_COPY
       :choices: AUTO, YES, NO

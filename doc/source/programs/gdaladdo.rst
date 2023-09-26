@@ -15,9 +15,13 @@ Synopsis
 
 .. code-block::
 
-    gdaladdo [-r {nearest,average,rms,bilinear,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
-            [-b band]* [-minsize val]
-            [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename [levels]
+    gdaladdo [--help] [--help-general]
+             [-r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_mp|average_magphase|mode}]
+             [-ro] [-clean] [-q] [-oo <NAME>=<VALUE>]... [-minsize <val>]
+             [--partial-refresh-from-source-timestamp]
+             [--partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>]
+             [--partial-refresh-from-source-extent <filename1>[,<filenameN>]...]
+             <filename> [<levels>]...
 
 Description
 -----------
@@ -27,11 +31,13 @@ most supported file formats with one of several downsampling algorithms.
 
 .. program:: gdaladdo
 
-.. option:: -r {nearest (default),average,rms,gauss,cubic,cubicspline,lanczos,average_magphase,mode}
+.. include:: options/help_and_help_general.rst
+
+.. option:: -r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_magphase|mode}
 
     Select a resampling algorithm.
 
-    ``nearest`` applies a nearest neighbour (simple sampling) resampler
+    ``nearest`` applies a nearest neighbour (simple sampling) resampler (default)
 
     ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
 
@@ -69,7 +75,7 @@ most supported file formats with one of several downsampling algorithms.
 
     remove all overviews.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 
@@ -79,6 +85,41 @@ most supported file formats with one of several downsampling algorithms.
     account if explicit levels are not specified. Defaults to 256.
 
     .. versionadded:: 2.3
+
+.. option:: --partial-refresh-from-source-timestamp
+
+    .. versionadded:: 3.8
+
+    This option performs a partial refresh of existing overviews, when <filename>
+    is a VRT file with an external overview.
+    It checks the modification timestamp of all the sources of the VRT
+    and regenerate the overview for areas corresponding to sources whose
+    timestamp is more recent than the external overview of the VRT.
+    By default all existing overview levels will be refreshed, unless explicit
+    levels are specified.
+
+.. option:: --partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>
+
+    .. versionadded:: 3.8
+
+    This option performs a partial refresh of existing overviews, in the region
+    of interest specified by georeference coordinates where <ulx> is the X value
+    of the upper left corner, <uly> is the Y value of the upper left corner,
+    <lrx> is the X value of the lower right corner and <lry> is the Y value of
+    the lower right corner.
+    By default all existing overview levels will be refreshed, unless explicit
+    levels are specified.
+
+.. option:: --partial-refresh-from-source-extent <filename1>[,<filenameN>]...
+
+    .. versionadded:: 3.8
+
+    This option performs a partial refresh of existing overviews, in the region
+    of interest specified by one or several filenames (names separated by comma).
+    Note that the filenames are only used to determine the regions of interest
+    to refresh. The reference source pixels are the one of the main dataset.
+    By default all existing overview levels will be refreshed, unless explicit
+    levels are specified.
 
 .. option:: <filename>
 
@@ -255,3 +296,25 @@ Create overviews for a specific subdataset, like for example one of potentially 
 ::
 
     gdaladdo GPKG:file.gpkg:layer
+
+
+Refresh overviews of a VRT file, for sources that have been modified after the
+.vrt.ovr generation:
+
+::
+
+    gdalbuildvrt my.vrt tile1.tif tile2.tif                          # create VRT
+    gdaladdo -r cubic my.vrt                                         # initial overview generation
+    touch tile1.tif                                                  # simulate update of one of the source tiles
+    gdaladdo --partial-refresh-from-source-timestamp -r cubic my.vrt # refresh overviews
+
+
+Refresh overviews of a TIFF file:
+
+::
+
+    gdalwarp -overwrite tile1.tif tile2.tif mosaic.tif                      # create mosaic
+    gdaladdo -r cubic mosaic.tif                                            # initial overview generation
+    touch tile1.tif                                                         # simulate update of one of the source tiles
+    gdalwarp tile1.tif mosaic.tif                                           # update mosaic
+    gdaladdo --partial-refresh-from-source-extent tile1.tif -r cubic my.vrt # refresh overviews

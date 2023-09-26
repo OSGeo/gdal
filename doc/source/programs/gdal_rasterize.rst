@@ -15,16 +15,16 @@ Synopsis
 
 .. code-block::
 
-    gdal_rasterize [-b band]* [-i] [-at]
-        [-oo NAME=VALUE]*
-        {[-burn value]* | [-a attribute_name] | [-3d]} [-add]
-        [-l layername]* [-where expression] [-sql select_statement|@filename]
-        [-dialect dialect] [-of format] [-a_srs srs_def] [-to NAME=VALUE]*
-        [-co "NAME=VALUE"]* [-a_nodata value] [-init value]*
-        [-te xmin ymin xmax ymax] [-tr xres yres] [-tap] [-ts width height]
+    gdal_rasterize [--help] [--help-general]
+        [-b <band>]... [-i] [-at]
+        [-oo <NAME>=<VALUE>]...
+        {[-burn <value>]... | [-a <attribute_name>] | [-3d]} [-add]
+        [-l <layername>]... [-where <expression>] [-sql <select_statement>|@<filename>]
+        [-dialect <dialect>] [-of <format>] [-a_srs <srs_def>] [-to <NAME>=<VALUE>]...
+        [-co <NAME>=<VALUE>]... [-a_nodata <value>] [-init <value>]...
+        [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-tap] [-ts <width> <height>]
         [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
-                CInt16/CInt32/CFloat32/CFloat64}]
-        [-optim {[AUTO]/VECTOR/RASTER}] [-q]
+             CInt16/CInt32/CFloat32/CFloat64}] [-optim {AUTO|VECTOR|RASTER}] [-q]
         <src_datasource> <dst_filename>
 
 Description
@@ -38,6 +38,8 @@ Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
 .. program:: gdal_rasterize
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <band>
 
@@ -127,7 +129,7 @@ raster data is only supported since GDAL 2.1.0.
     The <srs_def> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
     EPSG:n or a file containing the WKT.
 
-.. option:: -to NAME=VALUE
+.. option:: -to <NAME>=<VALUE>
 
     set a transformer
     option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`. This is
@@ -165,7 +167,7 @@ raster data is only supported since GDAL 2.1.0.
 
     Force the output bands to be of the indicated data type. Defaults to ``Float64``
 
-.. option:: -optim {[AUTO]/VECTOR/RASTER}}
+.. option:: -optim {AUTO|VECTOR|RASTER}
 
     Force the algorithm used (results are identical). The raster mode is used in most cases and
     optimise read/write operations. The vector mode is useful with a decent amount of input
@@ -175,7 +177,7 @@ raster data is only supported since GDAL 2.1.0.
 
     .. versionadded:: 2.3
 
-.. option:: -oo <NAME=VALUE>
+.. option:: -oo <NAME>=<VALUE>
 
     .. versionadded:: 3.7
 
@@ -192,9 +194,7 @@ raster data is only supported since GDAL 2.1.0.
 .. option:: <dst_filename>
 
     The GDAL supported output file.  Must support update mode access.
-    This file will be created (or overwritten if it already exists):option:`-of`,
-    :option:`-a_nodata`, :option:`-init`, :option:`-a_srs`, :option:`-co`, :option:`-te`,
-    :option:`-tr`, :option:`-tap`, :option:`-ts`, or :option:`-ot` options are used.
+    This file will be created (or overwritten if it already exists).
 
 The program create a new target raster image when any of the :option:`-of`,
 :option:`-a_nodata`, :option:`-init`, :option:`-a_srs`, :option:`-co`, :option:`-te`,

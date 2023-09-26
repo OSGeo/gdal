@@ -5676,6 +5676,40 @@ void OGR_F_DumpReadable(OGRFeatureH hFeat, FILE *fpOut)
 }
 
 /************************************************************************/
+/*                         OGR_F_DumpReadableAsString()                 */
+/************************************************************************/
+
+/**
+ * \brief Dump this feature in a human readable form.
+ *
+ * This dumps the attributes, and geometry; however, it doesn't include
+ * definition information (other than field types and names), nor does
+ * it report the geometry spatial reference system.
+ *
+ * A few options can be defined to change the default dump :
+ * <ul>
+ * <li>DISPLAY_FIELDS=NO : to hide the dump of the attributes</li>
+ * <li>DISPLAY_STYLE=NO : to hide the dump of the style string</li>
+ * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
+ * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * </ul>
+ *
+ * @param hFeat handle to the feature to dump.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ * @return a string with the feature representation (to be freed with CPLFree())
+ * @since GDAL 3.8
+ */
+
+char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hFeat, "OGR_F_DumpReadableAsString", nullptr);
+
+    return CPLStrdup(OGRFeature::FromHandle(hFeat)
+                         ->DumpReadableAsString(papszOptions)
+                         .c_str());
+}
+
+/************************************************************************/
 /*                               GetFID()                               */
 /************************************************************************/
 

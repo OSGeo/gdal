@@ -40,6 +40,33 @@ static const char *JSON_PATH_DELIMITER = "/";
 
 static const char *INVALID_OBJ_KEY = "__INVALID_OBJ_KEY__";
 
+#define JSON_C_VER_014 (14 << 8)
+
+// json_object_new_uint64() was added in libjson-c 0.14
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_014)
+
+static int CPLJSON_json_object_new_uint64_formatter(struct json_object *jso,
+                                                    struct printbuf *pb,
+                                                    int /* level */,
+                                                    int /* flags */)
+{
+    const char *pszStr = json_object_get_string(jso);
+    return printbuf_memappend(pb, pszStr, static_cast<int>(strlen(pszStr)));
+}
+
+static json_object *CPLJSON_json_object_new_uint64(uint64_t nVal)
+{
+    json_object *jso = json_object_new_string(
+        CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
+    json_object_set_serializer(jso, CPLJSON_json_object_new_uint64_formatter,
+                               nullptr, nullptr);
+    return jso;
+}
+
+#define json_object_new_uint64 CPLJSON_json_object_new_uint64
+
+#endif
+
 //------------------------------------------------------------------------------
 // JSONDocument
 //------------------------------------------------------------------------------
@@ -456,6 +483,45 @@ CPLJSONObject::CPLJSONObject() : m_poJsonObject(json_object_new_object())
 {
 }
 
+CPLJSONObject::CPLJSONObject(std::nullptr_t) : m_poJsonObject(nullptr)
+{
+}
+
+CPLJSONObject::CPLJSONObject(const std::string &osVal)
+    : m_poJsonObject(json_object_new_string(osVal.c_str()))
+{
+}
+
+CPLJSONObject::CPLJSONObject(const char *pszValue)
+    : m_poJsonObject(json_object_new_string(pszValue))
+{
+}
+
+CPLJSONObject::CPLJSONObject(bool bVal)
+    : m_poJsonObject(json_object_new_boolean(bVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(int nVal)
+    : m_poJsonObject(json_object_new_int(nVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(int64_t nVal)
+    : m_poJsonObject(json_object_new_int64(nVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(uint64_t nVal)
+    : m_poJsonObject(json_object_new_uint64(nVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(double dfVal)
+    : m_poJsonObject(json_object_new_double(dfVal))
+{
+}
+
 CPLJSONObject::CPLJSONObject(const std::string &osName,
                              const CPLJSONObject &oParent)
     : m_poJsonObject(json_object_get(json_object_new_object())), m_osKey(osName)
@@ -659,6 +725,28 @@ void CPLJSONObject::Add(const std::string &osName, GInt64 nValue)
 /**
  * Add new key - value pair to json object.
  * @param osName  Key name.
+ * @param nValue uint64_t value.
+ *
+ * @since GDAL 3.8
+ */
+void CPLJSONObject::Add(const std::string &osName, uint64_t nValue)
+{
+    std::string objectName;
+    if (m_osKey == INVALID_OBJ_KEY)
+        m_osKey.clear();
+    CPLJSONObject object = GetObjectByPath(osName, objectName);
+    if (object.IsValid() && json_object_get_type(TO_JSONOBJ(
+                                object.m_poJsonObject)) == json_type_object)
+    {
+        json_object *poVal = json_object_new_uint64(nValue);
+        json_object_object_add(TO_JSONOBJ(object.GetInternalHandle()),
+                               objectName.c_str(), poVal);
+    }
+}
+
+/**
+ * Add new key - value pair to json object.
+ * @param osName  Key name.
  * @param oValue   Array value.
  *
  * @since GDAL 2.3
@@ -832,6 +920,19 @@ void CPLJSONObject::Set(const std::string &osName, int nValue)
  * @since GDAL 2.3
  */
 void CPLJSONObject::Set(const std::string &osName, GInt64 nValue)
+{
+    Delete(osName);
+    Add(osName, nValue);
+}
+
+/**
+ * Change value by key.
+ * @param osName  Key name.
+ * @param nValue   uint64_t value.
+ *
+ * @since GDAL 3.8
+ */
+void CPLJSONObject::Set(const std::string &osName, uint64_t nValue)
 {
     Delete(osName);
     Add(osName, nValue);
@@ -1357,6 +1458,17 @@ int CPLJSONArray::Size() const
 }
 
 /**
+ * Add null object to array.
+ *
+ * @since GDAL 3.8
+ */
+void CPLJSONArray::AddNull()
+{
+    if (m_poJsonObject)
+        json_object_array_add(TO_JSONOBJ(m_poJsonObject), nullptr);
+}
+
+/**
  * Add json object to array.
  * @param oValue Json array.
  *
@@ -1435,6 +1547,21 @@ void CPLJSONArray::Add(GInt64 nValue)
     if (m_poJsonObject)
         json_object_array_add(TO_JSONOBJ(m_poJsonObject),
                               json_object_new_int64(nValue));
+}
+
+/**
+ * Add value to array
+ * @param nValue Value to add.
+ *
+ * @since GDAL 3.8
+ */
+void CPLJSONArray::Add(uint64_t nValue)
+{
+    if (m_poJsonObject)
+    {
+        json_object_array_add(TO_JSONOBJ(m_poJsonObject),
+                              json_object_new_uint64(nValue));
+    }
 }
 
 /**

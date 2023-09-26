@@ -202,6 +202,22 @@ struct GDALRasterizeOptionsForBinary
     std::string osFormat{};
 };
 
+struct GDALFootprintOptionsForBinary
+{
+    std::string osSource{};
+    bool bDestSpecified = false;
+    std::string osDest{};
+    bool bQuiet = false;
+    CPLStringList aosOpenOptions{};
+    bool bCreateOutput = false;
+    std::string osFormat{};
+
+    /*! whether to overwrite destination layer */
+    bool bOverwrite = false;
+
+    std::string osDestLayerName{};
+};
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */

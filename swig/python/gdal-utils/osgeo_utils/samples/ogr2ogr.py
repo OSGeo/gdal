@@ -1169,7 +1169,7 @@ def Usage():
         + "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
         + "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
         + "               [-simplify tolerance]\n"
-        + "               [-fieldTypeToString All|(type1[,type2]*)] [-explodecollections] \n"  # // "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]*)]\n" + \
+        + "               [-fieldTypeToString All|(type1[,type2]...)] [-explodecollections] \n"  # // "               [-segmentize max_dist] [-fieldTypeToString All|(type1[,type2]...)]\n" + \
         + "               dst_datasource_name src_datasource_name\n"
         + "               [-lco NAME=VALUE] [-nln name] [-nlt type] [-dim 2|3] [layer [layer ...]]\n"
         + "\n"

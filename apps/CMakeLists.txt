@@ -16,6 +16,8 @@ add_library(
   ogr2ogr_lib.cpp
   gdaldem_lib.cpp
   nearblack_lib.cpp
+  nearblack_lib_floodfill.cpp
+  gdal_footprint_lib.cpp
   gdalmdiminfo_lib.cpp
   gdalmdimtranslate_lib.cpp)
 add_dependencies(appslib generate_gdal_version_h)
@@ -63,6 +65,7 @@ if (BUILD_APPS)
   add_executable(gdaltransform gdaltransform.cpp)
   add_executable(gdal_create gdal_create.cpp)
   add_executable(gdal_viewshed gdal_viewshed.cpp)
+  add_executable(gdal_footprint commonutils.h gdal_footprint_bin.cpp)
   add_executable(ogrinfo commonutils.h ogrinfo_bin.cpp)
   add_executable(ogr2ogr ogr2ogr_bin.cpp)
 
@@ -99,6 +102,7 @@ if (BUILD_APPS)
       gdalwarp
       gdal_contour
       gdallocationinfo
+      gdal_footprint
       ogrinfo
       ogr2ogr
       gdalmdiminfo

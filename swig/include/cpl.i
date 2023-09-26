@@ -198,6 +198,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetFileSystemOptions) VSIGetFileSystemOptions;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
+%rename (GetGlobalConfigOption) wrapper_CPLGetGlobalConfigOption;
 %rename (SetThreadLocalConfigOption) CPLSetThreadLocalConfigOption;
 %rename (GetThreadLocalConfigOption) wrapper_CPLGetThreadLocalConfigOption;
 %rename (SetCredential) wrapper_VSISetCredential;
@@ -494,11 +495,36 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 {
     return CPLGetConfigOption( pszKey, pszDefault );
 }
+const char *wrapper_CPLGetGlobalConfigOption( const char * pszKey, const char * pszDefault = NULL )
+{
+    return CPLGetGlobalConfigOption( pszKey, pszDefault );
+}
 const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
     return CPLGetThreadLocalConfigOption( pszKey, pszDefault );
 }
 }
+
+
+%rename(GetConfigOptions) wrapper_GetConfigOptions;
+#if defined(SWIGPYTHON)
+%apply (char **dictAndCSLDestroy) { char ** };
+#else
+%apply (char **) { char ** };
+#endif
+%inline {
+char** wrapper_GetConfigOptions() {
+    char ** papszOpts = CPLGetConfigOptions();
+    char ** papszTLOpts = CPLGetThreadLocalConfigOptions();
+
+    papszOpts = CSLMerge(papszOpts, papszTLOpts);
+
+    CPLFree(papszTLOpts);
+
+    return papszOpts;
+};
+}
+%clear char **;
 
 %apply Pointer NONNULL {const char * pszPathPrefix};
 void VSISetPathSpecificOption( const char* pszPathPrefix, const char * pszKey, const char * pszValue );

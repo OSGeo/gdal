@@ -68,9 +68,9 @@ class IRISDataset final : public GDALPamDataset
     mutable double adfGeoTransform[6];
     mutable bool bHasLoadedProjection;
     void LoadProjection() const;
-    static bool GeodesicCalculation(float fLat, float fLon, float fAngle,
-                                    float fDist, float fEquatorialRadius,
-                                    float fPolarRadius, float fFlattening,
+    static bool GeodesicCalculation(double fLat, double fLon, double fAngle,
+                                    double fDist, double fEquatorialRadius,
+                                    double fPolarRadius, double fFlattening,
                                     std::pair<double, double> &oOutPair);
 
   public:
@@ -478,77 +478,77 @@ void IRISDataset::LoadProjection() const
 {
     bHasLoadedProjection = true;
     // They give the radius in cm.
-    float fEquatorialRadius =
-        CPL_LSBUINT32PTR(abyHeader + 220 + 320 + 12) / 100.0f;
+    double dfEquatorialRadius =
+        CPL_LSBUINT32PTR(abyHeader + 220 + 320 + 12) / 100.0;
     // Point 3.2.27 pag 3-15.
-    float fInvFlattening =
-        CPL_LSBUINT32PTR(abyHeader + 224 + 320 + 12) / 1000000.0f;
-    float fFlattening = 0.0f;
-    float fPolarRadius = 0.0f;
+    double dfInvFlattening =
+        CPL_LSBUINT32PTR(abyHeader + 224 + 320 + 12) / 1000000.0;
+    double dfFlattening = 0.0;
+    double dfPolarRadius = 0.0;
 
-    if (fEquatorialRadius == 0.0f)
+    if (dfEquatorialRadius == 0.0)
     {
         // If Radius is 0, change to 6371000 Point 3.2.27 pag 3-15 (old IRIS
         // versions).
-        fEquatorialRadius = 6371000.0f;
-        fPolarRadius = fEquatorialRadius;
-        fInvFlattening = 0.0f;
-        fFlattening = 0.0f;
+        dfEquatorialRadius = 6371000.0;
+        dfPolarRadius = dfEquatorialRadius;
+        dfInvFlattening = 0.0;
+        dfFlattening = 0.0;
     }
     else
     {
-        if (fInvFlattening == 0.0f)
+        if (dfInvFlattening == 0.0)
         {
             // When inverse flattening is infinite, they use 0.
-            fFlattening = 0.0f;
-            fPolarRadius = fEquatorialRadius;
+            dfFlattening = 0.0;
+            dfPolarRadius = dfEquatorialRadius;
         }
         else
         {
-            fFlattening = 1.0f / fInvFlattening;
-            fPolarRadius = fEquatorialRadius * (1.0f - fFlattening);
+            dfFlattening = 1.0 / dfInvFlattening;
+            dfPolarRadius = dfEquatorialRadius * (1.0 - dfFlattening);
         }
     }
 
     constexpr GUInt32 knUINT32_MAX = 0xFFFFFFFFU;
-    const float fCenterLon = static_cast<float>(
-        CPL_LSBUINT32PTR(abyHeader + 112 + 320 + 12) * 360.0 / knUINT32_MAX);
-    const float fCenterLat = static_cast<float>(
-        CPL_LSBUINT32PTR(abyHeader + 108 + 320 + 12) * 360.0 / knUINT32_MAX);
+    const double dfCenterLon =
+        CPL_LSBUINT32PTR(abyHeader + 112 + 320 + 12) * 360.0 / knUINT32_MAX;
+    const double dfCenterLat =
+        CPL_LSBUINT32PTR(abyHeader + 108 + 320 + 12) * 360.0 / knUINT32_MAX;
 
-    const float fProjRefLon = static_cast<float>(
-        CPL_LSBUINT32PTR(abyHeader + 244 + 320 + 12) * 360.0 / knUINT32_MAX);
-    const float fProjRefLat = static_cast<float>(
-        CPL_LSBUINT32PTR(abyHeader + 240 + 320 + 12) * 360.0 / knUINT32_MAX);
+    const double dfProjRefLon =
+        CPL_LSBUINT32PTR(abyHeader + 244 + 320 + 12) * 360.0 / knUINT32_MAX;
+    const double dfProjRefLat =
+        CPL_LSBUINT32PTR(abyHeader + 240 + 320 + 12) * 360.0 / knUINT32_MAX;
 
-    const float fRadarLocX = CPL_LSBSINT32PTR(abyHeader + 112 + 12) / 1000.0f;
-    const float fRadarLocY = CPL_LSBSINT32PTR(abyHeader + 116 + 12) / 1000.0f;
+    const double dfRadarLocX = CPL_LSBSINT32PTR(abyHeader + 112 + 12) / 1000.0;
+    const double dfRadarLocY = CPL_LSBSINT32PTR(abyHeader + 116 + 12) / 1000.0;
 
-    const float fScaleX = CPL_LSBSINT32PTR(abyHeader + 88 + 12) / 100.0f;
-    const float fScaleY = CPL_LSBSINT32PTR(abyHeader + 92 + 12) / 100.0f;
-    if (fScaleX <= 0.0f || fScaleY <= 0.0f || fScaleX >= fPolarRadius ||
-        fScaleY >= fPolarRadius)
+    const double dfScaleX = CPL_LSBSINT32PTR(abyHeader + 88 + 12) / 100.0;
+    const double dfScaleY = CPL_LSBSINT32PTR(abyHeader + 92 + 12) / 100.0;
+    if (dfScaleX <= 0.0 || dfScaleY <= 0.0 || dfScaleX >= dfPolarRadius ||
+        dfScaleY >= dfPolarRadius)
         return;
 
     // Mercator projection.
     if (EQUAL(aszProjections[nProjectionCode], "Mercator"))
     {
         std::pair<double, double> oPositionX2;
-        if (!GeodesicCalculation(fCenterLat, fCenterLon, 90.0f, fScaleX,
-                                 fEquatorialRadius, fPolarRadius, fFlattening,
-                                 oPositionX2))
+        if (!GeodesicCalculation(dfCenterLat, dfCenterLon, 90.0, dfScaleX,
+                                 dfEquatorialRadius, dfPolarRadius,
+                                 dfFlattening, oPositionX2))
             return;
         std::pair<double, double> oPositionY2;
-        if (!GeodesicCalculation(fCenterLat, fCenterLon, 0.0f, fScaleY,
-                                 fEquatorialRadius, fPolarRadius, fFlattening,
-                                 oPositionY2))
+        if (!GeodesicCalculation(dfCenterLat, dfCenterLon, 0.0, dfScaleY,
+                                 dfEquatorialRadius, dfPolarRadius,
+                                 dfFlattening, oPositionY2))
             return;
 
         m_oSRS.SetGeogCS("unnamed ellipse", "unknown", "unnamed",
-                         fEquatorialRadius, fInvFlattening, "Greenwich", 0.0,
+                         dfEquatorialRadius, dfInvFlattening, "Greenwich", 0.0,
                          "degree", 0.0174532925199433);
 
-        m_oSRS.SetMercator(fProjRefLat, fProjRefLon, 1.0, 0.0, 0.0);
+        m_oSRS.SetMercator(dfProjRefLat, dfProjRefLon, 1.0, 0.0, 0.0);
         m_oSRS.SetLinearUnits("Metre", 1.0);
 
         // The center coordinates are given in LatLon on the defined
@@ -557,7 +557,7 @@ void IRISDataset::LoadProjection() const
         OGRSpatialReference oSRSLatLon;
         oSRSLatLon.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oSRSLatLon.SetGeogCS("unnamed ellipse", "unknown", "unnamed",
-                             fEquatorialRadius, fInvFlattening, "Greenwich",
+                             dfEquatorialRadius, dfInvFlattening, "Greenwich",
                              0.0, "degree", 0.0174532925199433);
 
         OGRCoordinateTransformation *poTransform =
@@ -566,8 +566,8 @@ void IRISDataset::LoadProjection() const
         const double dfLon2 = oPositionX2.first;
         const double dfLat2 = oPositionY2.second;
 
-        double dfX = fCenterLon;
-        double dfY = fCenterLat;
+        double dfX = dfCenterLon;
+        double dfY = dfCenterLat;
         if (poTransform == nullptr || !poTransform->Transform(1, &dfX, &dfY))
             CPLError(CE_Failure, CPLE_None, "Transformation Failed");
 
@@ -576,10 +576,10 @@ void IRISDataset::LoadProjection() const
         if (poTransform == nullptr || !poTransform->Transform(1, &dfX2, &dfY2))
             CPLError(CE_Failure, CPLE_None, "Transformation Failed");
 
-        adfGeoTransform[0] = dfX - (fRadarLocX * (dfX2 - dfX));
+        adfGeoTransform[0] = dfX - (dfRadarLocX * (dfX2 - dfX));
         adfGeoTransform[1] = dfX2 - dfX;
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = dfY + (fRadarLocY * (dfY2 - dfY));
+        adfGeoTransform[3] = dfY + (dfRadarLocY * (dfY2 - dfY));
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = -1 * (dfY2 - dfY);
 
@@ -588,27 +588,27 @@ void IRISDataset::LoadProjection() const
     else if (EQUAL(aszProjections[nProjectionCode], "Azimutal equidistant"))
     {
         m_oSRS.SetGeogCS("unnamed ellipse", "unknown", "unnamed",
-                         fEquatorialRadius, fInvFlattening, "Greenwich", 0.0,
+                         dfEquatorialRadius, dfInvFlattening, "Greenwich", 0.0,
                          "degree", 0.0174532925199433);
-        m_oSRS.SetAE(fProjRefLat, fProjRefLon, 0.0, 0.0);
+        m_oSRS.SetAE(dfProjRefLat, dfProjRefLon, 0.0, 0.0);
 
-        adfGeoTransform[0] = -1 * (fRadarLocX * fScaleX);
-        adfGeoTransform[1] = fScaleX;
+        adfGeoTransform[0] = -1 * (dfRadarLocX * dfScaleX);
+        adfGeoTransform[1] = dfScaleX;
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = fRadarLocY * fScaleY;
+        adfGeoTransform[3] = dfRadarLocY * dfScaleY;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -1 * fScaleY;
+        adfGeoTransform[5] = -1 * dfScaleY;
         // When the projection is different from Mercator or Azimutal
         // equidistant, we set a standard geotransform.
     }
     else
     {
-        adfGeoTransform[0] = -1 * (fRadarLocX * fScaleX);
-        adfGeoTransform[1] = fScaleX;
+        adfGeoTransform[0] = -1 * (dfRadarLocX * dfScaleX);
+        adfGeoTransform[1] = dfScaleX;
         adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = fRadarLocY * fScaleY;
+        adfGeoTransform[3] = dfRadarLocY * dfScaleY;
         adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = -1 * fScaleY;
+        adfGeoTransform[5] = -1 * dfScaleY;
     }
 }
 
@@ -634,9 +634,9 @@ void IRISDataset::LoadProjection() const
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  * - - - - - - - -  */
 
-bool IRISDataset::GeodesicCalculation(float fLat, float fLon, float fAngle,
-                                      float fDist, float fEquatorialRadius,
-                                      float fPolarRadius, float fFlattening,
+bool IRISDataset::GeodesicCalculation(double fLat, double fLon, double fAngle,
+                                      double fDist, double fEquatorialRadius,
+                                      double fPolarRadius, double fFlattening,
                                       std::pair<double, double> &oOutPair)
 {
     const double dfAlpha1 = DEG2RAD * fAngle;

@@ -38,6 +38,7 @@ from test_py_scripts import samples_path
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("JP2OpenJPEG")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -46,32 +47,31 @@ def module_disable_exceptions():
         yield
 
 
-###############################################################################
-# Verify we have the JP2OpenJPEG driver.
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
 
-
-def test_validate_jp2_1():
-
-    gdaltest.has_validate_jp2_and_build_jp2 = False
-    gdaltest.jp2openjpeg_drv = gdal.GetDriverByName("JP2OpenJPEG")
-    if gdaltest.jp2openjpeg_drv is None:
-        pytest.skip()
-
-    path = samples_path
-    if path not in sys.path:
-        sys.path.append(path)
+    if samples_path not in sys.path:
+        sys.path.append(samples_path)
 
     try:
-        import build_jp2_from_xml
         import validate_jp2
 
         validate_jp2.validate
+    except (ImportError, AttributeError):
+        pytest.skip("validate_jp2 not available")
+
+    try:
+        import build_jp2_from_xml
+
         build_jp2_from_xml.build_file
     except (ImportError, AttributeError):
-        pytest.skip()
+        pytest.skip("build_jp2_from_xml not available")
 
-    gdaltest.has_validate_jp2_and_build_jp2 = True
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2OpenJPEG")
+
+    yield
+
+    gdaltest.reregister_all_jpeg2000_drivers()
 
 
 ###############################################################################
@@ -115,9 +115,6 @@ def validate(filename, inspire_tg=True, expected_gmljp2=True, oidoc=None):
 
 
 def test_validate_jp2_2():
-
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
 
     import build_jp2_from_xml
 
@@ -189,15 +186,12 @@ def test_validate_jp2_2():
 
 def test_validate_jp2_3():
 
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
-
     import build_jp2_from_xml
 
     build_jp2_from_xml.build_file(
         "data/test_validate_jp2/stefan_full_rgba_corrupted.xml", "/vsimem/out.jp2"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         error_report = validate(
             "/vsimem/out.jp2", oidoc="data/test_validate_jp2/stefan_full_rgba_oi.xml"
         )
@@ -250,15 +244,12 @@ def test_validate_jp2_3():
 
 def test_validate_jp2_4():
 
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
-
     import build_jp2_from_xml
 
     build_jp2_from_xml.build_file(
         "data/test_validate_jp2/almost_nojp2box.xml", "/vsimem/out.jp2"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         error_report = validate("/vsimem/out.jp2", expected_gmljp2=False)
     gdal.Unlink("/vsimem/out.jp2")
 
@@ -295,15 +286,12 @@ def test_validate_jp2_4():
 
 def test_validate_jp2_5():
 
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
-
     import build_jp2_from_xml
 
     build_jp2_from_xml.build_file(
         "data/test_validate_jp2/utmsmall_pct_corrupted.xml", "/vsimem/out.jp2"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         error_report = validate(
             "/vsimem/out.jp2", oidoc="data/test_validate_jp2/utmsmall_pct_oi.xml"
         )
@@ -344,9 +332,6 @@ def test_validate_jp2_5():
 
 def test_validate_jp2_6():
 
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
-
     error_report = validate(
         "data/test_validate_jp2/byte.jp2", oidoc="data/test_validate_jp2/byte_oi.xml"
     )
@@ -374,9 +359,6 @@ def test_validate_jp2_6():
 
 
 def test_validate_jp2_7():
-
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
 
     error_report = validate(
         "data/test_validate_jp2/stefan_full_rgba.jp2",
@@ -408,9 +390,6 @@ def test_validate_jp2_7():
 
 def test_validate_jp2_8():
 
-    if not gdaltest.has_validate_jp2_and_build_jp2:
-        pytest.skip()
-
     error_report = validate(
         "data/test_validate_jp2/utmsmall_pct.jp2",
         oidoc="data/test_validate_jp2/utmsmall_pct_oi.xml",
@@ -432,12 +411,3 @@ def test_validate_jp2_8():
         pp = pprint.PrettyPrinter()
         pp.pprint(error_report.warning_array)
         pytest.fail("did not get expected errors")
-
-
-###############################################################################
-
-
-def test_validate_jp2_cleanup():
-
-    if gdaltest.has_validate_jp2_and_build_jp2:
-        gdaltest.reregister_all_jpeg2000_drivers()

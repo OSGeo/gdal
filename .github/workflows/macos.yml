@@ -25,7 +25,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -50,4 +50,4 @@ jobs:
             # Emulate a few Travis-CI env variable so that some tests get properly skipped
             TRAVIS: true
             TRAVIS_OS_NAME: osx
-            BUILD_NAME: macos_build
+            BUILD_NAME: macos_build_conda

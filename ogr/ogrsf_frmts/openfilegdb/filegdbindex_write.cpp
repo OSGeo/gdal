@@ -1180,7 +1180,7 @@ bool FileGDBTable::CreateSpatialIndex()
             {
                 auto poGeom = std::unique_ptr<OGRGeometry>(
                     poGeomConverter->GetAsGeometry(psField));
-                if (poGeom != nullptr)
+                if (poGeom != nullptr && !poGeom->IsEmpty())
                 {
                     aSetValues.clear();
                     const auto eGeomType =

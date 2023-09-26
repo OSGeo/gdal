@@ -7,7 +7,7 @@
 # Add "include(Ccache)" to CMakeLists.txt and enable
 # using the option -D USE_CCACHE=ON
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.4...3.23)
 
 
 option(USE_CCACHE

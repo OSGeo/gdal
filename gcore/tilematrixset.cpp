@@ -154,12 +154,15 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
     }
 
     bool loadOk = false;
-    if ((strstr(fileOrDef, "\"type\"") != nullptr &&
-         strstr(fileOrDef, "\"TileMatrixSetType\"") != nullptr) ||
-        (strstr(fileOrDef, "\"identifier\"") != nullptr &&
-         strstr(fileOrDef, "\"boundingBox\"") != nullptr &&
-         (strstr(fileOrDef, "\"tileMatrix\"") != nullptr ||
-          strstr(fileOrDef, "\"tileMatrices\"") != nullptr)))
+    if (  // TMS 2.0 spec
+        (strstr(fileOrDef, "\"crs\"") &&
+         strstr(fileOrDef, "\"tileMatrices\"")) ||
+        // TMS 1.0 spec
+        (strstr(fileOrDef, "\"type\"") &&
+         strstr(fileOrDef, "\"TileMatrixSetType\"")) ||
+        (strstr(fileOrDef, "\"identifier\"") &&
+         strstr(fileOrDef, "\"boundingBox\"") &&
+         strstr(fileOrDef, "\"tileMatrix\"")))
     {
         loadOk = oDoc.LoadMemory(fileOrDef);
     }
@@ -197,18 +200,20 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
     }
 
     auto oRoot = oDoc.GetRoot();
-    if (oRoot.GetString("type") != "TileMatrixSetType" &&
-        !oRoot.GetObj("tileMatrix").IsValid() &&
-        !oRoot.GetObj("tileMatrices").IsValid())
+    const bool bIsTMSv2 =
+        oRoot.GetObj("crs").IsValid() && oRoot.GetObj("tileMatrices").IsValid();
+
+    if (!bIsTMSv2 && oRoot.GetString("type") != "TileMatrixSetType" &&
+        !oRoot.GetObj("tileMatrix").IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Expected type = TileMatrixSetType");
         return nullptr;
     }
 
-    poTMS->mIdentifier = oRoot.GetString("identifier");
+    poTMS->mIdentifier = oRoot.GetString(bIsTMSv2 ? "id" : "identifier");
     poTMS->mTitle = oRoot.GetString("title");
-    poTMS->mAbstract = oRoot.GetString("abstract");
+    poTMS->mAbstract = oRoot.GetString(bIsTMSv2 ? "description" : "abstract");
     const auto oBbox = oRoot.GetObj("boundingBox");
     if (oBbox.IsValid())
     {
@@ -226,7 +231,7 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
             poTMS->mBbox.mUpperCornerY = oUpperCorner[1].ToDouble(NaN);
         }
     }
-    poTMS->mCrs = oRoot.GetString("supportedCRS");
+    poTMS->mCrs = oRoot.GetString(bIsTMSv2 ? "crs" : "supportedCRS");
     poTMS->mWellKnownScaleSet = oRoot.GetString("wellKnownScaleSet");
 
     OGRSpatialReference oCrs;
@@ -249,16 +254,15 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         dfMetersPerUnit = oCrs.GetSemiMajor() * M_PI / 180;
     }
 
-    const auto oTileMatrix = oRoot.GetObj("tileMatrix").IsValid()
-                                 ? oRoot.GetArray("tileMatrix")
-                                 : oRoot.GetArray("tileMatrices");
-    if (oTileMatrix.IsValid())
+    const auto oTileMatrices =
+        oRoot.GetArray(bIsTMSv2 ? "tileMatrices" : "tileMatrix");
+    if (oTileMatrices.IsValid())
     {
         double dfLastScaleDenominator = std::numeric_limits<double>::max();
-        for (const auto &oTM : oTileMatrix)
+        for (const auto &oTM : oTileMatrices)
         {
             TileMatrix tm;
-            tm.mId = oTM.GetString("identifier");
+            tm.mId = oTM.GetString(bIsTMSv2 ? "id" : "identifier");
             tm.mScaleDenominator = oTM.GetDouble("scaleDenominator");
             if (tm.mScaleDenominator >= dfLastScaleDenominator ||
                 tm.mScaleDenominator <= 0)
@@ -273,7 +277,18 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
             // http://docs.opengeospatial.org/is/17-083r2/17-083r2.html
             tm.mResX = tm.mScaleDenominator * 0.28e-3 / dfMetersPerUnit;
             tm.mResY = tm.mResX;
-            const auto oTopLeftCorner = oTM.GetArray("topLeftCorner");
+            if (bIsTMSv2)
+            {
+                const auto osCornerOfOrigin = oTM.GetString("cornerOfOrigin");
+                if (!osCornerOfOrigin.empty() && osCornerOfOrigin != "topLeft")
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "cornerOfOrigin = %s not supported",
+                             osCornerOfOrigin.c_str());
+                }
+            }
+            const auto oTopLeftCorner =
+                oTM.GetArray(bIsTMSv2 ? "pointOfOrigin" : "topLeftCorner");
             if (oTopLeftCorner.IsValid() && oTopLeftCorner.Size() == 2)
             {
                 tm.mTopLeftX = oTopLeftCorner[0].ToDouble(NaN);
@@ -284,13 +299,11 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
             tm.mMatrixWidth = oTM.GetInteger("matrixWidth");
             tm.mMatrixHeight = oTM.GetInteger("matrixHeight");
 
-            const auto oVariableMatrixWidth =
-                oTM.GetObj("variableMatrixWidth").IsValid()
-                    ? oTM.GetArray("variableMatrixWidth")
-                    : oTM.GetArray("variableMatrixWidths");
-            if (oVariableMatrixWidth.IsValid())
+            const auto oVariableMatrixWidths = oTM.GetArray(
+                bIsTMSv2 ? "variableMatrixWidths" : "variableMatrixWidth");
+            if (oVariableMatrixWidths.IsValid())
             {
-                for (const auto &oVMW : oVariableMatrixWidth)
+                for (const auto &oVMW : oVariableMatrixWidths)
                 {
                     TileMatrix::VariableMatrixWidth vmw;
                     vmw.mCoalesce = oVMW.GetInteger("coalesce");

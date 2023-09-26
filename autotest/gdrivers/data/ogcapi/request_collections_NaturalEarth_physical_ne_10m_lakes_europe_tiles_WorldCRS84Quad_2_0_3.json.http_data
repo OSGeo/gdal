@@ -1,0 +1,58 @@
+HTTP/1.1 200 OK
+Date: Tue, 20 Jun 2023 10:38:04 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Expires: Wed, 12 Jun 2024 15:15:17 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Crs: <http://www.opengis.net/def/crs/OGC/1.3/CRS84>
+Content-Length: 1522
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Age: 588167
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json; charset=utf-8
+
+{
+   "type" : "FeatureCollection",
+   "features" : [ {
+      "type" : "Feature",
+      "id" : 13,
+      "geometry" : {
+         "type" : "Polygon",
+         "coordinates" : [
+            [ [-9.4543123969969, 53.5135506317524], [-9.1906244277605, 53.4222212049075], [-9.2167185497162, 53.5197308185314], [-9.4543123969969, 53.5135506317524] ]
+         ]
+      },
+      "properties" : {
+         "feature::id" : 13,
+         "id" : 112557,
+         "name" : "Corrib ( Lough )",
+         "lge_id" : "en",
+         "pfafstette" : 13,
+         "lke_type" : "B",
+         "altitude" : 5,
+         "objectid" : 65702,
+         "scalerank" : 10,
+         "featurecla" : "Lake",
+         "funkyname" : 0
+      }
+   } ],
+   "links" : [
+      {
+         "rel" : "self",
+         "type" : "application/geo+json",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?f=json&clipbox-crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84&clipbox=-45,45,0,90"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/html",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?f=html&clipbox-crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84&clipbox=-45,45,0,90"
+      },
+      {
+         "rel" : "collection",
+         "type" : "application/json",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
+      }
+   ],
+   "timeStamp" : "2023-06-13T15:15:17Z"
+}

@@ -72,7 +72,7 @@ def test_georaster_init():
     if gdaltest.oci_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         rs = gdaltest.oci_ds.ExecuteSQL("select owner from all_sdo_geor_sysdata")
 
     err_msg = gdal.GetLastErrorMsg()
@@ -114,7 +114,7 @@ def test_georaster_byte():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 4672, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -145,7 +145,7 @@ def test_georaster_int16():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 4672, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -176,7 +176,7 @@ def test_georaster_int32():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 4672, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -206,7 +206,7 @@ def test_georaster_rgb_b1():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 21212, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -236,7 +236,7 @@ def test_georaster_rgb_b2():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 21212, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -267,7 +267,7 @@ def test_georaster_rgb_b3_bsq():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 21212, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -298,7 +298,7 @@ def test_georaster_rgb_b3_bip():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 21212, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -329,7 +329,7 @@ def test_georaster_rgb_b3_bil():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 21212, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -359,7 +359,7 @@ def test_georaster_byte_deflate():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 4672, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -391,7 +391,7 @@ def test_georaster_rgb_deflate_b3():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 21212, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -421,7 +421,7 @@ def test_georaster_1bit():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 252, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -451,7 +451,7 @@ def test_georaster_2bit():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 718, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -481,7 +481,7 @@ def test_georaster_4bit():
 
     tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 2578, filename_absolute=1)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

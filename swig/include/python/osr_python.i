@@ -55,10 +55,40 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
                 this = _osr.new_SpatialReference(*args, **kwargs)
         finally:
             pass
-        try:
-            self.this.append(this)
-        except __builtin__.Exception:
-            self.this = this
+        if hasattr(_osr, "SpatialReference_swiginit"):
+            # SWIG 4 way
+            _osr.SpatialReference_swiginit(self, this)
+        else:
+            # SWIG < 4 way
+            try:
+                self.this.append(this)
+            except __builtin__.Exception:
+                self.this = this
 
   %}
+}
+
+%extend OSRCoordinateTransformationShadow {
+
+%feature("shadow") TransformPoint %{
+
+def TransformPoint(self, *args):
+    """
+    TransformPoint(CoordinateTransformation self, double [3] inout)
+    TransformPoint(CoordinateTransformation self, double [4] inout)
+    TransformPoint(CoordinateTransformation self, double x, double y, double z=0.0)
+    TransformPoint(CoordinateTransformation self, double x, double y, double z, double t)
+    """
+
+    import collections.abc
+    if len(args) == 1 and isinstance(args[0], collections.abc.Sequence):
+        len_args = len(args[0])
+        if len_args == 3:
+            return self._TransformPoint3Double(args[0])
+        elif len_args == 4:
+            return self._TransformPoint4Double(args[0])
+
+    return $action(self, *args)
+%}
+
 }

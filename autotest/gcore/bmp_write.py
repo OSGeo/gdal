@@ -40,7 +40,7 @@ def test_bmp_vsimem():
 
     tst = gdaltest.GDALTest("BMP", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################

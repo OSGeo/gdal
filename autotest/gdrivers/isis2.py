@@ -63,7 +63,7 @@ def test_isis2_1():
         0.0,
         -1200.0000476837158,
     )
-    return tst.testOpen(check_prj=expected_prj, check_gt=expected_gt)
+    tst.testOpen(check_prj=expected_prj, check_gt=expected_gt)
 
 
 ###############################################################################
@@ -74,7 +74,7 @@ def test_isis2_2():
 
     tst = gdaltest.GDALTest("ISIS2", "byte.tif", 1, 4672)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -91,4 +91,4 @@ def test_isis2_3():
         options=["LABELING_METHOD=DETACHED", "IMAGE_EXTENSION=qub"],
     )
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)

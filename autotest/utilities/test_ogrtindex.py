@@ -29,8 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import gdaltest
 import ogrtest
 import pytest
@@ -52,52 +50,42 @@ def ogrtindex_path():
 # Simple test
 
 
-def test_ogrtindex_1(ogrtindex_path, srs=None):
+@pytest.mark.parametrize("srs", (None, 4326))
+def test_ogrtindex_1(ogrtindex_path, tmp_path, srs):
+
+    if srs:
+        srs_obj = osr.SpatialReference()
+        srs_obj.ImportFromEPSG(srs)
+        srs = srs_obj
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    with shape_drv.CreateDataSource(str(tmp_path)) as shape_ds:
+        shape_lyr = shape_ds.CreateLayer("point1", srs=srs)
+        dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
+        dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(49 2)"))
+        shape_lyr.CreateFeature(dst_feat)
 
-    for basename in ["tileindex", "point1", "point2", "point3", "point4"]:
-        for extension in ["shp", "dbf", "shx", "prj"]:
-            try:
-                os.remove("tmp/%s.%s" % (basename, extension))
-            except OSError:
-                pass
+        shape_lyr = shape_ds.CreateLayer("point2", srs=srs)
+        dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
+        dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(49 3)"))
+        shape_lyr.CreateFeature(dst_feat)
 
-    shape_ds = shape_drv.CreateDataSource("tmp")
+        shape_lyr = shape_ds.CreateLayer("point3", srs=srs)
+        dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
+        dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(48 2)"))
+        shape_lyr.CreateFeature(dst_feat)
 
-    shape_lyr = shape_ds.CreateLayer("point1", srs=srs)
-    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(49 2)"))
-    shape_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
-
-    shape_lyr = shape_ds.CreateLayer("point2", srs=srs)
-    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(49 3)"))
-    shape_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
-
-    shape_lyr = shape_ds.CreateLayer("point3", srs=srs)
-    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(48 2)"))
-    shape_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
-
-    shape_lyr = shape_ds.CreateLayer("point4", srs=srs)
-    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(48 3)"))
-    shape_lyr.CreateFeature(dst_feat)
-    dst_feat.Destroy()
-
-    shape_ds.Destroy()
+        shape_lyr = shape_ds.CreateLayer("point4", srs=srs)
+        dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
+        dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(48 3)"))
+        shape_lyr.CreateFeature(dst_feat)
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        ogrtindex_path
-        + " -skip_different_projection tmp/tileindex.shp tmp/point1.shp tmp/point2.shp tmp/point3.shp tmp/point4.shp"
+        f"{ogrtindex_path} -skip_different_projection {tmp_path}/tileindex.shp {tmp_path}/point1.shp {tmp_path}/point2.shp {tmp_path}/point3.shp {tmp_path}/point4.shp"
     )
     assert err is None or err == "", "got error/warning"
 
-    ds = ogr.Open("tmp/tileindex.shp")
+    ds = ogr.Open(f"{tmp_path}/tileindex.shp")
     assert ds.GetLayer(0).GetFeatureCount() == 4, "did not get expected feature count"
 
     if srs is not None:
@@ -117,53 +105,49 @@ def test_ogrtindex_1(ogrtindex_path, srs=None):
         "POLYGON ((48 2,48 2,48 2,48 2,48 2))",
         "POLYGON ((48 3,48 3,48 3,48 3,48 3))",
     ]
-    i = 0
-    feat = ds.GetLayer(0).GetNextFeature()
-    while feat is not None:
+
+    for i, feat in enumerate(ds.GetLayer(0)):
         assert (
             feat.GetGeometryRef().ExportToWkt() == expected_wkts[i]
         ), "i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt())
-        i = i + 1
-        feat = ds.GetLayer(0).GetNextFeature()
-    ds.Destroy()
-
-
-###############################################################################
-# Same test but with a SRS set on the different tiles to index
-
-
-def test_ogrtindex_2(ogrtindex_path):
-
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-
-    return test_ogrtindex_1(ogrtindex_path, srs)
 
 
 ###############################################################################
 # Test -src_srs_name, -src_srs_format and -t_srs
 
 
-def test_ogrtindex_3(ogrtindex_path):
+def epsg_to_wkt(srid):
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(srid)
+    return srs.ExportToWkt()
+
+
+@pytest.mark.parametrize(
+    "src_srs_format,expected_srss",
+    [
+        ("", ["EPSG:4326", "EPSG:32631"]),
+        ("-src_srs_format AUTO", ["EPSG:4326", "EPSG:32631"]),
+        ("-src_srs_format EPSG", ["EPSG:4326", "EPSG:32631"]),
+        (
+            "-src_srs_format PROJ",
+            [
+                "+proj=longlat +datum=WGS84 +no_defs",
+                "+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs",
+            ],
+        ),
+        ("-src_srs_format WKT", [epsg_to_wkt(4326), epsg_to_wkt(32631)]),
+    ],
+)
+def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-
-    for basename in ["tileindex", "point1", "point2", "point3", "point4"]:
-        for extension in ["shp", "dbf", "shx", "prj"]:
-            try:
-                os.remove("tmp/%s.%s" % (basename, extension))
-            except OSError:
-                pass
-
-    shape_ds = shape_drv.CreateDataSource("tmp")
+    shape_ds = shape_drv.CreateDataSource(str(tmp_path))
 
     srs_4326 = osr.SpatialReference()
     srs_4326.ImportFromEPSG(4326)
-    wkt_epsg_4326 = srs_4326.ExportToWkt()
 
     srs_32631 = osr.SpatialReference()
     srs_32631.ImportFromEPSG(32631)
-    wkt_epsg_32631 = srs_32631.ExportToWkt()
 
     shape_lyr = shape_ds.CreateLayer("point1", srs=srs_4326)
     dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
@@ -176,90 +160,41 @@ def test_ogrtindex_3(ogrtindex_path):
     shape_lyr.CreateFeature(dst_feat)
     shape_ds = None
 
-    for (src_srs_format, expected_srss) in [
-        ("", ["EPSG:4326", "EPSG:32631"]),
-        ("-src_srs_format AUTO", ["EPSG:4326", "EPSG:32631"]),
-        ("-src_srs_format EPSG", ["EPSG:4326", "EPSG:32631"]),
-        (
-            "-src_srs_format PROJ",
-            [
-                "+proj=longlat +datum=WGS84 +no_defs",
-                "+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs",
-            ],
-        ),
-        ("-src_srs_format WKT", [wkt_epsg_4326, wkt_epsg_32631]),
-    ]:
+    output_filename = str(tmp_path / "tileindex.shp")
+    output_format = ""
+    if src_srs_format == "-src_srs_format WKT":
+        if ogr.GetDriverByName("SQLite") is None:
+            pytest.skip("SQLite driver not available")
+        output_filename = str(tmp_path / "tileindex.shp")
+        output_format = " -f SQLite"
 
-        if os.path.exists("tmp/tileindex.shp"):
-            shape_drv.DeleteDataSource("tmp/tileindex.shp")
-        if os.path.exists("tmp/tileindex.db"):
-            os.unlink("tmp/tileindex.db")
+    (_, err) = gdaltest.runexternal_out_and_err(
+        ogrtindex_path
+        + " -src_srs_name src_srs -t_srs EPSG:4326 "
+        + output_filename
+        + f" {tmp_path}/point1.shp {tmp_path}/point2.shp "
+        + src_srs_format
+        + output_format
+    )
 
-        output_filename = "tmp/tileindex.shp"
-        output_format = ""
-        if src_srs_format == "-src_srs_format WKT":
-            if ogr.GetDriverByName("SQLite") is None:
-                continue
-            output_filename = "tmp/tileindex.db"
-            output_format = " -f SQLite"
+    assert src_srs_format == "-src_srs_format WKT" or (
+        err is None or err == ""
+    ), "got error/warning"
 
-        (_, err) = gdaltest.runexternal_out_and_err(
-            ogrtindex_path
-            + " -src_srs_name src_srs -t_srs EPSG:4326 "
-            + output_filename
-            + " tmp/point1.shp tmp/point2.shp "
-            + src_srs_format
-            + output_format
-        )
+    ds = ogr.Open(output_filename)
+    assert ds.GetLayer(0).GetFeatureCount() == 2, "did not get expected feature count"
 
-        assert src_srs_format == "-src_srs_format WKT" or (
-            err is None or err == ""
-        ), "got error/warning"
+    assert (
+        ds.GetLayer(0).GetSpatialRef().GetAuthorityCode(None) == "4326"
+    ), "did not get expected spatial ref"
 
-        ds = ogr.Open(output_filename)
-        assert (
-            ds.GetLayer(0).GetFeatureCount() == 2
-        ), "did not get expected feature count"
+    expected_wkts = [
+        "POLYGON ((2 49,2 49,2 49,2 49,2 49))",
+        "POLYGON ((3 50,3 50,3 50,3 50,3 50))",
+    ]
 
-        assert (
-            ds.GetLayer(0).GetSpatialRef().GetAuthorityCode(None) == "4326"
-        ), "did not get expected spatial ref"
+    for i, feat in enumerate(ds.GetLayer(0)):
+        assert feat.GetField("src_srs") == expected_srss[i]
+        ogrtest.check_feature_geometry(feat, expected_wkts[i], context=f"i={i}")
 
-        expected_wkts = [
-            "POLYGON ((2 49,2 49,2 49,2 49,2 49))",
-            "POLYGON ((3 50,3 50,3 50,3 50,3 50))",
-        ]
-        i = 0
-        feat = ds.GetLayer(0).GetNextFeature()
-        while feat is not None:
-            if feat.GetField("src_srs") != expected_srss[i]:
-                feat.DumpReadable()
-                pytest.fail(i, src_srs_format)
-            assert (
-                ogrtest.check_feature_geometry(feat, expected_wkts[i]) == 0
-            ), "i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt())
-            i = i + 1
-            feat = ds.GetLayer(0).GetNextFeature()
-        ds = None
-
-    if os.path.exists("tmp/tileindex.shp"):
-        shape_drv.DeleteDataSource("tmp/tileindex.shp")
-    if os.path.exists("tmp/tileindex.db"):
-        os.unlink("tmp/tileindex.db")
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ogrtindex_cleanup():
-
-    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    if os.path.exists("tmp/tileindex.shp"):
-        shape_drv.DeleteDataSource("tmp/tileindex.shp")
-    shape_drv.DeleteDataSource("tmp/point1.shp")
-    shape_drv.DeleteDataSource("tmp/point2.shp")
-    if os.path.exists("tmp/point3.shp"):
-        shape_drv.DeleteDataSource("tmp/point3.shp")
-    if os.path.exists("tmp/point4.shp"):
-        shape_drv.DeleteDataSource("tmp/point4.shp")
+    ds = None

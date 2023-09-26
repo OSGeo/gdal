@@ -40,24 +40,32 @@ from osgeo import gdal
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
-def Usage():
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: gdal_pansharpen [--help] [--help-general]", file=f)
     print(
-        "Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset"
-    )
-    print("                       [-of format] [-b band]* [-w weight]*")
-    print(
-        "                       [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]"
-    )
-    print(
-        "                       [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]"
+        "                       <pan_dataset> {<spectral_dataset>[,band=<num>]} {<spectral_dataset>[,band=<num>]}... <out_dataset>",
+        file=f,
     )
     print(
-        "                       [-spat_adjust {union,intersection,none,nonewithoutwarning}]"
+        "                       [-of <format>] [-b <band>]... [-w <weight>]...", file=f
     )
-    print("                       [-verbose_vrt] [-co NAME=VALUE]* [-q]")
-    print("")
-    print("Create a dataset resulting from a pansharpening operation.")
-    return 2
+    print(
+        "                       [-r {nearest|bilinear|cubic|cubicspline|lanczos|average}]",
+        file=f,
+    )
+    print(
+        "                       [-threads {ALL_CPUS|<number>}] [-bitdepth <val>] [-nodata <val>]",
+        file=f,
+    )
+    print(
+        "                       [-spat_adjust {union|intersection|none|nonewithoutwarning}]",
+        file=f,
+    )
+    print("                       [-verbose_vrt] [-co <NAME>=<VALUE>]... [-q]", file=f)
+    print("", file=f)
+    print("Create a dataset resulting from a pansharpening operation.", file=f)
+    return 2 if isError else 0
 
 
 def main(argv=sys.argv):
@@ -115,9 +123,11 @@ def main(argv=sys.argv):
             progress_callback = None
         elif argv[i] == "-verbose_vrt":
             verbose_vrt = True
+        elif argv[i] == "--help":
+            return Usage(isError=False)
         elif argv[i][0] == "-":
             sys.stderr.write("Unrecognized option : %s\n" % argv[i])
-            return Usage()
+            return Usage(isError=True)
         elif pan_name is None:
             pan_name = argv[i]
         else:
@@ -126,7 +136,7 @@ def main(argv=sys.argv):
         i = i + 1
 
     if pan_name is None or len(spectral_names) < 2:
-        return Usage()
+        return Usage(isError=True)
 
     dst_filename = spectral_names.pop()
     return gdal_pansharpen(
@@ -277,8 +287,13 @@ def gdal_pansharpen(
         ms_name = spectral_ds[i].GetDescription()
         if driver_name.upper() == "VRT":
             if not os.path.isabs(ms_name):
-                ms_relative = "1"
-                ms_name = os.path.relpath(ms_name, os.path.dirname(dst_filename))
+                try:
+                    ms_name = os.path.relpath(ms_name, os.path.dirname(dst_filename))
+                    ms_relative = "1"
+                except ValueError:
+                    # Thrown if generating a relative path is not possible, e.g. if
+                    # ms_name is on a different Windows drive from dst_filename
+                    pass
 
         vrt_xml += """    <SpectralBand%s>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>

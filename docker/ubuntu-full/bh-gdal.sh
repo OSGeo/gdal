@@ -64,6 +64,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     echo "${GDAL_CMAKE_EXTRA_OPTS}"
     cmake .. \
         -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBUILD_TESTING=OFF \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \

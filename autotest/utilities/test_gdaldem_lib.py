@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import struct
 
 import gdaltest
@@ -104,7 +105,7 @@ def test_gdaldem_lib_hillshade_float():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_lib_hillshade_float_png():
+def test_gdaldem_lib_hillshade_float_png(tmp_vsimem):
 
     src_ds = gdal.Translate(
         "",
@@ -113,7 +114,7 @@ def test_gdaldem_lib_hillshade_float_png():
         outputType=gdal.GDT_Float32,
     )
     ds = gdal.DEMProcessing(
-        "/vsimem/test_gdaldem_lib_hillshade_float_png.png",
+        tmp_vsimem / "test_gdaldem_lib_hillshade_float_png.png",
         src_ds,
         "hillshade",
         format="PNG",
@@ -137,10 +138,6 @@ def test_gdaldem_lib_hillshade_float_png():
 
     src_ds = None
     ds = None
-
-    gdal.GetDriverByName("PNG").Delete(
-        "/vsimem/test_gdaldem_lib_hillshade_float_png.png"
-    )
 
 
 ###############################################################################
@@ -514,7 +511,7 @@ def test_gdaldem_lib_color_relief_nodata_value():
     colorFilename = "/vsimem/color_file.txt"
     gdal.FileFromMemBuffer(colorFilename, """nv 255 255 255""")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.DEMProcessing(
             "", src_ds, "color-relief", format="MEM", colorFilename=colorFilename
         )
@@ -606,6 +603,7 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
         "slope",
         format="MEM",
         alg="ZevenbergenThorne",
+        slopeFormat="degree",
         scale=111120,
         zFactor=30,
     )
@@ -699,3 +697,21 @@ def test_gdaldem_lib_nodata():
     if cs != 10:
         print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         pytest.fail("Bad checksum")
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdaldem_lib_dict_arguments():
+
+    opt = gdal.DEMProcessingOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

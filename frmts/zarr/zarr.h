@@ -51,18 +51,24 @@
 
 class ZarrDataset final : public GDALDataset
 {
+    friend class ZarrRasterBand;
+
     std::shared_ptr<GDALGroup> m_poRootGroup{};
     CPLStringList m_aosSubdatasets{};
     std::array<double, 6> m_adfGeoTransform{{0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
     bool m_bHasGT = false;
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
+    std::shared_ptr<GDALMDArray> m_poSingleArray{};
 
     static GDALDataset *OpenMultidim(const char *pszFilename, bool bUpdateMode,
                                      CSLConstList papszOpenOptions);
 
   public:
     explicit ZarrDataset(const std::shared_ptr<GDALGroup> &poRootGroup);
+    ~ZarrDataset() override;
+
+    CPLErr FlushCache(bool bAtClosing = false) override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -102,6 +108,7 @@ class ZarrRasterBand final : public GDALRasterBand
     friend class ZarrDataset;
 
     std::shared_ptr<GDALMDArray> m_poArray;
+    GDALColorInterp m_eColorInterp = GCI_Undefined;
 
   protected:
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
@@ -127,6 +134,8 @@ class ZarrRasterBand final : public GDALRasterBand
     CPLErr SetScale(double dfNewScale) override;
     const char *GetUnitType() override;
     CPLErr SetUnitType(const char *pszNewValue) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorInterpretation(GDALColorInterp eColorInterp) override;
 };
 
 /************************************************************************/
@@ -356,7 +365,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
   public:
     ~ZarrGroupBase() override;
 
-    void SetSelf(std::weak_ptr<ZarrGroupBase> self)
+    void SetSelf(const std::weak_ptr<ZarrGroupBase> &self)
     {
         m_pSelf = self;
     }
@@ -823,6 +832,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     virtual std::string
     BuildTileFilename(const uint64_t *tileIndices) const = 0;
+
+    bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
+                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       CSLConstList papszOptions) override;
 
   public:
     ~ZarrArray() override;

@@ -109,10 +109,7 @@ def test_osr_proj4_5():
 
     p4 = srs.ExportToProj4()
 
-    if p4 != input_p4:
-        gdaltest.post_reason("round trip via PROJ.4 damaged srs?")
-        print(p4)
-        return "fail"
+    assert p4 == input_p4, "round trip via PROJ.4 damaged srs?"
 
 
 ###############################################################################

@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdalcompare.py [-sds] golden_file new_file
+    gdalcompare.py [--help] [--help-general] [-sds] golden_file new_file
 
 Description
 -----------
@@ -31,6 +31,8 @@ only important that the GDAL visible data is identical a difference
 count of 1 (the binary difference) should be considered acceptable.
 
 .. program:: gdalcompare
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -sds
 

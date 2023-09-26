@@ -173,7 +173,9 @@ def test_gdal_edit_py_3(script_path):
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
 
     try:
-        test_py_scripts.run_py_script(script_path, "gdal_edit", filename + " -a_srs ''")
+        test_py_scripts.run_py_script(
+            script_path, "gdal_edit", filename + " -a_srs None"
+        )
 
         ds = gdal.Open(filename)
         wkt = ds.GetProjectionRef()

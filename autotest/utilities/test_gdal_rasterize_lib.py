@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import struct
 
 import gdaltest
@@ -108,24 +109,26 @@ def test_gdal_rasterize_lib_1():
 # Test creating an output file
 
 
-def test_gdal_rasterize_lib_3():
+def test_gdal_rasterize_lib_3(tmp_path, tmp_vsimem):
 
     import test_cli_utilities
 
     if test_cli_utilities.get_gdal_contour_path() is None:
         pytest.skip()
 
+    dst_shp = tmp_path / "n43dt0.shp"
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_contour_path()
-        + " ../gdrivers/data/n43.tif tmp/n43dt0.shp -i 10 -3d"
+        + f" ../gdrivers/data/n43.tif {dst_shp} -i 10 -3d"
     )
 
     with pytest.raises(Exception):
-        gdal.Rasterize("/vsimem/bogus.tif", "tmp/n43dt0.shp")
+        gdal.Rasterize(tmp_vsimem / "bogus.tif", dst_shp)
 
     ds = gdal.Rasterize(
         "",
-        "tmp/n43dt0.shp",
+        dst_shp,
         format="MEM",
         outputType=gdal.GDT_Byte,
         useZ=True,
@@ -134,8 +137,6 @@ def test_gdal_rasterize_lib_3():
         height=121,
         noData=0,
     )
-
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/n43dt0.shp")
 
     ds_ref = gdal.Open("../gdrivers/data/n43.tif")
 
@@ -432,7 +433,7 @@ def test_gdal_rasterize_lib_inverse():
     target_ds.SetGeoTransform((-0.5, 1, 0, 10.5, 0, -1))
     target_ds.SetSpatialRef(sr)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[9], inverse=True)
     assert ret == 1
 
@@ -641,3 +642,21 @@ def test_gdal_rasterize_lib_too_small_resolution():
 
     with pytest.raises(Exception, match="Invalid computed output raster size"):
         gdal.Rasterize("", vector_ds, format="MEM", xRes=1, yRes=1e-20)
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdal_rasterize_lib_dict_arguments():
+
+    opt = gdal.RasterizeOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

@@ -327,6 +327,9 @@ int TABDATFile::Close()
 
 int TABDATFile::SyncToDisk()
 {
+    if (m_fp == nullptr)
+        return 0;
+
     if (m_eAccessMode == TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

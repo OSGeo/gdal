@@ -637,6 +637,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %}
 
+%feature("pythonappend") GetMaskBand %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_band_ref(val)
+%}
+
+%feature("pythonappend") GetOverview %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_band_ref(val)
+%}
+
 %feature("shadow") ComputeStatistics %{
 def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
     """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr"""
@@ -1054,10 +1064,32 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         else:
             return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 
+    def _add_band_ref(self, band):
+        if band is None:
+            return
+
+        import weakref
+
+        if not hasattr(self, '_band_references'):
+            self._band_references = weakref.WeakSet()
+
+        self._band_references.add(band)
+        band._parent_ds = weakref.ref(self)
+
+    def _invalidate_bands(self):
+        if hasattr(self, '_band_references'):
+            for band in self._band_references:
+                band.this = None
+
+    def __del__(self):
+        self._invalidate_bands()
+
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
+        self._invalidate_bands()
+
         _gdal.delete_Dataset(self)
         self.this = None
 %}
@@ -1156,6 +1188,10 @@ def ReleaseResultSet(self, sql_lyr):
     if sql_lyr:
         sql_lyr.thisown = None
         sql_lyr.this = None
+%}
+
+%feature("pythonappend") GetRasterBand %{
+    self._add_band_ref(val)
 %}
 
 }
@@ -1648,7 +1684,10 @@ def Info(ds, **kwargs):
         (opts, format, deserialize) = InfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
-    if isinstance(ds, str):
+
+    import os
+
+    if isinstance(ds, (str, os.PathLike)):
         ds = Open(ds)
     ret = InfoInternal(ds, opts)
     if format == 'json' and deserialize:
@@ -1758,7 +1797,10 @@ def VectorInfo(ds, **kwargs):
         (opts, format, deserialize) = VectorInfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
-    if isinstance(ds, str):
+
+    import os
+
+    if isinstance(ds, (str, os.PathLike)):
         ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
     ret = VectorInfoInternal(ds, opts)
     if format == 'json' and deserialize:
@@ -1809,7 +1851,10 @@ def MultiDimInfo(ds, **kwargs):
     else:
         opts = kwargs['options']
         as_text = True
-    if isinstance(ds, str):
+
+    import os
+
+    if isinstance(ds, (str, os.PathLike)):
         ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_MULTIDIM_RASTER)
     ret = MultiDimInfoInternal(ds, opts)
     if not as_text:
@@ -1839,7 +1884,7 @@ def TranslateOptions(options=None, format=None,
               xRes = 0.0, yRes = 0.0,
               creationOptions=None, srcWin=None, projWin=None, projWinSRS=None, strict = False,
               unscale = False, scaleParams=None, exponents=None,
-              outputBounds=None, metadataOptions=None,
+              outputBounds=None, outputGeotransform=None, metadataOptions=None,
               outputSRS=None, nogcp=False, GCPs=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
@@ -1872,7 +1917,7 @@ def TranslateOptions(options=None, format=None,
     yRes:
         output vertical resolution
     creationOptions:
-        list of creation options
+        list or dict of creation options
     srcWin:
         subwindow in pixels to extract: [left_x, top_y, width, height]
     projWin:
@@ -1889,8 +1934,10 @@ def TranslateOptions(options=None, format=None,
         list of exponentiation parameters
     outputBounds:
         assigned output bounds: [ulx, uly, lrx, lry]
+    outputGeotransform:
+        assigned geotransform matrix (array of 6 values) (mutually exclusive with outputBounds)
     metadataOptions:
-        list of metadata options
+        list or dict of metadata options
     outputSRS:
         assigned output SRS
     nogcp:
@@ -1919,6 +1966,7 @@ def TranslateOptions(options=None, format=None,
 
     # Only used for tests
     return_option_list = options == '__RETURN_OPTION_LIST__'
+
     if return_option_list:
         options = []
     else:
@@ -1944,6 +1992,9 @@ def TranslateOptions(options=None, format=None,
         if creationOptions is not None:
             if isinstance(creationOptions, str):
                 new_options += ['-co', creationOptions]
+            elif isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
             else:
                 for opt in creationOptions:
                     new_options += ['-co', opt]
@@ -1963,9 +2014,19 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-exponent', _strHighPrec(exponent)]
         if outputBounds is not None:
             new_options += ['-a_ullr', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
+        if outputGeotransform:
+            if outputBounds:
+                raise Exception("outputBounds and outputGeotransform are mutually exclusive")
+            assert len(outputGeotransform) == 6
+            new_options += ['-a_gt']
+            for val in outputGeotransform:
+                new_options += [_strHighPrec(val)]
         if metadataOptions is not None:
             if isinstance(metadataOptions, str):
                 new_options += ['-mo', metadataOptions]
+            elif isinstance(metadataOptions, dict):
+                for k, v in metadataOptions.items():
+                    new_options += ['-mo', f'{k}={v}']
             else:
                 for opt in metadataOptions:
                     new_options += ['-mo', opt]
@@ -2105,7 +2166,7 @@ def WarpOptions(options=None, format=None,
     workingType:
         working type (gdalconst.GDT_Byte, etc...)
     warpOptions:
-        list of warping options
+        list or dict of warping options
     errorThreshold:
         error threshold for approximation transformer (in pixels)
     warpMemoryLimit:
@@ -2113,7 +2174,7 @@ def WarpOptions(options=None, format=None,
     resampleAlg:
         resampling mode
     creationOptions:
-        list of creation options
+        list or dict of creation options
     srcNodata:
         source nodata value(s)
     dstNodata:
@@ -2129,7 +2190,7 @@ def WarpOptions(options=None, format=None,
     polynomialOrder:
         order of polynomial GCP interpolation
     transformerOptions:
-        list of transformer options
+        list or dict of transformer options
     cutlineDSName:
         cutline dataset name
     cutlineLayer:
@@ -2202,8 +2263,12 @@ def WarpOptions(options=None, format=None,
         if dstAlpha:
             new_options += ['-dstalpha']
         if warpOptions is not None:
-            for opt in warpOptions:
-                new_options += ['-wo', str(opt)]
+            if isinstance(warpOptions, dict):
+                for k, v in warpOptions.items():
+                    new_options += ['-wo', f'{k}={v}']
+            else:
+                for opt in warpOptions:
+                    new_options += ['-wo', str(opt)]
         if errorThreshold is not None:
             new_options += ['-et', _strHighPrec(errorThreshold)]
         if resampleAlg is not None:
@@ -2232,8 +2297,12 @@ def WarpOptions(options=None, format=None,
         if warpMemoryLimit is not None:
             new_options += ['-wm', str(warpMemoryLimit)]
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if srcNodata is not None:
             new_options += ['-srcnodata', str(srcNodata)]
         if dstNodata is not None:
@@ -2249,8 +2318,12 @@ def WarpOptions(options=None, format=None,
         if polynomialOrder is not None:
             new_options += ['-order', str(polynomialOrder)]
         if transformerOptions is not None:
-            for opt in transformerOptions:
-                new_options += ['-to', opt]
+            if isinstance(transformerOptions, dict):
+                for k, v in transformerOptions.items():
+                    new_options += ['-to', opt]
+            else:
+                for opt in transformerOptions:
+                    new_options += ['-to', opt]
         if cutlineDSName is not None:
             new_options += ['-cutline', str(cutlineDSName)]
         if cutlineLayer is not None:
@@ -2309,19 +2382,22 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDSOrSrcDSTab, str):
+
+    import os
+
+    if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
         srcDSTab = [Open(srcDSOrSrcDSTab)]
     elif isinstance(srcDSOrSrcDSTab, list):
         srcDSTab = []
         for elt in srcDSOrSrcDSTab:
-            if isinstance(elt, str):
+            if isinstance(elt, (str, os.PathLike)):
                 srcDSTab.append(Open(elt))
             else:
                 srcDSTab.append(elt)
     else:
         srcDSTab = [srcDSOrSrcDSTab]
 
-    if isinstance(destNameOrDestDS, str):
+    if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALWarpDestName(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
     else:
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
@@ -2403,15 +2479,17 @@ def VectorTranslateOptions(options=None, format=None,
         SRS in which the spatFilter is expressed. If not specified, it is assumed to be
         the one of the layer(s)
     datasetCreationOptions:
-        list of dataset creation options
+        list or dict of dataset creation options
     layerCreationOptions:
-        list of layer creation options
+        list or dict of layer creation options
     layers:
         list of layers to convert
     layerName:
         output layer name
     geometryType:
-        output layer geometry type ('POINT', ....)
+        output layer geometry type ('POINT', ....). May be an array of strings
+        when using a special value like 'PROMOTE_TO_MULTI', 'CONVERT_TO_LINEAR',
+        'CONVERT_TO_CURVE' combined with another one or a geometry type.
     dim:
         output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
     transactionSize:
@@ -2474,7 +2552,13 @@ def VectorTranslateOptions(options=None, format=None,
     callback_data:
         user data for callback
     """
-    options = [] if options is None else options
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
 
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
@@ -2523,11 +2607,20 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-select', val]
 
         if datasetCreationOptions is not None:
-            for opt in datasetCreationOptions:
-                new_options += ['-dsco', opt]
+            if isinstance(datasetCreationOptions, dict):
+                for k, v in datasetCreationOptions.items():
+                    new_options += ['-dsco', f'{k}={v}']
+            else:
+                for opt in datasetCreationOptions:
+                    new_options += ['-dsco', opt]
+
         if layerCreationOptions is not None:
-            for opt in layerCreationOptions:
-                new_options += ['-lco', opt]
+            if isinstance(layerCreationOptions, dict):
+                for k, v in layerCreationOptions.items():
+                    new_options += ['-lco', f'{k}={v}']
+            else:
+                for opt in layerCreationOptions:
+                    new_options += ['-lco', opt]
 
         if layers is not None:
             if isinstance(layers, str):
@@ -2626,6 +2719,9 @@ def VectorTranslateOptions(options=None, format=None,
     if callback is not None:
         new_options += ['-progress']
 
+    if return_option_list:
+        return new_options
+
     return (GDALVectorTranslateOptions(new_options), callback, callback_data)
 
 
@@ -2651,10 +2747,13 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
         (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
-    if isinstance(destNameOrDestDS, str):
+    if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
     else:
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -2677,7 +2776,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
     format:
         output format ("GTiff", etc...)
     creationOptions:
-        list of creation options
+        list or dict of creation options
     computeEdges:
         whether to compute values at raster edges.
     alg:
@@ -2698,7 +2797,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         (hillshade only) whether to compute multi-directional shading. Only one of combined, multiDirectional and igor can be specified.
     igor:
         (hillshade only) whether to use Igor's hillshading from Maperitive.  Only one of combined, multiDirectional and igor can be specified.
-    slopeformat:
+    slopeFormat:
         (slope only) "degree" or "percent".
     trigonometric:
         (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
@@ -2713,7 +2812,12 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
     callback_data:
         user data for callback
     """
-    options = [] if options is None else options
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
 
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
@@ -2722,8 +2826,12 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if computeEdges:
             new_options += ['-compute_edges']
         if alg:
@@ -2761,6 +2869,9 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         if addAlpha:
             new_options += ['-alpha']
 
+    if return_option_list:
+        return new_options
+
     return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
 
 def DEMProcessing(destName, srcDS, processing, **kwargs):
@@ -2796,6 +2907,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
 def NearblackOptions(options=None, format=None,
          creationOptions=None, white = False, colors=None,
          maxNonBlack=None, nearDist=None, setAlpha = False, setMask = False,
+         alg=None,
          callback=None, callback_data=None):
     """Create a NearblackOptions() object that can be passed to gdal.Nearblack()
 
@@ -2806,7 +2918,7 @@ def NearblackOptions(options=None, format=None,
     format:
         output format ("GTiff", etc...)
     creationOptions:
-        list of creation options
+        list or dict of creation options
     white:
         whether to search for nearly white (255) pixels instead of nearly black pixels.
     colors:
@@ -2819,12 +2931,19 @@ def NearblackOptions(options=None, format=None,
         adds an alpha band to the output file.
     setMask:
         adds a mask band to the output file.
+    alg:
+        "twopasses" (default), or "floodfill"
     callback:
         callback method
     callback_data:
         user data for callback
     """
-    options = [] if options is None else options
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
 
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
@@ -2833,8 +2952,12 @@ def NearblackOptions(options=None, format=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if white:
             new_options += ['-white']
         if colors is not None:
@@ -2853,6 +2976,11 @@ def NearblackOptions(options=None, format=None,
             new_options += ['-setalpha']
         if setMask:
             new_options += ['-setmask']
+        if alg:
+            new_options += ['-alg', alg]
+
+    if return_option_list:
+        return new_options
 
     return (GDALNearblackOptions(new_options), callback, callback_data)
 
@@ -2877,10 +3005,13 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS)
 
-    if isinstance(destNameOrDestDS, str):
+    if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALNearblackDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
     else:
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -2917,7 +3048,7 @@ def GridOptions(options=None, format=None,
     height:
         height of the output raster in pixel
     creationOptions:
-        list of creation options
+        list or dict of creation options
     outputBounds:
         assigned output bounds:
         [ulx, uly, lrx, lry]
@@ -2951,7 +3082,13 @@ def GridOptions(options=None, format=None,
     callback_data:
         user data for callback
     """
-    options = [] if options is None else options
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
 
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
@@ -2964,8 +3101,12 @@ def GridOptions(options=None, format=None,
         if width != 0 or height != 0:
             new_options += ['-outsize', str(width), str(height)]
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if outputBounds is not None:
             new_options += ['-txe', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[2]), '-tye', _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
@@ -2990,6 +3131,9 @@ def GridOptions(options=None, format=None,
             new_options += ['-z_multiply', str(z_multiply)]
         if spatFilter is not None:
             new_options += ['-spat', str(spatFilter[0]), str(spatFilter[1]), str(spatFilter[2]), str(spatFilter[3])]
+
+    if return_option_list:
+        return new_options
 
     return (GDALGridOptions(new_options), callback, callback_data)
 
@@ -3042,14 +3186,14 @@ def RasterizeOptions(options=None, format=None,
     outputType:
         output type (gdalconst.GDT_Byte, etc...)
     creationOptions:
-        list of creation options
+        list or dict of creation options
     outputBounds:
         assigned output bounds:
         [minx, miny, maxx, maxy]
     outputSRS:
         assigned output SRS
     transformerOptions:
-        list of transformer options
+        list or dict of transformer options
     width:
         width of the output raster in pixel
     height:
@@ -3101,7 +3245,14 @@ def RasterizeOptions(options=None, format=None,
     callback_data:
         user data for callback
     """
-    options = [] if options is None else options
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
 
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
@@ -3112,8 +3263,12 @@ def RasterizeOptions(options=None, format=None,
         if outputType != gdalconst.GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType)]
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if bands is not None:
             for b in bands:
                 new_options += ['-b', str(b)]
@@ -3130,8 +3285,12 @@ def RasterizeOptions(options=None, format=None,
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
         if transformerOptions is not None:
-            for opt in transformerOptions:
-                new_options += ['-to', opt]
+            if isinstance(transformerOptions, dict):
+                for k, v in transformerOptions.items():
+                    new_options += ['-to', f'{k}={v}']
+            else:
+                for opt in transformerOptions:
+                    new_options += ['-to', opt]
         if width is not None and height is not None:
             new_options += ['-ts', str(width), str(height)]
         if xRes is not None and yRes is not None:
@@ -3171,6 +3330,9 @@ def RasterizeOptions(options=None, format=None,
         if add:
             new_options += ['-add']
 
+    if return_option_list:
+        return new_options
+
     return (GDALRasterizeOptions(new_options), callback, callback_data)
 
 def Rasterize(destNameOrDestDS, srcDS, **kwargs):
@@ -3190,17 +3352,228 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    import os
+
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
-    if isinstance(destNameOrDestDS, str):
+    if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
     else:
         return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+
+def FootprintOptions(options=None,
+                     format=None,
+                     bands=None,
+                     srcNodata=None,
+                     ovr=None,
+                     targetCoordinateSystem=None,
+                     dstSRS=None,
+                     splitPolys=None,
+                     convexHull=None,
+                     densify=None,
+                     simplify=None,
+                     maxPoints=None,
+                     layerName=None,
+                     layerCreationOptions=None,
+                     datasetCreationOptions=None,
+                     callback=None, callback_data=None):
+    """Create a FootprintOptions() object that can be passed to gdal.Footprint()
+
+    Parameters
+    ----------
+    options:
+        can be be an array of strings, a string or let empty and filled from other keywords.
+    format:
+        output format ("GeoJSON", etc...)
+    bands:
+        list of output bands to burn values into
+    srcNodata:
+        source nodata value(s).
+    ovr:
+        overview index.
+    targetCoordinateSystem:
+        "pixel" or "georef"
+    dstSRS:
+        output SRS
+    datasetCreationOptions:
+        list or dict of dataset creation options
+    layerCreationOptions:
+        list or dict of layer creation options
+    splitPolys:
+        whether to split multipolygons as several polygons
+    convexHull:
+        whether to compute the convex hull of polygons/multipolygons
+    densify:
+        tolerance value for polygon densification
+    simplify:
+        tolerance value for polygon simplification
+    maxPoints:
+        maximum number of points (100 by default, "unlimited" for unlimited)
+    layerName:
+        output layer name
+    callback:
+        callback method
+    callback_data:
+        user data for callback
+    """
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if format is not None:
+            new_options += ['-of', format]
+        if bands is not None:
+            for b in bands:
+                new_options += ['-b', str(b)]
+        if targetCoordinateSystem:
+            new_options += ["-t_cs", targetCoordinateSystem]
+        if dstSRS:
+            new_options += ["-t_srs", dstSRS]
+        if srcNodata is not None:
+            new_options += ['-srcnodata', str(srcNodata)]
+        if ovr is not None:
+            new_options += ['-ovr', str(ovr)]
+        if splitPolys:
+            new_options += ["-split_polys"]
+        if convexHull:
+            new_options += ["-convex_hull"]
+        if densify is not None:
+            new_options += ['-densify', str(densify)]
+        if simplify is not None:
+            new_options += ['-simplify', str(simplify)]
+        if maxPoints is not None:
+            new_options += ['-max_points', str(maxPoints)]
+        if layerName is not None:
+            new_options += ['-lyr_name', layerName]
+        if datasetCreationOptions is not None:
+            if isinstance(datasetCreationOptions, dict):
+                for k, v in datasetCreationOptions.items():
+                    new_options += ['-dsco', f'{k}={v}']
+            else:
+                for opt in datasetCreationOptions:
+                    new_options += ['-dsco', opt]
+        if layerCreationOptions is not None:
+            if isinstance(layerCreationOptions, dict):
+                for k, v in layerCreationOptions.items():
+                    new_options += ['-lco', f'{k}={v}']
+            else:
+                for opt in layerCreationOptions:
+                    new_options += ['-lco', opt]
+
+    if return_option_list:
+        return new_options
+
+    return (GDALFootprintOptions(new_options), callback, callback_data)
+
+def Footprint(destNameOrDestDS, srcDS, **kwargs):
+    """Compute the footprint of a raster
+
+    Parameters
+    ----------
+    destNameOrDestDS:
+        Output dataset name or object
+    srcDS:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.FootprintOptions(), string or array of strings,
+        other keywords arguments of gdal.FootprintOptions()
+        If options is provided as a gdal.FootprintOptions() object, other keywords are ignored.
+
+    Examples
+    --------
+
+    1. Special mode to get deserialized GeoJSON (in EPSG:4326 if dstSRS not specified):
+
+    >>> deserialized_geojson = gdal.FootPrint(None, src_ds, format="GeoJSON")
+
+    2. Special mode to get WKT:
+
+    >>> wkt = gdal.FootPrint(None, src_ds, format="WKT")
+
+    3. Get result in a GeoPackage
+
+    >>> gdal.FootPrintf("out.gpkg", src_ds, format="GPKG")
+
+    """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    inline_geojson_requested = (destNameOrDestDS is None or destNameOrDestDS == "") and \
+        "format" in kwargs and kwargs["format"] == "GeoJSON"
+    if inline_geojson_requested and "dstSRS" not in kwargs:
+        import copy
+        kwargs = copy.copy(kwargs)
+        kwargs["dstSRS"] = "EPSG:4326"
+
+    wkt_requested = (destNameOrDestDS is None or destNameOrDestDS == "") and \
+        "format" in kwargs and kwargs["format"] == "WKT"
+    if wkt_requested:
+        import copy
+        kwargs = copy.copy(kwargs)
+        kwargs["format"] = "GeoJSON"
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, callback, callback_data) = FootprintOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
+        srcDS = OpenEx(srcDS, gdalconst.OF_RASTER)
+
+    if inline_geojson_requested or wkt_requested:
+        import uuid
+        temp_filename = "/vsimem/" + str(uuid.uuid4())
+        try:
+            if not wrapper_GDALFootprintDestName(temp_filename, srcDS, opts, callback, callback_data):
+                return None
+            if inline_geojson_requested:
+                f = VSIFOpenL(temp_filename, "rb")
+                assert f
+                VSIFSeekL(f, 0, 2) # SEEK_END
+                size = VSIFTellL(f)
+                VSIFSeekL(f, 0, 0) # SEEK_SET
+                data = VSIFReadL(1, size, f)
+                VSIFCloseL(f)
+                import json
+                return json.loads(data)
+            else:
+                assert wkt_requested
+                ds = OpenEx(temp_filename)
+                lyr = ds.GetLayer(0)
+                wkts = []
+                for f in lyr:
+                    wkts.append(f.GetGeometryRef().ExportToWkt())
+                if len(wkts) == 1:
+                    return wkts[0]
+                else:
+                    return wkts
+        finally:
+            if VSIStatL(temp_filename):
+                Unlink(temp_filename)
+
+    import os
+
+    if isinstance(destNameOrDestDS, (str, os.PathLike)):
+        return wrapper_GDALFootprintDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALFootprintDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
 def BuildVRTOptions(options=None,
@@ -3337,12 +3710,15 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
 
     srcDSTab = []
     srcDSNamesTab = []
-    if isinstance(srcDSOrSrcDSTab, str):
-        srcDSNamesTab = [srcDSOrSrcDSTab]
+
+    import os
+
+    if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
+        srcDSNamesTab = [str(srcDSOrSrcDSTab)]
     elif isinstance(srcDSOrSrcDSTab, list):
         for elt in srcDSOrSrcDSTab:
-            if isinstance(elt, str):
-                srcDSNamesTab.append(elt)
+            if isinstance(elt, (str, os.PathLike)):
+                srcDSNamesTab.append(str(elt))
             else:
                 srcDSTab.append(elt)
         if srcDSTab and srcDSNamesTab:
@@ -3368,7 +3744,7 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
     format:
         output format ("GTiff", etc...)
     creationOptions:
-        list of creation options
+        list or dict of creation options
     arraySpecs:
         list of array specifications, each of them being an array name or
         "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
@@ -3386,7 +3762,14 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
     callback_data:
         user data for callback
     """
-    options = [] if options is None else options
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
 
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
@@ -3395,8 +3778,12 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
-            for opt in creationOptions:
-                new_options += ['-co', opt]
+            if isinstance(creationOptions, dict):
+                for k, v in creationOptions.items():
+                    new_options += ['-co', f'{k}={v}']
+            else:
+                for opt in creationOptions:
+                    new_options += ['-co', opt]
         if arraySpecs is not None:
             for s in arraySpecs:
                 new_options += ['-array', s]
@@ -3409,6 +3796,9 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
         if scaleAxesSpecs is not None:
             for s in scaleAxesSpecs:
                 new_options += ['-scaleaxes', s]
+
+    if return_option_list:
+        return new_options
 
     return (GDALMultiDimTranslateOptions(new_options), callback, callback_data)
 
@@ -3434,7 +3824,10 @@ def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
         (opts, callback, callback_data) = MultiDimTranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDSOrSrcDSTab, str):
+
+    import os
+
+    if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
         srcDSTab = [OpenEx(srcDSOrSrcDSTab, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER)]
     elif isinstance(srcDSOrSrcDSTab, list):
         srcDSTab = []
@@ -3524,8 +3917,11 @@ def config_options(options, thread_local=True):
            with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
                gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
-    oldvals = {key: GetConfigOption(key) for key in options}
+    get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
+
+    oldvals = {key: get_config_option(key) for key in options}
+
     for key in options:
         set_config_option(key, options[key])
     try:

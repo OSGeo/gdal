@@ -62,16 +62,13 @@ def test_ctg_1():
     AUTHORITY["EPSG","32614"],
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]"""
-    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
+    tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
-    if ret == "success":
-        ds = gdal.Open("data/ctg/fake_grid_cell")
-        lst = ds.GetRasterBand(1).GetCategoryNames()
-        assert lst is not None and lst, "expected non empty category names for band 1"
-        lst = ds.GetRasterBand(2).GetCategoryNames()
-        assert lst is None, "expected empty category names for band 2"
-        assert (
-            ds.GetRasterBand(1).GetNoDataValue() == 0
-        ), "did not get expected nodata value"
-
-    return ret
+    ds = gdal.Open("data/ctg/fake_grid_cell")
+    lst = ds.GetRasterBand(1).GetCategoryNames()
+    assert lst is not None and lst, "expected non empty category names for band 1"
+    lst = ds.GetRasterBand(2).GetCategoryNames()
+    assert lst is None, "expected empty category names for band 2"
+    assert (
+        ds.GetRasterBand(1).GetNoDataValue() == 0
+    ), "did not get expected nodata value"

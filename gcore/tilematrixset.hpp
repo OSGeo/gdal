@@ -55,6 +55,8 @@ class CPL_DLL TileMatrixSet
     {
         return mTitle;
     }
+
+    //! "abstract" in TMS v1 / "description" in TMS v2
     const std::string &abstract() const
     {
         return mAbstract;

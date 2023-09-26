@@ -63,13 +63,7 @@ def test_gml_geom(filename):
 
     geom_gml = ogr.CreateGeometryFromGML(gml)
 
-    if ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001) == 1:
-        clean_wkt = geom_wkt.ExportToWkt()
-        gml_wkt = geom_gml.ExportToWkt()
-        pytest.fail(
-            "WKT from GML (%s) does not match clean WKT (%s).\ngml was (%s)"
-            % (gml_wkt, clean_wkt, gml)
-        )
+    ogrtest.check_feature_geometry(geom_wkt, geom_gml, 0.0000000000001)
 
 
 ###############################################################################
@@ -199,20 +193,17 @@ def test_gml_polygon():
 
 
 def _CreateGMLWithSRSFromWkt(wkt, epsg):
+    __tracebackhide__ = True
 
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    if geom is None:
-        gdaltest.post_reason("Import geometry from WKT failed")
-        return None
+    assert geom is not None, "Import geometry from WKT failed"
 
     # Assign SRS from given EPSG code
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(epsg)
 
-    if srs is None:
-        gdaltest.post_reason("SRS import from EPSG failed")
-        return None
+    assert srs is not None, "SRS import from EPSG failed"
 
     geom.AssignSpatialReference(srs)
 
@@ -1092,6 +1083,32 @@ def test_gml_Tin():
         == "TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
     ), "<gml:Tin> not correctly parsed"
 
+    gml = """<gml:Surface>
+                <gml:trianglePatches>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 0 0 0 1 0 1 0 0 0 0</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Triangle>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 0 0 0</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Triangle>
+                </gml:trianglePatches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToWkt()
+        == "TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
+    ), "<gml:Tin> not correctly parsed"
+
     # Part 2 - Create GML File from OGR Geometries
     wkt_original = "TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
 
@@ -1105,6 +1122,135 @@ def test_gml_Tin():
     ):
         print(geom.ExportToWkt())
         pytest.fail("OGRGeometry::TriangulatedSurface incorrectly converted")
+
+
+###############################################################################
+
+
+def test_gml_Surface_with_curve_polygon_then_curve_polygon():
+
+    gml = """<gml:Surface>
+                <gml:patches>
+                    <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:PolygonPatch>
+                    <gml:PolygonPatch interpolation="planar">
+                     <gml:exterior>
+                      <gml:Ring>
+                       <gml:curveMember>
+                        <gml:Curve>
+                         <gml:segments>
+                          <gml:LineStringSegment interpolation="linear">
+                           <gml:pos>0 -1</gml:pos>
+                           <gml:pos>0 1</gml:pos>
+                          </gml:LineStringSegment>
+                          <gml:Arc interpolation="circularArc3Points" numArc="1">
+                           <gml:pos>0 1</gml:pos>
+                           <gml:pos>1 0</gml:pos>
+                           <gml:pos>0 -1</gml:pos>
+                          </gml:Arc>
+                         </gml:segments>
+                        </gml:Curve>
+                       </gml:curveMember>
+                      </gml:Ring></gml:exterior>
+                     </gml:PolygonPatch>
+                </gml:patches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToIsoWkt()
+        == "MULTISURFACE (((0 0,0 1,1 1,1 0,0 0)),CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1))))"
+    )
+
+
+###############################################################################
+
+
+def test_gml_Surface_with_curve_polygon_then_polygon_then_curve_polygon():
+
+    gml = """<gml:Surface>
+                <gml:patches>
+                    <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:PolygonPatch>
+                     <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:PolygonPatch>
+                    <gml:PolygonPatch interpolation="planar">
+                     <gml:exterior>
+                      <gml:Ring>
+                       <gml:curveMember>
+                        <gml:Curve>
+                         <gml:segments>
+                          <gml:LineStringSegment interpolation="linear">
+                           <gml:pos>0 -1</gml:pos>
+                           <gml:pos>0 1</gml:pos>
+                          </gml:LineStringSegment>
+                          <gml:Arc interpolation="circularArc3Points" numArc="1">
+                           <gml:pos>0 1</gml:pos>
+                           <gml:pos>1 0</gml:pos>
+                           <gml:pos>0 -1</gml:pos>
+                          </gml:Arc>
+                         </gml:segments>
+                        </gml:Curve>
+                       </gml:curveMember>
+                      </gml:Ring></gml:exterior>
+                     </gml:PolygonPatch>
+                </gml:patches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToIsoWkt()
+        == "MULTISURFACE (((0 0,0 1,1 1,1 0,0 0)),((0 0,0 1,1 1,1 0,0 0)),CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1))))"
+    )
+
+
+###############################################################################
+
+
+def test_gml_Surface_mix_of_triangle_and_rectangle():
+
+    gml = """<gml:Surface>
+                <gml:patches>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 0 0 0 1 0 1 0 0 0 0</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Triangle>
+                    <gml:Rectangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 10 0 1 10 1 1 10 1 0 10 0 0 10</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:Rectangle>
+                </gml:patches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToIsoWkt()
+        == "GEOMETRYCOLLECTION Z (TRIANGLE Z ((0 0 0,0 0 1,0 1 0,0 0 0)),POLYGON Z ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))"
+    )
 
 
 ###############################################################################
@@ -1143,10 +1289,7 @@ def test_gml_ConcatenatedDeduplication():
     expected_wkt = (
         "CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1)))"
     )
-    assert (
-        ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt))
-        == 0
-    )
+    ogrtest.check_feature_geometry(geom, expected_wkt)
 
     assert not ogrtest.have_geos() or geom.IsValid(), "geometry not valid"
 
@@ -1567,10 +1710,15 @@ def test_gml_invalid_geoms():
             "<gml:Triangle><gml:exterior><gml:CompositeCurve/></gml:exterior></gml:Triangle>",
             None,
         ),
+        ("<gml:TriangulatedSurface></gml:TriangulatedSurface>", None),
+        (
+            "<gml:TriangulatedSurface><gml:patches><gml:Triangle/></gml:patches></gml:TriangulatedSurface>",
+            None,
+        ),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # print gml
             geom = ogr.CreateGeometryFromGML(gml)
         if geom is None:
@@ -2098,11 +2246,8 @@ def test_gml_Arc():
     gml = "<gml:Arc><gml:posList>1 0 0 1 -1 0</gml:posList></gml:Arc>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 0,0 1,-1 0)")
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 0,0 1,-1 0)")
     )
 
     gml2 = geom.ExportToGML(["FORMAT=GML3"])
@@ -2122,11 +2267,8 @@ def test_gml_ArcByBulge():
     gml = "<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (2 0,0 2,-2 0)")
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (2 0,0 2,-2 0)")
     )
 
 
@@ -2139,11 +2281,8 @@ def test_gml_ArcByCenterPoint():
     gml = "<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (1 4,-1 2,1 0)")
     )
 
 
@@ -2203,14 +2342,9 @@ def test_gml_CompoundCurve_of_ArcByCenterPoint():
 </Surface>"""
     geom = ogr.CreateGeometryFromGML(gml)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom,
-            ogr.CreateGeometryFromWkt(
-                "POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))"
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom,
+        "POLYGON ((-80.4 33.86,-80.27 33.63,-80.305028054229538 33.622017309598967,-80.335422529369936 33.613343178471617,-80.366464292754429 33.606448070493634,-80.398003921948742 33.601365147653873,-80.429889693662162 33.598118851265042,-80.461968286017793 33.596724788982847,-80.494085487001527 33.597189662699385,-80.52608690656875 33.599511237590342,-80.557818688893789 33.603678352435914,-80.589128223167393 33.609670971175497,-80.619864849221443 33.617460275496377,-80.63 33.62,-80.39 33.85))",
     )
 
 
@@ -2223,11 +2357,8 @@ def test_gml_CircleByCenterPoint():
     gml = "<gml:CircleByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius></gml:CircleByCenterPoint>"
     geom = ogr.CreateGeometryFromGML(gml)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (-1 2,3 2,-1 2)")
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom, ogr.CreateGeometryFromWkt("CIRCULARSTRING (-1 2,3 2,-1 2)")
     )
 
 
@@ -2244,7 +2375,7 @@ def test_gml_CircleByCenterPoint_srs_geog_uom_m_km():
     gml = '<gml:CircleByCenterPoint srsName="URN:OGC:DEF:CRS:OGC:1.3:CRS84"><gml:pos>2 49</gml:pos><gml:radius uom="km">2</gml:radius></gml:CircleByCenterPoint>'
     geom2 = ogr.CreateGeometryFromGML(gml)
 
-    assert ogrtest.check_feature_geometry(geom1, geom2) == 0
+    ogrtest.check_feature_geometry(geom1, geom2)
 
 
 ###############################################################################
@@ -2293,14 +2424,9 @@ def test_gml_CompoundCurve_of_ArcByCenterPoint_curve_in_same_segments():
         </aixm:Surface>"""
     )
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom,
-            ogr.CreateGeometryFromWkt(
-                "POLYGON ((55.2333333333333 -36.1666666666667,55.2311637280767 -36.8943733791648,55.2602248071013 -36.8960852160185,55.2891782700249 -36.8912782655051,55.3178697537514 -36.88292675789,55.3461587637071 -36.8710639413776,55.3739064765608 -36.8557405708675,55.4009764350458 -36.8370248014709,55.4272352367262 -36.8150019876212,55.4525532129231 -36.7897743859994,55.476805093957 -36.7614607612323,55.4998706568286 -36.7301958939182,55.5216353514589 -36.6961299915025,55.5419909016414 -36.6594280032268,55.5608358769213 -36.6202688413925,55.5780762317212 -36.5788445119267,55.5936258081681 -36.5353591583435,55.6074067992521 -36.4900280239174,55.6193501691593 -36.4430763379496,55.6293960278662 -36.3947381326996,55.6374939573672 -36.3452549984946,55.6436032872147 -36.2948747851727,55.6476933173936 -36.2438502586493,55.6497434869178 -36.19243772209,55.6497434869178 -36.1408956112433,55.6476933173936 -36.089483074684,55.6436032872147 -36.0384585481606,55.6374939573672 -35.9880783348387,55.6293960278662 -35.9385952006337,55.6193501691593 -35.8902569953837,55.6074067992521 -35.8433053094159,55.5936258081681 -35.7979741749898,55.5780762317212 -35.7544888214066,55.5608358769213 -35.7130644919408,55.5419909016414 -35.6739053301065,55.5216353514589 -35.6372033418322,55.4998706568286 -35.6031374394151,55.476805093957 -35.571872572101,55.4525532129231 -35.5435589473339,55.4272352367262 -35.5183313457121,55.4009764350458 -35.4963085318624,55.3739064765608 -35.4775927624659,55.3461587637071 -35.4622693919557,55.3178697537514 -35.4504065754433,55.2891782700249 -35.4420550678282,55.2602248071013 -35.4372481173149,55.2311508336186 -35.4360014509317,55.2020980963355 -35.4383133491681,55.1732079288891 -35.4441648063421,55.1446205685763 -35.4535197729773,55.1164744843283 -35.4663254761286,55.0889057188812 -35.4825128133848,55.0620472479757 -35.5019968161103,55.0360283592393 -35.524677177381,55.0109740532301 -35.5504388400636,54.9870044689367 -35.5791526404379,54.9642343358562 -35.6106760028906,54.9427724545944 -35.6448536812344,54.9281635053072 -35.674116070019,55.2333333333333 -36.1666666666667))"
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom,
+        "POLYGON ((55.2333333333333 -36.1666666666667,55.2311637280767 -36.8943733791648,55.2602248071013 -36.8960852160185,55.2891782700249 -36.8912782655051,55.3178697537514 -36.88292675789,55.3461587637071 -36.8710639413776,55.3739064765608 -36.8557405708675,55.4009764350458 -36.8370248014709,55.4272352367262 -36.8150019876212,55.4525532129231 -36.7897743859994,55.476805093957 -36.7614607612323,55.4998706568286 -36.7301958939182,55.5216353514589 -36.6961299915025,55.5419909016414 -36.6594280032268,55.5608358769213 -36.6202688413925,55.5780762317212 -36.5788445119267,55.5936258081681 -36.5353591583435,55.6074067992521 -36.4900280239174,55.6193501691593 -36.4430763379496,55.6293960278662 -36.3947381326996,55.6374939573672 -36.3452549984946,55.6436032872147 -36.2948747851727,55.6476933173936 -36.2438502586493,55.6497434869178 -36.19243772209,55.6497434869178 -36.1408956112433,55.6476933173936 -36.089483074684,55.6436032872147 -36.0384585481606,55.6374939573672 -35.9880783348387,55.6293960278662 -35.9385952006337,55.6193501691593 -35.8902569953837,55.6074067992521 -35.8433053094159,55.5936258081681 -35.7979741749898,55.5780762317212 -35.7544888214066,55.5608358769213 -35.7130644919408,55.5419909016414 -35.6739053301065,55.5216353514589 -35.6372033418322,55.4998706568286 -35.6031374394151,55.476805093957 -35.571872572101,55.4525532129231 -35.5435589473339,55.4272352367262 -35.5183313457121,55.4009764350458 -35.4963085318624,55.3739064765608 -35.4775927624659,55.3461587637071 -35.4622693919557,55.3178697537514 -35.4504065754433,55.2891782700249 -35.4420550678282,55.2602248071013 -35.4372481173149,55.2311508336186 -35.4360014509317,55.2020980963355 -35.4383133491681,55.1732079288891 -35.4441648063421,55.1446205685763 -35.4535197729773,55.1164744843283 -35.4663254761286,55.0889057188812 -35.4825128133848,55.0620472479757 -35.5019968161103,55.0360283592393 -35.524677177381,55.0109740532301 -35.5504388400636,54.9870044689367 -35.5791526404379,54.9642343358562 -35.6106760028906,54.9427724545944 -35.6448536812344,54.9281635053072 -35.674116070019,55.2333333333333 -36.1666666666667))",
     )
 
 
@@ -2349,14 +2475,11 @@ def test_gml_Ring_starting_with_ArcByCenterPoint():
     )
     # print(g)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom,
-            ogr.CreateGeometryFromWkt(
-                "POLYGON ((46.745 0.331944444444444,46.7432764927165 0.347962462754535,46.7409162535525 0.363717281627594,46.7378065348593 0.3791917846605,46.7339626150092 0.394310000163572,46.7294033759096 0.408997750371246,46.7241512079629 0.423183023082575,46.7182318974714 0.436796331344972,46.7116744971061 0.449771059387196,46.7045111801497 0.462043792829896,46.6967770793052 0.473554631563425,46.6885101109471 0.484247483569652,46.6797507857586 0.494070338341013,46.6705420067727 0.502975518511247,46.6609288558889 0.5109199085045,46.6509583699943 0.517865159176619,46.6483333333333 0.519444444444444,46.4386111111111 0.338055555555556,46.4230555555555 0.289444444444444,46.4239652827541 0.273432507330975,46.4255282239253 0.25756088338307,46.4278483647801 0.241884857622964,46.4309144976449 0.226480183207377,46.4347118090807 0.21142133567082,46.4392219496614 0.196781161237034,46.4444231204746 0.18263053185483,46.450290175977 0.169038008752016,46.4567947427662 0.156069515749848,46.4639053537626 0.143788023916768,46.4715875972233 0.132253248900933,46.4798042799442 0.121521362391196,46.4885156039408 0.111644719041597,46.4976793558324 0.102671600158084,46.5002777777778 0.100555555555556,46.5408333333333 0.105555555555556,46.575 0.225,46.5944444444444 0.258333333333333,46.6583333333333 0.283333333333333,46.6955555555556 0.255555555555556,46.745 0.331944444444444))"
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom,
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((46.745 0.331944444444444,46.7432764927165 0.347962462754535,46.7409162535525 0.363717281627594,46.7378065348593 0.3791917846605,46.7339626150092 0.394310000163572,46.7294033759096 0.408997750371246,46.7241512079629 0.423183023082575,46.7182318974714 0.436796331344972,46.7116744971061 0.449771059387196,46.7045111801497 0.462043792829896,46.6967770793052 0.473554631563425,46.6885101109471 0.484247483569652,46.6797507857586 0.494070338341013,46.6705420067727 0.502975518511247,46.6609288558889 0.5109199085045,46.6509583699943 0.517865159176619,46.6483333333333 0.519444444444444,46.4386111111111 0.338055555555556,46.4230555555555 0.289444444444444,46.4239652827541 0.273432507330975,46.4255282239253 0.25756088338307,46.4278483647801 0.241884857622964,46.4309144976449 0.226480183207377,46.4347118090807 0.21142133567082,46.4392219496614 0.196781161237034,46.4444231204746 0.18263053185483,46.450290175977 0.169038008752016,46.4567947427662 0.156069515749848,46.4639053537626 0.143788023916768,46.4715875972233 0.132253248900933,46.4798042799442 0.121521362391196,46.4885156039408 0.111644719041597,46.4976793558324 0.102671600158084,46.5002777777778 0.100555555555556,46.5408333333333 0.105555555555556,46.575 0.225,46.5944444444444 0.258333333333333,46.6583333333333 0.283333333333333,46.6955555555556 0.255555555555556,46.745 0.331944444444444))"
+        ),
     )
 
 
@@ -2419,14 +2542,11 @@ def test_gml_Ring_ending_with_ArcByCenterPoint():
     )
     # print(g)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom,
-            ogr.CreateGeometryFromWkt(
-                "POLYGON ((65.9218528471645 57.4916243394278,65.994485559282 57.3816951549859,66.0052965317155 57.3703095464356,66.0160916673895 57.3589300898091,66.0986454478109 57.3055439797628,66.0972833787257 57.2909960861013,66.0952275333989 57.2770050871946,66.0927800217659 57.2634046235748,66.0899528791643 57.2502614506486,66.0867600033801 57.2376400142709,66.0832170844948 57.2256021285702,66.079341525797 57.214206668632,66.0751523561957 57.203509279214,66.0706701346179 57.1935621012919,66.0659168469146 57.1844135176486,66.0609157958339 57.1761079188393,66.0556914846553 57.1686854906152,66.0502694951079 57.1621820236802,66.0446763602204 57.1566287467641,66.0389394327704 57.1520521834553,66.033086750019 57.1484740335078,66.0271468954283 57.145911078861,66.0211488580662 57.1443751146804,66.0151218904116 57.1438729053792,66.0090953652666 57.1444061657465,66.0030986324867 57.1459715668484,65.9971608762266 57.1485607664255,65.991310973392 57.1521604634455,65.9855773539744 57.156752476156,65.9809866314029 57.1622574691103,65.9603973632284 57.1841098909668,65.9548299773474 57.1895629087476,65.9495750702849 57.1968227388142,65.9445389220664 57.2049612750665,65.9397459320329 57.2139385813473,65.935219308136 57.2237107308994,65.9309809566457 57.234230023973,65.927051378271 57.2454452217566,65.9234495711475 57.2573017957448,65.9201929411068 57.269742191149,65.9172972196136 57.2827061032052,65.914776389716 57.2961307649312,65.9126426203217 57.3099512454202,65.9109062090733 57.3241007570179,65.9095755340619 57.3385109700802,65.9086570145768 57.353112334239,65.9081550810541 57.3678344048457,65.9080721543467 57.382606172423,65.9084086344011 57.3973563949994,65.9091628983867 57.4120139317594,65.9103313082862 57.4265080751922,65.911908227915 57.4407688820673,65.9138860493003 57.4547275015333,65.9162552283127 57.468316498379,65.9190043294021 57.4814701705531,65.9218528471645 57.4916243394278))"
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom,
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((65.9218528471645 57.4916243394278,65.994485559282 57.3816951549859,66.0052965317155 57.3703095464356,66.0160916673895 57.3589300898091,66.0986454478109 57.3055439797628,66.0972833787257 57.2909960861013,66.0952275333989 57.2770050871946,66.0927800217659 57.2634046235748,66.0899528791643 57.2502614506486,66.0867600033801 57.2376400142709,66.0832170844948 57.2256021285702,66.079341525797 57.214206668632,66.0751523561957 57.203509279214,66.0706701346179 57.1935621012919,66.0659168469146 57.1844135176486,66.0609157958339 57.1761079188393,66.0556914846553 57.1686854906152,66.0502694951079 57.1621820236802,66.0446763602204 57.1566287467641,66.0389394327704 57.1520521834553,66.033086750019 57.1484740335078,66.0271468954283 57.145911078861,66.0211488580662 57.1443751146804,66.0151218904116 57.1438729053792,66.0090953652666 57.1444061657465,66.0030986324867 57.1459715668484,65.9971608762266 57.1485607664255,65.991310973392 57.1521604634455,65.9855773539744 57.156752476156,65.9809866314029 57.1622574691103,65.9603973632284 57.1841098909668,65.9548299773474 57.1895629087476,65.9495750702849 57.1968227388142,65.9445389220664 57.2049612750665,65.9397459320329 57.2139385813473,65.935219308136 57.2237107308994,65.9309809566457 57.234230023973,65.927051378271 57.2454452217566,65.9234495711475 57.2573017957448,65.9201929411068 57.269742191149,65.9172972196136 57.2827061032052,65.914776389716 57.2961307649312,65.9126426203217 57.3099512454202,65.9109062090733 57.3241007570179,65.9095755340619 57.3385109700802,65.9086570145768 57.353112334239,65.9081550810541 57.3678344048457,65.9080721543467 57.382606172423,65.9084086344011 57.3973563949994,65.9091628983867 57.4120139317594,65.9103313082862 57.4265080751922,65.911908227915 57.4407688820673,65.9138860493003 57.4547275015333,65.9162552283127 57.468316498379,65.9190043294021 57.4814701705531,65.9218528471645 57.4916243394278))"
+        ),
     )
 
 
@@ -2443,10 +2563,7 @@ def test_gml_Circle():
     geom = ogr.CreateGeometryFromGML(gml)
 
     expected_wkt = "CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0)"
-    assert (
-        ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt))
-        == 0
-    )
+    ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt))
 
     geom = ogr.CreateGeometryFromWkt("CIRCULARSTRING (0 0,2 0,0 0)")
     gml2 = geom.ExportToGML(["FORMAT=GML3"])
@@ -2480,10 +2597,7 @@ def test_gml_Circle():
     geom = ogr.CreateGeometryFromGML(gml)
 
     expected_wkt = "CURVEPOLYGON ( CIRCULARSTRING (-1 0,0 1,-0.707106781186547 -0.707106781186548,-0.923879532511287 -0.38268343236509,-1 0))"
-    assert (
-        ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt))
-        == 0
-    )
+    ogrtest.check_feature_geometry(geom, ogr.CreateGeometryFromWkt(expected_wkt))
 
 
 ###############################################################################
@@ -2659,19 +2773,16 @@ def test_gml_OGRCurvePolygon_CircularString_with_interior_LinearRing():
     # Test a CircularString followed by a LinearRing
     gml = """<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Circle><gml:posList>-1 0 1 2 3 0</gml:posList></gml:Circle></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:LinearRing><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>"""
     geom = ogr.CreateGeometryFromGML(gml)
-    assert (
-        ogrtest.check_feature_geometry(
-            geom,
-            "CURVEPOLYGON (CIRCULARSTRING (-1 0,1 2,3 0,1.0 -2.0,-1 0),(-2 -2,-2 2,2 2,2 -2,-2 -2))",
-        )
-        == 0
-    ), geom.ExportToWkt()
+    ogrtest.check_feature_geometry(
+        geom,
+        "CURVEPOLYGON (CIRCULARSTRING (-1 0,1 2,3 0,1.0 -2.0,-1 0),(-2 -2,-2 2,2 2,2 -2,-2 -2))",
+    )
 
     gml2 = geom.ExportToGML(["FORMAT=GML3"])
-    geom2 = ogr.CreateGeometryFromGML(gml)
+    geom2 = ogr.CreateGeometryFromGML(gml2)
     expected_gml2 = "<gml:Polygon><gml:exterior><gml:Curve><gml:segments><gml:ArcString><gml:posList>-1 0 1 2 3 0 1 -2 -1 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:exterior><gml:interior><gml:LineString><gml:posList>-2 -2 -2 2 2 2 2 -2 -2 -2</gml:posList></gml:LineString></gml:interior></gml:Polygon>"
     expected_geom2 = ogr.CreateGeometryFromGML(expected_gml2)
-    assert ogrtest.check_feature_geometry(geom2, expected_geom2) == 0, gml2
+    ogrtest.check_feature_geometry(geom2, expected_geom2)
 
 
 ###############################################################################

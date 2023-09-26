@@ -88,6 +88,7 @@ std::vector<CPLString> GetOutputDriversFor(const char *pszDestFilename,
     for (int i = 0; i < nDriverCount; i++)
     {
         GDALDriverH hDriver = GDALGetDriver(i);
+        bool bOk = false;
         if ((GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) !=
                  nullptr ||
              GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
@@ -98,6 +99,16 @@ std::vector<CPLString> GetOutputDriversFor(const char *pszDestFilename,
              ((nFlagRasterVector & GDAL_OF_VECTOR) &&
               GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR, nullptr) !=
                   nullptr)))
+        {
+            bOk = true;
+        }
+        else if (GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR_TRANSLATE_FROM,
+                                     nullptr) &&
+                 (nFlagRasterVector & GDAL_OF_VECTOR) != 0)
+        {
+            bOk = true;
+        }
+        if (bOk)
         {
             if (!osExt.empty() && DoesDriverHandleExtension(hDriver, osExt))
             {

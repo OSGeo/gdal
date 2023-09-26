@@ -134,12 +134,15 @@ def test_hfa_write_nd_invalid():
 # Test updating .rrd overviews in place (#2524).
 
 
-def test_hfa_update_overviews():
+def test_hfa_update_overviews(tmp_path):
 
-    shutil.copyfile("data/small_ov.img", "tmp/small.img")
-    shutil.copyfile("data/small_ov.rrd", "tmp/small.rrd")
+    img_path = str(tmp_path / "small.img")
+    rrd_path = str(tmp_path / "small.rrd")
 
-    ds = gdal.Open("tmp/small.img", gdal.GA_Update)
+    shutil.copyfile("data/small_ov.img", img_path)
+    shutil.copyfile("data/small_ov.rrd", rrd_path)
+
+    ds = gdal.Open(img_path, gdal.GA_Update)
     result = ds.BuildOverviews(overviewlist=[2])
 
     assert result == 0, "BuildOverviews() failed."
@@ -150,9 +153,15 @@ def test_hfa_update_overviews():
 # Test cleaning external overviews.
 
 
-def test_hfa_clean_external_overviews():
+def test_hfa_clean_external_overviews(tmp_path):
 
-    ds = gdal.Open("tmp/small.img", gdal.GA_Update)
+    img_path = str(tmp_path / "small.img")
+    rrd_path = str(tmp_path / "small.rrd")
+
+    shutil.copyfile("data/small_ov.img", img_path)
+    shutil.copyfile("data/small_ov.rrd", rrd_path)
+
+    ds = gdal.Open(img_path, gdal.GA_Update)
     result = ds.BuildOverviews(overviewlist=[])
 
     assert result == 0, "BuildOverviews() failed."
@@ -160,13 +169,13 @@ def test_hfa_clean_external_overviews():
     assert ds.GetRasterBand(1).GetOverviewCount() == 0, "Overviews still exist."
 
     ds = None
-    ds = gdal.Open("tmp/small.img")
+    ds = gdal.Open(img_path)
     assert ds.GetRasterBand(1).GetOverviewCount() == 0, "Overviews still exist."
     ds = None
 
-    assert not os.path.exists("tmp/small.rrd")
+    assert not os.path.exists(rrd_path)
 
-    gdal.GetDriverByName("HFA").Delete("tmp/small.img")
+    gdal.GetDriverByName("HFA").Delete(img_path)
 
 
 ###############################################################################

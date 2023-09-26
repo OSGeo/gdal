@@ -45,7 +45,7 @@ pytestmark = pytest.mark.require_driver("XYZ")
 def test_xyz_1():
 
     tst = gdaltest.GDALTest("XYZ", "byte.tif", 1, 4672)
-    return tst.testCreateCopy(
+    tst.testCreateCopy(
         vsimem=1,
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
     )
@@ -270,7 +270,7 @@ def test_xyz_9():
 """
 
     with gdaltest.tempfile("/vsimem/grid.xyz", content):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open("/vsimem/grid.xyz")
         assert ds.RasterXSize == 2 and ds.RasterYSize == 2
         cs = ds.GetRasterBand(1).Checksum()

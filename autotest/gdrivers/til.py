@@ -44,7 +44,7 @@ pytestmark = pytest.mark.require_driver("TIL")
 def test_til_1():
 
     tst = gdaltest.GDALTest("TIL", "til/testtil.til", 1, 4672)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

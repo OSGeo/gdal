@@ -17,14 +17,15 @@ Synopsis
 
 .. code-block::
 
-    gdalmdimtranslate [--help-general] [-co "NAME=VALUE"]*
-                      [-if format]* [-of format]
-                      [-array <array_spec>]*
-                      [-group <group_spec>]*
-                      [-subset <subset_spec>]*
-                      [-scaleaxes <scaleaxes_spec>]*
-                      [-oo NAME=VALUE]*
-                      <src_filename> <dst_filename>
+    gdalmdimtranslate [--help] [--help-general]
+                      [-if <format>]... [-of <format>]
+                      [-co <NAME>=<VALUE>]...
+                      [-array <array_spec>]...
+                      [-group <group_spec>]...
+                      [-subset <subset_spec>]...
+                      [-scaleaxes <scaleaxes_spec>]
+                      [-oo <NAME>=<VALUE>]...
+                       <src_filename> <dst_filename>
 
 
 Description
@@ -38,6 +39,8 @@ The following command line parameters can appear in any order.
 
 .. program:: gdalmdimtranslate
 
+.. include:: options/help_and_help_general.rst
+
 .. include:: options/if.rst
 
 .. option:: -of <format>
@@ -48,7 +51,7 @@ The following command line parameters can appear in any order.
     not specified, the format is guessed when possible from the extension of the
     destination filename.
 
-.. option:: -co <NAME=VALUE>
+.. option:: -co <NAME>=<VALUE>
 
     Many formats have one or more optional creation options that can be
     used to control particulars about the file created.
@@ -74,12 +77,16 @@ The following command line parameters can appear in any order.
     <array_spec> may be just an array name, potentially using a fully qualified
     syntax (/group/subgroup/array_name). Or it can be a combination of options
     with the syntax:
-    name={src_array_name}[,dstname={dst_array_name}][,transpose=[{axis1},{axis2},...][,view={view_expr}]
+    name={src_array_name}[,dstname={dst_array_name}][,resample=yes][,transpose=[{axis1},{axis2},...][,view={view_expr}]
 
-    [{axis1},{axis2},...] is the argument of  :cpp:func:`GDALMDArray::Transpose`.
-    For example, transpose=[1,0] switches the axis order of a 2D array.
+    The following options are processed in that order:
 
-    {view_expr} is the value of the *viewExpr* argument of :cpp:func:`GDALMDArray::GetView`
+    - ``resample=yes`` asks for the array to run through :cpp:func:`GDALMDArray::GetResampled`.
+
+    - [{axis1},{axis2},...] is the argument of  :cpp:func:`GDALMDArray::Transpose`.
+       For example, transpose=[1,0] switches the axis order of a 2D array.
+
+    - {view_expr} is the value of the *viewExpr* argument of :cpp:func:`GDALMDArray::GetView`
 
     When specifying a view_expr that performs a slicing or subsetting on a dimension, the
     equivalent operation will be applied to the corresponding indexing variable.
@@ -123,11 +130,11 @@ The following command line parameters can appear in any order.
     `OGC WCS 2.0 Scaling Extension <https://portal.opengeospatial.org/files/12-039>`__,
     but limited to integer scale factors.
 
-    That is dim1_name(scale_factor)[,dim2_name(scale_factor)]*
+    That is <dim1_name>(<scale_factor>)[,<dim2_name>(<scale_factor>)]...
 
     Using -scaleaxes is incompatible of specifying a *view* option in -array.
 
-.. option:: -oo <NAME=VALUE>
+.. option:: -oo <NAME>=<VALUE>
 
     .. versionadded:: 3.4
 

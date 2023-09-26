@@ -35,6 +35,8 @@ import pytest
 
 from osgeo import gdal, ogr
 
+pytestmark = pytest.mark.require_driver("PLScenes")
+
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -44,26 +46,10 @@ def module_disable_exceptions():
 
 
 ###############################################################################
-# Find PLScenes driver
-
-
-def test_ogr_plscenes_init():
-
-    gdaltest.plscenes_drv = ogr.GetDriverByName("PLScenes")
-
-    if gdaltest.plscenes_drv is not None:
-        return
-    pytest.skip()
-
-
-###############################################################################
 # Test Data V1 API catalog listing with a single catalog
 
 
 def test_ogr_plscenes_data_v1_catalog_no_paging():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/data_v1/item-types", '{ "item_types": [ { "id": "PSScene3Band" } ] }'
@@ -73,11 +59,11 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetLayerByName("non_existing") is None
     assert ds.GetLayerByName("PSScene3Band") is not None
     assert ds.GetLayerCount() == 1
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetLayerByName("non_existing") is None
 
     gdal.Unlink("/vsimem/data_v1/item-types")
@@ -88,9 +74,6 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
 
 
 def test_ogr_plscenes_data_v1_catalog_paging():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/data_v1/item-types",
@@ -105,7 +88,7 @@ def test_ogr_plscenes_data_v1_catalog_paging():
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
     assert ds is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetLayerByName("non_existing") is None
     assert ds.GetLayerByName("PSScene3Band") is not None
     gdal.FileFromMemBuffer(
@@ -114,7 +97,7 @@ def test_ogr_plscenes_data_v1_catalog_paging():
     assert ds.GetLayerByName("PSScene4Band") is not None
     assert ds.GetLayerCount() == 2
     assert ds.GetLayerByName("PSScene4Band") is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetLayerByName("non_existing") is None
 
     gdal.Unlink("/vsimem/data_v1/item-types")
@@ -127,9 +110,6 @@ def test_ogr_plscenes_data_v1_catalog_paging():
 
 
 def test_ogr_plscenes_data_v1_nominal():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
 
     gdal.FileFromMemBuffer(
         "/vsimem/data_v1/item-types",
@@ -313,7 +293,7 @@ def test_ogr_plscenes_data_v1_nominal():
         pytest.fail()
 
     # Cannot find /vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"GeometryFilter","field_name":"geometry","config":{"type":"Point","coordinates":[2.0,49.0]}}]}}
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.GetFeatureCount() == 1
 
     # Reset spatial filter
@@ -428,7 +408,7 @@ def test_ogr_plscenes_data_v1_nominal():
 
     # Missing catalog
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds_raster = gdal.OpenEx(
                 "PLScenes:",
                 gdal.OF_RASTER,
@@ -719,9 +699,6 @@ def test_ogr_plscenes_data_v1_nominal():
 
 def test_ogr_plscenes_data_v1_errors():
 
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
-
     # No PL_API_KEY
     with gdal.config_options(
         {"PL_API_KEY": "", "PL_URL": "/vsimem/data_v1/"}
@@ -782,7 +759,7 @@ def test_ogr_plscenes_data_v1_errors():
         ds = gdal.OpenEx(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
         )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr_count = ds.GetLayerCount()
     assert lyr_count == 1
 
@@ -799,11 +776,11 @@ def test_ogr_plscenes_data_v1_errors():
     ds.GetLayer(-1)
     ds.GetLayer(1)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayerByName("invalid_name")
 
     # Cannot find /vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSScene3Band"],"filter":{"type":"AndFilter","config":[]}}
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetNextFeature()
 
     # Empty object
@@ -833,9 +810,6 @@ def test_ogr_plscenes_data_v1_errors():
 
 
 def test_ogr_plscenes_data_v1_live():
-
-    if gdaltest.plscenes_drv is None:
-        pytest.skip()
 
     api_key = gdal.GetConfigOption("PL_API_KEY")
     if api_key is None:

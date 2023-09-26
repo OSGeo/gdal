@@ -143,7 +143,7 @@ def test_hdf4_read_online_1():
         filename_absolute=1,
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

@@ -15,8 +15,11 @@ Synopsis
 
 .. code-block::
 
-    nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]
-              [-setalpha] [-setmask] [-o outfile] [-q]  [-co "NAME=VALUE"]* infile
+    nearblack [--help] [--help-general]
+              [-of <format>] [-white | [-color <c1>,<c2>,<c3>...<cn>]...]
+              [-near <dist>] [-nb <non_black_pixels>]
+              [-setalpha] [-setmask] [-alg twopasses|floodfill]
+              [-o <outfile>] [-q] [-co <NAME>=<VALUE>]... <infile>
 
 Description
 -----------
@@ -29,6 +32,8 @@ if either alpha band or mask band is not set.
 
 .. program:: nearblack
 
+.. include:: options/help_and_help_general.rst
+
 .. option:: -o <outfile>
 
     The name of the output file to be created.
@@ -40,7 +45,7 @@ if either alpha band or mask band is not set.
     was ERDAS Imagine .img).
     Use the short format name (GTiff for GeoTIFF for example).
 
-.. option:: -co `"NAME=VALUE"`
+.. option:: -co <NAME>=<VALUE>
 
     Passes a creation option to the output format driver.  Multiple
     :option:`-co` options may be listed. See :ref:`raster_drivers` format
@@ -52,7 +57,7 @@ if either alpha band or mask band is not set.
 
     Search for nearly white (255) pixels instead of nearly black pixels.
 
-.. option:: -color <c1,c2,c3...cn>
+.. option:: -color <c1>,<c2>,<c3>...<cn>
 
     Search for pixels near the specified color. May be specified multiple times.
     When -color is specified, the pixels that are considered as the collar are set to 0.
@@ -64,7 +69,8 @@ if either alpha band or mask band is not set.
 
 .. option:: -nb <non_black_pixels>
 
-    number of non-black pixels that can be encountered before the giving up search inwards. Defaults to 2.
+    number of consecutive non-black pixels that can be encountered before the
+    giving up search inwards. Defaults to 2.
 
 .. option:: -setalpha
 
@@ -79,6 +85,27 @@ if either alpha band or mask band is not set.
     or adds a mask band to the input file if it does not already have one and no output file is specified.
     The mask band is set to 0 in the image collar and to 255 elsewhere.
 
+.. option:: -alg twopasses|floodfill
+
+    .. versionadded:: 3.8
+
+    Selects the algorithm to apply.
+
+    ``twopasses`` uses a top-to-bottom pass followed by a bottom-to-top pass.
+    This is the only algorithm implemented before GDAL 3.8. It may miss with
+    concave areas.
+    The algorithm processes the image one scanline at a time.  A scan "in" is done
+    from either end setting pixels to black or white until at least
+    "non_black_pixels" pixels that are more than "dist" gray levels away from
+    black, white or custom colors have been encountered at which point the scan stops.  The nearly
+    black, white or custom color pixels are set to black or white. The algorithm also scans from
+    top to bottom and from bottom to top to identify indentations in the top or bottom.
+
+    ``floodfill`` (added in GDAL 3.8) uses the `Flood Fill <https://en.wikipedia.org/wiki/Flood_fill#Span_filling>`_
+    algorithm and will work with concave areas. It requires creating a temporary
+    dataset and is slower than ``twopasses``. When a non-zero value for :option:`-nb`
+    is used, ``twopasses`` is actually called as an initial step of ``floodfill``.
+
 .. option:: -q
 
     Suppress progress monitor and other non-error output.
@@ -88,12 +115,6 @@ if either alpha band or mask band is not set.
     The input file.  Any GDAL supported format, any number of bands, normally 8bit
     Byte bands.
 
-The algorithm processes the image one scanline at a time.  A scan "in" is done
-from either end setting pixels to black or white until at least
-"non_black_pixels" pixels that are more than "dist" gray levels away from
-black, white or custom colors have been encountered at which point the scan stops.  The nearly
-black, white or custom color pixels are set to black or white. The algorithm also scans from
-top to bottom and from bottom to top to identify indentations in the top or bottom.
 
 The processing is all done in 8bit (Bytes).
 

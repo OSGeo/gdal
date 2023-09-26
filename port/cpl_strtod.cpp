@@ -36,7 +36,13 @@
 #include <cstdlib>
 #include <limits>
 
+// Coverity complains about CPLAtof(CPLGetConfigOption(...)) causing
+// a "untrusted loop bound" in the loop "Find a reasonable position for the end
+// of the string to provide to fast_float"
+#ifndef __COVERITY__
 #define USE_FAST_FLOAT
+#endif
+
 #ifdef USE_FAST_FLOAT
 #include "include_fast_float.h"
 #endif

@@ -122,7 +122,7 @@ class Layer(BaseLayer):
             if g:
                 geom_fields[
                     layer_defn.GetGeomFieldDefn(i).GetName()
-                ] = g.ExportToIsoWkt()
+                ] = g.ExportToIsoWkb()
         return {
             "id": ogr_f.GetFID(),
             "type": "OGRFeature",

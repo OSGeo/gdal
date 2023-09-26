@@ -77,6 +77,8 @@ extern void (*PyObject_Print)(PyObject *, FILE *, int);
 
 extern Py_ssize_t (*PyBytes_Size)(PyObject *);
 extern const char *(*PyBytes_AsString)(PyObject *);
+extern int *(*PyBytes_AsStringAndSize)(PyObject *, char **, Py_ssize_t *);
+extern PyObject *(*PyBytes_FromObject)(PyObject *);
 extern PyObject *(*PyBytes_FromStringAndSize)(const void *, size_t);
 
 extern PyObject *(*PyUnicode_FromString)(const char *);

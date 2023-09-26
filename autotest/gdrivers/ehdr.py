@@ -48,7 +48,7 @@ def test_ehdr_1():
 
     tst = gdaltest.GDALTest("EHDR", "png/rgba16.png", 2, 2042)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -59,7 +59,7 @@ def test_ehdr_2():
 
     tst = gdaltest.GDALTest("EHDR", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(check_gt=1, check_srs=1)
+    tst.testCreateCopy(check_gt=1, check_srs=1)
 
 
 ###############################################################################
@@ -70,7 +70,7 @@ def test_ehdr_3():
 
     tst = gdaltest.GDALTest("EHDR", "ehdr/float32.bil", 1, 27)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -103,12 +103,9 @@ def test_ehdr_4():
 
     ds = None
 
+    ###############################################################################
+    # verify dataset's colortable and nodata value.
 
-###############################################################################
-# verify last dataset's colortable and nodata value.
-
-
-def test_ehdr_5():
     ds = gdal.Open("tmp/test_4.bil")
     band = ds.GetRasterBand(1)
 
@@ -138,7 +135,7 @@ def test_ehdr_6():
 
     tst = gdaltest.GDALTest("EHDR", "ehdr/float32.bil", 1, 27)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -149,7 +146,7 @@ def test_ehdr_7():
 
     tst = gdaltest.GDALTest("EHDR", "int32.tif", 1, 4672)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -200,7 +197,7 @@ def test_ehdr_9():
 
 def test_ehdr_10():
     tst = gdaltest.GDALTest("EHDR", "ehdr/ehdr10.bil", 1, 8202)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -209,7 +206,7 @@ def test_ehdr_10():
 
 def test_ehdr_11():
     tst = gdaltest.GDALTest("EHDR", "ehdr/ehdr11.flt", 1, 8202)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -359,7 +356,7 @@ def test_ehdr_rat():
     assert not (
         ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable()
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
     assert ret != 0
     ds = None

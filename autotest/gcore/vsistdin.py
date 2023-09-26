@@ -99,7 +99,7 @@ def test_vsistdin_2():
 @gdaltest.disable_exceptions()
 def test_vsistdin_3():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = gdal.VSIFOpenL("/vsistdin/", "wb")
     assert f is None
 
@@ -230,7 +230,7 @@ def test_vsistdin_5():
         assert gdal.VSIFSeekL(f, 0, 0) == 0
         assert gdal.VSIFReadL(5, 1, f) == b"01234"
         assert gdal.VSIFReadL(3, 1, f) == b"567"
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert gdal.VSIFReadL(3, 1, f) == b""
         gdal.VSIFCloseL(f)
 

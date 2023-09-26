@@ -429,8 +429,7 @@ class GMLReader final : public IGMLReader
 
     bool m_bEmptyAsNull;
 
-    bool m_bIsConsistentSingleGeomElemPath = true;
-    std::string m_osSingleGeomElemPath{};
+    bool m_bUseBBOX = false;
 
     bool ParseXMLHugeFile(const char *pszOutputFilename,
                           const bool bSqliteIsTempFile,
@@ -578,21 +577,13 @@ class GMLReader final : public IGMLReader
         return m_bEmptyAsNull;
     }
 
-    void SetConsistentSingleGeomElemPath(bool b)
+    void SetUseBBOX(bool bFlag)
     {
-        m_bIsConsistentSingleGeomElemPath = b;
+        m_bUseBBOX = bFlag;
     }
-    bool IsConsistentSingleGeomElemPath() const
+    bool UseBBOX() const
     {
-        return m_bIsConsistentSingleGeomElemPath;
-    }
-    void SetSingleGeomElemPath(const std::string &s)
-    {
-        m_osSingleGeomElemPath = s;
-    }
-    const std::string &GetSingleGeomElemPath() const
-    {
-        return m_osSingleGeomElemPath;
+        return m_bUseBBOX;
     }
 
     static CPLMutex *hMutex;

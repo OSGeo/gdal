@@ -32,7 +32,6 @@
 
 import os
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -50,15 +49,20 @@ allowing file:// access:
 </configuration>
 """
 
-# Read test
-def test_vsihdfs_1():
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
     filename = "/vsihdfs/file:" + os.getcwd() + "/data/text.txt"
     fp = gdal.VSIFOpenL(filename, "rb")
     if fp is None:
-        gdaltest.have_vsihdfs = False
-        pytest.skip()
+        pytest.skip("vsihdfs is not available")
 
-    gdaltest.have_vsihdfs = True
+
+# Read test
+def test_vsihdfs_1():
+
+    filename = "/vsihdfs/file:" + os.getcwd() + "/data/text.txt"
+    fp = gdal.VSIFOpenL(filename, "rb")
 
     data = gdal.VSIFReadL(5, 1, fp)
     assert data and data.decode("ascii") == "Lorem"
@@ -71,8 +75,6 @@ def test_vsihdfs_1():
 
 # Seek test
 def test_vsihdfs_2():
-    if gdaltest.have_vsihdfs == False:
-        pytest.skip()
 
     filename = "/vsihdfs/file:" + os.getcwd() + "/data/text.txt"
     fp = gdal.VSIFOpenL(filename, "rb")
@@ -96,8 +98,6 @@ def test_vsihdfs_2():
 
 # Tell test
 def test_vsihdfs_3():
-    if gdaltest.have_vsihdfs == False:
-        pytest.skip()
 
     filename = "/vsihdfs/file:" + os.getcwd() + "/data/text.txt"
     fp = gdal.VSIFOpenL(filename, "rb")
@@ -114,8 +114,6 @@ def test_vsihdfs_3():
 
 # EOF test
 def test_vsihdfs_5():
-    if gdaltest.have_vsihdfs == False:
-        pytest.skip()
 
     filename = "/vsihdfs/file:" + os.getcwd() + "/data/text.txt"
     fp = gdal.VSIFOpenL(filename, "rb")
@@ -134,8 +132,6 @@ def test_vsihdfs_5():
 
 # Stat test
 def test_vsihdfs_6():
-    if gdaltest.have_vsihdfs == False:
-        pytest.skip()
 
     filename = "/vsihdfs/file:" + os.getcwd() + "/data/text.txt"
     statBuf = gdal.VSIStatL(filename, 0)
@@ -148,8 +144,6 @@ def test_vsihdfs_6():
 
 # ReadDir test
 def test_vsihdfs_7():
-    if gdaltest.have_vsihdfs == False:
-        pytest.skip()
 
     dirname = "/vsihdfs/file:" + os.getcwd() + "/data/"
     lst = gdal.ReadDir(dirname)

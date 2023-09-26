@@ -368,7 +368,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")))
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "1.0.0-beta.1");
+        oRoot.Add("version", "1.0.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;

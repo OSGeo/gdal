@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>RADIOMETRIC_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes></Notes>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T12:48:10</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report gippVersion="1.0" globalStatus="PASSED" date="2023-08-23T12:48:10.470Z">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>RADIOMETRIC_QUALITY</name>
+                <version>1.0</version>
+                <item url="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/" className="PDI Level 2A Datastrip Folder" name="S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09" class="http://www.esa.int/s2#pdi_level_2a_datastrip_container"/>
+                <check>
+                    <inspection creation="2023-08-23T12:48:09.653Z" duration="724" execution="2023-08-23T12:48:09.739Z" id="Radiometric_Quality_Indicators_Absolute" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check on the Radiometric Quality Indicators : Absolute Calibration Accuracy. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Absolute calibration accuracy is correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:10.612Z" duration="1" execution="2023-08-23T12:48:10.622Z" id="QuantificationValueBOA" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check BOA QUANTIFICATION_VALUE " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">BOA QUANTIFICATION_VALUE is OK</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:10.644Z" duration="0" execution="2023-08-23T12:48:10.675Z" id="QuantificationValueAOT" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check AOT QUANTIFICATION_VALUE " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">AOT QUANTIFICATION_VALUE is OK</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:10.704Z" duration="11" execution="2023-08-23T12:48:10.737Z" id="IntegrationTime" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check INTEGRATION_TIME " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">INTEGRATION_TIME is OK</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:11.374Z" duration="1" execution="2023-08-23T12:48:11.383Z" id="QuantificationValueWVP" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check WVP QUANTIFICATION_VALUE " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">WVP QUANTIFICATION_VALUE is OK</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:11.437Z" duration="1" execution="2023-08-23T12:48:11.444Z" id="Radiometric_Quality_Indicators_Multi_Temporal" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check on the Radiometric Quality Indicators : Multi-Temporal Calibration Accuracy. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Multi-temporal calibration accuracy is correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:14.615Z" duration="9" execution="2023-08-23T12:48:14.639Z" id="Radiometric_Quality_Indicators_Cross_Band" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check on the Radiometric Quality Indicators : Cross Band Calibration Accuracy. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Cross band calibration accuracy is correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:14.658Z" duration="4" execution="2023-08-23T12:48:14.664Z" id="EqualizationFlag" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check EQUALIZATION_MODE " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Equalization Mode is set to TRUE</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>

@@ -31,6 +31,8 @@
 
 
 import array
+import collections
+import pathlib
 
 import pytest
 
@@ -40,10 +42,11 @@ from osgeo import gdal
 # Basic test
 
 
-def test_nearblack_lib_1():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_1(alg):
 
     src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
-    ds = gdal.Nearblack("", src_ds, format="MEM", maxNonBlack=0, nearDist=15)
+    ds = gdal.Nearblack("", src_ds, format="MEM", maxNonBlack=0, nearDist=15, alg=alg)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 21106, "Bad checksum band 1"
@@ -68,10 +71,16 @@ def test_nearblack_lib_1():
 # Add alpha band
 
 
-def test_nearblack_lib_2():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_2(alg):
 
     ds = gdal.Nearblack(
-        "", "../gdrivers/data/rgbsmall.tif", format="MEM", maxNonBlack=0, setAlpha=True
+        "",
+        "../gdrivers/data/rgbsmall.tif",
+        format="MEM",
+        maxNonBlack=0,
+        setAlpha=True,
+        alg=alg,
     )
     assert ds is not None
 
@@ -84,12 +93,13 @@ def test_nearblack_lib_2():
 # Set existing alpha band
 
 
-def test_nearblack_lib_3():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_3(alg):
 
     src_ds = gdal.Nearblack(
         "", "../gdrivers/data/rgbsmall.tif", format="MEM", maxNonBlack=0, setAlpha=True
     )
-    ds = gdal.Nearblack("", src_ds, format="MEM", maxNonBlack=0, setAlpha=True)
+    ds = gdal.Nearblack("", src_ds, format="MEM", maxNonBlack=0, setAlpha=True, alg=alg)
     assert ds is not None
 
     assert ds.GetRasterBand(4).Checksum() == 22002, "Bad checksum band 0"
@@ -101,7 +111,8 @@ def test_nearblack_lib_3():
 # Test -white
 
 
-def test_nearblack_lib_4():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_4(alg):
 
     src_ds = gdal.Warp(
         "",
@@ -111,11 +122,12 @@ def test_nearblack_lib_4():
         srcNodata=0,
     )
     ds = gdal.Nearblack(
-        "", src_ds, format="MEM", white=True, maxNonBlack=0, setAlpha=True
+        "", src_ds, format="MEM", white=True, maxNonBlack=0, setAlpha=True, alg=alg
     )
     assert ds is not None
 
-    assert ds.GetRasterBand(4).Checksum() == 24151, "Bad checksum band 0"
+    expected_cs = 24151 if alg == "twopasses" else 24024
+    assert ds.GetRasterBand(4).Checksum() == expected_cs, "Bad checksum band 0"
 
     ds = None
 
@@ -124,14 +136,16 @@ def test_nearblack_lib_4():
 # Add mask band
 
 
-def test_nearblack_lib_5():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_5(tmp_vsimem, alg):
 
     ds = gdal.Nearblack(
-        "/vsimem/test_nearblack_lib_5.tif",
-        "../gdrivers/data/rgbsmall.tif",
+        tmp_vsimem / "test_nearblack_lib_5.tif",
+        pathlib.Path("../gdrivers/data/rgbsmall.tif"),
         format="GTiff",
         maxNonBlack=0,
         setMask=True,
+        alg=alg,
     )
     assert ds is not None
 
@@ -141,23 +155,26 @@ def test_nearblack_lib_5():
 
     ds = None
 
-    gdal.Unlink("/vsimem/test_nearblack_lib_5.tif")
-    gdal.Unlink("/vsimem/test_nearblack_lib_5.tif.msk")
-
 
 ###############################################################################
 # Test -color
 
 
-def test_nearblack_lib_7():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_7(alg):
 
     ds = gdal.Nearblack(
-        "", "data/whiteblackred.tif", format="MEM", colors=((0, 0, 0), (255, 255, 255))
+        "",
+        "data/whiteblackred.tif",
+        format="MEM",
+        colors=((0, 0, 0), (255, 255, 255)),
+        alg=alg,
+        maxNonBlack=0,
     )
     assert ds is not None
 
     assert (
-        ds.GetRasterBand(1).Checksum() == 418
+        ds.GetRasterBand(1).Checksum() == 1217
         and ds.GetRasterBand(2).Checksum() == 0
         and ds.GetRasterBand(3).Checksum() == 0
     ), "Bad checksum"
@@ -169,11 +186,12 @@ def test_nearblack_lib_7():
 # Test in-place update
 
 
-def test_nearblack_lib_8():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_8(alg):
 
     src_ds = gdal.Open("../gdrivers/data/rgbsmall.tif")
     ds = gdal.GetDriverByName("MEM").CreateCopy("", src_ds)
-    ret = gdal.Nearblack(ds, ds, maxNonBlack=0)
+    ret = gdal.Nearblack(ds, ds, maxNonBlack=0, alg=alg)
     assert ret == 1
 
     assert ds.GetRasterBand(1).Checksum() == 21106, "Bad checksum band 1"
@@ -183,7 +201,7 @@ def test_nearblack_lib_8():
     assert ds.GetRasterBand(3).Checksum() == 21309, "Bad checksum band 3"
 
 
-def _test_nearblack(in_array, expected_mask_array, maxNonBlack=0):
+def _test_nearblack(in_array, expected_mask_array, maxNonBlack=0, alg=None):
 
     ds = gdal.GetDriverByName("MEM").Create("", len(in_array[0]), len(in_array))
     ds.WriteRaster(
@@ -193,7 +211,9 @@ def _test_nearblack(in_array, expected_mask_array, maxNonBlack=0):
         ds.RasterYSize,
         b"".join([array.array("B", x).tobytes() for x in in_array]),
     )
-    ret_ds = gdal.Nearblack("", ds, maxNonBlack=maxNonBlack, format="MEM", setMask=True)
+    ret_ds = gdal.Nearblack(
+        "", ds, maxNonBlack=maxNonBlack, format="MEM", setMask=True, alg=alg
+    )
     mask_data = ret_ds.GetRasterBand(1).GetMaskBand().ReadRaster()
     mask_array = []
     for j in range(ds.RasterYSize):
@@ -203,7 +223,8 @@ def _test_nearblack(in_array, expected_mask_array, maxNonBlack=0):
     assert mask_array == expected_mask_array
 
 
-def test_nearblack_lib_9():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_all_valid(alg):
 
     # all valid -> no erosion
     _test_nearblack(
@@ -222,7 +243,12 @@ def test_nearblack_lib_9():
             [255, 255, 255, 255, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_all_invalid(alg):
 
     # all invalid
     _test_nearblack(
@@ -241,7 +267,12 @@ def test_nearblack_lib_9():
             [0, 0, 0, 0, 0],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_single_pixel_valid(alg):
 
     # single pixel valid -> eroded
     _test_nearblack(
@@ -260,7 +291,13 @@ def test_nearblack_lib_9():
             [0, 0, 0, 0, 0],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+@pytest.mark.parametrize("maxNonBlack", [0, 1, 5])
+def test_nearblack_lib_all_contour_valid(alg, maxNonBlack):
 
     # all contour is valid -> no erosion
     _test_nearblack(
@@ -278,8 +315,13 @@ def test_nearblack_lib_9():
             [255, 255, 255, 255, 255],
             [255, 255, 255, 255, 255],
         ],
-        maxNonBlack=1,
+        maxNonBlack=maxNonBlack,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_left(alg):
 
     # erosion from the left
     _test_nearblack(
@@ -298,8 +340,12 @@ def test_nearblack_lib_9():
             [255, 255, 255, 255, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
 
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_right(alg):
     # erosion from the right
     _test_nearblack(
         [
@@ -317,7 +363,12 @@ def test_nearblack_lib_9():
             [255, 255, 255, 255, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_top(alg):
 
     # erosion from the top
     _test_nearblack(
@@ -336,7 +387,12 @@ def test_nearblack_lib_9():
             [255, 255, 255, 255, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_bottom(alg):
 
     # erosion from the bottom
     _test_nearblack(
@@ -355,7 +411,12 @@ def test_nearblack_lib_9():
             [255, 0, 0, 0, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_top_and_bottom(alg):
 
     # Maybe erosion is a bit too greedy due to top-bottom + bottom-top passes
     _test_nearblack(
@@ -378,6 +439,7 @@ def test_nearblack_lib_9():
             [0, 0, 0, 0, 0, 0, 0],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
 
     # Maybe erosion is a bit too greedy due to top-bottom + bottom-top passes
@@ -397,4 +459,116 @@ def test_nearblack_lib_9():
             [0, 0, 0, 0, 0],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
+
+
+def test_nearblack_lib_floodfill_concave_from_left():
+
+    XXX = 0
+    input_ar = [
+        [255, 255, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [XXX, XXX, 255, XXX, 255],
+        [255, 255, XXX, XXX, 255],
+        [255, 255, 255, 255, 255],
+    ]
+    _test_nearblack(
+        input_ar,
+        input_ar,
+        maxNonBlack=0,
+        alg="floodfill",
+    )
+
+
+def test_nearblack_lib_floodfill_concave_from_right():
+
+    XXX = 0
+    input_ar = [
+        [255, 255, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, XXX, 255, XXX, XXX],
+        [255, XXX, XXX, 255, 255],
+        [255, 255, 255, 255, 255],
+    ]
+    _test_nearblack(
+        input_ar,
+        input_ar,
+        maxNonBlack=0,
+        alg="floodfill",
+    )
+
+
+def test_nearblack_lib_floodfill_concave_from_top():
+
+    XXX = 0
+    input_ar = [
+        [255, XXX, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, 255, 255, XXX, 255],
+        [255, 255, XXX, XXX, 255],
+        [255, 255, 255, 255, 255],
+    ]
+    _test_nearblack(
+        input_ar,
+        input_ar,
+        maxNonBlack=0,
+        alg="floodfill",
+    )
+
+
+def test_nearblack_lib_floodfill_concave_from_bottom():
+
+    XXX = 0
+    input_ar = [
+        [255, 255, 255, 255, 255],
+        [255, 255, XXX, XXX, 255],
+        [255, 255, 255, XXX, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, XXX, 255, 255, 255],
+    ]
+    _test_nearblack(
+        input_ar,
+        input_ar,
+        maxNonBlack=0,
+        alg="floodfill",
+    )
+
+
+def test_nearblack_lib_floodfill_concave_from_bottom_non_black():
+
+    XXX = 0
+    input_ar = [
+        [255, 255, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, 255, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+    ]
+    output_ar = [
+        [255, 255, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, XXX, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+    ]
+    _test_nearblack(
+        input_ar,
+        output_ar,
+        maxNonBlack=1,
+        alg="floodfill",
+    )
+
+
+def test_nearblack_lib_dict_arguments():
+
+    opt = gdal.NearblackOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

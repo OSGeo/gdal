@@ -51,16 +51,17 @@ def gdaldem_path():
 # Test gdaldem hillshade
 
 
-def test_gdaldem_hillshade(gdaldem_path):
+def test_gdaldem_hillshade(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_hillshade.tif")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdaldem_path
-        + " hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade.tif"
+        f"{gdaldem_path} hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif {output_tif}"
     )
     assert err is None or err == "", "got error/warning"
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_hillshade.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -84,15 +85,16 @@ def test_gdaldem_hillshade(gdaldem_path):
 # Test gdaldem hillshade
 
 
-def test_gdaldem_hillshade_compressed_tiled_output(gdaldem_path):
+def test_gdaldem_hillshade_compressed_tiled_output(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_hillshade_compressed_tiled.tif")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdaldem_path
-        + " hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade_compressed_tiled.tif -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0"
+        f"{gdaldem_path} hillshade -s 111120 -z 30 ../gdrivers/data/n43.tif {output_tif} -co TILED=YES -co COMPRESS=DEFLATE --config GDAL_CACHEMAX 0"
     )
     assert err is None or err == "", "got error/warning"
 
-    ds = gdal.Open("tmp/n43_hillshade_compressed_tiled.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -100,26 +102,27 @@ def test_gdaldem_hillshade_compressed_tiled_output(gdaldem_path):
 
     ds = None
 
-    stat_uncompressed = os.stat("tmp/n43_hillshade.tif")
-    stat_compressed = os.stat("tmp/n43_hillshade_compressed_tiled.tif")
+    stat_compressed = os.stat(output_tif)
+
     assert (
-        stat_uncompressed.st_size >= stat_compressed.st_size
-    ), "failure: compressed size greater than uncompressed one"
+        stat_compressed.st_size <= 15027
+    ), "compressed size greater than uncompressed one"
 
 
 ###############################################################################
 # Test gdaldem hillshade -combined
 
 
-def test_gdaldem_hillshade_combined(gdaldem_path):
+def test_gdaldem_hillshade_combined(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_hillshade_combined.tif")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " hillshade -s 111120 -z 30 -combined ../gdrivers/data/n43.tif tmp/n43_hillshade_combined.tif"
+        f"{gdaldem_path} hillshade -s 111120 -z 30 -combined ../gdrivers/data/n43.tif {output_tif}"
     )
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_hillshade_combined.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -143,14 +146,15 @@ def test_gdaldem_hillshade_combined(gdaldem_path):
 # Test gdaldem hillshade with -compute_edges
 
 
-def test_gdaldem_hillshade_compute_edges(gdaldem_path):
+def test_gdaldem_hillshade_compute_edges(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_hillshade_compute_edges.tif")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " hillshade -compute_edges -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade_compute_edges.tif"
+        f"{gdaldem_path} hillshade -compute_edges -s 111120 -z 30 ../gdrivers/data/n43.tif {output_tif}"
     )
 
-    ds = gdal.Open("tmp/n43_hillshade_compute_edges.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -163,9 +167,12 @@ def test_gdaldem_hillshade_compute_edges(gdaldem_path):
 # Test gdaldem hillshade with -az parameter
 
 
-def test_gdaldem_hillshade_azimuth(gdaldem_path):
+def test_gdaldem_hillshade_azimuth(gdaldem_path, tmp_path):
 
-    ds = gdal.GetDriverByName("GTiff").Create("tmp/pyramid.tif", 100, 100, 1)
+    input_tif = str(tmp_path / "pyramid.tif")
+    output_tif = str(tmp_path / "pyramid_shaded.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(input_tif, 100, 100, 1)
     ds.SetGeoTransform([2, 0.01, 0, 49, 0, -0.01])
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -182,12 +189,11 @@ def test_gdaldem_hillshade_azimuth(gdaldem_path):
 
     # Light from the east
     gdaltest.runexternal(
-        gdaldem_path
-        + " hillshade -s 111120 -z 100 -az 90 -co COMPRESS=LZW tmp/pyramid.tif tmp/pyramid_shaded.tif"
+        f"{gdaldem_path} hillshade -s 111120 -z 100 -az 90 -co COMPRESS=LZW {input_tif} {output_tif}"
     )
 
     ds_ref = gdal.Open("data/pyramid_shaded_ref.tif")
-    ds = gdal.Open("tmp/pyramid_shaded.tif")
+    ds = gdal.Open(output_tif)
     assert gdaltest.compare_ds(ds, ds_ref, verbose=1) <= 1, "Bad checksum"
     ds = None
     ds_ref = None
@@ -198,14 +204,15 @@ def test_gdaldem_hillshade_azimuth(gdaldem_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_hillshade_png(gdaldem_path):
+def test_gdaldem_hillshade_png(gdaldem_path, tmp_path):
+
+    output_png = str(tmp_path / "n43_hillshade.png")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade.png"
+        f"{gdaldem_path} hillshade -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.tif {output_png}"
     )
 
-    ds = gdal.Open("tmp/n43_hillshade.png")
+    ds = gdal.Open(output_png)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -219,14 +226,15 @@ def test_gdaldem_hillshade_png(gdaldem_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_hillshade_png_compute_edges(gdaldem_path):
+def test_gdaldem_hillshade_png_compute_edges(gdaldem_path, tmp_path):
+
+    output_png = str(tmp_path / "n43_hillshade_compute_edges.png")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " hillshade -compute_edges -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.tif tmp/n43_hillshade_compute_edges.png"
+        f"{gdaldem_path} hillshade -compute_edges -of PNG  -s 111120 -z 30 ../gdrivers/data/n43.tif {output_png}"
     )
 
-    ds = gdal.Open("tmp/n43_hillshade_compute_edges.png")
+    ds = gdal.Open(output_png)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -239,14 +247,16 @@ def test_gdaldem_hillshade_png_compute_edges(gdaldem_path):
 # Test gdaldem slope
 
 
-def test_gdaldem_slope(gdaldem_path):
+def test_gdaldem_slope(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_slope.tif")
 
     gdaltest.runexternal(
-        gdaldem_path + " slope -s 111120 ../gdrivers/data/n43.tif tmp/n43_slope.tif"
+        f"{gdaldem_path} slope -s 111120 ../gdrivers/data/n43.tif {output_tif}"
     )
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_slope.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 63748, "Bad checksum"
@@ -269,14 +279,14 @@ def test_gdaldem_slope(gdaldem_path):
 # Test gdaldem aspect
 
 
-def test_gdaldem_aspect(gdaldem_path):
+def test_gdaldem_aspect(gdaldem_path, tmp_path):
 
-    gdaltest.runexternal(
-        gdaldem_path + " aspect ../gdrivers/data/n43.tif tmp/n43_aspect.tif"
-    )
+    output_tif = str(tmp_path / "n43_aspect.tif")
+
+    gdaltest.runexternal(f"{gdaldem_path} aspect ../gdrivers/data/n43.tif {output_tif}")
 
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_aspect.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 54885, "Bad checksum"
@@ -299,14 +309,21 @@ def test_gdaldem_aspect(gdaldem_path):
 # Test gdaldem color relief
 
 
-def test_gdaldem_color_relief(gdaldem_path):
+@pytest.fixture()
+def n43_colorrelief_tif(gdaldem_path, tmp_path):
+    n43_colorrelief_tif = str(tmp_path / "n43_colorrelief.tif")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.tif"
+        f"{gdaldem_path} color-relief ../gdrivers/data/n43.tif data/color_file.txt {n43_colorrelief_tif}"
     )
+
+    yield n43_colorrelief_tif
+
+
+def test_gdaldem_color_relief(gdaldem_path, n43_colorrelief_tif):
+
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_colorrelief.tif")
+    ds = gdal.Open(n43_colorrelief_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
@@ -331,14 +348,15 @@ def test_gdaldem_color_relief(gdaldem_path):
 # Test gdaldem color relief on a GMT .cpt file
 
 
-def test_gdaldem_color_relief_cpt(gdaldem_path):
+def test_gdaldem_color_relief_cpt(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_colorrelief_cpt.tif")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief ../gdrivers/data/n43.tif data/color_file.cpt tmp/n43_colorrelief_cpt.tif"
+        f"{gdaldem_path} color-relief ../gdrivers/data/n43.tif data/color_file.cpt {output_tif}"
     )
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_colorrelief_cpt.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
@@ -363,17 +381,18 @@ def test_gdaldem_color_relief_cpt(gdaldem_path):
 # Test gdaldem color relief to VRT
 
 
-def test_gdaldem_color_relief_vrt(gdaldem_path):
+def test_gdaldem_color_relief_vrt(gdaldem_path, n43_colorrelief_tif, tmp_path):
+
+    output_vrt = str(tmp_path / "n43_colorrelief.vrt")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief -of VRT ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.vrt"
+        f"{gdaldem_path} color-relief -of VRT ../gdrivers/data/n43.tif data/color_file.txt {output_vrt}"
     )
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_colorrelief.vrt")
+    ds = gdal.Open(output_vrt)
     assert ds is not None
 
-    ds_ref = gdal.Open("tmp/n43_colorrelief.tif")
+    ds_ref = gdal.Open(n43_colorrelief_tif)
     assert gdaltest.compare_ds(ds, ds_ref, verbose=0) <= 1, "Bad checksum"
     ds_ref = None
 
@@ -393,17 +412,24 @@ def test_gdaldem_color_relief_vrt(gdaldem_path):
 # Test gdaldem color relief from a Float32 dataset
 
 
-def test_gdaldem_color_relief_from_float32(gdaldem_path):
+@pytest.fixture()
+def n43_float32_tif(tmp_path):
 
-    gdal.Translate(
-        "tmp/n43_float32.tif", "../gdrivers/data/n43.tif", options="-ot Float32"
-    )
+    n43_float32_path = str(tmp_path / "n43_float32.tif")
+
+    gdal.Translate(n43_float32_path, "../gdrivers/data/n43.tif", options="-ot Float32")
+
+    yield n43_float32_path
+
+
+def test_gdaldem_color_relief_from_float32(gdaldem_path, n43_float32_tif, tmp_path):
+
+    output_tif = str(tmp_path / "n43_colorrelief_from_float32.tif")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif"
+        f"{gdaldem_path} color-relief {n43_float32_tif} data/color_file.txt {output_tif}"
     )
-    ds = gdal.Open("tmp/n43_colorrelief_from_float32.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
@@ -420,13 +446,14 @@ def test_gdaldem_color_relief_from_float32(gdaldem_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_color_relief_png(gdaldem_path):
+def test_gdaldem_color_relief_png(gdaldem_path, tmp_path):
+
+    output_png = str(tmp_path / "n43_colorrelief.png")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief -of PNG ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.png"
+        f"{gdaldem_path} color-relief -of PNG ../gdrivers/data/n43.tif data/color_file.txt {output_png}"
     )
-    ds = gdal.Open("tmp/n43_colorrelief.png")
+    ds = gdal.Open(output_png)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
@@ -443,13 +470,16 @@ def test_gdaldem_color_relief_png(gdaldem_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_color_relief_from_float32_to_png(gdaldem_path):
+def test_gdaldem_color_relief_from_float32_to_png(
+    gdaldem_path, n43_float32_tif, tmp_path
+):
+
+    output_png = str(tmp_path / "n43_colorrelief_from_float32.png")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png"
+        f"{gdaldem_path} color-relief -of PNG {n43_float32_tif} data/color_file.txt {output_png}"
     )
-    ds = gdal.Open("tmp/n43_colorrelief_from_float32.png")
+    ds = gdal.Open(output_png)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
@@ -465,13 +495,14 @@ def test_gdaldem_color_relief_from_float32_to_png(gdaldem_path):
 # Test gdaldem color relief with -nearest_color_entry
 
 
-def test_gdaldem_color_relief_nearest_color_entry(gdaldem_path):
+def test_gdaldem_color_relief_nearest_color_entry(gdaldem_path, tmp_path):
+
+    output_tif = str(tmp_path / "n43_colorrelief_nearest.tif")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief -nearest_color_entry ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief_nearest.tif"
+        f"{gdaldem_path} color-relief -nearest_color_entry ../gdrivers/data/n43.tif data/color_file.txt {output_tif}"
     )
-    ds = gdal.Open("tmp/n43_colorrelief_nearest.tif")
+    ds = gdal.Open(output_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 57296, "Bad checksum"
@@ -487,13 +518,14 @@ def test_gdaldem_color_relief_nearest_color_entry(gdaldem_path):
 # Test gdaldem color relief with -nearest_color_entry and -of VRT
 
 
-def test_gdaldem_color_relief_nearest_color_entry_vrt(gdaldem_path):
+def test_gdaldem_color_relief_nearest_color_entry_vrt(gdaldem_path, tmp_path):
+
+    output_vrt = str(tmp_path / "n43_colorrelief_nearest.vrt")
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief -of VRT -nearest_color_entry ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief_nearest.vrt"
+        f"{gdaldem_path} color-relief -of VRT -nearest_color_entry ../gdrivers/data/n43.tif data/color_file.txt {output_vrt}"
     )
-    ds = gdal.Open("tmp/n43_colorrelief_nearest.vrt")
+    ds = gdal.Open(output_vrt)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 57296, "Bad checksum"
@@ -510,9 +542,13 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt(gdaldem_path):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdaldem_color_relief_nodata_nan(gdaldem_path):
+def test_gdaldem_color_relief_nodata_nan(gdaldem_path, tmp_path):
 
-    f = open("tmp/nodata_nan_src.asc", "wt")
+    input_asc = str(tmp_path / "nodata_nan_src.asc")
+    colors_txt = str(tmp_path / "nodata_nan_plt.txt")
+    output_tif = str(tmp_path / "nodata_nan_out.tif")
+
+    f = open(input_asc, "wt")
     f.write(
         """ncols        2
 nrows        2
@@ -525,17 +561,16 @@ NODATA_value nan
     )
     f.close()
 
-    f = open("tmp/nodata_nan_plt.txt", "wt")
+    f = open(colors_txt, "wt")
     f.write("0 0 0 0\n")
     f.write("nv 1 1 1\n")
     f.close()
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief tmp/nodata_nan_src.asc tmp/nodata_nan_plt.txt tmp/nodata_nan_out.tif"
+        f"{gdaldem_path} color-relief {input_asc} {colors_txt} {output_tif}"
     )
 
-    ds = gdal.Open("tmp/nodata_nan_out.tif")
+    ds = gdal.Open(output_tif)
     val = ds.GetRasterBand(1).ReadRaster()
     ds = None
 
@@ -544,19 +579,20 @@ NODATA_value nan
     val = struct.unpack("B" * 4, val)
     assert val == (0, 0, 0, 1)
 
-    os.unlink("tmp/nodata_nan_src.asc")
-    os.unlink("tmp/nodata_nan_plt.txt")
-    os.unlink("tmp/nodata_nan_out.tif")
-
 
 ###############################################################################
 # Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdaldem_color_relief_repeated_entry(gdaldem_path):
+def test_gdaldem_color_relief_repeated_entry(gdaldem_path, tmp_path):
 
-    f = open("tmp/test_gdaldem_color_relief_repeated_entry.asc", "wt")
+    input_asc = str(tmp_path / "test_gdaldem_color_relief_repeated_entry.asc")
+    colors_txt = str(tmp_path / "test_gdaldem_color_relief_repeated_entry.txt")
+    output_tif = str(tmp_path / "test_gdaldem_color_relief_repeated_entry_out.tif")
+    output_vrt = str(tmp_path / "test_gdaldem_color_relief_repeated_entry_out.vrt")
+
+    f = open(input_asc, "wt")
     f.write(
         """ncols        2
 nrows        3
@@ -570,7 +606,7 @@ NODATA_value 5
     )
     f.close()
 
-    f = open("tmp/test_gdaldem_color_relief_repeated_entry.txt", "wt")
+    f = open(colors_txt, "wt")
     f.write("1 1 1 1\n")
     f.write("6 10 10 10\n")
     f.write("6 20 20 20\n")
@@ -579,12 +615,11 @@ NODATA_value 5
     f.close()
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.tif",
+        f"{gdaldem_path} color-relief {input_asc} {colors_txt} {output_tif}",
         display_live_on_parent_stdout=True,
     )
 
-    ds = gdal.Open("tmp/test_gdaldem_color_relief_repeated_entry_out.tif")
+    ds = gdal.Open(output_tif)
     val = ds.GetRasterBand(1).ReadRaster()
     ds = None
 
@@ -594,100 +629,13 @@ NODATA_value 5
     assert val == (1, 1, 5, 10, 10, 25)
 
     gdaltest.runexternal(
-        gdaldem_path
-        + " color-relief tmp/test_gdaldem_color_relief_repeated_entry.asc tmp/test_gdaldem_color_relief_repeated_entry.txt tmp/test_gdaldem_color_relief_repeated_entry_out.vrt -of VRT",
+        f"{gdaldem_path} color-relief {input_asc} {colors_txt} {output_vrt} -of VRT",
         display_live_on_parent_stdout=True,
     )
 
-    ds = gdal.Open("tmp/test_gdaldem_color_relief_repeated_entry_out.vrt")
+    ds = gdal.Open(output_vrt)
     val = ds.GetRasterBand(1).ReadRaster()
     ds = None
 
     val = struct.unpack("B" * 6, val)
     assert val == (1, 1, 5, 10, 10, 25)
-
-    os.unlink("tmp/test_gdaldem_color_relief_repeated_entry.asc")
-    os.unlink("tmp/test_gdaldem_color_relief_repeated_entry.txt")
-    os.unlink("tmp/test_gdaldem_color_relief_repeated_entry_out.tif")
-    os.unlink("tmp/test_gdaldem_color_relief_repeated_entry_out.vrt")
-
-
-###############################################################################
-# Cleanup
-
-
-def test_gdaldem_cleanup():
-    try:
-        os.remove("tmp/n43_hillshade.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_hillshade_compressed_tiled.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_hillshade_combined.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_hillshade_compute_edges.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/pyramid.tif")
-        os.remove("tmp/pyramid_shaded.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_hillshade.png")
-        os.remove("tmp/n43_hillshade.png.aux.xml")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_hillshade_compute_edges.png")
-        os.remove("tmp/n43_hillshade_compute_edges.png.aux.xml")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_slope.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_aspect.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief_cpt.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief.vrt")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_float32.tif")
-        os.remove("tmp/n43_colorrelief_from_float32.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief.png")
-        os.remove("tmp/n43_colorrelief.png.aux.xml")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief_from_float32.png")
-        os.remove("tmp/n43_colorrelief_from_float32.png.aux.xml")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief_nearest.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43_colorrelief_nearest.vrt")
-    except OSError:
-        pass

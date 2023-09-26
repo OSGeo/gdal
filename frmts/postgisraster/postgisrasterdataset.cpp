@@ -798,7 +798,7 @@ void PostGISRasterDataset::GetDstWin(PostGISRasterTileDataset *psDP,
 /***********************************************************************
  * \brief Add tiles bands as complex source for raster bands.
  **********************************************************************/
-GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
+void PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
 {
     // Parameters to add the tile bands as sources
     int nDstXOff = 0;
@@ -839,8 +839,6 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
 
         prtb->poSource = prb->papoSources[prb->nSources - 1];
     }
-
-    return true;
 }
 
 /************************************************************************/
@@ -1395,22 +1393,16 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
                                                 GetRasterCount(), nullptr);
                 if (poRTDS != nullptr)
                 {
-                    if (AddComplexSource(poRTDS))
-                    {
-                        oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
-                        papoSourcesHolders =
-                            static_cast<PostGISRasterTileDataset **>(
-                                CPLRealloc(papoSourcesHolders,
-                                           sizeof(PostGISRasterTileDataset *) *
-                                               (m_nTiles + 1)));
-                        papoSourcesHolders[m_nTiles++] = poRTDS;
-                        CPLQuadTreeInsert(hQuadTree, poRTDS);
-                    }
-                    else
-                    {
-                        delete poRTDS;
-                        poRTDS = nullptr;
-                    }
+                    AddComplexSource(poRTDS);
+
+                    oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
+                    papoSourcesHolders =
+                        static_cast<PostGISRasterTileDataset **>(
+                            CPLRealloc(papoSourcesHolders,
+                                       sizeof(PostGISRasterTileDataset *) *
+                                           (m_nTiles + 1)));
+                    papoSourcesHolders[m_nTiles++] = poRTDS;
+                    CPLQuadTreeInsert(hQuadTree, poRTDS);
                 }
             }
 
@@ -2101,16 +2093,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
     for (int iSource = 0; iSource < l_nTiles; iSource++)
     {
         PostGISRasterTileDataset *poRTDS = papoSourcesHolders[iSource];
-        if (!AddComplexSource(poRTDS))
-        {
-            CPLDebug("PostGIS_Raster",
-                     "PostGISRasterDataset::ConstructOneDatasetFromTiles:"
-                     "Bounding box of tile %d does not intersect the "
-                     "bounding box of dataset ",
-                     iSource);
-
-            continue;
-        }
+        AddComplexSource(poRTDS);
         if (poRTDS->pszPKID != nullptr)
             oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
         CPLQuadTreeInsert(hQuadTree, poRTDS);

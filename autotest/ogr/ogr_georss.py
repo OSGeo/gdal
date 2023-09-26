@@ -82,19 +82,6 @@ def startup_and_cleanup():
 
     yield
 
-    list_files = [
-        "tmp/test_rss2.xml",
-        "tmp/test_atom.xml",
-        "tmp/test32631.rss",
-        "tmp/broken.rss",
-        "tmp/nonstandard.rss",
-    ]
-    for filename in list_files:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
     files = os.listdir("data")
     for filename in files:
         if len(filename) > 13 and filename[-13:] == ".resolved.gml":
@@ -353,84 +340,69 @@ def ogr_georss_create(filename, options):
 # Test writing a RSS 2.0 document in Simple dialect (doesn't need read support)
 
 
-def test_ogr_georss_4():
+def test_ogr_georss_4(tmp_path):
 
-    ogr_georss_create("tmp/test_rss2.xml", [])
+    ogr_georss_create(tmp_path / "test_rss2.xml", [])
 
-    content = open("tmp/test_rss2.xml").read()
+    content = open(tmp_path / "test_rss2.xml").read()
     assert content.find("<georss:point>49 2") != -1, "%s" % content
 
+    ###############################################################################
+    # Test reading document created at previous step
 
-###############################################################################
-# Test reading document created at previous step
-
-
-def test_ogr_georss_5():
-
-    return ogr_georss_test_rss("tmp/test_rss2.xml", False)
+    ogr_georss_test_rss(tmp_path / "test_rss2.xml", False)
 
 
 ###############################################################################
 # Test writing a RSS 2.0 document in GML dialect (doesn't need read support)
 
 
-def test_ogr_georss_6():
+def test_ogr_georss_6(tmp_path):
 
-    ogr_georss_create("tmp/test_rss2.xml", ["GEOM_DIALECT=GML"])
+    ogr_georss_create(tmp_path / "test_rss2.xml", ["GEOM_DIALECT=GML"])
 
-    content = open("tmp/test_rss2.xml").read()
+    content = open(tmp_path / "test_rss2.xml").read()
     assert content.find("<georss:where><gml:Point><gml:pos>49 2") != -1, "%s" % content
 
+    ###############################################################################
+    # Test reading document created at previous step
 
-###############################################################################
-# Test reading document created at previous step
-
-
-def test_ogr_georss_7():
     if not gdaltest.have_gml_reader:
-        pytest.skip()
+        return
 
-    return ogr_georss_test_rss("tmp/test_rss2.xml", False)
+    ogr_georss_test_rss(tmp_path / "test_rss2.xml", False)
 
 
 ###############################################################################
 # Test writing a RSS 2.0 document in W3C Geo dialect (doesn't need read support)
 
 
-def test_ogr_georss_8():
+def test_ogr_georss_8(tmp_path):
 
-    ogr_georss_create("tmp/test_rss2.xml", ["GEOM_DIALECT=W3C_GEO"])
+    ogr_georss_create(tmp_path / "test_rss2.xml", ["GEOM_DIALECT=W3C_GEO"])
 
-    content = open("tmp/test_rss2.xml").read()
+    content = open(tmp_path / "test_rss2.xml").read()
     assert not (
         content.find("<geo:lat>49") == -1 or content.find("<geo:long>2") == -1
     ), ("%s" % content)
 
+    ###############################################################################
+    # Test reading document created at previous step
 
-###############################################################################
-# Test reading document created at previous step
-
-
-def test_ogr_georss_9():
-
-    return ogr_georss_test_rss("tmp/test_rss2.xml", True)
+    ogr_georss_test_rss(tmp_path / "test_rss2.xml", True)
 
 
 ###############################################################################
 # Test writing a RSS 2.0 document in GML dialect with EPSG:32631
 
 
-def test_ogr_georss_10():
-    try:
-        os.remove("tmp/test32631.rss")
-    except OSError:
-        pass
+def test_ogr_georss_10(tmp_path):
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
 
-    ds = ogr.GetDriverByName("GeoRSS").CreateDataSource("tmp/test32631.rss")
-    with gdaltest.error_handler():
+    ds = ogr.GetDriverByName("GeoRSS").CreateDataSource(tmp_path / "test32631.rss")
+    with gdal.quiet_errors():
         try:
             lyr = ds.CreateLayer("georss", srs=srs)
         except Exception:
@@ -439,13 +411,14 @@ def test_ogr_georss_10():
 
     ds = None
 
-    try:
-        os.remove("tmp/test32631.rss")
-    except OSError:
-        pass
+
+def test_ogr_georss_11(tmp_path):
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
 
     ds = ogr.GetDriverByName("GeoRSS").CreateDataSource(
-        "tmp/test32631.rss", options=["GEOM_DIALECT=GML"]
+        tmp_path / "test32631.rss", options=["GEOM_DIALECT=GML"]
     )
     lyr = ds.CreateLayer("georss", srs=srs)
 
@@ -456,7 +429,7 @@ def test_ogr_georss_10():
 
     ds = None
 
-    content = open("tmp/test32631.rss").read()
+    content = open(tmp_path / "test32631.rss").read()
     assert (
         content.find(
             '<georss:where><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>500000 4000000'
@@ -464,19 +437,15 @@ def test_ogr_georss_10():
         != -1
     ), ("%s" % content)
 
-
-###############################################################################
-# Test reading document created at previous step
-
-
-def test_ogr_georss_11():
+    ###############################################################################
+    # Test reading document created at previous step
 
     if not gdaltest.georss_read_support:
-        pytest.skip()
+        return
     if not gdaltest.have_gml_reader:
-        pytest.skip()
+        return
 
-    ds = ogr.Open("tmp/test32631.rss")
+    ds = ogr.Open(tmp_path / "test32631.rss")
     lyr = ds.GetLayer(0)
 
     srs = osr.SpatialReference()
@@ -508,28 +477,40 @@ def test_ogr_georss_11():
 # Test various broken documents
 
 
-def test_ogr_georss_12():
+def test_ogr_georss_12a(tmp_path):
 
     if not gdaltest.georss_read_support:
         pytest.skip()
 
-    open("tmp/broken.rss", "wt").write(
+    open(tmp_path / "broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><item><a></item></rss>'
     )
-    with pytest.raises(Exception):
-        ogr.Open("tmp/broken.rss")
+    with pytest.raises(Exception, match="XML parsing .* failed"):
+        ogr.Open(tmp_path / "broken.rss")
 
-    open("tmp/broken.rss", "wt").write(
+
+def test_ogr_georss_12b(tmp_path):
+
+    if not gdaltest.georss_read_support:
+        pytest.skip()
+
+    open(tmp_path / "broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><channel><item><georss:box>49 2 49.5</georss:box></item></channel></rss>'
     )
-    ds = ogr.Open("tmp/broken.rss")
+    ds = ogr.Open(tmp_path / "broken.rss")
     with pytest.raises(Exception):
         ds.GetLayer(0).GetNextFeature()
 
-    open("tmp/broken.rss", "wt").write(
+
+def test_ogr_georss_12c(tmp_path):
+
+    if not gdaltest.georss_read_support:
+        pytest.skip()
+
+    open(tmp_path / "broken.rss", "wt").write(
         '<?xml version="1.0"?><rss><channel><item><georss:where><gml:LineString><gml:posList>48 2 48.1 2.1 48</gml:posList></gml:LineString></georss:where></item></channel></rss>'
     )
-    ds = ogr.Open("tmp/broken.rss")
+    ds = ogr.Open(tmp_path / "broken.rss")
     with pytest.raises(Exception):
         ds.GetLayer(0).GetNextFeature()
 
@@ -538,13 +519,10 @@ def test_ogr_georss_12():
 # Test writing non standard fields
 
 
-def test_ogr_georss_13():
-    try:
-        os.remove("tmp/nonstandard.rss")
-    except OSError:
-        pass
+def test_ogr_georss_13(tmp_path):
+
     ds = ogr.GetDriverByName("GeoRSS").CreateDataSource(
-        "tmp/nonstandard.rss", options=["USE_EXTENSIONS=YES"]
+        tmp_path / "nonstandard.rss", options=["USE_EXTENSIONS=YES"]
     )
     lyr = ds.CreateLayer("georss")
 
@@ -561,22 +539,18 @@ def test_ogr_georss_13():
 
     ds = None
 
-    content = open("tmp/nonstandard.rss").read()
+    content = open(tmp_path / "nonstandard.rss").read()
     assert content.find("<myns:field>val</myns:field>") != -1, "%s" % content
     assert content.find("<ogr:field2>val2</ogr:field2>") != -1, "%s" % content
     assert content.find("<ogr:field3>val3</ogr:field3>") != -1, "%s" % content
 
-
-###############################################################################
-# Test reading document created at previous step
-
-
-def test_ogr_georss_14():
+    ###############################################################################
+    # Test reading document created at previous step
 
     if not gdaltest.georss_read_support:
-        pytest.skip()
+        return
 
-    ds = ogr.Open("tmp/nonstandard.rss")
+    ds = ogr.Open(tmp_path / "nonstandard.rss")
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -599,14 +573,9 @@ def test_ogr_georss_14():
 # Test reading an in memory file (#2931)
 
 
-def test_ogr_georss_15():
+def test_ogr_georss_15(tmp_vsimem):
 
     if not gdaltest.georss_read_support:
-        pytest.skip()
-
-    try:
-        gdal.FileFromMemBuffer
-    except AttributeError:
         pytest.skip()
 
     content = """<?xml version="1.0" encoding="UTF-8"?>
@@ -624,9 +593,9 @@ def test_ogr_georss_15():
     </rss>"""
 
     # Create in-memory file
-    gdal.FileFromMemBuffer("/vsimem/georssinmem", content)
+    gdal.FileFromMemBuffer(tmp_vsimem / "georssinmem", content)
 
-    ds = ogr.Open("/vsimem/georssinmem")
+    ds = ogr.Open(tmp_vsimem / "georssinmem")
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -635,6 +604,3 @@ def test_ogr_georss_15():
         "item title",
         feat.GetFieldAsString("title"),
     )
-
-    # Release memory associated to the in-memory file
-    gdal.Unlink("/vsimem/georssinmem")

@@ -17,13 +17,13 @@ Synopsis
 
 .. code-block::
 
-   gdal_viewshed [-b <band>]
+   gdal_viewshed [--help] [--help-general] [-b <band>]
                  [-a_nodata <value>] [-f <formatname>]
                  [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]
                  -ox <observer_x> -oy <observer_y>
                  [-vv <visibility>] [-iv <invisibility>]
                  [-ov <out_of_range>] [-cc <curvature_coef>]
-                 [[-co NAME=VALUE] ...]
+                 [-co <NAME>=<VALUE>]...
                  [-q] [-om <output mode>]
                  <src_filename> <dst_filename>
 
@@ -39,6 +39,8 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
     if the georeferencing is in a projected coordinate reference system.
 
 .. program:: gdal_viewshed
+
+.. include:: options/help_and_help_general.rst
 
 .. include:: options/co.rst
 

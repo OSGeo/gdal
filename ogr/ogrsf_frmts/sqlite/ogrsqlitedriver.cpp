@@ -68,6 +68,11 @@ static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
     if (EQUAL(osExt, "mbtiles") && GDALGetDriverByName("MBTILES") != nullptr)
     {
+        if (CSLCount(poOpenInfo->papszAllowedDrivers) == 1 &&
+            EQUAL(poOpenInfo->papszAllowedDrivers[0], "SQLite"))
+        {
+            return TRUE;
+        }
         return FALSE;
     }
 

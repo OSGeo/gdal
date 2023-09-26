@@ -104,11 +104,9 @@ def test_gdalinfo_4(gdalinfo_path):
 # Test -stats option
 
 
-def test_gdalinfo_5(gdalinfo_path):
+def test_gdalinfo_5(gdalinfo_path, tmp_path):
 
-    tmpfilename = "tmp/test_gdalinfo_5.tif"
-    if os.path.exists(tmpfilename + ".aux.xml"):
-        os.remove(tmpfilename + ".aux.xml")
+    tmpfilename = str(tmp_path / "test_gdalinfo_5.tif")
     shutil.copy("../gcore/data/byte.tif", tmpfilename)
 
     ret = gdaltest.runexternal(gdalinfo_path + " " + tmpfilename)
@@ -118,8 +116,7 @@ def test_gdalinfo_5(gdalinfo_path):
     assert ret.find("STATISTICS_MINIMUM=74") != -1, "got wrong minimum (2)."
 
     # We will blow an exception if the file does not exist now!
-    os.remove(tmpfilename + ".aux.xml")
-    os.remove(tmpfilename)
+    assert os.path.exists(tmpfilename + ".aux.xml")
 
 
 ###############################################################################
@@ -159,11 +156,9 @@ def test_gdalinfo_7(gdalinfo_path):
 # Test -hist option
 
 
-def test_gdalinfo_8(gdalinfo_path):
+def test_gdalinfo_8(gdalinfo_path, tmp_path):
 
-    tmpfilename = "tmp/test_gdalinfo_8.tif"
-    if os.path.exists(tmpfilename + ".aux.xml"):
-        os.remove(tmpfilename + ".aux.xml")
+    tmpfilename = str(tmp_path / "test_gdalinfo_8.tif")
     shutil.copy("../gcore/data/byte.tif", tmpfilename)
 
     ret = gdaltest.runexternal(gdalinfo_path + " " + tmpfilename)
@@ -183,8 +178,7 @@ def test_gdalinfo_8(gdalinfo_path):
     ), "did not get expected histogram."
 
     # We will blow an exception if the file does not exist now!
-    os.remove(tmpfilename + ".aux.xml")
-    os.remove(tmpfilename)
+    assert os.path.exists(tmpfilename + ".aux.xml")
 
 
 ###############################################################################
@@ -323,17 +317,18 @@ def test_gdalinfo_18(gdalinfo_path):
 # Test --optfile
 
 
-def test_gdalinfo_19(gdalinfo_path):
+def test_gdalinfo_19(gdalinfo_path, tmp_path):
 
-    f = open("tmp/optfile.txt", "wt")
+    optfile_txt = str(tmp_path / "optfile.txt")
+
+    f = open(optfile_txt, "wt")
     f.write("# comment\n")
     f.write("../gcore/data/byte.tif\n")
     f.close()
     ret = gdaltest.runexternal(
-        gdalinfo_path + " --optfile tmp/optfile.txt",
+        gdalinfo_path + f" --optfile {optfile_txt}",
         check_memleak=False,
     )
-    os.unlink("tmp/optfile.txt")
     assert ret.startswith("Driver: GTiff/GeoTIFF")
 
 
@@ -967,15 +962,14 @@ def test_gdalinfo_if_option(gdalinfo_path):
 # Test STAC JSON output
 
 
-def test_gdalinfo_stac_json(gdalinfo_path):
+def test_gdalinfo_stac_json(gdalinfo_path, tmp_path):
 
-    tmpfilename = "tmp/test_gdalinfo_stac_json.tif"
+    tmpfilename = str(tmp_path / "test_gdalinfo_stac_json.tif")
     shutil.copy("../gcore/data/byte.tif", tmpfilename)
     ret, _ = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " -json -proj4 -stats -hist " + tmpfilename,
         encoding="UTF-8",
     )
-    gdal.GetDriverByName("GTiff").Delete(tmpfilename)
     data = json.loads(ret)
 
     assert "stac" in data
@@ -1007,21 +1001,22 @@ def test_gdalinfo_stac_json(gdalinfo_path):
     assert band["name"] == "b1"
     assert band["description"] == "Gray"
 
+
+def test_gdalinfo_stac_eo_bands(gdalinfo_path, tmp_path):
     # Test eo:bands cloud_cover
     # https://github.com/OSGeo/gdal/pull/6265#issuecomment-1232229669
-    tmpfilename = "tmp/test_gdalinfo_stac_json_cloud_cover.tif"
+    tmpfilename = str(tmp_path / "test_gdalinfo_stac_json_cloud_cover.tif")
     shutil.copy("../gcore/data/md_dg.tif", tmpfilename)
     shutil.copy(
-        "../gcore/data/md_dg.IMD", "tmp/test_gdalinfo_stac_json_cloud_cover.IMD"
+        "../gcore/data/md_dg.IMD", f"{tmp_path}/test_gdalinfo_stac_json_cloud_cover.IMD"
     )
     shutil.copy(
-        "../gcore/data/md_dg.RPB", "tmp/test_gdalinfo_stac_json_cloud_cover.RPB"
+        "../gcore/data/md_dg.RPB", f"{tmp_path}/test_gdalinfo_stac_json_cloud_cover.RPB"
     )
     ret, _ = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " -json " + tmpfilename,
         encoding="UTF-8",
     )
-    gdal.GetDriverByName("GTiff").Delete(tmpfilename)
     data = json.loads(ret)
 
     assert data["stac"]["eo:cloud_cover"] == 2

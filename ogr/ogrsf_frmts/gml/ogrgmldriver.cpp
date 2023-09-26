@@ -213,6 +213,9 @@ void RegisterOGRGML()
         "currently)' default='YES'/>"
         "  <Option name='REGISTRY' type='string' description='Filename of the "
         "registry with application schemas.'/>"
+        "  <Option name='USE_BBOX' type='boolean' description='Whether "
+        "to use gml:boundedBy at feature level as feature geometry, "
+        "if there are no other geometry' default='NO'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

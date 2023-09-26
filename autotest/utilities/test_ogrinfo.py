@@ -29,14 +29,14 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
+import pathlib
 
 import gdaltest
 import ogrtest
 import pytest
 import test_cli_utilities
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_ogrinfo_path() is None, reason="ogrinfo not available"
@@ -246,7 +246,9 @@ def test_ogrinfo_16(ogrinfo_path):
 # Test erroneous use of --optfile.
 
 
-def test_ogrinfo_17(ogrinfo_path):
+def test_ogrinfo_17(ogrinfo_path, tmp_path):
+
+    optfile_txt = str(tmp_path / "optfile.txt")
 
     (_, err) = gdaltest.runexternal_out_and_err(
         ogrinfo_path + " --optfile", check_memleak=False
@@ -259,14 +261,13 @@ def test_ogrinfo_17(ogrinfo_path):
     )
     assert "Unable to open optfile" in err
 
-    f = open("tmp/optfile.txt", "wt")
+    f = open(optfile_txt, "wt")
     f.write("--config foo\n")
     f.close()
     (_, err) = gdaltest.runexternal_out_and_err(
-        ogrinfo_path + " --optfile tmp/optfile.txt",
+        ogrinfo_path + f" --optfile {optfile_txt}",
         check_memleak=False,
     )
-    os.unlink("tmp/optfile.txt")
     assert "--config option given without a key and value argument" in err
 
 
@@ -274,17 +275,18 @@ def test_ogrinfo_17(ogrinfo_path):
 # Test --optfile
 
 
-def test_ogrinfo_18(ogrinfo_path):
+def test_ogrinfo_18(ogrinfo_path, tmp_path):
 
-    f = open("tmp/optfile.txt", "wt")
+    optfile_txt = str(tmp_path / "optfile.txt")
+
+    f = open(optfile_txt, "wt")
     f.write("# comment\n")
     f.write("../ogr/data/poly.shp\n")
     f.close()
     ret = gdaltest.runexternal(
-        ogrinfo_path + " --optfile tmp/optfile.txt",
+        ogrinfo_path + f" --optfile {optfile_txt}",
         check_memleak=False,
     )
-    os.unlink("tmp/optfile.txt")
     assert "ESRI Shapefile" in ret
 
 
@@ -326,24 +328,26 @@ def test_ogrinfo_21(ogrinfo_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogrinfo_22(ogrinfo_path):
+def test_ogrinfo_22(ogrinfo_path, tmp_path):
 
-    f = open("tmp/test_ogrinfo_22.csv", "wt")
+    csv_fname = str(tmp_path / "test_ogrinfo_22.csv")
+
+    f = open(csv_fname, "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
     f.write('"POINT(1 2)","POINT(3 4)"\n')
     f.close()
 
     ret = gdaltest.runexternal(
-        ogrinfo_path + " tmp/test_ogrinfo_22.csv",
+        ogrinfo_path + f" {csv_fname}",
         check_memleak=False,
     )
     assert "1: test_ogrinfo_22 (Unknown (any), Unknown (any))" in ret
 
     ret = gdaltest.runexternal(
-        ogrinfo_path + " -al -wkt_format wkt1 tmp/test_ogrinfo_22.csv",
+        ogrinfo_path + f" -al -wkt_format wkt1 {csv_fname}",
         check_memleak=False,
     )
-    expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'
+    expected_ret = f"""INFO: Open of `{csv_fname}'
       using driver `CSV' successful.
 
 Layer name: test_ogrinfo_22
@@ -405,17 +409,17 @@ OGRFeature(test_ogrinfo_22):1
     for i, exp_line in enumerate(expected_lines):
         assert exp_line == lines[i], ret
 
-    os.unlink("tmp/test_ogrinfo_22.csv")
-
 
 ###############################################################################
 # Test -geomfield (RFC 41) support
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogrinfo_23(ogrinfo_path):
+def test_ogrinfo_23(ogrinfo_path, tmp_path):
 
-    f = open("tmp/test_ogrinfo_23.csv", "wt")
+    csv_fname = str(tmp_path / "test_ogrinfo_23.csv")
+
+    f = open(csv_fname, "wt")
     f.write("_WKTgeom1_EPSG_4326,_WKTgeom2_EPSG_32631\n")
     f.write('"POINT(1 2)","POINT(3 4)"\n')
     f.write('"POINT(3 4)","POINT(1 2)"\n')
@@ -423,10 +427,10 @@ def test_ogrinfo_23(ogrinfo_path):
 
     ret = gdaltest.runexternal(
         ogrinfo_path
-        + " -al tmp/test_ogrinfo_23.csv -wkt_format wkt1 -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631",
+        + f" -al {csv_fname} -wkt_format wkt1 -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631",
         check_memleak=False,
     )
-    expected_ret = """INFO: Open of `tmp/test_ogrinfo_23.csv'
+    expected_ret = f"""INFO: Open of `{csv_fname}'
       using driver `CSV' successful.
 
 Layer name: test_ogrinfo_23
@@ -488,18 +492,19 @@ OGRFeature(test_ogrinfo_23):2
     for i, exp_line in enumerate(expected_lines):
         assert exp_line == lines[i], ret
 
-    os.unlink("tmp/test_ogrinfo_23.csv")
-
 
 ###############################################################################
 # Test metadata
 
 
-def test_ogrinfo_24(ogrinfo_path):
+def test_ogrinfo_24(ogrinfo_path, tmp_path):
 
-    f = open("tmp/test_ogrinfo_24.vrt", "wt")
+    vrt_fname = str(tmp_path / "test_ogrinfo_24.vrt")
+    poly_shp = str(pathlib.Path(__file__).parent.parent / "ogr" / "data" / "poly.shp")
+
+    f = open(vrt_fname, "wt")
     f.write(
-        """<OGRVRTDataSource>
+        f"""<OGRVRTDataSource>
     <Metadata>
         <MDI key="foo">bar</MDI>
     </Metadata>
@@ -510,7 +515,7 @@ def test_ogrinfo_24(ogrinfo_path):
         <Metadata>
             <MDI key="bar">baz</MDI>
         </Metadata>
-        <SrcDataSource relativeToVRT="1" shared="1">../../ogr/data/poly.shp</SrcDataSource>
+        <SrcDataSource relativeToVRT="0" shared="1">{poly_shp}</SrcDataSource>
         <SrcLayer>poly</SrcLayer>
   </OGRVRTLayer>
 </OGRVRTDataSource>"""
@@ -518,14 +523,14 @@ def test_ogrinfo_24(ogrinfo_path):
     f.close()
 
     ret = gdaltest.runexternal(
-        ogrinfo_path + " -ro -al tmp/test_ogrinfo_24.vrt -so",
+        ogrinfo_path + f" -ro -al {vrt_fname} -so",
         check_memleak=False,
     )
     assert "foo=bar" in ret
     assert "bar=baz" in ret
 
     ret = gdaltest.runexternal(
-        ogrinfo_path + " -ro -al tmp/test_ogrinfo_24.vrt -so -mdd all",
+        ogrinfo_path + f" -ro -al {vrt_fname} -so -mdd all",
         check_memleak=False,
     )
     assert "foo=bar" in ret
@@ -533,12 +538,10 @@ def test_ogrinfo_24(ogrinfo_path):
     assert "bar=baz" in ret
 
     ret = gdaltest.runexternal(
-        ogrinfo_path + " -ro -al tmp/test_ogrinfo_24.vrt -so -nomd",
+        ogrinfo_path + f" -ro -al {vrt_fname} -so -nomd",
         check_memleak=False,
     )
     assert "Metadata" not in ret
-
-    os.unlink("tmp/test_ogrinfo_24.vrt")
 
 
 ###############################################################################
@@ -558,15 +561,16 @@ def test_ogrinfo_25(ogrinfo_path):
 # Test SQLStatement with -sql @filename syntax
 
 
-def test_ogrinfo_sql_filename(ogrinfo_path):
+def test_ogrinfo_sql_filename(ogrinfo_path, tmp_path):
 
-    open("tmp/my.sql", "wt").write(
+    sql_fname = str(tmp_path / "my.sql")
+
+    open(sql_fname, "wt").write(
         """-- initial comment\nselect\n'--''--',* from --comment\npoly\n-- trailing comment"""
     )
     (ret, err) = gdaltest.runexternal_out_and_err(
-        ogrinfo_path + " -q ../ogr/data/poly.shp -sql @tmp/my.sql"
+        ogrinfo_path + f" -q ../ogr/data/poly.shp -sql @{sql_fname}"
     )
-    os.unlink("tmp/my.sql")
     assert err is None or err == "", "got error/warning"
     assert "OGRFeature(poly):0" in ret and "OGRFeature(poly):9" in ret, "wrong output"
 
@@ -692,3 +696,29 @@ def test_ogrinfo_hiearchical(ogrinfo_path):
     assert "  Layer: fd1_lyr2 (Point)" in ret
     assert "Group fd2:" in ret
     assert "  Layer: fd2_lyr (Point)" in ret
+
+
+###############################################################################
+# Test failed -sql
+
+
+def test_ogrinfo_failed_sql(ogrinfo_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        ogrinfo_path + ' ../ogr/data/poly.shp -sql "SELECT bla"'
+    )
+    assert "ERROR ret code = 1" in err
+
+
+###############################################################################
+# Test opening an empty geopackage
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogrinfo_empty_gpkg(ogrinfo_path, tmp_path):
+
+    filename = str(tmp_path / "empty.gpkg")
+    ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+
+    (ret, err) = gdaltest.runexternal_out_and_err(ogrinfo_path + f" {filename}")
+    assert err is None or err == "", "got error/warning"

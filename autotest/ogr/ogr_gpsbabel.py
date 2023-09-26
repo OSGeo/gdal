@@ -56,7 +56,7 @@ pytestmark = [
 def startup_and_cleanup():
 
     # Check that the GPX driver has read support
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         if ogr.Open("data/gpx/test.gpx") is None:
             assert "Expat" in gdal.GetLastErrorMsg()
             pytest.skip("GDAL build without Expat support")

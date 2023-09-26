@@ -213,6 +213,21 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     char **ParseHTMLFileList(const char *pszFilename, int nMaxFiles,
                              char *pszData, bool *pbGotFileList);
 
+    // Data structure and map to store regions that are in progress, to
+    // avoid simultaneous downloads of the same region in different threads
+    // Cf https://github.com/OSGeo/gdal/issues/8041
+    struct RegionInDownload
+    {
+        std::mutex oMutex{};
+        std::condition_variable oCond{};
+        bool bDownloadInProgress = false;
+        int nWaiters = 0;
+        std::string osData{};
+    };
+    std::mutex m_oMutex{};
+    std::map<std::string, std::unique_ptr<RegionInDownload>>
+        m_oMapRegionInDownload{};
+
   protected:
     CPLMutex *hMutex = nullptr;
 
@@ -236,12 +251,12 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     static const char *GetOptionsStatic();
 
-    static bool IsAllowedFilename(const char *pszFilename);
-
     VSICurlFilesystemHandlerBase();
 
   public:
     ~VSICurlFilesystemHandlerBase() override;
+
+    static bool IsAllowedFilename(const char *pszFilename);
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
                            bool bSetError,
@@ -302,6 +317,13 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     void AddRegion(const char *pszURL, vsi_l_offset nFileOffsetStart,
                    size_t nSize, const char *pData);
+
+    std::string NotifyStartDownloadRegion(const std::string &osURL,
+                                          vsi_l_offset startOffset,
+                                          int nBlocks);
+    void NotifyStopDownloadRegion(const std::string &osURL,
+                                  vsi_l_offset startOffset, int nBlocks,
+                                  const std::string &osData);
 
     bool GetCachedFileProp(const char *pszURL, FileProp &oFileProp);
     void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);
@@ -518,10 +540,37 @@ class VSICurlHandle : public VSIVirtualHandle
 };
 
 /************************************************************************/
+/*                  VSICurlFilesystemHandlerBaseWritable                */
+/************************************************************************/
+
+class VSICurlFilesystemHandlerBaseWritable : public VSICurlFilesystemHandlerBase
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBaseWritable)
+
+  protected:
+    VSICurlFilesystemHandlerBaseWritable() = default;
+
+    virtual VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename, CSLConstList papszOptions) = 0;
+
+  public:
+    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
+                           bool bSetError, CSLConstList papszOptions) override;
+
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
+    {
+        return true;
+    }
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override;
+};
+
+/************************************************************************/
 /*                        IVSIS3LikeFSHandler                           */
 /************************************************************************/
 
-class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
+class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
@@ -563,13 +612,6 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
                          void *pProgressData) override;
 
     virtual int DeleteObject(const char *pszFilename);
-
-    virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper *)
-    {
-    }
-    virtual void UpdateHandleFromMap(IVSIS3LikeHandleHelper *)
-    {
-    }
 
     bool Sync(const char *pszSource, const char *pszTarget,
               const char *const *papszOptions, GDALProgressFunc pProgressFunc,

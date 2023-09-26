@@ -120,7 +120,7 @@ static double average(double a, double b)
 
 static double degrees_to_radians(double d)
 {
-    return d * 0.017453292;
+    return d * (M_PI / 180);
 }
 
 static bool approx_equal(double a, double b)

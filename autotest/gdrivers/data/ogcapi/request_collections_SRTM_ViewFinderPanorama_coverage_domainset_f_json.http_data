@@ -1,0 +1,64 @@
+HTTP/1.1 200 OK
+Date: Tue, 20 Jun 2023 10:38:15 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Expires: Tue, 18 Jun 2024 06:29:02 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Length: 1288
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Age: 101353
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json
+
+{
+   "type" : "DomainSet",
+   "generalGrid" : {
+      "type" : "GeneralGridCoverage",
+      "srsName" : "http://www.opengis.net/def/crs/EPSG/0/4326",
+      "axisLabels" : [
+         "Lat",
+         "Lon"
+      ],
+      "axis" : [
+         {
+            "type" : "RegularAxis",
+            "axisLabel" : "Lat",
+            "lowerBound" : -90.0,
+            "upperBound" : 84.0,
+            "uomLabel" : "deg",
+            "resolution" : 0.0006866455078
+         },
+         {
+            "type" : "RegularAxis",
+            "axisLabel" : "Lon",
+            "lowerBound" : -180.0,
+            "upperBound" : 180.0,
+            "uomLabel" : "deg",
+            "resolution" : 0.0006866455078
+         }
+      ],
+      "gridLimits" : {
+         "type" : "GridLimits",
+         "srsName" : "http://www.opengis.net/def/crs/OGC/0/Index2D",
+         "axisLabels" : [
+            "i",
+            "j"
+         ],
+         "axis" : [
+            {
+               "type" : "IndexAxis",
+               "axisLabel" : "i",
+               "lowerBound" : 0,
+               "upperBound" : 253405
+            },
+            {
+               "type" : "IndexAxis",
+               "axisLabel" : "j",
+               "lowerBound" : 0,
+               "upperBound" : 524288
+            }
+         ]
+      }
+   }
+}

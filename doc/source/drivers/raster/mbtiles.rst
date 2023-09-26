@@ -23,8 +23,8 @@ write support requires GDAL to be built with GEOS.
 GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and
 PNG drivers.
 
-The SRS is always the Pseudo-Mercator (a.k.a Google Mercator)
-projection.
+The SRS is always the `Pseudo-Mercator <https://en.wikipedia.org/wiki/Web_Mercator_projection>`__
+(a.k.a Google Mercator) projection, EPSG:3857.
 
 Starting with GDAL 2.3, the driver will open a dataset as RGBA. For
 previous versions, the driver will try to determine the number of bands
@@ -126,7 +126,7 @@ The following open options are available:
          the BAND_COUNT value and the number of bands of the tile.
 
    -  .. oo:: TILE_FORMAT
-         :choices: PNG, PNG8, JPEG
+         :choices: PNG, PNG8, JPEG, WEBP
          :default: PNG
          :since: 2.1
 
@@ -138,7 +138,7 @@ The following open options are available:
          :choices: 1-100
          :default: 75
 
-         Quality setting for JPEG compression. Only
+         Quality setting for JPEG/WEBP compression. Only
          used in update mode.
 
    -  .. oo:: ZLEVEL
@@ -180,8 +180,8 @@ Raster creation issues
 Depending of the number of bands of the input dataset and the tile
 format selected, the driver will do the necessary conversions to be
 compatible with the tile format. When using the CreateCopy() API (such
-as with gdal_translate), automatic reprojection of the input dataset to
-EPSG:3857 (WebMercator) will be done, with selection of the appropriate
+as with :ref:`gdal_translate`), automatic reprojection of the input dataset to
+EPSG:3857 (Pseudo-Mercator) will be done, with selection of the appropriate
 zoom level.
 
 Fully transparent tiles will not be written to the database, as allowed
@@ -213,13 +213,13 @@ transparent to the user of GDAL API/utilities
 Tile formats
 ~~~~~~~~~~~~
 
-MBTiles can store tiles in PNG or JPEG. Support for those tile formats
-depend if the underlying drivers are available in GDAL. By default, GDAL
-will PNG tiles.
+MBTiles can store tiles in PNG, JPEG or WEBP (since 3.8). Support for
+those tile formats depend if the underlying drivers are available
+in GDAL. By default, GDAL will PNG tiles.
 
 It is possible to select the tile format by setting the creation/open
-option TILE_FORMAT to one of PNG, PNG8 or JPEG. When using JPEG, the
-alpha channel will not be stored.
+option TILE_FORMAT to one of PNG, PNG8, JPEG or WEBP. When using JPEG,
+the alpha channel will not be stored.
 
 PNG8 can be selected to use 8-bit PNG with a color table up to 256
 colors. On creation, an optimized color table is computed for each tile.
@@ -290,7 +290,7 @@ The following creation options are available:
          and height in pixels. Maximum supported is 4096.
 
    -  .. co:: TILE_FORMAT
-         :choices: PNG, PNG8, JPEG
+         :choices: PNG, PNG8, JPEG, WEBP
          :default: PNG
 
          Format used to store tiles. See
@@ -300,7 +300,7 @@ The following creation options are available:
          :choices: 1-100
          :default: 75
 
-         Quality setting for JPEG compression.
+         Quality setting for JPEG/WEBP compression.
 
    -  .. co:: ZLEVEL
          :choices: 1-9

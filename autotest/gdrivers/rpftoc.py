@@ -59,7 +59,7 @@ def test_rpftoc_1():
         0.0,
         -0.0013461816406249993,
     )
-    return tst.testOpen(check_gt=gt)
+    tst.testOpen(check_gt=gt)
 
 
 ###############################################################################
@@ -75,8 +75,7 @@ def test_rpftoc_2():
             0,
             filename_absolute=1,
         )
-        res = tst.testOpen()
-    return res
+        tst.testOpen()
 
 
 ###############################################################################

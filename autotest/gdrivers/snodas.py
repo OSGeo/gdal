@@ -58,13 +58,10 @@ def test_snodas_1():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
-    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs, skip_checksum=True)
+    tst.testOpen(check_gt=expected_gt, check_prj=expected_srs, skip_checksum=True)
 
-    if ret == "success":
-        ds = gdal.Open("data/snodas/fake_snodas.hdr")
-        ds.GetFileList()
-        assert ds.GetRasterBand(1).GetNoDataValue() == -9999
-        assert ds.GetRasterBand(1).GetMinimum() == 0
-        assert ds.GetRasterBand(1).GetMaximum() == 429
-
-    return ret
+    ds = gdal.Open("data/snodas/fake_snodas.hdr")
+    ds.GetFileList()
+    assert ds.GetRasterBand(1).GetNoDataValue() == -9999
+    assert ds.GetRasterBand(1).GetMinimum() == 0
+    assert ds.GetRasterBand(1).GetMaximum() == 429

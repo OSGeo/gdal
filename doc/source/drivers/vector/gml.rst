@@ -615,6 +615,14 @@ Open options
 
       Filename of the registry with application schemas.
 
+-  .. oo:: USE_BBOX
+      :choices: YES, NO
+      :default: NO
+      :since: 3.7.1
+
+      Whether to use gml:boundedBy at feature level as feature geometry,
+      if there are no other geometry.
+
 Creation Issues
 ---------------
 

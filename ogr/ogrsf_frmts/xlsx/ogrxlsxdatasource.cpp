@@ -190,11 +190,13 @@ OGRErr OGRXLSXLayer::DeleteFeature(GIntBig nFID)
 /*                          OGRXLSXDataSource()                         */
 /************************************************************************/
 
-OGRXLSXDataSource::OGRXLSXDataSource()
+OGRXLSXDataSource::OGRXLSXDataSource(CSLConstList papszOpenOptionsIn)
     : pszName(nullptr), bUpdatable(false), bUpdated(false), nLayers(0),
       papoLayers(nullptr), bFirstLineIsHeaders(false),
-      bAutodetectTypes(
-          !EQUAL(CPLGetConfigOption("OGR_XLSX_FIELD_TYPES", ""), "STRING")),
+      bAutodetectTypes(!EQUAL(
+          CSLFetchNameValueDef(papszOpenOptionsIn, "FIELD_TYPES",
+                               CPLGetConfigOption("OGR_XLSX_FIELD_TYPES", "")),
+          "STRING")),
       oParser(nullptr), bStopParsing(false), nWithoutEventCounter(0),
       nDataHandlerCounter(0), nCurLine(0), nCurCol(0), poCurLayer(nullptr),
       nStackDepth(0), nDepth(0), bInCellXFS(false)
@@ -639,7 +641,9 @@ void OGRXLSXDataSource::DetectHeaderLine()
         }
     }
 
-    const char *pszXLSXHeaders = CPLGetConfigOption("OGR_XLSX_HEADERS", "");
+    const char *pszXLSXHeaders =
+        CSLFetchNameValueDef(papszOpenOptions, "HEADERS",
+                             CPLGetConfigOption("OGR_XLSX_HEADERS", ""));
     bFirstLineIsHeaders = false;
     if (EQUAL(pszXLSXHeaders, "FORCE"))
         bFirstLineIsHeaders = true;

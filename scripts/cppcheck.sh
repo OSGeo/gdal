@@ -135,12 +135,20 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
+# Ignore pmtiles header
+grep -v -e "ogr/ogrsf_frmts/pmtiles/pmtiles/" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
 # Ignore third_party/fast_float
 grep -v -e "third_party/fast_float" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # False positive deallocuse
 grep -v -e "frmts/png/libpng/png.c" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# Ignore duplInheritedMember warning
+grep -v -e "duplInheritedMember" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then

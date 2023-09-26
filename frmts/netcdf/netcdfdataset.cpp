@@ -3296,11 +3296,10 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /************************************************************************/
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
-void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
-                                         bool bReadSRSOnly,
-                                         const char *pszGivenGM,
-                                         std::string *returnProjStr,
-                                         nccfdriver::SGeometry_Reader *sg)
+void netCDFDataset::SetProjectionFromVar(
+    int nGroupId, int nVarId, bool bReadSRSOnly, const char *pszGivenGM,
+    std::string *returnProjStr, nccfdriver::SGeometry_Reader *sg,
+    std::vector<std::string> *paosRemovedMDItems)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
@@ -4244,6 +4243,7 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
     }
 
     // Set Projection from CF.
+    double dfLinearUnitsConvFactor = 1.0;
     if ((bGotGeogCS || bGotCfSRS))
     {
         if ((nVarDimXID != -1) && (nVarDimYID != -1) && xdim > 0 && ydim > 0)
@@ -4260,35 +4260,77 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
 
                 const char *pszUnits = nullptr;
 
-                // TODO: What to do if units are not equal in X and Y.
-                if ((pszUnitsX != nullptr) && (pszUnitsY != nullptr) &&
-                    EQUAL(pszUnitsX, pszUnitsY))
-                    pszUnits = pszUnitsX;
+                if (pszUnitsX && pszUnitsY)
+                {
+                    if (EQUAL(pszUnitsX, pszUnitsY))
+                        pszUnits = pszUnitsX;
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "X axis unit (%s) is different from Y axis "
+                                 "unit (%s). SRS will ignore axis unit and be "
+                                 "likely wrong.",
+                                 pszUnitsX, pszUnitsY);
+                    }
+                }
+                else if (pszUnitsX)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "X axis unit is defined, but not Y one ."
+                             "SRS will ignore axis unit and be likely wrong.");
+                }
+                else if (pszUnitsY)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Y axis unit is defined, but not X one ."
+                             "SRS will ignore axis unit and be likely wrong.");
+                }
 
                 // Add units to PROJCS.
                 if (pszUnits != nullptr && !EQUAL(pszUnits, ""))
                 {
                     CPLDebug("GDAL_netCDF", "units=%s", pszUnits);
-                    if (EQUAL(pszUnits, "m"))
+                    if (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "metre") ||
+                        EQUAL(pszUnits, "meter"))
                     {
                         oSRS.SetLinearUnits("metre", 1.0);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9001);
                     }
                     else if (EQUAL(pszUnits, "km"))
                     {
-                        oSRS.SetLinearUnits("kilometre", 1000.0);
+                        dfLinearUnitsConvFactor = 1000.0;
+                        oSRS.SetLinearUnits("kilometre",
+                                            dfLinearUnitsConvFactor);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9036);
                     }
                     else if (EQUAL(pszUnits, "US_survey_foot") ||
                              EQUAL(pszUnits, "US_survey_feet"))
                     {
                         oSRS.SetLinearUnits("US survey foot",
-                                            CPLAtof(SRS_UL_US_FOOT_CONV));
+                                            dfLinearUnitsConvFactor);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9003);
                     }
-                    // TODO: Check for other values.
-                    // else
-                    //     oSRS.SetLinearUnits(pszUnits, 1.0);
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Unhandled X/Y axis unit %s. SRS will ignore "
+                                 "axis unit and be likely wrong.",
+                                 pszUnits);
+                    }
+
+                    // If the user doesn't ask to preserve the axis unit,
+                    // then normalize to metre
+                    if (dfLinearUnitsConvFactor != 1.0 &&
+                        !CPLFetchBool(GetOpenOptions(),
+                                      "PRESERVE_AXIS_UNIT_IN_CRS", false))
+                    {
+                        oSRS.SetLinearUnits("metre", 1.0);
+                        oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9001);
+                    }
+                    else
+                    {
+                        dfLinearUnitsConvFactor = 1.0;
+                    }
                 }
             }
             else if (oSRS.IsGeographic() && !bRotatedPole)
@@ -4733,6 +4775,81 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
             }
         }
 
+        const auto AreSRSEqualThroughProj4String =
+            [](const OGRSpatialReference &oSRS1,
+               const OGRSpatialReference &oSRS2)
+        {
+            char *pszProj4Str1 = nullptr;
+            oSRS1.exportToProj4(&pszProj4Str1);
+
+            char *pszProj4Str2 = nullptr;
+            oSRS2.exportToProj4(&pszProj4Str2);
+
+            {
+                char *pszTmp = strstr(pszProj4Str1, "+datum=");
+                if (pszTmp)
+                    memcpy(pszTmp, "+ellps=", strlen("+ellps="));
+            }
+
+            {
+                char *pszTmp = strstr(pszProj4Str2, "+datum=");
+                if (pszTmp)
+                    memcpy(pszTmp, "+ellps=", strlen("+ellps="));
+            }
+
+            bool bRet = false;
+            if (pszProj4Str1 && pszProj4Str2 &&
+                EQUAL(pszProj4Str1, pszProj4Str2))
+            {
+                bRet = true;
+            }
+
+            CPLFree(pszProj4Str1);
+            CPLFree(pszProj4Str2);
+            return bRet;
+        };
+
+        if (dfLinearUnitsConvFactor != 1.0)
+        {
+            for (int i = 0; i < 6; ++i)
+                adfTempGeoTransform[i] *= dfLinearUnitsConvFactor;
+
+            if (paosRemovedMDItems)
+            {
+                char szVarNameX[NC_MAX_NAME + 1];
+                CPL_IGNORE_RET_VAL(
+                    nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
+
+                char szVarNameY[NC_MAX_NAME + 1];
+                CPL_IGNORE_RET_VAL(
+                    nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
+
+                paosRemovedMDItems->push_back(
+                    CPLSPrintf("%s#units", szVarNameX));
+                paosRemovedMDItems->push_back(
+                    CPLSPrintf("%s#units", szVarNameY));
+            }
+        }
+
+        // If there is a global "geospatial_bounds_crs" attribute, check that it
+        // is consistent with the SRS, and if so, use it as the SRS
+        const char *pszGBCRS =
+            FetchAttr(nGroupId, NC_GLOBAL, "geospatial_bounds_crs");
+        if (pszGBCRS && STARTS_WITH(pszGBCRS, "EPSG:"))
+        {
+            OGRSpatialReference oSRSFromGBCRS;
+            oSRSFromGBCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if (oSRSFromGBCRS.SetFromUserInput(
+                    pszGBCRS,
+                    OGRSpatialReference::
+                        SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE &&
+                AreSRSEqualThroughProj4String(oSRS, oSRSFromGBCRS))
+            {
+                oSRS = oSRSFromGBCRS;
+                SetSpatialRefNoUpdate(&oSRS);
+            }
+        }
+
         CPLFree(pdfXCoord);
         CPLFree(pdfYCoord);
     }  // end if(has dims)
@@ -5027,7 +5144,7 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
                                          bool bReadSRSOnly)
 {
     SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr, nullptr,
-                         nullptr);
+                         nullptr, nullptr);
 }
 
 #ifdef NETCDF_HAS_NC4
@@ -5139,6 +5256,114 @@ bool netCDFDataset::ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId)
         std::swap(pszGeolocXFullName, pszGeolocYFullName);
         GDALPamDataset::SetMetadataItem("SWAP_XY", "YES", "GEOLOCATION");
     }
+
+    CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
+             pszGeolocXFullName, pszGeolocYFullName);
+
+    GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
+                                    "GEOLOCATION");
+
+    CPLString osTMP;
+    osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocXFullName);
+
+    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+    osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocYFullName);
+
+    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION", "PIXEL_CENTER",
+                                    "GEOLOCATION");
+    return true;
+}
+
+bool netCDFDataset::ProcessNASAEMITGeoLocation(int nGroupId, int nVarId)
+{
+    // Cf https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/
+
+    // Check for a structure like:
+    /* netcdf EMIT_L2A_RFL_001_20220903T163129_2224611_012 {
+        dimensions:
+            downtrack = 1280 ;
+            crosstrack = 1242 ;
+            bands = 285 ;
+            [...]
+
+        variables:
+            float reflectance(downtrack, crosstrack, bands) ;
+
+        group: location {
+          variables:
+                double lon(downtrack, crosstrack) ;
+                        lon:_FillValue = -9999. ;
+                        lon:long_name = "Longitude (WGS-84)" ;
+                        lon:units = "degrees east" ;
+                double lat(downtrack, crosstrack) ;
+                        lat:_FillValue = -9999. ;
+                        lat:long_name = "Latitude (WGS-84)" ;
+                        lat:units = "degrees north" ;
+          } // group location
+
+    }
+    */
+
+    int nVarDims = 0;
+    NCDF_ERR(nc_inq_varndims(nGroupId, nVarId, &nVarDims));
+    if (nVarDims != 3)
+        return false;
+
+    int nLocationGrpId = 0;
+    if (nc_inq_grp_ncid(cdfid, "location", &nLocationGrpId) != NC_NOERR)
+        return false;
+
+    std::array<int, 3> anVarDimIds;
+    NCDF_ERR(nc_inq_vardimid(nGroupId, nVarId, anVarDimIds.data()));
+    if (nYDimID != anVarDimIds[0] || nXDimID != anVarDimIds[1])
+        return false;
+
+    int nLongitudeId = 0;
+    int nLatitudeId = 0;
+    if (nc_inq_varid(nLocationGrpId, "lon", &nLongitudeId) != NC_NOERR ||
+        nc_inq_varid(nLocationGrpId, "lat", &nLatitudeId) != NC_NOERR)
+    {
+        return false;
+    }
+
+    int nDimsLongitude = 0;
+    NCDF_ERR(nc_inq_varndims(nLocationGrpId, nLongitudeId, &nDimsLongitude));
+    int nDimsLatitude = 0;
+    NCDF_ERR(nc_inq_varndims(nLocationGrpId, nLatitudeId, &nDimsLatitude));
+    if (!(nDimsLongitude == 2 && nDimsLatitude == 2))
+    {
+        return false;
+    }
+
+    std::array<int, 2> anDimLongitudeIds;
+    NCDF_ERR(nc_inq_vardimid(nLocationGrpId, nLongitudeId,
+                             anDimLongitudeIds.data()));
+    std::array<int, 2> anDimLatitudeIds;
+    NCDF_ERR(
+        nc_inq_vardimid(nLocationGrpId, nLatitudeId, anDimLatitudeIds.data()));
+    if (anDimLongitudeIds != anDimLatitudeIds)
+    {
+        return false;
+    }
+
+    if (anDimLongitudeIds[0] != anVarDimIds[0] ||
+        anDimLongitudeIds[1] != anVarDimIds[1])
+    {
+        return false;
+    }
+
+    const char *pszGeolocXFullName = "/location/lon";
+    const char *pszGeolocYFullName = "/location/lat";
 
     CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
              pszGeolocXFullName, pszGeolocYFullName);
@@ -5306,6 +5531,9 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
     else
     {
         bAddGeoloc = ProcessNASAL2OceanGeoLocation(nGroupId, nVarId);
+
+        if (!bAddGeoloc)
+            bAddGeoloc = ProcessNASAEMITGeoLocation(nGroupId, nVarId);
     }
 #endif
 
@@ -8036,8 +8264,8 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
                 GDAL_nc_close(new_cdfid);
                 return false;
             }
-            if (!CloneGrp(panGroupIds[i], nNewGrpId, eFormat == NCDF_FORMAT_NC4,
-                          nLayerId, nDimIdToGrow, nNewSize))
+            if (!CloneGrp(panGroupIds[i], nNewGrpId, /*bIsNC4=*/true, nLayerId,
+                          nDimIdToGrow, nNewSize))
             {
                 CPLFree(panGroupIds);
                 GDAL_nc_close(new_cdfid);
@@ -9036,15 +9264,46 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     else
 #endif
     {
+        const bool bVsiFile =
+            !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
 #ifdef ENABLE_UFFD
-        bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
         bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
         void *pVma = nullptr;
         uint64_t nVmaSize = 0;
 
-        if (bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported())
-            pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma,
-                                             &nVmaSize);
+        if (bVsiFile)
+        {
+            if (bReadOnly)
+            {
+                if (CPLIsUserFaultMappingSupported())
+                {
+                    pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma,
+                                                     &nVmaSize);
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Opening a /vsi file with the netCDF driver "
+                             "requires Linux userfaultfd to be available. "
+                             "If running from Docker, "
+                             "--security-opt seccomp=unconfined might be "
+                             "needed.%s",
+                             ((poDS->eFormat == NCDF_FORMAT_NC4 ||
+                               poDS->eFormat == NCDF_FORMAT_HDF5) &&
+                              GDALGetDriverByName("HDF5"))
+                                 ? " Or you may set the GDAL_SKIP=netCDF "
+                                   "configuration option to force the use of "
+                                   "the HDF5 driver."
+                                 : "");
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Opening a /vsi file with the netCDF driver is only "
+                         "supported in read-only mode");
+            }
+        }
         if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
         {
             // netCDF code, at least for netCDF 4.7.0, is confused by filenames
@@ -9056,7 +9315,25 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         else
             status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #else
-        status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        if (bVsiFile)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Opening a /vsi file with the netCDF driver requires Linux "
+                "userfaultfd to be available.%s",
+                ((poDS->eFormat == NCDF_FORMAT_NC4 ||
+                  poDS->eFormat == NCDF_FORMAT_HDF5) &&
+                 GDALGetDriverByName("HDF5"))
+                    ? " Or you may set the GDAL_SKIP=netCDF "
+                      "configuration option to force the use of the HDF5 "
+                      "driver."
+                    : "");
+            status2 = NC_EIO;
+        }
+        else
+        {
+            status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        }
 #endif
     }
     if (status2 != NC_NOERR)
@@ -9428,16 +9705,28 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    // For example for EMIT data (https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/),
+    // dimension order is downtrack, crosstrack, bands
+    bool bYXBandOrder = false;
+    if (nd == 3)
+    {
+        char szDimName[NC_MAX_NAME + 1] = {};
+        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[2], szDimName);
+        NCDF_ERR(status);
+        bYXBandOrder =
+            strcmp(szDimName, "bands") == 0 || strcmp(szDimName, "band") == 0;
+    }
+
     // Get X dimensions information.
     size_t xdim;
-    poDS->nXDimID = poDS->m_anDimIds[nd - 1];
+    poDS->nXDimID = poDS->m_anDimIds[bYXBandOrder ? 1 : nd - 1];
     nc_inq_dimlen(cdfid, poDS->nXDimID, &xdim);
 
     // Get Y dimension information.
     size_t ydim;
     if (nd >= 2)
     {
-        poDS->nYDimID = poDS->m_anDimIds[nd - 2];
+        poDS->nYDimID = poDS->m_anDimIds[bYXBandOrder ? 0 : nd - 2];
         nc_inq_dimlen(cdfid, poDS->nYDimID, &ydim);
     }
     else
@@ -9553,9 +9842,14 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Set projection info.
+    std::vector<std::string> aosRemovedMDItems;
     if (nd > 1)
     {
-        poDS->SetProjectionFromVar(cdfid, var, false);
+        poDS->SetProjectionFromVar(cdfid, var,
+                                   /*bReadSRSOnly=*/false,
+                                   /* pszGivenGM = */ nullptr,
+                                   /* returnProjStr = */ nullptr,
+                                   /* sg = */ nullptr, &aosRemovedMDItems);
     }
 
     // Override bottom-up with GDAL_NETCDF_BOTTOMUP config option.
@@ -9664,6 +9958,10 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Store Metadata.
+    for (const auto &osStr : aosRemovedMDItems)
+        poDS->papszMetadata =
+            CSLSetNameValue(poDS->papszMetadata, osStr.c_str(), nullptr);
+
     poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
 
     // Create bands.
@@ -11058,6 +11356,10 @@ void GDALRegister_netCDF()
         "a "
         "meaningful geotransform has been found, and is within the  "
         "bounds -180,360 -90,90, assume OGC:CRS84.' default='NO'/>"
+        "   <Option name='PRESERVE_AXIS_UNIT_IN_CRS' type='boolean' "
+        "scope='raster' description='Whether unusual linear axis unit (km) "
+        "should be kept as such, instead of being normalized to metre' "
+        "default='NO'/>"
         "</OpenOptionList>");
 
     // Make driver config and capabilities available.

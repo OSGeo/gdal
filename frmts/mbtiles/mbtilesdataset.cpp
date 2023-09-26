@@ -51,7 +51,8 @@
 #include <memory>
 #include <vector>
 
-static const char *const apszAllowedDrivers[] = {"JPEG", "PNG", nullptr};
+static const char *const apszAllowedDrivers[] = {"JPEG", "PNG", "WEBP",
+                                                 nullptr};
 
 #define SRS_EPSG_3857                                                          \
     "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS "                        \
@@ -260,9 +261,11 @@ class MBTilesVectorLayer final : public OGRLayer
 
   public:
     MBTilesVectorLayer(MBTilesDataset *poDS, const char *pszLayerName,
-                       const CPLJSONObject &oFields, bool bJsonField,
-                       double dfMinX, double dfMinY, double dfMaxX,
-                       double dfMaxY, OGRwkbGeometryType eGeomType,
+                       const CPLJSONObject &oFields,
+                       const CPLJSONArray &oAttributesFromTileStats,
+                       bool bJsonField, double dfMinX, double dfMinY,
+                       double dfMaxX, double dfMaxY,
+                       OGRwkbGeometryType eGeomType,
                        bool bZoomLevelFromSpatialFilter);
     ~MBTilesVectorLayer();
 
@@ -1444,9 +1447,9 @@ OGRLayer *MBTilesDataset::GetLayer(int iLayer)
 
 MBTilesVectorLayer::MBTilesVectorLayer(
     MBTilesDataset *poDS, const char *pszLayerName,
-    const CPLJSONObject &oFields, bool bJsonField, double dfMinX, double dfMinY,
-    double dfMaxX, double dfMaxY, OGRwkbGeometryType eGeomType,
-    bool bZoomLevelFromSpatialFilter)
+    const CPLJSONObject &oFields, const CPLJSONArray &oAttributesFromTileStats,
+    bool bJsonField, double dfMinX, double dfMinY, double dfMaxX, double dfMaxY,
+    OGRwkbGeometryType eGeomType, bool bZoomLevelFromSpatialFilter)
     : m_poDS(poDS), m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
       m_bJsonField(bJsonField)
 {
@@ -1465,7 +1468,7 @@ MBTilesVectorLayer::MBTilesVectorLayer(
     }
     else
     {
-        OGRMVTInitFields(m_poFeatureDefn, oFields);
+        OGRMVTInitFields(m_poFeatureDefn, oFields, oAttributesFromTileStats);
     }
 
     m_sExtent.MinX = dfMinX;
@@ -1989,11 +1992,14 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
             }
 
             CPLJSONObject oFields = oVectorLayers[i].GetObj("fields");
-            m_apoLayers.push_back(std::unique_ptr<OGRLayer>(
-                new MBTilesVectorLayer(this, oId.ToString().c_str(), oFields,
-                                       bJsonField, dfMinX, dfMinY, dfMaxX,
-                                       dfMaxY, eGeomType,
-                                       bZoomLevelFromSpatialFilter)));
+            CPLJSONArray oAttributesFromTileStats =
+                OGRMVTFindAttributesFromTileStat(oTileStatLayers,
+                                                 oId.ToString().c_str());
+            m_apoLayers.push_back(
+                std::unique_ptr<OGRLayer>(new MBTilesVectorLayer(
+                    this, oId.ToString().c_str(), oFields,
+                    oAttributesFromTileStats, bJsonField, dfMinX, dfMinY,
+                    dfMaxX, dfMaxY, eGeomType, bZoomLevelFromSpatialFilter)));
         }
     }
 }
@@ -3072,20 +3078,20 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 
-    const char *pszVersion =
-        CSLFetchNameValueDef(papszOptions, "VERSION", "1.1");
+    const char *pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
+    if (pszTF)
+        m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
+
+    const char *pszVersion = CSLFetchNameValueDef(
+        papszOptions, "VERSION", (m_eTF == GPKG_TF_WEBP) ? "1.3" : "1.1");
     pszSQL = sqlite3_mprintf(
         "INSERT INTO metadata (name, value) VALUES ('version', '%q')",
         pszVersion);
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 
-    const char *pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
-    if (pszTF)
-        m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
-
     const char *pszFormat = CSLFetchNameValueDef(
-        papszOptions, "FORMAT", (m_eTF == GPKG_TF_JPEG) ? "jpg" : "png");
+        papszOptions, "FORMAT", GDALMBTilesGetTileFormatName(m_eTF));
     pszSQL = sqlite3_mprintf(
         "INSERT INTO metadata (name, value) VALUES ('format', '%q')",
         pszFormat);
@@ -3689,9 +3695,10 @@ void GDALRegister_MBTiles()
     "    <Value>PNG</Value>"                                                   \
     "    <Value>PNG8</Value>"                                                  \
     "    <Value>JPEG</Value>"                                                  \
+    "    <Value>WEBP</Value>"                                                  \
     "  </Option>"                                                              \
     "  <Option name='QUALITY' scope='raster' type='int' min='1' max='100' "    \
-    "description='Quality for JPEG tiles' default='75'/>"                      \
+    "description='Quality for JPEG and WEBP tiles' default='75'/>"             \
     "  <Option name='ZLEVEL' scope='raster' type='int' min='1' max='9' "       \
     "description='DEFLATE compression level for PNG tiles' default='6'/>"      \
     "  <Option name='DITHER' scope='raster' type='boolean' "                   \
@@ -3730,7 +3737,7 @@ void GDALRegister_MBTiles()
         "description='Whether to auto-select the zoom level for vector layers "
         "according to spatial filter extent. Only for display purpose' "
         "default='NO'/>"
-        "  <Option name='JSON_FIELD' scope='vector' type='string' "
+        "  <Option name='JSON_FIELD' scope='vector' type='boolean' "
         "description='For vector layers, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
         "</OpenOptionList>");

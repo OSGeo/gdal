@@ -343,32 +343,64 @@ char **SQLTokenize(const char *pszStr)
 /* Return set of field names (in upper case) that have a UNIQUE constraint,
  * only on that single column.
  */
-std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3 *poDb,
-                                                     const char *pszTableName)
+
+std::set<std::string> SQLGetUniqueFieldUCConstraints(
+    sqlite3 *poDb, const char *pszTableName,
+    const std::vector<SQLSqliteMasterContent> &sqliteMasterContent)
 {
     // set names (in upper case) of fields with unique constraint
     std::set<std::string> uniqueFieldsUC;
 
     // Unique fields detection
     const std::string upperTableName{CPLString(pszTableName).toupper()};
-    char *pszTableDefinitionSQL =
-        sqlite3_mprintf("SELECT sql, type FROM sqlite_master "
-                        "WHERE type IN ('table', 'view') AND UPPER(name)='%q'",
-                        upperTableName.c_str());
-    auto oResultTable = SQLQuery(poDb, pszTableDefinitionSQL);
-    sqlite3_free(pszTableDefinitionSQL);
+    std::string tableDefinition;
 
-    if (!oResultTable || oResultTable->RowCount() == 0)
+    if (sqliteMasterContent.empty())
     {
-        if (oResultTable)
+        char *pszTableDefinitionSQL = sqlite3_mprintf(
+            "SELECT sql, type FROM sqlite_master "
+            "WHERE type IN ('table', 'view') AND UPPER(name)='%q'",
+            upperTableName.c_str());
+        auto oResultTable = SQLQuery(poDb, pszTableDefinitionSQL);
+        sqlite3_free(pszTableDefinitionSQL);
+
+        if (!oResultTable || oResultTable->RowCount() == 0)
+        {
+            if (oResultTable)
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find table %s",
+                         pszTableName);
+
+            return uniqueFieldsUC;
+        }
+        if (std::string(oResultTable->GetValue(1, 0)) == "view")
+        {
+            return uniqueFieldsUC;
+        }
+        tableDefinition = oResultTable->GetValue(0, 0);
+    }
+    else
+    {
+        for (const auto &row : sqliteMasterContent)
+        {
+            if (row.osType == "table" &&
+                CPLString(row.osTableName).toupper() == upperTableName)
+            {
+                tableDefinition = row.osSQL;
+                break;
+            }
+            else if (row.osType == "view" &&
+                     CPLString(row.osTableName).toupper() == upperTableName)
+            {
+                return uniqueFieldsUC;
+            }
+        }
+        if (tableDefinition.empty())
+        {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find table %s",
                      pszTableName);
 
-        return uniqueFieldsUC;
-    }
-    if (std::string(oResultTable->GetValue(1, 0)) == "view")
-    {
-        return uniqueFieldsUC;
+            return uniqueFieldsUC;
+        }
     }
 
     // Parses strings like "colum_name1" KEYWORD1 KEYWORD2 'some string',
@@ -432,7 +464,6 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3 *poDb,
 
     // Parses CREATE TABLE definition for column UNIQUE keywords
     {
-        std::string tableDefinition{oResultTable->GetValue(0, 0)};
         const auto nPosStart = tableDefinition.find('(');
         const auto nPosEnd = tableDefinition.rfind(')');
         if (nPosStart != std::string::npos && nPosEnd != std::string::npos &&
@@ -467,39 +498,62 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3 *poDb,
     }
 
     // Search indexes:
-    pszTableDefinitionSQL =
-        sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type='index' AND"
-                        " UPPER(tbl_name)=UPPER('%q') AND UPPER(sql) "
-                        "LIKE 'CREATE UNIQUE INDEX%%'",
-                        upperTableName.c_str());
-    oResultTable = SQLQuery(poDb, pszTableDefinitionSQL);
-    sqlite3_free(pszTableDefinitionSQL);
 
-    if (!oResultTable)
+    const auto ProcessIndexDefinition =
+        [&uniqueFieldsUC, &GetNextToken](const std::string &indexDefinitionIn)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error searching indexes for table %s", pszTableName);
-    }
-    else if (oResultTable->RowCount() >= 0)
-    {
-        for (int rowCnt = 0; rowCnt < oResultTable->RowCount(); ++rowCnt)
+        const auto nPosStart = indexDefinitionIn.find('(');
+        const auto nPosEnd = indexDefinitionIn.rfind(')');
+        if (nPosStart != std::string::npos && nPosEnd != std::string::npos &&
+            nPosEnd > nPosStart)
         {
-            std::string indexDefinition{oResultTable->GetValue(0, rowCnt)};
-            const auto nPosStart = indexDefinition.find('(');
-            const auto nPosEnd = indexDefinition.rfind(')');
-            if (nPosStart != std::string::npos &&
-                nPosEnd != std::string::npos && nPosEnd > nPosStart)
+            std::string indexDefinitionMod = indexDefinitionIn.substr(
+                nPosStart + 1, nPosEnd - nPosStart - 1);
+            size_t pos = 0;
+            const std::string osColName =
+                GetNextToken(indexDefinitionMod, pos, false);
+            // Only matches index on single columns
+            if (GetNextToken(indexDefinitionMod, pos, false).empty())
             {
-                indexDefinition = indexDefinition.substr(
-                    nPosStart + 1, nPosEnd - nPosStart - 1);
-                size_t pos = 0;
-                const std::string osColName =
-                    GetNextToken(indexDefinition, pos, false);
-                // Only matches index on single columns
-                if (GetNextToken(indexDefinition, pos, false).empty())
-                {
-                    uniqueFieldsUC.insert(CPLString(osColName).toupper());
-                }
+                uniqueFieldsUC.insert(CPLString(osColName).toupper());
+            }
+        }
+    };
+
+    if (sqliteMasterContent.empty())
+    {
+        char *pszTableDefinitionSQL = sqlite3_mprintf(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND"
+            " UPPER(tbl_name)='%q' AND UPPER(sql) "
+            "LIKE 'CREATE UNIQUE INDEX%%'",
+            upperTableName.c_str());
+        auto oResultTable = SQLQuery(poDb, pszTableDefinitionSQL);
+        sqlite3_free(pszTableDefinitionSQL);
+
+        if (!oResultTable)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Error searching indexes for table %s", pszTableName);
+        }
+        else if (oResultTable->RowCount() >= 0)
+        {
+            for (int rowCnt = 0; rowCnt < oResultTable->RowCount(); ++rowCnt)
+            {
+                std::string indexDefinition{oResultTable->GetValue(0, rowCnt)};
+                ProcessIndexDefinition(indexDefinition);
+            }
+        }
+    }
+    else
+    {
+        for (const auto &row : sqliteMasterContent)
+        {
+            if (row.osType == "index" &&
+                CPLString(row.osTableName).toupper() == upperTableName &&
+                STARTS_WITH_CI(row.osSQL.c_str(), "CREATE UNIQUE INDEX"))
+            {
+                std::string indexDefinition = row.osSQL;
+                ProcessIndexDefinition(indexDefinition);
             }
         }
     }

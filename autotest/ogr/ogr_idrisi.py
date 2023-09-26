@@ -84,28 +84,18 @@ def test_ogr_idrisi_1():
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, ogr.CreateGeometryFromWkt("POINT(400000 5000000)")
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, ogr.CreateGeometryFromWkt("POINT(400000 5000000)")
+    )
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 2.0:
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, ogr.CreateGeometryFromWkt("POINT (600000 4000000)")
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, ogr.CreateGeometryFromWkt("POINT (600000 4000000)")
+    )
 
     lyr.SetSpatialFilterRect(600000 - 1, 4000000 - 1, 600000 + 1, 4000000 + 1)
     lyr.ResetReading()
@@ -147,30 +137,20 @@ def test_ogr_idrisi_2():
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            ogr.CreateGeometryFromWkt("LINESTRING (400000 5000000,600000 4500000)"),
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        ogr.CreateGeometryFromWkt("LINESTRING (400000 5000000,600000 4500000)"),
+    )
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 20.0:
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            ogr.CreateGeometryFromWkt("LINESTRING (450000 4000000,550000 4500000)"),
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        ogr.CreateGeometryFromWkt("LINESTRING (450000 4000000,550000 4500000)"),
+    )
 
     lyr.SetSpatialFilterRect(0, 0, 1, 1)
     lyr.ResetReading()
@@ -205,34 +185,20 @@ def test_ogr_idrisi_3():
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            ogr.CreateGeometryFromWkt(
-                "POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000),(450000 4250000,450000 4750000,550000 4750000,550000 4250000,450000 4250000))"
-            ),
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        "POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000),(450000 4250000,450000 4750000,550000 4750000,550000 4250000,450000 4250000))",
+    )
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsDouble(0) != 2.0:
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            ogr.CreateGeometryFromWkt(
-                "POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000))"
-            ),
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        "POLYGON ((400000 4000000,400000 5000000,600000 5000000,600000 4000000,400000 4000000))",
+    )
 
     lyr.SetSpatialFilterRect(0, 0, 1, 1)
     lyr.ResetReading()

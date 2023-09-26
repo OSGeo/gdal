@@ -901,11 +901,14 @@ class netCDFDataset final : public GDALPamDataset
 
     void SetProjectionFromVar(int nGroupId, int nVarId, bool bReadSRSOnly,
                               const char *pszGivenGM, std::string *,
-                              nccfdriver::SGeometry_Reader *);
+                              nccfdriver::SGeometry_Reader *,
+                              std::vector<std::string> *paosRemovedMDItems);
     void SetProjectionFromVar(int nGroupId, int nVarId, bool bReadSRSOnly);
 
 #ifdef NETCDF_HAS_NC4
     bool ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId);
+
+    bool ProcessNASAEMITGeoLocation(int nGroupId, int nVarId);
 #endif
 
     int ProcessCFGeolocation(int nGroupId, int nVarId,

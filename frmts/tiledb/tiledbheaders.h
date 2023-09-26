@@ -29,6 +29,7 @@
 #ifndef TILEDB_HEADERS_H
 #define TILEDB_HEADERS_H
 
+#include <algorithm>
 #include <list>
 #include <variant>
 
@@ -74,6 +75,101 @@
 #define HAS_TILEDB_WORKING_UTF8_STRING_FILTER
 #endif
 
+#if TILEDB_VERSION_MAJOR > 2 ||                                                \
+    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
+#define HAS_TILEDB_DIMENSION_LABEL
+#endif
+
+#if TILEDB_VERSION_MAJOR > 2 ||                                                \
+    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 17)
+struct gdal_tiledb_vector_of_bool
+{
+    size_t m_size = 0;
+    size_t m_capacity = 0;
+    bool *m_v = nullptr;
+
+    gdal_tiledb_vector_of_bool() = default;
+    ~gdal_tiledb_vector_of_bool()
+    {
+        std::free(m_v);
+    }
+    gdal_tiledb_vector_of_bool(gdal_tiledb_vector_of_bool &&other)
+        : m_size(other.m_size), m_capacity(other.m_capacity),
+          m_v(std::move(other.m_v))
+    {
+        other.m_size = 0;
+        other.m_capacity = 0;
+        other.m_v = nullptr;
+    }
+    gdal_tiledb_vector_of_bool(const gdal_tiledb_vector_of_bool &) = delete;
+    gdal_tiledb_vector_of_bool &
+    operator=(const gdal_tiledb_vector_of_bool &) = delete;
+    gdal_tiledb_vector_of_bool &
+    operator=(gdal_tiledb_vector_of_bool &&) = delete;
+
+    size_t size() const
+    {
+        return m_size;
+    }
+    const bool *data() const
+    {
+        return m_v;
+    }
+    bool *data()
+    {
+        return m_v;
+    }
+    bool &operator[](size_t idx)
+    {
+        return m_v[idx];
+    }
+    bool operator[](size_t idx) const
+    {
+        return m_v[idx];
+    }
+    void resize(size_t new_size)
+    {
+        if (new_size > m_capacity)
+        {
+            const size_t new_capacity =
+                std::max<size_t>(new_size, 2 * m_capacity);
+            bool *new_v = static_cast<bool *>(
+                std::realloc(m_v, new_capacity * sizeof(bool)));
+            if (!new_v)
+            {
+                throw std::bad_alloc();
+            }
+            m_v = new_v;
+            m_capacity = new_capacity;
+        }
+        if (new_size > m_size)
+            memset(m_v + m_size, 0, (new_size - m_size) * sizeof(bool));
+        m_size = new_size;
+    }
+    void clear()
+    {
+        resize(0);
+    }
+    size_t capacity() const
+    {
+        return m_capacity;
+    }
+    void push_back(uint8_t v)
+    {
+        resize(size() + 1);
+        m_v[size() - 1] = static_cast<bool>(v);
+    }
+};
+#define VECTOR_OF_BOOL gdal_tiledb_vector_of_bool
+#define VECTOR_OF_BOOL_IS_NOT_UINT8_T
+#else
+#define VECTOR_OF_BOOL std::vector<uint8_t>
+#endif
+
+#ifdef HAS_TILEDB_DIMENSION_LABEL
+#define HAS_TILEDB_MULTIDIM
+#endif
+
 typedef enum
 {
     BAND = 0,
@@ -85,7 +181,9 @@ typedef enum
 
 #define DEFAULT_BATCH_SIZE 500000
 
-const CPLString TILEDB_VALUES("TDB_VALUES");
+constexpr const char *TILEDB_VALUES = "TDB_VALUES";
+
+constexpr const char *GDAL_ATTRIBUTE_NAME = "_gdal";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -123,6 +221,13 @@ class TileDBDataset : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+#ifdef HAS_TILEDB_MULTIDIM
+    static GDALDataset *OpenMultiDimensional(GDALOpenInfo *);
+    static GDALDataset *
+    CreateMultiDimensional(const char *pszFilename,
+                           CSLConstList papszRootGroupOptions,
+                           CSLConstList papszOptions);
+#endif
 };
 
 /************************************************************************/
@@ -149,7 +254,7 @@ class TileDBRasterDataset final : public TileDBDataset
     int nBlockYSize = -1;
     int nBlocksX = 0;
     int nBlocksY = 0;
-    int nBandStart = 1;
+    uint64_t nBandStart = 1;
     bool bHasSubDatasets = false;
     int nSubDataCount = 0;
     char **papszSubDatasets = nullptr;
@@ -166,8 +271,8 @@ class TileDBRasterDataset final : public TileDBDataset
     CPLErr CreateAttribute(GDALDataType eType, const CPLString &osAttrName,
                            const int nSubRasterCount = 1);
 
-    CPLErr AddDimensions(tiledb::Domain &domain, tiledb::Dimension &y,
-                         tiledb::Dimension &x,
+    CPLErr AddDimensions(tiledb::Domain &domain, const char *pszAttrName,
+                         tiledb::Dimension &y, tiledb::Dimension &x,
                          tiledb::Dimension *poBands = nullptr);
 
   public:
@@ -210,6 +315,9 @@ class OGRTileDBLayer final : public OGRLayer,
 {
   public:
     typedef std::variant<std::shared_ptr<std::string>,
+#ifdef VECTOR_OF_BOOL_IS_NOT_UINT8_T
+                         std::shared_ptr<VECTOR_OF_BOOL>,
+#endif
                          std::shared_ptr<std::vector<uint8_t>>,
                          std::shared_ptr<std::vector<int16_t>>,
                          std::shared_ptr<std::vector<uint16_t>>,
@@ -246,7 +354,7 @@ class OGRTileDBLayer final : public OGRLayer,
     bool m_bInitialized = false;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     std::string m_osFIDColumn{};
-    GIntBig m_nNextFID = -1;
+    GIntBig m_nNextFID = 1;
     int64_t m_nTotalFeatureCount = -1;
     bool m_bStats = false;
     bool m_bQueryComplete = false;
@@ -327,6 +435,7 @@ class OGRTileDBLayer final : public OGRLayer,
     const char *GetDatabaseGeomColName();
     void InitializeSchemaAndArray();
     void FlushArrays();
+    void AllocateNewBuffers();
     void ResetBuffers();
     void SwitchToReadingMode();
     void SwitchToWritingMode();

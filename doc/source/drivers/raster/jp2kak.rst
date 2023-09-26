@@ -84,6 +84,12 @@ runtime options can be used to alter the behavior of the driver.
       find EPH marker following packet header" or error reports indicating
       the need to run with the resilient and sequential flags on.
 
+-  .. config:: USE_TILE_AS_BLOCK
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use the JPEG2000 block size as the GDAL block size.
+
 Georeferencing
 --------------
 

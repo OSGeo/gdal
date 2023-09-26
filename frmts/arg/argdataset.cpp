@@ -260,6 +260,9 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
+    if (!GDALIsDriverDeprecatedForGDAL39StillEnabled("ARG"))
+        return nullptr;
+
     /* -------------------------------------------------------------------- */
     /*      Confirm the requested access is supported.                      */
     /* -------------------------------------------------------------------- */
@@ -618,6 +621,9 @@ GDALDataset *ARGDataset::CreateCopy(const char *pszFilename,
                                     GDALProgressFunc /* pfnProgress */,
                                     void * /*pProgressData */)
 {
+    if (!GDALIsDriverDeprecatedForGDAL39StillEnabled("ARG"))
+        return nullptr;
+
     const int nBands = poSrcDS->GetRasterCount();
     if (nBands != 1)
     {

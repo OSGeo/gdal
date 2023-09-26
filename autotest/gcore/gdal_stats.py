@@ -43,20 +43,14 @@ from osgeo import gdal
 
 def test_stats_nan_1():
 
-    gdaltest.gtiff_drv = gdal.GetDriverByName("GTiff")
-    if gdaltest.gtiff_drv is None:
-        pytest.skip()
-
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
     shutil.copyfile("data/nan32.tif", "tmp/nan32.tif")
 
     t = gdaltest.GDALTest("GTiff", "tmp/nan32.tif", 1, 874, filename_absolute=1)
-    ret = t.testOpen(check_approx_stat=stats, check_stat=stats)
+    t.testOpen(check_approx_stat=stats, check_stat=stats)
 
     gdal.GetDriverByName("GTiff").Delete("tmp/nan32.tif")
-
-    return ret
 
 
 ###############################################################################
@@ -65,29 +59,22 @@ def test_stats_nan_1():
 
 def test_stats_nan_2():
 
-    if gdaltest.gtiff_drv is None:
-        pytest.skip()
-
     stats = (50.0, 58.0, 54.0, 2.5819888974716)
 
     shutil.copyfile("data/nan64.tif", "tmp/nan64.tif")
 
     t = gdaltest.GDALTest("GTiff", "tmp/nan64.tif", 1, 4414, filename_absolute=1)
-    ret = t.testOpen(check_approx_stat=stats, check_stat=stats)
+    t.testOpen(check_approx_stat=stats, check_stat=stats)
 
     gdal.GetDriverByName("GTiff").Delete("tmp/nan64.tif")
-
-    return ret
 
 
 ###############################################################################
 # Test stats on signed byte (#3151)
 
 
+@pytest.mark.require_driver("HFA")
 def test_stats_signedbyte():
-
-    if gdaltest.gtiff_drv is None:
-        pytest.skip()
 
     stats = (-128.0, 127.0, -0.2, 80.64)
 
@@ -96,11 +83,9 @@ def test_stats_signedbyte():
     t = gdaltest.GDALTest(
         "HFA", "tmp/stats_signed_byte.img", 1, 11, filename_absolute=1
     )
-    ret = t.testOpen(check_approx_stat=stats, check_stat=stats, skip_checksum=1)
+    t.testOpen(check_approx_stat=stats, check_stat=stats, skip_checksum=1)
 
     gdal.GetDriverByName("HFA").Delete("tmp/stats_signed_byte.img")
-
-    return ret
 
 
 ###############################################################################
@@ -165,13 +150,14 @@ def test_stats_approx_nodata():
 # Test read and copy of dataset with nan as nodata value (#3576)
 
 
+@pytest.mark.require_driver("GTiff")
 def test_stats_nan_3():
 
     src_ds = gdal.Open("data/nan32_nodata.tif")
     nodata = src_ds.GetRasterBand(1).GetNoDataValue()
     assert gdaltest.isnan(nodata), "expected nan, got %f" % nodata
 
-    out_ds = gdaltest.gtiff_drv.CreateCopy("tmp/nan32_nodata.tif", src_ds)
+    out_ds = gdal.GetDriverByName("GTiff").CreateCopy("tmp/nan32_nodata.tif", src_ds)
     del out_ds
 
     src_ds = None
@@ -185,7 +171,7 @@ def test_stats_nan_3():
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
 
-    gdaltest.gtiff_drv.Delete("tmp/nan32_nodata.tif")
+    gdal.GetDriverByName("GTiff").Delete("tmp/nan32_nodata.tif")
     assert gdaltest.isnan(nodata), "expected nan, got %f" % nodata
 
 

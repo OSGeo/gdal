@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef DIRECTEDACYCLICGRAPH_INCLUDED_H
+#define DIRECTEDACYCLICGRAPH_INCLUDED_H
+
 #include <algorithm>
 #include <list>
 #include <map>
@@ -42,12 +45,12 @@ namespace gdal
 // See https://en.wikipedia.org/wiki/Directed_acyclic_graph
 template <class T, class V = std::string> class DirectedAcyclicGraph
 {
-    std::set<T> nodes;
+    std::set<T> nodes{};
     std::map<T, std::set<T>>
-        incomingNodes;  // incomingNodes[j][i] means an edge from i to j
+        incomingNodes{};  // incomingNodes[j][i] means an edge from i to j
     std::map<T, std::set<T>>
-        outgoingNodes;  // outgoingNodes[i][j] means an edge from i to j
-    std::map<T, V> names;
+        outgoingNodes{};  // outgoingNodes[i][j] means an edge from i to j
+    std::map<T, V> names{};
 
   public:
     DirectedAcyclicGraph() = default;
@@ -264,3 +267,5 @@ std::vector<T> DirectedAcyclicGraph<T, V>::getTopologicalOrdering()
 }
 
 }  // namespace gdal
+
+#endif  // DIRECTEDACYCLICGRAPH_INCLUDED_H

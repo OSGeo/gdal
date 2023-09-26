@@ -219,7 +219,7 @@ def test_rl2_5():
 def test_rl2_6():
 
     tst = gdaltest.GDALTest("SQLite", "byte.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -231,7 +231,7 @@ def test_rl2_7():
     tst = gdaltest.GDALTest(
         "SQLite", "small_world.tif", 1, 30111, options=["COMPRESS=PNG"]
     )
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -243,7 +243,7 @@ def test_rl2_8():
     tst = gdaltest.GDALTest(
         "SQLite", "small_world_pct.tif", 1, 14890, options=["COMPRESS=PNG"]
     )
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -253,7 +253,7 @@ def test_rl2_8():
 def test_rl2_9():
 
     tst = gdaltest.GDALTest("SQLite", "../../gcore/data/uint16.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -263,7 +263,7 @@ def test_rl2_9():
 def test_rl2_10():
 
     tst = gdaltest.GDALTest("SQLite", "../../gcore/data/int16.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -283,7 +283,7 @@ def test_rl2_11():
 def test_rl2_12():
 
     tst = gdaltest.GDALTest("SQLite", "../../gcore/data/int32.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -303,7 +303,7 @@ def test_rl2_13():
 def test_rl2_14():
 
     tst = gdaltest.GDALTest("SQLite", "../../gcore/data/float64.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -314,7 +314,7 @@ def test_rl2_14():
 def test_rl2_15():
 
     tst = gdaltest.GDALTest("SQLite", "../../gcore/data/1bit.bmp", 1, 200)
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -326,7 +326,7 @@ def test_rl2_16():
     tst = gdaltest.GDALTest(
         "SQLite", "byte.tif", 1, 4873, options=["NBITS=1", "COMPRESS=CCITTFAX4"]
     )
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -338,7 +338,7 @@ def test_rl2_17():
     tst = gdaltest.GDALTest(
         "SQLite", "byte.tif", 1, 4873, options=["NBITS=2", "COMPRESS=DEFLATE"]
     )
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -348,7 +348,7 @@ def test_rl2_17():
 def test_rl2_18():
 
     tst = gdaltest.GDALTest("SQLite", "byte.tif", 1, 2541, options=["NBITS=4"])
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -360,7 +360,7 @@ def test_rl2_19():
     tst = gdaltest.GDALTest(
         "SQLite", "byte.tif", 1, 4873, options=["PIXEL_TYPE=MONOCHROME"]
     )
-    return tst.testCreateCopy(vsimem=1, check_minmax=False)
+    tst.testCreateCopy(vsimem=1, check_minmax=False)
 
 
 ###############################################################################
@@ -403,7 +403,7 @@ def test_rl2_20():
         if nbits is not None:
             src_ds.GetRasterBand(1).SetMetadataItem("NBITS", nbits, "IMAGE_STRUCTURE")
         options = ["PIXEL_TYPE=" + pixel_type, "COMPRESS=" + compress]
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.rl2_drv.CreateCopy(
                 "/vsimem/rl2_20.rl2", src_ds, options=options
             )
@@ -558,5 +558,5 @@ def test_rl2_24():
 
 def test_rl2_error_create():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdaltest.rl2_drv.Create("/vsimem/out.db", 1, 1) is None

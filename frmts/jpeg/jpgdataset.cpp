@@ -1246,7 +1246,18 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
                 STARTS_WITH(reinterpret_cast<char *>(abyChunkHeader) + 4,
                             "Exif"))
             {
-                nTIFFHEADER = nChunkLoc + 10;
+                if (nTIFFHEADER < 0)
+                {
+                    nTIFFHEADER = nChunkLoc + 10;
+                }
+                else
+                {
+                    CPLDebug(
+                        "JPEG",
+                        "Another Exif directory found at offset %u. Ignoring "
+                        "it and only taking into account the one at offset %u",
+                        unsigned(nChunkLoc + 10), unsigned(nTIFFHEADER));
+                }
             }
         }
 
@@ -3027,6 +3038,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     poDS->sDInfo.err = jpeg_std_error(&poDS->sJErr);
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
+    poDS->sJErr.output_message = JPGDataset::OutputMessage;
     poDS->sUserData.p_previous_emit_message = poDS->sJErr.emit_message;
     poDS->sJErr.emit_message = JPGDataset::EmitMessage;
     poDS->sDInfo.client_data = &poDS->sUserData;
@@ -3609,6 +3621,20 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 
     // Return control to the setjmp point.
     longjmp(psUserData->setjmp_buffer, 1);
+}
+
+/************************************************************************/
+/*                          OutputMessage()                             */
+/************************************************************************/
+
+void JPGDataset::OutputMessage(j_common_ptr cinfo)
+{
+    char buffer[JMSG_LENGTH_MAX] = {};
+
+    // Create the message.
+    (*cinfo->err->format_message)(cinfo, buffer);
+
+    CPLDebug("JPEG", "libjpeg: %s", buffer);
 }
 
 /************************************************************************/
@@ -4453,14 +4479,15 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     // What options has the caller selected?
     int nQuality = 75;
-    if (CSLFetchNameValue(papszOptions, "QUALITY") != nullptr)
+    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    if (pszQuality)
     {
-        nQuality = atoi(CSLFetchNameValue(papszOptions, "QUALITY"));
-        if (nQuality < 10 || nQuality > 100)
+        nQuality = atoi(pszQuality);
+        if (nQuality < 1 || nQuality > 100)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "QUALITY=%s is not a legal value in the range 10-100.",
-                     CSLFetchNameValue(papszOptions, "QUALITY"));
+                     "QUALITY=%s is not a legal value in the range 1-100.",
+                     pszQuality);
             return nullptr;
         }
     }
@@ -4509,6 +4536,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     // Initialize JPG access to the file.
     sCInfo.err = jpeg_std_error(&sJErr);
     sJErr.error_exit = JPGDataset::ErrorExit;
+    sJErr.output_message = JPGDataset::OutputMessage;
     sUserData.p_previous_emit_message = sJErr.emit_message;
     sJErr.emit_message = JPGDataset::EmitMessage;
     sCInfo.client_data = &sUserData;
@@ -4722,7 +4750,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     }
 
     // Append masks to the jpeg file if necessary.
-    int nCloneFlags = GCIF_PAM_DEFAULT;
+    int nCloneFlags = GCIF_PAM_DEFAULT & ~GCIF_METADATA;
     if (bAppendMask)
     {
         CPLDebug("JPEG", "Appending Mask Bitmap");
@@ -4769,6 +4797,26 @@ GDALDataset *JPGDataset::CreateCopyStage2(
         if (poDS)
         {
             poDS->CloneInfo(poSrcDS, nCloneFlags);
+
+            char **papszExcludedDomains =
+                CSLAddString(nullptr, "COLOR_PROFILE");
+            char **papszMD = poSrcDS->GetMetadata();
+            bool bOnlyEXIF = true;
+            for (char **papszIter = papszMD; papszIter && *papszIter;
+                 ++papszIter)
+            {
+                if (!STARTS_WITH_CI(*papszIter, "EXIF_"))
+                {
+                    bOnlyEXIF = false;
+                    break;
+                }
+            }
+            if (bOnlyEXIF)
+                papszExcludedDomains = CSLAddString(papszExcludedDomains, "");
+            GDALDriver::DefaultCopyMetadata(poSrcDS, poDS, papszOptions,
+                                            papszExcludedDomains);
+            CSLDestroy(papszExcludedDomains);
+
             return poDS;
         }
 
@@ -4847,7 +4895,7 @@ const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
             "   <Option name='PROGRESSIVE' type='boolean' description='whether "
             "to generate a progressive JPEG' default='NO'/>\n"
             "   <Option name='QUALITY' type='int' description='good=100, "
-            "bad=0, default=75'/>\n"
+            "bad=1, default=75'/>\n"
             "   <Option name='LOSSLESS_COPY' type='string-select' "
             "description='Whether conversion should be lossless' "
             "default='AUTO'>"

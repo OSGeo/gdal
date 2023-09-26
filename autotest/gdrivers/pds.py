@@ -108,7 +108,7 @@ def test_pds_2():
 def test_pds_3():
 
     # Shut down warning about missing projection
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         tst = gdaltest.GDALTest("PDS", "pds/EN0001426030M_truncated.IMG", 1, 1367)
 
@@ -147,7 +147,7 @@ def test_pds_4():
 def test_pds_5():
 
     tst = gdaltest.GDALTest("PDS", "pds/pds_3355.lbl", 1, 2748)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -243,9 +243,7 @@ def test_pds_8():
             -926.11527442932129,
         )
 
-        result = tst.testOpen(check_gt=expected_gt)
-
-    return result
+        tst.testOpen(check_gt=expected_gt)
 
 
 ###############################################################################
@@ -341,7 +339,7 @@ END
 def test_pds_line_offset_not_multiple_of_record():
 
     tst = gdaltest.GDALTest("PDS", "pds/map_000_038_truncated.lbl", 1, 14019)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -355,7 +353,7 @@ def test_pds_band_storage_type_line_interleaved():
     tst = gdaltest.GDALTest(
         "PDS", "pds/hsp00017ba0_01_ra218s_trr3_truncated.lbl", 1, 64740
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_pds_oblique_cylindrical_read():

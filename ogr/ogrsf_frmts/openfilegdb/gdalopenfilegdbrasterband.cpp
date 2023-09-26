@@ -834,6 +834,8 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 
     ReadAuxTable(osLayerName);
 
+    SetMetadataItem("RASTER_DATASET", m_osRasterLayerName.c_str());
+
     if (!osDefinition.empty())
     {
         const char *const apszMD[] = {osDefinition.c_str(), nullptr};

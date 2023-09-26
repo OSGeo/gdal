@@ -15,25 +15,26 @@ Synopsis
 
 .. code-block::
 
-    gdalwarp [--help-general] [--formats]
-        [-b|-srcband n]* [-dstband n]*
-        [-s_srs srs_def] [-t_srs srs_def] [-ct string]
-        [-to "NAME=VALUE"]* [-vshift | -novshift]
-        [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]
-        [-order n | -tps | -rpc | -geoloc] [-et err_threshold]
-        [-refine_gcps tolerance [minimum_gcps]]
-        [-te xmin ymin xmax ymax] [-te_srs srs_def]
-        [-tr xres yres]|[-tr square] [-tap] [-ts width height]
-        [-ovr level|AUTO|AUTO-n|NONE] [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-        [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
+    gdalwarp [--help] [--help-general] [--formats]
+        [-b|-srcband <n>]... [-dstband <n>]...
+        [-s_srs <srs_def>] [-t_srs <srs_def>] [-ct <string>]
+        [-to <NAME>=<VALUE>]... [-vshift | -novshift]
+        [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]
+        [-order n | -tps | -rpc | -geoloc] [-et <err_threshold>]
+        [-refine_gcps <tolerance> [<minimum_gcps>]]
+        [-te <xmin> <ymin> <xmax> <ymax>] [-te_srs <srs_def>]
+        [-tr <xres> <yres>]|[-tr square] [-tap] [-ts <width> <height>]
+        [-ovr <level>|AUTO|AUTO-<n>|NONE] [-wo <NAME>=<VALUE>]... [-ot Byte/Int16/...] [-wt Byte/Int16]
+        [-srcnodata "<value>[ <value>...]"][-dstnodata "<value>[ <value>...]"]
         [-srcalpha|-nosrcalpha] [-dstalpha]
-        [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]
-        [-cutline datasource] [-cl layer] [-cwhere expression]
-        [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]
-        [-if format]* [-of format] [-co "NAME=VALUE"]* [-overwrite]
-        [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*
-        [-doo NAME=VALUE]*
-        srcfile* dstfile
+        [-r <resampling_method>] [-wm <memory_in_mb>] [-multi] [-q]
+        [-cutline <datasource>] [-cl <layer>] [-cwhere <expression>]
+        [-csql <statement>] [-cblend <dist_in_pixels>] [-crop_to_cutline]
+        [-if <format>]... [-of <format>] [-co <NAME>=<VALUE>]... [-overwrite]
+        [-nomd] [-cvmd <meta_conflict_value>] [-setci] [-oo <NAME>=<VALUE>]...
+        [-doo <NAME>=<VALUE>]...
+        <srcfile>... <dstfile>
+
 
 Description
 -----------
@@ -44,6 +45,8 @@ and can also apply GCPs stored with the image if the image is "raw"
 with control information.
 
 .. program:: gdalwarp
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <n>
 
@@ -116,7 +119,7 @@ with control information.
     source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
     is used.
 
-    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -t_srs <srs_def>
@@ -137,7 +140,7 @@ with control information.
     target SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
     is used.
 
-    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
@@ -147,10 +150,14 @@ with control information.
     or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
     transformation from the source to the target CRS. It must take into account the
     axis order of the source and target CRS.
+    When creating a new output file, using :option:`-t_srs` is still necessary
+    to have the target CRS written in the metadata of the output file,
+    but the parameters of the CoordinateOperation will override those of the
+    standard transformation.
 
     .. versionadded:: 3.0
 
-.. option:: -to <NAME=VALUE>
+.. option:: -to <NAME>=<VALUE>
 
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
@@ -196,7 +203,7 @@ with control information.
     option is specified, in which case, an exact transformer, i.e.
     err_threshold=0, will be used).
 
-.. option:: -refine_gcps <tolerance minimum_gcps>
+.. option:: -refine_gcps <tolerance> [<minimum_gcps>]
 
     Refines the GCPs by automatically eliminating outliers.
     Outliers will be eliminated until minimum_gcps are left or when no outliers can be detected.
@@ -205,7 +212,7 @@ with control information.
     The tolerance is in pixel units if no projection is available, otherwise it is in SRS units.
     If minimum_gcps is not provided, the minimum GCPs according to the polynomial model is used.
 
-.. option:: -te <xmin ymin xmax ymax>
+.. option:: -te <xmin> <ymin> <xmax> <ymax>
 
     Set georeferenced extents of output file to be created (in target SRS by
     default, or in the SRS specified with :option:`-te_srs`)
@@ -238,7 +245,9 @@ with control information.
 
     (target aligned pixels) align the coordinates of the extent of the output
     file to the values of the :option:`-tr`, such that the aligned extent
-    includes the minimum extent. Alignment means that xmin / resx, ymin / resy,
+    includes the minimum extent (edges lines/columns that are detected as
+    blank, before actual warping, will be removed starting with GDAL 3.8).
+    Alignment means that xmin / resx, ymin / resy,
     xmax / resx and ymax / resy are integer values.
 
 .. option:: -ts <width> <height>
@@ -247,7 +256,7 @@ with control information.
     the other dimension will be guessed from the computed resolution. Note that
     :option:`-ts` cannot be used with :option:`-tr`
 
-.. option:: -ovr <level|AUTO|AUTO-n|NONE>
+.. option:: -ovr <level>|AUTO|AUTO-<n>|NONE
 
     To specify which overview level of source files must be used. The default choice,
     AUTO, will select the overview level whose resolution is the closest to the
@@ -258,7 +267,7 @@ with control information.
     generated with a low quality resampling method, and the warping is done using a
     higher quality resampling method).
 
-.. option:: -wo `"NAME=VALUE"`
+.. option:: -wo <NAME>=<VALUE>
 
     Set a warp option.  The :cpp:member:`GDALWarpOptions::papszWarpOptions` docs show all options.
     Multiple :option:`-wo` options may be listed.
@@ -314,7 +323,7 @@ with control information.
         those situations to use the :option:`-ovr` ``NONE`` option to prevent existing overviews to
         be used.
 
-.. option:: -srcnodata <value [value...]>
+.. option:: -srcnodata "<value>[ <value>]..."
 
     Set nodata masking values for input bands (different values can be supplied
     for each band). If more than one value is supplied all values should be quoted
@@ -331,7 +340,7 @@ with control information.
     they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
     by default.
 
-.. option:: -dstnodata <value [value...]>
+.. option:: -dstnodata "<value>[ <value>]..."
 
     Set nodata values
     for output bands (different values can be supplied for each band).  If more
@@ -438,11 +447,11 @@ with control information.
     Set the color interpretation of the bands of the target dataset from
     the source dataset.
 
-.. option:: -oo <NAME=VALUE>
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 
-.. option:: -doo <NAME=VALUE>
+.. option:: -doo <NAME>=<VALUE>
 
     Output dataset open option (format specific)
 

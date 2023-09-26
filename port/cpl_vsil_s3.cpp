@@ -542,17 +542,12 @@ bool VSIDIRS3::IssueListDir()
         if (response_code != 200 ||
             requestHelper.sWriteFuncData.pBuffer == nullptr)
         {
-            bool bUpdateMap = true;
             if (requestHelper.sWriteFuncData.pBuffer != nullptr &&
                 poS3HandleHelper->CanRestartOnError(
                     requestHelper.sWriteFuncData.pBuffer,
-                    requestHelper.sWriteFuncHeaderData.pBuffer, false,
-                    &bUpdateMap))
+                    requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                if (bUpdateMap)
-                {
-                    poS3FS->UpdateMapFromHandle(poS3HandleHelper);
-                }
+                // nothing to do
             }
             else
             {
@@ -661,17 +656,15 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-amz-");
     }
 
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
+
   public:
     explicit VSIS3FSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
     ~VSIS3FSHandler() override;
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
-
-    void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poS3HandleHelper) override;
-    void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poS3HandleHelper) override;
 
     const char *GetOptions() override;
 
@@ -692,14 +685,6 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     {
         return true;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
@@ -922,7 +907,6 @@ CPLString IVSIS3LikeFSHandler::InitiateMultipartUpload(
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
             }
             else
@@ -1069,7 +1053,6 @@ CPLString IVSIS3LikeFSHandler::UploadPart(
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
             }
             else
@@ -1268,7 +1251,6 @@ size_t VSIS3WriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
                                          sWriteFuncData.pBuffer,
                                          m_sWriteFuncHeaderData.pBuffer, false))
                             {
-                                m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                                 bRetry = true;
                             }
                             else
@@ -1340,7 +1322,6 @@ size_t VSIS3WriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
                              sWriteFuncData.pBuffer,
                              m_sWriteFuncHeaderData.pBuffer, false))
                 {
-                    m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                     bRetry = true;
                 }
                 else
@@ -1552,7 +1533,6 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bRetry = true;
             }
             else
@@ -1690,7 +1670,6 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
             }
             else
@@ -1776,7 +1755,6 @@ bool IVSIS3LikeFSHandler::AbortMultipart(
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
             }
             else
@@ -1837,7 +1815,6 @@ bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
     {
         return false;
     }
-    UpdateHandleFromMap(poHandleHelper.get());
 
     // For debugging purposes
     const int nMaxUploads = std::min(
@@ -1915,7 +1892,6 @@ bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
                              requestHelper.sWriteFuncData.pBuffer,
                              requestHelper.sWriteFuncHeaderData.pBuffer, false))
                 {
-                    UpdateMapFromHandle(poHandleHelper.get());
                     bRetry = true;
                 }
                 else
@@ -1996,7 +1972,6 @@ bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
             bRet = false;
             continue;
         }
-        UpdateHandleFromMap(poSubHandleHelper.get());
 
         if (!AbortMultipart(GetFSPrefix() + osBucket + '/' + osKey, osUploadId,
                             poSubHandleHelper.get(), nMaxRetry,
@@ -2053,45 +2028,87 @@ int VSIS3WriteHandle::Close()
 }
 
 /************************************************************************/
+/*                          CreateWriteHandle()                         */
+/************************************************************************/
+
+VSIVirtualHandleUniquePtr
+VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
+                                  CSLConstList papszOptions)
+{
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+        this, pszFilename, poHandleHelper, false, papszOptions);
+    if (!poHandle->IsOK())
+    {
+        return nullptr;
+    }
+    return VSIVirtualHandleUniquePtr(poHandle.release());
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIS3FSHandler::Open(const char *pszFilename,
-                                       const char *pszAccess, bool bSetError,
-                                       CSLConstList papszOptions)
+VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
+    const char *pszFilename, const char *pszAccess, bool bSetError,
+    CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return nullptr;
 
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
+    if (strchr(pszAccess, '+'))
     {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
+        if (!SupportsRandomWrite(pszFilename, true))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsis3, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+                     "%s not supported for %s, unless "
+                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES",
+                     pszAccess, GetFSPrefix().c_str());
             errno = EACCES;
             return nullptr;
         }
 
-        VSIS3HandleHelper *poS3HandleHelper = VSIS3HandleHelper::BuildFromURI(
-            pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), false);
-        if (poS3HandleHelper == nullptr)
-            return nullptr;
-        UpdateHandleFromMap(poS3HandleHelper);
-        VSIS3WriteHandle *poHandle = new VSIS3WriteHandle(
-            this, pszFilename, poS3HandleHelper, false, papszOptions);
-        if (!poHandle->IsOK())
+        const std::string osTmpFilename(CPLGenerateTempFilename(nullptr));
+        if (strchr(pszAccess, 'r'))
         {
-            delete poHandle;
+            auto poExistingFile =
+                VSIVirtualHandleUniquePtr(VSIFOpenL(pszFilename, "rb"));
+            if (!poExistingFile)
+            {
+                return nullptr;
+            }
+            if (VSICopyFile(pszFilename, osTmpFilename.c_str(),
+                            poExistingFile.get(), static_cast<vsi_l_offset>(-1),
+                            nullptr, nullptr, nullptr) != 0)
+            {
+                VSIUnlink(osTmpFilename.c_str());
+                return nullptr;
+            }
+        }
+
+        auto fpTemp = VSIVirtualHandleUniquePtr(
+            VSIFOpenL(osTmpFilename.c_str(), pszAccess));
+        if (!fpTemp)
+        {
+            VSIUnlink(osTmpFilename.c_str());
             return nullptr;
         }
-        if (strchr(pszAccess, '+') != nullptr)
+
+        auto poWriteHandle = CreateWriteHandle(pszFilename, papszOptions);
+        if (!poWriteHandle)
         {
-            return VSICreateUploadOnCloseFile(poHandle);
+            return nullptr;
         }
-        return poHandle;
+
+        return VSICreateUploadOnCloseFile(std::move(poWriteHandle),
+                                          std::move(fpTemp), osTmpFilename);
+    }
+    else if (strchr(pszAccess, 'w') || strchr(pszAccess, 'a'))
+    {
+        return CreateWriteHandle(pszFilename, papszOptions).release();
     }
 
     if (CPLString(pszFilename).back() != '/')
@@ -2129,8 +2146,8 @@ VSIVirtualHandle *VSIS3FSHandler::Open(const char *pszFilename,
 /*                        SupportsRandomWrite()                         */
 /************************************************************************/
 
-bool VSIS3FSHandler::SupportsRandomWrite(const char *pszPath,
-                                         bool bAllowLocalTempFile)
+bool VSICurlFilesystemHandlerBaseWritable::SupportsRandomWrite(
+    const char *pszPath, bool bAllowLocalTempFile)
 {
     return bAllowLocalTempFile &&
            CPLTestBool(VSIGetPathSpecificOption(
@@ -2487,7 +2504,6 @@ std::set<CPLString> VSIS3FSHandler::DeleteObjects(const char *pszBucket,
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper.get());
                 bRetry = true;
             }
             else
@@ -2618,7 +2634,6 @@ char **VSIS3FSHandler::GetFileMetadata(const char *pszFilename,
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper.get());
                 bRetry = true;
             }
             else
@@ -2819,7 +2834,6 @@ bool VSIS3FSHandler::SetFileMetadata(const char *pszFilename,
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper.get());
                 bRetry = true;
             }
             else
@@ -3071,7 +3085,6 @@ VSICurlHandle *VSIS3FSHandler::CreateFileHandle(const char *pszFilename)
         pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), false);
     if (poS3HandleHelper)
     {
-        UpdateHandleFromMap(poS3HandleHelper);
         return new VSIS3Handle(this, pszFilename, poS3HandleHelper);
     }
     return nullptr;
@@ -3091,7 +3104,6 @@ CPLString VSIS3FSHandler::GetURLFromFilename(const CPLString &osFilename)
     {
         return "";
     }
-    UpdateHandleFromMap(poS3HandleHelper);
     CPLString osBaseURL(poS3HandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
         osBaseURL.resize(osBaseURL.size() - 1);
@@ -3241,8 +3253,6 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
     else
         osSourceHeader += (oldpath + GetFSPrefix().size());
 
-    UpdateHandleFromMap(poS3HandleHelper.get());
-
     int nRet = 0;
 
     bool bRetry;
@@ -3322,7 +3332,6 @@ int IVSIS3LikeFSHandler::CopyObject(const char *oldpath, const char *newpath,
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper.get());
                 bRetry = true;
             }
             else
@@ -3368,7 +3377,6 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
     {
         return -1;
     }
-    UpdateHandleFromMap(poS3HandleHelper);
 
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
     NetworkStatisticsAction oContextAction("DeleteObject");
@@ -3433,7 +3441,6 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
                          requestHelper.sWriteFuncData.pBuffer,
                          requestHelper.sWriteFuncHeaderData.pBuffer, false))
             {
-                UpdateMapFromHandle(poS3HandleHelper);
                 bRetry = true;
             }
             else
@@ -3545,7 +3552,6 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     {
         return nullptr;
     }
-    UpdateHandleFromMap(poS3HandleHelper);
 
     VSIDIRS3 *dir = new VSIDIRS3(this);
     dir->nRecurseDepth = nRecurseDepth;
@@ -4011,7 +4017,6 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                                false));
                 if (poS3HandleHelper)
                 {
-                    m_poFS->UpdateHandleFromMap(poS3HandleHelper.get());
                     m_poFS->AbortMultipart(kv.first, kv.second.osUploadID,
                                            poS3HandleHelper.get(), m_nMaxRetry,
                                            m_dfRetryDelay);
@@ -4198,6 +4203,23 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     if (fpIn)
                         VSIFCloseL(fpIn);
                 }
+                else
+                {
+
+                    if (eSyncStrategy == SyncStrategy::TIMESTAMP &&
+                        chunk.nMTime < oIterExistingTarget->second.nMTime)
+                    {
+                        // The target is more recent than the source.
+                        // Nothing to do
+                        CPLDebug(GetDebugKey(),
+                                 "%s is older than %s. "
+                                 "Do not replace %s assuming it was used to "
+                                 "upload %s",
+                                 osSubSource.c_str(), osSubTarget.c_str(),
+                                 osSubTarget.c_str(), osSubSource.c_str());
+                        bSkip = true;
+                    }
+                }
             }
 
             if (!bSkip)
@@ -4221,7 +4243,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                                    false));
                         if (poS3HandleHelper == nullptr)
                             return false;
-                        UpdateHandleFromMap(poS3HandleHelper.get());
+
                         const auto osUploadID = InitiateMultipartUpload(
                             osSubTarget, poS3HandleHelper.get(), nMaxRetry,
                             dfRetryDelay, aosObjectCreationOptions.List());
@@ -4305,6 +4327,25 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
                                 !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
             }
+        }
+
+        if (eSyncStrategy == SyncStrategy::TIMESTAMP && bTargetIsFile &&
+            !bDownloadFromNetworkToLocal && !bUploadFromLocalToNetwork &&
+            sSource.st_size == sTarget.st_size &&
+            sSource.st_mtime < sTarget.st_mtime)
+        {
+            // The target is more recent than the source. Nothing to do
+            CPLDebug(GetDebugKey(),
+                     "%s is older than %s. "
+                     "Do not replace %s assuming it was used to "
+                     "upload %s",
+                     osSource.c_str(), osTarget.c_str(), osTarget.c_str(),
+                     osSource.c_str());
+            if (pProgressFunc)
+            {
+                pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+            }
+            return true;
         }
 
         // Download from network to local file system ?
@@ -4407,7 +4448,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                                    false));
                         if (poS3HandleHelper == nullptr)
                             return false;
-                        UpdateHandleFromMap(poS3HandleHelper.get());
+
                         const auto osUploadID = InitiateMultipartUpload(
                             osTarget, poS3HandleHelper.get(), nMaxRetry,
                             dfRetryDelay, aosObjectCreationOptions.List());
@@ -4570,8 +4611,6 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         VSIFSeekL(fpIn, chunk.nStartOffset, SEEK_SET) == 0 &&
                         VSIFReadL(pBuffer, 1, nSizeToRead, fpIn) == nSizeToRead)
                     {
-                        queue->poFS->UpdateHandleFromMap(
-                            poS3HandleHelper.get());
                         const int nPartNumber =
                             1 + (queue->nMaxChunkSize == 0
                                      ? 0 /* shouldn't happen */
@@ -4695,7 +4734,6 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             {
                 CPLAssert(kv.second.nCountValidETags ==
                           kv.second.nExpectedCount);
-                UpdateHandleFromMap(poS3HandleHelper.get());
                 if (CompleteMultipart(kv.first, kv.second.osUploadID,
                                       kv.second.aosEtags, kv.second.nTotalSize,
                                       poS3HandleHelper.get(), nMaxRetry,
@@ -4716,24 +4754,6 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     }
 
     return sJobQueue.ret;
-}
-
-/************************************************************************/
-/*                         UpdateMapFromHandle()                        */
-/************************************************************************/
-
-void VSIS3FSHandler::UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    VSIS3UpdateParams::UpdateMapFromHandle(poHandleHelper);
-}
-
-/************************************************************************/
-/*                         UpdateHandleFromMap()                        */
-/************************************************************************/
-
-void VSIS3FSHandler::UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    VSIS3UpdateParams::UpdateHandleFromMap(poHandleHelper);
 }
 
 /************************************************************************/
@@ -4774,16 +4794,9 @@ VSIS3Handle::GetCurlHeaders(const CPLString &osVerb,
 bool VSIS3Handle::CanRestartOnError(const char *pszErrorMsg,
                                     const char *pszHeaders, bool bSetError)
 {
-    bool bUpdateMap = false;
     if (m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
-                                              bSetError, &bUpdateMap))
+                                              bSetError))
     {
-        if (bUpdateMap)
-        {
-            static_cast<VSIS3FSHandler *>(poFS)->UpdateMapFromHandle(
-                m_poS3HandleHelper);
-        }
-
         SetURL(m_poS3HandleHelper->GetURL());
         return true;
     }

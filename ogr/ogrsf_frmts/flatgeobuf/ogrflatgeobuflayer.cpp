@@ -1420,7 +1420,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         sHelper.nMaxBatchSize = 0;
     }
 
-    for (; iFeat < sHelper.nMaxBatchSize; iFeat++)
+    while (iFeat < sHelper.nMaxBatchSize)
     {
         bEOFOrError = true;
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount)
@@ -1518,6 +1518,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         const auto feature = GetRoot<Feature>(m_featureBuf);
         const auto geometry = feature->geometry();
+        const auto properties = feature->properties();
         if (!m_poFeatureDefn->IsGeometryIgnored() && geometry != nullptr)
         {
             auto geometryType = m_geometryType;
@@ -1531,6 +1532,9 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                          "Failed to read geometry");
                 goto error;
             }
+
+            if (!FilterGeometry(poOGRGeometry.get()))
+                goto end_of_loop;
 
             const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
             const size_t nWKBSize = poOGRGeometry->WkbSize();
@@ -1547,7 +1551,6 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         abSetFields.clear();
         abSetFields.resize(sHelper.nFieldCount);
 
-        const auto properties = feature->properties();
         if (properties != nullptr)
         {
             const auto data = properties->data();
@@ -1861,6 +1864,10 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 }
             }
         }
+
+        iFeat++;
+
+    end_of_loop:
 
         if (VSIFEofL(m_poFp))
         {

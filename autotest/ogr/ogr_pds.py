@@ -29,11 +29,10 @@
 ###############################################################################
 
 
-import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("OGR_PDS")
 
@@ -51,22 +50,17 @@ def test_ogr_pds_1():
 
     assert lyr.GetFeatureCount() == 74786, "did not get expected feature count"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetNextFeature()
     if feat.GetField("NOISE_COUNTS_1") != 96:
         feat.DumpReadable()
         pytest.fail()
-    geom = feat.GetGeometryRef()
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "POINT (146.1325 -55.648)", max_error=0.000000001
-        )
-        != 0
-    ):
-        print("did not get expected geom")
-        pytest.fail(geom.ExportToWkt())
 
-    with gdaltest.error_handler():
+    ogrtest.check_feature_geometry(
+        feat, "POINT (146.1325 -55.648)", max_error=0.000000001
+    )
+
+    with gdal.quiet_errors():
         feat = lyr.GetFeature(1)
     if feat.GetField("MARS_RADIUS") != 3385310.2:
         feat.DumpReadable()

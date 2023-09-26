@@ -1130,14 +1130,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             const size_t nValues = static_cast<size_t>(nXSize) * nYSize;
             const size_t nBytesToRead = nValues * nBandDataSize;
-            if (AccessBlock(nOffset, nBytesToRead, pData, nValues) != CE_None)
-            {
-                CPLError(CE_Failure, CPLE_FileIO,
-                         "Failed to read " CPL_FRMT_GUIB
-                         " bytes at " CPL_FRMT_GUIB ".",
-                         static_cast<GUIntBig>(nBytesToRead), nOffset);
-                return CE_Failure;
-            }
+            AccessBlock(nOffset, nBytesToRead, pData, nValues);
         }
         // 2. Case when we need deinterleave and/or subsample data.
         else
@@ -1167,16 +1160,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nOffset += nXOff * static_cast<vsi_l_offset>(nPixelOffset);
                 else
                     nOffset -= nXOff * static_cast<vsi_l_offset>(-nPixelOffset);
-                if (AccessBlock(nOffset, nBytesToRW, pabyData, nXSize) !=
-                    CE_None)
-                {
-                    CPLError(CE_Failure, CPLE_FileIO,
-                             "Failed to read " CPL_FRMT_GUIB
-                             " bytes at " CPL_FRMT_GUIB ".",
-                             static_cast<GUIntBig>(nBytesToRW), nOffset);
-                    CPLFree(pabyData);
-                    return CE_Failure;
-                }
+                AccessBlock(nOffset, nBytesToRW, pabyData, nXSize);
                 // Copy data from disk buffer to user block buffer and
                 // subsample, if needed.
                 if (nXSize == nBufXSize && nYSize == nBufYSize)

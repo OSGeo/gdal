@@ -47,12 +47,6 @@ From the build directory you can now configure CMake, build and install the bina
     and is thus not recommended. It is also not supported on Windows multi-configuration
     generator (such as VisualStudio).
 
-`
-On Windows, one may need to specify generator:
-
-.. code-block:: bash
-
-    cmake -G "Visual Studio 15 2017" ..
 
 If a dependency is installed in a custom location, specify the
 paths to the include directory and the library:
@@ -89,6 +83,35 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
     you may try removing CMakeCache.txt to start from a clean state.
 
 Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
+
+Building on Windows
++++++++++++++++++++
+
+On Windows, one may need to specify generator:
+
+.. code-block:: bash
+
+    cmake -G "Visual Studio 15 2017" ..
+
+
+Building on MacOS
++++++++++++++++++
+
+On MacOS, there are a couple of libraries that do not function properly when the GDAL build requirements are installed using Homebrew.
+
+The `Apache Arrow <https://arrow.apache.org/docs/index.html>`_ library included in the current distribution of Homebrew is broken, and causes a detection issue. In order to build GDAL successfuly, configure CMake to not find the Arrow package:
+
+.. code-block:: bash
+
+    cmake -DCMAKE_DISABLE_FIND_PACKAGE_Arrow=ON ..
+
+
+Similarly, recent versions of Homebrew no longer bundle `Boost <https://www.boost.org/>`_ with libkml, causing a failure to find Boost headers. You should either install Boost manually or disable libkml when building on MacOS:
+
+.. code-block:: bash
+
+    cmake -DGDAL_USE_LIBKML=OFF ..
+
 
 CMake general configure options
 +++++++++++++++++++++++++++++++
@@ -384,6 +407,12 @@ CURL
     Path to a shared or static library file, such as ``libcurl.dll``,
     ``libcurl.so``, ``libcurl.lib``, or other name.
 
+.. option:: CURL_USE_STATIC_LIBS=ON/OFF
+
+    .. versionadded:: 3.7.1
+
+    Must be set to ON when linking against a static build of Curl.
+
 .. option:: GDAL_USE_CURL=ON/OFF
 
     Control whether to use Curl. Defaults to ON when Curl is found.
@@ -493,6 +522,12 @@ the XercesC library.
 .. option:: EXPAT_LIBRARY
 
     Path to a shared or static library file.
+
+.. option:: EXPAT_USE_STATIC_LIBS=ON/OFF
+
+    .. versionadded:: 3.7.1
+
+    Must be set to ON when linking against a static build of Expat.
 
 .. option:: GDAL_USE_EXPAT=ON/OFF
 
@@ -1014,6 +1049,24 @@ of the original input image is preserved (within user defined error bounds).
     Control whether to use the LERC internal library. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_LERC=ON
 
+LIBAEC
+******
+
+`libaec <https://gitlab.dkrz.de/k202009/libaec>`_ is a compression library which offers
+the extended Golomb-Rice coding as defined in the CCSDS recommended standard 121.0-B-3.
+It is used by the :ref:`raster.grib` driver.
+
+.. option:: LIBAEC_INCLUDE_DIR
+
+    Path to an include directory with the ``libaec.h`` header file.
+
+.. option:: LIBAEC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LIBAEC=ON/OFF
+
+    Control whether to use LIBAEC. Defaults to ON when LIBAEC is found.
 
 LibKML
 ******
@@ -1456,7 +1509,8 @@ methods of Google Cloud. It might be required to use the :ref:`raster.eedai`
 images or use the :ref:`/vsigs/ <vsigs>` virtual file system.
 
 See https://cmake.org/cmake/help/latest/module/FindOpenSSL.html for details on
-how to configure the library
+how to configure the library. For static linking, the following options may
+be needed: -DOPENSSL_USE_STATIC_LIBS=TRUE -DOPENSSL_MSVC_STATIC_RT=TRUE
 
 .. option:: GDAL_USE_OPENSSL=ON/OFF
 
@@ -2197,8 +2251,20 @@ Java bindings options
 
 .. option:: GDAL_JAVA_INSTALL_DIR
 
-    Subdirectory into which to install the gdalalljni library and the .jar
+    Subdirectory into which to install the .jar
     files. It defaults to "${CMAKE_INSTALL_DATADIR}/java"
+
+    .. note::
+        Prior to GDAL 3.8, the gdalalljni library was also installed in that
+        directory. Starting with GDAL 3.8, this is controlled by the
+        ``GDAL_JAVA_JNI_INSTALL_DIR`` variable.
+
+.. option:: GDAL_JAVA_JNI_INSTALL_DIR
+
+    .. versionadded:: 3.8
+
+    Subdirectory into which to install the gdalalljni library.
+    It defaults to "${CMAKE_INSTALL_LIBDIR}/jni"
 
 Option only to be used by maintainers:
 

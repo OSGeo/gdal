@@ -182,6 +182,10 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-ms-");
     }
 
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
+
   public:
     VSIADLSFSHandler() = default;
     ~VSIADLSFSHandler() override = default;
@@ -194,9 +198,6 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     {
         return "ADLS";
     }
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
 
     int Rename(const char *oldpath, const char *newpath) override;
     int Unlink(const char *pszFilename) override;
@@ -243,14 +244,6 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     {
         return true;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     CPLString InitiateMultipartUpload(const std::string &osFilename,
                                       IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -303,6 +296,31 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
+};
+
+/************************************************************************/
+/*                          VSIADLSWriteHandle                         */
+/************************************************************************/
+
+class VSIADLSWriteHandle final : public VSIAppendWriteHandle
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSIADLSWriteHandle)
+
+    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
+    bool m_bCreated = false;
+
+    bool Send(bool bIsLastBlock) override;
+
+    bool SendInternal(VSIADLSFSHandler::Event event, CSLConstList papszOptions);
+
+    void InvalidateParentDirectory();
+
+  public:
+    VSIADLSWriteHandle(VSIADLSFSHandler *poFS, const char *pszFilename,
+                       VSIAzureBlobHandleHelper *poHandleHelper);
+    virtual ~VSIADLSWriteHandle();
+
+    bool CreateFile(CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -708,6 +726,28 @@ VSICurlHandle *VSIADLSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
+/*                          CreateWriteHandle()                         */
+/************************************************************************/
+
+VSIVirtualHandleUniquePtr
+VSIADLSFSHandler::CreateWriteHandle(const char *pszFilename,
+                                    CSLConstList papszOptions)
+{
+    VSIAzureBlobHandleHelper *poHandleHelper =
+        VSIAzureBlobHandleHelper::BuildFromURI(
+            pszFilename + GetFSPrefix().size(), GetFSPrefix());
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    auto poHandle =
+        cpl::make_unique<VSIADLSWriteHandle>(this, pszFilename, poHandleHelper);
+    if (!poHandle->CreateFile(papszOptions))
+    {
+        return nullptr;
+    }
+    return VSIVirtualHandleUniquePtr(poHandle.release());
+}
+
+/************************************************************************/
 /*                                Stat()                                */
 /************************************************************************/
 
@@ -1109,31 +1149,6 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          VSIADLSWriteHandle                         */
-/************************************************************************/
-
-class VSIADLSWriteHandle final : public VSIAppendWriteHandle
-{
-    CPL_DISALLOW_COPY_ASSIGN(VSIADLSWriteHandle)
-
-    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
-    bool m_bCreated = false;
-
-    bool Send(bool bIsLastBlock) override;
-
-    bool SendInternal(VSIADLSFSHandler::Event event, CSLConstList papszOptions);
-
-    void InvalidateParentDirectory();
-
-  public:
-    VSIADLSWriteHandle(VSIADLSFSHandler *poFS, const char *pszFilename,
-                       VSIAzureBlobHandleHelper *poHandleHelper);
-    virtual ~VSIADLSWriteHandle();
-
-    bool CreateFile(CSLConstList papszOptions);
-};
-
-/************************************************************************/
 /*                       VSIADLSWriteHandle()                          */
 /************************************************************************/
 
@@ -1233,63 +1248,6 @@ void VSIADLSFSHandler::ClearCache()
     IVSIS3LikeFSHandler::ClearCache();
 
     VSIAzureBlobHandleHelper::ClearCache();
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-VSIVirtualHandle *VSIADLSFSHandler::Open(const char *pszFilename,
-                                         const char *pszAccess, bool bSetError,
-                                         CSLConstList papszOptions)
-{
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
-        return nullptr;
-
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
-    {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsiadls, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
-            errno = EACCES;
-            return nullptr;
-        }
-
-        VSIAzureBlobHandleHelper *poHandleHelper =
-            VSIAzureBlobHandleHelper::BuildFromURI(
-                pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
-        if (poHandleHelper == nullptr)
-            return nullptr;
-        auto poHandle = std::unique_ptr<VSIADLSWriteHandle>(
-            new VSIADLSWriteHandle(this, pszFilename, poHandleHelper));
-        if (!poHandle->CreateFile(papszOptions))
-        {
-            return nullptr;
-        }
-        if (strchr(pszAccess, '+') != nullptr)
-        {
-            return VSICreateUploadOnCloseFile(poHandle.release());
-        }
-        return poHandle.release();
-    }
-
-    return VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError,
-                                              papszOptions);
-}
-
-/************************************************************************/
-/*                        SupportsRandomWrite()                         */
-/************************************************************************/
-
-bool VSIADLSFSHandler::SupportsRandomWrite(const char *pszPath,
-                                           bool bAllowLocalTempFile)
-{
-    return bAllowLocalTempFile &&
-           CPLTestBool(VSIGetPathSpecificOption(
-               pszPath, "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/

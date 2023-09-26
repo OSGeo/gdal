@@ -46,7 +46,7 @@ pytestmark = pytest.mark.require_driver("ADRG")
 def test_adrg_read_gen():
 
     tst = gdaltest.GDALTest("ADRG", "adrg/SMALL_ADRG/ABCDEF01.GEN", 1, 62833)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -56,7 +56,7 @@ def test_adrg_read_gen():
 def test_adrg_read_transh():
 
     tst = gdaltest.GDALTest("ADRG", "adrg/SMALL_ADRG/TRANSH01.THF", 1, 62833)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -72,7 +72,7 @@ def test_adrg_read_subdataset_img():
         62833,
         filename_absolute=1,
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

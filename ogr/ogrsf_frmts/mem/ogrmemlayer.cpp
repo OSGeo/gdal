@@ -66,7 +66,8 @@ class IOGRMemLayerFeatureIterator
 /*                            OGRMemLayer()                             */
 /************************************************************************/
 
-OGRMemLayer::OGRMemLayer(const char *pszName, OGRSpatialReference *poSRSIn,
+OGRMemLayer::OGRMemLayer(const char *pszName,
+                         const OGRSpatialReference *poSRSIn,
                          OGRwkbGeometryType eReqType)
     : m_poFeatureDefn(new OGRFeatureDefn(pszName)), m_nFeatureCount(0),
       m_iNextReadFID(0), m_nMaxFeatureCount(0), m_papoFeatures(nullptr),

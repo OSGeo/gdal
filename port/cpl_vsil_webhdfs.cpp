@@ -70,7 +70,7 @@ namespace cpl
 /*                         VSIWebHDFSFSHandler                          */
 /************************************************************************/
 
-class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
+class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBaseWritable
 {
     const std::string m_osPrefix;
     CPL_DISALLOW_COPY_ASSIGN(VSIWebHDFSFSHandler)
@@ -88,14 +88,16 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
 
     CPLString GetURLFromFilename(const CPLString &osFilename) override;
 
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
+
   public:
     explicit VSIWebHDFSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
     ~VSIWebHDFSFSHandler() override = default;
 
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
     int Unlink(const char *pszFilename) override;
     int Rmdir(const char *pszFilename) override;
     int Mkdir(const char *pszDirname, long nMode) override;
@@ -117,14 +119,6 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBase
     {
         return osFilename;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
     {
@@ -523,57 +517,19 @@ bool VSIWebHDFSWriteHandle::Append()
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWebHDFSFSHandler::Open(const char *pszFilename,
-                                            const char *pszAccess,
-                                            bool bSetError,
-                                            CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIWebHDFSFSHandler::CreateWriteHandle(const char *pszFilename,
+                                       CSLConstList /*papszOptions*/)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
-        return nullptr;
-
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
+    auto poHandle = cpl::make_unique<VSIWebHDFSWriteHandle>(this, pszFilename);
+    if (!poHandle->IsOK())
     {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsiwebhdfs, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
-            errno = EACCES;
-            return nullptr;
-        }
-
-        VSIWebHDFSWriteHandle *poHandle =
-            new VSIWebHDFSWriteHandle(this, pszFilename);
-        if (!poHandle->IsOK())
-        {
-            delete poHandle;
-            return nullptr;
-        }
-        if (strchr(pszAccess, '+') != nullptr)
-        {
-            return VSICreateUploadOnCloseFile(poHandle);
-        }
-        return poHandle;
+        return nullptr;
     }
-
-    return VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError,
-                                              papszOptions);
-}
-
-/************************************************************************/
-/*                        SupportsRandomWrite()                         */
-/************************************************************************/
-
-bool VSIWebHDFSFSHandler::SupportsRandomWrite(const char * /* pszPath */,
-                                              bool bAllowLocalTempFile)
-{
-    return bAllowLocalTempFile &&
-           CPLTestBool(CPLGetConfigOption(
-               "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

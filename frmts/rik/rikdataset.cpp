@@ -625,7 +625,7 @@ RIKDataset::RIKDataset()
         "414.1055246174,41.3265500042,603.0582474221,-0.8551163377,2."
         "1413174055,-7.0227298286,0],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM["
         "\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0."
-        "01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\","
+        "0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\","
         "\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_"
         "of_origin\",0],PARAMETER[\"central_meridian\",15.80827777777778],"
         "PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",1500000],"

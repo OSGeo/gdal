@@ -548,6 +548,8 @@ OGRErr CPL_DLL OGR_F_SetGeomField(OGRFeatureH hFeat, int iField,
 GIntBig CPL_DLL OGR_F_GetFID(OGRFeatureH);
 OGRErr CPL_DLL OGR_F_SetFID(OGRFeatureH, GIntBig);
 void CPL_DLL OGR_F_DumpReadable(OGRFeatureH, FILE *);
+char CPL_DLL *OGR_F_DumpReadableAsString(OGRFeatureH,
+                                         CSLConstList) CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_F_SetFrom(OGRFeatureH, OGRFeatureH, int);
 OGRErr CPL_DLL OGR_F_SetFromWithMap(OGRFeatureH, OGRFeatureH, int, const int *);
 

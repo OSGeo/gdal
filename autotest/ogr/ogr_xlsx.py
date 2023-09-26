@@ -129,6 +129,19 @@ def test_ogr_xlsx_2():
 
 
 ###############################################################################
+# Test HEADERS = DISABLE open option
+
+
+def test_ogr_xlsx_headers_open_option():
+
+    ds = gdal.OpenEx("data/xlsx/test.xlsx", open_options=["HEADERS=DISABLE"])
+
+    lyr = ds.GetLayerByName("Feuille7")
+
+    assert lyr.GetFeatureCount() == 3
+
+
+###############################################################################
 # Test OGR_XLSX_FIELD_TYPES = STRING
 
 
@@ -140,6 +153,19 @@ def test_ogr_xlsx_3():
         lyr = ds.GetLayerByName("Feuille7")
 
         assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+
+
+###############################################################################
+# Test FIELD_TYPES = STRING open option
+
+
+def test_ogr_xlsx_field_types_open_option():
+
+    ds = gdal.OpenEx("data/xlsx/test.xlsx", open_options=["FIELD_TYPES=STRING"])
+
+    lyr = ds.GetLayerByName("Feuille7")
+
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
 
 
 ###############################################################################
@@ -177,12 +203,10 @@ def test_ogr_xlsx_5():
     )
 
     ds = ogr.Open("tmp/test.xlsx")
-    ret = ogr_xlsx_check(ds)
+    ogr_xlsx_check(ds)
     ds = None
 
     os.unlink("tmp/test.xlsx")
-
-    return ret
 
 
 ###############################################################################

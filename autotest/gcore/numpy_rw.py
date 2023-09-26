@@ -659,19 +659,24 @@ def test_numpy_rw_16():
 
     # 1D
     array = numpy.empty([1], numpy.uint8)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal_array.OpenArray(array)
     assert ds is None
 
+    with gdaltest.enable_exceptions(), pytest.raises(
+        Exception, match="Illegal numpy array rank 1"
+    ):
+        gdal_array.OpenArray(array)
+
     # 4D
     array = numpy.empty([1, 1, 1, 1], numpy.uint8)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal_array.OpenArray(array)
     assert ds is None
 
     # Unsupported data type
     array = numpy.empty([1, 1], numpy.float16)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal_array.OpenArray(array)
     assert ds is None
 
@@ -684,7 +689,7 @@ def test_numpy_rw_17():
 
     # Disabled by default
     array = numpy.empty([1, 1], numpy.uint8)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(gdal_array.GetArrayFilename(array))
     assert ds is None
 
@@ -693,7 +698,7 @@ def test_numpy_rw_17():
     assert ds is not None
 
     # Invalid value
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("NUMPY:::invalid")
     assert ds is None
 
@@ -765,12 +770,12 @@ def test_numpy_rw_gdal_array_openarray_permissions():
     ar = numpy.zeros([1, 1], dtype=numpy.uint8)
     ar.setflags(write=False)
     ds = gdal_array.OpenArray(ar)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(1).Fill(1) != 0
     assert ds.GetRasterBand(1).Checksum() == 0
 
     # Cannot read in non-writeable array
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.ReadAsArray(buf_obj=ar) is None
         assert ds.GetRasterBand(1).ReadAsArray(buf_obj=ar) is None
 
@@ -975,6 +980,6 @@ def test_numpy_rw_band_read_as_array_getlasterrormsg():
 </VRTDataset>"""
     )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(1).ReadAsArray() is None
     assert gdal.GetLastErrorMsg() != ""

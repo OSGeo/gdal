@@ -485,6 +485,10 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 
     if (nBytesToWrite)
         memcpy(poFile->pabyData + m_nOffset, pBuffer, nBytesToWrite);
+    // Coverity seems to be confused by the fact that we access m_nOffset
+    // under a shared lock in most places, except here under an exclusive lock
+    // which is fine
+    // coverity[missing_lock]
     m_nOffset += nBytesToWrite;
 
     time(&poFile->mTime);

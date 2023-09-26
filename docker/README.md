@@ -10,6 +10,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 # Alpine based
 
 Alpine version:
+* 3.18 for GDAL 3.8
 * 3.17 for GDAL 3.7
 * 3.16 for GDAL 3.6
 * 3.15 for GDAL 3.5
@@ -44,7 +45,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 # Ubuntu based
 
 Ubuntu version:
-* 22.04 for GDAL 3.6 and 3.7
+* 22.04 for GDAL 3.6, 3.7 and 3.8
 * 20.04 for GDAL 3.4 and 3.5
 
 ## Small: `ghcr.io/osgeo/gdal:ubuntu-small-latest`
@@ -96,11 +97,11 @@ If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.7.0 and PROJ 9.2.0, for linux/amd64 and linux/arm64:
-* ghcr.io/osgeo/gdal:alpine-small-3.7.0
-* ghcr.io/osgeo/gdal:alpine-normal-3.7.0
-* ghcr.io/osgeo/gdal:ubuntu-small-3.7.0
-* ghcr.io/osgeo/gdal:ubuntu-full-3.7.0
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.7.2 and PROJ 9.3.0, for linux/amd64 and linux/arm64:
+* ghcr.io/osgeo/gdal:alpine-small-3.7.2
+* ghcr.io/osgeo/gdal:alpine-normal-3.7.2
+* ghcr.io/osgeo/gdal:ubuntu-small-3.7.2
+* ghcr.io/osgeo/gdal:ubuntu-full-3.7.2
 
 ## Multi-arch Images
 

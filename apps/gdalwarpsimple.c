@@ -50,11 +50,12 @@ static int nForcePixels = 0, nForceLines = 0;
 static void Usage()
 
 {
-    printf(
-        "Usage: gdalwarpsimple [--version] [--formats]\n"
-        "    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]\n"
-        "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n");
+    printf("Usage: gdalwarpsimple [--version] [--formats]\n"
+           "    [-s_srs <srs_def>] [-t_srs <srs_def>] [-order <n>] [-et "
+           "<err_threshold>]\n"
+           "    [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-ts "
+           "<width> <height>]\n"
+           "    [-of <format>] [-co <NAME>=<VALUE>]... <srcfile> <dstfile>\n");
     exit(1);
 }
 

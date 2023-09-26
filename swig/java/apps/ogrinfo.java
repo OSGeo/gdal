@@ -81,15 +81,15 @@ public class ogrinfo
                 bVerbose = false;
             else if (args[i].equals("-fid") && i + 1 < args.length)
             {
-                nFetchFID = new Integer(args[++i]).intValue();
+                nFetchFID = Integer.parseInt(args[++i]);
             }
             else if (args[i].equals("-spat") && i + 4 < args.length)
             {
                 Geometry oRing = new Geometry(ogrConstants.wkbLinearRing);
-                double xmin = new Double(args[++i]).doubleValue();
-                double ymin = new Double(args[++i]).doubleValue();
-                double xmax = new Double(args[++i]).doubleValue();
-                double ymax = new Double(args[++i]).doubleValue();
+                double xmin = Double.parseDouble(args[++i]);
+                double ymin = Double.parseDouble(args[++i]);
+                double xmax = Double.parseDouble(args[++i]);
+                double ymax = Double.parseDouble(args[++i]);
                 oRing.AddPoint(xmin, ymin);
                 oRing.AddPoint(xmin, ymax);
                 oRing.AddPoint(xmax, ymax);
@@ -113,7 +113,7 @@ public class ogrinfo
             }
             else if( args[i].equals("-rc") && i + 1 < args.length)
             {
-                nRepeatCount = new Integer(args[++i]).intValue();
+                nRepeatCount = Integer.parseInt(args[++i]);
             }
             else if( args[i].equals("-al") )
             {

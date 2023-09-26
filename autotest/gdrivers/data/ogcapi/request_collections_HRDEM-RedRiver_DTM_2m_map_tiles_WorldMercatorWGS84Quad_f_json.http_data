@@ -1,0 +1,108 @@
+HTTP/1.1 200 OK
+Date: Thu, 20 Jul 2023 17:27:39 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Fri, 19 Jul 2024 17:27:39 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Type: application/json
+Content-Length: 5587
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+
+{
+   "title" : "2m",
+   "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldMercatorWGS84Quad",
+   "crs" : "http://www.opengis.net/def/crs/EPSG/0/3395",
+   "dataType" : "map",
+   "tileMatrixSetLimits" : [
+      { "tileMatrix" : "0", "minTileRow" : 0, "maxTileRow" : 0, "minTileCol" : 0, "maxTileCol" : 0 },
+      { "tileMatrix" : "1", "minTileRow" : 0, "maxTileRow" : 0, "minTileCol" : 0, "maxTileCol" : 0 },
+      { "tileMatrix" : "2", "minTileRow" : 1, "maxTileRow" : 1, "minTileCol" : 0, "maxTileCol" : 0 },
+      { "tileMatrix" : "3", "minTileRow" : 2, "maxTileRow" : 2, "minTileCol" : 1, "maxTileCol" : 1 },
+      { "tileMatrix" : "4", "minTileRow" : 5, "maxTileRow" : 5, "minTileCol" : 3, "maxTileCol" : 3 },
+      { "tileMatrix" : "5", "minTileRow" : 10, "maxTileRow" : 11, "minTileCol" : 7, "maxTileCol" : 7 },
+      { "tileMatrix" : "6", "minTileRow" : 21, "maxTileRow" : 22, "minTileCol" : 14, "maxTileCol" : 14 },
+      { "tileMatrix" : "7", "minTileRow" : 43, "maxTileRow" : 44, "minTileCol" : 29, "maxTileCol" : 29 },
+      { "tileMatrix" : "8", "minTileRow" : 86, "maxTileRow" : 88, "minTileCol" : 58, "maxTileCol" : 59 },
+      { "tileMatrix" : "9", "minTileRow" : 173, "maxTileRow" : 176, "minTileCol" : 116, "maxTileCol" : 119 },
+      { "tileMatrix" : "10", "minTileRow" : 346, "maxTileRow" : 352, "minTileCol" : 233, "maxTileCol" : 238 },
+      { "tileMatrix" : "11", "minTileRow" : 692, "maxTileRow" : 705, "minTileCol" : 466, "maxTileCol" : 476 },
+      { "tileMatrix" : "12", "minTileRow" : 1385, "maxTileRow" : 1411, "minTileCol" : 933, "maxTileCol" : 953 },
+      { "tileMatrix" : "13", "minTileRow" : 2771, "maxTileRow" : 2823, "minTileCol" : 1867, "maxTileCol" : 1907 },
+      { "tileMatrix" : "14", "minTileRow" : 5542, "maxTileRow" : 5646, "minTileCol" : 3734, "maxTileCol" : 3815 },
+      { "tileMatrix" : "15", "minTileRow" : 11085, "maxTileRow" : 11293, "minTileCol" : 7469, "maxTileCol" : 7631 },
+      { "tileMatrix" : "16", "minTileRow" : 22171, "maxTileRow" : 22586, "minTileCol" : 14939, "maxTileCol" : 15262 }
+   ],
+   "links" : [
+      {
+         "rel" : "self",
+         "type" : "application/json",
+         "title" : "The JSON representation of the WorldMercatorWGS84Quad map tileset for HRDEM-RedRiver:DTM:2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?f=json"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/plain",
+         "title" : "The ECON representation of the WorldMercatorWGS84Quad map tileset for HRDEM-RedRiver:DTM:2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?f=econ"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/html",
+         "title" : "The HTML representation of the WorldMercatorWGS84Quad map tileset for HRDEM-RedRiver:DTM:2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?=html"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "application/json+tile",
+         "title" : "The TileJSON representation of the WorldMercatorWGS84Quad map tileset for HRDEM-RedRiver:DTM:2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?f=tilejson"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+         "type" : "application/json",
+         "title" : "WorldMercatorWGS84QuadTileMatrixSet definition (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldMercatorWGS84Quad"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/geodata",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m"
+      },
+      {
+         "rel" : "item",
+         "type" : "application/vnd.gnosis-map-tile",
+         "title" : "WorldMercatorWGS84Quad map tiles for HRDEM-RedRiver:DTM:2m (as GNOSIS Map Tiles)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad/{tileMatrix}/{tileRow}/{tileCol}.gmt",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "image/png",
+         "title" : "WorldMercatorWGS84Quad map tiles for HRDEM-RedRiver:DTM:2m (as PNG)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad/{tileMatrix}/{tileRow}/{tileCol}.png",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "image/jpeg",
+         "title" : "WorldMercatorWGS84Quad map tiles for HRDEM-RedRiver:DTM:2m (as JPG)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad/{tileMatrix}/{tileRow}/{tileCol}.jpg",
+         "templated" : true
+      },
+      {
+         "rel" : "item",
+         "type" : "image/tiff; application=geotiff",
+         "title" : "WorldMercatorWGS84Quad map tiles for HRDEM-RedRiver:DTM:2m (as GeoTIFF)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad/{tileMatrix}/{tileRow}/{tileCol}.tif",
+         "templated" : true
+      }
+   ],
+   "centerPoint" : {
+      "coordinates" : [ -97.0478533737652, 49.6424035030551 ],
+      "tileMatrix" : "11",
+      "scaleDenominator" : 272989.3867327723419,
+      "cellSize" : 76.4370282851763,
+      "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+   }
+}

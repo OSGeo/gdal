@@ -117,11 +117,9 @@ def test_ogr_shape_qix_1():
 
     ds = ogr.Open("/vsimem/ogr_shape_qix.shp")
     lyr = ds.GetLayer(0)
-    ret = check_qix_non_overlapping_geoms(lyr)
+    check_qix_non_overlapping_geoms(lyr)
 
     shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
-
-    return ret
 
 
 ###############################################################################
@@ -147,11 +145,9 @@ def test_ogr_shape_qix_2():
 
     ds = ogr.Open("/vsimem/ogr_shape_qix.shp")
     lyr = ds.GetLayer(0)
-    ret = check_qix_non_overlapping_geoms(lyr)
+    check_qix_non_overlapping_geoms(lyr)
 
     shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
-
-    return ret
 
 
 ###############################################################################
@@ -184,11 +180,9 @@ def test_ogr_shape_qix_3():
 
     ds = ogr.Open("/vsimem/ogr_shape_qix.shp")
     lyr = ds.GetLayer(0)
-    ret = check_qix_non_overlapping_geoms(lyr)
+    check_qix_non_overlapping_geoms(lyr)
 
     shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
-
-    return ret
 
 
 ###############################################################################
@@ -279,8 +273,6 @@ def test_ogr_shape_qix_4():
 
     ds.ExecuteSQL("CREATE SPATIAL INDEX ON ogr_shape_qix")
 
-    ret = check_qix_random_geoms(lyr)
+    check_qix_random_geoms(lyr)
 
     shape_drv.DeleteDataSource("/vsimem/ogr_shape_qix.shp")
-
-    return ret

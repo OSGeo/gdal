@@ -151,6 +151,9 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                 bNonEmpty = true;
         }
 
+        std::string GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH("/");
+        GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH += GDAL_MARKER_FOR_DIR;
+
         // Count the number of occurrences of a path. Can be 1 or 2. 2 in the
         // case that both a filename and directory exist
         std::map<CPLString, int> aoNameCount;
@@ -164,6 +167,20 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                 const char *pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
                 if (pszKey && strstr(pszKey, GDAL_MARKER_FOR_DIR) != nullptr)
                 {
+                    if (nRecurseDepth < 0)
+                    {
+                        if (strcmp(pszKey + osPrefix.size(),
+                                   GDAL_MARKER_FOR_DIR) == 0)
+                            continue;
+                        char *pszName = CPLStrdup(pszKey + osPrefix.size());
+                        char *pszMarker = strstr(
+                            pszName,
+                            GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH.c_str());
+                        if (pszMarker)
+                            *pszMarker = '\0';
+                        aoNameCount[pszName]++;
+                        CPLFree(pszName);
+                    }
                     bNonEmpty = true;
                 }
                 else if (pszKey && strlen(pszKey) > osPrefix.size())
@@ -203,12 +220,16 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                 {
                     if (nRecurseDepth < 0)
                     {
+                        if (strcmp(pszKey + osPrefix.size(),
+                                   GDAL_MARKER_FOR_DIR) == 0)
+                            continue;
                         aoEntries.push_back(
                             std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
                         auto &entry = aoEntries.back();
                         entry->pszName = CPLStrdup(pszKey + osPrefix.size());
-                        char *pszMarker =
-                            strstr(entry->pszName, GDAL_MARKER_FOR_DIR);
+                        char *pszMarker = strstr(
+                            entry->pszName,
+                            GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH.c_str());
                         if (pszMarker)
                             *pszMarker = '\0';
                         entry->nMode = S_IFDIR;
@@ -379,7 +400,9 @@ bool VSIDIRAz::IssueListDir()
     }
 
     poHandleHelper->ResetQueryParameters();
-    const CPLString osBaseURL(poHandleHelper->GetURLNoKVP());
+    std::string osBaseURL(poHandleHelper->GetURLNoKVP());
+    if (osBaseURL.back() == '/')
+        osBaseURL.pop_back();
 
     CURL *hCurlHandle = curl_easy_init();
 
@@ -494,6 +517,11 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     void InvalidateRecursive(const CPLString &osDirnameIn);
 
+    int CopyFile(const char *pszSource, const char *pszTarget,
+                 VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                 const char *const *papszOptions,
+                 GDALProgressFunc pProgressFunc, void *pProgressData) override;
+
     int CopyObject(const char *oldpath, const char *newpath,
                    CSLConstList papszMetadata) override;
     int MkdirInternal(const char *pszDirname, long nMode,
@@ -505,6 +533,10 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     {
         return STARTS_WITH(pszHeaderName, "x-ms-");
     }
+
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     explicit VSIAzureFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
@@ -520,9 +552,6 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     {
         return "AZURE";
     }
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
 
     int Unlink(const char *pszFilename) override;
     int *UnlinkBatch(CSLConstList papszFiles) override;
@@ -565,14 +594,6 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     {
         return true;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     CPLString InitiateMultipartUpload(const std::string & /* osFilename */,
                                       IVSIS3LikeHandleHelper *,
@@ -647,6 +668,30 @@ class VSIAzureHandle final : public VSICurlHandle
 };
 
 /************************************************************************/
+/*                          VSIAzureWriteHandle                         */
+/************************************************************************/
+
+class VSIAzureWriteHandle final : public VSIAppendWriteHandle
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSIAzureWriteHandle)
+
+    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
+    CPLStringList m_aosOptions{};
+    CPLStringList m_aosHTTPOptions{};
+
+    bool Send(bool bIsLastBlock) override;
+    bool SendInternal(bool bInitOnly, bool bIsLastBlock);
+
+    void InvalidateParentDirectory();
+
+  public:
+    VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
+                        VSIAzureBlobHandleHelper *poHandleHelper,
+                        CSLConstList papszOptions);
+    virtual ~VSIAzureWriteHandle();
+};
+
+/************************************************************************/
 /*                          CreateFileHandle()                          */
 /************************************************************************/
 
@@ -658,6 +703,28 @@ VSICurlHandle *VSIAzureFSHandler::CreateFileHandle(const char *pszFilename)
     if (poHandleHelper == nullptr)
         return nullptr;
     return new VSIAzureHandle(this, pszFilename, poHandleHelper);
+}
+
+/************************************************************************/
+/*                          CreateWriteHandle()                         */
+/************************************************************************/
+
+VSIVirtualHandleUniquePtr
+VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
+                                     CSLConstList papszOptions)
+{
+    VSIAzureBlobHandleHelper *poHandleHelper =
+        VSIAzureBlobHandleHelper::BuildFromURI(
+            pszFilename + GetFSPrefix().size(), GetFSPrefix());
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    auto poHandle = cpl::make_unique<VSIAzureWriteHandle>(
+        this, pszFilename, poHandleHelper, papszOptions);
+    if (!poHandle->IsOK())
+    {
+        return nullptr;
+    }
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -1074,30 +1141,6 @@ VSIAzureFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                          VSIAzureWriteHandle                         */
-/************************************************************************/
-
-class VSIAzureWriteHandle final : public VSIAppendWriteHandle
-{
-    CPL_DISALLOW_COPY_ASSIGN(VSIAzureWriteHandle)
-
-    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
-    CPLStringList m_aosOptions{};
-    CPLStringList m_aosHTTPOptions{};
-
-    bool Send(bool bIsLastBlock) override;
-    bool SendInternal(bool bInitOnly, bool bIsLastBlock);
-
-    void InvalidateParentDirectory();
-
-  public:
-    VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
-                        VSIAzureBlobHandleHelper *poHandleHelper,
-                        CSLConstList papszOptions);
-    virtual ~VSIAzureWriteHandle();
-};
-
-/************************************************************************/
 /*                        GetAzureBufferSize()                          */
 /************************************************************************/
 
@@ -1336,59 +1379,6 @@ void VSIAzureFSHandler::ClearCache()
     IVSIS3LikeFSHandler::ClearCache();
 
     VSIAzureBlobHandleHelper::ClearCache();
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-VSIVirtualHandle *VSIAzureFSHandler::Open(const char *pszFilename,
-                                          const char *pszAccess, bool bSetError,
-                                          CSLConstList papszOptions)
-{
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
-        return nullptr;
-
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
-    {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsiaz, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
-            errno = EACCES;
-            return nullptr;
-        }
-
-        VSIAzureBlobHandleHelper *poHandleHelper =
-            VSIAzureBlobHandleHelper::BuildFromURI(
-                pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
-        if (poHandleHelper == nullptr)
-            return nullptr;
-        auto poHandle = new VSIAzureWriteHandle(this, pszFilename,
-                                                poHandleHelper, papszOptions);
-        if (strchr(pszAccess, '+') != nullptr)
-        {
-            return VSICreateUploadOnCloseFile(poHandle);
-        }
-        return poHandle;
-    }
-
-    return VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError,
-                                              papszOptions);
-}
-
-/************************************************************************/
-/*                        SupportsRandomWrite()                         */
-/************************************************************************/
-
-bool VSIAzureFSHandler::SupportsRandomWrite(const char * /* pszPath */,
-                                            bool bAllowLocalTempFile)
-{
-    return bAllowLocalTempFile &&
-           CPLTestBool(CPLGetConfigOption(
-               "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/
@@ -1995,6 +1985,42 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
 }
 
 /************************************************************************/
+/*                           CopyFile()                                 */
+/************************************************************************/
+
+int VSIAzureFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
+                                VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                CSLConstList papszOptions,
+                                GDALProgressFunc pProgressFunc,
+                                void *pProgressData)
+{
+    const CPLString osPrefix(GetFSPrefix());
+    if ((STARTS_WITH(pszSource, "/vsis3/") ||
+         STARTS_WITH(pszSource, "/vsigs/") ||
+         STARTS_WITH(pszSource, "/vsiadls/") ||
+         STARTS_WITH(pszSource, "/vsicurl/")) &&
+        STARTS_WITH(pszTarget, osPrefix))
+    {
+        CPLString osMsg;
+        osMsg.Printf("Copying of %s", pszSource);
+
+        NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+        NetworkStatisticsAction oContextAction("CopyFile");
+
+        bool bRet = CopyObject(pszSource, pszTarget, papszOptions) == 0;
+        if (bRet && pProgressFunc)
+        {
+            bRet = pProgressFunc(1.0, osMsg.c_str(), pProgressData) != 0;
+        }
+        return bRet ? 0 : -1;
+    }
+
+    return IVSIS3LikeFSHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                         nSourceSize, papszOptions,
+                                         pProgressFunc, pProgressData);
+}
+
+/************************************************************************/
 /*                            CopyObject()                              */
 /************************************************************************/
 
@@ -2012,16 +2038,40 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
         return -1;
     }
 
-    CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
-    auto poS3HandleHelperSource = std::unique_ptr<IVSIS3LikeHandleHelper>(
-        CreateHandleHelper(osSourceNameWithoutPrefix, false));
-    if (poS3HandleHelperSource == nullptr)
-    {
-        return -1;
-    }
-
     CPLString osSourceHeader("x-ms-copy-source: ");
-    osSourceHeader += poS3HandleHelperSource->GetURLNoKVP();
+    if (STARTS_WITH(oldpath, GetFSPrefix().c_str()))
+    {
+        CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
+        auto poS3HandleHelperSource = std::unique_ptr<IVSIS3LikeHandleHelper>(
+            CreateHandleHelper(osSourceNameWithoutPrefix, false));
+        if (poS3HandleHelperSource == nullptr)
+        {
+            return -1;
+        }
+
+        osSourceHeader += poS3HandleHelperSource->GetURLNoKVP();
+    }
+    else
+    {
+        VSIStatBufL sStat;
+        // This has the effect of making sure that the S3 region is correct
+        // if copying from /vsis3/
+        if (VSIStatExL(oldpath, &sStat, VSI_STAT_EXISTS_FLAG) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s does not exist", oldpath);
+            return -1;
+        }
+
+        char *pszSignedURL = VSIGetSignedURL(oldpath, nullptr);
+        if (!pszSignedURL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot get signed URL for %s", oldpath);
+            return -1;
+        }
+        osSourceHeader += pszSignedURL;
+        VSIFree(pszSignedURL);
+    }
 
     int nRet = 0;
 

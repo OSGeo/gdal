@@ -118,7 +118,7 @@ def test_vsigs_1(gs_test_config):
         with gdaltest.config_option(
             "GDAL_HTTP_HEADER_FILE", "/i_dont/exist.py", thread_local=False
         ):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = open_for_read("/vsigs/foo/bar")
         if f is not None:
             gdal.VSIFCloseL(f)
@@ -137,12 +137,12 @@ def test_vsigs_1(gs_test_config):
 
         # Missing GS_SECRET_ACCESS_KEY
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsigs/foo/bar")
         assert f is None and gdal.VSIGetLastErrorMsg().find("GS_SECRET_ACCESS_KEY") >= 0
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsigs_streaming/foo/bar")
         assert f is None and gdal.VSIGetLastErrorMsg().find("GS_SECRET_ACCESS_KEY") >= 0
 
@@ -152,7 +152,7 @@ def test_vsigs_1(gs_test_config):
 
             # Missing GS_ACCESS_KEY_ID
             gdal.ErrorReset()
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = open_for_read("/vsigs/foo/bar")
             assert f is None and gdal.VSIGetLastErrorMsg().find("GS_ACCESS_KEY_ID") >= 0
 
@@ -162,7 +162,7 @@ def test_vsigs_1(gs_test_config):
 
                 # ERROR 1: The User Id you provided does not exist in our records.
                 gdal.ErrorReset()
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     f = open_for_read("/vsigs/foo/bar.baz")
                 if f is not None or gdal.VSIGetLastErrorMsg() == "":
                     if f is not None:
@@ -172,7 +172,7 @@ def test_vsigs_1(gs_test_config):
                     pytest.fail(gdal.VSIGetLastErrorMsg())
 
                 gdal.ErrorReset()
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     f = open_for_read("/vsigs_streaming/foo/bar.baz")
                 assert f is None and gdal.VSIGetLastErrorMsg() != ""
 
@@ -632,7 +632,7 @@ def test_vsigs_acl(gs_test_config, webserver_port):
         assert "XML" in md and md["XML"] == "<foo/>"
 
         # Error cases
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 gdal.GetFileMetadata("/vsigs/test_metadata/foo.txt", "UNSUPPORTED")
                 == {}
@@ -641,7 +641,7 @@ def test_vsigs_acl(gs_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add("GET", "/test_metadata/foo.txt?acl", 400)
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert not gdal.GetFileMetadata("/vsigs/test_metadata/foo.txt", "ACL")
 
         handler = webserver.SequentialHandler()
@@ -652,7 +652,7 @@ def test_vsigs_acl(gs_test_config, webserver_port):
             )
 
         # Error cases
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not gdal.SetFileMetadata(
                 "/vsigs/test_metadata/foo.txt", {}, "UNSUPPORTED"
             )
@@ -661,7 +661,7 @@ def test_vsigs_acl(gs_test_config, webserver_port):
         handler = webserver.SequentialHandler()
         handler.add("PUT", "/test_metadata/foo.txt?acl", 400)
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert not gdal.SetFileMetadata(
                     "/vsigs/test_metadata/foo.txt", {"XML": "<foo/>"}, "ACL"
                 )
@@ -725,7 +725,7 @@ def test_vsigs_read_credentials_refresh_token_default_gdal_app(
         thread_local=False,
     ):
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert gdal.GetSignedURL("/vsigs/foo/bar") is None
 
         gdal.VSICurlClearCache()
@@ -1473,7 +1473,7 @@ def test_vsigs_read_credentials_gce(gs_test_config, webserver_port):
 
             assert data == "bar"
 
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert gdal.GetSignedURL("/vsigs/foo/bar") is None
 
 
@@ -1668,7 +1668,7 @@ def test_vsigs_extra_1():
         # Invalid bucket : "The specified bucket does not exist"
         gdal.ErrorReset()
         f = open_for_read("/vsigs/not_existing_bucket/foo")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
         assert gdal.VSIGetLastErrorMsg() != ""

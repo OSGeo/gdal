@@ -1976,6 +1976,25 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         poArray = poBand->AsMDArray();
         CPLAssert(poArray);
     }
+
+    std::string osViewExpr = m_osViewExpr;
+    if (STARTS_WITH(osViewExpr.c_str(), "resample=true,") ||
+        osViewExpr == "resample=true")
+    {
+        poArray =
+            poArray->GetResampled(std::vector<std::shared_ptr<GDALDimension>>(
+                                      poArray->GetDimensionCount()),
+                                  GRIORA_NearestNeighbour, nullptr, nullptr);
+        if (poArray == nullptr)
+        {
+            return false;
+        }
+        if (osViewExpr == "resample=true")
+            osViewExpr.clear();
+        else
+            osViewExpr = osViewExpr.substr(strlen("resample=true,"));
+    }
+
     if (!m_anTransposedAxis.empty())
     {
         poArray = poArray->Transpose(m_anTransposedAxis);
@@ -1984,9 +2003,9 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
             return false;
         }
     }
-    if (!m_osViewExpr.empty())
+    if (!osViewExpr.empty())
     {
-        poArray = poArray->GetView(m_osViewExpr);
+        poArray = poArray->GetView(osViewExpr);
         if (poArray == nullptr)
         {
             return false;

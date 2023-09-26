@@ -160,7 +160,7 @@ static GDALDataset *OGRODSDriverOpen(GDALOpenInfo *poOpenInfo)
         fpSettings = VSIFOpenL(osTmpFilename, "rb");
     }
 
-    OGRODSDataSource *poDS = new OGRODSDataSource();
+    OGRODSDataSource *poDS = new OGRODSDataSource(poOpenInfo->papszOpenOptions);
 
     if (!poDS->Open(pszFilename, fpContent, fpSettings,
                     poOpenInfo->eAccess == GA_Update))
@@ -209,7 +209,7 @@ static GDALDataset *OGRODSDriverCreate(const char *pszName, int /* nXSize */,
     /* -------------------------------------------------------------------- */
     /*      Try to create datasource.                                       */
     /* -------------------------------------------------------------------- */
-    OGRODSDataSource *poDS = new OGRODSDataSource();
+    OGRODSDataSource *poDS = new OGRODSDataSource(nullptr);
 
     if (!poDS->Create(pszName, papszOptions))
     {
@@ -252,6 +252,26 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='FIELD_TYPES' type='string-select' "
+        "description='If set to STRING, all fields will be of type String. "
+        "Otherwise the driver autodetects the field type from field content.' "
+        "default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>STRING</Value>"
+        "  </Option>"
+        "  <Option name='HEADERS' type='string-select' "
+        "description='Defines if the first line should be considered as "
+        "containing the name of the fields.' "
+        "default='AUTO'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>FORCE</Value>"
+        "    <Value>DISABLE</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGRODSDriverIdentify;
     poDriver->pfnOpen = OGRODSDriverOpen;

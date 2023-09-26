@@ -383,6 +383,10 @@ public:
     return OSRIsDynamic(self);
   }
 
+  bool HasPointMotionOperation() {
+    return OSRHasPointMotionOperation(self);
+  }
+
   double GetCoordinateEpoch() {
     return OSRGetCoordinateEpoch(self);
   }
@@ -1237,7 +1241,11 @@ public:
 %apply (double argout[ANY]) {(double inout[3])};
 %apply (double argin[ANY]) {(double inout[3])};
 #endif
+#if SWIGPYTHON
+  void _TransformPoint3Double( double inout[3] ) {
+#else
   void TransformPoint( double inout[3] ) {
+#endif
     if (self == NULL)
         return;
     OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
@@ -1250,7 +1258,11 @@ public:
 %apply (double argout[ANY]) {(double inout[4])};
 %apply (double argin[ANY]) {(double inout[4])};
 #endif
+#if SWIGPYTHON
+  void _TransformPoint4Double( double inout[4] ) {
+#else
   void TransformPoint( double inout[4] ) {
+#endif
     if (self == NULL)
         return;
     OCTTransform4D( self, 1, &inout[0], &inout[1], &inout[2], &inout[3], NULL );

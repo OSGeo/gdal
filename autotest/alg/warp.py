@@ -287,21 +287,21 @@ def test_warp_6():
 
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_near.vrt", 1, 4770)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_warp_7():
 
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_blinear.vrt", 1, 4755)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_warp_8():
 
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_cubic.vrt", 1, 4833)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_warp_9():
@@ -330,7 +330,7 @@ def test_warp_11():
 
     tst = gdaltest.GDALTest("VRT", "rgbsmall_dstalpha.vrt", 4, 30658)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 # Test warping an empty RGBA with bilinear resampling
@@ -349,11 +349,9 @@ def test_warp_12():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "empty_rb.vrt", 4, 0)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/empty.tif")
-
-    return ret
 
 
 # Test warping an empty RGBA with cubic resampling
@@ -372,11 +370,9 @@ def test_warp_13():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "empty_rc.vrt", 4, 0)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/empty.tif")
-
-    return ret
 
 
 # Test warping an empty RGBA with cubic spline resampling
@@ -395,11 +391,9 @@ def test_warp_14():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "empty_rcs.vrt", 4, 0)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/empty.tif")
-
-    return ret
 
 
 # Test GWKNearestFloat with transparent source alpha band
@@ -418,11 +412,9 @@ def test_warp_15():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "test_nearest_float.vrt", 4, 0)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/test.tif")
-
-    return ret
 
 
 # Test GWKNearestFloat with opaque source alpha band
@@ -441,11 +433,9 @@ def test_warp_16():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "test_nearest_float.vrt", 4, 4921)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/test.tif")
-
-    return ret
 
 
 # Test GWKNearestShort with transparent source alpha band
@@ -464,11 +454,9 @@ def test_warp_17():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "test_nearest_short.vrt", 4, 0)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/test.tif")
-
-    return ret
 
 
 # Test GWKNearestShort with opaque source alpha band
@@ -487,11 +475,9 @@ def test_warp_18():
     # The alpha channel must be empty
     tst = gdaltest.GDALTest("VRT", "test_nearest_short.vrt", 4, 4921)
 
-    ret = tst.testOpen()
+    tst.testOpen()
 
     tiff_drv.Delete("tmp/test.tif")
-
-    return ret
 
 
 # Test all data types and resampling methods for very small images
@@ -553,7 +539,7 @@ def test_warp_20():
 
     tst = gdaltest.GDALTest("VRT", "white_nodata.vrt", 1, 1705)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -1614,14 +1600,14 @@ def test_warp_ds_rms():
 
     tst = gdaltest.GDALTest("VRT", "utmsmall_ds_rms.vrt", 1, 4926)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_warp_rms_1():
 
     tst = gdaltest.GDALTest("VRT", "utmsmall_rms_float.vrt", 1, 29819)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_warp_rms_2():

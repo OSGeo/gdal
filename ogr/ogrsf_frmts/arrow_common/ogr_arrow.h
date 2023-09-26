@@ -82,9 +82,12 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRArrowLayer(const OGRArrowLayer &) = delete;
     OGRArrowLayer &operator=(const OGRArrowLayer &) = delete;
 
-    std::vector<Constraint> m_asAttributeFilterConstraints{};
     int m_nUseOptimizedAttributeFilter = -1;
     bool m_bSpatialFilterIntersectsLayerExtent = true;
+    bool m_bUseRecordBatchBaseImplementation = false;
+
+    // Modified by UseRecordBatchBaseImplementation()
+    mutable struct ArrowSchema m_sCachedSchema = {};
 
     bool SkipToNextFeatureDueToAttributeFilter() const;
     void ExploreExprNode(const swq_expr_node *poNode);
@@ -92,6 +95,8 @@ class OGRArrowLayer CPL_NON_FINAL
 
     static struct ArrowArray *
     CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+
+    int GetArrowSchemaInternal(struct ArrowSchema *out) const;
 
   protected:
     OGRArrowDataset *m_poArrowDS = nullptr;
@@ -103,6 +108,19 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<std::vector<int>> m_anMapFieldIndexToArrowColumn{};
     std::vector<int> m_anMapGeomFieldIndexToArrowColumn{};
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
+
+    // OGR field indexes for bbox.minx/miny/maxx/maxy Real fields
+    int m_iBBOXMinXField = -1;
+    int m_iBBOXMinYField = -1;
+    int m_iBBOXMaxXField = -1;
+    int m_iBBOXMaxYField = -1;
+
+    const arrow::BinaryArray *m_poArrayWKB = nullptr;
+    const arrow::Array *m_poArrayBBOX = nullptr;
+    const arrow::DoubleArray *m_poArrayMinX = nullptr;
+    const arrow::DoubleArray *m_poArrayMinY = nullptr;
+    const arrow::DoubleArray *m_poArrayMaxX = nullptr;
+    const arrow::DoubleArray *m_poArrayMaxY = nullptr;
 
     bool m_bIgnoredFields = false;
     std::vector<int>
@@ -116,7 +134,7 @@ class OGRArrowLayer CPL_NON_FINAL
     int64_t m_nFeatureIdx = 0;
     int64_t m_nIdxInBatch = 0;
     std::map<std::string, CPLJSONObject> m_oMapGeometryColumns{};
-    std::map<int, OGREnvelope> m_oMapExtents{};
+    mutable std::map<int, OGREnvelope> m_oMapExtents{};
     int m_iRecordBatch = -1;
     std::shared_ptr<arrow::RecordBatch> m_poBatch{};
     // m_poBatch->columns() is a relatively costly operation, so cache its
@@ -125,6 +143,8 @@ class OGRArrowLayer CPL_NON_FINAL
         m_poBatchColumns{};  // must always be == m_poBatch->columns()
     mutable std::shared_ptr<arrow::Array> m_poReadFeatureTmpArray{};
 
+    std::vector<Constraint> m_asAttributeFilterConstraints{};
+
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
     LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
 
@@ -132,6 +152,12 @@ class OGRArrowLayer CPL_NON_FINAL
 
     virtual std::string GetDriverUCName() const = 0;
     static bool IsIntegerArrowType(arrow::Type::type typeId);
+    static bool
+    IsHandledListOrMapType(const std::shared_ptr<arrow::DataType> &valueType);
+    static bool
+    IsHandledListType(const std::shared_ptr<arrow::BaseListType> &listType);
+    static bool
+    IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType);
     static bool
     IsValidGeometryEncoding(const std::shared_ptr<arrow::Field> &field,
                             const std::string &osEncoding,
@@ -166,6 +192,7 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRGeometry *ReadGeometry(int iGeomField, const arrow::Array *array,
                               int64_t nIdxInBatch) const;
     virtual bool ReadNextBatch() = 0;
+    virtual void InvalidateCachedBatches() = 0;
     OGRFeature *GetNextRawFeature();
 
     virtual bool CanRunNonForcedGetExtent()
@@ -173,16 +200,12 @@ class OGRArrowLayer CPL_NON_FINAL
         return true;
     }
 
-    void SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
-    {
-        m_poBatch = poBatch;
-        m_poBatchColumns = m_poBatch->columns();
-    }
+    void SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch);
 
     // Refreshes Constraint.iArrayIdx from iField. To be called by SetIgnoredFields()
     void ComputeConstraintsArrayIdx();
 
-    virtual bool GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
+    virtual bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const;
     static OGRErr GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
                                         OGREnvelope *psExtent);
 
@@ -216,6 +239,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
     int TestCapability(const char *pszCap) override;
+
+    bool GetArrowStream(struct ArrowArrayStream *out_stream,
+                        CSLConstList papszOptions = nullptr) override;
 
     virtual std::unique_ptr<OGRFieldDomain>
     BuildDomain(const std::string &osDomainName, int iFieldIndex) const = 0;

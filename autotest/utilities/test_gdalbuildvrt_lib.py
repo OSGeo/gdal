@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
 import struct
 
 import gdaltest
@@ -96,10 +97,10 @@ def test_gdalbuildvrt_lib_2():
 # Test creating overviews
 
 
-def test_gdalbuildvrt_lib_ovr():
+def test_gdalbuildvrt_lib_ovr(tmp_vsimem):
 
-    tmpfilename = "/vsimem/my.vrt"
-    ds = gdal.BuildVRT(tmpfilename, "../gcore/data/byte.tif")
+    tmpfilename = tmp_vsimem / "my.vrt"
+    ds = gdal.BuildVRT(tmpfilename, pathlib.Path("../gcore/data/byte.tif"))
     ds.BuildOverviews("NEAR", [2])
     ds = None
     ds = gdal.Open(tmpfilename)
@@ -436,7 +437,7 @@ def test_gdalbuildvrt_lib_bandList():
     assert vrt_ds.GetRasterBand(2).Checksum() != 0
     assert vrt_ds.GetRasterBand(3).Checksum() == 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.BuildVRT("", [src_ds], bandList=[3]) is None
 
     src2_ds = gdal.GetDriverByName("MEM").Create("src2", 3, 1, 3)
@@ -557,7 +558,7 @@ def test_gdalbuildvrt_lib_warnings_and_custom_error_handler():
 def test_gdalbuildvrt_lib_strict_mode():
 
     with gdal.ExceptionMgr():
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 gdal.BuildVRT(
                     "", ["../gcore/data/byte.tif", "i_dont_exist.tif"], strict=False

@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 # ***************************************************************************/
 
+import math
 import sys
 
 from osgeo import gdal, osr
@@ -43,7 +44,7 @@ from osgeo import gdal, osr
 def Usage():
     print(
         "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n"
-        + "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname"
+        + "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]... datasetname"
     )
     return 2
 
@@ -319,19 +320,17 @@ def main(argv=None):
             print("  %s" % metadata)
 
     # --------------------------------------------------------------------
-    #      Setup projected to lat/long transform if appropriate.
+    #      Setup projected to long/lat transform if appropriate.
     # --------------------------------------------------------------------
-    if pszProjection:
-        hProj = osr.SpatialReference(pszProjection)
-        if hProj is not None:
-            hLatLong = hProj.CloneGeogCS()
-
+    hProj = hDataset.GetSpatialRef()
+    if hProj:
+        hLatLong = hProj.CloneGeogCS()
         if hLatLong is not None:
+            # To make sure the geographic coordinates are in long, lat order
+            hLatLong.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
             gdal.PushErrorHandler("CPLQuietErrorHandler")
             hTransform = osr.CoordinateTransformation(hProj, hLatLong)
             gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find("Unable to load PROJ.4 library") != -1:
-                hTransform = None
 
     # --------------------------------------------------------------------
     #      Report corners.
@@ -434,7 +433,7 @@ def main(argv=None):
 
         dfNoData = hBand.GetNoDataValue()
         if dfNoData is not None:
-            if dfNoData != dfNoData:
+            if math.isnan(dfNoData):
                 print("  NoData Value=nan")
             else:
                 print("  NoData Value=%.18g" % dfNoData)

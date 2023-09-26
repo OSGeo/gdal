@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_SENSOR_QUALITY_report.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes></Notes>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T12:47:20</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report gippVersion="1.0" globalStatus="PASSED" date="2023-08-23T12:47:20.638Z">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>SENSOR_QUALITY</name>
+                <version>1.0</version>
+                <item url="/mnt/shared/S2-EXECUTION-CONTEXT-csgroup/ddedf9a3-f495-4d63-8ad2-a5b195eb62fc/RefiningFinalize/FORMAT_METADATA_DS_L1C/output/PDI_DS/S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09/" className="PDI Level 1C Datastrip Folder" name="S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09" class="http://www.esa.int/s2#pdi_level_1c_datastrip_container"/>
+                <check>
+                    <inspection creation="2023-08-23T12:47:20.627Z" duration="1" execution="2023-08-23T12:47:20.635Z" id="Degraded_SAD" item="S2B_OPER_MTD_L1C_DS_2BPS_20230823T120234_S20230823T095553.xml" itemURL="/mnt/shared/S2-EXECUTION-CONTEXT-csgroup/ddedf9a3-f495-4d63-8ad2-a5b195eb62fc/RefiningFinalize/FORMAT_METADATA_DS_L1C/output/PDI_DS/S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09/S2B_OPER_MTD_L1C_DS_2BPS_20230823T120234_S20230823T095553.xml" name="Check the consistency of relative orbit. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">No Degraded SAD</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:47:20.690Z" duration="0" execution="2023-08-23T12:47:20.696Z" id="Datation_Model_GPS_SYNC" item="S2B_OPER_MTD_L1C_DS_2BPS_20230823T120234_S20230823T095553.xml" itemURL="/mnt/shared/S2-EXECUTION-CONTEXT-csgroup/ddedf9a3-f495-4d63-8ad2-a5b195eb62fc/RefiningFinalize/FORMAT_METADATA_DS_L1C/output/PDI_DS/S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09/S2B_OPER_MTD_L1C_DS_2BPS_20230823T120234_S20230823T095553.xml" name="Check the correctness of the Datation model with GPS_SYNC. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">GPS is synchronized.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:47:21.311Z" duration="1" execution="2023-08-23T12:47:21.320Z" id="Datation_Model_RMOY" item="S2B_OPER_MTD_L1C_DS_2BPS_20230823T120234_S20230823T095553.xml" itemURL="/mnt/shared/S2-EXECUTION-CONTEXT-csgroup/ddedf9a3-f495-4d63-8ad2-a5b195eb62fc/RefiningFinalize/FORMAT_METADATA_DS_L1C/output/PDI_DS/S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09/S2B_OPER_MTD_L1C_DS_2BPS_20230823T120234_S20230823T095553.xml" name="Check the correctness of the Datation model with RMOY. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">RMOY not found in dataset</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:47:27.461Z" duration="468" execution="2023-08-23T12:47:27.466Z" id="checkMetadata" item="S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09" itemURL="/mnt/shared/S2-EXECUTION-CONTEXT-csgroup/ddedf9a3-f495-4d63-8ad2-a5b195eb62fc/RefiningFinalize/FORMAT_METADATA_DS_L1C/output/PDI_DS/S2B_OPER_MSI_L1C_DS_2BPS_20230823T120234_S20230823T095553_N05.09/" name="Metadata file check. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Metadata file is present.</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>

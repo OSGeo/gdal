@@ -50,8 +50,8 @@ typedef struct
     size_t nHeaderLen;
 } GPkgHeader;
 
-OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType &eSubType,
-                            int &nMaxWidth);
+int GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType &eSubType,
+                   int &nMaxWidth);
 const char *GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType,
                              int nMaxWidth);
 OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ,
