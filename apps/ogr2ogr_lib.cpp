@@ -4820,7 +4820,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
     if (bOverwriteActuallyDone && !bAddOverwriteLCO &&
         EQUAL(m_poDstDS->GetDriver()->GetDescription(), "PostgreSQL") &&
-        !psOptions->nLayerTransaction && psOptions->nGroupTransactions >= 0 &&
+        !psOptions->nLayerTransaction && psOptions->nGroupTransactions > 0 &&
         CPLTestBool(CPLGetConfigOption("PG_COMMIT_WHEN_OVERWRITING", "YES")))
     {
         CPLDebug("GDALVectorTranslate",
@@ -5380,7 +5380,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 nFeaturesInTransaction = 0;
             }
             else if (!psOptions->nLayerTransaction &&
-                     psOptions->nGroupTransactions >= 0 &&
+                     psOptions->nGroupTransactions > 0 &&
                      ++nTotalEventsDone >= psOptions->nGroupTransactions)
             {
                 if (m_poODS->CommitTransaction() == OGRERR_FAILURE ||
