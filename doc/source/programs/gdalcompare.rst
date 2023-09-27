@@ -15,7 +15,12 @@ Synopsis
 
 .. code-block::
 
-    gdalcompare.py [--help] [--help-general] [-sds] golden_file new_file
+    gdalcompare.py [--help] [--help-general]
+                   [-dumpdiffs] [-skip_binary] [-skip_overviews]
+                   [-skip_geolocation] [-skip_geotransform]
+                   [-skip_metadata] [-skip_rpc] [-skip_srs]
+                   [-sds] <golden_file> <new_file>
+
 
 Description
 -----------
@@ -33,6 +38,55 @@ count of 1 (the binary difference) should be considered acceptable.
 .. program:: gdalcompare
 
 .. include:: options/help_and_help_general.rst
+
+.. option:: -dumpdiffs
+
+    .. versionadded:: 3.8
+
+    Whether to output the difference in pixel content in a TIFF file in the
+    current directory.
+
+.. option:: -skip_binary
+
+    .. versionadded:: 3.8
+
+    Whether to skip exact comparison of binary content.
+
+.. option:: -skip_overviews
+
+    .. versionadded:: 3.8
+
+    Whether to skip comparison of overviews.
+
+.. option:: -skip_geolocation
+
+    .. versionadded:: 3.8
+
+    Whether to skip comparison of GEOLOCATION metadata domain.
+
+.. option:: -skip_geotransform
+
+    .. versionadded:: 3.8
+
+    Whether to skip comparison of geotransform matrix.
+
+.. option:: -skip_metadata
+
+    .. versionadded:: 3.8
+
+    Whether to skip comparison of metadata
+
+.. option:: -skip_rpc
+
+    .. versionadded:: 3.8
+
+    Whether to skip comparison of Rational Polynomial Coefficients (RPC) metadata domain.
+
+.. option:: -skip_srs
+
+    .. versionadded:: 3.8
+
+    Whether to skip comparison of spatial reference systems (SRS).
 
 .. option:: -sds
 
