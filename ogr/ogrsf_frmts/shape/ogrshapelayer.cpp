@@ -912,8 +912,9 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
               psShape->dfYMin == psShape->dfYMax)) ||
             psShape->nSHPType == SHPT_NULL)
         {
-            poFeature = SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId,
-                                          psShape, osEncoding);
+            poFeature =
+                SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId, psShape,
+                                  osEncoding, m_bHasWarnedWrongWindingOrder);
         }
         else if (m_sFilterEnvelope.MaxX < psShape->dfXMin ||
                  m_sFilterEnvelope.MaxY < psShape->dfYMin ||
@@ -925,14 +926,16 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
         }
         else
         {
-            poFeature = SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId,
-                                          psShape, osEncoding);
+            poFeature =
+                SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId, psShape,
+                                  osEncoding, m_bHasWarnedWrongWindingOrder);
         }
     }
     else
     {
-        poFeature = SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId,
-                                      nullptr, osEncoding);
+        poFeature =
+            SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId, nullptr,
+                              osEncoding, m_bHasWarnedWrongWindingOrder);
     }
 
     return poFeature;
@@ -1034,9 +1037,9 @@ OGRFeature *OGRShapeLayer::GetFeature(GIntBig nFeatureId)
     if (!TouchLayer() || nFeatureId > INT_MAX)
         return nullptr;
 
-    OGRFeature *poFeature =
-        SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn,
-                          static_cast<int>(nFeatureId), nullptr, osEncoding);
+    OGRFeature *poFeature = SHPReadOGRFeature(
+        hSHP, hDBF, poFeatureDefn, static_cast<int>(nFeatureId), nullptr,
+        osEncoding, m_bHasWarnedWrongWindingOrder);
 
     if (poFeature == nullptr)
     {
@@ -1488,7 +1491,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
                 if (psShape)
                 {
-                    poGeometry = SHPReadOGRObject(hSHP, iShape, psShape);
+                    poGeometry = SHPReadOGRObject(
+                        hSHP, iShape, psShape, m_bHasWarnedWrongWindingOrder);
                     if (poGeometry)
                         poGeometry->getEnvelope(&sGeomEnv);
                     psShape = nullptr;
@@ -1551,7 +1555,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                         if (psShape)
                         {
                             poGeometry =
-                                SHPReadOGRObject(hSHP, iShape, psShape);
+                                SHPReadOGRObject(hSHP, iShape, psShape,
+                                                 m_bHasWarnedWrongWindingOrder);
                             psShape = nullptr;
                         }
                     }
