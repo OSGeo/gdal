@@ -59,6 +59,7 @@ class OGRXLSXLayer final : public OGRMemLayer
     void Init();
     bool bUpdated;
     bool bHasHeaderLine;
+    std::string m_osCols{};
     std::set<int> oSetFieldsOfUnknownType{};
 
   public:
@@ -161,6 +162,11 @@ class OGRXLSXLayer final : public OGRMemLayer
         return OGRMemLayer::TestCapability(pszCap);
     }
 
+    const std::string &GetCols() const
+    {
+        return m_osCols;
+    }
+
     virtual OGRErr SyncToDisk() override;
 };
 
@@ -178,6 +184,7 @@ typedef enum
     STATE_T,
 
     /* for sheet?.xml */
+    STATE_COLS,
     STATE_SHEETDATA,
     STATE_ROW,
     STATE_CELL,
@@ -213,7 +220,7 @@ class OGRXLSXDataSource final : public GDALDataset
     bool bUpdated;
 
     int nLayers;
-    OGRLayer **papoLayers;
+    OGRXLSXLayer **papoLayers;
     std::map<CPLString, CPLString> oMapRelsIdToTarget;
     std::set<std::string> m_oSetSheetId;
 
@@ -236,6 +243,7 @@ class OGRXLSXDataSource final : public GDALDataset
     int nCurCol;
 
     OGRXLSXLayer *poCurLayer;
+    std::string m_osCols{};
 
     int nStackDepth;
     int nDepth;
@@ -257,6 +265,8 @@ class OGRXLSXDataSource final : public GDALDataset
     void startElementDefault(const char *pszName, const char **ppszAttr);
     void startElementTable(const char *pszName, const char **ppszAttr);
     void endElementTable(const char *pszName);
+    void startElementCols(const char *pszName, const char **ppszAttr);
+    void endElementCols(const char *pszName);
     void startElementRow(const char *pszName, const char **ppszAttr);
     void endElementRow(const char *pszName);
     void startElementCell(const char *pszName, const char **ppszAttr);
