@@ -2931,8 +2931,7 @@ int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
 char aMessage[MM_MESSAGE_LENGHT], 
      aFileIdentifier[MM_MAX_LEN_LAYER_IDENTIFIER],
      aMMIDSRS[MM_MAX_ID_SNY];
-unsigned __int32 i;
-//unsigned __int32 i_id;
+MM_EXT_DBF_N_FIELDS nIField;
 FILE_TYPE *pF;
 
     if(NULL==(pF=fopen_function(hMMMD->aLayerName, "w+t")))
@@ -3000,16 +2999,16 @@ FILE_TYPE *pF;
                 }
             }
         }
-    
-        // Writing OVERVIEW:ASPECTES_TECNICS in polygon metadata file. 
-        // ArcSource=fitx_pol.arc
-        if(hMMMD->ePlainLT==MM_LayerType_Pol)
-        {
-            printf_function(pF, "\n[%s]\n", SECTION_OVVW_ASPECTES_TECNICS);
-            printf_function(pF, "%s=\"%s\"\n", KEY_ArcSource, hMMMD->aArcFile);
-        }
     }
-
+    
+    // Writing OVERVIEW:ASPECTES_TECNICS in polygon metadata file. 
+    // ArcSource=fitx_pol.arc
+    if(hMMMD->ePlainLT==MM_LayerType_Pol)
+    {
+        printf_function(pF, "\n[%s]\n", SECTION_OVVW_ASPECTES_TECNICS);
+        printf_function(pF, "%s=\"%s\"\n", KEY_ArcSource, hMMMD->aArcFile);
+    }
+    
     // Writing EXTENT section
     printf_function(pF, "\n[%s]\n", SECTION_EXTENT);
     printf_function(pF, "%s=0\n", KEY_toler_env);
@@ -3052,31 +3051,102 @@ FILE_TYPE *pF;
     printf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]\n");
     printf_function(pF, "visible=1\n");
     printf_function(pF, "MostrarUnitats=0\n");
-    printf_function(pF, "descriptor=Internal Graphic identifier\n");
+    printf_function(pF, "descriptor=Internal graphic identifier\n");
     
-    // Writing TAULA_PRINCIPAL section (for vector files)
+    if(hMMMD->ePlainLT==MM_LayerType_Arc)
+    {
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Number of vertices\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Lenght of arc\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Initial node\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Final node\n");
+    }
+    else if(hMMMD->ePlainLT==MM_LayerType_Node)
+    {
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:ARCS_A_NOD]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Number of arcs to node\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Node type\n");
+    }
+    else if(hMMMD->ePlainLT==MM_LayerType_Pol)
+    {
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Number of vertices\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Perimeter of the polygon\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:AREA]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Area of the polygon\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Number of arcs\n");
+
+        printf_function(pF, "\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]\n");
+        printf_function(pF, "visible=0\n");
+        printf_function(pF, "simbolitzable=0\n");
+        printf_function(pF, "MostrarUnitats=0\n");
+        printf_function(pF, "descriptor=Number of elemental polygons\n");
+    }
+
+    // Writing TAULA_PRINCIPAL section
     if(hMMMD->pLayerDB && hMMMD->pLayerDB->nNFields>0)
     {
-        // Looking for the Identify Graph field
-        /*for (i_id=0;i_id<hMMMD->pLayerDB->nNFields;i_id++)
-        {
-            if(hMMMD->pLayerDB->pFields[i_id].bIsIdGraph)
-                break;
-        }
-        if(i_id<hMMMD->pLayerDB->nNFields)
-        {
-            printf_function(pF, "\n[%s]\n", SECTION_TAULA_PRINCIPAL);
-            printf_function(pF, "%s=%s\n", KEY_IdGrafic, hMMMD->pLayerDB->pFields[i_id].pszFieldName);
-            printf_function(pF, "%s=RELACIO_1_N_DICC\n", KEY_TipusRelacio);
-        }*/
-
         // For each field of the databes
-        for (i=0;i<hMMMD->pLayerDB->nNFields;i++)
+        for (nIField=0;nIField<hMMMD->pLayerDB->nNFields;nIField++)
         {
-            if(!IsEmptyString(hMMMD->pLayerDB->pFields[i].pszFieldDescription))
+            if(!IsEmptyString(hMMMD->pLayerDB->pFields[nIField].pszFieldDescription))
             {
-                printf_function(pF, "\n[%s:%s]\n", SECTION_TAULA_PRINCIPAL, hMMMD->pLayerDB->pFields[i].pszFieldName);
-                printf_function(pF, "%s=%s\n", KEY_descriptor, hMMMD->pLayerDB->pFields[i].pszFieldDescription);
+                printf_function(pF, "\n[%s:%s]\n", SECTION_TAULA_PRINCIPAL, hMMMD->pLayerDB->pFields[nIField].pszFieldName);
+                printf_function(pF, "%s=%s\n", KEY_descriptor, hMMMD->pLayerDB->pFields[nIField].pszFieldDescription);
             }
         }
     }
@@ -3377,87 +3447,109 @@ MM_EXT_DBF_N_FIELDS nNFields;
     return 0;
 }
 
-int MMAddPointRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer, struct MiraMonFeature *hMMFeature,
-                       MM_INTERNAL_FID nElemCount)
+int MMAddFeatureRecordToMMDB(struct MiraMonFeature *hMMFeature,
+                             struct MM_BASE_DADES_XP *pBD_XP,
+                             char *pszRecordOnCourse,
+                             struct MM_FLUSH_INFO *pFlushRecList,
+                             MM_NUMERATOR_RECORD *nNumRecords,
+                             MM_EXT_DBF_N_FIELDS nNumPrivateMMField)
 {
-struct MM_BASE_DADES_XP *pBD_XP=NULL;
-char *pszRecordOnCourse;
 unsigned __int32 nIRecord;
 MM_EXT_DBF_N_FIELDS nIField;
 
-    // Adding record to the MiraMon database (extended DBF)
-    // Flush settings
-    hMiraMonLayer->MMPoint.MMAdmDB.FlushRecList.pBlockWhereToSave=
-        (void *)hMiraMonLayer->MMPoint.MMAdmDB.pRecList;
-
-    pBD_XP=hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP;
-    pszRecordOnCourse=hMiraMonLayer->MMPoint.MMAdmDB.szRecordOnCourse;
-    
-    hMiraMonLayer->MMPoint.MMAdmDB.FlushRecList.SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
-    hMiraMonLayer->MMPoint.MMAdmDB.FlushRecList.pBlockToBeSaved=(void *)pszRecordOnCourse;
-
-    memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
-        &nElemCount, TRUE);
-    
     for(nIRecord=0; nIRecord<hMMFeature->nNumRecords; nIRecord++)
     {
         for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
         {
-            if (pBD_XP->Camp[nIField+MM_PRIVATE_POINT_DB_FIELDS].TipusDeCamp=='C')
+            if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
 	        {
                 if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
                 {
                     MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POINT_DB_FIELDS, 
+                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
                                FALSE);
                 }
                 else
                 {
                     MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POINT_DB_FIELDS, 
+                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
                                FALSE);
                 }
 	        }
-            else if (pBD_XP->Camp[nIField+MM_PRIVATE_POINT_DB_FIELDS].TipusDeCamp=='N')
+            else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='N')
 	        {
-                if(pBD_XP->Camp[nIField+MM_PRIVATE_POINT_DB_FIELDS].Is64)
+                if(pBD_XP->Camp[nIField+nNumPrivateMMField].Is64)
                 {
                     MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POINT_DB_FIELDS, 
+                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].iValue,
                                TRUE);
                 }
                 else
                 {
                     MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POINT_DB_FIELDS, 
+                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].dValue,
                                FALSE);
                 }
                 
 	        }
-            else if (pBD_XP->Camp[nIField+MM_PRIVATE_POINT_DB_FIELDS].TipusDeCamp=='D')
+            else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='D')
 	        {
                 MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POINT_DB_FIELDS, 
+                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
                                FALSE);
 	        }
             else
 	        {
                 MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POINT_DB_FIELDS, 
+                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
                                FALSE);
 	        }
         }
-        if(MMAppendBlockToBuffer(&hMiraMonLayer->MMPoint.MMAdmDB.FlushRecList))
+        
+        if(MMAppendBlockToBuffer(pFlushRecList))
             return 1;
-        hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP->nfitxes++;
+
+        (*nNumRecords)++;
     }
+    return 0;
+}
+
+int MMAddPointRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer, 
+                        struct MiraMonFeature *hMMFeature,
+                        MM_INTERNAL_FID nElemCount)
+{
+struct MM_BASE_DADES_XP *pBD_XP=NULL;
+MM_EXT_DBF_N_FIELDS nNumPrivateMMField=MM_PRIVATE_POINT_DB_FIELDS;
+char *pszRecordOnCourse;
+struct MM_FLUSH_INFO *pFlushRecList;
+
+    // Adding record to the MiraMon database (extended DBF)
+    // Flush settings
+    pFlushRecList=&hMiraMonLayer->MMPoint.MMAdmDB.FlushRecList;
+    pFlushRecList->pBlockWhereToSave=
+        (void *)hMiraMonLayer->MMPoint.MMAdmDB.pRecList;
+
+    pBD_XP=hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP;
+    pszRecordOnCourse=hMiraMonLayer->MMPoint.MMAdmDB.szRecordOnCourse;
+    
+    pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
+    pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
+
+    memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
+    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
+        &nElemCount, TRUE);
+    
+    if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,
+            pszRecordOnCourse, pFlushRecList, 
+            &hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP->nfitxes,
+            nNumPrivateMMField))
+        return 1;
     return 0;
 }
 
@@ -3466,9 +3558,9 @@ int MMAddArcRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer, struct MiraMonF
 {
 struct MM_BASE_DADES_XP *pBD_XP=NULL;
 char *pszRecordOnCourse;
-unsigned __int32 nIRecord;
-MM_EXT_DBF_N_FIELDS nIField;
 struct MiraMonArcLayer *pMMArcLayer;
+MM_EXT_DBF_N_FIELDS nNumPrivateMMField=MM_PRIVATE_ARC_DB_FIELDS;
+struct MM_FLUSH_INFO *pFlushRecList;
 
     if(hMiraMonLayer->bIsPolygon)
         pMMArcLayer=&hMiraMonLayer->MMPolygon.MMArc;
@@ -3477,14 +3569,15 @@ struct MiraMonArcLayer *pMMArcLayer;
 
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
-    pMMArcLayer->MMAdmDB.FlushRecList.pBlockWhereToSave=
+    pFlushRecList=&pMMArcLayer->MMAdmDB.FlushRecList;
+    pFlushRecList->pBlockWhereToSave=
         (void *)pMMArcLayer->MMAdmDB.pRecList;
 
     pBD_XP=pMMArcLayer->MMAdmDB.pMMBDXP;
     pszRecordOnCourse=pMMArcLayer->MMAdmDB.szRecordOnCourse;
     
-    pMMArcLayer->MMAdmDB.FlushRecList.SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
-    pMMArcLayer->MMAdmDB.FlushRecList.pBlockToBeSaved=(void *)pszRecordOnCourse;
+    pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
+    pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
     
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
     MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
@@ -3504,70 +3597,17 @@ struct MiraMonArcLayer *pMMArcLayer;
     
     if(hMiraMonLayer->bIsPolygon)
     {
-        if(MMAppendBlockToBuffer(&pMMArcLayer->MMAdmDB.FlushRecList))
+        if(MMAppendBlockToBuffer(pFlushRecList))
             return 1;
         pMMArcLayer->MMAdmDB.pMMBDXP->nfitxes++;
         return 0;
     }
 
-    for(nIRecord=0; nIRecord<hMMFeature->nNumRecords; nIRecord++)
-    {
-        for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
-        {
-            if (pBD_XP->Camp[nIField+MM_PRIVATE_ARC_DB_FIELDS].TipusDeCamp=='C')
-	        {
-                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_ARC_DB_FIELDS, 
-                               hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
-                               FALSE);
-                }
-                else
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_ARC_DB_FIELDS, 
-                               hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE);
-                }
-	        }
-            else if (pBD_XP->Camp[nIField+MM_PRIVATE_ARC_DB_FIELDS].TipusDeCamp=='N')
-	        {
-                if(pBD_XP->Camp[nIField+MM_PRIVATE_ARC_DB_FIELDS].Is64)
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_ARC_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].iValue,
-                               TRUE);
-                }
-                else
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_ARC_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].dValue,
-                               FALSE);
-                }
-                
-	        }
-            else if (pBD_XP->Camp[nIField+MM_PRIVATE_ARC_DB_FIELDS].TipusDeCamp=='D')
-	        {
-                MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_ARC_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE);
-	        }
-            else
-	        {
-                MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_ARC_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
-                               FALSE);
-	        }
-        }
-        if(MMAppendBlockToBuffer(&pMMArcLayer->MMAdmDB.FlushRecList))
-            return 1;
-        pMMArcLayer->MMAdmDB.pMMBDXP->nfitxes++;
-    }
+    if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,
+            pszRecordOnCourse, pFlushRecList, 
+            &pMMArcLayer->MMAdmDB.pMMBDXP->nfitxes,
+            nNumPrivateMMField))
+        return 1;
     return 0;
 }
 
@@ -3613,24 +3653,28 @@ double nDoubleValue;
     return 0;
 }
 
-int MMAddPolygonRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer, struct MiraMonFeature *hMMFeature,
-                       MM_INTERNAL_FID nElemCount, MM_TIPUS_N_VERTEXS nVerticesCount, struct MM_PH *pPolHeader)
+int MMAddPolygonRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer, 
+                        struct MiraMonFeature *hMMFeature,
+                        MM_INTERNAL_FID nElemCount, 
+                        MM_TIPUS_N_VERTEXS nVerticesCount, 
+                        struct MM_PH *pPolHeader)
 {
 struct MM_BASE_DADES_XP *pBD_XP=NULL;
 char *pszRecordOnCourse;
-unsigned __int32 nIRecord;
-MM_EXT_DBF_N_FIELDS nIField;
+MM_EXT_DBF_N_FIELDS nNumPrivateMMField=MM_PRIVATE_POLYGON_DB_FIELDS;
+struct MM_FLUSH_INFO *pFlushRecList;
 
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
-    hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList.pBlockWhereToSave=
+    pFlushRecList=&hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList;
+    pFlushRecList->pBlockWhereToSave=
         (void *)hMiraMonLayer->MMPolygon.MMAdmDB.pRecList;
 
     pBD_XP=hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP;
     pszRecordOnCourse=hMiraMonLayer->MMPolygon.MMAdmDB.szRecordOnCourse;
     
-    hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList.SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
-    hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList.pBlockToBeSaved=(void *)pszRecordOnCourse;
+    pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
+    pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
 
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
     MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
@@ -3638,7 +3682,7 @@ MM_EXT_DBF_N_FIELDS nIField;
 
     if(!hMMFeature)
     {
-        if(MMAppendBlockToBuffer(&hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList))
+        if(MMAppendBlockToBuffer(pFlushRecList))
             return 1;
         hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nfitxes++;
         return 0;
@@ -3659,67 +3703,11 @@ MM_EXT_DBF_N_FIELDS nIField;
     MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
         &pPolHeader->nRingsCount, TRUE);
     
-    
-    for(nIRecord=0; nIRecord<hMMFeature->nNumRecords; nIRecord++)
-    {
-        for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
-        {
-            if (pBD_XP->Camp[nIField+MM_PRIVATE_POLYGON_DB_FIELDS].TipusDeCamp=='C')
-	        {
-                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POLYGON_DB_FIELDS, 
-                               hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
-                               FALSE);
-                }
-                else
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POLYGON_DB_FIELDS, 
-                               hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE);
-                }
-	        }
-            else if (pBD_XP->Camp[nIField+MM_PRIVATE_POLYGON_DB_FIELDS].TipusDeCamp=='N')
-	        {
-                if(pBD_XP->Camp[nIField+MM_PRIVATE_POLYGON_DB_FIELDS].Is64)
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POLYGON_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].iValue,
-                               TRUE);
-                }
-                else
-                {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POLYGON_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].dValue,
-                               FALSE);
-                }
-                
-	        }
-            else if (pBD_XP->Camp[nIField+MM_PRIVATE_POLYGON_DB_FIELDS].TipusDeCamp=='D')
-	        {
-                MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POLYGON_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE);
-	        }
-            else
-	        {
-                MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+MM_PRIVATE_POLYGON_DB_FIELDS, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
-                               FALSE);
-	        }
-        }
-        
-        if(MMAppendBlockToBuffer(&hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList))
-            return 1;
-
-        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nfitxes++;
-    }
+    if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,
+            pszRecordOnCourse, pFlushRecList, 
+            & hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nfitxes,
+            nNumPrivateMMField))
+        return 1;
     return 0;
 }
 

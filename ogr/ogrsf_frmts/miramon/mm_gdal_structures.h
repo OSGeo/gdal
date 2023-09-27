@@ -77,27 +77,15 @@ struct MM_CAMP // FIELD
     // Not used in GDAL: Content as expression
     MM_BOOLEAN EsExpressio; 
 
-	MM_BYTE ProveDeNivJerarqSup; /* En teoria pot prendre un dels següents valors:
-				    	PROVE_DE_NIV_JERARQ_SUP_NO, PROVE_DE_NIV_JERARQ_SUP_FULL,
-				        PROVE_DE_NIV_JERARQ_SUP_SERIE o PROVE_DE_NIV_JERARQ_SUP_MULTISERIE,
-                        però pel disseny d'herència realitzat només hauria a de ser
-                        pot ser PROVE_DE_NIV_JERARQ_SUP_NO o PROVE_DE_NIV_JERARQ_SUP_SERIE.*/
+    // Not used in GDAL
+	//MM_BYTE ProveDeNivJerarqSup;
 
-    MM_TIPUS_NUMERADOR_TAULA_ASSOC NTaulesAssoc;
-    struct BDXP_O_BDODBC * TaulaAssoc; /* Usat en estructures de bases de
-    							dades de RELs de la versió 4. El seu contingut
-                                només té sentit quan
-                                	mostrar_camp==CAMP_QUE_MOSTRA_TAULA_BDXP_O_BDODBC.
-                                En cas contrari queda indeterminat.*/
-    MM_BYTE TractamentVariable; /* Indica si el camp conté una variable de tipus
-    							"quantitatiu continu", "ordinal" ("qualitatiu")
-                                o "categòric". Vegeu els define CAMP_INDETERMINAT,
-                                CAMP_CATEGORIC, CAMP_ORDINAL i
-                                CAMP_QUANTITATIU_CONTINU a DefBD.h i les
-                                funcions TipusCampDBF_a_TractamentVariable() i
-                                DonaTractamentVariable_o_Defecte().  */
-    char unitats[MM_MAX_LON_UNITATS_CAMP];
-    MM_BOOLEAN MostrarUnitats;
+    // MM_TIPUS_NUMERADOR_TAULA_ASSOC NTaulesAssoc;
+    // struct BDXP_O_BDODBC * TaulaAssoc; 
+    //
+    MM_BYTE TractamentVariable; 
+    //char unitats[MM_MAX_LON_UNITATS_CAMP];
+    //MM_BOOLEAN MostrarUnitats;
 
     //char NODATADef[MAX_NODATA_DEF]; 
 

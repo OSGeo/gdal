@@ -101,7 +101,7 @@ void RegisterOGRMiraMon()
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-    poDriver->SetDescription("MM");
+    poDriver->SetDescription("MiraMon");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
@@ -124,7 +124,10 @@ void RegisterOGRMiraMon()
         "<Value>NULL</Value>"
         "</Option>"
         "</LayerCreationOptionList>");
-
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONFIELDDATATYPES,
+        "Integer Integer64 Real String Date Time DateTime "
+        "Binary IntegerList Integer64List RealList StringList");
     poDriver->pfnOpen = OGRMMDriverOpen;
     poDriver->pfnIdentify = OGRMMDriverIdentify;
     poDriver->pfnCreate = OGRMMDriverCreate;
