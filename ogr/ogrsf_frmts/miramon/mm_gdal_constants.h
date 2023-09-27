@@ -39,6 +39,8 @@ CPL_C_START // Necessary for compiling C in GDAL project
 #define MM_NUMERATOR_DBF_FIELD_TYPE             unsigned __int32   //(TIPUS_NUMERADOR_CAMP)
 #define MM_NUMERATOR_RECORD                     unsigned __int32   // ·$· <-- 64
 #define MM_FILE_OFFSET                          unsigned __int64 
+typedef size_t MM_TIPUS_N_VERTEXS;
+
 //#define MM_TIPUS_MIDA_FITXER                    __int64  
 typedef __int64 MM_TIPUS_MIDA_FITXER;
 #define MM_TIPUS_OFFSET_PRIMERA_FITXA           __int32 

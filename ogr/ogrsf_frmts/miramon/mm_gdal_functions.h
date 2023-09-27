@@ -16,7 +16,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #define MM_EscriuOffsetNomEstesBD_XP(bd_xp,i_camp,offset_nom_camp) \
 			memcpy((bd_xp)->Camp[(i_camp)].reservat_2+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,&(offset_nom_camp),4)
 
-
+char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 void MM_InitializeField(struct MM_CAMP *camp);
 struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps);
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP);

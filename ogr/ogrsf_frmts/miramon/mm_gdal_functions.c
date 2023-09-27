@@ -612,7 +612,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
             {
             	char nom_temp[MM_MAX_LON_FIELD_NAME_DBF];
 
-				strncpy(nom_temp,base_dades_XP->Camp[i].NomCamp, MM_MAX_LON_FIELD_NAME_DBF);
+				MM_strnzcpy(nom_temp,base_dades_XP->Camp[i].NomCamp, MM_MAX_LON_FIELD_NAME_DBF);
 				MM_ReturnValidClassicDBFFieldName(nom_temp);
 				nom_temp[MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF-1]='\0';
 				if ((MM_CheckClassicFieldNameEqual(base_dades_XP, nom_temp)) == TRUE)
@@ -1040,7 +1040,7 @@ int retorn_valida_nom_camp;
 		if(retorn_valida_nom_camp==MM_NOM_DBF_ESTES_I_VALID)
 		{
 			MM_CalculateBytesExtendedFieldName(camp);
-			strncpy(nom_temp, NomCamp, MM_MAX_LON_FIELD_NAME_DBF);
+			MM_strnzcpy(nom_temp, NomCamp, MM_MAX_LON_FIELD_NAME_DBF);
 			MM_ReturnValidClassicDBFFieldName(nom_temp);
 			MM_strnzcpy(camp->NomCampDBFClassica, nom_temp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
 		}

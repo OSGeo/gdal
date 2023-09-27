@@ -408,7 +408,7 @@ struct MM_ZSection
 struct MM_AH
 {
     struct MMBoundingBox dfBB;
-    MM_INTERNAL_FID nElemCount; // 4/8 bytes depending on the version
+    MM_TIPUS_N_VERTEXS nElemCount; // 4/8 bytes depending on the version
     MM_FILE_OFFSET nOffset; // 4/8 bytes depending on the version
     MM_INTERNAL_FID nFirstIdNode; // 4/8 bytes depending on the version
     MM_INTERNAL_FID nLastIdNode; // 4/8 bytes depending on the version
