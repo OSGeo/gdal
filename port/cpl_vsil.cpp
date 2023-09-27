@@ -1591,6 +1591,9 @@ VSIDIR *VSIFilesystemHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     }
     VSIDIRGeneric *dir = new VSIDIRGeneric(this);
     dir->osRootPath = pszPath;
+    if (!dir->osRootPath.empty() &&
+        (dir->osRootPath.back() == '/' || dir->osRootPath.back() == '\\'))
+        dir->osRootPath.pop_back();
     dir->nRecurseDepth = nRecurseDepth;
     dir->papszContent = papszContent;
     dir->m_osFilterPrefix = CSLFetchNameValueDef(papszOptions, "PREFIX", "");
