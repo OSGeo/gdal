@@ -37,17 +37,12 @@
 static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    const char *pszHeader =
-        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-    if (poOpenInfo->nHeaderBytes && strstr(pszHeader, "@VGMT") != nullptr)
-        return true;
-
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
         return true;
 
-    return false;
+    return 0;
 }
 
 /************************************************************************/

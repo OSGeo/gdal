@@ -64,7 +64,7 @@ struct MM_CAMP *MM_CreateAllFields(int ncamps)
 struct MM_CAMP *camp;
 MM_NUMERATOR_DBF_FIELD_TYPE i;
 
-    if ((camp=malloc(ncamps*sizeof(*camp)))==NULL)
+    if ((camp=calloc_function(ncamps*sizeof(*camp)))==NULL)
         return NULL;
     
     for (i=0; i<(size_t)ncamps; i++)
@@ -78,7 +78,7 @@ struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_cam
 struct MM_BASE_DADES_XP *base_dades_XP;
 
 	if ((base_dades_XP = (struct MM_BASE_DADES_XP *)
-						calloc(sizeof(struct MM_BASE_DADES_XP), 1)) == NULL)
+						calloc_function(sizeof(struct MM_BASE_DADES_XP))) == NULL)
 	{
 		//ErrorMsg(stb(0,No_mem));
 		return NULL;
@@ -87,7 +87,7 @@ struct MM_BASE_DADES_XP *base_dades_XP;
 	if (n_camps==0)
 	{
 		/* base_dades_XP->Camp =NULL; No cal perquè ja s'ha inicialitzat
-						amb calloc() */
+						amb calloc_function() */
 		;
 	}
 	else
@@ -96,7 +96,7 @@ struct MM_BASE_DADES_XP *base_dades_XP;
 		base_dades_XP->Camp = (struct MM_CAMP *)MM_CreateAllFields(n_camps);
 		if (!base_dades_XP->Camp)
 		{
-			free (base_dades_XP);
+			free_function (base_dades_XP);
 			//ErrorMsg(stb(0,No_mem));
 			return NULL;
 		}
@@ -397,7 +397,7 @@ size_t i;
 		return NULL;
 
     i=strlen(text);
-	if ((ptr=malloc(i+2)) == NULL)
+	if ((ptr=calloc_function(i+2)) == NULL)
         return NULL;
 
     *ptr=caracter;
@@ -414,7 +414,7 @@ size_t longsubindex;
 size_t longnomcamp;
        					/* Faig un duplicat del nom del camp. */
 						/* El duplicat ha de tenir de amplada size_t ampladamax */
-    NomCamp_SubIndex = calloc(ampladamax, sizeof(char));
+    NomCamp_SubIndex = calloc_function(ampladamax*sizeof(char));
     if(!NomCamp_SubIndex)
         return NULL;
     
@@ -434,7 +434,7 @@ size_t longnomcamp;
     else
     	NomCamp_SubIndex = strcat(NomCamp_SubIndex, _subindex);
 
-    free(_subindex);
+    free_function(_subindex);
 
     return NomCamp_SubIndex;
 }
@@ -463,7 +463,7 @@ char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
 size_t retorn_fwrite;
 MM_BOOLEAN cal_tancar_taula=FALSE;
 
-	if ((zero=calloc(1,max_n_zeros))==NULL)
+	if ((zero=calloc_function(max_n_zeros))==NULL)
 		return FALSE;
 	
     if (base_dades_XP->pfBaseDades == NULL)
@@ -626,13 +626,13 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 					j = 0;
 					while (MM_CheckClassicFieldNameEqual(base_dades_XP, c) == TRUE && j < base_dades_XP->ncamps)
 					{
-						free(c);
+						free_function(c);
 						c = MM_SetSubIndexFieldNam(nom_temp, ++j, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
 					}
 
 					// Deso el nom del camp a l'estructura
 					strcpy(base_dades_XP->Camp[i].NomCampDBFClassica, c);
-					free(c);
+					free_function(c);
                 }
 				else
 					strcpy(base_dades_XP->Camp[i].NomCampDBFClassica, nom_temp);
@@ -817,12 +817,12 @@ char **cadena;
                 cadena=base_dades_XP->Camp[i].separador;
                 if (cadena[j])
                 {
-                    free(cadena[j]);
+                    free_function(cadena[j]);
                     cadena[j]=NULL;
                 }
             }
         }
-		free(base_dades_XP->Camp);
+		free_function(base_dades_XP->Camp);
 		base_dades_XP->Camp = NULL;
         base_dades_XP->ncamps=0;
 	}
@@ -834,7 +834,7 @@ void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 	if (base_dades_XP)
 	{
         MM_ReleaseMainFields(base_dades_XP);
-		free(base_dades_XP);
+		free_function(base_dades_XP);
 	}
 	return;
 }

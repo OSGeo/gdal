@@ -71,7 +71,7 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     }
 
     papoLayers = static_cast<OGRMiraMonLayer **>(
-        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRMiraMonLayer *)));
+        CPLRealloc(papoLayers, sizeof(OGRMiraMonLayer *) * (nLayers + 1)));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
@@ -161,11 +161,8 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 			break;
     }
 
-    // ·$· AP Revisar
     /* -------------------------------------------------------------------- */
-    /*      If this is the first layer for this datasource, and if the      */
-    /*      datasource name doesn't ends in .pol, .arc or .pnt              */
-    /*      we will override the provided layer name                        */
+    /*      We will override the provided layer name                        */
     /*      with the name from the file with the appropiate extension       */
     /* -------------------------------------------------------------------- */
 
@@ -178,10 +175,18 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     if (STARTS_WITH(osFilename, "/vsistdout"))
         pszFlags = "wb";
-    else if (!EQUAL(CPLGetExtension(pszName), "pnt") &&
-        !EQUAL(CPLGetExtension(pszName), "arc") &&
-        !EQUAL(CPLGetExtension(pszName), "pol"))
+    else if(layerType!=MM_LayerType_Unknown)
+    {
+        // Extension is determined only for the type of the layer
         osFilename = CPLFormFilename(osPath, pszLayerName, pszExtension);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+           "MiraMon layers cannot be created with a wkbUnknown layer "
+            "geometry type.");
+        return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */

@@ -3322,7 +3322,10 @@ MM_EXT_DBF_N_FIELDS nNFields;
 
     if(hMiraMonLayer->bIsPoint)
     {
-        nNFields=MM_PRIVATE_POINT_DB_FIELDS+hMiraMonLayer->pLayerDB->nNFields;
+        if(hMiraMonLayer->pLayerDB)
+            nNFields=MM_PRIVATE_POINT_DB_FIELDS+hMiraMonLayer->pLayerDB->nNFields;
+        else
+            nNFields=MM_PRIVATE_POINT_DB_FIELDS;
         hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP=MM_CreateDBFHeader(nNFields);
 
         pBD_XP=hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP;
@@ -3332,7 +3335,11 @@ MM_EXT_DBF_N_FIELDS nNFields;
     }
     else if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
-        nNFields=MM_PRIVATE_ARC_DB_FIELDS+hMiraMonLayer->pLayerDB->nNFields;
+        if(hMiraMonLayer->pLayerDB)
+            nNFields=MM_PRIVATE_ARC_DB_FIELDS+hMiraMonLayer->pLayerDB->nNFields;
+        else
+            nNFields=MM_PRIVATE_ARC_DB_FIELDS;
+
         pBD_XP=hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP=MM_CreateDBFHeader(nNFields);
 
         if (0==(nIField=(MM_EXT_DBF_N_FIELDS)
@@ -3345,16 +3352,20 @@ MM_EXT_DBF_N_FIELDS nNFields;
     }
     else if(hMiraMonLayer->bIsPolygon)
     {
-        nNFields=MM_PRIVATE_POLYGON_DB_FIELDS+hMiraMonLayer->pLayerDB->nNFields;
+        if(hMiraMonLayer->pLayerDB)
+            nNFields=MM_PRIVATE_POLYGON_DB_FIELDS+hMiraMonLayer->pLayerDB->nNFields;
+        else
+            nNFields=MM_PRIVATE_POLYGON_DB_FIELDS;
+
         hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP=MM_CreateDBFHeader(nNFields);
 
         pBD_XP=hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP;
 	    if (0==(nIField=(MM_EXT_DBF_N_FIELDS)
-                    MM_DefineFirstPolygonFieldsDB_XP(pBD_XP, 0)))
+                    MM_DefineFirstPolygonFieldsDB_XP(pBD_XP, 6)))
 	        return 1;
 
         pBD_XP_Aux=hMiraMonLayer->MMPolygon.MMArc.MMAdmDB.pMMBDXP=MM_CreateDBFHeader(5);
-        if (0==MM_DefineFirstArcFieldsDB_XP(pBD_XP_Aux, 0))
+        if (0==MM_DefineFirstArcFieldsDB_XP(pBD_XP_Aux, 6))
 	        return 1;
 
         pBD_XP_Aux=hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB.pMMBDXP=MM_CreateDBFHeader(3);
@@ -3691,16 +3702,16 @@ struct MM_FLUSH_INFO *pFlushRecList;
     MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
         &nVerticesCount, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+2,
         &pPolHeader->dfPerimeter, FALSE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+3,
         &pPolHeader->dfArea, FALSE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+4,
         &pPolHeader->nArcsCount, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+5,
         &pPolHeader->nRingsCount, TRUE);
     
     if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,

@@ -132,7 +132,7 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 
 #define MM_PRIVATE_POINT_DB_FIELDS      1
 #define MM_PRIVATE_ARC_DB_FIELDS        5
-#define MM_PRIVATE_POLYGON_DB_FIELDS    5
+#define MM_PRIVATE_POLYGON_DB_FIELDS    6
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

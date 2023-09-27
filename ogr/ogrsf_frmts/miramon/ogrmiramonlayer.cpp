@@ -1088,7 +1088,11 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
 {
     if (poFeatureDefn->GetFieldCount() == 0)
+    {
+        // MiraMon have private DataBase records
+        hMMFeature.nNumRecords = 1;
         return OGRERR_NONE;
+    }
 
     CPLString osFieldData;
     unsigned __int32 nIRecord;
@@ -1104,6 +1108,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             char **panValues =
                 poFeature->GetFieldAsStringList(iField);
             hMMFeature.nNumRecords = CSLCount(panValues);
+            if(hMMFeature.nNumRecords ==0 )
+                hMMFeature.nNumRecords++;
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
                     hMMFeature.nNumRecords, hMMFeature.nNumRecords, 0))
                 return OGRERR_NOT_ENOUGH_MEMORY;
@@ -1138,6 +1144,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             const int *panValues =
                 poFeature->GetFieldAsIntegerList(iField, &nCount);
             hMMFeature.nNumRecords = nCount;
+            if(hMMFeature.nNumRecords ==0 )
+                hMMFeature.nNumRecords++;
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
                     hMMFeature.nNumRecords, hMMFeature.nNumRecords, 0))
                 return OGRERR_NOT_ENOUGH_MEMORY;
@@ -1163,6 +1171,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             const GIntBig *panValues =
                 poFeature->GetFieldAsInteger64List(iField, &nCount);
             hMMFeature.nNumRecords = nCount;
+            if(hMMFeature.nNumRecords ==0 )
+                hMMFeature.nNumRecords++;
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
                     hMMFeature.nNumRecords, hMMFeature.nNumRecords, 0))
                 return OGRERR_NOT_ENOUGH_MEMORY;
@@ -1187,6 +1197,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             const double *panValues =
                 poFeature->GetFieldAsDoubleList(iField, &nCount);
             hMMFeature.nNumRecords = nCount;
+            if(hMMFeature.nNumRecords ==0 )
+                hMMFeature.nNumRecords++;
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
                     hMMFeature.nNumRecords, hMMFeature.nNumRecords, 0))
                 return OGRERR_NOT_ENOUGH_MEMORY;
