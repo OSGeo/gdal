@@ -1019,6 +1019,36 @@ def test_ogr_shape_26(tmp_path):
 
 
 ###############################################################################
+# Test reading bad geometries where a multi-part multipolygon is
+# written as a single-part multipolygon with its parts as inner
+# rings, like done by QGIS <= 3.28.11 with GDAL >= 3.7
+
+
+def test_ogr_shape_read_multipolygon_as_invalid_polygon():
+
+    ds = ogr.Open("data/shp/multipolygon_as_invalid_polygon.shp")
+    lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        f = lyr.GetNextFeature()
+        assert (
+            "contains polygon(s) with rings with invalid winding order"
+            in gdal.GetLastErrorMsg()
+        )
+    assert (
+        f.GetGeometryRef().ExportToWkt()
+        == "MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((10 0,11 1,10 1,10 0)))"
+    )
+    gdal.ErrorReset()
+    f = lyr.GetNextFeature()
+    assert gdal.GetLastErrorMsg() == ""
+    assert (
+        f.GetGeometryRef().ExportToWkt()
+        == "MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((0.5 -0.5,1.5 0.5,0.5 0.5,0.5 -0.5)))"
+    )
+
+
+###############################################################################
 # Test alternate date formatting (#2746)
 
 
