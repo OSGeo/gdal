@@ -80,7 +80,7 @@ If we delete ``dataset`` and then try to use ``band``, Python will throw a confu
    >>> dataset = gdal.Open('C:\\RandomData.img')
    >>> band = dataset.GetRasterBand(1)
    >>> del dataset           # This will cause the Python garbage collector to deallocate dataset
-   >>> band.Checksum()       # This will now crash Python because the band's dataset is gone
+   >>> band.Checksum()       # This will throw an exception because the band's dataset is gone
    # TypeError: in method 'Band_Checksum', argument 1 of type 'GDALRasterBandShadow *'
 
 .. note::
