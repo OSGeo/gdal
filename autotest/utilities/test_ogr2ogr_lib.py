@@ -175,6 +175,18 @@ def test_ogr2ogr_lib_6():
 
 
 ###############################################################################
+# Test selFields to []
+
+
+def test_ogr2ogr_lib_sel_fields_empty():
+
+    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.VectorTranslate("", srcDS, format="Memory", selectFields=[])
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+
+###############################################################################
 # Test LCO
 
 

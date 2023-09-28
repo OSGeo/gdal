@@ -233,6 +233,11 @@ struct GDALVectorTranslateOptions
     /*! whether osGeomField is set (useful for empty strings) */
     bool bGeomFieldSet = false;
 
+    /*! whether -select has been specified. This is of course true when
+     * !aosSelFields.empty(), but this can also be set when an empty string
+     * has been to disable fields. */
+    bool bSelFieldsSet = false;
+
     /*! list of fields from input layer to copy to the new layer. A field is
        skipped if mentioned previously in the list even if the input layer has
        duplicate field names. (Defaults to all; any field is skipped if a
@@ -487,6 +492,7 @@ class SetupTargetLayer
     char **m_papszLCO;
     OGRSpatialReference *m_poOutputSRS;
     bool m_bNullifyOutputSRS;
+    bool m_bSelFieldsSet = false;
     char **m_papszSelFields;
     bool m_bAppend;
     bool m_bAddMissingFields;
@@ -1777,7 +1783,7 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-nln");
         return nullptr;
     }
-    if (!psOptions->aosSelFields.empty())
+    if (psOptions->bSelFieldsSet)
     {
         CPLError(CE_Failure, CPLE_NotSupported, szErrorMsg, "-select");
         return nullptr;
@@ -2202,8 +2208,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         return nullptr;
     }
 
-    if (!psOptions->aosSelFields.empty() && bAppend &&
-        !psOptions->bAddMissingFields)
+    if (psOptions->bSelFieldsSet && bAppend && !psOptions->bAddMissingFields)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "if -append is specified, -select cannot be used "
@@ -2735,6 +2740,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oSetup.m_papszLCO = psOptions->aosLCO.List();
     oSetup.m_poOutputSRS = oOutputSRSHolder.get();
     oSetup.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
+    oSetup.m_bSelFieldsSet = psOptions->bSelFieldsSet;
     oSetup.m_papszSelFields = psOptions->aosSelFields.List();
     oSetup.m_bAppend = bAppend;
     oSetup.m_bAddMissingFields = psOptions->bAddMissingFields;
@@ -3836,9 +3842,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     /* -------------------------------------------------------------------- */
     std::vector<int> anRequestedGeomFields;
     const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
-    if (m_papszSelFields && !bAppend)
+    if (m_bSelFieldsSet && !bAppend)
     {
-        for (int iField = 0; m_papszSelFields[iField] != nullptr; iField++)
+        for (int iField = 0; m_papszSelFields && m_papszSelFields[iField];
+             iField++)
         {
             int iSrcField = poSrcFDefn->GetFieldIndex(m_papszSelFields[iField]);
             if (iSrcField >= 0)
@@ -4415,10 +4422,11 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
         }
     }
-    else if (m_papszSelFields && !bAppend)
+    else if (m_bSelFieldsSet && !bAppend)
     {
         int nDstFieldCount = poDstFDefn ? poDstFDefn->GetFieldCount() : 0;
-        for (int iField = 0; m_papszSelFields[iField] != nullptr; iField++)
+        for (int iField = 0; m_papszSelFields && m_papszSelFields[iField];
+             iField++)
         {
             const int iSrcField =
                 poSrcFDefn->GetFieldIndex(m_papszSelFields[iField]);
@@ -4509,8 +4517,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 const char *pszFieldName =
                     poSrcFDefn->GetFieldDefn(iSrcField)->GetNameRef();
                 bool bFieldRequested = false;
-                for (int iField = 0; m_papszSelFields[iField] != nullptr;
-                     iField++)
+                for (int iField = 0;
+                     m_papszSelFields && m_papszSelFields[iField]; iField++)
                 {
                     if (EQUAL(pszFieldName, m_papszSelFields[iField]))
                     {
@@ -4579,9 +4587,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         const char *pszFIDColumn = poDstLayer->GetFIDColumn();
 
         std::vector<int> anSrcFieldIndices;
-        if (m_papszSelFields)
+        if (m_bSelFieldsSet)
         {
-            for (int iField = 0; m_papszSelFields[iField] != nullptr; iField++)
+            for (int iField = 0; m_papszSelFields && m_papszSelFields[iField];
+                 iField++)
             {
                 const int iSrcField =
                     poSrcFDefn->GetFieldIndex(m_papszSelFields[iField]);
@@ -6490,6 +6499,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char *pszSelect = papszArgv[++i];
+            psOptions->bSelFieldsSet = true;
             psOptions->aosSelFields =
                 CSLTokenizeStringComplex(pszSelect, " ,", FALSE, FALSE);
         }
