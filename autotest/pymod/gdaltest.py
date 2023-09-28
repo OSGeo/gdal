@@ -49,7 +49,7 @@ from threading import Thread
 
 import pytest
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 jp2kak_drv = None
 jpeg2000_drv = None
@@ -2052,3 +2052,32 @@ def validate_json(jsn, schema):
             jsonschema.validate(instance=jsn, schema=schema)
         except jsonschema.exceptions.RefResolutionError:
             pytest.skip("Failed to resolve remote reference in JSON schema")
+
+
+###############################################################################
+# Close and reopen a dataset
+
+
+def reopen(ds, update=False, open_options=None):
+
+    ds_loc = ds.GetDescription()
+    ds_drv = ds.GetDriver()
+
+    ds.Close()
+
+    if isinstance(ds, ogr.DataSource) and open_options is None:
+        return ogr.Open(ds_loc, update)
+
+    flags = 0
+    if update:
+        flags = gdal.OF_UPDATE
+
+    if open_options is None:
+        open_options = {}
+
+    return gdal.OpenEx(
+        ds_loc,
+        flags,
+        allowed_drivers=[ds_drv.GetDescription()],
+        open_options=open_options,
+    )
