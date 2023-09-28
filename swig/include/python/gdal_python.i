@@ -1088,10 +1088,14 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return self
 
     def __exit__(self, *args):
-        self._invalidate_bands()
+        self.Close()
+%}
 
-        _gdal.delete_Dataset(self)
-        self.this = None
+%feature("pythonappend") Close %{
+    self.thisown = 0
+    self.this = None
+    self._invalidate_bands()
+    return val
 %}
 
 %feature("shadow") ExecuteSQL %{

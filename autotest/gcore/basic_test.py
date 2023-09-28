@@ -834,6 +834,31 @@ def test_create_context_manager(tmp_path):
     assert ds_in.GetRasterBand(1).Checksum() != 0
 
 
+def test_dataset_use_after_close_1():
+    ds = gdal.Open("data/byte.tif")
+    assert ds is not None
+
+    ds.Close()
+
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1)
+
+
+def test_dataset_use_after_close_2():
+    ds = gdal.Open("data/byte.tif")
+    assert ds is not None
+
+    ds2 = ds
+
+    ds2.Close()
+
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1)
+
+    with pytest.raises(Exception):
+        ds2.GetRasterBand(1)
+
+
 def test_band_use_after_dataset_close_1():
     ds = gdal.Open("data/byte.tif")
     band = ds.GetRasterBand(1)
