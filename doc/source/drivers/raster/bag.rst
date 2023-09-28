@@ -75,7 +75,7 @@ The driver has different modes of working which can be controlled by the
 MODE open option:
 
 .. oo:: MODE
-   :choices: LOW_RES_GRID, LIST_SUPERGRIDS, RESAMPLED_GRID, AUTO
+   :choices: LOW_RES_GRID, LIST_SUPERGRIDS, RESAMPLED_GRID, INTERPOLATED, AUTO
    :default: AUTO
 
    Driver mode.
@@ -126,7 +126,8 @@ MODE open option:
       overviews correspond to resampled grids computed with different
       values of the RESX and RESY parameters, but using the same value
       population rules (and not nearest neighbour resampling of the full
-      resolution resampled grid).
+      resolution resampled grid). The last overview level is the
+      low-resolution grid (if SUPERGRIDS_MASK=NO)
 
       The available open options in this mode are:
 
@@ -190,6 +191,26 @@ MODE open option:
          themselves at the nodata value.
       -  NODATA_VALUE=value. Override the default value, which is usually
          1000000.
+
+   -  MODE=RESAMPLED: (GDAL >= 3.8) in this mode, the user specify the extent and
+      resolution of a target grid, and for each cell of this target grid,
+      the driver will interpolate the value from the surrounding nodes of the
+      supergrid(s) that applies to the cell, using in priority bilinear
+      interpolation (for a node that falls within a supergrid and when all
+      4 surrounding nodes of the supergrid are not at nodata value), and
+      fallbacks to barycentric interpolation or inverse distance weighting in
+      other situations.
+
+      Overviews are reported. Note that those overviews correspond to resampled
+      grids computed with different values of the RESX and RESY parameters, but
+      for performance reasons, the interpolation is still limited to the immediate
+      neighbours of the target grid in the supergrid(s), which result in
+      the equivalent of nearest-neighbour downsampling of the full resolution
+      raster. The last overview level is the low-resolution grid.
+
+      The available open options in this mode are MINX, MINY, MAXX, MAXY,
+      RESX, RESY, RES_STRATEGY, RES_FILTER_MIN, RES_FILTER_MAX and NODATA_VALUE
+      (cf their above description for the MODE=RESAMPLED_GRID)
 
 Spatial metadata support
 ------------------------
