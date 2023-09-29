@@ -2336,3 +2336,20 @@ def test_vrt_read_complex_source_use_band_data_type_constraint(
         struct_type * (20 * 20), obj.ReadRaster(buf_type=gdal_type)
     )
     assert max(scaleddata) == 255
+
+
+###############################################################################
+
+
+def test_vrt_read_top_and_bottom_strips_average():
+
+    ref_ds = gdal.Translate("", "data/vrt/top_and_bottom_strips.vrt", format="MEM")
+    ds = gdal.Open("data/vrt/top_and_bottom_strips.vrt")
+
+    args = (0, 127, 256, 129)
+    kwargs = {"buf_xsize": 128, "buf_ysize": 64, "resample_alg": gdal.GRIORA_Average}
+
+    ref_data = ref_ds.ReadRaster(*args, **kwargs)
+    assert ds.GetRasterBand(1).ReadRaster(*args, **kwargs) == ref_data
+    assert ds.ReadRaster(*args, **kwargs) == ref_data
+    assert ref_data[0] == 128
