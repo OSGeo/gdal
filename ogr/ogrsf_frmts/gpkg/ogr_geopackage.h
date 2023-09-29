@@ -100,6 +100,7 @@ struct OGRGPKGTableLayerFillArrowArray
     std::unique_ptr<OGRArrowArrayHelper> psHelper{};
     int nCountRows = 0;
     bool bErrorOccurred = false;
+    std::string osErrorMsg{};
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
     struct tm brokenDown
@@ -758,6 +759,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
         bool m_bArrayReady = false;
         bool m_bFetchRows = false;
         bool m_bStop = false;
+        std::string m_osErrorMsg{};
         std::unique_ptr<GDALGeoPackageDataset> m_poDS{};
         OGRGeoPackageTableLayer *m_poLayer{};
         GIntBig m_iStartShapeId = 0;
@@ -773,7 +775,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     virtual int GetNextArrowArray(struct ArrowArrayStream *,
                                   struct ArrowArray *out_array) override;
-    int GetNextArrowArrayInternal(struct ArrowArray *out_array);
+    int GetNextArrowArrayInternal(struct ArrowArray *out_array,
+                                  std::string &osErrorMsg);
     int GetNextArrowArrayAsynchronous(struct ArrowArray *out_array);
     void GetNextArrowArrayAsynchronousWorker();
     void CancelAsyncNextArrowArray();

@@ -7336,9 +7336,8 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         else
         {
             // should not happen !
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "OGR_GPKG_FillArrowArray_Step() got more rows than expected!");
+            psFillArrowArray->osErrorMsg =
+                "OGR_GPKG_FillArrowArray_Step() got more rows than expected!";
             sqlite3_interrupt(psFillArrowArray->hDB);
             psFillArrowArray->bErrorOccurred = true;
             return;
@@ -7694,13 +7693,15 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     }
     else
     {
+        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
         if (m_poFillArrowArray->bErrorOccurred)
         {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     m_poFillArrowArray->osErrorMsg.c_str());
             return EIO;
         }
 
         // Resume worker thread
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
         m_poFillArrowArray->psHelper = std::move(psHelper);
         m_poFillArrowArray->nCountRows = 0;
         m_poFillArrowArray->oCV.notify_one();
@@ -7722,6 +7723,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     if (m_poFillArrowArray->bErrorOccurred)
     {
         m_oThreadNextArrowArray.join();
+        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                 m_poFillArrowArray->osErrorMsg.c_str());
         m_poFillArrowArray->psHelper->ClearArray();
         return EIO;
     }
@@ -7851,8 +7854,8 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
                      &pszErrMsg) != SQLITE_OK)
     {
         m_poFillArrowArray->bErrorOccurred = true;
-        CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                 pszErrMsg ? pszErrMsg : "unknown error");
+        m_poFillArrowArray->osErrorMsg =
+            pszErrMsg ? pszErrMsg : "unknown error";
     }
     sqlite3_free(pszErrMsg);
 
@@ -7942,6 +7945,9 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             }
             task->m_bArrayReady = false;
         }
+        if (!task->m_osErrorMsg.empty())
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     task->m_osErrorMsg.c_str());
 
         const auto stopThread = [&task]()
         {
@@ -8092,7 +8098,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 {
                     taskPtr->m_bFetchRows = false;
                     taskPtr->m_poLayer->GetNextArrowArrayInternal(
-                        taskPtr->m_psArrowArray.get());
+                        taskPtr->m_psArrowArray.get(), taskPtr->m_osErrorMsg);
                     taskPtr->m_bArrayReady = true;
                     taskPtr->m_oCV.notify_one();
                     // cppcheck-suppress knownConditionTrueFalse
@@ -8118,7 +8124,11 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         }
     }
 
-    return GetNextArrowArrayInternal(out_array);
+    std::string osErrorMsg;
+    int ret = GetNextArrowArrayInternal(out_array, osErrorMsg);
+    if (!osErrorMsg.empty())
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
+    return ret;
 }
 
 /************************************************************************/
@@ -8126,7 +8136,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
-    struct ArrowArray *out_array)
+    struct ArrowArray *out_array, std::string &osErrorMsg)
 {
     memset(out_array, 0, sizeof(*out_array));
 
@@ -8204,8 +8214,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     {
         if (!sFillArrowArray.bErrorOccurred)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "%s",
-                     pszErrMsg ? pszErrMsg : "unknown error");
+            osErrorMsg = pszErrMsg ? pszErrMsg : "unknown error";
         }
     }
     sqlite3_free(pszErrMsg);
