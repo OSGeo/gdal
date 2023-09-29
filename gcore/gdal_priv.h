@@ -880,10 +880,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     UpdateRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                        std::string &failureReason);
 
-    virtual OGRLayer *CreateLayer(const char *pszName,
-                                  OGRSpatialReference *poSpatialRef = nullptr,
-                                  OGRwkbGeometryType eGType = wkbUnknown,
-                                  char **papszOptions = nullptr);
+    virtual OGRLayer *CreateLayer(
+        const char *pszName, const OGRSpatialReference *poSpatialRef = nullptr,
+        OGRwkbGeometryType eGType = wkbUnknown, char **papszOptions = nullptr);
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                 char **papszOptions = nullptr);
 
@@ -922,10 +921,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     //! @endcond
 
   protected:
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr);
+    virtual OGRLayer *ICreateLayer(
+        const char *pszName, const OGRSpatialReference *poSpatialRef = nullptr,
+        OGRwkbGeometryType eGType = wkbUnknown, char **papszOptions = nullptr);
 
     //! @cond Doxygen_Suppress
     OGRErr ProcessSQLCreateIndex(const char *);

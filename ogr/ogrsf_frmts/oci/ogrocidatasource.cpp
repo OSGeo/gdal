@@ -485,7 +485,7 @@ void OGROCIDataSource::TruncateLayer(const char *pszLayerName)
 /************************************************************************/
 
 OGRLayer *OGROCIDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eType,
                                          char **papszOptions)
 
@@ -908,7 +908,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGROCIDataSource::FetchSRSId(OGRSpatialReference *poSRS)
+int OGROCIDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
 {
     char *pszWKT = nullptr;

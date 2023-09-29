@@ -288,7 +288,7 @@ OGRLayer *OGRTABDataSource::GetLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRSIn,
+                                         const OGRSpatialReference *poSRSIn,
                                          OGRwkbGeometryType /* eGeomTypeIn */,
                                          char **papszOptions)
 

@@ -171,7 +171,7 @@ bool OGRDGNDataSource::PreCreate(const char *pszFilename, char **papszOptionsIn)
 /************************************************************************/
 
 OGRLayer *OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eGeomType,
                                          char **papszExtraOptions)
 

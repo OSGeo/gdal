@@ -521,10 +521,9 @@ OdString OGRDGNV8DataSource::FromUTF8(const CPLString &str)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDGNV8DataSource::ICreateLayer(const char *pszLayerName,
-                                           OGRSpatialReference * /*poSRS*/,
-                                           OGRwkbGeometryType /*eGeomType*/,
-                                           char **papszOptions)
+OGRLayer *OGRDGNV8DataSource::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference * /*poSRS*/,
+    OGRwkbGeometryType /*eGeomType*/, char **papszOptions)
 
 {
     if (!m_bUpdate)

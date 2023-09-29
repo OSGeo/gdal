@@ -376,7 +376,7 @@ class OGRElasticDataSource final : public GDALDataset
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int iLayer) override;

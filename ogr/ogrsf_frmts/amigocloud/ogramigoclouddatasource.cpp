@@ -371,7 +371,7 @@ int OGRAmigoCloudDataSource::FetchSRSId(OGRSpatialReference *poSRS)
 /************************************************************************/
 
 OGRLayer *OGRAmigoCloudDataSource::ICreateLayer(
-    const char *pszNameIn, OGRSpatialReference *poSpatialRef,
+    const char *pszNameIn, const OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (!bReadWrite)
@@ -386,10 +386,10 @@ OGRLayer *OGRAmigoCloudDataSource::ICreateLayer(
         new OGRAmigoCloudTableLayer(this, osName);
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
-    OGRSpatialReference *poSRSClone = poSpatialRef;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSpatialRef)
     {
-        poSRSClone = poSRSClone->Clone();
+        poSRSClone = poSpatialRef->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     poLayer->SetDeferredCreation(eGType, poSRSClone, bGeomNullable);

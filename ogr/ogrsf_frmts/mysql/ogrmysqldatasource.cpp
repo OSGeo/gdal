@@ -652,7 +652,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
+int OGRMySQLDataSource::FetchSRSId(const OGRSpatialReference *poSRSIn)
 
 {
     if (poSRSIn == nullptr)
@@ -1173,7 +1173,7 @@ OGRErr OGRMySQLDataSource::DeleteLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
-                                           OGRSpatialReference *poSRS,
+                                           const OGRSpatialReference *poSRS,
                                            OGRwkbGeometryType eType,
                                            char **papszOptions)
 

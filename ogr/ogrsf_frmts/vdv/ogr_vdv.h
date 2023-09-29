@@ -207,7 +207,7 @@ class OGRVDVDataSource final : public GDALDataset
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference * /*poSpatialRef*/,
+                                   const OGRSpatialReference * /*poSpatialRef*/,
                                    OGRwkbGeometryType /*eGType*/,
                                    char **papszOptions) override;
     virtual int TestCapability(const char *pszCap) override;

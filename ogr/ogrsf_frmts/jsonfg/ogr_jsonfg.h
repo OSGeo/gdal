@@ -270,7 +270,7 @@ class OGRJSONFGDataset final : public GDALDataset
     void BeforeCreateFeature();
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSRS = nullptr,
+                           const OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;

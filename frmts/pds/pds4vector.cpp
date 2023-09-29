@@ -1502,7 +1502,7 @@ OGRErr PDS4FixedWidthTable::CreateField(OGRFieldDefn *poFieldIn, int)
 /*                          InitializeNewLayer()                        */
 /************************************************************************/
 
-bool PDS4FixedWidthTable::InitializeNewLayer(OGRSpatialReference *poSRS,
+bool PDS4FixedWidthTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
                                              bool bForceGeographic,
                                              OGRwkbGeometryType eGType,
                                              const char *const *papszOptions)
@@ -2485,7 +2485,7 @@ char **PDS4DelimitedTable::GetFileList() const
 /*                          InitializeNewLayer()                        */
 /************************************************************************/
 
-bool PDS4DelimitedTable::InitializeNewLayer(OGRSpatialReference *poSRS,
+bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
                                             bool bForceGeographic,
                                             OGRwkbGeometryType eGType,
                                             const char *const *papszOptions)

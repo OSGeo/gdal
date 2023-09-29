@@ -149,10 +149,10 @@ OGRLayer *OGRGPXDataSource::GetLayer(int iLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference * /* poSRS */,
-                                         OGRwkbGeometryType eType,
-                                         char **papszOptions)
+OGRLayer *
+OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRSpatialReference * /* poSRS */,
+                               OGRwkbGeometryType eType, char **papszOptions)
 {
     GPXGeometryType gpxGeomType;
     if (eType == wkbPoint || eType == wkbPoint25D)

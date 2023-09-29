@@ -293,7 +293,7 @@ int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
 /************************************************************************/
 
 OGRLayer *OGRGeoconceptDataSource::ICreateLayer(
-    const char *pszLayerName, OGRSpatialReference *poSRS /* = NULL */,
+    const char *pszLayerName, const OGRSpatialReference *poSRS /* = NULL */,
     OGRwkbGeometryType eType /* = wkbUnknown */,
     char **papszOptions /* = NULL */)
 
@@ -517,7 +517,11 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer(
     /*      Assign the coordinate system (if provided)                      */
     /* -------------------------------------------------------------------- */
     if (poSRS != nullptr)
-        poFile->SetSpatialRef(poSRS);
+    {
+        auto poSRSClone = poSRS->Clone();
+        poFile->SetSpatialRef(poSRSClone);
+        poSRSClone->Release();
+    }
 
     return poFile;
 }

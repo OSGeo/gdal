@@ -1756,10 +1756,10 @@ static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference * /*poSpatialRef*/,
-                                         OGRwkbGeometryType eGType,
-                                         char **papszOptions)
+OGRLayer *
+OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRSpatialReference * /*poSpatialRef*/,
+                               OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (!m_bUpdate)
         return nullptr;

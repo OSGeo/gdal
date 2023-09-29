@@ -166,7 +166,7 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
 /************************************************************************/
 
 OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType eType,
                                             char **papszOptions)
 

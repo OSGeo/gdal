@@ -55,9 +55,9 @@ char *OGR_G_ExportToKML(OGRGeometryH hGeometry, const char *pszAltitudeMode);
 /*                           OGRKMLLayer()                              */
 /************************************************************************/
 
-OGRKMLLayer::OGRKMLLayer(const char *pszName, OGRSpatialReference *poSRSIn,
-                         bool bWriterIn, OGRwkbGeometryType eReqType,
-                         OGRKMLDataSource *poDSIn)
+OGRKMLLayer::OGRKMLLayer(const char *pszName,
+                         const OGRSpatialReference *poSRSIn, bool bWriterIn,
+                         OGRwkbGeometryType eReqType, OGRKMLDataSource *poDSIn)
     : poDS_(poDSIn),
       poSRS_(poSRSIn ? new OGRSpatialReference(nullptr) : nullptr),
       poCT_(nullptr), poFeatureDefn_(new OGRFeatureDefn(pszName)),

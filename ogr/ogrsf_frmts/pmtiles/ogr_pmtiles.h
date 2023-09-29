@@ -364,7 +364,7 @@ class OGRPMTilesWriterDataset final : public GDALDataset
 
     CPLErr Close() override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference *,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference *,
                            OGRwkbGeometryType, char **) override;
 
     int TestCapability(const char *) override;

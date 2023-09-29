@@ -264,10 +264,9 @@ int OGRILI2DataSource::Create(const char *pszFilename,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRILI2DataSource::ICreateLayer(const char *pszLayerName,
-                                          OGRSpatialReference * /* poSRS */,
-                                          OGRwkbGeometryType eType,
-                                          char ** /* papszOptions */)
+OGRLayer *OGRILI2DataSource::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference * /* poSRS */,
+    OGRwkbGeometryType eType, char ** /* papszOptions */)
 {
     if (fpOutput == nullptr)
         return nullptr;

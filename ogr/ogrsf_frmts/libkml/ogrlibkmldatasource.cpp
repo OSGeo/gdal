@@ -2120,10 +2120,9 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer(int iLayer)
 
 ******************************************************************************/
 
-OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(const char *pszLayerName,
-                                                    OGRSpatialReference *poSRS,
-                                                    OGRwkbGeometryType eGType,
-                                                    char **papszOptions)
+OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
+    const char *pszLayerName, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eGType, char **papszOptions)
 {
     ContainerPtr poKmlLayerContainer = nullptr;
 
@@ -2167,10 +2166,9 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(const char *pszLayerName,
 
 ******************************************************************************/
 
-OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(const char *pszLayerName,
-                                                    OGRSpatialReference *poSRS,
-                                                    OGRwkbGeometryType eGType,
-                                                    char ** /* papszOptions */)
+OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
+    const char *pszLayerName, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eGType, char ** /* papszOptions */)
 {
     DocumentPtr poKmlDocument = nullptr;
 
@@ -2231,7 +2229,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(const char *pszLayerName,
 ******************************************************************************/
 
 OGRLayer *OGRLIBKMLDataSource::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poOgrSRS,
+                                            const OGRSpatialReference *poOgrSRS,
                                             OGRwkbGeometryType eGType,
                                             char **papszOptions)
 {

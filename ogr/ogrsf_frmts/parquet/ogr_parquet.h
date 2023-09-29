@@ -286,7 +286,7 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     ~OGRParquetWriterLayer() override;
 
     bool SetOptions(CSLConstList papszOptions,
-                    OGRSpatialReference *poSpatialRef,
+                    const OGRSpatialReference *poSpatialRef,
                     OGRwkbGeometryType eGType);
 
     OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
@@ -324,7 +324,7 @@ class OGRParquetWriterDataset final : public GDALPamDataset
 
   protected:
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef = nullptr,
+                           const OGRSpatialReference *poSpatialRef = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
 };

@@ -3352,7 +3352,7 @@ void OGRSQLiteDataSource::ReleaseResultSet(OGRLayer *poLayer)
 /************************************************************************/
 
 OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType eType,
                                             char **papszOptions)
 
@@ -3571,10 +3571,10 @@ OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
 
     poLayer->Initialize(pszLayerName, true, false, true,
                         /* bMayEmitError = */ false);
-    OGRSpatialReference *poSRSClone = poSRS;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSRS)
     {
-        poSRSClone = poSRSClone->Clone();
+        poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     poLayer->SetCreationParameters(osFIDColumnName, eType, pszGeomFormat,

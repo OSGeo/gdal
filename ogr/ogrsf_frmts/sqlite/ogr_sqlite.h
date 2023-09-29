@@ -722,7 +722,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     GetLayerWithGetSpatialWhereByName(const char *pszName) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int) override;

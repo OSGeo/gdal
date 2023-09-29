@@ -536,7 +536,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     virtual int TestCapability(const char *) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
     virtual OGRErr DeleteLayer(int) override;

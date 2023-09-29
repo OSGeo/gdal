@@ -6497,10 +6497,9 @@ OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
-                                              OGRSpatialReference *poSpatialRef,
-                                              OGRwkbGeometryType eGType,
-                                              char **papszOptions)
+OGRLayer *GDALGeoPackageDataset::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSpatialRef,
+    OGRwkbGeometryType eGType, char **papszOptions)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify we are in update mode.                                   */

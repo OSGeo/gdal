@@ -7651,7 +7651,7 @@ OGRLayer *netCDFDataset::GetLayer(int nIdx)
 /************************************************************************/
 
 OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
-                                      OGRSpatialReference *poSpatialRef,
+                                      const OGRSpatialReference *poSpatialRef,
                                       OGRwkbGeometryType eGType,
                                       char **papszOptions)
 {
@@ -7719,10 +7719,10 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
 
     // Make a clone to workaround a bug in released MapServer versions
     // that destroys the passed SRS instead of releasing it .
-    OGRSpatialReference *poSRS = poSpatialRef;
-    if (poSRS != nullptr)
+    OGRSpatialReference *poSRS = nullptr;
+    if (poSpatialRef)
     {
-        poSRS = poSRS->Clone();
+        poSRS = poSpatialRef->Clone();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     std::shared_ptr<netCDFLayer> poLayer(

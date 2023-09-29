@@ -595,7 +595,7 @@ class OGROCIDataSource final : public OGRDataSource
 
     virtual OGRErr DeleteLayer(int) override;
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 
@@ -611,7 +611,7 @@ class OGROCIDataSource final : public OGRDataSource
                                  const char *pszDialect) override;
     virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
-    int FetchSRSId(OGRSpatialReference *poSRS);
+    int FetchSRSId(const OGRSpatialReference *poSRS);
     OGRSpatialReference *FetchSRS(int nSRID);
 };
 

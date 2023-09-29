@@ -334,10 +334,10 @@ OGRLayer *OGRTileDBDataset::ExecuteSQL(const char *pszSQLCommand,
 /***********************************************************************/
 /*                           ICreateLayer()                            */
 /***********************************************************************/
-OGRLayer *OGRTileDBDataset::ICreateLayer(const char *pszName,
-                                         OGRSpatialReference *poSpatialRef,
-                                         OGRwkbGeometryType eGType,
-                                         char **papszOptions)
+OGRLayer *
+OGRTileDBDataset::ICreateLayer(const char *pszName,
+                               const OGRSpatialReference *poSpatialRef,
+                               OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (eAccess != GA_Update)
     {
