@@ -133,6 +133,113 @@ VRTSourcedRasterBand::~VRTSourcedRasterBand()
 }
 
 /************************************************************************/
+/*                  CanIRasterIOBeForwardedToEachSource()               */
+/************************************************************************/
+
+bool VRTSourcedRasterBand::CanIRasterIOBeForwardedToEachSource(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    int nBufXSize, int nBufYSize, GDALRasterIOExtraArg *psExtraArg) const
+{
+    // If resampling with non-nearest neighbour, we need to be careful
+    // if the VRT band exposes a nodata value, but the sources do not have it.
+    // To also avoid edge effects on sources when downsampling, use the
+    // base implementation of IRasterIO() (that is acquiring sources at their
+    // nominal resolution, and then downsampling), but only if none of the
+    // contributing sources have overviews.
+    if (eRWFlag == GF_Read && (nXSize != nBufXSize || nYSize != nBufYSize) &&
+        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour && nSources != 0)
+    {
+        bool bSourceHasOverviews = false;
+        const bool bIsDownsampling = (nBufXSize < nXSize && nBufYSize < nYSize);
+        int nContributingSources = 0;
+        bool bSourceFullySatisfiesRequest = true;
+        for (int i = 0; i < nSources; i++)
+        {
+            if (!papoSources[i]->IsSimpleSource())
+            {
+                return false;
+            }
+            else
+            {
+                VRTSimpleSource *const poSource =
+                    static_cast<VRTSimpleSource *>(papoSources[i]);
+
+                double dfXOff = nXOff;
+                double dfYOff = nYOff;
+                double dfXSize = nXSize;
+                double dfYSize = nYSize;
+                if (psExtraArg->bFloatingPointWindowValidity)
+                {
+                    dfXOff = psExtraArg->dfXOff;
+                    dfYOff = psExtraArg->dfYOff;
+                    dfXSize = psExtraArg->dfXSize;
+                    dfYSize = psExtraArg->dfYSize;
+                }
+
+                // The window we will actually request from the source raster
+                // band.
+                double dfReqXOff = 0.0;
+                double dfReqYOff = 0.0;
+                double dfReqXSize = 0.0;
+                double dfReqYSize = 0.0;
+                int nReqXOff = 0;
+                int nReqYOff = 0;
+                int nReqXSize = 0;
+                int nReqYSize = 0;
+
+                // The window we will actual set _within_ the pData buffer.
+                int nOutXOff = 0;
+                int nOutYOff = 0;
+                int nOutXSize = 0;
+                int nOutYSize = 0;
+
+                bool bError = false;
+                if (!poSource->GetSrcDstWindow(
+                        dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
+                        &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
+                        &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
+                        &nOutYOff, &nOutXSize, &nOutYSize, bError))
+                {
+                    continue;
+                }
+                auto poBand = poSource->GetRasterBand();
+                if (poBand == nullptr)
+                {
+                    return false;
+                }
+                ++nContributingSources;
+                if (!(nOutXOff == 0 && nOutYOff == 0 &&
+                      nOutXSize == nBufXSize && nOutYSize == nBufYSize))
+                    bSourceFullySatisfiesRequest = false;
+                if (m_bNoDataValueSet)
+                {
+                    int bSrcHasNoData = FALSE;
+                    const double dfSrcNoData =
+                        poBand->GetNoDataValue(&bSrcHasNoData);
+                    if (!bSrcHasNoData || dfSrcNoData != m_dfNoDataValue)
+                    {
+                        return false;
+                    }
+                }
+                if (bIsDownsampling)
+                {
+                    if (poBand->GetOverviewCount() != 0)
+                    {
+                        bSourceHasOverviews = true;
+                    }
+                }
+            }
+        }
+        if (bIsDownsampling && !bSourceHasOverviews &&
+            (nContributingSources > 1 || !bSourceFullySatisfiesRequest))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -181,93 +288,27 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     }
 
     // If resampling with non-nearest neighbour, we need to be careful
-    // if the VRT band exposes a nodata value, but the sources do not have it
-    if (eRWFlag == GF_Read && (nXSize != nBufXSize || nYSize != nBufYSize) &&
-        psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
-        m_bNoDataValueSet)
+    // if the VRT band exposes a nodata value, but the sources do not have it.
+    // To also avoid edge effects on sources when downsampling, use the
+    // base implementation of IRasterIO() (that is acquiring sources at their
+    // nominal resolution, and then downsampling), but only if none of the
+    // contributing sources have overviews.
+    if (l_poDS && !CanIRasterIOBeForwardedToEachSource(
+                      eRWFlag, nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                      nBufYSize, psExtraArg))
     {
-        for (int i = 0; i < nSources; i++)
+        const bool bBackupEnabledOverviews = l_poDS->AreOverviewsEnabled();
+        if (!l_poDS->m_apoOverviews.empty() && l_poDS->AreOverviewsEnabled())
         {
-            bool bFallbackToBase = false;
-            if (!papoSources[i]->IsSimpleSource())
-            {
-                bFallbackToBase = true;
-            }
-            else
-            {
-                VRTSimpleSource *const poSource =
-                    static_cast<VRTSimpleSource *>(papoSources[i]);
-
-                double dfXOff = nXOff;
-                double dfYOff = nYOff;
-                double dfXSize = nXSize;
-                double dfYSize = nYSize;
-                if (psExtraArg->bFloatingPointWindowValidity)
-                {
-                    dfXOff = psExtraArg->dfXOff;
-                    dfYOff = psExtraArg->dfYOff;
-                    dfXSize = psExtraArg->dfXSize;
-                    dfYSize = psExtraArg->dfYSize;
-                }
-
-                // The window we will actually request from the source raster
-                // band.
-                double dfReqXOff = 0.0;
-                double dfReqYOff = 0.0;
-                double dfReqXSize = 0.0;
-                double dfReqYSize = 0.0;
-                int nReqXOff = 0;
-                int nReqYOff = 0;
-                int nReqXSize = 0;
-                int nReqYSize = 0;
-
-                // The window we will actual set _within_ the pData buffer.
-                int nOutXOff = 0;
-                int nOutYOff = 0;
-                int nOutXSize = 0;
-                int nOutYSize = 0;
-
-                bool bError = false;
-                if (!poSource->GetSrcDstWindow(
-                        dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
-                        &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
-                        &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize, &nOutXOff,
-                        &nOutYOff, &nOutXSize, &nOutYSize, bError))
-                {
-                    continue;
-                }
-                int bSrcHasNoData = FALSE;
-                auto poBand = poSource->GetRasterBand();
-                if (poBand == nullptr)
-                {
-                    bFallbackToBase = true;
-                }
-                else
-                {
-                    const double dfSrcNoData =
-                        poBand->GetNoDataValue(&bSrcHasNoData);
-                    if (!bSrcHasNoData || dfSrcNoData != m_dfNoDataValue)
-                        bFallbackToBase = true;
-                }
-            }
-            if (bFallbackToBase && l_poDS)
-            {
-                const bool bBackupEnabledOverviews =
-                    l_poDS->AreOverviewsEnabled();
-                if (!l_poDS->m_apoOverviews.empty() &&
-                    l_poDS->AreOverviewsEnabled())
-                {
-                    // Disable use of implicit overviews to avoid infinite
-                    // recursion
-                    l_poDS->SetEnableOverviews(false);
-                }
-                const auto eErr = GDALRasterBand::IRasterIO(
-                    eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
-                    nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
-                l_poDS->SetEnableOverviews(bBackupEnabledOverviews);
-                return eErr;
-            }
+            // Disable use of implicit overviews to avoid infinite
+            // recursion
+            l_poDS->SetEnableOverviews(false);
         }
+        const auto eErr = GDALRasterBand::IRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg);
+        l_poDS->SetEnableOverviews(bBackupEnabledOverviews);
+        return eErr;
     }
 
     /* -------------------------------------------------------------------- */

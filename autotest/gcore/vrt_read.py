@@ -2178,3 +2178,20 @@ def test_vrt_read_compute_statistics_mosaic_optimization_not_triggered():
 
     vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
     assert vrt_stats == src_ds.GetRasterBand(1).ComputeStatistics(False)
+
+
+###############################################################################
+
+
+def test_vrt_read_top_and_bottom_strips_average():
+
+    ref_ds = gdal.Translate("", "data/vrt/top_and_bottom_strips.vrt", format="MEM")
+    ds = gdal.Open("data/vrt/top_and_bottom_strips.vrt")
+
+    args = (0, 127, 256, 129)
+    kwargs = {"buf_xsize": 128, "buf_ysize": 64, "resample_alg": gdal.GRIORA_Average}
+
+    ref_data = ref_ds.ReadRaster(*args, **kwargs)
+    assert ds.GetRasterBand(1).ReadRaster(*args, **kwargs) == ref_data
+    assert ds.ReadRaster(*args, **kwargs) == ref_data
+    assert ref_data[0] == 128

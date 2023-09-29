@@ -1,0 +1,20 @@
+<VRTDataset rasterXSize="256" rasterYSize="256">
+  <GeoTransform>  0.0000000000000000e+00,  1.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00, -1.0000000000000000e+00</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">top_strip.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="256" RasterYSize="128" DataType="Byte" BlockXSize="256" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="256" ySize="128" />
+      <DstRect xOff="0" yOff="0" xSize="256" ySize="128" />
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">bottom_strip.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="256" RasterYSize="128" DataType="Byte" BlockXSize="256" BlockYSize="128" />
+      <SrcRect xOff="0" yOff="0" xSize="256" ySize="128" />
+      <DstRect xOff="0" yOff="128" xSize="256" ySize="128" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
