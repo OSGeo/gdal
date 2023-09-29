@@ -559,7 +559,9 @@ def ReleaseResultSet(self, sql_lyr):
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature(self)
+      self._invalidate_geom_refs()
       self.thisown = 0
+      self.this = None
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
@@ -583,8 +585,8 @@ def ReleaseResultSet(self, sql_lyr):
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
-        if key == 'this':
-            return self.__dict__[key]
+        if key in ('this', 'thisown', '_geom_references'):
+            return self.__getattribute__(key)
 
         idx = self._getfieldindex(key)
         if idx < 0:
@@ -600,8 +602,8 @@ def ReleaseResultSet(self, sql_lyr):
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
-        if key == 'this' or key == 'thisown':
-            self.__dict__[key] = value
+        if key in ('this', 'thisown', '_geom_references'):
+            super().__setattr__(key, value)
         else:
             idx = self._getfieldindex(key)
             if idx != -1:
@@ -779,6 +781,8 @@ def ReleaseResultSet(self, sql_lyr):
 
         return self.GetGeometryRef()
 
+    def __del__(self):
+        self._invalidate_geom_refs()
 
     def __repr__(self):
         return self.DumpReadableAsString()
@@ -829,6 +833,47 @@ def ReleaseResultSet(self, sql_lyr):
         return output
 
 
+    def _add_geom_ref(self, geom):
+        if geom is None:
+            return
+
+        if not hasattr(self, '_geom_references'):
+            import weakref
+
+            self._geom_references = weakref.WeakSet()
+
+        self._geom_references.add(geom)
+
+
+    def _invalidate_geom_refs(self):
+        if hasattr(self, '_geom_references'):
+            for geom in self._geom_references:
+                geom.this = None
+
+%}
+
+%feature("shadow") SetGeometryDirectly %{
+    def SetGeometryDirectly(self, geom):
+        ret = $action(self, geom)
+        if ret == OGRERR_NONE:
+            self._add_geom_ref(geom)
+        return ret
+%}
+
+%feature("shadow") SetGeomFieldDirectly %{
+    def SetGeomFieldDirectly(self, field, geom):
+        ret = $action(self, field, geom)
+        if ret == OGRERR_NONE:
+            self._add_geom_ref(geom)
+        return ret
+%}
+
+%feature("pythonappend") GetGeometryRef %{
+    self._add_geom_ref(val)
+%}
+
+%feature("pythonappend") GetGeomFieldRef %{
+    self._add_geom_ref(val)
 %}
 
 %feature("shadow") SetField %{

@@ -125,30 +125,6 @@ references to objects that no longer exist so that an exception is thrown
 instead of a crash, but the work is not complete.
 
 Unfortunately there is no complete list of such relationships, so you have to watch for it yourself.
-One other known place involves the OGR ``GetGeometryRef()`` function:
-
-.. code-block::
-
-   >>> feat = lyr.GetNextFeature()
-   >>> geom = feat.GetGeometryRef()     # geom contains a reference into the C++ geometry object maintained by the C++ feature object
-   >>> del feat                         # This deallocates the C++ feature object, and its C++ geometry
-   >>> print(geom.ExportToWkt())        # Crash here. The C++ geometry no longer exists
-   < Python crashes >
-
-If you read the GDAL and OGR API documentation carefully, you will see that the functions that end in "Ref" obtain references to internal objects, rather than making new copies.
-This is a clue that the problem could occur. Be careful when using the "Ref" functions. Also watch out for functions that end in "Directly", such as ``SetGeometryDirectly()``, which transfer ownership of internal objects:
-
-.. code-block::
-
-   >>> point = ogr.Geometry(ogr.wkbPoint)
-   >>> feature = ogr.Feature(layer_defn)
-   >>> feature.SetGeometryDirectly(point)    # Transfers ownership of the C++ geometry from point to feature
-   >>> del feature                           # point becomes implicitly invalid, because feature owns the C++ geometry
-   >>> print(point.ExportToWkt())            # Crash here
-   < Python crashes >
-
-The advantage of the "Ref" and "Directly" functions is they provide faster performance because a duplicate object does not need to be created. The disadvantage is that you have to watch out for this problem.
-
 
 Python crashes if you add a new field to an OGR layer when features deriving from this layer definition are still active
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
