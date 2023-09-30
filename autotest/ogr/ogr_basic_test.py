@@ -1060,3 +1060,90 @@ def test_layer_use_after_datasource_release():
     # Make sure ds.Release() has invalidated "lyr" so we don't crash here
     with pytest.raises(Exception):
         lyr.GetFeatureCount()
+
+
+def test_feature_use_after_destroy():
+
+    defn = ogr.FeatureDefn()
+    feature = ogr.Feature(defn)
+    feature.Destroy()
+
+    with pytest.raises(Exception):
+        feature.DumpReadable()
+
+
+@pytest.mark.parametrize("destroy_method", ("del", "Destroy"))
+def test_geom_use_after_feature_delete_1(destroy_method):
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if destroy_method == "del":
+        del feat
+    elif destroy_method == "Destroy":
+        feat.Destroy()
+
+    with pytest.raises(Exception):
+        geom.ExportToWkt()
+
+
+@pytest.mark.parametrize("arg_type", ("int", "string"))
+def test_geom_use_after_feature_delete_2(arg_type):
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+
+    if arg_type == "int":
+        geom = feat.GetGeomFieldRef(0)
+    elif arg_type == "string":
+        geom = feat.GetGeomFieldRef("")
+
+    del feat
+
+    with pytest.raises(Exception):
+        geom.ExportToWkt()
+
+
+def test_geom_use_after_transfer_to_feature_1(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(tmp_vsimem / "test.shp")
+    lyr = ds.CreateLayer("test")
+
+    point = ogr.Geometry(ogr.wkbPoint)
+    feature = ogr.Feature(lyr.GetLayerDefn())
+    feature.SetGeometryDirectly(point)
+    del feature
+
+    with pytest.raises(Exception):
+        point.ExportToWkt()
+
+
+@pytest.mark.parametrize("arg_type", ("int", "string"))
+def test_geom_use_after_transfer_to_feature(tmp_vsimem, arg_type):
+
+    lyr_defn = ogr.FeatureDefn()
+
+    gfld_defn = ogr.GeomFieldDefn()
+    gfld_defn.SetName("geom_obj")
+
+    lyr_defn.AddGeomFieldDefn(gfld_defn)
+
+    point = ogr.Geometry(ogr.wkbPoint)
+    feature = ogr.Feature(lyr_defn)
+    if arg_type == "string":
+        with pytest.raises(RuntimeError, match="Invalid field name"):
+            feature.SetGeomFieldDirectly("wrong_name", point) == ogr.OGRERR_FAILURE
+
+        feature.SetGeomFieldDirectly("geom_obj", point)
+    elif arg_type == "int":
+        feature.SetGeomFieldDirectly(0, point)
+
+    del feature
+
+    with pytest.raises(Exception):
+        point.ExportToWkt()
