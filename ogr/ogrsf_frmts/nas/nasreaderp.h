@@ -44,7 +44,6 @@
 IGMLReader *CreateNASReader();
 
 class NASReader;
-class OGRNASRelationLayer;
 
 CPL_C_START
 OGRGeometryH OGR_G_CreateFromGML3(const char *pszGML);
