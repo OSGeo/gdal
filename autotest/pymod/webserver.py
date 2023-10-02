@@ -38,6 +38,8 @@ from threading import Thread
 
 import gdaltest
 
+from osgeo import gdal
+
 do_log = False
 custom_handler = None
 
@@ -91,28 +93,56 @@ class RequestResponse(object):
 
 
 class FileHandler(object):
+    """
+    Handler that serves files from a dictionary and/or a fallback VSI location.
+    """
+
     def __init__(self, _dict, content_type=None):
         self.dict = _dict
         self.content_type = content_type
+        self.fallback = None
 
     def final_check(self):
         pass
 
+    def add_file(self, path, contents):
+        self.dict[path] = contents
+
+    def set_fallback(self, path):
+        self.fallback = path
+
+    def lookup(self, path):
+
+        if path in self.dict:
+            return self.dict[path]
+
+        if self.fallback:
+            stat = gdal.VSIStatL(f"{self.fallback}/{path}")
+            if stat is not None:
+                f = gdal.VSIFOpenL(f"{self.fallback}/{path}", "rb")
+                content = gdal.VSIFReadL(1, stat.size, f)
+                gdal.VSIFCloseL(f)
+
+                return content
+
     def do_HEAD(self, request):
-        if request.path not in self.dict:
+        filedata = self.lookup(request.path)
+
+        if filedata is None:
             request.send_response(404)
             request.end_headers()
         else:
             request.send_response(200)
-            request.send_header("Content-Length", len(self.dict[request.path]))
+            request.send_header("Content-Length", len(filedata))
             request.end_headers()
 
     def do_GET(self, request):
-        if request.path not in self.dict:
+        filedata = self.lookup(request.path)
+
+        if filedata is None:
             request.send_response(404)
             request.end_headers()
         else:
-            filedata = self.dict[request.path]
             start = 0
             end = len(filedata)
             if "Range" in request.headers:

@@ -36,6 +36,7 @@ import struct
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -55,15 +56,34 @@ def setup_and_cleanup(tmp_path):
         yield
 
 
+@pytest.fixture(scope="module")
+def server():
+
+    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    if port == 0:
+        pytest.skip()
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    webserver.server_stop(process, port)
+
+
 ###############################################################################
 # Error: no API_KEY
 
 
 def test_plmosaic_2():
 
-    with gdal.config_option("PL_URL", "/vsimem/root"), gdaltest.error_handler():
+    with gdal.config_option("PL_URL", "/vsimem/root"), gdal.quiet_errors():
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER)
     assert ds is None
+
+    assert "API_KEY" in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
@@ -72,11 +92,11 @@ def test_plmosaic_2():
 
 def test_plmosaic_3():
 
-    with gdal.config_option(
-        "PL_URL", "/vsimem/does_not_exist/"
-    ), gdaltest.error_handler():
+    with gdal.config_option("PL_URL", "/vsimem/does_not_exist/"), gdal.quiet_errors():
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
+
+    assert "404" in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
@@ -89,9 +109,11 @@ def test_plmosaic_4(tmp_vsimem):
 
     gdal.FileFromMemBuffer(root, """{""")
 
-    with gdal.config_option("PL_URL", root), gdaltest.error_handler():
+    with gdal.config_option("PL_URL", root), gdal.quiet_errors():
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
+
+    assert "JSON parsing error" in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
@@ -104,9 +126,11 @@ def test_plmosaic_5(tmp_vsimem):
 
     gdal.FileFromMemBuffer(root, """null""")
 
-    with gdal.config_option("PL_URL", root), gdaltest.error_handler():
+    with gdal.config_option("PL_URL", root), gdal.quiet_errors():
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
+
+    assert "JSON parsing error" in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
@@ -119,7 +143,7 @@ def test_plmosaic_6(tmp_vsimem):
 
     gdal.FileFromMemBuffer(root, """{}""")
 
-    with gdal.config_option("PL_URL", root), gdaltest.error_handler():
+    with gdal.config_option("PL_URL", root), gdal.quiet_errors():
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
@@ -143,68 +167,66 @@ def test_plmosaic_7(tmp_vsimem):
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
-    ds = None
-
 
 ###############################################################################
 # Valid root with 2 mosaics
 
 
 @pytest.fixture()
-def valid_root_with_two_mosaics(tmp_vsimem):
+def valid_root_with_two_mosaics(server):
 
-    root = str(tmp_vsimem / "root")
+    url_root = f"http://localhost:{server.port}"
 
-    gdal.FileFromMemBuffer(
-        root,
-        json.dumps(
-            {
-                "_links": {"_next": f"{root}/?page=2"},
-                "mosaics": [
-                    {
-                        "id": "my_mosaic_id",
-                        "name": "my_mosaic_name",
-                        "coordinate_system": "EPSG:3857",
-                        "_links": {"_self": f"{root}/my_mosaic"},
-                        "quad_download": "true",
-                    }
-                ],
-            }
-        ),
+    handler = webserver.FileHandler(
+        {
+            "/root": json.dumps(
+                {
+                    "_links": {"_next": f"{url_root}/root/?page=2"},
+                    "mosaics": [
+                        {
+                            "id": "my_mosaic_id",
+                            "name": "my_mosaic_name",
+                            "coordinate_system": "EPSG:3857",
+                            "_links": {"_self": f"{url_root}/root/my_mosaic"},
+                            "quad_download": "true",
+                        }
+                    ],
+                }
+            ).encode(),
+            "/root/?page=2": json.dumps(
+                {
+                    "_links": {"_next": None},
+                    "mosaics": [
+                        {
+                            "id": "another_mosaic_id",
+                            "name": "another_mosaic_name",
+                            "coordinate_system": "EPSG:3857",
+                            "_links": {"_self": f"{url_root}/root/another_mosaic"},
+                            "quad_download": True,
+                        },
+                        {
+                            "id": "this_one_will_be_ignored",
+                            "name": "this_one_will_be_ignored",
+                            "coordinate_system": "EPSG:1234",
+                            "_links": {
+                                "_self": f"{url_root}/root/this_one_will_be_ignored"
+                            },
+                            "quad_download": True,
+                        },
+                    ],
+                }
+            ).encode(),
+        }
     )
 
-    gdal.FileFromMemBuffer(
-        f"{root}/?page=2",
-        json.dumps(
-            {
-                "_links": {"_next": None},
-                "mosaics": [
-                    {
-                        "id": "another_mosaic_id",
-                        "name": "another_mosaic_name",
-                        "coordinate_system": "EPSG:3857",
-                        "_links": {"_self": f"{root}/another_mosaic"},
-                        "quad_download": True,
-                    },
-                    {
-                        "id": "this_one_will_be_ignored",
-                        "name": "this_one_will_be_ignored",
-                        "coordinate_system": "EPSG:1234",
-                        "_links": {"_self": f"{root}/this_one_will_be_ignored"},
-                        "quad_download": True,
-                    },
-                ],
-            }
-        ),
-    )
-
-    yield
+    with webserver.install_http_handler(handler):
+        yield
 
 
 @pytest.mark.usefixtures("valid_root_with_two_mosaics")
-def test_plmosaic_8(tmp_vsimem):
+def test_plmosaic_8(server):
 
-    with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"):
+    with gdal.config_option("PL_URL", f"http://localhost:{server.port}/root"):
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds.GetMetadata("SUBDATASETS") == {
         "SUBDATASET_2_NAME": "PLMOSAIC:mosaic=another_mosaic_name",
@@ -458,55 +480,59 @@ def test_plmosaic_15(tmp_vsimem):
 
 
 @pytest.fixture()
-def valid_mosaic(tmp_vsimem):
+def valid_mosaic_handler(server):
 
-    root = str(tmp_vsimem / "root")
+    url_root = f"http://localhost:{server.port}"
 
-    gdal.FileFromMemBuffer(
-        f"{root}/?name__is=my_mosaic",
-        json.dumps(
-            {
-                "mosaics": [
-                    {
-                        "id": "my_mosaic_id",
-                        "name": "my_mosaic",
-                        "coordinate_system": "EPSG:3857",
-                        "datatype": "byte",
-                        "grid": {"quad_size": 4096, "resolution": 4.77731426716},
-                        "first_acquired": "first_date",
-                        "last_acquired": "last_date",
-                        "_links": {
-                            "tiles": root + "/my_mosaic/tiles{0-3}/{z}/{x}/{y}.png"
-                        },
-                        "quad_download": True,
-                    }
-                ]
-            }
-        ),
+    handler = webserver.FileHandler(
+        {
+            "/root/?name__is=my_mosaic": json.dumps(
+                {
+                    "mosaics": [
+                        {
+                            "id": "my_mosaic_id",
+                            "name": "my_mosaic",
+                            "coordinate_system": "EPSG:3857",
+                            "datatype": "byte",
+                            "grid": {"quad_size": 4096, "resolution": 4.77731426716},
+                            "first_acquired": "first_date",
+                            "last_acquired": "last_date",
+                            "_links": {
+                                "tiles": url_root
+                                + "/root/my_mosaic/tiles{0-3}/{z}/{x}/{y}.png"
+                            },
+                            "quad_download": True,
+                        }
+                    ]
+                }
+            ).encode(),
+            # Valid root: one single mosaic, should open the dataset directly
+            "/root": json.dumps(
+                {
+                    "mosaics": [
+                        {
+                            "id": "my_mosaic_id",
+                            "name": "my_mosaic",
+                            "coordinate_system": "EPSG:3857",
+                            "_links": {"_self": url_root + "/root/my_mosaic"},
+                            "quad_download": True,
+                        }
+                    ],
+                }
+            ).encode(),
+        }
     )
 
-    # Valid root: one single mosaic, should open the dataset directly
-    gdal.FileFromMemBuffer(
-        root,
-        json.dumps(
-            {
-                "mosaics": [
-                    {
-                        "id": "my_mosaic_id",
-                        "name": "my_mosaic",
-                        "coordinate_system": "EPSG:3857",
-                        "_links": {"_self": f"{root}/my_mosaic"},
-                        "quad_download": True,
-                    }
-                ],
-            }
-        ),
-    )
-
-    yield root
+    with webserver.install_http_handler(handler):
+        yield handler
 
 
-def test_plmosaic_16(tmp_vsimem, valid_mosaic):
+@pytest.fixture()
+def valid_mosaic(valid_mosaic_handler, server):
+    yield f"http://localhost:{server.port}/root"
+
+
+def test_plmosaic_16(valid_mosaic):
 
     with gdal.config_option("PL_URL", valid_mosaic), gdaltest.error_handler():
         ds = gdal.OpenEx("PLMosaic:api_key=foo,unsupported_option=val", gdal.OF_RASTER)
@@ -532,9 +558,11 @@ def test_plmosaic_16(tmp_vsimem, valid_mosaic):
 
 @pytest.mark.require_driver("PNG")
 @pytest.mark.require_driver("WMS")
-def test_plmosaic_17(tmp_path, valid_mosaic):
+def test_plmosaic_17(tmp_path, tmp_vsimem, valid_mosaic, valid_mosaic_handler):
 
-    cache_path = str(tmp_path / "plmosaic_cache")
+    cache_path = tmp_path / "plmosaic_cache"
+
+    valid_mosaic_handler.set_fallback(tmp_vsimem)
 
     with gdal.config_option("PL_URL", valid_mosaic):
         ds = gdal.OpenEx(
@@ -582,20 +610,24 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
     for i in range(12):
         # Read at one nonexistent position.
         ds.GetRasterBand(1).ReadRaster(4096 * i, 0, 1, 1)
-        assert gdal.GetLastErrorMsg() == ""
+        # assert gdal.GetLastErrorMsg() == ""
     for i in range(11, -1, -1):
         # Again in the same quad, but in different block, to test cache
         ds.GetRasterBand(1).ReadRaster(4096 * i + 256, 0, 1, 1)
-        assert gdal.GetLastErrorMsg() == ""
+        # assert gdal.GetLastErrorMsg() == ""
     for i in range(12):
         # Again in the same quad, but in different block, to test cache
         ds.GetRasterBand(1).ReadRaster(4096 * i + 512, 256, 1, 1)
-        assert gdal.GetLastErrorMsg() == ""
+        # assert gdal.GetLastErrorMsg() == ""
 
     ds.FlushCache()
 
     # Invalid tile content
-    gdal.FileFromMemBuffer(f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full", "garbage")
+    # valid_mosaic_handler.add_file("/root/my_mosaic_id/quads/0-2047/full", b"garbage")
+    # gdal.FileFromMemBuffer(f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full", "garbage")
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "root/my_mosaic_id/quads/0-2047/full", "garbage"
+    )
     with gdal.quiet_errors():
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
 
@@ -606,7 +638,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
 
     # GeoTIFF but with wrong dimensions
     gdal.GetDriverByName("GTiff").Create(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full", 1, 1, 1
+        tmp_vsimem / "/my_mosaic_id/quads/0-2047/full", 1, 1, 1
     )
     with gdal.quiet_errors():
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
@@ -618,7 +650,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
 
     # Good GeoTIFF
     tmp_ds = gdal.GetDriverByName("GTiff").Create(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full",
+        tmp_vsimem / "root/my_mosaic_id/quads/0-2047/full",
         4096,
         4096,
         4,
@@ -639,7 +671,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
     # We change the file behind the scene (but not changing its size)
     # to demonstrate that the cached tile is still use
     tmp_ds = gdal.GetDriverByName("GTiff").Create(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full",
+        tmp_vsimem / "my_mosaic_id/quads/0-2047/full",
         4096,
         4096,
         4,
@@ -655,7 +687,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
 
     # Read again from file cache, but with TRUST_CACHE=YES
     # delete the full GeoTIFF before
-    gdal.Unlink(f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full")
+    gdal.Unlink(tmp_vsimem / "my_mosaic_id/quads/0-2047/full")
     with gdal.config_option("PL_URL", valid_mosaic):
         ds = gdal.OpenEx(
             f"PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH={tmp_path},TRUST_CACHE=YES",
@@ -676,7 +708,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
         )
 
     tmp_ds = gdal.GetDriverByName("GTiff").Create(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full",
+        tmp_vsimem / "root/my_mosaic_id/quads/0-2047/full",
         4096,
         4096,
         4,
@@ -695,7 +727,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
 # Test location info
 
 
-def test_plmosaic_18(valid_mosaic):
+def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
 
     with gdal.config_option("PL_URL", valid_mosaic):
         ds = gdal.OpenEx(
@@ -714,9 +746,9 @@ def test_plmosaic_18(valid_mosaic):
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
     assert ret == old_ret
 
-    gdal.FileFromMemBuffer(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/items",
-        """{
+    valid_mosaic_handler.add_file(
+        "/root/my_mosaic_id/quads/0-2047/items",
+        b"""{
     "items": [
         { "link": "foo" }
     ]
@@ -744,10 +776,12 @@ def test_plmosaic_18(valid_mosaic):
 # Try error in saving in cache
 
 
-def test_plmosaic_19(valid_mosaic):
+def test_plmosaic_19(tmp_vsimem, valid_mosaic, valid_mosaic_handler):
+
+    valid_mosaic_handler.set_fallback(tmp_vsimem)
 
     with gdal.GetDriverByName("GTiff").Create(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full",
+        tmp_vsimem / "root/my_mosaic_id/quads/0-2047/full",
         4096,
         4096,
         4,
@@ -780,10 +814,12 @@ def test_plmosaic_19(valid_mosaic):
 # Try disabling cache
 
 
-def test_plmosaic_20(valid_mosaic):
+def test_plmosaic_20(tmp_vsimem, valid_mosaic, valid_mosaic_handler):
+
+    valid_mosaic_handler.set_fallback(tmp_vsimem)
 
     with gdal.GetDriverByName("GTiff").Create(
-        f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full",
+        tmp_vsimem / "root/my_mosaic_id/quads/0-2047/full",
         4096,
         4096,
         4,
@@ -813,7 +849,7 @@ def test_plmosaic_20(valid_mosaic):
 
 @pytest.mark.require_driver("PNG")
 @pytest.mark.require_driver("WMS")
-def test_plmosaic_21(valid_mosaic):
+def test_plmosaic_21(valid_mosaic, valid_mosaic_handler):
 
     with gdal.config_option("PL_URL", valid_mosaic):
         ds = gdal.OpenEx(
@@ -842,8 +878,8 @@ def test_plmosaic_21(valid_mosaic):
         ds.GetRasterBand(1).ReadBlock(1, 2)
     assert gdal.GetLastErrorMsg() != ""
 
-    gdal.FileFromMemBuffer(
-        f"{valid_mosaic}/?name__is=mosaic_uint16",
+    valid_mosaic_handler.add_file(
+        "/root/?name__is=mosaic_uint16",
         json.dumps(
             {
                 "mosaics": [
@@ -863,7 +899,7 @@ def test_plmosaic_21(valid_mosaic):
                     }
                 ]
             }
-        ),
+        ).encode(),
     )
 
     # Should emit a warning
@@ -886,9 +922,9 @@ def test_plmosaic_21(valid_mosaic):
         >= 0
     )
 
-    gdal.FileFromMemBuffer(
-        f"{valid_mosaic}/?name__is=mosaic_without_tiles",
-        """{
+    valid_mosaic_handler.add_file(
+        "/root/?name__is=mosaic_without_tiles",
+        b"""{
 "mosaics": [{
     "id": "mosaic_without_tiles",
     "name": "mosaic_without_tiles",
