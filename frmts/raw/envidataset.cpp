@@ -2836,6 +2836,25 @@ CPLErr ENVIRasterBand::SetCategoryNames(char **papszCategoryNamesIn)
 CPLErr ENVIRasterBand::SetNoDataValue(double dfNoDataValue)
 {
     cpl::down_cast<ENVIDataset *>(poDS)->bHeaderDirty = true;
+
+    if (poDS->GetRasterCount() > 1)
+    {
+        int bOtherBandHasNoData = false;
+        const int nOtherBand = nBand > 1 ? 1 : 2;
+        double dfOtherBandNoData = poDS->GetRasterBand(nOtherBand)
+                                       ->GetNoDataValue(&bOtherBandHasNoData);
+        if (bOtherBandHasNoData &&
+            !(std::isnan(dfOtherBandNoData) && std::isnan(dfNoDataValue)) &&
+            dfOtherBandNoData != dfNoDataValue)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Nodata value of band %d (%.18g) is different from nodata "
+                     "value from band %d (%.18g). Only the later will be "
+                     "written in the ENVI header as the \"data ignore value\"",
+                     nBand, dfNoDataValue, nOtherBand, dfOtherBandNoData);
+        }
+    }
+
     return RawRasterBand::SetNoDataValue(dfNoDataValue);
 }
 

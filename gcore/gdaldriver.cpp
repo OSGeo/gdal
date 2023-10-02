@@ -659,7 +659,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     double adfGeoTransform[6] = {};
 
     if (nDstBands == 0 && !bStrict)
-        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLTurnFailureIntoWarning(true);
 
     if (eErr == CE_None &&
         poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
@@ -696,7 +696,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     }
 
     if (nDstBands == 0 && !bStrict)
-        CPLPopErrorHandler();
+        CPLTurnFailureIntoWarning(false);
 
     /* -------------------------------------------------------------------- */
     /*      Copy metadata.                                                  */
@@ -728,7 +728,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
         /* --------------------------------------------------------------------
          */
         if (!bStrict)
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLTurnFailureIntoWarning(true);
 
         if (strlen(poSrcBand->GetDescription()) > 0)
             poDstBand->SetDescription(poSrcBand->GetDescription());
@@ -768,8 +768,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
 
         if (!bStrict)
         {
-            CPLPopErrorHandler();
-            CPLErrorReset();
+            CPLTurnFailureIntoWarning(false);
         }
         else
         {

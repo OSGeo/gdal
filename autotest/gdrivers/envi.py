@@ -1003,3 +1003,28 @@ def test_envi_read_direct_access_update_scenario():
     ds = None
 
     gdal.GetDriverByName("ENVI").Delete(filename)
+
+
+###############################################################################
+# Test setting different nodata values
+
+
+@pytest.mark.parametrize(
+    "nd1,nd2,expected_warning",
+    [
+        (1, 1, False),
+        (float("nan"), float("nan"), False),
+        (float("nan"), 1, True),
+        (1, float("nan"), True),
+    ],
+)
+def test_envi_write_warn_different_nodata(tmp_vsimem, nd1, nd2, expected_warning):
+    filename = str(tmp_vsimem / "test_envi_write_warn_different_nodata.img")
+    ds = gdal.GetDriverByName("ENVI").Create(filename, 1, 1, 2)
+    assert ds.GetRasterBand(1).SetNoDataValue(nd1) == gdal.CE_None
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        assert ds.GetRasterBand(2).SetNoDataValue(nd2) == gdal.CE_None
+        assert gdal.GetLastErrorType() == (
+            gdal.CE_Warning if expected_warning else gdal.CE_None
+        )
