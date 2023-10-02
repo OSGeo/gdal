@@ -7914,6 +7914,17 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
         ds.ReleaseResultSet(sql_lyr)
         assert fc == 0
 
+    # Test invalid filter and exceptions
+    with gdaltest.enable_exceptions():
+        lyr.SetAttributeFilter("invalid")
+        with pytest.raises(Exception, match="no such column: invalid"):
+            stream = lyr.GetArrowStreamAsNumPy()
+            [batch for batch in stream]
+
+        lyr.SetAttributeFilter("1 = 1")
+        stream = lyr.GetArrowStreamAsNumPy()
+        assert len([batch for batch in stream]) == 1
+
     ds = None
 
     ogr.GetDriverByName("GPKG").DeleteDataSource(filename)
