@@ -1741,7 +1741,7 @@ This can also be seen as an equivalent of running `gdal_translate -of VRT -if DR
 
 The effect of the ``scale`` option (added in GDAL 3.7) is to rescale the input pixel values from the
 range **src_min** to **src_max** to the range **dst_min** to **dst_max**  ``src_min,src_max[,dst_min,dst_max]``
-either 2 or 4 comma separated values. The same rules apply for the source and destination ranges, and ``scale_bn`` syntax may be used as it is with (:ref:`gdal_translate`).  The option ``scale=true`` (default if unspecified is ``scale=false``) may also be used without value arguments (added in GDAL 3.8), where it results in the output range 0,255 from whatever the source range is. Do consider the need for also using ``ot`` option in order to accomodate the intended output range.
+either 2 or 4 comma separated values. The same rules apply for the source and destination ranges, and ``scale_bn`` syntax may be used as it is with (:ref:`gdal_translate`).  The option ``scale=true`` (default if unspecified is ``scale=false``) may also be used without value arguments (added in GDAL 3.8), where it results in the output range 0,255 from whatever the source range is. Do consider the need for also using ``ot`` option in order to accommodate the intended output range.
 
 The effect of the ``exponent`` option (added in GDAL 3.7) is to apply non-linear scaling with a power function,
 a single value to be used with the ``scale`` option. The same ``exponent_bn`` syntax may be used in combination with ``scale_bn`` to
@@ -1769,7 +1769,7 @@ the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific dataset open options, multiple values are allowed. The value
 consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
-The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. To apply this use syntax ``unscale=true``, or ``unscale=false`` (which is the default if not specified). Do consider the need for also using ``ot`` option in order to accomodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
+The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. To apply this use syntax ``unscale=true``, or ``unscale=false`` (which is the default if not specified). Do consider the need for also using ``ot`` option in order to accommodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
 
 The effect of the ``a_coord_epoch`` option (added in GDAL 3.8) is to assign a coordinate epoch, linked with the output SRS as
 with (:ref:`gdal_translate`).

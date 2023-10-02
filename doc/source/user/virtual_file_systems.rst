@@ -336,7 +336,7 @@ JPEG2000 is generally not suitable for network access, unless using a layout
 carefully designed for that purpose, and when using a JPEG200 library that is
 heavily optimized.
 
-JPEG2000 files can come in many flavours : single-tiled vs tiled, with different
+JPEG2000 files can come in many flavors : single-tiled vs tiled, with different
 progression order (this is of particular importance for single-tiled access),
 and with optional markers
 
@@ -830,7 +830,7 @@ Several authentication methods are possible, and are attempted in the following 
     d) The :config:`AZURE_STORAGE_SAS_TOKEN` configuration option (``AZURE_SAS`` if GDAL < 3.5) is set to specify a Shared Access Signature. This SAS is appended to URLs built by the /vsiaz/ file system handler. Its value should already be URL-encoded and should not contain any leading '?' or '&' character (e.g. a valid one may look like "st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D"). Available since GDAL 3.2
     e) The current machine is a Azure Virtual Machine with Azure Active Directory permissions assigned to it (see https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm). Available since GDAL 3.3.
 
-    Authentication using Azure Active Directoy Workload Identity (using AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE and AZURE_AUTHORITY_HOST environment variables), typically for Azure Kubernetes, is available since GDAL 3.7.2
+    Authentication using Azure Active Directory Workload Identity (using AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE and AZURE_AUTHORITY_HOST environment variables), typically for Azure Kubernetes, is available since GDAL 3.7.2
 
 3. Starting with GDAL 3.5, the `configuration file <https://github.com/MicrosoftDocs/azure-docs-cli/blob/main/docs-ref-conceptual/azure-cli-configuration.md>` of the "az" command line utility can be used. The following keys of the ``[storage]`` section will be used in the following priority: ``connection_string``, ``account`` + ``key`` or ``account`` + ``sas_token``
 

@@ -301,7 +301,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset nBodySize = 0;
     int nHTTPCode = 0;
     char m_szCurlErrBuf[CURL_ERROR_SIZE + 1];
-    bool m_bErrorOccured = false;
+    bool m_bErrorOccurred = false;
 
     void AcquireMutex();
     void ReleaseMutex();
@@ -1055,8 +1055,8 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
-    m_bErrorOccured = eRet != CURLE_OK;
-    if (m_bErrorOccured)
+    m_bErrorOccurred = eRet != CURLE_OK;
+    if (m_bErrorOccurred)
     {
         // For autotest purposes only !
         const char *pszSimulatedCurlError = CPLGetConfigOption(
@@ -1108,7 +1108,7 @@ void VSICurlStreamingHandle::StartDownload()
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
     nRingBufferFileOffset = 0;
-    m_bErrorOccured = false;
+    m_bErrorOccurred = false;
     hThread = CPLCreateJoinableThread(VSICurlDownloadInThread, this);
 }
 
@@ -1141,7 +1141,7 @@ void VSICurlStreamingHandle::StopDownload()
 
     oRingBuffer.Reset();
     bDownloadStopped = FALSE;
-    m_bErrorOccured = false;
+    m_bErrorOccurred = false;
     nRingBufferFileOffset = 0;
     bEOF = false;
 }
@@ -1253,7 +1253,7 @@ retry:
     }
 
     // Has a Seek() being done since the last Read()?
-    bool bErrorOccured = false;
+    bool bErrorOccurred = false;
 
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
     {
@@ -1300,7 +1300,7 @@ retry:
                 while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
                 const int bBufferEmpty = (oRingBuffer.GetSize() == 0);
-                bErrorOccured = m_bErrorOccured;
+                bErrorOccurred = m_bErrorOccurred;
                 ReleaseMutex();
 
                 if (bBufferEmpty && !bDownloadInProgress)
@@ -1310,21 +1310,21 @@ retry:
 
         CPLFree(pabyTmp);
 
-        if (nBytesToSkip != 0 && !bErrorOccured)
+        if (nBytesToSkip != 0 && !bErrorOccurred)
         {
             bEOF = true;
             return 0;
         }
     }
 
-    if (!bEOF && nRemaining > 0 && !bErrorOccured)
+    if (!bEOF && nRemaining > 0 && !bErrorOccurred)
     {
         StartDownload();
         CPLAssert(curOffset == nRingBufferFileOffset);
     }
 
     // Fill the destination buffer from the ring buffer.
-    while (!bEOF && nRemaining > 0 && !bErrorOccured)
+    while (!bEOF && nRemaining > 0 && !bErrorOccurred)
     {
         AcquireMutex();
         size_t nToRead = oRingBuffer.GetSize();
@@ -1354,7 +1354,7 @@ retry:
             while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                 CPLCondWait(hCondProducer, hRingBufferMutex);
             const bool bBufferEmpty = oRingBuffer.GetSize() == 0;
-            bErrorOccured = m_bErrorOccured;
+            bErrorOccurred = m_bErrorOccurred;
             ReleaseMutex();
 
             if (bBufferEmpty && !bDownloadInProgress)
@@ -1418,7 +1418,7 @@ retry:
         CPLFree(pabyErrorBuffer);
     }
 
-    if (bErrorOccured)
+    if (bErrorOccurred)
     {
         const int nMaxRetry = atoi(CPLGetConfigOption(
             "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));

@@ -99,7 +99,7 @@ Building on MacOS
 
 On MacOS, there are a couple of libraries that do not function properly when the GDAL build requirements are installed using Homebrew.
 
-The `Apache Arrow <https://arrow.apache.org/docs/index.html>`_ library included in the current distribution of Homebrew is broken, and causes a detection issue. In order to build GDAL successfuly, configure CMake to not find the Arrow package:
+The `Apache Arrow <https://arrow.apache.org/docs/index.html>`_ library included in the current distribution of Homebrew is broken, and causes a detection issue. In order to build GDAL successfully, configure CMake to not find the Arrow package:
 
 .. code-block:: bash
 

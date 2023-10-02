@@ -3515,14 +3515,14 @@ def test_vsis3_sync_failed(aws_test_config, webserver_port):
             "Content-Range": "bytes 0-2/3",
             "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
         },
-        "foo",
+        "xyz",
     )
     handler.add(
         "GET",
         "/out/testsync.txt",
         200,
         {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
-        "fo",  # only returns 2 bytes instead of 3
+        "xy",  # only returns 2 bytes instead of 3
     )
     with webserver.install_http_handler(handler):
         with pytest.raises(

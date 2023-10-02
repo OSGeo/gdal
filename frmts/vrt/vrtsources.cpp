@@ -2768,7 +2768,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
             {
                 GByte abyTemp[2 * sizeof(double)];
                 // Convert first to the VRTRasterBand data type
-                // to get its clamping, before outputing to buffer data type
+                // to get its clamping, before outputting to buffer data type
                 GDALCopyWords(afResult, eWrkDataType, 0, abyTemp, eBandDataType,
                               0, 1);
                 GDALCopyWords(abyTemp, eBandDataType, 0, pDstLocation, eBufType,

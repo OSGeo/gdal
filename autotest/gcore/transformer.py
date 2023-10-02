@@ -1144,7 +1144,7 @@ def test_transformer_gcp_antimeridian_unwrap():
     success, pnt = tr.TransformPoint(0, 2525, 0)
     assert success and pnt == pytest.approx((175.82001802587033, 62.884780066613, 0.0))
 
-    # TPS transfomer
+    # TPS transformer
     tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
 
     success, pnt = tr.TransformPoint(0, 0, 0)

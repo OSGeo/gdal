@@ -2616,7 +2616,7 @@ TEST_F(test_cpl, CPLJSONDocument)
     }
     {
         CPLJSONObject oObj(static_cast<uint64_t>(123) * 1024 * 1024 * 1024);
-        // Might be a string with older libjson versons
+        // Might be a string with older libjson versions
         if (oObj.GetType() == CPLJSONObject::Type::Long)
         {
             EXPECT_EQ(oObj.ToLong(),

@@ -594,7 +594,7 @@ The following creation options are available:
       for specific cases (dynamic CRS with coordinate epoch).
       This option generally does not need to be specified, as the driver will
       automatically update the ``gpkg_spatial_ref_sys`` table when needed, but
-      it may be useful to create GeoPackage datasets matching the expections of
+      it may be useful to create GeoPackage datasets matching the exceptions of
       other software or profiles (such as the DGIWG-GPKG profile).
 
 -  .. co:: METADATA_TABLES
