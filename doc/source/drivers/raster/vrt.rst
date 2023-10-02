@@ -1697,7 +1697,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, and ``nogcp``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, and ``eco``.
 
 Other options may be added in the future.
 
@@ -1769,12 +1769,17 @@ the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific dataset open options, multiple values are allowed. The value
 consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
-The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. Do apply this use syntax ``unscale=true``, or ``unscale=false`` which is the default behaviour if not specified. Do consider the need for also using ``ot`` option in order to accomodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
+The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. To apply this use syntax ``unscale=true``, or ``unscale=false`` (which is the default if not specified). Do consider the need for also using ``ot`` option in order to accomodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
 
 The effect of the ``a_coord_epoch`` option (added in GDAL 3.8) is to assign a coordinate epoch, linked with the output SRS as
 with (:ref:`gdal_translate`).
 
-The effect of the ``nogcp`` option (added in GDAL 3.8) is to not copy the GCPs in the source dataset to the output dataset (:ref:`gdal_translate`).
+The effect of the ``nogcp`` option (added in GDAL 3.8) is to not copy the GCPs in the source dataset to the output dataset (:ref:`gdal_translate`). To apply this
+use syntax ``nogcp=true``, or ``nogcp=false`` (which is the default if not specified).
+
+The effect of the ``epo`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall partially outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``epo=true``, or ``epo=false`` (which is the default if not specified).
+
+The effect of the ``eco`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall completely outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``eco=true``, or ``eco=false`` (which is the default if not specified).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

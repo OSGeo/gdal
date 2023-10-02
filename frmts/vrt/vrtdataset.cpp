@@ -1349,7 +1349,20 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     argv.AddString("-nogcp");
                 }
             }
-
+            else if (EQUAL(pszKey, "epo"))
+            {
+                if (CPLTestBool(pszValue))
+                {
+                    argv.AddString("-epo");
+                }
+            }
+            else if (EQUAL(pszKey, "eco"))
+            {
+                if (CPLTestBool(pszValue))
+                {
+                    argv.AddString("-eco");
+                }
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
