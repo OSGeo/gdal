@@ -54,8 +54,10 @@
 /* ==================================================================== */
 OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                               OGRFeatureDefn *poDefn, int iShape,
-                              SHPObject *psShape, const char *pszSHPEncoding);
-OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape);
+                              SHPObject *psShape, const char *pszSHPEncoding,
+                              bool &bHasWarnedWrongWindingOrder);
+OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
+                              bool &bHasWarnedWrongWindingOrder);
 OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
                                       DBFHandle hDBF,
                                       const char *pszSHPEncoding,
@@ -182,6 +184,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     bool bCreateSpatialIndexAtClose;
     bool bRewindOnWrite;
+    bool m_bHasWarnedWrongWindingOrder = false;
 
     bool m_bAutoRepack;
     typedef enum
