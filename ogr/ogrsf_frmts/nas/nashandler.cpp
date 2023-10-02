@@ -503,13 +503,12 @@ void NASHandler::startElement(const XMLCh *const /* uri */,
     /*      If it is (or at least potentially is) a simple attribute,       */
     /*      then start collecting it.                                       */
     /* -------------------------------------------------------------------- */
-    else if (m_poReader->IsAttributeElement(m_osElementName))
+    else if (m_poReader->IsAttributeElement(m_osElementName, attrs))
     {
         CPLFree(m_pszCurField);
         m_pszCurField = CPLStrdup("");
 
-        // Capture href as OB property.
-        m_poReader->CheckForRelations(m_osElementName, attrs, &m_pszCurField);
+        m_poReader->DealWithAttributes(m_osElementName, m_osElementName.length(), attrs);
 
         // Capture "fid" attribute as part of the property value -
         // primarily this is for wfs:Delete operation's FeatureId attribute.

@@ -233,7 +233,7 @@ class NASReader final : public IGMLReader
     void PushState(GMLReadState *);
 
     bool IsFeatureElement(const char *pszElement);
-    bool IsAttributeElement(const char *pszElement);
+    bool IsAttributeElement(const char *pszElement, const Attributes &attrs);
 
     void PushFeature(const char *pszElement, const Attributes &attrs);
 
@@ -248,10 +248,11 @@ class NASReader final : public IGMLReader
         return m_bStopParsing;
     }
 
+    int GetAttributeElementIndex(const char *pszElement, int nLen, const char *pszAttrKey);
+
     void CheckForFID(const Attributes &attrs, char **ppszCurField);
     void CheckForRID(const Attributes &attrs, char **ppszCurField);
-    void CheckForRelations(const char *pszElement, const Attributes &attrs,
-                           char **ppszCurField);
+    void DealWithAttributes(const char *pszElement, int nLenName, const Attributes &attrs);
 
     virtual const char *GetGlobalSRSName() override
     {

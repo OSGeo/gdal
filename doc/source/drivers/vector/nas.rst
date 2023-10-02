@@ -26,24 +26,24 @@ ax_flurstueck.objektkoordinaten next to the regular wkb_geometry).
 Starting with GDAL 3.7, defining the NAS_GFS_TEMPLATE configuration option is
 required for the NAS driver to open a file. It may be set to the empty string
 to mean that the driver should try to establish the schema of the file from its
-content, but using the below mentioned template is recommended.
+content, but using one of templates mentioned below is recommended.
 
-A `GFS
-template <https://github.com/norBIT/alkisimport/blob/master/alkis-schema.gfs>`__
-and a corresponding `PostgreSQL
-schema <https://github.com/norBIT/alkisimport/blob/master/alkis-schema.sql>`__
-of the full NAS schema are part of `norGIS
-ALKIS-Import <http://www.norbit.de/68/>`__ (also featuring a shell
-script and PyQt frontend which ease the import). The two files were
-generated using `xmi2db <https://github.com/norBIT/xmi2db/>`__ (fork of
+The GFS templates and PostgreSQL schemas are part of `norGIS
+ALKIS-Import <http://www.norbit.de/68/>`__ (also featuring a shell script and
+PyQt frontend which ease the import).  There are currently two versions:
+
+* GeoInfoDok 6: `GFS template <https://github.com/norBIT/alkisimport/blob/master/alkis-schema.gfs>`__ (for GDAL >=3.8 and `<3.8 <https://github.com/norBIT/alkisimport/blob/master/alkis-schema.37.gfs>`__)  and `PostgreSQL schema <https://github.com/norBIT/alkisimport/blob/master/alkis-schema.sql>`__
+* GeoInfoDok 7.1.2: `GFS template <https://github.com/norBIT/alkisimport/blob/gid7/alkis-schema.gfs>`__ and `PostgreSQL schema <https://github.com/norBIT/alkisimport/blob/gid7/alkis-schema.sql>`__
+
+The files were generated using `xmi2db <https://github.com/norBIT/xmi2db/>`__ (fork of
 `xmi2db <https://github.com/pkorduan/xmi2db>`__) from the official
 application schema.
 
-The configuration option **NAS_NO_RELATION_LAYER** allows
-disabling populating the table *alkis_beziehungen*. The information found
-there is redundant to the relation fields also contained in original
-elements/tables. Enabling the option also makes progress reporting
-available.
+In GDAL 3.8 the creation of the relation layer *alkis_beziehungen* was removed. Prior
+the configuration option **NAS_NO_RELATION_LAYER** allowed to disable its
+population - which was default in ALKIS-Import. The information found there was
+redundant to the relation fields also contained in original elements/tables.
+Enabling the option also made progress reporting available.
 
 This driver was implemented within the context of the `PostNAS
 project <http://trac.wheregroup.com/PostNAS>`__, which has more
