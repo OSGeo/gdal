@@ -73,7 +73,7 @@ Creation Issues
   `More background and dicussion on this issue at <https://github.com/flatgeobuf/flatgeobuf/discussions/260>`__
 
 * The creation of the packet Hilbert R-Tree requires an amount of RAM which
-  is at least the number of features times 80 bytes.
+  is at least the number of features times 83 bytes.
 
 Examples
 --------
