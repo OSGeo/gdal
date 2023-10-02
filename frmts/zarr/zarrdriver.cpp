@@ -558,7 +558,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         // Pass papszOpenOptions for LOAD_EXTRA_DIM_METADATA_DELAY
         auto poNewDS =
             std::unique_ptr<GDALDataset>(poMainArray->AsClassicDataset(
-                iXDim, iYDim, poOpenInfo->papszOpenOptions));
+                iXDim, iYDim, poRG, poOpenInfo->papszOpenOptions));
         if (!poNewDS)
             return nullptr;
 

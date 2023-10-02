@@ -2244,6 +2244,10 @@ GDALMDArrayH CPL_DLL GDALMDArrayGetMask(GDALMDArrayH hArray,
                                         CSLConstList papszOptions);
 GDALDatasetH CPL_DLL GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
                                                  size_t iXDim, size_t iYDim);
+GDALDatasetH CPL_DLL GDALMDArrayAsClassicDatasetEx(GDALMDArrayH hArray,
+                                                   size_t iXDim, size_t iYDim,
+                                                   GDALGroupH hRootGroup,
+                                                   CSLConstList papszOptions);
 CPLErr CPL_DLL GDALMDArrayGetStatistics(
     GDALMDArrayH hArray, GDALDatasetH, int bApproxOK, int bForce,
     double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev,
