@@ -164,6 +164,15 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                               struct ArrowArray *array,
                               CSLConstList papszOptions) const;
 
+    //! @cond Doxygen_Suppress
+    bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
+                                        const std::string &osFieldPrefix,
+                                        std::string &osErrorMsg) const;
+    bool CreateFieldFromArrowSchemaInternal(const struct ArrowSchema *schema,
+                                            const std::string &osFieldPrefix,
+                                            CSLConstList papszOptions);
+    //! @endcond
+
   public:
     OGRLayer();
     virtual ~OGRLayer();
@@ -203,6 +212,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual GDALDataset *GetDataset();
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr);
+    virtual bool IsArrowSchemaSupported(const struct ArrowSchema *schema,
+                                        std::string &osErrorMsg) const;
+    virtual bool
+    CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
+                               CSLConstList papszOptions = nullptr);
+    virtual bool WriteArrowBatch(const struct ArrowSchema *schema,
+                                 struct ArrowArray *array,
+                                 CSLConstList papszOptions = nullptr);
 
     OGRErr SetFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
     OGRErr CreateFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
@@ -352,6 +369,16 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                            bool bEnvelopeAlreadySet,
                            OGREnvelope &sEnvelope) const;
     //! @endcond
+
+    /** Field name used by GetArrowSchema() for a FID column when
+     * GetFIDColumn() is not set.
+     */
+    static constexpr const char *DEFAULT_ARROW_FID_NAME = "OGC_FID";
+
+    /** Field name used by GetArrowSchema() for the name of the (single)
+     * geometry column (returned by GetGeometryColumn()) is not set.
+     */
+    static constexpr const char *DEFAULT_ARROW_GEOMETRY_NAME = "wkb_geometry";
 
   protected:
     //! @cond Doxygen_Suppress
