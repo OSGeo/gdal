@@ -3641,6 +3641,7 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
     }
 
     VSIVirtualHandleUniquePtr poFileHandleAutoClose;
+    bool bUsingStreaming = false;
     if (!fpSource)
     {
         if (STARTS_WITH(pszSource, osPrefix))
@@ -3655,6 +3656,8 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
                 if (!osStreamingPath.empty())
                 {
                     fpSource = VSIFOpenExL(osStreamingPath, "rb", TRUE);
+                    if (fpSource)
+                        bUsingStreaming = true;
                 }
             }
         }
@@ -3671,9 +3674,26 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
         poFileHandleAutoClose.reset(fpSource);
     }
 
-    return VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,
-                                          nSourceSize, papszOptions,
-                                          pProgressFunc, pProgressData);
+    int ret = VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                             nSourceSize, papszOptions,
+                                             pProgressFunc, pProgressData);
+    if (ret == -1 && bUsingStreaming)
+    {
+        // Retry without streaming. This may be useful for large files, when
+        // there are connectivity issues, as retry attempts will be more
+        // efficient when using range requests.
+        CPLDebug(GetDebugKey(), "Retrying copy without streaming");
+        fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
+        if (fpSource)
+        {
+            poFileHandleAutoClose.reset(fpSource);
+            ret = VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                                 nSourceSize, papszOptions,
+                                                 pProgressFunc, pProgressData);
+        }
+    }
+
+    return ret;
 }
 
 /************************************************************************/
