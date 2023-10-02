@@ -49,15 +49,15 @@ def test_ogr_refcount_1():
     #    gdaltest.post_reason( 'Initial Open DS count is not zero!' )
     #    return 'failed'
 
-    gdaltest.ds_1 = ogr.OpenShared("data/idlink.dbf")
-    gdaltest.ds_2 = ogr.OpenShared("data/poly.shp")
+    ds_1 = ogr.OpenShared("data/idlink.dbf")
+    ds_2 = ogr.OpenShared("data/poly.shp")
 
     # if ogr.GetOpenDSCount() != 2:
     #    gdaltest.post_reason( 'Open DS count not 2 after shared opens.' )
     #    return 'failed'
 
-    assert gdaltest.ds_1.GetRefCount() == 1
-    assert gdaltest.ds_2.GetRefCount() == 1
+    assert ds_1.GetRefCount() == 1
+    assert ds_2.GetRefCount() == 1
 
 
 ###############################################################################
@@ -66,15 +66,17 @@ def test_ogr_refcount_1():
 
 def test_ogr_refcount_2():
 
+    ds_1 = ogr.OpenShared("data/idlink.dbf")
     ds_3 = ogr.OpenShared("data/idlink.dbf")
+
+    assert ds_1 is not None
+    assert ds_3 is not None
 
     # if ogr.GetOpenDSCount() != 2:
     #    gdaltest.post_reason( 'Open DS count not 2 after third open.' )
     #    return 'failed'
 
     assert ds_3.GetRefCount() == 2, "Refcount not 2 after reopened."
-
-    gdaltest.ds_3 = ds_3
 
 
 ###############################################################################
@@ -83,11 +85,15 @@ def test_ogr_refcount_2():
 
 def test_ogr_refcount_3():
 
-    gdaltest.ds_3.Release()
+    ds_1 = ogr.OpenShared("data/idlink.dbf")
+    ds_3 = ogr.OpenShared("data/idlink.dbf")
 
-    assert gdaltest.ds_1.GetRefCount() == 1
+    assert ds_1 is not None
+    assert ds_3 is not None
 
-    gdaltest.ds_1.Release()
+    ds_3.Release()
+
+    assert ds_1.GetRefCount() == 1
 
 
 ###############################################################################
@@ -96,12 +102,11 @@ def test_ogr_refcount_3():
 
 def test_ogr_refcount_4():
 
+    ds_1 = ogr.OpenShared("data/idlink.dbf")
+    ds_2 = ogr.OpenShared("data/poly.shp")
+
+    assert ds_1 is not None
+    assert ds_2 is not None
+
     with gdal.quiet_errors():
         ogr.GetOpenDS(0)
-
-
-###############################################################################
-
-
-def test_ogr_refcount_cleanup():
-    gdaltest.ds_2.Release()
