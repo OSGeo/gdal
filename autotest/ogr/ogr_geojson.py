@@ -2244,7 +2244,8 @@ def test_ogr_geojson_56():
       { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [[-179, 52],[179, 47]] } },
       { "type": "Feature", "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 51.0 ], [ 180.0, 49.5 ] ], [ [ -180.0, 49.5 ], [ -179.0, 48.0 ] ] ] } },
       { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[177, 51],[-175, 51],[-175, 48],[177, 48],[177, 51]]] } },
-      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } }
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ] ] } }
   ]
 }""",
         format="GeoJSON",
@@ -2255,13 +2256,14 @@ def test_ogr_geojson_56():
     gdal.Unlink("/vsimem/out.json")
     expected = """{
 "type": "FeatureCollection",
-"bbox": [ 177.0000000, 47.0000000, -175.0000000, 52.0000000 ],
+"bbox": [172.0, 47.0, -162.0, 52.0],
 "features": [
 { "type": "Feature", "properties": { }, "bbox": [ 179.0, 48.0, -179.0, 51.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 51.0 ], [ 180.0, 49.5 ] ], [ [ -180.0, 49.5 ], [ -179.0, 48.0 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 179.0, 47.0, -179.0, 52.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ -179.0, 52.0 ], [ -180.0, 49.5 ] ], [ [ 180.0, 49.5 ], [ 179.0, 47.0 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 179.0, 48.0, -179.0, 51.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 51.0 ], [ 180.0, 49.5 ] ], [ [ -180.0, 49.5 ], [ -179.0, 48.0 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 177.0, 48.0, -175.0, 51.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } },
-{ "type": "Feature", "properties": { }, "bbox": [ 177.0, 48.0, -175.0, 51.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } }
+{ "type": "Feature", "properties": { }, "bbox": [ 177.0, 48.0, -175.0, 51.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } },
+{ "type": "Feature", "bbox": [ 172, 51, -162, 52 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ] ] } }
 ]
 }
 """
@@ -2269,31 +2271,68 @@ def test_ogr_geojson_56():
     j_got = json.loads(got)
     j_expected = json.loads(expected)
     assert j_got["bbox"] == j_expected["bbox"]
-    assert len(j_expected["features"]) == 5
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"])),
+    assert len(j_expected["features"]) == 6
+    for i in range(len(j_expected["features"])):
+        assert j_got["features"][i]["bbox"] == j_expected["features"][i]["bbox"], i
+        try:
+            ogrtest.check_feature_geometry(
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_got["features"][i]["geometry"])
+                ),
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_expected["features"][i]["geometry"])
+                ),
+            )
+        except AssertionError as e:
+            pytest.fail("At geom %d: %s" % (i, str(e)))
+
+    # Test geometries that defeats antimeridian heuristics
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -80, 10 ], [-60, 10], [-60, 11], [-80, 10] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 80, 10 ], [60, 10], [60, 11], [80, 10] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 10, 10 ], [120, 10], [120, 11], [10, 10] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -91, 10 ], [-80, 10], [-80, 11], [-91, 10] ] ] ] } }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
     )
 
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"])),
-    )
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [-163.0, 10.0, 173.0, 52.0],
+"features": [
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -80, 10 ], [-60, 10], [-60, 11], [-80, 10] ] ] ] } },
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 80, 10 ], [60, 10], [60, 11], [80, 10] ] ] ] } },
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 10, 10 ], [120, 10], [120, 11], [10, 10] ] ] ] } },
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -91, 10 ], [-80, 10], [-80, 11], [-91, 10] ] ] ] } }
+]
+}
+"""
 
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"])),
-    )
-
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][3]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][3]["geometry"])),
-    )
-
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][4]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][4]["geometry"])),
-    )
+    j_got = json.loads(got)
+    j_expected = json.loads(expected)
+    assert j_got["bbox"] == j_expected["bbox"]
+    assert len(j_expected["features"]) == 4
+    for i in range(len(j_expected["features"])):
+        assert j_got["features"][i]["bbox"] == j_expected["features"][i]["bbox"], i
+        try:
+            ogrtest.check_feature_geometry(
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_got["features"][i]["geometry"])
+                ),
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_expected["features"][i]["geometry"])
+                ),
+            )
+        except AssertionError as e:
+            pytest.fail("At geom %d: %s" % (i, str(e)))
 
     # Test polygon geometry that covers the whole world (#2833)
     gdal.VectorTranslate(
