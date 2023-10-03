@@ -842,6 +842,8 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     }
 
     sHelper.Shrink(iFeat);
+    if (iFeat == 0)
+        sHelper.ClearArray();
 
     return 0;
 

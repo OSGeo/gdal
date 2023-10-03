@@ -255,7 +255,8 @@ class CPL_DLL OGRArrowArrayHelper
 
     void ClearArray()
     {
-        m_out_array->release(m_out_array);
+        if (m_out_array->release)
+            m_out_array->release(m_out_array);
         memset(m_out_array, 0, sizeof(*m_out_array));
     }
 

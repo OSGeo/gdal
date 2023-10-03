@@ -1879,10 +1879,17 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         bEOFOrError = false;
     }
 
-    if (bEOFOrError && m_featuresCount > 0)
+    if (bEOFOrError)
         m_bEOF = true;
 
     sHelper.Shrink(iFeat);
+
+    if (iFeat == 0)
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+    }
+
     return 0;
 
 error:

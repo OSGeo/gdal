@@ -7867,7 +7867,13 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
     m_poFillArrowArray->bIsFinished = true;
     if (m_poFillArrowArray->nCountRows >= 0)
+    {
         m_poFillArrowArray->psHelper->Shrink(m_poFillArrowArray->nCountRows);
+        if (m_poFillArrowArray->nCountRows == 0)
+        {
+            m_poFillArrowArray->psHelper->ClearArray();
+        }
+    }
     m_poFillArrowArray->oCV.notify_one();
 }
 
@@ -7878,7 +7884,24 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
 int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                                struct ArrowArray *out_array)
 {
-    GetLayerDefn();
+    if (!m_bFeatureDefnCompleted)
+        GetLayerDefn();
+    if (m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
+    {
+        memset(out_array, 0, sizeof(*out_array));
+        return EIO;
+    }
+
+    if (m_poFilterGeom != nullptr)
+    {
+        // Both are exclusive
+        CreateSpatialIndexIfNecessary();
+        if (!RunDeferredSpatialIndexUpdate())
+        {
+            memset(out_array, 0, sizeof(*out_array));
+            return EIO;
+        }
+    }
 
     if (CPLTestBool(CPLGetConfigOption("OGR_GPKG_STREAM_BASE_IMPL", "NO")))
     {
@@ -8231,6 +8254,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     }
 
     sFillArrowArray.psHelper->Shrink(sFillArrowArray.nCountRows);
+    if (sFillArrowArray.nCountRows == 0)
+    {
+        sFillArrowArray.psHelper->ClearArray();
+    }
 
     m_iNextShapeId += sFillArrowArray.nCountRows;
 
