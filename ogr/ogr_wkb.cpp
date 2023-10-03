@@ -778,6 +778,254 @@ bool OGRWKBIsWithinPessimistic(const GByte *pabyWkb, size_t nWKBSize,
 }
 
 /************************************************************************/
+/*                            epsilonEqual()                            */
+/************************************************************************/
+
+constexpr double EPSILON = 1.0E-5;
+
+static inline bool epsilonEqual(double a, double b, double eps)
+{
+    return ::fabs(a - b) < eps;
+}
+
+/************************************************************************/
+/*                     OGRWKBIsClockwiseRing()                          */
+/************************************************************************/
+
+static inline double GetX(const GByte *data, uint32_t i, int nDim,
+                          bool bNeedSwap)
+{
+    double dfX;
+    memcpy(&dfX, data + static_cast<size_t>(i) * nDim * sizeof(double),
+           sizeof(double));
+    if (bNeedSwap)
+        CPL_SWAP64PTR(&dfX);
+    return dfX;
+}
+
+static inline double GetY(const GByte *data, uint32_t i, int nDim,
+                          bool bNeedSwap)
+{
+    double dfY;
+    memcpy(&dfY, data + (static_cast<size_t>(i) * nDim + 1) * sizeof(double),
+           sizeof(double));
+    if (bNeedSwap)
+        CPL_SWAP64PTR(&dfY);
+    return dfY;
+}
+
+static bool OGRWKBIsClockwiseRing(const GByte *data, const uint32_t nPoints,
+                                  const int nDim, const bool bNeedSwap)
+{
+    // WARNING: keep in sync OGRLineString::isClockwise(),
+    // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
+
+    bool bUseFallback = false;
+
+    // Find the lowest rightmost vertex.
+    uint32_t v = 0;  // Used after for.
+    double vX = GetX(data, v, nDim, bNeedSwap);
+    double vY = GetY(data, v, nDim, bNeedSwap);
+    for (uint32_t i = 1; i < nPoints - 1; i++)
+    {
+        // => v < end.
+        const double y = GetY(data, i, nDim, bNeedSwap);
+        if (y < vY)
+        {
+            v = i;
+            vX = GetX(data, i, nDim, bNeedSwap);
+            vY = y;
+            bUseFallback = false;
+        }
+        else if (y == vY)
+        {
+            const double x = GetX(data, i, nDim, bNeedSwap);
+            if (x > vX)
+            {
+                v = i;
+                vX = x;
+                vY = y;
+                bUseFallback = false;
+            }
+            else if (x == vX)
+            {
+                // Two vertex with same coordinates are the lowest rightmost
+                // vertex.  Cannot use that point as the pivot (#5342).
+                bUseFallback = true;
+            }
+        }
+    }
+
+    // Previous.
+    uint32_t next = (v == 0) ? nPoints - 2 : v - 1;
+    if (epsilonEqual(GetX(data, next, nDim, bNeedSwap), vX, EPSILON) &&
+        epsilonEqual(GetY(data, next, nDim, bNeedSwap), vY, EPSILON))
+    {
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
+        bUseFallback = true;
+    }
+
+    const double dx0 = GetX(data, next, nDim, bNeedSwap) - vX;
+    const double dy0 = GetY(data, next, nDim, bNeedSwap) - vY;
+
+    // Following.
+    next = v + 1;
+    if (next >= nPoints - 1)
+    {
+        next = 0;
+    }
+
+    if (epsilonEqual(GetX(data, next, nDim, bNeedSwap), vX, EPSILON) &&
+        epsilonEqual(GetY(data, next, nDim, bNeedSwap), vY, EPSILON))
+    {
+        // Don't try to be too clever by retrying with a next point.
+        // This can lead to false results as in the case of #3356.
+        bUseFallback = true;
+    }
+
+    const double dx1 = GetX(data, next, nDim, bNeedSwap) - vX;
+    const double dy1 = GetY(data, next, nDim, bNeedSwap) - vY;
+
+    const double crossproduct = dx1 * dy0 - dx0 * dy1;
+
+    if (!bUseFallback)
+    {
+        if (crossproduct > 0)  // CCW
+            return false;
+        else if (crossproduct < 0)  // CW
+            return true;
+    }
+
+    // This is a degenerate case: the extent of the polygon is less than EPSILON
+    // or 2 nearly identical points were found.
+    // Try with Green Formula as a fallback, but this is not a guarantee
+    // as we'll probably be affected by numerical instabilities.
+
+    double dfSum = GetX(data, 0, nDim, bNeedSwap) *
+                   (GetY(data, 1, nDim, bNeedSwap) -
+                    GetY(data, nPoints - 1, nDim, bNeedSwap));
+
+    for (uint32_t i = 1; i < nPoints - 1; i++)
+    {
+        dfSum += GetX(data, i, nDim, bNeedSwap) *
+                 (GetY(data, i + 1, nDim, bNeedSwap) -
+                  GetY(data, i - 1, nDim, bNeedSwap));
+    }
+
+    dfSum += GetX(data, nPoints - 1, nDim, bNeedSwap) *
+             (GetY(data, 0, nDim, bNeedSwap) -
+              GetX(data, nPoints - 2, nDim, bNeedSwap));
+
+    return dfSum < 0;
+}
+
+/************************************************************************/
+/*                OGRWKBFixupCounterClockWiseExternalRing()             */
+/************************************************************************/
+
+static bool OGRWKBFixupCounterClockWiseExternalRingInternal(
+    GByte *data, size_t size, size_t &iOffsetInOut, const int nRec)
+{
+    if (size - iOffsetInOut < MIN_WKB_SIZE)
+    {
+        return false;
+    }
+    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(data[iOffsetInOut]);
+    if (!(nByteOrder == wkbXDR || nByteOrder == wkbNDR))
+    {
+        return false;
+    }
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
+
+    OGRwkbGeometryType eGeometryType = wkbUnknown;
+    OGRReadWKBGeometryType(data + iOffsetInOut, wkbVariantIso, &eGeometryType);
+    iOffsetInOut += 5;
+    const auto eFlatType = wkbFlatten(eGeometryType);
+    const int nDim = 2 + (OGR_GT_HasZ(eGeometryType) ? 1 : 0) +
+                     (OGR_GT_HasM(eGeometryType) ? 1 : 0);
+
+    if (eFlatType == wkbPolygon)
+    {
+        const uint32_t nRings =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nRings > (size - iOffsetInOut) / sizeof(uint32_t))
+        {
+            return false;
+        }
+        for (uint32_t iRing = 0; iRing < nRings; ++iRing)
+        {
+            if (iOffsetInOut + sizeof(uint32_t) > size)
+                return false;
+            const uint32_t nPoints =
+                OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+            const size_t sizeOfPoint = nDim * sizeof(double);
+            if (nPoints > (size - iOffsetInOut) / sizeOfPoint)
+            {
+                return false;
+            }
+
+            if (nPoints >= 4)
+            {
+                const bool bIsClockwiseRing = OGRWKBIsClockwiseRing(
+                    data + iOffsetInOut, nPoints, nDim, OGR_SWAP(eByteOrder));
+                if ((bIsClockwiseRing && iRing == 0) ||
+                    (!bIsClockwiseRing && iRing > 0))
+                {
+                    GByte abyTmp[4 * sizeof(double)];
+                    for (uint32_t i = 0; i < nPoints / 2; ++i)
+                    {
+                        GByte *pBegin = data + iOffsetInOut + i * sizeOfPoint;
+                        GByte *pEnd = data + iOffsetInOut +
+                                      (nPoints - 1 - i) * sizeOfPoint;
+                        memcpy(abyTmp, pBegin, sizeOfPoint);
+                        memcpy(pBegin, pEnd, sizeOfPoint);
+                        memcpy(pEnd, abyTmp, sizeOfPoint);
+                    }
+                }
+            }
+
+            iOffsetInOut += nPoints * sizeOfPoint;
+        }
+    }
+
+    if (eFlatType == wkbGeometryCollection || eFlatType == wkbMultiPolygon ||
+        eFlatType == wkbMultiSurface)
+    {
+        if (nRec == 128)
+        {
+            return false;
+        }
+        const uint32_t nParts =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
+        {
+            return false;
+        }
+        for (uint32_t k = 0; k < nParts; k++)
+        {
+            if (!OGRWKBFixupCounterClockWiseExternalRingInternal(
+                    data, size, iOffsetInOut, nRec))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+/** Modifies the geometry such that exterior rings of polygons are
+ * counter-clockwise oriented and inner rings clockwise oriented.
+ */
+void OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb, size_t nWKBSize)
+{
+    size_t iOffsetInOut = 0;
+    OGRWKBFixupCounterClockWiseExternalRingInternal(
+        pabyWkb, nWKBSize, iOffsetInOut, /* nRec = */ 0);
+}
+
+/************************************************************************/
 /*                         OGRAppendBuffer()                            */
 /************************************************************************/
 
