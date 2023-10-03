@@ -106,7 +106,6 @@ def test_gdalbuildvrt_lib_ovr(tmp_vsimem):
     ds = gdal.Open(tmpfilename)
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
     ds = None
-    gdal.GetDriverByName("VRT").Delete(tmpfilename)
 
 
 def test_gdalbuildvrt_lib_te_partial_overlap():
@@ -247,7 +246,7 @@ def test_gdalbuildvrt_lib_virtual_overviews_not_same_res():
 
 
 ###############################################################################
-def test_gdalbuildvrt_lib_separate_nodata():
+def test_gdalbuildvrt_lib_separate_nodata(tmp_vsimem):
 
     src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
@@ -257,12 +256,11 @@ def test_gdalbuildvrt_lib_separate_nodata():
     src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
-    gdal.BuildVRT("/vsimem/out.vrt", [src1_ds, src2_ds], separate=True)
+    gdal.BuildVRT(tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True)
 
-    f = gdal.VSIFOpenL("/vsimem/out.vrt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
-    gdal.Unlink("/vsimem/out.vrt")
 
     assert b"<NoDataValue>1</NoDataValue>" in data
     assert b"<NODATA>1</NODATA>" in data
@@ -271,7 +269,7 @@ def test_gdalbuildvrt_lib_separate_nodata():
 
 
 ###############################################################################
-def test_gdalbuildvrt_lib_separate_nodata_2():
+def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
 
     src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
@@ -281,12 +279,13 @@ def test_gdalbuildvrt_lib_separate_nodata_2():
     src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
-    gdal.BuildVRT("/vsimem/out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="3 4")
+    gdal.BuildVRT(
+        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="3 4"
+    )
 
-    f = gdal.VSIFOpenL("/vsimem/out.vrt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
-    gdal.Unlink("/vsimem/out.vrt")
 
     assert b"<NoDataValue>3</NoDataValue>" in data
     assert b"<NODATA>3</NODATA>" in data
@@ -295,7 +294,7 @@ def test_gdalbuildvrt_lib_separate_nodata_2():
 
 
 ###############################################################################
-def test_gdalbuildvrt_lib_separate_nodata_3():
+def test_gdalbuildvrt_lib_separate_nodata_3(tmp_vsimem):
 
     src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
@@ -306,17 +305,16 @@ def test_gdalbuildvrt_lib_separate_nodata_3():
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
     gdal.BuildVRT(
-        "/vsimem/out.vrt",
+        tmp_vsimem / "out.vrt",
         [src1_ds, src2_ds],
         separate=True,
         srcNodata="3 4",
         VRTNodata="5 6",
     )
 
-    f = gdal.VSIFOpenL("/vsimem/out.vrt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
-    gdal.Unlink("/vsimem/out.vrt")
 
     assert b"<NoDataValue>5</NoDataValue>" in data
     assert b"<NODATA>3</NODATA>" in data
@@ -325,7 +323,7 @@ def test_gdalbuildvrt_lib_separate_nodata_3():
 
 
 ###############################################################################
-def test_gdalbuildvrt_lib_separate_nodata_4():
+def test_gdalbuildvrt_lib_separate_nodata_4(tmp_vsimem):
 
     src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
@@ -336,17 +334,16 @@ def test_gdalbuildvrt_lib_separate_nodata_4():
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
     gdal.BuildVRT(
-        "/vsimem/out.vrt",
+        tmp_vsimem / "out.vrt",
         [src1_ds, src2_ds],
         separate=True,
         srcNodata="None",
         VRTNodata="None",
     )
 
-    f = gdal.VSIFOpenL("/vsimem/out.vrt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
-    gdal.Unlink("/vsimem/out.vrt")
 
     assert b"<NoDataValue>" not in data
     assert b"<NODATA>" not in data
@@ -574,9 +571,9 @@ def test_gdalbuildvrt_lib_strict_mode():
 
 
 ###############################################################################
-def test_gdalbuildvrt_lib_te_touching_on_edge():
+def test_gdalbuildvrt_lib_te_touching_on_edge(tmp_vsimem):
 
-    tmp_filename = "/vsimem/test_gdalbuildvrt_lib_te_touching_on_edge.vrt"
+    tmp_filename = tmp_vsimem / "test_gdalbuildvrt_lib_te_touching_on_edge.vrt"
     ds = gdal.BuildVRT(
         tmp_filename,
         "../gcore/data/byte.tif",
@@ -591,54 +588,46 @@ def test_gdalbuildvrt_lib_te_touching_on_edge():
     assert ds.GetRasterBand(1).Checksum() == 0
     ds = None
 
-    gdal.Unlink(tmp_filename)
-
 
 ###############################################################################
 @pytest.mark.parametrize("num_bands_1,num_bands_2", [(3, 3), (3, 4), (4, 3), (4, 4)])
 @pytest.mark.parametrize("drv_name", ["MEM", "GTiff"])
-def test_gdalbuildvrt_lib_addAlpha(num_bands_1, num_bands_2, drv_name):
-    fname1 = "/vsimem/test_gdalbuildvrt_lib_addAlpha_1.tif"
-    fname2 = "/vsimem/test_gdalbuildvrt_lib_addAlpha_2.tif"
+def test_gdalbuildvrt_lib_addAlpha(tmp_vsimem, num_bands_1, num_bands_2, drv_name):
+    fname1 = tmp_vsimem / "test_gdalbuildvrt_lib_addAlpha_1.tif"
+    fname2 = tmp_vsimem / "test_gdalbuildvrt_lib_addAlpha_2.tif"
 
-    try:
-        src_ds1 = gdal.GetDriverByName(drv_name).Create(fname1, 1, 1, num_bands_1)
-        if num_bands_1 == 4:
-            src_ds1.GetRasterBand(src_ds1.RasterCount).SetColorInterpretation(
-                gdal.GCI_AlphaBand
-            )
-        for i in range(src_ds1.RasterCount):
-            src_ds1.GetRasterBand(i + 1).Fill(i + 1)
-        src_ds1.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    src_ds1 = gdal.GetDriverByName(drv_name).Create(fname1, 1, 1, num_bands_1)
+    if num_bands_1 == 4:
+        src_ds1.GetRasterBand(src_ds1.RasterCount).SetColorInterpretation(
+            gdal.GCI_AlphaBand
+        )
+    for i in range(src_ds1.RasterCount):
+        src_ds1.GetRasterBand(i + 1).Fill(i + 1)
+    src_ds1.SetGeoTransform([2, 1, 0, 49, 0, -1])
 
-        src_ds2 = gdal.GetDriverByName(drv_name).Create(fname2, 1, 1, num_bands_2)
-        if num_bands_2 == 4:
-            src_ds2.GetRasterBand(src_ds2.RasterCount).SetColorInterpretation(
-                gdal.GCI_AlphaBand
-            )
-        for i in range(src_ds2.RasterCount):
-            src_ds2.GetRasterBand(i + 1).Fill(i + 1)
-        src_ds2.SetGeoTransform([3, 1, 0, 49, 0, -1])
+    src_ds2 = gdal.GetDriverByName(drv_name).Create(fname2, 1, 1, num_bands_2)
+    if num_bands_2 == 4:
+        src_ds2.GetRasterBand(src_ds2.RasterCount).SetColorInterpretation(
+            gdal.GCI_AlphaBand
+        )
+    for i in range(src_ds2.RasterCount):
+        src_ds2.GetRasterBand(i + 1).Fill(i + 1)
+    src_ds2.SetGeoTransform([3, 1, 0, 49, 0, -1])
 
-        if drv_name == "MEM":
-            ds = gdal.BuildVRT("", [src_ds1, src_ds2], addAlpha=True)
-        else:
-            src_ds1 = None
-            src_ds2 = None
-            ds = gdal.BuildVRT("", [fname1, fname2], addAlpha=True)
-        assert ds.RasterCount == 4
-        assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
-        assert ds.GetRasterBand(1).ReadRaster() == b"\x01\x01"
-        assert ds.GetRasterBand(2).ReadRaster() == b"\x02\x02"
-        assert ds.GetRasterBand(3).ReadRaster() == b"\x03\x03"
-        assert ds.GetRasterBand(4).ReadRaster() == (
-            b"\xff" if num_bands_1 == 3 else b"\x04"
-        ) + (b"\xff" if num_bands_2 == 3 else b"\x04")
-    finally:
-        if gdal.VSIStatL(fname1) is not None:
-            gdal.Unlink(fname1)
-        if gdal.VSIStatL(fname2) is not None:
-            gdal.Unlink(fname2)
+    if drv_name == "MEM":
+        ds = gdal.BuildVRT("", [src_ds1, src_ds2], addAlpha=True)
+    else:
+        src_ds1 = None
+        src_ds2 = None
+        ds = gdal.BuildVRT("", [fname1, fname2], addAlpha=True)
+    assert ds.RasterCount == 4
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
+    assert ds.GetRasterBand(1).ReadRaster() == b"\x01\x01"
+    assert ds.GetRasterBand(2).ReadRaster() == b"\x02\x02"
+    assert ds.GetRasterBand(3).ReadRaster() == b"\x03\x03"
+    assert ds.GetRasterBand(4).ReadRaster() == (
+        b"\xff" if num_bands_1 == 3 else b"\x04"
+    ) + (b"\xff" if num_bands_2 == 3 else b"\x04")
 
 
 ###############################################################################

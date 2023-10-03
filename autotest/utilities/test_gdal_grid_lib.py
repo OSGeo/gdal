@@ -40,17 +40,23 @@ import pytest
 from osgeo import gdal, ogr
 
 
-def create_source_dataset():
+@pytest.fixture()
+def n43_tif():
+    ds = gdal.Open("../gdrivers/data/n43.tif")
+    return ds
+
+
+@pytest.fixture()
+def n43_shp(tmp_vsimem, n43_tif):
 
     # Create an OGR grid from the values of n43.tif
-    ds = gdal.Open("../gdrivers/data/n43.tif")
-    geotransform = ds.GetGeoTransform()
+    geotransform = n43_tif.GetGeoTransform()
 
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    shape_ds = shape_drv.CreateDataSource("/vsimem/tmp")
+    shape_ds = shape_drv.CreateDataSource(tmp_vsimem / "tmp")
     shape_lyr = shape_ds.CreateLayer("n43")
 
-    data = ds.ReadRaster(0, 0, 121, 121)
+    data = n43_tif.ReadRaster(0, 0, 121, 121)
     array_val = struct.unpack("h" * 121 * 121, data)
     for j in range(121):
         for i in range(121):
@@ -65,18 +71,16 @@ def create_source_dataset():
 
     shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON n43")
 
-    shape_ds = None
-
-    return ds
+    return gdaltest.reopen(shape_ds, update=1)
 
 
 ###############################################################################
 #
 
 
-def test_gdal_grid_lib_1():
+def test_gdal_grid_lib_1(n43_tif, n43_shp):
 
-    ds = create_source_dataset()
+    ds = n43_tif
 
     spatFilter = None
     if ogrtest.have_geos():
@@ -85,7 +89,7 @@ def test_gdal_grid_lib_1():
     # Create a GDAL dataset from the previous generated OGR grid
     ds2 = gdal.Grid(
         "",
-        "/vsimem/tmp/n43.shp",
+        n43_shp.GetDescription(),
         format="MEM",
         outputBounds=[-80.0041667, 42.9958333, -78.9958333, 44.0041667],
         width=121,
@@ -107,60 +111,59 @@ def test_gdal_grid_lib_1():
     ds = None
     ds2 = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/tmp")
-
 
 ###############################################################################
 # Test with a point number not multiple of 8 or 16
 
 
-def test_gdal_grid_lib_2():
-
-    create_source_dataset()
-
-    shape_ds = ogr.Open("/vsimem/tmp", update=1)
-    shape_lyr = shape_ds.CreateLayer("test_gdal_grid_lib_2")
-    dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
-    dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0 100)"))
-    shape_lyr.CreateFeature(dst_feat)
-    shape_ds = None
-
-    for env in [
+@pytest.mark.parametrize(
+    "env",
+    [
         {"GDAL_USE_AVX": "NO", "GDAL_USE_SSE": "NO"},
         {"GDAL_USE_AVX": "NO"},
         {},
-    ]:
+    ],
+)
+def test_gdal_grid_lib_2(tmp_vsimem, env):
 
-        with gdal.config_options(env):
+    shp_filename = tmp_vsimem / "test_gdal_grid_lib_2.shp"
 
-            # Point strictly on grid
-            ds1 = gdal.Grid(
-                "",
-                "/vsimem/tmp/test_gdal_grid_lib_2.shp",
-                format="MEM",
-                outputBounds=[-0.5, -0.5, 0.5, 0.5],
-                width=1,
-                height=1,
-                outputType=gdal.GDT_Byte,
-            )
+    with ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        shp_filename
+    ) as shape_ds:
+        shape_lyr = shape_ds.CreateLayer("test_gdal_grid_lib_2")
+        dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
+        dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0 100)"))
+        shape_lyr.CreateFeature(dst_feat)
 
-            ds2 = gdal.Grid(
-                "",
-                "/vsimem/tmp/test_gdal_grid_lib_2.shp",
-                format="MEM",
-                outputBounds=[-0.4, -0.4, 0.6, 0.6],
-                width=10,
-                height=10,
-                outputType=gdal.GDT_Byte,
-            )
+    with gdal.config_options(env):
 
-        cs = ds1.GetRasterBand(1).Checksum()
-        assert cs == 2
+        # Point strictly on grid
+        ds1 = gdal.Grid(
+            "",
+            shp_filename,
+            format="MEM",
+            outputBounds=[-0.5, -0.5, 0.5, 0.5],
+            width=1,
+            height=1,
+            outputType=gdal.GDT_Byte,
+        )
 
-        cs = ds2.GetRasterBand(1).Checksum()
-        assert cs == 1064
+        ds2 = gdal.Grid(
+            "",
+            shp_filename,
+            format="MEM",
+            outputBounds=[-0.4, -0.4, 0.6, 0.6],
+            width=10,
+            height=10,
+            outputType=gdal.GDT_Byte,
+        )
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/tmp")
+    cs = ds1.GetRasterBand(1).Checksum()
+    assert cs == 2
+
+    cs = ds2.GetRasterBand(1).Checksum()
+    assert cs == 1064
 
 
 ###############################################################################

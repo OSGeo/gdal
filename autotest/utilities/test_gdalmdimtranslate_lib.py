@@ -41,13 +41,12 @@ from osgeo import gdal
 ###############################################################################
 
 
-def test_gdalmdimtranslate_no_arg():
+def test_gdalmdimtranslate_no_arg(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
 
     assert gdal.MultiDimInfo(tmpfile) == gdal.MultiDimInfo("data/mdim.vrt")
-    gdal.Unlink(tmpfile)
 
 
 ###############################################################################
@@ -80,15 +79,13 @@ def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
         arraySpecs=["/my_subgroup/array_in_subgroup"],
     )
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 
 
-def test_gdalmdimtranslate_multidim_1d_to_classic():
+def test_gdalmdimtranslate_multidim_1d_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     assert gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", arraySpecs=["latitude"])
     ds = gdal.Open(tmpfile)
@@ -98,30 +95,26 @@ def test_gdalmdimtranslate_multidim_1d_to_classic():
     assert struct.unpack("f" * 10, data)[0] == 90.0
     ds = None
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 
 
-def test_gdalmdimtranslate_classic_to_classic():
+def test_gdalmdimtranslate_classic_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     ds = gdal.MultiDimTranslate(tmpfile, "../gcore/data/byte.tif")
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 
 
-def test_gdalmdimtranslate_classic_to_multidim():
+def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
-    tmpgtifffile = "/vsimem/tmp.tif"
+    tmpfile = tmp_vsimem / "out.vrt"
+    tmpgtifffile = tmp_vsimem / "tmp.tif"
     ds = gdal.Translate(tmpgtifffile, "../gcore/data/byte.tif")
     ds.SetSpatialRef(None)
     ds = None
@@ -175,9 +168,9 @@ def test_gdalmdimtranslate_classic_to_multidim():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_array():
+def test_gdalmdimtranslate_array(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", arraySpecs=["not_existing"])
     with pytest.raises(Exception):
@@ -256,9 +249,9 @@ def test_gdalmdimtranslate_array():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_array_with_transpose_and_view():
+def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(
         tmpfile,
         "data/mdim.vrt",
@@ -331,9 +324,9 @@ def test_gdalmdimtranslate_array_with_transpose_and_view():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_group():
+def test_gdalmdimtranslate_group(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", groupSpecs=["not_existing"])
     with pytest.raises(Exception):
@@ -396,9 +389,9 @@ def test_gdalmdimtranslate_group():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_two_groups():
+def test_gdalmdimtranslate_two_groups(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(
         tmpfile,
         "data/mdim.vrt",
@@ -466,9 +459,9 @@ def test_gdalmdimtranslate_two_groups():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_subset():
+def test_gdalmdimtranslate_subset(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", subsetSpecs=["latitude("])
     with pytest.raises(Exception):
@@ -721,9 +714,9 @@ def test_gdalmdimtranslate_subset():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_scaleaxes():
+def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(
         tmpfile,
         "data/mdim.vrt",
@@ -795,9 +788,9 @@ def test_gdalmdimtranslate_scaleaxes():
     )
 
 
-def test_gdalmdimtranslate_dims_with_same_name_different_size():
+def test_gdalmdimtranslate_dims_with_same_name_different_size(tmp_vsimem):
 
-    srcfile = "/vsimem/in.vrt"
+    srcfile = tmp_vsimem / "in.vrt"
     gdal.FileFromMemBuffer(
         srcfile,
         """<VRTDataset>
@@ -814,7 +807,7 @@ def test_gdalmdimtranslate_dims_with_same_name_different_size():
 </VRTDataset>""",
     )
 
-    tmpfile = "/vsimem/test.vrt"
+    tmpfile = tmp_vsimem / "test.vrt"
     gdal.MultiDimTranslate(tmpfile, srcfile, groupSpecs=["/"], format="VRT")
 
     f = gdal.VSIFOpenL(tmpfile, "rb")

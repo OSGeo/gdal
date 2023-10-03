@@ -1529,21 +1529,20 @@ def test_gdalwarp_47_append_subdataset(gdalwarp_path, tmp_path):
 # Test -if option
 
 
-def test_gdalwarp_if_option(gdalwarp_path):
+def test_gdalwarp_if_option(gdalwarp_path, tmp_vsimem):
 
     ret, err = gdaltest.runexternal_out_and_err(
-        gdalwarp_path + " -if GTiff ../gcore/data/byte.tif /vsimem/out.tif"
+        f"{gdalwarp_path} -if GTiff ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is None or err == ""
 
     _, err = gdaltest.runexternal_out_and_err(
-        gdalwarp_path
-        + " -if invalid_driver_name ../gcore/data/byte.tif /vsimem/out.tif"
+        f"{gdalwarp_path} -if invalid_driver_name ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is not None
     assert "invalid_driver_name" in err
 
     _, err = gdaltest.runexternal_out_and_err(
-        gdalwarp_path + " -if HFA ../gcore/data/byte.tif /vsimem/out.tif"
+        f"{gdalwarp_path} -if HFA ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is not None
