@@ -59,7 +59,7 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * @see GDALDriverManager::AutoLoadDrivers()
  * @since GDAL 3.8
 */
-CPLErr CPL_DLL GDALRegisterPlugin(const char *name)
+CPLErr GDALRegisterPlugin(const char *name)
 {
     auto poDriverManager = GetGDALDriverManager();
     // LoadPlugin is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
