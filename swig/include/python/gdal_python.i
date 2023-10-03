@@ -2102,7 +2102,10 @@ def Translate(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = Open(srcDS)
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
@@ -2637,9 +2640,13 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-gt', str(transactionSize)]
 
         if clipSrc is not None:
+            import os
+
             new_options += ['-clipsrc']
             if isinstance(clipSrc, str):
                 new_options += [clipSrc]
+            elif isinstance(clipSrc, os.PathLike):
+                new_options += [str(clipSrc)]
             else:
                 try:
                     new_options += [
@@ -2658,9 +2665,13 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-clipsrcwhere', str(clipSrcWhere)]
 
         if clipDst is not None:
+            import os
+
             new_options += ['-clipdst']
             if isinstance(clipDst, str):
                 new_options += [clipDst]
+            elif isinstance(clipDst, os.PathLike):
+                new_options += [str(clipDst)]
             else:
                 try:
                     new_options += [
@@ -2902,8 +2913,14 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
         (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
     else:
         (opts, colorFilename, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = Open(srcDS)
+
+    if isinstance(colorFilename, os.PathLike):
+        colorFilename = str(colorFilename)
 
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
@@ -3162,7 +3179,10 @@ def Grid(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
