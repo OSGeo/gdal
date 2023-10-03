@@ -6853,7 +6853,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
     const int nFieldCount = poDefn->GetFieldCount();
     for (int i = 0; i < nFieldCount; i++)
     {
-        if (IsFieldSet(i))
+        if (IsFieldSetUnsafe(i))
             continue;
         const auto poFieldDefn = poDefn->GetFieldDefn(i);
         if (bNotNullableOnly && poFieldDefn->IsNullable())
