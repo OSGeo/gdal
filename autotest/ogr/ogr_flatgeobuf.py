@@ -1109,6 +1109,23 @@ def test_ogr_flatgeobuf_arrow_stream_numpy():
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
 
 
+###############################################################################
+# Test reading an empty file with GetArrowStream()
+
+
+def test_ogr_flatgeobuf_arrow_stream_empty_file():
+
+    ds = ogr.GetDriverByName("FlatGeoBuf").CreateDataSource("/vsimem/test.fgb")
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+    stream = lyr.GetArrowStream()
+    assert stream.GetNextRecordBatch() is None
+    del stream
+    ds = None
+
+    ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
+
+
 def test_ogr_flatgeobuf_issue_7401():
     # Verify null geom handling without spatial index
     ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/test.fgb")
