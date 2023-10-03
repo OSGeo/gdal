@@ -505,10 +505,10 @@ def test_gdaldem_lib_color_relief():
     ds = None
 
 
-def test_gdaldem_lib_color_relief_nodata_value():
+def test_gdaldem_lib_color_relief_nodata_value(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    colorFilename = "/vsimem/color_file.txt"
+    colorFilename = tmp_vsimem / "color_file.txt"
     gdal.FileFromMemBuffer(colorFilename, """nv 255 255 255""")
 
     with gdal.quiet_errors():
