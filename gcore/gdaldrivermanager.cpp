@@ -837,11 +837,11 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
                 CSLDestroy(papszSearchPaths);
 
                 CPLString osFuncName;
-                if (STARTS_WITH_CI(pszFilename, "gdal_"))
+                if (EQUAL(prefix, "gdal_"))
                 {
                     osFuncName.Printf("GDALRegister_%s", name);
                 }
-                else if (STARTS_WITH_CI(pszFilename, "ogr_"))
+                else
                 {
                     osFuncName.Printf("RegisterOGR%s", name);
                 }
@@ -879,6 +879,7 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
     return CE_Failure;
 #endif  // GDAL_NO_AUTOLOAD
 }
+
 /************************************************************************/
 /*                          AutoLoadDrivers()                           */
 /************************************************************************/

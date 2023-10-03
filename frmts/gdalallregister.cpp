@@ -62,7 +62,7 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 CPLErr CPL_DLL GDALRegisterPlugin(const char *name)
 {
     auto poDriverManager = GetGDALDriverManager();
-    // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
+    // LoadPlugin is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     return poDriverManager->LoadPlugin(name);
 }
 
