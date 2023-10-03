@@ -787,7 +787,7 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
 {
 #ifdef GDAL_NO_AUTOLOAD
     CPLDebug("GDAL", "GDALDriverManager::LoadPlugin() not compiled in.");
-    return CPLE_NotSupported;
+    return CE_Failure;
 #else
     const char *pszGDAL_DRIVER_PATH =
         CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr);
@@ -797,7 +797,7 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
     /* -------------------------------------------------------------------- */
     /*      Where should we look for stuff?                                 */
     /* -------------------------------------------------------------------- */
-    char **papszSearchPaths = GetSearchPaths(pszGDAL_DRIVER_PATH);
+    const CPLStringList aosSearchPaths(GetSearchPaths(pszGDAL_DRIVER_PATH));
 
     /* -------------------------------------------------------------------- */
     /*      Format the ABI version specific subdirectory to look in.        */
@@ -810,15 +810,15 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
     /*      Scan each directory looking for files matching                  */
     /*      gdal_{name}.[so|dll|dylib] or ogr_{name}.[so|dll|dylib]         */
     /* -------------------------------------------------------------------- */
-    const int nSearchPaths = CSLCount(papszSearchPaths);
+    const int nSearchPaths = aosSearchPaths.size();
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
         CPLString osABISpecificDir =
-            CPLFormFilename(papszSearchPaths[iDir], osABIVersion, nullptr);
+            CPLFormFilename(aosSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
         if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
-            osABISpecificDir = papszSearchPaths[iDir];
+            osABISpecificDir = aosSearchPaths[iDir];
 
         CPLString gdal_or_ogr[2] = {"gdal_", "ogr_"};
         CPLString platformExtensions[3] = {"so", "dll", "dylib"};
@@ -832,9 +832,6 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
                     extension);
                 if (VSIStatL(pszFilename, &sStatBuf) != 0)
                     continue;
-
-                //cleanup now as the following codepath is garanteed to return
-                CSLDestroy(papszSearchPaths);
 
                 CPLString osFuncName;
                 if (EQUAL(prefix, "gdal_"))
@@ -873,7 +870,6 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
             }
         }
     }
-    CSLDestroy(papszSearchPaths);
     CPLError(CE_Failure, CPLE_AppDefined,
              "Failed to find driver %s in configured driver paths.", name);
     return CE_Failure;
