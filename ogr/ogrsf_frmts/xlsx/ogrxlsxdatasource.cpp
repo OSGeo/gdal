@@ -310,7 +310,11 @@ int OGRXLSXDataSource::Open(const char *pszFilename,
     /* Remove empty layers at the end, which tend to be there */
     while (nLayers > 1)
     {
-        if (papoLayers[nLayers - 1]->GetFeatureCount() == 0)
+        papoLayers[nLayers - 1]->Init();
+        if ((papoLayers[nLayers - 1]->m_osCols.empty() ||
+             papoLayers[nLayers - 1]->m_osCols.find("max=\"1025\" min=\"1\"") !=
+                 std::string::npos) &&
+            papoLayers[nLayers - 1]->GetFeatureCount(false) == 0)
         {
             delete papoLayers[nLayers - 1];
             nLayers--;
@@ -359,6 +363,9 @@ void OGRXLSXDataSource::startElementCbk(const char *pszNameIn,
         case STATE_DEFAULT:
             startElementDefault(pszNameIn, ppszAttr);
             break;
+        case STATE_COLS:
+            startElementCols(pszNameIn, ppszAttr);
+            break;
         case STATE_SHEETDATA:
             startElementTable(pszNameIn, ppszAttr);
             break;
@@ -399,6 +406,9 @@ void OGRXLSXDataSource::endElementCbk(const char *pszNameIn)
             break;
         case STATE_SHEETDATA:
             endElementTable(pszNameIn);
+            break;
+        case STATE_COLS:
+            endElementCols(pszNameIn);
             break;
         case STATE_ROW:
             endElementRow(pszNameIn);
@@ -667,13 +677,51 @@ void OGRXLSXDataSource::DetectHeaderLine()
 void OGRXLSXDataSource::startElementDefault(const char *pszNameIn,
                                             CPL_UNUSED const char **ppszAttr)
 {
-    if (strcmp(pszNameIn, "sheetData") == 0)
+    if (strcmp(pszNameIn, "cols") == 0)
+    {
+        PushState(STATE_COLS);
+        m_osCols = "<cols>";
+    }
+    else if (strcmp(pszNameIn, "sheetData") == 0)
     {
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
         nCurLine = 0;
         PushState(STATE_SHEETDATA);
     }
+}
+
+/************************************************************************/
+/*                          startElementCols()                          */
+/************************************************************************/
+
+void OGRXLSXDataSource::startElementCols(const char *pszNameIn,
+                                         const char **ppszAttr)
+{
+    m_osCols.append("<");
+    m_osCols.append(pszNameIn);
+    for (const char **iter = ppszAttr; iter && iter[0] && iter[1]; iter += 2)
+    {
+        m_osCols.append(" ");
+        m_osCols.append(iter[0]);
+        m_osCols.append("=\"");
+        char *pszXML = OGRGetXML_UTF8_EscapedString(iter[1]);
+        m_osCols.append(pszXML);
+        CPLFree(pszXML);
+        m_osCols.append("\"");
+    }
+    m_osCols.append(">");
+}
+
+/************************************************************************/
+/*                            endElementCell()                          */
+/************************************************************************/
+
+void OGRXLSXDataSource::endElementCols(const char *pszNameIn)
+{
+    m_osCols.append("</");
+    m_osCols.append(pszNameIn);
+    m_osCols.append(">");
 }
 
 /************************************************************************/
@@ -738,7 +786,7 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (nCurLine == 0 || (nCurLine == 1 && apoFirstLineValues.empty()))
         {
-            /* We could remove empty sheet, but too late now */
+            // no rows
         }
         else if (nCurLine == 1)
         {
@@ -1151,6 +1199,7 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer *poLayer)
     const bool bUpdatedBackup = bUpdated;
 
     oParser = OGRCreateExpatXMLParser();
+    m_osCols.clear();
     XML_SetElementHandler(oParser, OGRXLSX::startElementCbk,
                           OGRXLSX::endElementCbk);
     XML_SetCharacterDataHandler(oParser, OGRXLSX::dataHandlerCbk);
@@ -1199,6 +1248,7 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer *poLayer)
     VSIFCloseL(fp);
 
     bUpdated = bUpdatedBackup;
+    poLayer->m_osCols = m_osCols;
 }
 
 /************************************************************************/
@@ -1521,8 +1571,8 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
                 // or relative to the /xl subdirectory
                 osFilename = osPrefixedFilename + CPLString("/xl/") + osTarget;
             }
-            papoLayers = (OGRLayer **)CPLRealloc(
-                papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
+            papoLayers = (OGRXLSXLayer **)CPLRealloc(
+                papoLayers, (nLayers + 1) * sizeof(OGRXLSXLayer *));
             papoLayers[nLayers++] =
                 new OGRXLSXLayer(this, osFilename, pszSheetName);
         }
@@ -1793,14 +1843,14 @@ OGRLayer *OGRXLSXDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
-    OGRLayer *poLayer =
+    OGRXLSXLayer *poLayer =
         new OGRXLSXLayer(this,
                          CPLSPrintf("/vsizip/%s/xl/worksheets/sheet%d.xml",
                                     pszName, nLayers + 1),
                          pszLayerName, TRUE);
 
-    papoLayers =
-        (OGRLayer **)CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
+    papoLayers = (OGRXLSXLayer **)CPLRealloc(
+        papoLayers, (nLayers + 1) * sizeof(OGRXLSXLayer *));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
@@ -2073,7 +2123,7 @@ static CPLString BuildColString(int nCol)
 /*                             WriteLayer()                             */
 /************************************************************************/
 
-static bool WriteLayer(const char *pszName, OGRLayer *poLayer, int iLayer,
+static bool WriteLayer(const char *pszName, OGRXLSXLayer *poLayer, int iLayer,
                        std::map<std::string, int> &oStringMap,
                        std::vector<std::string> &oStringList)
 {
@@ -2104,27 +2154,33 @@ static bool WriteLayer(const char *pszName, OGRLayer *poLayer, int iLayer,
     bool bHasHeaders = false;
     int iRow = 1;
 
-    VSIFPrintfL(fp, "<cols>\n");
-    for (int j = 0; j < poFDefn->GetFieldCount(); j++)
+    const int nFields = poFDefn->GetFieldCount();
+    if (nFields > 0)
     {
-        int nWidth = 15;
-        if (poFDefn->GetFieldDefn(j)->GetType() == OFTDateTime)
-            nWidth = 29;
-        VSIFPrintfL(fp, "<col min=\"%d\" max=\"%d\" width=\"%d\"/>\n", j + 1,
-                    1024, nWidth);
+        VSIFPrintfL(fp, "<cols>\n");
+        for (int j = 0; j < nFields; j++)
+        {
+            int nWidth = 15;
+            if (poFDefn->GetFieldDefn(j)->GetType() == OFTDateTime)
+                nWidth = 29;
+            VSIFPrintfL(fp, "<col min=\"%d\" max=\"%d\" width=\"%d\"/>\n",
+                        j + 1, 1024, nWidth);
 
-        if (strcmp(poFDefn->GetFieldDefn(j)->GetNameRef(),
-                   CPLSPrintf("Field%d", j + 1)) != 0)
-            bHasHeaders = true;
+            if (strcmp(poFDefn->GetFieldDefn(j)->GetNameRef(),
+                       CPLSPrintf("Field%d", j + 1)) != 0)
+                bHasHeaders = true;
+        }
+        VSIFPrintfL(fp, "</cols>\n");
     }
-    VSIFPrintfL(fp, "</cols>\n");
+    else if (!poLayer->GetCols().empty())
+        VSIFPrintfL(fp, "%s\n", poLayer->GetCols().c_str());
 
     VSIFPrintfL(fp, "<sheetData>\n");
 
     if (bHasHeaders && poFeature != nullptr)
     {
         VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
-        for (int j = 0; j < poFDefn->GetFieldCount(); j++)
+        for (int j = 0; j < nFields; j++)
         {
             const char *pszVal = poFDefn->GetFieldDefn(j)->GetNameRef();
             std::map<std::string, int>::iterator oIter =
@@ -2153,7 +2209,7 @@ static bool WriteLayer(const char *pszName, OGRLayer *poLayer, int iLayer,
     while (poFeature != nullptr)
     {
         VSIFPrintfL(fp, "<row r=\"%d\">\n", iRow);
-        for (int j = 0; j < poFeature->GetFieldCount(); j++)
+        for (int j = 0; j < nFields; j++)
         {
             if (poFeature->IsFieldSetAndNotNull(j))
             {
@@ -2479,7 +2535,7 @@ CPLErr OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
     // VSIMkdir(CPLSPrintf("/vsizip/%s/xl/worksheets", pszName),0755);
     for (int i = 0; i < nLayers; i++)
     {
-        bOK &= WriteLayer(pszName, GetLayer(i), i, oStringMap, oStringList);
+        bOK &= WriteLayer(pszName, papoLayers[i], i, oStringMap, oStringList);
     }
 
     bOK &= WriteSharedStrings(pszName, oStringMap, oStringList);

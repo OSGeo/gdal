@@ -593,3 +593,33 @@ def test_ogr_xlsx_read_xlsx_prefix():
         tmpfilename, open("data/xlsx/cells_with_inline_formatting.xlsx", "rb").read()
     ):
         assert ogr.Open("XLSX:" + tmpfilename) is not None
+
+
+###############################################################################
+# Test writing sheets without rows
+
+
+def test_ogr_xlsx_write_sheet_without_row():
+
+    tmpfilename = "/vsimem/temp.xlsx"
+    ds = ogr.GetDriverByName("XLSX").CreateDataSource(tmpfilename)
+    lyr = ds.CreateLayer("L1")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    lyr = ds.CreateLayer("L2")
+    lyr.CreateField(ogr.FieldDefn("bar"))
+    ds = None
+    ds = ogr.Open(tmpfilename, update=1)
+    assert ds.GetLayerCount() == 2
+    lyr = ds.CreateLayer("L3")
+    lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["baz"] = 123
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open(tmpfilename)
+    assert ds.GetLayerCount() == 3
+    assert ds.GetLayer(0).GetFeatureCount() == 0
+    assert ds.GetLayer(1).GetFeatureCount() == 0
+    assert ds.GetLayer(2).GetFeatureCount() == 1
+    ds = None
+    gdal.Unlink(tmpfilename)
