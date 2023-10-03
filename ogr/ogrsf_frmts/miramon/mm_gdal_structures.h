@@ -125,7 +125,7 @@ struct MM_BASE_DADES_XP // MiraMon Database Structure
 	MM_NUMERATOR_RECORD nfitxes;
 	MM_TIPUS_BYTES_ACUMULATS_DBF BytesPerFitxa;
 	MM_NUMERATOR_DBF_FIELD_TYPE ncamps;
-	struct MM_CAMP huge * Camp;
+	struct MM_CAMP *Camp;
     MM_TIPUS_OFFSET_PRIMERA_FITXA OffsetPrimeraFitxa;
 	MM_NUMERATOR_DBF_FIELD_TYPE CampIdGrafic;
     MM_NUMERATOR_DBF_FIELD_TYPE CampIdEntitat;

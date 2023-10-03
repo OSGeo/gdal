@@ -7,6 +7,8 @@
 CPL_C_START // Necessary for compiling C in GDAL project
 #endif
 
+#include <stddef.h> // For size_t 
+
 #define MM_STATISTICAL_UNDEFINED_VALUE (2.9E+301)
 
 // BIT 1
@@ -24,8 +26,6 @@ CPL_C_START // Necessary for compiling C in GDAL project
 
 #define MM_BOOLEAN  char
 #define MM_HANDLE   void *
-
-#define huge
 
 #define MM_MAX_PATH                         260
 #define MM_MESSAGE_LENGHT                   512

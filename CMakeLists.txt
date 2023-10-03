@@ -1,6 +1,8 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 cmake_minimum_required(VERSION 3.9...3.27)
 
+list(APPEND CMAKE_PREFIX_PATH "C:/dev/vcpkg/vcpkg/installed")
+
 project(gdal LANGUAGES C CXX)
 include(CTest)
 
@@ -164,41 +166,8 @@ endif ()
 #   $ cmake -DPython_ROOT=C:\Python36 ..
 # ~~~
 #
-#cmake -DPython_LOOKUP_VERSION=3.11.3 ..
-#cmake -DPython_ROOT="C:\Users\a.pau\AppData\Local\Programs\Python\Python311" ..
 
-#afegit per AP
-#set(ODBCCPP_INCLUDE_DIR "D:/GitHub-repository/odbc-cpp-wrapper/src/odbc")
 set(ODBCCPP_INCLUDE_DIR "D:/GitHub-repository/odbc-cpp-wrapper/src")
-set(XercesC_INCLUDE_DIR "D:/GitHub-repository/xerces-c/src")
-set(XercesC_LIBRARY "D:/GitHub-repository/xerces-c/build")
-set(XercesC_VERSION "D:/GitHub-repository/xerces-c/src")
-
-#set(EXPAT_DIR, "D:/GitHub-repository/libexpat/expat")
-#set(EXPAT_INCLUDE_DIR "C:/Users/a.pau/AppData/Local/miniconda3/envs/gdal_master_env/Library/include")
-#set(EXPAT_LIBRARY "C:/Users/a.pau/AppData/Local/miniconda3/envs/gdal_master_env/Library/lib")
-#set(EXPAT_LIBRARY "D:/GitHub-repository/libexpat/expat/build/Debug/libexpatd.dll")
-#set(EXPAT_LIBRARY "D:/GDAL_external_libs/expat-win64bin/Bin/libexpat.dll")
-
-#set(EXPAT_USE_STATIC_LIBS OFF)
-#set(GDAL_USE_EXPAT ON)
-set(GDAL_USE_CRYPTOPP OFF)
-set(GDAL_USE_ARCHIVE OFF)
-set(GDAL_USE_OPENSSL OFF)
-
-#set(ODBCCPP_LIBRARY "D:/GitHub-repository/odbc-cpp-wrapper/src")
-
-set(PROJ_LIBRARY_RELEASE "D:/GitHub-repository/PROJ/build/lib/Release/proj.lib")
-set(PROJ_LIBRARY_DEBUG "D:/GitHub-repository/PROJ/build/lib/Debug/proj.lib")
-set(PROJ_INCLUDE_DIR "D:/GitHub-repository/PROJ/src")
-#set(SQLite3_INCLUDE_DIR "D:/vcpkg/packages/sqlite3_x64-windows/include/sqlite3.h")
-#set(SQLite3_LIBRARY "D:/000 GESTIO MIRAMON/2023 to 2024 Generalitat/GDAL/sqlite-dll-win64-x64-3420000");
-
-include_directories(${ODBCCPP_INCLUDE_DIR})
-set(GDAL_USE_MSSQL_NCLI OFF)
-set(GDAL_USE_MSSQL_ODBC OFF)
-set(GDAL_USE_XERCESC OFF)
-
 
 include(FeatureSummary)
 

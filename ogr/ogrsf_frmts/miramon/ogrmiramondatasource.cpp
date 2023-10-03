@@ -71,7 +71,7 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     }
 
     papoLayers = static_cast<OGRMiraMonLayer **>(
-        CPLRealloc(papoLayers, sizeof(OGRMiraMonLayer *) * (nLayers + 1)));
+        CPLRealloc(papoLayers, (size_t)(sizeof(OGRMiraMonLayer *) * ((size_t)nLayers + (size_t)1))));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
@@ -107,9 +107,6 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 {
     const char *pszExtension= "pol";
 
-    if (nLayers != 0)
-        return nullptr;
-        
     /* -------------------------------------------------------------------- */
     /*      Establish the geometry type.  Note this logic                   */
     /* -------------------------------------------------------------------- */
@@ -180,13 +177,13 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         // Extension is determined only for the type of the layer
         osFilename = CPLFormFilename(osPath, pszLayerName, pszExtension);
     }
-    else
+    /*else
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
            "MiraMon layers cannot be created with a wkbUnknown layer "
             "geometry type.");
         return nullptr;
-    }
+    }*/
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */

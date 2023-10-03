@@ -1,1 +1,374 @@
 The system is: Windows - 10.0.19045 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30148 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCCompilerId.c
+Microsoft (R) Incremental Linker Version 14.29.30148.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCCompilerId.exe 
+CMakeCCompilerId.obj 
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+
+The C compiler identification is MSVC, found in "D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/3.20.21032501-MSVC_2/CompilerIdC/CMakeCCompilerId.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.29.30148 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCXXCompilerId.cpp
+Microsoft (R) Incremental Linker Version 14.29.30148.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCXXCompilerId.exe 
+CMakeCXXCompilerId.obj 
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+
+The CXX compiler identification is MSVC, found in "D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/3.20.21032501-MSVC_2/CompilerIdCXX/CMakeCXXCompilerId.exe"
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_59ac6 && [1/2] Building C object CMakeFiles\cmTC_59ac6.dir\CMakeCCompilerABI.c.obj
+[2/2] Linking C executable cmTC_59ac6.exe
+
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_7c1c7 && [1/2] Building CXX object CMakeFiles\cmTC_7c1c7.dir\CMakeCXXCompilerABI.cpp.obj
+[2/2] Linking CXX executable cmTC_7c1c7.exe
+
+
+
+Performing C++ SOURCE FILE Test test_AVX succeeded with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_816f5 && [1/2] Building CXX object CMakeFiles\cmTC_816f5.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_816f5.exe
+
+
+Source file was:
+#include <cstdio>
+      int main() { return 0; }
+Performing C++ SOURCE FILE Test test_AVX2 succeeded with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_2024d && [1/2] Building CXX object CMakeFiles\cmTC_2024d.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_2024d.exe
+
+
+Source file was:
+#include <cstdio>
+      int main() { return 0; }
+Determining if the function getcwd exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_8f2a9 && [1/2] Building C object CMakeFiles\cmTC_8f2a9.dir\CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_8f2a9.exe
+
+
+
+Determining if the include file fcntl.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_857d8 && [1/2] Building C object CMakeFiles\cmTC_857d8.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_857d8.exe
+
+
+
+Determining if the include file sys/types.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_f83fc && [1/2] Building C object CMakeFiles\cmTC_f83fc.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_f83fc.exe
+
+
+
+Determining if the include file locale.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9549c && [1/2] Building C object CMakeFiles\cmTC_9549c.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_9549c.exe
+
+
+
+Determining if the include file direct.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_83e12 && [1/2] Building C object CMakeFiles\cmTC_83e12.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_83e12.exe
+
+
+
+Determining if the include file stdint.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_03d01 && [1/2] Building C object CMakeFiles\cmTC_03d01.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_03d01.exe
+
+
+
+Determining if the include file stddef.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_b8b8b && [1/2] Building C object CMakeFiles\cmTC_b8b8b.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_b8b8b.exe
+
+
+
+Determining size of int passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_484a9 && [1/2] Building C object CMakeFiles\cmTC_484a9.dir\SIZEOF_INT.c.obj
+[2/2] Linking C executable cmTC_484a9.exe
+
+
+
+Determining size of unsigned long passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_7db88 && [1/2] Building C object CMakeFiles\cmTC_7db88.dir\SIZEOF_UNSIGNED_LONG.c.obj
+[2/2] Linking C executable cmTC_7db88.exe
+
+
+
+Determining size of long int passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_fb728 && [1/2] Building C object CMakeFiles\cmTC_fb728.dir\SIZEOF_LONG_INT.c.obj
+[2/2] Linking C executable cmTC_fb728.exe
+
+
+
+Determining size of void* passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_996d1 && [1/2] Building C object CMakeFiles\cmTC_996d1.dir\SIZEOF_VOIDP.c.obj
+[2/2] Linking C executable cmTC_996d1.exe
+
+
+
+Determining size of size_t passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_c04f7 && [1/2] Building C object CMakeFiles\cmTC_c04f7.dir\SIZEOF_SIZE_T.c.obj
+[2/2] Linking C executable cmTC_c04f7.exe
+
+
+
+Determining if the include file atlbase.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_d0b67 && [1/2] Building CXX object CMakeFiles\cmTC_d0b67.dir\CheckIncludeFile.cxx.obj
+[2/2] Linking CXX executable cmTC_d0b67.exe
+
+
+
+Performing C++ SOURCE FILE Test _ICONV_SECOND_ARGUMENT_IS_NOT_CONST succeeded with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9b319 && [1/2] Building CXX object CMakeFiles\cmTC_9b319.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_9b319.exe
+
+
+Source file was:
+#include <stdlib.h>
+    #include <iconv.h>
+    int main(){
+      iconv_t conv = 0;
+      char* in = 0;
+      size_t ilen = 0;
+      char* out = 0;
+      size_t olen = 0;
+      size_t ret = iconv(conv, &in, &ilen, &out, &olen);
+      return (size_t)ret;
+    }
+Performing C++ SOURCE FILE Test ICONV_HAS_EXTRA_CHARSETS succeeded with the following compile output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_3372e && [1/2] Building CXX object CMakeFiles\cmTC_3372e.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_3372e.exe
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+#include <stdlib.h>
+#include <iconv.h>
+int main(){
+    iconv_t conv = iconv_open("UTF-8", "CP1251");
+    if( conv != (iconv_t)-1 )
+    {
+        iconv_close(conv);
+        return 0;
+    }
+    return 1;
+}
+Performing C SOURCE FILE Test HAVE_JPEGTURBO_DUAL_MODE_8_12 succeeded with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_8c52e && [1/2] Building C object CMakeFiles\cmTC_8c52e.dir\src.c.obj
+[2/2] Linking C executable cmTC_8c52e.exe
+
+
+Source file was:
+
+      #include <stddef.h>
+      #include <stdio.h>
+      #include "jpeglib.h"
+      int main()
+      {
+          jpeg_read_scanlines(0,0,0);
+          jpeg12_read_scanlines(0,0,0);
+          return 0;
+      }
+      
+Determining if the sqlite3_mutex_alloc exist passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9c955 && [1/2] Building C object CMakeFiles\cmTC_9c955.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_9c955.exe
+
+
+File D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sqlite3.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sqlite3_mutex_alloc
+  return ((int*)(&sqlite3_mutex_alloc))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sqlite3_column_table_name exist passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_b140d && [1/2] Building C object CMakeFiles\cmTC_b140d.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_b140d.exe
+
+
+File D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sqlite3.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sqlite3_column_table_name
+  return ((int*)(&sqlite3_column_table_name))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sqlite3_rtree_query_callback exist passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_4143d && [1/2] Building C object CMakeFiles\cmTC_4143d.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_4143d.exe
+
+
+File D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sqlite3.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sqlite3_rtree_query_callback
+  return ((int*)(&sqlite3_rtree_query_callback))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sqlite3_load_extension exist passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_6d360 && [1/2] Building C object CMakeFiles\cmTC_6d360.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_6d360.exe
+
+
+File D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sqlite3.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sqlite3_load_extension
+  return ((int*)(&sqlite3_load_extension))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the sqlite3_progress_handler exist passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_2430e && [1/2] Building C object CMakeFiles\cmTC_2430e.dir\CheckSymbolExists.c.obj
+[2/2] Linking C executable cmTC_2430e.exe
+
+
+File D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <sqlite3.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef sqlite3_progress_handler
+  return ((int*)(&sqlite3_progress_handler))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test SQLite3_HAS_NON_DEPRECATED_AUTO_EXTENSION succeeded with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_3726d && [1/2] Building C object CMakeFiles\cmTC_3726d.dir\src.c.obj
+[2/2] Linking C executable cmTC_3726d.exe
+
+
+Source file was:
+#include <sqlite3.h>
+         int main(){
+          return sqlite3_auto_extension ((void (*)(void)) 0);
+         }
+Determining if the include file sqlite3ext.h exists passed with the following output:
+Change Dir: D:/GitHub-repository/GDAL/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_792bd && [1/2] Building C object CMakeFiles\cmTC_792bd.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_792bd.exe
+
+
+

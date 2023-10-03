@@ -342,7 +342,7 @@ struct MMAdmDatabase
     char *pRecList; // Records list  // (II mode)
 
     // Temporary space where to mount the DBF record.
-    // Reused every time feature is created
+    // Reused every time a feature is created
     char *szRecordOnCourse;
 };
 
@@ -646,6 +646,9 @@ struct MiraMonLayerInfo
 
     // Layer database read from origin.
     struct MiraMonDataBase *pLayerDB;
+
+    // This is used only to write temporary stuff
+    char szNFieldAux[MM_MAX_AMPLADA_CAMP_N_DBF];
 };
 
 enum DataType {MMDTByte, MMDTInteger, MMDTuInteger, 

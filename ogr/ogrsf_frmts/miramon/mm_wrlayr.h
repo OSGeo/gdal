@@ -1,5 +1,5 @@
-#ifndef __MMWRLAYR_H
-#define __MMWRLAYR_H
+#ifndef __MM_WRLAYR_H
+#define __MM_WRLAYR_H
 
 /* -------------------------------------------------------------------- */
 /*      Necessary functions to read/write a MiraMon Vector File         */
@@ -66,9 +66,10 @@ CPL_C_START // Necessary for compiling in GDAL project
 /* -------------------------------------------------------------------- */
 // Layer functions
 struct MiraMonLayerInfo * MMCreateLayer(char *pzFileName, __int32 LayerVersion, 
-            int eLT, unsigned __int64 nElemCount, struct MiraMonDataBase *attributes);
-int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, const char *pzFileName, __int32 LayerVersion, int eLT,
-                unsigned __int64 nElemCount, struct MiraMonDataBase *attributes);
+            int eLT, struct MiraMonDataBase *attributes);
+int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, const char *pzFileName, 
+                __int32 LayerVersion, int eLT,
+                struct MiraMonDataBase *pLayerDB);
 int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
@@ -129,4 +130,4 @@ int MMWriteVectorMetadata(struct MiraMonLayerInfo *hMiraMonLayer);
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif
-#endif //__MMWRLAYR_H
+#endif //__MM_WRLAYR_H

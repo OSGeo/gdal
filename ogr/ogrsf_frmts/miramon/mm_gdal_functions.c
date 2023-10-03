@@ -950,7 +950,8 @@ int retorn=0;
 	{
 		if (strlen(camp->DescripcioCamp[0])>MM_MAX_LON_DESCRIPCIO_CAMP_DBF-4-n_digits_i)
 			camp->DescripcioCamp[0][mida_nom-4-n_digits_i]='\0';
-		sprintf(camp->DescripcioCamp[0]+strlen(camp->DescripcioCamp[0]), " (%u)", i);
+        if(camp->DescripcioCamp[0]+strlen(camp->DescripcioCamp[0]))
+            sprintf(camp->DescripcioCamp[0]+strlen(camp->DescripcioCamp[0]), " (%u)", i);
 		for (i_camp=0; i_camp<bd_xp->ncamps; i_camp++)
 		{
 			if (bd_xp->Camp+i_camp==camp)
@@ -970,7 +971,8 @@ int retorn=0;
 		camp->DescripcioCamp[0][mida_nom-7]='\0';
 	for (i++; i<(size_t)256; i++)
 	{
-		sprintf(camp->DescripcioCamp[0]+strlen(camp->DescripcioCamp[0]), " (%u)", i);
+        if(camp->DescripcioCamp[0]+strlen(camp->DescripcioCamp[0]))
+		    sprintf(camp->DescripcioCamp[0]+strlen(camp->DescripcioCamp[0]), " (%u)", i);
 		for (i_camp=0; i_camp<bd_xp->ncamps; i_camp++)
 		{
 			if (bd_xp->Camp+i_camp==camp)
@@ -1015,6 +1017,12 @@ int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen)
 {
 size_t i;
+    if(!src)
+    {
+        *dest='\0';
+        return dest;
+    }
+
     if (!maxlen)
     	i=0;
     else
@@ -1216,7 +1224,7 @@ char *p;
 	if(camp->BytesPerCamp<MM_MESSAGE_LENGHT)
 		p=local_message;
 	else
-		p=calloc_function(camp->BytesPerCamp+10);
+		p=calloc_function((size_t)camp->BytesPerCamp+(size_t)10);
 
 	if (camp->TipusDeCamp=='N')
     {
@@ -1246,6 +1254,13 @@ char *p;
 
 	if(p!=local_message)
 		free_function(p);
+}
+
+int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
+							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
+							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada)
+{
+    return 0;
 }
 
 #ifdef TODO
@@ -1478,7 +1493,7 @@ int retorn_printf;
 	}
     
 	return 0;
-} /* Fi de CanviaAmpladaCampDBF() */
+} /* Fi de MMChangeCFieldWidthDBF() */
 #endif // TO_DO
 
 #ifdef GDAL_COMPILATION

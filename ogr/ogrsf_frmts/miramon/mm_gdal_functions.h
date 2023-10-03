@@ -34,6 +34,9 @@ void MM_WriteValueToRecordDBXP(char *registre,
                                    const struct MM_CAMP *camp, 
                                    const void *valor,
                                    MM_BOOLEAN is_64);
+int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
+							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
+							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada);
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif
