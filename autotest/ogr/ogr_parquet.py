@@ -1783,6 +1783,26 @@ def test_ogr_parquet_arrow_stream_numpy():
 
 
 ###############################################################################
+# Test reading an empty file with GetArrowStream()
+
+
+def test_ogr_parquet_arrow_stream_empty_file():
+
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource("/vsimem/test.parquet")
+    ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    ds = None
+    ds = ogr.Open("/vsimem/test.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+    stream = lyr.GetArrowStream()
+    assert stream.GetNextRecordBatch() is None
+    del stream
+    ds = None
+
+    ogr.GetDriverByName("Parquet").DeleteDataSource("/vsimem/test.parquet")
+
+
+###############################################################################
 
 
 def test_ogr_parquet_arrow_stream_numpy_with_fid_column():
