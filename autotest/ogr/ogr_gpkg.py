@@ -7751,6 +7751,33 @@ def test_ogr_gpkg_arrow_stream_numpy():
 
 
 ###############################################################################
+# Test reading an empty file with GetArrowStream()
+
+
+def test_ogr_gpkg_arrow_stream_empty_file():
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource("/vsimem/test.gpkg")
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+    stream = lyr.GetArrowStream()
+    assert stream.GetNextRecordBatch() is None
+    del stream
+
+    with gdaltest.config_option("OGR_GPKG_STREAM_BASE_IMPL", "YES"):
+        stream = lyr.GetArrowStream()
+        assert stream.GetNextRecordBatch() is None
+        del stream
+
+    with ds.ExecuteSQL("SELECT * FROM test") as lyr:
+        stream = lyr.GetArrowStream()
+        assert stream.GetNextRecordBatch() is None
+        del stream
+    ds = None
+
+    ogr.GetDriverByName("GPKG").DeleteDataSource("/vsimem/test.gpkg")
+
+
+###############################################################################
 # Test opening a file in WAL mode on a read-only storage
 
 
