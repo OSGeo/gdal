@@ -318,6 +318,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     int64_t m_nRowGroupSize = 64 * 1024;
     arrow::Compression::type m_eCompression = arrow::Compression::UNCOMPRESSED;
 
+    std::vector<std::shared_ptr<arrow::Field>> m_apoFieldsFromArrowSchema{};
     std::vector<std::shared_ptr<arrow::ArrayBuilder>> m_apoBuilders{};
 
     std::vector<uint8_t> m_abyBuffer{};
@@ -355,10 +356,22 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
                                         const std::shared_ptr<arrow::Array> &)>
                          postProcessArray);
 
+    virtual void FixupWKBGeometryBeforeWriting(GByte * /*pabyWKB*/,
+                                               size_t /*nLen*/)
+    {
+    }
     virtual void FixupGeometryBeforeWriting(OGRGeometry * /* poGeom */)
     {
     }
     virtual bool IsSRSRequired() const = 0;
+    bool WriteArrowBatchInternal(
+        const struct ArrowSchema *schema, struct ArrowArray *array,
+        CSLConstList papszOptions,
+        std::function<bool(const std::shared_ptr<arrow::RecordBatch> &)>
+            writeBatch);
+
+    OGRErr BuildGeometry(OGRGeometry *poGeom, int iGeomField,
+                         arrow::ArrayBuilder *poBuilder);
 
   public:
     OGRArrowWriterLayer(
@@ -373,6 +386,10 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<std::string> GetFieldDomainNames() const;
     const OGRFieldDomain *GetFieldDomain(const std::string &name) const;
 
+    const char *GetFIDColumn() override
+    {
+        return m_osFIDColumn.c_str();
+    }
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
@@ -389,6 +406,18 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
     GIntBig GetFeatureCount(int bForce) override;
+
+    bool IsArrowSchemaSupported(const struct ArrowSchema * /*schema*/,
+                                std::string & /*osErrorMsg */) const override
+    {
+        return true;
+    }
+    bool
+    CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
+                               CSLConstList papszOptions = nullptr) override;
+    bool WriteArrowBatch(const struct ArrowSchema *schema,
+                         struct ArrowArray *array,
+                         CSLConstList papszOptions = nullptr) override = 0;
 
   protected:
     OGRErr ICreateFeature(OGRFeature *poFeature) override;

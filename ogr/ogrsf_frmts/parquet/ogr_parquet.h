@@ -270,6 +270,8 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     virtual bool
     IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
 
+    virtual void FixupWKBGeometryBeforeWriting(GByte *pabyWKB,
+                                               size_t nLen) override;
     virtual void FixupGeometryBeforeWriting(OGRGeometry *poGeom) override;
     virtual bool IsSRSRequired() const override
     {
@@ -292,6 +294,10 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
     OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
+
+    bool WriteArrowBatch(const struct ArrowSchema *schema,
+                         struct ArrowArray *array,
+                         CSLConstList papszOptions = nullptr) override;
 };
 
 /************************************************************************/

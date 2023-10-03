@@ -33,6 +33,8 @@
 
 #include "../arrow_common/ograrrowwriterlayer.hpp"
 
+#include "ogr_wkb.h"
+
 /************************************************************************/
 /*                      OGRParquetWriterLayer()                         */
 /************************************************************************/
@@ -694,6 +696,19 @@ bool OGRParquetWriterLayer::FlushGroup()
 }
 
 /************************************************************************/
+/*                    FixupWKBGeometryBeforeWriting()                   */
+/************************************************************************/
+
+void OGRParquetWriterLayer::FixupWKBGeometryBeforeWriting(GByte *pabyWkb,
+                                                          size_t nLen)
+{
+    if (!m_bForceCounterClockwiseOrientation)
+        return;
+
+    OGRWKBFixupCounterClockWiseExternalRing(pabyWkb, nLen);
+}
+
+/************************************************************************/
 /*                     FixupGeometryBeforeWriting()                     */
 /************************************************************************/
 
@@ -726,4 +741,39 @@ void OGRParquetWriterLayer::FixupGeometryBeforeWriting(OGRGeometry *poGeom)
             FixupGeometryBeforeWriting(poSubGeom);
         }
     }
+}
+
+/************************************************************************/
+/*                          WriteArrowBatch()                           */
+/************************************************************************/
+
+inline bool
+OGRParquetWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
+                                       struct ArrowArray *array,
+                                       CSLConstList papszOptions)
+{
+    return WriteArrowBatchInternal(
+        schema, array, papszOptions,
+        [this](const std::shared_ptr<arrow::RecordBatch> &poBatch)
+        {
+            auto status = m_poFileWriter->NewBufferedRowGroup();
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "NewBufferedRowGroup() failed with %s",
+                         status.message().c_str());
+                return false;
+            }
+
+            status = m_poFileWriter->WriteRecordBatch(*poBatch);
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "WriteRecordBatch() failed: %s",
+                         status.message().c_str());
+                return false;
+            }
+
+            return true;
+        });
 }
