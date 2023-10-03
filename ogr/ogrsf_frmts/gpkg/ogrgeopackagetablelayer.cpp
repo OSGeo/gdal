@@ -293,7 +293,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         if (iField == m_iFIDAsRegularColumnIndex ||
             m_abGeneratedColumns[iField])
             continue;
-        if (!poFeature->IsFieldSet(iField))
+        if (!poFeature->IsFieldSetUnsafe(iField))
         {
             if (bBindUnsetFields)
             {
@@ -308,28 +308,37 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
             continue;
         }
 
-        const OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
+        const OGRFieldDefn *poFieldDefn =
+            poFeatureDefn->GetFieldDefnUnsafe(iField);
         int err = SQLITE_OK;
 
-        if (!poFeature->IsFieldNull(iField))
+        if (!poFeature->IsFieldNullUnsafe(iField))
         {
-            switch (SQLiteFieldFromOGR(poFieldDefn->GetType()))
+            const auto eType = poFieldDefn->GetType();
+            switch (eType)
             {
-                case SQLITE_INTEGER:
+                case OFTInteger:
+                {
+                    err = sqlite3_bind_int(
+                        poStmt, nColCount++,
+                        poFeature->GetFieldAsIntegerUnsafe(iField));
+                    break;
+                }
+                case OFTInteger64:
                 {
                     err = sqlite3_bind_int64(
                         poStmt, nColCount++,
-                        poFeature->GetFieldAsInteger64(iField));
+                        poFeature->GetFieldAsInteger64Unsafe(iField));
                     break;
                 }
-                case SQLITE_FLOAT:
+                case OFTReal:
                 {
                     err = sqlite3_bind_double(
                         poStmt, nColCount++,
-                        poFeature->GetFieldAsDouble(iField));
+                        poFeature->GetFieldAsDoubleUnsafe(iField));
                     break;
                 }
-                case SQLITE_BLOB:
+                case OFTBinary:
                 {
                     int szBlob = 0;
                     GByte *pabyBlob =
@@ -343,7 +352,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                     const char *pszVal = "";
                     int nValLengthBytes = -1;
                     sqlite3_destructor_type destructorType = SQLITE_TRANSIENT;
-                    if (poFieldDefn->GetType() == OFTDate)
+                    if (eType == OFTDate)
                     {
                         destructorType = SQLITE_STATIC;
                         const auto psFieldRaw =
@@ -383,7 +392,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                             nInsertionBufferPos += 10;
                         }
                     }
-                    else if (poFieldDefn->GetType() == OFTDateTime)
+                    else if (eType == OFTDateTime)
                     {
                         destructorType = SQLITE_STATIC;
                         const auto psFieldRaw =
@@ -439,9 +448,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                         }
                         nInsertionBufferPos += nValLengthBytes;
                     }
-                    else if (poFieldDefn->GetType() == OFTString)
+                    else if (eType == OFTString)
                     {
-                        pszVal = poFeature->GetFieldAsString(iField);
+                        pszVal = poFeature->GetFieldAsStringUnsafe(iField);
                         if (poFieldDefn->GetWidth() > 0)
                         {
                             if (!CPLIsUTF8(pszVal, -1))
@@ -2277,10 +2286,10 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
     const int nFieldCount = m_poFeatureDefn->GetFieldCount();
     for (int iField = 0; iField < nFieldCount; iField++)
     {
-        if (poFeature->IsFieldSet(iField))
+        if (poFeature->IsFieldSetUnsafe(iField))
             continue;
         const char *pszDefault =
-            poFeature->GetFieldDefnRef(iField)->GetDefault();
+            m_poFeatureDefn->GetFieldDefnUnsafe(iField)->GetDefault();
         if (pszDefault != nullptr)
         {
             bHasDefaultValue = true;

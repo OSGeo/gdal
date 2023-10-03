@@ -2388,7 +2388,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     ASSERT_TRUE(insertEntry != queryLog.end());
     ASSERT_EQ(
         insertEntry->sql.find(
-            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, '123', NULL))sql",
+            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, 123, NULL))sql",
             0),
         0);
 #endif
