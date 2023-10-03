@@ -41,6 +41,32 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 #endif
 
 /************************************************************************/
+/*                          GDALRegisterPlugin()                        */
+/*                                                                      */
+/*      Register a plugin by name, returning an error if not found      */
+/************************************************************************/
+
+/**
+ * \brief Register a plugin by name, returning an error if not found      
+ * 
+ * This function will call GDALDriverManager::LoadPlugin() to register a
+ * specific plugin by name.
+ * 
+ * This method is intended to be called instead of GDALAllRegister() or
+ * GDALRegisterPlugins() when fine tuning which drivers are needed at runtime.
+ * 
+ * @see GDALDriverManager::LoadPlugin()
+ * @see GDALDriverManager::AutoLoadDrivers()
+ * @since GDAL 3.8
+*/
+CPLErr CPL_DLL GDALRegisterPlugin(const char *name)
+{
+    auto poDriverManager = GetGDALDriverManager();
+    // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
+    return poDriverManager->LoadPlugin(name);
+}
+
+/************************************************************************/
 /*                          GDALRegisterPlugins()                       */
 /*                                                                      */
 /*      Register drivers and support code available as a plugin.        */
