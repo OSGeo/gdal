@@ -173,27 +173,6 @@ int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
     return static_cast<int>(SQLGetInteger64(poDb, pszSQL, err));
 }
 
-int SQLiteFieldFromOGR(OGRFieldType eType)
-{
-    switch (eType)
-    {
-        case OFTInteger:
-            return SQLITE_INTEGER;
-        case OFTReal:
-            return SQLITE_FLOAT;
-        case OFTString:
-            return SQLITE_TEXT;
-        case OFTBinary:
-            return SQLITE_BLOB;
-        case OFTDate:
-            return SQLITE_TEXT;
-        case OFTDateTime:
-            return SQLITE_TEXT;
-        default:
-            return 0;
-    }
-}
-
 /************************************************************************/
 /*                             SQLUnescape()                            */
 /************************************************************************/

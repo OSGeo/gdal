@@ -72,8 +72,6 @@ GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
 
 std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char *pszSQL);
 
-int SQLiteFieldFromOGR(OGRFieldType eType);
-
 /* To escape literals. The returned string doesn't contain the surrounding
  * single quotes */
 CPLString SQLEscapeLiteral(const char *pszLiteral);
