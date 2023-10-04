@@ -100,4 +100,6 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
     const std::vector<SQLSqliteMasterContent> &sqliteMasterContent =
         std::vector<SQLSqliteMasterContent>());
 
+bool OGRSQLiteRTreeRequiresTrustedSchemaOn();
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED
