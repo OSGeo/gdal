@@ -1918,6 +1918,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void AutoLoadDrivers();
     void AutoSkipDrivers();
     void ReorderDrivers();
+    static CPLErr LoadPlugin(const char *name);
 
     static void AutoLoadPythonDrivers();
 };

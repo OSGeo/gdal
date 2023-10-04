@@ -878,6 +878,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
 
 void CPL_DLL CPL_STDCALL GDALAllRegister(void);
 void CPL_DLL GDALRegisterPlugins(void);
+CPLErr CPL_DLL GDALRegisterPlugin(const char *name);
 
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreate(GDALDriverH hDriver, const char *, int, int, int, GDALDataType,

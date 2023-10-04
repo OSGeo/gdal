@@ -64,6 +64,13 @@ TEST_F(test_gdal, register_plugins)
     GDALRegisterPlugins();
 }
 
+// Test that GDALRegisterPlugin can be called and returns an error for a non
+// existing plugin name
+TEST_F(test_gdal, register_plugin)
+{
+    ASSERT_EQ(GDALRegisterPlugin("rtbreg_non_existing_plugin"), CE_Failure);
+}
+
 // Test number of registered GDAL drivers
 TEST_F(test_gdal, number_of_registered_drivers)
 {
