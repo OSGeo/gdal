@@ -31,7 +31,7 @@ Motivation
   self-explanatory on their actual width (64 bit), adds cognitive load to
   developers.
 
-- Due to their poor namespacing, those short typenames may occasionaly clash
+- Due to their poor namespacing, those short typenames may occasionally clash
   with other libraries. At a time, Poppler used a ``GBool`` data type as well,
   which was clashing with GDAL's one.
 
