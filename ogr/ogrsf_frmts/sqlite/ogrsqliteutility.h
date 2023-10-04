@@ -89,4 +89,7 @@ char **SQLTokenize(const char *pszSQL);
 
 std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3 *poDb,
                                                      const char *pszTableName);
+
+bool OGRSQLiteRTreeRequiresTrustedSchemaOn();
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED
