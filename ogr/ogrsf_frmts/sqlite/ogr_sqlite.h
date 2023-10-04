@@ -697,6 +697,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     CPLErr Close() override;
 
+    void PostInitSpatialite();
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
@@ -764,9 +766,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     {
         return m_nFileTimestamp;
     }
-
-    bool IsSpatialiteLoaded();
-    int GetSpatialiteVersionNumber();
 
     bool IsSpatialiteDB() const
     {
