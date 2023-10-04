@@ -21,6 +21,8 @@ RUN apk add \
     qhull-dev \
     unixodbc-dev \
     libpq-dev \
+    apache-arrow-dev \
+    py3-pyarrow py3-pyarrow-pyc \
     libxml2-dev \
     podofo-dev
 
