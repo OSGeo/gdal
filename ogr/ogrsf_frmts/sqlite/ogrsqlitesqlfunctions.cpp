@@ -1006,28 +1006,29 @@ static void OGRSQLITE_hstore_get_value(sqlite3_context *pContext,
 #define SQLITE_DETERMINISTIC 0
 #endif
 
+#ifndef SQLITE_INNOCUOUS
+#define SQLITE_INNOCUOUS 0
+#endif
+
+#define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+
 static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
 {
     OGRSQLiteExtensionData *pData = OGRSQLiteRegisterSQLFunctionsCommon(hDB);
 
-    sqlite3_create_function(hDB, "ogr_version", 0,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ogr_version", 0, UTF8_INNOCUOUS, nullptr,
                             OGR2SQLITE_ogr_version, nullptr, nullptr);
 
-    sqlite3_create_function(hDB, "ogr_version", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ogr_version", 1, UTF8_INNOCUOUS, nullptr,
                             OGR2SQLITE_ogr_version, nullptr, nullptr);
 
-    sqlite3_create_function(hDB, "ogr_deflate", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ogr_deflate", 1, UTF8_INNOCUOUS, nullptr,
                             OGR2SQLITE_ogr_deflate, nullptr, nullptr);
 
-    sqlite3_create_function(hDB, "ogr_deflate", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ogr_deflate", 2, UTF8_INNOCUOUS, nullptr,
                             OGR2SQLITE_ogr_deflate, nullptr, nullptr);
 
-    sqlite3_create_function(hDB, "ogr_inflate", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ogr_inflate", 1, UTF8_INNOCUOUS, nullptr,
                             OGR2SQLITE_ogr_inflate, nullptr, nullptr);
 
     sqlite3_create_function(hDB, "ogr_geocode", -1, SQLITE_UTF8, pData,
@@ -1057,13 +1058,11 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
 #endif
 
     // Custom and undocumented function, not sure I'll keep it.
-    sqlite3_create_function(hDB, "Transform3", 3,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, pData,
+    sqlite3_create_function(hDB, "Transform3", 3, UTF8_INNOCUOUS, pData,
                             OGR2SQLITE_Transform, nullptr, nullptr);
 
     // HSTORE functions
-    sqlite3_create_function(hDB, "hstore_get_value", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "hstore_get_value", 2, UTF8_INNOCUOUS, nullptr,
                             OGRSQLITE_hstore_get_value, nullptr, nullptr);
 
     /* Check if spatialite is available */
@@ -1078,11 +1077,9 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
         CPLTestBool(CPLGetConfigOption("OGR_SQLITE_SPATIAL_FUNCTIONS", "YES"));
 
 #define REGISTER_ST_op(argc, op)                                               \
-    sqlite3_create_function(hDB, #op, argc,                                    \
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,       \
+    sqlite3_create_function(hDB, #op, argc, UTF8_INNOCUOUS, nullptr,           \
                             OGR2SQLITE_ST_##op, nullptr, nullptr);             \
-    sqlite3_create_function(hDB, "ST_" #op, argc,                              \
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,       \
+    sqlite3_create_function(hDB, "ST_" #op, argc, UTF8_INNOCUOUS, nullptr,     \
                             OGR2SQLITE_ST_##op, nullptr, nullptr);
 
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
@@ -1119,7 +1116,7 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
         REGISTER_ST_op(2, Intersection);
         REGISTER_ST_op(2, Difference);
         // Union() is invalid
-        sqlite3_create_function(hDB, "ST_Union", 2, SQLITE_ANY, nullptr,
+        sqlite3_create_function(hDB, "ST_Union", 2, UTF8_INNOCUOUS, nullptr,
                                 OGR2SQLITE_ST_Union, nullptr, nullptr);
         REGISTER_ST_op(2, SymDifference);
 

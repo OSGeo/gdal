@@ -8707,6 +8707,12 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
 #define SQLITE_DETERMINISTIC 0
 #endif
 
+#ifndef SQLITE_INNOCUOUS
+#define SQLITE_INNOCUOUS 0
+#endif
+
+#define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+
 void GDALGeoPackageDataset::InstallSQLFunctions()
 {
     InitSpatialite();
@@ -8720,33 +8726,26 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                  nullptr);
 
     /* Used by RTree Spatial Index Extension */
-    sqlite3_create_function(hDB, "ST_MinX", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MinX", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMinX, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_MinY", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MinY", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMinY, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_MaxX", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MaxX", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMaxX, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_MaxY", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MaxY", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMaxY, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_IsEmpty", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_IsEmpty", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTIsEmpty, nullptr, nullptr);
 
     /* Used by Geometry Type Triggers Extension */
-    sqlite3_create_function(hDB, "ST_GeometryType", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_GeometryType", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTGeometryType, nullptr, nullptr);
-    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
-                            OGRGeoPackageGPKGIsAssignable, nullptr, nullptr);
+    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2, UTF8_INNOCUOUS,
+                            nullptr, OGRGeoPackageGPKGIsAssignable, nullptr,
+                            nullptr);
 
     /* Used by Geometry SRS ID Triggers Extension */
-    sqlite3_create_function(hDB, "ST_SRID", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_SRID", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTSRID, nullptr, nullptr);
 
     /* Spatialite-like functions */
@@ -8758,37 +8757,33 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             OGRGeoPackageHasSpatialIndex, nullptr, nullptr);
 
     // HSTORE functions
-    sqlite3_create_function(hDB, "hstore_get_value", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "hstore_get_value", 2, UTF8_INNOCUOUS, nullptr,
                             GPKG_hstore_get_value, nullptr, nullptr);
 
     // Override a few Spatialite functions to work with gpkg_spatial_ref_sys
-    sqlite3_create_function(hDB, "ST_Transform", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
+    sqlite3_create_function(hDB, "ST_Transform", 2, UTF8_INNOCUOUS, this,
                             OGRGeoPackageTransform, nullptr, nullptr);
-    sqlite3_create_function(hDB, "Transform", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
+    sqlite3_create_function(hDB, "Transform", 2, UTF8_INNOCUOUS, this,
                             OGRGeoPackageTransform, nullptr, nullptr);
     sqlite3_create_function(hDB, "SridFromAuthCRS", 2, SQLITE_UTF8, this,
                             OGRGeoPackageSridFromAuthCRS, nullptr, nullptr);
 
+    sqlite3_create_function(hDB, "ST_EnvIntersects", 2, UTF8_INNOCUOUS, nullptr,
+                            OGRGeoPackageSTEnvelopesIntersectsTwoParams,
+                            nullptr, nullptr);
     sqlite3_create_function(
-        hDB, "ST_EnvIntersects", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+        hDB, "ST_EnvelopesIntersects", 2, UTF8_INNOCUOUS, nullptr,
         OGRGeoPackageSTEnvelopesIntersectsTwoParams, nullptr, nullptr);
-    sqlite3_create_function(
-        hDB, "ST_EnvelopesIntersects", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC,
-        nullptr, OGRGeoPackageSTEnvelopesIntersectsTwoParams, nullptr, nullptr);
 
-    sqlite3_create_function(
-        hDB, "ST_EnvIntersects", 5, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
-        OGRGeoPackageSTEnvelopesIntersects, nullptr, nullptr);
-    sqlite3_create_function(
-        hDB, "ST_EnvelopesIntersects", 5, SQLITE_UTF8 | SQLITE_DETERMINISTIC,
-        nullptr, OGRGeoPackageSTEnvelopesIntersects, nullptr, nullptr);
+    sqlite3_create_function(hDB, "ST_EnvIntersects", 5, UTF8_INNOCUOUS, nullptr,
+                            OGRGeoPackageSTEnvelopesIntersects, nullptr,
+                            nullptr);
+    sqlite3_create_function(hDB, "ST_EnvelopesIntersects", 5, UTF8_INNOCUOUS,
+                            nullptr, OGRGeoPackageSTEnvelopesIntersects,
+                            nullptr, nullptr);
 
     // Implementation that directly hacks the GeoPackage geometry blob header
-    sqlite3_create_function(hDB, "SetSRID", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "SetSRID", 2, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSetSRID, nullptr, nullptr);
 
     // GDAL specific function
@@ -8812,13 +8807,11 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     }();
     if (gbRegisterMakeValid)
     {
-        sqlite3_create_function(hDB, "ST_MakeValid", 1,
-                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+        sqlite3_create_function(hDB, "ST_MakeValid", 1, UTF8_INNOCUOUS, nullptr,
                                 OGRGeoPackageSTMakeValid, nullptr, nullptr);
     }
 
-    sqlite3_create_function(hDB, "ST_Area", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_Area", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTArea, nullptr, nullptr);
 
     // Debug functions
