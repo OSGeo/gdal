@@ -8858,6 +8858,47 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
 
     InstallSQLFunctions();
 
+    const char *pszSqlitePragma =
+        CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
+    OGRErr eErr = OGRERR_NONE;
+    if ((!pszSqlitePragma || !strstr(pszSqlitePragma, "trusted_schema")) &&
+        // Older sqlite versions don't have this pragma
+        SQLGetInteger(hDB, "PRAGMA trusted_schema", &eErr) == 0 &&
+        eErr == OGRERR_NONE)
+    {
+        bool bNeedsTrustedSchema = false;
+
+        // Current SQLite versions require PRAGMA trusted_schema = 1 to be
+        // able to use the RTree from triggers, which is only needed when
+        // modifying the RTree.
+        if (((flags & SQLITE_OPEN_READWRITE) != 0 ||
+             (flags & SQLITE_OPEN_CREATE) != 0) &&
+            OGRSQLiteRTreeRequiresTrustedSchemaOn())
+        {
+            bNeedsTrustedSchema = true;
+        }
+
+#ifdef HAVE_SPATIALITE
+        // Spatialite <= 5.1.0 doesn't declare its functions as SQLITE_INNOCUOUS
+        if (!bNeedsTrustedSchema && HasExtensionsTable() &&
+            SQLGetInteger(
+                hDB,
+                "SELECT 1 FROM gpkg_extensions WHERE "
+                "extension_name ='gdal_spatialite_computed_geom_column'",
+                nullptr) == 1 &&
+            SpatialiteRequiresTrustedSchemaOn() && AreSpatialiteTriggersSafe())
+        {
+            bNeedsTrustedSchema = true;
+        }
+#endif
+
+        if (bNeedsTrustedSchema)
+        {
+            CPLDebug("GPKG", "Setting PRAGMA trusted_schema = 1");
+            SQLCommand(hDB, "PRAGMA trusted_schema = 1");
+        }
+    }
+
     return true;
 }
 
