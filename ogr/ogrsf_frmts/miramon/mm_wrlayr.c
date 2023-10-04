@@ -511,6 +511,15 @@ int MMInitZSectionLayer(struct MiraMonLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+int MMOpenCorrectMiraMonFile(char **pszLayerName, const char *szExtension)
+{
+    remove_function(*pszLayerName);
+    strcpy(*pszLayerName, 
+            reset_extension(*pszLayerName, szExtension));
+
+    return 0;
+}
+
 int MMInitPointLayer(struct MiraMonLayerInfo *hMiraMonLayer, int bIs3d)
 {
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
@@ -529,6 +538,13 @@ int MMInitPointLayer(struct MiraMonLayerInfo *hMiraMonLayer, int bIs3d)
 
     // Opening the binary file where sections TH, TL[...] and ZH-ZD[...]-ZL[...]
     // are going to be written.
+    if(hMiraMonLayer->bNameNeedsCorrection)
+    {
+        if(MMOpenCorrectMiraMonFile(
+            &hMiraMonLayer->MMPoint.pszLayerName, "pnt"))
+            return 1;
+        hMiraMonLayer->bNameNeedsCorrection=0;
+    }
     if(NULL==(hMiraMonLayer->MMPoint.pF=fopen_function(
         hMiraMonLayer->MMPoint.pszLayerName, 
         hMiraMonLayer->pszFlags)))
@@ -684,6 +700,13 @@ struct MM_TH *pArcTopHeader;
     pArcTopHeader->aFileType[1]='R';
     pArcTopHeader->aFileType[2]='C';
 
+    if(hMiraMonLayer->bNameNeedsCorrection)
+    {
+        if(MMOpenCorrectMiraMonFile(&pMMArcLayer->pszLayerName, "arc"))
+            return 1;
+        hMiraMonLayer->bNameNeedsCorrection=0;
+    }
+
     if(NULL==(pMMArcLayer->pF = fopen_function(pMMArcLayer->pszLayerName, 
         hMiraMonLayer->pszFlags)))
         return 1;
@@ -775,6 +798,13 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
     hMiraMonLayer->TopHeader.aFileType[1]='O';
     hMiraMonLayer->TopHeader.aFileType[2]='L';
 
+    if(hMiraMonLayer->bNameNeedsCorrection)
+    {
+        if(MMOpenCorrectMiraMonFile(
+            &pMMPolygonLayer->pszLayerName, "pol"))
+            return 1;
+        hMiraMonLayer->bNameNeedsCorrection=0;
+    }
     if(NULL==(pMMPolygonLayer->pF = 
             fopen_function(pMMPolygonLayer->pszLayerName, hMiraMonLayer->pszFlags)))
         return 1;
@@ -839,12 +869,87 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
     return 0;
 }
 
-int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, const char *pzFileName, 
-                __int32 LayerVersion, int eLT,
-                struct MiraMonDataBase *pLayerDB)
+int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer)
 {
     int bIs3d=0;
 
+    if(hMiraMonLayer->eLT==MM_LayerType_Point || 
+        hMiraMonLayer->eLT==MM_LayerType_Point3d)
+    {
+        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_POINTS;
+        
+        hMiraMonLayer->MMPoint.pszLayerName=strdup_function(
+                hMiraMonLayer->pszSrcLayerName);
+        if(hMiraMonLayer->eLT==MM_LayerType_Point3d)
+            bIs3d=1;
+
+        if(MMInitPointLayer(hMiraMonLayer, bIs3d))
+        {
+            MMFreeLayer(hMiraMonLayer);
+            return 1;
+        }
+        return 0;
+    }
+    if(hMiraMonLayer->eLT==MM_LayerType_Arc || 
+        hMiraMonLayer->eLT==MM_LayerType_Arc3d)
+    {
+        struct MiraMonArcLayer *pMMArcLayer=&hMiraMonLayer->MMArc;
+
+        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_ARCS;
+
+        pMMArcLayer->pszLayerName=strdup_function(
+            hMiraMonLayer->pszSrcLayerName);
+        if(hMiraMonLayer->eLT==MM_LayerType_Arc3d)
+            bIs3d=1;
+
+        if(MMInitArcLayer(hMiraMonLayer, bIs3d))
+        {
+            MMFreeLayer(hMiraMonLayer);
+            return 1;
+        }
+        return 0;
+    }
+    if(hMiraMonLayer->eLT==MM_LayerType_Pol || 
+        hMiraMonLayer->eLT==MM_LayerType_Pol3d)
+    {
+        struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
+
+        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_POLYGONS;
+
+        if(hMiraMonLayer->eLT==MM_LayerType_Pol3d)
+            bIs3d=1;
+        
+        pMMPolygonLayer->pszLayerName=strdup_function(
+            hMiraMonLayer->pszSrcLayerName);
+        if(MMInitPolygonLayer(hMiraMonLayer, bIs3d))
+        {
+            MMFreeLayer(hMiraMonLayer);
+            return 1;
+        }
+
+        pMMPolygonLayer->MMArc.pszLayerName=strdup_function(
+            hMiraMonLayer->pszSrcLayerName);
+        strcpy(pMMPolygonLayer->MMArc.pszLayerName, 
+            reset_extension(pMMPolygonLayer->MMArc.pszLayerName, "arc"));
+        if(MMInitArcLayer(hMiraMonLayer, bIs3d))
+        {
+            MMFreeLayer(hMiraMonLayer);
+            return 1;
+        }
+
+        if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
+            MMSet1_1Version(&pMMPolygonLayer->TopArcHeader);
+        else
+            MMSet2_0Version(&pMMPolygonLayer->TopArcHeader);
+    }
+
+    return 0;
+}
+
+int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, const char *pzFileName, 
+                __int32 LayerVersion, 
+                struct MiraMonDataBase *pLayerDB)
+{
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
     hMiraMonLayer->Version=MM_VECTOR_LAYER_LAST_VERSION;
     
@@ -877,68 +982,15 @@ int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, const char *pzFileName,
         hMiraMonLayer->LayerVersion=MM_64BITS_VERSION;
     }
 
-    if(eLT==MM_LayerType_Point || eLT==MM_LayerType_Point3d)
+    hMiraMonLayer->pszSrcLayerName=strdup_function(pzFileName);
+
+    if(!hMiraMonLayer->bIsBeenInit && 
+        hMiraMonLayer->eLT!=MM_LayerType_Unknown)
     {
-        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_POINTS;
-        
-        hMiraMonLayer->MMPoint.pszLayerName=strdup_function(pzFileName);
-        if(eLT==MM_LayerType_Point3d)
-            bIs3d=1;
-
-        if(MMInitPointLayer(hMiraMonLayer, bIs3d))
-        {
-            MMFreeLayer(hMiraMonLayer);
+        if(MMInitLayerByType(hMiraMonLayer))
             return 1;
-        }
+        hMiraMonLayer->bIsBeenInit=1;
     }
-    else if(eLT==MM_LayerType_Arc || eLT==MM_LayerType_Arc3d)
-    {
-        struct MiraMonArcLayer *pMMArcLayer=&hMiraMonLayer->MMArc;
-
-        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_ARCS;
-
-        pMMArcLayer->pszLayerName=strdup_function(pzFileName);
-        if(eLT==MM_LayerType_Arc3d)
-            bIs3d=1;
-
-        if(MMInitArcLayer(hMiraMonLayer, bIs3d))
-        {
-            MMFreeLayer(hMiraMonLayer);
-            return 1;
-        }
-    }
-    else if(eLT==MM_LayerType_Pol || eLT==MM_LayerType_Pol3d)
-    {
-        struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
-
-        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_POLYGONS;
-
-        if(eLT==MM_LayerType_Pol3d)
-            bIs3d=1;
-        
-        pMMPolygonLayer->pszLayerName=strdup_function(pzFileName);
-        if(MMInitPolygonLayer(hMiraMonLayer, bIs3d))
-        {
-            MMFreeLayer(hMiraMonLayer);
-            return 1;
-        }
-
-        pMMPolygonLayer->MMArc.pszLayerName=strdup_function(pzFileName);
-        strcpy(pMMPolygonLayer->MMArc.pszLayerName, 
-            reset_extension(pMMPolygonLayer->MMArc.pszLayerName, "arc"));
-        if(MMInitArcLayer(hMiraMonLayer, bIs3d))
-        {
-            MMFreeLayer(hMiraMonLayer);
-            return 1;
-        }
-
-        if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
-            MMSet1_1Version(&pMMPolygonLayer->TopArcHeader);
-        else
-            MMSet2_0Version(&pMMPolygonLayer->TopArcHeader);
-    }
-
-    // Return the handle to the layer
     return 0;
 }
 
@@ -1356,7 +1408,7 @@ int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer)
 /*      Layer Functions: Creating a layer                               */
 /* -------------------------------------------------------------------- */
 struct MiraMonLayerInfo * MMCreateLayer(char *pzFileName, 
-            __int32 LayerVersion, int eLT,
+            __int32 LayerVersion, 
             struct MiraMonDataBase *hLayerDB)
 {
 struct MiraMonLayerInfo *hMiraMonLayer;
@@ -1364,7 +1416,7 @@ struct MiraMonLayerInfo *hMiraMonLayer;
     // Creating of the handle to a MiraMon Layer
     hMiraMonLayer=(struct MiraMonLayerInfo *)calloc_function(
                     sizeof(*hMiraMonLayer));
-    if(MMInitLayer(hMiraMonLayer, pzFileName, LayerVersion, eLT, 
+    if(MMInitLayer(hMiraMonLayer, pzFileName, LayerVersion, 
                 hLayerDB))
         return NULL;
 
@@ -2560,10 +2612,23 @@ MM_FILE_OFFSET LastOffset;
     return 1;
 }
 
-int AddMMFeature(struct MiraMonLayerInfo *hMiraMonLayer, struct MiraMonFeature *hMiraMonFeature)
+int AddMMFeature(struct MiraMonLayerInfo *hMiraMonLayer, 
+        struct MiraMonFeature *hMiraMonFeature)
 {
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
     
+    if(!hMiraMonLayer->bIsBeenInit)
+    {
+        if(hMiraMonLayer->eLT==MM_LayerType_Unknown)
+        {
+            info_message_function("MiraMon cannot write unknown type layers.");
+            return 1;
+        }
+        if(MMInitLayerByType(hMiraMonLayer))
+            return 1;
+        hMiraMonLayer->bIsBeenInit = 1;
+    }
+
     if(hMiraMonLayer->bIsPoint)
         return MMCreateFeaturePoint(hMiraMonLayer, hMiraMonFeature);
     return MMCreateFeaturePolOrArc(hMiraMonLayer, hMiraMonFeature);

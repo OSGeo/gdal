@@ -177,13 +177,11 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         // Extension is determined only for the type of the layer
         osFilename = CPLFormFilename(osPath, pszLayerName, pszExtension);
     }
-    /*else
+    else
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-           "MiraMon layers cannot be created with a wkbUnknown layer "
-            "geometry type.");
-        return nullptr;
-    }*/
+        // If type undefined, no extensions is added until type is defined
+        osFilename = CPLFormFilename(osPath, pszLayerName, "~mm");
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */

@@ -87,17 +87,22 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             if (pMMHeader.Flag & MM_LAYER_3D_INFO)
             {
                 poFeatureDefn->SetGeomType(wkbPoint25D);
-                if (MMInitLayer(&hMiraMonLayer, pszFilename, nMMVersion,
-                        MM_LayerType_Point3d, NULL))
+                if (MMInitLayer(&hMiraMonLayer, pszFilename,
+                    nMMVersion, NULL))
                     bValidFile = false;
+                hMiraMonLayer.eLT = MM_LayerType_Point3d;
             }
             else
             {
                 poFeatureDefn->SetGeomType(wkbPoint);
-                if(MMInitLayer(&hMiraMonLayer, pszFilename, nMMVersion,
-                        MM_LayerType_Point, NULL))
+                if(MMInitLayer(&hMiraMonLayer, pszFilename,
+                    nMMVersion, NULL))
                     bValidFile = false;
+                hMiraMonLayer.eLT = MM_LayerType_Point;
             }
+            if(MMInitLayerByType(&hMiraMonLayer))
+                bValidFile = false;
+            hMiraMonLayer.bIsBeenInit = 1;
             hMiraMonLayer.bIsPoint=1;
         }
         else if (pMMHeader.aFileType[0] == 'A' &&
@@ -107,17 +112,22 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             if (pMMHeader.Flag & MM_LAYER_3D_INFO)
             {
                 poFeatureDefn->SetGeomType(wkbLineString25D);
-                if(MMInitLayer(&hMiraMonLayer, pszFilename, nMMVersion,
-                        MM_LayerType_Arc3d, NULL))
+                if(MMInitLayer(&hMiraMonLayer, pszFilename,
+                    nMMVersion, NULL))
                     bValidFile = false;
+                hMiraMonLayer.eLT = MM_LayerType_Arc3d;
             }
             else
             {
                 poFeatureDefn->SetGeomType(wkbLineString);
-                if(MMInitLayer(&hMiraMonLayer, pszFilename, nMMVersion,
-                        MM_LayerType_Arc, NULL))
+                if(MMInitLayer(&hMiraMonLayer, pszFilename,
+                    nMMVersion, NULL))
                     bValidFile = false;
+                hMiraMonLayer.eLT = MM_LayerType_Arc;
             }
+            if(MMInitLayerByType(&hMiraMonLayer))
+                bValidFile = false;
+            hMiraMonLayer.bIsBeenInit = 1;
             hMiraMonLayer.bIsArc=1;
         }
         else if(pMMHeader.aFileType[0]=='P' &&
@@ -131,9 +141,10 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
                 else
                     poFeatureDefn->SetGeomType(wkbPolygon25D);
-                if(MMInitLayer(&hMiraMonLayer, pszFilename, nMMVersion,
-                        MM_LayerType_Pol3d, NULL))
+                if(MMInitLayer(&hMiraMonLayer, pszFilename,
+                    nMMVersion, NULL))
                     bValidFile = false;
+                hMiraMonLayer.eLT = MM_LayerType_Pol3d;
             }
             else
             {
@@ -141,11 +152,24 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     poFeatureDefn->SetGeomType(wkbMultiPolygon);
                 else
                     poFeatureDefn->SetGeomType(wkbPolygon);
-                if(MMInitLayer(&hMiraMonLayer, pszFilename, nMMVersion,
-                        MM_LayerType_Pol,  NULL))
+                if(MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion,  NULL))
                     bValidFile = false;
+                hMiraMonLayer.eLT = MM_LayerType_Pol3d;
             }
+            if(MMInitLayerByType(&hMiraMonLayer))
+                bValidFile = false;
+            hMiraMonLayer.bIsBeenInit = 1;
             hMiraMonLayer.bIsPolygon=1;
+        }
+        else
+        {
+            // Unknown type
+            if(MMInitLayer(&hMiraMonLayer, pszFilename,
+                    nMMVersion, NULL))
+                    bValidFile = false;
+            hMiraMonLayer.bIsBeenInit = 0;
+            hMiraMonLayer.bNameNeedsCorrection = 1;
         }
 
         /* --------------------------------------------------------------------
@@ -878,10 +902,36 @@ OGRErr OGRMiraMonLayer::WriteGeometry(OGRGeometryH hGeom,
         /* -------------------------------------------------------------------- */
         /*      Dump vertices.                                                  */
         /* -------------------------------------------------------------------- */
-    
-        if (wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint ||
-            wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbLineString ||
-            wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon)
+
+        // If the layer has unknown type let's guess it from the feature.
+        if(hMiraMonLayer.eLT == MM_LayerType_Unknown)
+        {
+            switch (poFeatureDefn->GetGeomType())
+            {
+                case wkbPoint:
+                    hMiraMonLayer.eLT = MM_LayerType_Point;
+                    break;
+                case wkbPoint25D:
+                    hMiraMonLayer.eLT = MM_LayerType_Point3d;
+                    break;
+                case wkbLineString:
+                    hMiraMonLayer.eLT = MM_LayerType_Arc;
+                    break;
+                case wkbLineString25D:
+                    hMiraMonLayer.eLT = MM_LayerType_Arc3d;
+                    break;
+                case wkbPolygon:
+                    hMiraMonLayer.eLT = MM_LayerType_Point;
+                    break;
+                case wkbPolygon25D:
+                    hMiraMonLayer.eLT = MM_LayerType_Point3d;
+                    break;
+            }
+        }
+
+        if (wkbFlatten(poFeatureDefn->GetGeomType()) == wkbPoint ||
+            wkbFlatten(poFeatureDefn->GetGeomType()) == wkbLineString ||
+            wkbFlatten(poFeatureDefn->GetGeomType()) == wkbPolygon)
         {
             if (MMResizeUI64Pointer(&hMMFeature.pNCoord, &hMMFeature.nMaxpNCoord,
                 hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))

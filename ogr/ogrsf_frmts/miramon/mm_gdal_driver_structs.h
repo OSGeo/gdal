@@ -571,7 +571,7 @@ struct MiraMonPolygonLayer
 // features are being read
 struct MiraMonFeature
 {
-    // A MiraMon Feature 
+    // Number of parts
     unsigned __int64 nNRings; // =1 for lines and points
     unsigned __int64 nIRing; // The ring is being processed
     
@@ -614,6 +614,8 @@ struct MiraMonLayerInfo
     // MM_32BITS_LAYER_VERSION: less than 2 Gb files
     // MM_64BITS_LAYER_VERSION: more than 2 Gb files
     char LayerVersion;
+
+    char *pszSrcLayerName;
     
     char pszFlags[10]; // To Open the file
     int bIsPolygon;
@@ -628,6 +630,10 @@ struct MiraMonLayerInfo
     // Header of the layer
     __int32 nHeaderDiskSize;
     struct MM_TH TopHeader;
+
+    int eLT;    // Type of layer: Point, line or polygon (3d or not)
+    int bIsBeenInit; // 1 if layer has already been initialized
+    int bNameNeedsCorrection; // 1 if name needs the extension to be added
 
     // Point layer
     struct MiraMonPointLayer MMPoint;

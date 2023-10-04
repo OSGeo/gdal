@@ -65,11 +65,14 @@ CPL_C_START // Necessary for compiling in GDAL project
 /*      Functions                                                       */
 /* -------------------------------------------------------------------- */
 // Layer functions
-struct MiraMonLayerInfo * MMCreateLayer(char *pzFileName, __int32 LayerVersion, 
-            int eLT, struct MiraMonDataBase *attributes);
-int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, const char *pzFileName, 
-                __int32 LayerVersion, int eLT,
+struct MiraMonLayerInfo * MMCreateLayer(char *pzFileName, 
+            __int32 LayerVersion, 
+            struct MiraMonDataBase *attributes);
+int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, 
+                const char *pzFileName, 
+                __int32 LayerVersion, 
                 struct MiraMonDataBase *pLayerDB);
+int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
@@ -79,7 +82,8 @@ int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion);
 int MMInitFeature(struct MiraMonFeature *MMFeature);
 void MMResetFeature(struct MiraMonFeature *MMFeature);
 void MMDestroyFeature(struct MiraMonFeature *MMFeature);
-int AddMMFeature(struct MiraMonLayerInfo *hMiraMonLayer, struct MiraMonFeature *hMiraMonFeature);
+int AddMMFeature(struct MiraMonLayerInfo *hMiraMonLayer, 
+            struct MiraMonFeature *hMiraMonFeature);
 int MMGetVectorVersion(struct MM_TH *pTopHeader);
 
 // Tool functions
