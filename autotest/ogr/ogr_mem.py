@@ -1555,6 +1555,39 @@ def test_ogr_mem_write_pyarrow():
     decimal128 = pa.array([d, d, d, d, d], pa.decimal128(5, 2))
     decimal256 = pa.array([d, d, d, d, d], pa.decimal256(5, 2))
 
+    list_decimal128 = pa.array(
+        [
+            [],
+            [decimal.Decimal("123.45")],
+            [decimal.Decimal("123.45"), decimal.Decimal("-123.45")],
+            None,
+            [decimal.Decimal("123.45"), decimal.Decimal("234.56")],
+        ],
+        type=pa.list_(pa.decimal128(5, 2)),
+    )
+
+    large_list_decimal128 = pa.array(
+        [
+            [],
+            [decimal.Decimal("123.45")],
+            [decimal.Decimal("123.45"), decimal.Decimal("-123.45")],
+            None,
+            [decimal.Decimal("123.45"), decimal.Decimal("234.56")],
+        ],
+        type=pa.large_list(pa.decimal128(5, 2)),
+    )
+
+    fixed_size_list_decimal128 = pa.array(
+        [
+            [decimal.Decimal("123.45"), decimal.Decimal("-123.45")],
+            [decimal.Decimal("-123.45"), decimal.Decimal("123.45")],
+            None,
+            [decimal.Decimal("234.56"), decimal.Decimal("-234.56")],
+            [decimal.Decimal("345.67"), decimal.Decimal("-345.67")],
+        ],
+        type=pa.list_(pa.decimal128(5, 2), 2),
+    )
+
     import struct
 
     wkb_geometry = pa.array(
@@ -1636,6 +1669,9 @@ def test_ogr_mem_write_pyarrow():
         "dict_list_uint8",
         "decimal128",
         "decimal256",
+        "list_decimal128",
+        "large_list_decimal128",
+        "fixed_size_list_decimal128",
         "wkb_geometry",
         "fid",
     ]
@@ -1743,6 +1779,9 @@ def test_ogr_mem_write_pyarrow():
   dict_list_uint8 (IntegerList(Int16)) = (2:2,3)
   decimal128 (Real) = 123.45
   decimal256 (Real) = 123.45
+  list_decimal128 (RealList) = (2: 123.45, 234.56)
+  large_list_decimal128 (RealList) = (2: 123.45, 234.56)
+  fixed_size_list_decimal128 (RealList) = (2: 345.67,-345.67)
   POINT (4 2)
 
 """

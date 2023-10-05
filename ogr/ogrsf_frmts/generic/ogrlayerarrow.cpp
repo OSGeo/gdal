@@ -4116,6 +4116,37 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
                 return true;
             }
         }
+
+        if (STARTS_WITH(childFormat, "d:"))  // decimal
+        {
+            int nPrecision = 0;
+            int nScale = 0;
+            int nWidthInBytes = 0;
+            if (!ParseDecimalFormat(childFormat, nPrecision, nScale,
+                                    nWidthInBytes))
+            {
+                AppendError(std::string("Invalid field format ") + childFormat +
+                            " for field " + osFieldPrefix + fieldName);
+                return false;
+            }
+
+            if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+            {
+                AppendError(
+                    "For decimal field, only width 128 and 256 are supported");
+                return false;
+            }
+
+            // precision=19 fits on 64 bits
+            if (nPrecision <= 0 || nPrecision > 19)
+            {
+                AppendError(
+                    "For decimal field, only precision up to 19 is supported");
+                return false;
+            }
+            return true;
+        }
+
         AppendError("Type list of '" + std::string(childFormat) +
                     "' for field " + osFieldPrefix + fieldName +
                     " is not supported.");
@@ -4316,6 +4347,48 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                 return CreateField(&oFieldDefn) == OGRERR_NONE;
             }
         }
+
+        if (STARTS_WITH(childFormat, "d:"))  // Decimal
+        {
+            int nPrecision = 0;
+            int nScale = 0;
+            int nWidthInBytes = 0;
+            if (!ParseDecimalFormat(childFormat, nPrecision, nScale,
+                                    nWidthInBytes))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                         (std::string("Invalid field format ") + format +
+                          " for field " + osFieldPrefix + fieldName)
+                             .c_str());
+                return false;
+            }
+
+            if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "For decimal field, only width 128 and 256 are supported");
+                return false;
+            }
+
+            // precision=19 fits on 64 bits
+            if (nPrecision <= 0 || nPrecision > 19)
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "For decimal field, only precision up to 19 is supported");
+                return false;
+            }
+
+            OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(),
+                                    OFTRealList);
+            // DBF convention: add space for negative sign and decimal separator
+            oFieldDefn.SetWidth(nPrecision + 2);
+            oFieldDefn.SetPrecision(nScale);
+            oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) != 0);
+            return CreateField(&oFieldDefn) == OGRERR_NONE;
+        }
+
         CPLError(CE_Failure, CPLE_NotSupported, "%s",
                  ("List of type '" + std::string(childFormat) + "' for field " +
                   osFieldPrefix + fieldName + " is not supported.")
@@ -4601,6 +4674,55 @@ static bool BuildOGRFieldInfo(
                                      OGR_GetFieldTypeName(sType.eType));
                             return false;
                         }
+                    }
+                }
+
+                if (!bTypeOK && STARTS_WITH(childFormat, "d:"))
+                {
+                    if (!ParseDecimalFormat(childFormat, sInfo.nPrecision,
+                                            sInfo.nScale, sInfo.nWidthInBytes))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 (std::string("Invalid field format ") +
+                                  childFormat + " for field " + osFieldPrefix +
+                                  fieldName)
+                                     .c_str());
+                        return false;
+                    }
+
+                    if (sInfo.nWidthInBytes != 128 / 8 &&
+                        sInfo.nWidthInBytes != 256 / 8)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "For decimal field, only width 128 and 256 are "
+                            "supported");
+                        return false;
+                    }
+
+                    // precision=19 fits on 64 bits
+                    if (sInfo.nPrecision <= 0 || sInfo.nPrecision > 19)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_NotSupported,
+                            "For decimal field, only precision up to 19 is "
+                            "supported");
+                        return false;
+                    }
+
+                    if (eOGRType == OFTRealList)
+                    {
+                        bTypeOK = true;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "For field %s, OGR field type is %s whereas "
+                                 "Arrow type implies %s",
+                                 sInfo.osName.c_str(),
+                                 OGR_GetFieldTypeName(eOGRType),
+                                 OGR_GetFieldTypeName(OFTRealList));
+                        return false;
                     }
                 }
 
@@ -5132,6 +5254,91 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
         // either 128 or 256 bits
         CPLAssert((asFieldInfo[iArrowIdx].nWidthInBytes % 8) == 0);
         const int nWidthIn64BitWord = asFieldInfo[iArrowIdx].nWidthInBytes / 8;
+
+        if (format[0] == '+' && format[1] == 'l')
+        {
+            const auto panOffsets =
+                static_cast<const uint32_t *>(array->buffers[1]) +
+                array->offset;
+            const auto childArray = array->children[0];
+            const auto *panValues =
+                static_cast<const int64_t *>(childArray->buffers[1]);
+            std::vector<double> aValues;
+            for (auto i = panOffsets[iFeature]; i < panOffsets[iFeature + 1];
+                 ++i)
+            {
+#ifdef CPL_LSB
+                const auto nIdx = i * nWidthIn64BitWord;
+#else
+                const auto nIdx = i * nWidthIn64BitWord + nWidthIn64BitWord - 1;
+#endif
+                const auto nVal =
+                    panValues[nIdx + childArray->offset * nWidthIn64BitWord];
+                const double dfVal =
+                    static_cast<double>(nVal) *
+                    std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
+                aValues.push_back(dfVal);
+            }
+            oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
+                              aValues.data());
+            return true;
+        }
+        else if (format[0] == '+' && format[1] == 'L')
+        {
+            const auto panOffsets =
+                static_cast<const uint64_t *>(array->buffers[1]) +
+                array->offset;
+            const auto childArray = array->children[0];
+            const auto *panValues =
+                static_cast<const int64_t *>(childArray->buffers[1]);
+            std::vector<double> aValues;
+            for (auto i = static_cast<size_t>(panOffsets[iFeature]);
+                 i < static_cast<size_t>(panOffsets[iFeature + 1]); ++i)
+            {
+#ifdef CPL_LSB
+                const auto nIdx = i * nWidthIn64BitWord;
+#else
+                const auto nIdx = i * nWidthIn64BitWord + nWidthIn64BitWord - 1;
+#endif
+                const auto nVal =
+                    panValues[nIdx + childArray->offset * nWidthIn64BitWord];
+                const double dfVal =
+                    static_cast<double>(nVal) *
+                    std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
+                aValues.push_back(dfVal);
+            }
+            oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
+                              aValues.data());
+            return true;
+        }
+        else if (format[0] == '+' && format[1] == 'w' && format[2] == ':')
+        {
+            const int nVals = atoi(format + strlen("+w:"));
+            const auto childArray = array->children[0];
+            const auto *panValues =
+                static_cast<const int64_t *>(childArray->buffers[1]);
+            std::vector<double> aValues;
+            for (int i = 0; i < nVals; ++i)
+            {
+#ifdef CPL_LSB
+                const auto nIdx = (iFeature * nVals + i) * nWidthIn64BitWord;
+#else
+                const auto nIdx = (iFeature * nVals + i) * nWidthIn64BitWord +
+                                  nWidthIn64BitWord - 1;
+#endif
+                const auto nVal =
+                    panValues[nIdx + childArray->offset * nWidthIn64BitWord];
+                const double dfVal =
+                    static_cast<double>(nVal) *
+                    std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
+                aValues.push_back(dfVal);
+            }
+            oFeature.SetField(iOGRFieldIdx, nVals, aValues.data());
+            return true;
+        }
+
+        CPLAssert(format[0] == 'd');
+
 #ifdef CPL_LSB
         const auto nIdx = iFeature * nWidthIn64BitWord;
 #else
