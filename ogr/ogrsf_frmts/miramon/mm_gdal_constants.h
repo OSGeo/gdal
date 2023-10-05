@@ -65,11 +65,10 @@ typedef __int64 MM_TIPUS_MIDA_FITXER;
 
 #define MM_MAX_ID_SNY                    41
 
-#define MM_BYTE                         unsigned char
 #define MM_TIPUS_BYTES_PER_CAMP_DBF     unsigned __int32
 #define MM_TIPUS_BYTES_ACUMULATS_DBF    unsigned __int32
 
-#define MM_MAX_LON_DESCRIPCIO_CAMP_DBF 256>(_MAX_PATH+100)?256:(_MAX_PATH+100)
+#define MM_MAX_LON_DESCRIPCIO_CAMP_DBF ((256 >(_MAX_PATH+100))? 256 :(_MAX_PATH+100))
 #define MM_NUM_IDIOMES_MD_MULTIDIOMA 4
 
 #define MM_CAMP_NO_MOSTRABLE                    0
@@ -127,12 +126,21 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 #define MM_NOM_CAMP_PRIMER_CARACTER_    0x04
 
 #define MM_MAX_AMPLADA_CAMP_N_DBF       21
-#define MM_MAX_AMPLADA_CAMP_C_DBF       500  // But it can be modified on the fly
+#define MM_MAX_AMPLADA_CAMP_C_DBF       3//500  // But it can be modified on the fly
 #define MM_MAX_AMPLADA_CAMP_D_DBF       10
 
 #define MM_PRIVATE_POINT_DB_FIELDS      1
 #define MM_PRIVATE_ARC_DB_FIELDS        5
 #define MM_PRIVATE_POLYGON_DB_FIELDS    6
+
+typedef unsigned char       MM_BYTE;
+
+#define MM_NOU_N_DECIMALS_NO_APLICA		    0
+#define MM_APLICAR_NOU_N_DECIMALS			1
+#define MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS	2
+#define MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM	3
+#define MM_CARACTERS_DOUBLE                 40
+
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

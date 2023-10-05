@@ -7,10 +7,12 @@
 #ifdef GDAL_COMPILATION
 #include "mm_gdal_constants.h"   // MM_BYTE
 #include "mm_gdal_structures.h"   // struct BASE_DADES_XP
+#include "mm_gdal_driver_structs.h"   // struct MMAdmDatabase
 CPL_C_START // Necessary for compiling in GDAL project
 #else
 #include "mm_gdal\mm_gdal_constants.h"   // MM_BYTE
 #include "mm_gdal\mm_gdal_structures.h"   // struct BASE_DADES_XP
+#include "mm_gdal\mm_gdal_driver_structs.h"   // struct MMAdmDatabase
 #endif
 
 #define MM_EscriuOffsetNomEstesBD_XP(bd_xp,i_camp,offset_nom_camp) \
@@ -30,13 +32,17 @@ size_t MM_DefineFirstPointFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp);
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(struct MM_CAMP *camp,
 			struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom);
 
-void MM_WriteValueToRecordDBXP(char *registre, 
-                                   const struct MM_CAMP *camp, 
-                                   const void *valor,
-                                   MM_BOOLEAN is_64);
+int MMWriteValueToRecordDBXP(struct MMAdmDatabase *pMMAdmDB,
+                              char *registre, 
+                              const struct MM_CAMP *camp, 
+                              const void *valor,
+                              MM_BOOLEAN is_64);
+
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
-							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada);
+							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
+                            MM_BYTE nou_decimals,
+							MM_BYTE que_fer_amb_reformatat_decimals);
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif

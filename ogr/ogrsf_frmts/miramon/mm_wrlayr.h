@@ -22,17 +22,18 @@ CPL_C_START // Necessary for compiling in GDAL project
     //#include "str_snyd.h"   // For struct SNY_TRANSFORMADOR_GEODESIA
     #include "nomsfitx.h"   // Per a CanviaExtensio()
     #include "fitxers.h"    // Per a removeAO()
-    #define calloc_function(a) MM_calloc(a)
+    #define calloc_function(a) MM_calloc((a))
     #define realloc_function MM_realloc
     #define free_function MM_free
-    #define fopen_function(f,a) fopen_64(f,a)
+    #define fopen_function(f,a) fopen_64((f),(a))
     #define fflush_function fflush_64
-    #define fclose_function(f) fclose_64(f)
-    #define ftell_function(f) ftell_64(f)
-    #define fwrite_function(p,s,r,f) fwrite_64(p,s,r,f)
-    #define fread_function(p,s,r,f) fread_64(p,s,r,f)
-    #define fseek_function(f,s,g) fseek_64(f,s,g)
-    #define strdup_function(p)  strdup(p)
+    #define fclose_function(f) fclose_64((f))
+    #define ftell_function(f) ftell_64((f))
+    #define fwrite_function(p,s,r,f) fwrite_64((p),(s),(r),(f))
+    #define fread_function(p,s,r,f) fread_64((p),(s),(r),(f))
+    #define fseek_function(f,s,g) fseek_64((f),(s),(g))
+    #define TruncateFile_function(a,b) TruncaFitxer_64((a),(b))
+    #define strdup_function(p)  strdup((p))
     #define get_filename_function TreuAdreca
     #define error_message_function puts
     #define info_message_function puts
@@ -41,17 +42,18 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define reset_extension(a,b)    CanviaExtensio((a),(b))
     #define remove_function(a)  removeAO((a))
 #else
-    #define calloc_function(a) CPLCalloc(1,a)
+    #define calloc_function(a) CPLCalloc(1,(a))
     #define realloc_function CPLRealloc
     #define free_function CPLFree
-    #define fopen_function(f,a) VSIFOpenL(f,a)
+    #define fopen_function(f,a) VSIFOpenL((f),(a))
     #define fflush_function VSIFFlushL
-    #define fclose_function(f) VSIFCloseL(f)
-    #define ftell_function(f) VSIFTellL(f)
-    #define fwrite_function(p,s,r,f) VSIFWriteL(p,s,r,f)
-    #define fread_function(p,s,r,f) VSIFReadL(p,s,r,f)
-    #define fseek_function(f,s,g) VSIFSeekL(f,s,g)
-    #define strdup_function(p)  CPLStrdup(p)
+    #define fclose_function(f) VSIFCloseL((f))
+    #define ftell_function(f) VSIFTellL((f))
+    #define fwrite_function(p,s,r,f) VSIFWriteL((p),(s),(r),(f))
+    #define fread_function(p,s,r,f) VSIFReadL((p),(s),(r),(f))
+    #define fseek_function(f,s,g) VSIFSeekL((f),(s),(g))
+    #define TruncateFile_function(a,b) VSIFTruncateL((a),(b))
+    #define strdup_function(p)  CPLStrdup((p))
     #define get_filename_function CPLGetFilename
     #define error_message_function puts //CPLError
     #define info_message_function puts

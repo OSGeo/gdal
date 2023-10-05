@@ -344,6 +344,10 @@ struct MMAdmDatabase
     // Temporary space where to mount the DBF record.
     // Reused every time a feature is created
     char *szRecordOnCourse;
+
+    // Just to put number values to evaluate lenghts
+    MM_NUMERATOR_DBF_FIELD_TYPE nNumStringToOperate;
+    char *szStringToOperate;
 };
 
 
@@ -598,9 +602,9 @@ struct MiraMonFeature
     double *pZCoord; 
 
     // Records of the feature
-	unsigned __int32 nNumRecords;
+	MM_NUMERATOR_RECORD nNumRecords;
     // Number of reserved elements in *pRecords
-    unsigned __int32 nMaxRecords; 
+    MM_NUMERATOR_RECORD nMaxRecords; 
 	struct MiraMonRecord *pRecords;
 };
 

@@ -46,8 +46,6 @@
 CPL_C_START // Necessary for compiling in GDAL project
 #endif
 
-static char local_message[MM_MESSAGE_LENGHT];
-
 void MM_InitializeField(struct MM_CAMP *camp)
 {
 	memset(camp, '\0', sizeof(*camp));
@@ -79,25 +77,18 @@ struct MM_BASE_DADES_XP *base_dades_XP;
 
 	if ((base_dades_XP = (struct MM_BASE_DADES_XP *)
 						calloc_function(sizeof(struct MM_BASE_DADES_XP))) == NULL)
-	{
-		//ErrorMsg(stb(0,No_mem));
 		return NULL;
-	}
-
+	
 	if (n_camps==0)
 	{
-		/* base_dades_XP->Camp =NULL; No cal perquè ja s'ha inicialitzat
-						amb calloc_function() */
 		;
 	}
 	else
 	{
-        //CreaTotsElsCamps inicialitza perfectament base_dades_XP->Camp (JM)
-		base_dades_XP->Camp = (struct MM_CAMP *)MM_CreateAllFields(n_camps);
+    	base_dades_XP->Camp = (struct MM_CAMP *)MM_CreateAllFields(n_camps);
 		if (!base_dades_XP->Camp)
 		{
 			free_function (base_dades_XP);
-			//ErrorMsg(stb(0,No_mem));
 			return NULL;
 		}
 	}
@@ -594,11 +585,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         {
 			j = (short)strlen(base_dades_XP->Camp[i].NomCamp);
         	
-			// Fem aquesta traducció abans d'escriure
-			strcpy(local_message, base_dades_XP->Camp[i].NomCamp);
-			//CanviaJocCaracPerEscriureDBF(local_message, JocCaracDBFaMM(base_dades_XP->JocCaracters, ParMM.JocCaracDBFPerDefecte));
-
-			retorn_fwrite=fwrite_function(&local_message, 1, j, base_dades_XP->pfBaseDades);
+			retorn_fwrite=fwrite_function(&base_dades_XP->Camp[i].NomCamp, 1, j, base_dades_XP->pfBaseDades);
         	if (retorn_fwrite != (size_t)j)
             {
 				return FALSE;
@@ -639,11 +626,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
             }
         	j = (short)strlen(base_dades_XP->Camp[i].NomCampDBFClassica);
 
-			// Fem aquesta traducció abans d'escriure
-			strcpy(local_message, base_dades_XP->Camp[i].NomCampDBFClassica);
-			//CanviaJocCaracPerEscriureDBF(local_message, JocCaracDBFaMM(base_dades_XP->JocCaracters, ParMM.JocCaracDBFPerDefecte));
-
-            retorn_fwrite=fwrite_function(&local_message, 1, j, base_dades_XP->pfBaseDades);
+			retorn_fwrite=fwrite_function(&base_dades_XP->Camp[i].NomCampDBFClassica, 1, j, base_dades_XP->pfBaseDades);
         	if (retorn_fwrite != (size_t)j)
             {
 				return FALSE;
@@ -1214,60 +1197,153 @@ size_t i_camp=0;
 	return i_camp;
 }
 
-void MM_WriteValueToRecordDBXP(char *registre, 
-                                   const struct MM_CAMP *camp, 
-                                   const void *valor,
-                                   MM_BOOLEAN is_64)
+
+const char MM_CadenaBuida[]={""};
+#define MM_MarcaFinalDeCadena (*MM_CadenaBuida)
+const char MM_CadenaEspai[]={" "};
+
+MM_BOOLEAN MM_EsNANDouble(double a)
 {
-char *p;
+__int64 exp, mantissa;
 
-	if(camp->BytesPerCamp<MM_MESSAGE_LENGHT)
-		p=local_message;
-	else
-		p=calloc_function((size_t)camp->BytesPerCamp+(size_t)10);
+	exp = *(__int64*)&a& 0x7FF0000000000000ui64;
+	mantissa = *(__int64*)&a & 0x000FFFFFFFFFFFFFui64;
+	if (exp == 0x7FF0000000000000ui64 && mantissa != 0)
+		return TRUE;
+	return FALSE;
+}//Fi de MM_EsNANDouble()
+#define MM_EsDoubleInfinit(a) (((*(unsigned __int64*)&(a)&0x7FFFFFFFFFFFFFFFui64)==0x7FF0000000000000ui64)?TRUE:FALSE)
 
-	if (camp->TipusDeCamp=='N')
-    {
-        if(!is_64)
+int MM_SprintfDoubleAmplada(char * cadena, int amplada, int n_decimals, double valor_double,
+                            MM_BOOLEAN *Error_sprintf_n_decimals)
+{
+#define VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E 1E+17
+#define VALOR_MASSA_PETIT_PER_IMPRIMIR_f 1E-17
+char cadena_treball[MM_CARACTERS_DOUBLE+1];
+int retorn_printf;
+
+	if (MM_EsNANDouble(valor_double)) 
+	{
+    	if (amplada<3)
         {
-    	    sprintf(p,
-        		    "%*.*f",
-                    camp->BytesPerCamp,
-                    camp->DecimalsSiEsFloat,
-                    *(const double *)valor);
+        	*cadena=*MM_CadenaBuida;
+            return EOF;
+        }
+		return sprintf (cadena, "NAN");
+    }
+	if (MM_EsDoubleInfinit(valor_double))
+	{
+    	if (amplada<3)
+        {
+        	*cadena=*MM_CadenaBuida;
+            return EOF;
+        }
+		return sprintf (cadena, "INF");
+    }
+
+    *Error_sprintf_n_decimals=FALSE;
+	if (!valor_double)
+    {
+        retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
+        if (retorn_printf==EOF) // Poc probable, però...
+        {
+            *cadena=*MM_CadenaBuida;
+            return retorn_printf;
+        }
+        // retorn_printf és el mateix que strlen(cadena_treball)
+        if (retorn_printf>amplada)
+        {
+        	int escurcament=retorn_printf-amplada;
+            if (escurcament>n_decimals)
+            {
+                *cadena=*MM_CadenaBuida;
+                return EOF;
+            }
+            *Error_sprintf_n_decimals=TRUE;
+            n_decimals=n_decimals-escurcament;
+            retorn_printf=sprintf (cadena, "%*.*f", amplada, n_decimals, valor_double);
         }
         else
+        	strcpy(cadena,cadena_treball);
+
+	    return retorn_printf;
+    }
+
+    if ( valor_double> VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E ||
+         valor_double<-VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E ||
+        (valor_double< VALOR_MASSA_PETIT_PER_IMPRIMIR_f &&
+         valor_double>-VALOR_MASSA_PETIT_PER_IMPRIMIR_f) )
+    {
+        retorn_printf=sprintf (cadena_treball, "%*.*E", amplada, n_decimals, valor_double);
+        // retorn_printf és el mateix que strlen(cadena_treball)
+        if (retorn_printf==EOF) // Poc probable, però...
         {
-            sprintf(p,
-        		    "%*lld",
-                    camp->BytesPerCamp,
-                    *(const __int64 *)valor);
+            *cadena=*MM_CadenaBuida;
+            return retorn_printf;
         }
+        if (retorn_printf>amplada)
+        {
+        	int escurcament=retorn_printf-amplada;
+            if (escurcament>n_decimals)
+            {
+                *cadena=*MM_CadenaBuida;
+                return EOF;
+            }
+            *Error_sprintf_n_decimals=TRUE;
+            n_decimals=n_decimals-escurcament;
+            retorn_printf=sprintf (cadena, "%*.*E", amplada, n_decimals, valor_double);
+        }
+        else
+        	strcpy(cadena,cadena_treball);
+
+	    return retorn_printf;
+    }
+
+    retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
+    if (retorn_printf==EOF) // Poc probable, però...
+    {
+        *cadena=*MM_CadenaBuida;
+        return retorn_printf;
+    }
+    // retorn_printf és el mateix que strlen(cadena_treball)
+    if (retorn_printf>amplada)
+    {
+        int escurcament=retorn_printf-amplada;
+        if (escurcament>n_decimals)
+        {
+            *cadena=*MM_CadenaBuida;
+            return EOF;
+        }
+        *Error_sprintf_n_decimals=TRUE;
+        n_decimals=n_decimals-escurcament;
+        retorn_printf=sprintf (cadena, "%*.*f", amplada, n_decimals, valor_double);
     }
     else
-    	sprintf(p,
-        		"%-*s",
-                camp->BytesPerCamp,
-                (const char *)valor);
+        strcpy(cadena,cadena_treball);
 
-    memcpy(registre+camp->BytesAcumulats, p, camp->BytesPerCamp);
+    return retorn_printf;
 
-	if(p!=local_message)
-		free_function(p);
+#undef VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E
+#undef VALOR_MASSA_PETIT_PER_IMPRIMIR_f
+} // Fi de SprintfDoubleAmplada()
+
+MM_BOOLEAN MM_EsCadenaDeBlancs(const char *cadena)
+{
+char *ptr;
+
+	for (ptr=(char*)cadena; *ptr; ptr++)
+		if (*ptr!=' ' && *ptr!='\t')
+			return FALSE;
+
+	return TRUE;
 }
 
+// This function assumes that all the file is saved in disk and closed.
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
-							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada)
-{
-    return 0;
-}
-
-#ifdef TODO
-// This function assumes that all the file is saved in disk and closed.
-int MMChangeCFieldWidthDBF(struct MM_BASE_DADES_XP * base_dades_XP,
-							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
-							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada)
+							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
+                            MM_BYTE nou_decimals,
+							MM_BYTE que_fer_amb_reformatat_decimals)
 {
 char *registre, *blancs=NULL;
 MM_TIPUS_BYTES_PER_CAMP_DBF l_glop1, l_glop2, i_glop2;
@@ -1275,27 +1351,15 @@ MM_NUMERATOR_RECORD i_reg, nfitx;
 int canvi_amplada;
 signed __int32 j;
 MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
-char ModeLectura_previ[4];
-enum GESTIO_MEMORIA_ACCES_FITXER AccesFitxer_previ;
 size_t retorn_fwrite;
 int retorn_TruncaFitxer;
 
-char sz_data_a_convertir[11];	// Si aquesta és la conversió desitjada (cas CANVIA_C8_A_C10_I_CANVIA_DATA_A_FORMAT_USUARI)
-								// rebrà una data 20181122 i la convertirà en 22-11-2018.
-char sz_data_en_blanc[10];	// És simplement un bloc que es copiarà: no cal que estigui finalitzat amb \0 i per això
-							// només té 10 bytes d'ample.
-void *ptr;
-
-BOOL error_sprintf_EOF=FALSE, error_sprintf_n_decimals=FALSE;
+MM_BOOLEAN error_sprintf_n_decimals=FALSE;
 int retorn_printf;
 
-    if(base_dades_XP->Camp[quincamp].TipusDeCamp!='C')
-        return 0;
-	
 	canvi_amplada = novaamplada - base_dades_XP->Camp[quincamp].BytesPerCamp;
 	
-    /* Càlcul sobre els registres. */
-	if (base_dades_XP->nfitxes != 0)
+    if (base_dades_XP->nfitxes != 0)
 	{
 		l_glop1 = base_dades_XP->Camp[quincamp].BytesAcumulats;
 		i_glop2 = l_glop1 + base_dades_XP->Camp[quincamp].BytesPerCamp;
@@ -1306,21 +1370,20 @@ int retorn_printf;
 					base_dades_XP->Camp[quincamp + 1].BytesAcumulats;
 
 		if ((registre = calloc_function(base_dades_XP->BytesPerFitxa)) == NULL)
-		{
-            error_message_function("Not enough memory");
-			return 1;
-		}
-        registre[base_dades_XP->BytesPerFitxa-1]=MarcaFinalDeCadena;
+		    return 1;
+		
+        registre[base_dades_XP->BytesPerFitxa-1]=MM_MarcaFinalDeCadena;
 
-        if ((blancs = (char *) MM_malloc(novaamplada)) == NULL)
+        if ((blancs = (char *) calloc_function(novaamplada)) == NULL)
         {
-            error_message_function("Not enough memory");
-            MM_free (registre);
+            free_function (registre);
             return 1;
         }
         memset(blancs, ' ', novaamplada);
         
+
 		nfitx = base_dades_XP->nfitxes;
+
         #ifdef _MSC_VER
         #pragma warning( disable : 4127 )
         #endif
@@ -1329,107 +1392,171 @@ int retorn_printf;
         #pragma warning( default : 4127 )
         #endif
         {
-            if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
+            if( 0!=fseek_function(base_dades_XP->pfBaseDades,
+                           base_dades_XP->OffsetPrimeraFitxa +
+                           (MM_FILE_OFFSET)i_reg * base_dades_XP->BytesPerFitxa,
+                           SEEK_SET))
             {
-                if( 0!=fseek_mem(base_dades_XP->pfBaseDades_mem, 
-                               (base_dades_XP->OffsetPrimeraFitxa +
-                               (OFFSET_FITXER)i_reg * base_dades_XP->BytesPerFitxa),
-                               SEEK_SET)
-                       ||
-                    1!=fread_mem(registre, base_dades_XP->BytesPerFitxa,
-                                1, base_dades_XP->pfBaseDades_mem)
-                        ||
-                    0!=fseek_mem(base_dades_XP->pfBaseDades_mem, 
-                                (base_dades_XP->OffsetPrimeraFitxa +
-                                (OFFSET_FITXER)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada)),
-                                SEEK_SET)
-                        ||
-                    1!=fwrite_mem(registre, l_glop1, 1, base_dades_XP->pfBaseDades_mem))
-                {
-                    if (blancs) MM_free(blancs);
-                    MM_free (registre);
-                    ErrorMsg(stb(0, Error_escriptura_Disc_ple));
-                    return 1;
-                }
-            }
-            else
-            {
-                if( 0!=fseek_64(base_dades_XP->pfBaseDades,
-                               base_dades_XP->OffsetPrimeraFitxa +
-                               (OFFSET_FITXER)i_reg * base_dades_XP->BytesPerFitxa,
-                               SEEK_SET)
-                       ||
-                    1!=fread_64(registre, base_dades_XP->BytesPerFitxa,
-                                1, base_dades_XP->pfBaseDades)
-                        ||
-                    0!=fseek_64(base_dades_XP->pfBaseDades,
-                                base_dades_XP->OffsetPrimeraFitxa +
-                                (OFFSET_FITXER)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada),
-                                SEEK_SET)
-                        ||
-                    1!=fwrite_64(registre, l_glop1, 1, base_dades_XP->pfBaseDades))
-                {
-                    if (blancs) MM_free(blancs);
-                    MM_free (registre);
-                    ErrorMsg(stb(0, Error_escriptura_Disc_ple));
-                    return 1;
-                }
+                if (blancs) free_function(blancs);
+                free_function (registre);
+                return 1;
             }
 
+            if(1!=fread_function(registre, base_dades_XP->BytesPerFitxa,
+                            1, base_dades_XP->pfBaseDades))
+            {
+                if (blancs) free_function(blancs);
+                free_function (registre);
+                return 1;
+            }
             
+
+            if(0!=fseek_function(base_dades_XP->pfBaseDades,
+                            base_dades_XP->OffsetPrimeraFitxa +
+                            (MM_FILE_OFFSET)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada),
+                            SEEK_SET))
+            {
+                if (blancs) free_function(blancs);
+                free_function (registre);
+                return 1;
+            }
+            
+            if(1!=fwrite_function(registre, l_glop1, 1, base_dades_XP->pfBaseDades))
+            {
+                if (blancs) free_function(blancs);
+                free_function (registre);
+                return 1;
+            }
+
             switch (base_dades_XP->Camp[quincamp].TipusDeCamp)
             {
                 case 'C':
-                    if (que_fer_amb_reformatat_decimals==CANVIA_C8_A_C10_I_CANVIA_DATA_A_FORMAT_USUARI)
-                    {
-                        memcpy(sz_data_a_convertir,
-                           registre + l_glop1, base_dades_XP->Camp[quincamp].BytesPerCamp);
-                        Data_Num_dBase_a_Normal(sz_data_a_convertir);
-                        if (*sz_data_a_convertir==*CadenaBuida)
-                        {	// Criteri de Data_Num_dBase_a_Normal(), útil per al MiraD, de retornar una
-                            // cadena buida si el registre era buit. Per tant, he d'omplir amb el
-                            // camp amb blancs.
-                            ptr=sz_data_en_blanc;
-                        }
-                        else
-                            ptr=sz_data_a_convertir;
+                case 'L':
+                    memcpy(blancs,
+                       registre + l_glop1,
+                        ( canvi_amplada<0 ? novaamplada :
+                               base_dades_XP->Camp[quincamp].BytesPerCamp));
+                    retorn_fwrite=fwrite_function(blancs, novaamplada, 1, base_dades_XP->pfBaseDades);
 
-                        if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
-                            retorn_fwrite=fwrite_mem(ptr, novaamplada, 1, base_dades_XP->pfBaseDades_mem);
-                        else
-                            retorn_fwrite=fwrite_64(ptr, novaamplada, 1, base_dades_XP->pfBaseDades);
-                    }
-                    else
-                    {
-                        memcpy(blancs,
-                           registre + l_glop1,
-                            ( canvi_amplada<0 ? novaamplada :
-                                   base_dades_XP->Camp[quincamp].BytesPerCamp));
-                        if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
-                            retorn_fwrite=fwrite_mem(blancs, novaamplada, 1, base_dades_XP->pfBaseDades_mem);
-                        else
-                            retorn_fwrite=fwrite_64(blancs, novaamplada, 1, base_dades_XP->pfBaseDades);
-                    }
                     if(1!=retorn_fwrite)
                     {
-                        if (blancs) MM_free(blancs);
-                        MM_free (registre);
-                        ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+                        if (blancs) free_function(blancs);
+                        free_function (registre);
                         return 1;
                     }
                     break;
+                case 'N':
+                    if (nou_decimals == base_dades_XP->Camp[quincamp].DecimalsSiEsFloat ||
+                        que_fer_amb_reformatat_decimals==MM_NOU_N_DECIMALS_NO_APLICA)
+                        que_fer_amb_reformatat_decimals=MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS;
+                    else if (que_fer_amb_reformatat_decimals==MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM)
+                        que_fer_amb_reformatat_decimals=MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS;
+                    
+
+                    if (que_fer_amb_reformatat_decimals==MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS)
+                    {
+                        if (canvi_amplada>=0)
+                        {
+                            if( 1!=fwrite_function(blancs, canvi_amplada, 1, base_dades_XP->pfBaseDades) ||
+                                1!=fwrite_function(registre + l_glop1,
+                                        base_dades_XP->Camp[quincamp].BytesPerCamp, 1,
+                                        base_dades_XP->pfBaseDades))
+                            {
+                                if (blancs) free_function(blancs);
+                                free_function (registre);
+                                return 1;
+                            }
+                        }
+                        else if (canvi_amplada<0)
+                        {
+
+                            #ifdef _MSC_VER
+                            #pragma warning( disable : 4127 )
+                            #endif
+                            for(j=(signed __int32)(l_glop1 + (base_dades_XP->Camp[quincamp].BytesPerCamp-1));TRUE;j--)
+                            #ifdef _MSC_VER
+                            #pragma warning( default : 4127 )
+                            #endif
+                            {
+                                if(j<(signed)l_glop1 || registre[j] ==  ' ')
+                                {
+                                    j++;
+                                    break;
+                                }
+                            }
+
+                            if((base_dades_XP->Camp[quincamp].BytesPerCamp + l_glop1- j) < novaamplada)
+                                j -= (signed __int32)(novaamplada - (base_dades_XP->Camp[quincamp].BytesPerCamp + l_glop1-j));
+
+                            retorn_fwrite=fwrite_function(registre+j, novaamplada, 1, base_dades_XP->pfBaseDades);
+                            if(1!=retorn_fwrite)
+                            {
+                                if (blancs) free_function(blancs);
+                                free_function (registre);
+                                return 1;
+                            }
+                        }
+                    }
+                    else // APLICAR_NOU_N_DECIMALS
+                    {	// Canvia el nombre de decimals i cal reformatar
+                        double valor;
+                        char *sz_valor;
+
+                        if ((sz_valor=calloc_function(max(novaamplada,base_dades_XP->Camp[quincamp].BytesPerCamp)+1))==NULL) // Sumo 1 per poder posar-hi el \0
+                        {
+                            if (blancs) free_function(blancs);
+                            free_function (registre);
+                            return 1;
+                        }
+                        memcpy(sz_valor, registre + l_glop1, base_dades_XP->Camp[quincamp].BytesPerCamp);
+                        sz_valor[base_dades_XP->Camp[quincamp].BytesPerCamp]=0;
+
+                        if(!MM_EsCadenaDeBlancs(sz_valor))
+                        {
+                            if (sscanf(sz_valor, "%lf", &valor)!=1)
+                                memset(sz_valor, *MM_CadenaEspai, max(novaamplada,base_dades_XP->Camp[quincamp].BytesPerCamp));
+                            else
+                            {
+                                retorn_printf=MM_SprintfDoubleAmplada(sz_valor, novaamplada, 
+                                    nou_decimals, valor, &error_sprintf_n_decimals);
+                            }
+
+                            retorn_fwrite=fwrite_function(sz_valor,novaamplada, 1, base_dades_XP->pfBaseDades);
+                            if(1!=retorn_fwrite)
+                            {
+                                if (blancs) free_function(blancs);
+                                free_function(registre);
+                                free_function(sz_valor);
+                                return 1;
+                            }
+                        }
+                        else
+                        {
+                            memset(sz_valor, *MM_CadenaEspai, novaamplada);
+                            retorn_fwrite=fwrite_function(sz_valor, novaamplada, 1, base_dades_XP->pfBaseDades);
+                            if(1!=retorn_fwrite)
+                            {
+                                if (blancs) free_function(blancs);
+                                free_function(registre);
+                                free_function(sz_valor);
+                                return 1;
+                            }
+                        }
+                        free_function(sz_valor);
+                    }
+                    break;
+                default:
+                    free_function (blancs);
+                    free_function (registre);
+                    return 1;
             }
-            if(l_glop2)  //Si l_glop2==0 estem a l'últim camp i no cal fer res
+            if(l_glop2)
             {
-                if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
-                    retorn_fwrite=fwrite_mem(registre + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades_mem);
-                else
-                    retorn_fwrite=fwrite_64(registre + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades);
+                retorn_fwrite=fwrite_function(registre + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades);
                 if(1!=retorn_fwrite)
                 {
-                    if (blancs) MM_free(blancs);
-                    MM_free (registre);
-                    ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+                    if (blancs) free_function(blancs);
+                    free_function (registre);
                     return 1;
                 }
             }
@@ -1442,59 +1569,39 @@ int retorn_printf;
             }
             else
             {
-                
                 if (i_reg == 0)
                     break;
                 i_reg--;
             }
-        }  /* Bucle de moure registres. */
+        }
 
-        if (error_sprintf_EOF)
-        	ErrorMsg("Some value(s) could not be written properly."); // ·$· A passar a stb:
-            	
-		if (error_sprintf_n_decimals)
-        	ErrorMsg("Some value(s) was written with less decimal places than required because of field width."); // ·$· A passar a stb:
-            	
+		if (blancs) free_function(blancs);
+		free_function(registre);
 
-		if (blancs) MM_free(blancs);
-		MM_free(registre);
-
-		if (base_dades_XP->AccesFitxer==GM_AF_MEMORIA)
-            retorn_TruncaFitxer=TruncaFitxer_mem(base_dades_XP->pfBaseDades_mem,
-					  (base_dades_XP->OffsetPrimeraFitxa +
-					  (OFFSET_FITXER)base_dades_XP->nfitxes *(base_dades_XP->BytesPerFitxa+canvi_amplada)));
-        else
-            retorn_TruncaFitxer=TruncaFitxer_64(base_dades_XP->pfBaseDades,
+        retorn_TruncaFitxer=TruncateFile_function(base_dades_XP->pfBaseDades,
 					  base_dades_XP->OffsetPrimeraFitxa +
-					  (OFFSET_FITXER)base_dades_XP->nfitxes *(base_dades_XP->BytesPerFitxa+canvi_amplada));
+					  (MM_FILE_OFFSET)base_dades_XP->nfitxes *(base_dades_XP->BytesPerFitxa+canvi_amplada));
 		if (canvi_amplada<0 && retorn_TruncaFitxer)
-		{
-            ErrorMsg(stb(0, Error_en_repos_fitxer));
 			return 1;
-		}
 	} /* Fi de registres de != 0*/
 
     if (canvi_amplada!=0)
     {
 		base_dades_XP->Camp[quincamp].BytesPerCamp = novaamplada;
         base_dades_XP->BytesPerFitxa+=canvi_amplada;
-        for (i_camp=(TIPUS_NUMERADOR_CAMP_DBF)(quincamp+1); i_camp< base_dades_XP->ncamps; i_camp++)
+        for (i_camp=(MM_NUMERATOR_DBF_FIELD_TYPE)(quincamp+1); i_camp< base_dades_XP->ncamps; i_camp++)
             base_dades_XP->Camp[i_camp].BytesAcumulats+=canvi_amplada;
     }
 	base_dades_XP->Camp[quincamp].DecimalsSiEsFloat = nou_decimals;
 
-	DonaData(&(base_dades_XP->dia), &(base_dades_XP->mes), &(base_dades_XP->any));
+	//DonaData(&(base_dades_XP->dia), &(base_dades_XP->mes), &(base_dades_XP->any));
 
-	/* Actualitzar la capçalera */
-	if ((ActualitzaTotaCapca(base_dades_XP, ACTUALITZA_FITXER_SI_PREEXISTENT)) == FALSE)
-	{
-    	ErrorMsg(stb(0, Error_escriptura_Disc_ple));
+	if ((MM_UpdateEntireHeader(base_dades_XP)) == FALSE)
 		return 1;
-	}
     
 	return 0;
 } /* Fi de MMChangeCFieldWidthDBF() */
-#endif // TO_DO
+
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

@@ -117,6 +117,12 @@ int MMAddPolygonRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer,
                         struct MM_PH *pPolHeader);
 int MMCloseMMBD_XP(struct MiraMonLayerInfo *hMiraMonLayer);
 void MMDestroyMMDB(struct MiraMonLayerInfo *hMiraMonLayer);
+
+int MMTestAndFixValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
+                              MM_NUMERATOR_DBF_FIELD_TYPE nIField, 
+                              const void *valor,
+                              MM_BOOLEAN is_64);
+
 /* -------------------------------------------------------------------- */
 /*      Layer Functions: Header                                         */
 /* -------------------------------------------------------------------- */
@@ -3326,6 +3332,14 @@ int MMInitMMDB(struct MMAdmDatabase *pMMAdmDB)
         error_message_function("Not enough memory");
         return 1;
     }
+    pMMAdmDB->nNumStringToOperate=pMMAdmDB->pMMBDXP->BytesPerFitxa;
+    pMMAdmDB->szStringToOperate=calloc_function(pMMAdmDB->nNumStringToOperate);
+    if(!pMMAdmDB->szStringToOperate)
+    {
+        error_message_function("Not enough memory");
+        return 1;
+    }
+
     return 0;
 }
 
@@ -3478,8 +3492,139 @@ MM_EXT_DBF_N_FIELDS nNFields;
     return 0;
 }
 
+int MMTestAndFixValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
+                              MM_NUMERATOR_DBF_FIELD_TYPE nIField, 
+                              const void *valor,
+                              MM_BOOLEAN is_64)
+{
+    struct MM_CAMP *camp=pMMAdmDB->pMMBDXP->Camp+nIField;
+    MM_TIPUS_BYTES_PER_CAMP_DBF nNewWidth;
+
+    if(camp->BytesPerCamp>=pMMAdmDB->nNumStringToOperate)
+    {
+        char *p;
+		p=calloc_function((size_t)camp->BytesPerCamp+(size_t)10);
+        if(!p)
+        {
+            error_message_function("Not enough memory");
+            return 1;
+        }
+        pMMAdmDB->szStringToOperate=p;
+        pMMAdmDB->nNumStringToOperate=camp->BytesPerCamp+10;
+    }
+
+    if (camp->TipusDeCamp=='N')
+    {
+        if(!is_64)
+        {
+    	    sprintf(pMMAdmDB->szStringToOperate,
+        		    "%*.*f",
+                    camp->BytesPerCamp,
+                    camp->DecimalsSiEsFloat,
+                    *(const double *)valor);
+        }
+        else
+        {
+            sprintf(pMMAdmDB->szStringToOperate,
+        		    "%*lld",
+                    camp->BytesPerCamp,
+                    *(const __int64 *)valor);
+        }
+    }
+    else
+    {
+    	sprintf(pMMAdmDB->szStringToOperate,
+        		"%-*s",
+                camp->BytesPerCamp,
+                (const char *)valor);
+    }
+
+    nNewWidth=(MM_TIPUS_BYTES_PER_CAMP_DBF)strlen(pMMAdmDB->szStringToOperate);
+    if(nNewWidth>camp->BytesPerCamp)
+    {
+        if(MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
+            return 1;
+        
+        // Flushing all to be flushed
+        pMMAdmDB->FlushRecList.SizeOfBlockToBeSaved=0;
+        if(MM_AppendBlockToBuffer(&pMMAdmDB->FlushRecList))
+            return 1;
+
+        pMMAdmDB->pMMBDXP->pfBaseDades=pMMAdmDB->pFExtDBF;
+
+        if(MM_ChangeDBFWidthField(pMMAdmDB->pMMBDXP, nIField, 
+            nNewWidth, 0, MM_NOU_N_DECIMALS_NO_APLICA))
+            return 1;
+
+        // The record on course also has to change its size.
+        if(NULL==(pMMAdmDB->szRecordOnCourse=
+            realloc_function(pMMAdmDB->szRecordOnCourse, 
+            pMMAdmDB->pMMBDXP->BytesPerFitxa)))
+        {
+            error_message_function("Not enough memory");
+            return 1;
+        }
+
+        // File has changed it's size, so it has to be updated
+        // at the Flush tool
+        fseek_function(pMMAdmDB->pFExtDBF, 0, SEEK_END);
+        pMMAdmDB->FlushRecList.OffsetWhereToFlush=
+            ftell_function(pMMAdmDB->pFExtDBF);
+    }
+    return 0;
+}
+
+int MMWriteValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
+                              char *registre, 
+                              const struct MM_CAMP *camp, 
+                              const void *valor,
+                              MM_BOOLEAN is_64)
+{
+    if(camp->BytesPerCamp>=pMMAdmDB->nNumStringToOperate)
+    {
+        char *p;
+		p=calloc_function((size_t)camp->BytesPerCamp+(size_t)10);
+        if(!p)
+        {
+            error_message_function("Not enough memory");
+            return 1;
+        }
+        pMMAdmDB->szStringToOperate=p;
+    }
+
+    if (camp->TipusDeCamp=='N')
+    {
+        if(!is_64)
+        {
+    	    sprintf(pMMAdmDB->szStringToOperate,
+        		    "%*.*f",
+                    camp->BytesPerCamp,
+                    camp->DecimalsSiEsFloat,
+                    *(const double *)valor);
+        }
+        else
+        {
+            sprintf(pMMAdmDB->szStringToOperate,
+        		    "%*lld",
+                    camp->BytesPerCamp,
+                    *(const __int64 *)valor);
+        }
+    }
+    else
+    {
+    	sprintf(pMMAdmDB->szStringToOperate,
+        		"%-*s",
+                camp->BytesPerCamp,
+                (const char *)valor);
+    }
+    
+    memcpy(registre+camp->BytesAcumulats, pMMAdmDB->szStringToOperate, camp->BytesPerCamp);
+    return 0;
+}
+
+
 int MMAddFeatureRecordToMMDB(struct MiraMonFeature *hMMFeature,
-                             struct MM_BASE_DADES_XP *pBD_XP,
+                             struct MMAdmDatabase  *pMMAdmDB,
                              char *pszRecordOnCourse,
                              struct MM_FLUSH_INFO *pFlushRecList,
                              MM_NUMERATOR_RECORD *nNumRecords,
@@ -3487,7 +3632,9 @@ int MMAddFeatureRecordToMMDB(struct MiraMonFeature *hMMFeature,
 {
 unsigned __int32 nIRecord;
 MM_EXT_DBF_N_FIELDS nIField;
+struct MM_BASE_DADES_XP *pBD_XP=NULL;
 
+    pBD_XP=pMMAdmDB->pMMBDXP;
     for(nIRecord=0; nIRecord<hMMFeature->nNumRecords; nIRecord++)
     {
         for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
@@ -3496,50 +3643,56 @@ MM_EXT_DBF_N_FIELDS nIField;
 	        {
                 if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
                 {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
+                    if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
-                               FALSE);
+                               FALSE))
+                        return 1;
                 }
                 else
                 {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
+                    if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE);
+                               FALSE))
+                        return 1;
                 }
 	        }
             else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='N')
 	        {
                 if(pBD_XP->Camp[nIField+nNumPrivateMMField].Is64)
                 {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
+                    if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].iValue,
-                               TRUE);
+                               TRUE))
+                        return 1;
                 }
                 else
                 {
-                    MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
+                    if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].dValue,
-                               FALSE);
+                               FALSE))
+                       return 1;
                 }
                 
 	        }
             else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='D')
 	        {
-                MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
+                if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE);
+                               FALSE))
+                   return 1;
 	        }
             else
 	        {
-                MM_WriteValueToRecordDBXP(pszRecordOnCourse, 
+                if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
-                               FALSE);
+                               FALSE))
+                   return 1;
 	        }
         }
         
@@ -3556,66 +3709,92 @@ int MM_DetectAndFixDBFWidthChange(struct MiraMonLayerInfo *hMiraMonLayer,
                             struct MMAdmDatabase *pMMAdmDB,
                             struct MM_FLUSH_INFO *pFlushRecList,
                             MM_EXT_DBF_N_FIELDS nNumPrivateMMField,
-                            unsigned __int32 nFirstIRecord,
-                            MM_EXT_DBF_N_FIELDS nFirstIField)
+                            unsigned __int32 nIRecord,
+                            MM_EXT_DBF_N_FIELDS nIField)
 {
 struct MM_BASE_DADES_XP *pBD_XP;
-unsigned __int32 nIRecord;
-MM_EXT_DBF_N_FIELDS nIField;
-MM_TIPUS_BYTES_PER_CAMP_DBF nNewWidth;
 
     pBD_XP=pMMAdmDB->pMMBDXP;
-    for(nIRecord=nFirstIRecord; nIRecord<hMMFeature->nNumRecords; nIRecord++)
+    if(nIRecord>=hMMFeature->nNumRecords)
+        return 0;
+    
+    if(nIField>=hMMFeature->pRecords[nIRecord].nNumField)
+        return 0;
+    
+    if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
     {
-        if(nIRecord==nFirstIRecord)
-            nIField=nFirstIField;
-        else
-            nIField=0;
-
-        for (; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
+        if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
         {
-            if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
-	        {
-                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
-                {
-                    nNewWidth=(MM_TIPUS_BYTES_PER_CAMP_DBF)strlen(
-                        hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue);
-                }
-                else
-                {
-                    nNewWidth=(MM_TIPUS_BYTES_PER_CAMP_DBF)strlen(
-                        hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue);
-                }
-                if(nNewWidth>pBD_XP->Camp[nIField+nNumPrivateMMField].BytesPerCamp)
-                {
-                    if(MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
-                        return 1;
-                    
-                    // Flushing all to be flushed
-                    pMMAdmDB->FlushRecList.SizeOfBlockToBeSaved=0;
-                    if(MM_AppendBlockToBuffer(&pMMAdmDB->FlushRecList))
-                        return 1;
-
-                    if(MM_ChangeDBFWidthField(pBD_XP, nIField, nNewWidth))
-                        return 1;
-                    
-                    // TEMPORAL Closing database files just for testing
-                    //if(fclose_function(pMMAdmDB->pFExtDBF))
-                    //    return 1;
-
-                    // 
-                    if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer, 
-                            hMMFeature, pMMAdmDB, pFlushRecList, nNumPrivateMMField,
-                            nIRecord, nIField+1))
-                        return 1;
-                    return 0;
-                    
-                }
-	        }
+            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+                       nIField+nNumPrivateMMField, 
+                       hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
+                       FALSE))
+                return 1;
+        }
+        else
+        {
+            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+                       nIField+nNumPrivateMMField, 
+                       hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
+                       FALSE))
+                return 1;
         }
     }
+    else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='N')
+    {
+        if(pBD_XP->Camp[nIField+nNumPrivateMMField].Is64)
+        {
+            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+                       nIField+nNumPrivateMMField, 
+                       &hMMFeature->pRecords[nIRecord].pField[nIField].iValue,
+                       TRUE))
+                return 1;
+        }
+        else
+        {
+            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+                       nIField+nNumPrivateMMField, 
+                       &hMMFeature->pRecords[nIRecord].pField[nIField].dValue,
+                       FALSE))
+                return 1;
+        }
+        
+    }
+    else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='D')
+    {
+        if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+                       nIField+nNumPrivateMMField, 
+                       &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
+                       FALSE))
+           return 1;
+    }
+    else
+    {
+        if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+                       nIField+nNumPrivateMMField, 
+                       &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
+                       FALSE))
+           return 1;
+    }
+
+    // We analize next fields
+    if(nIField==hMMFeature->pRecords[nIRecord].nNumField-1)
+    {
+        if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer, 
+                hMMFeature, pMMAdmDB, pFlushRecList, nNumPrivateMMField,
+                nIRecord+1, 0))
+            return 1;
+    }
+    else
+    {
+        if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer, 
+                hMMFeature, pMMAdmDB, pFlushRecList, nNumPrivateMMField,
+                nIRecord, nIField+1))
+            return 1;
+    }
     return 0;
-}
+} // End of MM_DetectAndFixDBFWidthChange()
+
 
 int MMAddPointRecordToMMDB(struct MiraMonLayerInfo *hMiraMonLayer, 
                         struct MiraMonFeature *hMMFeature,
@@ -3637,18 +3816,24 @@ struct MM_FLUSH_INFO *pFlushRecList;
     
     pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
 
-    memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
-
+    // Test lenght
     if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &hMiraMonLayer->MMPoint.MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
         return 1;
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
-        &nElemCount, TRUE);
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPoint.MMAdmDB, 
+            0, &nElemCount, TRUE))
+        return 1;
     
+    // Now lenght is sure, write
+    memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPoint.MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp, 
+        &nElemCount, TRUE);
+
     pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
-    if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,
+    if(MMAddFeatureRecordToMMDB(hMMFeature, &hMiraMonLayer->MMPoint.MMAdmDB,
             pszRecordOnCourse, pFlushRecList, 
             &hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP->nfitxes,
             nNumPrivateMMField))
@@ -3682,20 +3867,48 @@ struct MM_FLUSH_INFO *pFlushRecList;
     pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
     pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
     
+    // Test lenght
+    if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
+            hMMFeature, &pMMArcLayer->MMAdmDB,
+            pFlushRecList, nNumPrivateMMField, 0, 0))
+        return 1;
+
+    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+            0, &nElemCount, TRUE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+            1, &pArcHeader->nElemCount, TRUE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+            2, &pArcHeader->dfLenght, FALSE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+            3, &pArcHeader->nFirstIdNode, TRUE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+            4, &pArcHeader->nLastIdNode, TRUE))
+        return 1;
+
+    // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
+    MMWriteValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp, 
         &nElemCount, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MMWriteValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+1,
         &pArcHeader->nElemCount, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+2,
+    MMWriteValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+2,
         &pArcHeader->dfLenght, FALSE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+3,
+    MMWriteValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+3,
         &pArcHeader->nFirstIdNode, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+3,
+    MMWriteValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+4,
         &pArcHeader->nLastIdNode, TRUE);
     
     if(hMiraMonLayer->bIsPolygon)
@@ -3706,7 +3919,8 @@ struct MM_FLUSH_INFO *pFlushRecList;
         return 0;
     }
 
-    if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,
+    pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
+    if(MMAddFeatureRecordToMMDB(hMMFeature, &pMMArcLayer->MMAdmDB,
             pszRecordOnCourse, pFlushRecList, 
             &pMMArcLayer->MMAdmDB.pMMBDXP->nfitxes,
             nNumPrivateMMField))
@@ -3738,16 +3952,33 @@ double nDoubleValue;
     pMMNodeLayer->MMAdmDB.FlushRecList.SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
     pMMNodeLayer->MMAdmDB.FlushRecList.pBlockToBeSaved=(void *)pszRecordOnCourse;
     
+    // Test lenght
+    if(MMTestAndFixValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
+            0, &nElemCount, TRUE))
+        return 1;
+    nDoubleValue=pNodeHeader->nArcsCount;
+    if(MMTestAndFixValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
+            1, &nDoubleValue, FALSE))
+        return 1;
+    nDoubleValue=pNodeHeader->cNodeType;
+    if(MMTestAndFixValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
+            2, &nDoubleValue, FALSE))
+        return 1;
+
+    // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
+    MMWriteValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp, 
         &nElemCount, TRUE);
 
     nDoubleValue=pNodeHeader->nArcsCount;
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MMWriteValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+1,
         &nDoubleValue, FALSE);
 
     nDoubleValue=pNodeHeader->cNodeType;
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+2,
+    MMWriteValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+2,
         &nDoubleValue, FALSE);
 
     if(MM_AppendBlockToBuffer(&pMMNodeLayer->MMAdmDB.FlushRecList))
@@ -3779,8 +4010,35 @@ struct MM_FLUSH_INFO *pFlushRecList;
     pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
     pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
 
+    // Test lenght
+    if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
+            hMMFeature, &hMiraMonLayer->MMPolygon.MMAdmDB,
+            pFlushRecList, nNumPrivateMMField, 0, 0))
+        return 1;
+
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+            0, &nElemCount, TRUE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+            1, &nVerticesCount, TRUE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+            2, &pPolHeader->dfPerimeter, FALSE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+            3, &pPolHeader->dfArea, FALSE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+            4, &pPolHeader->nArcsCount, TRUE))
+        return 1;
+    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+            5, &pPolHeader->nRingsCount, TRUE))
+        return 1;
+
+    // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp, 
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB,
+        pszRecordOnCourse, pBD_XP->Camp, 
         &nElemCount, TRUE);
 
     if(!hMMFeature)
@@ -3791,22 +4049,29 @@ struct MM_FLUSH_INFO *pFlushRecList;
         return 0;
     }
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+1,
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+1,
         &nVerticesCount, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+2,
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+2,
         &pPolHeader->dfPerimeter, FALSE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+3,
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+3,
         &pPolHeader->dfArea, FALSE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+4,
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+4,
         &pPolHeader->nArcsCount, TRUE);
 
-    MM_WriteValueToRecordDBXP(pszRecordOnCourse, pBD_XP->Camp+5,
+    MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
+        pszRecordOnCourse, pBD_XP->Camp+5,
         &pPolHeader->nRingsCount, TRUE);
     
-    if(MMAddFeatureRecordToMMDB(hMMFeature, pBD_XP,
+    pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
+    if(MMAddFeatureRecordToMMDB(hMMFeature, 
+            &hMiraMonLayer->MMPolygon.MMAdmDB,
             pszRecordOnCourse, pFlushRecList, 
             & hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nfitxes,
             nNumPrivateMMField))
@@ -3874,6 +4139,13 @@ void MMDestroyMMDBFile(struct MMAdmDatabase *pMMAdmDB)
         free_function(pMMAdmDB->szRecordOnCourse);
         pMMAdmDB->szRecordOnCourse=NULL;
     }
+    if (pMMAdmDB->szStringToOperate)
+    {
+        free_function(pMMAdmDB->szStringToOperate);
+        pMMAdmDB->szStringToOperate=NULL;
+        pMMAdmDB->nNumStringToOperate=0;
+    }
+    
     MM_ReleaseDBFHeader(pMMAdmDB->pMMBDXP);
 }
 
