@@ -214,12 +214,14 @@ RUN mkdir odbc-cpp-wrapper \
   && rm -rf odbc-cpp-wrapper
 
 # Arrow
+# We should perhaps pin the pyarrow version to the one of libarrow...
 RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
  && dpkg --install apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
  && apt-get update \
  && apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev \
  && rm ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m pip install pyarrow
 
 # Build libQB3
 # Used by the MRF driver
