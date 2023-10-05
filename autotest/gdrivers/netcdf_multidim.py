@@ -3740,3 +3740,73 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT():
         )[0]
         == -10
     )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
+
+    filename = str(
+        tmp_path / "test_netcdf_multidim_serialize_statistics_asclassicdataset.nc"
+    )
+    shutil.copy("data/netcdf/byte_no_cf.nc", filename)
+
+    def test():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+
+        view = ar.GetView("[0:10,...]")
+        classic_ds = view.AsClassicDataset(1, 0)
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
+            0.0,
+            0.0,
+            0.0,
+            -1.0,
+        ]
+        classic_ds.GetRasterBand(1).ComputeStatistics(False)
+
+        view = ar.GetView("[10:20,...]")
+        classic_ds = view.AsClassicDataset(1, 0)
+        classic_ds.GetRasterBand(1).ComputeStatistics(False)
+
+    def reopen():
+
+        aux_xml = open(filename + ".aux.xml", "rb").read().decode("UTF-8")
+        assert (
+            '<DerivedDataset name="AsClassicDataset(1,0) view of Sliced view of /Band1 ([0:10,...])">'
+            in aux_xml
+        )
+        assert (
+            '<DerivedDataset name="AsClassicDataset(1,0) view of Sliced view of /Band1 ([0:10,...])">'
+            in aux_xml
+        )
+
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+
+        view = ar.GetView("[0:10,...]")
+        classic_ds = view.AsClassicDataset(1, 0)
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == pytest.approx(
+            [74.0, 255.0, 126.82, 26.729713803182]
+        )
+
+        view = ar.GetView("[10:20,...]")
+        classic_ds = view.AsClassicDataset(1, 0)
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == pytest.approx(
+            [99.0, 206.0, 126.71, 18.356086184152]
+        )
+
+        classic_ds = ar.AsClassicDataset(1, 0)
+        assert classic_ds.GetRasterBand(1).GetStatistics(False, False) == [
+            0.0,
+            0.0,
+            0.0,
+            -1.0,
+        ]
+
+    test()
+    reopen()
