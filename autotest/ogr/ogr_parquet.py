@@ -2281,15 +2281,16 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
     ds = ogr.Open("data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("decimal128 = -1234.567")
-    # Fast filtering on decimal data type not implemented for now
-    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 0
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
     stream = lyr.GetArrowStreamAsPyArrow()
     batches = [batch for batch in stream]
-    assert len(batches[0].field("uint8")) == 2
+    assert len(batches) == 2
+    assert len(batches[0].field("uint8")) == 1
+    assert len(batches[1].field("uint8")) == 1
     assert batches[0].field("uint8")[0].as_py() == 2
-    assert batches[0].field("uint8")[1].as_py() == 5
-    assert batches[0].field("decimal128")[0].as_py() == -1234.567
-    assert batches[0].field("decimal128")[1].as_py() == -1234.567
+    assert batches[1].field("uint8")[0].as_py() == 5
+    assert float(batches[0].field("decimal128")[0].as_py()) == -1234.567
+    assert float(batches[1].field("decimal128")[0].as_py()) == -1234.567
 
 
 ###############################################################################

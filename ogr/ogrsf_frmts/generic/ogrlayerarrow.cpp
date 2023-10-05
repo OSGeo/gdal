@@ -2152,16 +2152,42 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
         }
     }
 
-    // For now, we can't filter on decimal128/decimal256 fields
     if (bHasAttrQuery && strncmp(schema->format, "d:", 2) == 0)
     {
         if (aosUsedFields.FindString((osPrefix + schema->name).c_str()) >= 0)
         {
-            CPLDebug("OGR",
-                     "Field %s has unhandled format '%s' for an "
-                     "attribute to filter on",
-                     (osPrefix + schema->name).c_str(), schema->format);
-            return false;
+            int nPrecision = 0;
+            int nScale = 0;
+            int nWidthInBytes = 0;
+            if (!ParseDecimalFormat(schema->format, nPrecision, nScale,
+                                    nWidthInBytes))
+            {
+                CPLDebug("OGR", "%s",
+                         (std::string("Invalid field format ") +
+                          schema->format + " for field " + osPrefix +
+                          schema->name)
+                             .c_str());
+                return false;
+            }
+
+            if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+            {
+                CPLDebug(
+                    "OGR",
+                    "For decimal field, only width 128 and 256 are supported");
+                return false;
+            }
+
+            // precision=19 fits on 64 bits
+            if (nPrecision <= 0 || nPrecision > 19)
+            {
+                CPLDebug(
+                    "OGR",
+                    "For decimal field, only precision up to 19 is supported");
+                return false;
+            }
+
+            return true;
         }
     }
 
@@ -3406,6 +3432,35 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                     array, iOGRFieldIndex, nOffsettedIndex, childArray,
                     oFeature);
         }
+    }
+    else if (format[0] == 'd' && format[1] == ':')
+    {
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        if (!ParseDecimalFormat(format, nPrecision, nScale, nWidthInBytes))
+        {
+            CPLAssert(false);
+        }
+
+        // fits on a int64
+        CPLAssert(nPrecision <= 19);
+        // either 128 or 256 bits
+        CPLAssert((nWidthInBytes % 8) == 0);
+        const int nWidthIn64BitWord = nWidthInBytes / 8;
+        const size_t iFeature =
+            static_cast<size_t>(nOffsettedIndex - array->offset);
+#ifdef CPL_LSB
+        const auto nIdx = iFeature * nWidthIn64BitWord;
+#else
+        const auto nIdx = iFeature * nWidthIn64BitWord + nWidthIn64BitWord - 1;
+#endif
+        const auto *panValues = static_cast<const int64_t *>(array->buffers[1]);
+        const auto nVal = panValues[nIdx + array->offset * nWidthIn64BitWord];
+        const double dfVal =
+            static_cast<double>(nVal) * std::pow(10.0, -nScale);
+        oFeature.SetField(iOGRFieldIndex, dfVal);
+        return true;
     }
     else
     {
