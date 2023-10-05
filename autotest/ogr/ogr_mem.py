@@ -1735,6 +1735,46 @@ def test_ogr_mem_write_pyarrow():
 
 
 @gdaltest.enable_exceptions()
+def test_ogr_mem_write_pyarrow_geometry_in_large_binary():
+    pa = pytest.importorskip("pyarrow")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+
+    import struct
+
+    wkb_geometry = pa.array(
+        [
+            None if i == 1 else (b"\x01\x01\x00\x00\x00" + struct.pack("<dd", i, 2))
+            for i in range(5)
+        ],
+        type=pa.large_binary(),
+    )
+
+    names = ["wkb_geometry"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    success, error_msg = lyr.IsPyArrowSchemaSupported(table.schema)
+    assert success, error_msg
+
+    assert lyr.WritePyArrow(table) == ogr.OGRERR_NONE
+
+    f = lyr.GetFeature(4)
+    assert (
+        str(f)
+        == """OGRFeature(test):4
+  POINT (4 2)
+
+"""
+    )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
 @pytest.mark.parametrize("dict_values", [["foo", "bar", "baz"], [10, 20, 30]])
 def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
     pa = pytest.importorskip("pyarrow")
