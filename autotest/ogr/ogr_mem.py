@@ -1549,6 +1549,12 @@ def test_ogr_mem_write_pyarrow():
         indices_dict_list_uint8, dictionary_list_uint8
     )
 
+    import decimal
+
+    d = decimal.Decimal("123.45")
+    decimal128 = pa.array([d, d, d, d, d], pa.decimal128(5, 2))
+    decimal256 = pa.array([d, d, d, d, d], pa.decimal256(5, 2))
+
     import struct
 
     wkb_geometry = pa.array(
@@ -1628,6 +1634,8 @@ def test_ogr_mem_write_pyarrow():
         "dict_int64",
         "dict_uint64",
         "dict_list_uint8",
+        "decimal128",
+        "decimal256",
         "wkb_geometry",
         "fid",
     ]
@@ -1648,6 +1656,14 @@ def test_ogr_mem_write_pyarrow():
     for i in range(len(table.schema)):
         if table.schema.field(i).name not in ("wkb_geometry", "fid"):
             lyr.CreateFieldFromPyArrowSchema(table.schema.field(i))
+
+    idx = lyr.GetLayerDefn().GetFieldIndex("decimal128")
+    assert lyr.GetLayerDefn().GetFieldDefn(idx).GetWidth() == 5 + 2
+    assert lyr.GetLayerDefn().GetFieldDefn(idx).GetPrecision() == 2
+
+    idx = lyr.GetLayerDefn().GetFieldIndex("decimal256")
+    assert lyr.GetLayerDefn().GetFieldDefn(idx).GetWidth() == 5 + 2
+    assert lyr.GetLayerDefn().GetFieldDefn(idx).GetPrecision() == 2
 
     assert lyr.WritePyArrow(table, options=["FID=fid"]) == ogr.OGRERR_NONE
     assert fid.to_pylist() == [0, 1, 2, 3, 4]
@@ -1725,6 +1741,8 @@ def test_ogr_mem_write_pyarrow():
   dict_int64 (String) = baz
   dict_uint64 (String) = baz
   dict_list_uint8 (IntegerList(Int16)) = (2:2,3)
+  decimal128 (Real) = 123.45
+  decimal256 (Real) = 123.45
   POINT (4 2)
 
 """

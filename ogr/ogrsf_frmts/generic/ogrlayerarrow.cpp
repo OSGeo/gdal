@@ -2031,6 +2031,48 @@ OGRParseArrowMetadata(const char *pabyMetadata)
 }
 
 /************************************************************************/
+/*                        ParseDecimalFormat()                          */
+/************************************************************************/
+
+static bool ParseDecimalFormat(const char *format, int &nPrecision, int &nScale,
+                               int &nWidthInBytes)
+{
+    // d:19,10     ==> decimal128 [precision 19, scale 10]
+    // d:19,10,NNN ==> decimal bitwidth = NNN [precision 19, scale 10]
+    nPrecision = 0;
+    nScale = 0;
+    nWidthInBytes = 128 / 8;  // 128 bit
+    const char *pszFirstComma = strchr(format + 2, ',');
+    if (pszFirstComma)
+    {
+        nPrecision = atoi(format + 2);
+        nScale = atoi(pszFirstComma + 1);
+        const char *pszSecondComma = strchr(pszFirstComma + 1, ',');
+        if (pszSecondComma)
+        {
+            const int nWidthInBits = atoi(pszSecondComma + 1);
+            if ((nWidthInBits % 8) != 0)
+            {
+                // shouldn't happen for well-format schemas
+                nWidthInBytes = 0;
+                return false;
+            }
+            else
+            {
+                nWidthInBytes = nWidthInBits / 8;
+            }
+        }
+    }
+    else
+    {
+        // shouldn't happen for well-format schemas
+        nWidthInBytes = 0;
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                            IsHandledSchema()                         */
 /************************************************************************/
 
@@ -2654,31 +2696,10 @@ static bool CompactArray(const struct ArrowSchema *schema,
     }
     else if (strncmp(format, "d:", 2) == 0)
     {
-        // d:19,10     ==> decimal128 [precision 19, scale 10]
-        // d:19,10,NNN ==> decimal bitwidth = NNN [precision 19, scale 10]
-        int nWidth = 128 / 8;  // 128 bit
-        const char *pszComma = strchr(format + 2, ',');
-        if (pszComma)
-        {
-            pszComma = strchr(pszComma + 1, ',');
-            if (pszComma)
-            {
-                nWidth = atoi(pszComma + 1);
-                if ((nWidth % 8) != 0)
-                {
-                    // shouldn't happen for well-format schemas
-                    nWidth = 0;
-                }
-                else
-                    nWidth /= 8;
-            }
-        }
-        else
-        {
-            // shouldn't happen for well-format schemas
-            nWidth = 0;
-        }
-        if (nWidth == 0)
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        if (!ParseDecimalFormat(format, nPrecision, nScale, nWidthInBytes))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected error in PostFilterArrowArray(): unhandled "
@@ -2687,7 +2708,8 @@ static bool CompactArray(const struct ArrowSchema *schema,
 
             return false;
         }
-        CompactFixedWidthArray(array, nWidth, iStart, abyValidityFromFilters);
+        CompactFixedWidthArray(array, nWidthInBytes, iStart,
+                               abyValidityFromFilters);
     }
     else
     {
@@ -2973,6 +2995,18 @@ inline static void FillFieldFixedSizeListString(
         aosVals.AddString(osTmp.c_str());
     }
     oFeature.SetField(iOGRFieldIdx, aosVals.List());
+}
+
+/************************************************************************/
+/*                              GetValue()                              */
+/************************************************************************/
+
+template <typename ArrowType>
+inline static ArrowType GetValue(const struct ArrowArray *array,
+                                 size_t iFeature)
+{
+    const auto *panValues = static_cast<const ArrowType *>(array->buffers[1]);
+    return panValues[iFeature + array->offset];
 }
 
 /************************************************************************/
@@ -4039,6 +4073,34 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
                     " is not supported.");
         return false;
     }
+    else if (STARTS_WITH(format, "d:"))  // decimal
+    {
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        if (!ParseDecimalFormat(format, nPrecision, nScale, nWidthInBytes))
+        {
+            AppendError(std::string("Invalid field format ") + format +
+                        " for field " + osFieldPrefix + fieldName);
+            return false;
+        }
+
+        if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+        {
+            AppendError(
+                "For decimal field, only width 128 and 256 are supported");
+            return false;
+        }
+
+        // precision=19 fits on 64 bits
+        if (nPrecision <= 0 || nPrecision > 19)
+        {
+            AppendError(
+                "For decimal field, only precision up to 19 is supported");
+            return false;
+        }
+        return true;
+    }
     else
     {
         for (const auto &sType : gasArrowTypesToOGR)
@@ -4062,7 +4124,7 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
             if (STARTS_WITH(format, pszSupported))
                 return true;
         }
-        // TODO: "d:"
+
         AppendError("Type '" + std::string(format) + "' for field " +
                     osFieldPrefix + fieldName + " is not supported.");
         return false;
@@ -4206,6 +4268,43 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         return false;
     }
 
+    if (STARTS_WITH(format, "d:"))  // Decimal
+    {
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        if (!ParseDecimalFormat(format, nPrecision, nScale, nWidthInBytes))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                     (std::string("Invalid field format ") + format +
+                      " for field " + osFieldPrefix + fieldName)
+                         .c_str());
+            return false;
+        }
+
+        if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "For decimal field, only width 128 and 256 are supported");
+            return false;
+        }
+
+        // precision=19 fits on 64 bits
+        if (nPrecision <= 0 || nPrecision > 19)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "For decimal field, only precision up to 19 is supported");
+            return false;
+        }
+
+        OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(), OFTReal);
+        // DBF convention: add space for negative sign and decimal separator
+        oFieldDefn.SetWidth(nPrecision + 2);
+        oFieldDefn.SetPrecision(nScale);
+        oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) != 0);
+        return CreateField(&oFieldDefn) == OGRERR_NONE;
+    }
+
     CPLError(CE_Failure, CPLE_NotSupported, "%s",
              ("Type '" + std::string(format) + "' for field " + osFieldPrefix +
               fieldName + " is not supported.")
@@ -4289,6 +4388,9 @@ struct FieldInfo
     int iOGRFieldIdx = -1;
     OGRFieldType eFieldType = OFTMaxType;
     bool bIsGeomCol = false;
+    int nWidthInBytes = 0;  // only used for decimal fields
+    int nPrecision = 0;     // only used for decimal fields
+    int nScale = 0;         // only used for decimal fields
 };
 
 static bool BuildOGRFieldInfo(
@@ -4458,6 +4560,52 @@ static bool BuildOGRFieldInfo(
                 }
             }
 
+            if (!bTypeOK && STARTS_WITH(format, "d:"))
+            {
+                if (!ParseDecimalFormat(format, sInfo.nPrecision, sInfo.nScale,
+                                        sInfo.nWidthInBytes))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             (std::string("Invalid field format ") + format +
+                              " for field " + osFieldPrefix + fieldName)
+                                 .c_str());
+                    return false;
+                }
+
+                if (sInfo.nWidthInBytes != 128 / 8 &&
+                    sInfo.nWidthInBytes != 256 / 8)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "For decimal field, only width 128 and 256 are "
+                             "supported");
+                    return false;
+                }
+
+                // precision=19 fits on 64 bits
+                if (sInfo.nPrecision <= 0 || sInfo.nPrecision > 19)
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "For decimal field, only precision up to 19 is "
+                             "supported");
+                    return false;
+                }
+
+                if (eOGRType == OFTReal)
+                {
+                    bTypeOK = true;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "For field %s, OGR field type is %s whereas "
+                             "Arrow type implies %s",
+                             sInfo.osName.c_str(),
+                             OGR_GetFieldTypeName(eOGRType),
+                             OGR_GetFieldTypeName(OFTReal));
+                    return false;
+                }
+            }
+
             if (!bTypeOK)
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "%s",
@@ -4534,18 +4682,6 @@ static bool BuildOGRFieldInfo(
 
     asFieldInfo.emplace_back(std::move(sInfo));
     return true;
-}
-
-/************************************************************************/
-/*                              GetValue()                              */
-/************************************************************************/
-
-template <typename ArrowType>
-inline static ArrowType GetValue(const struct ArrowArray *array,
-                                 size_t iFeature)
-{
-    const auto *panValues = static_cast<const ArrowType *>(array->buffers[1]);
-    return panValues[iFeature + array->offset];
 }
 
 /************************************************************************/
@@ -4933,6 +5069,25 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
         return FillFieldBinary<uint64_t>(array, iOGRFieldIdx, iFeature,
                                          iArrowIdx, asFieldInfo, osFieldPrefix,
                                          fieldName, oFeature);
+    }
+    else if (asFieldInfo[iArrowIdx].nPrecision > 0)
+    {
+        // fits on a int64
+        CPLAssert(asFieldInfo[iArrowIdx].nPrecision <= 19);
+        // either 128 or 256 bits
+        CPLAssert((asFieldInfo[iArrowIdx].nWidthInBytes % 8) == 0);
+        const int nWidthIn64BitWord = asFieldInfo[iArrowIdx].nWidthInBytes / 8;
+#ifdef CPL_LSB
+        const auto nIdx = iFeature * nWidthIn64BitWord;
+#else
+        const auto nIdx = iFeature * nWidthIn64BitWord + nWidthIn64BitWord - 1;
+#endif
+        const auto *panValues = static_cast<const int64_t *>(array->buffers[1]);
+        const auto nVal = panValues[nIdx + array->offset * nWidthIn64BitWord];
+        const double dfVal = static_cast<double>(nVal) *
+                             std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
+        oFeature.SetFieldSameTypeUnsafe(iOGRFieldIdx, dfVal);
+        return true;
     }
     else if (SetFieldForOtherFormats(
                  oFeature, iOGRFieldIdx,
