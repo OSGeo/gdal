@@ -38,6 +38,7 @@
 #include "cpl_float.h"
 #include "cpl_time.h"
 #include <cassert>
+#include <cinttypes>
 #include <limits>
 #include <set>
 
@@ -3938,6 +3939,13 @@ const struct
     {"U", OFTStringList, OFSTNone},   // large string
 };
 
+static inline bool IsValidDictionaryIndexType(const char *format)
+{
+    return format[0] == 'c' || format[0] == 'C' || format[0] == 's' ||
+           format[0] == 'S' || format[0] == 'i' || format[0] == 'I' ||
+           format[0] == 'l' || format[0] == 'L';
+}
+
 /** Returns whether the provided ArrowSchema is supported for writing.
  *
  * This method exists since not all drivers may support all Arrow data types.
@@ -3978,11 +3986,12 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
         osErrorMsg += osMsg;
     };
 
+    const char *fieldName = schema->name;
     const char *format = schema->format;
     if (strcmp(format, "+s") == 0)
     {
         bool bRet = true;
-        const std::string osNewPrefix(osFieldPrefix + schema->name + ".");
+        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
             if (!IsArrowSchemaSupportedInternal(schema->children[i],
@@ -3992,9 +4001,22 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
         return bRet;
     }
 
-    else if (strcmp(format, "+l") == 0 ||  // list
-             strcmp(format, "+L") == 0 ||  // large list
-             STARTS_WITH(format, "+w:"))   // fixed-size list
+    if (schema->dictionary)
+    {
+        if (!IsValidDictionaryIndexType(format))
+        {
+            AppendError("Dictionary only supported if the parent is of "
+                        "type [U]Int[8|16|32|64]");
+            return false;
+        }
+
+        schema = schema->dictionary;
+        format = schema->format;
+    }
+
+    if (strcmp(format, "+l") == 0 ||  // list
+        strcmp(format, "+L") == 0 ||  // large list
+        STARTS_WITH(format, "+w:"))   // fixed-size list
     {
         // Only some subtypes supported
         const char *childFormat = schema->children[0]->format;
@@ -4006,14 +4028,14 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
             }
         }
         AppendError("Type list of '" + std::string(childFormat) +
-                    "' for field " + osFieldPrefix + schema->name +
+                    "' for field " + osFieldPrefix + fieldName +
                     " is not supported.");
         return false;
     }
 
     else if (strcmp(format, "+m") == 0)
     {
-        AppendError("Type map for field " + osFieldPrefix + schema->name +
+        AppendError("Type map for field " + osFieldPrefix + fieldName +
                     " is not supported.");
         return false;
     }
@@ -4042,7 +4064,7 @@ bool OGRLayer::IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
         }
         // TODO: "d:"
         AppendError("Type '" + std::string(format) + "' for field " +
-                    osFieldPrefix + schema->name + " is not supported.");
+                    osFieldPrefix + fieldName + " is not supported.");
         return false;
     }
 }
@@ -4101,10 +4123,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     const struct ArrowSchema *schema, const std::string &osFieldPrefix,
     CSLConstList papszOptions)
 {
+    const char *fieldName = schema->name;
     const char *format = schema->format;
     if (strcmp(format, "+s") == 0)
     {
-        const std::string osNewPrefix(osFieldPrefix + schema->name + ".");
+        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
             if (!CreateFieldFromArrowSchemaInternal(schema->children[i],
@@ -4114,11 +4137,25 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         return true;
     }
 
+    if (schema->dictionary)
+    {
+        if (!IsValidDictionaryIndexType(format))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Dictionary only supported if the parent is of "
+                     "type [U]Int[8|16|32|64]");
+            return false;
+        }
+
+        schema = schema->dictionary;
+        format = schema->format;
+    }
+
     for (const auto &sType : gasArrowTypesToOGR)
     {
         if (strcmp(format, sType.arrowType) == 0)
         {
-            OGRFieldDefn oFieldDefn((osFieldPrefix + schema->name).c_str(),
+            OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(),
                                     sType.eType);
             oFieldDefn.SetSubType(sType.eSubType);
             oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) != 0);
@@ -4131,7 +4168,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         STARTS_WITH(format, "tsu:") ||  // timestamp[us]
         STARTS_WITH(format, "tsn:"))    // timestamp[ns]
     {
-        OGRFieldDefn oFieldDefn((osFieldPrefix + schema->name).c_str(),
+        OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(),
                                 OFTDateTime);
         oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) != 0);
         return CreateField(&oFieldDefn) == OGRERR_NONE;
@@ -4139,8 +4176,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
 
     if (STARTS_WITH(format, "w:"))  // fixed-width binary
     {
-        OGRFieldDefn oFieldDefn((osFieldPrefix + schema->name).c_str(),
-                                OFTBinary);
+        OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(), OFTBinary);
         oFieldDefn.SetWidth(atoi(format + strlen("w:")));
         oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) != 0);
         return CreateField(&oFieldDefn) == OGRERR_NONE;
@@ -4155,7 +4191,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         {
             if (strcmp(childFormat, sType.arrowType) == 0)
             {
-                OGRFieldDefn oFieldDefn((osFieldPrefix + schema->name).c_str(),
+                OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(),
                                         sType.eType);
                 oFieldDefn.SetSubType(sType.eSubType);
                 oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) !=
@@ -4165,14 +4201,14 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         }
         CPLError(CE_Failure, CPLE_NotSupported, "%s",
                  ("List of type '" + std::string(childFormat) + "' for field " +
-                  osFieldPrefix + schema->name + " is not supported.")
+                  osFieldPrefix + fieldName + " is not supported.")
                      .c_str());
         return false;
     }
 
     CPLError(CE_Failure, CPLE_NotSupported, "%s",
              ("Type '" + std::string(format) + "' for field " + osFieldPrefix +
-              schema->name + " is not supported.")
+              fieldName + " is not supported.")
                  .c_str());
     return false;
 }
@@ -4262,10 +4298,11 @@ static bool BuildOGRFieldInfo(
     const char *pszGeomFieldName, const struct ArrowSchema *&schemaFIDColumn,
     struct ArrowArray *&arrayFIDColumn)
 {
+    const char *fieldName = schema->name;
     const char *format = schema->format;
     if (strcmp(format, "+s") == 0)
     {
-        const std::string osNewPrefix(osFieldPrefix + schema->name + ".");
+        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
             if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
@@ -4276,41 +4313,120 @@ static bool BuildOGRFieldInfo(
                 return false;
             }
         }
+        return true;
     }
-    else
+
+    if (schema->dictionary)
     {
-        FieldInfo sInfo;
-        sInfo.osName = osFieldPrefix + schema->name;
-        if (pszFIDName && sInfo.osName == pszFIDName)
+        if (!IsValidDictionaryIndexType(format))
         {
-            if (format[0] == 'i' || format[0] == 'l')
-            {
-                sInfo.iOGRFieldIdx = FID_COLUMN_SPECIAL_OGR_FIELD_IDX;
-                schemaFIDColumn = schema;
-                arrayFIDColumn = array;
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "FID column '%s' should be of Arrow format 'i' "
-                         "(int32) or 'l' (int64)",
-                         sInfo.osName.c_str());
-                return false;
-            }
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Dictionary only supported if the parent is of "
+                     "type [U]Int[8|16|32|64]");
+            return false;
+        }
+
+        schema = schema->dictionary;
+        format = schema->format;
+        array = array->dictionary;
+    }
+
+    FieldInfo sInfo;
+    sInfo.osName = osFieldPrefix + fieldName;
+    if (pszFIDName && sInfo.osName == pszFIDName)
+    {
+        if (format[0] == 'i' || format[0] == 'l')
+        {
+            sInfo.iOGRFieldIdx = FID_COLUMN_SPECIAL_OGR_FIELD_IDX;
+            schemaFIDColumn = schema;
+            arrayFIDColumn = array;
         }
         else
         {
-            sInfo.iOGRFieldIdx =
-                poFeatureDefn->GetFieldIndex(sInfo.osName.c_str());
-            if (sInfo.iOGRFieldIdx >= 0)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "FID column '%s' should be of Arrow format 'i' "
+                     "(int32) or 'l' (int64)",
+                     sInfo.osName.c_str());
+            return false;
+        }
+    }
+    else
+    {
+        sInfo.iOGRFieldIdx = poFeatureDefn->GetFieldIndex(sInfo.osName.c_str());
+        if (sInfo.iOGRFieldIdx >= 0)
+        {
+            bool bTypeOK = false;
+            const auto eOGRType =
+                poFeatureDefn->GetFieldDefn(sInfo.iOGRFieldIdx)->GetType();
+            sInfo.eFieldType = eOGRType;
+            for (const auto &sType : gasArrowTypesToOGR)
             {
-                bool bTypeOK = false;
-                const auto eOGRType =
-                    poFeatureDefn->GetFieldDefn(sInfo.iOGRFieldIdx)->GetType();
-                sInfo.eFieldType = eOGRType;
-                for (const auto &sType : gasArrowTypesToOGR)
+                if (strcmp(format, sType.arrowType) == 0)
                 {
-                    if (strcmp(format, sType.arrowType) == 0)
+                    if (eOGRType == sType.eType)
+                    {
+                        bTypeOK = true;
+                        break;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "For field %s, OGR field type is %s whereas "
+                                 "Arrow type implies %s",
+                                 sInfo.osName.c_str(),
+                                 OGR_GetFieldTypeName(eOGRType),
+                                 OGR_GetFieldTypeName(sType.eType));
+                        return false;
+                    }
+                }
+            }
+
+            if (!bTypeOK &&
+                (STARTS_WITH(format, "tss:") || STARTS_WITH(format, "tsm:") ||
+                 STARTS_WITH(format, "tsu:") || STARTS_WITH(format, "tsn:")))
+            {
+                if (eOGRType == OFTDateTime)
+                {
+                    bTypeOK = true;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "For field %s, OGR field type is %s whereas "
+                             "Arrow type implies %s",
+                             sInfo.osName.c_str(),
+                             OGR_GetFieldTypeName(eOGRType),
+                             OGR_GetFieldTypeName(OFTDateTime));
+                    return false;
+                }
+            }
+
+            if (!bTypeOK && STARTS_WITH(format, "w:"))
+            {
+                if (eOGRType == OFTBinary)
+                {
+                    bTypeOK = true;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "For field %s, OGR field type is %s whereas "
+                             "Arrow type implies %s",
+                             sInfo.osName.c_str(),
+                             OGR_GetFieldTypeName(eOGRType),
+                             OGR_GetFieldTypeName(OFTBinary));
+                    return false;
+                }
+            }
+
+            if (!bTypeOK &&
+                (strcmp(format, "+l") == 0 || strcmp(format, "+L") == 0 ||
+                 STARTS_WITH(format, "+w:")))
+            {
+                const char *childFormat = schema->children[0]->format;
+                for (const auto &sType : gasListTypes)
+                {
+                    if (strcmp(childFormat, sType.arrowType) == 0)
                     {
                         if (eOGRType == sType.eType)
                         {
@@ -4319,174 +4435,160 @@ static bool BuildOGRFieldInfo(
                         }
                         else
                         {
-                            CPLError(
-                                CE_Failure, CPLE_AppDefined,
-                                "For field %s, OGR field type is %s whereas "
-                                "Arrow type implies %s",
-                                sInfo.osName.c_str(),
-                                OGR_GetFieldTypeName(eOGRType),
-                                OGR_GetFieldTypeName(sType.eType));
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "For field %s, OGR field type is %s "
+                                     "whereas "
+                                     "Arrow type implies %s",
+                                     sInfo.osName.c_str(),
+                                     OGR_GetFieldTypeName(eOGRType),
+                                     OGR_GetFieldTypeName(sType.eType));
                             return false;
                         }
-                    }
-                }
-
-                if (!bTypeOK && (STARTS_WITH(format, "tss:") ||
-                                 STARTS_WITH(format, "tsm:") ||
-                                 STARTS_WITH(format, "tsu:") ||
-                                 STARTS_WITH(format, "tsn:")))
-                {
-                    if (eOGRType == OFTDateTime)
-                    {
-                        bTypeOK = true;
-                    }
-                    else
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "For field %s, OGR field type is %s whereas "
-                                 "Arrow type implies %s",
-                                 sInfo.osName.c_str(),
-                                 OGR_GetFieldTypeName(eOGRType),
-                                 OGR_GetFieldTypeName(OFTDateTime));
-                        return false;
-                    }
-                }
-
-                if (!bTypeOK && STARTS_WITH(format, "w:"))
-                {
-                    if (eOGRType == OFTBinary)
-                    {
-                        bTypeOK = true;
-                    }
-                    else
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "For field %s, OGR field type is %s whereas "
-                                 "Arrow type implies %s",
-                                 sInfo.osName.c_str(),
-                                 OGR_GetFieldTypeName(eOGRType),
-                                 OGR_GetFieldTypeName(OFTBinary));
-                        return false;
-                    }
-                }
-
-                if (!bTypeOK &&
-                    (strcmp(format, "+l") == 0 || strcmp(format, "+L") == 0 ||
-                     STARTS_WITH(format, "+w:")))
-                {
-                    const char *childFormat = schema->children[0]->format;
-                    for (const auto &sType : gasListTypes)
-                    {
-                        if (strcmp(childFormat, sType.arrowType) == 0)
-                        {
-                            if (eOGRType == sType.eType)
-                            {
-                                bTypeOK = true;
-                                break;
-                            }
-                            else
-                            {
-                                CPLError(CE_Failure, CPLE_AppDefined,
-                                         "For field %s, OGR field type is %s "
-                                         "whereas "
-                                         "Arrow type implies %s",
-                                         sInfo.osName.c_str(),
-                                         OGR_GetFieldTypeName(eOGRType),
-                                         OGR_GetFieldTypeName(sType.eType));
-                                return false;
-                            }
-                        }
-                    }
-
-                    if (!bTypeOK)
-                    {
-                        CPLError(CE_Failure, CPLE_NotSupported, "%s",
-                                 ("List of type '" + std::string(childFormat) +
-                                  "' for field " + osFieldPrefix +
-                                  schema->name + " is not supported.")
-                                     .c_str());
-                        return false;
                     }
                 }
 
                 if (!bTypeOK)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported, "%s",
-                             ("Type '" + std::string(format) + "' for field " +
-                              osFieldPrefix + schema->name +
+                             ("List of type '" + std::string(childFormat) +
+                              "' for field " + osFieldPrefix + fieldName +
                               " is not supported.")
                                  .c_str());
                     return false;
                 }
             }
-            else
+
+            if (!bTypeOK)
             {
-                sInfo.iOGRFieldIdx =
-                    poFeatureDefn->GetGeomFieldIndex(sInfo.osName.c_str());
-                if (sInfo.iOGRFieldIdx < 0)
+                CPLError(CE_Failure, CPLE_NotSupported, "%s",
+                         ("Type '" + std::string(format) + "' for field " +
+                          osFieldPrefix + fieldName + " is not supported.")
+                             .c_str());
+                return false;
+            }
+        }
+        else
+        {
+            sInfo.iOGRFieldIdx =
+                poFeatureDefn->GetGeomFieldIndex(sInfo.osName.c_str());
+            if (sInfo.iOGRFieldIdx < 0)
+            {
+                if (pszGeomFieldName && pszGeomFieldName == sInfo.osName)
                 {
-                    if (pszGeomFieldName && pszGeomFieldName == sInfo.osName)
-                    {
-                        if (poFeatureDefn->GetGeomFieldCount() == 0)
-                        {
-                            CPLError(CE_Failure, CPLE_AppDefined,
-                                     "Cannot find OGR geometry field for Arrow "
-                                     "array %s",
-                                     sInfo.osName.c_str());
-                            return false;
-                        }
-                        sInfo.iOGRFieldIdx = 0;
-                    }
-                    else
-                    {
-                        // Check if ARROW:extension:name = ogc.wkb
-                        const char *pabyMetadata = schema->metadata;
-                        if (pabyMetadata)
-                        {
-                            const auto oMetadata =
-                                OGRParseArrowMetadata(pabyMetadata);
-                            auto oIter =
-                                oMetadata.find(ARROW_EXTENSION_NAME_KEY);
-                            if (oIter != oMetadata.end() &&
-                                oIter->second == EXTENSION_NAME_WKB)
-                            {
-                                if (poFeatureDefn->GetGeomFieldCount() == 0)
-                                {
-                                    CPLError(CE_Failure, CPLE_AppDefined,
-                                             "Cannot find OGR geometry field "
-                                             "for Arrow array %s",
-                                             sInfo.osName.c_str());
-                                    return false;
-                                }
-                                sInfo.iOGRFieldIdx = 0;
-                            }
-                        }
-                    }
-                    if (sInfo.iOGRFieldIdx < 0)
+                    if (poFeatureDefn->GetGeomFieldCount() == 0)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Cannot find OGR field for Arrow array %s",
+                                 "Cannot find OGR geometry field for Arrow "
+                                 "array %s",
                                  sInfo.osName.c_str());
                         return false;
                     }
+                    sInfo.iOGRFieldIdx = 0;
+                }
+                else
+                {
+                    // Check if ARROW:extension:name = ogc.wkb
+                    const char *pabyMetadata = schema->metadata;
+                    if (pabyMetadata)
+                    {
+                        const auto oMetadata =
+                            OGRParseArrowMetadata(pabyMetadata);
+                        auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+                        if (oIter != oMetadata.end() &&
+                            oIter->second == EXTENSION_NAME_WKB)
+                        {
+                            if (poFeatureDefn->GetGeomFieldCount() == 0)
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Cannot find OGR geometry field "
+                                         "for Arrow array %s",
+                                         sInfo.osName.c_str());
+                                return false;
+                            }
+                            sInfo.iOGRFieldIdx = 0;
+                        }
+                    }
                 }
 
-                if (strcmp(schema->format, "z") != 0 &&
-                    strcmp(schema->format, "Z") != 0)
+                if (sInfo.iOGRFieldIdx < 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Geometry column '%s' should be of Arrow format "
-                             "'z' (binary) or 'Z' (large binary)",
+                             "Cannot find OGR field for Arrow array %s",
                              sInfo.osName.c_str());
                     return false;
                 }
-                sInfo.bIsGeomCol = true;
             }
-        }
 
-        asFieldInfo.emplace_back(std::move(sInfo));
+            if (strcmp(schema->format, "z") != 0 &&
+                strcmp(schema->format, "Z") != 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Geometry column '%s' should be of Arrow format "
+                         "'z' (binary) or 'Z' (large binary)",
+                         sInfo.osName.c_str());
+                return false;
+            }
+            sInfo.bIsGeomCol = true;
+        }
     }
+
+    asFieldInfo.emplace_back(std::move(sInfo));
     return true;
+}
+
+/************************************************************************/
+/*                              GetValue()                              */
+/************************************************************************/
+
+template <typename ArrowType>
+inline static ArrowType GetValue(const struct ArrowArray *array,
+                                 size_t iFeature)
+{
+    const auto *panValues = static_cast<const ArrowType *>(array->buffers[1]);
+    return panValues[iFeature + array->offset];
+}
+
+/************************************************************************/
+/*                           GetUInt64Value()                           */
+/************************************************************************/
+
+static inline uint64_t GetUInt64Value(const struct ArrowSchema *schema,
+                                      const struct ArrowArray *array,
+                                      size_t iFeature)
+{
+    uint64_t nVal = 0;
+    switch (schema->format[0])
+    {
+        case 'c':
+            nVal = GetValue<int8_t>(array, iFeature);
+            break;
+        case 'C':
+            nVal = GetValue<uint8_t>(array, iFeature);
+            break;
+        case 's':
+            nVal = GetValue<int16_t>(array, iFeature);
+            break;
+        case 'S':
+            nVal = GetValue<uint16_t>(array, iFeature);
+            break;
+        case 'i':
+            nVal = GetValue<int32_t>(array, iFeature);
+            break;
+        case 'I':
+            nVal = GetValue<uint32_t>(array, iFeature);
+            break;
+        case 'l':
+            nVal = GetValue<int64_t>(array, iFeature);
+            break;
+        case 'L':
+            nVal = GetValue<uint64_t>(array, iFeature);
+            break;
+        default:
+            // Shouldn't happend given checks in BuildOGRFieldInfo()
+            CPLAssert(false);
+            break;
+    }
+    return nVal;
 }
 
 /************************************************************************/
@@ -4497,6 +4599,7 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
                                    const struct ArrowArray *array,
                                    size_t iFeature)
 {
+    const char *fieldName = schema->name;
     const char *format = schema->format;
     if (format[0] == '+' && format[1] == 's')
     {
@@ -4508,42 +4611,56 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         }
         return nRet;
     }
-    else if (format[0] == 'u')  // UTF-8
+
+    if (schema->dictionary)
     {
-        const uint8_t *pabyValidity =
-            static_cast<const uint8_t *>(array->buffers[0]);
-        if (array->null_count != 0 && pabyValidity &&
-            !TestBit(pabyValidity,
-                     static_cast<size_t>(iFeature + array->offset)))
+        if (schema->dictionary->format[0] != 'u' &&
+            schema->dictionary->format[0] != 'U')
+            return 0;
+    }
+    else if (format[0] != 'u' && format[0] != 'U')
+        return 0;
+
+    const uint8_t *pabyValidity =
+        static_cast<const uint8_t *>(array->buffers[0]);
+    if (array->null_count != 0 && pabyValidity &&
+        !TestBit(pabyValidity, static_cast<size_t>(iFeature + array->offset)))
+    {
+        // empty string
+        return 0;
+    }
+
+    if (schema->dictionary)
+    {
+        const uint64_t nDictIdx = GetUInt64Value(schema, array, iFeature);
+        const auto dictArray = array->dictionary;
+        if (nDictIdx >= static_cast<uint64_t>(dictArray->length))
         {
-            // empty string
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Feature %" PRIu64
+                     ", field %s: invalid dictionary index: %" PRIu64,
+                     static_cast<uint64_t>(iFeature), fieldName, nDictIdx);
+            return 0;
         }
-        else
-        {
-            const auto *panOffsets =
-                static_cast<const uint32_t *>(array->buffers[1]) +
-                array->offset;
-            return 1 + (panOffsets[iFeature + 1] - panOffsets[iFeature]);
-        }
+
+        array = dictArray;
+        schema = schema->dictionary;
+        format = schema->format;
+        iFeature = static_cast<size_t>(nDictIdx);
+    }
+
+    if (format[0] == 'u')  // UTF-8
+    {
+        const auto *panOffsets =
+            static_cast<const uint32_t *>(array->buffers[1]) + array->offset;
+        return 1 + (panOffsets[iFeature + 1] - panOffsets[iFeature]);
     }
     else if (format[0] == 'U')  // large UTF-8
     {
-        const uint8_t *pabyValidity =
-            static_cast<const uint8_t *>(array->buffers[0]);
-        if (array->null_count != 0 && pabyValidity &&
-            !TestBit(pabyValidity,
-                     static_cast<size_t>(iFeature + array->offset)))
-        {
-            // empty string
-        }
-        else
-        {
-            const auto *panOffsets =
-                static_cast<const uint64_t *>(array->buffers[1]) +
-                array->offset;
-            return 1 + static_cast<size_t>(panOffsets[iFeature + 1] -
-                                           panOffsets[iFeature]);
-        }
+        const auto *panOffsets =
+            static_cast<const uint64_t *>(array->buffers[1]) + array->offset;
+        return 1 + static_cast<size_t>(panOffsets[iFeature + 1] -
+                                       panOffsets[iFeature]);
     }
     return 0;
 }
@@ -4634,10 +4751,11 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
                         OGRFeature &oFeature, std::string &osWorkingBuffer)
 
 {
+    const char *fieldName = schema->name;
     const char *format = schema->format;
     if (format[0] == '+' && format[1] == 's')
     {
-        const std::string osNewPrefix(osFieldPrefix + schema->name + ".");
+        const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
             if (!FillFeature(poLayer, schema->children[i], array->children[i],
@@ -4691,6 +4809,25 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
             }
             return true;
         }
+    }
+
+    if (array->dictionary)
+    {
+        const uint64_t nDictIdx = GetUInt64Value(schema, array, iFeature);
+        auto dictArray = array->dictionary;
+        if (nDictIdx >= static_cast<uint64_t>(dictArray->length))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Feature %" PRIu64
+                     ", field %s: invalid dictionary index: %" PRIu64,
+                     static_cast<uint64_t>(iFeature),
+                     (osFieldPrefix + fieldName).c_str(), nDictIdx);
+            return false;
+        }
+        array = dictArray;
+        schema = schema->dictionary;
+        format = schema->format;
+        iFeature = static_cast<size_t>(nDictIdx);
     }
 
     if (format[0] == 'b')  // Boolean
@@ -4789,13 +4926,13 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
     {
         return FillFieldBinary<uint32_t>(array, iOGRFieldIdx, iFeature,
                                          iArrowIdx, asFieldInfo, osFieldPrefix,
-                                         schema->name, oFeature);
+                                         fieldName, oFeature);
     }
     else if (format[0] == 'Z')  // large binary
     {
         return FillFieldBinary<uint64_t>(array, iOGRFieldIdx, iFeature,
                                          iArrowIdx, asFieldInfo, osFieldPrefix,
-                                         schema->name, oFeature);
+                                         fieldName, oFeature);
     }
     else if (SetFieldForOtherFormats(
                  oFeature, iOGRFieldIdx,
@@ -4806,7 +4943,7 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
 
     CPLError(CE_Failure, CPLE_NotSupported, "%s",
              ("Type '" + std::string(format) + "' for field " + osFieldPrefix +
-              schema->name + " is not supported.")
+              fieldName + " is not supported.")
                  .c_str());
     return false;
 }

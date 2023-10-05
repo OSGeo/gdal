@@ -1517,6 +1517,38 @@ def test_ogr_mem_write_pyarrow():
         type=pa.list_(pa.large_string(), 2),
     )
 
+    dictionary = pa.array(["foo", "bar", "baz"])
+
+    indices_int8 = pa.array([0, 1, 2, None, 2], type=pa.int8())
+    dict_int8 = pa.DictionaryArray.from_arrays(indices_int8, dictionary)
+
+    indices_uint8 = pa.array([0, 1, 2, None, 2], type=pa.uint8())
+    dict_uint8 = pa.DictionaryArray.from_arrays(indices_uint8, dictionary)
+
+    indices_int16 = pa.array([0, 1, 2, None, 2], type=pa.int16())
+    dict_int16 = pa.DictionaryArray.from_arrays(indices_int16, dictionary)
+
+    indices_uint16 = pa.array([0, 1, 2, None, 2], type=pa.uint16())
+    dict_uint16 = pa.DictionaryArray.from_arrays(indices_uint16, dictionary)
+
+    indices_int32 = pa.array([0, 1, 2, None, 2], type=pa.int32())
+    dict_int32 = pa.DictionaryArray.from_arrays(indices_int32, dictionary)
+
+    indices_uint32 = pa.array([0, 1, 2, None, 2], type=pa.uint32())
+    dict_uint32 = pa.DictionaryArray.from_arrays(indices_uint32, dictionary)
+
+    indices_int64 = pa.array([0, 1, 2, None, 2], type=pa.int64())
+    dict_int64 = pa.DictionaryArray.from_arrays(indices_int64, dictionary)
+
+    indices_uint64 = pa.array([0, 1, 2, None, 2], type=pa.uint64())
+    dict_uint64 = pa.DictionaryArray.from_arrays(indices_uint64, dictionary)
+
+    dictionary_list_uint8 = pa.array([[0, 1], [2, 3]], pa.list_(pa.uint8()))
+    indices_dict_list_uint8 = pa.array([0, 1, 0, None, 1], type=pa.int32())
+    dict_list_uint8 = pa.DictionaryArray.from_arrays(
+        indices_dict_list_uint8, dictionary_list_uint8
+    )
+
     import struct
 
     wkb_geometry = pa.array(
@@ -1587,6 +1619,15 @@ def test_ogr_mem_write_pyarrow():
         "fixed_size_list_float64",
         "fixed_size_list_string",
         "fixed_size_list_large_string",
+        "dict_int8",
+        "dict_uint8",
+        "dict_int16",
+        "dict_uint16",
+        "dict_int32",
+        "dict_uint32",
+        "dict_int64",
+        "dict_uint64",
+        "dict_list_uint8",
         "wkb_geometry",
         "fid",
     ]
@@ -1675,7 +1716,59 @@ def test_ogr_mem_write_pyarrow():
   fixed_size_list_float64 (RealList) = (2:8,9)
   fixed_size_list_string (StringList) = (2:iw,j)
   fixed_size_list_large_string (StringList) = (2:iw,j)
+  dict_int8 (String) = baz
+  dict_uint8 (String) = baz
+  dict_int16 (String) = baz
+  dict_uint16 (String) = baz
+  dict_int32 (String) = baz
+  dict_uint32 (String) = baz
+  dict_int64 (String) = baz
+  dict_uint64 (String) = baz
+  dict_list_uint8 (IntegerList(Int16)) = (2:2,3)
   POINT (4 2)
 
 """
     )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("dict_values", [["foo", "bar", "baz"], [10, 20, 30]])
+def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
+    pa = pytest.importorskip("pyarrow")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+
+    dictionary = pa.array(dict_values)
+    indices_invalid_index = pa.array([0, 1, 2, None, 2], type=pa.int32())
+    dict_invalid_index = pa.DictionaryArray.from_arrays(
+        indices_invalid_index, dictionary
+    )
+    # Super hacky: we alter the last value of indices_invalid_index after
+    # building the DictionaryArray to point to an invalid item in dictionary
+    import ctypes
+
+    idx = len(dict_invalid_index.indices) - 1
+    sizeof_int32 = 4
+    raw_tab = ctypes.c_int32.from_address(
+        dict_invalid_index.indices.buffers()[1].address + idx * sizeof_int32
+    )
+    raw_tab.value = len(dictionary)
+
+    names = [
+        "dict_invalid_index",
+    ]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    lyr.CreateFieldFromPyArrowSchema(table.schema.field(0))
+
+    with pytest.raises(
+        Exception,
+        match="Feature 4, field dict_invalid_index: invalid dictionary index: 3",
+    ):
+        assert lyr.WritePyArrow(table)
