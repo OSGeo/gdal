@@ -30,6 +30,8 @@
 #include "ogr_api.h"
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
+#include "ogr_p.h"
+#include "ogr_swq.h"
 #include "ogr_wkb.h"
 
 #include "cpl_float.h"
@@ -2826,7 +2828,7 @@ BuildMapFieldNameToArrowPath(const struct ArrowSchema *schema,
 static size_t FillValidityArrayFromAttrQuery(
     const OGRLayer *poLayer, OGRFeatureQuery *poAttrQuery,
     const struct ArrowSchema *schema, struct ArrowArray *array,
-    std::vector<bool> &abyValidityFromFilters)
+    std::vector<bool> &abyValidityFromFilters, CSLConstList papszOptions)
 {
     size_t nCountIntersecting = 0;
     auto poFeatureDefn = const_cast<OGRLayer *>(poLayer)->GetLayerDefn();
@@ -2844,6 +2846,7 @@ static size_t FillValidityArrayFromAttrQuery(
     };
     std::vector<UsedFieldsInfo> aoUsedFieldsInfo;
 
+    bool bNeedsFID = false;
     const CPLStringList aosUsedFields(poAttrQuery->GetUsedFields());
     for (int i = 0; i < aosUsedFields.size(); ++i)
     {
@@ -2865,13 +2868,139 @@ static size_t FillValidityArrayFromAttrQuery(
                          aosUsedFields[i]);
             }
         }
+        else if (EQUAL(aosUsedFields[i], "FID"))
+        {
+            bNeedsFID = true;
+        }
+        else
+        {
+            CPLDebug("OGR", "Cannot find used field %s", aosUsedFields[i]);
+        }
     }
 
     const size_t nLength = abyValidityFromFilters.size();
+
+    GIntBig nBaseSeqFID = -1;
+    std::vector<int> anArrowPathToFIDColumn;
+    if (bNeedsFID)
+    {
+        // BASE_SEQUENTIAL_FID is set when there is no Arrow column for the FID
+        // and we assume sequential FID numbering
+        const char *pszBaseSeqFID =
+            CSLFetchNameValue(papszOptions, "BASE_SEQUENTIAL_FID");
+        if (pszBaseSeqFID)
+        {
+            nBaseSeqFID = CPLAtoGIntBig(pszBaseSeqFID);
+
+            // Optimizimation for "FID = constant"
+            swq_expr_node *poNode =
+                static_cast<swq_expr_node *>(poAttrQuery->GetSWQExpr());
+            if (poNode->eNodeType == SNT_OPERATION &&
+                poNode->nOperation == SWQ_EQ && poNode->nSubExprCount == 2 &&
+                poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+                poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+                poNode->papoSubExpr[0]->field_index ==
+                    poFeatureDefn->GetFieldCount() + SPF_FID &&
+                poNode->papoSubExpr[1]->field_type == SWQ_INTEGER64)
+            {
+                if (nBaseSeqFID + static_cast<int64_t>(nLength) <
+                        poNode->papoSubExpr[1]->int_value ||
+                    nBaseSeqFID > poNode->papoSubExpr[1]->int_value)
+                {
+                    return 0;
+                }
+            }
+        }
+        else
+        {
+            const char *pszFIDColumn =
+                const_cast<OGRLayer *>(poLayer)->GetFIDColumn();
+            if (pszFIDColumn && pszFIDColumn[0])
+            {
+                const auto oIter = oMapFieldNameToArrowPath.find(pszFIDColumn);
+                if (oIter != oMapFieldNameToArrowPath.end())
+                {
+                    anArrowPathToFIDColumn = oIter->second;
+                }
+            }
+            if (anArrowPathToFIDColumn.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Filtering on FID requested but cannot associate a "
+                         "FID with Arrow records");
+            }
+        }
+    }
+
     for (size_t iRow = 0; iRow < nLength; ++iRow)
     {
         if (!abyValidityFromFilters[iRow])
             continue;
+
+        if (bNeedsFID)
+        {
+            if (nBaseSeqFID >= 0)
+            {
+                oFeature.SetFID(nBaseSeqFID + iRow);
+            }
+            else if (!anArrowPathToFIDColumn.empty())
+            {
+                oFeature.SetFID(OGRNullFID);
+
+                const struct ArrowSchema *psSchemaField = schema;
+                const struct ArrowArray *psArray = array;
+                bool bSkip = false;
+                for (size_t i = 0; i < anArrowPathToFIDColumn.size(); ++i)
+                {
+                    const int iChild = anArrowPathToFIDColumn[i];
+                    if (i > 0)
+                    {
+                        const uint8_t *pabyValidity =
+                            psArray->null_count == 0
+                                ? nullptr
+                                : static_cast<uint8_t *>(
+                                      const_cast<void *>(psArray->buffers[0]));
+                        const size_t nOffsettedIndex =
+                            static_cast<size_t>(iRow + psArray->offset);
+                        if (pabyValidity &&
+                            !TestBit(pabyValidity, nOffsettedIndex))
+                        {
+                            bSkip = true;
+                            break;
+                        }
+                    }
+
+                    psSchemaField = psSchemaField->children[iChild];
+                    psArray = psArray->children[iChild];
+                }
+                if (bSkip)
+                    continue;
+
+                const char *format = psSchemaField->format;
+                const uint8_t *pabyValidity =
+                    psArray->null_count == 0
+                        ? nullptr
+                        : static_cast<uint8_t *>(
+                              const_cast<void *>(psArray->buffers[0]));
+                const size_t nOffsettedIndex =
+                    static_cast<size_t>(iRow + psArray->offset);
+                if (pabyValidity && !TestBit(pabyValidity, nOffsettedIndex))
+                {
+                    // do nothing
+                }
+                else if (format[0] == 'i')
+                {
+                    oFeature.SetFID(static_cast<const int32_t *>(
+                        psArray->buffers[1])[nOffsettedIndex]);
+                }
+                else if (format[0] == 'l')
+                {
+                    oFeature.SetFID(static_cast<const int64_t *>(
+                        psArray->buffers[1])[nOffsettedIndex]);
+                }
+            }
+        }
+
         for (const auto &sInfo : aoUsedFieldsInfo)
         {
             const int iOGRFieldIndex = sInfo.iOGRFieldIndex;
@@ -3227,7 +3356,8 @@ static size_t FillValidityArrayFromAttrQuery(
  * Assumes that CanPostFilterArrowArray() has been called and returned true.
  */
 void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
-                                    struct ArrowArray *array) const
+                                    struct ArrowArray *array,
+                                    CSLConstList papszOptions) const
 {
     if (!m_poFilterGeom && !m_poAttrQuery)
         return;
@@ -3276,7 +3406,8 @@ void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
     const size_t nCountIntersecting =
         m_poAttrQuery && nCountIntersectingGeom > 0
             ? FillValidityArrayFromAttrQuery(this, m_poAttrQuery, schema, array,
-                                             abyValidityFromFilters)
+                                             abyValidityFromFilters,
+                                             papszOptions)
         : m_poFilterGeom ? nCountIntersectingGeom
                          : nLength;
     // Nothing to do ?
@@ -3286,7 +3417,8 @@ void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
         return;
     }
 
-    if (!CompactStructArray(schema, array, 0, abyValidityFromFilters))
+    if (nCountIntersecting > 0 &&
+        !CompactStructArray(schema, array, 0, abyValidityFromFilters))
     {
         array->release(array);
         memset(array, 0, sizeof(*array));

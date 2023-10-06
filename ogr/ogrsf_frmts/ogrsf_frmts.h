@@ -161,7 +161,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual bool
     CanPostFilterArrowArray(const struct ArrowSchema *schema) const;
     void PostFilterArrowArray(const struct ArrowSchema *schema,
-                              struct ArrowArray *array) const;
+                              struct ArrowArray *array,
+                              CSLConstList papszOptions) const;
 
   public:
     OGRLayer();

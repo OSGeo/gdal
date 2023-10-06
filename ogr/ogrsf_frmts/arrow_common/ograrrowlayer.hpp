@@ -2424,6 +2424,8 @@ inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
             if (constraint.iField == m_poFeatureDefn->GetFieldCount() + SPF_FID)
             {
                 constraint.iArrayIdx = m_nRequestedFIDColumn;
+                if (constraint.iArrayIdx < 0 && m_osFIDColumn.empty())
+                    return;
             }
             else
             {
@@ -2437,8 +2439,7 @@ inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
                          "it being ignored",
                          constraint.iField ==
                                  m_poFeatureDefn->GetFieldCount() + SPF_FID
-                             ? (m_osFIDColumn.empty() ? "FID"
-                                                      : m_osFIDColumn.c_str())
+                             ? m_osFIDColumn.c_str()
                              : m_poFeatureDefn->GetFieldDefn(constraint.iField)
                                    ->GetNameRef());
             }
@@ -2448,12 +2449,11 @@ inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
             if (constraint.iField == m_poFeatureDefn->GetFieldCount() + SPF_FID)
             {
                 constraint.iArrayIdx = m_iFIDArrowColumn;
-                if (constraint.iArrayIdx < 0)
+                if (constraint.iArrayIdx < 0 && !m_osFIDColumn.empty())
                 {
                     CPLDebug(GetDriverUCName().c_str(),
                              "Constraint on field %s cannot be applied",
-                             m_osFIDColumn.empty() ? "FID"
-                                                   : m_osFIDColumn.c_str());
+                             m_osFIDColumn.c_str());
                 }
             }
             else
@@ -2755,10 +2755,24 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
     {
         if (constraint.iArrayIdx < 0)
         {
-            // can happen if ignoring a field that is needed by the
-            // attribute filter. ComputeConstraintsArrayIdx() will have
-            // warned about that
-            continue;
+            if (constraint.iField ==
+                    m_poFeatureDefn->GetFieldCount() + SPF_FID &&
+                m_osFIDColumn.empty())
+            {
+                if (!ConstraintEvaluator(constraint,
+                                         static_cast<GIntBig>(m_nFeatureIdx)))
+                {
+                    return true;
+                }
+                continue;
+            }
+            else
+            {
+                // can happen if ignoring a field that is needed by the
+                // attribute filter. ComputeConstraintsArrayIdx() will have
+                // warned about that
+                continue;
+            }
         }
 
         const arrow::Array *array =
@@ -4014,9 +4028,19 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         OverrideArrowRelease(m_poArrowDS, out_array);
 
+        const auto nFeatureIdxCur = m_nFeatureIdx;
+        m_nFeatureIdx += m_nIdxInBatch;
+
         if (m_poAttrQuery || m_poFilterGeom)
         {
-            PostFilterArrowArray(&m_sCachedSchema, out_array);
+            CPLStringList aosOptions;
+            if (m_iFIDArrowColumn < 0)
+                aosOptions.SetNameValue(
+                    "BASE_SEQUENTIAL_FID",
+                    CPLSPrintf(CPL_FRMT_GIB,
+                               static_cast<GIntBig>(nFeatureIdxCur)));
+            PostFilterArrowArray(&m_sCachedSchema, out_array,
+                                 aosOptions.List());
             if (out_array->length == 0)
             {
                 // If there are no records after filtering, start again
@@ -4024,6 +4048,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 continue;
             }
         }
+
         break;
     }
 

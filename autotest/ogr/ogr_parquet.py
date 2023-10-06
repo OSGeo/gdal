@@ -2124,6 +2124,92 @@ def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
 
 
 ###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_without_fid_column():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    ignored_fields = ["decimal128", "decimal256", "time64_ns"]
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        fld_defn = lyr_defn.GetFieldDefn(i)
+        if fld_defn.GetName().startswith("map_"):
+            ignored_fields.append(fld_defn.GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+    lyr.SetAttributeFilter("fid in (1, 3)")
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    f = lyr.GetNextFeature()
+    assert f["uint8"] == 2
+    f = lyr.GetNextFeature()
+    assert f["uint8"] == 4
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    lyr.ResetReading()
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    vals = []
+    for batch in stream:
+        for v in batch["uint8"]:
+            vals.append(v)
+    assert vals == [2, 4]
+
+    # Check that it works if the effect of the attribute filter is to
+    # skip entire row groups.
+    lyr.SetAttributeFilter("fid = 4")
+
+    lyr.ResetReading()
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    vals = []
+    for batch in stream:
+        for v in batch["uint8"]:
+            vals.append(v)
+    assert vals == [5]
+
+
+###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = "/vsimem/test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column.parquet"
+    gdal.VectorTranslate(
+        filename, "data/poly.shp", options="-unsetFieldWidth -lco FID=my_fid"
+    )
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("fid in (1, 3)")
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    f = lyr.GetNextFeature()
+    assert f["EAS_ID"] == 179
+    f = lyr.GetNextFeature()
+    assert f["EAS_ID"] == 173
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    lyr.ResetReading()
+    stream = lyr.GetArrowStreamAsNumPy()
+    vals_fid = []
+    vals_EAS_ID = []
+    for batch in stream:
+        for v in batch["my_fid"]:
+            vals_fid.append(v)
+        for v in batch["EAS_ID"]:
+            vals_EAS_ID.append(v)
+    assert vals_fid == [1, 3]
+    assert vals_EAS_ID == [179, 173]
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test attribute filter through ArrowStream API
 # We use the pyarrow API, to be able to test we correctly deal with decimal
 # data type

@@ -84,6 +84,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     std::vector<int> m_anMapGeomFieldIndexToParquetColumn{};
     bool m_bHasMissingMappingToParquet = false;
 
+    std::vector<int64_t> m_anSelectedGroupsStartFeatureIdx{};
     std::vector<int> m_anRequestedParquetColumns{};  // only valid when
                                                      // m_bIgnoredFields is set
 #ifdef DEBUG
