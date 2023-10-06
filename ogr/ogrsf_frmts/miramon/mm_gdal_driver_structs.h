@@ -76,6 +76,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #define MM_INCR_NUMBER_OF_NODES      2000
 #define MM_FIRST_NUMBER_OF_POLYGONS 10000
 #define MM_INCR_NUMBER_OF_POLYGONS  1000
+#define MM_FIRST_NUMBER_OF_VERTICES     10000
 #define MM_INCR_NUMBER_OF_VERTICES      1000
 
 #define MM_250MB   262144000
@@ -626,7 +627,7 @@ struct MiraMonLayerInfo
     
     // Number of elements of the layer. It's mandatory knowing 
     // it before writing the layer on disk.
-    MM_INTERNAL_FID nSuposedElemCount; 
+    //MM_INTERNAL_FID nSuposedElemCount; 
     MM_INTERNAL_FID nFinalElemCount; // Real element count after conversion
     
     // Header of the layer

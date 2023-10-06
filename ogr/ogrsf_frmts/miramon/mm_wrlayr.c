@@ -476,8 +476,7 @@ int MMInitZSectionDescription(struct MM_ZSection *pZSection)
 
 int MMInitZSectionLayer(struct MiraMonLayerInfo *hMiraMonLayer, 
                         FILE_TYPE *pF3d,
-                        struct MM_ZSection *pZSection,
-                        MM_FILE_OFFSET ZSectionOffset)
+                        struct MM_ZSection *pZSection)
 {
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
@@ -493,10 +492,11 @@ int MMInitZSectionLayer(struct MiraMonLayerInfo *hMiraMonLayer,
 
     // ZH
     pZSection->ZHeader.nMyDiskSize=32;
-    pZSection->ZSectionOffset=ZSectionOffset;
+    pZSection->ZSectionOffset=0;
 
     // ZD
-    pZSection->nMaxZDescription=hMiraMonLayer->nSuposedElemCount;
+    pZSection->nMaxZDescription=
+        MM_FIRST_NUMBER_OF_VERTICES*sizeof(double);
     if(MMInitZSectionDescription(pZSection))
         return 1;
 
@@ -505,12 +505,11 @@ int MMInitZSectionLayer(struct MiraMonLayerInfo *hMiraMonLayer,
     else
         pZSection->nZDDiskSize=MM_SIZE_OF_ZD_64_BITS;
 
-    pZSection->ZDOffset=pZSection->ZSectionOffset+
-            pZSection->ZHeader.nMyDiskSize;
+    pZSection->ZDOffset=0;
 
     // ZL
     if(MMInitFlush(&pZSection->FlushZL, pF3d, 
-            sizeof(double)*hMiraMonLayer->nSuposedElemCount, &pZSection->pZL, 
+            MM_250MB, &pZSection->pZL, 
             0, sizeof(double)))
         return 1;
 
@@ -571,7 +570,7 @@ int MMInitPointLayer(struct MiraMonLayerInfo *hMiraMonLayer, int bIs3d)
 
     if(MMInitFlush(&hMiraMonLayer->MMPoint.FlushTL, 
             hMiraMonLayer->MMPoint.pFTL, 
-            2*sizeof(double)*hMiraMonLayer->nSuposedElemCount, 
+            MM_250MB, 
             &hMiraMonLayer->MMPoint.pTL, 
             0, MM_SIZE_OF_TL))
            return 1;
@@ -594,10 +593,7 @@ int MMInitPointLayer(struct MiraMonLayerInfo *hMiraMonLayer, int bIs3d)
     // Zsection
     if(MMInitZSectionLayer(hMiraMonLayer, 
                     hMiraMonLayer->MMPoint.pF3d, 
-                    &hMiraMonLayer->MMPoint.pZSection,
-                    hMiraMonLayer->nHeaderDiskSize+
-                    hMiraMonLayer->nSuposedElemCount*
-                    hMiraMonLayer->MMPoint.FlushTL.nMyDiskSize))
+                    &hMiraMonLayer->MMPoint.pZSection))
         return 1;
 
     // MIRAMON DATA BASE
@@ -643,7 +639,7 @@ struct MiraMonArcLayer *pMMArcLayer;
 
 
     // Node Header
-    pMMArcLayer->MMNode.nMaxNodeHeader=2*hMiraMonLayer->nSuposedElemCount;
+    pMMArcLayer->MMNode.nMaxNodeHeader=MM_FIRST_NUMBER_OF_NODES;
     if(NULL==(pMMArcLayer->MMNode.pNodeHeader=(struct MM_NH *)calloc_function(
                             pMMArcLayer->MMNode.nMaxNodeHeader*
                             sizeof(*pMMArcLayer->MMNode.pNodeHeader))))
@@ -666,7 +662,7 @@ struct MiraMonArcLayer *pMMArcLayer;
     fseek_function(pMMArcLayer->MMNode.pFNL, 0, SEEK_SET);
 
     if(MMInitFlush(&pMMArcLayer->MMNode.FlushNL, pMMArcLayer->MMNode.pFNL, 
-            2*hMiraMonLayer->nSuposedElemCount, &pMMArcLayer->MMNode.pNL, 0, 0))
+            MM_250MB, &pMMArcLayer->MMNode.pNL, 0, 0))
            return 1;
 
     // Creating the DBF file name
@@ -724,7 +720,7 @@ struct MM_TH *pArcTopHeader;
     else
         pMMArcLayer->nSizeArcHeader=MM_SIZE_OF_AH_64BITS;
 
-    pMMArcLayer->nMaxArcHeader=hMiraMonLayer->nSuposedElemCount;
+    pMMArcLayer->nMaxArcHeader=MM_FIRST_NUMBER_OF_ARCS;
     if(NULL==(pMMArcLayer->pArcHeader=(struct MM_AH *)calloc_function(
                             pMMArcLayer->nMaxArcHeader*
                             sizeof(*pMMArcLayer->pArcHeader))))
@@ -741,9 +737,8 @@ struct MM_TH *pArcTopHeader;
         return 1;
     fseek_function(pMMArcLayer->pFAL, 0, SEEK_SET);
 
-    // ·$· Aproximate properly (N vertices in a layer)
     if(MMInitFlush(&pMMArcLayer->FlushAL, pMMArcLayer->pFAL, 
-            2*hMiraMonLayer->nSuposedElemCount, &pMMArcLayer->pAL, 0, 0))
+            MM_500MB, &pMMArcLayer->pAL, 0, 0))
            return 1;
 
     // 3D
@@ -760,10 +755,7 @@ struct MM_TH *pArcTopHeader;
 
         if(MMInitZSectionLayer(hMiraMonLayer, 
                         pMMArcLayer->pF3d, 
-                        &pMMArcLayer->pZSection,
-                        hMiraMonLayer->nHeaderDiskSize+
-                        hMiraMonLayer->nSuposedElemCount*pMMArcLayer->nSizeArcHeader+
-                        hMiraMonLayer->nSuposedElemCount*pMMArcLayer->FlushAL.nMyDiskSize))
+                        &pMMArcLayer->pZSection))
             return 1;
     }
 
@@ -831,7 +823,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
     fseek_function(pMMPolygonLayer->pFPS, 0, SEEK_SET);
 
     if(MMInitFlush(&pMMPolygonLayer->FlushPS, pMMPolygonLayer->pFPS, 
-            hMiraMonLayer->nSuposedElemCount, &pMMPolygonLayer->pPS, 0, 
+            MM_500MB, &pMMPolygonLayer->pPS, 0, 
             pMMPolygonLayer->nPSElementSize))
            return 1;
 
@@ -841,7 +833,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
     else
         pMMPolygonLayer->nPHElementSize=MM_SIZE_OF_PH_64BITS;
 
-    pMMPolygonLayer->nMaxPolHeader=hMiraMonLayer->nSuposedElemCount+1;  
+    pMMPolygonLayer->nMaxPolHeader=MM_FIRST_NUMBER_OF_POLYGONS+1;  
     if(NULL==(pMMPolygonLayer->pPolHeader=(struct MM_PH *)calloc_function(
             pMMPolygonLayer->nMaxPolHeader*
             sizeof(*pMMPolygonLayer->pPolHeader))))
@@ -857,20 +849,20 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         reset_extension(pMMPolygonLayer->pszPALName, "~PL"));
 
     if(NULL==(pMMPolygonLayer->pFPAL = fopen_function(pMMPolygonLayer->pszPALName, 
-        hMiraMonLayer->pszFlags)))
+            hMiraMonLayer->pszFlags)))
         return 1;
     fseek_function(pMMPolygonLayer->pFPAL, 0, SEEK_SET);
 
     if(MMInitFlush(&pMMPolygonLayer->FlushPAL, pMMPolygonLayer->pFPAL, 
-            hMiraMonLayer->nSuposedElemCount, &pMMPolygonLayer->pPAL, 0, 0))
-           return 1;
+            MM_500MB, &pMMPolygonLayer->pPAL, 0, 0))
+        return 1;
 
     // Creating the DBF file name
     pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName=strdup_function(
                 pMMPolygonLayer->pszLayerName);
     if(MMResetExtensionAndLastLetter(pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName, 
                 pMMPolygonLayer->pszLayerName, "P.dbf"))
-            return 1;
+        return 1;
 
     return 0;
 }
@@ -882,8 +874,6 @@ int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer)
     if(hMiraMonLayer->eLT==MM_LayerType_Point || 
         hMiraMonLayer->eLT==MM_LayerType_Point3d)
     {
-        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_POINTS;
-        
         hMiraMonLayer->MMPoint.pszLayerName=strdup_function(
                 hMiraMonLayer->pszSrcLayerName);
         if(hMiraMonLayer->eLT==MM_LayerType_Point3d)
@@ -901,8 +891,6 @@ int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer)
     {
         struct MiraMonArcLayer *pMMArcLayer=&hMiraMonLayer->MMArc;
 
-        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_ARCS;
-
         pMMArcLayer->pszLayerName=strdup_function(
             hMiraMonLayer->pszSrcLayerName);
         if(hMiraMonLayer->eLT==MM_LayerType_Arc3d)
@@ -919,8 +907,6 @@ int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer)
         hMiraMonLayer->eLT==MM_LayerType_Pol3d)
     {
         struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
-
-        hMiraMonLayer->nSuposedElemCount=MM_FIRST_NUMBER_OF_POLYGONS;
 
         if(hMiraMonLayer->eLT==MM_LayerType_Pol3d)
             bIs3d=1;
@@ -2159,8 +2145,7 @@ MM_TIPUS_N_VERTEXS nPolVertices=0;
                         &pMMArc->nMaxArcHeader, 
                         pArcTopHeader->nElemCount,
                         MM_INCR_NUMBER_OF_ARCS,
-                        hMMFeature->nNRings>hMiraMonLayer->nSuposedElemCount?
-                        hMMFeature->nNRings:hMiraMonLayer->nSuposedElemCount))
+                        0))
         {
             error_message_function("Memory error\n");
             return MM_FATAL_ERROR_WRITING_FEATURES;
