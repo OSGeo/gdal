@@ -724,6 +724,7 @@ struct ArrowSchema;
 
 bool CPL_DLL OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
                                           const struct ArrowSchema *schema,
+                                          char **papszOptions,
                                           char **ppszErrorMsg);
 bool CPL_DLL OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
                                               const struct ArrowSchema *schema,

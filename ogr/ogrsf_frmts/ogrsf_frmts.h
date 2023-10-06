@@ -165,9 +165,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                               CSLConstList papszOptions) const;
 
     //! @cond Doxygen_Suppress
-    bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
-                                        const std::string &osFieldPrefix,
-                                        std::string &osErrorMsg) const;
     bool CreateFieldFromArrowSchemaInternal(const struct ArrowSchema *schema,
                                             const std::string &osFieldPrefix,
                                             CSLConstList papszOptions);
@@ -213,6 +210,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
                                 CSLConstList papszOptions = nullptr);
     virtual bool IsArrowSchemaSupported(const struct ArrowSchema *schema,
+                                        CSLConstList papszOptions,
                                         std::string &osErrorMsg) const;
     virtual bool
     CreateFieldFromArrowSchema(const struct ArrowSchema *schema,

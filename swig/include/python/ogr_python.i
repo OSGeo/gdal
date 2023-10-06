@@ -538,7 +538,7 @@ def ReleaseResultSet(self, sql_lyr):
         return Stream(stream, use_masked_arrays)
 
 
-    def IsPyArrowSchemaSupported(self, pa_schema):
+    def IsPyArrowSchemaSupported(self, pa_schema, options=[]):
         """Returns whether the passed pyarrow Schema is supported by the layer, as a tuple (success: bool, errorMsg: str).
 
            This may be used as a preliminary check before calling WritePyArrowBatch()
@@ -547,7 +547,7 @@ def ReleaseResultSet(self, sql_lyr):
         import pyarrow as pa
         schema = ArrowSchema()
         pa_schema._export_to_c(schema._getPtr())
-        return self.IsArrowSchemaSupported(schema)
+        return self.IsArrowSchemaSupported(schema, options)
 
 
     def CreateFieldFromPyArrowSchema(self, pa_schema, options=[]):

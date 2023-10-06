@@ -408,6 +408,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     GIntBig GetFeatureCount(int bForce) override;
 
     bool IsArrowSchemaSupported(const struct ArrowSchema * /*schema*/,
+                                CSLConstList /* papszOptions */,
                                 std::string & /*osErrorMsg */) const override
     {
         return true;

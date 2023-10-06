@@ -1505,9 +1505,9 @@ public:
 #endif
 
 #ifdef SWIGPYTHON
-    void IsArrowSchemaSupported(const struct ArrowSchema *schema, bool* pbRet, char **errorMsg)
+    void IsArrowSchemaSupported(const struct ArrowSchema *schema, bool* pbRet, char **errorMsg, char** options = NULL)
     {
-        *pbRet = OGR_L_IsArrowSchemaSupported(self, schema, errorMsg);
+        *pbRet = OGR_L_IsArrowSchemaSupported(self, schema, options, errorMsg);
     }
 #endif
 
