@@ -295,10 +295,8 @@ struct MiraMonRasterMetaData
 
 struct MiraMonFieldValue
 {
-    #define MM_MAX_STRING_FIELD_VALUE   50000  // Never less than 10
-	char pStaticValue[MM_MAX_STRING_FIELD_VALUE];   // For string values (or value of a type
-                        //      of field not included in the following lines).
-                        // For data values with YYYYMMDD format.
+    #define MM_INIT_STRING_FIELD_VALUE   50000  // Never less than 10
+	MM_NUMERATOR_DBF_FIELD_TYPE nNumDinValue; // Size of the reserved string value
     char *pDinValue;       // Used if MM_MAX_STRING_FIELD_VALUE is not enough
 	double dValue;     // For double and 32 bit integer numeric values and 
     __int64 iValue;    // For 64 bit integer values. 
@@ -580,13 +578,13 @@ struct MiraMonFeature
     unsigned __int64 nIRing; // The ring is being processed
     
     // Number of reserved elements in *pNCoord
-    unsigned __int64 nMaxpNCoord; 
-    unsigned __int64 *pNCoord; // [0]=1 for lines and points
+    MM_TIPUS_N_VERTEXS nMaxpNCoord; 
+    MM_TIPUS_N_VERTEXS *pNCoord; // [0]=1 for lines and points
 
     // Number of reserved elements in *pCoord
-    unsigned __int64 nMaxpCoord; 
+    MM_TIPUS_N_VERTEXS nMaxpCoord; 
     // Coordinate index thats is being processed
-    unsigned __int64 nICoord; 
+    MM_TIPUS_N_VERTEXS nICoord; 
     // List of the coordinates of the feature
     struct MM_POINT_2D *pCoord; 
 

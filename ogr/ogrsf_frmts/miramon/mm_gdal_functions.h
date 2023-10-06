@@ -37,7 +37,9 @@ int MMWriteValueToRecordDBXP(struct MMAdmDatabase *pMMAdmDB,
                               const struct MM_CAMP *camp, 
                               const void *valor,
                               MM_BOOLEAN is_64);
-
+int MM_SecureCopyStringFieldValue(char **pszStringDst,
+                                 const char *pszStringSrc,
+                                 MM_NUMERATOR_DBF_FIELD_TYPE *nStringCurrentLenght);
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
 							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,

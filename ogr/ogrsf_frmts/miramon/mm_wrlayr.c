@@ -121,7 +121,7 @@ void MMDestroyMMDB(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMTestAndFixValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
                               MM_NUMERATOR_DBF_FIELD_TYPE nIField, 
                               const void *valor,
-                              MM_BOOLEAN is_64);
+                              unsigned char nWTDNewDecimals);
 
 /* -------------------------------------------------------------------- */
 /*      Layer Functions: Header                                         */
@@ -2823,10 +2823,10 @@ int MMResizeIntPointer(int **pInt,
 }
 
 int MMResizeMM_POINT2DPointer(struct MM_POINT_2D **pPoint2D, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+                        MM_TIPUS_N_VERTEXS *nMax, 
+                        MM_TIPUS_N_VERTEXS nNum, 
+                        MM_TIPUS_N_VERTEXS nIncr,
+                        MM_TIPUS_N_VERTEXS nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -3494,52 +3494,29 @@ MM_EXT_DBF_N_FIELDS nNFields;
 
 int MMTestAndFixValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
                               MM_NUMERATOR_DBF_FIELD_TYPE nIField, 
-                              const void *valor,
-                              MM_BOOLEAN is_64)
+                              char *szValue,
+                              unsigned char nWTDNewDecimals)
 {
     struct MM_CAMP *camp=pMMAdmDB->pMMBDXP->Camp+nIField;
     MM_TIPUS_BYTES_PER_CAMP_DBF nNewWidth;
 
-    if(camp->BytesPerCamp>=pMMAdmDB->nNumStringToOperate)
+    if(!szValue)
+        return 0;
+
+    nNewWidth=(MM_TIPUS_BYTES_PER_CAMP_DBF)strlen(szValue);
+    if(nNewWidth+1>=pMMAdmDB->nNumStringToOperate)
     {
         char *p;
-		p=calloc_function((size_t)camp->BytesPerCamp+(size_t)10);
+		p=calloc_function(strlen(szValue));
         if(!p)
         {
             error_message_function("Not enough memory");
             return 1;
         }
         pMMAdmDB->szStringToOperate=p;
-        pMMAdmDB->nNumStringToOperate=camp->BytesPerCamp+10;
+        pMMAdmDB->nNumStringToOperate=(MM_NUMERATOR_DBF_FIELD_TYPE)strlen(szValue)+1;
     }
-
-    if (camp->TipusDeCamp=='N')
-    {
-        if(!is_64)
-        {
-    	    sprintf(pMMAdmDB->szStringToOperate,
-        		    "%*.*f",
-                    camp->BytesPerCamp,
-                    camp->DecimalsSiEsFloat,
-                    *(const double *)valor);
-        }
-        else
-        {
-            sprintf(pMMAdmDB->szStringToOperate,
-        		    "%*lld",
-                    camp->BytesPerCamp,
-                    *(const __int64 *)valor);
-        }
-    }
-    else
-    {
-    	sprintf(pMMAdmDB->szStringToOperate,
-        		"%-*s",
-                camp->BytesPerCamp,
-                (const char *)valor);
-    }
-
-    nNewWidth=(MM_TIPUS_BYTES_PER_CAMP_DBF)strlen(pMMAdmDB->szStringToOperate);
+    
     if(nNewWidth>camp->BytesPerCamp)
     {
         if(MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
@@ -3552,8 +3529,9 @@ int MMTestAndFixValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
 
         pMMAdmDB->pMMBDXP->pfBaseDades=pMMAdmDB->pFExtDBF;
 
+        // //·$·AP Nous decimals?
         if(MM_ChangeDBFWidthField(pMMAdmDB->pMMBDXP, nIField, 
-            nNewWidth, 0, MM_NOU_N_DECIMALS_NO_APLICA))
+            nNewWidth, 0, nWTDNewDecimals))
             return 1;
 
         // The record on course also has to change its size.
@@ -3641,22 +3619,11 @@ struct MM_BASE_DADES_XP *pBD_XP=NULL;
         {
             if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
 	        {
-                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
-                {
-                    if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
-                               hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
-                               FALSE))
-                        return 1;
-                }
-                else
-                {
-                    if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
-                               pBD_XP->Camp+nIField+nNumPrivateMMField, 
-                               hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                               FALSE))
-                        return 1;
-                }
+                if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
+                           pBD_XP->Camp+nIField+nNumPrivateMMField, 
+                           hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
+                           FALSE))
+                    return 1;
 	        }
             else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='N')
 	        {
@@ -3682,7 +3649,7 @@ struct MM_BASE_DADES_XP *pBD_XP=NULL;
 	        {
                 if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
-                               &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
+                               hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
                                FALSE))
                    return 1;
 	        }
@@ -3721,62 +3688,12 @@ struct MM_BASE_DADES_XP *pBD_XP;
     if(nIField>=hMMFeature->pRecords[nIRecord].nNumField)
         return 0;
     
-    if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
-    {
-        if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
-        {
-            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
-                       nIField+nNumPrivateMMField, 
-                       hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
-                       FALSE))
-                return 1;
-        }
-        else
-        {
-            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
-                       nIField+nNumPrivateMMField, 
-                       hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                       FALSE))
-                return 1;
-        }
-    }
-    else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='N')
-    {
-        if(pBD_XP->Camp[nIField+nNumPrivateMMField].Is64)
-        {
-            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
-                       nIField+nNumPrivateMMField, 
-                       &hMMFeature->pRecords[nIRecord].pField[nIField].iValue,
-                       TRUE))
-                return 1;
-        }
-        else
-        {
-            if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
-                       nIField+nNumPrivateMMField, 
-                       &hMMFeature->pRecords[nIRecord].pField[nIField].dValue,
-                       FALSE))
-                return 1;
-        }
-        
-    }
-    else if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='D')
-    {
-        if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
-                       nIField+nNumPrivateMMField, 
-                       &hMMFeature->pRecords[nIRecord].pField[nIField].pStaticValue,
-                       FALSE))
-           return 1;
-    }
-    else
-    {
-        if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
-                       nIField+nNumPrivateMMField, 
-                       &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
-                       FALSE))
-           return 1;
-    }
-
+    if(MMTestAndFixValueToRecordDBXP(pMMAdmDB, 
+               nIField+nNumPrivateMMField, 
+               hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue,
+               MM_NOU_N_DECIMALS_NO_APLICA))
+        return 1;
+    
     // We analize next fields
     if(nIField==hMMFeature->pRecords[nIRecord].nNumField-1)
     {
@@ -3822,10 +3739,6 @@ struct MM_FLUSH_INFO *pFlushRecList;
             pFlushRecList, nNumPrivateMMField, 0, 0))
         return 1;
 
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPoint.MMAdmDB, 
-            0, &nElemCount, TRUE))
-        return 1;
-    
     // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
     MMWriteValueToRecordDBXP(&hMiraMonLayer->MMPoint.MMAdmDB, 
@@ -3871,22 +3784,6 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &pMMArcLayer->MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-        return 1;
-
-    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
-            0, &nElemCount, TRUE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
-            1, &pArcHeader->nElemCount, TRUE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
-            2, &pArcHeader->dfLenght, FALSE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
-            3, &pArcHeader->nFirstIdNode, TRUE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&pMMArcLayer->MMAdmDB, 
-            4, &pArcHeader->nLastIdNode, TRUE))
         return 1;
 
     // Now lenght is sure, write
@@ -3952,20 +3849,6 @@ double nDoubleValue;
     pMMNodeLayer->MMAdmDB.FlushRecList.SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
     pMMNodeLayer->MMAdmDB.FlushRecList.pBlockToBeSaved=(void *)pszRecordOnCourse;
     
-    // Test lenght
-    if(MMTestAndFixValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
-            0, &nElemCount, TRUE))
-        return 1;
-    nDoubleValue=pNodeHeader->nArcsCount;
-    if(MMTestAndFixValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
-            1, &nDoubleValue, FALSE))
-        return 1;
-    nDoubleValue=pNodeHeader->cNodeType;
-    if(MMTestAndFixValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
-            2, &nDoubleValue, FALSE))
-        return 1;
-
-    // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
     MMWriteValueToRecordDBXP(&pMMNodeLayer->MMAdmDB, 
         pszRecordOnCourse, pBD_XP->Camp, 
@@ -4014,25 +3897,6 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &hMiraMonLayer->MMPolygon.MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-        return 1;
-
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
-            0, &nElemCount, TRUE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
-            1, &nVerticesCount, TRUE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
-            2, &pPolHeader->dfPerimeter, FALSE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
-            3, &pPolHeader->dfArea, FALSE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
-            4, &pPolHeader->nArcsCount, TRUE))
-        return 1;
-    if(MMTestAndFixValueToRecordDBXP(&hMiraMonLayer->MMPolygon.MMAdmDB, 
-            5, &pPolHeader->nRingsCount, TRUE))
         return 1;
 
     // Now lenght is sure, write

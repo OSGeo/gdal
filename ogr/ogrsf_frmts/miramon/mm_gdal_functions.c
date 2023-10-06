@@ -1338,14 +1338,42 @@ char *ptr;
 	return TRUE;
 }
 
+int MM_SecureCopyStringFieldValue(char **pszStringDst,
+                                 const char *pszStringSrc,
+                                 MM_NUMERATOR_DBF_FIELD_TYPE *nStringCurrentLenght)
+{
+    if(!pszStringSrc)
+    {
+        if(1>=*nStringCurrentLenght)
+        {
+            (*pszStringDst)=realloc_function(*pszStringDst, 2);
+            if(!(*pszStringDst))
+                return 1;
+            *nStringCurrentLenght=(MM_NUMERATOR_DBF_FIELD_TYPE)2;
+        }
+        strcpy(*pszStringDst, "\0");
+        return 0;
+    }
+
+    if(strlen(pszStringSrc)>=*nStringCurrentLenght)
+    {
+        (*pszStringDst)=realloc_function(*pszStringDst, strlen(pszStringSrc)+1);
+        if(!(*pszStringDst))
+            return 1;
+        *nStringCurrentLenght=(MM_NUMERATOR_DBF_FIELD_TYPE)(strlen(pszStringSrc)+1);
+    }
+    strcpy(*pszStringDst, pszStringSrc);
+    return 0;
+}
+
 // This function assumes that all the file is saved in disk and closed.
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
-							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
-							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
-                            MM_BYTE nou_decimals,
+							MM_NUMERATOR_DBF_FIELD_TYPE nIField,
+							MM_TIPUS_BYTES_PER_CAMP_DBF nNewWidth,
+                            MM_BYTE nNewPrecision,
 							MM_BYTE que_fer_amb_reformatat_decimals)
 {
-char *registre, *blancs=NULL;
+char *record, *whites=NULL;
 MM_TIPUS_BYTES_PER_CAMP_DBF l_glop1, l_glop2, i_glop2;
 MM_NUMERATOR_RECORD i_reg, nfitx;
 int canvi_amplada;
@@ -1357,29 +1385,29 @@ int retorn_TruncaFitxer;
 MM_BOOLEAN error_sprintf_n_decimals=FALSE;
 int retorn_printf;
 
-	canvi_amplada = novaamplada - base_dades_XP->Camp[quincamp].BytesPerCamp;
+	canvi_amplada = nNewWidth - base_dades_XP->Camp[nIField].BytesPerCamp;
 	
     if (base_dades_XP->nfitxes != 0)
 	{
-		l_glop1 = base_dades_XP->Camp[quincamp].BytesAcumulats;
-		i_glop2 = l_glop1 + base_dades_XP->Camp[quincamp].BytesPerCamp;
-		if (quincamp == base_dades_XP->ncamps-1)
+		l_glop1 = base_dades_XP->Camp[nIField].BytesAcumulats;
+		i_glop2 = l_glop1 + base_dades_XP->Camp[nIField].BytesPerCamp;
+		if (nIField == base_dades_XP->ncamps-1)
 			l_glop2 = 0;
 		else
 			l_glop2 = base_dades_XP->BytesPerFitxa -
-					base_dades_XP->Camp[quincamp + 1].BytesAcumulats;
+					base_dades_XP->Camp[nIField + 1].BytesAcumulats;
 
-		if ((registre = calloc_function(base_dades_XP->BytesPerFitxa)) == NULL)
+		if ((record = calloc_function(base_dades_XP->BytesPerFitxa)) == NULL)
 		    return 1;
 		
-        registre[base_dades_XP->BytesPerFitxa-1]=MM_MarcaFinalDeCadena;
+        record[base_dades_XP->BytesPerFitxa-1]=MM_MarcaFinalDeCadena;
 
-        if ((blancs = (char *) calloc_function(novaamplada)) == NULL)
+        if ((whites = (char *) calloc_function(nNewWidth)) == NULL)
         {
-            free_function (registre);
+            free_function (record);
             return 1;
         }
-        memset(blancs, ' ', novaamplada);
+        memset(whites, ' ', nNewWidth);
         
 
 		nfitx = base_dades_XP->nfitxes;
@@ -1397,16 +1425,16 @@ int retorn_printf;
                            (MM_FILE_OFFSET)i_reg * base_dades_XP->BytesPerFitxa,
                            SEEK_SET))
             {
-                if (blancs) free_function(blancs);
-                free_function (registre);
+                if (whites) free_function(whites);
+                free_function (record);
                 return 1;
             }
 
-            if(1!=fread_function(registre, base_dades_XP->BytesPerFitxa,
+            if(1!=fread_function(record, base_dades_XP->BytesPerFitxa,
                             1, base_dades_XP->pfBaseDades))
             {
-                if (blancs) free_function(blancs);
-                free_function (registre);
+                if (whites) free_function(whites);
+                free_function (record);
                 return 1;
             }
             
@@ -1416,37 +1444,37 @@ int retorn_printf;
                             (MM_FILE_OFFSET)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada),
                             SEEK_SET))
             {
-                if (blancs) free_function(blancs);
-                free_function (registre);
+                if (whites) free_function(whites);
+                free_function (record);
                 return 1;
             }
             
-            if(1!=fwrite_function(registre, l_glop1, 1, base_dades_XP->pfBaseDades))
+            if(1!=fwrite_function(record, l_glop1, 1, base_dades_XP->pfBaseDades))
             {
-                if (blancs) free_function(blancs);
-                free_function (registre);
+                if (whites) free_function(whites);
+                free_function (record);
                 return 1;
             }
 
-            switch (base_dades_XP->Camp[quincamp].TipusDeCamp)
+            switch (base_dades_XP->Camp[nIField].TipusDeCamp)
             {
                 case 'C':
                 case 'L':
-                    memcpy(blancs,
-                       registre + l_glop1,
-                        ( canvi_amplada<0 ? novaamplada :
-                               base_dades_XP->Camp[quincamp].BytesPerCamp));
-                    retorn_fwrite=fwrite_function(blancs, novaamplada, 1, base_dades_XP->pfBaseDades);
+                    memcpy(whites,
+                       record + l_glop1,
+                        ( canvi_amplada<0 ? nNewWidth :
+                               base_dades_XP->Camp[nIField].BytesPerCamp));
+                    retorn_fwrite=fwrite_function(whites, nNewWidth, 1, base_dades_XP->pfBaseDades);
 
                     if(1!=retorn_fwrite)
                     {
-                        if (blancs) free_function(blancs);
-                        free_function (registre);
+                        if (whites) free_function(whites);
+                        free_function (record);
                         return 1;
                     }
                     break;
                 case 'N':
-                    if (nou_decimals == base_dades_XP->Camp[quincamp].DecimalsSiEsFloat ||
+                    if (nNewPrecision == base_dades_XP->Camp[nIField].DecimalsSiEsFloat ||
                         que_fer_amb_reformatat_decimals==MM_NOU_N_DECIMALS_NO_APLICA)
                         que_fer_amb_reformatat_decimals=MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS;
                     else if (que_fer_amb_reformatat_decimals==MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM)
@@ -1457,13 +1485,13 @@ int retorn_printf;
                     {
                         if (canvi_amplada>=0)
                         {
-                            if( 1!=fwrite_function(blancs, canvi_amplada, 1, base_dades_XP->pfBaseDades) ||
-                                1!=fwrite_function(registre + l_glop1,
-                                        base_dades_XP->Camp[quincamp].BytesPerCamp, 1,
+                            if( 1!=fwrite_function(whites, canvi_amplada, 1, base_dades_XP->pfBaseDades) ||
+                                1!=fwrite_function(record + l_glop1,
+                                        base_dades_XP->Camp[nIField].BytesPerCamp, 1,
                                         base_dades_XP->pfBaseDades))
                             {
-                                if (blancs) free_function(blancs);
-                                free_function (registre);
+                                if (whites) free_function(whites);
+                                free_function (record);
                                 return 1;
                             }
                         }
@@ -1473,71 +1501,71 @@ int retorn_printf;
                             #ifdef _MSC_VER
                             #pragma warning( disable : 4127 )
                             #endif
-                            for(j=(signed __int32)(l_glop1 + (base_dades_XP->Camp[quincamp].BytesPerCamp-1));TRUE;j--)
+                            for(j=(signed __int32)(l_glop1 + (base_dades_XP->Camp[nIField].BytesPerCamp-1));TRUE;j--)
                             #ifdef _MSC_VER
                             #pragma warning( default : 4127 )
                             #endif
                             {
-                                if(j<(signed)l_glop1 || registre[j] ==  ' ')
+                                if(j<(signed)l_glop1 || record[j] ==  ' ')
                                 {
                                     j++;
                                     break;
                                 }
                             }
 
-                            if((base_dades_XP->Camp[quincamp].BytesPerCamp + l_glop1- j) < novaamplada)
-                                j -= (signed __int32)(novaamplada - (base_dades_XP->Camp[quincamp].BytesPerCamp + l_glop1-j));
+                            if((base_dades_XP->Camp[nIField].BytesPerCamp + l_glop1- j) < nNewWidth)
+                                j -= (signed __int32)(nNewWidth - (base_dades_XP->Camp[nIField].BytesPerCamp + l_glop1-j));
 
-                            retorn_fwrite=fwrite_function(registre+j, novaamplada, 1, base_dades_XP->pfBaseDades);
+                            retorn_fwrite=fwrite_function(record+j, nNewWidth, 1, base_dades_XP->pfBaseDades);
                             if(1!=retorn_fwrite)
                             {
-                                if (blancs) free_function(blancs);
-                                free_function (registre);
+                                if (whites) free_function(whites);
+                                free_function (record);
                                 return 1;
                             }
                         }
                     }
-                    else // APLICAR_NOU_N_DECIMALS
-                    {	// Canvia el nombre de decimals i cal reformatar
+                    else // MM_APLICAR_NOU_N_DECIMALS
+                    {	
                         double valor;
                         char *sz_valor;
 
-                        if ((sz_valor=calloc_function(max(novaamplada,base_dades_XP->Camp[quincamp].BytesPerCamp)+1))==NULL) // Sumo 1 per poder posar-hi el \0
+                        if ((sz_valor=calloc_function(max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp)+1))==NULL) // Sumo 1 per poder posar-hi el \0
                         {
-                            if (blancs) free_function(blancs);
-                            free_function (registre);
+                            if (whites) free_function(whites);
+                            free_function (record);
                             return 1;
                         }
-                        memcpy(sz_valor, registre + l_glop1, base_dades_XP->Camp[quincamp].BytesPerCamp);
-                        sz_valor[base_dades_XP->Camp[quincamp].BytesPerCamp]=0;
+                        memcpy(sz_valor, record + l_glop1, base_dades_XP->Camp[nIField].BytesPerCamp);
+                        sz_valor[base_dades_XP->Camp[nIField].BytesPerCamp]=0;
 
                         if(!MM_EsCadenaDeBlancs(sz_valor))
                         {
                             if (sscanf(sz_valor, "%lf", &valor)!=1)
-                                memset(sz_valor, *MM_CadenaEspai, max(novaamplada,base_dades_XP->Camp[quincamp].BytesPerCamp));
+                                memset(sz_valor, *MM_CadenaEspai, max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp));
                             else
                             {
-                                retorn_printf=MM_SprintfDoubleAmplada(sz_valor, novaamplada, 
-                                    nou_decimals, valor, &error_sprintf_n_decimals);
+                                retorn_printf=MM_SprintfDoubleAmplada(sz_valor, nNewWidth, 
+                                    nNewPrecision, valor, &error_sprintf_n_decimals);
                             }
 
-                            retorn_fwrite=fwrite_function(sz_valor,novaamplada, 1, base_dades_XP->pfBaseDades);
+                            retorn_fwrite=fwrite_function(sz_valor,nNewWidth, 1, base_dades_XP->pfBaseDades);
                             if(1!=retorn_fwrite)
                             {
-                                if (blancs) free_function(blancs);
-                                free_function(registre);
+                                if (whites) free_function(whites);
+                                free_function(record);
                                 free_function(sz_valor);
                                 return 1;
                             }
                         }
                         else
                         {
-                            memset(sz_valor, *MM_CadenaEspai, novaamplada);
-                            retorn_fwrite=fwrite_function(sz_valor, novaamplada, 1, base_dades_XP->pfBaseDades);
+                            memset(sz_valor, *MM_CadenaEspai, nNewWidth);
+                            retorn_fwrite=fwrite_function(sz_valor, nNewWidth, 1, base_dades_XP->pfBaseDades);
                             if(1!=retorn_fwrite)
                             {
-                                if (blancs) free_function(blancs);
-                                free_function(registre);
+                                if (whites) free_function(whites);
+                                free_function(record);
                                 free_function(sz_valor);
                                 return 1;
                             }
@@ -1546,17 +1574,17 @@ int retorn_printf;
                     }
                     break;
                 default:
-                    free_function (blancs);
-                    free_function (registre);
+                    free_function (whites);
+                    free_function (record);
                     return 1;
             }
             if(l_glop2)
             {
-                retorn_fwrite=fwrite_function(registre + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades);
+                retorn_fwrite=fwrite_function(record + i_glop2, l_glop2, 1, base_dades_XP->pfBaseDades);
                 if(1!=retorn_fwrite)
                 {
-                    if (blancs) free_function(blancs);
-                    free_function (registre);
+                    if (whites) free_function(whites);
+                    free_function (record);
                     return 1;
                 }
             }
@@ -1575,8 +1603,8 @@ int retorn_printf;
             }
         }
 
-		if (blancs) free_function(blancs);
-		free_function(registre);
+		if (whites) free_function(whites);
+		free_function(record);
 
         retorn_TruncaFitxer=TruncateFile_function(base_dades_XP->pfBaseDades,
 					  base_dades_XP->OffsetPrimeraFitxa +
@@ -1587,12 +1615,12 @@ int retorn_printf;
 
     if (canvi_amplada!=0)
     {
-		base_dades_XP->Camp[quincamp].BytesPerCamp = novaamplada;
+		base_dades_XP->Camp[nIField].BytesPerCamp = nNewWidth;
         base_dades_XP->BytesPerFitxa+=canvi_amplada;
-        for (i_camp=(MM_NUMERATOR_DBF_FIELD_TYPE)(quincamp+1); i_camp< base_dades_XP->ncamps; i_camp++)
+        for (i_camp=(MM_NUMERATOR_DBF_FIELD_TYPE)(nIField+1); i_camp< base_dades_XP->ncamps; i_camp++)
             base_dades_XP->Camp[i_camp].BytesAcumulats+=canvi_amplada;
     }
-	base_dades_XP->Camp[quincamp].DecimalsSiEsFloat = nou_decimals;
+	base_dades_XP->Camp[nIField].DecimalsSiEsFloat = nNewPrecision;
 
 	//DonaData(&(base_dades_XP->dia), &(base_dades_XP->mes), &(base_dades_XP->any));
 

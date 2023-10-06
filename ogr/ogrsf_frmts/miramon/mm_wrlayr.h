@@ -117,10 +117,10 @@ int MMResizeIntPointer(int **pInt,
                         unsigned __int64 nProposedMax);
 
 int MMResizeMM_POINT2DPointer(struct MM_POINT_2D **pPoint2D, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+                        MM_TIPUS_N_VERTEXS *nMax, 
+                        MM_TIPUS_N_VERTEXS nNum, 
+                        MM_TIPUS_N_VERTEXS nIncr,
+                        MM_TIPUS_N_VERTEXS nProposedMax);
 
 int MMResizeDoublePointer(double **pDouble, 
                         unsigned __int64 *nMax, 
