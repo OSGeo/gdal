@@ -1175,6 +1175,7 @@ def test_ogr_mem_write_arrow():
 @gdaltest.enable_exceptions()
 def test_ogr_mem_write_pyarrow():
     pa = pytest.importorskip("pyarrow")
+    np = pytest.importorskip("numpy")  # for float16
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     lyr = ds.CreateLayer("test")
@@ -1203,6 +1204,9 @@ def test_ogr_mem_write_pyarrow():
     int64 = pa.array(
         [None if i == 2 else -200000000000 + i * 100000000000 for i in range(5)],
         type=pa.int64(),
+    )
+    float16 = pa.array(
+        [None if i == 2 else np.float16(1.5 + i) for i in range(5)], type=pa.float16()
     )
     float32 = pa.array(
         [None if i == 2 else 1.5 + i for i in range(5)], type=pa.float32()
@@ -1311,6 +1315,18 @@ def test_ogr_mem_write_pyarrow():
             for i in range(5)
         ],
         type=pa.list_(pa.int64()),
+    )
+    list_float16 = pa.array(
+        [
+            None
+            if i == 2
+            else [
+                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                for j in range(i)
+            ]
+            for i in range(5)
+        ],
+        type=pa.list_(pa.float16()),
     )
     list_float32 = pa.array(
         [
@@ -1433,6 +1449,18 @@ def test_ogr_mem_write_pyarrow():
         ],
         type=pa.large_list(pa.int64()),
     )
+    large_list_float16 = pa.array(
+        [
+            None
+            if i == 2
+            else [
+                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                for j in range(i)
+            ]
+            for i in range(5)
+        ],
+        type=pa.large_list(pa.float16()),
+    )
     large_list_float32 = pa.array(
         [
             None
@@ -1501,6 +1529,16 @@ def test_ogr_mem_write_pyarrow():
     )
     fixed_size_list_int64 = pa.array(
         [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]], type=pa.list_(pa.int64(), 2)
+    )
+    fixed_size_list_float16 = pa.array(
+        [
+            [np.float16(0), None],
+            [np.float16(2), np.float16(3)],
+            [np.float16(4), np.float16(5)],
+            [np.float16(6), np.float16(7)],
+            [np.float16(8), np.float16(9)],
+        ],
+        type=pa.list_(pa.float16(), 2),
     )
     fixed_size_list_float32 = pa.array(
         [[0, None], [2, 3], [4, 5], [6, 7], [8, 9]], type=pa.list_(pa.float32(), 2)
@@ -1588,6 +1626,318 @@ def test_ogr_mem_write_pyarrow():
         type=pa.list_(pa.decimal128(5, 2), 2),
     )
 
+    map_boolean = pa.array(
+        [[("z", False)], None, [], [], [("x", None), ("yz", True)]],
+        type=pa.map_(pa.string(), pa.bool_()),
+    )
+
+    map_uint8 = pa.array(
+        [[("z", 2)], None, [], [], [("x", None), ("yz", 4)]],
+        type=pa.map_(pa.string(), pa.uint8()),
+    )
+
+    map_int8 = pa.array(
+        [[("z", -2)], None, [], [], [("x", None), ("yz", -4)]],
+        type=pa.map_(pa.string(), pa.int8()),
+    )
+
+    map_uint16 = pa.array(
+        [[("z", 2)], None, [], [], [("x", None), ("yz", 4)]],
+        type=pa.map_(pa.string(), pa.uint16()),
+    )
+
+    map_int16 = pa.array(
+        [[("z", -2)], None, [], [], [("x", None), ("yz", -4)]],
+        type=pa.map_(pa.string(), pa.int16()),
+    )
+
+    map_uint32 = pa.array(
+        [[("z", 2)], None, [], [], [("x", None), ("yz", 4)]],
+        type=pa.map_(pa.string(), pa.uint32()),
+    )
+
+    map_int32 = pa.array(
+        [[("z", -2)], None, [], [], [("x", None), ("yz", -4)]],
+        type=pa.map_(pa.string(), pa.int32()),
+    )
+
+    map_uint64 = pa.array(
+        [[("z", 2)], None, [], [], [("x", None), ("yz", 4)]],
+        type=pa.map_(pa.string(), pa.uint64()),
+    )
+
+    map_int64 = pa.array(
+        [[("z", -2)], None, [], [], [("x", None), ("yz", -4)]],
+        type=pa.map_(pa.string(), pa.int64()),
+    )
+
+    map_float16 = pa.array(
+        [[("z", np.float16(2))], None, [], [], [("x", None), ("yz", np.float16(4))]],
+        type=pa.map_(pa.string(), pa.float16()),
+    )
+
+    map_float32 = pa.array(
+        [[("z", 2)], None, [], [], [("x", None), ("yz", 4)]],
+        type=pa.map_(pa.string(), pa.float32()),
+    )
+
+    map_float64 = pa.array(
+        [[("z", 2)], None, [], [], [("x", None), ("yz", 4)]],
+        type=pa.map_(pa.string(), pa.float64()),
+    )
+
+    map_string = pa.array(
+        [[("z", "foo")], None, [], [], [("x", None), ("yz", "bar")]],
+        type=pa.map_(pa.string(), pa.string()),
+    )
+
+    map_large_string = pa.array(
+        [[("z", "foo")], None, [], [], [("x", None), ("yz", "bar")]],
+        type=pa.map_(pa.string(), pa.large_string()),
+    )
+
+    map_binary = pa.array(
+        [
+            [("z", b"\x01\x01\x00\x00\x00")],
+            None,
+            [],
+            [],
+            [("x", None), ("yz", b"\x00\x00\x01\x00\x00")],
+        ],
+        type=pa.map_(pa.string(), pa.binary()),
+    )
+
+    map_large_binary = pa.array(
+        [
+            [("z", b"\x01\x01\x00\x00\x00")],
+            None,
+            [],
+            [],
+            [("x", None), ("yz", b"\x00\x00\x01\x00\x00")],
+        ],
+        type=pa.map_(pa.string(), pa.large_binary()),
+    )
+
+    map_fixed_size_binary = pa.array(
+        [
+            [("z", b"\x01\x01\x00\x00\x00")],
+            None,
+            [],
+            [],
+            [("x", None), ("yz", b"\x00\x00\x01\x00\x00")],
+        ],
+        type=pa.map_(pa.string(), pa.binary(5)),
+    )
+
+    map_decimal = pa.array(
+        [[("z", d)], None, [], [], [("x", None), ("yz", d)]],
+        type=pa.map_(pa.string(), pa.decimal128(5, 2)),
+    )
+
+    map_structure = pa.array(
+        [None, None, [], [], [("x", None), ("y", {}), ("z", {"f1": "foo", "f2": 2})]],
+        type=pa.map_(pa.string(), pa.struct([("f1", pa.string()), ("f2", pa.int32())])),
+    )
+
+    map_map_string = pa.array(
+        [
+            None,
+            [("f", [("g", "h")])],
+            None,
+            None,
+            [("a", [("b", "c"), ("d", None)]), ("e", None)],
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.string())),
+    )
+
+    map_list_bool = pa.array(
+        [
+            [("x", [True]), ("y", [False, True])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [True, False]), ("x", None), ("z", [False, None, True])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.bool_())),
+    )
+
+    map_list_uint8 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, 8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.uint8())),
+    )
+
+    map_list_int8 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, -8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.int8())),
+    )
+
+    map_list_uint16 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, 8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.uint16())),
+    )
+
+    map_list_int16 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, -8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.int16())),
+    )
+
+    map_list_uint32 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, 8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.uint32())),
+    )
+
+    map_list_int32 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, -8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.int32())),
+    )
+
+    map_list_uint64 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, 8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.uint64())),
+    )
+
+    map_list_int64 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, -8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.int64())),
+    )
+
+    map_list_float16 = pa.array(
+        [
+            [("x", [np.float16(2)]), ("y", [np.float16(3), np.float16(4)])],
+            [("z", [])],
+            None,
+            [],
+            [
+                ("w", [np.float16(5), np.float16(6)]),
+                ("x", None),
+                ("z", [np.float16(7), None, np.float16(8)]),
+            ],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.float16())),
+    )
+
+    map_list_float32 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, 8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.float32())),
+    )
+
+    map_list_float64 = pa.array(
+        [
+            [("x", [2]), ("y", [3, 4])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [5, 6]), ("x", None), ("z", [7, None, -8])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.float64())),
+    )
+
+    map_list_decimal = pa.array(
+        [
+            [("x", [d]), ("y", [d, d])],
+            [("z", [])],
+            None,
+            [],
+            [("w", [d, d]), ("x", None), ("z", [d, None, d])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.decimal128(5, 2))),
+    )
+
+    map_fixed_size_list_uint8 = pa.array(
+        [
+            [("z", [4, 5])],
+            None,
+            None,
+            None,
+            [("x", [2, 3]), ("y", None), ("z", [4, 5])],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.uint8(), 2)),
+    )
+
+    list_list_string = pa.array(
+        [None, [["efg"]], [], [], [["a"], None, ["b", None, "cd"]]],
+        type=pa.list_(pa.list_(pa.string())),
+    )
+
+    list_large_list_large_string = pa.array(
+        [None, [["efg"]], [], [], [["a"], None, ["b", None, "cd"]]],
+        type=pa.list_(pa.large_list(pa.large_string())),
+    )
+
+    list_map_string = pa.array(
+        [None, [None], [], [], [[("a", "b"), ("c", "d")], [("e", "f")]]],
+        type=pa.list_(pa.map_(pa.string(), pa.string())),
+    )
+
+    list_binary = pa.array(
+        [None, [None], [], [], [b"\x01\x01\x00\x00\x00", b"\x00\x00\x01\x00\x00"]],
+        type=pa.list_(pa.binary()),
+    )
+
+    list_large_binary = pa.array(
+        [None, [None], [], [], [b"\x01\x01\x00\x00\x00", b"\x00\x00\x01\x00\x00"]],
+        type=pa.list_(pa.large_binary()),
+    )
+
+    list_fixed_size_binary = pa.array(
+        [None, [None], [], [], [b"\x01\x01\x00\x00\x00", b"\x00\x00\x01\x00\x00"]],
+        type=pa.list_(pa.binary(5)),
+    )
+
     import struct
 
     wkb_geometry = pa.array(
@@ -1608,6 +1958,7 @@ def test_ogr_mem_write_pyarrow():
         "uint32",
         "int64",
         "uint64",
+        "float16",
         "float32",
         "float64",
         "string",
@@ -1628,6 +1979,7 @@ def test_ogr_mem_write_pyarrow():
         "list_uint32",
         "list_int64",
         "list_uint64",
+        "list_float16",
         "list_float32",
         "list_float64",
         "list_string",
@@ -1641,6 +1993,7 @@ def test_ogr_mem_write_pyarrow():
         "large_list_uint32",
         "large_list_int64",
         "large_list_uint64",
+        "large_list_float16",
         "large_list_float32",
         "large_list_float64",
         "large_list_string",
@@ -1654,6 +2007,7 @@ def test_ogr_mem_write_pyarrow():
         "fixed_size_list_uint32",
         "fixed_size_list_int64",
         "fixed_size_list_uint64",
+        "fixed_size_list_float16",
         "fixed_size_list_float32",
         "fixed_size_list_float64",
         "fixed_size_list_string",
@@ -1672,6 +2026,46 @@ def test_ogr_mem_write_pyarrow():
         "list_decimal128",
         "large_list_decimal128",
         "fixed_size_list_decimal128",
+        "map_boolean",
+        "map_int8",
+        "map_uint8",
+        "map_int16",
+        "map_uint16",
+        "map_int32",
+        "map_uint32",
+        "map_int64",
+        "map_uint64",
+        "map_float16",
+        "map_float32",
+        "map_float64",
+        "map_string",
+        "map_large_string",
+        "map_binary",
+        "map_large_binary",
+        "map_fixed_size_binary",
+        "map_decimal",
+        "map_structure",
+        "map_map_string",
+        "map_list_bool",
+        "map_list_int8",
+        "map_list_uint8",
+        "map_list_int16",
+        "map_list_uint16",
+        "map_list_int32",
+        "map_list_uint32",
+        "map_list_int64",
+        "map_list_uint64",
+        "map_list_float16",
+        "map_list_float32",
+        "map_list_float64",
+        "map_list_decimal",
+        "map_fixed_size_list_uint8",
+        "list_list_string",
+        "list_large_list_large_string",
+        "list_map_string",
+        "list_binary",
+        "list_large_binary",
+        "list_fixed_size_binary",
         "wkb_geometry",
         "fid",
     ]
@@ -1704,6 +2098,18 @@ def test_ogr_mem_write_pyarrow():
     assert lyr.WritePyArrow(table, options=["FID=fid"]) == ogr.OGRERR_NONE
     assert fid.to_pylist() == [0, 1, 2, 3, 4]
 
+    f = lyr.GetFeature(0)
+    assert f["map_uint8"] == """{"z":2}"""
+
+    f = lyr.GetFeature(1)
+    assert f["map_uint8"] is None
+
+    f = lyr.GetFeature(2)
+    assert f["map_uint8"] == "{}"
+
+    f = lyr.GetFeature(3)
+    assert f["map_uint8"] == "{}"
+
     f = lyr.GetFeature(4)
     assert (
         str(f)
@@ -1717,6 +2123,7 @@ def test_ogr_mem_write_pyarrow():
   uint32 (Integer64) = 4000000001
   int64 (Integer64) = 200000000000
   uint64 (Real) = 400000000001
+  float16 (Real(Float32)) = 5.5
   float32 (Real(Float32)) = 5.5
   float64 (Real) = 5.5
   string (String) = def
@@ -1738,6 +2145,7 @@ def test_ogr_mem_write_pyarrow():
   list_uint32 (Integer64List) = (4:0,7,8,9)
   list_int64 (Integer64List) = (4:0,7,8,9)
   list_uint64 (RealList) = (4:0,7,8,9)
+  list_float16 (RealList(Float32)) = (4:0.0,7.5,8.5,9.5)
   list_float32 (RealList(Float32)) = (4:0.0,7.5,8.5,9.5)
   list_float64 (RealList) = (4:0,7.5,8.5,9.5)
   list_string (StringList) = (4:A,BC,CDE,DEFG)
@@ -1751,6 +2159,7 @@ def test_ogr_mem_write_pyarrow():
   large_list_uint32 (Integer64List) = (4:0,7,8,9)
   large_list_int64 (Integer64List) = (4:0,7,8,9)
   large_list_uint64 (RealList) = (4:0,7,8,9)
+  large_list_float16 (RealList(Float32)) = (4:0.0,7.5,8.5,9.5)
   large_list_float32 (RealList(Float32)) = (4:0.0,7.5,8.5,9.5)
   large_list_float64 (RealList) = (4:0,7.5,8.5,9.5)
   large_list_string (StringList) = (4:A,BC,CDE,DEFG)
@@ -1764,6 +2173,7 @@ def test_ogr_mem_write_pyarrow():
   fixed_size_list_uint32 (Integer64List) = (2:8,9)
   fixed_size_list_int64 (Integer64List) = (2:8,9)
   fixed_size_list_uint64 (RealList) = (2:8,9)
+  fixed_size_list_float16 (RealList(Float32)) = (2:8.0,9.0)
   fixed_size_list_float32 (RealList(Float32)) = (2:8.0,9.0)
   fixed_size_list_float64 (RealList) = (2:8,9)
   fixed_size_list_string (StringList) = (2:iw,j)
@@ -1782,6 +2192,46 @@ def test_ogr_mem_write_pyarrow():
   list_decimal128 (RealList) = (2: 123.45, 234.56)
   large_list_decimal128 (RealList) = (2: 123.45, 234.56)
   fixed_size_list_decimal128 (RealList) = (2: 345.67,-345.67)
+  map_boolean (String(JSON)) = {"x":null,"yz":true}
+  map_int8 (String(JSON)) = {"x":null,"yz":-4}
+  map_uint8 (String(JSON)) = {"x":null,"yz":4}
+  map_int16 (String(JSON)) = {"x":null,"yz":-4}
+  map_uint16 (String(JSON)) = {"x":null,"yz":4}
+  map_int32 (String(JSON)) = {"x":null,"yz":-4}
+  map_uint32 (String(JSON)) = {"x":null,"yz":4}
+  map_int64 (String(JSON)) = {"x":null,"yz":-4}
+  map_uint64 (String(JSON)) = {"x":null,"yz":4}
+  map_float16 (String(JSON)) = {"x":null,"yz":4.0}
+  map_float32 (String(JSON)) = {"x":null,"yz":4.0}
+  map_float64 (String(JSON)) = {"x":null,"yz":4.0}
+  map_string (String(JSON)) = {"x":null,"yz":"bar"}
+  map_large_string (String(JSON)) = {"x":null,"yz":"bar"}
+  map_binary (String(JSON)) = {"x":null,"yz":"AAABAAA="}
+  map_large_binary (String(JSON)) = {"x":null,"yz":"AAABAAA="}
+  map_fixed_size_binary (String(JSON)) = {"x":null,"yz":"AAABAAA="}
+  map_decimal (String(JSON)) = {"x":null,"yz":123.45}
+  map_structure (String(JSON)) = {"x":null,"y":{"f1":null,"f2":null},"z":{"f1":"foo","f2":2}}
+  map_map_string (String(JSON)) = {"a":{"b":"c","d":null},"e":null}
+  map_list_bool (String(JSON)) = {"w":[true,false],"x":null,"z":[false,null,true]}
+  map_list_int8 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,-8]}
+  map_list_uint8 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,8]}
+  map_list_int16 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,-8]}
+  map_list_uint16 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,8]}
+  map_list_int32 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,-8]}
+  map_list_uint32 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,8]}
+  map_list_int64 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,-8]}
+  map_list_uint64 (String(JSON)) = {"w":[5,6],"x":null,"z":[7,null,8]}
+  map_list_float16 (String(JSON)) = {"w":[5.0,6.0],"x":null,"z":[7.0,null,8.0]}
+  map_list_float32 (String(JSON)) = {"w":[5.0,6.0],"x":null,"z":[7.0,null,8.0]}
+  map_list_float64 (String(JSON)) = {"w":[5.0,6.0],"x":null,"z":[7.0,null,-8.0]}
+  map_list_decimal (String(JSON)) = {"w":[123.45,123.45],"x":null,"z":[123.45,null,123.45]}
+  map_fixed_size_list_uint8 (String(JSON)) = {"x":[2,3],"y":null,"z":[4,5]}
+  list_list_string (String(JSON)) = [["a"],null,["b",null,"cd"]]
+  list_large_list_large_string (String(JSON)) = [["a"],null,["b",null,"cd"]]
+  list_map_string (String(JSON)) = [{"a":"b","c":"d"},{"e":"f"}]
+  list_binary (String(JSON)) = ["AQEAAAA=","AAABAAA="]
+  list_large_binary (String(JSON)) = ["AQEAAAA=","AAABAAA="]
+  list_fixed_size_binary (String(JSON)) = ["AQEAAAA=","AAABAAA="]
   POINT (4 2)
 
 """

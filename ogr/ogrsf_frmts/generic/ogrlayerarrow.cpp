@@ -36,6 +36,7 @@
 #include "ogr_wkb.h"
 
 #include "cpl_float.h"
+#include "cpl_json.h"
 #include "cpl_time.h"
 #include <cassert>
 #include <cinttypes>
@@ -2195,6 +2196,28 @@ static bool ParseDecimalFormat(const char *format, int &nPrecision, int &nScale,
 }
 
 /************************************************************************/
+/*                   GetErrorIfUnsupportedDecimal()                     */
+/************************************************************************/
+
+static const char *GetErrorIfUnsupportedDecimal(int nWidthInBytes,
+                                                int nPrecision)
+{
+
+    if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+    {
+        return "For decimal field, only width 128 and 256 are supported";
+    }
+
+    // precision=19 fits on 64 bits
+    if (nPrecision <= 0 || nPrecision > 19)
+    {
+        return "For decimal field, only precision up to 19 is supported";
+    }
+
+    return nullptr;
+}
+
+/************************************************************************/
 /*                            IsHandledSchema()                         */
 /************************************************************************/
 
@@ -2290,20 +2313,11 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
                 return false;
             }
 
-            if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+            const char *pszError =
+                GetErrorIfUnsupportedDecimal(nWidthInBytes, nPrecision);
+            if (pszError)
             {
-                CPLDebug(
-                    "OGR",
-                    "For decimal field, only width 128 and 256 are supported");
-                return false;
-            }
-
-            // precision=19 fits on 64 bits
-            if (nPrecision <= 0 || nPrecision > 19)
-            {
-                CPLDebug(
-                    "OGR",
-                    "For decimal field, only precision up to 19 is supported");
+                CPLDebug("OGR", "%s", pszError);
                 return false;
             }
         }
@@ -3149,6 +3163,415 @@ inline static ArrowType GetValue(const struct ArrowArray *array,
     return panValues[iFeature + array->offset];
 }
 
+template <> bool GetValue<bool>(const struct ArrowArray *array, size_t iFeature)
+{
+    const auto *pabyValues = static_cast<const uint8_t *>(array->buffers[1]);
+    return TestBit(pabyValues, iFeature + static_cast<size_t>(array->offset));
+}
+
+/************************************************************************/
+/*                          GetValueFloat16()                           */
+/************************************************************************/
+
+static float GetValueFloat16(const struct ArrowArray *array, const size_t nIdx)
+{
+    const auto *panValues = static_cast<const uint16_t *>(array->buffers[1]);
+    const auto nFloat16AsUInt32 =
+        CPLHalfToFloat(panValues[nIdx + array->offset]);
+    float f;
+    memcpy(&f, &nFloat16AsUInt32, sizeof(f));
+    return f;
+}
+
+/************************************************************************/
+/*                          GetValueDecimal()                           */
+/************************************************************************/
+
+static double GetValueDecimal(const struct ArrowArray *array,
+                              const int nWidthIn64BitWord, const int nScale,
+                              const size_t nIdx)
+{
+#ifdef CPL_LSB
+    const auto nIdxIn64BitWord = nIdx * nWidthIn64BitWord;
+#else
+    const auto nIdxIn64BitWord =
+        nIdx * nWidthIn64BitWord + nWidthIn64BitWord - 1;
+#endif
+    const auto *panValues = static_cast<const int64_t *>(array->buffers[1]);
+    const auto nVal =
+        panValues[nIdxIn64BitWord + array->offset * nWidthIn64BitWord];
+    return static_cast<double>(nVal) * std::pow(10.0, -nScale);
+}
+
+/************************************************************************/
+/*                             GetString()                              */
+/************************************************************************/
+
+template <class OffsetType>
+static std::string GetString(const struct ArrowArray *array, const size_t nIdx)
+{
+    const OffsetType *panOffsets =
+        static_cast<const OffsetType *>(array->buffers[1]) +
+        static_cast<size_t>(array->offset) + nIdx;
+    const char *pabyStr = static_cast<const char *>(array->buffers[2]);
+    std::string osStr;
+    osStr.assign(pabyStr + static_cast<size_t>(panOffsets[0]),
+                 static_cast<size_t>(panOffsets[1] - panOffsets[0]));
+    return osStr;
+}
+
+/************************************************************************/
+/*                       GetBinaryAsBase64()                            */
+/************************************************************************/
+
+template <class OffsetType>
+static std::string GetBinaryAsBase64(const struct ArrowArray *array,
+                                     const size_t nIdx)
+{
+    const OffsetType *panOffsets =
+        static_cast<const OffsetType *>(array->buffers[1]) +
+        static_cast<size_t>(array->offset) + nIdx;
+    const GByte *pabyData = static_cast<const GByte *>(array->buffers[2]);
+    const size_t nLen = static_cast<size_t>(panOffsets[1] - panOffsets[0]);
+    if (nLen > static_cast<size_t>(std::numeric_limits<int>::max()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too large binary");
+        return std::string();
+    }
+    char *pszVal = CPLBase64Encode(
+        static_cast<int>(nLen), pabyData + static_cast<size_t>(panOffsets[0]));
+    std::string osStr(pszVal);
+    CPLFree(pszVal);
+    return osStr;
+}
+
+/************************************************************************/
+/*                   GetValueFixedWithBinaryAsBase64()                  */
+/************************************************************************/
+
+static std::string
+GetValueFixedWithBinaryAsBase64(const struct ArrowArray *array,
+                                const int nWidth, const size_t nIdx)
+{
+    const GByte *pabyData = static_cast<const GByte *>(array->buffers[1]);
+    char *pszVal = CPLBase64Encode(
+        nWidth,
+        pabyData + (static_cast<size_t>(array->offset) + nIdx) * nWidth);
+    std::string osStr(pszVal);
+    CPLFree(pszVal);
+    return osStr;
+}
+
+static CPLJSONObject GetObjectAsJSON(const struct ArrowSchema *schema,
+                                     const struct ArrowArray *array,
+                                     const size_t nIdx);
+
+/************************************************************************/
+/*                               AddToArray()                           */
+/************************************************************************/
+
+static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
+                       const struct ArrowArray *array, const size_t nIdx)
+{
+    if (IsBoolean(schema->format))
+        oArray.Add(GetValue<bool>(array, nIdx));
+    else if (IsUInt8(schema->format))
+        oArray.Add(GetValue<uint8_t>(array, nIdx));
+    else if (IsInt8(schema->format))
+        oArray.Add(GetValue<int8_t>(array, nIdx));
+    else if (IsUInt16(schema->format))
+        oArray.Add(GetValue<uint16_t>(array, nIdx));
+    else if (IsInt16(schema->format))
+        oArray.Add(GetValue<int16_t>(array, nIdx));
+    else if (IsUInt32(schema->format))
+        oArray.Add(static_cast<GIntBig>(GetValue<uint32_t>(array, nIdx)));
+    else if (IsInt32(schema->format))
+        oArray.Add(GetValue<int32_t>(array, nIdx));
+    else if (IsUInt64(schema->format))
+        oArray.Add(GetValue<uint64_t>(array, nIdx));
+    else if (IsInt64(schema->format))
+        oArray.Add(static_cast<GIntBig>(GetValue<int64_t>(array, nIdx)));
+    else if (IsFloat16(schema->format))
+        oArray.Add(GetValueFloat16(array, nIdx));
+    else if (IsFloat32(schema->format))
+        oArray.Add(GetValue<float>(array, nIdx));
+    else if (IsFloat64(schema->format))
+        oArray.Add(GetValue<double>(array, nIdx));
+    else if (IsString(schema->format))
+        oArray.Add(GetString<uint32_t>(array, nIdx));
+    else if (IsLargeString(schema->format))
+        oArray.Add(GetString<uint64_t>(array, nIdx));
+    else if (IsBinary(schema->format))
+        oArray.Add(GetBinaryAsBase64<uint32_t>(array, nIdx));
+    else if (IsLargeBinary(schema->format))
+        oArray.Add(GetBinaryAsBase64<uint64_t>(array, nIdx));
+    else if (IsFixedWidthBinary(schema->format))
+        oArray.Add(GetValueFixedWithBinaryAsBase64(
+            array, GetFixedWithBinary(schema->format), nIdx));
+    else if (IsDecimal(schema->format))
+    {
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        const bool bOK = ParseDecimalFormat(schema->format, nPrecision, nScale,
+                                            nWidthInBytes);
+        // Already validated
+        CPLAssert(bOK);
+        CPL_IGNORE_RET_VAL(bOK);
+        oArray.Add(GetValueDecimal(array, nWidthInBytes / 8, nScale, nIdx));
+    }
+    else
+        oArray.Add(GetObjectAsJSON(schema, array, nIdx));
+}
+
+/************************************************************************/
+/*                         GetListAsJSON()                              */
+/************************************************************************/
+
+template <class OffsetType>
+static CPLJSONObject GetListAsJSON(const struct ArrowSchema *schema,
+                                   const struct ArrowArray *array,
+                                   const size_t nIdx)
+{
+    CPLJSONArray oArray;
+    const auto panOffsets = static_cast<const OffsetType *>(array->buffers[1]) +
+                            array->offset + nIdx;
+    const auto childSchema = schema->children[0];
+    const auto childArray = array->children[0];
+    const uint8_t *pabyValidity =
+        childArray->null_count == 0
+            ? nullptr
+            : static_cast<const uint8_t *>(childArray->buffers[0]);
+    for (size_t k = static_cast<size_t>(panOffsets[0]);
+         k < static_cast<size_t>(panOffsets[1]); k++)
+    {
+        if (!pabyValidity ||
+            TestBit(pabyValidity, k + static_cast<size_t>(childArray->offset)))
+        {
+            AddToArray(oArray, childSchema, childArray, k);
+        }
+        else
+        {
+            oArray.AddNull();
+        }
+    }
+    return oArray;
+}
+
+/************************************************************************/
+/*                     GetFixedSizeListAsJSON()                         */
+/************************************************************************/
+
+static CPLJSONObject GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
+                                            const struct ArrowArray *array,
+                                            const size_t nIdx)
+{
+    CPLJSONArray oArray;
+    const int nVals = GetFixedSizeList(schema->format);
+    const auto childSchema = schema->children[0];
+    const auto childArray = array->children[0];
+    const uint8_t *pabyValidity =
+        childArray->null_count == 0
+            ? nullptr
+            : static_cast<const uint8_t *>(childArray->buffers[0]);
+    for (size_t k = nIdx * nVals; k < (nIdx + 1) * nVals; k++)
+    {
+        if (!pabyValidity ||
+            TestBit(pabyValidity, k + static_cast<size_t>(childArray->offset)))
+        {
+            AddToArray(oArray, childSchema, childArray, k);
+        }
+        else
+        {
+            oArray.AddNull();
+        }
+    }
+    return oArray;
+}
+
+/************************************************************************/
+/*                              AddToDict()                             */
+/************************************************************************/
+
+static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
+                      const struct ArrowSchema *schema,
+                      const struct ArrowArray *array, const size_t nIdx)
+{
+    if (IsBoolean(schema->format))
+        oDict.Add(osKey, GetValue<bool>(array, nIdx));
+    else if (IsUInt8(schema->format))
+        oDict.Add(osKey, GetValue<uint8_t>(array, nIdx));
+    else if (IsInt8(schema->format))
+        oDict.Add(osKey, GetValue<int8_t>(array, nIdx));
+    else if (IsUInt16(schema->format))
+        oDict.Add(osKey, GetValue<uint16_t>(array, nIdx));
+    else if (IsInt16(schema->format))
+        oDict.Add(osKey, GetValue<int16_t>(array, nIdx));
+    else if (IsUInt32(schema->format))
+        oDict.Add(osKey, static_cast<GIntBig>(GetValue<uint32_t>(array, nIdx)));
+    else if (IsInt32(schema->format))
+        oDict.Add(osKey, GetValue<int32_t>(array, nIdx));
+    else if (IsUInt64(schema->format))
+        oDict.Add(osKey, GetValue<uint64_t>(array, nIdx));
+    else if (IsInt64(schema->format))
+        oDict.Add(osKey, static_cast<GIntBig>(GetValue<int64_t>(array, nIdx)));
+    else if (IsFloat16(schema->format))
+        oDict.Add(osKey, GetValueFloat16(array, nIdx));
+    else if (IsFloat32(schema->format))
+        oDict.Add(osKey, GetValue<float>(array, nIdx));
+    else if (IsFloat64(schema->format))
+        oDict.Add(osKey, GetValue<double>(array, nIdx));
+    else if (IsString(schema->format))
+        oDict.Add(osKey, GetString<uint32_t>(array, nIdx));
+    else if (IsLargeString(schema->format))
+        oDict.Add(osKey, GetString<uint64_t>(array, nIdx));
+    else if (IsBinary(schema->format))
+        oDict.Add(osKey, GetBinaryAsBase64<uint32_t>(array, nIdx));
+    else if (IsLargeBinary(schema->format))
+        oDict.Add(osKey, GetBinaryAsBase64<uint64_t>(array, nIdx));
+    else if (IsFixedWidthBinary(schema->format))
+        oDict.Add(osKey, GetValueFixedWithBinaryAsBase64(
+                             array, GetFixedWithBinary(schema->format), nIdx));
+    else if (IsDecimal(schema->format))
+    {
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        const bool bOK = ParseDecimalFormat(schema->format, nPrecision, nScale,
+                                            nWidthInBytes);
+        // Already validated
+        CPLAssert(bOK);
+        CPL_IGNORE_RET_VAL(bOK);
+        oDict.Add(osKey,
+                  GetValueDecimal(array, nWidthInBytes / 8, nScale, nIdx));
+    }
+    else
+        oDict.Add(osKey, GetObjectAsJSON(schema, array, nIdx));
+}
+
+/************************************************************************/
+/*                         GetMapAsJSON()                               */
+/************************************************************************/
+
+static CPLJSONObject GetMapAsJSON(const struct ArrowSchema *schema,
+                                  const struct ArrowArray *array,
+                                  const size_t nIdx)
+{
+    const auto schemaStruct = schema->children[0];
+    if (!IsStructure(schemaStruct->format))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetMapAsJSON(): !IsStructure(schemaStruct->format))");
+        return CPLJSONObject();
+    }
+    const auto schemaKey = schemaStruct->children[0];
+    const auto schemaValues = schemaStruct->children[1];
+    if (!IsString(schemaKey->format))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetMapAsJSON(): !IsString(schemaKey->format))");
+        return CPLJSONObject();
+    }
+    const auto arrayKeys = array->children[0]->children[0];
+    const auto arrayValues = array->children[0]->children[1];
+
+    CPLJSONObject oDict;
+    const auto panOffsets =
+        static_cast<const uint32_t *>(array->buffers[1]) + array->offset + nIdx;
+    const uint8_t *pabyValidityKeys =
+        arrayKeys->null_count == 0
+            ? nullptr
+            : static_cast<const uint8_t *>(arrayKeys->buffers[0]);
+    const uint32_t *panOffsetsKeys =
+        static_cast<const uint32_t *>(arrayKeys->buffers[1]) +
+        arrayKeys->offset;
+    const char *pabyKeys = static_cast<const char *>(arrayKeys->buffers[2]);
+    const uint8_t *pabyValidityValues =
+        arrayValues->null_count == 0
+            ? nullptr
+            : static_cast<const uint8_t *>(arrayValues->buffers[0]);
+    for (uint32_t k = panOffsets[0]; k < panOffsets[1]; k++)
+    {
+        if (!pabyValidityKeys ||
+            TestBit(pabyValidityKeys,
+                    k + static_cast<size_t>(arrayKeys->offset)))
+        {
+            std::string osKey;
+            osKey.assign(pabyKeys + panOffsetsKeys[k],
+                         panOffsetsKeys[k + 1] - panOffsetsKeys[k]);
+
+            if (!pabyValidityValues ||
+                TestBit(pabyValidityValues,
+                        k + static_cast<size_t>(arrayValues->offset)))
+            {
+                AddToDict(oDict, osKey, schemaValues, arrayValues, k);
+            }
+            else
+            {
+                oDict.AddNull(osKey);
+            }
+        }
+    }
+    return oDict;
+}
+
+/************************************************************************/
+/*                        GetStructureAsJSON()                          */
+/************************************************************************/
+
+static CPLJSONObject GetStructureAsJSON(const struct ArrowSchema *schema,
+                                        const struct ArrowArray *array,
+                                        const size_t nIdx)
+{
+    CPLJSONObject oDict;
+    for (int64_t k = 0; k < schema->n_children; k++)
+    {
+        const uint8_t *pabyValidityValues =
+            array->children[k]->null_count == 0
+                ? nullptr
+                : static_cast<const uint8_t *>(array->children[k]->buffers[0]);
+        if (!pabyValidityValues ||
+            TestBit(pabyValidityValues,
+                    nIdx + static_cast<size_t>(array->children[k]->offset)))
+        {
+            AddToDict(oDict, schema->children[k]->name, schema->children[k],
+                      array->children[k], nIdx);
+        }
+        else
+        {
+            oDict.AddNull(schema->children[k]->name);
+        }
+    }
+    return oDict;
+}
+
+/************************************************************************/
+/*                        GetObjectAsJSON()                             */
+/************************************************************************/
+
+static CPLJSONObject GetObjectAsJSON(const struct ArrowSchema *schema,
+                                     const struct ArrowArray *array,
+                                     const size_t nIdx)
+{
+    if (IsMap(schema->format))
+        return GetMapAsJSON(schema, array, nIdx);
+    else if (IsList(schema->format))
+        return GetListAsJSON<uint32_t>(schema, array, nIdx);
+    else if (IsLargeList(schema->format))
+        return GetListAsJSON<uint64_t>(schema, array, nIdx);
+    else if (IsFixedSizeList(schema->format))
+        return GetFixedSizeListAsJSON(schema, array, nIdx);
+    else if (IsStructure(schema->format))
+        return GetStructureAsJSON(schema, array, nIdx);
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetObjectAsJSON(): unhandled value format: %s",
+                 schema->format);
+        return CPLJSONObject();
+    }
+}
+
 /************************************************************************/
 /*                      SetFieldForOtherFormats()                       */
 /************************************************************************/
@@ -3162,13 +3585,10 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
     const char *format = schema->format;
     if (IsFloat16(format))
     {
-        // half-float
-        const auto nFloat16AsUInt16 =
-            static_cast<const uint16_t *>(array->buffers[1])[nOffsettedIndex];
-        const auto nFloat16AsUInt32 = CPLHalfToFloat(nFloat16AsUInt16);
-        float f;
-        memcpy(&f, &nFloat16AsUInt32, sizeof(f));
-        oFeature.SetField(iOGRFieldIndex, f);
+        oFeature.SetField(
+            iOGRFieldIndex,
+            GetValueFloat16(array, nOffsettedIndex -
+                                       static_cast<size_t>(array->offset)));
     }
 
     else if (IsFixedWidthBinary(format))
@@ -3346,16 +3766,10 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
         else if (IsFloat16(childFormat))
         {
             std::vector<double> aValues;
-            const auto *paValues =
-                static_cast<const uint16_t *>(childArray->buffers[1]) +
-                childArray->offset + nOffsettedIndex * nItems;
             for (int i = 0; i < nItems; ++i)
             {
-                const auto nFloat16AsUInt16 = paValues[i];
-                const auto nFloat16AsUInt32 = CPLHalfToFloat(nFloat16AsUInt16);
-                float f;
-                memcpy(&f, &nFloat16AsUInt32, sizeof(f));
-                aValues.push_back(f);
+                aValues.push_back(
+                    GetValueFloat16(childArray, nOffsettedIndex * nItems + i));
             }
             oFeature.SetField(iOGRFieldIndex, static_cast<int>(aValues.size()),
                               aValues.data());
@@ -3543,6 +3957,24 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                     array, iOGRFieldIndex, nOffsettedIndex, childArray,
                     oFeature);
         }
+        else if (format[1] == ARROW_2ND_LETTER_LIST)
+        {
+            const size_t iFeature =
+                static_cast<size_t>(nOffsettedIndex - array->offset);
+            oFeature.SetField(iOGRFieldIndex,
+                              GetListAsJSON<uint32_t>(schema, array, iFeature)
+                                  .Format(CPLJSONObject::PrettyFormat::Plain)
+                                  .c_str());
+        }
+        else
+        {
+            const size_t iFeature =
+                static_cast<size_t>(nOffsettedIndex - array->offset);
+            oFeature.SetField(iOGRFieldIndex,
+                              GetListAsJSON<uint64_t>(schema, array, iFeature)
+                                  .Format(CPLJSONObject::PrettyFormat::Plain)
+                                  .c_str());
+        }
     }
     else if (IsDecimal(format))
     {
@@ -3561,17 +3993,19 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
         const int nWidthIn64BitWord = nWidthInBytes / 8;
         const size_t iFeature =
             static_cast<size_t>(nOffsettedIndex - array->offset);
-#ifdef CPL_LSB
-        const auto nIdx = iFeature * nWidthIn64BitWord;
-#else
-        const auto nIdx = iFeature * nWidthIn64BitWord + nWidthIn64BitWord - 1;
-#endif
-        const auto *panValues = static_cast<const int64_t *>(array->buffers[1]);
-        const auto nVal = panValues[nIdx + array->offset * nWidthIn64BitWord];
-        const double dfVal =
-            static_cast<double>(nVal) * std::pow(10.0, -nScale);
-        oFeature.SetField(iOGRFieldIndex, dfVal);
+        oFeature.SetField(
+            iOGRFieldIndex,
+            GetValueDecimal(array, nWidthIn64BitWord, nScale, iFeature));
         return true;
+    }
+    else if (IsMap(format))
+    {
+        const size_t iFeature =
+            static_cast<size_t>(nOffsettedIndex - array->offset);
+        oFeature.SetField(iOGRFieldIndex,
+                          GetMapAsJSON(schema, array, iFeature)
+                              .Format(CPLJSONObject::PrettyFormat::Plain)
+                              .c_str());
     }
     else
     {
@@ -4137,6 +4571,62 @@ static inline bool IsValidDictionaryIndexType(const char *format)
            format[1] == 0;
 }
 
+static bool IsSupportForJSONObj(const struct ArrowSchema *schema)
+{
+    const char *format = schema->format;
+    if (IsStructure(format))
+    {
+        for (int64_t i = 0; i < schema->n_children; ++i)
+        {
+            if (!IsSupportForJSONObj(schema->children[i]))
+                return false;
+        }
+        return true;
+    }
+
+    for (const auto &sType : gasListTypes)
+    {
+        if (format[0] == sType.arrowLetter && format[1] == 0)
+        {
+            return true;
+        }
+    }
+
+    if (IsBinary(format) || IsLargeBinary(format) || IsFixedWidthBinary(format))
+        return true;
+
+    if (IsDecimal(format))
+    {
+        int nPrecision = 0;
+        int nScale = 0;
+        int nWidthInBytes = 0;
+        if (!ParseDecimalFormat(format, nPrecision, nScale, nWidthInBytes))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid field format %s",
+                     format);
+            return false;
+        }
+
+        return GetErrorIfUnsupportedDecimal(nWidthInBytes, nPrecision) ==
+               nullptr;
+    }
+
+    if (IsMap(format))
+    {
+        return IsStructure(schema->children[0]->format) &&
+               schema->children[0]->n_children == 2 &&
+               IsString(schema->children[0]->children[0]->format) &&
+               IsSupportForJSONObj(schema->children[0]->children[1]);
+    }
+
+    if (IsList(format) || IsLargeList(format) || IsFixedSizeList(format))
+    {
+        return IsSupportForJSONObj(schema->children[0]);
+    }
+
+    return false;
+}
+
 static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
                                            const std::string &osFieldPrefix,
                                            bool bUseFallbackTypes,
@@ -4222,32 +4712,32 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
                 return false;
             }
 
-            if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+            const char *pszError =
+                GetErrorIfUnsupportedDecimal(nWidthInBytes, nPrecision);
+            if (pszError)
             {
-                AppendError(
-                    "For decimal field, only width 128 and 256 are supported");
-                return false;
-            }
-
-            // precision=19 fits on 64 bits
-            if (nPrecision <= 0 || nPrecision > 19)
-            {
-                AppendError(
-                    "For decimal field, only precision up to 19 is supported");
+                AppendError(pszError);
                 return false;
             }
 
             return CheckSupportedType(OFTRealList);
         }
 
-        AppendError("Type list of '" + std::string(childFormat) +
-                    "' for field " + osFieldPrefix + fieldName +
+        if (IsSupportForJSONObj(schema))
+        {
+            return true;
+        }
+
+        AppendError("Type list for field " + osFieldPrefix + fieldName +
                     " is not supported.");
         return false;
     }
 
     else if (IsMap(format))
     {
+        if (IsSupportForJSONObj(schema))
+            return true;
+
         AppendError("Type map for field " + osFieldPrefix + fieldName +
                     " is not supported.");
         return false;
@@ -4264,20 +4754,14 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
             return false;
         }
 
-        if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+        const char *pszError =
+            GetErrorIfUnsupportedDecimal(nWidthInBytes, nPrecision);
+        if (pszError)
         {
-            AppendError(
-                "For decimal field, only width 128 and 256 are supported");
+            AppendError(pszError);
             return false;
         }
 
-        // precision=19 fits on 64 bits
-        if (nPrecision <= 0 || nPrecision > 19)
-        {
-            AppendError(
-                "For decimal field, only precision up to 19 is supported");
-            return false;
-        }
         return CheckSupportedType(OFTReal);
     }
     else
@@ -4546,6 +5030,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         }
     }
 
+    if (IsMap(format))
+    {
+        return AddField(OFTString, OFSTJSON, 0, 0);
+    }
+
     if (STARTS_WITH(format, "tss:") ||  // timestamp[s]
         STARTS_WITH(format, "tsm:") ||  // timestamp[ms]
         STARTS_WITH(format, "tsu:") ||  // timestamp[us]
@@ -4585,25 +5074,21 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                 return false;
             }
 
-            if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+            const char *pszError =
+                GetErrorIfUnsupportedDecimal(nWidthInBytes, nPrecision);
+            if (pszError)
             {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "For decimal field, only width 128 and 256 are supported");
-                return false;
-            }
-
-            // precision=19 fits on 64 bits
-            if (nPrecision <= 0 || nPrecision > 19)
-            {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "For decimal field, only precision up to 19 is supported");
+                CPLError(CE_Failure, CPLE_NotSupported, "%s", pszError);
                 return false;
             }
 
             // DBF convention: add space for negative sign and decimal separator
             return AddField(OFTRealList, OFSTNone, nPrecision + 2, nScale);
+        }
+
+        if (IsSupportForJSONObj(schema->children[0]))
+        {
+            return AddField(OFTString, OFSTJSON, 0, 0);
         }
 
         CPLError(CE_Failure, CPLE_NotSupported, "%s",
@@ -4627,18 +5112,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             return false;
         }
 
-        if (nWidthInBytes != 128 / 8 && nWidthInBytes != 256 / 8)
+        const char *pszError =
+            GetErrorIfUnsupportedDecimal(nWidthInBytes, nPrecision);
+        if (pszError)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "For decimal field, only width 128 and 256 are supported");
-            return false;
-        }
-
-        // precision=19 fits on 64 bits
-        if (nPrecision <= 0 || nPrecision > 19)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "For decimal field, only precision up to 19 is supported");
+            CPLError(CE_Failure, CPLE_NotSupported, "%s", pszError);
             return false;
         }
 
@@ -4751,6 +5229,7 @@ struct FieldInfo
 {
     std::string osName{};
     int iOGRFieldIdx = -1;
+    const char *format = nullptr;
     OGRFieldType eNominalFieldType =
         OFTMaxType;  // OGR data type that would best match the Arrow type
     OGRFieldType eTargetFieldType =
@@ -4807,6 +5286,7 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
 
     FieldInfo sInfo;
     sInfo.osName = osFieldPrefix + fieldName;
+    sInfo.format = format;
     if (pszFIDName && sInfo.osName == pszFIDName)
     {
         if (IsInt32(format) || IsInt64(format))
@@ -4859,6 +5339,25 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
                                  OGR_GetFieldTypeName(sType.eType));
                         return false;
                     }
+                }
+            }
+
+            if (!bTypeOK && IsMap(format))
+            {
+                sInfo.eNominalFieldType = OFTString;
+                if (eOGRType == sInfo.eNominalFieldType)
+                {
+                    bTypeOK = true;
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "For field %s, OGR field type is %s whereas "
+                             "Arrow type implies %s",
+                             sInfo.osName.c_str(),
+                             OGR_GetFieldTypeName(eOGRType),
+                             OGR_GetFieldTypeName(OFTString));
+                    return false;
                 }
             }
 
@@ -4960,23 +5459,11 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
                         return false;
                     }
 
-                    if (sInfo.nWidthInBytes != 128 / 8 &&
-                        sInfo.nWidthInBytes != 256 / 8)
+                    const char *pszError = GetErrorIfUnsupportedDecimal(
+                        sInfo.nWidthInBytes, sInfo.nPrecision);
+                    if (pszError)
                     {
-                        CPLError(
-                            CE_Failure, CPLE_NotSupported,
-                            "For decimal field, only width 128 and 256 are "
-                            "supported");
-                        return false;
-                    }
-
-                    // precision=19 fits on 64 bits
-                    if (sInfo.nPrecision <= 0 || sInfo.nPrecision > 19)
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_NotSupported,
-                            "For decimal field, only precision up to 19 is "
-                            "supported");
+                        CPLError(CE_Failure, CPLE_NotSupported, "%s", pszError);
                         return false;
                     }
 
@@ -4998,6 +5485,25 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
                                  sInfo.osName.c_str(),
                                  OGR_GetFieldTypeName(eOGRType),
                                  OGR_GetFieldTypeName(OFTRealList));
+                        return false;
+                    }
+                }
+
+                if (!bTypeOK && IsSupportForJSONObj(schema->children[0]))
+                {
+                    sInfo.eNominalFieldType = OFTString;
+                    if (eOGRType == sInfo.eNominalFieldType)
+                    {
+                        bTypeOK = true;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "For field %s, OGR field type is %s whereas "
+                                 "Arrow type implies %s",
+                                 sInfo.osName.c_str(),
+                                 OGR_GetFieldTypeName(eOGRType),
+                                 OGR_GetFieldTypeName(OFTString));
                         return false;
                     }
                 }
@@ -5025,21 +5531,11 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
                     return false;
                 }
 
-                if (sInfo.nWidthInBytes != 128 / 8 &&
-                    sInfo.nWidthInBytes != 256 / 8)
+                const char *pszError = GetErrorIfUnsupportedDecimal(
+                    sInfo.nWidthInBytes, sInfo.nPrecision);
+                if (pszError)
                 {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "For decimal field, only width 128 and 256 are "
-                             "supported");
-                    return false;
-                }
-
-                // precision=19 fits on 64 bits
-                if (sInfo.nPrecision <= 0 || sInfo.nPrecision > 19)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "For decimal field, only precision up to 19 is "
-                             "supported");
+                    CPLError(CE_Failure, CPLE_NotSupported, "%s", pszError);
                     return false;
                 }
 
@@ -5376,6 +5872,16 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
                 oFeature.SetFID(OGRNullFID);
             else if (asFieldInfo[iArrowIdx].bIsGeomCol)
                 oFeature.SetGeomFieldDirectly(iOGRFieldIdx, nullptr);
+            else if (asFieldInfo[iArrowIdx].eNominalFieldType == OFTString &&
+                     (IsMap(format) || IsList(format)))
+            {
+                OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIdx);
+                if (IsValidField(psField))
+                {
+                    CPLFree(psField->String);
+                    OGR_RawField_SetNull(psField);
+                }
+            }
             else
             {
                 OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIdx);
@@ -5544,23 +6050,13 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
                 static_cast<const uint32_t *>(array->buffers[1]) +
                 array->offset;
             const auto childArray = array->children[0];
-            const auto *panValues =
-                static_cast<const int64_t *>(childArray->buffers[1]);
             std::vector<double> aValues;
             for (auto i = panOffsets[iFeature]; i < panOffsets[iFeature + 1];
                  ++i)
             {
-#ifdef CPL_LSB
-                const auto nIdx = i * nWidthIn64BitWord;
-#else
-                const auto nIdx = i * nWidthIn64BitWord + nWidthIn64BitWord - 1;
-#endif
-                const auto nVal =
-                    panValues[nIdx + childArray->offset * nWidthIn64BitWord];
-                const double dfVal =
-                    static_cast<double>(nVal) *
-                    std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
-                aValues.push_back(dfVal);
+                aValues.push_back(GetValueDecimal(childArray, nWidthIn64BitWord,
+                                                  asFieldInfo[iArrowIdx].nScale,
+                                                  i));
             }
             oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
                               aValues.data());
@@ -5572,23 +6068,13 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
                 static_cast<const uint64_t *>(array->buffers[1]) +
                 array->offset;
             const auto childArray = array->children[0];
-            const auto *panValues =
-                static_cast<const int64_t *>(childArray->buffers[1]);
             std::vector<double> aValues;
             for (auto i = static_cast<size_t>(panOffsets[iFeature]);
                  i < static_cast<size_t>(panOffsets[iFeature + 1]); ++i)
             {
-#ifdef CPL_LSB
-                const auto nIdx = i * nWidthIn64BitWord;
-#else
-                const auto nIdx = i * nWidthIn64BitWord + nWidthIn64BitWord - 1;
-#endif
-                const auto nVal =
-                    panValues[nIdx + childArray->offset * nWidthIn64BitWord];
-                const double dfVal =
-                    static_cast<double>(nVal) *
-                    std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
-                aValues.push_back(dfVal);
+                aValues.push_back(GetValueDecimal(childArray, nWidthIn64BitWord,
+                                                  asFieldInfo[iArrowIdx].nScale,
+                                                  i));
             }
             oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
                               aValues.data());
@@ -5598,23 +6084,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
         {
             const int nVals = GetFixedSizeList(format);
             const auto childArray = array->children[0];
-            const auto *panValues =
-                static_cast<const int64_t *>(childArray->buffers[1]);
             std::vector<double> aValues;
             for (int i = 0; i < nVals; ++i)
             {
-#ifdef CPL_LSB
-                const auto nIdx = (iFeature * nVals + i) * nWidthIn64BitWord;
-#else
-                const auto nIdx = (iFeature * nVals + i) * nWidthIn64BitWord +
-                                  nWidthIn64BitWord - 1;
-#endif
-                const auto nVal =
-                    panValues[nIdx + childArray->offset * nWidthIn64BitWord];
-                const double dfVal =
-                    static_cast<double>(nVal) *
-                    std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
-                aValues.push_back(dfVal);
+                aValues.push_back(GetValueDecimal(childArray, nWidthIn64BitWord,
+                                                  asFieldInfo[iArrowIdx].nScale,
+                                                  iFeature * nVals + i));
             }
             oFeature.SetField(iOGRFieldIdx, nVals, aValues.data());
             return true;
@@ -5622,16 +6097,10 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
 
         CPLAssert(format[0] == ARROW_LETTER_DECIMAL);
 
-#ifdef CPL_LSB
-        const auto nIdx = iFeature * nWidthIn64BitWord;
-#else
-        const auto nIdx = iFeature * nWidthIn64BitWord + nWidthIn64BitWord - 1;
-#endif
-        const auto *panValues = static_cast<const int64_t *>(array->buffers[1]);
-        const auto nVal = panValues[nIdx + array->offset * nWidthIn64BitWord];
-        const double dfVal = static_cast<double>(nVal) *
-                             std::pow(10.0, -asFieldInfo[iArrowIdx].nScale);
-        oFeature.SetFieldSameTypeUnsafe(iOGRFieldIdx, dfVal);
+        oFeature.SetFieldSameTypeUnsafe(
+            iOGRFieldIdx,
+            GetValueDecimal(array, nWidthIn64BitWord,
+                            asFieldInfo[iArrowIdx].nScale, iFeature));
         return true;
     }
     else if (SetFieldForOtherFormats(
@@ -5845,6 +6314,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     }
 
     std::map<int, int> oMapOGRFieldIndexToFieldInfoIndex;
+    std::vector<bool> abIsRegularStringField(poLayerDefn->GetFieldCount(), 0);
     for (int i = 0; i < static_cast<int>(asFieldInfo.size()); ++i)
     {
         if (asFieldInfo[i].iOGRFieldIdx >= 0 && !asFieldInfo[i].bIsGeomCol)
@@ -5853,6 +6323,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                           asFieldInfo[i].iOGRFieldIdx) ==
                       oMapOGRFieldIndexToFieldInfoIndex.end());
             oMapOGRFieldIndexToFieldInfoIndex[asFieldInfo[i].iOGRFieldIdx] = i;
+            if (asFieldInfo[i].eNominalFieldType == OFTString &&
+                !IsMap(asFieldInfo[i].format))
+                abIsRegularStringField[asFieldInfo[i].iOGRFieldIdx] = true;
         }
     }
 
@@ -5896,8 +6369,13 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     struct FeatureCleaner
     {
         OGRFeature &m_oFeature;
+        const std::vector<bool> &m_abIsRegularStringField;
 
-        explicit FeatureCleaner(OGRFeature &oFeature) : m_oFeature(oFeature)
+        explicit FeatureCleaner(
+            OGRFeature &oFeature,
+            const std::vector<bool> &abIsRegularStringFieldIn)
+            : m_oFeature(oFeature),
+              m_abIsRegularStringField(abIsRegularStringFieldIn)
         {
         }
 
@@ -5910,7 +6388,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             const int nFieldCount = poLayerDefn->GetFieldCount();
             for (int i = 0; i < nFieldCount; ++i)
             {
-                if (poLayerDefn->GetFieldDefnUnsafe(i)->GetType() == OFTString)
+                if (m_abIsRegularStringField[i])
                 {
                     if (m_oFeature.IsFieldSetAndNotNullUnsafe(i))
                         m_oFeature.SetFieldSameTypeUnsafe(
@@ -5921,7 +6399,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     };
 
     OGRFeature oFeature(bFallbackTypesUsed ? &oLayerDefnTmp : poLayerDefn);
-    FeatureCleaner oCleaner(oFeature);
+    FeatureCleaner oCleaner(oFeature, abIsRegularStringField);
     OGRFeature oFeatureTarget(poLayerDefn);
     OGRFeature *const poFeatureTarget =
         bFallbackTypesUsed ? &oFeatureTarget : &oFeature;
