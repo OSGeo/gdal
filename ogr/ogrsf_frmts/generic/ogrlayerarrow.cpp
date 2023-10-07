@@ -470,6 +470,7 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
 
         out_schema->children[iSchemaChild] =
             CreateSchemaForWKBGeometryColumn(poFieldDefn);
+
         ++iSchemaChild;
     }
 
@@ -4318,10 +4319,15 @@ static size_t FillValidityArrayFromAttrQuery(
                 const GByte *pabyData =
                     static_cast<const GByte *>(psArray->buffers[2]);
                 const uint32_t nSize = nNextOffset - nOffset;
+                CPLAssert(oFeature.GetFieldDefnRef(iOGRFieldIndex)->GetType() ==
+                          OFTString);
                 char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
                 memcpy(pszStr, pabyData + nOffset, nSize);
                 pszStr[nSize] = 0;
-                oFeature.SetFieldSameTypeUnsafe(iOGRFieldIndex, pszStr);
+                OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIndex);
+                if (IsValidField(psField))
+                    CPLFree(psField->String);
+                psField->String = pszStr;
             }
             else if (IsLargeString(format))
             {
@@ -4331,22 +4337,14 @@ static size_t FillValidityArrayFromAttrQuery(
                     psArray->buffers[1])[nOffsettedIndex + 1];
                 const GByte *pabyData =
                     static_cast<const GByte *>(psArray->buffers[2]);
-                const uint64_t nSize64 = nNextOffset - nOffset;
-                if (nSize64 >
-                    static_cast<uint64_t>(std::numeric_limits<int32_t>::max()))
-                {
-                    abyValidityFromFilters.clear();
-                    abyValidityFromFilters.resize(nLength);
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unexpected error in PostFilterArrowArray(): too "
-                             "large string");
-                    return 0;
-                }
-                const size_t nSize = static_cast<size_t>(nSize64);
+                const size_t nSize = static_cast<size_t>(nNextOffset - nOffset);
                 char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
                 memcpy(pszStr, pabyData + static_cast<size_t>(nOffset), nSize);
                 pszStr[nSize] = 0;
-                oFeature.SetFieldSameTypeUnsafe(iOGRFieldIndex, pszStr);
+                OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIndex);
+                if (IsValidField(psField))
+                    CPLFree(psField->String);
+                psField->String = pszStr;
             }
             else if (IsBinary(format))
             {

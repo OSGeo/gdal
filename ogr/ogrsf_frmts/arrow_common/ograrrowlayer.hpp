@@ -3890,9 +3890,11 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                         m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
                     CPLAssert(strcmp(out_schema->children[i]->name,
                                      poGeomFieldDefn->GetNameRef()) == 0);
+                    auto poSchema =
+                        CreateSchemaForWKBGeometryColumn(poGeomFieldDefn, "z");
                     out_schema->children[i]->release(out_schema->children[i]);
-                    out_schema->children[j] =
-                        CreateSchemaForWKBGeometryColumn(poGeomFieldDefn);
+                    *(out_schema->children[j]) = *poSchema;
+                    CPLFree(poSchema);
                 }
                 else if (m_aeGeomEncoding[iGeomField] !=
                          OGRArrowGeomEncoding::WKB)
@@ -3927,14 +3929,16 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                     // Set ARROW:extension:name = ogc:wkb
                     auto poSchema = CreateSchemaForWKBGeometryColumn(
                         poGeomFieldDefn, pszFormat);
-                    out_schema->children[j]->release(out_schema->children[j]);
-                    out_schema->children[j] = poSchema;
+                    out_schema->children[i]->release(out_schema->children[i]);
+                    *(out_schema->children[j]) = *poSchema;
+                    CPLFree(poSchema);
                 }
             }
 
             ++j;
         }
     }
+
     out_schema->n_children = j;
 
     OverrideArrowRelease(m_poArrowDS, out_schema);
@@ -4007,7 +4011,8 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                         if (targetArray)
                         {
                             sourceArray->release(sourceArray);
-                            out_array->children[nArrayIdx] = targetArray;
+                            *(out_array->children[nArrayIdx]) = *targetArray;
+                            CPLFree(targetArray);
                         }
                         else
                         {
