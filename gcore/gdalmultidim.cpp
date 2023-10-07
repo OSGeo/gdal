@@ -4734,7 +4734,8 @@ bool GDALMDArray::ReadUsingContiguousIRead(
         if (arrayStep[i] > 0)
             anTmpStartIdx[i] = arrayStartIdx[i];
         else
-            anTmpStartIdx[i] = arrayStartIdx[i] + (count[i] - 1) * arrayStep[i];
+            anTmpStartIdx[i] =
+                arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
         const uint64_t nCount =
             (count[i] - 1) * static_cast<uint64_t>(std::abs(arrayStep[i])) + 1;
         if (nCount > std::numeric_limits<size_t>::max() / nMemArraySize)
