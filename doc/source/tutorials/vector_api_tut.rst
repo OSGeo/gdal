@@ -1747,13 +1747,6 @@ Supported options of the base implementation are:
   The corresponding ArrowArray must be of type binary (w) or large
   binary (W).
 
-- USE_FALLBACK_TYPES=YES. This may be set to allow GDAL to fallback to
-  another OGRFieldType data type (typically String) when the natural OGR type
-  is not supported in creation by the driver. This implies that the layer
-  implements GetDataset() to be able to retrieve supported data types from the
-  driver. This option must be used consistently among IsArrowSchemaSupported(),
-  CreateFieldFromArrowSchema() and WriteArrowBatch().
-
 Drivers that have a specialized implementation (such as :ref:`vector.parquet`
 and :ref:`vector.arrow`) advertise the OLCFastWriteArrowBatch layer capability.
 

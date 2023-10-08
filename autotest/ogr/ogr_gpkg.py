@@ -9314,7 +9314,7 @@ def test_ogr_gpkg_write_flushcache(tmp_vsimem):
 
 
 ###############################################################################
-# Test WriteArrowBatch() with USE_FALLBACK_TYPES=YES
+# Test WriteArrowBatch() with fallback types
 
 
 @gdaltest.enable_exceptions()
@@ -9359,49 +9359,17 @@ def test_ogr_gpkg_write_arrow_fallback_types(tmp_vsimem):
     schema = stream.GetSchema()
 
     success, error_msg = lyr.IsArrowSchemaSupported(schema)
-    assert not success
-    assert (
-        "Field stringlist would require using OGR type StringList but the driver does not support it. You may set the USE_FALLBACK_TYPES=YES option to allow use of a fallback type"
-        in error_msg
-    )
-
-    success, error_msg = lyr.IsArrowSchemaSupported(schema, ["USE_FALLBACK_TYPES=YES"])
     assert success
 
     for i in range(schema.GetChildrenCount()):
-        if schema.GetChild(i).GetName() in (
-            "stringlist",
-            "intlist",
-            "int64list",
-            "reallist",
-        ):
-            with pytest.raises(Exception):
-                lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
-
-    for i in range(schema.GetChildrenCount()):
         if schema.GetChild(i).GetName() not in ("wkb_geometry", "OGC_FID"):
-            lyr.CreateFieldFromArrowSchema(
-                schema.GetChild(i), ["USE_FALLBACK_TYPES=YES"]
-            )
+            lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
 
     while True:
         array = stream.GetNextRecordBatch()
         if array is None:
             break
-        with pytest.raises(
-            Exception,
-            match="For field time, OGR field type is String whereas Arrow type implies Time",
-        ):
-            lyr.WriteArrowBatch(schema, array, ["FID=OGC_FID"])
-
-    del stream
-    stream = src_lyr.GetArrowStream()
-    schema = stream.GetSchema()
-    while True:
-        array = stream.GetNextRecordBatch()
-        if array is None:
-            break
-        lyr.WriteArrowBatch(schema, array, ["FID=OGC_FID", "USE_FALLBACK_TYPES=YES"])
+        lyr.WriteArrowBatch(schema, array, ["FID=OGC_FID"])
 
     f = lyr.GetNextFeature()
     assert f.GetFID() == 10
