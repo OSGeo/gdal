@@ -975,3 +975,46 @@ def test_ogr_feature_repr():
     out = feat.__repr__()
 
     assert out.startswith("OGRFeature(src):")
+
+
+def test_ogr_feature_list_to_json():
+
+    src_feat_def = ogr.FeatureDefn("src")
+
+    field_def = ogr.FieldDefn("field_integerlist", ogr.OFTIntegerList)
+    src_feat_def.AddFieldDefn(field_def)
+
+    field_def = ogr.FieldDefn("field_booleanlist", ogr.OFTIntegerList)
+    field_def.SetSubType(ogr.OFSTBoolean)
+    src_feat_def.AddFieldDefn(field_def)
+
+    field_def = ogr.FieldDefn("field_integer64list", ogr.OFTInteger64List)
+    src_feat_def.AddFieldDefn(field_def)
+
+    field_def = ogr.FieldDefn("field_reallist", ogr.OFTRealList)
+    src_feat_def.AddFieldDefn(field_def)
+
+    field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
+    src_feat_def.AddFieldDefn(field_def)
+
+    dst_feat_def = ogr.FeatureDefn("dst")
+    for i in range(src_feat_def.GetFieldCount()):
+        field_def = ogr.FieldDefn(src_feat_def.GetFieldDefn(i).GetName(), ogr.OFTString)
+        field_def.SetSubType(ogr.OFSTJSON)
+        dst_feat_def.AddFieldDefn(field_def)
+
+    src_f = ogr.Feature(src_feat_def)
+    src_f["field_integerlist"] = [1, 2]
+    src_f["field_booleanlist"] = [True, False]
+    src_f["field_integer64list"] = [123456789012345, 2]
+    src_f["field_reallist"] = [1.5, 2.5]
+    src_f["field_stringlist"] = ["a", "b"]
+
+    dst_f = ogr.Feature(dst_feat_def)
+    dst_f.SetFrom(src_f)
+
+    assert dst_f["field_integerlist"] == "[ 1, 2 ]"
+    assert dst_f["field_booleanlist"] == "[ true, false ]"
+    assert dst_f["field_integer64list"] == "[ 123456789012345, 2 ]"
+    assert dst_f["field_reallist"] == "[ 1.5, 2.5 ]"
+    assert dst_f["field_stringlist"] == '[ "a", "b" ]'

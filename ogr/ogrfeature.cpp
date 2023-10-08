@@ -3569,9 +3569,20 @@ char *OGRFeature::GetFieldAsSerializedJSon(int iField) const
         json_object *poObj = json_object_new_array();
         int nCount = 0;
         const int *panValues = GetFieldAsIntegerList(iField, &nCount);
-        for (int i = 0; i < nCount; i++)
+        if (poFDefn->GetSubType() == OFSTBoolean)
         {
-            json_object_array_add(poObj, json_object_new_int(panValues[i]));
+            for (int i = 0; i < nCount; i++)
+            {
+                json_object_array_add(
+                    poObj, json_object_new_boolean(panValues[i] != 0));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < nCount; i++)
+            {
+                json_object_array_add(poObj, json_object_new_int(panValues[i]));
+            }
         }
         pszRet = CPLStrdup(json_object_to_json_string(poObj));
         json_object_put(poObj);
