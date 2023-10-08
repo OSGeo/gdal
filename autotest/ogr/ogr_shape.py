@@ -5772,7 +5772,7 @@ def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
     assert f["date"] == "2023/10/06"
     assert f["time"] == "12:34:56"
     assert f["binary"] == "0123465789ABCDEF"
-    assert f["datetime"] == "2023/10/06 19:43:00"
+    assert f["datetime"] == "2023-10-06T19:43:00"
     assert f["stringlist"] == '[ "foo", "bar" ]'
     assert f["intlist"] == "[ 1, 2 ]"
     assert f["int64list"] == "[ 12345678901234, 2 ]"
