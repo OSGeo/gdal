@@ -6179,12 +6179,15 @@ OGRErr OGR_F_SetFrom(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int bForgiving)
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
+ * @param bUseISO8601ForDateTimeAsString true if datetime fields
+ * converted to string should use ISO8601 formatting rather than OGR own format.
+ *
  * @return OGRERR_NONE if the operation succeeds, even if some values are
  * not transferred, otherwise an error code.
  */
 
 OGRErr OGRFeature::SetFrom(const OGRFeature *poSrcFeature, const int *panMap,
-                           int bForgiving)
+                           int bForgiving, bool bUseISO8601ForDateTimeAsString)
 
 {
     if (poSrcFeature == this)
@@ -6237,7 +6240,8 @@ OGRErr OGRFeature::SetFrom(const OGRFeature *poSrcFeature, const int *panMap,
     /*      Set the fields by name.                                         */
     /* -------------------------------------------------------------------- */
 
-    const OGRErr eErr = SetFieldsFrom(poSrcFeature, panMap, bForgiving);
+    const OGRErr eErr = SetFieldsFrom(poSrcFeature, panMap, bForgiving,
+                                      bUseISO8601ForDateTimeAsString);
     if (eErr != OGRERR_NONE)
         return eErr;
 
@@ -6316,12 +6320,16 @@ OGRErr OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
+ * @param bUseISO8601ForDateTimeAsString true if datetime fields
+ * converted to string should use ISO8601 formatting rather than OGR own format.
+ *
  * @return OGRERR_NONE if the operation succeeds, even if some values are
  * not transferred, otherwise an error code.
  */
 
 OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
-                                 const int *panMap, int bForgiving)
+                                 const int *panMap, int bForgiving,
+                                 bool bUseISO8601ForDateTimeAsString)
 
 {
     const int nSrcFieldCount = poSrcFeature->poDefn->GetFieldCountUnsafe();
@@ -6486,7 +6494,12 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
                 }
                 else if (eDstType == OFTString || eDstType == OFTStringList)
                 {
-                    SetField(iDstField, poSrcFeature->GetFieldAsString(iField));
+                    SetField(iDstField,
+                             eSrcType == OFTDateTime &&
+                                     bUseISO8601ForDateTimeAsString
+                                 ? poSrcFeature->GetFieldAsISO8601DateTime(
+                                       iField, nullptr)
+                                 : poSrcFeature->GetFieldAsString(iField));
                 }
                 else if (!bForgiving)
                     return OGRERR_FAILURE;
