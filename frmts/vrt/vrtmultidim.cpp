@@ -1936,7 +1936,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
         else
         {
             poSrcDS = GDALDataset::Open(
-                m_osFilename.c_str(),
+                osFilename.c_str(),
                 (m_osBand.empty() ? GDAL_OF_MULTIDIM_RASTER : GDAL_OF_RASTER) |
                     GDAL_OF_INTERNAL | GDAL_OF_VERBOSE_ERROR,
                 nullptr, nullptr, nullptr);
