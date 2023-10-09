@@ -254,6 +254,12 @@ jobs:
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.8/site-packages/osgeo/_gdal.cpython-38-x86_64-linux-gnu.so
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit.py byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit.py
+    - name: Python type hints check
+      run: |
+        cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python
+        pip install typing-extensions==4.8.0 mypy==1.5.1
+        # TODO: Remove || true once type hints are correct
+        mypy osgeo || true
     - name: Standalone gdal-utils package from wheel
       run: |
         mv gdal-swig-python $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python

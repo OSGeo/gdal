@@ -49,6 +49,7 @@
 
 %include "python_exceptions.i"
 %include "python_strings.i"
+%include "python_type_hints.i"
 
 // Start: to be removed in GDAL 4.0
 

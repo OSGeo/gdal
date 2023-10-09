@@ -8,6 +8,7 @@
 %feature("autodoc");
 
 %include "gdal_dataset_docs.i"
+%include "python_type_hints.i"
 
 %init %{
   /* gdal_python.i %init code */
