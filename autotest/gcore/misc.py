@@ -189,9 +189,17 @@ def _misc_5_internal(drv, datatype, nBands):
         # gdaltest.post_reason(reason)
         # TODO: Why not return -1?
         pass
-    # else:
-    #    if ds.RasterCount > 0:
-    #        print ds.GetRasterBand(1).Checksum()
+    elif ds.RasterCount and drv.ShortName not in ["GSBG", "GS7BG", "NWT_GRD", "netCDF"]:
+        creation_data_types = drv.GetMetadataItem(gdal.DMD_CREATIONDATATYPES)
+        if creation_data_types and gdal.GetDataTypeName(
+            datatype
+        ) in creation_data_types.split(" "):
+            assert ds.GetRasterBand(1).DataType == datatype, (
+                dirname,
+                drv.ShortName,
+                nBands,
+                gdal.GetDataTypeName(datatype),
+            )
     ds = None
 
     try:
@@ -243,10 +251,13 @@ def test_misc_5():
 
                     for nBands in [1, 3]:
                         for datatype in (
+                            gdal.GDT_Int8,
                             gdal.GDT_UInt16,
                             gdal.GDT_Int16,
                             gdal.GDT_UInt32,
                             gdal.GDT_Int32,
+                            gdal.GDT_UInt64,
+                            gdal.GDT_Int64,
                             gdal.GDT_Float32,
                             gdal.GDT_Float64,
                             gdal.GDT_CInt16,
