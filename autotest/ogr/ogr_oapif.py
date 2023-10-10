@@ -1056,7 +1056,7 @@ def test_ogr_opaif_schema_from_xml_schema():
         """{ "collections" : [ {
                     "name": "foo",
                     "links": [
-                        { "rel": "describedBy",
+                        { "rel": "describedby",
                           "type": "application/xml",
                           "href": "http://localhost:%d/oapif/collections/foo/xmlschema"
                         }
@@ -1135,7 +1135,7 @@ def test_ogr_opaif_schema_from_json_schema():
         """{ "collections" : [ {
                     "name": "foo",
                     "links": [
-                        { "rel": "describedBy",
+                        { "rel": "describedby",
                           "type": "application/schema+json",
                           "href": "http://localhost:%d/oapif/collections/foo/jsonschema"
                         }
