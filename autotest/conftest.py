@@ -291,3 +291,17 @@ def tmp_vsimem(request):
     yield path
 
     gdal.RmdirRecursive(str(path))
+
+
+# Fixture to run a test function with pytest_benchmark
+@pytest.fixture(scope="function")
+def decorate_with_benchmark(request, benchmark):
+    def run_under_benchmark(f, benchmark):
+        def test_with_benchmark_fixture(*args, **kwargs):
+            @benchmark
+            def do():
+                f(*args, **kwargs)
+
+        return test_with_benchmark_fixture
+
+    request.node.obj = run_under_benchmark(request.node.obj, benchmark)
