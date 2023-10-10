@@ -8250,7 +8250,7 @@ struct MetadataItem
 };
 }  // namespace
 
-class GDALRasterBandFromArray final : public GDALRasterBand
+class GDALRasterBandFromArray final : public GDALPamRasterBand
 {
     std::vector<GUInt64> m_anOffset{};
     std::vector<size_t> m_anCount{};
@@ -8282,7 +8282,7 @@ class GDALRasterBandFromArray final : public GDALRasterBand
     GDALColorInterp GetColorInterpretation() override;
 };
 
-class GDALDatasetFromArray final : public GDALDataset
+class GDALDatasetFromArray final : public GDALPamDataset
 {
     friend class GDALRasterBandFromArray;
 
@@ -8316,7 +8316,8 @@ class GDALDatasetFromArray final : public GDALDataset
         CPLErr eErr = CE_None;
         if (nOpenFlags != OPEN_FLAGS_CLOSED)
         {
-            if (GDALDatasetFromArray::FlushCache() != CE_None)
+            if (GDALDatasetFromArray::FlushCache(/*bAtClosing=*/true) !=
+                CE_None)
                 eErr = CE_Failure;
             m_poArray.reset();
         }
@@ -9138,6 +9139,15 @@ lbl_next_depth:
     }
     if (iDim > 0)
         goto lbl_return_to_caller;
+
+    if (!array->GetFilename().empty())
+    {
+        poDS->SetPhysicalFilename(array->GetFilename().c_str());
+        poDS->SetDerivedDatasetName(
+            CPLSPrintf("AsClassicDataset(%d,%d) view of %s", int(iXDim),
+                       int(iYDim), array->GetFullName().c_str()));
+        poDS->TryLoadXML();
+    }
 
     return poDS.release();
 }
