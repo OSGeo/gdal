@@ -707,6 +707,31 @@ def test_vrtmisc_blocksize_gdal_translate_indirect():
 
 
 ###############################################################################
+# Test replicating source block size if we subset with an offset multiple
+# of the source block size
+
+
+def test_vrtmisc_blocksize_gdal_translate_implicit():
+
+    src_filename = "/vsimem/src.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        src_filename, 128, 512, options=["TILED=YES", "BLOCKXSIZE=48", "BLOCKYSIZE=256"]
+    )
+    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_implicit.vrt"
+    vrt_ds = gdal.Translate(filename, src_filename, srcWin=[48 * 2, 256, 100, 256])
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 48
+    assert blockysize == 256
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(src_filename)
+
+
+###############################################################################
 # Test support for coordinate epoch
 
 
