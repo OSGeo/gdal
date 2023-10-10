@@ -27,7 +27,7 @@
       "alias" : "fooString",
       "type" : "esriFieldTypeString",
       "length" : 50
-    },
+    }
   ],
   "features" : [
     {
@@ -40,7 +40,7 @@
         "objectid" : 1,
         "fooInt" : 2,
         "fooDouble" : 3.4,
-        "fooString" : "56",
+        "fooString" : "56"
       }
     }
   ]
