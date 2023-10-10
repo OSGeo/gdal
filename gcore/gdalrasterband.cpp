@@ -135,7 +135,23 @@ GDALRasterBand::~GDALRasterBand()
  * format.
  *
  * Some formats may efficiently implement decimation into a buffer by
- * reading from lower resolution overview images.
+ * reading from lower resolution overview images. The logic of the default
+ * implementation in the base class GDALRasterBand is the following one. It
+ * computes a target_downscaling_factor from the window of interest and buffer
+ * size which is min(nXSize/nBufXSize, nYSize/nBufYSize).
+ * It then walks through overviews and will select the first one whose
+ * downscaling factor is greater than target_downscaling_factor / 1.2.
+ *
+ * Let's assume we have overviews at downscaling factors 2, 4 and 8.
+ * The relationship between target_downscaling_factor and the select overview
+ * level is the following one:
+ *
+ * target_downscaling_factor  | selected_overview
+ * -------------------------  | -----------------
+ * ]0,       2 / 1.2]         | full resolution band
+ * ]2 / 1.2, 4 / 1.2]         | 2x downsampled band
+ * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
+ * ]8 / 1.2, infinity[        | 8x downsampled band
  *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
@@ -207,7 +223,23 @@ GDALRasterBand::~GDALRasterBand()
  * format.
  *
  * Some formats may efficiently implement decimation into a buffer by
- * reading from lower resolution overview images.
+ * reading from lower resolution overview images. The logic of the default
+ * implementation in the base class GDALRasterBand is the following one. It
+ * computes a target_downscaling_factor from the window of interest and buffer
+ * size which is min(nXSize/nBufXSize, nYSize/nBufYSize).
+ * It then walks through overviews and will select the first one whose
+ * downscaling factor is greater than target_downscaling_factor / 1.2.
+ *
+ * Let's assume we have overviews at downscaling factors 2, 4 and 8.
+ * The relationship between target_downscaling_factor and the select overview
+ * level is the following one:
+ *
+ * target_downscaling_factor  | selected_overview
+ * -------------------------  | -----------------
+ * ]0,       2 / 1.2]         | full resolution band
+ * ]2 / 1.2, 4 / 1.2]         | 2x downsampled band
+ * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
+ * ]8 / 1.2, infinity[        | 8x downsampled band
  *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
