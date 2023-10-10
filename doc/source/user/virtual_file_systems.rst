@@ -392,7 +392,13 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - pc_url_signing=yes/no: whether to use the URL signing mechanism of Microsoft Planetary Computer (https://planetarycomputer.microsoft.com/docs/concepts/sas/). (GDAL >= 3.5.2)
 - pc_collection=name: name of the collection of the dataset for Planetary Computer URL signing. Only used when pc_url_signing=yes. (GDAL >= 3.5.2)
 
-Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :config:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :config:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
+Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :config:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading, it will progressively increase the chunk size up to 128 times :config:`CPL_VSIL_CURL_CHUNK_SIZE` (so 2 MB by default) to improve download performance.
+
+In addition, a global least-recently-used cache of 16 MB shared among all downloaded content is used, and content in it may be reused after a file handle has been closed and reopen, during the life-time of the process or until :cpp:func:`VSICurlClearCache` is called. Starting with GDAL 2.3, the size of this global LRU cache can be modified by setting the configuration option :config:`CPL_VSIL_CURL_CACHE_SIZE` (in bytes).
+
+When increasing the value of :config:`CPL_VSIL_CURL_CHUNK_SIZE` to optimize sequential reading, it is recommended to increase :config:`CPL_VSIL_CURL_CACHE_SIZE` as well to 128 times the value of :config:`CPL_VSIL_CURL_CHUNK_SIZE`.
+
+Starting with GDAL 2.3, the :config:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
 
 The :config:`GDAL_HTTP_PROXY` (for both HTTP and HTTPS protocols), :config:`GDAL_HTTPS_PROXY` (for HTTPS protocol only), :config:`GDAL_HTTP_PROXYUSERPWD` and :config:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
 
@@ -424,8 +430,6 @@ Starting with GDAL 3.7, the above configuration options can also be specified
 as path-specific options with :cpp:func:`VSISetPathSpecificOption`.
 
 The file can be cached in RAM by setting the configuration option :config:`VSI_CACHE` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option :config:`VSI_CACHE_SIZE` (in bytes). Content in that cache is discarded when the file handle is closed.
-
-In addition, a global least-recently-used cache of 16 MB shared among all downloaded content is enabled by default, and content in it may be reused after a file handle has been closed and reopen, during the life-time of the process or until :cpp:func:`VSICurlClearCache` is called. Starting with GDAL 2.3, the size of this global LRU cache can be modified by setting the configuration option :config:`CPL_VSIL_CURL_CACHE_SIZE` (in bytes).
 
 Starting with GDAL 2.3, the :config:`CPL_VSIL_CURL_NON_CACHED` configuration option can be set to values like :file:`/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory`, so that at file handle closing, all cached content related to the mentioned file(s) is no longer cached. This can help when dealing with resources that can be modified during execution of GDAL related code. Alternatively, :cpp:func:`VSICurlClearCache` can be used.
 
