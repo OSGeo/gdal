@@ -513,10 +513,10 @@ const CPLJSONDocument &OGROAPIFDataset::GetAPIDoc()
                 }
                 const auto osRel(oLink.GetString("rel"));
                 const auto osType(oLink.GetString("type"));
-                if (osRel == "service-desc"
+                if (EQUAL(osRel.c_str(), "service-desc")
 #ifndef REMOVE_SUPPORT_FOR_OLD_VERSIONS
                     // Needed for http://beta.fmi.fi/data/3/wfs/sofp
-                    || osRel == "service"
+                    || EQUAL(osRel.c_str(), "service")
 #endif
                 )
                 {
@@ -826,7 +826,7 @@ bool OGROAPIFDataset::LoadJSONCollections(const CPLString &osResultIn)
                 {
                     continue;
                 }
-                if (oLink.GetString("rel") == "next")
+                if (EQUAL(oLink.GetString("rel").c_str(), "next"))
                 {
                     osNextURL = oLink.GetString("href");
                     nCountRelNext++;
@@ -1141,7 +1141,7 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
             const auto osRel(oLink.GetString("rel"));
             const auto osURL = oLink.GetString("href");
             const auto type = oLink.GetString("type");
-            if (osRel == "describedBy")
+            if (EQUAL(osRel.c_str(), "describedby"))
             {
                 if (type == MEDIA_TYPE_TEXT_XML ||
                     type == MEDIA_TYPE_APPLICATION_XML)
@@ -1158,14 +1158,14 @@ OGROAPIFLayer::OGROAPIFLayer(OGROAPIFDataset *poDS, const CPLString &osName,
                     m_bDescribedByIsXML = false;
                 }
             }
-            else if (osRel == "queryables")
+            else if (EQUAL(osRel.c_str(), "queryables"))
             {
                 if (type == MEDIA_TYPE_JSON || m_osQueryablesURL.empty())
                 {
                     m_osQueryablesURL = m_poDS->ReinjectAuthInURL(osURL);
                 }
             }
-            else if (osRel == "items")
+            else if (EQUAL(osRel.c_str(), "items"))
             {
                 if (type == MEDIA_TYPE_GEOJSON)
                 {
@@ -1898,7 +1898,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
                         {
                             continue;
                         }
-                        if (oLink.GetString("rel") == "next")
+                        if (EQUAL(oLink.GetString("rel").c_str(), "next"))
                         {
                             nCountRelNext++;
                             auto type = oLink.GetString("type");
