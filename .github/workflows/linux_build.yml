@@ -90,6 +90,13 @@ jobs:
             build_script: build.sh
             test_script: test.sh
 
+          - name: Ubuntu 20.04, benchmarks
+            id: benchmarks
+            travis_branch: ubuntu_2004
+            container: ubuntu_20.04
+            build_script: build.sh
+            test_script: test.sh
+
           - name: Ubuntu 20.04, Intel compiler
             id: icc
             container: icc
@@ -267,6 +274,13 @@ jobs:
             TEST_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
           else
             TEST_CMD="ctest -V -j $(nproc)"
+          fi
+
+          if test "${{ matrix.id }}" = "benchmarks"; then
+            if test -f /sys/devices/system/cpu/intel_pstate/no_turbo; then
+              echo "Disable TurboBoost"
+              echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+            fi
           fi
 
           # For cache
