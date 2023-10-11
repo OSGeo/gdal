@@ -105,6 +105,8 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
                                          OGRwkbGeometryType eType,
                                          CPL_UNUSED char **papszOptions)
 {
+    CPLAssert(nullptr != pszLayerName);
+
     const char *pszExtension= "pol";
 
     /* -------------------------------------------------------------------- */
@@ -235,6 +237,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     VSIFCloseL(fp);
     return nullptr;
+
 }
 
 /************************************************************************/

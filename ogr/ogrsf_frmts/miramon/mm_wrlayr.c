@@ -3026,10 +3026,21 @@ char aTimeString[30];
     // Writing EXTENT section
     printf_function(pF, "\n[%s]\n", SECTION_EXTENT);
     printf_function(pF, "%s=0\n", KEY_toler_env);
-    printf_function(pF, "%s=%lf\n", KEY_MinX, hMMMD->hBB.dfMinX);
-    printf_function(pF, "%s=%lf\n", KEY_MaxX, hMMMD->hBB.dfMaxX);
-    printf_function(pF, "%s=%lf\n", KEY_MinY, hMMMD->hBB.dfMinY);
-    printf_function(pF, "%s=%lf\n", KEY_MaxY, hMMMD->hBB.dfMaxY);
+    
+    
+    
+    
+
+    if(hMMMD->hBB.dfMinX!=MM_STATISTICAL_UNDEFINED_VALUE &&
+        hMMMD->hBB.dfMaxX!=-MM_STATISTICAL_UNDEFINED_VALUE &&
+        hMMMD->hBB.dfMinY!=MM_STATISTICAL_UNDEFINED_VALUE &&
+        hMMMD->hBB.dfMaxY!=-MM_STATISTICAL_UNDEFINED_VALUE)
+    {
+        printf_function(pF, "%s=%lf\n", KEY_MinX, hMMMD->hBB.dfMinX);
+        printf_function(pF, "%s=%lf\n", KEY_MaxX, hMMMD->hBB.dfMaxX);
+        printf_function(pF, "%s=%lf\n", KEY_MinY, hMMMD->hBB.dfMinY);
+        printf_function(pF, "%s=%lf\n", KEY_MaxY, hMMMD->hBB.dfMaxY);
+    }
     
     // Writing OVERVIEW section
     printf_function(pF, "\n[%s]\n", SECTION_OVERVIEW);
@@ -3198,6 +3209,7 @@ struct MiraMonVectorMetaData hMMMD;
 
         memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB, sizeof(hMMMD.hBB));
         hMMMD.pLayerDB=hMiraMonLayer->pLayerDB;
+        return MMWriteMetadataFile(&hMMMD);
     }
     else if(layerPlainType==MM_LayerType_Arc)
     {
@@ -3222,6 +3234,7 @@ struct MiraMonVectorMetaData hMMMD;
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMPolygon.TopArcHeader.hBB, sizeof(hMMMD.hBB));
             hMMMD.pLayerDB=NULL;
         }
+        return MMWriteMetadataFile(&hMMMD);
     }
     else if(layerPlainType==MM_LayerType_Pol)
     {
@@ -3233,6 +3246,7 @@ struct MiraMonVectorMetaData hMMMD;
         hMMMD.pLayerDB=hMiraMonLayer->pLayerDB;
         strcpy(hMMMD.aArcFile, 
                 get_filename_function(hMiraMonLayer->MMPolygon.MMArc.pszLayerName));
+        return MMWriteMetadataFile(&hMMMD);
     }
     else if(layerPlainType==MM_LayerType_Node)
     {
@@ -3252,11 +3266,9 @@ struct MiraMonVectorMetaData hMMMD;
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMPolygon.MMArc.TopNodeHeader.hBB, sizeof(hMMMD.hBB));
         }
         hMMMD.pLayerDB=NULL;
+        return MMWriteMetadataFile(&hMMMD);
     }
-    else
-        return 1;
-
-    return MMWriteMetadataFile(&hMMMD);
+    return 0;
 }
 
 int MMWriteVectorMetadata(struct MiraMonLayerInfo *hMiraMonLayer)
@@ -3283,8 +3295,8 @@ int MMWriteVectorMetadata(struct MiraMonLayerInfo *hMiraMonLayer)
         return MMWriteVectorMetadataFile(hMiraMonLayer, 
                     MM_LayerType_Pol, MM_LayerType_Pol);
     }
-    error_message_function("Failed to create metadata file.");
-    return 1;
+    return MMWriteVectorMetadataFile(hMiraMonLayer, 
+        MM_LayerType_Unknown, MM_LayerType_Unknown);
 }
 
 
@@ -3666,6 +3678,9 @@ int MM_DetectAndFixDBFWidthChange(struct MiraMonLayerInfo *hMiraMonLayer,
 {
 struct MM_BASE_DADES_XP *pBD_XP;
 
+    if(!hMMFeature)
+        return 0;
+
     pBD_XP=pMMAdmDB->pMMBDXP;
     if(nIRecord>=hMMFeature->nNumRecords)
         return 0;
@@ -3766,10 +3781,13 @@ struct MM_FLUSH_INFO *pFlushRecList;
     pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
     
     // Test lenght
-    if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
+    if (hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
+    {
+        if (MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &pMMArcLayer->MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-        return 1;
+            return 1;
+    }
 
     // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
@@ -3939,10 +3957,30 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
     return 0;
 }
 
-int MMCloseMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
+int MMCloseMMBD_XPFile(struct MiraMonLayerInfo *hMiraMonLayer,
+                    struct MMAdmDatabase *MMAdmDB)
 {
     if(!MMAdmDB->pFExtDBF)
-        return 0;
+    {
+        // In case of 0 elements created we have to 
+        // create an empty DBF
+        if(hMiraMonLayer->bIsPolygon)
+        {
+            if(hMiraMonLayer->TopHeader.nElemCount<=1)
+            {
+                if(MMCreateMMDB(hMiraMonLayer))
+                    return 1;
+            }
+        }
+        else
+        {
+            if(hMiraMonLayer->TopHeader.nElemCount==0)
+            {
+                if(MMCreateMMDB(hMiraMonLayer))
+                    return 1;
+            }
+        }
+    }
 
     if(MM_WriteNRecordsMMBD_XPFile(MMAdmDB))
         return 1;
@@ -3962,23 +4000,28 @@ int MMCloseMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 int MMCloseMMBD_XP(struct MiraMonLayerInfo *hMiraMonLayer)
 {
     if(hMiraMonLayer->bIsPoint)
-        return MMCloseMMBD_XPFile(&hMiraMonLayer->MMPoint.MMAdmDB);
+        return MMCloseMMBD_XPFile(hMiraMonLayer, 
+                        &hMiraMonLayer->MMPoint.MMAdmDB);
     if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
-        if(MMCloseMMBD_XPFile(&hMiraMonLayer->MMArc.MMAdmDB))
+        if(MMCloseMMBD_XPFile(hMiraMonLayer, 
+                &hMiraMonLayer->MMArc.MMAdmDB))
             return 1;
-        return MMCloseMMBD_XPFile(&hMiraMonLayer->MMArc.MMNode.MMAdmDB);
+        return MMCloseMMBD_XPFile(hMiraMonLayer, 
+            &hMiraMonLayer->MMArc.MMNode.MMAdmDB);
     }
     if(hMiraMonLayer->bIsPolygon)
     {
-        if(MMCloseMMBD_XPFile(&hMiraMonLayer->MMPolygon.MMAdmDB))
+        if(MMCloseMMBD_XPFile(hMiraMonLayer, 
+                &hMiraMonLayer->MMPolygon.MMAdmDB))
             return 1;
-        if(MMCloseMMBD_XPFile(&hMiraMonLayer->MMPolygon.MMArc.MMAdmDB))
+        if(MMCloseMMBD_XPFile(hMiraMonLayer, 
+                &hMiraMonLayer->MMPolygon.MMArc.MMAdmDB))
             return 1;
-        return MMCloseMMBD_XPFile(&hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB);
+        return MMCloseMMBD_XPFile(hMiraMonLayer, 
+            &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB);
     }
-    error_message_function("Failed to create database files.");
-    return 1;
+    return 0;
 }
 
 void MMDestroyMMDBFile(struct MMAdmDatabase *pMMAdmDB)

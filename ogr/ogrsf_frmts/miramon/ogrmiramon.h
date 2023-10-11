@@ -73,8 +73,12 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     OGRFeature *GetNextRawFeature();
 
-    OGRErr WriteGeometry(OGRGeometryH hGeom,
-                    bool bExternalRing, bool bWriteNow,
+    OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
+                    bool bExternalRing, int eLT);
+    OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
+                                        bool bExternalRing,
+                                        OGRFeature *poFeature);
+    OGRErr WriteGeometry(bool bExternalRing, 
                     OGRFeature *poFeature);
     OGRErr CompleteHeader(OGRGeometry *);
     GIntBig GetFeatureCount(int bForce);

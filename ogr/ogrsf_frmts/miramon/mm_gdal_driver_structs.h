@@ -625,9 +625,7 @@ struct MiraMonLayerInfo
     int bIsArc; // Also 1 in a polygon layer
     int bIsPoint;
     
-    // Number of elements of the layer. It's mandatory knowing 
-    // it before writing the layer on disk.
-    //MM_INTERNAL_FID nSuposedElemCount; 
+    // Final number of elements of the layer. 
     MM_INTERNAL_FID nFinalElemCount; // Real element count after conversion
     
     // Header of the layer
