@@ -2044,10 +2044,10 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
             (strcmp(lSchema.children[nIdx]->format, "z") == 0);
         const uint32_t *panOffsets32 =
             static_cast<const uint32_t *>(psGeomArray->buffers[1]) +
-            array->offset;
+            psGeomArray->offset;
         const uint64_t *panOffsets64 =
             static_cast<const uint64_t *>(psGeomArray->buffers[1]) +
-            array->offset;
+            psGeomArray->offset;
         GByte *pabyData =
             static_cast<GByte *>(const_cast<void *>(psGeomArray->buffers[2]));
         OGREnvelope sEnvelope;
