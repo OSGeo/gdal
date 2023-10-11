@@ -14,6 +14,8 @@ cmake ${GDAL_SOURCE_DIR:=..} \
     -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     -DECW_ROOT=/opt/libecwj2-3.3 \
     -DMRSID_ROOT=/usr/local \
-    -DFileGDB_ROOT=/usr/local/FileGDB_API
+    -DFileGDB_ROOT=/usr/local/FileGDB_API \
+    -DSQLite3_INCLUDE_DIR=/usr/local/install-sqlite-trusted-schema-off/include \
+    -DSQLite3_LIBRARY=/usr/local/install-sqlite-trusted-schema-off/lib/libsqlite3.so
 
 make -j$(nproc)
