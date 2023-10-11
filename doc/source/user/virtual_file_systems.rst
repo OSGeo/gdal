@@ -223,7 +223,8 @@ To point to a file inside a 7z file, the filename must be of the form
 is the relative path to the file inside the archive.`
 
 Default extensions recognized by this virtual file system are:
-``7z``, ``lpk`` (Esri ArcGIS Layer Package), ``lpkx``, ``mpk`` (Esri ArcGIS Map Package) and ``mpkx``.
+``7z``, ``lpk`` (Esri ArcGIS Layer Package), ``lpkx``, ``mpk`` (Esri ArcGIS Map Package),
+``mpkx`` and ``ppkx`` (Esri ArcGIS Pro Project Package).
 
 An alternate syntax is available so as to enable chaining and not being
 dependent on those extensions, e.g.: :file:`/vsi7z/{/path/to/the/archive}/path/inside/the/archive`.
