@@ -353,13 +353,14 @@ static cl_device_id get_device(OCLVendor *peVendor)
              platformIndex++)
         {
 
+            constexpr int max_devices{20};
             cl_uint num_devices;
-            cl_device_id devices[20];
+            cl_device_id devices[max_devices];
             err = clGetDeviceIDs(platforms[platformIndex],
                                  bUseOpenCLCPU
                                      ? CL_DEVICE_TYPE_CPU
                                      : CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU,
-                                 10, devices, &num_devices);
+                                 max_devices, devices, &num_devices);
 
             if (err != CL_SUCCESS)
             {
