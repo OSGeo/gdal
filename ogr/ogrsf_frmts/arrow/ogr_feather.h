@@ -195,6 +195,10 @@ class OGRFeatherWriterLayer final : public OGRArrowWriterLayer
     bool SetOptions(const std::string &osFilename, CSLConstList papszOptions,
                     const OGRSpatialReference *poSpatialRef,
                     OGRwkbGeometryType eGType);
+
+    bool WriteArrowBatch(const struct ArrowSchema *schema,
+                         struct ArrowArray *array,
+                         CSLConstList papszOptions = nullptr) override;
 };
 
 /************************************************************************/

@@ -537,6 +537,51 @@ def ReleaseResultSet(self, sql_lyr):
 
         return Stream(stream, use_masked_arrays)
 
+
+    def IsPyArrowSchemaSupported(self, pa_schema, options=[]):
+        """Returns whether the passed pyarrow Schema is supported by the layer, as a tuple (success: bool, errorMsg: str).
+
+           This may be used as a preliminary check before calling WritePyArrowBatch()
+        """
+
+        import pyarrow as pa
+        schema = ArrowSchema()
+        pa_schema._export_to_c(schema._getPtr())
+        return self.IsArrowSchemaSupported(schema, options)
+
+
+    def CreateFieldFromPyArrowSchema(self, pa_schema, options=[]):
+        """Create a field from the passed pyarrow Schema."""
+
+        import pyarrow as pa
+        schema = ArrowSchema()
+        pa_schema._export_to_c(schema._getPtr())
+        return self.CreateFieldFromArrowSchema(schema, options)
+
+
+    def WritePyArrow(self, pa_batch, options=[]):
+        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer."""
+
+        import pyarrow as pa
+
+        # Is it a pyarrow.Table ?
+        if hasattr(pa_batch, "to_batches"):
+            for batch in pa_batch.to_batches():
+                if self.WritePyArrow(batch, options=options) != OGRERR_NONE:
+                    return OGRERR_FAILURE
+            return OGRERR_NONE
+
+        # Is it a pyarrow.RecordBatch ?
+        if hasattr(pa_batch, "columns") and hasattr(pa_batch, "schema"):
+            array = pa.StructArray.from_arrays(pa_batch.columns, names=pa_batch.schema.names)
+            return self.WritePyArrow(array, options=options)
+
+        # Assume it is a pyarrow.StructArray
+        schema = ArrowSchema()
+        array = ArrowArray()
+        pa_batch._export_to_c(array._getPtr(), schema._getPtr())
+        return self.WriteArrowBatch(schema, array, options)
+
   %}
 
 }

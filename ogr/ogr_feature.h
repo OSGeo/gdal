@@ -1222,9 +1222,12 @@ class CPL_DLL OGRFeature
     void DumpReadable(FILE *, CSLConstList papszOptions = nullptr) const;
     std::string DumpReadableAsString(CSLConstList papszOptions = nullptr) const;
 
-    OGRErr SetFrom(const OGRFeature *, int = TRUE);
-    OGRErr SetFrom(const OGRFeature *, const int *, int = TRUE);
-    OGRErr SetFieldsFrom(const OGRFeature *, const int *, int = TRUE);
+    OGRErr SetFrom(const OGRFeature *, int bForgiving = TRUE);
+    OGRErr SetFrom(const OGRFeature *, const int *panMap, int bForgiving = TRUE,
+                   bool bUseISO8601ForDateTimeAsString = false);
+    OGRErr SetFieldsFrom(const OGRFeature *, const int *panMap,
+                         int bForgiving = TRUE,
+                         bool bUseISO8601ForDateTimeAsString = false);
 
     //! @cond Doxygen_Suppress
     OGRErr RemapFields(OGRFeatureDefn *poNewDefn, const int *panRemapSource);

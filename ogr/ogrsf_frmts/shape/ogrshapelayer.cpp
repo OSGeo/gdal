@@ -3778,3 +3778,12 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                          GetDataset()                                */
+/************************************************************************/
+
+GDALDataset *OGRShapeLayer::GetDataset()
+{
+    return poDS;
+}

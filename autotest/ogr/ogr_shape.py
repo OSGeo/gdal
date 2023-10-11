@@ -5704,3 +5704,76 @@ def test_ogr_shape_prj_with_wrong_axis_order(tmp_vsimem):
     assert lyr.GetSpatialRef().GetAxisName(None, 0) == "Latitude"
     assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
     assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
+
+
+###############################################################################
+# Test WriteArrowBatch() and fallback types
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("string", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+    src_lyr.CreateField(ogr.FieldDefn("int64", ogr.OFTInteger64))
+    src_lyr.CreateField(ogr.FieldDefn("real", ogr.OFTReal))
+    src_lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    src_lyr.CreateField(ogr.FieldDefn("time", ogr.OFTTime))
+    src_lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    src_lyr.CreateField(ogr.FieldDefn("binary", ogr.OFTBinary))
+    src_lyr.CreateField(ogr.FieldDefn("stringlist", ogr.OFTStringList))
+    src_lyr.CreateField(ogr.FieldDefn("intlist", ogr.OFTIntegerList))
+    src_lyr.CreateField(ogr.FieldDefn("int64list", ogr.OFTInteger64List))
+    src_lyr.CreateField(ogr.FieldDefn("reallist", ogr.OFTRealList))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["string"] = "foo"
+    f["int"] = 123
+    f["int64"] = 12345678901234
+    f["real"] = 1.5
+    f["date"] = "2023/10/06"
+    f["time"] = "12:34:56"
+    f["datetime"] = "2023/10/06 19:43:00"
+    f.SetField("binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    f["stringlist"] = ["foo", "bar"]
+    f["intlist"] = [1, 2]
+    f["int64list"] = [12345678901234, 2]
+    f["reallist"] = [1.5, 2.5]
+    src_lyr.CreateFeature(f)
+
+    filename = tmp_vsimem / "test_ogr_gpkg_write_arrow_fallback_types.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    success, error_msg = lyr.IsArrowSchemaSupported(schema)
+    assert success
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() not in ("wkb_geometry", "OGC_FID"):
+            lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        lyr.WriteArrowBatch(schema, array, ["FID=OGC_FID"])
+
+    f = lyr.GetNextFeature()
+    assert f["string"] == "foo"
+    assert f["int"] == 123
+    assert f["int64"] == 12345678901234
+    assert f["real"] == 1.5
+    assert f["date"] == "2023/10/06"
+    assert f["time"] == "12:34:56"
+    assert f["binary"] == "0123465789ABCDEF"
+    assert f["datetime"] == "2023-10-06T19:43:00"
+    assert f["stringlist"] == '[ "foo", "bar" ]'
+    assert f["intlist"] == "[ 1, 2 ]"
+    assert f["int64list"] == "[ 12345678901234, 2 ]"
+    assert f["reallist"] == "[ 1.5, 2.5 ]"

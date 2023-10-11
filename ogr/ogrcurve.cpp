@@ -711,6 +711,9 @@ static inline bool epsilonEqual(double a, double b, double eps)
 int OGRCurve::isClockwise() const
 
 {
+    // WARNING: keep in sync OGRLineString::isClockwise(),
+    // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
+
     const int nPointCount = getNumPoints();
     if (nPointCount < 3)
         return TRUE;

@@ -1036,6 +1036,9 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
 #define OLCFastGetArrowStream                                                  \
     "FastGetArrowStream" /**< Layer capability for fast GetArrowStream()       \
                             implementation */
+#define OLCFastWriteArrowBatch                                                 \
+    "FastWriteArrowBatch" /**< Layer capability for fast WriteArrowBatch()     \
+                            implementation */
 
 #define ODsCCreateLayer                                                        \
     "CreateLayer" /**< Dataset capability for layer creation */

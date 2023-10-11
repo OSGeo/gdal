@@ -85,6 +85,7 @@ add_executable(
   test_ogr_geos.cpp
   test_ogr_shape.cpp
   test_ogr_swq.cpp
+  test_ogr_wkb.cpp
   test_osr.cpp
   test_osr_pci.cpp
   test_osr_ct.cpp

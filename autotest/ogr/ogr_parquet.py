@@ -2281,15 +2281,16 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
     ds = ogr.Open("data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("decimal128 = -1234.567")
-    # Fast filtering on decimal data type not implemented for now
-    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 0
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
     stream = lyr.GetArrowStreamAsPyArrow()
     batches = [batch for batch in stream]
-    assert len(batches[0].field("uint8")) == 2
+    assert len(batches) == 2
+    assert len(batches[0].field("uint8")) == 1
+    assert len(batches[1].field("uint8")) == 1
     assert batches[0].field("uint8")[0].as_py() == 2
-    assert batches[0].field("uint8")[1].as_py() == 5
-    assert batches[0].field("decimal128")[0].as_py() == -1234.567
-    assert batches[0].field("decimal128")[1].as_py() == -1234.567
+    assert batches[1].field("uint8")[0].as_py() == 5
+    assert float(batches[0].field("decimal128")[0].as_py()) == -1234.567
+    assert float(batches[1].field("decimal128")[0].as_py()) == -1234.567
 
 
 ###############################################################################
@@ -2939,3 +2940,75 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
         minx, maxx, miny, maxy = lyr.GetExtent()
         assert (minx, miny, maxx, maxy) == (-1.0, 0.0, 3.0, 10.0)
         ds = None
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_write_arrow(tmp_vsimem):
+
+    src_ds = ogr.Open("data/parquet/test.parquet")
+    src_lyr = src_ds.GetLayer(0)
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_write_arrow.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer(
+            "test", srs=src_lyr.GetSpatialRef(), geom_type=ogr.wkbPoint, options=[]
+        )
+
+        stream = src_lyr.GetArrowStream(["MAX_FEATURES_IN_BATCH=3"])
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert success
+
+        for i in range(schema.GetChildrenCount()):
+            if schema.GetChild(i).GetName() != src_lyr.GetGeometryColumn():
+                dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+        while True:
+            array = stream.GetNextRecordBatch()
+            if array is None:
+                break
+            assert dst_lyr.WriteArrowBatch(schema, array) == ogr.OGRERR_NONE
+
+    _check_test_parquet(outfilename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_write_arrow_rewind_polygon(tmp_vsimem):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
+    src_lyr.CreateFeature(f)
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_write_arrow.parquet")
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer("test", geom_type=ogr.wkbPolygon, options=[])
+
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert success
+
+        for i in range(schema.GetChildrenCount()):
+            if schema.GetChild(i).GetName() not in ("OGC_FID", "wkb_geometry"):
+                dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+        while True:
+            array = stream.GetNextRecordBatch()
+            if array is None:
+                break
+            assert dst_lyr.WriteArrowBatch(schema, array) == ogr.OGRERR_NONE
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,1 1,0 1,0 0))"

@@ -1029,6 +1029,10 @@ class ArrowArray {
 public:
 %extend {
 
+  ArrowArray() {
+    return (struct ArrowArray* )calloc(1, sizeof(struct ArrowArray));
+  }
+
   ~ArrowArray() {
     if( self->release )
       self->release(self);
@@ -1056,6 +1060,10 @@ class ArrowSchema {
 public:
 %extend {
 
+  ArrowSchema() {
+    return (struct ArrowSchema* )calloc(1, sizeof(struct ArrowSchema));
+  }
+
   ~ArrowSchema() {
     if( self->release )
       self->release(self);
@@ -1066,8 +1074,21 @@ public:
     return self;
   }
 
+  const char* GetName() {
+    return self->name;
+  }
+
   GIntBig GetChildrenCount() {
     return self->n_children;
+  }
+
+  const ArrowSchema* GetChild(int iChild) {
+    if( iChild < 0 || iChild >= self->n_children )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong index");
+        return NULL;
+    }
+    return self->children[iChild];
   }
 
 } /* %extend */
@@ -1486,6 +1507,27 @@ public:
           return NULL;
       }
   }
+#endif
+
+#ifdef SWIGPYTHON
+    void IsArrowSchemaSupported(const struct ArrowSchema *schema, bool* pbRet, char **errorMsg, char** options = NULL)
+    {
+        *pbRet = OGR_L_IsArrowSchemaSupported(self, schema, options, errorMsg);
+    }
+#endif
+
+#ifdef SWIGPYTHON
+    OGRErr CreateFieldFromArrowSchema(const struct ArrowSchema *schema, char** options = NULL)
+    {
+        return OGR_L_CreateFieldFromArrowSchema(self, schema, options) ? OGRERR_NONE : OGRERR_FAILURE;
+    }
+#endif
+
+#ifdef SWIGPYTHON
+    OGRErr WriteArrowBatch(const struct ArrowSchema *schema, struct ArrowArray *array, char** options = NULL)
+    {
+        return OGR_L_WriteArrowBatch(self, schema, array, options) ? OGRERR_NONE : OGRERR_FAILURE;
+    }
 #endif
 
 #ifdef SWIGPYTHON

@@ -236,6 +236,8 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                   char **papszCreateOptions = nullptr);
     virtual ~OGRShapeLayer();
 
+    GDALDataset *GetDataset() override;
+
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
