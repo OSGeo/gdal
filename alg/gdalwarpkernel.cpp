@@ -408,14 +408,17 @@ static void ThreadFuncAdapter(void *pData)
             psThreadData->mapThreadToTransformerArg[nThreadId] =
                 pTransformerArg;
         }
+
+        if (pTransformerArg == nullptr)
+        {
+            CPLAssert(psThreadData->pTransformerArgInput != nullptr);
+            CPLAssert(!psThreadData->bTransformerArgInputAssignedToThread);
+        }
     }
 
     // If no transformer assigned to current thread, instantiate one
     if (pTransformerArg == nullptr)
     {
-        CPLAssert(psThreadData->pTransformerArgInput != nullptr);
-        CPLAssert(!psThreadData->bTransformerArgInputAssignedToThread);
-
         // This somehow assumes that GDALCloneTransformer() is thread-safe
         // which should normally be the case.
         pTransformerArg =
