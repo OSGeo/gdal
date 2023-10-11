@@ -2686,14 +2686,18 @@ int MMResizeMiraMonFieldValue(struct MiraMonFieldValue **pFieldValue,
                         unsigned __int32 nIncr,
                         unsigned __int32 nProposedMax)
 {
+unsigned __int32 nPrevMax;
+
     if(nNum<*nMax)
         return 0;
-    
+
+    nPrevMax=*nMax;
     *nMax=max_function(nNum+nIncr, nProposedMax);
 	if(((*pFieldValue)=realloc_function(*pFieldValue, 
         *nMax*sizeof(**pFieldValue)))==NULL)
 		return 1;
 
+    memset((*pFieldValue)+nPrevMax, 0, (*nMax-nPrevMax)*sizeof(**pFieldValue));
     return 0;
 }
 
@@ -3497,6 +3501,7 @@ int MMTestAndFixValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
     struct MM_CAMP *camp=pMMAdmDB->pMMBDXP->Camp+nIField;
     MM_TIPUS_BYTES_PER_CAMP_DBF nNewWidth;
 
+
     if(!szValue)
         return 0;
 
@@ -3731,13 +3736,15 @@ struct MM_FLUSH_INFO *pFlushRecList;
     pBD_XP=hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP;
     pszRecordOnCourse=hMiraMonLayer->MMPoint.MMAdmDB.szRecordOnCourse;
     
-    pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
-
     // Test lenght
     if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &hMiraMonLayer->MMPoint.MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
         return 1;
+
+    // Reassign the point because the function can realloc it.
+    pszRecordOnCourse=hMiraMonLayer->MMPoint.MMAdmDB.szRecordOnCourse;
+    pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
 
     // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
@@ -3781,13 +3788,10 @@ struct MM_FLUSH_INFO *pFlushRecList;
     pFlushRecList->pBlockToBeSaved=(void *)pszRecordOnCourse;
     
     // Test lenght
-    if (hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
-    {
-        if (MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
+    if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &pMMArcLayer->MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-            return 1;
-    }
+        return 1;
 
     // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);

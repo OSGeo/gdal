@@ -808,7 +808,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     if (!bUpdate)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Cannot create features on read-only dataset.");
+                 "\nCannot create features on read-only dataset.");
         return OGRERR_FAILURE;
     }
 
@@ -820,12 +820,46 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     if (poGeom == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Features without geometry not supported by MM writer.");
+                 "\nFeatures without geometry not supported by MM writer.");
         return OGRERR_FAILURE;
     }
 
     if (poFeatureDefn->GetGeomType() == wkbUnknown)
         poFeatureDefn->SetGeomType(wkbFlatten(poGeom->getGeometryType()));
+
+    if (hMiraMonLayer.eLT==MM_LayerType_Unknown)
+    {
+        switch (wkbFlatten(poFeatureDefn->GetGeomType()))
+        {
+            case wkbPoint:
+		    case wkbMultiPoint:
+                hMiraMonLayer.eLT=MM_LayerType_Point;
+                break;
+            case wkbPoint25D:
+			    hMiraMonLayer.eLT=MM_LayerType_Point3d;
+			    break;
+		    case wkbLineString:
+		    case wkbMultiLineString:
+			    hMiraMonLayer.eLT=MM_LayerType_Arc;
+			    break;
+            case wkbLineString25D:
+			    hMiraMonLayer.eLT=MM_LayerType_Arc3d;
+			    break;
+		    case wkbPolygon:
+		    case wkbMultiPolygon:
+                hMiraMonLayer.eLT=MM_LayerType_Pol;
+			    break;
+            case wkbPolygon25D:
+            case wkbMultiPolygon25D:
+                hMiraMonLayer.eLT=MM_LayerType_Pol3d;
+			    break;
+            case wkbGeometryCollection:
+		    case wkbUnknown:
+		    default:
+                hMiraMonLayer.eLT=MM_LayerType_Unknown;
+			    break;
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Write Geometry                                                  */
@@ -851,7 +885,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
     if (MMResizeUI64Pointer(&hMMFeature.pNCoord, &hMMFeature.nMaxpNCoord,
         hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
     {
-        CPLError(CE_Failure, CPLE_FileIO, "MiraMon write failure: %s",
+        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
             VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
@@ -859,7 +893,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
     if (MMResizeIntPointer(&hMMFeature.pbArcInfo, &hMMFeature.nMaxpbArcInfo,
         hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
     {
-        CPLError(CE_Failure, CPLE_FileIO, "MiraMon write failure: %s",
+        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
             VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
@@ -874,7 +908,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
         hMMFeature.nICoord + hMMFeature.pNCoord[hMMFeature.nIRing],
         MM_MEAN_NUMBER_OF_COORDS, 0))
     {
-        CPLError(CE_Failure, CPLE_FileIO, "MiraMon write failure: %s",
+        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
             VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
@@ -884,7 +918,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
             hMMFeature.nICoord + hMMFeature.pNCoord[hMMFeature.nIRing],
             MM_MEAN_NUMBER_OF_COORDS, 0))
         {
-            CPLError(CE_Failure, CPLE_FileIO, "MiraMon write failure: %s",
+            CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                 VSIStrerror(errno));
             return OGRERR_FAILURE;
         }
@@ -896,7 +930,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
         hMMFeature.pCoord[hMMFeature.nICoord].dfY = OGR_G_GetY(hGeom, iPoint);
         if (hMiraMonLayer.TopHeader.bIs3d && OGR_G_GetCoordinateDimension(hGeom) != 3)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "MiraMon write failure: is 3d or not?");
+            CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: is 3d or not?");
             return OGRERR_FAILURE;
         }
         if (hMiraMonLayer.TopHeader.bIs3d)
@@ -1028,14 +1062,14 @@ OGRErr OGRMiraMonLayer::WriteGeometry(bool bExternalRing,
         
     if(result==MM_FATAL_ERROR_WRITING_FEATURES)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "MiraMon write failure: %s",
+        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                         VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if(result==MM_STOP_WRITING_FEATURES)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "MiraMon format limitations.");
-        CPLError(CE_Failure, CPLE_FileIO, "Try V2.0 option.");
+        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon format limitations.");
+        CPLError(CE_Failure, CPLE_FileIO, "\nTry V2.0 option.");
         return OGRERR_FAILURE;
     }
 
@@ -1201,7 +1235,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    hMMFeature.pRecords[nIRecord].nNumField, 0))
+                    10, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[nIRecord].pField[iField].pDinValue,
@@ -1230,7 +1264,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    hMMFeature.pRecords[nIRecord].nNumField, 0))
+                    10, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[nIRecord].nNumField = iField;
@@ -1265,7 +1299,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    hMMFeature.pRecords[nIRecord].nNumField, 0))
+                    10, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[nIRecord].nNumField = iField;
@@ -1299,7 +1333,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    hMMFeature.pRecords[nIRecord].nNumField, 0))
+                    10, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[nIRecord].nNumField = iField;
@@ -1318,7 +1352,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    hMMFeature.pRecords[0].nNumField, 0))
+                    10, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
@@ -1332,7 +1366,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    hMMFeature.pRecords[0].nNumField, 0))
+                    10, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
 
@@ -1351,13 +1385,13 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    hMMFeature.pRecords[0].nNumField, 0))
+                    10, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             hMMFeature.pRecords[0].pField[iField].dValue =
                 poFeature->GetFieldAsInteger(iField);
             if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
-                    poFeature->GetFieldAsString(iField),
+                    pszRawValue,
                     &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                 return OGRERR_NOT_ENOUGH_MEMORY;
         }
@@ -1368,7 +1402,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    hMMFeature.pRecords[0].nNumField, 0))
+                    10, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             hMMFeature.pRecords[0].pField[iField].iValue =
@@ -1385,7 +1419,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    hMMFeature.pRecords[0].nNumField, 0))
+                    10, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             hMMFeature.pRecords[0].pField[iField].dValue =
@@ -1460,14 +1494,14 @@ OGRErr OGRMiraMonLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
     if (!bUpdate)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Cannot create fields on read-only dataset.");
+                 "\nCannot create fields on read-only dataset.");
         return OGRERR_FAILURE;
     }
 
     if (bHeaderComplete)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to create fields after features have been created.");
+                 "\nUnable to create fields after features have been created.");
         return OGRERR_FAILURE;
     }
 
@@ -1484,7 +1518,7 @@ OGRErr OGRMiraMonLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
             if (!bApproxOK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Field %s is of unsupported type %s.",
+                         "\nField %s is of unsupported type %s.",
                          poField->GetNameRef(),
                          poField->GetFieldTypeName(poField->GetType()));
                 return OGRERR_FAILURE;
