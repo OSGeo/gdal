@@ -2546,7 +2546,8 @@ def VectorTranslateOptions(options=None, format=None,
     explodeCollections:
         produce one feature for each geometry in any kind of geometry collection in the
         source file, applied after any -sql option. This option is not compatible with
-        preserveFID.
+        preserveFID but a SQLStatement (e.g. SELECT fid AS original_fid, * FROM ...)
+        can be used to store the original FID if needed.
     preserveFID:
         Use the FID of the source features instead of letting the output driver automatically
         assign a new one (for formats that require a FID). If not in append mode, this behavior
