@@ -2707,28 +2707,18 @@ int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord,
                         unsigned __int32 nIncr,
                         unsigned __int32 nProposedMax)
 {
-unsigned __int32 nIRecord;
+unsigned __int32 nPrevMax;
 
     if(nNum<*nMax)
         return 0;
     
+    nPrevMax=*nMax;
     *nMax=max_function(nNum+nIncr, nProposedMax);
 	if(((*pMiraMonRecord)=realloc_function(*pMiraMonRecord, 
         *nMax*sizeof(**pMiraMonRecord)))==NULL)
 		return 1;
 
-    for(nIRecord=nNum; nIRecord<*nMax; nIRecord++)
-    {
-        memset((*pMiraMonRecord)[nIRecord].pField, 0, 
-                sizeof(*((*pMiraMonRecord)[nIRecord].pField)));
-        if(MMResizeMiraMonFieldValue(&((*pMiraMonRecord)[nIRecord].pField), 
-                &((*pMiraMonRecord)[nIRecord].nMaxField),
-                (*pMiraMonRecord)[nIRecord].nNumField, 
-                MM_INIT_NUMBER_OF_FIELDS,
-                0))
-        return 1;
-    }
-
+    memset((*pMiraMonRecord)+nPrevMax, 0, (*nMax-nPrevMax)*sizeof(**pMiraMonRecord));
     return 0;
 }
 
@@ -3619,6 +3609,8 @@ struct MM_BASE_DADES_XP *pBD_XP=NULL;
     {
         for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
         {
+            if(!hMMFeature->pRecords[nIRecord].pField[nIField].bIsValid)
+                continue;
             if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
 	        {
                 if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
@@ -3655,14 +3647,14 @@ struct MM_BASE_DADES_XP *pBD_XP=NULL;
                                FALSE))
                    return 1;
 	        }
-            else
+            /*else
 	        {
                 if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 
                                pBD_XP->Camp+nIField+nNumPrivateMMField, 
                                &hMMFeature->pRecords[nIRecord].pField[nIField].bValue,
                                FALSE))
                    return 1;
-	        }
+	        }*/
         }
         
         if(MM_AppendBlockToBuffer(pFlushRecList))

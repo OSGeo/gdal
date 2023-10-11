@@ -12,6 +12,8 @@ CPL_C_START // Necessary for compiling in GDAL project
 #else
 #include "mm_gdal\mm_gdal_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
+// Falta això o es queixa a diversos llocs
+#include "str_snyd.h"	// Per a struct SNY_TRANSFORMADOR_GEODESIA  
 #endif
 
 // For MetaData
@@ -296,12 +298,13 @@ struct MiraMonRasterMetaData
 
 struct MiraMonFieldValue
 {
+    MM_BOOLEAN bIsValid;   // If 1 the value is filled. If 0, there is no value.
     #define MM_INIT_STRING_FIELD_VALUE   50000  // Never less than 10
 	MM_NUMERATOR_DBF_FIELD_TYPE nNumDinValue; // Size of the reserved string value
     char *pDinValue;       // Used if MM_MAX_STRING_FIELD_VALUE is not enough
 	double dValue;     // For double and 32 bit integer numeric values and 
     __int64 iValue;    // For 64 bit integer values. 
-	MM_BOOLEAN bValue;	// For binary values.
+	//MM_BOOLEAN kbValue;	// For binary values.
 };
 
 struct MiraMonRecord
