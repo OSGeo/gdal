@@ -1717,17 +1717,6 @@ class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
   public:
     IVSIS3LikeStreamingFSHandler() = default;
 
-    char **ReadDir(const char *pszDirname) override
-    {
-        if (STARTS_WITH(pszDirname, GetFSPrefix()))
-        {
-            return VSIReadDir(
-                (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
-                    .c_str());
-        }
-        return nullptr;
-    }
-
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override
     {
         if (STARTS_WITH(pszDirname, GetFSPrefix()))

@@ -1233,18 +1233,41 @@ The file referenced by /vsisparse/ should be an XML control file formatted somet
 
 Hopefully the values and semantics are fairly obvious.
 
-.. _target_user_virtual_file_systems_file_caching:
 
-File caching
-------------
+.. _vsicached:
 
-This is not a proper virtual file system handler, but a C function that takes a virtual file handle and returns a new handle that caches read-operations on the input file handle. The cache is RAM based and the content of the cache is discarded when the file handle is closed. The cache is a least-recently used lists of blocks of 32KB each.
+/vsicached/ (File caching)
+--------------------------
+
+The :cpp:func:`VSICreateCachedFile` function takes a virtual file handle and returns a new handle that caches read-operations on the input file handle. The cache is RAM based and the content of the cache is discarded when the file handle is closed. The cache is a least-recently used lists of blocks of 32KB each (default size).
+
+This is mostly useful for files accessible through slow local/operating-system-mounted filesystems.
+
+That is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
+
+The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
 
 The :cpp:class:`VSICachedFile` class only handles read operations at that time, and will error out on write operations.
 
-This is done with the :cpp:func:`VSICreateCachedFile` function, that is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
+Starting with GDAL 3.8, a ``/vsicached?`` virtual file system also exists to cache a particular file.
 
-The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
+The syntax is the following one: ``/vsicached?[option_i=val_i&]*file=<filename>``
+where each option name and value (including the value of ``file``) is URL-encoded
+(actually, only required for the ampersand character. It might be desirable to
+have forward slash character uncoded).
+It is important that the ``file`` option appears at the end, so that code that
+tries to look for side-car files, list directory content, can work properly.
+
+Currently supported options are:
+
+- ``chunk_size=<value>`` where value is the` size of the chunk size in bytes. ``KB`` or ``MB`` suffixes can be also appended (without space after the numeric value). The maximum supported value is 1 GB.
+- ``cache_size=<value>`` where value is the size of the cache size in bytes, for each file. ``KB`` or ``MB`` suffixes can be also appended.
+
+Examples:
+
+- ``/vsicached?chunk_size=1MB&file=/home/even/byte.tif``
+- ``/vsicached?file=./byte.tif``
+
 
 .. _vsicrypt:
 

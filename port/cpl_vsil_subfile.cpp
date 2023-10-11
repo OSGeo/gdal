@@ -96,7 +96,7 @@ class VSISubFileFilesystemHandler final : public VSIFilesystemHandler
     int Unlink(const char *pszFilename) override;
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
-    char **ReadDir(const char *pszDirname) override;
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 };
 
 /************************************************************************/
@@ -476,10 +476,11 @@ int VSISubFileFilesystemHandler::Rmdir(const char * /* pszPathname */)
 }
 
 /************************************************************************/
-/*                              ReadDir()                               */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
-char **VSISubFileFilesystemHandler::ReadDir(const char * /* pszPath */)
+char **VSISubFileFilesystemHandler::ReadDirEx(const char * /* pszPath */,
+                                              int /* nMaxFiles */)
 {
     errno = EACCES;
     return nullptr;

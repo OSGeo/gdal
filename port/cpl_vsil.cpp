@@ -3164,6 +3164,7 @@ VSIFileManager *VSIFileManager::Get()
     VSIInstallStdoutHandler();
     VSIInstallSparseFileHandler();
     VSIInstallTarFileHandler();
+    VSIInstallCachedFileHandler();
     VSIInstallCryptFileHandler();
 
     return poManager;
