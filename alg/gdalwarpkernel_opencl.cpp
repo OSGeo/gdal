@@ -326,8 +326,8 @@ static cl_device_id get_device(OCLVendor *peVendor)
     const bool bUseOpenCLCPU =
         CPLTestBool(CPLGetConfigOption("OPENCL_USE_CPU", "FALSE"));
 
-    const char *pszBlacklistedVendor;
-    const char *pszPreferredVendor;
+    const char *pszBlacklistedVendor = "";
+    const char *pszPreferredVendor = "";
 
     struct device_info
     {
