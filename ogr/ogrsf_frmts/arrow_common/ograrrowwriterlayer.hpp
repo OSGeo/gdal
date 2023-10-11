@@ -1994,6 +1994,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     ArrayReleaser *releaser = new ArrayReleaser(array);
     array->private_data = releaser;
     array->n_children = newArrayChildren.size();
+    // cppcheck-suppress autoVariables
     array->children = newArrayChildren.data();
 
     // Process geometry columns:

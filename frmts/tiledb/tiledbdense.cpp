@@ -1344,9 +1344,8 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const uint64_t nStart = dims[iYDim].domain<uint64_t>().first;
         const uint64_t nEnd = dims[iYDim].domain<uint64_t>().second;
-        if (nStart != 0 || nStart > nEnd ||
-            nEnd - nStart >
-                static_cast<uint64_t>(std::numeric_limits<int>::max() - 1))
+        if (nStart != 0 ||
+            nEnd > static_cast<uint64_t>(std::numeric_limits<int>::max() - 1))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid bounds for Y dimension.");
@@ -1374,9 +1373,8 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         const uint64_t nStart = dims[iXDim].domain<uint64_t>().first;
         const uint64_t nEnd = dims[iXDim].domain<uint64_t>().second;
-        if (nStart != 0 || nStart > nEnd ||
-            nEnd - nStart >
-                static_cast<uint64_t>(std::numeric_limits<int>::max() - 1))
+        if (nStart != 0 ||
+            nEnd > static_cast<uint64_t>(std::numeric_limits<int>::max() - 1))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid bounds for X dimension.");

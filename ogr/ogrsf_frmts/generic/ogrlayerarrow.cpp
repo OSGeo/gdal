@@ -6372,6 +6372,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         osWorkingBuffer.reserve(nWorkingBufferSize);
 #ifdef DEBUG
         const char *pszWorkingBuffer = osWorkingBuffer.c_str();
+        CPL_IGNORE_RET_VAL(pszWorkingBuffer);
 #endif
         int iArrowIdx = 0;
         for (int64_t i = 0; i < schema->n_children; ++i)

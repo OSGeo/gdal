@@ -6,9 +6,8 @@ C2F *poTypes = nullptr;
 /*** class definitions ***/
 
 OGRSOSIDataType::OGRSOSIDataType(int nSize)
+    : poElements(new OGRSOSISimpleDataType[nSize]), nElementCount(nSize)
 {
-    poElements = new OGRSOSISimpleDataType[nSize];
-    nElementCount = nSize;
 }
 OGRSOSIDataType::~OGRSOSIDataType()
 {
