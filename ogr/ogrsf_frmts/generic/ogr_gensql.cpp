@@ -1038,7 +1038,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 {
                     if (psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP)
+                        psColDef->field_type == SWQ_TIMESTAMP ||
+                        psColDef->field_type == SWQ_STRING)
                         poSummaryFeature->SetField(iField,
                                                    oSummary.osMin.c_str());
                     else
@@ -1048,7 +1049,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                 {
                     if (psColDef->field_type == SWQ_DATE ||
                         psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP)
+                        psColDef->field_type == SWQ_TIMESTAMP ||
+                        psColDef->field_type == SWQ_STRING)
                         poSummaryFeature->SetField(iField,
                                                    oSummary.osMax.c_str());
                     else
