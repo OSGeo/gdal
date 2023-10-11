@@ -280,6 +280,7 @@ output coordinate system or even reprojecting the features during translation.
     a FID layer creation option, in which case the name of the source FID
     column will be used and source feature IDs will be attempted to be
     preserved. This behavior can be disabled by setting ``-unsetFid``.
+    This option is not compatible with ``-explodecollections``.
 
 .. option:: -fid <fid>
 
@@ -442,7 +443,9 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -explodecollections
 
     Produce one feature for each geometry in any kind of geometry collection in
-    the source file, applied after any ``-sql`` option.
+    the source file, applied after any ``-sql`` option. This options is not
+    compatible with ``-preserve_fid`` but ``-sql "SELECT fid AS original_fid, * FROM ..."``
+    can be used to store the original FID if needed.
 
 .. option:: -zfield <field_name>
 
