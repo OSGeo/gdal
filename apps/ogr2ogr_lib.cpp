@@ -64,6 +64,7 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+#include "ogr_recordbatch.h"
 #include "ogr_spatialref.h"
 #include "ogrlayerdecorator.h"
 #include "ogrsf_frmts.h"
@@ -447,6 +448,7 @@ struct TargetLayerInfo
     GIntBig m_nFeaturesRead = 0;
     bool m_bPerFeatureCT = 0;
     OGRLayer *m_poDstLayer = nullptr;
+    bool m_bUseWriteArrowBatch = false;
 
     struct ReprojectionInfo
     {
@@ -486,6 +488,11 @@ struct AssociatedLayers
 
 class SetupTargetLayer
 {
+    bool CanUseWriteArrowBatch(OGRLayer *poSrcLayer, OGRLayer *poDstLayer,
+                               bool bJustCreatedLayer,
+                               const GDALVectorTranslateOptions *psOptions,
+                               bool &bError);
+
   public:
     GDALDataset *m_poSrcDS;
     GDALDataset *m_poDstDS;
@@ -526,6 +533,12 @@ class SetupTargetLayer
 
 class LayerTranslator
 {
+    static bool TranslateArrow(const TargetLayerInfo *psInfo,
+                               GIntBig nCountLayerFeatures,
+                               GIntBig *pnReadFeatureCount,
+                               GDALProgressFunc pfnProgress, void *pProgressArg,
+                               const GDALVectorTranslateOptions *psOptions);
+
   public:
     GDALDataset *m_poSrcDS = nullptr;
     GDALDataset *m_poODS = nullptr;
@@ -555,10 +568,11 @@ class LayerTranslator
     GIntBig m_nLimit = -1;
     OGRGeometryFactory::TransformWithOptionsCache m_transformWithOptionsCache;
 
-    int Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
-                  GIntBig nCountLayerFeatures, GIntBig *pnReadFeatureCount,
-                  GIntBig &nTotalEventsDone, GDALProgressFunc pfnProgress,
-                  void *pProgressArg, GDALVectorTranslateOptions *psOptions);
+    bool Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
+                   GIntBig nCountLayerFeatures, GIntBig *pnReadFeatureCount,
+                   GIntBig &nTotalEventsDone, GDALProgressFunc pfnProgress,
+                   void *pProgressArg,
+                   const GDALVectorTranslateOptions *psOptions);
 
   private:
     const OGRGeometry *GetDstClipGeom(const OGRSpatialReference *poGeomSRS);
@@ -3817,6 +3831,125 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
 }
 
 /************************************************************************/
+/*                 SetupTargetLayer::CanUseWriteArrowBatch()            */
+/************************************************************************/
+
+bool SetupTargetLayer::CanUseWriteArrowBatch(
+    OGRLayer *poSrcLayer, OGRLayer *poDstLayer, bool bJustCreatedLayer,
+    const GDALVectorTranslateOptions *psOptions, bool &bError)
+{
+    bError = false;
+
+    // Check if we can use the Arrow interface to get and write features
+    // as it will be faster if the input (resp. output) driver has a fast
+    // implementation of GetArrowStream() (resp. WriteArrowBatch())
+    // We also can only do that only if using ogr2ogr without options that
+    // alter features.
+    // OGR2OGR_USE_ARROW_API config option is mostly for testing purposes
+    // or as a safety belt if things turned bad...
+    bool bUseWriteArrowBatch = false;
+    if (((poSrcLayer->TestCapability(OLCFastGetArrowStream) &&
+          poDstLayer->TestCapability(OLCFastWriteArrowBatch) &&
+          // As we don't control the input array size when the input or output
+          // drivers are Arrow/Parquet (as they don't use the generic
+          // implementation), we can't guarantee that ROW_GROUP_SIZE/BATCH_SIZE
+          // layer creation options will be honored.
+          !psOptions->aosLCO.FetchNameValue("ROW_GROUP_SIZE") &&
+          !psOptions->aosLCO.FetchNameValue("BATCH_SIZE") &&
+          CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "YES"))) ||
+         CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "NO"))) &&
+        !psOptions->bSkipFailures && !psOptions->bTransform &&
+        !m_papszSelFields && !m_bAddMissingFields &&
+        m_eGType == GEOMTYPE_UNCHANGED && psOptions->eGeomOp == GEOMOP_NONE &&
+        m_eGeomTypeConversion == GTC_DEFAULT && m_nCoordDim < 0 &&
+        !m_papszFieldTypesToString && !m_papszMapFieldType &&
+        !m_bUnsetFieldWidth && !m_bExplodeCollections && !m_pszZField &&
+        m_bExactFieldNameMatch && !m_bForceNullable && !m_bResolveDomains &&
+        !m_bUnsetDefault && psOptions->nFIDToFetch == OGRNullFID &&
+        !psOptions->bMakeValid)
+    {
+        struct ArrowArrayStream streamSrc;
+        if (poSrcLayer->GetArrowStream(&streamSrc, nullptr))
+        {
+            struct ArrowSchema schemaSrc;
+            if (streamSrc.get_schema(&streamSrc, &schemaSrc) == 0)
+            {
+                std::string osErrorMsg;
+                if (poDstLayer->IsArrowSchemaSupported(&schemaSrc, nullptr,
+                                                       osErrorMsg))
+                {
+                    OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
+                    if (bJustCreatedLayer && poDstFDefn &&
+                        poDstFDefn->GetFieldCount() == 0)
+                    {
+                        // Create output fields using CreateFieldFromArrowSchema()
+                        for (int i = 0; i < schemaSrc.n_children; ++i)
+                        {
+                            const char *pszFieldName =
+                                schemaSrc.children[i]->name;
+                            if (!EQUAL(pszFieldName, "OGC_FID") &&
+                                !EQUAL(pszFieldName, "wkb_geometry") &&
+                                !EQUAL(pszFieldName,
+                                       poSrcLayer->GetFIDColumn()) &&
+                                poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
+                                    pszFieldName) < 0 &&
+                                !poDstLayer->CreateFieldFromArrowSchema(
+                                    schemaSrc.children[i], nullptr))
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Cannot create field %s",
+                                         pszFieldName);
+                                schemaSrc.release(&schemaSrc);
+                                streamSrc.release(&streamSrc);
+                                return false;
+                            }
+                        }
+                        bUseWriteArrowBatch = true;
+                    }
+                    else if (!bJustCreatedLayer)
+                    {
+                        // If the layer already exist, get its schema, and
+                        // check that it looks to be the same as the souce
+                        // one
+                        struct ArrowArrayStream streamDst;
+                        if (poDstLayer->GetArrowStream(&streamDst, nullptr))
+                        {
+                            struct ArrowSchema schemaDst;
+                            if (streamDst.get_schema(&streamDst, &schemaDst) ==
+                                0)
+                            {
+                                if (schemaDst.n_children ==
+                                    schemaSrc.n_children)
+                                {
+                                    bUseWriteArrowBatch = true;
+                                }
+                                schemaDst.release(&schemaDst);
+                            }
+                            streamDst.release(&streamDst);
+                        }
+                    }
+                    if (bUseWriteArrowBatch)
+                    {
+                        CPLDebug("OGR2OGR", "Using WriteArrowBatch()");
+                    }
+                }
+                else
+                {
+                    CPLDebug("OGR2OGR",
+                             "Cannot use WriteArrowBatch() because "
+                             "input layer schema is not supported by output "
+                             "layer: %s",
+                             osErrorMsg.c_str());
+                }
+                schemaSrc.release(&schemaSrc);
+            }
+            streamSrc.release(&streamSrc);
+        }
+    }
+    return bUseWriteArrowBatch;
+}
+
+/************************************************************************/
 /*                   SetupTargetLayer::Setup()                          */
 /************************************************************************/
 
@@ -3920,6 +4053,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     OGRLayer *poDstLayer = GetLayerAndOverwriteIfNecessary(
         m_poDstDS, pszNewLayerName, m_bOverwrite, &bErrorOccurred,
         &bOverwriteActuallyDone, &bAddOverwriteLCO);
+    const bool bJustCreatedLayer = (poDstLayer == nullptr);
     if (bErrorOccurred)
         return nullptr;
 
@@ -4404,11 +4538,21 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         iChangeWidthBy++;
     }
 
+    bool bError = false;
+    const bool bUseWriteArrowBatch = CanUseWriteArrowBatch(
+        poSrcLayer, poDstLayer, bJustCreatedLayer, psOptions, bError);
+    if (bError)
+        return nullptr;
+
     /* Caution : at the time of writing, the MapInfo driver */
     /* returns NULL until a field has been added */
     OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
 
-    if (m_papszFieldMap && bAppend)
+    if (bUseWriteArrowBatch)
+    {
+        // Fields created above
+    }
+    else if (m_papszFieldMap && bAppend)
     {
         bool bIdentity = false;
 
@@ -4859,6 +5003,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     }
 
     std::unique_ptr<TargetLayerInfo> psInfo(new TargetLayerInfo);
+    psInfo->m_bUseWriteArrowBatch = bUseWriteArrowBatch;
     psInfo->m_nFeaturesRead = 0;
     psInfo->m_bPerFeatureCT = false;
     psInfo->m_poSrcLayer = poSrcLayer;
@@ -5240,16 +5385,128 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
 }
 
 /************************************************************************/
+/*                 LayerTranslator::TranslateArrow()                    */
+/************************************************************************/
+
+bool LayerTranslator::TranslateArrow(
+    const TargetLayerInfo *psInfo, GIntBig nCountLayerFeatures,
+    GIntBig *pnReadFeatureCount, GDALProgressFunc pfnProgress,
+    void *pProgressArg, const GDALVectorTranslateOptions *psOptions)
+{
+    struct ArrowArrayStream stream;
+    struct ArrowSchema schema;
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("GEOMETRY_ENCODING", "WKB");
+    if (!psInfo->m_bPreserveFID)
+        aosOptions.SetNameValue("INCLUDE_FID", "NO");
+    if (psOptions->nGroupTransactions > 0)
+        aosOptions.SetNameValue(
+            "BATCH_SIZE", CPLSPrintf("%d", psOptions->nGroupTransactions));
+    if (psInfo->m_poSrcLayer->GetArrowStream(&stream, aosOptions.List()))
+    {
+        if (stream.get_schema(&stream, &schema) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "stream.get_schema() failed");
+            stream.release(&stream);
+            return false;
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed");
+        return false;
+    }
+
+    bool bRet = true;
+
+    GIntBig nCount = 0;
+    bool bGoOn = true;
+    while (bGoOn)
+    {
+        struct ArrowArray array;
+        // Acquire source batch
+        if (stream.get_next(&stream, &array) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "stream.get_next() failed");
+            bRet = false;
+            break;
+        }
+
+        if (array.release == nullptr)
+        {
+            // End of stream
+            break;
+        }
+
+        // Limit number of features in batch if needed
+        if (psOptions->nLimit >= 0 && nCount + array.length > psOptions->nLimit)
+        {
+            const auto nAdjustedLength = psOptions->nLimit - nCount;
+            for (int i = 0; i < array.n_children; ++i)
+            {
+                if (array.children[i]->length == array.length)
+                    array.children[i]->length = nAdjustedLength;
+            }
+            array.length = nAdjustedLength;
+            nCount = psOptions->nLimit;
+            bGoOn = false;
+        }
+        else
+        {
+            nCount += array.length;
+        }
+
+        // Write batch to target layer
+        if (!psInfo->m_poDstLayer->WriteArrowBatch(&schema, &array, nullptr))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "WriteArrowBatch() failed");
+            if (array.release)
+                array.release(&array);
+            bRet = false;
+            break;
+        }
+
+        if (array.release)
+            array.release(&array);
+
+        /* Report progress */
+        if (pfnProgress)
+        {
+            if (!pfnProgress(nCountLayerFeatures
+                                 ? nCount * 1.0 / nCountLayerFeatures
+                                 : 1.0,
+                             "", pProgressArg))
+            {
+                bGoOn = false;
+                bRet = false;
+            }
+        }
+
+        if (pnReadFeatureCount)
+            *pnReadFeatureCount = nCount;
+    }
+
+    schema.release(&schema);
+    stream.release(&stream);
+    return bRet;
+}
+
+/************************************************************************/
 /*                     LayerTranslator::Translate()                     */
 /************************************************************************/
 
-int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
-                               GIntBig nCountLayerFeatures,
-                               GIntBig *pnReadFeatureCount,
-                               GIntBig &nTotalEventsDone,
-                               GDALProgressFunc pfnProgress, void *pProgressArg,
-                               GDALVectorTranslateOptions *psOptions)
+bool LayerTranslator::Translate(
+    OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
+    GIntBig nCountLayerFeatures, GIntBig *pnReadFeatureCount,
+    GIntBig &nTotalEventsDone, GDALProgressFunc pfnProgress, void *pProgressArg,
+    const GDALVectorTranslateOptions *psOptions)
 {
+    if (psInfo->m_bUseWriteArrowBatch)
+    {
+        return TranslateArrow(psInfo, nCountLayerFeatures, pnReadFeatureCount,
+                              pfnProgress, pProgressArg, psOptions);
+    }
+
     const int eGType = m_eGType;
     const OGRSpatialReference *poOutputSRS = m_poOutputSRS;
 
