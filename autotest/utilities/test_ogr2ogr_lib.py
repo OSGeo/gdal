@@ -982,7 +982,8 @@ def test_ogr2ogr_lib_t_srs_ignored(tmp_vsimem):
     got_msg = []
 
     def my_handler(errorClass, errno, msg):
-        got_msg.append(msg)
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
         return
 
     with gdaltest.error_handler(my_handler):
