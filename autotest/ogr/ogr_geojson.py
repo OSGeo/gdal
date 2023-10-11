@@ -4417,3 +4417,147 @@ def test_ogr_geojson_write_geometry_validity_fixing(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().IsValid()
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789+01:00")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789-01:00")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "UTC"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [None, 1654000496789, None, 1653996896789, 1654004096789]
+
+    for tz in ["UTC", "+01:00", "-01:00", "Europe/Paris", "unknown"]:
+        stream = lyr.GetArrowStreamAsPyArrow(["TIMEZONE=" + tz])
+        if tz == "unknown":
+            assert stream.schema.field("datetime").type.tz is None
+        else:
+            assert stream.schema.field("datetime").type.tz == tz
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [None, 1654000496789, None, 1653996896789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789+05:00")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T13:34:56.789+05:00")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "+05:00"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789-05:00")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T13:34:56.789-05:00")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "-05:00"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T13:34:56.789")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz is None
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1654004096789]

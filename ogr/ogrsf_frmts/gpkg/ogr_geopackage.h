@@ -579,6 +579,8 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
     {
         return m_poDS;
     }
+    virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
+                                CSLConstList papszOptions = nullptr) override;
     virtual int GetNextArrowArray(struct ArrowArrayStream *,
                                   struct ArrowArray *out_array) override;
 

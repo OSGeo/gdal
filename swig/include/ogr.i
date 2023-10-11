@@ -468,6 +468,11 @@ typedef void retGetPoints;
 %constant F_VAL_ALLOW_NULL_WHEN_DEFAULT = 0x00000008; /***<Allow fields that are null when there's an associated default value. */
 %constant F_VAL_ALL = 0xFFFFFFFF; /**< Enable all validation tests */
 
+%constant TZFLAG_UNKNOWN = 0;
+%constant TZFLAG_LOCALTIME = 1;
+%constant TZFLAG_MIXED_TZ = 2;
+%constant TZFLAG_UTC = 100;
+
 /** Flag for OGR_L_GetGeometryTypes() indicating that
  * OGRGeometryTypeCounter::nCount value is not needed */
 %constant GGT_COUNT_NOT_NEEDED = 0x1;
@@ -2554,6 +2559,14 @@ public:
 
   void SetPrecision(int precision) {
     OGR_Fld_SetPrecision(self, precision);
+  }
+
+  int GetTZFlag() {
+    return OGR_Fld_GetTZFlag(self);
+  }
+
+  void SetTZFlag(int tzflag) {
+    OGR_Fld_SetTZFlag(self, tzflag);
   }
 
   /* Interface method added for GDAL 1.7.0 */

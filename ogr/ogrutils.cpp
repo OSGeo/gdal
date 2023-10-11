@@ -944,6 +944,94 @@ int OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 }
 
 /************************************************************************/
+/*                       OGRTimezoneToTZFlag()                          */
+/************************************************************************/
+
+/** \brief Converts a text timezone into OGR TZFlag integer representation.
+ *
+ * @param pszTZ "UTC", "Etc/UTC", or "(+/-)[0-9][0-9](:?)[0-9][0-9]"
+ * @param bEmitErrorIfUnhandledFormat Whether to emit an error if pszTZ is
+ *                                    a non-empty string with unrecognized
+ *                                    format.
+ */
+int OGRTimezoneToTZFlag(const char *pszTZ, bool bEmitErrorIfUnhandledFormat)
+{
+    int nTZFlag = OGR_TZFLAG_UNKNOWN;
+    const size_t nTZLen = strlen(pszTZ);
+    if (strcmp(pszTZ, "UTC") == 0 || strcmp(pszTZ, "Etc/UTC") == 0)
+    {
+        nTZFlag = OGR_TZFLAG_UTC;
+    }
+    else if ((pszTZ[0] == '+' || pszTZ[0] == '-') &&
+             ((nTZLen == 6 && pszTZ[3] == ':') ||
+              (nTZLen == 5 && pszTZ[3] >= '0' && pszTZ[3] <= '9')))
+    {
+        int nTZHour = atoi(pszTZ + 1);
+        int nTZMin = atoi(pszTZ + (nTZLen == 6 ? 4 : 3));
+        if (nTZHour >= 0 && nTZHour <= 14 && nTZMin >= 0 && nTZMin < 60 &&
+            (nTZMin % 15) == 0)
+        {
+            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
+            if (pszTZ[0] == '+')
+            {
+                nTZFlag = OGR_TZFLAG_UTC + nTZFlag;
+            }
+            else
+            {
+                nTZFlag = OGR_TZFLAG_UTC - nTZFlag;
+            }
+        }
+    }
+    else if (pszTZ[0] != 0 && bEmitErrorIfUnhandledFormat)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unrecognized timezone: '%s'",
+                 pszTZ);
+    }
+    return nTZFlag;
+}
+
+/************************************************************************/
+/*                       OGRTZFlagToTimezone()                          */
+/************************************************************************/
+
+/** \brief Converts a OGR TZFlag integer representation into a string
+ *
+ * @param nTZFlag OGR TZFlag integer (only ones with
+ *        value > OGR_TZFLAG_MIXED_TZ will yield a non-empty output)
+ * @param pszUTCRepresentation String to return if nTZFlag == OGR_TZFLAG_UTC.
+ *                             Typically "UTC", "Z", or "+00:00"
+ */
+std::string OGRTZFlagToTimezone(int nTZFlag, const char *pszUTCRepresentation)
+{
+    if (nTZFlag == OGR_TZFLAG_UTC)
+    {
+        return pszUTCRepresentation;
+    }
+    else if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
+    {
+        char chSign;
+        const int nOffset = (nTZFlag - OGR_TZFLAG_UTC) * 15;
+        int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
+        const int nMinutes = std::abs(nOffset - nHours * 60);
+
+        if (nOffset < 0)
+        {
+            chSign = '-';
+            nHours = std::abs(nHours);
+        }
+        else
+        {
+            chSign = '+';
+        }
+        return CPLSPrintf("%c%02d:%02d", chSign, nHours, nMinutes);
+    }
+    else
+    {
+        return std::string();
+    }
+}
+
+/************************************************************************/
 /*                            OGRParseDate()                            */
 /*                                                                      */
 /*      Parse a variety of text date formats into an OGRField.          */

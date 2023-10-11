@@ -1831,6 +1831,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                               len, &ogrField))
                             {
                                 sHelper.SetDateTime(psArray, iFeat, brokenDown,
+                                                    sHelper.anTZFlags[i],
                                                     ogrField);
                             }
                             else
@@ -1840,8 +1841,9 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                 str[len] = '\0';
                                 if (OGRParseDate(str, &ogrField, 0))
                                 {
-                                    sHelper.SetDateTime(psArray, iFeat,
-                                                        brokenDown, ogrField);
+                                    sHelper.SetDateTime(
+                                        psArray, iFeat, brokenDown,
+                                        sHelper.anTZFlags[i], ogrField);
                                 }
                             }
                         }

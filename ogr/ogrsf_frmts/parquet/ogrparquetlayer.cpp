@@ -2213,12 +2213,14 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
         if (bFoundMin)
         {
             const int64_t timestamp = sMin.Integer64;
-            OGRArrowLayer::TimestampToOGR(timestamp, timestampType, &sMin);
+            OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
+                                          poFieldDefn->GetTZFlag(), &sMin);
         }
         if (bFoundMax)
         {
             const int64_t timestamp = sMax.Integer64;
-            OGRArrowLayer::TimestampToOGR(timestamp, timestampType, &sMax);
+            OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
+                                          poFieldDefn->GetTZFlag(), &sMax);
         }
         eType = OFTDateTime;
     }

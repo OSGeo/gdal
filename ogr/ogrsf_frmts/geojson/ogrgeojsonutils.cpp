@@ -991,7 +991,8 @@ OGRFieldType GeoJSONPropertyToFieldType(json_object *poObject,
 /*                        GeoJSONStringPropertyToFieldType()            */
 /************************************************************************/
 
-OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject)
+OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
+                                              int &nTZFlag)
 {
     if (poObject == nullptr)
     {
@@ -999,6 +1000,7 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject)
     }
     const char *pszStr = json_object_get_string(poObject);
 
+    nTZFlag = 0;
     OGRField sWrkField;
     CPLPushErrorHandler(CPLQuietErrorHandler);
     const bool bSuccess = CPL_TO_BOOL(OGRParseDate(pszStr, &sWrkField, 0));
@@ -1009,6 +1011,7 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject)
         const bool bHasDate =
             strchr(pszStr, '/') != nullptr || strchr(pszStr, '-') != nullptr;
         const bool bHasTime = strchr(pszStr, ':') != nullptr;
+        nTZFlag = sWrkField.Date.TZFlag;
         if (bHasDate && bHasTime)
             return OFTDateTime;
         else if (bHasDate)

@@ -35,7 +35,6 @@
 #include <limits>
 
 static constexpr int TZFLAG_UNINITIALIZED = -1;
-static constexpr int TZFLAG_MIXED = -2;
 
 #define OGR_ARROW_RETURN_NOT_OK(status, ret_value)                             \
     do                                                                         \
@@ -231,8 +230,15 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OFTDateTime:
+            {
+                const int nTZFlag = poFieldDefn->GetTZFlag();
+                if (nTZFlag >= OGR_TZFLAG_MIXED_TZ)
+                {
+                    m_anTZFlag[i] = nTZFlag;
+                }
                 dt = arrow::timestamp(arrow::TimeUnit::MILLI);
                 break;
+            }
         }
         fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(), dt,
                                          poFieldDefn->IsNullable()));
@@ -382,9 +388,11 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
     int nArrowIdxFirstField = !m_osFIDColumn.empty() ? 1 : 0;
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
     {
-        if (m_anTZFlag[i] > 1)
+        if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ)
         {
-            const int nOffset = (m_anTZFlag[i] - 100) * 15;
+            const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_UTC
+                                    ? 0
+                                    : (m_anTZFlag[i] - OGR_TZFLAG_UTC) * 15;
             int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
             const int nMinutes = std::abs(nOffset - nHours * 60);
 
@@ -1177,15 +1185,18 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 brokenDown.tm_min = nMinute;
                 brokenDown.tm_sec = 0;
                 GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
-                if (!IsFileWriterCreated() && m_anTZFlag[i] != TZFLAG_MIXED)
+                if (!IsFileWriterCreated() &&
+                    m_anTZFlag[i] != OGR_TZFLAG_UNKNOWN)
                 {
                     if (m_anTZFlag[i] == TZFLAG_UNINITIALIZED)
                         m_anTZFlag[i] = nTZFlag;
                     else if (m_anTZFlag[i] != nTZFlag)
                     {
-                        if (m_anTZFlag[i] > 1 && nTZFlag > 1)
+                        if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ &&
+                            nTZFlag >= OGR_TZFLAG_MIXED_TZ)
                         {
-                            m_anTZFlag[i] = 100;  // harmonize on UTC
+                            m_anTZFlag[i] =
+                                OGR_TZFLAG_MIXED_TZ;  // harmonize on UTC ultimately
                         }
                         else
                         {
@@ -1194,13 +1205,13 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                                      "timezone-aware and local/without "
                                      "timezone values.",
                                      poFieldDefn->GetNameRef());
-                            m_anTZFlag[i] = TZFLAG_MIXED;
+                            m_anTZFlag[i] = OGR_TZFLAG_UNKNOWN;
                         }
                     }
                 }
-                if (nTZFlag != 0 && nTZFlag != 1)
+                if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
                 {
-                    nVal -= (nTZFlag - 100) * 15 * 60;
+                    nVal -= (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
                 }
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(
                     static_cast<arrow::TimestampBuilder *>(poBuilder)->Append(

@@ -7585,7 +7585,8 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                         pszTxt, &ogrField, poFieldDefn, nFID))
                 {
                     psHelper->SetDateTime(
-                        psArray, iFeat, psFillArrowArray->brokenDown, ogrField);
+                        psArray, iFeat, psFillArrowArray->brokenDown,
+                        psHelper->anTZFlags[iField], ogrField);
                 }
                 break;
             }

@@ -32,7 +32,7 @@ import pathlib
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 ###############################################################################
 # Simple test
@@ -840,3 +840,42 @@ def test_ogrinfo_lib_fielddomains():
             "mergePolicy": "default value",
         },
     }
+
+
+###############################################################################
+# Test time zones
+
+
+def test_ogrinfo_lib_time_zones():
+
+    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test")
+    fld_defn = ogr.FieldDefn("unknown", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_UNKNOWN)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("localtime", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_LOCALTIME)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("mixed", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_MIXED_TZ)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("utc", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_UTC)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("plus_one_hour", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_UTC + 4)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("minus_one_hour", ogr.OFTDateTime)
+    fld_defn.SetTZFlag(ogr.TZFLAG_UTC - 4)
+    lyr.CreateField(fld_defn)
+    ret = gdal.VectorInfo(ds, format="json")
+
+    gdaltest.validate_json(ret, "ogrinfo_output.schema.json")
+
+    fields = ret["layers"][0]["fields"]
+    assert "timezone" not in fields[0]
+    assert fields[1]["timezone"] == "localtime"
+    assert fields[2]["timezone"] == "mixed timezones"
+    assert fields[3]["timezone"] == "UTC"
+    assert fields[4]["timezone"] == "+01:00"
+    assert fields[5]["timezone"] == "-01:00"

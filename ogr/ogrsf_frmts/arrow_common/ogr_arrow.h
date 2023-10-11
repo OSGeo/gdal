@@ -248,7 +248,7 @@ class OGRArrowLayer CPL_NON_FINAL
 
     static void TimestampToOGR(int64_t timestamp,
                                const arrow::TimestampType *timestampType,
-                               OGRField *psField);
+                               int nTZFlag, OGRField *psField);
 };
 
 /************************************************************************/

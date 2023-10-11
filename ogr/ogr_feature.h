@@ -121,6 +121,8 @@ class CPL_DLL OGRFieldDefn
 
     std::string m_osComment{};  // field comment. Might be empty
 
+    int m_nTZFlag = OGR_TZFLAG_UNKNOWN;
+
   public:
     OGRFieldDefn(const char *, OGRFieldType);
     explicit OGRFieldDefn(const OGRFieldDefn *);
@@ -177,6 +179,15 @@ class CPL_DLL OGRFieldDefn
     void SetPrecision(int nPrecisionIn)
     {
         nPrecision = nPrecisionIn;
+    }
+
+    int GetTZFlag() const
+    {
+        return m_nTZFlag;
+    }
+    void SetTZFlag(int nTZFlag)
+    {
+        m_nTZFlag = nTZFlag;
     }
 
     void Set(const char *, OGRFieldType, int = 0, int = 0,

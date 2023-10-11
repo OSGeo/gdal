@@ -504,6 +504,24 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
 }
 
 /************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+bool OGRGeoPackageLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
+                                        CSLConstList papszOptions)
+{
+    CPLStringList aosOptions;
+    aosOptions.Assign(CSLDuplicate(papszOptions), true);
+    // GeoPackage are assumed to be in UTC. Even if another timezone is used,
+    // we'll do the conversion to UTC
+    if (aosOptions.FetchNameValue("TIMEZONE") == nullptr)
+    {
+        aosOptions.SetNameValue("TIMEZONE", "UTC");
+    }
+    return OGRLayer::GetArrowStream(out_stream, aosOptions.List());
+}
+
+/************************************************************************/
 /*                      GetNextArrowArray()                             */
 /************************************************************************/
 
@@ -802,6 +820,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                            &ogrField, poFieldDefn, nFID))
                     {
                         sHelper.SetDateTime(psArray, iFeat, brokenDown,
+                                            sHelper.anTZFlags[iField],
                                             ogrField);
                     }
                     break;
