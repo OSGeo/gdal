@@ -4113,9 +4113,21 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "FID",
                                            poSrcLayer->GetFIDColumn());
-            CPLDebug("GDALVectorTranslate", "Using FID=%s and -preserve_fid",
-                     poSrcLayer->GetFIDColumn());
-            bPreserveFID = true;
+            if (!psOptions->bExplodeCollections)
+            {
+                CPLDebug("GDALVectorTranslate",
+                         "Using FID=%s and -preserve_fid",
+                         poSrcLayer->GetFIDColumn());
+                bPreserveFID = true;
+            }
+            else
+            {
+                CPLDebug("GDALVectorTranslate",
+                         "Using FID=%s and disable -preserve_fid because not "
+                         "compatible with -explodecollection",
+                         poSrcLayer->GetFIDColumn());
+                bPreserveFID = false;
+            }
         }
         // Detect scenario of converting GML2 with fid attribute to GPKG
         else if (EQUAL(m_poDstDS->GetDriver()->GetDescription(), "GPKG") &&
