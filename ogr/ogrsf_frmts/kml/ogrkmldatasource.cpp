@@ -364,7 +364,7 @@ int OGRKMLDataSource::Create(const char *pszName, char **papszOptions)
 /************************************************************************/
 
 OGRLayer *OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eType,
                                          char ** /* papszOptions */)
 {

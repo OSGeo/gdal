@@ -959,7 +959,7 @@ class netCDFDataset final : public GDALPamDataset
     CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef,
+                                   const OGRSpatialReference *poSpatialRef,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions) override;
 

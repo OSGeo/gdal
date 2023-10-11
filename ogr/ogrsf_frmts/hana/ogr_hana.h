@@ -406,7 +406,7 @@ class OGRHanaDataSource final : public GDALDataset
     OGRLayer *GetLayer(int index) override;
     OGRLayer *GetLayerByName(const char *) override;
     OGRLayer *ICreateLayer(const char *layerName,
-                           OGRSpatialReference *srs = nullptr,
+                           const OGRSpatialReference *srs = nullptr,
                            OGRwkbGeometryType geomType = wkbUnknown,
                            char **options = nullptr) override;
     int TestCapability(const char *capabilities) override;

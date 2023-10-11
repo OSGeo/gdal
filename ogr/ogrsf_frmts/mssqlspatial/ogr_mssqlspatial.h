@@ -652,7 +652,7 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     virtual OGRErr DeleteLayer(int iLayer) override;
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 

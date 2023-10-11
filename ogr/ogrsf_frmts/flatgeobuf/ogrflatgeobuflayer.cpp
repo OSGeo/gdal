@@ -170,7 +170,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
 
 OGRFlatGeobufLayer::OGRFlatGeobufLayer(const char *pszLayerName,
                                        const char *pszFilename,
-                                       OGRSpatialReference *poSpatialRef,
+                                       const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType,
                                        bool bCreateSpatialIndexAtClose,
                                        VSILFILE *poFpWrite,
@@ -2354,7 +2354,7 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
 
 OGRFlatGeobufLayer *
 OGRFlatGeobufLayer::Create(const char *pszLayerName, const char *pszFilename,
-                           OGRSpatialReference *poSpatialRef,
+                           const OGRSpatialReference *poSpatialRef,
                            OGRwkbGeometryType eGType,
                            bool bCreateSpatialIndexAtClose, char **papszOptions)
 {

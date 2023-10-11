@@ -2106,7 +2106,7 @@ OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,
-                                       OGRSpatialReference *poSRS,
+                                       const OGRSpatialReference *poSRS,
                                        OGRwkbGeometryType eType,
                                        CPL_UNUSED char **papszOptions)
 {

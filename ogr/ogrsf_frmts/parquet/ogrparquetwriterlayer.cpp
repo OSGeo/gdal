@@ -89,7 +89,7 @@ bool OGRParquetWriterLayer::IsSupportedGeometryType(
 /************************************************************************/
 
 bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
-                                       OGRSpatialReference *poSpatialRef,
+                                       const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
     const char *pszGeomEncoding =

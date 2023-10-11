@@ -3372,7 +3372,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     CPLErr Close() override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 
@@ -5966,12 +5966,12 @@ static bool ValidateMinMaxZoom(int nMinZoom, int nMaxZoom)
 /************************************************************************/
 
 OGRLayer *OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType,
                                             char **papszOptions)
 {
-    OGRSpatialReference *poSRSClone = poSRS;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSRS)
     {
         poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);

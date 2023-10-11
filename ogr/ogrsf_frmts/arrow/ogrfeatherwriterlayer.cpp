@@ -82,7 +82,7 @@ bool OGRFeatherWriterLayer::IsSupportedGeometryType(
 
 bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
                                        CSLConstList papszOptions,
-                                       OGRSpatialReference *poSpatialRef,
+                                       const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
     const char *pszDefaultFormat =

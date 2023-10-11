@@ -4745,10 +4745,7 @@ Example:
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
+no coordinate system is available.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -4759,7 +4756,7 @@ specific.
 */
 
 OGRLayer *GDALDataset::CreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef,
+                                   const OGRSpatialReference *poSpatialRef,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions)
 
@@ -4837,10 +4834,7 @@ Example:
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param hSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
+no coordinate system is available.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -5217,7 +5211,7 @@ int GDALDataset::GetSummaryRefCount() const
 
 OGRLayer *
 GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
-                          CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                          CPL_UNUSED const OGRSpatialReference *poSpatialRef,
                           CPL_UNUSED OGRwkbGeometryType eGType,
                           CPL_UNUSED char **papszOptions)
 

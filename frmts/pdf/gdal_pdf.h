@@ -503,7 +503,7 @@ class PDFWritableVectorDataset final : public GDALDataset
     virtual ~PDFWritableVectorDataset();
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
 

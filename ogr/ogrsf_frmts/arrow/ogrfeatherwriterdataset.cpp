@@ -79,7 +79,7 @@ int OGRFeatherWriterDataset::TestCapability(const char *pszCap)
 /************************************************************************/
 
 OGRLayer *OGRFeatherWriterDataset::ICreateLayer(
-    const char *pszName, OGRSpatialReference *poSpatialRef,
+    const char *pszName, const OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (m_poLayer)

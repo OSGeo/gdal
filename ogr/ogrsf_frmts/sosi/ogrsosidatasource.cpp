@@ -660,10 +660,9 @@ int OGRSOSIDataSource::Create(const char *pszFilename)
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGRSOSIDataSource::ICreateLayer(const char *pszNameIn,
-                                          OGRSpatialReference *poSpatialRef,
-                                          OGRwkbGeometryType eGType,
-                                          CPL_UNUSED char **papszOptions)
+OGRLayer *OGRSOSIDataSource::ICreateLayer(
+    const char *pszNameIn, const OGRSpatialReference *poSpatialRef,
+    OGRwkbGeometryType eGType, CPL_UNUSED char **papszOptions)
 {
     /* SOSI does not really support layers - so let's first see that the global
      * settings are consistent */
@@ -671,8 +670,7 @@ OGRLayer *OGRSOSIDataSource::ICreateLayer(const char *pszNameIn,
     {
         if (poSpatialRef != NULL)
         {
-            poSRS = poSpatialRef;
-            poSRS->Reference();
+            poSRS = poSpatialRef->Clone();
 
             const char *pszKoosys = poSRS->GetAuthorityCode("PROJCS");
             if (pszKoosys == NULL)

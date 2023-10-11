@@ -509,7 +509,7 @@ bool OGRJSONFGDataset::EmitStartFeaturesIfNeededAndReturnIfFirstFeature()
 /************************************************************************/
 
 OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eGType,
                                          char **papszOptions)
 {

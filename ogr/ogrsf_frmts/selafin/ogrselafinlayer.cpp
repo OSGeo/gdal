@@ -60,7 +60,7 @@ static void MoveOverwrite(VSILFILE *fpDest, VSILFILE *fpSource)
 /************************************************************************/
 
 OGRSelafinLayer::OGRSelafinLayer(const char *pszLayerNameP, int bUpdateP,
-                                 OGRSpatialReference *poSpatialRefP,
+                                 const OGRSpatialReference *poSpatialRefP,
                                  Selafin::Header *poHeaderP, int nStepNumberP,
                                  SelafinTypeDef eTypeP)
     : eType(eTypeP), bUpdate(CPL_TO_BOOL(bUpdateP)), nStepNumber(nStepNumberP),

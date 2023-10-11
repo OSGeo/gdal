@@ -1662,7 +1662,7 @@ OGRLayer *OGRHanaDataSource::GetLayerByName(const char *name)
 /************************************************************************/
 
 OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
-                                          OGRSpatialReference *srs,
+                                          const OGRSpatialReference *srs,
                                           OGRwkbGeometryType geomType,
                                           char **options)
 {

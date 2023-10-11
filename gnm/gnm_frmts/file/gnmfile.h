@@ -46,10 +46,11 @@ class GNMFileNetwork : public GNMGenericNetwork
                           char **papszOptions) override;
 
   protected:
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr) override;
+    virtual OGRLayer *
+    ICreateLayer(const char *pszName,
+                 const OGRSpatialReference *poSpatialRef = nullptr,
+                 OGRwkbGeometryType eGType = wkbUnknown,
+                 char **papszOptions = nullptr) override;
     virtual int CheckNetworkExist(const char *pszFilename,
                                   char **papszOptions) override;
 

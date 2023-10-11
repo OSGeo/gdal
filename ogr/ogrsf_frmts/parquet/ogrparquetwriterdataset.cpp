@@ -77,7 +77,7 @@ int OGRParquetWriterDataset::TestCapability(const char *pszCap)
 /************************************************************************/
 
 OGRLayer *OGRParquetWriterDataset::ICreateLayer(
-    const char *pszName, OGRSpatialReference *poSpatialRef,
+    const char *pszName, const OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (m_poLayer)

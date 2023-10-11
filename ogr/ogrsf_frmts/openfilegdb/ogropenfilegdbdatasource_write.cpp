@@ -1345,10 +1345,9 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
-                                                 OGRSpatialReference *poSRS,
-                                                 OGRwkbGeometryType eType,
-                                                 char **papszOptions)
+OGRLayer *OGROpenFileGDBDataSource::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eType, char **papszOptions)
 {
     if (eAccess != GA_Update)
         return nullptr;

@@ -4160,7 +4160,7 @@ void PDS4Dataset::WriteHeader()
 /************************************************************************/
 
 OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
-                                    OGRSpatialReference *poSpatialRef,
+                                    const OGRSpatialReference *poSpatialRef,
                                     OGRwkbGeometryType eGType,
                                     char **papszOptions)
 {

@@ -326,7 +326,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRLayer *GetLayer(int iLayer) override;
     OGRErr DeleteLayer(int iLayer) override;
     OGRLayer *ICreateLayer(const char *pszLayerName,
-                           OGRSpatialReference *poSpatialRef,
+                           const OGRSpatialReference *poSpatialRef,
                            OGRwkbGeometryType eGType,
                            char **papszOptions) override;
     int TestCapability(const char *) override;

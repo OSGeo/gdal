@@ -348,7 +348,7 @@ class OGRShapeDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *) override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 

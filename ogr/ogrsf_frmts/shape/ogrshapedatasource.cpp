@@ -571,7 +571,7 @@ static CPLString LaunderLayerName(const char *pszLayerName)
 /************************************************************************/
 
 OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
-                                           OGRSpatialReference *poSRS,
+                                           const OGRSpatialReference *poSRS,
                                            OGRwkbGeometryType eType,
                                            char **papszOptions)
 
@@ -888,15 +888,16 @@ OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     /*      Create the .prj file, if required.                              */
     /* -------------------------------------------------------------------- */
     std::string osPrjFilename;
+    OGRSpatialReference *poSRSClone = nullptr;
     if (poSRS != nullptr)
     {
         osPrjFilename = CPLFormFilename(nullptr, pszFilenameWithoutExt, "prj");
-        poSRS = poSRS->Clone();
+        poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;
         VSILFILE *fp = nullptr;
         const char *const apszOptions[] = {"FORMAT=WKT1_ESRI", nullptr};
-        if (poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE &&
+        if (poSRSClone->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE &&
             (fp = VSIFOpenL(osPrjFilename.c_str(), "wt")) != nullptr)
         {
             VSIFWriteL(pszWKT, strlen(pszWKT), 1, fp);
@@ -916,12 +917,12 @@ OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         CPLStrdup(CPLFormFilename(nullptr, pszFilenameWithoutExt, "shp"));
 
     OGRShapeLayer *poLayer =
-        new OGRShapeLayer(this, pszFilename, hSHP, hDBF, poSRS,
+        new OGRShapeLayer(this, pszFilename, hSHP, hDBF, poSRSClone,
                           /* bSRSSet = */ true, osPrjFilename,
                           /* bUpdate = */ true, eType);
-    if (poSRS != nullptr)
+    if (poSRSClone != nullptr)
     {
-        poSRS->Release();
+        poSRSClone->Release();
     }
 
     CPLFree(pszFilenameWithoutExt);

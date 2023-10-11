@@ -521,10 +521,10 @@ OGRErr GNMFileNetwork::DeleteLayer(int nIndex)
     return GNMGenericNetwork::DeleteLayer(nIndex);
 }
 
-OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
-                                       OGRSpatialReference * /* poSpatialRef */,
-                                       OGRwkbGeometryType eGType,
-                                       char **papszOptions)
+OGRLayer *
+GNMFileNetwork::ICreateLayer(const char *pszName,
+                             const OGRSpatialReference * /* poSpatialRef */,
+                             OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (nullptr == m_poLayerDriver)
     {

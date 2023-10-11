@@ -65,7 +65,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     }
     OGRLayer *GetLayer(int) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSRS = nullptr,
+                           const OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;
@@ -174,10 +174,9 @@ OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(const char *pszNameIn,
-                                                OGRSpatialReference *poSRS,
-                                                OGRwkbGeometryType /*eGType*/,
-                                                char **papszOptions)
+OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
+    const char *pszNameIn, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType /*eGType*/, char **papszOptions)
 {
     if (!TestCapability(ODsCCreateLayer))
         return nullptr;

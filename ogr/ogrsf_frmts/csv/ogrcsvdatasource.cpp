@@ -916,10 +916,10 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSpatialRef,
-                                         OGRwkbGeometryType eGType,
-                                         char **papszOptions)
+OGRLayer *
+OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRSpatialReference *poSpatialRef,
+                               OGRwkbGeometryType eGType, char **papszOptions)
 {
     // Verify we are in update mode.
     if (!bUpdate)
