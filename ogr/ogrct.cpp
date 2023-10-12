@@ -3211,6 +3211,7 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
     if (degree_output)
     {
         CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+
         north_pole_in_bounds =
             ContainsNorthPole(xmin, ymin, xmax, ymax, output_lon_lat_order);
         if (CPLGetLastErrorType() != CE_None)
@@ -3302,6 +3303,9 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
         // and lat = +/- 90deg Helps for example for EPSG:4326 to ESRI:53037
         if (poSRSTarget->IsProjected())
         {
+            CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oBackuper;
+
             const double dfLon0 =
                 poSRSTarget->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
             if (dfLon0 != 0)
