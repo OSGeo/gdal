@@ -6456,6 +6456,7 @@ def test_netcdf_NASA_EMIT():
 ###########################################################
 # Test gdal subdataset informational functions
 
+
 @pytest.mark.parametrize(
     "filename,path_component",
     (
