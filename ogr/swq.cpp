@@ -429,9 +429,10 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
             {
                 if (def->field_type == SWQ_DATE ||
                     def->field_type == SWQ_TIME ||
-                    def->field_type == SWQ_TIMESTAMP)
+                    def->field_type == SWQ_TIMESTAMP ||
+                    def->field_type == SWQ_STRING)
                 {
-                    if (strcmp(value, summary.osMin) < 0)
+                    if (summary.count == 0 || strcmp(value, summary.osMin) < 0)
                     {
                         summary.osMin = value;
                     }
@@ -450,9 +451,10 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
             {
                 if (def->field_type == SWQ_DATE ||
                     def->field_type == SWQ_TIME ||
-                    def->field_type == SWQ_TIMESTAMP)
+                    def->field_type == SWQ_TIMESTAMP ||
+                    def->field_type == SWQ_STRING)
                 {
-                    if (strcmp(value, summary.osMax) > 0)
+                    if (summary.count == 0 || strcmp(value, summary.osMax) > 0)
                     {
                         summary.osMax = value;
                     }
