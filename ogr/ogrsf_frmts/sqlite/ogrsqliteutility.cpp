@@ -557,6 +557,7 @@ bool OGRSQLiteRTreeRequiresTrustedSchemaOn()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "sqlite3_open_v2(:memory:) failed");
+            sqlite3_close(hDB);
             return false;
         }
         rc = sqlite3_exec(hDB,

@@ -2605,9 +2605,16 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
     VSIUnlink(m_osAsyncDBName.c_str());
     CPLDebug("GPKG", "Creating background RTree DB %s",
              m_osAsyncDBName.c_str());
-    sqlite3_open_v2(m_osAsyncDBName.c_str(), &m_hAsyncDBHandle,
-                    SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-                    m_poDS->GetVFS() ? m_poDS->GetVFS()->zName : nullptr);
+    if (sqlite3_open_v2(m_osAsyncDBName.c_str(), &m_hAsyncDBHandle,
+                        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+                        m_poDS->GetVFS() ? m_poDS->GetVFS()->zName : nullptr) !=
+        SQLITE_OK)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "sqlite3_open_v2() of %s failed",
+                 m_osAsyncDBName.c_str());
+        sqlite3_close(m_hAsyncDBHandle);
+        m_hAsyncDBHandle = nullptr;
+    }
     if (m_hAsyncDBHandle != nullptr)
     {
         if (SQLCommand(m_hAsyncDBHandle,
