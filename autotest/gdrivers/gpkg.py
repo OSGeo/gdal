@@ -4110,6 +4110,53 @@ def test_gpkg_byte_nodata_value(band_count):
 
 
 ###############################################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "filename,path_component,subdataset_component",
+    (
+        ("XXXXXXXXX:/test.gpkg:layer1", "", ""),
+        ("GPKG:/test.gpkg", "", ""),
+        ("GPKG:/test.gpkg:layer1", "/test.gpkg", "layer1"),
+        ("gpkg:/test.gpkg:layer1", "/test.gpkg", "layer1"),
+        (r"GPKG:c:\test.gpkg", "", ""),
+        (r"GPKG:c:\test.gpkg:layer1", r"c:\test.gpkg", "layer1"),
+        (r"gpkg:c:\test.gpkg:layer1", r"c:\test.gpkg", "layer1"),
+    ),
+)
+def test_gpkg_gdal_subdataset_get_filename(
+    filename, path_component, subdataset_component
+):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if path_component == "":
+        assert info is None
+    else:
+        assert info.GetPathComponent() == path_component
+        assert info.GetSubdatasetComponent() == subdataset_component
+
+
+@pytest.mark.parametrize(
+    "subdataset_component,new_path",
+    (
+        ("GPKG:/test.gpkg", ""),
+        ("GPKG:/test.gpkg:layer1", "GPKG:/new/test.gpkg:layer1"),
+        ("gpkg:/test.gpkg:layer1", "gpkg:/new/test.gpkg:layer1"),
+        (r"GPKG:c:\test.gpkg:layer1", "GPKG:/new/test.gpkg:layer1"),
+        (r"gpkg:c:\test.gpkg:layer1", "gpkg:/new/test.gpkg:layer1"),
+    ),
+)
+def test_gpkg_gdal_subdataset_modify_filename(subdataset_component, new_path):
+
+    info = gdal.GetSubdatasetInfo(subdataset_component)
+    if new_path == "":
+        assert info is None
+    else:
+        assert info.ModifyPathComponent("/new/test.gpkg") == new_path
+
+
+###############################################################################
 # Test gdal_get_layer_pixel_value() function
 
 

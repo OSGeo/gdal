@@ -759,7 +759,7 @@ def test_netcdf_16():
 
 
 ###############################################################################
-# check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
+# check support for netcdf-4 - make sure HDF5 is not read by netcdf driver
 
 
 @pytest.mark.require_driver("HDF5")
@@ -773,16 +773,16 @@ def test_netcdf_17():
         # test with Open()
         ds = gdal.Open(ifile)
         if ds is None:
-            pytest.fail("GDAL did not open hdf5 file")
+            pytest.fail("GDAL did not open HDF5 file")
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
             # return fail if opened with the netCDF driver
-            assert name != "netCDF", "netcdf driver opened hdf5 file"
+            assert name != "netCDF", "netcdf driver opened HDF5 file"
 
         # test with Identify()
         name = gdal.IdentifyDriver(ifile).GetDescription()
-        assert name != "netCDF", "netcdf driver was identified for hdf5 file"
+        assert name != "netCDF", "netcdf driver was identified for HDF5 file"
 
     else:
         pytest.skip()
@@ -6451,3 +6451,74 @@ def test_netcdf_NASA_EMIT():
         "Y_BAND": "1",
         "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT.nc":/location/lat',
     }
+
+
+###########################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "filename,path_component",
+    (
+        (
+            'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+            "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+            "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            r'NETCDF:"C:\data\netcdf\quoted \"SNPP_VIIRS.20230406T024200\".L2.OC.NRT.nc":/navigation_data/longitude',
+            r'C:\data\netcdf\quoted "SNPP_VIIRS.20230406T024200".L2.OC.NRT.nc',
+        ),
+        (
+            r"NETCDF:C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+            r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+            r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        ("", ""),
+    ),
+)
+def test_gdal_subdataset_get_filename(filename, path_component):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if filename == "":
+        assert info is None
+    else:
+        assert info.GetPathComponent() == path_component
+        assert info.GetSubdatasetComponent() == "/navigation_data/longitude"
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+        "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+        r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+        "",
+    ),
+)
+def test_gdal_subdataset_modify_filename(filename):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if filename == "":
+        assert info is None
+    else:
+        assert (
+            info.ModifyPathComponent('"/path/to.nc"')
+            == 'NETCDF:"/path/to.nc":/navigation_data/longitude'
+        )
+        if 'NETCDF:"' in filename:
+            assert (
+                info.ModifyPathComponent("/path/to.nc")
+                == 'NETCDF:"/path/to.nc":/navigation_data/longitude'
+            )
+        else:
+            assert (
+                info.ModifyPathComponent("/path/to.nc")
+                == "NETCDF:/path/to.nc:/navigation_data/longitude"
+            )

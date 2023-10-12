@@ -1300,6 +1300,71 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
     void *poQueryLoggerArg);
 
 /* ==================================================================== */
+/*      Informational utilities about subdatasets in file names         */
+/* ==================================================================== */
+
+/**
+ *  Opaque type used for the C bindings of the C++ GDALSubdatasetInfo class
+ *  @since GDAL 3.8
+*/
+typedef struct GDALSubdatasetInfo *GDALSubdatasetInfoH;
+
+/**
+ * @brief Returns a new GDALSubdatasetInfo object with methods to extract
+ *        and manipulate subdataset information.
+ *        If the pszFileName argument is not recognized by any driver as
+ *        a subdataset descriptor, NULL is returned.
+ *        The returned object must be freed with GDALDestroySubdatasetInfo().
+ * @param pszFileName           File name with subdataset information
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      Opaque pointer to a GDALSubdatasetInfo object or NULL if no drivers accepted the file name.
+ * @since                       GDAL 3.8
+ */
+GDALSubdatasetInfoH CPL_DLL GDALGetSubdatasetInfo(const char *pszFileName);
+
+/**
+ * @brief Returns the file path component of a
+ *        subdataset descriptor effectively stripping the information about the subdataset
+ *        and returning the "parent" dataset descriptor.
+ *        The returned string must be freed with CPLFree().
+ * @param hInfo                 Pointer to GDALSubdatasetInfo object
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      The original string with the subdataset information removed.
+ * @since                       GDAL 3.8
+ */
+char CPL_DLL *GDALSubdatasetInfoGetPathComponent(GDALSubdatasetInfoH hInfo);
+
+/**
+ * @brief Returns the subdataset component of a subdataset descriptor descriptor.
+ *        The returned string must be freed with CPLFree().
+ * @param hInfo                 Pointer to GDALSubdatasetInfo object
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      The subdataset name.
+ * @since                       GDAL 3.8
+ */
+char CPL_DLL *
+GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo);
+
+/**
+ * @brief Replaces the path component of a subdataset descriptor.
+ *        The returned string must be freed with CPLFree().
+ * @param hInfo                 Pointer to GDALSubdatasetInfo object
+ * @param pszNewPath            New path.
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      The original subdataset descriptor with the old path component replaced by newPath.
+ * @since                       GDAL 3.8
+ */
+char CPL_DLL *GDALSubdatasetInfoModifyPathComponent(GDALSubdatasetInfoH hInfo,
+                                                    const char *pszNewPath);
+
+/**
+ * @brief Destroys a GDALSubdatasetInfo object.
+ * @param hInfo                 Pointer to GDALSubdatasetInfo object
+ * @since                       GDAL 3.8
+ */
+void CPL_DLL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo);
+
+/* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
