@@ -295,9 +295,33 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
 
+    int TestCapability(const char *pszCap) override;
+#if PARQUET_VERSION_MAJOR <= 10
+    // Parquet <= 10 doesn't support the WriteRecordBatch() API
+    bool IsArrowSchemaSupported(const struct ArrowSchema *schema,
+                                CSLConstList papszOptions,
+                                std::string &osErrorMsg) const override
+    {
+        return OGRLayer::IsArrowSchemaSupported(schema, papszOptions,
+                                                osErrorMsg);
+    }
+    bool
+    CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
+                               CSLConstList papszOptions = nullptr) override
+    {
+        return OGRLayer::CreateFieldFromArrowSchema(schema, papszOptions);
+    }
+    bool WriteArrowBatch(const struct ArrowSchema *schema,
+                         struct ArrowArray *array,
+                         CSLConstList papszOptions = nullptr) override
+    {
+        return OGRLayer::WriteArrowBatch(schema, array, papszOptions);
+    }
+#else
     bool WriteArrowBatch(const struct ArrowSchema *schema,
                          struct ArrowArray *array,
                          CSLConstList papszOptions = nullptr) override;
+#endif
 };
 
 /************************************************************************/

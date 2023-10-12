@@ -747,6 +747,7 @@ void OGRParquetWriterLayer::FixupGeometryBeforeWriting(OGRGeometry *poGeom)
 /*                          WriteArrowBatch()                           */
 /************************************************************************/
 
+#if PARQUET_VERSION_MAJOR > 10
 inline bool
 OGRParquetWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                                        struct ArrowArray *array,
@@ -776,4 +777,18 @@ OGRParquetWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 
             return true;
         });
+}
+#endif
+
+/************************************************************************/
+/*                         TestCapability()                             */
+/************************************************************************/
+
+inline int OGRParquetWriterLayer::TestCapability(const char *pszCap)
+{
+#if PARQUET_VERSION_MAJOR <= 10
+    if (EQUAL(pszCap, OLCFastWriteArrowBatch))
+        return false;
+#endif
+    return OGRArrowWriterLayer::TestCapability(pszCap);
 }
