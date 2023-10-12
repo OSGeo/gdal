@@ -3372,14 +3372,40 @@ static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg)
     /* -------------------------------------------------------------------- */
     /*      Handle SourceCS.                                                */
     /* -------------------------------------------------------------------- */
-    char *pszWKT = nullptr;
+    const auto ExportToWkt = [](const OGRSpatialReference *poSRS)
+    {
+        // Try first in WKT1 for backward compat
+        {
+            char *pszWKT = nullptr;
+            const char *const apszOptions[] = {"FORMAT=WKT1", nullptr};
+            CPLErrorHandlerPusher oHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oBackuper;
+            if (poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
+            {
+                std::string osRet(pszWKT);
+                CPLFree(pszWKT);
+                return osRet;
+            }
+            CPLFree(pszWKT);
+        }
+
+        char *pszWKT = nullptr;
+        const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
+        if (poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
+        {
+            std::string osRet(pszWKT);
+            CPLFree(pszWKT);
+            return osRet;
+        }
+        CPLFree(pszWKT);
+        return std::string();
+    };
 
     auto poSRS = psInfo->poForwardTransform->GetSourceCS();
     if (poSRS)
     {
-        poSRS->exportToWkt(&pszWKT);
-        CPLCreateXMLElementAndValue(psTree, "SourceSRS", pszWKT);
-        CPLFree(pszWKT);
+        const auto osWKT = ExportToWkt(poSRS);
+        CPLCreateXMLElementAndValue(psTree, "SourceSRS", osWKT.c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -3388,9 +3414,8 @@ static CPLXMLNode *GDALSerializeReprojectionTransformer(void *pTransformArg)
     poSRS = psInfo->poForwardTransform->GetTargetCS();
     if (poSRS)
     {
-        poSRS->exportToWkt(&pszWKT);
-        CPLCreateXMLElementAndValue(psTree, "TargetSRS", pszWKT);
-        CPLFree(pszWKT);
+        const auto osWKT = ExportToWkt(poSRS);
+        CPLCreateXMLElementAndValue(psTree, "TargetSRS", osWKT.c_str());
     }
 
     /* -------------------------------------------------------------------- */
