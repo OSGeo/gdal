@@ -2111,3 +2111,68 @@ def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
             assert lyr.GetFeatureCount() == 2
             del lyr
             del ds_output
+
+
+###############################################################################
+# Test forced use of the Arrow interface
+
+
+@pytest.mark.parametrize("limit", [None, 1])
+def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("str_field"))
+    for i in range(2):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["str_field"] = "foo%d" % i
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 2)" % i))
+        src_lyr.CreateFeature(f)
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        out_ds = gdal.VectorTranslate(
+            "",
+            src_ds,
+            format="Memory",
+            limit=limit,
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount())
+
+    f = out_lyr.GetNextFeature()
+    assert f["str_field"] == "foo0"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 2)"
+
+    if not limit:
+        f = out_lyr.GetNextFeature()
+        assert f["str_field"] == "foo1"
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+    # Test append
+    got_msg = []
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        gdal.VectorTranslate(
+            out_ds,
+            src_ds,
+            accessMode="append",
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    out_lyr = out_ds.GetLayer(0)
+    assert (
+        out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount()) + 2
+    )
