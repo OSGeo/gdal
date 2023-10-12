@@ -966,12 +966,17 @@ def test_ogr_flatgeobuf_invalid_output_filename():
 ###############################################################################
 
 
-def test_ogr_flatgeobuf_arrow_stream_numpy():
+@pytest.mark.parametrize(
+    "layer_creation_options",
+    [[], ["SPATIAL_INDEX=NO"]],
+    ids=["regular", "no_spatial_index"],
+)
+def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
     pytest.importorskip("osgeo.gdal_array")
     numpy = pytest.importorskip("numpy")
 
     ds = ogr.GetDriverByName("FlatGeoBuf").CreateDataSource("/vsimem/test.fgb")
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=layer_creation_options)
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
 
     field = ogr.FieldDefn("str", ogr.OFTString)
@@ -1069,23 +1074,47 @@ def test_ogr_flatgeobuf_arrow_stream_numpy():
     assert batch["OGC_FID"][1] == 1
     assert batch["bool"][1] == False
 
-    # Test attribute filter
-    lyr.SetAttributeFilter("int16 = -123")
-    stream = lyr.GetArrowStreamAsNumPy()
-    batches = [batch for batch in stream]
-    lyr.SetAttributeFilter(None)
-    assert len(batches) == 1
-    assert len(batches[0]["OGC_FID"]) == 1
-    assert batches[0]["OGC_FID"][0] == 1
+    for options in ([], ["MAX_FEATURES_IN_BATCH=1"]):
+        # Test attribute filter
+        lyr.SetAttributeFilter("int16 = -123")
+        stream = lyr.GetArrowStreamAsNumPy()
+        batches = [batch for batch in stream]
+        lyr.SetAttributeFilter(None)
+        assert len(batches) == 1
+        assert len(batches[0]["OGC_FID"]) == 1
+        assert batches[0]["OGC_FID"][0] == 1
+        assert batches[0]["int16"][0] == -123
 
-    # Test spatial filter
-    lyr.SetSpatialFilterRect(0, 0, 10, 10)
-    stream = lyr.GetArrowStreamAsNumPy()
-    batches = [batch for batch in stream]
-    lyr.SetSpatialFilter(None)
-    assert len(batches) == 1
-    assert len(batches[0]["OGC_FID"]) == 1
-    assert batches[0]["OGC_FID"][0] == 0
+        # Test spatial filter
+        lyr.SetSpatialFilterRect(0, 0, 10, 10)
+        stream = lyr.GetArrowStreamAsNumPy()
+        batches = [batch for batch in stream]
+        lyr.SetSpatialFilter(None)
+        assert len(batches) == 1
+        assert len(batches[0]["OGC_FID"]) == 1
+        assert batches[0]["OGC_FID"][0] == 0
+        assert batches[0]["int16"][0] == -12345
+
+        # Test attribute + spatial filter: no result
+        lyr.SetAttributeFilter("int16 = -123")
+        lyr.SetSpatialFilterRect(0, 0, 10, 10)
+        stream = lyr.GetArrowStreamAsNumPy()
+        batches = [batch for batch in stream]
+        lyr.SetAttributeFilter(None)
+        lyr.SetSpatialFilter(None)
+        assert len(batches) == 0
+
+        # Test attribute + spatial filter: result
+        lyr.SetAttributeFilter("int16 = -123")
+        lyr.SetSpatialFilterRect(-1, 2, -1, 2)
+        stream = lyr.GetArrowStreamAsNumPy()
+        batches = [batch for batch in stream]
+        lyr.SetAttributeFilter(None)
+        lyr.SetSpatialFilter(None)
+        assert len(batches) == 1
+        assert len(batches[0]["int16"]) == 1
+        assert batches[0]["OGC_FID"][0] == 1
+        assert batches[0]["int16"][0] == -123
 
     # Test ignored fields
     assert lyr.SetIgnoredFields(["OGR_GEOMETRY", "int16"]) == ogr.OGRERR_NONE
