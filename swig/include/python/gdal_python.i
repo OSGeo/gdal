@@ -2434,6 +2434,7 @@ def VectorTranslateOptions(options=None, format=None,
          clipDstSQL=None,
          clipDstLayer=None,
          clipDstWhere=None,
+         preserveFID=False,
          simplifyTolerance=None,
          segmentizeMaxDist=None,
          makeValid=False,
@@ -2544,7 +2545,16 @@ def VectorTranslateOptions(options=None, format=None,
         and is only an afterwards conversion.
     explodeCollections:
         produce one feature for each geometry in any kind of geometry collection in the
-        source file, applied after any -sql option.
+        source file, applied after any -sql option. This option is not compatible with
+        preserveFID but a SQLStatement (e.g. SELECT fid AS original_fid, * FROM ...)
+        can be used to store the original FID if needed.
+    preserveFID:
+        Use the FID of the source features instead of letting the output driver automatically
+        assign a new one (for formats that require a FID). If not in append mode, this behavior
+        is the default if the output driver has a FID  layer  creation  option,  in which case
+        the name of the source FID column will be used and source feature IDs will be attempted
+        to be preserved. This behavior can be disabled by setting -unsetFid.
+        This option is not compatible with explodeCollections
     zField:
         name of field to use to set the Z component of geometries
     resolveDomains:
@@ -2703,6 +2713,8 @@ def VectorTranslateOptions(options=None, format=None,
                 new_options += [",".join(mapFieldType)]
         if explodeCollections:
             new_options += ['-explodecollections']
+        if preserveFID:
+            new_options += ['-preserve_fid']
         if spatFilter is not None:
             new_options += [
                 '-spat',
