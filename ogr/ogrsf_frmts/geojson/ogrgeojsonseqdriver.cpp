@@ -661,15 +661,22 @@ OGRErr OGRGeoJSONSeqLayer::ICreateFeature(OGRFeature *poFeature)
         m_oWriteOptions);
     CPLAssert(nullptr != poObj);
 
-    if (m_poDS->m_bIsRSSeparated)
+    const char *pszJson = json_object_to_json_string(poObj);
+
+    char chEOL = '\n';
+    OGRErr eErr = OGRERR_NONE;
+    if ((m_poDS->m_bIsRSSeparated &&
+         VSIFWriteL(&RS, 1, 1, m_poDS->m_fp) != 1) ||
+        VSIFWriteL(pszJson, strlen(pszJson), 1, m_poDS->m_fp) != 1 ||
+        VSIFWriteL(&chEOL, 1, 1, m_poDS->m_fp) != 1)
     {
-        VSIFPrintfL(m_poDS->m_fp, "%c", RS);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot write feature");
+        eErr = OGRERR_FAILURE;
     }
-    VSIFPrintfL(m_poDS->m_fp, "%s\n", json_object_to_json_string(poObj));
 
     json_object_put(poObj);
 
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/
