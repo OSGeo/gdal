@@ -2096,7 +2096,10 @@ def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
         )
 
         if preserveFID:
-            with pytest.raises(RuntimeError, match="cannot use -preserve_fid and -explodecollections at the same time"):
+            with pytest.raises(
+                RuntimeError,
+                match="cannot use -preserve_fid and -explodecollections at the same time",
+            ):
                 gdal.VectorTranslate(srcDS=src, destNameOrDestDS=dst, options=options)
 
         else:
