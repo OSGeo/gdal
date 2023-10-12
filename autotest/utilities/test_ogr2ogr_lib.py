@@ -1922,3 +1922,52 @@ def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
         gdal.VectorTranslate("", src_ds, format="Memory", geometryType=nlt_value)
         is not None
     )
+
+
+###############################################################################
+# Test issue (#8523) when -preserve_fid was set even if -explodecollections was
+# set with a GPKG MULTI layer
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("preserveFID", (True, False))
+def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
+    """Test issue #8523 when -preserve_fid was set even if -explodecollections was set"""
+
+    with gdal.ExceptionMgr(useExceptions=True):
+
+        src = tmp_vsimem / "test_collection.gpkg"
+        dst = tmp_vsimem / "test_collection_exploded.gpkg"
+
+        ds = ogr.GetDriverByName("GPKG").CreateDataSource(src)
+        lyr = ds.CreateLayer("test_collection", None, ogr.wkbMultiPoint)
+
+        wkt_geom = "MULTIPOINT((0 0), (1 1))"
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
+
+        lyr.CreateFeature(feat)
+
+        del lyr
+        del ds
+
+        options = gdal.VectorTranslateOptions(
+            explodeCollections=True, preserveFID=preserveFID
+        )
+
+        if preserveFID:
+            with pytest.raises(
+                RuntimeError,
+                match="cannot use -preserve_fid and -explodecollections at the same time",
+            ):
+                gdal.VectorTranslate(srcDS=src, destNameOrDestDS=dst, options=options)
+
+        else:
+            ds_output = gdal.VectorTranslate(
+                srcDS=src, destNameOrDestDS=dst, options=options
+            )
+            lyr = ds_output.GetLayerByName("test_collection")
+            assert lyr.GetFeatureCount() == 2
+            del lyr
+            del ds_output
