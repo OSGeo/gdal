@@ -98,25 +98,52 @@ class FileHandler(object):
     """
 
     def __init__(self, _dict, content_type=None):
-        self.dict = _dict
+        self.dict = {"GET": _dict, "PUT": {}, "POST": {}, "DELETE": {}}
         self.content_type = content_type
         self.fallback = None
 
     def final_check(self):
         pass
 
-    def add_file(self, path, contents):
-        self.dict[path] = contents
+    def handle_get(self, path, contents):
+        self.add_file(path, contents, verb="GET")
+
+    def handle_put(self, path, contents):
+        self.add_file(path, contents, verb="PUT")
+
+    def handle_delete(self, path, contents):
+        self.add_file(path, contents, verb="DELETE")
+
+    def handle_post(self, path, contents, post_body=None):
+        self.add_file(path, contents, verb="POST", post_body=post_body)
+
+    def add_file(self, path, contents, verb="GET", post_body=None):
+        if type(contents) is str:
+            contents = contents.encode()
+
+        if type(post_body) is str:
+            post_body = post_body.encode()
+
+        if verb == "POST":
+            if path in self.dict["POST"]:
+                self.dict["POST"][path][post_body] = contents
+            else:
+                self.dict["POST"][path] = {post_body: contents}
+        else:
+            self.dict[verb][path] = contents
 
     def set_fallback(self, path):
         self.fallback = path
 
-    def lookup(self, path):
+    def lookup(self, path, verb, post_body=None):
 
-        if path in self.dict:
-            return self.dict[path]
+        if path in self.dict[verb]:
+            if verb == "POST":
+                return self.dict["POST"][path].get(post_body, None)
+            else:
+                return self.dict[verb][path]
 
-        if self.fallback:
+        if verb == "GET" and self.fallback:
             stat = gdal.VSIStatL(f"{self.fallback}/{path}")
             if stat is not None:
                 f = gdal.VSIFOpenL(f"{self.fallback}/{path}", "rb")
@@ -125,20 +152,7 @@ class FileHandler(object):
 
                 return content
 
-    def do_HEAD(self, request):
-        filedata = self.lookup(request.path)
-
-        if filedata is None:
-            request.send_response(404)
-            request.end_headers()
-        else:
-            request.send_response(200)
-            request.send_header("Content-Length", len(filedata))
-            request.end_headers()
-
-    def do_GET(self, request):
-        filedata = self.lookup(request.path)
-
+    def send_response(self, request, filedata):
         if filedata is None:
             request.send_response(404)
             request.end_headers()
@@ -169,6 +183,34 @@ class FileHandler(object):
                 request.send_response(500)
                 request.end_headers()
                 request.wfile.write(str(ex).encode("utf8"))
+
+    def do_HEAD(self, request):
+        filedata = self.lookup(request.path, "GET")
+
+        if filedata is None:
+            request.send_response(404)
+            request.end_headers()
+        else:
+            request.send_response(200)
+            request.send_header("Content-Length", len(filedata))
+            request.end_headers()
+
+    def do_GET(self, request):
+        filedata = self.lookup(request.path, "GET")
+        self.send_response(request, filedata)
+
+    def do_PUT(self, request):
+        filedata = self.lookup(request.path, "PUT")
+        self.send_response(request, filedata)
+
+    def do_POST(self, request):
+        content = request.rfile.read(int(request.headers["Content-Length"]))
+        filedata = self.lookup(request.path, "POST", post_body=content)
+        self.send_response(request, filedata)
+
+    def do_DELETE(self, request):
+        filedata = self.lookup(request.path, "DELETE")
+        self.send_response(request, filedata)
 
 
 class SequentialHandler(object):
