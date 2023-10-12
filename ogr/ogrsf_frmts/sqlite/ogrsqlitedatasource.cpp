@@ -594,8 +594,12 @@ bool OGRSQLiteBaseDataSource::CloseDB()
               STARTS_WITH(m_pszFilename, "/vsizip/")) &&
             VSIStatL(CPLSPrintf("%s-wal", m_pszFilename), &sStat) == 0)
         {
-            CPL_IGNORE_RET_VAL(sqlite3_open(m_pszFilename, &hDB));
-            if (hDB != nullptr)
+            if (sqlite3_open(m_pszFilename, &hDB) != SQLITE_OK)
+            {
+                sqlite3_close(hDB);
+                hDB = nullptr;
+            }
+            else if (hDB != nullptr)
             {
 #ifdef SQLITE_FCNTL_PERSIST_WAL
                 int nPersistentWAL = -1;
@@ -1376,12 +1380,16 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 
     for (int iterOpen = 0; iterOpen < 2; iterOpen++)
     {
+        CPLAssert(hDB == nullptr);
         int rc = sqlite3_open_v2(m_osFilenameForSQLiteOpen.c_str(), &hDB, flags,
                                  pMyVFS ? pMyVFS->zName : nullptr);
-        if (rc != SQLITE_OK)
+        if (rc != SQLITE_OK || !hDB)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "sqlite3_open(%s) failed: %s",
-                     m_pszFilename, sqlite3_errmsg(hDB));
+                     m_pszFilename,
+                     hDB ? sqlite3_errmsg(hDB) : "(unknown error)");
+            sqlite3_close(hDB);
+            hDB = nullptr;
             return false;
         }
 
