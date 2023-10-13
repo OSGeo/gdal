@@ -5765,6 +5765,22 @@ FillFieldBinary(const struct ArrowArray *array, int iOGRFieldIdx,
     if (asFieldInfo[iArrowIdx].bIsGeomCol)
     {
         size_t nBytesConsumedOut = 0;
+
+        // Check if we can reuse the existing geometry, to save dynamic memory
+        // allocations.
+        if (nLen >= 5 && pabyData[0] == wkbNDR && pabyData[1] <= wkbTriangle &&
+            pabyData[2] == 0 && pabyData[3] == 0 && pabyData[4] == 0)
+        {
+            const auto poExistingGeom = oFeature.GetGeomFieldRef(iOGRFieldIdx);
+            if (poExistingGeom &&
+                poExistingGeom->getGeometryType() == pabyData[1])
+            {
+                poExistingGeom->importFromWkb(pabyData, nLen, wkbVariantIso,
+                                              nBytesConsumedOut);
+                return true;
+            }
+        }
+
         OGRGeometry *poGeometry = nullptr;
         OGRGeometryFactory::createFromWkb(pabyData, nullptr, &poGeometry, nLen,
                                           wkbVariantIso, nBytesConsumedOut);
