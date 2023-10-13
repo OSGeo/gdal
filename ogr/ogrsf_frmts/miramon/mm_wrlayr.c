@@ -1202,15 +1202,20 @@ int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer)
         if(MMClosePointLayer(hMiraMonLayer))
             return 1;
     }
-    if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
+    else if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
         if(MMCloseArcLayer(hMiraMonLayer))
             return 1;
     }
-    if(hMiraMonLayer->bIsPolygon)
+    else if(hMiraMonLayer->bIsPolygon)
     {
       if(MMClosePolygonLayer(hMiraMonLayer))
           return 1;
+    }
+    else
+    {
+        // If no geometry remove all created files
+        remove_function(hMiraMonLayer->pszSrcLayerName);
     }
 
     // MiraMon metadata files
@@ -1390,6 +1395,12 @@ int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer)
         MMDestroyArcLayer(hMiraMonLayer);
     else if(hMiraMonLayer->bIsPolygon)
         MMDestroyPolygonLayer(hMiraMonLayer);
+    
+    if(hMiraMonLayer->pszSrcLayerName)
+    {
+        free_function(hMiraMonLayer->pszSrcLayerName);
+        hMiraMonLayer->pszSrcLayerName=NULL;
+    }    
 
     // Destroys all database objects
     MMDestroyMMDB(hMiraMonLayer);
@@ -3592,6 +3603,56 @@ int MMWriteValueToRecordDBXP(struct MMAdmDatabase  *pMMAdmDB,
     return 0;
 }
 
+// Gets the n-th value of the format (number_of_values:val1,val2,...,valN)
+char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord)
+{
+char *p, *q;
+int nNValues, nIValues;
+char *pszAux;
+
+    if(!pszStringList)
+        return NULL;
+
+    pszAux=strdup_function(pszStringList);
+    p=strstr(pszAux, "(");
+    if(!p)
+        return NULL;
+    p++;
+    if(!p)
+        return NULL;
+    q=strstr(p, ":");
+    p[(ptrdiff_t)q-(ptrdiff_t)p]='\0';	
+    nNValues=atoi(p);
+    if(nIRecord>(unsigned __int32)nNValues)
+        return NULL;
+
+    q++;
+    nIValues=0;
+    while((unsigned __int32)nIValues<=nIRecord)
+    {
+        if(!q)
+            return NULL;
+        p=strstr(q, ",");
+        if(!p)
+        {
+            p=strstr(q, ")");
+            if(!p)
+                return NULL;
+            q[(ptrdiff_t)p-(ptrdiff_t)q]='\0';	
+            return q;
+        }
+        if ((unsigned __int32)nIValues == nIRecord)
+        {
+            p = strstr(q, ",");
+            q[(ptrdiff_t)p - (ptrdiff_t)q] = '\0';
+
+            return q;
+        }
+        q=p+1;
+    }
+
+    return q;
+}
 
 int MMAddFeatureRecordToMMDB(struct MiraMonFeature *hMMFeature,
                              struct MMAdmDatabase  *pMMAdmDB,
@@ -3609,8 +3670,19 @@ struct MM_BASE_DADES_XP *pBD_XP=NULL;
     {
         for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
         {
+            // A field with no valid value is written as blank
             if(!hMMFeature->pRecords[nIRecord].pField[nIField].bIsValid)
+            {
+                MM_TIPUS_BYTES_ACUMULATS_DBF i = 0;
+                while(i<pBD_XP->Camp[nIField+nNumPrivateMMField].BytesPerCamp)
+                {
+                    memcpy(pszRecordOnCourse+
+                        pBD_XP->Camp[nIField+nNumPrivateMMField].BytesAcumulats+i, 
+                        " ",  1);
+                    i++;
+                }
                 continue;
+            }
             if (pBD_XP->Camp[nIField+nNumPrivateMMField].TipusDeCamp=='C')
 	        {
                 if(MMWriteValueToRecordDBXP(pMMAdmDB, pszRecordOnCourse, 

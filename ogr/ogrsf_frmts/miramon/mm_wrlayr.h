@@ -129,7 +129,7 @@ int MMResizeDoublePointer(double **pDouble,
                         unsigned __int64 nProposedMax);
 
 int IsEmptyString(const char *string);
-
+char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord);
 // Metadata functions
 int MMWriteVectorMetadata(struct MiraMonLayerInfo *hMiraMonLayer);
 
