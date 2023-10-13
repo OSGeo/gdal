@@ -157,6 +157,7 @@ void RegisterOGRGPX()
         "  <Option name='METADATA_LINK_*_TYPE' type='string'/>"
         "  <Option name='METADATA_NAME' type='string'/>"
         "  <Option name='METADATA_TIME' type='string'/>"
+        "  <Option name='CREATOR' type='string'/>"
         "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
