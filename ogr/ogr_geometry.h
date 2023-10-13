@@ -1445,6 +1445,7 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
     friend class OGRGeometry;
 
     int nPointCount;
+    int m_nPointCapacity = 0;
     OGRRawPoint *paoPoints;
     double *padfZ;
     double *padfM;
@@ -2741,9 +2742,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
 class CPL_DLL OGRGeometryCollection : public OGRGeometry
 {
-    OGRErr importFromWkbInternal(const unsigned char *pabyData, size_t nSize,
-                                 int nRecLevel, OGRwkbVariant,
-                                 size_t &nBytesConsumedOut);
     OGRErr importFromWktInternal(const char **ppszInput, int nRecLevel);
 
   protected:
@@ -2757,6 +2755,10 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     static OGRGeometryCollection *
     TransferMembersAndDestroy(OGRGeometryCollection *poSrc,
                               OGRGeometryCollection *poDst);
+
+    OGRErr importFromWkbInternal(const unsigned char *pabyData, size_t nSize,
+                                 int nRecLevel, OGRwkbVariant,
+                                 size_t &nBytesConsumedOut);
     //! @endcond
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
 
@@ -3141,6 +3143,9 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 #ifndef DOXYGEN_XML
     using OGRGeometry::exportToWkt;
 #endif
+
+    virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
+                                 size_t &nBytesConsumedOut) override;
 
     /// Export a multipolygon to WKT
     /// \param opts  Output options.
@@ -3865,6 +3870,9 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 #ifndef DOXYGEN_XML
     using OGRGeometry::exportToWkt;
 #endif
+
+    virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
+                                 size_t &nBytesConsumedOut) override;
 
     /// Export a multilinestring to WKT
     /// \param opts  Output options.
