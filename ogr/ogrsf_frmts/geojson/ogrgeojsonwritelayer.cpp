@@ -327,13 +327,19 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
         /* Separate "Feature" entries in "FeatureCollection" object. */
         VSIFPrintfL(fp, ",\n");
     }
-    VSIFPrintfL(fp, "%s",
-                json_object_to_json_string_ext(
-                    poObj, JSON_C_TO_STRING_SPACED
+    const char *pszJson = json_object_to_json_string_ext(
+        poObj, JSON_C_TO_STRING_SPACED
 #ifdef JSON_C_TO_STRING_NOSLASHESCAPE
-                               | JSON_C_TO_STRING_NOSLASHESCAPE
+                   | JSON_C_TO_STRING_NOSLASHESCAPE
 #endif
-                    ));
+    );
+
+    OGRErr eErr = OGRERR_NONE;
+    if (VSIFWriteL(pszJson, strlen(pszJson), 1, fp) != 1)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot write feature");
+        eErr = OGRERR_FAILURE;
+    }
 
     json_object_put(poObj);
 
@@ -423,7 +429,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     if (poFeatureToWrite != poFeature)
         delete poFeatureToWrite;
 
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/
