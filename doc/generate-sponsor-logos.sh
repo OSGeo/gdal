@@ -12,7 +12,8 @@ inkscape --export-png=images/sponsors/logo-esri.png --export-width=$GOLD_WIDTH i
 inkscape --export-png=images/sponsors/logo-nasa.png --export-width=$GOLD_WIDTH images/sponsors/logo-nasa.svg
 
 inkscape --export-png=images/sponsors/logo-google.png --export-width=$SILVER_WIDTH images/sponsors/logo-google.svg
-inkscape --export-png=images/sponsors/logo-safe.png --export-width=$SILVER_WIDTH images/sponsors/logo-safe.svg
+# Make Safe logo appear similar in size to Google one
+inkscape --export-png=images/sponsors/logo-safe.png --export-width=240 images/sponsors/logo-safe.svg
 
 inkscape --export-png=images/sponsors/logo-koordinates.png --export-width=$BRONZE_WIDTH images/sponsors/logo-koordinates.svg
 inkscape --export-png=images/sponsors/logo-frontiersi.png --export-width=$BRONZE_WIDTH images/sponsors/logo-FrontierSI.svg

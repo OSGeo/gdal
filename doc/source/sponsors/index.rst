@@ -62,7 +62,7 @@ the health of the project:
 
         .. image:: ../../images/sponsors/logo-safe.png
            :class: img-logos
-           :width: 200 px
+           :width: 240 px
            :target: https://www.safe.com
 
 
