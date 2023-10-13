@@ -1351,7 +1351,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         else if (eFType == OFTString)
         {
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, 1);
-            hMMFeature.pRecords[0].nNumField = iField;
+            hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
@@ -1366,7 +1366,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         else if (eFType == OFTDate)
         {
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, 1);
-            hMMFeature.pRecords[0].nNumField = iField;
+            hMMFeature.pRecords[0].nNumField = nNumFields;
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
@@ -1386,7 +1386,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         else if (eFType == OFTInteger)
         {
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, 1);
-            hMMFeature.pRecords[0].nNumField=poFeatureDefn->GetFieldCount();
+            hMMFeature.pRecords[0].nNumField = nNumFields;
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
@@ -1404,7 +1404,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         else if (eFType == OFTInteger64)
         {
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, 1);
-            hMMFeature.pRecords[0].nNumField=poFeatureDefn->GetFieldCount();
+            hMMFeature.pRecords[0].nNumField = nNumFields;
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
@@ -1422,7 +1422,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         else if (eFType == OFTReal)
         {
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, 1);
-            hMMFeature.pRecords[0].nNumField=poFeatureDefn->GetFieldCount();
+            hMMFeature.pRecords[0].nNumField = nNumFields;
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
