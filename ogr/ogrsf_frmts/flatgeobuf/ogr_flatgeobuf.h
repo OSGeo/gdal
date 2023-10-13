@@ -117,6 +117,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     std::string
         m_osTempFile;  // holds generated temp file name for two pass writing
     uint32_t m_maxFeatureSize = 0;
+    std::vector<uint8_t> m_writeProperties{};
 
     // shared
     GByte *m_featureBuf = nullptr;  // reusable/resizable feature data buffer

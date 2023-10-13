@@ -1951,7 +1951,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 
     const auto fieldCount = m_poFeatureDefn->GetFieldCount();
 
-    std::vector<uint8_t> properties;
+    std::vector<uint8_t> &properties = m_writeProperties;
+    properties.clear();
     properties.reserve(1024 * 4);
     FlatBufferBuilder fbb;
     fbb.TrackMinAlign(8);
