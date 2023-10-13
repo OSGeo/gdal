@@ -5399,8 +5399,11 @@ bool LayerTranslator::TranslateArrow(
     if (!psInfo->m_bPreserveFID)
         aosOptions.SetNameValue("INCLUDE_FID", "NO");
     if (psOptions->nGroupTransactions > 0)
+    {
         aosOptions.SetNameValue(
-            "BATCH_SIZE", CPLSPrintf("%d", psOptions->nGroupTransactions));
+            "MAX_FEATURES_IN_BATCH",
+            CPLSPrintf("%d", psOptions->nGroupTransactions));
+    }
     if (psInfo->m_poSrcLayer->GetArrowStream(&stream, aosOptions.List()))
     {
         if (stream.get_schema(&stream, &schema) != 0)
