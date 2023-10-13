@@ -1115,7 +1115,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     if (hMiraMonLayer.pLayerDB->pFields)
     {
         memset(hMiraMonLayer.pLayerDB->pFields, 0, sizeof(*hMiraMonLayer.pLayerDB->pFields));
-        for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
+        for (MM_EXT_DBF_N_FIELDS iField = 0; iField < (MM_EXT_DBF_N_FIELDS)poFeatureDefn->GetFieldCount(); iField++)
         {
             if(!(hMiraMonLayer.pLayerDB->pFields+iField))
                 continue;
@@ -1170,18 +1170,13 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                     (unsigned int)(poFeatureDefn->GetFieldDefn(iField)->GetWidth() + 1);
             }
 
-            if (hMiraMonLayer.pLayerDB->pFields[iField].pszFieldName)
-            {
-                MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldName,
-                    poFeatureDefn->GetFieldDefn(iField)->GetNameRef() ? poFeatureDefn->GetFieldDefn(iField)->GetNameRef():NULL,
-                    MM_MAX_LON_FIELD_NAME_DBF);
-            }
-            if (hMiraMonLayer.pLayerDB->pFields[iField].pszFieldDescription)
-            {
-                MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldDescription,
-                    poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef(),
-                    MM_MAX_BYTES_FIELD_DESC);
-            }
+            MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldName,
+                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef() ? poFeatureDefn->GetFieldDefn(iField)->GetNameRef():NULL,
+                 MM_MAX_LON_FIELD_NAME_DBF);
+
+            MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldDescription,
+                poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef(),
+                MM_MAX_BYTES_FIELD_DESC);
 
             hMiraMonLayer.pLayerDB->nNFields++;
         }
