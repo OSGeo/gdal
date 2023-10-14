@@ -123,7 +123,7 @@ int VRTFilteredSource::IsTypeSupported(GDALDataType eTestType) const
 /*                              RasterIO()                              */
 /************************************************************************/
 
-CPLErr VRTFilteredSource::RasterIO(GDALDataType eBandDataType, int nXOff,
+CPLErr VRTFilteredSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
                                    int nYOff, int nXSize, int nYSize,
                                    void *pData, int nBufXSize, int nBufYSize,
                                    GDALDataType eBufType, GSpacing nPixelSpace,
@@ -139,7 +139,7 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eBandDataType, int nXOff,
     if (nBufXSize != nXSize || nBufYSize != nYSize)
     {
         return VRTComplexSource::RasterIO(
-            eBandDataType, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+            eVRTBandDataType, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
             nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
     }
 
@@ -317,7 +317,8 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         const bool bIsComplex =
             CPL_TO_BOOL(GDALDataTypeIsComplex(eOperDataType));
         const CPLErr eErr = VRTComplexSource::RasterIOInternal<float>(
-            eBandDataType, nFileXOff, nFileYOff, nFileXSize, nFileYSize,
+            l_band, eVRTBandDataType, nFileXOff, nFileYOff, nFileXSize,
+            nFileYSize,
             pabyWorkData + nLineOffset * nTopFill + nPixelOffset * nLeftFill,
             nFileXSize, nFileYSize, eOperDataType, nPixelOffset, nLineOffset,
             &sExtraArgs, bIsComplex ? GDT_CFloat32 : GDT_Float32);

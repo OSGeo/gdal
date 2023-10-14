@@ -2360,3 +2360,158 @@ def test_vrt_read_top_and_bottom_strips_average():
     assert ds.GetRasterBand(1).ReadRaster(*args, **kwargs) == ref_data
     assert ds.ReadRaster(*args, **kwargs) == ref_data
     assert ref_data[0] == 128
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "input_datatype", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16]
+)
+@pytest.mark.parametrize("vrt_type", ["Byte", "UInt16", "Int16"])
+@pytest.mark.parametrize("nodata", [0, 254])
+@pytest.mark.parametrize(
+    "request_type", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16]
+)
+def test_vrt_read_complex_source_nodata(
+    tmp_vsimem, input_datatype, vrt_type, nodata, request_type
+):
+
+    if input_datatype == gdal.GDT_Byte:
+        array_type = "B"
+    elif input_datatype == gdal.GDT_UInt16:
+        array_type = "H"
+    elif input_datatype == gdal.GDT_Int16:
+        array_type = "h"
+    else:
+        assert False
+    input_data = array.array(
+        array_type,
+        [
+            nodata,
+            1,
+            2,
+            3,
+            nodata,  # EOL
+            4,
+            nodata,
+            5,
+            6,
+            7,  # EOL
+            16,
+            17,
+            18,
+            19,
+            20,  # EOL
+            8,
+            9,
+            nodata,
+            10,
+            11,  # EOL
+            nodata,
+            nodata,
+            nodata,
+            nodata,
+            nodata,  # EOL
+            12,
+            13,
+            14,
+            nodata,
+            15,  # EOL
+        ],
+    )
+    input_filename = str(tmp_vsimem / "source.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(input_filename, 5, 6, 1, input_datatype)
+    ds.WriteRaster(0, 0, 5, 6, input_data, buf_type=input_datatype)
+    ds.Close()
+    complex_xml = f"""<VRTDataset rasterXSize="5" rasterYSize="6">
+  <VRTRasterBand dataType="{vrt_type}" band="1">
+    <NoDataValue>255</NoDataValue>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">{input_filename}</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <NODATA>{nodata}</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+    vrt_ds = gdal.Open(complex_xml)
+    if request_type == gdal.GDT_Byte:
+        array_request_type = "B"
+    elif request_type == gdal.GDT_UInt16:
+        array_request_type = "H"
+    elif request_type == gdal.GDT_Int16:
+        array_request_type = "h"
+    else:
+        assert False
+    got_data = vrt_ds.ReadRaster(buf_type=request_type)
+    got_data = struct.unpack(array_request_type * (5 * 6), got_data)
+    assert got_data == (
+        255,
+        1,
+        2,
+        3,
+        255,  # EOL
+        4,
+        255,
+        5,
+        6,
+        7,  # EOL
+        16,
+        17,
+        18,
+        19,
+        20,  # EOL
+        8,
+        9,
+        255,
+        10,
+        11,  # EOL
+        255,
+        255,
+        255,
+        255,
+        255,  # EOL
+        12,
+        13,
+        14,
+        255,
+        15,  # EOL
+    )
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("data_type", [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_Int16])
+def test_vrt_read_complex_source_nodata_out_of_range(tmp_vsimem, data_type):
+
+    if data_type == gdal.GDT_Byte:
+        array_type = "B"
+    elif data_type == gdal.GDT_UInt16:
+        array_type = "H"
+    elif data_type == gdal.GDT_Int16:
+        array_type = "h"
+    else:
+        assert False
+    input_data = array.array(array_type, [1])
+    input_filename = str(tmp_vsimem / "source.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(input_filename, 1, 1, 1, data_type)
+    ds.WriteRaster(0, 0, 1, 1, input_data, buf_type=data_type)
+    ds.Close()
+    vrt_type = gdal.GetDataTypeName(data_type)
+    complex_xml = f"""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="{vrt_type}" band="1">
+    <NoDataValue>255</NoDataValue>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">{input_filename}</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <NODATA>-100000000</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+    vrt_ds = gdal.Open(complex_xml)
+    got_data = vrt_ds.ReadRaster(buf_type=data_type)
+    got_data = struct.unpack(array_type, got_data)
+    assert got_data == (1,)
