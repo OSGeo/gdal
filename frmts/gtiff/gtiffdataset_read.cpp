@@ -560,8 +560,16 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
                 psJob->nXBlock, psJob->nYBlock);
             if (apoBlocks[i] == nullptr)
             {
+                // Temporary disabling of dirty block fushing, otherwise
+                // we can be in a deadlock situation, where the
+                // GTiffDataset::SubmitCompressionJob() method waits for jobs
+                // to be finished, that can't finish (actually be started)
+                // because this task and its siblings are taking all the
+                // available workers allowed by the global thread pool.
+                GDALRasterBlock::EnterDisableDirtyBlockFlush();
                 apoBlocks[i] = poDS->GetRasterBand(iBand)->GetLockedBlockRef(
                     psJob->nXBlock, psJob->nYBlock, TRUE);
+                GDALRasterBlock::LeaveDisableDirtyBlockFlush();
                 if (apoBlocks[i] == nullptr)
                     return false;
             }
