@@ -191,7 +191,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         // We need a temporary buffer for over-sampling/sub-sampling
         // and/or data type conversion.
-        pTmpBuffer = VSI_MALLOC_VERBOSE(nReqXSize * nReqYSize * nSrcPixelSize);
+        pTmpBuffer = VSI_MALLOC3_VERBOSE(nReqXSize, nReqYSize, nSrcPixelSize);
         if (pTmpBuffer == nullptr)
             eErr = CE_Failure;
     }
@@ -204,8 +204,9 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (pTmpBuffer == nullptr)
             ppData[iLine] = static_cast<GByte *>(pData) + iLine * nLineSpace;
         else
-            ppData[iLine] = static_cast<GByte *>(pTmpBuffer) +
-                            iLine * nReqXSize * nSrcPixelSize;
+            ppData[iLine] =
+                static_cast<GByte *>(pTmpBuffer) +
+                static_cast<size_t>(iLine) * nReqXSize * nSrcPixelSize;
         int nSrcLine = 0;
         if (nBufYSize < nYSize)  // Sub-sampling in y.
             nSrcLine = nYOff + static_cast<int>((iLine + 0.5) * dfSrcYInc);
