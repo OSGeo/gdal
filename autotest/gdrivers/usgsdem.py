@@ -112,6 +112,7 @@ def test_usgsdem_4():
 # Test CreateCopy() without any creation options
 
 
+@pytest.mark.require_driver("DTED")
 def test_usgsdem_5():
 
     ds = gdal.Open("data/n43.dt0")
@@ -147,6 +148,7 @@ def test_usgsdem_5():
 # creation option and check that both files are binary identical.
 
 
+@pytest.mark.require_driver("DTED")
 def test_usgsdem_6():
 
     ds = gdal.Open("data/n43.dt0")
@@ -188,6 +190,7 @@ def test_usgsdem_6():
 # Test CreateCopy() with CDED50K profile
 
 
+@pytest.mark.require_driver("DTED")
 def test_usgsdem_7():
 
     ds = gdal.Open("data/n43.dt0")
