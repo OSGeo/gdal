@@ -1081,6 +1081,7 @@ static void CPL_STDCALL StackingErrorHandler( CPLErr eErr, CPLErrorNum no,
 static void PushStackingErrorHandler(std::vector<ErrorStruct>* paoErrors)
 {
     CPLPushErrorHandlerEx(StackingErrorHandler, paoErrors);
+    CPLSetCurrentErrorHandlerCatchDebug(false);
 }
 
 static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bSuccess)
@@ -1097,7 +1098,7 @@ static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bS
         CPLErr eErrClass = (*paoErrors)[iError].type;
         if( bSuccess && eErrClass == CE_Failure )
         {
-            pfnPreviousHandler( eErrClass,
+            CPLCallPreviousHandler( eErrClass,
                                 (*paoErrors)[iError].no,
                                 (*paoErrors)[iError].msg );
         }
