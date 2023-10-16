@@ -84,7 +84,7 @@ class OGROAPIFDataset final : public GDALDataset
     CPLString m_osUserQueryParams;
     CPLString m_osUserPwd;
     int m_nPageSize = 1000;
-    int m_bPageSizeSetFromOpenOptions = false;
+    bool m_bPageSizeSetFromOpenOptions = false;
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
     std::string m_osAskedCRS{};
     OGRSpatialReference m_oAskedCRS{};
@@ -903,93 +903,83 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
 
                 const auto parameters{path.GetArray("get/parameters")};
 
-                // loop through parameters to find "limit"
-                for (const auto &para : parameters)
+                // check $ref
+                for (const auto &param : parameters)
                 {
-                    if (para.GetName() == "limit")
+                    const auto ref{param.GetString("$ref")};
+                    if (ref.find("limit") != std::string::npos)
                     {
-                        bFound = true;
-                    }
-                }
-
-                if (!bFound)
-                {
-                    // check $ref
-                    for (const auto &param : parameters)
-                    {
-                        const auto ref{param.GetString("$ref")};
-                        if (ref.find("limit") != std::string::npos)
+                        // Examine ref
+                        if (ref.find("http") == 0 &&
+                            ref.find(".yml") == std::string::npos &&
+                            ref.find(".yml") ==
+                                std::string::
+                                    npos)  // Remote document, skip yaml
                         {
-                            // Examine ref
-                            if (ref.find("http") == 0)  // Remote document
+                            // Only reinject auth if the URL matches
+                            auto limitUrl{ref.find(m_osRootURL) == 0
+                                              ? ReinjectAuthInURL(ref)
+                                              : ref};
+                            std::string fragment;
+                            const auto hashPos{limitUrl.find('#')};
+                            if (hashPos != std::string::npos)
                             {
-                                // Only reinject auth if the URL matches
-                                auto limitUrl{ref.find(m_osRootURL) == 0
-                                                  ? ReinjectAuthInURL(ref)
-                                                  : ref};
-                                std::string fragment;
-                                const auto hashPos{limitUrl.find('#')};
-                                if (hashPos != std::string::npos)
-                                {
-                                    // Remove leading #
-                                    fragment = limitUrl.substr(hashPos + 1);
-                                    limitUrl = limitUrl.substr(0, hashPos);
-                                }
-                                CPLString osResult;
-                                CPLString osContentType;
-                                // Do not limit accepted content-types, external resources may have any
-                                if (!Download(limitUrl, nullptr, osResult,
-                                              osContentType))
-                                {
-                                    CPLDebug(
-                                        "OAPIF",
-                                        "Could not download OPENAPI $ref: %s",
-                                        ref.c_str());
-                                    return;
-                                }
+                                // Remove leading #
+                                fragment = limitUrl.substr(hashPos + 1);
+                                limitUrl = limitUrl.substr(0, hashPos);
+                            }
+                            CPLString osResult;
+                            CPLString osContentType;
+                            // Do not limit accepted content-types, external resources may have any
+                            if (!Download(limitUrl, nullptr, osResult,
+                                          osContentType))
+                            {
+                                CPLDebug("OAPIF",
+                                         "Could not download OPENAPI $ref: %s",
+                                         ref.c_str());
+                                return;
+                            }
 
-                                // We cannot trust the content-type, try JSON (YAML not implemented)
+                            // We cannot trust the content-type, try JSON (YAML not implemented)
 
-                                // Try JSON
-                                CPLJSONDocument oLimitDoc;
-                                if (oLimitDoc.LoadMemory(osResult))
+                            // Try JSON
+                            CPLJSONDocument oLimitDoc;
+                            if (oLimitDoc.LoadMemory(osResult))
+                            {
+                                const auto oLimitRoot{oLimitDoc.GetRoot()};
+                                if (oLimitRoot.IsValid())
                                 {
-                                    const auto oLimitRoot{oLimitDoc.GetRoot()};
-                                    if (oLimitRoot.IsValid())
+                                    const auto oLimit{
+                                        oLimitRoot.GetObj(fragment)};
+                                    if (oLimit.IsValid())
                                     {
-                                        const auto oLimit{
-                                            oLimitRoot.GetObj(fragment)};
-                                        if (oLimit.IsValid())
-                                        {
-                                            nMaximum = oLimit.GetInteger(
-                                                "schema/maximum", -1);
-                                            //nMinimum = oLimit.GetInteger( "schema/minimum", -1 );
-                                            nDefault = oLimit.GetInteger(
-                                                "schema/default", -1);
-                                            bFound = true;
-                                        }
+                                        nMaximum = oLimit.GetInteger(
+                                            "schema/maximum", -1);
+                                        //nMinimum = oLimit.GetInteger( "schema/minimum", -1 );
+                                        nDefault = oLimit.GetInteger(
+                                            "schema/default", -1);
+                                        bFound = true;
                                     }
                                 }
                             }
-                            else if (ref.find('#') == 0)  // Local ref
+                        }
+                        else if (ref.find('#') == 0)  // Local ref
+                        {
+                            const auto oLimit{oRoot.GetObj(ref.substr(1))};
+                            if (oLimit.IsValid())
                             {
-                                const auto oLimit{oRoot.GetObj(ref.substr(1))};
-                                if (oLimit.IsValid())
-                                {
-                                    nMaximum =
-                                        oLimit.GetInteger("schema/maximum", -1);
-                                    //nMinimum = oLimit.GetInteger( "schema/minimum", -1 );
-                                    nDefault =
-                                        oLimit.GetInteger("schema/default", -1);
-                                    bFound = true;
-                                }
+                                nMaximum =
+                                    oLimit.GetInteger("schema/maximum", -1);
+                                //nMinimum = oLimit.GetInteger( "schema/minimum", -1 );
+                                nDefault =
+                                    oLimit.GetInteger("schema/default", -1);
+                                bFound = true;
                             }
-                            else
-                            {
-                                CPLDebug("OAPIF",
-                                         "Could not open OPENAPI $ref: %s",
-                                         ref.c_str());
-                            }
+                        }
+                        else
+                        {
+                            CPLDebug("OAPIF", "Could not open OPENAPI $ref: %s",
+                                     ref.c_str());
                         }
                     }
                 }
