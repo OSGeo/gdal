@@ -2975,7 +2975,11 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual std::shared_ptr<GDALMDArray>
     Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const;
 
-    std::shared_ptr<GDALMDArray> GetUnscaled() const;
+    std::shared_ptr<GDALMDArray> GetUnscaled(
+        double dfOverriddenScale = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenOffset = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenDstNodata =
+            std::numeric_limits<double>::quiet_NaN()) const;
 
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
