@@ -1297,6 +1297,55 @@ void CPL_STDCALL CPLPopErrorHandler()
 }
 
 /************************************************************************/
+/*                         CPLCallPreviousHandler()                     */
+/************************************************************************/
+
+/**
+ * Call the previously installed error handler in the error handler stack.
+ *
+ * Only to be used by a custom error handler that wants to forward events to
+ * the previous error handler.
+ *
+ * @since GDAL 3.8
+ */
+
+void CPLCallPreviousHandler(CPLErr eErrClass, CPLErrorNum err_no,
+                            const char *pszMsg)
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    if (psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx))
+    {
+        fprintf(stderr, "CPLCallPreviousHandler() failed.\n");
+        return;
+    }
+
+    if (psCtx->psHandlerStack != nullptr)
+    {
+        CPLErrorHandlerNode *psCurNode = psCtx->psHandlerStack;
+        psCtx->psHandlerStack = psCurNode->psNext;
+        if (psCtx->psHandlerStack)
+        {
+            CPLErrorHandlerNode *psNewCurNode = psCtx->psHandlerStack;
+            psCtx->psHandlerStack->pfnHandler(eErrClass, err_no, pszMsg);
+            if (psNewCurNode != psCtx->psHandlerStack)
+            {
+                fprintf(stderr, "CPLCallPreviousHandler() has detected that a "
+                                "previous error handler messed up with the "
+                                "error stack. Chaos guaranteed!\n");
+            }
+        }
+        else
+            CPLDefaultErrorHandler(eErrClass, err_no, pszMsg);
+        psCtx->psHandlerStack = psCurNode;
+    }
+    else
+    {
+        CPLDefaultErrorHandler(eErrClass, err_no, pszMsg);
+    }
+}
+
+/************************************************************************/
 /*                 CPLSetCurrentErrorHandlerCatchDebug()                */
 /************************************************************************/
 
