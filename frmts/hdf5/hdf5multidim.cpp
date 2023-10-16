@@ -972,6 +972,21 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
 
     HDF5Array::GetAttributes();
 
+    // Special case for S102 nodata value that is at 1e6
+    if (GetFullName() ==
+            "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values" &&
+        m_dt.GetClass() == GEDTC_COMPOUND &&
+        m_dt.GetSize() == 2 * sizeof(float) &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Float32)
+    {
+        m_abyNoData.resize(m_dt.GetSize());
+        float afNoData[2] = {1e6f, 1e6f};
+        memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
+    }
+
     if (bSkipFullDimensionInstantiation)
     {
         const int nDims = H5Sget_simple_extent_ndims(m_hDataSpace);
