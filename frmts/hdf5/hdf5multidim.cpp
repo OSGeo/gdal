@@ -1549,10 +1549,10 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
 
     // Only for testing
     const char *pszThreshold =
-        CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "10000000");
+        CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "16777216");
     const GUIntBig nThreshold =
         CPLScanUIntBig(pszThreshold, static_cast<int>(strlen(pszThreshold)));
-    if (nEltCount < nThreshold / nBufferDataTypeSize)
+    if (nEltCount == 1 || nEltCount <= nThreshold / nBufferDataTypeSize)
     {
         CPLDebug("HDF5", "Using slow path");
         std::vector<GByte> abyTemp;
@@ -1602,48 +1602,42 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    CPLDebug("HDF5", "Using very slow path");
-    std::vector<GUInt64> anStart(nDims);
-    const std::vector<size_t> anCount(nDims, 1);
-    const std::vector<GInt64> anStep(nDims, 1);
-    const std::vector<GPtrDiff_t> anStride(nDims, 1);
+    std::vector<GUInt64> arrayStartIdxHalf;
+    std::vector<size_t> countHalf;
+    size_t iDimToSplit = nDims;
+    // Find the first dimension that has at least 2 elements, to split along
+    // it
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        arrayStartIdxHalf.push_back(arrayStartIdx[i]);
+        countHalf.push_back(count[i]);
+        if (count[i] >= 2 && iDimToSplit == nDims)
+        {
+            iDimToSplit = i;
+        }
+    }
 
-    std::vector<size_t> anStackCount(nDims);
-    std::vector<GByte *> pabyDstBufferStack(nDims + 1);
-    pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
-    size_t iDim = 0;
-lbl_next_depth:
-    if (iDim == nDims)
+    CPLAssert(iDimToSplit != nDims);
+
+    countHalf[iDimToSplit] /= 2;
+    if (!ReadSlow(arrayStartIdxHalf.data(), countHalf.data(), arrayStep,
+                  bufferStride, bufferDataType, pDstBuffer))
     {
-        if (!IRead(anStart.data(), anCount.data(), anStep.data(),
-                   anStride.data(), bufferDataType, pabyDstBufferStack[nDims]))
-        {
-            return false;
-        }
+        return false;
     }
-    else
-    {
-        anStart[iDim] = arrayStartIdx[iDim];
-        anStackCount[iDim] = count[iDim];
-        while (true)
-        {
-            ++iDim;
-            pabyDstBufferStack[iDim] = pabyDstBufferStack[iDim - 1];
-            goto lbl_next_depth;
-        lbl_return_to_caller_in_loop:
-            --iDim;
-            --anStackCount[iDim];
-            if (anStackCount[iDim] == 0)
-                break;
-            pabyDstBufferStack[iDim] +=
-                bufferStride[iDim] * nBufferDataTypeSize;
-            anStart[iDim] =
-                CPLUnsanitizedAdd<GUInt64>(anStart[iDim], arrayStep[iDim]);
-        }
-    }
-    if (iDim > 0)
-        goto lbl_return_to_caller_in_loop;
-    return true;
+    arrayStartIdxHalf[iDimToSplit] = static_cast<GUInt64>(
+        arrayStep[iDimToSplit] > 0
+            ? arrayStartIdx[iDimToSplit] +
+                  arrayStep[iDimToSplit] * countHalf[iDimToSplit]
+            : arrayStartIdx[iDimToSplit] -
+                  (-arrayStep[iDimToSplit]) * countHalf[iDimToSplit]);
+    GByte *pOtherHalfDstBuffer =
+        static_cast<GByte *>(pDstBuffer) + bufferStride[iDimToSplit] *
+                                               countHalf[iDimToSplit] *
+                                               nBufferDataTypeSize;
+    countHalf[iDimToSplit] = count[iDimToSplit] - countHalf[iDimToSplit];
+    return ReadSlow(arrayStartIdxHalf.data(), countHalf.data(), arrayStep,
+                    bufferStride, bufferDataType, pOtherHalfDstBuffer);
 }
 
 /************************************************************************/
@@ -1980,11 +1974,45 @@ static void CopyToFinalBuffer(void *pDstBuffer, const void *pTemp, size_t nDims,
             ? CreateMapTargetComponentsToSrc(hSrcDataType, bufferDataType)
             : std::vector<unsigned>();
 
+    bool bFastCopyOfCompoundToSingleComponentCompound = false;
+    GDALDataType eSrcTypeComp = GDT_Unknown;
+    size_t nSrcOffset = 0;
+    GDALDataType eDstTypeComp = GDT_Unknown;
+    int bufferStrideLastDim = 0;
+    if (nDims > 0 && mapDstCompsToSrcComps.size() == 1 &&
+        bufferDataType.GetComponents()[0]->GetType().GetClass() ==
+            GEDTC_NUMERIC)
+    {
+        auto hMemberType =
+            H5Tget_member_type(hSrcDataType, mapDstCompsToSrcComps[0]);
+        eSrcTypeComp = HDF5Dataset::GetDataType(hMemberType);
+        if (eSrcTypeComp != GDT_Unknown)
+        {
+            nSrcOffset =
+                H5Tget_member_offset(hSrcDataType, mapDstCompsToSrcComps[0]);
+            eDstTypeComp = bufferDataType.GetComponents()[0]
+                               ->GetType()
+                               .GetNumericDataType();
+            bufferStrideLastDim = static_cast<int>(bufferStride[nDims - 1] *
+                                                   bufferDataType.GetSize());
+            bFastCopyOfCompoundToSingleComponentCompound = true;
+        }
+    }
+
 lbl_next_depth:
-    if (iDim == nDims)
+    if (bFastCopyOfCompoundToSingleComponentCompound && iDim == nDims - 1)
+    {
+        GDALCopyWords64(pabySrcBuffer + nSrcOffset, eSrcTypeComp,
+                        static_cast<int>(nSrcDataTypeSize),
+                        pabyDstBufferStack[iDim], eDstTypeComp,
+                        static_cast<int>(bufferStrideLastDim), count[iDim]);
+        pabySrcBuffer += count[iDim] * nSrcDataTypeSize;
+    }
+    else if (iDim == nDims)
     {
         CopyValue(pabySrcBuffer, hSrcDataType, pabyDstBufferStack[nDims],
                   bufferDataType, mapDstCompsToSrcComps);
+        pabySrcBuffer += nSrcDataTypeSize;
     }
     else
     {
@@ -2001,7 +2029,6 @@ lbl_next_depth:
                 break;
             pabyDstBufferStack[iDim] +=
                 bufferStride[iDim] * bufferDataType.GetSize();
-            pabySrcBuffer += nSrcDataTypeSize;
         }
     }
     if (iDim > 0)
