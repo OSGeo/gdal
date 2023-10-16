@@ -4838,7 +4838,6 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
         return false;
     }
 }
-//! @endcond
 
 /** Returns whether the provided ArrowSchema is supported for writing.
  *
