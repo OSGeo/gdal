@@ -20,7 +20,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 void MM_InitializeField(struct MM_CAMP *camp);
-struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps);
+struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps, MM_BYTE nCharSet);
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP);
 MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitxer);
 int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp_inicial);
@@ -32,11 +32,11 @@ size_t MM_DefineFirstPointFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp);
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(struct MM_CAMP *camp,
 			struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom);
 
-int MMWriteValueToRecordDBXP(struct MMAdmDatabase *pMMAdmDB,
-                              char *registre, 
-                              const struct MM_CAMP *camp, 
-                              const void *valor,
-                              MM_BOOLEAN is_64);
+int MMWriteValueToRecordDBXP(struct MiraMonLayerInfo *hMiraMonLayer,
+                            char *registre, 
+                            const struct MM_CAMP *camp, 
+                            const void *valor,
+                            MM_BOOLEAN is_64);
 int MM_SecureCopyStringFieldValue(char **pszStringDst,
                                  const char *pszStringSrc,
                                  MM_NUMERATOR_DBF_FIELD_TYPE *nStringCurrentLenght);

@@ -346,10 +346,6 @@ struct MMAdmDatabase
     // Temporary space where to mount the DBF record.
     // Reused every time a feature is created
     char *szRecordOnCourse;
-
-    // Just to put number values to evaluate lenghts
-    MM_NUMERATOR_DBF_FIELD_TYPE nNumStringToOperate;
-    char *szStringToOperate;
 };
 
 
@@ -657,8 +653,18 @@ struct MiraMonLayerInfo
     // Layer database read from origin.
     struct MiraMonDataBase *pLayerDB;
 
+    // Charset of DBF files (same for all)
+    //  MM_JOC_CARAC_UTF8_DBF
+    //  MM_JOC_CARAC_ANSI_DBASE;
+    MM_BYTE nCharSet;
+    
     // This is used only to write temporary stuff
     char szNFieldAux[MM_MAX_AMPLADA_CAMP_N_DBF];
+    // Dinamic string that is used as temporary buffer
+    // with variable size as needed. Its value is 
+    // very temporary. Copy in a safe place to save its value.
+    MM_NUMERATOR_DBF_FIELD_TYPE nNumStringToOperate;
+    char *szStringToOperate;
 };
 
 enum DataType {MMDTByte, MMDTInteger, MMDTuInteger, 

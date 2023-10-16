@@ -7,8 +7,9 @@
 
 #include "ogr_api.h"    // For OGRLayerH
 #include "mm_gdal_driver_structs.h"
-
-#ifdef GDAL_COMPILATION
+#ifndef GDAL_COMPILATION
+#include "gdalmm.h"     // For PTR_MM_OGR_F_GetFieldAsString()
+#else
 CPL_C_START // Necessary for compiling in GDAL project
 #endif
 
@@ -41,6 +42,17 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define max_function max
     #define reset_extension(a,b)    CanviaExtensio((a),(b))
     #define remove_function(a)  removeAO((a))
+    #define OGR_F_GetFieldAsString_function(a,b) ptr_MM_OGR_F_GetFieldAsString((a),(b))
+    #define OGR_F_Destroy_function(a)           ptr_MM_OGR_F_Destroy((a))
+    #define GDALClose_function(a)               ptr_MM_GDALClose((a))
+    #define OGR_Fld_GetNameRef_function(a)      ptr_MM_OGR_Fld_GetNameRef((a))
+    #define OGR_FD_GetFieldDefn_function(a,b)   ptr_MM_OGR_FD_GetFieldDefn((a),(b))
+    #define GDALOpenEx_function(a,b,c,d,e)      ptr_MM_GDALOpenEx((a),(b),(c),(d),(e))
+    #define OGR_FD_GetFieldCount_function(a)    ptr_MM_OGR_FD_GetFieldCount((a))
+    #define OGR_L_GetLayerDefn_function(a)      ptr_MM_OGR_L_GetLayerDefn((a))
+    #define OGR_L_GetNextFeature_function(a)    ptr_MM_OGR_L_GetNextFeature((a))
+    #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
+    #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
 #else
     #define calloc_function(a) CPLCalloc(1,(a))
     #define realloc_function CPLRealloc
@@ -61,6 +73,17 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define max_function MAX
     #define reset_extension(a,b)    CPLResetExtension((a),(b))
     #define remove_function(a)  VSIUnlink((a))
+    #define OGR_F_GetFieldAsString_function(a,b) OGR_F_GetFieldAsString((a),(b))
+    #define OGR_F_Destroy_function(a)  OGR_F_Destroy((a))
+    #define GDALClose_function(a)      GDALClose((a))
+    #define OGR_Fld_GetNameRef_function(a)  OGR_Fld_GetNameRef((a))
+    #define OGR_FD_GetFieldDefn_function(a,b) OGR_FD_GetFieldDefn((a),(b))
+    #define GDALOpenEx_function(a,b,c,d,e)     GDALOpenEx((a),(b),(c),(d),(e))
+    #define OGR_FD_GetFieldCount_function(a)    OGR_FD_GetFieldCount((a))
+    #define OGR_L_GetLayerDefn_function(a)      OGR_L_GetLayerDefn((a))
+    #define OGR_L_GetNextFeature_function(a)    OGR_L_GetNextFeature((a))
+    #define OGR_L_ResetReading_function(a)      OGR_L_ResetReading((a))
+    #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
 #endif
 
 /* -------------------------------------------------------------------- */

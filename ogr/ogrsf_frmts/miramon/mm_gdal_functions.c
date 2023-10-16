@@ -96,7 +96,8 @@ struct MM_BASE_DADES_XP *base_dades_XP;
 	return base_dades_XP;
 }
 
-struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps)
+struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps,
+                        MM_BYTE charset)
 {
 struct MM_BASE_DADES_XP *bd_xp;
 struct MM_CAMP *camp;
@@ -105,7 +106,7 @@ MM_NUMERATOR_DBF_FIELD_TYPE i;
 	if (NULL==(bd_xp=MM_CreateEmptyHeader(n_camps)))
     	return NULL;
 
-    bd_xp->JocCaracters=MM_JOC_CARAC_UTF8_DBF;//MM_JOC_CARAC_ANSI_DBASE;
+    bd_xp->JocCaracters=charset;
     
     strcpy(bd_xp->ModeLectura,"a+b");
 

@@ -1114,7 +1114,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     hMiraMonLayer.pLayerDB->nNFields=0;
     if (hMiraMonLayer.pLayerDB->pFields)
     {
-        memset(hMiraMonLayer.pLayerDB->pFields, 0, sizeof(*hMiraMonLayer.pLayerDB->pFields));
+        memset(hMiraMonLayer.pLayerDB->pFields, 0,
+            poFeatureDefn->GetFieldCount()*sizeof(*hMiraMonLayer.pLayerDB->pFields));
         for (MM_EXT_DBF_N_FIELDS iField = 0; iField < (MM_EXT_DBF_N_FIELDS)poFeatureDefn->GetFieldCount(); iField++)
         {
             if(!(hMiraMonLayer.pLayerDB->pFields+iField))
@@ -1170,14 +1171,35 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                     (unsigned int)(poFeatureDefn->GetFieldDefn(iField)->GetWidth() + 1);
             }
 
-            MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldName,
-                 poFeatureDefn->GetFieldDefn(iField)->GetNameRef() ? poFeatureDefn->GetFieldDefn(iField)->GetNameRef():NULL,
-                 MM_MAX_LON_FIELD_NAME_DBF);
-
-            MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldDescription,
-                poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef(),
-                MM_MAX_BYTES_FIELD_DESC);
-
+            if (poFeatureDefn->GetFieldDefn(iField)->GetNameRef())
+            {
+                // Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                char* pszString =
+                    CPLRecode(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                        CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                for (size_t i = 0; pszString[i] != '\0'; i++)
+                {
+                    if (pszString[i] == ' ')
+                        pszString[i] = '_';
+                }
+                MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldName,
+                    pszString, MM_MAX_LON_FIELD_NAME_DBF);
+            }
+            
+            if (poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef())
+            {
+                char* pszString =
+                    CPLRecode(poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef(),
+                        CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                for (size_t i = 0; pszString[i] != '\0'; i++)
+                {
+                    if (pszString[i] == ' ')
+                        pszString[i] = '_';
+                }
+                MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldDescription,
+                    pszString, MM_MAX_BYTES_FIELD_DESC);
+                CPLFree(pszString);
+            }
             hMiraMonLayer.pLayerDB->nNFields++;
         }
     }
@@ -1237,9 +1259,21 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                     10, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
+                // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                char *pszString =
+                    CPLRecode(panValues[nIRecord], CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                for (size_t i = 0; pszString[i] != '\0'; i++)
+                {
+                    if (pszString[i] == ' ')
+                        pszString[i] = '_';
+                }
                 if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[nIRecord].pField[iField].pDinValue,
-                        panValues[nIRecord], &hMMFeature.pRecords[nIRecord].pField[iField].nNumDinValue))
+                        pszString, &hMMFeature.pRecords[nIRecord].pField[iField].nNumDinValue))
+                {
+                    CPLFree(pszString);
                 	return OGRERR_NOT_ENOUGH_MEMORY;
+                }
+                CPLFree(pszString);
                 hMMFeature.pRecords[nIRecord].pField[iField].bIsValid = 1;
             }
         }
@@ -1353,9 +1387,20 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                     10, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
-            if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
-                    pszRawValue, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+            char *pszString =
+                CPLRecode(pszRawValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            for (size_t i = 0; pszString[i] != '\0'; i++)
+            {
+                if (pszString[i] == ' ')
+                    pszString[i] = '_';
+            }
+            if (MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
+                pszString, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+            {
+                CPLFree(pszString);
                 return OGRERR_NOT_ENOUGH_MEMORY;
+            }
             hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
         }
         else if (eFType == OFTDate)
