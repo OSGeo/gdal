@@ -395,6 +395,7 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
     if (!bFoundExpectedContentType)
     {
 #ifndef REMOVE_HACK
+        // cppcheck-suppress nullPointer
         if (strstr(pszAccept, "json"))
         {
             if (strstr(osURL, "raw.githubusercontent.com") &&
@@ -413,6 +414,7 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
         }
 #endif
 
+        // cppcheck-suppress nullPointer
         if (strstr(pszAccept, "xml") && psResult->pszContentType != nullptr &&
             (CheckContentType(psResult->pszContentType, MEDIA_TYPE_TEXT_XML) ||
              CheckContentType(psResult->pszContentType,
@@ -421,6 +423,7 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
             bFoundExpectedContentType = true;
         }
 
+        // cppcheck-suppress nullPointer
         if (strstr(pszAccept, MEDIA_TYPE_JSON_SCHEMA) &&
             psResult->pszContentType != nullptr &&
             (CheckContentType(psResult->pszContentType, MEDIA_TYPE_JSON) ||
@@ -439,6 +442,7 @@ bool OGROAPIFDataset::Download(const CPLString &osURL, const char *pszAccept,
 #endif
              })
         {
+            // cppcheck-suppress nullPointer
             if (strstr(pszAccept, pszMediaType) &&
                 psResult->pszContentType != nullptr &&
                 CheckContentType(psResult->pszContentType, pszMediaType))
