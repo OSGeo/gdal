@@ -63,6 +63,8 @@ def generate(filename, version):
     BathymetryCoverage_01.attrs["gridOriginLatitude"] = np.float64(48)
     BathymetryCoverage_01.attrs["gridSpacingLongitudinal"] = np.float64(0.4)
     BathymetryCoverage_01.attrs["gridSpacingLatitudinal"] = np.float64(0.5)
+    BathymetryCoverage_01.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
+    BathymetryCoverage_01.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
 
     f.create_group("Group_F")
 

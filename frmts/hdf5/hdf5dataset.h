@@ -131,8 +131,7 @@ class HDF5SharedResources
         m_oMapEOSGridNameToDimensions{};
     std::map<std::string, std::vector<std::shared_ptr<GDALDimension>>>
         m_oMapEOSSwathNameToDimensions{};
-    std::map<std::string, std::shared_ptr<GDALMDArrayRegularlySpaced>>
-        m_oRefKeeper;
+    std::map<std::string, std::shared_ptr<GDALMDArray>> m_oRefKeeper;
 
     explicit HDF5SharedResources(const std::string &osFilename);
 
@@ -199,7 +198,7 @@ class HDF5SharedResources
         return oIter->second;
     }
 
-    void KeepRef(const std::shared_ptr<GDALMDArrayRegularlySpaced> &poArray)
+    void KeepRef(const std::shared_ptr<GDALMDArray> &poArray)
     {
         m_oRefKeeper[poArray->GetFullName()] = poArray;
     }

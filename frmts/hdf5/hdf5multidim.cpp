@@ -27,6 +27,7 @@
 
 #include "hdf5dataset.h"
 #include "hdf5eosparser.h"
+#include "s100.h"
 
 #include <algorithm>
 #include <set>
@@ -1232,6 +1233,52 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                 m_dims.emplace_back(poDim);
             }
             return;
+        }
+
+        // Special case for S102
+        if (nDims == 2 &&
+            GetFullName() ==
+                "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values")
+        {
+            auto poRootGroup = m_poShared->GetRootGroup();
+            if (poRootGroup)
+            {
+                m_poSRS = std::make_shared<OGRSpatialReference>();
+                if (S100ReadSRS(poRootGroup.get(), *(m_poSRS.get())))
+                {
+                    if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
+                        std::vector<int>{2, 1})
+                        m_poSRS->SetDataAxisToSRSAxisMapping({1, 2});
+                    else
+                        m_poSRS->SetDataAxisToSRSAxisMapping({2, 1});
+                }
+                else
+                {
+                    m_poSRS.reset();
+                }
+
+                auto poBathymetryCoverage01 =
+                    poRootGroup->OpenGroupFromFullname(
+                        "/BathymetryCoverage/BathymetryCoverage.01");
+                if (poBathymetryCoverage01)
+                {
+                    std::vector<std::shared_ptr<GDALMDArray>> apoIndexingVars;
+                    if (S100GetDimensions(poBathymetryCoverage01.get(), m_dims,
+                                          apoIndexingVars) &&
+                        m_dims.size() == 2 &&
+                        m_dims[0]->GetSize() == anDimSizes[0] &&
+                        m_dims[1]->GetSize() == anDimSizes[1])
+                    {
+                        for (const auto &poIndexingVar : apoIndexingVars)
+                            m_poShared->KeepRef(poIndexingVar);
+                        return;
+                    }
+                    else
+                    {
+                        m_dims.clear();
+                    }
+                }
+            }
         }
     }
 

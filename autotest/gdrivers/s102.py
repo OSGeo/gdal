@@ -175,3 +175,30 @@ def test_s102_identify_fallback_through_HDF5_driver():
     assert ds.GetDriver().GetDescription() == "S102"
     del ds
     assert not os.path.exists("data/s102/test_s102_v2.1.h5.aux.xml")
+
+
+###############################################################################
+
+
+def test_s102_multidim():
+    ds = gdal.OpenEx("data/s102/test_s102_v2.1.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArrayFromFullname(
+        "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values"
+    )
+    assert ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+    assert ar.GetDimensions()[0].GetName() == "Y"
+    y = ar.GetDimensions()[0].GetIndexingVariable()
+    y_data = struct.unpack("d" * y.GetDimensions()[0].GetSize(), y.Read())
+    assert y_data[0] == 48.0
+    assert y_data[-1] == 48.5
+
+    assert ar.GetDimensions()[1].GetName() == "X"
+    x = ar.GetDimensions()[1].GetIndexingVariable()
+    x_data = struct.unpack("d" * x.GetDimensions()[0].GetSize(), x.Read())
+    assert x_data[0] == 2.0
+    assert x_data[-1] == 2.8
+
+    # Check that it doesn't go into infinite recursion
+    gdal.MultiDimInfo(ds)

@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "hdf5dataset.h"
 #include "gh5_convenience.h"
+#include "s100.h"
 
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
@@ -210,6 +211,11 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     HDF5_GLOBAL_LOCK();
 
+    if (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER)
+    {
+        return HDF5Dataset::OpenMultiDim(poOpenInfo);
+    }
+
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
@@ -388,76 +394,11 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetBand(2, poUncertaintyBand);
 
     // Compute geotransform
-    auto poOriginX =
-        poBathymetryCoverage01->GetAttribute("gridOriginLongitude");
-    auto poOriginY = poBathymetryCoverage01->GetAttribute("gridOriginLatitude");
-    auto poSpacingX =
-        poBathymetryCoverage01->GetAttribute("gridSpacingLongitudinal");
-    auto poSpacingY =
-        poBathymetryCoverage01->GetAttribute("gridSpacingLatitudinal");
-    if (poOriginX &&
-        poOriginX->GetDataType().GetNumericDataType() == GDT_Float64 &&
-        poOriginY &&
-        poOriginY->GetDataType().GetNumericDataType() == GDT_Float64 &&
-        poSpacingX &&
-        poSpacingX->GetDataType().GetNumericDataType() == GDT_Float64 &&
-        poSpacingY &&
-        poSpacingY->GetDataType().GetNumericDataType() == GDT_Float64)
-    {
-        poDS->m_adfGeoTransform[0] = poOriginX->ReadAsDouble();
-        poDS->m_adfGeoTransform[3] =
-            poOriginY->ReadAsDouble() +
-            (bNorthUp ? poSpacingY->ReadAsDouble() * (poDS->nRasterYSize - 1)
-                      : 0);
-        poDS->m_adfGeoTransform[1] = poSpacingX->ReadAsDouble();
-        poDS->m_adfGeoTransform[5] =
-            bNorthUp ? -poSpacingY->ReadAsDouble() : poSpacingY->ReadAsDouble();
-
-        // From pixel-center convention to pixel-corner convention
-        poDS->m_adfGeoTransform[0] -= poDS->m_adfGeoTransform[1] / 2;
-        poDS->m_adfGeoTransform[3] -= poDS->m_adfGeoTransform[5] / 2;
-
-        poDS->m_bHasGT = true;
-    }
+    poDS->m_bHasGT = S100GetGeoTransform(poBathymetryCoverage01.get(),
+                                         poDS->m_adfGeoTransform, bNorthUp);
 
     // Get SRS
-    auto poHorizontalCRS = poRootGroup->GetAttribute("horizontalCRS");
-    if (poHorizontalCRS &&
-        poHorizontalCRS->GetDataType().GetClass() == GEDTC_NUMERIC)
-    {
-        // horizontalCRS is v2.2
-        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (poDS->m_oSRS.importFromEPSG(poHorizontalCRS->ReadAsInt()) !=
-            OGRERR_NONE)
-        {
-            poDS->m_oSRS.Clear();
-        }
-    }
-    else
-    {
-        auto poHorizontalDatumReference =
-            poRootGroup->GetAttribute("horizontalDatumReference");
-        auto poHorizontalDatumValue =
-            poRootGroup->GetAttribute("horizontalDatumValue");
-        if (poHorizontalDatumReference && poHorizontalDatumValue)
-        {
-            const char *pszAuthName =
-                poHorizontalDatumReference->ReadAsString();
-            const char *pszAuthCode = poHorizontalDatumValue->ReadAsString();
-            if (pszAuthName && pszAuthCode)
-            {
-                poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (poDS->m_oSRS.SetFromUserInput(
-                        (std::string(pszAuthName) + ':' + pszAuthCode).c_str(),
-                        OGRSpatialReference::
-                            SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
-                    OGRERR_NONE)
-                {
-                    poDS->m_oSRS.Clear();
-                }
-            }
-        }
-    }
+    S100ReadSRS(poRootGroup.get(), poDS->m_oSRS);
 
     // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.0.0_Final_Clean_Web.pdf
     // Table S100_VerticalAndSoundingDatum page 20
@@ -616,6 +557,7 @@ void GDALRegister_S102()
 
     poDriver->SetDescription("S102");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "S-102 Bathymetric Surface Product");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s102.html");
