@@ -5439,6 +5439,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
 /*                             GetView()                                */
 /************************************************************************/
 
+// clang-format off
 /** Return a view of the array using slicing or field access.
  *
  * The slice expression uses the same syntax as NumPy basic slicing and
@@ -5468,17 +5469,23 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * <li>GetView("[:,2]"): returns a 1-dimensional array, sliced at index 2 in the
  *     second dimension. That is [2,6].</li>
  * <li>GetView("[:,2:3:]"): returns a 2-dimensional array, sliced at index 2 in
- * the second dimension. That is [[2],[6]].</li> <li>GetView("[::,2]"): Same as
+ * the second dimension. That is [[2],[6]].</li>
+ * <li>GetView("[::,2]"): Same as
  * above.</li> <li>GetView("[...,2]"): same as above, in that case, since the
- * ellipsis only expands to one dimension here.</li> <li>GetView("[:,::2]"):
+ * ellipsis only expands to one dimension here.</li>
+ * <li>GetView("[:,::2]"):
  * returns a 2-dimensional array, with even-indexed elements of the second
- * dimension. That is [[0,2],[4,6]].</li> <li>GetView("[:,1::2]"): returns a
+ * dimension. That is [[0,2],[4,6]].</li>
+ * <li>GetView("[:,1::2]"): returns a
  * 2-dimensional array, with odd-indexed elements of the second dimension. That
- * is [[1,3],[5,7]].</li> <li>GetView("[:,1:3:]"): returns a 2-dimensional
+ * is [[1,3],[5,7]].</li>
+ * <li>GetView("[:,1:3:]"): returns a 2-dimensional
  * array, with elements of the second dimension with index in the range [1,3[.
- * That is [[1,2],[5,6]].</li> <li>GetView("[::-1,:]"): returns a 2-dimensional
+ * That is [[1,2],[5,6]].</li>
+ * <li>GetView("[::-1,:]"): returns a 2-dimensional
  * array, with the values in first dimension reversed. That is
- * [[4,5,6,7],[0,1,2,3]].</li> <li>GetView("[newaxis,...]"): returns a
+ * [[4,5,6,7],[0,1,2,3]].</li>
+ * <li>GetView("[newaxis,...]"): returns a
  * 3-dimensional array, with an addditional dimension of size 1 put at the
  * beginning. That is [[[0,1,2,3],[4,5,6,7]]].</li>
  * </ul>
@@ -5510,6 +5517,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * @return a new array, that holds a reference to the original one, and thus is
  * a view of it (not a copy), or nullptr in case of error.
  */
+// clang-format on
 std::shared_ptr<GDALMDArray>
 GDALMDArray::GetView(const std::string &viewExpr) const
 {
