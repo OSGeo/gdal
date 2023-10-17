@@ -81,10 +81,11 @@ The following options are available:
 
 -  .. oo:: PAGE_SIZE
       :choices: <integer>
-      :default: 10
+      :default: 1000
 
       Number of features to retrieve per request.
-      Minimum is 1, maximum 10000.
+      Minimum is 1. If not set, an attempt to determine the maximum 
+      allowed size will be done by examining the API schema.
 
 -  .. oo:: USERPWD
 
