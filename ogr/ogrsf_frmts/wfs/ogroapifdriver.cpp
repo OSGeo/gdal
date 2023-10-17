@@ -912,7 +912,7 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
                         // Examine ref
                         if (ref.find("http") == 0 &&
                             ref.find(".yml") == std::string::npos &&
-                            ref.find(".yml") ==
+                            ref.find(".yaml") ==
                                 std::string::
                                     npos)  // Remote document, skip yaml
                         {
