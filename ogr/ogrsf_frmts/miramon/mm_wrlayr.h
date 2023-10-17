@@ -100,6 +100,7 @@ int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer,
 int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer);
+void MMDestroyLayer(struct MiraMonLayerInfo **hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
 int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion);
 

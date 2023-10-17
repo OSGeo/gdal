@@ -92,7 +92,7 @@ OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 void RegisterOGRMiraMon()
 
 {
-    if (GDALGetDriverByName("OGR_MM") != nullptr)
+    if (GDALGetDriverByName("MiraMon") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -104,7 +104,7 @@ void RegisterOGRMiraMon()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "pol");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "pol arc pnt");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/miramon.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "NO");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     //poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
     poDriver->SetMetadataItem(

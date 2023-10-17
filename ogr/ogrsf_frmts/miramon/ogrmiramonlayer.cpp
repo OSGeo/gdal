@@ -60,193 +60,340 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
 
-    /* -------------------------------------------------------------------- */
-    /*      Read the header.                                                */
-    /* -------------------------------------------------------------------- */
-    if (!STARTS_WITH(pszFilename, "/vsistdout"))
+    if (bUpdate)
     {
-        CPLString osFieldNames;
-        CPLString osFieldTypes;
-        CPLString osGeometryType;
-        CPLString osRegion;
-        CPLString osWKT;
-        CPLString osProj4;
-        CPLString osEPSG;
-        int nMMVersion;
+        /* -------------------------------------------------------------------- */
+        /*      Read the header.                                                */
+        /* -------------------------------------------------------------------- */
+        if (!STARTS_WITH(pszFilename, "/vsistdout"))
+        {
+            CPLString osFieldNames;
+            CPLString osFieldTypes;
+            CPLString osGeometryType;
+            CPLString osRegion;
+            CPLString osWKT;
+            CPLString osProj4;
+            CPLString osEPSG;
+            int nMMVersion;
 
-        MMReadHeader(m_fp, &pMMHeader);
-        MMInitFeature(&hMMFeature);
+            MMReadHeader(m_fp, &pMMHeader);
+            MMInitFeature(&hMMFeature);
 
-        nMMVersion=MMGetVectorVersion(&pMMHeader);
-        if (nMMVersion == MM_UNKNOWN_VERSION)
-            bValidFile = false;
-        if(pMMHeader.aFileType[0]=='P' &&
-                pMMHeader.aFileType[1]=='N' &&
-                pMMHeader.aFileType[2]=='T')
-        {
-            if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+            nMMVersion = MMGetVectorVersion(&pMMHeader);
+            if (nMMVersion == MM_UNKNOWN_VERSION)
+                bValidFile = false;
+            if (pMMHeader.aFileType[0] == 'P' &&
+                pMMHeader.aFileType[1] == 'N' &&
+                pMMHeader.aFileType[2] == 'T')
             {
-                poFeatureDefn->SetGeomType(wkbPoint25D);
-                MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL);
-                hMiraMonLayer.eLT = MM_LayerType_Point3d;
-            }
-            else
-            {
-                poFeatureDefn->SetGeomType(wkbPoint);
-                MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL);
-                hMiraMonLayer.eLT = MM_LayerType_Point;
-            }
-            MMInitLayerByType(&hMiraMonLayer);
-            hMiraMonLayer.bIsBeenInit = 1;
-            hMiraMonLayer.bIsPoint=1;
-        }
-        else if (pMMHeader.aFileType[0] == 'A' &&
-            pMMHeader.aFileType[1] == 'R' &&
-            pMMHeader.aFileType[2] == 'C')
-        {
-            if (pMMHeader.Flag & MM_LAYER_3D_INFO)
-            {
-                poFeatureDefn->SetGeomType(wkbLineString25D);
-                MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL);
-                hMiraMonLayer.eLT = MM_LayerType_Arc3d;
-            }
-            else
-            {
-                poFeatureDefn->SetGeomType(wkbLineString);
-                MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL);
-                hMiraMonLayer.eLT = MM_LayerType_Arc;
-            }
-            MMInitLayerByType(&hMiraMonLayer);
-            hMiraMonLayer.bIsBeenInit = 1;
-            hMiraMonLayer.bIsArc=1;
-        }
-        else if(pMMHeader.aFileType[0]=='P' &&
-                pMMHeader.aFileType[1]=='O' &&
-                pMMHeader.aFileType[2]=='L')
-        {
-            // 3D
-            if (pMMHeader.Flag & MM_LAYER_3D_INFO)
-            {
-                if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
-                    poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
+                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+                {
+                    poFeatureDefn->SetGeomType(wkbPoint25D);
+                    MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion, NULL);
+                    hMiraMonLayer.eLT = MM_LayerType_Point3d;
+                }
                 else
-                    poFeatureDefn->SetGeomType(wkbPolygon25D);
-                MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL);
-                hMiraMonLayer.eLT = MM_LayerType_Pol3d;
+                {
+                    poFeatureDefn->SetGeomType(wkbPoint);
+                    MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion, NULL);
+                    hMiraMonLayer.eLT = MM_LayerType_Point;
+                }
+                MMInitLayerByType(&hMiraMonLayer);
+                hMiraMonLayer.bIsBeenInit = 1;
+                hMiraMonLayer.bIsPoint = 1;
+            }
+            else if (pMMHeader.aFileType[0] == 'A' &&
+                pMMHeader.aFileType[1] == 'R' &&
+                pMMHeader.aFileType[2] == 'C')
+            {
+                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+                {
+                    poFeatureDefn->SetGeomType(wkbLineString25D);
+                    MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion, NULL);
+                    hMiraMonLayer.eLT = MM_LayerType_Arc3d;
+                }
+                else
+                {
+                    poFeatureDefn->SetGeomType(wkbLineString);
+                    MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion, NULL);
+                    hMiraMonLayer.eLT = MM_LayerType_Arc;
+                }
+                MMInitLayerByType(&hMiraMonLayer);
+                hMiraMonLayer.bIsBeenInit = 1;
+                hMiraMonLayer.bIsArc = 1;
+            }
+            else if (pMMHeader.aFileType[0] == 'P' &&
+                pMMHeader.aFileType[1] == 'O' &&
+                pMMHeader.aFileType[2] == 'L')
+            {
+                // 3D
+                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+                {
+                    if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
+                        poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
+                    else
+                        poFeatureDefn->SetGeomType(wkbPolygon25D);
+                    MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion, NULL);
+                    hMiraMonLayer.eLT = MM_LayerType_Pol3d;
+                }
+                else
+                {
+                    if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
+                        poFeatureDefn->SetGeomType(wkbMultiPolygon);
+                    else
+                        poFeatureDefn->SetGeomType(wkbPolygon);
+                    MMInitLayer(&hMiraMonLayer, pszFilename,
+                        nMMVersion, NULL);
+                    hMiraMonLayer.eLT = MM_LayerType_Pol;
+                }
+                MMInitLayerByType(&hMiraMonLayer);
+                hMiraMonLayer.bIsBeenInit = 1;
+                hMiraMonLayer.bIsPolygon = 1;
             }
             else
             {
-                if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
-                    poFeatureDefn->SetGeomType(wkbMultiPolygon);
-                else
-                    poFeatureDefn->SetGeomType(wkbPolygon);
+                // Unknown type
                 MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion,  NULL);
-                hMiraMonLayer.eLT = MM_LayerType_Pol;
+                    nMMVersion, NULL);
+                hMiraMonLayer.bIsBeenInit = 0;
+                hMiraMonLayer.bNameNeedsCorrection = 1;
             }
-            MMInitLayerByType(&hMiraMonLayer);
-            hMiraMonLayer.bIsBeenInit = 1;
-            hMiraMonLayer.bIsPolygon=1;
+
+            /* --------------------------------------------------------------------
+             */
+             /*      Handle coordinate system. */
+             /* --------------------------------------------------------------------
+              */
+            if (osWKT.length())
+            {
+                m_poSRS = new OGRSpatialReference();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (m_poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
+                {
+                    delete m_poSRS;
+                    m_poSRS = nullptr;
+                }
+            }
+            else if (osEPSG.length())
+            {
+                m_poSRS = new OGRSpatialReference();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (m_poSRS->importFromEPSG(atoi(osEPSG)) != OGRERR_NONE)
+                {
+                    delete m_poSRS;
+                    m_poSRS = nullptr;
+                }
+            }
+            else if (osProj4.length())
+            {
+                m_poSRS = new OGRSpatialReference();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (m_poSRS->importFromProj4(osProj4) != OGRERR_NONE)
+                {
+                    delete m_poSRS;
+                    m_poSRS = nullptr;
+                }
+            }
+
+            /* -----------------------------------------------------------------*/
+            /*      Process fields.                                             */
+            /* -----------------------------------------------------------------*/
+            if (osFieldNames.length() || osFieldTypes.length())
+            {
+                char** papszFN =
+                    CSLTokenizeStringComplex(osFieldNames, "|", TRUE, TRUE);
+                char** papszFT =
+                    CSLTokenizeStringComplex(osFieldTypes, "|", TRUE, TRUE);
+                const int nFNCount = CSLCount(papszFN);
+                const int nFTCount = CSLCount(papszFT);
+                const int nFieldCount = std::max(nFNCount, nFTCount);
+
+                for (int iField = 0; iField < nFieldCount; iField++)
+                {
+                    OGRFieldDefn oField("", OFTString);
+
+                    if (iField < nFNCount)
+                        oField.SetName(papszFN[iField]);
+                    else
+                        oField.SetName(CPLString().Printf("Field_%d", iField + 1));
+
+                    if (iField < nFTCount)
+                    {
+                        if (EQUAL(papszFT[iField], "integer"))
+                            oField.SetType(OFTInteger);
+                        else if (EQUAL(papszFT[iField], "double"))
+                            oField.SetType(OFTReal);
+                        else if (EQUAL(papszFT[iField], "datetime"))
+                            oField.SetType(OFTDateTime);
+                    }
+
+                    poFeatureDefn->AddFieldDefn(&oField);
+                }
+
+                CSLDestroy(papszFN);
+                CSLDestroy(papszFT);
+            }
         }
         else
         {
-            // Unknown type
-            MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL);
-            hMiraMonLayer.bIsBeenInit = 0;
-            hMiraMonLayer.bNameNeedsCorrection = 1;
-        }
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Handle coordinate system. */
-        /* --------------------------------------------------------------------
-         */
-        if (osWKT.length())
-        {
-            m_poSRS = new OGRSpatialReference();
-            m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (m_poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
+            if (poSRS)
             {
-                delete m_poSRS;
-                m_poSRS = nullptr;
-            }
-        }
-        else if (osEPSG.length())
-        {
-            m_poSRS = new OGRSpatialReference();
-            m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (m_poSRS->importFromEPSG(atoi(osEPSG)) != OGRERR_NONE)
-            {
-                delete m_poSRS;
-                m_poSRS = nullptr;
-            }
-        }
-        else if (osProj4.length())
-        {
-            m_poSRS = new OGRSpatialReference();
-            m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (m_poSRS->importFromProj4(osProj4) != OGRERR_NONE)
-            {
-                delete m_poSRS;
-                m_poSRS = nullptr;
+                m_poSRS = poSRS->Clone();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
         }
 
-        /* -----------------------------------------------------------------*/
-        /*      Process fields.                                             */
-        /* -----------------------------------------------------------------*/
-        if (osFieldNames.length() || osFieldTypes.length())
-        {
-            char **papszFN =
-                CSLTokenizeStringComplex(osFieldNames, "|", TRUE, TRUE);
-            char **papszFT =
-                CSLTokenizeStringComplex(osFieldTypes, "|", TRUE, TRUE);
-            const int nFNCount = CSLCount(papszFN);
-            const int nFTCount = CSLCount(papszFT);
-            const int nFieldCount = std::max(nFNCount, nFTCount);
-
-            for (int iField = 0; iField < nFieldCount; iField++)
-            {
-                OGRFieldDefn oField("", OFTString);
-
-                if (iField < nFNCount)
-                    oField.SetName(papszFN[iField]);
-                else
-                    oField.SetName(CPLString().Printf("Field_%d", iField + 1));
-
-                if (iField < nFTCount)
-                {
-                    if (EQUAL(papszFT[iField], "integer"))
-                        oField.SetType(OFTInteger);
-                    else if (EQUAL(papszFT[iField], "double"))
-                        oField.SetType(OFTReal);
-                    else if (EQUAL(papszFT[iField], "datetime"))
-                        oField.SetType(OFTDateTime);
-                }
-
-                poFeatureDefn->AddFieldDefn(&oField);
-            }
-
-            CSLDestroy(papszFN);
-            CSLDestroy(papszFT);
-        }
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     }
     else
     {
-        if (poSRS)
+        /* ---------------------------------------------------------------- */
+        /*      Read the header.                                            */
+        /* -----------------------------------------------------------------*/
+        if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
-            m_poSRS = poSRS->Clone();
-            m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        }
-    }
+            CPLString osFieldNames;
+            CPLString osFieldTypes;
+            CPLString osGeometryType;
+            CPLString osRegion;
+            CPLString osWKT;
+            CPLString osProj4;
+            CPLString osEPSG;
+            int nMMVersion;
 
-    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
+            MMReadHeader(m_fp, &pMMHeader);
+            
+            nMMVersion = MMGetVectorVersion(&pMMHeader);
+            if (nMMVersion == MM_UNKNOWN_VERSION)
+                bValidFile = false;
+            if (pMMHeader.aFileType[0] == 'P' &&
+                pMMHeader.aFileType[1] == 'N' &&
+                pMMHeader.aFileType[2] == 'T')
+            {
+                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+                    poFeatureDefn->SetGeomType(wkbPoint25D);
+                else
+                    poFeatureDefn->SetGeomType(wkbPoint);
+            }
+            else if (pMMHeader.aFileType[0] == 'A' &&
+                pMMHeader.aFileType[1] == 'R' &&
+                pMMHeader.aFileType[2] == 'C')
+            {
+                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+                    poFeatureDefn->SetGeomType(wkbLineString25D);
+                else
+                    poFeatureDefn->SetGeomType(wkbLineString);
+            }
+            else if (pMMHeader.aFileType[0] == 'P' &&
+                pMMHeader.aFileType[1] == 'O' &&
+                pMMHeader.aFileType[2] == 'L')
+            {
+                // 3D
+                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
+                {
+                    if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
+                        poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
+                    else
+                        poFeatureDefn->SetGeomType(wkbPolygon25D);
+                }
+                else
+                {
+                    if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
+                        poFeatureDefn->SetGeomType(wkbMultiPolygon);
+                    else
+                        poFeatureDefn->SetGeomType(wkbPolygon);
+                }
+            }
+
+            /* -----------------------------------------------*/
+            /*      Handle coordinate system.                 */
+            /* ---------------------------------------------- */
+            if (osWKT.length())
+            {
+                m_poSRS = new OGRSpatialReference();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (m_poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
+                {
+                    delete m_poSRS;
+                    m_poSRS = nullptr;
+                }
+            }
+            else if (osEPSG.length())
+            {
+                m_poSRS = new OGRSpatialReference();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (m_poSRS->importFromEPSG(atoi(osEPSG)) != OGRERR_NONE)
+                {
+                    delete m_poSRS;
+                    m_poSRS = nullptr;
+                }
+            }
+            else if (osProj4.length())
+            {
+                m_poSRS = new OGRSpatialReference();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (m_poSRS->importFromProj4(osProj4) != OGRERR_NONE)
+                {
+                    delete m_poSRS;
+                    m_poSRS = nullptr;
+                }
+            }
+
+            /* -----------------------------------------------------------------*/
+            /*      Process fields.                                             */
+            /* -----------------------------------------------------------------*/
+            if (osFieldNames.length() || osFieldTypes.length())
+            {
+                char** papszFN =
+                    CSLTokenizeStringComplex(osFieldNames, "|", TRUE, TRUE);
+                char** papszFT =
+                    CSLTokenizeStringComplex(osFieldTypes, "|", TRUE, TRUE);
+                const int nFNCount = CSLCount(papszFN);
+                const int nFTCount = CSLCount(papszFT);
+                const int nFieldCount = std::max(nFNCount, nFTCount);
+
+                for (int iField = 0; iField < nFieldCount; iField++)
+                {
+                    OGRFieldDefn oField("", OFTString);
+
+                    if (iField < nFNCount)
+                        oField.SetName(papszFN[iField]);
+                    else
+                        oField.SetName(CPLString().Printf("Field_%d", iField + 1));
+
+                    if (iField < nFTCount)
+                    {
+                        if (EQUAL(papszFT[iField], "integer"))
+                            oField.SetType(OFTInteger);
+                        else if (EQUAL(papszFT[iField], "double"))
+                            oField.SetType(OFTReal);
+                        else if (EQUAL(papszFT[iField], "datetime"))
+                            oField.SetType(OFTDateTime);
+                    }
+
+                    poFeatureDefn->AddFieldDefn(&oField);
+                }
+
+                CSLDestroy(papszFN);
+                CSLDestroy(papszFT);
+            }
+        }
+        else
+        {
+            if (poSRS)
+            {
+                m_poSRS = poSRS->Clone();
+                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            }
+        }
+
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
+    }
 
     bValidFile = true;
 }
@@ -907,7 +1054,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
 
     if (MMResizeMM_POINT2DPointer(&hMMFeature.pCoord, &hMMFeature.nMaxpCoord,
         hMMFeature.nICoord + hMMFeature.pNCoord[hMMFeature.nIRing],
-        MM_MEAN_NUMBER_OF_COORDS, 0))
+        MM_MEAN_NUMBER_OF_NCOORDS, 0))
     {
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
             VSIStrerror(errno));
@@ -917,7 +1064,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
     {
         if (MMResizeDoublePointer(&hMMFeature.pZCoord, &hMMFeature.nMaxpZCoord,
             hMMFeature.nICoord + hMMFeature.pNCoord[hMMFeature.nIRing],
-            MM_MEAN_NUMBER_OF_COORDS, 0))
+            MM_MEAN_NUMBER_OF_NCOORDS, 0))
         {
             CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                 VSIStrerror(errno));
@@ -1246,7 +1393,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 nNumRecords++;
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, nNumRecords);
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
-                    hMMFeature.nNumRecords, 10, hMMFeature.nNumRecords))
+                    hMMFeature.nNumRecords, MM_INC_NUMBER_OF_RECORDS, hMMFeature.nNumRecords))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
             for (nIRecord = 0; nIRecord < hMMFeature.nNumRecords; nIRecord++)
@@ -1256,7 +1403,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    10, hMMFeature.pRecords[nIRecord].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
@@ -1288,7 +1435,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 nNumRecords++;
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, nNumRecords);
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
-                    hMMFeature.nNumRecords, 10, hMMFeature.nNumRecords))
+                    hMMFeature.nNumRecords, MM_INC_NUMBER_OF_RECORDS, hMMFeature.nNumRecords))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
             for (nIRecord = 0; nIRecord < hMMFeature.nNumRecords; nIRecord++)
@@ -1298,7 +1445,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    10, hMMFeature.pRecords[nIRecord].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[nIRecord].pField[iField].dValue =
@@ -1323,7 +1470,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 nNumRecords++;
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, nNumRecords);
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
-                    hMMFeature.nNumRecords, 10, hMMFeature.nNumRecords))
+                    hMMFeature.nNumRecords, MM_INC_NUMBER_OF_RECORDS, hMMFeature.nNumRecords))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
             for (nIRecord = 0; nIRecord < hMMFeature.nNumRecords; nIRecord++)
@@ -1333,7 +1480,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    10, hMMFeature.pRecords[nIRecord].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[nIRecord].pField[iField].iValue = panValues[nIRecord];
@@ -1355,7 +1502,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 nNumRecords++;
             hMMFeature.nNumRecords = max_function(hMMFeature.nNumRecords, nNumRecords);
             if(MMResizeMiraMonRecord(&hMMFeature.pRecords, &hMMFeature.nMaxRecords,
-                    hMMFeature.nNumRecords, 10, hMMFeature.nNumRecords))
+                    hMMFeature.nNumRecords, MM_INC_NUMBER_OF_RECORDS, hMMFeature.nNumRecords))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
             for (nIRecord = 0; nIRecord < hMMFeature.nNumRecords; nIRecord++)
@@ -1365,7 +1512,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[nIRecord].pField),
                     &hMMFeature.pRecords[nIRecord].nMaxField,
                     hMMFeature.pRecords[nIRecord].nNumField,
-                    10, hMMFeature.pRecords[nIRecord].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[nIRecord].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[nIRecord].pField[iField].dValue = panValues[nIRecord];
@@ -1384,7 +1531,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    10, hMMFeature.pRecords[0].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
@@ -1410,7 +1557,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    10, hMMFeature.pRecords[0].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
 
@@ -1430,7 +1577,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    10, hMMFeature.pRecords[0].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             hMMFeature.pRecords[0].pField[iField].dValue =
@@ -1448,7 +1595,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    10, hMMFeature.pRecords[0].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             hMMFeature.pRecords[0].pField[iField].iValue =
@@ -1466,7 +1613,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                     &hMMFeature.pRecords[0].nMaxField,
                     hMMFeature.pRecords[0].nNumField,
-                    10, hMMFeature.pRecords[0].nNumField))
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             hMMFeature.pRecords[0].pField[iField].dValue =

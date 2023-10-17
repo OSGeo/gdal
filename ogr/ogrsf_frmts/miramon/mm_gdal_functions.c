@@ -464,7 +464,10 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 		strcpy(base_dades_XP->ModeLectura, "wb");
         
         if ( (base_dades_XP->pfBaseDades =fopen_function(base_dades_XP->szNomFitxer,base_dades_XP->ModeLectura))==NULL )
+        {
+            free_function(zero);
 			return FALSE;
+        }
 		
         cal_tancar_taula = TRUE;
 	}
@@ -497,7 +500,10 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     /* Byte 0 */
     if(fwrite_function(&(base_dades_XP->versio_dbf), 1, 1,
                 base_dades_XP->pfBaseDades) != 1)
+    {
+        free_function(zero);
         return FALSE;
+    }
 
     /* MM_BYTE de 1 a 3 */
     variable_byte = (MM_BYTE)(base_dades_XP->any-1900);
@@ -630,6 +636,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 			retorn_fwrite=fwrite_function(&base_dades_XP->Camp[i].NomCampDBFClassica, 1, j, base_dades_XP->pfBaseDades);
         	if (retorn_fwrite != (size_t)j)
             {
+                free_function(zero);
 				return FALSE;
 			}
 
@@ -638,53 +645,86 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
             bytes_acumulats+=mida_nom;
         }
 		else
+		{
+            free_function(zero);
 			return FALSE;
+		}
 		
 		
         if (fwrite_function(zero, 1, 11-j, base_dades_XP->pfBaseDades) != 11-(size_t)j)
-            return FALSE;
+        {
+            free_function(zero);
+			return FALSE;
+		}
         /* Byte 11, Tipus de Camp */
         if (fwrite_function(&base_dades_XP->Camp[i].TipusDeCamp, 1, 1, base_dades_XP->pfBaseDades) != 1)
-            return FALSE;
+        {
+            free_function(zero);
+			return FALSE;
+		}
         /* Bytes 12 a 15 --> Reservats */
         if (fwrite_function(&base_dades_XP->Camp[i].reservat_1, 4, 1, base_dades_XP->pfBaseDades) != 1)
-            return FALSE;
+        {
+            free_function(zero);
+			return FALSE;
+		}
         /* Byte 16, o OFFSET_BYTESxCAMP_CAMP_CLASSIC --> BytesPerCamp */
         if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf) && base_dades_XP->Camp[i].TipusDeCamp=='C')
         {
             if (fwrite_function((void *)&byte_zero, 1, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+			    return FALSE;
+		    }
             // De moment he escrit un zero. A OFFSET_BYTESxCAMP_CAMP_ESPECIAL escriuré el que toca.
         }
         else
         {
             if (fwrite_function(&base_dades_XP->Camp[i].BytesPerCamp, 1, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+		        return FALSE;
+		    }
         }
         /* Byte 17 --> En els camps 'N' i 'F' indica els decimals.*/
         if(base_dades_XP->Camp[i].TipusDeCamp == 'N' || base_dades_XP->Camp[i].TipusDeCamp == 'F')
         {
             if (fwrite_function(&base_dades_XP->Camp[i].DecimalsSiEsFloat, 1, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+		        return FALSE;
+		    }
         }
         else
         {
             if (fwrite_function(zero, 1, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+		        return FALSE;
+		    }
         }
         if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf) && base_dades_XP->Camp[i].TipusDeCamp=='C')
         {
             /* Bytes de 18 a 20 --> Reservats */
             if (fwrite_function(&base_dades_XP->Camp[i].reservat_2, 20-18+1, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+		        return FALSE;
+		    }
             /* Bytes de 21 a 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, longitud de camps especials, com els C
                                     en DBF esteses */
             if (fwrite_function(&base_dades_XP->Camp[i].BytesPerCamp, sizeof(MM_TIPUS_BYTES_PER_CAMP_DBF), 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+		        return FALSE;
+		    }
 
             /* Bytes de 25 a 30 --> Reservats */
             if (fwrite_function(&base_dades_XP->Camp[i].reservat_2[25-18], 30-25+1, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+		        return FALSE;
+		    }
         }
         else
         {
@@ -693,16 +733,24 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
             memset(base_dades_XP->Camp[i].reservat_2+MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL, '\0', 4);
             /* Bytes de 18 a 30 --> Reservats */
             if (fwrite_function(&base_dades_XP->Camp[i].reservat_2, 13, 1, base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
+            {
+                free_function(zero);
+	            return FALSE;
+		    }
         }
         /* Byte 31 --> MDX flag.	*/
         if (fwrite_function(&base_dades_XP->Camp[i].MDX_camp_flag, 1, 1, base_dades_XP->pfBaseDades) != 1)
+        {
+            free_function(zero);
             return FALSE;
+	    }
 	}
+
+    free_function(zero);
 
     variable_byte = 13;
 	if (fwrite_function(&variable_byte, 1, 1, base_dades_XP->pfBaseDades) != 1)
-	    return FALSE;
+        return FALSE;
     
     // Cal veure que tinguem el lloc suficient per a col·locar els noms estesos
     // no fós cas que ara tinguéssin, no més camps, sinó més noms estesos

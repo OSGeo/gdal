@@ -599,8 +599,11 @@ int MMInitPointLayer(struct MiraMonLayerInfo *hMiraMonLayer, int bIs3d)
 
     // MIRAMON DATA BASE
     // Creating the DBF file name
-    hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName=strdup_function(
-                hMiraMonLayer->MMPoint.pszLayerName);
+    hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName=
+        calloc_function(strlen(hMiraMonLayer->MMPoint.pszLayerName)+6);
+    strcpy(hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName, 
+        hMiraMonLayer->MMPoint.pszLayerName);
+    
     if(MMResetExtensionAndLastLetter(hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName, 
                 hMiraMonLayer->MMPoint.pszLayerName, "T.dbf"))
             return 1;
@@ -667,8 +670,11 @@ struct MiraMonArcLayer *pMMArcLayer;
            return 1;
 
     // Creating the DBF file name
-    pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName=strdup_function(
-                pMMArcLayer->MMNode.pszLayerName);
+    pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName=
+        calloc_function(strlen(pMMArcLayer->MMNode.pszLayerName)+6);
+    strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, 
+        pMMArcLayer->MMNode.pszLayerName);
+
     if(MMResetExtensionAndLastLetter(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, 
                 pMMArcLayer->MMNode.pszLayerName, "N.dbf"))
             return 1;
@@ -773,8 +779,11 @@ struct MM_TH *pArcTopHeader;
 
     // MIRAMON DATA BASE
     // Creating the DBF file name
-    pMMArcLayer->MMAdmDB.pszExtDBFLayerName=strdup_function(
-                pMMArcLayer->pszLayerName);
+    pMMArcLayer->MMAdmDB.pszExtDBFLayerName=
+        calloc_function(strlen(pMMArcLayer->pszLayerName)+6);
+    strcpy(pMMArcLayer->MMAdmDB.pszExtDBFLayerName, 
+        pMMArcLayer->pszLayerName);
+
     if(MMResetExtensionAndLastLetter(pMMArcLayer->MMAdmDB.pszExtDBFLayerName, 
                 pMMArcLayer->pszLayerName, "A.dbf"))
             return 1;
@@ -859,8 +868,11 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         return 1;
 
     // Creating the DBF file name
-    pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName=strdup_function(
-                pMMPolygonLayer->pszLayerName);
+    pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName=
+        calloc_function(strlen(pMMPolygonLayer->pszLayerName)+6);
+    strcpy(pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName, 
+        pMMPolygonLayer->pszLayerName);
+
     if(MMResetExtensionAndLastLetter(pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName, 
                 pMMPolygonLayer->pszLayerName, "P.dbf"))
         return 1;
@@ -1252,6 +1264,17 @@ void MMDestroyMMAdmDB(struct MMAdmDatabase *pMMAdmDB)
         free_function(pMMAdmDB->pRecList);
         pMMAdmDB->pRecList=NULL;
     }
+    if(pMMAdmDB->pszExtDBFLayerName)
+    {
+        free_function(pMMAdmDB->pszExtDBFLayerName);
+        pMMAdmDB->pszExtDBFLayerName=NULL;
+    }
+
+    if(pMMAdmDB->szRecordOnCourse)
+    {
+        free_function(pMMAdmDB->szRecordOnCourse);
+        pMMAdmDB->szRecordOnCourse=NULL;
+    }
 }
 int MMDestroyPointLayer(struct MiraMonLayerInfo *hMiraMonLayer)
 {
@@ -1261,6 +1284,11 @@ int MMDestroyPointLayer(struct MiraMonLayerInfo *hMiraMonLayer)
     {
         free_function(hMiraMonLayer->MMPoint.pTL);
         hMiraMonLayer->MMPoint.pTL=NULL;
+    }
+    if(hMiraMonLayer->MMPoint.pszTLName)
+    {
+        free_function(hMiraMonLayer->MMPoint.pszTLName);
+        hMiraMonLayer->MMPoint.pszTLName=NULL;
     }
 
     if(hMiraMonLayer->TopHeader.bIs3d)
@@ -1298,6 +1326,11 @@ struct MiraMonArcLayer *pMMArcLayer;
         free_function(pMMArcLayer->MMNode.pNL);
         pMMArcLayer->MMNode.pNL=NULL;
     }
+    if(pMMArcLayer->MMNode.pszNLName)
+    {
+        free_function(pMMArcLayer->MMNode.pszNLName);
+        pMMArcLayer->MMNode.pszNLName=NULL;
+    }
     if(pMMArcLayer->MMNode.pszLayerName)
     {
         free_function(pMMArcLayer->MMNode.pszLayerName);
@@ -1323,6 +1356,11 @@ struct MiraMonArcLayer *pMMArcLayer;
     {
         free_function(pMMArcLayer->pAL);
         pMMArcLayer->pAL=NULL;
+    }
+    if(pMMArcLayer->pszALName)
+    {
+        free_function(pMMArcLayer->pszALName);
+        pMMArcLayer->pszALName=NULL;
     }
     
     if(pMMArcLayer->pArcHeader)
@@ -1359,11 +1397,21 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         free_function(pMMPolygonLayer->pPAL);
         pMMPolygonLayer->pPAL=NULL;
     }
+    if(pMMPolygonLayer->pszPALName)
+    {
+        free_function(pMMPolygonLayer->pszPALName);
+        pMMPolygonLayer->pszPALName=NULL;
+    }
 
     if(pMMPolygonLayer->pPS)
     {
         free_function(pMMPolygonLayer->pPS);
         pMMPolygonLayer->pPS=NULL;
+    }
+    if(pMMPolygonLayer->pszPSName)
+    {
+        free_function(pMMPolygonLayer->pszPSName);
+        pMMPolygonLayer->pszPSName=NULL;
     }
     
     if(pMMPolygonLayer->pPolHeader)
@@ -1413,11 +1461,30 @@ int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer)
     {
         free_function(hMiraMonLayer->pszSrcLayerName);
         hMiraMonLayer->pszSrcLayerName=NULL;
-    }    
+    }
+
+    if(hMiraMonLayer->szStringToOperate)
+    {
+        free_function(hMiraMonLayer->szStringToOperate);
+        hMiraMonLayer->szStringToOperate=NULL;
+        hMiraMonLayer->nNumStringToOperate=0;
+    }
 
     // Destroys all database objects
     MMDestroyMMDB(hMiraMonLayer);
     return 0;
+}
+
+void MMDestroyLayer(struct MiraMonLayerInfo **hMiraMonLayer)
+{
+    if(!hMiraMonLayer)
+        return;
+    if(!(*hMiraMonLayer))
+        return;
+    if(!(*hMiraMonLayer))
+        return;
+    free_function(*hMiraMonLayer);
+    *hMiraMonLayer=NULL;
 }
 
 /* -------------------------------------------------------------------- */
@@ -1925,7 +1992,7 @@ int MMInitFeature(struct MiraMonFeature *hMMFeature)
 {
     memset(hMMFeature, 0, sizeof(*hMMFeature));
 
-    hMMFeature->nMaxRecords=1;
+    hMMFeature->nMaxRecords=MM_INIT_NUMBER_OF_RECORDS;
     if((hMMFeature->pRecords=calloc_function(
             hMMFeature->nMaxRecords*sizeof(*(hMMFeature->pRecords))))==NULL)
         return 1;
@@ -1940,13 +2007,55 @@ int MMInitFeature(struct MiraMonFeature *hMMFeature)
     return 0;
 }
 
-// Conserves all allocated memroy but inicialize the counters to zero.
+// Conserves all allocated memory but reset the information
 void MMResetFeature(struct MiraMonFeature *hMMFeature)
 {
+    if(hMMFeature->pNCoord)
+    {
+        memset(hMMFeature->pNCoord, 0, 
+            hMMFeature->nMaxpNCoord*
+            sizeof(*(hMMFeature->pNCoord)));
+    }
+    if(hMMFeature->pCoord)
+    {
+	    memset(hMMFeature->pCoord, 
+            0, hMMFeature->nMaxpCoord*
+            sizeof(*(hMMFeature->pCoord)));
+    }
+    hMMFeature->nICoord=0;
+	if (hMMFeature->pZCoord)
+    {
+		memset(hMMFeature->pZCoord, 0, 
+            hMMFeature->nMaxpZCoord*
+            sizeof(*(hMMFeature->pZCoord)));
+    }
     hMMFeature->nNRings=0;
     hMMFeature->nIRing=0;
-    hMMFeature->nICoord=0;
-    hMMFeature->nNumRecords=0;
+    
+    if(hMMFeature->pbArcInfo)
+    {
+        memset(hMMFeature->pbArcInfo, 
+            0, hMMFeature->nMaxpbArcInfo*
+            sizeof(*(hMMFeature->pbArcInfo)));
+    }
+
+    if(hMMFeature->pRecords)
+    {
+        MM_NUMERATOR_RECORD nIRecord;
+        MM_EXT_DBF_N_FIELDS nIField;
+
+        for(nIRecord=0; nIRecord<hMMFeature->nMaxRecords; nIRecord++)
+        {
+            if(!hMMFeature->pRecords[nIRecord].pField)
+                continue;
+            for(nIField=0; nIField<hMMFeature->pRecords[nIRecord].nMaxField; nIField++)
+            {
+                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
+                    *(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)='\0';
+                hMMFeature->pRecords[nIRecord].pField[nIField].bIsValid=0;
+            }
+        }
+    }
 }
 
 // Conserves all allocated memroy but inicialize the counters to zero.
@@ -1967,11 +2076,33 @@ void MMDestroyFeature(struct MiraMonFeature *hMMFeature)
         free_function(hMMFeature->pNCoord);
         hMMFeature->pNCoord=NULL;
     }
+    
+    if(hMMFeature->pbArcInfo)
+    {
+        free_function(hMMFeature->pbArcInfo);
+        hMMFeature->pbArcInfo=NULL;
+    }
+
     if(hMMFeature->pRecords)
     {
+        MM_NUMERATOR_RECORD nIRecord;
+        MM_EXT_DBF_N_FIELDS nIField;
+
+        for(nIRecord=0; nIRecord<hMMFeature->nMaxRecords; nIRecord++)
+        {
+            if(!hMMFeature->pRecords[nIRecord].pField)
+                continue;
+            for(nIField=0; nIField<hMMFeature->pRecords[nIRecord].nMaxField; nIField++)
+            {
+                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
+                    free_function(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue);
+            }
+            free_function(hMMFeature->pRecords[nIRecord].pField);
+        }
         free_function(hMMFeature->pRecords);
         hMMFeature->pRecords=NULL;
     }
+	
     hMMFeature->nNRings=0;
     hMMFeature->nNumRecords=0;
     hMMFeature->nMaxRecords=0;
@@ -3196,6 +3327,7 @@ int MMResetExtensionAndLastLetter(char *pzNewLayerName,
                                 const char *MDExt)
 {
     char *pszAuxName=strdup_function(pzOldLayerName);
+    
     strcpy(pzNewLayerName,
          reset_extension(pszAuxName, "k"));
     if(strlen(pzNewLayerName)<3)

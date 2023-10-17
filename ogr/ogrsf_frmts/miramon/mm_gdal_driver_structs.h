@@ -120,11 +120,14 @@ CPL_C_START // Necessary for compiling in GDAL project
 #define MM_MEAN_NUMBER_OF_RINGS 10  
 
 // Number of coordinates a feature could have (it's just an aproximation)
+#define MM_MEAN_NUMBER_OF_NCOORDS 100
 #define MM_MEAN_NUMBER_OF_COORDS 1000  
 
 // Number of fields that the suppose to have.
 #define MM_INIT_NUMBER_OF_RECORDS   1
+#define MM_INC_NUMBER_OF_RECORDS   5
 #define MM_INIT_NUMBER_OF_FIELDS    20
+#define MM_INC_NUMBER_OF_FIELDS    10
 
 enum FieldType
 {
@@ -648,7 +651,7 @@ struct MiraMonLayerInfo
     MM_FILE_OFFSET OffsetCheck;
 
     // EPSG code of the coordinate system information.
-    char *pSRS; 
+    char *pSRS; // User has to free it.
 
     // Layer database read from origin.
     struct MiraMonDataBase *pLayerDB;
