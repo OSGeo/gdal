@@ -35,7 +35,9 @@ add_library(
   rasterfill.cpp
   thinplatespline.cpp
   gdal_simplesurf.cpp
-  viewshed.cpp)
+  viewshed.cpp
+  gdalgenericinverse.cpp
+)
 
 add_dependencies(alg generate_gdal_version_h)
 
