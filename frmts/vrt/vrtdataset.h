@@ -152,6 +152,9 @@ VRTParseCoreSources(CPLXMLNode *psTree, const char *,
 VRTSource *
 VRTParseFilterSources(CPLXMLNode *psTree, const char *,
                       std::map<CPLString, GDALDataset *> &oMapSharedSources);
+VRTSource *
+VRTParseArraySource(CPLXMLNode *psTree, const char *,
+                    std::map<CPLString, GDALDataset *> &oMapSharedSources);
 
 /************************************************************************/
 /*                              VRTDataset                              */
@@ -1041,6 +1044,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
                            std::map<CPLString, GDALDataset *> &) override;
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
+    CPLErr ParseSrcRectAndDstRect(const CPLXMLNode *psSrc);
+
     void SetSrcBand(const char *pszFilename, int nBand);
     void SetSrcBand(GDALRasterBand *);
     void SetSrcMaskBand(GDALRasterBand *);
@@ -1412,6 +1417,7 @@ class VRTGroup final : public GDALGroup
     std::weak_ptr<Ref> GetRootGroupRef() const;
 
   public:
+    explicit VRTGroup(const char *pszVRTPath);
     VRTGroup(const std::string &osParentName, const std::string &osName);
     ~VRTGroup();
 
@@ -1628,6 +1634,7 @@ class VRTMDArray final : public GDALMDArray
 
     std::weak_ptr<VRTGroup::Ref> m_poGroupRef;
     std::string m_osVRTPath{};
+    std::shared_ptr<VRTGroup> m_poDummyOwningGroup{};
 
     GDALExtendedDataType m_dt;
     std::vector<std::shared_ptr<GDALDimension>> m_dims;
@@ -1684,6 +1691,9 @@ class VRTMDArray final : public GDALMDArray
     {
         return m_osFilename;
     }
+
+    static std::shared_ptr<VRTMDArray> Create(const char *pszVRTPath,
+                                              const CPLXMLNode *psNode);
 
     static std::shared_ptr<VRTMDArray>
     Create(const std::shared_ptr<VRTGroup> &poThisGroup,

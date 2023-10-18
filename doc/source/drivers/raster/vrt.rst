@@ -182,7 +182,7 @@ The attributes for VRTRasterBand are:
 - **blockYSize** (optional, GDAL >= 3.3): block height.
   If not specified, defaults to the minimum of the raster height and 128.
 
-This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, etc.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
+This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, AveragedSource, KernelFilteredSource and ArraySource.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
 
 The allowed subelements for VRTRasterBand are :
 
@@ -304,6 +304,8 @@ The allowed subelements for VRTRasterBand are :
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
 - **KernelFilteredSource**: The KernelFilteredSource_ is a pixel source derived from the Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements, but it also passes the data through a simple filtering kernel specified with the Kernel element.
+
+- **ArraySource**: The ArraySource_ indicates that raster data should be read from a 2D array using the multidimensional API.
 
 - **MaskBand**: This element represents a mask band that is specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
 
@@ -492,6 +494,212 @@ For example, a Gaussian blur:
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
     </KernelFilteredSource>
+
+ArraySource
+~~~~~~~~~~~
+
+.. versionadded:: 3.8
+
+The ArraySource_ indicates that raster data should be read from a 2D array using
+the multidimensional API. If the original array is not a 3D array, a DerivedArray
+with a View step must be typically used to create a 2D slice.
+
+ArraySource can have the following child elements:
+
+* ``SingleSourceArray``, ``DerivedArray`` or ``Array``: required as first child element
+* ``SrcRect`` (same syntax and semantics as in SimpleSource): optional
+* ``DstRect`` (same syntax and semantics as in SimpleSource): optional
+
+SingleSourceArray
+^^^^^^^^^^^^^^^^^
+
+SingleSourceArray references a multidimensional raster through a SourceFilename
+element and an array through its full path within it with SourceArray. When
+SingleSourceArray is used as a direct child of ArraySource, it must be a 2-dimensional
+array.
+
+Example:
+
+.. code-block:: xml
+
+    <ArraySource>
+      <SingleSourceArray>
+        <SourceFilename relativeToVRT="1">byte.nc</SourceFilename>
+        <SourceArray>/my_array</SourceArray>
+      </SingleSourceArray>
+    </ArraySource>
+
+Be careful that quite often arrays in the multidimensional API use a "bottom-up"
+approach, and it might thus be needed to reverse the Y axis, with a View expression
+with a DerivedArray (cf below example)
+
+DerivedArray
+^^^^^^^^^^^^
+
+A DerivedArray starts with an array coming from a SingleSourceArray
+(but it could also be a DerivedArray or a Array), which must be the first
+child element, and applies different processing steps wrapped in zero or more
+Step elements.
+
+* View step: applies the :cpp:func:`GDALMDArray::GetView` method
+
+The ``View`` element must have an ``expr`` attribute, which is the argument of
+:cpp:func:`GDALMDArray::GetView` method
+
+The following example slices the 3D dimension at index 0 and flips the vertical
+axis (assuming 1st dimension is a non-spatial one, 2nd dimension is the Y
+dimension and 3rd dimension is the X dimension)
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">3d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <View expr="[0,::-1,...]"/>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* ``Transpose`` step: applies the :cpp:func:`GDALMDArray::Transpose` method
+
+The ``Transpose`` element must have a ``newOrder`` attribute, which is the argument of
+:cpp:func:`GDALMDArray::Transpose` method
+
+The following example transposes the 2 axis of a 2D array
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">2d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <Transpose newOrder="[1,0]"/>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* Resample step: applies the :cpp:func:`GDALMDArray::GetResampled` method
+
+The ``Resample`` element may have the following child elements, which correspond
+to the arguments of the :cpp:func:`GDALMDArray::GetResampled` method:
+
+- ``Dimension``: with a ``name`` and ``size`` attribute. This element may be repeated.
+- ``ResampleAlg``: whose value is ``NearestNeighbour`` (default), ``Cubic``, ``CubicSpline``, ``Bilinear``, ``Lanczos``, ``Average``, ``RMS`` or ``Mode``
+- ``SRS``: target SRS (string recognized by :cpp:func:`OGRSpatialReference::SetFromUserInput`)
+- ``Option`` with a ``name`` attribute and the value as the content of the element. This element may be repeated.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+            <SourceArray>/Band1</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <Resample>
+                <Dimension name="Y" size="40"/>
+                <Dimension name="X" size="40"/>
+                <ResampleAlg>Bilinear</ResampleAlg>
+                <SRS>EPSG:4267</SRS>
+                <Option name="IGNORED">YES</Option>
+              </Resample>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* Grid step: applies the :cpp:func:`GDALMDArray::GetGridded` method
+
+The ``Grid`` element may have the following child elements, which correspond
+to the arguments of the :cpp:func:`GDALMDArray::GetGridded` method:
+
+- ``GridOptions`` (required): name and options of the gridding algorithm
+- ``XArray`` (optional): its child value should be a SingleSourceArray, DerivedArray or Array pointing to the array to use for the X dimension. This is needed if the source array does not have a ``coordinates`` attribute.
+- ``YArray`` (optional): its child value should be a SingleSourceArray, DerivedArray or Array pointing to the array to use for the Y dimension. This is needed if the source array does not have a ``coordinates`` attribute.
+- ``Option`` with a ``name`` attribute and the value as the content of the element. This element may be repeated.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+            <SourceArray>/Band1</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <Grid>
+                  <GridOptions>invdist</GridOptions>
+                  <XArray>
+                      <SingleSourceArray>
+                        <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+                        <SourceArray>/varX</SourceArray>
+                      </SingleSourceArray>
+                  </XArray>
+                  <YArray>
+                      <SingleSourceArray>
+                        <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+                        <SourceArray>/varY</SourceArray>
+                      </SingleSourceArray>
+                  </YArray>
+                  <Option name="IGNORED">YES</Option>
+              </Grid>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* ``GetUnscaled`` step: applies the :cpp:func:`GDALMDArray::GetUnscaled` method
+
+It does not have any child elements.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">2d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <GetUnscaled/>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* ``GetMask`` step: applies the :cpp:func:`GDALMDArray::GetMask` method
+
+The ``GetMask`` element may have the following child elements, which correspond
+to the arguments of the :cpp:func:`GDALMDArray::GetMask` method:
+
+- ``Option`` with a ``name`` attribute and the value as the content of the element. This element may be repeated.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">2d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <GetMask>
+                  <Option name="UNMASK_FLAGS">microwave,land</Option>
+              </GetMask>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+Array
+^^^^^
+
+:ref:`Array <vrt_multidimensional>` can be used to mosaic several multidimensional arrays.
+
 
 Overviews
 ---------

@@ -656,10 +656,19 @@ VRTSimpleSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
     if (strstr(m_osSrcDSName.c_str(), "<VRTDataset") != nullptr)
         m_aosOpenOptions.SetNameValue("ROOT_PATH", pszVRTPath);
 
+    return ParseSrcRectAndDstRect(psSrc);
+}
+
+/************************************************************************/
+/*                        ParseSrcRectAndDstRect()                      */
+/************************************************************************/
+
+CPLErr VRTSimpleSource::ParseSrcRectAndDstRect(const CPLXMLNode *psSrc)
+{
     /* -------------------------------------------------------------------- */
     /*      Set characteristics.                                            */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *const psSrcRect = CPLGetXMLNode(psSrc, "SrcRect");
+    const CPLXMLNode *const psSrcRect = CPLGetXMLNode(psSrc, "SrcRect");
     if (psSrcRect)
     {
         double xOff = CPLAtof(CPLGetXMLValue(psSrcRect, "xOff", "-1"));
@@ -685,7 +694,7 @@ VRTSimpleSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
         m_dfSrcYSize = -1;
     }
 
-    CPLXMLNode *const psDstRect = CPLGetXMLNode(psSrc, "DstRect");
+    const CPLXMLNode *const psDstRect = CPLGetXMLNode(psSrc, "DstRect");
     if (psDstRect)
     {
         double xOff = CPLAtof(CPLGetXMLValue(psDstRect, "xOff", "-1"));
