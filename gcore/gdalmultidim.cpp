@@ -4374,7 +4374,14 @@ void CopyToFinalBufferSameDataType(const void *pSrcBuffer, void *pDstBuffer,
     std::vector<size_t> anStackCount(nDims);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
     const GByte *pabySrcBuffer = static_cast<const GByte *>(pSrcBuffer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     size_t iDim = 0;
 
 lbl_next_depth:
