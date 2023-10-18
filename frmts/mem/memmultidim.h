@@ -66,7 +66,6 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
     std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
     std::map<CPLString, std::shared_ptr<GDALDimension>> m_oMapDimensions{};
-    std::weak_ptr<MEMGroup> m_pSelf{};
     std::weak_ptr<MEMGroup> m_pParent{};
 
   protected:
@@ -82,7 +81,6 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
 
     void NotifyChildrenOfDeletion() override;
 
-  public:
     MEMGroup(const std::string &osParentName, const char *pszName)
         : GDALGroup(osParentName, pszName ? pszName : "")
     {
@@ -90,6 +88,7 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
             m_osFullName = osParentName;
     }
 
+  public:
     static std::shared_ptr<MEMGroup> Create(const std::string &osParentName,
                                             const char *pszName);
 

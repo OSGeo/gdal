@@ -92,9 +92,20 @@ class HDF4Group final : public GDALGroup
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SDSGroup> m_poGDALGroup{};
 
-  public:
+  protected:
     HDF4Group(const std::string &osParentName, const std::string &osName,
               const std::shared_ptr<HDF4SharedResources> &poShared);
+
+  public:
+    static std::shared_ptr<HDF4Group>
+    Create(const std::string &osParentName, const std::string &osName,
+           const std::shared_ptr<HDF4SharedResources> &poShared)
+    {
+        auto poGroup = std::shared_ptr<HDF4Group>(
+            new HDF4Group(osParentName, osName, poShared));
+        poGroup->SetSelf(poGroup);
+        return poGroup;
+    }
 
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList papszOptions = nullptr) const override;
@@ -3190,7 +3201,7 @@ void HDF4Dataset::OpenMultiDim(const char *pszFilename,
 
     hSD = -1;
 
-    m_poRootGroup = std::make_shared<HDF4Group>(std::string(), "/", poShared);
+    m_poRootGroup = HDF4Group::Create(std::string(), "/", poShared);
 
     SetDescription(pszFilename);
 

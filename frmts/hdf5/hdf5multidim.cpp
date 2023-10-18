@@ -64,7 +64,7 @@ class HDF5Group final : public GDALGroup
     static herr_t GetAttributesCallback(hid_t hGroup, const char *pszObjName,
                                         void *);
 
-  public:
+  protected:
     HDF5Group(
         const std::string &osParentName, const std::string &osName,
         const std::shared_ptr<HDF5SharedResources> &poShared,
@@ -83,6 +83,19 @@ class HDF5Group final : public GDALGroup
         {
             HDF5Group::GetDimensions();
         }
+    }
+
+  public:
+    static std::shared_ptr<HDF5Group> Create(
+        const std::string &osParentName, const std::string &osName,
+        const std::shared_ptr<HDF5SharedResources> &poShared,
+        const std::set<std::pair<unsigned long, unsigned long>> &oSetParentIds,
+        hid_t hGroup, unsigned long objIds[2])
+    {
+        auto poGroup = std::shared_ptr<HDF5Group>(new HDF5Group(
+            osParentName, osName, poShared, oSetParentIds, hGroup, objIds));
+        poGroup->SetSelf(poGroup);
+        return poGroup;
     }
 
     ~HDF5Group()
@@ -537,7 +550,7 @@ std::shared_ptr<HDF5Group> HDF5SharedResources::GetRootGroup()
 
     auto poSharedResources = m_poSelf.lock();
     CPLAssert(poSharedResources != nullptr);
-    return std::make_shared<HDF5Group>(
+    return HDF5Group::Create(
         std::string(), "/", poSharedResources,
         std::set<std::pair<unsigned long, unsigned long>>(), hGroup,
         oStatbuf.objno);
@@ -778,9 +791,8 @@ std::shared_ptr<GDALGroup> HDF5Group::OpenGroup(const std::string &osName,
     {
         return nullptr;
     }
-    return std::make_shared<HDF5Group>(GetFullName(), osName, m_poShared,
-                                       m_oSetParentIds, hSubGroup,
-                                       oStatbuf.objno);
+    return HDF5Group::Create(GetFullName(), osName, m_poShared, m_oSetParentIds,
+                             hSubGroup, oStatbuf.objno);
 }
 
 /************************************************************************/

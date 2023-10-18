@@ -341,7 +341,6 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     mutable bool m_bDimensionsInstantiated = false;
     bool m_bUpdatable = false;
     bool m_bDimSizeInUpdate = false;
-    std::weak_ptr<ZarrGroupBase> m_pSelf{};
 
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
@@ -364,11 +363,6 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
   public:
     ~ZarrGroupBase() override;
-
-    void SetSelf(const std::weak_ptr<ZarrGroupBase> &self)
-    {
-        m_pSelf = self;
-    }
 
     std::shared_ptr<GDALAttribute>
     GetAttribute(const std::string &osName) const override

@@ -3751,7 +3751,7 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
     filename = str(
         tmp_path / "test_netcdf_multidim_serialize_statistics_asclassicdataset.nc"
     )
-    shutil.copy("data/netcdf/byte_no_cf.nc", filename)
+    shutil.copy("data/netcdf/byte.nc", filename)
 
     def test():
         ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
@@ -3772,6 +3772,16 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
         classic_ds = view.AsClassicDataset(1, 0)
         classic_ds.GetRasterBand(1).ComputeStatistics(False)
 
+        rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
+        ds = rg_subset.OpenMDArray("Band1").AsClassicDataset(1, 0)
+        ds.GetRasterBand(1).ComputeStatistics(False)
+
+    def test2():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
+        rg_subset.OpenMDArray("Band1").GetStatistics(False, force=True)
+
     def reopen():
 
         aux_xml = open(filename + ".aux.xml", "rb").read().decode("UTF-8")
@@ -3783,6 +3793,11 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
             '<DerivedDataset name="AsClassicDataset(1,0) view of Sliced view of /Band1 ([0:10,...])">'
             in aux_xml
         )
+        assert (
+            '<DerivedDataset name="AsClassicDataset(1,0) view of /Band1 with context Selection /x=440750">'
+            in aux_xml
+        )
+        assert '<Array name="/Band1" context="Selection /x=440750">' in aux_xml
 
         ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
@@ -3808,5 +3823,16 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
             -1.0,
         ]
 
+        rg_subset = rg.SubsetDimensionFromSelection("/x=440750")
+
+        assert rg_subset.OpenMDArray("Band1").GetStatistics(False, False).min == 107
+        assert rg_subset.OpenMDArray("Band1").GetStatistics(False, False).max == 197
+
+        ds = rg_subset.OpenMDArray("Band1").AsClassicDataset(1, 0)
+        assert ds.GetRasterBand(1).GetStatistics(False, False) == pytest.approx(
+            [107.0, 197.0, 149.7, 26.595300336714]
+        )
+
     test()
+    test2()
     reopen()

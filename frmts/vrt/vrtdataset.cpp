@@ -587,7 +587,7 @@ CPLErr VRTDataset::XMLInit(CPLXMLNode *psTree, const char *pszVRTPathIn)
             return CE_Failure;
         }
 
-        m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+        m_poRootGroup = VRTGroup::Create(std::string(), "/");
         m_poRootGroup->SetIsRootGroup();
         if (!m_poRootGroup->XMLInit(m_poRootGroup, m_poRootGroup, psGroup,
                                     pszVRTPathIn))
@@ -1779,7 +1779,7 @@ VRTDataset::CreateMultiDimensional(const char *pszFilename,
     VRTDataset *poDS = new VRTDataset(0, 0);
     poDS->eAccess = GA_Update;
     poDS->SetDescription(pszFilename);
-    poDS->m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+    poDS->m_poRootGroup = VRTGroup::Create(std::string(), "/");
     poDS->m_poRootGroup->SetIsRootGroup();
     poDS->m_poRootGroup->SetFilename(pszFilename);
     poDS->m_poRootGroup->SetDirty();
