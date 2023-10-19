@@ -200,7 +200,8 @@ class CPL_DLL OGRArrowArrayHelper
         {
             // Convert for ogrField.Date.TZFlag to UTC
             const int TZOffset = (ogrField.Date.TZFlag - OGR_TZFLAG_UTC) * 15;
-            nVal -= TZOffset * 60 * 1000;
+            const int TZOffsetMS = TZOffset * 60 * 1000;
+            nVal -= TZOffsetMS;
         }
         static_cast<int64_t *>(const_cast<void *>(psArray->buffers[1]))[iFeat] =
             nVal;
