@@ -546,6 +546,14 @@ endif ()
 set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
 set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
 
+if(OGR_ENABLE_DRIVER_GPKG AND
+   NOT DEFINED OGR_ENABLE_DRIVER_SQLITE AND
+   DEFINED OGR_BUILD_OPTIONAL_DRIVERS AND
+   NOT OGR_BUILD_OPTIONAL_DRIVERS)
+   message(STATUS "Automatically enabling SQLite driver")
+   set(OGR_ENABLE_DRIVER_SQLITE ON CACHE BOOL "Set ON to build OGR SQLite driver")
+endif()
+
 # We need to forward declare a few OGR drivers because raster formats need them
 option(OGR_ENABLE_DRIVER_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
 option(OGR_ENABLE_DRIVER_GML "Set ON to build OGR GML driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
