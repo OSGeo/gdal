@@ -1419,7 +1419,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
 
         ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
         lyr = ds.GetLayer(0)
-        lyr.GetLayerDefn()
+        assert lyr.GetLayerDefn().GetFieldCount() == 8
         ds = None
 
         f = gdal.VSIFOpenL("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rb")
@@ -1438,30 +1438,35 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
     </FeatureTypeList>
   </WFS_Capabilities>
   <OGRWFSLayer name="my_layer">
-    <schema foo="http://foo" gml="http://www.opengis.net/gml" xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
-      <import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd" />
-      <complexType name="my_layerType">
-        <complexContent>
-          <extension base="gml:AbstractFeatureType">
-            <sequence>
-              <element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string" />
-              <element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean" />
-              <element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short" />
-              <element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int" />
-              <element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float" />
-              <element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double" />
-              <element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime" />
-              <element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType" />
-            </sequence>
-          </extension>
-        </complexContent>
-      </complexType>
-      <element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType" />
-    </schema>
+    <xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+      <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd" />
+      <xsd:complexType name="my_layerType">
+        <xsd:complexContent>
+          <xsd:extension base="gml:AbstractFeatureType">
+            <xsd:sequence>
+              <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType" />
+            </xsd:sequence>
+          </xsd:extension>
+        </xsd:complexContent>
+      </xsd:complexType>
+      <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType" />
+    </xsd:schema>
   </OGRWFSLayer>
 </OGRWFSDataSource>
 """
         )
+
+        ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldCount() == 8
+        ds = None
 
         with gdaltest.tempfile(
             "/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml",

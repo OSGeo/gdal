@@ -1148,10 +1148,13 @@ OGRFeatureDefn *OGRWFSLayer::GetLayerDefn()
     if (poFeatureDefn)
         return poFeatureDefn;
 
-    poDS->LoadMultipleLayerDefn(GetName(), pszNS, pszNSVal);
+    if (poDS->GetLayerCount() > 1)
+    {
+        poDS->LoadMultipleLayerDefn(GetName(), pszNS, pszNSVal);
 
-    if (poFeatureDefn)
-        return poFeatureDefn;
+        if (poFeatureDefn)
+            return poFeatureDefn;
+    }
 
     return BuildLayerDefn();
 }
