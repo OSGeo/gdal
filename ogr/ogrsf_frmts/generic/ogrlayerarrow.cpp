@@ -3006,7 +3006,7 @@ static void ArrowTimestampToOGRDateTime(int64_t nTimestamp,
     int nTZFlag = 0;
     const size_t nTZLen = strlen(pszTZ);
     if ((nTZLen == 3 && strcmp(pszTZ, "UTC") == 0) ||
-        (nTZLen == 7 && strcmp(pszTZ, "Etc/UTC") == 7))
+        (nTZLen == 7 && strcmp(pszTZ, "Etc/UTC") == 0))
     {
         nTZFlag = 100;
     }
