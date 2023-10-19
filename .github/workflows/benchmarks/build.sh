@@ -25,10 +25,9 @@ make -j$(nproc)
 
 mkdir old_version
 cd old_version
-# To be updated with a true reference branch and commit
-git clone https://github.com/rouault/gdal
+git clone https://github.com/OSGeo/gdal
 cd gdal
-git checkout b880cad693cd6cec0b0c90422cc6430121787ce4
+git checkout 32ec2a989c083fbfd9498169052829640b7df7c6
 mkdir build
 cd build
 
