@@ -477,6 +477,7 @@ size_t OGRGeometryCollection::WkbSize() const
 /*                       importFromWkbInternal()                        */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRGeometryCollection::importFromWkbInternal(
     const unsigned char *pabyData, size_t nSize, int nRecLevel,
     OGRwkbVariant eWkbVariant, size_t &nBytesConsumedOut)
@@ -581,6 +582,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal(
 
     return OGRERR_NONE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           importFromWkb()                            */

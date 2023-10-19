@@ -3841,15 +3841,14 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
     bError = false;
 
     // Check if we can use the Arrow interface to get and write features
-    // as it will be faster if the input (resp. output) driver has a fast
-    // implementation of GetArrowStream() (resp. WriteArrowBatch())
+    // as it will be faster if the input driver has a fast
+    // implementation of GetArrowStream().
     // We also can only do that only if using ogr2ogr without options that
     // alter features.
     // OGR2OGR_USE_ARROW_API config option is mostly for testing purposes
     // or as a safety belt if things turned bad...
     bool bUseWriteArrowBatch = false;
     if (((poSrcLayer->TestCapability(OLCFastGetArrowStream) &&
-          poDstLayer->TestCapability(OLCFastWriteArrowBatch) &&
           // As we don't control the input array size when the input or output
           // drivers are Arrow/Parquet (as they don't use the generic
           // implementation), we can't guarantee that ROW_GROUP_SIZE/BATCH_SIZE
@@ -5400,8 +5399,11 @@ bool LayerTranslator::TranslateArrow(
     if (!psInfo->m_bPreserveFID)
         aosOptions.SetNameValue("INCLUDE_FID", "NO");
     if (psOptions->nGroupTransactions > 0)
+    {
         aosOptions.SetNameValue(
-            "BATCH_SIZE", CPLSPrintf("%d", psOptions->nGroupTransactions));
+            "MAX_FEATURES_IN_BATCH",
+            CPLSPrintf("%d", psOptions->nGroupTransactions));
+    }
     if (psInfo->m_poSrcLayer->GetArrowStream(&stream, aosOptions.List()))
     {
         if (stream.get_schema(&stream, &schema) != 0)
