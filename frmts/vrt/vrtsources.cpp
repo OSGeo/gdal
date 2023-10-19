@@ -31,6 +31,7 @@
 #include "gdal_vrt.h"
 #include "vrtdataset.h"
 
+#include <cassert>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -2746,6 +2747,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
     const GDALColorTable *poColorTable = nullptr;
     const bool bIsComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eBufType));
     const int nWordSize = GDALGetDataTypeSizeBytes(eWrkDataType);
+    assert(nWordSize != 0);
 
     // If no explicit <NODATA> is set, but UseMaskBand is set, and the band
     // has a nodata value, then use it as if it was set as <NODATA>
