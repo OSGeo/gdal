@@ -1184,6 +1184,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
         NoInitByte()
         {
             // do nothing
+            /* coverity[uninit_member] */
         }
     };
 #ifdef __GNUC__
