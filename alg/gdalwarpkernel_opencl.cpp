@@ -326,9 +326,6 @@ static cl_device_id get_device(OCLVendor *peVendor)
     const bool bUseOpenCLCPU =
         CPLTestBool(CPLGetConfigOption("OPENCL_USE_CPU", "FALSE"));
 
-    const char *pszBlacklistedVendor = "";
-    const char *pszPreferredVendor = "";
-
     struct device_info
     {
         cl_device_id id;
@@ -343,10 +340,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
     // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
     if (num_platforms > 0)
     {
-
-        pszPreferredVendor =
-            CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", nullptr);
-        pszBlacklistedVendor =
+        const char *pszBlacklistedVendor =
             CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", nullptr);
 
         for (cl_uint platformIndex = 0; platformIndex < num_platforms;
@@ -412,7 +406,8 @@ static cl_device_id get_device(OCLVendor *peVendor)
     if (!openCLdevices.empty())
     {
         // Sort, GPU first, then preferred vendor, Intel comes last (unless is the preferred of course)
-        const std::string preferredVendorName{pszPreferredVendor};
+        const std::string preferredVendorName{
+            CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", "")};
         std::sort(
             openCLdevices.begin(), openCLdevices.end(),
             [&](const device_info first, const device_info second) -> int
