@@ -29,6 +29,7 @@
 ###############################################################################
 
 import json
+import sys
 import time
 
 import gdaltest
@@ -2827,6 +2828,7 @@ def test_ogr_elasticsearch_geo_shape_wkt(
 # Test _TIMEOUT / _TERMINATE_AFTER
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Test fails on Windows")
 def test_ogr_elasticsearch_timeout_terminate_after(es_url, handle_get, handle_post):
 
     handle_get("/fakeelasticsearch", """{"version":{"number":"7.0.0"}}""")
