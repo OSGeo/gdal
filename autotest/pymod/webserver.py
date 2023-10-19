@@ -50,8 +50,8 @@ def install_http_handler(handler_instance):
     custom_handler = handler_instance
     try:
         yield
-    finally:
         handler_instance.final_check()
+    finally:
         custom_handler = None
 
 
