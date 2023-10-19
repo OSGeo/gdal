@@ -4772,8 +4772,8 @@ bool GDALMDArray::ReadUsingContiguousIRead(
     }
     auto poMEMArray =
         MEMMDArray::Create(std::string(), std::string(), apoTmpDims, oType);
-    poMEMArray->Init(static_cast<GByte *>(pTmpBuffer.get()));
-    return poMEMArray->Read(anTmpStartIdx.data(), count, arrayStep,
+    return poMEMArray->Init(static_cast<GByte *>(pTmpBuffer.get())) &&
+           poMEMArray->Read(anTmpStartIdx.data(), count, arrayStep,
                             bufferStride, bufferDataType, pDstBuffer);
 }
 
