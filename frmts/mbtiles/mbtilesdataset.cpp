@@ -3545,15 +3545,14 @@ CPLErr MBTilesDataset::IBuildOverviews(
         int nRows = 0;
         int nCols = 0;
         char **papszResult = nullptr;
-        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'",
-                          &papszResult, &nRows, &nCols, nullptr);
+        sqlite3_get_table(
+            hDB, "SELECT * FROM metadata WHERE name = 'minzoom' LIMIT 2",
+            &papszResult, &nRows, &nCols, nullptr);
         sqlite3_free_table(papszResult);
         if (nRows == 1)
         {
-            sqlite3_exec(hDB, "DELETE FROM metadata WHERE name = 'minzoom'",
-                         nullptr, nullptr, nullptr);
             pszSQL = sqlite3_mprintf(
-                "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')",
+                "UPDATE metadata SET value = %d WHERE name = 'minzoom'",
                 m_nZoomLevel);
             sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
             sqlite3_free(pszSQL);
@@ -3578,6 +3577,18 @@ CPLErr MBTilesDataset::IBuildOverviews(
     }
 
     FlushCache(false);
+
+    const auto GetOverviewIndex = [](int nVal)
+    {
+        int iOvr = -1;
+        while (nVal > 1)
+        {
+            nVal >>= 1;
+            iOvr++;
+        }
+        return iOvr;
+    };
+
     for (int i = 0; i < nOverviews; i++)
     {
         if (panOverviewList[i] < 2)
@@ -3594,18 +3605,19 @@ CPLErr MBTilesDataset::IBuildOverviews(
                      panOverviewList[i]);
             return CE_Failure;
         }
+        const int iOvr = GetOverviewIndex(panOverviewList[i]);
+        if (iOvr >= m_nOverviewCount)
+        {
+            CPLDebug("MBTILES",
+                     "Requested overview factor %d leads to too small overview "
+                     "and will be ignored",
+                     panOverviewList[i]);
+        }
     }
 
     GDALRasterBand ***papapoOverviewBands =
         (GDALRasterBand ***)CPLCalloc(sizeof(void *), nBands);
     int iCurOverview = 0;
-    int nMinZoom = m_nZoomLevel;
-    for (int i = 0; i < m_nOverviewCount; i++)
-    {
-        MBTilesDataset *poODS = m_papoOverviewDS[i];
-        if (poODS->m_nZoomLevel < nMinZoom)
-            nMinZoom = poODS->m_nZoomLevel;
-    }
     for (int iBand = 0; iBand < nBands; iBand++)
     {
         papapoOverviewBands[iBand] =
@@ -3613,21 +3625,14 @@ CPLErr MBTilesDataset::IBuildOverviews(
         iCurOverview = 0;
         for (int i = 0; i < nOverviews; i++)
         {
-            int nVal = panOverviewList[i];
-            int iOvr = -1;
-            while (nVal > 1)
+            const int iOvr = GetOverviewIndex(panOverviewList[i]);
+            if (iOvr < m_nOverviewCount)
             {
-                nVal >>= 1;
-                iOvr++;
+                MBTilesDataset *poODS = m_papoOverviewDS[iOvr];
+                papapoOverviewBands[iBand][iCurOverview] =
+                    poODS->GetRasterBand(iBand + 1);
+                iCurOverview++;
             }
-            if (iOvr >= m_nOverviewCount)
-            {
-                continue;
-            }
-            MBTilesDataset *poODS = m_papoOverviewDS[iOvr];
-            papapoOverviewBands[iBand][iCurOverview] =
-                poODS->GetRasterBand(iBand + 1);
-            iCurOverview++;
         }
     }
 
@@ -3643,19 +3648,36 @@ CPLErr MBTilesDataset::IBuildOverviews(
 
     if (eErr == CE_None)
     {
+        // Determine new minzoom value from the existing one and the new
+        // requested overview levels
+        int nMinZoom = m_nZoomLevel;
+        bool bHasMinZoomMetadata = false;
         int nRows = 0;
         int nCols = 0;
         char **papszResult = nullptr;
         sqlite3_get_table(
-            hDB, "SELECT * FROM metadata WHERE name = 'minzoom' LIMIT 2",
+            hDB, "SELECT value FROM metadata WHERE name = 'minzoom' LIMIT 2",
             &papszResult, &nRows, &nCols, nullptr);
-        sqlite3_free_table(papszResult);
-        if (nRows == 1)
+        if (nRows == 1 && nCols == 1 && papszResult[1])
         {
-            sqlite3_exec(hDB, "DELETE FROM metadata WHERE name = 'minzoom'",
-                         nullptr, nullptr, nullptr);
+            bHasMinZoomMetadata = true;
+            nMinZoom = atoi(papszResult[1]);
+        }
+        sqlite3_free_table(papszResult);
+        if (bHasMinZoomMetadata)
+        {
+            for (int i = 0; i < nOverviews; i++)
+            {
+                const int iOvr = GetOverviewIndex(panOverviewList[i]);
+                if (iOvr < m_nOverviewCount)
+                {
+                    const MBTilesDataset *poODS = m_papoOverviewDS[iOvr];
+                    nMinZoom = std::min(nMinZoom, poODS->m_nZoomLevel);
+                }
+            }
+
             char *pszSQL = sqlite3_mprintf(
-                "INSERT INTO metadata (name, value) VALUES ('minzoom', '%d')",
+                "UPDATE metadata SET value = '%d' WHERE name = 'minzoom'",
                 nMinZoom);
             sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
             sqlite3_free(pszSQL);

@@ -418,6 +418,41 @@ def test_mbtiles_7():
 
 
 ###############################################################################
+# Test building overview
+
+
+@pytest.mark.require_driver("PNG")
+def test_mbtiles_overview_minzoom():
+
+    filename = "/vsimem/test_mbtiles_overview_minzoom.mbtiles"
+
+    gdal.Translate(filename, "data/byte.tif", options="-outsize 1024 0")
+    ds = gdal.Open(filename, gdal.GA_Update)
+    assert ds.GetMetadataItem("minzoom") == "17"
+    assert ds.GetMetadataItem("maxzoom") == "17"
+    ds.BuildOverviews("NEAR", [2])
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetMetadataItem("minzoom") == "16"
+    assert ds.GetMetadataItem("maxzoom") == "17"
+    ds = None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.BuildOverviews("NEAR", [8])
+    ds = None
+
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 3
+    assert ds.GetMetadataItem("minzoom") == "14"
+    assert ds.GetMetadataItem("maxzoom") == "17"
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Single band with 24 bit color table, PNG
 
 
