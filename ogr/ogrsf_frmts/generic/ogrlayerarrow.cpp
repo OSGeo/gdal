@@ -1503,7 +1503,8 @@ FillDateTimeArray(struct ArrowArray *psChild,
                 // Convert for psRawField->Date.TZFlag to nFieldTZFlag
                 const int TZOffset =
                     (psRawField->Date.TZFlag - nFieldTZFlag) * 15;
-                nVal -= TZOffset * 60 * 1000;
+                const int TZOffsetMS = TZOffset * 60 * 1000;
+                nVal -= TZOffsetMS;
             }
             else if (nFieldTZFlag == OGR_TZFLAG_MIXED_TZ &&
                      psRawField->Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
@@ -1511,7 +1512,8 @@ FillDateTimeArray(struct ArrowArray *psChild,
                 // Convert for psRawField->Date.TZFlag to UTC
                 const int TZOffset =
                     (psRawField->Date.TZFlag - OGR_TZFLAG_UTC) * 15;
-                nVal -= TZOffset * 60 * 1000;
+                const int TZOffsetMS = TZOffset * 60 * 1000;
+                nVal -= TZOffsetMS;
             }
             panValues[iFeat] = nVal;
         }
