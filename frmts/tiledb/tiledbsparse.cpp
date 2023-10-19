@@ -5104,7 +5104,7 @@ void OGRTileDBLayer::FillBoolListArray(
 /*                        GetNextArrowArray()                           */
 /************************************************************************/
 
-int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
+int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                       struct ArrowArray *out_array)
 {
     memset(out_array, 0, sizeof(*out_array));
@@ -5505,6 +5505,22 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
             }
         }
         CPL_IGNORE_RET_VAL(iSchemaChild);
+
+        if (m_poAttrQuery &&
+            (!m_poQueryCondition || m_bAttributeFilterPartiallyTranslated))
+        {
+            struct ArrowSchema schema;
+            stream->get_schema(stream, &schema);
+            CPLAssert(schema.release != nullptr);
+            CPLAssert(schema.n_children == out_array->n_children);
+            // Spatial filter already evaluated
+            auto poFilterGeomBackup = m_poFilterGeom;
+            m_poFilterGeom = nullptr;
+            if (CanPostFilterArrowArray(&schema))
+                PostFilterArrowArray(&schema, out_array, nullptr);
+            schema.release(&schema);
+            m_poFilterGeom = poFilterGeomBackup;
+        }
     }
     catch (const std::exception &e)
     {
