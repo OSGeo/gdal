@@ -300,6 +300,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
         ("COVERAGE", "SRTM"),
     ),
 )
+@pytest.mark.require_driver("WMS")
 def test_ogr_ogcapi_raster(api, collection):
 
     ds = gdal.OpenEx(
@@ -383,6 +384,7 @@ def test_wrong_url(api, of_type):
         )
 
 
+@pytest.mark.require_driver("WMS")
 def test_ogc_api_raster_tiles():
 
     ds = gdal.OpenEx(

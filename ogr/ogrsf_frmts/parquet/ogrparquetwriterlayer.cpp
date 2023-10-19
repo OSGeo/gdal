@@ -420,7 +420,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                         char *pszPROJJSON = nullptr;
                         oSRSIdentified.exportToPROJJSON(&pszPROJJSON, nullptr);
                         CPLJSONDocument oCRSDoc;
-                        oCRSDoc.LoadMemory(pszPROJJSON);
+                        CPL_IGNORE_RET_VAL(oCRSDoc.LoadMemory(pszPROJJSON));
                         CPLFree(pszPROJJSON);
                         CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
                         RemoveIDFromMemberOfEnsembles(oCRSRoot);

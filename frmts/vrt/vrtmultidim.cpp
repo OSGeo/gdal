@@ -2653,7 +2653,7 @@ ParseSingleSourceArray(const CPLXMLNode *psSingleSourceArray,
         return nullptr;
     }
     const char *pszSourceFilename =
-        CPLGetXMLValue(psSourceFileNameNode, nullptr, nullptr);
+        CPLGetXMLValue(psSourceFileNameNode, nullptr, "");
     const bool bRelativeToVRT = CPL_TO_BOOL(
         atoi(CPLGetXMLValue(psSourceFileNameNode, "relativeToVRT", "0")));
 

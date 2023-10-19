@@ -991,7 +991,7 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
         }
     }
 
-    if (bFound && nMaximum > 0)
+    if (bFound)
     {
         // Initially set to GDAL's default (1000)
         int pageSize{m_nPageSize};
@@ -1006,9 +1006,12 @@ void OGROAPIFDataset::DeterminePageSizeFromAPI(const std::string &itemsUrl)
         else if (nMaximum > 0)
             pageSize = nMaximum;
 
-        CPLDebug("OAPIF", "Maximum 'limit' set from OPENAPI schema: %d",
-                 nMaximum);
-        m_nPageSize = pageSize;
+        if (m_nPageSize != pageSize)
+        {
+            CPLDebug("OAPIF", "Page size set from OPENAPI schema: %d",
+                     pageSize);
+            m_nPageSize = pageSize;
+        }
     }
 }
 

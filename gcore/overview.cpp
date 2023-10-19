@@ -2116,12 +2116,15 @@ static CPLErr GDALResampleChunk_Gauss(
                         if (colorEntries[idx].c4)
                         {
                             const int nWeight = panLineWeight[i];
-                            nTotalR += static_cast<GInt64>(
-                                colorEntries[idx].c1 * nWeight);
-                            nTotalG += static_cast<GInt64>(
-                                colorEntries[idx].c2 * nWeight);
-                            nTotalB += static_cast<GInt64>(
-                                colorEntries[idx].c3 * nWeight);
+                            nTotalR +=
+                                static_cast<GInt64>(colorEntries[idx].c1) *
+                                nWeight;
+                            nTotalG +=
+                                static_cast<GInt64>(colorEntries[idx].c2) *
+                                nWeight;
+                            nTotalB +=
+                                static_cast<GInt64>(colorEntries[idx].c3) *
+                                nWeight;
                             nTotalWeight += nWeight;
                         }
                     }

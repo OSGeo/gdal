@@ -4846,24 +4846,30 @@ TEST_F(test_cpl, VSIGetCanonicalFilename)
         if (VSIStatL(osUC.c_str(), &sStat) == 0)
         {
             char *pszRes = VSIGetCanonicalFilename(osUC.c_str());
-            ASSERT_TRUE(pszRes);
+            EXPECT_TRUE(pszRes);
+            if (pszRes)
+            {
 #if defined(_WIN32) || (defined(__MACH__) && defined(__APPLE__))
-            // On Windows or Mac, we should get the real canonical name, i.e.
-            // in lower case
-            EXPECT_STREQ(pszRes, osLC.c_str());
+                // On Windows or Mac, we should get the real canonical name,
+                // i.e. in lower case
+                EXPECT_STREQ(pszRes, osLC.c_str());
 #else
-            // On other operating systems, VSIGetCanonicalFilename()
-            // could not be implemented, so be laxer in the check
-            EXPECT_STREQ(CPLString(pszRes).tolower().c_str(),
-                         CPLString(osLC).tolower().c_str());
+                // On other operating systems, VSIGetCanonicalFilename()
+                // could not be implemented, so be laxer in the check
+                EXPECT_STREQ(CPLString(pszRes).tolower().c_str(),
+                             CPLString(osLC).tolower().c_str());
 #endif
+            }
             CPLFree(pszRes);
         }
 
         {
             char *pszRes = VSIGetCanonicalFilename(osLC.c_str());
-            ASSERT_TRUE(pszRes);
-            EXPECT_STREQ(pszRes, osLC.c_str());
+            EXPECT_TRUE(pszRes);
+            if (pszRes)
+            {
+                EXPECT_STREQ(pszRes, osLC.c_str());
+            }
             CPLFree(pszRes);
         }
     }

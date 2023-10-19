@@ -199,8 +199,6 @@ struct OPJCodecWrapper
         : pCodec(nullptr), pStream(nullptr), psImage(nullptr),
           pasBandParams(nullptr), psJP2File(nullptr)
     {
-        opj_set_default_encoder_parameters(&compressParams);
-        opj_set_default_decoder_parameters(&decompressParams);
     }
     explicit OPJCodecWrapper(OPJCodecWrapper *rhs)
         : pCodec(rhs->pCodec), pStream(rhs->pStream), psImage(rhs->psImage),
@@ -352,6 +350,8 @@ struct OPJCodecWrapper
         opj_set_warning_handler(pCodec, JP2OpenJPEG_WarningCallback, nullptr);
         opj_set_error_handler(pCodec, JP2OpenJPEG_ErrorCallback, nullptr);
 
+        opj_dparameters_t decompressParams;
+        opj_set_default_decoder_parameters(&decompressParams);
         if (!opj_setup_decoder(pCodec, &decompressParams))
         {
             opj_destroy_codec(pCodec);
@@ -479,6 +479,8 @@ struct OPJCodecWrapper
         int bEPH =
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "EPH", "FALSE"));
 
+        opj_cparameters_t compressParams;
+        opj_set_default_encoder_parameters(&compressParams);
         if (bSOP)
             compressParams.csty |= 0x02;
         if (bEPH)
@@ -763,8 +765,6 @@ struct OPJCodecWrapper
         return pStream;
     }
 
-    opj_dparameters_t decompressParams;
-    opj_cparameters_t compressParams;
     jp2_codec *pCodec;
     jp2_stream *pStream;
     jp2_image *psImage;
