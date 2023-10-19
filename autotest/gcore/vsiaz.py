@@ -116,7 +116,7 @@ def test_vsiaz_fake_basic():
         "/vsiaz/az_fake_bucket/resource", ["START_DATE=20180213T123456"]
     )
     assert (
-        "azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12"
+        "azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=j0cUaaHtf2SW2usSsiN79DYx%2Fo1vWwq4lLYZSC5%2Bv7I%3D&sp=r&spr=https&sr=b&st=2018-02-13T12%3A34%3A56Z&sv=2020-12-06"
         in signed_url
     )
 
@@ -2740,3 +2740,101 @@ def test_vsiaz_copy_from_vsis3():
                 )
                 == 0
             )
+
+
+###############################################################################
+# Test server-side copy from Azure to Azure, but with source and target being
+# in same bucket
+
+
+def test_vsiaz_copy_from_vsiaz_same_bucket():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+
+        request.protocol_version = "HTTP/1.1"
+        h = request.headers
+        if (
+            "x-ms-copy-source" not in h
+            or h["x-ms-copy-source"]
+            != f"http://127.0.0.1:{gdaltest.webserver_port}/azure/blob/myaccount/az_container/test.bin"
+        ):
+            sys.stderr.write("Bad headers: %s\n" % str(h))
+            request.send_response(403)
+            return
+        request.send_response(202)
+        request.send_header("Connection", "close")
+        request.end_headers()
+
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/az_container/test2.bin",
+        custom_method=method,
+    )
+
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.CopyFile(
+                "/vsiaz/az_container/test.bin",
+                "/vsiaz/az_container/test2.bin",
+            )
+            == 0
+        )
+
+
+###############################################################################
+# Test server-side copy from Azure to Azure, but with source and target being
+# in different buckets
+
+
+def test_vsiaz_copy_from_vsiaz_different_storage_bucket():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/azure/blob/myaccount/az_source_container/test.bin",
+        200,
+        {"Content-Length": "3"},
+    )
+
+    def method(request):
+
+        request.protocol_version = "HTTP/1.1"
+        h = request.headers
+        if "x-ms-copy-source" not in h or (
+            not h["x-ms-copy-source"].startswith(
+                f"http://127.0.0.1:{gdaltest.webserver_port}/azure/blob/myaccount/az_source_container/test.bin?se="
+            )
+        ):
+            sys.stderr.write("Bad headers: %s\n" % str(h))
+            request.send_response(403)
+            return
+        request.send_response(202)
+        request.send_header("Connection", "close")
+        request.end_headers()
+
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/az_target_container/test.bin",
+        custom_method=method,
+    )
+
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.CopyFile(
+                "/vsiaz/az_source_container/test.bin",
+                "/vsiaz/az_target_container/test.bin",
+            )
+            == 0
+        )

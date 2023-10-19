@@ -985,13 +985,34 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     CPLString osSignedIdentifier(
         CSLFetchNameValueDef(papszOptions, "SIGNEDIDENTIFIER", ""));
 
+    const std::string osSignedVersion("2020-12-06");
+    const std::string osSignedProtocol("https");
+    const std::string osSignedResource("b");  // blob
+
+    std::string osCanonicalizedResource("/blob/");
+    osCanonicalizedResource += CPLAWSURLEncode(m_osStorageAccount, false);
+    osCanonicalizedResource += '/';
+    osCanonicalizedResource += CPLAWSURLEncode(m_osBucket, false);
+    osCanonicalizedResource += '/';
+    osCanonicalizedResource += CPLAWSURLEncode(m_osObjectKey, false);
+
+    // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas
     CPLString osStringToSign;
     osStringToSign += osSignedPermissions + "\n";
     osStringToSign += osStartDate + "\n";
     osStringToSign += osEndDate + "\n";
-    osStringToSign += "/" + m_osStorageAccount + "/" + m_osBucket + "\n";
+    osStringToSign += osCanonicalizedResource + "\n";
     osStringToSign += osSignedIdentifier + "\n";
-    osStringToSign += "2012-02-12";
+    osStringToSign += "\n";  // signedIP
+    osStringToSign += osSignedProtocol + "\n";
+    osStringToSign += osSignedVersion + "\n";
+    osStringToSign += osSignedResource + "\n";
+    osStringToSign += "\n";  // signedSnapshotTime
+    osStringToSign += "\n";  // signedEncryptionScope
+    osStringToSign += "\n";  // rscc
+    osStringToSign += "\n";  // rscd
+    osStringToSign += "\n";  // rsce
+    osStringToSign += "\n";  // rscl
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("AZURE", "osStringToSign = %s", osStringToSign.c_str());
@@ -1003,11 +1024,12 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     CPLString osSignature(GetSignature(osStringToSign, m_osStorageKey));
 
     ResetQueryParameters();
-    AddQueryParameter("sv", "2012-02-12");
+    AddQueryParameter("sv", osSignedVersion);
     AddQueryParameter("st", osStartDate);
     AddQueryParameter("se", osEndDate);
-    AddQueryParameter("sr", "c");
+    AddQueryParameter("sr", osSignedResource);
     AddQueryParameter("sp", osSignedPermissions);
+    AddQueryParameter("spr", osSignedProtocol);
     AddQueryParameter("sig", osSignature);
     if (!osSignedIdentifier.empty())
         AddQueryParameter("si", osSignedIdentifier);
