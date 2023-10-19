@@ -122,6 +122,7 @@ jobs:
 
     steps:
       - name: Set variables
+        # This logic needs to be kept in sync between linux_build.yml and converity_scan.yml
         run: |
           CONTAINER_TAG_CLEAN=$(echo ${CONTAINER_TAG} | tr -d -c "[:alnum:].-")
           echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}"
