@@ -91,6 +91,8 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
                                       double dfMaxY) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
+    virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
+                                CSLConstList papszOptions = nullptr) override;
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
