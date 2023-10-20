@@ -3877,9 +3877,14 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                 if (poDstLayer->IsArrowSchemaSupported(&schemaSrc, nullptr,
                                                        osErrorMsg))
                 {
-                    OGRFeatureDefn *poDstFDefn = poDstLayer->GetLayerDefn();
+                    const OGRFeatureDefn *poSrcFDefn =
+                        poSrcLayer->GetLayerDefn();
+                    const OGRFeatureDefn *poDstFDefn =
+                        poDstLayer->GetLayerDefn();
                     if (bJustCreatedLayer && poDstFDefn &&
-                        poDstFDefn->GetFieldCount() == 0)
+                        poDstFDefn->GetFieldCount() == 0 &&
+                        poDstFDefn->GetGeomFieldCount() ==
+                            poSrcFDefn->GetGeomFieldCount())
                     {
                         // Create output fields using CreateFieldFromArrowSchema()
                         for (int i = 0; i < schemaSrc.n_children; ++i)
@@ -3890,8 +3895,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                                 !EQUAL(pszFieldName, "wkb_geometry") &&
                                 !EQUAL(pszFieldName,
                                        poSrcLayer->GetFIDColumn()) &&
-                                poSrcLayer->GetLayerDefn()->GetGeomFieldIndex(
-                                    pszFieldName) < 0 &&
+                                poSrcFDefn->GetGeomFieldIndex(pszFieldName) <
+                                    0 &&
                                 !poDstLayer->CreateFieldFromArrowSchema(
                                     schemaSrc.children[i], nullptr))
                             {
