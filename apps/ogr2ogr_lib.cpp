@@ -3886,19 +3886,49 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                         poDstFDefn->GetGeomFieldCount() ==
                             poSrcFDefn->GetGeomFieldCount())
                     {
+                        std::map<std::string, OGRFieldSubType>
+                            oMapFieldNameToSubType;
+                        for (int i = 0; i < poSrcFDefn->GetFieldCount(); ++i)
+                        {
+                            const auto poSrcFieldDefn =
+                                poSrcFDefn->GetFieldDefn(i);
+                            if (poSrcFieldDefn->GetSubType() == OFSTJSON)
+                                oMapFieldNameToSubType[poSrcFieldDefn
+                                                           ->GetNameRef()] =
+                                    poSrcFieldDefn->GetSubType();
+                        }
+                        std::set<std::string> oSetGeomFieldNames;
+                        for (int i = 0; i < poSrcFDefn->GetGeomFieldCount();
+                             ++i)
+                        {
+                            const auto poSrcGeomFieldDefn =
+                                poSrcFDefn->GetGeomFieldDefn(i);
+                            oSetGeomFieldNames.insert(
+                                poSrcGeomFieldDefn->GetNameRef());
+                        }
+
                         // Create output fields using CreateFieldFromArrowSchema()
                         for (int i = 0; i < schemaSrc.n_children; ++i)
                         {
                             const char *pszFieldName =
                                 schemaSrc.children[i]->name;
+                            CPLStringList aosOptions;
+                            auto oIterSubType =
+                                oMapFieldNameToSubType.find(pszFieldName);
+                            if (oIterSubType != oMapFieldNameToSubType.end())
+                            {
+                                aosOptions.SetNameValue(
+                                    "SUBTYPE", OGR_GetFieldSubTypeName(
+                                                   oIterSubType->second));
+                            }
                             if (!EQUAL(pszFieldName, "OGC_FID") &&
                                 !EQUAL(pszFieldName, "wkb_geometry") &&
                                 !EQUAL(pszFieldName,
                                        poSrcLayer->GetFIDColumn()) &&
-                                poSrcFDefn->GetGeomFieldIndex(pszFieldName) <
-                                    0 &&
+                                oSetGeomFieldNames.find(pszFieldName) ==
+                                    oSetGeomFieldNames.end() &&
                                 !poDstLayer->CreateFieldFromArrowSchema(
-                                    schemaSrc.children[i], nullptr))
+                                    schemaSrc.children[i], aosOptions.List()))
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
                                          "Cannot create field %s",

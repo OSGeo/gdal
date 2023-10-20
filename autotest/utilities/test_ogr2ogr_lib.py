@@ -2123,9 +2123,13 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test")
     src_lyr.CreateField(ogr.FieldDefn("str_field"))
+    fld_defn = ogr.FieldDefn("json_field")
+    fld_defn.SetSubType(ogr.OFSTJSON)
+    src_lyr.CreateField(fld_defn)
     for i in range(2):
         f = ogr.Feature(src_lyr.GetLayerDefn())
         f["str_field"] = "foo%d" % i
+        f["json_field"] = '{"foo":"bar"}'
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 2)" % i))
         src_lyr.CreateFeature(f)
 
@@ -2148,10 +2152,17 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
 
     out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "str_field"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+    assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTNone
+    assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "json_field"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+    assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTJSON
     assert out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount())
 
     f = out_lyr.GetNextFeature()
     assert f["str_field"] == "foo0"
+    assert f["json_field"] == '{"foo":"bar"}'
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 2)"
 
     if not limit:

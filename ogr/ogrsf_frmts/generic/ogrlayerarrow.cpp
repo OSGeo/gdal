@@ -5020,7 +5020,14 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     {
         if (strcmp(format, sType.arrowType) == 0)
         {
-            return AddField(sType.eType, sType.eSubType, 0, 0);
+            OGRFieldSubType eSubType = sType.eSubType;
+            if (sType.eType == OFTString &&
+                EQUAL(CSLFetchNameValueDef(papszOptions, "SUBTYPE", ""),
+                      "JSON"))
+            {
+                eSubType = OFSTJSON;
+            }
+            return AddField(sType.eType, eSubType, 0, 0);
         }
     }
 
@@ -5139,10 +5146,13 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
  *
  * This method and CreateField() are mutually exclusive in the same session.
  *
+ * The base implementation of CreateFieldFromArrowSchema() supports the
+ * option SUBTYPE=JSON for fields of type string.
+ *
  * This method is the same as the C function OGR_L_CreateFieldFromArrowSchema().
  *
  * @param schema Schema of the field to create.
- * @param papszOptions Options (none currently). Null terminated list, or nullptr.
+ * @param papszOptions Options. Null terminated list, or nullptr.
  * @return true in case of success
  * @since 3.8
  */
@@ -5170,11 +5180,14 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  *
  * This method and CreateField() are mutually exclusive in the same session.
  *
+ * The base implementation of CreateFieldFromArrowSchema() supports the
+ * option SUBTYPE=JSON for fields of type string.
+ *
  * This method is the same as the C++ method OGRLayer::CreateFieldFromArrowSchema().
  *
  * @param hLayer Layer.
  * @param schema Schema of the field to create.
- * @param papszOptions Options (none currently). Null terminated list, or nullptr.
+ * @param papszOptions Options. Null terminated list, or nullptr.
  * @return true in case of success
  * @since 3.8
  */
