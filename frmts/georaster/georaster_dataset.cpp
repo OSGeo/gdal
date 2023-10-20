@@ -809,6 +809,21 @@ char **GeoRasterDataset::GetFileList()
     return papszFileList;
 }
 
+static bool ValidateCommaSeperatedNumbers(const char *str)
+{
+    const size_t nStrLength = strlen(str);
+    for (size_t nPos = 0; nPos < nStrLength; ++nPos)
+    {
+        // Allow only commas, numbers, and spaces
+        if (!(isdigit(str[nPos]) || str[nPos] == ',' || str[nPos] == ' ' ||
+              str[nPos] == '.'))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                     Create()
 //  ---------------------------------------------------------------------------
@@ -1272,12 +1287,83 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->nPyramidLevels = atoi(pszFetched);
     }
 
-    pszFetched = CSLFetchNameValue(papszOptions, "STATISTICS");
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS");
 
     if (pszFetched != nullptr)
     {
-        poGRD->poGeoRaster->bGenerateStatistics = true;
-        poGRD->poGeoRaster->sStatisticsLayerNumbers = pszFetched;
+        poGRD->poGeoRaster->bGenStats = EQUAL(pszFetched, "TRUE");
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGFACTOR");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStats = true;
+        poGRD->poGeoRaster->nGenStatsSamplingFactor = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGWINDOW");
+
+    if (pszFetched != nullptr)
+    {
+        if (ValidateCommaSeperatedNumbers(pszFetched))
+        {
+            poGRD->poGeoRaster->sGenStatsSamplingWindow = pszFetched;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong comma separated string for sampling window (%s)",
+                     pszFetched);
+            delete poGRD;
+            return nullptr;
+        }
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_HISTOGRAM");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStatsHistogram = pszFetched;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_LAYERNUMBERS");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->sGenStatsLayerNumbers = pszFetched;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_USEBIN");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStatsHistogram = EQUAL(pszFetched, "TRUE");
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_BINFUNCTION");
+
+    if (pszFetched != nullptr)
+    {
+        if (ValidateCommaSeperatedNumbers(pszFetched))
+        {
+            poGRD->poGeoRaster->sGenStatsBinFunction = pszFetched;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong comma separated string for bin function (%s)",
+                     pszFetched);
+            delete poGRD;
+            return nullptr;
+        }
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_NODATA");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStatsNodata = EQUAL(pszFetched, "TRUE");
     }
 
     //  -------------------------------------------------------------------

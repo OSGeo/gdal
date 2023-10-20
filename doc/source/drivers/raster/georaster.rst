@@ -185,7 +185,7 @@ Creation Options
       generated. If :co:`GENPYRAMID` is not informed the resample method NN
       (nearest neighbor) will apply.
 
--  .. co:: GENSTATISTICS
+-  .. co:: GENSTATS
       :choices: TRUE, FALSE
       :default: FALSE
 
@@ -201,23 +201,23 @@ Creation Options
       For example, when setting this value to 4, one-sixteenth of the cells are sampled.
       The higher the value, the less accurate the statistics are likely to be, 
       but the more quickly they will be computed.
-      Defaults 1, this means that all cells are sampled.
+      Defaults to 1, which means that all cells are sampled.
 
 -  .. co:: GENSTATS_SAMPLINGWINDOW
-      :choices: <integer\,integer\,...>
+      :choices: <integer\,integer\,integer\,integer>
 
       This parameter identifies the upper-left (row, column) and lower-right 
       (row, column) coordinates of a rectangular window, and raster space is assumed.
       The intersection of the MBR (minimum bounding rectangle) of the
       GeoRaster object in raster space is used for computing statistics.
-      When this value is not specified, then a value of NULL is used.
+      When this value is not specified, statistics are computed for the entire raster.
 
 -  .. co:: GENSTATS_HISTOGRAM
       :choices: TRUE, FALSE
       :default: FALSE
 
       When this value is set to TRUE, a histogram will be computed and stored.
-      Defaults to FALSE, so an histogram won't be generated.
+      Defaults to FALSE, so a histogram won't be generated.
 
 -  .. co:: GENSTATS_LAYERNUMBERS
       :choices: <integer\,integer\,...>, <integer>-<integer>
@@ -233,6 +233,7 @@ Creation Options
       :choices: TRUE, FALSE
       :default: TRUE
 
+      Defaults to TRUE.
       Specifies whether or not to use a provided bin function 
       (specified in :co:`GENSTATS_BINFUNCTION`).
       When this value is set to TRUE, the bin function to be
@@ -240,15 +241,29 @@ Creation Options
       specified in :co:`GENSTATS_BINFUNCTION`. (2) the bin
       function specified by the <binFunction> element in the
       GeoRaster XML metadata. (3) a dynamically generated bin
-      function.
-      Default value is TRUE.
+      function generated as follows: 
+      - min and max are the actual min and max values of the raster
+      - numbins is defined as:
+        - celldepth = 1, numbins = 2.
+        - cellDepth = 2, numbins = 4.
+        - cellDepth = 4, numbins = 8.
+        cellDepth >= 8, numbins = 256. 
+      
+      When this value is set to FALSE, then the bin function
+      to use is the one generated dynamically as previously
+      described.
 
 -  .. co:: GENSTATS_BINFUNCTION
       :choices: <integer\,integer\,integer\,integer\,integer>
       
       An array whose element specify the bin type, total
       number of bins, first bin number, minimum cell value,
-      and maximum cell value.
+      and maximum cell value. Bin type must be linear (0).
+      When this value is not specified, and :co:`GENSTATS_USEBIN`
+      is TRUE, then the bin function to use is as follows: 
+
+      1. A valid function defined in the GeoRaster metadata.
+      2. The same bin function generated when :co:`GENSTATS_USEBIN` is FALSE.
 
 -  .. co:: GENSTATS_NODATA
       :choices: TRUE, FALSE
@@ -441,23 +456,28 @@ Loading:
 General use of GeoRaster
 ------------------------
 
-| GeoRaster can be used in any GDAL command line tool with all the
-  available options. Like a image subset extraction or re-project:
-| % gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54
-  output.tif \\
+GeoRaster can be used in any GDAL command line tool with all the available options.
+Like a image subset extraction or re-project:
+
+.. code-block:: bash
+
+    % gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54 output.tif \
     -srcwin 0 0 800 600
-  % gdalwarp -of png geor:scott/tiger@dbdemo,st_rdt_1,130 output.png
-  -t_srs EPSG:9000913
-  Two different GeoRaster can be used as input and output on the same
-  operation:
-| % gdal_translate -of georaster
-  geor:scott/tiger@dbdemo,landsat,scene,id=54
-  geor:scott/tiger@proj1,projview,image -co INSERT="VALUES
-  (102, SDO_GEOR.INIT())"
-  Applications that use GDAL can theoretically read and write from
-  GeoRaster just like any other format but most of then are more
-  inclined to try to access files on the file system so one alternative
-  is to create VRT to represent the GeoRaster description, e.g.:
-| % gdal_translate -of VRT geor:scott/tiger@dbdemo,landsat,scene,id=54
-  view_54.vrt
-  % openenv view_54.vrt
+    % gdalwarp -of png geor:scott/tiger@dbdemo,st_rdt_1,130 output.png
+   -t_srs EPSG:9000913
+
+Two different GeoRaster can be used as input and output on the same operation:
+
+.. code-block:: bash
+
+    % gdal_translate -of georaster geor:scott/tiger@dbdemo,landsat,scene,id=54 \
+    geor:scott/tiger@proj1,projview,image -co INSERT="VALUES (102, SDO_GEOR.INIT())"
+
+Applications that use GDAL can theoretically read and write from GeoRaster just like
+any other format but most of then are more inclined to try to access files on the file
+system so one alternative is to create VRT to represent the GeoRaster description, e.g.:
+
+.. code-block:: bash
+
+    % gdal_translate -of VRT geor:scott/tiger@dbdemo,landsat,scene,id=54 view_54.vrt
+    % openenv view_54.vrt
