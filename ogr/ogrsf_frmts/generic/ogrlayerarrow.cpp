@@ -1549,9 +1549,13 @@ FillDateTimeArray(struct ArrowArray *psChild,
  *
  * @since GDAL 3.6
  */
-int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *,
+int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                 struct ArrowArray *out_array)
 {
+    ArrowArrayStreamPrivateDataSharedDataWrapper *poPrivate =
+        static_cast<ArrowArrayStreamPrivateDataSharedDataWrapper *>(
+            stream->private_data);
+
     const bool bIncludeFID = CPLTestBool(
         m_aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"));
     int nMaxBatchSize = atoi(m_aosArrowArrayStreamOptions.FetchNameValueDef(
@@ -1573,6 +1577,11 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *,
     }
 
     memset(out_array, 0, sizeof(*out_array));
+    if (poPrivate->poShared->m_bEOF)
+    {
+        return 0;
+    }
+
     auto poLayerDefn = GetLayerDefn();
     const int nFieldCount = poLayerDefn->GetFieldCount();
     const int nGeomFieldCount = poLayerDefn->GetGeomFieldCount();
@@ -1586,7 +1595,10 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *,
     {
         auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
         if (!poFeature)
+        {
+            poPrivate->poShared->m_bEOF = true;
             break;
+        }
         apoFeatures.emplace_back(std::move(poFeature));
     }
     if (apoFeatures.empty())
@@ -1914,6 +1926,7 @@ void OGRLayer::ReleaseStream(struct ArrowArrayStream *stream)
         static_cast<ArrowArrayStreamPrivateDataSharedDataWrapper *>(
             stream->private_data);
     poPrivate->poShared->m_bArrowArrayStreamInProgress = false;
+    poPrivate->poShared->m_bEOF = false;
     if (poPrivate->poShared->m_poLayer)
         poPrivate->poShared->m_poLayer->ResetReading();
     delete poPrivate;

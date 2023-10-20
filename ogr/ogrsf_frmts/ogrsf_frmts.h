@@ -130,6 +130,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     struct ArrowArrayStreamPrivateData
     {
         bool m_bArrowArrayStreamInProgress = false;
+        bool m_bEOF = false;
         OGRLayer *m_poLayer = nullptr;
     };
     std::shared_ptr<ArrowArrayStreamPrivateData>
