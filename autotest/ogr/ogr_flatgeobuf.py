@@ -1077,7 +1077,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
     for options in ([], ["MAX_FEATURES_IN_BATCH=1"]):
         # Test attribute filter
         lyr.SetAttributeFilter("int16 = -123")
-        stream = lyr.GetArrowStreamAsNumPy()
+        stream = lyr.GetArrowStreamAsNumPy(options)
         batches = [batch for batch in stream]
         lyr.SetAttributeFilter(None)
         assert len(batches) == 1
@@ -1087,7 +1087,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
 
         # Test spatial filter
         lyr.SetSpatialFilterRect(0, 0, 10, 10)
-        stream = lyr.GetArrowStreamAsNumPy()
+        stream = lyr.GetArrowStreamAsNumPy(options)
         batches = [batch for batch in stream]
         lyr.SetSpatialFilter(None)
         assert len(batches) == 1
@@ -1098,7 +1098,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
         # Test attribute + spatial filter: no result
         lyr.SetAttributeFilter("int16 = -123")
         lyr.SetSpatialFilterRect(0, 0, 10, 10)
-        stream = lyr.GetArrowStreamAsNumPy()
+        stream = lyr.GetArrowStreamAsNumPy(options)
         batches = [batch for batch in stream]
         lyr.SetAttributeFilter(None)
         lyr.SetSpatialFilter(None)
@@ -1107,7 +1107,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
         # Test attribute + spatial filter: result
         lyr.SetAttributeFilter("int16 = -123")
         lyr.SetSpatialFilterRect(-1, 2, -1, 2)
-        stream = lyr.GetArrowStreamAsNumPy()
+        stream = lyr.GetArrowStreamAsNumPy(options)
         batches = [batch for batch in stream]
         lyr.SetAttributeFilter(None)
         lyr.SetSpatialFilter(None)
@@ -1115,6 +1115,22 @@ def test_ogr_flatgeobuf_arrow_stream_numpy(layer_creation_options):
         assert len(batches[0]["int16"]) == 1
         assert batches[0]["OGC_FID"][0] == 1
         assert batches[0]["int16"][0] == -123
+
+    # Test fast FID filtering
+    lyr.SetAttributeFilter("FID IN (1, -2, 0)")
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["OGC_FID"]) == 2
+    assert set(batch["OGC_FID"]) == set([0, 1])
+
+    lyr.SetAttributeFilter("FID = 2")
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 0
 
     # Test ignored fields
     assert lyr.SetIgnoredFields(["OGR_GEOMETRY", "int16"]) == ogr.OGRERR_NONE
