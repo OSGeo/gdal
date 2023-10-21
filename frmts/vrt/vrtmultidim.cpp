@@ -1853,7 +1853,7 @@ VRTMDArraySourceFromArray::~VRTMDArraySourceFromArray()
         CPLDebug("VRT", "Dropping reference to %s", key.c_str());
         CacheEntry oPair;
         g_cacheSources.tryGet(key, oPair);
-        oPair.second.erase(oPair.second.find(this));
+        oPair.second.erase(this);
         g_cacheSources.insert(key, oPair);
     }
 }
