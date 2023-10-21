@@ -1281,6 +1281,39 @@ def test_ogr_rfc28_47(data_ds):
     ) as lyr:
         ogrtest.check_features_against_list(lyr, "EAS_ID", [171, 170])
 
+    with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1") as lyr:
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_FAILURE
+        assert lyr.GetNextFeature() is None
+
+    with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 1") as lyr:
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_FAILURE
+        assert lyr.GetNextFeature() is None
+
+    with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 2 OFFSET 1") as lyr:
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_NONE
+        f = lyr.GetNextFeature()
+        assert f["EAS_ID"] == 171
+        assert lyr.GetNextFeature() is None
+
+    with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 2 OFFSET 1") as lyr:
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_NONE
+        assert lyr.SetNextByIndex(1) == ogr.OGRERR_NONE
+        f = lyr.GetNextFeature()
+        assert f["EAS_ID"] == 171
+        assert lyr.GetNextFeature() is None
+
+    with data_ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 1") as lyr:
+        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_FAILURE
+        assert lyr.GetNextFeature() is None
+
+    with data_ds.ExecuteSQL("SELECT * FROM POLY OFFSET 1") as lyr:
+        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_FAILURE
+        assert lyr.GetNextFeature() is None
+
+    with data_ds.ExecuteSQL("SELECT * FROM POLY") as lyr:
+        assert lyr.SetNextByIndex((1 << 63) - 1) == ogr.OGRERR_FAILURE
+        assert lyr.GetNextFeature() is None
+
 
 ###############################################################################
 # Test date/datetime comparisons (#6810)
