@@ -350,6 +350,103 @@ def test_gdalbuildvrt_lib_separate_nodata_4(tmp_vsimem):
 
 
 ###############################################################################
+def test_gdalbuildvrt_lib_separate_multiband():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src1_ds.GetRasterBand(1).Fill(1)
+    src1_ds.GetRasterBand(2).Fill(2)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src2_ds.GetRasterBand(1).Fill(3)
+    src2_ds.GetRasterBand(2).Fill(4)
+    src2_ds.GetRasterBand(3).Fill(5)
+
+    ds = gdal.BuildVRT(
+        "",
+        [src1_ds, src2_ds],
+        separate=True,
+    )
+    assert ds.RasterCount == 5
+    for i in range(ds.RasterCount):
+        assert ds.GetRasterBand(i + 1).Checksum() == i + 1
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_multiband_regular_raster(tmp_vsimem):
+
+    src1_filename = str(tmp_vsimem / "src1.tif")
+    src1_ds = gdal.GetDriverByName("GTiff").Create(src1_filename, 1, 1, 2)
+    src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src1_ds.GetRasterBand(1).Fill(1)
+    src1_ds.GetRasterBand(2).Fill(2)
+    src1_ds = None
+
+    src2_filename = str(tmp_vsimem / "src2.tif")
+    src2_ds = gdal.GetDriverByName("GTiff").Create(src2_filename, 1, 1, 3)
+    src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src2_ds.GetRasterBand(1).Fill(3)
+    src2_ds.GetRasterBand(2).Fill(4)
+    src2_ds.GetRasterBand(3).Fill(5)
+    src2_ds = None
+
+    ds = gdal.BuildVRT(
+        "",
+        [src1_filename, src2_filename],
+        separate=True,
+    )
+    assert ds.RasterCount == 5
+    for i in range(ds.RasterCount):
+        assert ds.GetRasterBand(i + 1).Checksum() == i + 1
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_multiband_band_selection():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src1_ds.GetRasterBand(1).Fill(1)
+    src1_ds.GetRasterBand(2).Fill(2)
+
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+    src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src2_ds.GetRasterBand(1).Fill(3)
+    src2_ds.GetRasterBand(2).Fill(4)
+    src2_ds.GetRasterBand(3).Fill(5)
+
+    ds = gdal.BuildVRT(
+        "",
+        [src1_ds, src2_ds],
+        separate=True,
+        bandList=[2, 1],
+    )
+    assert ds.RasterCount == 4
+    assert ds.GetRasterBand(1).Checksum() == 2
+    assert ds.GetRasterBand(2).Checksum() == 1
+    assert ds.GetRasterBand(3).Checksum() == 4
+    assert ds.GetRasterBand(4).Checksum() == 3
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_multiband_band_selection_error():
+
+    src1_ds = gdal.GetDriverByName("MEM").Create("foo", 1, 1, 2)
+    src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+    src1_ds.GetRasterBand(1).Fill(1)
+    src1_ds.GetRasterBand(2).Fill(2)
+
+    with gdal.quiet_errors():
+        ds = gdal.BuildVRT(
+            "",
+            [src1_ds],
+            separate=True,
+            bandList=[1, 2, 3],
+        )
+    assert ds is None
+
+
+###############################################################################
 def test_gdalbuildvrt_lib_usemaskband_on_mask_band():
 
     src1_ds = gdal.GetDriverByName("MEM").Create("src1", 3, 1)
