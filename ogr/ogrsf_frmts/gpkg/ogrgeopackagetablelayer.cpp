@@ -3819,50 +3819,81 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 }
 
 /************************************************************************/
-/*                        findMinOrMax()                                */
+/*                      GetExtentFromRTree()                            */
 /************************************************************************/
 
-static bool findMinOrMax(GDALGeoPackageDataset *poDS,
-                         const CPLString &osRTreeName, const char *pszVarName,
-                         bool isMin, double &val)
+static bool GetExtentFromRTree(sqlite3 *hDB, const std::string &osRTreeName,
+                               double &minx, double &miny, double &maxx,
+                               double &maxy)
 {
-    // We proceed by dichotomic search since unfortunately SELECT MIN(minx)
-    // in a RTree is a slow operation
-    double minval = -1e10;
-    double maxval = 1e10;
-    val = 0.0;
-    double oldval = 0.0;
-    for (int i = 0; i < 100 && maxval - minval > 1e-18; i++)
+    // Cf https://github.com/sqlite/sqlite/blob/master/ext/rtree/rtree.c
+    // for the description of the content of the rtree _node table
+    // We fetch the root node (nodeno = 1) and iterates over its cells, to
+    // take the min/max of their minx/maxx/miny/maxy values.
+    char *pszSQL = sqlite3_mprintf(
+        "SELECT data FROM \"%w_node\" WHERE nodeno = 1", osRTreeName.c_str());
+    sqlite3_stmt *hStmt = nullptr;
+    CPL_IGNORE_RET_VAL(sqlite3_prepare_v2(hDB, pszSQL, -1, &hStmt, nullptr));
+    sqlite3_free(pszSQL);
+    bool bOK = false;
+    if (hStmt)
     {
-        val = (minval + maxval) / 2;
-        if (i > 0 && val == oldval)
+        if (sqlite3_step(hStmt) == SQLITE_ROW &&
+            sqlite3_column_type(hStmt, 0) == SQLITE_BLOB)
         {
-            break;
+            const int nBytes = sqlite3_column_bytes(hStmt, 0);
+            // coverity[tainted_data_return]
+            const GByte *pabyData =
+                static_cast<const GByte *>(sqlite3_column_blob(hStmt, 0));
+            constexpr int BLOB_HEADER_SIZE = 4;
+            if (nBytes > BLOB_HEADER_SIZE)
+            {
+                const int nCellCount = (pabyData[2] << 8) | pabyData[3];
+                constexpr int SIZEOF_CELL = 24;  // int64_t + 4 float
+                if (nCellCount >= 1 &&
+                    nBytes >= BLOB_HEADER_SIZE + SIZEOF_CELL * nCellCount)
+                {
+                    minx = std::numeric_limits<double>::max();
+                    miny = std::numeric_limits<double>::max();
+                    maxx = -std::numeric_limits<double>::max();
+                    maxy = -std::numeric_limits<double>::max();
+                    size_t offset = BLOB_HEADER_SIZE;
+                    for (int i = 0; i < nCellCount; ++i)
+                    {
+                        offset += sizeof(int64_t);
+
+                        float fMinX;
+                        memcpy(&fMinX, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMinX);
+                        minx = std::min(minx, static_cast<double>(fMinX));
+
+                        float fMaxX;
+                        memcpy(&fMaxX, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMaxX);
+                        maxx = std::max(maxx, static_cast<double>(fMaxX));
+
+                        float fMinY;
+                        memcpy(&fMinY, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMinY);
+                        miny = std::min(miny, static_cast<double>(fMinY));
+
+                        float fMaxY;
+                        memcpy(&fMaxY, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMaxY);
+                        maxy = std::max(maxy, static_cast<double>(fMaxY));
+                    }
+
+                    bOK = true;
+                }
+            }
         }
-        oldval = val;
-        CPLString osSQL = "SELECT 1 FROM ";
-        osSQL += "\"" + SQLEscapeName(osRTreeName) + "\"";
-        osSQL += " WHERE ";
-        osSQL += pszVarName;
-        osSQL += isMin ? " < " : " > ";
-        osSQL += CPLSPrintf("%.18g", val);
-        osSQL += " LIMIT 1";
-        auto oResult = SQLQuery(poDS->GetDB(), osSQL);
-        if (!oResult)
-        {
-            return false;
-        }
-        const bool bHasValue = oResult->RowCount() != 0;
-        if ((isMin && !bHasValue) || (!isMin && bHasValue))
-        {
-            minval = val;
-        }
-        else
-        {
-            maxval = val;
-        }
+        sqlite3_finalize(hStmt);
     }
-    return true;
+    return bOK;
 }
 
 /************************************************************************/
@@ -3888,39 +3919,28 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
     CancelAsyncNextArrowArray();
 
+    if (m_poFeatureDefn->GetGeomFieldCount() && HasSpatialIndex() &&
+        CPLTestBool(
+            CPLGetConfigOption("OGR_GPKG_USE_RTREE_FOR_GET_EXTENT", "TRUE")))
+    {
+        if (GetExtentFromRTree(m_poDS->GetDB(), m_osRTreeName, psExtent->MinX,
+                               psExtent->MinY, psExtent->MaxX, psExtent->MaxY))
+        {
+            m_poExtent = new OGREnvelope(*psExtent);
+            m_bExtentChanged = true;
+            SaveExtent();
+            return OGRERR_NONE;
+        }
+        else
+        {
+            UpdateContentsToNullExtent();
+            return OGRERR_FAILURE;
+        }
+    }
+
     /* User is OK with expensive calculation */
     if (bForce && m_poFeatureDefn->GetGeomFieldCount())
     {
-        if (HasSpatialIndex() &&
-            CPLTestBool(CPLGetConfigOption("OGR_GPKG_USE_RTREE_FOR_GET_EXTENT",
-                                           "TRUE")))
-        {
-            CPLString osSQL = "SELECT 1 FROM ";
-            osSQL += "\"" + SQLEscapeName(m_osRTreeName) + "\"";
-            osSQL += " LIMIT 1";
-            if (SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) == 0)
-            {
-                UpdateContentsToNullExtent();
-                return OGRERR_FAILURE;
-            }
-
-            double minx, miny, maxx, maxy;
-            if (findMinOrMax(m_poDS, m_osRTreeName, "MINX", true, minx) &&
-                findMinOrMax(m_poDS, m_osRTreeName, "MINY", true, miny) &&
-                findMinOrMax(m_poDS, m_osRTreeName, "MAXX", false, maxx) &&
-                findMinOrMax(m_poDS, m_osRTreeName, "MAXY", false, maxy))
-            {
-                psExtent->MinX = minx;
-                psExtent->MinY = miny;
-                psExtent->MaxX = maxx;
-                psExtent->MaxY = maxy;
-                m_poExtent = new OGREnvelope(*psExtent);
-                m_bExtentChanged = true;
-                SaveExtent();
-                return OGRERR_NONE;
-            }
-        }
-
         /* fall back to default implementation (scan all features) and save */
         /* the result for later */
         const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
@@ -5297,16 +5317,9 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
                 // If we do have a spatial index, and our filter contains the
                 // bounding box of the RTree, then just filter on non-null
                 // non-empty geometries.
-                CPLString osSQL = "SELECT 1 FROM ";
-                osSQL += "\"" + SQLEscapeName(m_osRTreeName) + "\"";
-                osSQL += " LIMIT 1";
-
                 double minx, miny, maxx, maxy;
-                if (SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) != 0 &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MINX", true, minx) &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MINY", true, miny) &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MAXX", false, maxx) &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MAXY", false, maxy) &&
+                if (GetExtentFromRTree(m_poDS->GetDB(), m_osRTreeName, minx,
+                                       miny, maxx, maxy) &&
                     sEnvelope.MinX <= minx && sEnvelope.MinY <= miny &&
                     sEnvelope.MaxX >= maxx && sEnvelope.MaxY >= maxy)
                 {

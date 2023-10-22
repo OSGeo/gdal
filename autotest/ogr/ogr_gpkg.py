@@ -3771,8 +3771,6 @@ def test_ogr_gpkg_38(tmp_vsimem, spatial_index):
 
     ds = ogr.Open(dbname, update=1)
     lyr = ds.GetLayer(0)
-    extent = lyr.GetExtent(force=0, can_return_null=True)
-    assert extent is None
     # Test that we can compute the extent of a layer that has none registered in gpkg_contents
     extent = lyr.GetExtent(force=1)
     assert extent == (1, 3, 2, 4)
