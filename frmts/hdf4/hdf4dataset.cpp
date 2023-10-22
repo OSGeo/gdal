@@ -41,6 +41,7 @@
 
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
+#include <cctype>
 
 extern const char *const pszGDALSignature;
 

@@ -45,6 +45,7 @@
 #include <vector>
 #include <set>
 #include <thread>
+#include <cctype>
 
 #define UNKNOWN_SRID -2
 #define DEFAULT_SRID 0

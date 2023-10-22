@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <cctype>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
