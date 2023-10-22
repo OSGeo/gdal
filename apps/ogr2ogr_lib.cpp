@@ -3943,7 +3943,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                     else if (!bJustCreatedLayer)
                     {
                         // If the layer already exist, get its schema, and
-                        // check that it looks to be the same as the souce
+                        // check that it looks to be the same as the source
                         // one
                         struct ArrowArrayStream streamDst;
                         if (poDstLayer->GetArrowStream(&streamDst, nullptr))

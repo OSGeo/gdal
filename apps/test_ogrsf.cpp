@@ -4000,7 +4000,7 @@ static int TestLayerGetArrowStream(OGRLayer *poLayer)
     }
 
     bool bRet = true;
-    // We are a bit in non-specified behaviour below by calling get_next()
+    // We are a bit in non-specified behavior below by calling get_next()
     // after end of iteration.
     {
         struct ArrowArray array;

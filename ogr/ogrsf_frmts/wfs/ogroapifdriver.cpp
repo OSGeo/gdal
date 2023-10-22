@@ -113,7 +113,7 @@ class OGROAPIFDataset final : public GDALDataset
     bool LoadJSONCollections(const CPLString &osResultIn);
 
     /**
-     * Determines tha page size by making a call to the API endpoint to get the server's
+     * Determines the page size by making a call to the API endpoint to get the server's
      * default and max limits for the collection items specified by itemsUrl
      */
     void DeterminePageSizeFromAPI(const std::string &itemsUrl);

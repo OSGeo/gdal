@@ -5656,7 +5656,7 @@ static inline uint64_t GetUInt64Value(const struct ArrowSchema *schema,
             nVal = GetValue<uint64_t>(array, iFeature);
             break;
         default:
-            // Shouldn't happend given checks in BuildOGRFieldInfo()
+            // Shouldn't happen given checks in BuildOGRFieldInfo()
             CPLAssert(false);
             break;
     }
