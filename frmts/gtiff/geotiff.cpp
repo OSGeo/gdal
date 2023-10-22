@@ -39,6 +39,7 @@
 #include "tiffio.h"
 #include "tif_jxl.h"
 #include "xtiffio.h"
+#include <cctype>
 
 // Needed to expose WEBP_LOSSLESS option
 #ifdef WEBP_SUPPORT
