@@ -8389,7 +8389,10 @@ def test_ogr_gpkg_get_geometry_types(tmp_vsimem):
 
 
 @pytest.mark.parametrize("write_to_disk", (True, False), ids=["on_disk", "in_memory"])
-def test_ogr_gpkg_background_rtree_build(tmp_path, tmp_vsimem, write_to_disk):
+@pytest.mark.parametrize("OGR_GPKG_MAX_RAM_USAGE_RTREE", (1, 1000, None))
+def test_ogr_gpkg_background_rtree_build(
+    tmp_path, tmp_vsimem, write_to_disk, OGR_GPKG_MAX_RAM_USAGE_RTREE
+):
 
     if write_to_disk:
         filename = tmp_path / "test_ogr_gpkg_background_rtree_build.gpkg"
@@ -8397,46 +8400,67 @@ def test_ogr_gpkg_background_rtree_build(tmp_path, tmp_vsimem, write_to_disk):
         filename = tmp_vsimem / "test_ogr_gpkg_background_rtree_build.gpkg"
 
     # Batch insertion only
-
     gdal.ErrorReset()
-    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
-    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
-        lyr = ds.CreateLayer("foo")
-    assert lyr.StartTransaction() == ogr.OGRERR_NONE
-    for i in range(1000):
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (i, i)))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        if i == 500:
-            assert lyr.CommitTransaction() == ogr.OGRERR_NONE
-            assert lyr.StartTransaction() == ogr.OGRERR_NONE
-    assert lyr.CommitTransaction() == ogr.OGRERR_NONE
-    assert gdal.GetLastErrorMsg() == ""
+    with gdaltest.config_option(
+        "OGR_GPKG_MAX_RAM_USAGE_RTREE",
+        str(OGR_GPKG_MAX_RAM_USAGE_RTREE)
+        if OGR_GPKG_MAX_RAM_USAGE_RTREE is not None
+        else None,
+        thread_local=False,
+    ):
+        ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+        with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+            lyr = ds.CreateLayer("foo")
+        assert lyr.StartTransaction() == ogr.OGRERR_NONE
+        for i in range(1000):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometryDirectly(
+                ogr.CreateGeometryFromWkt("POINT(%d %d)" % (10000 + i, i))
+            )
+            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+            if i == 500:
+                assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+                assert lyr.StartTransaction() == ogr.OGRERR_NONE
+        assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+        assert gdal.GetLastErrorMsg() == ""
 
-    with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
-        lyr = ds.CreateLayer("bar")
-    assert lyr.StartTransaction() == ogr.OGRERR_NONE
-    for i in range(900):
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (-i, -i)))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        if i == 500:
-            assert lyr.CommitTransaction() == ogr.OGRERR_NONE
-            assert lyr.StartTransaction() == ogr.OGRERR_NONE
-    assert lyr.CommitTransaction() == ogr.OGRERR_NONE
-    assert gdal.GetLastErrorMsg() == ""
+        with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
+            lyr = ds.CreateLayer("bar")
+        assert lyr.StartTransaction() == ogr.OGRERR_NONE
+        for i in range(900):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(%d %d)" % (-i, -i)))
+            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+            if i == 500:
+                assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+                assert lyr.StartTransaction() == ogr.OGRERR_NONE
+        assert lyr.CommitTransaction() == ogr.OGRERR_NONE
+        assert gdal.GetLastErrorMsg() == ""
 
-    ds = None
+        ds.Close()
+
     assert gdal.VSIStatL(filename.with_suffix(".gpkg.tmp_rtree_foo.db")) is None
     assert gdal.VSIStatL(filename.with_suffix(".gpkg.tmp_rtree_bar.db")) is None
 
     ds = ogr.Open(filename)
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
-    assert sql_lyr.GetFeatureCount() == 1000
-    ds.ReleaseResultSet(sql_lyr)
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_bar_geom")
-    assert sql_lyr.GetFeatureCount() == 900
-    ds.ReleaseResultSet(sql_lyr)
+    with ds.ExecuteSQL("SELECT rtreecheck('rtree_foo_geom')") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "ok"
+    with ds.ExecuteSQL("SELECT * FROM rtree_foo_geom") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1000
+    foo_lyr = ds.GetLayerByName("foo")
+    for i in range(1000):
+        foo_lyr.SetSpatialFilterRect(10000 + i - 0.5, i - 0.5, 10000 + i + 0.5, i + 0.5)
+        assert foo_lyr.GetFeatureCount() == 1, i
+    with ds.ExecuteSQL("SELECT rtreecheck('rtree_bar_geom')") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "ok"
+    with ds.ExecuteSQL("SELECT * FROM rtree_bar_geom") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 900
+    bar_lyr = ds.GetLayerByName("bar")
+    for i in range(900):
+        bar_lyr.SetSpatialFilterRect(-i - 0.5, -i - 0.5, -i + 0.5, -i + 0.5)
+        assert bar_lyr.GetFeatureCount() == 1, i
     ds = None
 
     gdal.Unlink(filename)

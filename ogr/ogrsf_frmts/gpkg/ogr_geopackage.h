@@ -597,6 +597,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
 /************************************************************************/
 
 struct OGRGPKGTableLayerFillArrowArray;
+struct sqlite_rtree_bl;
 
 class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 {
@@ -674,6 +675,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     std::string m_osAsyncDBName{};
     std::string m_osAsyncDBAttachName{};
     sqlite3 *m_hAsyncDBHandle = nullptr;
+    sqlite_rtree_bl *m_hRTree = nullptr;
     cpl::ThreadSafeQueue<std::vector<GPKGRTreeEntry>> m_oQueueRTreeEntries{};
     bool m_bAllowedRTreeThread = false;
     bool m_bThreadRTreeStarted = false;
@@ -854,6 +856,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 
     void CreateSpatialIndexIfNecessary();
     void FinishOrDisableThreadedRTree();
+    bool FlushInMemoryRTree(sqlite3 *hRTreeDB, const char *pszRTreeName);
     bool CreateSpatialIndex(const char *pszTableName = nullptr);
     bool DropSpatialIndex(bool bCalledFromSQLFunction = false);
     CPLString ReturnSQLCreateSpatialIndexTriggers(const char *pszTableName,

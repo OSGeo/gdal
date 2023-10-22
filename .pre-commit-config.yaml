@@ -54,5 +54,6 @@ repos:
                 ogr/ogrsf_frmts/cad/libopencad/|
                 ogr/ogrsf_frmts/geojson/libjson/|
                 ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
-                ogr/ogrsf_frmts/pmtiles/pmtiles/
+                ogr/ogrsf_frmts/pmtiles/pmtiles/|
+                ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load
               )
