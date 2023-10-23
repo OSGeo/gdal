@@ -2535,7 +2535,7 @@ void GeoRasterDataset::SetSubdatasets(GeoRasterWrapper *poGRW)
 
                 papszSubdatasets = CSLSetNameValue(
                     papszSubdatasets, CPLSPrintf("SUBDATASET_%d_DESC", nCount),
-                    CPLSPrintf("%s.Table=%s", szOwner, szTable));
+                    CPLSPrintf("Table=%s.%s", szOwner, szTable));
 
                 nCount++;
             } while (poStmt->Fetch());
