@@ -3682,6 +3682,16 @@ static void OverrideArrowRelease(OGRArrowDataset *poDS, T *obj)
         std::shared_ptr<arrow::MemoryPool> poMemoryPool{};
         void (*pfnPreviousRelease)(T *) = nullptr;
         void *pPreviousPrivateData = nullptr;
+
+        static void release(T *l_obj)
+        {
+            OverriddenPrivate *myPrivate =
+                static_cast<OverriddenPrivate *>(l_obj->private_data);
+            l_obj->private_data = myPrivate->pPreviousPrivateData;
+            l_obj->release = myPrivate->pfnPreviousRelease;
+            l_obj->release(l_obj);
+            delete myPrivate;
+        }
     };
 
     auto overriddenPrivate = new OverriddenPrivate();
@@ -3689,15 +3699,7 @@ static void OverrideArrowRelease(OGRArrowDataset *poDS, T *obj)
     overriddenPrivate->pPreviousPrivateData = obj->private_data;
     overriddenPrivate->pfnPreviousRelease = obj->release;
 
-    obj->release = [](T *l_obj)
-    {
-        OverriddenPrivate *myPrivate =
-            static_cast<OverriddenPrivate *>(l_obj->private_data);
-        l_obj->private_data = myPrivate->pPreviousPrivateData;
-        l_obj->release = myPrivate->pfnPreviousRelease;
-        l_obj->release(l_obj);
-        delete myPrivate;
-    };
+    obj->release = OverriddenPrivate::release;
     obj->private_data = overriddenPrivate;
 }
 
@@ -4051,6 +4053,9 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                  aosOptions.List());
             if (out_array->length == 0)
             {
+                if (out_array->release)
+                    out_array->release(out_array);
+                memset(out_array, 0, sizeof(*out_array));
                 // If there are no records after filtering, start again
                 // with a new batch
                 continue;
