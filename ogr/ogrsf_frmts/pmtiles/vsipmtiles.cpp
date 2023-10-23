@@ -194,10 +194,10 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
     } while (false);
 
     GDALOpenInfo oOpenInfo(osPmtilesFilename.c_str(), GA_ReadOnly);
-    oOpenInfo.papszOpenOptions =
-        CSLSetNameValue(oOpenInfo.papszOpenOptions, "DECOMPRESS_TILES", "NO");
-    oOpenInfo.papszOpenOptions = CSLSetNameValue(oOpenInfo.papszOpenOptions,
-                                                 "ACCEPT_ANY_TILE_TYPE", "YES");
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("DECOMPRESS_TILES", "NO");
+    aosOptions.SetNameValue("ACCEPT_ANY_TILE_TYPE", "YES");
+    oOpenInfo.papszOpenOptions = aosOptions.List();
     auto poDS = cpl::make_unique<OGRPMTilesDataset>();
     {
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
