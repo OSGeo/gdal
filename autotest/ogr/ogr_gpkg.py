@@ -8469,22 +8469,29 @@ def test_ogr_gpkg_background_rtree_build(
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("footoooooooooooooooooooooooooooooooooooooooooolong")
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(10):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
     assert lyr.SetFeature(f) == ogr.OGRERR_NONE
     ds = None
 
     ds = ogr.Open(filename)
-    sql_lyr = ds.ExecuteSQL(
+    with ds.ExecuteSQL(
+        "SELECT rtreecheck('rtree_footoooooooooooooooooooooooooooooooooooooooooolong_geom')"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "ok"
+    with ds.ExecuteSQL(
         "SELECT * FROM rtree_footoooooooooooooooooooooooooooooooooooooooooolong_geom"
-    )
-    assert sql_lyr.GetFeatureCount() == 1
-    ds.ReleaseResultSet(sql_lyr)
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 10
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(0.5, 0.5, 1.5, 1.5)
     assert lyr.GetFeatureCount() == 1
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
+    assert lyr.GetFeatureCount() == 9
     ds = None
 
     gdal.Unlink(filename)
@@ -8493,26 +8500,30 @@ def test_ogr_gpkg_background_rtree_build(
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("foo with space")
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(10):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
     assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
     ds = None
 
     ds = ogr.Open(filename)
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM "rtree_foo with space_geom"')
-    assert sql_lyr.GetFeatureCount() == 0
-    ds.ReleaseResultSet(sql_lyr)
+    with ds.ExecuteSQL("SELECT rtreecheck('rtree_foo with space_geom')") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "ok"
+    with ds.ExecuteSQL('SELECT * FROM "rtree_foo with space_geom"') as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 9
     ds = None
 
     # Test RollbackTransaction() after batch insertion
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
         lyr = ds.CreateLayer("foo")
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(10):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     lyr.StartTransaction()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 1)"))
@@ -8521,12 +8532,14 @@ def test_ogr_gpkg_background_rtree_build(
     ds = None
 
     ds = ogr.Open(filename)
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM rtree_foo_geom")
-    assert sql_lyr.GetFeatureCount() == 1
-    ds.ReleaseResultSet(sql_lyr)
+    with ds.ExecuteSQL("SELECT rtreecheck('rtree_foo_geom')") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == "ok"
+    with ds.ExecuteSQL("SELECT * FROM rtree_foo_geom") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 10
     lyr = ds.GetLayer(0)
-    lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
-    assert lyr.GetFeatureCount() == 1
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 1.5, 1.5)
+    assert lyr.GetFeatureCount() == 10
     ds = None
 
 
