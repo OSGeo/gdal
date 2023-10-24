@@ -809,6 +809,21 @@ char **GeoRasterDataset::GetFileList()
     return papszFileList;
 }
 
+static bool ValidateCommaSeperatedNumbers(const char *str)
+{
+    const size_t nStrLength = strlen(str);
+    for (size_t nPos = 0; nPos < nStrLength; ++nPos)
+    {
+        // Allow only commas, numbers, and spaces
+        if (!(isdigit(str[nPos]) || str[nPos] == ',' || str[nPos] == ' ' ||
+              str[nPos] == '.'))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                     Create()
 //  ---------------------------------------------------------------------------
@@ -1272,12 +1287,83 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->nPyramidLevels = atoi(pszFetched);
     }
 
-    pszFetched = CSLFetchNameValue(papszOptions, "STATISTICS");
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS");
 
     if (pszFetched != nullptr)
     {
-        poGRD->poGeoRaster->bGenerateStatistics = true;
-        poGRD->poGeoRaster->sStatisticsLayerNumbers = pszFetched;
+        poGRD->poGeoRaster->bGenStats = EQUAL(pszFetched, "TRUE");
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGFACTOR");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStats = true;
+        poGRD->poGeoRaster->nGenStatsSamplingFactor = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGWINDOW");
+
+    if (pszFetched != nullptr)
+    {
+        if (ValidateCommaSeperatedNumbers(pszFetched))
+        {
+            poGRD->poGeoRaster->sGenStatsSamplingWindow = pszFetched;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong comma separated string for sampling window (%s)",
+                     pszFetched);
+            delete poGRD;
+            return nullptr;
+        }
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_HISTOGRAM");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStatsHistogram = pszFetched;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_LAYERNUMBERS");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->sGenStatsLayerNumbers = pszFetched;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_USEBIN");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStatsHistogram = EQUAL(pszFetched, "TRUE");
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_BINFUNCTION");
+
+    if (pszFetched != nullptr)
+    {
+        if (ValidateCommaSeperatedNumbers(pszFetched))
+        {
+            poGRD->poGeoRaster->sGenStatsBinFunction = pszFetched;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong comma separated string for bin function (%s)",
+                     pszFetched);
+            delete poGRD;
+            return nullptr;
+        }
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_NODATA");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStatsNodata = EQUAL(pszFetched, "TRUE");
     }
 
     //  -------------------------------------------------------------------
@@ -2449,7 +2535,7 @@ void GeoRasterDataset::SetSubdatasets(GeoRasterWrapper *poGRW)
 
                 papszSubdatasets = CSLSetNameValue(
                     papszSubdatasets, CPLSPrintf("SUBDATASET_%d_DESC", nCount),
-                    CPLSPrintf("%s.Table=%s", szOwner, szTable));
+                    CPLSPrintf("Table=%s.%s", szOwner, szTable));
 
                 nCount++;
             } while (poStmt->Fetch());
@@ -2920,9 +3006,29 @@ void CPL_DLL GDALRegister_GEOR()
         "  </Option>"
         "  <Option name='GENPYRLEVELS'  type='int'  description='Number of "
         "pyramid level to generate'/>"
-        "  <Option name='STATISTICS'    type='string' "
-        " description='Generate statistics for the raster, value should be in'"
-        "the form \"1,2,3\" (1 to 3) or \"1-10\" />"
+        " <Option name='GENSTATS' type='boolean'"
+        "description='Generate statistics from the given rasters'"
+        "default='FALSE' />"
+        " <Option name='GENSTATS_SAMPLINGFACTOR' type='int'"
+        "description='Number of cells skipped in both row and column dimensions when"
+        "the statistics are computed' "
+        "default='1' />"
+        " <Option name='GENSTATS_SAMPLINGWINDOW' type='string'"
+        "description='Coordinates of a rectangular window' />"
+        " <Option name='GENSTATS_HISTOGRAM' type='boolean'"
+        "description='Compute a histogram' default='FALSE' />"
+        " <Option name='GENSTATS_LAYERNUMBERS' type='string'"
+        "description='layer numbers and range for which to compute"
+        "the statistics' />"
+        " <Option name='GENSTATS_USEBIN' type='boolean'"
+        "description='Use a bin function provided by GENSTATS_BINFUNCTION'"
+        " default='TRUE' />"
+        " <Option name='GENSTATS_BINFUNCTION' type='string'"
+        "description='Array to specify the bin function' />"
+        " <Option name='GENSTATS_NODATA' type='boolean'"
+        "description='whether or not to compare each cell values"
+        "with NODATA values defined in the metadata'"
+        " default='FALSE' />"
         "  <Option name='OBJECTTABLE' type='boolean' "
         "description='Create RDT as object table'/>"
         "  <Option name='SPATIALEXTENT' type='boolean' "
