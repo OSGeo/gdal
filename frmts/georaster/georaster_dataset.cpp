@@ -3006,7 +3006,7 @@ void CPL_DLL GDALRegister_GEOR()
         "  </Option>"
         "  <Option name='GENPYRLEVELS'  type='int'  description='Number of "
         "pyramid level to generate'/>"
-        " <Option name='GENSTATISTICS' type='boolean'"
+        " <Option name='GENSTATS' type='boolean'"
         "description='Generate statistics from the given rasters'"
         "default='FALSE' />"
         " <Option name='GENSTATS_SAMPLINGFACTOR' type='int'"
