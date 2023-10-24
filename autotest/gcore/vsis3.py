@@ -255,13 +255,13 @@ def test_vsis3_1(aws_test_config):
     with gdaltest.config_options({"AWS_SECRET_ACCESS_KEY": ""}, thread_local=False):
         gdal.ErrorReset()
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/foo/bar")
         assert f is None
         assert gdal.VSIGetLastErrorMsg().find("AWS_SECRET_ACCESS_KEY") >= 0
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/foo/bar")
         assert f is None
         assert gdal.VSIGetLastErrorMsg().find("AWS_SECRET_ACCESS_KEY") >= 0
@@ -272,7 +272,7 @@ def test_vsis3_1(aws_test_config):
     ):
         # Missing AWS_ACCESS_KEY_ID
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/foo/bar")
         assert f is None
         assert gdal.VSIGetLastErrorMsg().find("AWS_ACCESS_KEY_ID") >= 0
@@ -287,7 +287,7 @@ def test_vsis3_1(aws_test_config):
         # ERROR 1: The AWS Access Key Id you provided does not exist in our
         # records.
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/foo/bar.baz")
         if f is not None or gdal.VSIGetLastErrorMsg() == "":
             if f is not None:
@@ -297,7 +297,7 @@ def test_vsis3_1(aws_test_config):
             pytest.fail(gdal.VSIGetLastErrorMsg())
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/foo/bar.baz")
         assert f is None and gdal.VSIGetLastErrorMsg() != ""
 
@@ -370,6 +370,9 @@ def get_s3_fake_bucket_resource_method_with_security_token(request):
 
 
 def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_port):
+
+    gdal.VSICurlClearCache()
+
     signed_url = gdal.GetSignedURL("/vsis3/s3_fake_bucket/resource")
     expected_url_8080 = (
         "http://127.0.0.1:8080/s3_fake_bucket/resource"
@@ -659,7 +662,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/non_xml_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("bla") >= 0
 
@@ -679,7 +682,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/invalid_xml_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<oops>") >= 0
 
@@ -699,7 +702,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/no_code_in_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error/>") >= 0
 
@@ -722,7 +725,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read(
                 "/vsis3_streaming/s3_fake_bucket"
                 "/no_region_in_AuthorizationHeaderMalformed_error"
@@ -748,7 +751,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read(
                 "/vsis3_streaming/s3_fake_bucket"
                 "/no_endpoint_in_PermanentRedirect_error"
@@ -774,7 +777,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3_streaming/s3_fake_bucket/no_message_in_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error>") >= 0
 
@@ -833,7 +836,7 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         "/vsis3/s3_fake_bucket_with_requester_pays", {"AWS_REQUEST_PAYER": "requester"}
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = open_for_read("/vsis3/s3_fake_bucket_with_requester_pays/resource")
                 assert f is not None
                 data = gdal.VSIFReadL(1, 3, f).decode("ascii")
@@ -943,7 +946,7 @@ def test_vsis3_open_after_config_option_change(aws_test_config, webserver_port):
     handler.add("GET", "/test_vsis3_change_config_options/?delimiter=%2F", 403)
     handler.add("GET", "/test_vsis3_change_config_options/test.bin", 403)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsis3/test_vsis3_change_config_options/test.bin")
         assert f is None
 
@@ -1117,7 +1120,13 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    expected_dir_contents = ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
+
+    assert (
+        gdal.ReadDir("/vsis3_streaming/s3_fake_bucket2/a_dir with_space")
+        == expected_dir_contents
+    )
 
     assert (
         gdal.VSIStatL(
@@ -1134,7 +1143,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     # Same as above: cached
     dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir(
@@ -1153,7 +1162,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     )
 
     dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
 
     # Test partial clear of the cache
     gdal.VSICurlPartialClearCache("/vsis3/s3_fake_bucket2/a_dir with_space")
@@ -1903,7 +1912,7 @@ def test_vsis3_opendir_synthetize_missing_directory(aws_test_config, webserver_p
 
 def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3", "wb")
     assert f is None
 
@@ -1970,7 +1979,7 @@ def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/empty_file.bin", "wb")
         assert f is not None
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFSeekL(f, 1, 0)
         assert ret != 0
         gdal.VSIFCloseL(f)
@@ -1980,7 +1989,7 @@ def test_vsis3_4(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/empty_file.bin", "wb")
         assert f is not None
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFReadL(1, 1, f)
         assert not ret
         gdal.VSIFCloseL(f)
@@ -1992,7 +2001,7 @@ def test_vsis3_4(aws_test_config, webserver_port):
         f = gdal.VSIFOpenL("/vsis3/s3_fake_bucket3/empty_file_error.bin", "wb")
         assert f is not None
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFCloseL(f)
     assert gdal.GetLastErrorMsg() != ""
 
@@ -2172,7 +2181,7 @@ def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
         handler.add("PUT", "/s3_fake_bucket3/put_with_retry.bin", 502)
         handler.add("PUT", "/s3_fake_bucket3/put_with_retry.bin", custom_method=method)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 gdal.VSIFCloseL(f)
 
@@ -2183,7 +2192,7 @@ def test_vsis3_write_single_put_retry(aws_test_config, webserver_port):
 
 def test_vsis3_5(aws_test_config, webserver_port):
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsis3/foo")
     assert ret != 0
 
@@ -2219,7 +2228,7 @@ def test_vsis3_5(aws_test_config, webserver_port):
     handler.add("GET", "/s3_delete_bucket/delete_file_error", 200)
     handler.add("DELETE", "/s3_delete_bucket/delete_file_error", 403)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsis3/s3_delete_bucket/delete_file_error")
     assert ret != 0
 
@@ -2720,7 +2729,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
             ):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == 0
             gdal.ErrorReset()
@@ -2787,7 +2796,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
             ):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None, filename
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == 0, filename
             gdal.ErrorReset()
@@ -2827,11 +2836,11 @@ def test_vsis3_6(aws_test_config, webserver_port):
         ):  # 1 MB
             f = gdal.VSIFOpenL(filename, "wb")
         assert f is not None, filename
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == 0, filename
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFCloseL(f)
         assert gdal.GetLastErrorMsg() != "", filename
 
@@ -2886,7 +2895,7 @@ def test_vsis3_6(aws_test_config, webserver_port):
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == size, filename
             gdal.ErrorReset()
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != "", filename
 
@@ -2944,7 +2953,7 @@ def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
             {},
         )
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == size
@@ -2967,7 +2976,7 @@ def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
             {},
         )
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 gdal.VSIFCloseL(f)
 
@@ -3243,12 +3252,12 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
 
     options = ["SYNC_STRATEGY=ETAG"]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         handler = webserver.SequentialHandler()
         with webserver.install_http_handler(handler):
             assert not gdal.Sync("/i_do/not/exist", "/vsis3/", options=options)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         handler = webserver.SequentialHandler()
         handler.add("GET", "/do_not/exist", 404)
         handler.add("GET", "/do_not/?delimiter=%2F&max-keys=100&prefix=exist%2F", 404)
@@ -3483,6 +3492,44 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
         )
 
     gdal.Unlink("/vsimem/testsync.txt")
+
+
+###############################################################################
+# Test vsisync() failure
+
+
+@gdaltest.enable_exceptions()
+def test_vsis3_sync_failed(aws_test_config, webserver_port):
+
+    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+
+    # S3 to local: S3 file is older -> download
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        206,
+        {
+            "Content-Length": "3",
+            "Content-Range": "bytes 0-2/3",
+            "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
+        },
+        "xyz",
+    )
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        200,
+        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
+        "xy",  # only returns 2 bytes instead of 3
+    )
+    with webserver.install_http_handler(handler):
+        with pytest.raises(
+            Exception,
+            match="Copying of /vsis3/out/testsync.txt to /vsimem/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+        ):
+            gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/")
 
 
 ###############################################################################
@@ -3954,7 +4001,7 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
         thread_local=False,
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert not gdal.Sync(
                     "/vsimem/test",
                     "/vsis3/test_bucket",
@@ -4046,11 +4093,11 @@ def test_vsis3_metadata(aws_test_config, webserver_port):
         assert gdal.SetFileMetadata("/vsis3/test_metadata/foo.txt", {}, "TAGS")
 
     # Error case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.GetFileMetadata("/vsis3/test_metadata/foo.txt", "UNSUPPORTED") == {}
 
     # Error case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.SetFileMetadata(
             "/vsis3/test_metadata/foo.txt", {}, "UNSUPPORTED"
         )
@@ -4093,7 +4140,7 @@ def test_vsis3_random_write(aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "w+b") is None
 
     with gdaltest.config_option(
@@ -4130,7 +4177,7 @@ def test_vsis3_random_write_failure_1(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("PUT", "/random_write/test.bin", 400, {})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert gdal.VSIFCloseL(f) != 0
 
 
@@ -4153,7 +4200,7 @@ def test_vsis3_random_write_failure_2(aws_test_config, webserver_port):
     handler = webserver.SequentialHandler()
     handler.add("POST", "/random_write/test.bin?uploads", 400, {})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert gdal.VSIFCloseL(f) != 0
 
 
@@ -4186,6 +4233,76 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
     handler.add("PUT", "/random_write/test.tif", 200, {})
     with webserver.install_http_handler(handler):
         ds = None
+
+
+###############################################################################
+# Test r+ access
+
+
+def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    with gdal.quiet_errors():
+        assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b") is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/random_write/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents>
+                    <Key>test.bin</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>1</Size>
+                </Contents>
+            </ListBucketResult>
+            """,
+    )
+    handler.add("GET", "/random_write/test.bin", 200, {}, "f")
+    handler.add("PUT", "/random_write/test.bin", 200, {}, expected_body=b"foo")
+    with webserver.install_http_handler(handler), gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
+        f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
+        assert f
+        assert gdal.VSIFSeekL(f, 1, 0) == 0
+        assert gdal.VSIFWriteL("oo", 2, 1, f) == 1
+        assert gdal.VSIFCloseL(f) == 0
+
+
+###############################################################################
+# Test r+ access
+
+
+def test_vsis3_random_write_on_existing_file_that_does_not_exist(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/random_write/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents/>
+            </ListBucketResult>
+            """,
+    )
+    with webserver.install_http_handler(handler), gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
+        f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
+        assert f is None
 
 
 ###############################################################################
@@ -4471,7 +4588,7 @@ aws_secret_access_key = bar
     )
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(options, thread_local=False):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = open_for_read("/vsis3/s3_fake_bucket/resource")
         assert f is not None
         assert gdal.GetLastErrorMsg() != ""
@@ -4882,7 +4999,7 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
             with gdaltest.config_option(
                 "CPL_AWS_EC2_API_ROOT_URL", invalid_url, thread_local=False
             ):
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     f = open_for_read("/vsis3/s3_fake_bucket/bar")
         assert f is None
 
@@ -5278,7 +5395,7 @@ def test_vsis3_non_existing_file_GDAL_DISABLE_READDIR_ON_OPEN(
         "GDAL_DISABLE_READDIR_ON_OPEN", "YES", thread_local=False
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 gdal.Open("/vsis3/test_bucket/non_existing.tif")
     assert gdal.GetLastErrorMsg() == "HTTP response code: 404"
 
@@ -5472,7 +5589,7 @@ def test_vsis3_extra_1():
         # Invalid bucket : "The specified bucket does not exist"
         gdal.ErrorReset()
         f = open_for_read("/vsis3/not_existing_bucket/foo")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
         assert gdal.VSIGetLastErrorMsg() != ""

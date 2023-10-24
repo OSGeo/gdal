@@ -52,7 +52,7 @@ class GDALNullDataset final : public GDALDataset
     virtual OGRLayer *GetLayer(int) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
 
@@ -93,10 +93,10 @@ class GDALNullRasterBand final : public GDALRasterBand
 class GDALNullLayer final : public OGRLayer
 {
     OGRFeatureDefn *poFeatureDefn;
-    OGRSpatialReference *poSRS;
+    OGRSpatialReference *poSRS = nullptr;
 
   public:
-    GDALNullLayer(const char *pszLayerName, OGRSpatialReference *poSRS,
+    GDALNullLayer(const char *pszLayerName, const OGRSpatialReference *poSRS,
                   OGRwkbGeometryType eType);
     virtual ~GDALNullLayer();
 
@@ -222,7 +222,7 @@ GDALNullDataset::~GDALNullDataset()
 /************************************************************************/
 
 OGRLayer *GDALNullDataset::ICreateLayer(const char *pszLayerName,
-                                        OGRSpatialReference *poSRS,
+                                        const OGRSpatialReference *poSRS,
                                         OGRwkbGeometryType eType, char **)
 {
     m_papoLayers = static_cast<OGRLayer **>(
@@ -329,16 +329,16 @@ GDALDataset *GDALNullDataset::Create(const char *, int nXSize, int nYSize,
 /************************************************************************/
 
 GDALNullLayer::GDALNullLayer(const char *pszLayerName,
-                             OGRSpatialReference *poSRSIn,
+                             const OGRSpatialReference *poSRSIn,
                              OGRwkbGeometryType eType)
-    : poFeatureDefn(new OGRFeatureDefn(pszLayerName)), poSRS(poSRSIn)
+    : poFeatureDefn(new OGRFeatureDefn(pszLayerName))
 {
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->SetGeomType(eType);
     poFeatureDefn->Reference();
 
-    if (poSRS)
-        poSRS->Reference();
+    if (poSRSIn)
+        poSRS = poSRSIn->Clone();
 }
 
 /************************************************************************/

@@ -96,9 +96,15 @@ class OGRFeatherLayer final : public OGRArrowLayer
                          const std::string &key);
     OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol, int iCol) const;
     bool ReadNextBatch() override;
+
+    void InvalidateCachedBatches() override;
+
     OGRFeature *GetNextRawFeature();
 
     virtual bool CanRunNonForcedGetExtent() override;
+
+    bool
+    CanPostFilterArrowArray(const struct ArrowSchema *schema) const override;
 
     bool ReadNextBatchFile();
     bool ReadNextBatchStream();
@@ -187,8 +193,12 @@ class OGRFeatherWriterLayer final : public OGRArrowWriterLayer
     ~OGRFeatherWriterLayer() override;
 
     bool SetOptions(const std::string &osFilename, CSLConstList papszOptions,
-                    OGRSpatialReference *poSpatialRef,
+                    const OGRSpatialReference *poSpatialRef,
                     OGRwkbGeometryType eGType);
+
+    bool WriteArrowBatch(const struct ArrowSchema *schema,
+                         struct ArrowArray *array,
+                         CSLConstList papszOptions = nullptr) override;
 };
 
 /************************************************************************/
@@ -224,7 +234,7 @@ class OGRFeatherWriterDataset final : public GDALPamDataset
 
   protected:
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef = nullptr,
+                           const OGRSpatialReference *poSpatialRef = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
 };

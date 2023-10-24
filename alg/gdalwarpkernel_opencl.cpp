@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
 #if defined(HAVE_OPENCL)
 
 /* The following line may be uncommented for increased debugging traces and
@@ -294,11 +295,10 @@ static cl_device_id get_device(OCLVendor *peVendor)
     size_t returned_size = 0;
     cl_char vendor_name[1024] = {0};
     cl_char device_name[1024] = {0};
+    cl_device_type device_type;
 
     std::vector<cl_platform_id> platforms;
     cl_uint num_platforms = 0;
-    cl_device_id preferred_device_id = nullptr;
-    int preferred_is_gpu = FALSE;
 
     static bool gbBuggyOpenCL = false;
     if (gbBuggyOpenCL)
@@ -323,110 +323,124 @@ static cl_device_id get_device(OCLVendor *peVendor)
         return nullptr;
     }
 
-    bool bUseOpenCLCPU =
+    const bool bUseOpenCLCPU =
         CPLTestBool(CPLGetConfigOption("OPENCL_USE_CPU", "FALSE"));
+
+    struct device_info
+    {
+        cl_device_id id;
+        cl_device_type device_type;
+        std::string vendor_name;
+        std::string device_name;
+    };
+
+    std::vector<device_info> openCLdevices;
 
     // In case we have several implementations, pick up the non Intel one by
     // default, unless the PREFERRED_OPENCL_VENDOR config option is specified.
-    for (cl_uint i = 0; i < num_platforms; i++)
+    if (num_platforms > 0)
     {
-        cl_device_id device = nullptr;
-        const char *pszBlacklistedVendor;
-        const char *pszPreferredVendor;
-        int is_gpu;
-
-        // Find the GPU CL device, this is what we really want
-        // If there is no GPU device is CL capable, fall back to CPU
-        if (bUseOpenCLCPU)
-            err = CL_DEVICE_NOT_FOUND;
-        else
-            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 1, &device,
-                                 nullptr);
-        is_gpu = (err == CL_SUCCESS);
-        if (err != CL_SUCCESS)
-        {
-            // Find the CPU CL device, as a fallback
-            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_CPU, 1, &device,
-                                 nullptr);
-            if (err != CL_SUCCESS || device == nullptr)
-                continue;
-        }
-
-        // Get some information about the returned device
-        err = clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(vendor_name),
-                              vendor_name, &returned_size);
-        err |= clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name),
-                               device_name, &returned_size);
-        assert(err == CL_SUCCESS);
-
-        if (num_platforms > 1)
-            CPLDebug("OpenCL",
-                     "Found vendor='%s' / device='%s' (%s implementation).",
-                     vendor_name, device_name, (is_gpu) ? "GPU" : "CPU");
-
-        pszBlacklistedVendor =
+        const char *pszBlacklistedVendor =
             CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", nullptr);
-        if (pszBlacklistedVendor &&
-            EQUAL(reinterpret_cast<const char *>(vendor_name),
-                  pszBlacklistedVendor))
-        {
-            CPLDebug(
-                "OpenCL",
-                "Blacklisted vendor='%s' / device='%s' implementation skipped",
-                vendor_name, device_name);
-            continue;
-        }
 
-        if (preferred_device_id == nullptr || (is_gpu && !preferred_is_gpu))
+        for (cl_uint platformIndex = 0; platformIndex < num_platforms;
+             platformIndex++)
         {
-            preferred_device_id = device;
-            preferred_is_gpu = is_gpu;
-        }
 
-        pszPreferredVendor =
-            CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", nullptr);
-        if (pszPreferredVendor)
-        {
-            if (EQUAL(reinterpret_cast<const char *>(vendor_name),
-                      pszPreferredVendor))
+            constexpr int max_devices{20};
+            cl_uint num_devices;
+            cl_device_id devices[max_devices];
+            err = clGetDeviceIDs(platforms[platformIndex],
+                                 bUseOpenCLCPU
+                                     ? CL_DEVICE_TYPE_CPU
+                                     : CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU,
+                                 max_devices, devices, &num_devices);
+
+            if (err != CL_SUCCESS)
             {
-                preferred_device_id = device;
-                preferred_is_gpu = is_gpu;
-                break;
+                continue;
+            }
+
+            cl_device_id device = nullptr;
+
+            for (cl_uint deviceIndex = 0; deviceIndex < num_devices;
+                 ++deviceIndex)
+            {
+
+                device = devices[deviceIndex];
+                err = clGetDeviceInfo(device, CL_DEVICE_VENDOR,
+                                      sizeof(vendor_name), vendor_name,
+                                      &returned_size);
+                err |=
+                    clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name),
+                                    device_name, &returned_size);
+                err |=
+                    clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(device_type),
+                                    &device_type, &returned_size);
+                assert(err == CL_SUCCESS);
+                if (pszBlacklistedVendor &&
+                    EQUAL(reinterpret_cast<const char *>(vendor_name),
+                          pszBlacklistedVendor))
+                {
+                    CPLDebug("OpenCL",
+                             "Blacklisted vendor='%s' / device='%s' "
+                             "implementation skipped",
+                             vendor_name, device_name);
+                }
+                else
+                {
+                    CPLDebug(
+                        "OpenCL",
+                        "Found vendor='%s' / device='%s' (%s implementation).",
+                        vendor_name, device_name,
+                        (device_type == CL_DEVICE_TYPE_GPU) ? "GPU" : "CPU");
+                    openCLdevices.push_back(
+                        {device, device_type,
+                         reinterpret_cast<const char *>(vendor_name),
+                         reinterpret_cast<const char *>(device_name)});
+                }
             }
         }
-        else if (is_gpu &&
-                 !STARTS_WITH(reinterpret_cast<const char *>(vendor_name),
-                              "Intel"))
-        {
-            preferred_device_id = device;
-            preferred_is_gpu = is_gpu;
-            break;
-        }
     }
-    if (preferred_device_id == nullptr)
+
+    if (!openCLdevices.empty())
+    {
+        // Sort, GPU first, then preferred vendor, Intel comes last (unless is the preferred of course)
+        const std::string preferredVendorName{
+            CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", "")};
+        std::sort(
+            openCLdevices.begin(), openCLdevices.end(),
+            [&](const device_info first, const device_info second) -> int
+            {
+                return (first.device_type == CL_DEVICE_TYPE_GPU ? 4 : 0) +
+                           (first.vendor_name == preferredVendorName ? 2 : 0) +
+                           (first.vendor_name.find("Intel") == 0 ? 0 : 1) >
+                       (second.device_type == CL_DEVICE_TYPE_GPU ? 4 : 0) +
+                           (second.vendor_name == preferredVendorName ? 2 : 0) +
+                           (second.vendor_name.find("Intel") == 0 ? 0 : 1);
+            });
+    }
+    else
     {
         CPLDebug("OpenCL", "No implementation found");
         return nullptr;
     }
 
-    err = clGetDeviceInfo(preferred_device_id, CL_DEVICE_VENDOR,
-                          sizeof(vendor_name), vendor_name, &returned_size);
-    err |= clGetDeviceInfo(preferred_device_id, CL_DEVICE_NAME,
-                           sizeof(device_name), device_name, &returned_size);
+    const device_info &device{openCLdevices.front()};
+
     CPLDebug("OpenCL",
              "Connected to vendor='%s' / device='%s' (%s implementation).",
-             vendor_name, device_name, (preferred_is_gpu) ? "GPU" : "CPU");
+             device.vendor_name.c_str(), device.device_name.c_str(),
+             (device.device_type == CL_DEVICE_TYPE_GPU) ? "GPU" : "CPU");
 
-    if (STARTS_WITH(reinterpret_cast<const char *>(vendor_name),
-                    "Advanced Micro Devices"))
+    if (STARTS_WITH(device.vendor_name.c_str(), "Advanced Micro Devices"))
         *peVendor = VENDOR_AMD;
-    else if (STARTS_WITH(reinterpret_cast<const char *>(vendor_name), "Intel"))
+    else if (STARTS_WITH(device.vendor_name.c_str(), "Intel"))
         *peVendor = VENDOR_INTEL;
     else
         *peVendor = VENDOR_OTHER;
 
-    return preferred_device_id;
+    return device.id;
 }
 
 /*

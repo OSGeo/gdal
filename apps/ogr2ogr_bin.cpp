@@ -62,58 +62,65 @@ static bool StringCISortFunction(const CPLString &a, const CPLString &b)
     return STRCASECMP(a.c_str(), b.c_str()) < 0;
 }
 
-static void Usage(const char *pszAdditionalMsg = nullptr, bool bShort = true)
+static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
+                  bool bShort = true)
 {
-    printf(
-        "Usage: ogr2ogr [--help-general] [-skipfailures] [-append | -upsert] "
-        "[-update]\n"
-        "               [-select field_list] [-where "
-        "restricted_where|@filename]\n"
-        "               [-progress] [-sql <sql statement>|@filename] [-dialect "
-        "dialect]\n"
-        "               [-preserve_fid] [-fid FID] [-limit nb_features]\n"
-        "               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] "
-        "[-geomfield field]\n"
-        "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def] "
-        "[-ct string]\n"
-        "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] "
-        "...]\n"
-        "               dst_datasource_name src_datasource_name\n"
-        "               [-lco NAME=VALUE] [-nln name] \n"
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: ogr2ogr [--help] [--help-general]\n"
+        "               [-skipfailures] [-append | -upsert] [-update]\n"
+        "               [-select <field_list>] [-where "
+        "<restricted_where>|@<filename>]\n"
+        "               [-progress] [-sql <sql statement>|@<filename>] "
+        "[-dialect "
+        "<dialect>]\n"
+        "               [-preserve_fid] [-fid <FID>] [-limit <nb_features>]\n"
+        "               [-spat <xmin> <ymin> <xmax> <ymax>] [-spat_srs "
+        "<srs_def>] "
+        "[-geomfield <field>]\n"
+        "               [-a_srs <srs_def>] [-t_srs <srs_def>] [-s_srs "
+        "<srs_def>] "
+        "[-ct <string>]\n"
+        "               [-f <format_name>] [-overwrite] "
+        "[-dsco <NAME>=<VALUE>]...\n"
+        "               [-lco <NAME>=<VALUE>]... [-nln <name>] \n"
         "               [-nlt "
-        "type|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
-        "               [-dim XY|XYZ|XYM|XYZM|layer_dim] [layer [layer ...]]\n"
+        "<type>|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
+        "               [-dim XY|XYZ|XYM|XYZM|<layer_dim>]\n"
+        "               <dst_datasource_name> <src_datasource_name>\n"
+        "               [<layer> [<layer>...]]\n"
         "\n"
         "Advanced options :\n"
         "               [-gt n] [-ds_transaction]\n"
-        "               [[-oo NAME=VALUE] ...] [[-doo NAME=VALUE] ...]\n"
-        "               [-clipsrc [xmin ymin xmax "
-        "ymax]|WKT|datasource|spat_extent]\n"
-        "               [-clipsrcsql sql_statement] [-clipsrclayer layer]\n"
-        "               [-clipsrcwhere expression]\n"
-        "               [-clipdst [xmin ymin xmax ymax]|WKT|datasource]\n"
-        "               [-clipdstsql sql_statement] [-clipdstlayer layer]\n"
-        "               [-clipdstwhere expression]\n"
-        "               [-wrapdateline][-datelineoffset val]\n"
-        "               [[-simplify tolerance] | [-segmentize max_dist]]\n"
+        "               [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...\n"
+        "               [-clipsrc {[<xmin> <ymin> <xmax> <ymax>]|<WKT>|"
+        "<datasource>|spat_extent}]\n"
+        "               [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]\n"
+        "               [-clipsrcwhere <expression>]\n"
+        "               [-clipdst {[<xmin> <ymin> <xmax> "
+        "<ymax>]|<WKT>|<datasource>}]\n"
+        "               [-clipdstsql <sql_statement>] [-clipdstlayer <layer>]\n"
+        "               [-clipdstwhere <expression>]\n"
+        "               [-wrapdateline][-datelineoffset <val>]\n"
+        "               [[-simplify <tolerance>] | [-segmentize <max_dist>]]\n"
         "               [-makevalid]\n"
         "               [-addfields] [-unsetFid] [-emptyStrAsNull]\n"
         "               [-relaxedFieldNameMatch] [-forceNullable] "
         "[-unsetDefault]\n"
-        "               [-fieldTypeToString All|(type1[,type2]*)] "
+        "               [-fieldTypeToString {All|{<type1>[,<type2>]}...}] "
         "[-unsetFieldWidth]\n"
         "               [-mapFieldType "
-        "srctype|All=dsttype[,srctype2=dsttype2]*]\n"
-        "               [-dateTimeTo UTC|UTC(+|-)HH|UTC(+|-)HH:MM]]\n"
-        "               [-fieldmap identity | index1[,index2]*]\n"
-        "               [-splitlistfields] [-maxsubfields val]\n"
+        "{<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}]\n"
+        "               [-dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}]\n"
+        "               [-fieldmap {identity|{<index1>[,<index2>]...}]\n"
+        "               [-splitlistfields] [-maxsubfields <val>]\n"
         "               [-resolveDomains]\n"
-        "               [-explodecollections] [-zfield field_name]\n"
-        "               [-gcp ungeoref_x ungeoref_y georef_x georef_y "
-        "[elevation]]* [-order n | -tps]\n"
-        "               [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | "
-        "[-a_coord_epoch epoch]]\n"
-        "               [-nomd] [-mo \"META-TAG=VALUE\"]* [-noNativeData]\n");
+        "               [-explodecollections] [-zfield <field_name>]\n"
+        "               [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> "
+        "[<elevation>]]... [[-order <n>]|[-tps]]\n"
+        "               [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] "
+        "[-a_coord_epoch <epoch>]\n"
+        "               [-nomd] [-mo <META-TAG>=<VALUE>]... [-noNativeData]\n");
 
     if (bShort)
     {
@@ -297,12 +304,14 @@ MAIN_START(nArgc, papszArgv)
         }
         else if (EQUAL(papszArgv[iArg], "--help"))
         {
-            Usage();
+            Usage(false);
+            nRetCode = 0;
             goto exit;
         }
         else if (EQUAL(papszArgv[iArg], "--long-usage"))
         {
-            Usage(nullptr, false);
+            Usage(false, nullptr, false);
+            nRetCode = 0;
             goto exit;
         }
     }
@@ -313,7 +322,7 @@ MAIN_START(nArgc, papszArgv)
 
     if (psOptions == nullptr)
     {
-        Usage();
+        Usage(true);
         GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
     }
@@ -322,9 +331,9 @@ MAIN_START(nArgc, papszArgv)
         psOptionsForBinary->pszDestDataSource == nullptr)
     {
         if (psOptionsForBinary->pszDestDataSource == nullptr)
-            Usage("no target datasource provided");
+            Usage(true, "no target datasource provided");
         else
-            Usage("no source datasource provided");
+            Usage(true, "no source datasource provided");
         GDALVectorTranslateOptionsFree(psOptions);
         GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
@@ -446,7 +455,7 @@ MAIN_START(nArgc, papszArgv)
         hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource,
                                      hODS, 1, &hDS, psOptions, &bUsageError);
         if (bUsageError)
-            Usage();
+            Usage(true);
         else
             nRetCode = hDstDS ? 0 : 1;
     }

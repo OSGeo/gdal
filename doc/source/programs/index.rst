@@ -4,6 +4,19 @@
 Programs
 ================================================================================
 
+General
+-------
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   argument_syntax
+
+.. only:: html
+
+    - :ref:`argument_syntax`
+
 Raster programs
 ---------------
 

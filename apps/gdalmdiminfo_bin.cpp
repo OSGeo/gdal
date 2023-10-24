@@ -37,19 +37,22 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdalmdiminfo [--help-general] [-oo NAME=VALUE]* "
-           "[-arrayoption NAME=VALUE]*\n"
-           "                    [-detailed] [-nopretty] [-array {array_name}] "
-           "[-limit {number}]\n"
-           "                    [-stats] [-if format]* datasetname\n");
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: gdalmdiminfo [--help] [--help-general]\n"
+        "                    [-oo <NAME>=<VALUE>]... [-arrayoption "
+        "<NAME>=<VALUE>]...\n"
+        "                    [-detailed] [-nopretty] [-array <array_name>]\n"
+        "                    [-limit <number>] [-stats] [-if <format>]...\n"
+        "                    <datasetname>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit(1);
+    exit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -79,7 +82,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage();
+            Usage(false);
         }
     }
     argv = CSLAddString(argv, "-stdout");
@@ -89,10 +92,10 @@ MAIN_START(argc, argv)
     GDALMultiDimInfoOptions *psOptions =
         GDALMultiDimInfoOptionsNew(argv + 1, &sOptionsForBinary);
     if (psOptions == nullptr)
-        Usage();
+        Usage(true);
 
     if (sOptionsForBinary.osFilename.empty())
-        Usage("No datasource specified.");
+        Usage(true, "No datasource specified.");
 
     GDALDatasetH hDataset =
         GDALOpenEx(sOptionsForBinary.osFilename.c_str(),

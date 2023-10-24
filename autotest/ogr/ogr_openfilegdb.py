@@ -252,9 +252,9 @@ def ogr_openfilegdb_make_test_data():
             feat.SetField("real", 4.56)
             feat.SetField("adate", "2013/12/26 12:34:56")
             feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
-            feat.SetFieldBinaryFromHexString("binary", "00FF7F")
+            feat.SetField("binary", b"\x00\xFF\x7F")
             feat.SetField("xml", "<foo></foo>")
-            feat.SetFieldBinaryFromHexString("binary2", "123456")
+            feat.SetField("binary2", b"\x12\x34\x56")
             lyr.CreateFeature(feat)
 
         if data[0] == "none":
@@ -1208,7 +1208,7 @@ def test_ogr_openfilegdb_10():
         ]:
             for offset in offsets:
                 backup = fuzz(filename, offset)
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     gdal.ErrorReset()
                     ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
                     error_msg = gdal.GetLastErrorMsg()
@@ -1267,7 +1267,7 @@ def test_ogr_openfilegdb_10():
             for offset in offsets:
                 # print(offset)
                 backup = fuzz(filename, offset)
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     gdal.ErrorReset()
                     ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
                     error_msg = gdal.GetLastErrorMsg()
@@ -1569,7 +1569,7 @@ def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():
     ds = ogr.Open(dirname)
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(0.5, 0.5, 48.5, 48.5)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.GetFeatureCount() == 48 * 48
     assert (
         "Cannot use /vsimem/test_ogr_openfilegdb_read_broken_spx_wrong_index_depth.gdb/a00000009.spx"
@@ -1938,7 +1938,7 @@ def _check_domains(ds):
         "SpeedLimit",
     }
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetFieldDomain("i_dont_exist") is None
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
@@ -2000,7 +2000,7 @@ def test_ogr_openfilegdb_write_domains_from_other_gdb():
     assert ds.TestCapability(ogr.ODsCDeleteFieldDomain) == 1
     assert ds.TestCapability(ogr.ODsCUpdateFieldDomain) == 1
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ds.DeleteFieldDomain("not_existing")
 
     domain = ogr.CreateCodedFieldDomain(

@@ -44,8 +44,18 @@ testnonboundtoswig_setup
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
+def setup_and_cleanup():
+
     with gdaltest.disable_exceptions():
+
+        fp = gdal.VSIFOpenL(
+            "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "wb+"
+        )
+        if fp is None:
+            pytest.skip("/vsicrypt is not available")
+        gdal.VSIFCloseL(fp)
+        gdal.Unlink("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin")
+
         yield
 
 
@@ -55,19 +65,9 @@ def module_disable_exceptions():
 
 def test_vsicrypt_1():
 
-    gdaltest.has_vsicrypt = False
-    fp = gdal.VSIFOpenL("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "wb+")
-    if fp is None:
-        pytest.skip()
-    gdal.VSIFCloseL(fp)
-    gdal.Unlink("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin")
-    gdaltest.has_vsicrypt = True
-
     import vsifile
 
-    return vsifile.vsifile_generic(
-        "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin"
-    )
+    vsifile.vsifile_generic("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin")
 
 
 ###############################################################################
@@ -76,50 +76,47 @@ def test_vsicrypt_1():
 
 def test_vsicrypt_2():
 
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
-
     # Missing key
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt//vsimem/file.bin", "wb+")
     assert fp is None
 
     # Invalid file
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing", "wb"
         )
     assert fp is None
 
     # Invalid file
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing", "rb"
         )
     assert fp is None
 
     # Invalid file
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing", "ab"
         )
     assert fp is None
 
     # Invalid access
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/not_existing/not_existing", "foo"
         )
     assert fp is None
 
     # Key to short
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt/key=a,file=/vsimem/file.bin", "wb+")
     assert fp is None
 
     # Invalid signature
     gdal.FileFromMemBuffer("/vsimem/file.bin", "foo")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "rb"
         )
@@ -145,7 +142,7 @@ def test_vsicrypt_2():
         gdal.VSIFWriteL(header, 1, 46 - 1 - i, fp)
         gdal.VSIFCloseL(fp)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             fp = gdal.VSIFOpenL(
                 "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "rb"
             )
@@ -163,7 +160,7 @@ def test_vsicrypt_2():
             gdal.VSIFWriteL(header_new, 1, 46, fp)
             gdal.VSIFCloseL(fp)
 
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 fp = gdal.VSIFOpenL(
                     "/vsicrypt/key=DONT_USE_IN_PROD,file=" "/vsimem/file.bin", "rb"
                 )
@@ -223,7 +220,7 @@ def test_vsicrypt_2():
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "rb"
         )
@@ -276,7 +273,7 @@ def test_vsicrypt_2():
     gdal.VSIFWriteL(header, 1, len(header), fp)
     gdal.VSIFCloseL(fp)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "rb"
         )
@@ -293,7 +290,7 @@ def test_vsicrypt_2():
 
     assert content != "hello"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt/key=short_key,file=/vsimem/file.bin", "ab")
     assert fp is None
 
@@ -304,24 +301,24 @@ def test_vsicrypt_2():
     gdal.VSIFWriteL("hello", 1, 5, fp)
     gdal.VSIFCloseL(fp)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin", "rb"
         )
     assert fp is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt/key=short_key,file=/vsimem/file.bin", "ab")
     assert fp is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=dont_use_in_prod,file=/vsimem/file.bin", "ab"
         )
     assert fp is None
 
     # Test creating with potentially not built-in alg:
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/alg=blowfish,key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "wb"
         )
@@ -329,14 +326,14 @@ def test_vsicrypt_2():
         gdal.VSIFCloseL(fp)
 
     # Invalid sector_size
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,sector_size=1,file=/vsimem/file.bin", "wb"
         )
     assert fp is None
 
     # Sector size (16) should be at least twice larger than the block size (16) in CBC_CTS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,sector_size=16,mode=CBC_CTS,file=/vsimem/file.bin",
             "wb",
@@ -355,9 +352,6 @@ def test_vsicrypt_2():
     reason="Fails randomly on that platform",
 )
 def test_vsicrypt_3():
-
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
 
     for options in [
         "sector_size=16",
@@ -379,7 +373,7 @@ def test_vsicrypt_3():
         gdal.Unlink("/vsimem/file.bin")
 
         if options == "alg=invalid" or options == "mode=invalid":
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 fp = gdal.VSIFOpenL(
                     "/vsicrypt/key=DONT_USE_IN_PRODDONT_USE_IN_PROD,%s,file=/vsimem/file.bin"
                     % options,
@@ -420,7 +414,7 @@ def test_vsicrypt_3():
 
         gdal.Unlink("/vsimem/file.bin")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             fp = gdal.VSIFOpenL(
                 "/vsicrypt/key=DONT_USE_IN_PROD,%s,file=/vsimem/file.bin" % options,
                 "wb",
@@ -466,7 +460,7 @@ def test_vsicrypt_3():
 
     assert content == "hello", options
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         statRes = gdal.VSIStatL("/vsicrypt//vsimem/file.bin")
     assert statRes is None
 
@@ -491,9 +485,6 @@ def test_vsicrypt_3():
 
 
 def test_vsicrypt_4():
-
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
 
     test_file = (
         "/vsicrypt/key=DONT_USE_IN_PROD,sector_size=32,file=/vsimem/file_enc.bin"
@@ -562,9 +553,6 @@ def test_vsicrypt_4():
 
 def test_vsicrypt_5():
 
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
-
     test_file = "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file_enc.bin"
 
     f = gdal.VSIFOpenL(test_file, "wb+")
@@ -623,9 +611,6 @@ def test_vsicrypt_6(testnonboundtoswig_setup):  # noqa
     # Set a valid key
     testnonboundtoswig_setup.VSISetCryptKey("DONT_USE_IN_PROD".encode("ASCII"), 16)
 
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
-
     fp = gdal.VSIFOpenL("/vsicrypt/add_key_check=yes,file=/vsimem/file.bin", "wb+")
     assert fp is not None
     gdal.VSIFWriteL("hello", 1, 5, fp)
@@ -650,17 +635,17 @@ def test_vsicrypt_6(testnonboundtoswig_setup):  # noqa
 
     # Set a too short key
     testnonboundtoswig_setup.VSISetCryptKey("bbc".encode("ASCII"), 3)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt//vsimem/file.bin", "rb")
     assert fp is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt//vsimem/file.bin", "wb+")
     assert fp is None
 
     # Erase key
     testnonboundtoswig_setup.VSISetCryptKey(None, 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fp = gdal.VSIFOpenL("/vsicrypt//vsimem/file.bin", "wb+")
     assert fp is None
 

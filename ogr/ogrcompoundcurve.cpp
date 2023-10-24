@@ -524,7 +524,8 @@ OGRErr OGRCompoundCurve::addCurve(const OGRCurve *poCurve,
  * \brief Add a curve directly to the container.
  *
  * Ownership of the passed geometry is taken by the container rather than
- * cloning as addCurve() does.
+ * cloning as addCurve() does, but only if the method is successful.
+ * If the method fails, ownership still belongs to the caller.
  *
  * There is no ISO SQL/MM analog to this method.
  *
@@ -609,6 +610,35 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal(OGRCurve *poCurve,
     }
 
     return oCC.addCurveDirectly(this, poCurve, bNeedRealloc);
+}
+
+/************************************************************************/
+/*                          addCurve()                                  */
+/************************************************************************/
+
+/**
+ * \brief Add a curve directly to the container.
+ *
+ * There is no ISO SQL/MM analog to this method.
+ *
+ * This method is the same as the C function OGR_G_AddGeometryDirectly().
+ *
+ * @param poCurve geometry to add to the container.
+ * @param dfToleranceEps relative tolerance when checking that the first point
+ * of a segment matches then end point of the previous one. Default value:
+ * 1e-14.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE in case of error
+ * (for example if curves are not contiguous)
+ */
+OGRErr OGRCompoundCurve::addCurve(std::unique_ptr<OGRCurve> poCurve,
+                                  double dfToleranceEps)
+{
+    OGRCurve *poCurvePtr = poCurve.release();
+    OGRErr eErr = addCurveDirectlyInternal(poCurvePtr, dfToleranceEps, TRUE);
+    if (eErr != OGRERR_NONE)
+        delete poCurvePtr;
+    return eErr;
 }
 
 /************************************************************************/

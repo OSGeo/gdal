@@ -15,10 +15,13 @@ Synopsis
 
 .. code-block::
 
-    gdalinfo [--help-general] [-json] [-mm] [-stats | -approx_stats] [-hist] [-nogcp] [-nomd]
-             [-norat] [-noct] [-nofl] [-checksum] [-proj4]
-             [-listmdd] [-mdd domain|`all`]* [-wkt_format WKT1|WKT2|...]
-             [-sd subdataset] [-oo NAME=VALUE]* [-if format]* datasetname
+    gdalinfo [--help] [--help-general]
+             [-json] [-mm] [-stats | -approx_stats] [-hist]
+             [-nogcp] [-nomd] [-norat] [-noct] [-nofl]
+             [-checksum] [-listmdd] [-mdd <domain>|all]
+             [-proj4] [-wkt_format {WKT1|WKT2|<other_format>}]...
+             [-sd <subdataset>] [-oo <NAME>=<VALUE>]... [-if <format>]...
+             <datasetname>
 
 Description
 -----------
@@ -29,6 +32,8 @@ raster dataset.
 The following command line parameters can appear in any order
 
 .. program:: gdalinfo
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -json
 
@@ -123,7 +128,7 @@ The following command line parameters can appear in any order
 
     Report a PROJ.4 string corresponding to the file's coordinate system.
 
-.. option:: -oo <NAME=VALUE>
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific).
 

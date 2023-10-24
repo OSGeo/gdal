@@ -207,7 +207,8 @@ class OGRJMLDataset final : public GDALDataset
     }
     OGRLayer *GetLayer(int) override;
 
-    OGRLayer *ICreateLayer(const char *pszLayerName, OGRSpatialReference *poSRS,
+    OGRLayer *ICreateLayer(const char *pszLayerName,
+                           const OGRSpatialReference *poSRS,
                            OGRwkbGeometryType eType,
                            char **papszOptions) override;
 

@@ -188,7 +188,7 @@ def test_vsiaz_extra_1():
         # Invalid bucket : "The specified bucket does not exist"
         gdal.ErrorReset()
         f = open_for_read("/vsiaz/not_existing_bucket/foo")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
         assert gdal.VSIGetLastErrorMsg() != ""

@@ -388,14 +388,14 @@ def test_ogr_geos_concavehull():
 
     g1 = ogr.CreateGeometryFromWkt("MULTIPOINT(0 0,0.4 0.5,0 1,1 1,0.6 0.5,1 0)")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         res = g1.ConcaveHull(0.5, False)
 
     if res is None:
         assert "GEOS 3.11" in gdal.GetLastErrorMsg()
         pytest.skip(gdal.GetLastErrorMsg())
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         res = g1.ConcaveHull(-1, False)
     assert res is None
 
@@ -506,7 +506,7 @@ def test_ogr_geos_isvalid_false():
 
     g1 = ogr.CreateGeometryFromWkt("POLYGON((0 0,1 1,1 2,1 1,0 0))")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         isring = g1.IsValid()
 
     assert isring == 0
@@ -521,7 +521,7 @@ def test_ogr_geos_isvalid_false_too_few_points():
     )
 
     with ogr.ExceptionMgr():  # fail test if exception is thrown
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             isvalid = g1.IsValid()
 
     assert isvalid == 0

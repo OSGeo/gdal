@@ -15,11 +15,12 @@ Synopsis
 
 .. code-block::
 
-    gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
-                  [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]
-                  [-ul_lr ulx uly lrx lry] [-init "value [value...]"]
-                  [-n nodata_value] [-a_nodata output_nodata_value]
-                  [-ot datatype] [-createonly] input_files
+    gdal_merge.py [--help] [--help-general]
+                  [-o <out_filename>] [-of <out_format>] [-co <NAME>=<VALUE>]...
+                  [-ps <pixelsize_x> <pixelsize_y>] [-tap] [-separate] [-q] [-v] [-pct]
+                  [-ul_lr <ulx> <uly> <lrx> <lry>] [-init "<value>[ <value>]..."]
+                  [-n <nodata_value>] [-a_nodata <output_nodata_value>]
+                  [-ot <datatype>] [-createonly] <intput_file> [<intput_file>]...
 
 Description
 -----------
@@ -33,6 +34,8 @@ one source band will not set a nodata/transparent value on all bands for the
 target pixel in the resulting raster nor will it overwrite a valid pixel value.
 
 .. program:: gdal_merge
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -o <out_filename>
 

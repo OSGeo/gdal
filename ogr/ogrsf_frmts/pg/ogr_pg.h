@@ -662,7 +662,7 @@ class OGRPGDataSource final : public OGRDataSource
     virtual CPLErr FlushCache(bool bAtClosing) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 

@@ -49,15 +49,16 @@ def module_disable_exceptions():
 # Open VRT datasource.
 
 
-def test_ogr_vrt_1():
+@pytest.fixture()
+def vrt_ds():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Complains about dummySrcDataSource as expected.
-        gdaltest.vrt_ds = ogr.Open("data/vrt/vrt_test.vrt")
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
 
-    if gdaltest.vrt_ds is not None:
-        return
-    pytest.fail()
+    assert ds is not None
+
+    return ds
 
 
 ###############################################################################
@@ -66,11 +67,9 @@ def test_ogr_vrt_1():
 # Also tests FID-copied-from-source.
 
 
-def test_ogr_vrt_2():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_2(vrt_ds):
 
-    lyr = gdaltest.vrt_ds.GetLayerByName("test2")
+    lyr = vrt_ds.GetLayerByName("test2")
 
     extent = lyr.GetExtent()
     assert extent == (12.5, 100.0, 17.0, 200.0), "wrong extent"
@@ -98,11 +97,9 @@ def test_ogr_vrt_2():
 # Also tests FID-from-attribute.
 
 
-def test_ogr_vrt_3():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_3(vrt_ds):
 
-    lyr = gdaltest.vrt_ds.GetLayerByName("test3")
+    lyr = vrt_ds.GetLayerByName("test3")
 
     expect = ["First", "Second"]
 
@@ -125,11 +122,9 @@ def test_ogr_vrt_3():
 # Test a spatial query.
 
 
-def test_ogr_vrt_4():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_4(vrt_ds):
 
-    lyr = gdaltest.vrt_ds.GetLayerByName("test3")
+    lyr = vrt_ds.GetLayerByName("test3")
     lyr.ResetReading()
 
     lyr.SetSpatialFilterRect(90, 90, 300, 300)
@@ -150,9 +145,9 @@ def test_ogr_vrt_4():
 # Test an attribute query.
 
 
-def test_ogr_vrt_5():
+def test_ogr_vrt_5(vrt_ds):
 
-    lyr = gdaltest.vrt_ds.GetLayerByName("test3")
+    lyr = vrt_ds.GetLayerByName("test3")
     lyr.ResetReading()
 
     lyr.SetAttributeFilter("x < 50")
@@ -173,12 +168,9 @@ def test_ogr_vrt_5():
 # Test GetFeature() on layer with FID coming from a column.
 
 
-def test_ogr_vrt_6():
+def test_ogr_vrt_6(vrt_ds):
 
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
-    lyr = gdaltest.vrt_ds.GetLayerByName("test3")
+    lyr = vrt_ds.GetLayerByName("test3")
     lyr.ResetReading()
 
     feat = lyr.GetFeature(2)
@@ -190,11 +182,9 @@ def test_ogr_vrt_6():
 #
 
 
-def test_ogr_vrt_7():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_7(vrt_ds):
 
-    lyr = gdaltest.vrt_ds.GetLayerByName("test4")
+    lyr = vrt_ds.GetLayerByName("test4")
 
     expect = ["First", "Second"]
 
@@ -219,9 +209,7 @@ def test_ogr_vrt_7():
 #
 
 
-def test_ogr_vrt_8():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_8(vrt_ds):
 
     vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test4"><SrcDataSource relativeToVRT="0">data/flat.dbf</SrcDataSource><SrcSQL>SELECT * FROM flat</SrcSQL><FID>fid</FID><GeometryType>wkbPoint</GeometryType><GeometryField encoding="PointFromColumns" x="x" y="y" z="z"/></OGRVRTLayer></OGRVRTDataSource>'
     ds = ogr.Open(vrt_xml)
@@ -248,12 +236,9 @@ def test_ogr_vrt_8():
 # Test that attribute filters are passed through to an underlying layer.
 
 
-def test_ogr_vrt_9():
+def test_ogr_vrt_9(vrt_ds):
 
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
-    lyr = gdaltest.vrt_ds.GetLayerByName("test3")
+    lyr = vrt_ds.GetLayerByName("test3")
     lyr.SetAttributeFilter("other = 'Second'")
     lyr.ResetReading()
 
@@ -278,8 +263,6 @@ def test_ogr_vrt_9():
 
 
 def test_ogr_vrt_10():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
 
     vrt_xml = '<OGRVRTDataSource><OGRVRTLayer name="test"><SrcDataSource relativeToVRT="0">data/shp/testpoly.shp</SrcDataSource><SrcLayer>testpoly</SrcLayer></OGRVRTLayer></OGRVRTDataSource>'
     vrt_ds = ogr.Open(vrt_xml)
@@ -304,11 +287,9 @@ def test_ogr_vrt_10():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_11():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_11(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("x,val1,y,val2,style\n".encode("ascii"))
     f.write(
         '2,"val11",49,"val12","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"\n'.encode("ascii")
@@ -316,14 +297,14 @@ def test_ogr_vrt_11():
     f.close()
 
     try:
-        os.remove("tmp/test.csvt")
+        os.remove(tmp_path / "test.csvt")
     except OSError:
         pass
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="PointFromColumns" x="x" y="y" reportSrcColumn="false"/>
         <Style>style</Style>
@@ -358,7 +339,7 @@ def test_ogr_vrt_11():
 
     # The x and y fields are considered as string by default, so spatial
     # filter cannot be turned into attribute filter
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_lyr.SetSpatialFilterRect(0, 40, 10, 49.5)
         ret = vrt_lyr.GetFeatureCount()
     assert gdal.GetLastErrorMsg().find("not declared as numeric fields") != -1
@@ -367,7 +348,7 @@ def test_ogr_vrt_11():
     vrt_ds = None
 
     # Add a .csvt file to specify the x and y columns as reals
-    f = open("tmp/test.csvt", "wb")
+    f = open(tmp_path / "test.csvt", "wb")
     f.write("Real,String,Real,String\n".encode("ascii"))
     f.close()
 
@@ -385,28 +366,23 @@ def test_ogr_vrt_11():
 
     vrt_ds = None
 
-    os.remove("tmp/test.csv")
-    os.remove("tmp/test.csvt")
-
 
 ###############################################################################
 # Test VRT write capabilities with WKT geometries
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_12():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_12(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("wkt_geom,val1,val2\n".encode("ascii"))
     f.write('POINT (2 49),"val11","val12"\n'.encode("ascii"))
     f.close()
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="WKT" field="wkt_geom"/>
     </OGRVRTLayer>
@@ -428,26 +404,22 @@ def test_ogr_vrt_12():
 
     vrt_ds = None
 
-    os.remove("tmp/test.csv")
-
 
 ###############################################################################
 # Test VRT write capabilities with WKB geometries
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_13():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_13(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("wkb_geom,val1,val2\n".encode("ascii"))
     f.close()
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="WKB" field="wkb_geom"/>
     </OGRVRTLayer>
@@ -469,24 +441,16 @@ def test_ogr_vrt_13():
 
     vrt_ds = None
 
-    os.remove("tmp/test.csv")
-
 
 ###############################################################################
 # Test SrcRegion element for VGS_Direct
 
 
-def test_ogr_vrt_14():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_14(tmp_path):
 
-    with gdaltest.error_handler():
-        try:
-            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
-        except AttributeError:
-            pass
-
-    shp_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/test.shp")
+    shp_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "test.shp"
+    )
     shp_lyr = shp_ds.CreateLayer("test")
 
     feat = ogr.Feature(shp_lyr.GetLayerDefn())
@@ -513,10 +477,10 @@ def test_ogr_vrt_14():
 
     shp_ds = None
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="mytest">
-        <SrcDataSource relativeToVRT="0">tmp/test.shp</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.shp</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
     </OGRVRTLayer>
@@ -556,7 +520,6 @@ def test_ogr_vrt_14():
     ), "Did not get expected one feature count with no filter."
 
     vrt_ds = None
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
 
 
 ###############################################################################
@@ -564,11 +527,9 @@ def test_ogr_vrt_14():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_15():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_15(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("wkt_geom,val1,val2\n".encode("ascii"))
     f.write("POINT (-10 49),,\n".encode("ascii"))
     f.write("POINT (-10 49),,\n".encode("ascii"))
@@ -576,10 +537,10 @@ def test_ogr_vrt_15():
     f.write("POINT (-10 49),,\n".encode("ascii"))
     f.close()
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="WKT" field="wkt_geom"/>
         <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
@@ -609,23 +570,19 @@ def test_ogr_vrt_15():
 
     vrt_ds = None
 
-    os.remove("tmp/test.csv")
-
 
 ###############################################################################
 # Test SrcRegion element for VGS_PointFromColumns
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_16():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_16(tmp_path):
 
-    f = open("tmp/test.csvt", "wb")
+    f = open(tmp_path / "test.csvt", "wb")
     f.write("Real,Real,String,String\n".encode("ascii"))
     f.close()
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("x,y,val1,val2\n".encode("ascii"))
     f.write("-10,49,,\n".encode("ascii"))
     f.write("-10,49,,\n".encode("ascii"))
@@ -633,10 +590,10 @@ def test_ogr_vrt_16():
     f.write("-10,49,,\n".encode("ascii"))
     f.close()
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="PointFromColumns" x="x" y="y"/>
         <SrcRegion>POLYGON((0 40,0 50,10 50,10 40,0 40))</SrcRegion>
@@ -659,8 +616,6 @@ def test_ogr_vrt_16():
     if vrt_lyr.GetFeatureCount() != 1:
         if gdal.GetLastErrorMsg().find("GEOS support not enabled") != -1:
             vrt_ds = None
-            os.remove("tmp/test.csv")
-            os.remove("tmp/test.csvt")
             pytest.skip()
         pytest.fail()
 
@@ -672,9 +627,6 @@ def test_ogr_vrt_16():
 
     vrt_ds = None
 
-    os.remove("tmp/test.csv")
-    os.remove("tmp/test.csvt")
-
 
 ###############################################################################
 # Test explicit field definitions.
@@ -682,9 +634,6 @@ def test_ogr_vrt_16():
 
 @pytest.mark.require_driver("CSV")
 def test_ogr_vrt_17():
-
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
 
     vrt_xml = """
 <OGRVRTDataSource>
@@ -751,9 +700,6 @@ def test_ogr_vrt_17():
 @pytest.mark.require_driver("CSV")
 def test_ogr_vrt_18():
 
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
     vrt_xml = """
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
@@ -780,9 +726,6 @@ def test_ogr_vrt_18():
 
 def test_ogr_vrt_19_optimized():
 
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
@@ -799,9 +742,6 @@ def test_ogr_vrt_19_optimized():
 
 def test_ogr_vrt_19_nonoptimized():
 
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
@@ -817,17 +757,11 @@ def test_ogr_vrt_19_nonoptimized():
 # Test VGS_Direct
 
 
-def test_ogr_vrt_20():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_20(tmp_path):
 
-    with gdaltest.error_handler():
-        try:
-            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
-        except AttributeError:
-            pass
-
-    shp_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/test.shp")
+    shp_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "test.shp"
+    )
     shp_lyr = shp_ds.CreateLayer("test")
 
     feat = ogr.Feature(shp_lyr.GetLayerDefn())
@@ -854,10 +788,10 @@ def test_ogr_vrt_20():
 
     shp_ds = None
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="mytest">
-        <SrcDataSource relativeToVRT="0">tmp/test.shp</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.shp</SrcDataSource>
         <SrcLayer>test</SrcLayer>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
@@ -922,287 +856,265 @@ def test_ogr_vrt_20():
         pytest.fail()
 
     vrt_ds = None
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
 
 
 ###############################################################################
 # Test lazy initialization with valid layer
 
 
-def ogr_vrt_21_internal():
-
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetName() == "test3"
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetGeomType() == ogr.wkbPoint
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetSpatialRef().ExportToWkt().find("84") != -1
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    lyr.ResetReading()
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetNextFeature() is not None
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetFeature(1) is not None
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetFeatureCount() != 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.SetNextByIndex(1) == 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetLayerDefn().GetFieldCount() != 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.SetAttributeFilter("") == 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    lyr.SetSpatialFilter(None)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetExtent() is not None
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    assert lyr.GetFIDColumn() == "fid"
-    ds = None
-
-    feature_defn = ogr.FeatureDefn()
-    feat = ogr.Feature(feature_defn)
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    lyr.CreateFeature(feat)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    lyr.SetFeature(feat)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    lyr.DeleteFeature(0)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test3")
-    lyr.SyncToDisk()
-    ds = None
-
-
 def test_ogr_vrt_21():
-    with gdaltest.error_handler():
-        ogr_vrt_21_internal()
+
+    with gdal.quiet_errors():
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetName() == "test3"
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetSpatialRef().ExportToWkt().find("84") != -1
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        lyr.ResetReading()
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetNextFeature() is not None
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetFeature(1) is not None
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetFeatureCount() != 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.SetNextByIndex(1) == 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetLayerDefn().GetFieldCount() != 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.SetAttributeFilter("") == 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        lyr.SetSpatialFilter(None)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 1
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetExtent() is not None
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        assert lyr.GetFIDColumn() == "fid"
+        ds = None
+
+        feature_defn = ogr.FeatureDefn()
+        feat = ogr.Feature(feature_defn)
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        lyr.CreateFeature(feat)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        lyr.SetFeature(feat)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        lyr.DeleteFeature(0)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test3")
+        lyr.SyncToDisk()
+        ds = None
 
 
 ###############################################################################
 # Test lazy initialization with invalid layer
 
 
-def ogr_vrt_22_internal():
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetName() == "test5"
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetGeomType() == ogr.wkbPoint
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetSpatialRef() is None
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.ResetReading()
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetNextFeature() is None
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetFeature(1) is None
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetFeatureCount() == 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.SetNextByIndex(1) != 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetLayerDefn().GetFieldCount() == 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.SetAttributeFilter("") != 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.SetSpatialFilter(None)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    assert lyr.GetFIDColumn() == ""
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.GetExtent()
-    ds = None
-
-    feature_defn = ogr.FeatureDefn()
-    feat = ogr.Feature(feature_defn)
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.CreateFeature(feat)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.SetFeature(feat)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.DeleteFeature(0)
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.SyncToDisk()
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.StartTransaction()
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.CommitTransaction()
-    ds = None
-
-    ds = ogr.Open("data/vrt/vrt_test.vrt")
-    lyr = ds.GetLayerByName("test5")
-    lyr.RollbackTransaction()
-    ds = None
-
-
 def test_ogr_vrt_22():
-    with gdaltest.error_handler():
-        ogr_vrt_22_internal()
+    with gdal.quiet_errors():
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetName() == "test5"
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetSpatialRef() is None
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.ResetReading()
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetNextFeature() is None
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetFeature(1) is None
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetFeatureCount() == 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.SetNextByIndex(1) != 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetLayerDefn().GetFieldCount() == 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.SetAttributeFilter("") != 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.SetSpatialFilter(None)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        assert lyr.GetFIDColumn() == ""
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.GetExtent()
+        ds = None
+
+        feature_defn = ogr.FeatureDefn()
+        feat = ogr.Feature(feature_defn)
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.CreateFeature(feat)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.SetFeature(feat)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.DeleteFeature(0)
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.SyncToDisk()
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.StartTransaction()
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.CommitTransaction()
+        ds = None
+
+        ds = ogr.Open("data/vrt/vrt_test.vrt")
+        lyr = ds.GetLayerByName("test5")
+        lyr.RollbackTransaction()
+        ds = None
 
 
 ###############################################################################
 # Test anti-recursion mechanism
 
 
-def test_ogr_vrt_23(shared_ds_flag=""):
+def test_ogr_vrt_23(tmp_vsimem, shared_ds_flag=""):
 
     if int(gdal.VersionInfo("VERSION_NUM")) < 1900:
         pytest.skip("would crash")
 
-    rec1 = (
-        """<OGRVRTDataSource>
+    rec1 = f"""<OGRVRTDataSource>
     <OGRVRTLayer name="rec1">
-        <SrcDataSource%s>/vsimem/rec2.vrt</SrcDataSource>
+        <SrcDataSource{shared_ds_flag}>{tmp_vsimem}/rec2.vrt</SrcDataSource>
         <SrcLayer>rec2</SrcLayer>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-        % shared_ds_flag
-    )
 
-    rec2 = (
-        """<OGRVRTDataSource>
+    rec2 = f"""<OGRVRTDataSource>
     <OGRVRTLayer name="rec2">
-        <SrcDataSource%s>/vsimem/rec1.vrt</SrcDataSource>
+        <SrcDataSource{shared_ds_flag}>{tmp_vsimem}/rec1.vrt</SrcDataSource>
         <SrcLayer>rec1</SrcLayer>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
-        % shared_ds_flag
-    )
 
-    gdal.FileFromMemBuffer("/vsimem/rec1.vrt", rec1)
-    gdal.FileFromMemBuffer("/vsimem/rec2.vrt", rec2)
+    gdal.FileFromMemBuffer(tmp_vsimem / "rec1.vrt", rec1)
+    gdal.FileFromMemBuffer(tmp_vsimem / "rec2.vrt", rec2)
 
-    ds = ogr.Open("/vsimem/rec1.vrt")
+    ds = ogr.Open(tmp_vsimem / "rec1.vrt")
     assert ds is not None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayer(0).GetLayerDefn()
         ds.GetLayer(0).GetFeatureCount()
     assert gdal.GetLastErrorMsg() != "", "error expected !"
-
-    gdal.Unlink("/vsimem/rec1.vrt")
-    gdal.Unlink("/vsimem/rec2.vrt")
 
 
 ###############################################################################
 # Test anti-recursion mechanism on shared DS
 
 
-def test_ogr_vrt_24():
+def test_ogr_vrt_24(tmp_vsimem):
 
-    test_ogr_vrt_23(' shared="1"')
+    test_ogr_vrt_23(tmp_vsimem, ' shared="1"')
 
     rec1 = """<OGRVRTDataSource>
     <OGRVRTLayer name="test">
@@ -1223,7 +1135,7 @@ def test_ogr_vrt_24():
     assert ds is not None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayer(0).GetLayerDefn()
         ds.GetLayer(0).GetFeatureCount()
     assert gdal.GetLastErrorMsg() != "", "error expected !"
@@ -1238,7 +1150,7 @@ def test_ogr_vrt_24():
 
 def test_ogr_vrt_25():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/vrt_test.vrt")
 
     # test3 layer just declares fid, and implicit fields (so all source
@@ -1267,9 +1179,11 @@ def test_ogr_vrt_25():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_ogr_vrt_26():
+def test_ogr_vrt_26(tmp_vsimem):
 
-    sqlite_ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/ogr_vrt_26.db")
+    sqlite_ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+        tmp_vsimem / "ogr_vrt_26.db"
+    )
     if sqlite_ds is None:
         pytest.skip()
 
@@ -1279,9 +1193,9 @@ def test_ogr_vrt_26():
     sqlite_ds.SyncToDisk()
 
     vrt_ds = ogr.Open(
-        """<OGRVRTDataSource>
+        f"""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource>/vsimem/ogr_vrt_26.db</SrcDataSource>
+        <SrcDataSource>{tmp_vsimem}/ogr_vrt_26.db</SrcDataSource>
     </OGRVRTLayer>
 </OGRVRTDataSource>""",
         update=1,
@@ -1315,14 +1229,12 @@ def test_ogr_vrt_26():
 
     sqlite_ds = None
 
-    ogr.GetDriverByName("SQLite").DeleteDataSource("/vsimem/ogr_vrt_26.db")
-
 
 ###############################################################################
 # Test shapebin geometry
 
 
-def test_ogr_vrt_27():
+def test_ogr_vrt_27(tmp_vsimem):
 
     csv = """dummy,shapebin
 "dummy","01000000000000000000F03F0000000000000040"
@@ -1330,12 +1242,12 @@ def test_ogr_vrt_27():
 "dummy","0500000000000000000000000000000000000000000000000000F03F000000000000F03F010000000500000000000000000000000000000000000000000000000000000000000000000000000000F03F000000000000F03F000000000000F03F000000000000F03F000000000000000000000000000000000000000000000000"
 """
 
-    gdal.FileFromMemBuffer("/vsimem/ogr_vrt_27.csv", csv)
+    gdal.FileFromMemBuffer(tmp_vsimem / "ogr_vrt_27.csv", csv)
 
     ds = ogr.Open(
-        """<OGRVRTDataSource>
+        f"""<OGRVRTDataSource>
   <OGRVRTLayer name="ogr_vrt_27">
-    <SrcDataSource relativeToVRT="0" shared="0">/vsimem/ogr_vrt_27.csv</SrcDataSource>
+    <SrcDataSource relativeToVRT="0" shared="0">{tmp_vsimem}/ogr_vrt_27.csv</SrcDataSource>
     <GeometryField encoding="shape" field="shapebin"/>
     <Field name="foo"/>
   </OGRVRTLayer>
@@ -1361,35 +1273,33 @@ def test_ogr_vrt_27():
 
     ds = None
 
-    gdal.Unlink("/vsimem/ogr_vrt_27.csv")
-
 
 ###############################################################################
 # Invalid VRT testing
 
 
-def test_ogr_vrt_28():
+def test_ogr_vrt_28(tmp_vsimem):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("<OGRVRTDataSource></foo>")
     assert ds is None
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_28_invalid.vrt",
+        tmp_vsimem / "ogr_vrt_28_invalid.vrt",
         "<bla><OGRVRTDataSource></OGRVRTDataSource></bla>",
     )
-    with gdaltest.error_handler():
-        ds = ogr.Open("/vsimem/ogr_vrt_28_invalid.vrt")
+    with gdal.quiet_errors():
+        ds = ogr.Open(tmp_vsimem / "ogr_vrt_28_invalid.vrt")
     assert ds is None
-    gdal.Unlink("/vsimem/ogr_vrt_28_invalid.vrt")
+    gdal.Unlink(tmp_vsimem / "ogr_vrt_28_invalid.vrt")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/invalid.vrt")
     assert ds is not None
 
     for i in range(ds.GetLayerCount()):
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = ds.GetLayer(i)
             lyr.GetNextFeature()
         assert (
@@ -1398,15 +1308,15 @@ def test_ogr_vrt_28():
 
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open("<OGRVRTDataSource><OGRVRTLayer/></OGRVRTDataSource>")
     assert gdal.GetLastErrorMsg() != "", "expected error message on datasource opening"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/invalid2.vrt")
     assert gdal.GetLastErrorMsg() != "", "expected error message on datasource opening"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/invalid3.vrt")
     assert gdal.GetLastErrorMsg() != "", "expected error message on datasource opening"
 
@@ -1415,14 +1325,11 @@ def test_ogr_vrt_28():
 # Test OGRVRTWarpedLayer
 
 
-def test_ogr_vrt_29():
+def test_ogr_vrt_29(tmp_path):
 
-    gdal.Unlink("tmp/ogr_vrt_29.shp")
-    gdal.Unlink("tmp/ogr_vrt_29.shx")
-    gdal.Unlink("tmp/ogr_vrt_29.dbf")
-    gdal.Unlink("tmp/ogr_vrt_29.prj")
-
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_vrt_29.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "ogr_vrt_29.shp"
+    )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     lyr = ds.CreateLayer("ogr_vrt_29", srs=sr)
@@ -1441,12 +1348,12 @@ def test_ogr_vrt_29():
     ds = None
 
     # Invalid source layer
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
-            """<OGRVRTDataSource>
+            f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
-                <SrcDataSource>tmp/non_existing.shp</SrcDataSource>
+                <SrcDataSource>{tmp_path}/non_existing.shp</SrcDataSource>
             </OGRVRTLayer>
             <TargetSRS>EPSG:32631</TargetSRS>
         </OGRVRTWarpedLayer>
@@ -1455,7 +1362,7 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Non-spatial layer
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
             """<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
@@ -1469,12 +1376,12 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Missing TargetSRS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
-            """<OGRVRTDataSource>
+            f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
-                <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
+                <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
             </OGRVRTLayer>
         </OGRVRTWarpedLayer>
     </OGRVRTDataSource>"""
@@ -1482,12 +1389,12 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Invalid TargetSRS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
-            """<OGRVRTDataSource>
+            f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
-                <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
+                <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
             </OGRVRTLayer>
             <TargetSRS>foo</TargetSRS>
         </OGRVRTWarpedLayer>
@@ -1496,12 +1403,12 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Invalid SrcSRS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
-            """<OGRVRTDataSource>
+            f"""<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
             <OGRVRTLayer name="ogr_vrt_29">
-                <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
+                <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
             </OGRVRTLayer>
             <SrcSRS>foo</SrcSRS>
             <TargetSRS>EPSG:32631</TargetSRS>
@@ -1512,10 +1419,10 @@ def test_ogr_vrt_29():
 
     # TargetSRS == source SRS
     ds = ogr.Open(
-        """<OGRVRTDataSource>
+        f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
-            <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
+            <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
         </OGRVRTLayer>
         <TargetSRS>EPSG:4326</TargetSRS>
     </OGRVRTWarpedLayer>
@@ -1526,10 +1433,10 @@ def test_ogr_vrt_29():
 
     # Forced extent
     ds = ogr.Open(
-        """<OGRVRTDataSource>
+        f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
-            <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
+            <SrcDataSource>{tmp_path}/ogr_vrt_29.shp</SrcDataSource>
         </OGRVRTLayer>
         <TargetSRS>EPSG:32631</TargetSRS>
         <ExtentXMin>426857</ExtentXMin>
@@ -1544,7 +1451,7 @@ def test_ogr_vrt_29():
     assert bb == (426857, 485608, 5427475, 5516874)
     ds = None
 
-    f = open("tmp/ogr_vrt_29.vrt", "wt")
+    f = open(tmp_path / "ogr_vrt_29.vrt", "wt")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
@@ -1558,7 +1465,7 @@ def test_ogr_vrt_29():
     f.close()
 
     # Check reprojection in both directions
-    ds = ogr.Open("tmp/ogr_vrt_29.vrt", update=1)
+    ds = ogr.Open(tmp_path / "ogr_vrt_29.vrt", update=1)
     lyr = ds.GetLayer(0)
 
     sr = lyr.GetSpatialRef()
@@ -1613,23 +1520,23 @@ def test_ogr_vrt_29():
     ds = None
 
     # Check failed operations in read-only
-    ds = ogr.Open("tmp/ogr_vrt_29.vrt")
+    ds = ogr.Open(tmp_path / "ogr_vrt_29.vrt")
     lyr = ds.GetLayer(0)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.DeleteFeature(1)
     assert ret != 0
 
     feat = lyr.GetNextFeature()
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
     feat = None
@@ -1637,7 +1544,7 @@ def test_ogr_vrt_29():
     ds = None
 
     # Check in .shp file
-    ds = ogr.Open("tmp/ogr_vrt_29.shp", update=1)
+    ds = ogr.Open(tmp_path / "ogr_vrt_29.shp", update=1)
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1665,19 +1572,19 @@ def test_ogr_vrt_29():
     ds = None
 
     # Check failed reprojection when reading through VRT
-    ds = ogr.Open("tmp/ogr_vrt_29.vrt", update=1)
+    ds = ogr.Open(tmp_path / "ogr_vrt_29.vrt", update=1)
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("id = 1000")
 
     # Reprojection will fail
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetNextFeature()
     fid = feat.GetFID()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
         pytest.fail()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetFeature(fid)
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
@@ -1687,7 +1594,7 @@ def test_ogr_vrt_29():
     lyr.DeleteFeature(fid)
     ds = None
 
-    f = open("tmp/ogr_vrt_29_2.vrt", "wt")
+    f = open(tmp_path / "ogr_vrt_29_2.vrt", "wt")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
@@ -1701,19 +1608,19 @@ def test_ogr_vrt_29():
     f.close()
 
     # Check failed reprojection when writing through VRT
-    ds = ogr.Open("tmp/ogr_vrt_29_2.vrt", update=1)
+    ds = ogr.Open(tmp_path / "ogr_vrt_29_2.vrt", update=1)
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-180 91)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-180 91)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
     feat = None
@@ -1721,7 +1628,7 @@ def test_ogr_vrt_29():
     ds = None
 
     # Some sanity operations before running test_ogrsf
-    ds = ogr.Open("tmp/ogr_vrt_29.shp", update=1)
+    ds = ogr.Open(tmp_path / "ogr_vrt_29.shp", update=1)
     ds.ExecuteSQL("REPACK ogr_vrt_29")
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_vrt_29")
     ds = None
@@ -1730,40 +1637,21 @@ def test_ogr_vrt_29():
     if test_cli_utilities.get_test_ogrsf_path() is not None:
 
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_29.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_29.vrt"
         )
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
-
-    gdal.Unlink("tmp/ogr_vrt_29.shp")
-    gdal.Unlink("tmp/ogr_vrt_29.shx")
-    gdal.Unlink("tmp/ogr_vrt_29.dbf")
-    gdal.Unlink("tmp/ogr_vrt_29.prj")
-    os.unlink("tmp/ogr_vrt_29.vrt")
-    os.unlink("tmp/ogr_vrt_29_2.vrt")
 
 
 ###############################################################################
 # Test OGRVRTUnionLayer
 
 
-def test_ogr_vrt_30():
+def test_ogr_vrt_30(tmp_path):
 
-    for filename in [
-        "tmp/ogr_vrt_30_1.shp",
-        "tmp/ogr_vrt_30_1.shx",
-        "tmp/ogr_vrt_30_1.dbf",
-        "tmp/ogr_vrt_30_1.prj",
-        "tmp/ogr_vrt_30_1.qix",
-        "tmp/ogr_vrt_30_2.shp",
-        "tmp/ogr_vrt_30_2.shx",
-        "tmp/ogr_vrt_30_2.dbf",
-        "tmp/ogr_vrt_30_2.prj",
-        "tmp/ogr_vrt_30_2.qix",
-    ]:
-        gdal.Unlink(filename)
-
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_vrt_30_1.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "ogr_vrt_30_1.shp"
+    )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     lyr = ds.CreateLayer("ogr_vrt_30_1", srs=sr)
@@ -1785,7 +1673,9 @@ def test_ogr_vrt_30():
 
     ds = None
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_vrt_30_2.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "ogr_vrt_30_2.shp"
+    )
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     lyr = ds.CreateLayer("ogr_vrt_30_2", srs=sr)
@@ -1807,7 +1697,7 @@ def test_ogr_vrt_30():
 
     ds = None
 
-    f = open("tmp/ogr_vrt_30.vrt", "wt")
+    f = open(tmp_path / "ogr_vrt_30.vrt", "wt")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
@@ -1825,7 +1715,7 @@ def test_ogr_vrt_30():
     # Check
 
     for check in range(10):
-        ds = ogr.Open("tmp/ogr_vrt_30.vrt", update=1)
+        ds = ogr.Open(tmp_path / "ogr_vrt_30.vrt", update=1)
         lyr = ds.GetLayer(0)
 
         if check == 0:
@@ -1932,7 +1822,7 @@ def test_ogr_vrt_30():
             # CreateFeature() should fail
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -1941,7 +1831,7 @@ def test_ogr_vrt_30():
             lyr.ResetReading()
             feat = lyr.GetNextFeature()
             feat.SetField("id2", 45321)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -1960,19 +1850,19 @@ def test_ogr_vrt_30():
 
         ret = gdaltest.runexternal(
             test_cli_utilities.get_test_ogrsf_path()
-            + " -ro tmp/ogr_vrt_30.vrt --config OGR_VRT_MAX_OPENED 1"
+            + f" -ro {tmp_path}/ogr_vrt_30.vrt --config OGR_VRT_MAX_OPENED 1"
         )
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " tmp/ogr_vrt_30.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" {tmp_path}/ogr_vrt_30.vrt"
         )
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
     # Test various optional attributes
-    f = open("tmp/ogr_vrt_30.vrt", "wt")
+    f = open(tmp_path / "ogr_vrt_30.vrt", "wt")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
@@ -1998,7 +1888,7 @@ def test_ogr_vrt_30():
     f.close()
 
     for check in range(9):
-        ds = ogr.Open("tmp/ogr_vrt_30.vrt", update=1)
+        ds = ogr.Open(tmp_path / "ogr_vrt_30.vrt", update=1)
         lyr = ds.GetLayer(0)
 
         if check == 0:
@@ -2091,7 +1981,7 @@ def test_ogr_vrt_30():
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("source_layer", "random_name")
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2099,7 +1989,7 @@ def test_ogr_vrt_30():
             # unset source_layer name with CreateFeature()
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2109,7 +1999,7 @@ def test_ogr_vrt_30():
             feat.SetFID(999999)
             feat.SetField("source_layer", "ogr_vrt_30_2")
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2126,13 +2016,13 @@ def test_ogr_vrt_30():
 
             # invalid source_layer name with SetFeature()
             feat.SetField("source_layer", "random_name")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
 
             # unset source_layer name with SetFeature()
             feat.UnsetField("source_layer")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
 
@@ -2140,7 +2030,7 @@ def test_ogr_vrt_30():
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("source_layer", "ogr_vrt_30_2")
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2175,21 +2065,6 @@ def test_ogr_vrt_30():
             assert lyr.SyncToDisk() == 0, "should have succeeded"
 
         ds = None
-
-    for filename in [
-        "tmp/ogr_vrt_30_1.shp",
-        "tmp/ogr_vrt_30_1.shx",
-        "tmp/ogr_vrt_30_1.dbf",
-        "tmp/ogr_vrt_30_1.prj",
-        "tmp/ogr_vrt_30_1.qix",
-        "tmp/ogr_vrt_30_2.shp",
-        "tmp/ogr_vrt_30_2.shx",
-        "tmp/ogr_vrt_30_2.dbf",
-        "tmp/ogr_vrt_30_2.prj",
-        "tmp/ogr_vrt_30_2.qix",
-    ]:
-        gdal.Unlink(filename)
-    os.unlink("tmp/ogr_vrt_30.vrt")
 
 
 ###############################################################################
@@ -2233,7 +2108,7 @@ def test_ogr_vrt_31(shared_ds_flag=""):
     assert ds is not None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayer(0).GetLayerDefn()
         ds.GetLayer(0).GetFeatureCount()
     assert gdal.GetLastErrorMsg() != "", "error expected !"
@@ -2255,183 +2130,198 @@ def test_ogr_vrt_32():
 # Test multi-geometry support
 
 
+@pytest.fixture(scope="module")
+def ogr_vrt_33(tmp_path_factory):
+
+    dirname = tmp_path_factory.mktemp("ogr_vrt") / "ogr_vrt_33"
+
+    with ogr.GetDriverByName("CSV").CreateDataSource(
+        dirname, options=["GEOMETRY=AS_WKT"]
+    ) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["CREATE_CSVT=YES"])
+        lyr.CreateGeomField(
+            ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint)
+        )
+        lyr.CreateGeomField(
+            ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon)
+        )
+        lyr.CreateGeomField(
+            ogr.GeomFieldDefn("geom__WKT_EPSG_4326_LINESTRING", ogr.wkbLineString)
+        )
+        lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
+        lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
+
+        lyr = ds.CreateLayer(
+            "test2", geom_type=ogr.wkbNone, options=["CREATE_CSVT=YES"]
+        )
+        lyr.CreateGeomField(
+            ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon)
+        )
+        lyr.CreateGeomField(
+            ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint)
+        )
+        lyr.CreateGeomField(
+            ogr.GeomFieldDefn("geom__WKT_EPSG_32631_POINT", ogr.wkbPoint)
+        )
+        lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
+        lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
+
+    with ogr.Open(dirname, update=1) as ds:
+        lyr = ds.GetLayerByName("test")
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeomField(0, ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        feat.SetGeomField(
+            1, ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))")
+        )
+        feat.SetField("X", -1)
+        feat.SetField("Y", -2)
+        lyr.CreateFeature(feat)
+
+        lyr = ds.GetLayerByName("test2")
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeomField(
+            0, ogr.CreateGeometryFromWkt("POLYGON ((1 1,1 2,2 2,2 1,1 1))")
+        )
+        feat.SetGeomField(1, ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        feat.SetGeomField(2, ogr.CreateGeometryFromWkt("POINT (5 6)"))
+        feat.SetField("X", -3)
+        feat.SetField("Y", -4)
+        lyr.CreateFeature(feat)
+
+    return dirname
+
+
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_33():
+@pytest.mark.parametrize("minimal_definition", (True, False))
+def test_ogr_vrt_33(ogr_vrt_33, tmp_path, minimal_definition):
 
-    try:
-        import shutil
-
-        shutil.rmtree("tmp/ogr_vrt_33")
-    except OSError:
-        pass
-
-    ds = ogr.GetDriverByName("CSV").CreateDataSource(
-        "tmp/ogr_vrt_33", options=["GEOMETRY=AS_WKT"]
-    )
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["CREATE_CSVT=YES"])
-    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint))
-    lyr.CreateGeomField(
-        ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon)
-    )
-    lyr.CreateGeomField(
-        ogr.GeomFieldDefn("geom__WKT_EPSG_4326_LINESTRING", ogr.wkbLineString)
-    )
-    lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
-
-    lyr = ds.CreateLayer("test2", geom_type=ogr.wkbNone, options=["CREATE_CSVT=YES"])
-    lyr.CreateGeomField(
-        ogr.GeomFieldDefn("geom__WKT_EPSG_32632_POLYGON", ogr.wkbPolygon)
-    )
-    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_4326_POINT", ogr.wkbPoint))
-    lyr.CreateGeomField(ogr.GeomFieldDefn("geom__WKT_EPSG_32631_POINT", ogr.wkbPoint))
-    lyr.CreateField(ogr.FieldDefn("Y", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("X", ogr.OFTReal))
-    ds = None
-
-    ds = ogr.Open("tmp/ogr_vrt_33", update=1)
-    lyr = ds.GetLayerByName("test")
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetGeomField(0, ogr.CreateGeometryFromWkt("POINT (1 2)"))
-    feat.SetGeomField(1, ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))"))
-    feat.SetField("X", -1)
-    feat.SetField("Y", -2)
-    lyr.CreateFeature(feat)
-
-    lyr = ds.GetLayerByName("test2")
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetGeomField(0, ogr.CreateGeometryFromWkt("POLYGON ((1 1,1 2,2 2,2 1,1 1))"))
-    feat.SetGeomField(1, ogr.CreateGeometryFromWkt("POINT (3 4)"))
-    feat.SetGeomField(2, ogr.CreateGeometryFromWkt("POINT (5 6)"))
-    feat.SetField("X", -3)
-    feat.SetField("Y", -4)
-    lyr.CreateFeature(feat)
-    ds = None
-
-    for i in range(2):
-        if i == 0:
-            # Minimalist definition.
-            ds_str = """<OGRVRTDataSource>
-    <OGRVRTLayer name="test">
-        <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
-    </OGRVRTLayer>
+    if minimal_definition:
+        # Minimalist definition.
+        ds_str = f"""<OGRVRTDataSource>
+<OGRVRTLayer name="test">
+    <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
+</OGRVRTLayer>
 </OGRVRTDataSource>"""
-        else:
-            # Implicit fields
-            ds_str = """<OGRVRTDataSource>
-    <OGRVRTLayer name="test">
-        <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
-        <GeometryField name="geom__WKT_EPSG_4326_POINT"/>
-        <GeometryField name="geom__WKT_EPSG_32632_POLYGON"/>
-    </OGRVRTLayer>
+    else:
+        # Implicit fields
+        ds_str = f"""<OGRVRTDataSource>
+<OGRVRTLayer name="test">
+    <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
+    <GeometryField name="geom__WKT_EPSG_4326_POINT"/>
+    <GeometryField name="geom__WKT_EPSG_32632_POLYGON"/>
+</OGRVRTLayer>
 </OGRVRTDataSource>"""
 
+    ds = ogr.Open(ds_str)
+    lyr = ds.GetLayer(0)
+    for j in range(5):
+        if j == 0:
+            assert lyr.GetGeomType() == ogr.wkbPoint
+        elif j == 1:
+            assert lyr.GetSpatialRef().ExportToWkt().find("GEOGCS") == 0
+        elif j == 2:
+            assert lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbPolygon
+        elif j == 3:
+            assert lyr.GetExtent(geom_field=1) == (0, 1, 0, 1)
+        elif j == 4:
+            assert (
+                lyr.GetLayerDefn()
+                .GetGeomFieldDefn(1)
+                .GetSpatialRef()
+                .ExportToWkt()
+                .find("PROJCS")
+                == 0
+            )
+            feat = lyr.GetNextFeature()
+            if feat.GetGeomFieldRef(0).ExportToWkt() != "POINT (1 2)":
+                feat.DumpReadable()
+                pytest.fail()
+            if (
+                feat.GetGeomFieldRef(1).ExportToWkt()
+                != "POLYGON ((0 0,0 1,1 1,1 0,0 0))"
+            ):
+                feat.DumpReadable()
+                pytest.fail()
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
+        f.write(ds_str.encode("ascii"))
+        f.close()
+        ret = gdaltest.runexternal(
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
+        )
+
+        assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_geos()
+def test_ogr_vrt_33a(ogr_vrt_33, tmp_path):
+
+    # Select only second field and change various attributes
+    ds_str = f"""<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
+        <GeometryField name="foo" field="geom__WKT_EPSG_32632_POLYGON">
+            <GeometryType>wkbPolygon25D</GeometryType>
+            <SRS>+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs</SRS>
+            <ExtentXMin>1</ExtentXMin>
+            <ExtentYMin>2</ExtentYMin>
+            <ExtentXMax>3</ExtentXMax>
+            <ExtentYMax>4</ExtentYMax>
+            <SrcRegion clip="true">POLYGON((0.5 0.5,1.5 0.5,1.5 1.5,0.5 1.5,0.5 0.5))</SrcRegion>
+        </GeometryField>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+    for i in range(6):
         ds = ogr.Open(ds_str)
         lyr = ds.GetLayer(0)
-        for j in range(5):
-            if j == 0:
-                assert lyr.GetGeomType() == ogr.wkbPoint
-            elif j == 1:
-                assert lyr.GetSpatialRef().ExportToWkt().find("GEOGCS") == 0
-            elif j == 2:
-                assert (
-                    lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbPolygon
+        if i == 0:
+            assert lyr.GetGeomType() == ogr.wkbPolygon25D
+        elif i == 1:
+            assert (
+                lyr.GetSpatialRef()
+                .ExportToWkt()
+                .find(
+                    "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"
                 )
-            elif j == 3:
-                assert lyr.GetExtent(geom_field=1) == (0, 1, 0, 1)
-            elif j == 4:
-                assert (
-                    lyr.GetLayerDefn()
-                    .GetGeomFieldDefn(1)
-                    .GetSpatialRef()
-                    .ExportToWkt()
-                    .find("PROJCS")
-                    == 0
-                )
-                feat = lyr.GetNextFeature()
-                if feat.GetGeomFieldRef(0).ExportToWkt() != "POINT (1 2)":
-                    feat.DumpReadable()
-                    pytest.fail()
-                if (
-                    feat.GetGeomFieldRef(1).ExportToWkt()
-                    != "POLYGON ((0 0,0 1,1 1,1 0,0 0))"
-                ):
-                    feat.DumpReadable()
-                    pytest.fail()
-
-        if test_cli_utilities.get_test_ogrsf_path() is not None:
-            f = open("tmp/ogr_vrt_33.vrt", "wb")
-            f.write(ds_str.encode("ascii"))
-            f.close()
-            ret = gdaltest.runexternal(
-                test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+                >= 0
             )
-            os.unlink("tmp/ogr_vrt_33.vrt")
+        elif i == 2:
+            assert lyr.GetGeometryColumn() == "foo"
+        elif i == 3:
+            assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+            assert lyr.GetExtent(geom_field=0) == (1, 3, 2, 4)
+        elif i == 4:
+            assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
+        elif i == 5:
+            assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+            feat = lyr.GetNextFeature()
+            if feat.GetGeomFieldRef(0).ExportToWkt() not in (
+                "POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))",
+                "POLYGON ((1 1,1.0 0.5,0.5 0.5,0.5 1.0,1 1))",
+            ):
+                feat.DumpReadable()
+                pytest.fail()
 
-            assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
+        f.write(ds_str.encode("ascii"))
+        f.close()
+        ret = gdaltest.runexternal(
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
+        )
 
-    if ogrtest.have_geos():
-        # Select only second field and change various attributes
-        ds_str = """<OGRVRTDataSource>
-        <OGRVRTLayer name="test">
-            <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
-            <GeometryField name="foo" field="geom__WKT_EPSG_32632_POLYGON">
-                <GeometryType>wkbPolygon25D</GeometryType>
-                <SRS>+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs</SRS>
-                <ExtentXMin>1</ExtentXMin>
-                <ExtentYMin>2</ExtentYMin>
-                <ExtentXMax>3</ExtentXMax>
-                <ExtentYMax>4</ExtentYMax>
-                <SrcRegion clip="true">POLYGON((0.5 0.5,1.5 0.5,1.5 1.5,0.5 1.5,0.5 0.5))</SrcRegion>
-            </GeometryField>
-        </OGRVRTLayer>
-    </OGRVRTDataSource>"""
-        for i in range(6):
-            ds = ogr.Open(ds_str)
-            lyr = ds.GetLayer(0)
-            if i == 0:
-                assert lyr.GetGeomType() == ogr.wkbPolygon25D
-            elif i == 1:
-                assert (
-                    lyr.GetSpatialRef()
-                    .ExportToWkt()
-                    .find(
-                        "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"
-                    )
-                    >= 0
-                )
-            elif i == 2:
-                assert lyr.GetGeometryColumn() == "foo"
-            elif i == 3:
-                assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
-                assert lyr.GetExtent(geom_field=0) == (1, 3, 2, 4)
-            elif i == 4:
-                assert lyr.TestCapability(ogr.OLCFastFeatureCount) == 0
-            elif i == 5:
-                assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
-                feat = lyr.GetNextFeature()
-                if feat.GetGeomFieldRef(0).ExportToWkt() not in (
-                    "POLYGON ((0.5 1.0,1 1,1.0 0.5,0.5 0.5,0.5 1.0))",
-                    "POLYGON ((1 1,1.0 0.5,0.5 0.5,0.5 1.0,1 1))",
-                ):
-                    feat.DumpReadable()
-                    pytest.fail()
+        assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
-        if test_cli_utilities.get_test_ogrsf_path() is not None:
-            f = open("tmp/ogr_vrt_33.vrt", "wb")
-            f.write(ds_str.encode("ascii"))
-            f.close()
-            ret = gdaltest.runexternal(
-                test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
-            )
-            os.unlink("tmp/ogr_vrt_33.vrt")
 
-            assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33b(ogr_vrt_33, tmp_path):
 
     # No geometry fields
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
+        <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
         <GeometryType>wkbNone</GeometryType>
     </OGRVRTLayer>
 </OGRVRTDataSource>"""
@@ -2454,19 +2344,23 @@ def test_ogr_vrt_33():
                 pytest.fail()
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
-    ds_str = """<OGRVRTDataSource>
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33c(ogr_vrt_33, tmp_path):
+
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
+        <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
         <GeometryField name="geom__WKT_EPSG_4326_POINT"/>
         <GeometryField name="foo" encoding="PointFromColumns" x="X" y="Y" reportSrcColumn="false">
             <SRS>EPSG:4326</SRS>
@@ -2518,21 +2412,25 @@ def test_ogr_vrt_33():
         pytest.fail()
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33d(ogr_vrt_33):
+
     # Warped layer without explicit WarpedGeomFieldName
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="test">
-            <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <TargetSRS>EPSG:32631</TargetSRS>
     </OGRVRTWarpedLayer>
@@ -2549,11 +2447,14 @@ def test_ogr_vrt_33():
         feat.DumpReadable()
         pytest.fail()
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33e(ogr_vrt_33):
     # Warped layer with explicit WarpedGeomFieldName (that is the first field)
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="test">
-            <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <WarpedGeomFieldName>geom__WKT_EPSG_4326_POINT</WarpedGeomFieldName>
         <TargetSRS>EPSG:32631</TargetSRS>
@@ -2571,25 +2472,31 @@ def test_ogr_vrt_33():
         feat.DumpReadable()
         pytest.fail()
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33f(ogr_vrt_33):
     # Warped layer with explicit WarpedGeomFieldName (that does NOT exist)
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="test">
-            <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <WarpedGeomFieldName>foo</WarpedGeomFieldName>
         <TargetSRS>EPSG:32631</TargetSRS>
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>"""
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(ds_str)
     assert gdal.GetLastErrorMsg() != ""
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33g(ogr_vrt_33):
     # Warped layer with explicit WarpedGeomFieldName (that is the second field)
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="test">
-            <SrcDataSource>tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource>{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <WarpedGeomFieldName>geom__WKT_EPSG_32632_POLYGON</WarpedGeomFieldName>
         <TargetSRS>EPSG:4326</TargetSRS>
@@ -2614,15 +2521,18 @@ def test_ogr_vrt_33():
         feat.DumpReadable()
         pytest.fail()
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33h(ogr_vrt_33, tmp_path):
     # UnionLayer with default union strategy
 
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="test">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <OGRVRTLayer name="test2">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
     </OGRVRTUnionLayer>
 </OGRVRTDataSource>"""
@@ -2669,25 +2579,28 @@ def test_ogr_vrt_33():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33i(ogr_vrt_33, tmp_path):
     # UnionLayer with intersection strategy
 
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="test">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <OGRVRTLayer name="test2">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <FieldStrategy>Intersection</FieldStrategy>
     </OGRVRTUnionLayer>
@@ -2729,25 +2642,28 @@ def test_ogr_vrt_33():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33j(ogr_vrt_33, tmp_path):
     # UnionLayer with FirstLayer strategy
 
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="test">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <OGRVRTLayer name="test2">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <FieldStrategy>FirstLayer</FieldStrategy>
     </OGRVRTUnionLayer>
@@ -2790,25 +2706,28 @@ def test_ogr_vrt_33():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33k(ogr_vrt_33, tmp_path):
     # UnionLayer with explicit fields but without further information
 
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="test">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <OGRVRTLayer name="test2">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <GeometryField name="geom__WKT_EPSG_32632_POLYGON"/>
         <GeometryField name="geom__WKT_EPSG_4326_POINT"/>
@@ -2843,25 +2762,28 @@ def test_ogr_vrt_33():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33l(ogr_vrt_33, tmp_path):
     # UnionLayer with explicit fields with extra information
 
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="test">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <OGRVRTLayer name="test2">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <GeometryField name="geom__WKT_EPSG_32632_POLYGON">
             <GeometryType>wkbPolygon25D</GeometryType>
@@ -2906,25 +2828,28 @@ def test_ogr_vrt_33():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
+
+@pytest.mark.require_driver("CSV")
+def test_ogr_vrt_33m(ogr_vrt_33, tmp_path):
     # UnionLayer with geometry fields disabled
 
-    ds_str = """<OGRVRTDataSource>
+    ds_str = f"""<OGRVRTDataSource>
     <OGRVRTUnionLayer name="union_layer">
         <OGRVRTLayer name="test">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <OGRVRTLayer name="test2">
-            <SrcDataSource shared="1">tmp/ogr_vrt_33</SrcDataSource>
+            <SrcDataSource shared="1">{ogr_vrt_33}</SrcDataSource>
         </OGRVRTLayer>
         <GeometryType>wkbNone</GeometryType>
     </OGRVRTUnionLayer>
@@ -2941,17 +2866,17 @@ def test_ogr_vrt_33():
     ds = None
 
     if test_cli_utilities.get_test_ogrsf_path() is not None:
-        f = open("tmp/ogr_vrt_33.vrt", "wb")
+        f = open(tmp_path / "ogr_vrt_33.vrt", "wb")
         f.write(ds_str.encode("ascii"))
         f.close()
         ret = gdaltest.runexternal(
-            test_cli_utilities.get_test_ogrsf_path() + " -ro tmp/ogr_vrt_33.vrt"
+            test_cli_utilities.get_test_ogrsf_path() + f" -ro {tmp_path}/ogr_vrt_33.vrt"
         )
-        os.unlink("tmp/ogr_vrt_33.vrt")
+        os.unlink(tmp_path / "ogr_vrt_33.vrt")
 
         assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
 
-    ds = ogr.Open("tmp/ogr_vrt_33")
+    ds = ogr.Open(ogr_vrt_33)
     sql_lyr = ds.ExecuteSQL("SELECT * FROM test UNION ALL SELECT * FROM test2")
     geom_fields = [
         ["geom__WKT_EPSG_4326_POINT", ogr.wkbPoint, "4326"],
@@ -2999,24 +2924,22 @@ def test_ogr_vrt_33():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_34():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_34(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("x,y\n".encode("ascii"))
     f.write("2,49\n".encode("ascii"))
     f.close()
 
     try:
-        os.remove("tmp/test.csvt")
+        os.remove(tmp_path / "test.csvt")
     except OSError:
         pass
 
-    vrt_xml = """
+    vrt_xml = f"""
 <OGRVRTDataSource>
     <OGRVRTLayer name="test">
-        <SrcDataSource relativeToVRT="0">tmp/test.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="0">{tmp_path}/test.csv</SrcDataSource>
         <SrcLayer>test</SrcLayer>
         <GeometryField encoding="PointFromColumns" x="x" y="y"/>
         <Field name="x" type="Real"/>
@@ -3033,30 +2956,26 @@ def test_ogr_vrt_34():
         pytest.fail()
     ds = None
 
-    os.unlink("tmp/test.csv")
-
 
 ###############################################################################
 # Test nullable fields
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_35():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_35(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("c1,c2,WKT,WKT2\n".encode("ascii"))
     f.write('1,,"POINT(2 49),"\n'.encode("ascii"))
     f.close()
 
     try:
-        os.remove("tmp/test.csvt")
+        os.remove(tmp_path / "test.csvt")
     except OSError:
         pass
 
     # Explicit nullable
-    f = open("tmp/test.vrt", "wb")
+    f = open(tmp_path / "test.vrt", "wb")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTLayer name="test">
@@ -3073,7 +2992,7 @@ def test_ogr_vrt_35():
     )
     f.close()
 
-    ds = ogr.Open("tmp/test.vrt")
+    ds = ogr.Open(tmp_path / "test.vrt")
     lyr = ds.GetLayerByName("test")
     assert lyr.GetLayerDefn().GetFieldDefn(0).IsNullable() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() == 1
@@ -3082,7 +3001,7 @@ def test_ogr_vrt_35():
     ds = None
 
     # Implicit nullable
-    f = open("tmp/test2.vrt", "wb")
+    f = open(tmp_path / "test2.vrt", "wb")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTLayer name="test">
@@ -3095,7 +3014,7 @@ def test_ogr_vrt_35():
     )
     f.close()
 
-    ds = ogr.Open("tmp/test2.vrt")
+    ds = ogr.Open(tmp_path / "test2.vrt")
     lyr = ds.GetLayerByName("test")
     assert lyr.GetLayerDefn().GetFieldDefn(0).IsNullable() == 0
     assert lyr.GetLayerDefn().GetFieldDefn(1).IsNullable() == 1
@@ -3103,31 +3022,25 @@ def test_ogr_vrt_35():
     assert lyr.GetLayerDefn().GetGeomFieldDefn(1).IsNullable() == 1
     ds = None
 
-    os.unlink("tmp/test.csv")
-    os.unlink("tmp/test.vrt")
-    os.unlink("tmp/test2.vrt")
-
 
 ###############################################################################
 # Test field alternative name and comment
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_alternative_name_comment():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_alternative_name_comment(tmp_path):
 
-    f = open("tmp/test.csv", "wb")
+    f = open(tmp_path / "test.csv", "wb")
     f.write("c1,c2\n".encode("ascii"))
     f.write('1,,"\n'.encode("ascii"))
     f.close()
 
     try:
-        os.remove("tmp/test.csvt")
+        os.remove(tmp_path / "test.csvt")
     except OSError:
         pass
 
-    f = open("tmp/test.vrt", "wb")
+    f = open(tmp_path / "test.vrt", "wb")
     f.write(
         """<OGRVRTDataSource>
     <OGRVRTLayer name="test">
@@ -3142,7 +3055,7 @@ def test_ogr_vrt_alternative_name_comment():
     )
     f.close()
 
-    ds = ogr.Open("tmp/test.vrt")
+    ds = ogr.Open(tmp_path / "test.vrt")
     lyr = ds.GetLayerByName("test")
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "c1"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alternative_name"
@@ -3152,20 +3065,15 @@ def test_ogr_vrt_alternative_name_comment():
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
     ds = None
 
-    os.unlink("tmp/test.csv")
-    os.unlink("tmp/test.vrt")
-
 
 ###############################################################################
 # Test editing direct geometries
 
 
-def test_ogr_vrt_36():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_36(tmp_vsimem):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-        "/vsimem/ogr_vrt_36.shp"
+        tmp_vsimem / "ogr_vrt_36.shp"
     )
     lyr = ds.CreateLayer("ogr_vrt_36", geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn("id"))
@@ -3177,32 +3085,29 @@ def test_ogr_vrt_36():
     ds = None
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_36.vrt",
+        tmp_vsimem / "ogr_vrt_36.vrt",
         """<OGRVRTDataSource>
     <OGRVRTLayer name="ogr_vrt_36">
-        <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_36.shp</SrcDataSource>
+        <SrcDataSource relativeToVRT="1">ogr_vrt_36.shp</SrcDataSource>
         <GeometryType>wkbPoint</GeometryType>
         <LayerSRS>WGS84</LayerSRS>
     </OGRVRTLayer>
 </OGRVRTDataSource>""",
     )
 
-    ds = ogr.Open("/vsimem/ogr_vrt_36.vrt", update=1)
+    ds = ogr.Open(tmp_vsimem / "ogr_vrt_36.vrt", update=1)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     lyr.SetFeature(f)
     ds = None
 
-    ds = ogr.Open("/vsimem/ogr_vrt_36.shp")
+    ds = ogr.Open(tmp_vsimem / "ogr_vrt_36.shp")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f["id"] != "1":
         f.DumpReadable()
         pytest.fail()
     ds = None
-
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/ogr_vrt_36.shp")
-    gdal.Unlink("/vsimem/ogr_vrt_36.vrt")
 
 
 ###############################################################################
@@ -3211,13 +3116,13 @@ def test_ogr_vrt_36():
 
 def test_ogr_vrt_37():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/vrt_test.vrt")
 
     lyr = ds.GetLayerByName("test6")
     assert lyr.GetGeomType() == ogr.wkbNone
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/vrt_test.vrt")
 
     lyr = ds.GetLayerByName("test6")
@@ -3228,11 +3133,9 @@ def test_ogr_vrt_37():
 # Test reading geometry type
 
 
-def test_ogr_vrt_38():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
-    types = [
+@pytest.mark.parametrize(
+    "type_str,ogr_type",
+    [
         ["Point", ogr.wkbPoint],
         ["LineString", ogr.wkbLineString],
         ["Polygon", ogr.wkbPolygon],
@@ -3247,40 +3150,39 @@ def test_ogr_vrt_38():
         ["MultiSurface", ogr.wkbMultiSurface],
         ["Curve", ogr.wkbCurve],
         ["Surface", ogr.wkbSurface],
-    ]
+    ],
+)
+@pytest.mark.parametrize("qualifier", ["", "Z", "M", "ZM", "25D"])
+def test_ogr_vrt_38(tmp_vsimem, type_str, ogr_type, qualifier):
 
-    for (type_str, ogr_type) in types:
-        for qualifier in ["", "Z", "M", "ZM", "25D"]:
-            if qualifier == "Z" and ogr_type <= ogr.wkbGeometryCollection:
-                continue
-            if qualifier == "25D" and ogr_type > ogr.wkbGeometryCollection:
-                continue
-            gdal.FileFromMemBuffer(
-                "/vsimem/ogr_vrt_38.vrt",
-                """<OGRVRTDataSource>
-        <OGRVRTLayer name="ogr_vrt_38">
-            <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_38.shp</SrcDataSource>
-            <GeometryType>wkb%s%s</GeometryType>
-        </OGRVRTLayer>
-    </OGRVRTDataSource>"""
-                % (type_str, qualifier),
-            )
+    if qualifier == "Z" and ogr_type <= ogr.wkbGeometryCollection:
+        return
+    if qualifier == "25D" and ogr_type > ogr.wkbGeometryCollection:
+        return
 
-            expected_geom_type = ogr_type
-            if qualifier == "Z" or qualifier == "ZM" or qualifier == "25D":
-                expected_geom_type = ogr.GT_SetZ(expected_geom_type)
-            if qualifier == "M" or qualifier == "ZM":
-                expected_geom_type = ogr.GT_SetM(expected_geom_type)
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "ogr_vrt_38.vrt",
+        f"""<OGRVRTDataSource>
+<OGRVRTLayer name="ogr_vrt_38">
+    <SrcDataSource relativeToVRT="1">ogr_vrt_38.shp</SrcDataSource>
+    <GeometryType>wkb{type_str}{qualifier}</GeometryType>
+</OGRVRTLayer>
+</OGRVRTDataSource>""",
+    )
 
-            ds = ogr.Open("/vsimem/ogr_vrt_38.vrt", update=1)
-            lyr = ds.GetLayer(0)
-            assert lyr.GetGeomType() == expected_geom_type, (
-                type_str,
-                qualifier,
-                lyr.GetGeomType(),
-            )
+    expected_geom_type = ogr_type
+    if qualifier == "Z" or qualifier == "ZM" or qualifier == "25D":
+        expected_geom_type = ogr.GT_SetZ(expected_geom_type)
+    if qualifier == "M" or qualifier == "ZM":
+        expected_geom_type = ogr.GT_SetM(expected_geom_type)
 
-    gdal.Unlink("/vsimem/ogr_vrt_38.vrt")
+    ds = ogr.Open(tmp_vsimem / "ogr_vrt_38.vrt", update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == expected_geom_type, (
+        type_str,
+        qualifier,
+        lyr.GetGeomType(),
+    )
 
 
 ###############################################################################
@@ -3288,12 +3190,10 @@ def test_ogr_vrt_38():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_39():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_39(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_39.csv",
+        tmp_vsimem / "ogr_vrt_39.csv",
         """my_fid,val
 30,1
 25,2
@@ -3301,16 +3201,16 @@ def test_ogr_vrt_39():
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_39.csvt",
+        tmp_vsimem / "ogr_vrt_39.csvt",
         """Integer,Integer
 """,
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_39.vrt",
+        tmp_vsimem / "ogr_vrt_39.vrt",
         """<OGRVRTDataSource>
     <OGRVRTLayer name="ogr_vrt_39">
-        <SrcDataSource relativeToVRT="1">/vsimem/ogr_vrt_39.csv</SrcDataSource>
+        <SrcDataSource relativeToVRT="1">ogr_vrt_39.csv</SrcDataSource>
         <GeometryType>wkbNone</GeometryType>
         <FID>my_fid</FID>
         <Field name="val" type="Integer" src="val"/>
@@ -3318,7 +3218,7 @@ def test_ogr_vrt_39():
 </OGRVRTDataSource>""",
     )
 
-    ds = ogr.Open("/vsimem/ogr_vrt_39.vrt")
+    ds = ogr.Open(tmp_vsimem / "ogr_vrt_39.vrt")
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("fid = 25")
     f = lyr.GetNextFeature()
@@ -3327,29 +3227,23 @@ def test_ogr_vrt_39():
         pytest.fail()
     ds = None
 
-    gdal.Unlink("/vsimem/ogr_vrt_39.csv")
-    gdal.Unlink("/vsimem/ogr_vrt_39.csvt")
-    gdal.Unlink("/vsimem/ogr_vrt_39.vrt")
-
 
 ###############################################################################
 # Test PointZM support with encoding="PointFromColumns"
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_vrt_40():
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
+def test_ogr_vrt_40(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_40.csv",
+        tmp_vsimem / "ogr_vrt_40.csv",
         """id,x,y,z,m
 1,1,2,3,4
 """,
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ogr_vrt_40.vrt",
+        tmp_vsimem / "ogr_vrt_40.vrt",
         """<OGRVRTDataSource>
   <OGRVRTLayer name="ogr_vrt_40">
     <SrcDataSource relativeToVRT="1">ogr_vrt_40.csv</SrcDataSource>
@@ -3360,7 +3254,7 @@ def test_ogr_vrt_40():
 """,
     )
 
-    ds = ogr.Open("/vsimem/ogr_vrt_40.vrt")
+    ds = ogr.Open(tmp_vsimem / "ogr_vrt_40.vrt")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPointZM
     f = lyr.GetNextFeature()
@@ -3368,9 +3262,6 @@ def test_ogr_vrt_40():
         f.DumpReadable()
         pytest.fail()
     ds = None
-
-    gdal.Unlink("/vsimem/ogr_vrt_40.csv")
-    gdal.Unlink("/vsimem/ogr_vrt_40.vrt")
 
 
 ###############################################################################
@@ -3387,7 +3278,7 @@ def test_ogr_vrt_41():
 </OGRVRTDataSource>"""
     )
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetExtent()
 
 
@@ -3439,30 +3330,3 @@ def test_ogr_vrt_field_names_same_case():
     f = lyr.GetNextFeature()
     assert f["id"] == "foo"
     assert f["id_from_uc"] == "bar"
-
-
-###############################################################################
-#
-
-
-def test_ogr_vrt_cleanup():
-
-    if gdaltest.vrt_ds is None:
-        pytest.skip()
-
-    gdal.Unlink("/vsimem/rec1.vrt")
-    gdal.Unlink("/vsimem/rec2.vrt")
-
-    try:
-        os.unlink("tmp/ogr_vrt_33.vrt")
-    except OSError:
-        pass
-
-    try:
-        import shutil
-
-        shutil.rmtree("tmp/ogr_vrt_33")
-    except OSError:
-        pass
-
-    gdaltest.vrt_ds = None

@@ -30,7 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
+import collections
 import shutil
 import struct
 
@@ -40,31 +40,14 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
-
-@pytest.fixture(scope="module", autouse=True)
-def setup_and_cleanup():
-
-    yield
-
-    # We don't clean up when run in debug mode.
-    if gdal.GetConfigOption("CPL_DEBUG", "OFF") == "ON":
-        return
-
-    for i in range(2):
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif")
-        except OSError:
-            pass
-
-
 ###############################################################################
 # Simple test
 
 
-def test_gdalwarp_lib_1():
+def test_gdalwarp_lib_1(tmp_path):
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
-    dstDS = gdal.Warp("tmp/testgdalwarp1.tif", ds1)
+    dstDS = gdal.Warp(tmp_path / "testgdalwarp1.tif", ds1)
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
@@ -75,11 +58,13 @@ def test_gdalwarp_lib_1():
 # Test -of option
 
 
-def test_gdalwarp_lib_2():
+def test_gdalwarp_lib_2(tmp_path):
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
     dstDS = gdal.Warp(
-        "tmp/testgdalwarp2.tif".encode("ascii").decode("ascii"), [ds1], format="GTiff"
+        tmp_path / "testgdalwarp2.tif".encode("ascii").decode("ascii"),
+        [ds1],
+        format="GTiff",
     )
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -124,9 +109,7 @@ def test_gdalwarp_lib_4():
 @pytest.fixture(scope="module")
 def testgdalwarp_gcp_tif(tmp_path_factory):
 
-    testgdalwarp_gcp_tif_fname = str(
-        tmp_path_factory.mktemp("tmp") / "testgdalwarp_gcp.tif"
-    )
+    testgdalwarp_gcp_tif_fname = tmp_path_factory.mktemp("tmp") / "testgdalwarp_gcp.tif"
 
     ds = gdal.Open("../gcore/data/byte.tif")
     gcpList = [
@@ -418,18 +401,16 @@ def test_gdalwarp_lib_15(testgdalwarp_gcp_tif):
 # Test -of VRT which is a special case
 
 
-def test_gdalwarp_lib_16(testgdalwarp_gcp_tif):
+def test_gdalwarp_lib_16(tmp_vsimem, testgdalwarp_gcp_tif):
 
     ds = gdal.Warp(
-        "/vsimem/test_gdalwarp_lib_16.vrt", testgdalwarp_gcp_tif, format="VRT"
+        tmp_vsimem / "test_gdalwarp_lib_16.vrt", [testgdalwarp_gcp_tif], format="VRT"
     )
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
     ds = None
-
-    gdal.Unlink("/vsimem/test_gdalwarp_lib_16.vrt")
 
     # Cannot write file
     with pytest.raises(Exception):
@@ -490,6 +471,68 @@ def test_gdalwarp_lib_21():
 
 
 ###############################################################################
+# Test cutline with sourceCRS != targetCRS and targetCRS == cutlineCRS
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GPKG")
+def test_gdalwarp_lib_cutline_reprojection(tmp_vsimem):
+
+    cutline_filename = tmp_vsimem / "cutline.gpkg"
+
+    gdal.VectorTranslate(
+        cutline_filename, "data/cutline.vrt", dstSRS="EPSG:4267", reproject=True
+    )
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/utmsmall.tif",
+        format="MEM",
+        dstSRS="EPSG:4267",
+        cutlineDSName=cutline_filename,
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 18883, "Bad checksum"
+
+    ds = None
+
+
+###############################################################################
+# Test cutline with sourceCRS != targetCRS and targetCRS == cutlineCRS and coordinateOperation
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GPKG")
+def test_gdalwarp_lib_cutline_reprojection_and_coordinate_operation(tmp_vsimem):
+
+    cutline_filename = tmp_vsimem / "cutline.gpkg"
+
+    ct = "+proj=pipeline +step +proj=affine +xoff=10000 +step +inv +proj=utm +zone=11 +ellps=clrk66 +step +proj=unitconvert +xy_in=rad +xy_out=deg +step +proj=axisswap +order=2,1"
+    gdal.VectorTranslate(
+        cutline_filename,
+        "data/cutline.vrt",
+        dstSRS="EPSG:4267",
+        coordinateOperation=ct,
+        reproject=True,
+    )
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/utmsmall.tif",
+        format="MEM",
+        dstSRS="EPSG:4267",
+        cutlineDSName=cutline_filename,
+        coordinateOperation=ct,
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 18914, "Bad checksum"
+
+    ds = None
+
+
+###############################################################################
 # Test cutline from PostGIS (mostly to check that we open the dataset in
 # vector mode, and not in raster mode, which would cause the PostGISRaster
 # driver to be used)
@@ -538,12 +581,12 @@ def test_gdalwarp_lib_cutline_postgis():
 @pytest.mark.parametrize(
     "options", [{}, {"GDALWARP_SKIP_CUTLINE_CONTAINMENT_TEST": "YES"}]
 )
-def test_gdalwarp_lib_cutline_larger_source_dataset(options):
+def test_gdalwarp_lib_cutline_larger_source_dataset(tmp_vsimem, options):
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(26711)
     cutline_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-        "/vsimem/cutline.shp"
+        tmp_vsimem / "cutline.shp"
     )
     cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
     f = ogr.Feature(cutline_lyr.GetLayerDefn())
@@ -560,7 +603,7 @@ def test_gdalwarp_lib_cutline_larger_source_dataset(options):
             "",
             "../gcore/data/byte.tif",
             format="MEM",
-            cutlineDSName="/vsimem/cutline.shp",
+            cutlineDSName=tmp_vsimem / "cutline.shp",
             cutlineLayer="cutline",
         )
     assert ds is not None
@@ -568,7 +611,6 @@ def test_gdalwarp_lib_cutline_larger_source_dataset(options):
     assert ds.GetRasterBand(1).Checksum() == 4672
 
     ds = None
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
 ###############################################################################
@@ -680,7 +722,7 @@ def test_gdalwarp_lib_45():
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_lib_46():
+def test_gdalwarp_lib_46(tmp_vsimem):
 
     ds = gdal.Warp(
         "",
@@ -703,7 +745,7 @@ def test_gdalwarp_lib_46():
         outputSRS="EPSG:4326",
     )
 
-    cutlineDSName = "/vsimem/test_gdalwarp_lib_46.json"
+    cutlineDSName = tmp_vsimem / "test_gdalwarp_lib_46.json"
     cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(cutlineDSName)
     cutline_lyr = cutline_ds.CreateLayer("cutline")
     f = ogr.Feature(cutline_lyr.GetLayerDefn())
@@ -776,9 +818,11 @@ def test_gdalwarp_lib_46():
 # Test -crop_to_cutline -tr X Y -wo CUTLINE_ALL_TOUCHED=YES (fixes for #1360)
 
 
-def test_gdalwarp_lib_cutline_all_touched_single_pixel():
+def test_gdalwarp_lib_cutline_all_touched_single_pixel(tmp_vsimem):
 
-    cutlineDSName = "/vsimem/test_gdalwarp_lib_cutline_all_touched_single_pixel.json"
+    cutlineDSName = (
+        tmp_vsimem / "test_gdalwarp_lib_cutline_all_touched_single_pixel.json"
+    )
     cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(cutlineDSName)
     cutline_lyr = cutline_ds.CreateLayer("cutline")
     f = ogr.Feature(cutline_lyr.GetLayerDefn())
@@ -824,10 +868,10 @@ def test_gdalwarp_lib_cutline_all_touched_single_pixel():
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_lib_crop_to_cutline_slightly_shifted_wrt_pixel_boundaries():
+def test_gdalwarp_lib_crop_to_cutline_slightly_shifted_wrt_pixel_boundaries(tmp_vsimem):
 
     cutlineDSName = (
-        "/vsimem/test_gdalwarp_lib_crop_to_cutline_close_to_pixel_boundaries.json"
+        tmp_vsimem / "test_gdalwarp_lib_crop_to_cutline_close_to_pixel_boundaries.json"
     )
     cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(cutlineDSName)
     srs = osr.SpatialReference()
@@ -1052,9 +1096,11 @@ def test_gdalwarp_lib_111():
 # Test cutline without geometry
 
 
-def test_gdalwarp_lib_112():
+def test_gdalwarp_lib_112(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_vsimem / "cutline.shp"
+    )
     lyr = ds.CreateLayer("cutline")
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -1065,19 +1111,20 @@ def test_gdalwarp_lib_112():
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
-            cutlineDSName="/vsimem/cutline.shp",
+            cutlineDSName=tmp_vsimem / "cutline.shp",
             cutlineSQL="SELECT * FROM cutline",
         )
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
 ###############################################################################
 # Test cutline with non polygon geometry
 
 
-def test_gdalwarp_lib_113():
+def test_gdalwarp_lib_113(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_vsimem / "cutline.shp"
+    )
     lyr = ds.CreateLayer("cutline")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
@@ -1089,18 +1136,19 @@ def test_gdalwarp_lib_113():
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
-            cutlineDSName="/vsimem/cutline.shp",
+            cutlineDSName=tmp_vsimem / "cutline.shp",
         )
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
 ###############################################################################
 # Test cutline without feature
 
 
-def test_gdalwarp_lib_114():
+def test_gdalwarp_lib_114(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_vsimem / "cutline.shp"
+    )
     ds.CreateLayer("cutline")
     ds = None
     with pytest.raises(Exception):
@@ -1108,9 +1156,8 @@ def test_gdalwarp_lib_114():
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
-            cutlineDSName="/vsimem/cutline.shp",
+            cutlineDSName=tmp_vsimem / "cutline.shp",
         )
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
 ###############################################################################
@@ -1233,7 +1280,7 @@ def test_gdalwarp_lib_121():
         gdal.wrapper_GDALWarpDestName("", [], None, gdal.TermProgress_nocb)
 
     # Null dest name
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             gdal.wrapper_GDALWarpDestName(None, [], None)
 
@@ -1320,9 +1367,11 @@ def test_gdalwarp_lib_125():
 
 
 @pytest.mark.require_geos
-def test_gdalwarp_lib_126():
+def test_gdalwarp_lib_126(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/vsimem/cutline.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_vsimem / "cutline.shp"
+    )
     lyr = ds.CreateLayer("cutline")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(
@@ -1336,9 +1385,8 @@ def test_gdalwarp_lib_126():
             "",
             "../gcore/data/utmsmall.tif",
             format="MEM",
-            cutlineDSName="/vsimem/cutline.shp",
+            cutlineDSName=tmp_vsimem / "cutline.shp",
         )
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/cutline.shp")
 
 
 ###############################################################################
@@ -1356,7 +1404,7 @@ def test_gdalwarp_lib_127():
 # Test automatic densification of cutline (#6375)
 
 
-def test_gdalwarp_lib_128():
+def test_gdalwarp_lib_128(tmp_vsimem):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1177, 4719)
     rpc = [
@@ -1378,7 +1426,7 @@ def test_gdalwarp_lib_128():
     mem_ds.SetMetadata(rpc, "RPC")
     mem_ds.GetRasterBand(1).Fill(255)
 
-    cutlineDSName = "/vsimem/test_gdalwarp_lib_128.json"
+    cutlineDSName = tmp_vsimem / "test_gdalwarp_lib_128.json"
     cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(cutlineDSName)
     cutline_lyr = cutline_ds.CreateLayer("cutline")
     f = ogr.Feature(cutline_lyr.GetLayerDefn())
@@ -1451,7 +1499,7 @@ def test_gdalwarp_lib_128():
 
 
 @pytest.mark.require_geos
-def test_gdalwarp_lib_129():
+def test_gdalwarp_lib_129(tmp_vsimem):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1000, 2000)
     rpc = [
@@ -1474,7 +1522,7 @@ def test_gdalwarp_lib_129():
     mem_ds.SetMetadata(rpc, "RPC")
     mem_ds.GetRasterBand(1).Fill(255)
 
-    cutlineDSName = "/vsimem/test_gdalwarp_lib_129.json"
+    cutlineDSName = tmp_vsimem / "test_gdalwarp_lib_129.json"
     cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(cutlineDSName)
     cutline_lyr = cutline_ds.CreateLayer("cutline")
     f = ogr.Feature(cutline_lyr.GetLayerDefn())
@@ -1511,10 +1559,10 @@ def test_gdalwarp_lib_129():
 # GTiff output
 
 
-def test_gdalwarp_lib_130():
+def test_gdalwarp_lib_130(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_gdalwarp_lib_130.tif", 1, 1, 5, options=["PHOTOMETRIC=RGB"]
+        tmp_vsimem / "test_gdalwarp_lib_130.tif", 1, 1, 5, options=["PHOTOMETRIC=RGB"]
     )
     src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
     src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
@@ -1524,7 +1572,7 @@ def test_gdalwarp_lib_130():
     src_ds.GetRasterBand(4).Fill(4)
     src_ds.GetRasterBand(5).Fill(255)
 
-    ds = gdal.Warp("/vsimem/test_gdalwarp_lib_130_dst.tif", src_ds)
+    ds = gdal.Warp(tmp_vsimem / "test_gdalwarp_lib_130_dst.tif", src_ds)
     assert (
         ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
     ), "bad color interpretation"
@@ -1548,21 +1596,18 @@ def test_gdalwarp_lib_130():
     ds = None
 
     assert (
-        gdal.VSIStatL("/vsimem/test_gdalwarp_lib_130_dst.tif.aux.xml") is None
+        gdal.VSIStatL(tmp_vsimem / "test_gdalwarp_lib_130_dst.tif.aux.xml") is None
     ), "got PAM file"
-
-    gdal.Unlink("/vsimem/test_gdalwarp_lib_130.tif")
-    gdal.Unlink("/vsimem/test_gdalwarp_lib_130_dst.tif")
 
 
 ###############################################################################
 # Test -nosrcalpha
 
 
-def test_gdalwarp_lib_131():
+def test_gdalwarp_lib_131(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_gdalwarp_lib_131.tif", 1, 1, 2
+        tmp_vsimem / "test_gdalwarp_lib_131.tif", 1, 1, 2
     )
     src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
     src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
@@ -1570,7 +1615,7 @@ def test_gdalwarp_lib_131():
     src_ds.GetRasterBand(2).Fill(0)
 
     ds = gdal.Warp(
-        "/vsimem/test_gdalwarp_lib_131_dst.tif", src_ds, options="-nosrcalpha"
+        tmp_vsimem / "test_gdalwarp_lib_131_dst.tif", src_ds, options="-nosrcalpha"
     )
     expected_val = [1, 0]
     for i in range(2):
@@ -1578,10 +1623,6 @@ def test_gdalwarp_lib_131():
         assert data == expected_val[i], "bad checksum"
     src_ds = None
     ds = None
-    gdal.Unlink("/vsimem/test_gdalwarp_lib_131.tif")
-    gdal.Unlink("/vsimem/test_gdalwarp_lib_131_dst.tif")
-    if gdal.VSIStatL("/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml") is not None:
-        gdal.Unlink("/vsimem/test_gdalwarp_lib_131_dst.tif.aux.xml")
 
 
 ###############################################################################
@@ -1589,63 +1630,56 @@ def test_gdalwarp_lib_131():
 # with alpha > 0 and < 255
 
 
-def test_gdalwarp_lib_132():
+@pytest.mark.parametrize("dt", [gdal.GDT_Byte, gdal.GDT_Float32])
+def test_gdalwarp_lib_132(tmp_vsimem, dt):
 
-    for dt in [gdal.GDT_Byte, gdal.GDT_Float32]:
-        src_ds = gdal.GetDriverByName("GTiff").Create(
-            "/vsimem/test_gdalwarp_lib_132.tif", 33, 1, 2, dt
-        )
-        src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
-        src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "test_gdalwarp_lib_132.tif", 33, 1, 2, dt
+    )
+    src_ds.SetGeoTransform([100, 1, 0, 200, 0, -1])
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
 
-        ds = gdal.Translate("/vsimem/test_gdalwarp_lib_132_dst.tif", src_ds)
-        dst_grey = 60
-        dst_alpha = 100
-        ds.GetRasterBand(1).Fill(dst_grey)
-        ds.GetRasterBand(2).Fill(dst_alpha)
+    ds = gdal.Translate(tmp_vsimem / "test_gdalwarp_lib_132_dst.tif", src_ds)
+    dst_grey = 60
+    dst_alpha = 100
+    ds.GetRasterBand(1).Fill(dst_grey)
+    ds.GetRasterBand(2).Fill(dst_alpha)
 
-        src_grey = 170
-        src_alpha = 200
-        src_ds.GetRasterBand(1).Fill(src_grey)
-        src_ds.GetRasterBand(2).Fill(src_alpha)
-        gdal.Warp(ds, src_ds)
-        expected_alpha = int(src_alpha + dst_alpha * (255 - src_alpha) / 255.0 + 0.5)
-        expected_grey = int(
-            (src_grey * src_alpha + dst_grey * dst_alpha * (255 - src_alpha) / 255.0)
-            / expected_alpha
-            + 0.5
-        )
-        expected_val = [expected_grey, expected_alpha]
-        for i in range(2):
-            for x in range(33):
-                data = struct.unpack(
-                    "B" * 1,
-                    ds.GetRasterBand(i + 1).ReadRaster(
-                        i, 0, 1, 1, buf_type=gdal.GDT_Byte
-                    ),
-                )[0]
-                if data != pytest.approx(expected_val[i], abs=1):
-                    print(dt)
-                    print(x)
-                    pytest.fail("bad checksum")
-        ds = None
+    src_grey = 170
+    src_alpha = 200
+    src_ds.GetRasterBand(1).Fill(src_grey)
+    src_ds.GetRasterBand(2).Fill(src_alpha)
+    gdal.Warp(ds, src_ds)
+    expected_alpha = int(src_alpha + dst_alpha * (255 - src_alpha) / 255.0 + 0.5)
+    expected_grey = int(
+        (src_grey * src_alpha + dst_grey * dst_alpha * (255 - src_alpha) / 255.0)
+        / expected_alpha
+        + 0.5
+    )
+    expected_val = [expected_grey, expected_alpha]
+    for i in range(2):
+        for x in range(33):
+            data = struct.unpack(
+                "B" * 1,
+                ds.GetRasterBand(i + 1).ReadRaster(i, 0, 1, 1, buf_type=gdal.GDT_Byte),
+            )[0]
+            if data != pytest.approx(expected_val[i], abs=1):
+                print(dt)
+                print(x)
+                pytest.fail("bad checksum")
+    ds = None
 
-        src_ds = None
-
-        gdal.Unlink("/vsimem/test_gdalwarp_lib_132.tif")
-        gdal.Unlink("/vsimem/test_gdalwarp_lib_132_dst.tif")
-        if gdal.VSIStatL("/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml") is not None:
-            gdal.Unlink("/vsimem/test_gdalwarp_lib_132_dst.tif.aux.xml")
+    src_ds = None
 
 
 ###############################################################################
 # Test cutline with multiple touching polygons
 
 
-def test_gdalwarp_lib_133():
+def test_gdalwarp_lib_133(tmp_vsimem):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-        "/vsimem/test_gdalwarp_lib_133.shp"
+        tmp_vsimem / "test_gdalwarp_lib_133.shp"
     )
     lyr = ds.CreateLayer("cutline")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1661,7 +1695,7 @@ def test_gdalwarp_lib_133():
     src_ds.SetGeoTransform([0, 1, 0, 1, 0, -1])
     src_ds.GetRasterBand(1).Fill(255)
     ds = gdal.Warp(
-        "", src_ds, format="MEM", cutlineDSName="/vsimem/test_gdalwarp_lib_133.shp"
+        "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "test_gdalwarp_lib_133.shp"
     )
     assert ds is not None
 
@@ -1669,19 +1703,15 @@ def test_gdalwarp_lib_133():
 
     ds = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-        "/vsimem/test_gdalwarp_lib_133.shp"
-    )
-
 
 ###############################################################################
 # Test SRC_METHOD=NO_GEOTRANSFORM and DST_METHOD=NO_GEOTRANSFORM (#6721)
 
 
-def test_gdalwarp_lib_134():
+def test_gdalwarp_lib_134(tmp_vsimem):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-        "/vsimem/test_gdalwarp_lib_134.shp"
+        tmp_vsimem / "test_gdalwarp_lib_134.shp"
     )
     lyr = ds.CreateLayer("cutline")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1715,7 +1745,7 @@ def test_gdalwarp_lib_134():
         src_ds,
         format="MEM",
         transformerOptions=["SRC_METHOD=NO_GEOTRANSFORM", "DST_METHOD=NO_GEOTRANSFORM"],
-        cutlineDSName="/vsimem/test_gdalwarp_lib_134.shp",
+        cutlineDSName=tmp_vsimem / "test_gdalwarp_lib_134.shp",
         cropToCutline=True,
     )
     assert ds is not None
@@ -1727,7 +1757,7 @@ def test_gdalwarp_lib_134():
     ds = None
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-        "/vsimem/test_gdalwarp_lib_134.shp"
+        tmp_vsimem / "test_gdalwarp_lib_134.shp"
     )
 
 
@@ -1735,12 +1765,54 @@ def test_gdalwarp_lib_134():
 # Test vertical datum shift
 
 
+@pytest.fixture()
 @pytest.mark.require_driver("GTX")
-def test_gdalwarp_lib_135():
+def gdalwarp_135_grid_gtx(tmp_path):
+
+    grid_gtx = str(tmp_path / "grid.gtx")
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+
+    grid_ds = gdal.GetDriverByName("GTX").Create(grid_gtx, 3, 3, 1, gdal.GDT_Float32)
+    grid_ds.SetProjection(sr.ExportToWkt())
+    grid_ds.SetGeoTransform([-180 - 90, 180, 0, 90 + 45, 0, -90])
+    grid_ds.GetRasterBand(1).Fill(20)
+    grid_ds = None
+
+    return grid_gtx
+
+
+@pytest.fixture()
+@pytest.mark.require_driver("GTX")
+def gdalwarp_135_grid2_gtx(tmp_path):
+
+    grid2_gtx = str(tmp_path / "grid2.gtx")
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("WGS84")
+
+    grid_ds = gdal.GetDriverByName("GTX").Create(grid2_gtx, 3, 3, 1, gdal.GDT_Float32)
+    grid_ds.SetProjection(sr.ExportToWkt())
+    grid_ds.SetGeoTransform([-180 - 90, 180, 0, 90 + 45, 0, -90])
+    grid_ds.GetRasterBand(1).Fill(5)
+    grid_ds = None
+
+    return grid2_gtx
+
+
+@pytest.fixture()
+def gdalwarp_135_src_ds(tmp_path):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     src_ds.GetRasterBand(1).Fill(100)
+
+    return src_ds
+
+
+@pytest.fixture()
+def gdalwarp_135_src_ds_longlat(tmp_path):
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -1750,144 +1822,181 @@ def test_gdalwarp_lib_135():
     src_ds_longlat.SetGeoTransform([-180, 180, 0, 90, 0, -180])
     src_ds_longlat.GetRasterBand(1).Fill(100)
 
-    grid_ds = gdal.GetDriverByName("GTX").Create(
-        "tmp/grid.gtx", 3, 3, 1, gdal.GDT_Float32
-    )
-    grid_ds.SetProjection(sr.ExportToWkt())
-    grid_ds.SetGeoTransform([-180 - 90, 180, 0, 90 + 45, 0, -90])
-    grid_ds.GetRasterBand(1).Fill(20)
-    grid_ds = None
+    return src_ds_longlat
 
-    grid_ds = gdal.GetDriverByName("GTX").Create(
-        "tmp/grid2.gtx", 3, 3, 1, gdal.GDT_Float32
-    )
-    grid_ds.SetProjection(sr.ExportToWkt())
-    grid_ds.SetGeoTransform([-180 - 90, 180, 0, 90 + 45, 0, -90])
-    grid_ds.GetRasterBand(1).Fill(5)
-    grid_ds = None
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
 
     # Forward transform
     ds = gdal.Warp(
         "",
-        src_ds,
+        gdalwarp_135_src_ds,
         format="MEM",
-        srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
+        srcSRS=f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
         dstSRS="EPSG:4979",
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135a(gdalwarp_135_src_ds_longlat, gdalwarp_135_grid_gtx):
+
+    # Forward transform, longlat
+
     ds = gdal.Warp(
         "",
-        src_ds_longlat,
+        gdalwarp_135_src_ds_longlat,
         format="MEM",
-        srcSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
+        srcSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
         dstSRS="EPSG:4979",
     )
     assert ds.GetGeoTransform() == (-180, 180, 0, 90, 0, -180)
     data = struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
+
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135b(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
 
     # Inverse transform
     ds = gdal.Warp(
         "",
-        src_ds,
+        gdalwarp_135_src_ds,
         format="MEM",
         srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs",
-        dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 80, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135c(gdalwarp_135_src_ds_longlat, gdalwarp_135_grid_gtx):
+
+    # Inverse transform, longlat
     ds = gdal.Warp(
         "",
-        src_ds_longlat,
+        gdalwarp_135_src_ds_longlat,
         format="MEM",
         srcSRS="EPSG:4979",
-        dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
     )
     assert ds.GetGeoTransform() == (-180, 180, 0, 90, 0, -180)
     data = struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 80, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135d(
+    gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx
+):
+
     # Both transforms
     ds = gdal.Warp(
         "",
-        src_ds,
+        gdalwarp_135_src_ds,
         format="MEM",
-        srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
-        dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid2.gtx +vunits=m +no_defs",
+        srcSRS=f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid2_gtx} +vunits=m +no_defs",
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 115, "Bad value"
 
+
+def test_gdalwarp_lib_135e(gdalwarp_135_src_ds):
+
     # Both transforms, but none of them have geoidgrids
     ds = gdal.Warp(
-        "", src_ds, format="MEM", srcSRS="EPSG:32631+5730", dstSRS="EPSG:4326+5621"
+        "",
+        gdalwarp_135_src_ds,
+        format="MEM",
+        srcSRS="EPSG:32631+5730",
+        dstSRS="EPSG:4326+5621",
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 100, "Bad value"
+
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135f(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
 
     # Both transforms being a no-op
     ds = gdal.Warp(
         "",
-        src_ds,
+        gdalwarp_135_src_ds,
         format="MEM",
-        srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
-        dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
+        srcSRS=f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
     )
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 100, "Bad value"
 
-    if (osr.GetPROJVersionMajor(), osr.GetPROJVersionMinor()) >= (6, 3):
-        # Both transforms to anonymous VRT
-        ds = gdal.Warp(
-            "",
-            src_ds,
-            format="VRT",
-            srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
-            dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid2.gtx +vunits=m +no_defs",
-        )
-        src_ds = None  # drop the ref to src_ds before for fun
-        data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
-        assert data == 115, "Bad value"
 
-        src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-        src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
-        src_ds.GetRasterBand(1).Fill(100)
+@pytest.mark.require_proj(6, 3)
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135g(
+    gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx
+):
+    # Both transforms to anonymous VRT
+    ds = gdal.Warp(
+        "",
+        gdalwarp_135_src_ds,
+        format="VRT",
+        srcSRS=f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid2_gtx} +vunits=m +no_defs",
+    )
+    gdalwarp_135_src_ds = None  # drop the ref to src_ds before for fun
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == 115, "Bad value"
 
-        # Target CRS in us-ft
-        ds = gdal.Warp(
-            "",
-            src_ds,
-            format="VRT",
-            outputType=gdal.GDT_Float32,
-            srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
-            dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid2.gtx +vunits=us-ft +no_defs",
-        )
-        data = struct.unpack("f" * 1, ds.GetRasterBand(1).ReadRaster())[0]
-        assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
 
-        # Both transforms to regular VRT
-        gdal.GetDriverByName("GTiff").CreateCopy("tmp/dem.tif", src_ds)
-        gdal.Warp(
-            "tmp/tmp.vrt",
-            "tmp/dem.tif",
-            format="VRT",
-            srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs",
-            dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=./tmp/grid2.gtx +vunits=m +no_defs",
-        )
-        ds = gdal.Open("tmp/tmp.vrt")
-        data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
-        ds = None
-        gdal.Unlink("tmp/dem.tif")
-        gdal.Unlink("tmp/tmp.vrt")
-        assert data == 115, "Bad value"
+@pytest.mark.require_proj(6, 3)
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
+    src_ds.GetRasterBand(1).Fill(100)
 
-    # Missing grid in forward path, but this is OK
+    # Target CRS in us-ft
     ds = gdal.Warp(
         "",
         src_ds,
+        format="VRT",
+        outputType=gdal.GDT_Float32,
+        srcSRS=f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid2_gtx} +vunits=us-ft +no_defs",
+    )
+    data = struct.unpack("f" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
+
+
+@pytest.mark.require_proj(6, 3)
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135i(
+    gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx, tmp_path
+):
+    # Both transforms to regular VRT
+    gdal.GetDriverByName("GTiff").CreateCopy(f"{tmp_path}/dem.tif", gdalwarp_135_src_ds)
+    gdal.Warp(
+        f"{tmp_path}/tmp.vrt",
+        f"{tmp_path}/dem.tif",
+        format="VRT",
+        srcSRS=f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs",
+        dstSRS=f"+proj=longlat +datum=WGS84 +geoidgrids={gdalwarp_135_grid2_gtx} +vunits=m +no_defs",
+    )
+    ds = gdal.Open(f"{tmp_path}/tmp.vrt")
+    data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
+    ds = None
+    assert data == 115, "Bad value"
+
+
+def test_gdalwarp_lib_135j(gdalwarp_135_src_ds):
+    # Missing grid in forward path, but this is OK
+    ds = gdal.Warp(
+        "",
+        gdalwarp_135_src_ds,
         format="MEM",
         srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs",
         dstSRS="EPSG:4979",
@@ -1895,10 +2004,12 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 100, "Bad value"
 
+
+def test_gdalwarp_lib_135k(gdalwarp_135_src_ds):
     # Missing grid in inverse path but this is OK
     ds = gdal.Warp(
         "",
-        src_ds,
+        gdalwarp_135_src_ds,
         format="MEM",
         srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs",
         dstSRS="+proj=longlat +datum=WGS84 +geoidgrids=@i_dont_exist.tif +vunits=m +no_defs",
@@ -1906,12 +2017,15 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 100, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135m(gdalwarp_135_grid_gtx):
     # Forward transform with explicit m unit
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4(
-        "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs"
+        f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs"
     )
     src_ds.SetProjection(sr.ExportToWkt())
     src_ds.GetRasterBand(1).Fill(100)
@@ -1921,12 +2035,15 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135n(gdalwarp_135_grid_gtx):
     # Forward transform with explicit ft unit
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4(
-        "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs"
+        f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs"
     )
     src_ds.SetProjection(sr.ExportToWkt())
     src_ds.GetRasterBand(1).Fill(100 / 0.3048)
@@ -1938,12 +2055,15 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135o(gdalwarp_135_grid_gtx):
     # Forward transform with explicit US survey foot unit
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4(
-        "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs"
+        f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs"
     )
     src_ds.SetProjection(sr.ExportToWkt())
     src_ds.GetRasterBand(1).Fill(100 / 0.3048006096012192)
@@ -1955,22 +2075,27 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135p(gdalwarp_135_grid_gtx):
     # Forward transform with explicit unhandled unit
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
     sr = osr.SpatialReference()
     sr.ImportFromProj4(
-        "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/grid.gtx +vunits=m +no_defs"
+        f"+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={gdalwarp_135_grid_gtx} +vunits=m +no_defs"
     )
     src_ds.SetProjection(sr.ExportToWkt())
     src_ds.GetRasterBand(1).Fill(100)
     src_ds.GetRasterBand(1).SetUnitType("unhandled")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Warp("", src_ds, format="MEM", dstSRS="EPSG:4979")
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 120, "Bad value"
 
+
+def test_gdalwarp_lib_135q():
     # Transform to same CRS (implicit)
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
@@ -1983,6 +2108,8 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 100, "Bad value"
 
+
+def test_gdalwarp_lib_135r():
     # Transform to same CRS (explicit)
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetGeoTransform([500000, 1, 0, 4000000, 0, -1])
@@ -1995,8 +2122,13 @@ def test_gdalwarp_lib_135():
     data = struct.unpack("B" * 1, ds.GetRasterBand(1).ReadRaster())[0]
     assert data == 100, "Bad value"
 
+
+@pytest.mark.require_driver("GTX")
+def test_gdalwarp_lib_135s(tmp_path):
+    empty_grid_gtx = str(tmp_path / "empty_grid.gtx")
+
     grid_ds = gdal.GetDriverByName("GTX").Create(
-        "tmp/empty_grid.gtx", 3, 3, 1, gdal.GDT_Float32
+        empty_grid_gtx, 3, 3, 1, gdal.GDT_Float32
     )
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -2016,34 +2148,23 @@ def test_gdalwarp_lib_135():
                 "",
                 src_ds,
                 format="MEM",
-                srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=./tmp/empty_grid.gtx +vunits=m +no_defs",
+                srcSRS="+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids={empty_grid_gtx} +vunits=m +no_defs",
                 dstSRS="EPSG:4979",
             )
-
-    gdal.GetDriverByName("GTiff").Delete("tmp/grid.gtx")
-    gdal.GetDriverByName("GTiff").Delete("tmp/grid2.gtx")
-    gdal.GetDriverByName("GTiff").Delete("tmp/empty_grid.gtx")
 
 
 ###############################################################################
 # Test error code path linked with failed warper initialization
 
 
-def test_gdalwarp_lib_136():
+@pytest.mark.parametrize("fmt", ("MEM", "VRT"))
+def test_gdalwarp_lib_136(fmt):
 
     with pytest.raises(Exception):
         gdal.Warp(
             "",
             "../gcore/data/utmsmall.tif",
-            format="MEM",
-            warpOptions=["CUTLINE=invalid"],
-        )
-
-    with pytest.raises(Exception):
-        gdal.Warp(
-            "",
-            "../gcore/data/utmsmall.tif",
-            format="VRT",
+            format=fmt,
             warpOptions=["CUTLINE=invalid"],
         )
 
@@ -2089,39 +2210,36 @@ def test_gdalwarp_lib_touching_dateline():
 # Test fix for https://trac.osgeo.org/gdal/ticket/7245
 
 
-def test_gdalwarp_lib_override_default_output_nodata():
+@pytest.mark.require_driver("netCDF")
+@pytest.mark.parametrize("frmt", ("NC", "NC2", "NC4"))
+def test_gdalwarp_lib_override_default_output_nodata(frmt, tmp_path):
 
     drv = gdal.GetDriverByName("netCDF")
-    if drv is None:
-        pytest.skip()
-
     creationoptionlist = drv.GetMetadataItem("DMD_CREATIONOPTIONLIST")
-    formats = ["NC"]
-    if "<Value>NC2</Value>" in creationoptionlist:
-        formats += ["NC2"]
-    if "<Value>NC4</Value>" in creationoptionlist:
-        formats += ["NC4", "NC4C"]
 
-    for frmt in formats:
-        gdal.Warp(
-            "tmp/out.nc",
-            "../gcore/data/byte.tif",
-            srcNodata=255,
-            format="netCDF",
-            creationOptions=["FORMAT=" + frmt],
-        )
-        ds = gdal.Open("tmp/out.nc")
-        assert ds.GetRasterBand(1).GetNoDataValue() == 255, frmt
-        assert ds.GetProjection() != "", frmt
-        ds = None
-        os.unlink("tmp/out.nc")
+    if f"<Value>{frmt}</Value>" not in creationoptionlist:
+        pytest.skip(f"netCDF format {frmt} not available")
+
+    result_nc = str(tmp_path / "out.nc")
+
+    gdal.Warp(
+        result_nc,
+        "../gcore/data/byte.tif",
+        srcNodata=255,
+        format="netCDF",
+        creationOptions=["FORMAT=" + frmt],
+    )
+    ds = gdal.Open(result_nc)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 255, frmt
+    assert ds.GetProjection() != "", frmt
+    ds = None
 
 
 ###############################################################################
 # Test automatting setting (or not) of SKIP_NOSOURCE=YES
 
 
-def test_gdalwarp_lib_auto_skip_nosource():
+def test_gdalwarp_lib_auto_skip_nosource(tmp_vsimem):
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
@@ -2131,7 +2249,7 @@ def test_gdalwarp_lib_auto_skip_nosource():
     src_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src_ds.SetProjection(sr.ExportToWkt())
 
-    tmpfilename = "/vsimem/test_gdalwarp_lib_auto_skip_nosource.tif"
+    tmpfilename = tmp_vsimem / "test_gdalwarp_lib_auto_skip_nosource.tif"
 
     for options in [
         "-wo SKIP_NOSOURCE=NO",
@@ -2230,18 +2348,18 @@ def test_gdalwarp_lib_auto_skip_nosource():
         cs = out_ds.GetRasterBand(1).Checksum()
         assert cs == 41500, (options, cs)
 
-    gdal.Unlink(tmpfilename)
-
 
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=ortho
 # (https://github.com/OSGeo/gdal/issues/862)
 
 
-def test_gdalwarp_lib_to_ortho():
+def test_gdalwarp_lib_to_ortho(tmp_path):
+
+    result_tif = str(tmp_path / "out.tif")
 
     out_ds = gdal.Warp(
-        "/tmp/out.tif",
+        result_tif,
         "../gdrivers/data/small_world.tif",
         options='-of MEM -t_srs "+proj=ortho +datum=WGS84" -ts 1024 1024',
     )
@@ -2541,9 +2659,9 @@ def test_gdalwarp_lib_bug_4326_to_3857():
 # Test warping of single source to COG
 
 
-def test_gdalwarp_lib_to_cog():
+def test_gdalwarp_lib_to_cog(tmp_vsimem):
 
-    tmpfilename = "/vsimem/cog.tif"
+    tmpfilename = tmp_vsimem / "cog.tif"
     ds = gdal.Warp(
         tmpfilename,
         "../gcore/data/byte.tif",
@@ -2552,16 +2670,15 @@ def test_gdalwarp_lib_to_cog():
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
-    gdal.Unlink(tmpfilename)
 
 
 ###############################################################################
 # Test warping of single source to COG with reprojection options
 
 
-def test_gdalwarp_lib_to_cog_reprojection_options():
+def test_gdalwarp_lib_to_cog_reprojection_options(tmp_vsimem):
 
-    tmpfilename = "/vsimem/cog.tif"
+    tmpfilename = tmp_vsimem / "cog.tif"
     ds = gdal.Warp(
         tmpfilename,
         "../gcore/data/byte.tif",
@@ -2582,22 +2699,19 @@ def test_gdalwarp_lib_to_cog_reprojection_options():
 # Test warping of multiple source, compatible of BuildVRT mosaicing, to COG
 
 
-def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog():
+def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog(tmp_vsimem):
 
-    tmpfilename = "/vsimem/cog.tif"
+    tmpfilename = tmp_vsimem / "cog.tif"
     left_ds = gdal.Translate(
-        "/vsimem/left.tif", "../gcore/data/byte.tif", options="-srcwin 0 0 10 20"
+        tmp_vsimem / "left.tif", "../gcore/data/byte.tif", options="-srcwin 0 0 10 20"
     )
     right_ds = gdal.Translate(
-        "/vsimem/right.tif", "../gcore/data/byte.tif", options="-srcwin 10 0 10 20"
+        tmp_vsimem / "right.tif", "../gcore/data/byte.tif", options="-srcwin 10 0 10 20"
     )
     ds = gdal.Warp(tmpfilename, [left_ds, right_ds], options="-f COG")
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
-    gdal.Unlink(tmpfilename)
-    gdal.Unlink("/vsimem/left.tif")
-    gdal.Unlink("/vsimem/right.tif")
 
 
 ###############################################################################
@@ -2605,14 +2719,16 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog():
 # with reprojection options
 
 
-def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_options():
+def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_options(
+    tmp_vsimem,
+):
 
-    tmpfilename = "/vsimem/cog.tif"
+    tmpfilename = tmp_vsimem / "cog.tif"
     left_ds = gdal.Translate(
-        "/vsimem/left.tif", "../gcore/data/byte.tif", options="-srcwin 0 0 10 20"
+        tmp_vsimem / "left.tif", "../gcore/data/byte.tif", options="-srcwin 0 0 10 20"
     )
     right_ds = gdal.Translate(
-        "/vsimem/right.tif", "../gcore/data/byte.tif", options="-srcwin 10 0 10 20"
+        tmp_vsimem / "right.tif", "../gcore/data/byte.tif", options="-srcwin 10 0 10 20"
     )
     ds = gdal.Warp(
         tmpfilename,
@@ -2627,25 +2743,22 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_op
     )  # 4300 on Mac, 4186 on Mac / Conda
     assert ds.GetRasterBand(2).Checksum() == 4415
     ds = None
-    gdal.Unlink(tmpfilename)
-    gdal.Unlink("/vsimem/left.tif")
-    gdal.Unlink("/vsimem/right.tif")
 
 
 ###############################################################################
 # Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG
 
 
-def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog():
+def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog(tmp_vsimem):
 
-    tmpfilename = "/vsimem/cog.tif"
+    tmpfilename = tmp_vsimem / "cog.tif"
     left_ds = gdal.Translate(
-        "/vsimem/left.tif",
+        tmp_vsimem / "left.tif",
         "../gcore/data/byte.tif",
         options="-srcwin 0 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255",
     )
     right_ds = gdal.Translate(
-        "/vsimem/right.tif",
+        tmp_vsimem / "right.tif",
         "../gcore/data/byte.tif",
         options="-srcwin 5 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255",
     )
@@ -2654,9 +2767,6 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog():
     assert ds.GetRasterBand(1).Checksum() == 4672
     assert ds.GetRasterBand(2).Checksum() == 4873
     ds = None
-    gdal.Unlink(tmpfilename)
-    gdal.Unlink("/vsimem/left.tif")
-    gdal.Unlink("/vsimem/right.tif")
 
 
 ###############################################################################
@@ -2664,16 +2774,18 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog():
 # with reprojection options
 
 
-def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog_reprojection_options():
+def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog_reprojection_options(
+    tmp_vsimem,
+):
 
-    tmpfilename = "/vsimem/cog.tif"
+    tmpfilename = tmp_vsimem / "cog.tif"
     left_ds = gdal.Translate(
-        "/vsimem/left.tif",
+        tmp_vsimem / "left.tif",
         "../gcore/data/byte.tif",
         options="-srcwin 0 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255",
     )
     right_ds = gdal.Translate(
-        "/vsimem/right.tif",
+        tmp_vsimem / "right.tif",
         "../gcore/data/byte.tif",
         options="-srcwin 5 0 15 20 -b 1 -b 1 -colorinterp_2 alpha -scale_2 0 255 255 255",
     )
@@ -2690,9 +2802,6 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog_reprojection_
     )  # 4300 on Mac, 4206 on Mac / Conda
     assert ds.GetRasterBand(2).Checksum() == 4415
     ds = None
-    gdal.Unlink(tmpfilename)
-    gdal.Unlink("/vsimem/left.tif")
-    gdal.Unlink("/vsimem/right.tif")
 
 
 ###############################################################################
@@ -2713,24 +2822,24 @@ def test_gdalwarp_lib_no_crs():
 # when wrapping along the antimeridian (related to #2754)
 
 
-def test_gdalwarp_lib_xscale_antimeridian():
+def test_gdalwarp_lib_xscale_antimeridian(tmp_vsimem):
 
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
 
-    src1_ds = gdal.GetDriverByName("GTiff").Create("/vsimem/src1.tif", 1000, 1000)
+    src1_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src1.tif", 1000, 1000)
     src1_ds.SetGeoTransform([179, 0.001, 0, 50, 0, -0.001])
     src1_ds.SetProjection(sr.ExportToWkt())
     src1_ds.GetRasterBand(1).Fill(100)
     src1_ds = None
 
-    src2_ds = gdal.GetDriverByName("GTiff").Create("/vsimem/src2.tif", 1000, 1000)
+    src2_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "src2.tif", 1000, 1000)
     src2_ds.SetGeoTransform([-180, 0.001, 0, 50, 0, -0.001])
     src2_ds.SetProjection(sr.ExportToWkt())
     src2_ds.GetRasterBand(1).Fill(200)
     src2_ds = None
 
-    source = gdal.BuildVRT("", ["/vsimem/src1.tif", "/vsimem/src2.tif"])
+    source = gdal.BuildVRT("", [tmp_vsimem / "src1.tif", tmp_vsimem / "src2.tif"])
     # Wrap to UTM zone 1 across the antimeridian
     ds = gdal.Warp(
         "",
@@ -2743,9 +2852,6 @@ def test_gdalwarp_lib_xscale_antimeridian():
     # Check that the set of values is just 100 and 200. If the xscale was wrong,
     # we would take intou account 0 values outsize of the 2 tiles.
     assert set(vals) == set([100, 200])
-
-    gdal.Unlink("/vsimem/src1.tif")
-    gdal.Unlink("/vsimem/src2.tif")
 
 
 ###############################################################################
@@ -2772,18 +2878,20 @@ def test_gdalwarp_lib_scale_offset():
 # Test cutline with zero-width sliver
 
 
-def test_gdalwarp_lib_cutline_zero_width_sliver():
+def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
 
     # Geometry valid in EPSG:4326, but that has a zero-width sliver
     # at point [-90.783634, 33.612466] that results in an invalid geometry in UTM
     geojson = '{"type": "MultiPolygon", "coordinates": [[[[-90.789474, 33.608456], [-90.789675, 33.609965], [-90.789688, 33.610022], [-90.789668, 33.610318], [-90.78966, 33.610722], [-90.789598, 33.612225], [-90.789593, 33.612305], [-90.78956, 33.612358], [-90.789475, 33.612365], [-90.789072, 33.61237], [-90.788643, 33.612367], [-90.787938, 33.612375], [-90.787155, 33.612393], [-90.785787, 33.612403], [-90.785132, 33.612425], [-90.784582, 33.612435], [-90.783712, 33.612472],     [-90.783634, 33.612466],     [-90.783647, 33.612467], [-90.783198, 33.612472], [-90.781774, 33.61249], [-90.78104, 33.612511], [-90.780976, 33.612288], [-90.781022, 33.612023], [-90.781033, 33.61179], [-90.781019, 33.611549], [-90.781033, 33.611299], [-90.781055, 33.610906], [-90.781055, 33.610575], [-90.781094, 33.610042], [-90.781084, 33.608534], [-90.781924, 33.608439], [-90.781946, 33.607715], [-90.782421, 33.607559], [-90.78367, 33.607845], [-90.783573, 33.609717], [-90.783741, 33.609384], [-90.784017, 33.607994], [-90.784507, 33.608018], [-90.785483, 33.608138], [-90.787171, 33.608301], [-90.789474, 33.608456]]]]}'
-    gdal.FileFromMemBuffer("/vsimem/cutline.geojson", geojson)
+    gdal.FileFromMemBuffer(tmp_vsimem / "cutline.geojson", geojson)
     src_ds = gdal.GetDriverByName("MEM").Create("", 968, 751)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32615)
     src_ds.SetSpatialRef(srs)
     src_ds.SetGeoTransform([690129, 30, 0, 3723432, 0, -30])
-    ds = gdal.Warp("", src_ds, format="MEM", cutlineDSName="/vsimem/cutline.geojson")
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
+    )
     assert ds is not None
 
 
@@ -2985,25 +3093,47 @@ def test_gdalwarp_lib_from_ob_tran_including_north_pole_to_geographic():
 
 
 ###############################################################################
+# Test warping from a dataset in geographic with longitudes outside [-180,180]
+# to the same CRS doesn't alter the extent
+# (https://github.com/OSGeo/gdal/issues/8194)
+
+
+def test_gdalwarp_lib_geographic_outside_180_no_crs_change():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 36, 18)
+    src_ds.SetGeoTransform([0, 10, 0, 90, 0, -10])
+    srs = osr.SpatialReference()
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    src_ds.GetRasterBand(1).Fill(1)
+
+    ds = gdal.Warp("", src_ds, format="MEM", xRes=20, yRes=20)
+    gt = ds.GetGeoTransform()
+    assert ds.RasterXSize == 18
+    assert ds.RasterYSize == 9
+    assert gt == pytest.approx((0, 20, 0, 90, 0, -20))
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)
+
+
+###############################################################################
 # Test gdalwarp foo.tif foo.tif.ovr
 
 
-def test_gdalwarp_lib_generate_ovr():
+def test_gdalwarp_lib_generate_ovr(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/foo.tif", open("../gcore/data/byte.tif", "rb").read()
+        tmp_vsimem / "foo.tif", open("../gcore/data/byte.tif", "rb").read()
     )
-    gdal.GetDriverByName("GTiff").Create("/vsimem/foo.tif.ovr", 10, 10)
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "foo.tif.ovr", 10, 10)
     ds = gdal.Warp(
-        "/vsimem/foo.tif.ovr",
-        "/vsimem/foo.tif",
+        tmp_vsimem / "foo.tif.ovr",
+        tmp_vsimem / "foo.tif",
         options="-of GTiff -r average -ts 10 10 -overwrite",
     )
     assert ds
     assert ds.GetRasterBand(1).Checksum() != 0, "Bad checksum"
     ds = None
-
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/foo.tif")
 
 
 ###############################################################################
@@ -3011,29 +3141,27 @@ def test_gdalwarp_lib_generate_ovr():
 # overwritten (https://github.com/OSGeo/gdal/issues/5633)
 
 
-def test_gdalwarp_lib_not_delete_shared_auxiliary_files():
+def test_gdalwarp_lib_not_delete_shared_auxiliary_files(tmp_path):
+
+    img_foo_r1c1_jp2 = str(tmp_path / "IMG_foo_R1C1.JP2")
+    img_foo_r1c1_tif = str(tmp_path / "IMG_foo_R1C1.tif")
+    dim_foo_xml = str(tmp_path / "DIM_foo.XML")
 
     # Yes, we do intend to copy a .TIF as a fake .JP2
-    shutil.copy(
-        "../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF", "tmp/IMG_foo_R1C1.JP2"
-    )
-    shutil.copy("../gdrivers/data/dimap2/bundle/DIM_foo.XML", "tmp/DIM_foo.XML")
+    shutil.copy("../gdrivers/data/dimap2/bundle/IMG_foo_R1C1.TIF", img_foo_r1c1_jp2)
+    shutil.copy("../gdrivers/data/dimap2/bundle/DIM_foo.XML", dim_foo_xml)
 
-    gdal.Warp("tmp/IMG_foo_R1C1.tif", "tmp/IMG_foo_R1C1.JP2")
+    gdal.Warp(img_foo_r1c1_tif, img_foo_r1c1_jp2)
 
-    ds = gdal.Open("tmp/IMG_foo_R1C1.tif")
+    ds = gdal.Open(img_foo_r1c1_tif)
     assert len(ds.GetFileList()) == 2
     ds = None
 
-    gdal.Warp("tmp/IMG_foo_R1C1.tif", "tmp/IMG_foo_R1C1.JP2", format="GTiff")
+    gdal.Warp(img_foo_r1c1_tif, img_foo_r1c1_jp2, format="GTiff")
 
-    ds = gdal.Open("tmp/IMG_foo_R1C1.tif")
+    ds = gdal.Open(img_foo_r1c1_tif)
     assert len(ds.GetFileList()) == 2
     ds = None
-
-    os.unlink("tmp/IMG_foo_R1C1.JP2")
-    os.unlink("tmp/IMG_foo_R1C1.tif")
-    os.unlink("tmp/DIM_foo.XML")
 
 
 ###############################################################################
@@ -3228,7 +3356,7 @@ def test_gdalwarp_lib_srcBands():
     assert ds.GetRasterBand(2).Checksum() == 4672
 
     # Error: len(dstBands) != len(srcBands)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             assert (
                 gdal.Warp(
@@ -3463,13 +3591,13 @@ def test_gdalwarp_lib_tr_square():
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_lib_auto_optimize_size():
+def test_gdalwarp_lib_auto_optimize_size(tmp_vsimem):
 
     src_ds = gdal.Translate(
         "", "../gcore/data/byte.tif", options="-f MEM -outsize 1500 1500 -r bilinear"
     )
 
-    tmpfilename = "/vsimem/test_gdalwarp_lib_auto_optimize_size.tif"
+    tmpfilename = tmp_vsimem / "test_gdalwarp_lib_auto_optimize_size.tif"
     # Warp to tiled GeoTIFF with low warp memory and block cache size, to
     # potentially exhibit we wouldn't write to output tile boundaries.
     with gdaltest.SetCacheMax(256 * 256):
@@ -3477,16 +3605,13 @@ def test_gdalwarp_lib_auto_optimize_size():
 
     # Warp to MEM and then translate to tiled GeoTIFF
     ref_ds_src = gdal.Warp("", src_ds, options="-f MEM")
-    tmpfilename2 = "/vsimem/test_gdalwarp_lib_auto_optimize_size2.tif"
+    tmpfilename2 = tmp_vsimem / "test_gdalwarp_lib_auto_optimize_size2.tif"
     gdal.Translate(tmpfilename2, ref_ds_src, options="-co TILED=YES -co COMPRESS=JPEG")
 
     ds = gdal.Open(tmpfilename)
     ds_ref = gdal.Open(tmpfilename2)
-    try:
-        assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
-    finally:
-        gdal.Unlink(tmpfilename)
-        gdal.Unlink(tmpfilename2)
+
+    assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
 
 
 ###############################################################################
@@ -3514,3 +3639,81 @@ def test_gdalwarp_lib_working_data_type_with_source_dataset_of_different_types()
     minval, maxval = out_ds.GetRasterBand(1).ComputeRasterMinMax()
     assert minval == 1
     assert maxval == 1
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/8163
+# (we need GEOS for the logic to split the cutline geometry in two parts)
+
+
+@pytest.mark.require_geos
+def test_gdalwarp_lib_cutline_crossing_antimeridian_in_EPSG_32601_and_raster_in_EPSG_4326(
+    tmp_vsimem,
+):
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32601)
+    cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(
+        tmp_vsimem / "cutline.json"
+    )
+    cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((300000 7200000,409800 7200000,409800 7090200,300000 7090200,300000 7200000))"
+        )
+    )
+    cutline_lyr.CreateFeature(f)
+    cutline_ds = None
+
+    ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        format="MEM",
+        cutlineDSName=tmp_vsimem / "cutline.json",
+        cropToCutline=True,
+    )
+
+    assert ds.RasterXSize == 400
+    assert ds.RasterYSize == 1
+    assert ds.GetGeoTransform() == pytest.approx((-180.0, 0.9, 0.0, 64.8, 0.0, -0.9))
+    # Check that left-most and right-most pixels are non zero
+    assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[0] == 11
+    assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster(1, 0, 1, 1))[0] == 0
+    assert (
+        struct.unpack("B", ds.GetRasterBand(1).ReadRaster(ds.RasterXSize - 2, 0, 1, 1))[
+            0
+        ]
+        == 0
+    )
+    assert (
+        struct.unpack("B", ds.GetRasterBand(1).ReadRaster(ds.RasterXSize - 1, 0, 1, 1))[
+            0
+        ]
+        == 9
+    )
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdalwarp_lib_dict_arguments():
+
+    opt = gdal.WarpOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    assert opt == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+    opt = gdal.WarpOptions(
+        "__RETURN_OPTION_LIST__",
+        warpOptions=collections.OrderedDict(
+            (("SKIP_NOSOURCE", "YES"), ("NUM_THREADS", 2))
+        ),
+    )
+
+    assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]

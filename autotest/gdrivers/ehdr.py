@@ -103,12 +103,9 @@ def test_ehdr_4():
 
     ds = None
 
+    ###############################################################################
+    # verify dataset's colortable and nodata value.
 
-###############################################################################
-# verify last dataset's colortable and nodata value.
-
-
-def test_ehdr_5():
     ds = gdal.Open("tmp/test_4.bil")
     band = ds.GetRasterBand(1)
 
@@ -359,7 +356,7 @@ def test_ehdr_rat():
     assert not (
         ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable()
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
     assert ret != 0
     ds = None

@@ -11614,7 +11614,7 @@ public class SpatialReference:public int SetProjection(String name)
  * <p>
  * Adds a new PARAMETER under the PROJCS with the indicated name and value.
  * <p>
- * Please check <a href="http://www.remotesensing.org/geotiff/proj_list">http://www.remotesensing.org/geotiff/proj_list</a> pages for
+ * Please check <a href="https://gdal.org/proj_list">https://gdal.org/proj_list</a> pages for
  * legal parameter names for specific projections.
  *
  * @param name the parameter name, which should be selected from

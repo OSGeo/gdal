@@ -1,6 +1,6 @@
 .. WARNING: if modifying that file, please edit gdal_translate.rst too
 
-.. option:: -co <NAME=VALUE>
+.. option:: -co <NAME>=<VALUE>
 
     Many formats have one or more optional creation options that can be
     used to control particulars about the file created. For instance,

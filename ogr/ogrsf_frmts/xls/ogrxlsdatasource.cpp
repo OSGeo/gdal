@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <freexl.h>
+#include "include_freexl.h"
 
 #ifdef _WIN32
 #include <windows.h>

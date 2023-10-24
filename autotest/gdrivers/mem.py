@@ -42,7 +42,7 @@ from osgeo import gdal
 @gdaltest.disable_exceptions()
 def mem_native_memory():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("MEM:::")
     assert ds is None, "opening MEM dataset should have failed."
     for libname in ["msvcrt", "libc.so.6"]:
@@ -306,43 +306,43 @@ def test_mem_6():
     drv = gdal.GetDriverByName("MEM")
 
     # Multiplication overflow
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = drv.Create("", 1, 1, 0x7FFFFFFF, gdal.GDT_Float64)
     assert ds is None
     ds = None
 
     # Multiplication overflow
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = drv.Create("", 0x7FFFFFFF, 0x7FFFFFFF, 16)
     assert ds is None
     ds = None
 
     # Multiplication overflow
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = drv.Create("", 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64)
     assert ds is None
     ds = None
 
     # Out of memory error
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = drv.Create("", 0x7FFFFFFF, 0x7FFFFFFF, 1, options=["INTERLEAVE=PIXEL"])
     assert ds is None
     ds = None
 
     # Out of memory error
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = drv.Create("", 0x7FFFFFFF, 0x7FFFFFFF, 1)
     assert ds is None
     ds = None
 
     # 32 bit overflow on 32-bit builds, or possible out of memory error
     ds = drv.Create("", 0x7FFFFFFF, 1, 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.AddBand(gdal.GDT_Float64)
 
     # Will raise out of memory error in all cases
     ds = drv.Create("", 0x7FFFFFFF, 0x7FFFFFFF, 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.AddBand(gdal.GDT_Float64)
     assert ret != 0
 
@@ -522,7 +522,7 @@ def test_mem_10():
 
     # Error case: building overview on a 0 band dataset
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.BuildOverviews("NEAR", [2])
 
     # Requesting overviews when they are not

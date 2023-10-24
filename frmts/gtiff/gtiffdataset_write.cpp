@@ -97,6 +97,18 @@ static bool GTiffGetWebPLossless(CSLConstList papszOptions)
     return CPLFetchBool(papszOptions, "WEBP_LOSSLESS", false);
 }
 
+static double GTiffGetLERCMaxZError(CSLConstList papszOptions)
+{
+    return CPLAtof(CSLFetchNameValueDef(papszOptions, "MAX_Z_ERROR", "0.0"));
+}
+
+static double GTiffGetLERCMaxZErrorOverview(CSLConstList papszOptions)
+{
+    return CPLAtof(CSLFetchNameValueDef(
+        papszOptions, "MAX_Z_ERROR_OVERVIEW",
+        CSLFetchNameValueDef(papszOptions, "MAX_Z_ERROR", "0.0")));
+}
+
 #if HAVE_JXL
 static bool GTiffGetJXLLossless(CSLConstList papszOptions)
 {
@@ -2451,7 +2463,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
         nWebpLevel = atoi(opt);
     }
 
-    double dfMaxZError = m_dfMaxZError;
+    double dfMaxZError = m_dfMaxZErrorOverview;
     if (const char *opt = GetOptionValue("MAX_Z_ERROR", "MAX_Z_ERROR_OVERVIEW"))
     {
         dfMaxZError = CPLAtof(opt);
@@ -2479,6 +2491,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->m_bWebPLossless = bWebpLossless;
     poODS->m_nJpegTablesMode = m_nJpegTablesMode;
     poODS->m_dfMaxZError = dfMaxZError;
+    poODS->m_dfMaxZErrorOverview = dfMaxZError;
     memcpy(poODS->m_anLercAddCompressionAndVersion,
            m_anLercAddCompressionAndVersion,
            sizeof(m_anLercAddCompressionAndVersion));
@@ -3392,8 +3405,12 @@ static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS)
     {
         CPLErrorStateBackuper oErrorStateBackuper;
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        if (poSRS->IsDerivedGeographic())
+        if (poSRS->IsDerivedGeographic() ||
+            (poSRS->IsProjected() && !poSRS->IsCompound() &&
+             poSRS->GetAxesCount() == 3))
+        {
             eErr = OGRERR_FAILURE;
+        }
         else
         {
             // Geographic3D CRS can't be exported to WKT1, but are
@@ -4136,6 +4153,34 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                     0, nullptr, "IMAGE_STRUCTURE");
             }
         }
+        else if (pszCompress && STARTS_WITH_CI(pszCompress, "LERC"))
+        {
+            const double dfMaxZError =
+                GTiffGetLERCMaxZError(papszCreationOptions);
+            const double dfMaxZErrorOverview =
+                GTiffGetLERCMaxZErrorOverview(papszCreationOptions);
+            if (dfMaxZError == 0.0 && dfMaxZErrorOverview == 0.0)
+            {
+                AppendMetadataItem(&psRoot, &psTail,
+                                   "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
+                                   nullptr, "IMAGE_STRUCTURE");
+            }
+            else
+            {
+                AppendMetadataItem(&psRoot, &psTail, "MAX_Z_ERROR",
+                                   CSLFetchNameValueDef(papszCreationOptions,
+                                                        "MAX_Z_ERROR", ""),
+                                   0, nullptr, "IMAGE_STRUCTURE");
+                if (dfMaxZError != dfMaxZErrorOverview)
+                {
+                    AppendMetadataItem(
+                        &psRoot, &psTail, "MAX_Z_ERROR_OVERVIEW",
+                        CSLFetchNameValueDef(papszCreationOptions,
+                                             "MAX_Z_ERROR_OVERVIEW", ""),
+                        0, nullptr, "IMAGE_STRUCTURE");
+                }
+            }
+        }
 #if HAVE_JXL
         else if (pszCompress && EQUAL(pszCompress, "JXL"))
         {
@@ -4661,11 +4706,6 @@ static signed char GTiffGetZSTDPreset(char **papszOptions)
         }
     }
     return static_cast<signed char>(nZSTDLevel);
-}
-
-static double GTiffGetLERCMaxZError(char **papszOptions)
-{
-    return CPLAtof(CSLFetchNameValueDef(papszOptions, "MAX_Z_ERROR", "0.0"));
 }
 
 static signed char GTiffGetZLevel(char **papszOptions)
@@ -6199,6 +6239,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     poDS->m_nJpegQuality = GTiffGetJpegQuality(papszParamList);
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszParamList);
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszParamList);
+    poDS->m_dfMaxZErrorOverview = GTiffGetLERCMaxZErrorOverview(papszParamList);
 #if HAVE_JXL
     poDS->m_bJXLLossless = GTiffGetJXLLossless(papszParamList);
     poDS->m_nJXLEffort = GTiffGetJXLEffort(papszParamList);
@@ -7492,6 +7533,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     poDS->m_nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
     poDS->m_dfMaxZError = GTiffGetLERCMaxZError(papszOptions);
+    poDS->m_dfMaxZErrorOverview = GTiffGetLERCMaxZErrorOverview(papszOptions);
 #if HAVE_JXL
     poDS->m_bJXLLossless = GTiffGetJXLLossless(papszOptions);
     poDS->m_nJXLEffort = GTiffGetJXLEffort(papszOptions);

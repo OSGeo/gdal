@@ -47,12 +47,6 @@ From the build directory you can now configure CMake, build and install the bina
     and is thus not recommended. It is also not supported on Windows multi-configuration
     generator (such as VisualStudio).
 
-`
-On Windows, one may need to specify generator:
-
-.. code-block:: bash
-
-    cmake -G "Visual Studio 15 2017" ..
 
 If a dependency is installed in a custom location, specify the
 paths to the include directory and the library:
@@ -89,6 +83,35 @@ for the shared lib, *e.g.* ``set (GDAL_LIB_OUTPUT_NAME gdal_x64 CACHE STRING "" 
     you may try removing CMakeCache.txt to start from a clean state.
 
 Refer to :ref:`using_gdal_in_cmake` for how to use GDAL in a CMake project.
+
+Building on Windows
++++++++++++++++++++
+
+On Windows, one may need to specify generator:
+
+.. code-block:: bash
+
+    cmake -G "Visual Studio 15 2017" ..
+
+
+Building on MacOS
++++++++++++++++++
+
+On MacOS, there are a couple of libraries that do not function properly when the GDAL build requirements are installed using Homebrew.
+
+The `Apache Arrow <https://arrow.apache.org/docs/index.html>`_ library included in the current distribution of Homebrew is broken, and causes a detection issue. In order to build GDAL successfully, configure CMake to not find the Arrow package:
+
+.. code-block:: bash
+
+    cmake -DCMAKE_DISABLE_FIND_PACKAGE_Arrow=ON ..
+
+
+Similarly, recent versions of Homebrew no longer bundle `Boost <https://www.boost.org/>`_ with libkml, causing a failure to find Boost headers. You should either install Boost manually or disable libkml when building on MacOS:
+
+.. code-block:: bash
+
+    cmake -DGDAL_USE_LIBKML=OFF ..
+
 
 CMake general configure options
 +++++++++++++++++++++++++++++++
@@ -1026,6 +1049,24 @@ of the original input image is preserved (within user defined error bounds).
     Control whether to use the LERC internal library. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_LERC=ON
 
+LIBAEC
+******
+
+`libaec <https://gitlab.dkrz.de/k202009/libaec>`_ is a compression library which offers
+the extended Golomb-Rice coding as defined in the CCSDS recommended standard 121.0-B-3.
+It is used by the :ref:`raster.grib` driver.
+
+.. option:: LIBAEC_INCLUDE_DIR
+
+    Path to an include directory with the ``libaec.h`` header file.
+
+.. option:: LIBAEC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LIBAEC=ON/OFF
+
+    Control whether to use LIBAEC. Defaults to ON when LIBAEC is found.
 
 LibKML
 ******

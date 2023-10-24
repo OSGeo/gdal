@@ -88,7 +88,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
 
     if (nBits < 8)
     {
-        int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
+        const int nSkipBytes = atoi(poEDS->GetKeyValue("SKIPBYTES"));
         if (nSkipBytes < 0 || nSkipBytes > std::numeric_limits<int>::max() / 8)
         {
             m_bValid = false;
@@ -98,7 +98,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
         }
         else
         {
-            nStartBit = nSkipBytes * 8;
+            nStartBit = static_cast<vsi_l_offset>(nSkipBytes) * 8;
         }
         if (nBand >= 2)
         {

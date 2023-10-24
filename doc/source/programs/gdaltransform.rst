@@ -15,11 +15,13 @@ Synopsis
 
 .. code-block::
 
-    gdaltransform [--help-general]
-        [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
-        [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc]
-        [-gcp pixel line easting northing [elevation]]* [-output_xy]
+    gdaltransform [--help] [--help-general]
+        [-i] [-s_srs <srs_def>] [-t_srs <srs_def>] [-to >NAME>=<VALUE>]...
+        [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]
+        [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc]
+        [-gcp <pixel> <line> <easting> <northing> [elevation]]... [-output_xy]
         [srcfile [dstfile]]
+
 
 Description
 -----------
@@ -29,6 +31,8 @@ projection,including GCP-based transformations.
 
 .. program:: gdaltransform
 
+.. include:: options/help_and_help_general.rst
+
 .. option:: -s_srs <srs_def>
 
     Set source spatial reference.
@@ -37,6 +41,17 @@ projection,including GCP-based transformations.
     (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
     containing well known text.
 
+.. option:: -s_coord_epoch <epoch>
+
+    .. versionadded:: 3.8
+
+    Assign a coordinate epoch, linked with the source SRS. Useful when the
+    source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
+    is used.
+
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
+
 .. option:: -t_srs <srs_def>
 
     set target spatial reference.
@@ -44,6 +59,17 @@ projection,including GCP-based transformations.
     OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
     (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
     containing well known text.
+
+.. option:: -t_coord_epoch <epoch>
+
+    .. versionadded:: 3.8
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
+    is used.
+
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
 
@@ -55,7 +81,7 @@ projection,including GCP-based transformations.
 
     .. versionadded:: 3.0
 
-.. option:: -to NAME=VALUE
+.. option:: -to <NAME>=<VALUE>
 
     set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
 
@@ -92,11 +118,11 @@ projection,including GCP-based transformations.
 
     File with source projection definition or GCP's. If
     not given, source projection is read from the command-line :option:`-s_srs`
-    or :option:`-gcp` parameters 
+    or :option:`-gcp` parameters
 
 .. option:: <dstfile>
 
-    File with destination projection definition. 
+    File with destination projection definition.
 
 Coordinates are read as pairs, triples (for 3D,) or (since GDAL 3.0.0,) quadruplets
 (for X,Y,Z,time) of numbers per line from standard

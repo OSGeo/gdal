@@ -1,0 +1,23 @@
+name: Delete untagged containers
+
+on:
+    push:
+        paths-ignore:
+            - 'doc/**'
+        branches-ignore:
+            - 'backport**'
+
+jobs:
+  delete-untagged-containers:
+    name: Delete all containers from gdal-deps without tags
+    runs-on: ubuntu-latest
+    steps:
+    - name: Delete all containers from gdal-deps without tags
+      uses: Chizkiyahu/delete-untagged-ghcr-action@v2
+      with:
+        token: ${{ secrets.PAT_TOKEN_DELETE_UNTAGGED_CONTAINERS }}
+        repository_owner: ${{ github.repository_owner }}
+        repository: ${{ github.repository }}
+        package_name: gdal-deps
+        untagged_only: true
+        owner_type: org

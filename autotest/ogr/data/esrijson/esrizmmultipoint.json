@@ -27,20 +27,20 @@
       "alias" : "fooString",
       "type" : "esriFieldTypeString",
       "length" : 50
-    },
+    }
   ],
   "features" : [
     {
       "geometry" : {
         "hasZ" : true,
         "hasM" : true,
-        "points" : [ [2,49,1,100], [3,50,2,100] ],
+        "points" : [ [2,49,1,100], [3,50,2,100] ]
       },
       "attributes" : {
         "objectid" : 1,
         "fooInt" : 2,
         "fooDouble" : 3.4,
-        "fooString" : "56",
+        "fooString" : "56"
       }
     }
   ]

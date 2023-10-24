@@ -36,6 +36,15 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("GIF")
 
+
+@pytest.fixture(autouse=True)
+def setup_and_cleanup_test():
+
+    yield
+
+    gdaltest.clean_tmp()
+
+
 ###############################################################################
 # Get the GIF driver, and verify a few things about it.
 
@@ -145,18 +154,22 @@ def test_gif_6():
 def test_gif_7():
 
     # Move the GIF driver after the BIGGIF driver.
-    drv = gdal.GetDriverByName("GIF")
-    drv.Deregister()
-    drv.Register()
+    try:
+        drv = gdal.GetDriverByName("GIF")
+        drv.Deregister()
+        drv.Register()
 
-    tst = gdaltest.GDALTest("BIGGIF", "gif/bug407.gif", 1, 57921)
+        tst = gdaltest.GDALTest("BIGGIF", "gif/bug407.gif", 1, 57921)
+        tst.testOpen()
 
-    tst.testOpen()
+        ds = gdal.Open("data/gif/bug407.gif")
+        assert ds is not None
 
-    ds = gdal.Open("data/gif/bug407.gif")
-    assert ds is not None
-
-    assert ds.GetDriver().ShortName == "BIGGIF"
+        assert ds.GetDriver().ShortName == "BIGGIF"
+    finally:
+        drv = gdal.GetDriverByName("BIGGIF")
+        drv.Deregister()
+        drv.Register()
 
 
 ###############################################################################
@@ -164,11 +177,6 @@ def test_gif_7():
 
 
 def test_gif_8():
-
-    # Move the BIGGIF driver after the GIF driver.
-    drv = gdal.GetDriverByName("BIGGIF")
-    drv.Deregister()
-    drv.Register()
 
     ds = gdal.Open("data/gif/fakebig.gif")
     assert ds is not None
@@ -206,11 +214,3 @@ def test_gif_10():
     tst = gdaltest.GDALTest("GIF", "byte.tif", 1, 4672, options=["INTERLACING=YES"])
 
     tst.testCreateCopy(vsimem=1)
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_gif_cleanup():
-    gdaltest.clean_tmp()

@@ -749,7 +749,7 @@ def test_ogr_pgeo_read_domains():
         "split_policy_duplicate",
     }
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetFieldDomain("i_dont_exist") is None
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "domains"

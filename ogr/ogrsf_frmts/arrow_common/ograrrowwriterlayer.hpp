@@ -31,11 +31,13 @@
 #include "cpl_json.h"
 #include "cpl_time.h"
 
+#include "ogrlayerarrow.h"
+#include "ogr_wkb.h"
+
 #include <cinttypes>
 #include <limits>
 
 static constexpr int TZFLAG_UNINITIALIZED = -1;
-static constexpr int TZFLAG_MIXED = -2;
 
 #define OGR_ARROW_RETURN_NOT_OK(status, ret_value)                             \
     do                                                                         \
@@ -98,7 +100,7 @@ inline void OGRArrowWriterLayer::FinalizeWriting()
     {
         PerformStepsBeforeFinalFlushGroup();
 
-        if (!m_apoBuilders.empty())
+        if (!m_apoBuilders.empty() && m_apoFieldsFromArrowSchema.empty())
             FlushGroup();
 
         CloseFileWriter();
@@ -123,6 +125,12 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
     {
         bNeedGDALSchema = true;
         fields.emplace_back(arrow::field(m_osFIDColumn, arrow::int64(), false));
+    }
+
+    if (!m_apoFieldsFromArrowSchema.empty())
+    {
+        fields.insert(fields.end(), m_apoFieldsFromArrowSchema.begin(),
+                      m_apoFieldsFromArrowSchema.end());
     }
 
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
@@ -231,8 +239,15 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
 
             case OFTDateTime:
+            {
+                const int nTZFlag = poFieldDefn->GetTZFlag();
+                if (nTZFlag >= OGR_TZFLAG_MIXED_TZ)
+                {
+                    m_anTZFlag[i] = nTZFlag;
+                }
                 dt = arrow::timestamp(arrow::TimeUnit::MILLI);
                 break;
+            }
         }
         fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(), dt,
                                          poFieldDefn->IsNullable()));
@@ -382,9 +397,11 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
     int nArrowIdxFirstField = !m_osFIDColumn.empty() ? 1 : 0;
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
     {
-        if (m_anTZFlag[i] > 1)
+        if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ)
         {
-            const int nOffset = (m_anTZFlag[i] - 100) * 15;
+            const int nOffset = m_anTZFlag[i] == OGR_TZFLAG_UTC
+                                    ? 0
+                                    : (m_anTZFlag[i] - OGR_TZFLAG_UTC) * 15;
             int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
             const int nMinutes = std::abs(nOffset - nHours * 60);
 
@@ -515,8 +532,83 @@ inline OGRErr OGRArrowWriterLayer::CreateField(OGRFieldDefn *poField,
                  "Cannot add field after a first feature has been written");
         return OGRERR_FAILURE;
     }
+    if (!m_apoFieldsFromArrowSchema.empty())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot mix calls to CreateField() and "
+                 "CreateFieldFromArrowSchema()");
+        return OGRERR_FAILURE;
+    }
     m_poFeatureDefn->AddFieldDefn(poField);
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                OGRLayer::CreateFieldFromArrowSchema()                */
+/************************************************************************/
+
+inline bool OGRArrowWriterLayer::CreateFieldFromArrowSchema(
+    const struct ArrowSchema *schema, CSLConstList /*papszOptions*/)
+{
+    if (m_poSchema)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot add field after a first feature has been written");
+        return false;
+    }
+
+    if (m_poFeatureDefn->GetFieldCount())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot mix calls to CreateField() and "
+                 "CreateFieldFromArrowSchema()");
+        return false;
+    }
+
+    if (m_osFIDColumn == schema->name)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "FID column has the same name as this field: %s",
+                 schema->name);
+        return false;
+    }
+
+    for (auto &apoField : m_apoFieldsFromArrowSchema)
+    {
+        if (apoField->name() == schema->name)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field of name %s already exists", schema->name);
+            return false;
+        }
+    }
+
+    if (m_poFeatureDefn->GetGeomFieldIndex(schema->name) >= 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Geometry field of name %s already exists", schema->name);
+        return false;
+    }
+
+    // ImportField() would release the schema, but we don't want that
+    // So copy the structure content into a local variable, and override its
+    // release callback to a no-op. This may be a bit fragile, but it doesn't
+    // look like ImportField implementation tries to access the C ArrowSchema
+    // after it has been called.
+    struct ArrowSchema lSchema = *schema;
+    const auto DummyFreeSchema = [](struct ArrowSchema *ptrSchema)
+    { ptrSchema->release = nullptr; };
+    lSchema.release = DummyFreeSchema;
+    auto result = arrow::ImportField(&lSchema);
+    CPLAssert(lSchema.release == nullptr);
+    if (!result.ok())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CreateFieldFromArrowSchema() failed");
+        return false;
+    }
+    m_apoFieldsFromArrowSchema.emplace_back(std::move(*result));
+    return true;
 }
 
 /************************************************************************/
@@ -828,6 +920,325 @@ inline void OGRArrowWriterLayer::CreateArrayBuilders()
 }
 
 /************************************************************************/
+/*                          BuildGeometry()                             */
+/************************************************************************/
+
+inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
+                                                 int iGeomField,
+                                                 arrow::ArrayBuilder *poBuilder)
+{
+    const auto eGType = poGeom ? poGeom->getGeometryType() : wkbNone;
+    const auto eColumnGType =
+        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetType();
+    const bool bIsEmpty = poGeom != nullptr && poGeom->IsEmpty();
+    if (poGeom != nullptr && !bIsEmpty)
+    {
+        if (poGeom->Is3D())
+        {
+            OGREnvelope3D oEnvelope;
+            poGeom->getEnvelope(&oEnvelope);
+            m_aoEnvelopes[iGeomField].Merge(oEnvelope);
+        }
+        else
+        {
+            OGREnvelope oEnvelope;
+            poGeom->getEnvelope(&oEnvelope);
+            m_aoEnvelopes[iGeomField].Merge(oEnvelope);
+        }
+        m_oSetWrittenGeometryTypes[iGeomField].insert(eGType);
+    }
+
+    if (poGeom == nullptr)
+    {
+        if (m_aeGeomEncoding[iGeomField] ==
+                OGRArrowGeomEncoding::GEOARROW_POINT &&
+            GetDriverUCName() == "PARQUET")
+        {
+            // For some reason, Parquet doesn't support a NULL FixedSizeList
+            // on reading
+            auto poPointBuilder =
+                static_cast<arrow::FixedSizeListBuilder *>(poBuilder);
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+                poPointBuilder->value_builder());
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                std::numeric_limits<double>::quiet_NaN()));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                std::numeric_limits<double>::quiet_NaN()));
+            if (OGR_GT_HasZ(eGType))
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                    std::numeric_limits<double>::quiet_NaN()));
+            if (OGR_GT_HasM(eGType))
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                    std::numeric_limits<double>::quiet_NaN()));
+        }
+        else
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
+        }
+    }
+    else if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKB)
+    {
+        std::unique_ptr<OGRGeometry> poGeomModified;
+        if (OGR_GT_HasM(eGType) && !OGR_GT_HasM(eColumnGType))
+        {
+            static bool bHasWarned = false;
+            if (!bHasWarned)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Removing M component from geometry");
+                bHasWarned = true;
+            }
+            poGeomModified.reset(poGeom->clone());
+            poGeomModified->setMeasured(false);
+            poGeom = poGeomModified.get();
+        }
+        FixupGeometryBeforeWriting(poGeom);
+        const auto nSize = poGeom->WkbSize();
+        if (nSize < INT_MAX)
+        {
+            m_abyBuffer.resize(nSize);
+            poGeom->exportToWkb(wkbNDR, &m_abyBuffer[0], wkbVariantIso);
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                static_cast<arrow::BinaryBuilder *>(poBuilder)->Append(
+                    m_abyBuffer.data(), static_cast<int>(m_abyBuffer.size())));
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Too big geometry. "
+                     "Writing null geometry");
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
+        }
+    }
+    else if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKT)
+    {
+        OGRWktOptions options;
+        options.variant = wkbVariantIso;
+        if (m_nWKTCoordinatePrecision >= 0)
+        {
+            options.format = OGRWktFormat::F;
+            options.precision = m_nWKTCoordinatePrecision;
+        }
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(
+            static_cast<arrow::StringBuilder *>(poBuilder)->Append(
+                poGeom->exportToWkt(options)));
+    }
+    // The following checks are only valid for GeoArrow encoding
+    else if ((!bIsEmpty && eGType != eColumnGType) ||
+             (bIsEmpty && wkbFlatten(eGType) != wkbFlatten(eColumnGType)))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Geometry of type %s found, whereas %s is expected. "
+                 "Writing null geometry",
+                 OGRGeometryTypeToName(eGType),
+                 OGRGeometryTypeToName(eColumnGType));
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
+    }
+    else if (!bIsEmpty && poGeom->Is3D() != OGR_GT_HasZ(eColumnGType))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Geometry Z flag (%d) != column geometry type Z flag (%d)d. "
+                 "Writing null geometry",
+                 poGeom->Is3D(), OGR_GT_HasZ(eColumnGType));
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
+    }
+    else if (!bIsEmpty && poGeom->IsMeasured() != OGR_GT_HasM(eColumnGType))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Geometry M flag (%d) != column geometry type M flag (%d)d. "
+                 "Writing null geometry",
+                 poGeom->IsMeasured(), OGR_GT_HasM(eColumnGType));
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
+    }
+    else if (m_aeGeomEncoding[iGeomField] ==
+             OGRArrowGeomEncoding::GEOARROW_POINT)
+    {
+        const auto poPoint = poGeom->toPoint();
+        auto poPointBuilder =
+            static_cast<arrow::FixedSizeListBuilder *>(poBuilder);
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+        auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+            poPointBuilder->value_builder());
+        if (bIsEmpty)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                std::numeric_limits<double>::quiet_NaN()));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                std::numeric_limits<double>::quiet_NaN()));
+        }
+        else
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poPoint->getX()));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poPoint->getY()));
+        }
+        if (OGR_GT_HasZ(eColumnGType))
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poPoint->getZ()));
+        if (OGR_GT_HasM(eColumnGType))
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poPoint->getM()));
+    }
+    else if (m_aeGeomEncoding[iGeomField] ==
+             OGRArrowGeomEncoding::GEOARROW_LINESTRING)
+    {
+        const auto poLS = poGeom->toLineString();
+        auto poListBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
+        auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
+            poListBuilder->value_builder());
+        auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+            poPointBuilder->value_builder());
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
+        for (int j = 0; j < poLS->getNumPoints(); ++j)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poLS->getX(j)));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poLS->getY(j)));
+            if (poGeom->Is3D())
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poLS->getZ(j)));
+            if (poGeom->IsMeasured())
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poLS->getM(j)));
+        }
+    }
+    else if (m_aeGeomEncoding[iGeomField] ==
+             OGRArrowGeomEncoding::GEOARROW_POLYGON)
+    {
+        const auto poPolygon = poGeom->toPolygon();
+        auto poPolygonBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
+        auto poRingBuilder = static_cast<arrow::ListBuilder *>(
+            poPolygonBuilder->value_builder());
+        auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
+            poRingBuilder->value_builder());
+        auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+            poPointBuilder->value_builder());
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poPolygonBuilder->Append());
+        for (const auto *poRing : *poPolygon)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poRingBuilder->Append());
+            for (int j = 0; j < poRing->getNumPoints(); ++j)
+            {
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poRing->getX(j)));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poRing->getY(j)));
+                if (poGeom->Is3D())
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poRing->getZ(j)));
+                if (poGeom->IsMeasured())
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poRing->getM(j)));
+            }
+        }
+    }
+    else if (m_aeGeomEncoding[iGeomField] ==
+             OGRArrowGeomEncoding::GEOARROW_MULTIPOINT)
+    {
+        const auto poMultiPoint = poGeom->toMultiPoint();
+        auto poListBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
+        auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
+            poListBuilder->value_builder());
+        auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+            poPointBuilder->value_builder());
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
+        for (const auto *poPoint : *poMultiPoint)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poPoint->getX()));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                poValueBuilder->Append(poPoint->getY()));
+            if (poGeom->Is3D())
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poPoint->getZ()));
+            if (poGeom->IsMeasured())
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poPoint->getM()));
+        }
+    }
+    else if (m_aeGeomEncoding[iGeomField] ==
+             OGRArrowGeomEncoding::GEOARROW_MULTILINESTRING)
+    {
+        const auto poMLS = poGeom->toMultiLineString();
+        auto poMLSBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
+        auto poLSBuilder =
+            static_cast<arrow::ListBuilder *>(poMLSBuilder->value_builder());
+        auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
+            poLSBuilder->value_builder());
+        auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+            poPointBuilder->value_builder());
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poMLSBuilder->Append());
+        for (const auto *poLS : *poMLS)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poLSBuilder->Append());
+            for (int j = 0; j < poLS->getNumPoints(); ++j)
+            {
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poLS->getX(j)));
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                    poValueBuilder->Append(poLS->getY(j)));
+                if (poGeom->Is3D())
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poLS->getZ(j)));
+                if (poGeom->IsMeasured())
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poLS->getM(j)));
+            }
+        }
+    }
+    else if (m_aeGeomEncoding[iGeomField] ==
+             OGRArrowGeomEncoding::GEOARROW_MULTIPOLYGON)
+    {
+        const auto poMPoly = poGeom->toMultiPolygon();
+        auto poMPolyBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
+        auto poPolyBuilder =
+            static_cast<arrow::ListBuilder *>(poMPolyBuilder->value_builder());
+        auto poRingBuilder =
+            static_cast<arrow::ListBuilder *>(poPolyBuilder->value_builder());
+        auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
+            poRingBuilder->value_builder());
+        auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
+            poPointBuilder->value_builder());
+        OGR_ARROW_RETURN_OGRERR_NOT_OK(poMPolyBuilder->Append());
+        for (const auto *poPolygon : *poMPoly)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPolyBuilder->Append());
+            for (const auto *poRing : *poPolygon)
+            {
+                OGR_ARROW_RETURN_OGRERR_NOT_OK(poRingBuilder->Append());
+                for (int j = 0; j < poRing->getNumPoints(); ++j)
+                {
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poRing->getX(j)));
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poRing->getY(j)));
+                    if (poGeom->Is3D())
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                            poValueBuilder->Append(poRing->getZ(j)));
+                    if (poGeom->IsMeasured())
+                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                            poValueBuilder->Append(poRing->getM(j)));
+                }
+            }
+        }
+    }
+    else
+    {
+        CPLAssert(false);
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
 /*                          ICreateFeature()                            */
 /************************************************************************/
 
@@ -840,6 +1251,13 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
 
     if (m_apoBuilders.empty())
     {
+        if (!m_apoFieldsFromArrowSchema.empty())
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "ICreateFeature() cannot be used after "
+                     "CreateFieldFromArrowSchema()");
+            return OGRERR_FAILURE;
+        }
         CreateArrayBuilders();
     }
 
@@ -1177,15 +1595,18 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 brokenDown.tm_min = nMinute;
                 brokenDown.tm_sec = 0;
                 GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
-                if (!IsFileWriterCreated() && m_anTZFlag[i] != TZFLAG_MIXED)
+                if (!IsFileWriterCreated() &&
+                    m_anTZFlag[i] != OGR_TZFLAG_UNKNOWN)
                 {
                     if (m_anTZFlag[i] == TZFLAG_UNINITIALIZED)
                         m_anTZFlag[i] = nTZFlag;
                     else if (m_anTZFlag[i] != nTZFlag)
                     {
-                        if (m_anTZFlag[i] > 1 && nTZFlag > 1)
+                        if (m_anTZFlag[i] >= OGR_TZFLAG_MIXED_TZ &&
+                            nTZFlag >= OGR_TZFLAG_MIXED_TZ)
                         {
-                            m_anTZFlag[i] = 100;  // harmonize on UTC
+                            m_anTZFlag[i] =
+                                OGR_TZFLAG_MIXED_TZ;  // harmonize on UTC ultimately
                         }
                         else
                         {
@@ -1194,13 +1615,13 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                                      "timezone-aware and local/without "
                                      "timezone values.",
                                      poFieldDefn->GetNameRef());
-                            m_anTZFlag[i] = TZFLAG_MIXED;
+                            m_anTZFlag[i] = OGR_TZFLAG_UNKNOWN;
                         }
                     }
                 }
-                if (nTZFlag != 0 && nTZFlag != 1)
+                if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
                 {
-                    nVal -= (nTZFlag - 100) * 15 * 60;
+                    nVal -= (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
                 }
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(
                     static_cast<arrow::TimestampBuilder *>(poBuilder)->Append(
@@ -1216,315 +1637,8 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
     {
         auto poBuilder = m_apoBuilders[nArrowIdx].get();
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
-        const auto eGType = poGeom ? poGeom->getGeometryType() : wkbNone;
-        const auto eColumnGType =
-            m_poFeatureDefn->GetGeomFieldDefn(i)->GetType();
-        const bool bIsEmpty = poGeom != nullptr && poGeom->IsEmpty();
-        if (poGeom != nullptr && !bIsEmpty)
-        {
-            if (poGeom->Is3D())
-            {
-                OGREnvelope3D oEnvelope;
-                poGeom->getEnvelope(&oEnvelope);
-                m_aoEnvelopes[i].Merge(oEnvelope);
-            }
-            else
-            {
-                OGREnvelope oEnvelope;
-                poGeom->getEnvelope(&oEnvelope);
-                m_aoEnvelopes[i].Merge(oEnvelope);
-            }
-            m_oSetWrittenGeometryTypes[i].insert(eGType);
-        }
-
-        if (poGeom == nullptr)
-        {
-            if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_POINT &&
-                GetDriverUCName() == "PARQUET")
-            {
-                // For some reason, Parquet doesn't support a NULL FixedSizeList
-                // on reading
-                auto poPointBuilder =
-                    static_cast<arrow::FixedSizeListBuilder *>(poBuilder);
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
-                auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                    poPointBuilder->value_builder());
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
-                    std::numeric_limits<double>::quiet_NaN()));
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
-                    std::numeric_limits<double>::quiet_NaN()));
-                if (OGR_GT_HasZ(eGType))
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
-                        std::numeric_limits<double>::quiet_NaN()));
-                if (OGR_GT_HasM(eGType))
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
-                        std::numeric_limits<double>::quiet_NaN()));
-            }
-            else
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
-            }
-        }
-        else if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKB)
-        {
-            std::unique_ptr<OGRGeometry> poGeomModified;
-            if (OGR_GT_HasM(eGType) && !OGR_GT_HasM(eColumnGType))
-            {
-                static bool bHasWarned = false;
-                if (!bHasWarned)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Removing M component from geometry");
-                    bHasWarned = true;
-                }
-                poGeomModified.reset(poGeom->clone());
-                poGeomModified->setMeasured(false);
-                poGeom = poGeomModified.get();
-            }
-            FixupGeometryBeforeWriting(poGeom);
-            const auto nSize = poGeom->WkbSize();
-            if (nSize < INT_MAX)
-            {
-                m_abyBuffer.resize(nSize);
-                poGeom->exportToWkb(wkbNDR, &m_abyBuffer[0], wkbVariantIso);
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    static_cast<arrow::BinaryBuilder *>(poBuilder)->Append(
-                        m_abyBuffer.data(),
-                        static_cast<int>(m_abyBuffer.size())));
-            }
-            else
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Too big geometry. "
-                         "Writing null geometry");
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
-            }
-        }
-        else if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKT)
-        {
-            OGRWktOptions options;
-            options.variant = wkbVariantIso;
-            if (m_nWKTCoordinatePrecision >= 0)
-            {
-                options.format = OGRWktFormat::F;
-                options.precision = m_nWKTCoordinatePrecision;
-            }
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                static_cast<arrow::StringBuilder *>(poBuilder)->Append(
-                    poGeom->exportToWkt(options)));
-        }
-        // The following checks are only valid for GeoArrow encoding
-        else if ((!bIsEmpty && eGType != eColumnGType) ||
-                 (bIsEmpty && wkbFlatten(eGType) != wkbFlatten(eColumnGType)))
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Geometry of type %s found, whereas %s is expected. "
-                     "Writing null geometry",
-                     OGRGeometryTypeToName(eGType),
-                     OGRGeometryTypeToName(eColumnGType));
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
-        }
-        else if (!bIsEmpty && poGeom->Is3D() != OGR_GT_HasZ(eColumnGType))
-        {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Geometry Z flag (%d) != column geometry type Z flag (%d)d. "
-                "Writing null geometry",
-                poGeom->Is3D(), OGR_GT_HasZ(eColumnGType));
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
-        }
-        else if (!bIsEmpty && poGeom->IsMeasured() != OGR_GT_HasM(eColumnGType))
-        {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Geometry M flag (%d) != column geometry type M flag (%d)d. "
-                "Writing null geometry",
-                poGeom->IsMeasured(), OGR_GT_HasM(eColumnGType));
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poBuilder->AppendNull());
-        }
-        else if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_POINT)
-        {
-            const auto poPoint = poGeom->toPoint();
-            auto poPointBuilder =
-                static_cast<arrow::FixedSizeListBuilder *>(poBuilder);
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
-            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                poPointBuilder->value_builder());
-            if (bIsEmpty)
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
-                    std::numeric_limits<double>::quiet_NaN()));
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
-                    std::numeric_limits<double>::quiet_NaN()));
-            }
-            else
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getX()));
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getY()));
-            }
-            if (OGR_GT_HasZ(eColumnGType))
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getZ()));
-            if (OGR_GT_HasM(eColumnGType))
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getM()));
-        }
-        else if (m_aeGeomEncoding[i] ==
-                 OGRArrowGeomEncoding::GEOARROW_LINESTRING)
-        {
-            const auto poLS = poGeom->toLineString();
-            auto poListBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
-            auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
-                poListBuilder->value_builder());
-            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                poPointBuilder->value_builder());
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
-            for (int j = 0; j < poLS->getNumPoints(); ++j)
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poLS->getX(j)));
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poLS->getY(j)));
-                if (poGeom->Is3D())
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poLS->getZ(j)));
-                if (poGeom->IsMeasured())
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poLS->getM(j)));
-            }
-        }
-        else if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::GEOARROW_POLYGON)
-        {
-            const auto poPolygon = poGeom->toPolygon();
-            auto poPolygonBuilder =
-                static_cast<arrow::ListBuilder *>(poBuilder);
-            auto poRingBuilder = static_cast<arrow::ListBuilder *>(
-                poPolygonBuilder->value_builder());
-            auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
-                poRingBuilder->value_builder());
-            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                poPointBuilder->value_builder());
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poPolygonBuilder->Append());
-            for (const auto *poRing : *poPolygon)
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poRingBuilder->Append());
-                for (int j = 0; j < poRing->getNumPoints(); ++j)
-                {
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poRing->getX(j)));
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poRing->getY(j)));
-                    if (poGeom->Is3D())
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poValueBuilder->Append(poRing->getZ(j)));
-                    if (poGeom->IsMeasured())
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poValueBuilder->Append(poRing->getM(j)));
-                }
-            }
-        }
-        else if (m_aeGeomEncoding[i] ==
-                 OGRArrowGeomEncoding::GEOARROW_MULTIPOINT)
-        {
-            const auto poMultiPoint = poGeom->toMultiPoint();
-            auto poListBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
-            auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
-                poListBuilder->value_builder());
-            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                poPointBuilder->value_builder());
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poListBuilder->Append());
-            for (const auto *poPoint : *poMultiPoint)
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getX()));
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getY()));
-                if (poGeom->Is3D())
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poPoint->getZ()));
-                if (poGeom->IsMeasured())
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poPoint->getM()));
-            }
-        }
-        else if (m_aeGeomEncoding[i] ==
-                 OGRArrowGeomEncoding::GEOARROW_MULTILINESTRING)
-        {
-            const auto poMLS = poGeom->toMultiLineString();
-            auto poMLSBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
-            auto poLSBuilder = static_cast<arrow::ListBuilder *>(
-                poMLSBuilder->value_builder());
-            auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
-                poLSBuilder->value_builder());
-            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                poPointBuilder->value_builder());
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poMLSBuilder->Append());
-            for (const auto *poLS : *poMLS)
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poLSBuilder->Append());
-                for (int j = 0; j < poLS->getNumPoints(); ++j)
-                {
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poPointBuilder->Append());
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poLS->getX(j)));
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                        poValueBuilder->Append(poLS->getY(j)));
-                    if (poGeom->Is3D())
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poValueBuilder->Append(poLS->getZ(j)));
-                    if (poGeom->IsMeasured())
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poValueBuilder->Append(poLS->getM(j)));
-                }
-            }
-        }
-        else if (m_aeGeomEncoding[i] ==
-                 OGRArrowGeomEncoding::GEOARROW_MULTIPOLYGON)
-        {
-            const auto poMPoly = poGeom->toMultiPolygon();
-            auto poMPolyBuilder = static_cast<arrow::ListBuilder *>(poBuilder);
-            auto poPolyBuilder = static_cast<arrow::ListBuilder *>(
-                poMPolyBuilder->value_builder());
-            auto poRingBuilder = static_cast<arrow::ListBuilder *>(
-                poPolyBuilder->value_builder());
-            auto poPointBuilder = static_cast<arrow::FixedSizeListBuilder *>(
-                poRingBuilder->value_builder());
-            auto poValueBuilder = static_cast<arrow::DoubleBuilder *>(
-                poPointBuilder->value_builder());
-            OGR_ARROW_RETURN_OGRERR_NOT_OK(poMPolyBuilder->Append());
-            for (const auto *poPolygon : *poMPoly)
-            {
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(poPolyBuilder->Append());
-                for (const auto *poRing : *poPolygon)
-                {
-                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poRingBuilder->Append());
-                    for (int j = 0; j < poRing->getNumPoints(); ++j)
-                    {
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poPointBuilder->Append());
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poValueBuilder->Append(poRing->getX(j)));
-                        OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                            poValueBuilder->Append(poRing->getY(j)));
-                        if (poGeom->Is3D())
-                            OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                                poValueBuilder->Append(poRing->getZ(j)));
-                        if (poGeom->IsMeasured())
-                            OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                                poValueBuilder->Append(poRing->getM(j)));
-                    }
-                }
-            }
-        }
-        else
-        {
-            CPLAssert(false);
-        }
+        if (BuildGeometry(poGeom, i, poBuilder) != OGRERR_NONE)
+            return OGRERR_FAILURE;
     }
 
     m_nFeatureCount++;
@@ -1569,6 +1683,9 @@ inline int OGRArrowWriterLayer::TestCapability(const char *pszCap)
         return m_poSchema == nullptr;
 
     if (EQUAL(pszCap, OLCSequentialWrite))
+        return true;
+
+    if (EQUAL(pszCap, OLCFastWriteArrowBatch))
         return true;
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))
@@ -1643,4 +1760,421 @@ inline bool OGRArrowWriterLayer::WriteArrays(
         nArrowIdx++;
     }
     return true;
+}
+
+/************************************************************************/
+/*                            TestBit()                                 */
+/************************************************************************/
+
+static inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
+{
+    return (pabyData[nIdx / 8] & (1 << (nIdx % 8))) != 0;
+}
+
+/************************************************************************/
+/*                       WriteArrowBatchInternal()                      */
+/************************************************************************/
+
+inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
+    const struct ArrowSchema *schema, struct ArrowArray *array,
+    CSLConstList papszOptions,
+    std::function<bool(const std::shared_ptr<arrow::RecordBatch> &)> writeBatch)
+{
+    if (m_poSchema == nullptr)
+    {
+        CreateSchema();
+    }
+
+    if (!IsFileWriterCreated())
+    {
+        CreateWriter();
+        if (!IsFileWriterCreated())
+            return false;
+    }
+
+    if (m_apoBuilders.empty())
+    {
+        CreateArrayBuilders();
+    }
+
+    const char *pszFIDName = CSLFetchNameValueDef(
+        papszOptions, "FID", OGRLayer::DEFAULT_ARROW_FID_NAME);
+    const char *pszSingleGeomFieldName =
+        CSLFetchNameValue(papszOptions, "GEOMETRY_NAME");
+
+    // Sort schema and array children in the same order as m_poSchema.
+    // This is needed for non-WKB geometry encoding
+    std::map<std::string, int> oMapSchemaChildrenNameToIdx;
+    for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
+    {
+        if (oMapSchemaChildrenNameToIdx.find(schema->children[i]->name) !=
+            oMapSchemaChildrenNameToIdx.end())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Several fields with same name '%s' found",
+                     schema->children[i]->name);
+            return false;
+        }
+        oMapSchemaChildrenNameToIdx[schema->children[i]->name] = i;
+
+        if (!pszSingleGeomFieldName && schema->children[i]->metadata)
+        {
+            const auto oMetadata =
+                OGRParseArrowMetadata(schema->children[i]->metadata);
+            auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+            if (oIter != oMetadata.end() && oIter->second == EXTENSION_NAME_WKB)
+            {
+                pszSingleGeomFieldName = schema->children[i]->name;
+            }
+        }
+    }
+    if (!pszSingleGeomFieldName)
+        pszSingleGeomFieldName = OGRLayer::DEFAULT_ARROW_GEOMETRY_NAME;
+
+    std::vector<int> anMapLayerSchemaToArraySchema(m_poSchema->num_fields(),
+                                                   -1);
+    struct ArrowArray fidArray;
+    struct ArrowSchema fidSchema;
+    memset(&fidArray, 0, sizeof(fidArray));
+    memset(&fidSchema, 0, sizeof(fidSchema));
+    std::vector<void *> apBuffers;
+    std::vector<int64_t> fids;
+    std::set<int> oSetReferencedFieldsInArraySchema;
+    const auto DummyFreeArray = [](struct ArrowArray *ptrArray)
+    { ptrArray->release = nullptr; };
+    const auto DummyFreeSchema = [](struct ArrowSchema *ptrSchema)
+    { ptrSchema->release = nullptr; };
+    bool bRebuildBatch = false;
+    for (int i = 0; i < m_poSchema->num_fields(); ++i)
+    {
+        auto oIter =
+            oMapSchemaChildrenNameToIdx.find(m_poSchema->field(i)->name());
+        if (oIter == oMapSchemaChildrenNameToIdx.end())
+        {
+            if (m_poSchema->field(i)->name() == m_osFIDColumn)
+            {
+                oIter = oMapSchemaChildrenNameToIdx.find(pszFIDName);
+                if (oIter == oMapSchemaChildrenNameToIdx.end())
+                {
+                    // If the input data does not contain a FID column, but
+                    // the output file requires it, creates a default FID column
+                    fidArray.release = DummyFreeArray;
+                    fidArray.n_buffers = 2;
+                    apBuffers.resize(2);
+                    fidArray.buffers =
+                        const_cast<const void **>(apBuffers.data());
+                    fids.reserve(static_cast<size_t>(array->length));
+                    for (size_t iRow = 0;
+                         iRow < static_cast<size_t>(array->length); ++iRow)
+                        fids.push_back(m_nFeatureCount + iRow);
+                    fidArray.buffers[1] = fids.data();
+                    fidArray.length = array->length;
+                    fidSchema.release = DummyFreeSchema;
+                    fidSchema.name = m_osFIDColumn.c_str();
+                    fidSchema.format = "l";  // int64
+                    continue;
+                }
+            }
+            else if (m_poFeatureDefn->GetGeomFieldCount() == 1 &&
+                     m_poFeatureDefn->GetGeomFieldIndex(
+                         m_poSchema->field(i)->name().c_str()) == 0)
+            {
+                oIter =
+                    oMapSchemaChildrenNameToIdx.find(pszSingleGeomFieldName);
+                if (oIter != oMapSchemaChildrenNameToIdx.end())
+                    bRebuildBatch = true;
+            }
+
+            if (oIter == oMapSchemaChildrenNameToIdx.end())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find field '%s' in schema",
+                         m_poSchema->field(i)->name().c_str());
+                return false;
+            }
+        }
+        anMapLayerSchemaToArraySchema[i] = oIter->second;
+        oSetReferencedFieldsInArraySchema.insert(oIter->second);
+    }
+
+    std::vector<struct ArrowSchema *> newSchemaChildren(
+        m_poSchema->num_fields());
+    std::vector<struct ArrowArray *> newArrayChildren(m_poSchema->num_fields());
+    for (int i = 0; i < m_poSchema->num_fields(); ++i)
+    {
+        if (anMapLayerSchemaToArraySchema[i] < 0)
+        {
+            CPLAssert(m_poSchema->field(i)->name() == m_osFIDColumn);
+            newSchemaChildren[i] = &fidSchema;
+            newArrayChildren[i] = &fidArray;
+        }
+        else
+        {
+            newSchemaChildren[i] =
+                schema->children[anMapLayerSchemaToArraySchema[i]];
+            newArrayChildren[i] =
+                array->children[anMapLayerSchemaToArraySchema[i]];
+        }
+    }
+
+    for (int i = 0; i < static_cast<int>(schema->n_children); ++i)
+    {
+        if (oSetReferencedFieldsInArraySchema.find(i) ==
+            oSetReferencedFieldsInArraySchema.end())
+        {
+            if (m_osFIDColumn.empty() &&
+                strcmp(schema->children[i]->name, pszFIDName) == 0)
+            {
+                // If the input data contains a FID column, but the output data
+                // does not, then ignore it.
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Found field '%s' in array schema that does not exist "
+                         "in layer schema",
+                         schema->children[i]->name);
+                return false;
+            }
+        }
+    }
+
+    // ImportSchema() would release the schema, but we don't want that
+    // So copy the structure content into a local variable, and override its
+    // release callback to a no-op. This may be a bit fragile, but it doesn't
+    // look like ImportSchema implementation tries to access the C ArrowSchema
+    // after it has been called.
+    struct ArrowSchema lSchema = *schema;
+    schema = &lSchema;
+    CPL_IGNORE_RET_VAL(schema);
+
+    lSchema.n_children = newSchemaChildren.size();
+    lSchema.children = newSchemaChildren.data();
+
+    lSchema.release = DummyFreeSchema;
+    auto poSchemaResult = arrow::ImportSchema(&lSchema);
+    CPLAssert(lSchema.release == nullptr);
+    if (!poSchemaResult.ok())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "ImportSchema() failed with %s",
+                 poSchemaResult.status().message().c_str());
+        return false;
+    }
+    auto poSchema = *poSchemaResult;
+
+    // Hack the array to use the new children we've computed above
+    // but make sure the original release() callback sees the original children
+    struct ArrayReleaser
+    {
+        struct ArrowArray ori_array
+        {
+        };
+
+        explicit ArrayReleaser(struct ArrowArray *array)
+        {
+            memcpy(&ori_array, array, sizeof(*array));
+            array->release = ArrayReleaser::release;
+            array->private_data = this;
+        }
+
+        static void release(struct ArrowArray *array)
+        {
+            struct ArrayReleaser *releaser =
+                static_cast<struct ArrayReleaser *>(array->private_data);
+            memcpy(array, &(releaser->ori_array), sizeof(*array));
+            CPLAssert(array->release != nullptr);
+            array->release(array);
+            CPLAssert(array->release == nullptr);
+            delete releaser;
+        }
+    };
+
+    // Must be allocated on the heap, since ArrayReleaser::release() will be
+    // called after this method has ended.
+    ArrayReleaser *releaser = new ArrayReleaser(array);
+    array->private_data = releaser;
+    array->n_children = newArrayChildren.size();
+    // cppcheck-suppress autoVariables
+    array->children = newArrayChildren.data();
+
+    // Process geometry columns:
+    // - if the output encoding is WKB, then just note the geometry type and
+    //   envelope.
+    // - otherwise convert to the output encoding.
+    int nBuilderIdx = 0;
+    if (!m_osFIDColumn.empty())
+    {
+        nBuilderIdx++;
+    }
+    std::map<std::string, std::shared_ptr<arrow::Array>>
+        oMapGeomFieldNameToArray;
+    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount();
+         ++i, ++nBuilderIdx)
+    {
+        const char *pszThisGeomFieldName =
+            m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef();
+        int nIdx = poSchema->GetFieldIndex(pszThisGeomFieldName);
+        if (nIdx < 0)
+        {
+            if (m_poFeatureDefn->GetGeomFieldCount() == 1)
+                nIdx = poSchema->GetFieldIndex(pszSingleGeomFieldName);
+            if (nIdx < 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot find geometry field '%s' in schema",
+                         pszThisGeomFieldName);
+                return false;
+            }
+        }
+
+        if (strcmp(lSchema.children[nIdx]->format, "z") != 0 &&
+            strcmp(lSchema.children[nIdx]->format, "Z") != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Type of geometry field '%s' is not binary, but '%s'",
+                     pszThisGeomFieldName, lSchema.children[nIdx]->format);
+            return false;
+        }
+
+        const auto psGeomArray = array->children[nIdx];
+        const uint8_t *pabyValidity =
+            psGeomArray->null_count != 0
+                ? static_cast<const uint8_t *>(psGeomArray->buffers[0])
+                : nullptr;
+        const bool bUseOffsets32 =
+            (strcmp(lSchema.children[nIdx]->format, "z") == 0);
+        const uint32_t *panOffsets32 =
+            static_cast<const uint32_t *>(psGeomArray->buffers[1]) +
+            psGeomArray->offset;
+        const uint64_t *panOffsets64 =
+            static_cast<const uint64_t *>(psGeomArray->buffers[1]) +
+            psGeomArray->offset;
+        GByte *pabyData =
+            static_cast<GByte *>(const_cast<void *>(psGeomArray->buffers[2]));
+        OGREnvelope sEnvelope;
+        auto poBuilder = m_apoBuilders[nBuilderIdx].get();
+
+        for (size_t iRow = 0; iRow < static_cast<size_t>(psGeomArray->length);
+             ++iRow)
+        {
+            if (!pabyValidity ||
+                TestBit(pabyValidity, iRow + psGeomArray->offset))
+            {
+                const auto nLen =
+                    bUseOffsets32 ? static_cast<size_t>(panOffsets32[iRow + 1] -
+                                                        panOffsets32[iRow])
+                                  : static_cast<size_t>(panOffsets64[iRow + 1] -
+                                                        panOffsets64[iRow]);
+                GByte *pabyWkb =
+                    pabyData + (bUseOffsets32
+                                    ? panOffsets32[iRow]
+                                    : static_cast<size_t>(panOffsets64[iRow]));
+                if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKB)
+                {
+                    FixupWKBGeometryBeforeWriting(pabyWkb, nLen);
+
+                    uint32_t nType = 0;
+                    bool bNeedSwap = false;
+                    if (OGRWKBGetGeomType(pabyWkb, nLen, bNeedSwap, nType))
+                    {
+                        m_oSetWrittenGeometryTypes[i].insert(
+                            static_cast<OGRwkbGeometryType>(nType));
+                        if (OGRWKBGetBoundingBox(pabyWkb, nLen, sEnvelope))
+                        {
+                            m_aoEnvelopes[i].Merge(sEnvelope);
+                        }
+                    }
+                }
+                else
+                {
+                    size_t nBytesConsumedOut = 0;
+                    OGRGeometry *poGeometry = nullptr;
+                    OGRGeometryFactory::createFromWkb(
+                        pabyWkb, nullptr, &poGeometry, nLen, wkbVariantIso,
+                        nBytesConsumedOut);
+                    if (BuildGeometry(poGeometry, i, poBuilder) != OGRERR_NONE)
+                    {
+                        delete poGeometry;
+                        return false;
+                    }
+                    delete poGeometry;
+                }
+            }
+            else if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+            {
+                if (BuildGeometry(nullptr, i, poBuilder) != OGRERR_NONE)
+                    return false;
+            }
+        }
+
+        if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+        {
+            std::shared_ptr<arrow::Array> geomArray;
+            auto status = poBuilder->Finish(&geomArray);
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "builder::Finish() for field %s failed with %s",
+                         pszThisGeomFieldName, status.message().c_str());
+                return false;
+            }
+            oMapGeomFieldNameToArray[pszThisGeomFieldName] =
+                std::move(geomArray);
+        }
+    }
+
+    auto poRecordBatchResult = arrow::ImportRecordBatch(array, poSchema);
+    if (!poRecordBatchResult.ok())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ImportRecordBatch() failed with %s",
+                 poRecordBatchResult.status().message().c_str());
+        return false;
+    }
+    auto poRecordBatch = *poRecordBatchResult;
+
+    // below assertion commented out since it is not strictly necessary, but
+    // reflects what ImportRecordBatch() does.
+    // CPLAssert(array->release == nullptr);
+
+    // We may need to reconstruct a final record batch that perfectly matches
+    // the expected schema.
+    if (bRebuildBatch || !oMapGeomFieldNameToArray.empty())
+    {
+        std::vector<std::shared_ptr<arrow::Array>> apoArrays;
+        for (int i = 0; i < m_poSchema->num_fields(); ++i)
+        {
+            auto oIter =
+                oMapGeomFieldNameToArray.find(m_poSchema->field(i)->name());
+            if (oIter != oMapGeomFieldNameToArray.end())
+                apoArrays.emplace_back(oIter->second);
+            else
+                apoArrays.emplace_back(poRecordBatch->column(i));
+            if (apoArrays.back()->type()->id() !=
+                m_poSchema->field(i)->type()->id())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field '%s' of unexpected type",
+                         m_poSchema->field(i)->name().c_str());
+                return false;
+            }
+        }
+        poRecordBatchResult = arrow::RecordBatch::Make(
+            m_poSchema, poRecordBatch->num_rows(), apoArrays);
+        if (!poRecordBatchResult.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "RecordBatch::Make() failed with %s",
+                     poRecordBatchResult.status().message().c_str());
+            return false;
+        }
+        poRecordBatch = *poRecordBatchResult;
+    }
+
+    if (writeBatch(poRecordBatch))
+    {
+        m_nFeatureCount += poRecordBatch->num_rows();
+        return true;
+    }
+    return false;
 }

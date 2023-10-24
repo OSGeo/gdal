@@ -65,7 +65,8 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
                              const char *pszFullNameIn, SHPHandle hSHPIn,
                              DBFHandle hDBFIn,
                              const OGRSpatialReference *poSRSIn, bool bSRSSetIn,
-                             bool bUpdate, OGRwkbGeometryType eReqType,
+                             const std::string &osPrjFilename, bool bUpdate,
+                             OGRwkbGeometryType eReqType,
                              char **papszCreateOptions)
     : OGRAbstractProxiedLayer(poDSIn->GetPool()), poDS(poDSIn),
       poFeatureDefn(nullptr), iNextShapeId(0), nTotalShapeCount(0),
@@ -218,6 +219,8 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
         }
         auto poGeomFieldDefn = cpl::make_unique<OGRShapeGeomFieldDefn>(
             pszFullName, eType, bSRSSetIn, poSRSClone);
+        if (!osPrjFilename.empty())
+            poGeomFieldDefn->SetPrjFilename(osPrjFilename);
         if (poSRSClone)
             poSRSClone->Release();
         poFeatureDefn->SetGeomType(wkbNone);
@@ -909,8 +912,9 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
               psShape->dfYMin == psShape->dfYMax)) ||
             psShape->nSHPType == SHPT_NULL)
         {
-            poFeature = SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId,
-                                          psShape, osEncoding);
+            poFeature =
+                SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId, psShape,
+                                  osEncoding, m_bHasWarnedWrongWindingOrder);
         }
         else if (m_sFilterEnvelope.MaxX < psShape->dfXMin ||
                  m_sFilterEnvelope.MaxY < psShape->dfYMin ||
@@ -922,14 +926,16 @@ OGRFeature *OGRShapeLayer::FetchShape(int iShapeId)
         }
         else
         {
-            poFeature = SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId,
-                                          psShape, osEncoding);
+            poFeature =
+                SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId, psShape,
+                                  osEncoding, m_bHasWarnedWrongWindingOrder);
         }
     }
     else
     {
-        poFeature = SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId,
-                                      nullptr, osEncoding);
+        poFeature =
+            SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn, iShapeId, nullptr,
+                              osEncoding, m_bHasWarnedWrongWindingOrder);
     }
 
     return poFeature;
@@ -1031,9 +1037,9 @@ OGRFeature *OGRShapeLayer::GetFeature(GIntBig nFeatureId)
     if (!TouchLayer() || nFeatureId > INT_MAX)
         return nullptr;
 
-    OGRFeature *poFeature =
-        SHPReadOGRFeature(hSHP, hDBF, poFeatureDefn,
-                          static_cast<int>(nFeatureId), nullptr, osEncoding);
+    OGRFeature *poFeature = SHPReadOGRFeature(
+        hSHP, hDBF, poFeatureDefn, static_cast<int>(nFeatureId), nullptr,
+        osEncoding, m_bHasWarnedWrongWindingOrder);
 
     if (poFeature == nullptr)
     {
@@ -1485,7 +1491,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
                 if (psShape)
                 {
-                    poGeometry = SHPReadOGRObject(hSHP, iShape, psShape);
+                    poGeometry = SHPReadOGRObject(
+                        hSHP, iShape, psShape, m_bHasWarnedWrongWindingOrder);
                     if (poGeometry)
                         poGeometry->getEnvelope(&sGeomEnv);
                     psShape = nullptr;
@@ -1548,7 +1555,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                         if (psShape)
                         {
                             poGeometry =
-                                SHPReadOGRObject(hSHP, iShape, psShape);
+                                SHPReadOGRObject(hSHP, iShape, psShape,
+                                                 m_bHasWarnedWrongWindingOrder);
                             psShape = nullptr;
                         }
                     }
@@ -2378,6 +2386,29 @@ const OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
         {
             memmove(papszLines[0], papszLines[0] + 3,
                     strlen(papszLines[0] + 3) + 1);
+        }
+        if (STARTS_WITH_CI(papszLines[0], "GEOGCS["))
+        {
+            // Strip AXIS[] in GEOGCS to address use case of
+            // https://github.com/OSGeo/gdal/issues/8452
+            std::string osVal;
+            for (CSLConstList papszIter = papszLines; *papszIter; ++papszIter)
+                osVal += *papszIter;
+            OGR_SRSNode oSRSNode;
+            const char *pszVal = osVal.c_str();
+            if (oSRSNode.importFromWkt(&pszVal) == OGRERR_NONE)
+            {
+                oSRSNode.StripNodes("AXIS");
+                char *pszWKT = nullptr;
+                oSRSNode.exportToWkt(&pszWKT);
+                if (pszWKT)
+                {
+                    CSLDestroy(papszLines);
+                    papszLines =
+                        static_cast<char **>(CPLCalloc(2, sizeof(char *)));
+                    papszLines[0] = pszWKT;
+                }
+            }
         }
         if (poSRSNonConst->importFromESRI(papszLines) != OGRERR_NONE)
         {
@@ -3596,23 +3627,24 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
     if (hSHP)
     {
         const char *pszSHPFilename = VSI_SHP_GetFilename(hSHP->fpSHP);
-        oFileList.AddString(pszSHPFilename);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszSHPFilename));
         const char *pszSHPExt = CPLGetExtension(pszSHPFilename);
         const char *pszSHXFilename = CPLResetExtension(
             pszSHPFilename, (pszSHPExt[0] == 's') ? "shx" : "SHX");
-        oFileList.AddString(pszSHXFilename);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszSHXFilename));
     }
 
     if (hDBF)
     {
         const char *pszDBFFilename = VSI_SHP_GetFilename(hDBF->fp);
-        oFileList.AddString(pszDBFFilename);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(pszDBFFilename));
         if (hDBF->pszCodePage != nullptr && hDBF->iLanguageDriver == 0)
         {
             const char *pszDBFExt = CPLGetExtension(pszDBFFilename);
             const char *pszCPGFilename = CPLResetExtension(
                 pszDBFFilename, (pszDBFExt[0] == 'd') ? "cpg" : "CPG");
-            oFileList.AddString(pszCPGFilename);
+            oFileList.AddStringDirectly(
+                VSIGetCanonicalFilename(pszCPGFilename));
         }
     }
 
@@ -3623,19 +3655,23 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
             OGRShapeGeomFieldDefn *poGeomFieldDefn =
                 cpl::down_cast<OGRShapeGeomFieldDefn *>(
                     GetLayerDefn()->GetGeomFieldDefn(0));
-            oFileList.AddString(poGeomFieldDefn->GetPrjFilename());
+            oFileList.AddStringDirectly(
+                VSIGetCanonicalFilename(poGeomFieldDefn->GetPrjFilename()));
         }
         if (CheckForQIX())
         {
             const char *pszQIXFilename = CPLResetExtension(pszFullName, "qix");
-            oFileList.AddString(pszQIXFilename);
+            oFileList.AddStringDirectly(
+                VSIGetCanonicalFilename(pszQIXFilename));
         }
         else if (CheckForSBN())
         {
             const char *pszSBNFilename = CPLResetExtension(pszFullName, "sbn");
-            oFileList.AddString(pszSBNFilename);
+            oFileList.AddStringDirectly(
+                VSIGetCanonicalFilename(pszSBNFilename));
             const char *pszSBXFilename = CPLResetExtension(pszFullName, "sbx");
-            oFileList.AddString(pszSBXFilename);
+            oFileList.AddStringDirectly(
+                VSIGetCanonicalFilename(pszSBXFilename));
         }
     }
 }
@@ -3741,4 +3777,13 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     poFeatureDefn->SetName(pszNewName);
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          GetDataset()                                */
+/************************************************************************/
+
+GDALDataset *OGRShapeLayer::GetDataset()
+{
+    return poDS;
 }

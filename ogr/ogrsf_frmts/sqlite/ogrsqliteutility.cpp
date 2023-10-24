@@ -173,27 +173,6 @@ int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
     return static_cast<int>(SQLGetInteger64(poDb, pszSQL, err));
 }
 
-int SQLiteFieldFromOGR(OGRFieldType eType)
-{
-    switch (eType)
-    {
-        case OFTInteger:
-            return SQLITE_INTEGER;
-        case OFTReal:
-            return SQLITE_FLOAT;
-        case OFTString:
-            return SQLITE_TEXT;
-        case OFTBinary:
-            return SQLITE_BLOB;
-        case OFTDate:
-            return SQLITE_TEXT;
-        case OFTDateTime:
-            return SQLITE_TEXT;
-        default:
-            return 0;
-    }
-}
-
 /************************************************************************/
 /*                             SQLUnescape()                            */
 /************************************************************************/
@@ -559,4 +538,63 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
     }
 
     return uniqueFieldsUC;
+}
+
+/************************************************************************/
+/*               OGRSQLiteRTreeRequiresTrustedSchemaOn()                */
+/************************************************************************/
+
+/** Whether the use of a RTree in triggers or views requires trusted_schema
+ * PRAGMA to be set to ON */
+bool OGRSQLiteRTreeRequiresTrustedSchemaOn()
+{
+    static bool b = []()
+    {
+        sqlite3 *hDB = nullptr;
+        int rc =
+            sqlite3_open_v2(":memory:", &hDB, SQLITE_OPEN_READWRITE, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "sqlite3_open_v2(:memory:) failed");
+            sqlite3_close(hDB);
+            return false;
+        }
+        rc = sqlite3_exec(hDB,
+                          "CREATE VIRTUAL TABLE foo_rtree USING rtree(id, "
+                          "minx, miny, maxx, maxy);",
+                          nullptr, nullptr, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE VIRTUAL TABLE foo_rtree failed");
+            sqlite3_close(hDB);
+            return false;
+        }
+        rc = sqlite3_exec(hDB, "CREATE VIEW v AS SELECT * FROM foo_rtree;",
+                          nullptr, nullptr, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE VIEW v AS SELECT * FROM foo_rtree failed");
+            sqlite3_close(hDB);
+            return false;
+        }
+        // Try to read the virtual table from a view. As of today (sqlite 3.43.1)
+        // this require trusted_schema = ON
+        rc = sqlite3_exec(hDB, "SELECT * FROM v", nullptr, nullptr, nullptr);
+        bool bRequiresTrustedSchemaOn = false;
+        if (rc != SQLITE_OK)
+        {
+            CPL_IGNORE_RET_VAL(sqlite3_exec(hDB, "PRAGMA trusted_schema = ON",
+                                            nullptr, nullptr, nullptr));
+            rc =
+                sqlite3_exec(hDB, "SELECT * FROM v", nullptr, nullptr, nullptr);
+            if (rc == SQLITE_OK)
+                bRequiresTrustedSchemaOn = true;
+        }
+        sqlite3_close(hDB);
+        return bRequiresTrustedSchemaOn;
+    }();
+    return b;
 }

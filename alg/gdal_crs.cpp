@@ -177,11 +177,18 @@ static void *GDALCreateSimilarGCPTransformer(void *hTransformArg,
 
 static void *GDALCreateGCPTransformerEx(int nGCPCount,
                                         const GDAL_GCP *pasGCPList,
-                                        int nReqOrder, int bReversed,
-                                        int bRefine, double dfTolerance,
+                                        int nReqOrder, bool bReversed,
+                                        bool bRefine, double dfTolerance,
                                         int nMinimumGcps)
 
 {
+    // If no minimumGcp parameter was passed, we  use the default value
+    // according to the model
+    if (bRefine && nMinimumGcps == -1)
+    {
+        nMinimumGcps = ((nReqOrder + 1) * (nReqOrder + 2)) / 2 + 1;
+    }
+
     GCPTransformInfo *psInfo = nullptr;
     double *padfGeoX = nullptr;
     double *padfGeoY = nullptr;
@@ -341,7 +348,7 @@ void *GDALCreateGCPTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
 
 {
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder,
-                                      bReversed, FALSE, -1, -1);
+                                      CPL_TO_BOOL(bReversed), false, -1, -1);
 }
 
 /** Create GCP based polynomial transformer, with a tolerance threshold to
@@ -352,14 +359,8 @@ void *GDALCreateGCPRefineTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
                                      double dfTolerance, int nMinimumGcps)
 
 {
-    // If no minimumGcp parameter was passed, we  use the default value
-    // according to the model
-    if (nMinimumGcps == -1)
-    {
-        nMinimumGcps = ((nReqOrder + 1) * (nReqOrder + 2)) / 2 + 1;
-    }
     return GDALCreateGCPTransformerEx(nGCPCount, pasGCPList, nReqOrder,
-                                      bReversed, TRUE, dfTolerance,
+                                      CPL_TO_BOOL(bReversed), true, dfTolerance,
                                       nMinimumGcps);
 }
 

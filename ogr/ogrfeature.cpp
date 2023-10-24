@@ -3569,9 +3569,20 @@ char *OGRFeature::GetFieldAsSerializedJSon(int iField) const
         json_object *poObj = json_object_new_array();
         int nCount = 0;
         const int *panValues = GetFieldAsIntegerList(iField, &nCount);
-        for (int i = 0; i < nCount; i++)
+        if (poFDefn->GetSubType() == OFSTBoolean)
         {
-            json_object_array_add(poObj, json_object_new_int(panValues[i]));
+            for (int i = 0; i < nCount; i++)
+            {
+                json_object_array_add(
+                    poObj, json_object_new_boolean(panValues[i] != 0));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < nCount; i++)
+            {
+                json_object_array_add(poObj, json_object_new_int(panValues[i]));
+            }
         }
         pszRet = CPLStrdup(json_object_to_json_string(poObj));
         json_object_put(poObj);
@@ -5676,6 +5687,40 @@ void OGR_F_DumpReadable(OGRFeatureH hFeat, FILE *fpOut)
 }
 
 /************************************************************************/
+/*                         OGR_F_DumpReadableAsString()                 */
+/************************************************************************/
+
+/**
+ * \brief Dump this feature in a human readable form.
+ *
+ * This dumps the attributes, and geometry; however, it doesn't include
+ * definition information (other than field types and names), nor does
+ * it report the geometry spatial reference system.
+ *
+ * A few options can be defined to change the default dump :
+ * <ul>
+ * <li>DISPLAY_FIELDS=NO : to hide the dump of the attributes</li>
+ * <li>DISPLAY_STYLE=NO : to hide the dump of the style string</li>
+ * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
+ * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * </ul>
+ *
+ * @param hFeat handle to the feature to dump.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ * @return a string with the feature representation (to be freed with CPLFree())
+ * @since GDAL 3.8
+ */
+
+char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hFeat, "OGR_F_DumpReadableAsString", nullptr);
+
+    return CPLStrdup(OGRFeature::FromHandle(hFeat)
+                         ->DumpReadableAsString(papszOptions)
+                         .c_str());
+}
+
+/************************************************************************/
 /*                               GetFID()                               */
 /************************************************************************/
 
@@ -6134,12 +6179,15 @@ OGRErr OGR_F_SetFrom(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int bForgiving)
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
+ * @param bUseISO8601ForDateTimeAsString true if datetime fields
+ * converted to string should use ISO8601 formatting rather than OGR own format.
+ *
  * @return OGRERR_NONE if the operation succeeds, even if some values are
  * not transferred, otherwise an error code.
  */
 
 OGRErr OGRFeature::SetFrom(const OGRFeature *poSrcFeature, const int *panMap,
-                           int bForgiving)
+                           int bForgiving, bool bUseISO8601ForDateTimeAsString)
 
 {
     if (poSrcFeature == this)
@@ -6192,7 +6240,8 @@ OGRErr OGRFeature::SetFrom(const OGRFeature *poSrcFeature, const int *panMap,
     /*      Set the fields by name.                                         */
     /* -------------------------------------------------------------------- */
 
-    const OGRErr eErr = SetFieldsFrom(poSrcFeature, panMap, bForgiving);
+    const OGRErr eErr = SetFieldsFrom(poSrcFeature, panMap, bForgiving,
+                                      bUseISO8601ForDateTimeAsString);
     if (eErr != OGRERR_NONE)
         return eErr;
 
@@ -6271,12 +6320,16 @@ OGRErr OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
  * @param bForgiving TRUE if the operation should continue despite lacking
  * output fields matching some of the source fields.
  *
+ * @param bUseISO8601ForDateTimeAsString true if datetime fields
+ * converted to string should use ISO8601 formatting rather than OGR own format.
+ *
  * @return OGRERR_NONE if the operation succeeds, even if some values are
  * not transferred, otherwise an error code.
  */
 
 OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
-                                 const int *panMap, int bForgiving)
+                                 const int *panMap, int bForgiving,
+                                 bool bUseISO8601ForDateTimeAsString)
 
 {
     const int nSrcFieldCount = poSrcFeature->poDefn->GetFieldCountUnsafe();
@@ -6441,7 +6494,12 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
                 }
                 else if (eDstType == OFTString || eDstType == OFTStringList)
                 {
-                    SetField(iDstField, poSrcFeature->GetFieldAsString(iField));
+                    SetField(iDstField,
+                             eSrcType == OFTDateTime &&
+                                     bUseISO8601ForDateTimeAsString
+                                 ? poSrcFeature->GetFieldAsISO8601DateTime(
+                                       iField, nullptr)
+                                 : poSrcFeature->GetFieldAsString(iField));
                 }
                 else if (!bForgiving)
                     return OGRERR_FAILURE;
@@ -6819,7 +6877,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
     const int nFieldCount = poDefn->GetFieldCount();
     for (int i = 0; i < nFieldCount; i++)
     {
-        if (IsFieldSet(i))
+        if (IsFieldSetUnsafe(i))
             continue;
         const auto poFieldDefn = poDefn->GetFieldDefn(i);
         if (bNotNullableOnly && poFieldDefn->IsNullable())

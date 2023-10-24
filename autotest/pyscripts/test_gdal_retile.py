@@ -103,6 +103,72 @@ def test_gdal_retile_2(script_path, tmp_path):
 
 
 ###############################################################################
+# test gdal_retile.py with input having gaps
+
+# This test first creates input rasters which would create an tile index having some tiles with no input data.
+# if these 100x100 rasters are retiled to 20x20, the upper left hand corner should have tiles.
+
+#
+# 30 N               ---------------
+#                    |             |
+#                    |   100X00    |
+#                    |   Image 2   |
+#                    |             |
+# 15 N -----------------------------
+#      |             |             |
+#      |   100X00    |   100X00    |
+#      |   Image 1   |   Image 3   |
+#      |             |             |
+#  0 N -----------------------------
+#      0 E           15 E         30 E
+
+
+def test_gdal_retile_non_contigous(script_path, tmp_path):
+    drv = gdal.GetDriverByName("GTiff")
+    srs = osr.SpatialReference()
+    srs.SetWellKnownGeogCS("WGS84")
+    wkt = srs.ExportToWkt()
+
+    in1_tif = str(tmp_path / "in1.tif")
+    with drv.Create(in1_tif, 100, 100, 1) as ds:
+        px1_x = 15.0 / ds.RasterXSize
+        px1_y = 15.0 / ds.RasterYSize
+        ds.SetProjection(wkt)
+        ds.SetGeoTransform([0, px1_x, 0, 15, 0, -px1_y])
+        ds.GetRasterBand(1).Fill(0)
+
+    in2_tif = str(tmp_path / "in2.tif")
+    with drv.Create(in2_tif, 100, 100, 1) as ds:
+        px2_x = 15.0 / ds.RasterXSize
+        px2_y = 15.0 / ds.RasterYSize
+        ds.SetProjection(wkt)
+        ds.SetGeoTransform([15, px2_x, 0, 30, 0, -px2_y])
+        ds.GetRasterBand(1).Fill(21)
+
+    in3_tif = str(tmp_path / "in3.tif")
+    with drv.Create(in3_tif, 100, 100, 1) as ds:
+        px3_x = 15.0 / ds.RasterXSize
+        px3_y = 15.0 / ds.RasterYSize
+        ds.SetProjection(wkt)
+        ds.SetGeoTransform([15, px3_x, 0, 15, 0, -px3_y])
+        ds.GetRasterBand(1).Fill(42)
+
+    out_dir = tmp_path / "outretile_noncontigous"
+    out_dir.mkdir()
+
+    script_out = test_py_scripts.run_py_script(
+        script_path,
+        "gdal_retile",
+        f"-v -levels 2 -r bilinear -ps 20 20 -targetDir {out_dir} {in1_tif} {in2_tif} {in3_tif}",
+    )
+
+    assert "ERROR ret code = 1" not in script_out
+
+    assert os.path.exists(f"{out_dir}/in1_01_05.tif")
+    assert os.path.exists(f"{out_dir}/1/in1_1_2.tif")
+
+
+###############################################################################
 # Test gdal_retile.py with input images of different pixel sizes
 
 

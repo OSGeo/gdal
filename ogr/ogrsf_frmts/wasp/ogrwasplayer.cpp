@@ -756,7 +756,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
     if (!pszLine)
         return nullptr;
 
-    double dfValues[4];
+    double dfValues[4] = {0};
     int iNumValues = 0;
     {
         std::istringstream iss(pszLine);

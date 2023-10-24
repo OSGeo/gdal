@@ -15,8 +15,9 @@ Synopsis
 
 .. code-block::
 
-    gdal_sieve.py [-q] [-st threshold] [-4] [-8] [-o name=value]
-            srcfile [-nomask] [-mask filename] [-of format] [dstfile]
+    gdal_sieve.py [--help] [--help-general]
+                  [-q] [-st threshold] [-4] [-8] [-o name=value]
+                  <srcfile> [-nomask] [-mask filename] [-of format] [<dstfile>]
 
 Description
 -----------

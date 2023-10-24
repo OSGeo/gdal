@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -41,7 +40,7 @@ def test_ogr_fielddomain_range():
             None, "desc", ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             ogr.CreateRangeFieldDomain(
                 "name", "desc", ogr.OFTString, ogr.OFSTNone, 1, True, 2, True
@@ -129,7 +128,7 @@ def test_ogr_fielddomain_range():
     assert "Maximum value: 2023-07-03T12:13:15" in ret
 
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             domain.GetEnumeration()
 
     with pytest.raises(Exception):

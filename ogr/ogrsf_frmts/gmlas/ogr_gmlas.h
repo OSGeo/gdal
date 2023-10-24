@@ -1119,7 +1119,7 @@ class GMLASSchemaAnalyzer
         std::vector<XSElementDeclaration *> &oVectorEltsForTopClass,
         std::set<CPLString> &aoSetXPathEltsForTopClass, XSModel *poModel,
         bool &bSimpleEnoughOut, int &nCountSubEltsOut);
-    void BuildMapCountOccurrencesOfSameName(
+    static void BuildMapCountOccurrencesOfSameName(
         XSModelGroup *poModelGroup,
         std::map<CPLString, int> &oMapCountOccurrencesOfSameName);
     bool ExploreModelGroup(
@@ -1152,8 +1152,9 @@ class GMLASSchemaAnalyzer
 
     bool IsIgnoredXPath(const CPLString &osXPath);
 
-    void CollectClassesReferences(GMLASFeatureClass &oClass,
-                                  std::vector<GMLASFeatureClass *> &aoClasses);
+    static void
+    CollectClassesReferences(GMLASFeatureClass &oClass,
+                             std::vector<GMLASFeatureClass *> &aoClasses);
 
     CPL_DISALLOW_COPY_ASSIGN(GMLASSchemaAnalyzer)
 

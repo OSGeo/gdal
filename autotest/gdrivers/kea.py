@@ -124,7 +124,7 @@ def test_kea_4():
     if gdaltest.kea_driver is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
     assert ds is None
 
@@ -142,42 +142,42 @@ def test_kea_4():
     ds = None
     ds = gdal.Open("tmp/out.kea")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetProjection("a")
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform([1, 2, 3, 4, 5, 6])
     assert ret != 0
 
     # Disabled for now since some of them cause memory leaks or
     # crash in the HDF5 library finalizer
     if False:  # pylint: disable=using-constant-test
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = ds.SetMetadataItem("foo", "bar")
         assert ret != 0
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = ds.SetMetadata({"foo": "bar"})
         assert ret != 0
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = ds.GetRasterBand(1).SetMetadataItem("foo", "bar")
         assert ret != 0
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = ds.GetRasterBand(1).SetMetadata({"foo": "bar"})
         assert ret != 0
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = ds.SetGCPs([], "")
         assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.AddBand(gdal.GDT_Byte)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, "\0")
     assert ret != 0
     assert ds.GetRasterBand(1).Checksum() == 3
@@ -555,7 +555,7 @@ def test_kea_12():
         assert rat.GetTypeOfCol(i) == cloned_rat.GetTypeOfCol(i)
         assert rat.GetUsageOfCol(i) == cloned_rat.GetUsageOfCol(i)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         rat.GetNameOfCol(-1)
         rat.GetTypeOfCol(-1)

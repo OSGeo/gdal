@@ -377,6 +377,7 @@ VSIS3HandleHelper::VSIS3HandleHelper(
       m_bUseVirtualHosting(bUseVirtualHosting),
       m_eCredentialsSource(eCredentialsSource)
 {
+    VSIS3UpdateParams::UpdateHandleFromMap(this);
 }
 
 /************************************************************************/
@@ -1913,15 +1914,12 @@ struct curl_slist *VSIS3HandleHelper::GetCurlHeaders(
 
 bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
                                           const char *pszHeaders,
-                                          bool bSetError, bool *pbUpdateMap)
+                                          bool bSetError)
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
     CPLDebug("S3", "%s", pszHeaders ? pszHeaders : "");
 #endif
-
-    if (pbUpdateMap != nullptr)
-        *pbUpdateMap = true;
 
     if (!STARTS_WITH(pszErrorMsg, "<?xml") &&
         !STARTS_WITH(pszErrorMsg, "<Error>"))
@@ -1973,6 +1971,9 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
         SetRegion(pszRegion);
         CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
         CPLDestroyXMLNode(psTree);
+
+        VSIS3UpdateParams::UpdateMapFromHandle(this);
+
         return true;
     }
 
@@ -2028,8 +2029,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
                          m_osEndpoint.c_str());
                 CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
                 CPLDestroyXMLNode(psTree);
-                if (bIsTemporaryRedirect && pbUpdateMap != nullptr)
-                    *pbUpdateMap = false;
+                if (!bIsTemporaryRedirect)
+                    VSIS3UpdateParams::UpdateMapFromHandle(this);
                 return true;
             }
 
@@ -2041,8 +2042,8 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
         CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
         CPLDestroyXMLNode(psTree);
 
-        if (bIsTemporaryRedirect && pbUpdateMap != nullptr)
-            *pbUpdateMap = false;
+        if (!bIsTemporaryRedirect)
+            VSIS3UpdateParams::UpdateMapFromHandle(this);
 
         return true;
     }
@@ -2223,16 +2224,14 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
 /************************************************************************/
 
 std::mutex VSIS3UpdateParams::gsMutex{};
+
 std::map<CPLString, VSIS3UpdateParams>
     VSIS3UpdateParams::goMapBucketsToS3Params{};
 
-void VSIS3UpdateParams::UpdateMapFromHandle(
-    IVSIS3LikeHandleHelper *poHandleHelper)
+void VSIS3UpdateParams::UpdateMapFromHandle(VSIS3HandleHelper *poS3HandleHelper)
 {
     std::lock_guard<std::mutex> guard(gsMutex);
 
-    VSIS3HandleHelper *poS3HandleHelper =
-        cpl::down_cast<VSIS3HandleHelper *>(poHandleHelper);
     goMapBucketsToS3Params[poS3HandleHelper->GetBucket()] =
         VSIS3UpdateParams(poS3HandleHelper);
 }
@@ -2241,13 +2240,10 @@ void VSIS3UpdateParams::UpdateMapFromHandle(
 /*                         UpdateHandleFromMap()                        */
 /************************************************************************/
 
-void VSIS3UpdateParams::UpdateHandleFromMap(
-    IVSIS3LikeHandleHelper *poHandleHelper)
+void VSIS3UpdateParams::UpdateHandleFromMap(VSIS3HandleHelper *poS3HandleHelper)
 {
     std::lock_guard<std::mutex> guard(gsMutex);
 
-    VSIS3HandleHelper *poS3HandleHelper =
-        cpl::down_cast<VSIS3HandleHelper *>(poHandleHelper);
     std::map<CPLString, VSIS3UpdateParams>::iterator oIter =
         goMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if (oIter != goMapBucketsToS3Params.end())

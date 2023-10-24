@@ -1299,7 +1299,10 @@ void OGRGeoJSONReaderAddOrUpdateField(
             poFieldDefn->SetWidth(1);
         if (poFieldDefn->GetType() == OFTString && !bDateAsString)
         {
-            poFieldDefn->SetType(GeoJSONStringPropertyToFieldType(poVal));
+            int nTZFlag = 0;
+            poFieldDefn->SetType(
+                GeoJSONStringPropertyToFieldType(poVal, nTZFlag));
+            poFieldDefn->SetTZFlag(nTZFlag);
         }
         apoFieldDefn.emplace_back(std::move(poFieldDefn));
         const int nIndex = static_cast<int>(apoFieldDefn.size()) - 1;
@@ -1328,7 +1331,10 @@ void OGRGeoJSONReaderAddOrUpdateField(
             poFDefn->SetType(eNewType);
             if (poFDefn->GetType() == OFTString && !bDateAsString)
             {
-                poFDefn->SetType(GeoJSONStringPropertyToFieldType(poVal));
+                int nTZFlag = 0;
+                poFDefn->SetType(
+                    GeoJSONStringPropertyToFieldType(poVal, nTZFlag));
+                poFDefn->SetTZFlag(nTZFlag);
             }
             poFDefn->SetSubType(eNewSubType);
             aoSetUndeterminedTypeFields.erase(nIndex);
@@ -1533,7 +1539,18 @@ void OGRGeoJSONReaderAddOrUpdateField(
         {
             if (eNewType == OFTString && !bDateAsString &&
                 eNewSubType == OFSTNone)
-                eNewType = GeoJSONStringPropertyToFieldType(poVal);
+            {
+                int nTZFlag = 0;
+                eNewType = GeoJSONStringPropertyToFieldType(poVal, nTZFlag);
+                if (poFDefn->GetTZFlag() > OGR_TZFLAG_UNKNOWN &&
+                    nTZFlag != poFDefn->GetTZFlag())
+                {
+                    if (nTZFlag == OGR_TZFLAG_UNKNOWN)
+                        poFDefn->SetTZFlag(OGR_TZFLAG_UNKNOWN);
+                    else
+                        poFDefn->SetTZFlag(OGR_TZFLAG_MIXED_TZ);
+                }
+            }
             if (eType != eNewType)
             {
                 poFDefn->SetSubType(OFSTNone);

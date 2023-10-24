@@ -38,6 +38,7 @@ add_library(
   gdalarraybandblockcache.cpp
   gdalhashsetbandblockcache.cpp
   gdalrelationship.cpp
+  gdalsubdatasetinfo.cpp
   gdalorienteddataset.cpp
   overview.cpp
   rasterio.cpp
@@ -165,4 +166,6 @@ target_public_header(
   gdalcachedpixelaccessor.h
   rawdataset.h
   gdalgeorefpamdataset.h
-  gdal_mdreader.h)
+  gdal_mdreader.h
+  gdalsubdatasetinfo.h
+)

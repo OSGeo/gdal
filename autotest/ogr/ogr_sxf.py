@@ -39,16 +39,14 @@ pytestmark = pytest.mark.require_driver("SXF")
 # Open SXF datasource.
 
 
+@pytest.fixture()
 def test_ogr_sxf_1():
 
-    gdaltest.sxf_ds = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Expect Warning 0 and Warning 6.
-        gdaltest.sxf_ds = ogr.Open("data/sxf/100_test.sxf")
+        ds = ogr.Open("data/sxf/100_test.sxf")
 
-    if gdaltest.sxf_ds is not None:
-        return
-    pytest.fail()
+    assert ds is not None
 
 
 ###############################################################################
@@ -125,15 +123,3 @@ def test_ogr_sxf_4():
         actual_layer_names.append(lyr.GetName())
 
     assert actual_layer_names == lyr_names
-
-
-###############################################################################
-#
-
-
-def test_ogr_sxf_cleanup():
-
-    if gdaltest.sxf_ds is None:
-        pytest.skip()
-
-    gdaltest.sxf_ds = None

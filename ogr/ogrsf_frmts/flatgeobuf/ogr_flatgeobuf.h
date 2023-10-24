@@ -117,6 +117,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     std::string
         m_osTempFile;  // holds generated temp file name for two pass writing
     uint32_t m_maxFeatureSize = 0;
+    std::vector<uint8_t> m_writeProperties{};
 
     // shared
     GByte *m_featureBuf = nullptr;  // reusable/resizable feature data buffer
@@ -142,7 +143,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
                        const char *pszFilename, VSILFILE *poFp,
                        uint64_t offset);
     OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename,
-                       OGRSpatialReference *poSpatialRef,
+                       const OGRSpatialReference *poSpatialRef,
                        OGRwkbGeometryType eGType,
                        bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite,
                        std::string &osTempFile);
@@ -163,7 +164,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
                                     bool bVerifyBuffers);
     static OGRFlatGeobufLayer *
     Create(const char *pszLayerName, const char *pszFilename,
-           OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
+           const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
            bool bCreateSpatialIndexAtClose, char **papszOptions);
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
@@ -262,10 +263,11 @@ class OGRFlatGeobufDataset final : public GDALDataset
                                char **papszOptions);
     virtual OGRLayer *GetLayer(int) override;
     int TestCapability(const char *pszCap) override;
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr) override;
+    virtual OGRLayer *
+    ICreateLayer(const char *pszName,
+                 const OGRSpatialReference *poSpatialRef = nullptr,
+                 OGRwkbGeometryType eGType = wkbUnknown,
+                 char **papszOptions = nullptr) override;
 
     virtual int GetLayerCount() override
     {

@@ -270,10 +270,11 @@ class OGRNGWDataset final : public GDALDataset
     }
     virtual OGRLayer *GetLayer(int) override;
     virtual int TestCapability(const char *) override;
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr) override;
+    virtual OGRLayer *
+    ICreateLayer(const char *pszName,
+                 const OGRSpatialReference *poSpatialRef = nullptr,
+                 OGRwkbGeometryType eGType = wkbUnknown,
+                 char **papszOptions = nullptr) override;
     virtual OGRErr DeleteLayer(int) override;
     virtual CPLErr SetMetadata(char **papszMetadata,
                                const char *pszDomain = "") override;

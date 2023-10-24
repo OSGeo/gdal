@@ -560,8 +560,16 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
                 psJob->nXBlock, psJob->nYBlock);
             if (apoBlocks[i] == nullptr)
             {
+                // Temporary disabling of dirty block flushing, otherwise
+                // we can be in a deadlock situation, where the
+                // GTiffDataset::SubmitCompressionJob() method waits for jobs
+                // to be finished, that can't finish (actually be started)
+                // because this task and its siblings are taking all the
+                // available workers allowed by the global thread pool.
+                GDALRasterBlock::EnterDisableDirtyBlockFlush();
                 apoBlocks[i] = poDS->GetRasterBand(iBand)->GetLockedBlockRef(
                     psJob->nXBlock, psJob->nYBlock, TRUE);
+                GDALRasterBlock::LeaveDisableDirtyBlockFlush();
                 if (apoBlocks[i] == nullptr)
                     return false;
             }
@@ -1444,6 +1452,7 @@ class FetchBufferVirtualMemIO final
         return true;
     }
 
+    // cppcheck-suppress unusedStructMember
     static const bool bMinimizeIO = false;
 };
 
@@ -2945,7 +2954,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     {
         // We need a temporary buffer for over-sampling/sub-sampling
         // and/or data type conversion.
-        pTmpBuffer = VSI_MALLOC_VERBOSE(nReqXSize * nReqYSize * nSrcPixelSize);
+        pTmpBuffer = VSI_MALLOC3_VERBOSE(nReqXSize, nReqYSize, nSrcPixelSize);
         if (pTmpBuffer == nullptr)
             eErr = CE_Failure;
     }
@@ -2956,7 +2965,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     for (int iLine = 0; eErr == CE_None && iLine < nReqYSize; ++iLine)
     {
         ppData[iLine] = static_cast<GByte *>(pTmpBuffer) +
-                        iLine * nReqXSize * nSrcPixelSize;
+                        static_cast<size_t>(iLine) * nReqXSize * nSrcPixelSize;
         int nSrcLine = 0;
         if (nBufYSize < nYSize)  // Sub-sampling in y.
             nSrcLine = nYOff + static_cast<int>((iLine + 0.5) * dfSrcYInc);
@@ -5413,6 +5422,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             psRoot ? CPLGetXMLNode(psRoot, "=GDALMetadata") : nullptr;
         if (psItem)
             psItem = psItem->psChild;
+        bool bMaxZErrorFound = false;
+        bool bMaxZErrorOverviewFound = false;
         for (; psItem != nullptr; psItem = psItem->psNext)
         {
 
@@ -5453,6 +5464,18 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_bWebPLossless = false;
                         m_nWebPLevel = static_cast<signed char>(nLevel);
                     }
+                }
+                else if (m_nCompression == COMPRESSION_LERC &&
+                         EQUAL(pszKey, "MAX_Z_ERROR"))
+                {
+                    bMaxZErrorFound = true;
+                    m_dfMaxZError = CPLAtof(pszValue);
+                }
+                else if (m_nCompression == COMPRESSION_LERC &&
+                         EQUAL(pszKey, "MAX_Z_ERROR_OVERVIEW"))
+                {
+                    bMaxZErrorOverviewFound = true;
+                    m_dfMaxZErrorOverview = CPLAtof(pszValue);
                 }
 #if HAVE_JXL
                 else if (m_nCompression == COMPRESSION_JXL &&
@@ -5573,6 +5596,11 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 }
             }
             CPLFree(pszUnescapedValue);
+        }
+
+        if (bMaxZErrorFound && !bMaxZErrorOverviewFound)
+        {
+            m_dfMaxZErrorOverview = m_dfMaxZError;
         }
 
         CPLDestroyXMLNode(psRoot);
@@ -6378,6 +6406,14 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         else if (EQUAL(pszName, "WEBP_LEVEL"))
         {
             return CPLSPrintf("%d", m_nWebPLevel);
+        }
+        else if (EQUAL(pszName, "MAX_Z_ERROR"))
+        {
+            return CPLSPrintf("%f", m_dfMaxZError);
+        }
+        else if (EQUAL(pszName, "MAX_Z_ERROR_OVERVIEW"))
+        {
+            return CPLSPrintf("%f", m_dfMaxZErrorOverview);
         }
 #if HAVE_JXL
         else if (EQUAL(pszName, "JXL_LOSSLESS"))

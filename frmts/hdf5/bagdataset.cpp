@@ -31,6 +31,7 @@
 #include "hdf5dataset.h"
 #include "gh5_convenience.h"
 
+#include "cpl_mem_cache.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "gdal_alg.h"
@@ -97,6 +98,7 @@ class BAGDataset final : public GDALPamDataset
     friend class BAGBaseBand;
     friend class BAGResampledBand;
     friend class BAGGeorefMDSuperGridBand;
+    friend class BAGInterpolatedBand;
 
     bool m_bReportVertCRS = true;
 
@@ -164,17 +166,15 @@ class BAGDataset final : public GDALPamDataset
 
     unsigned m_nSuperGridRefinementStartIndex = 0;
 
-    unsigned m_nCachedRefinementStartIndex = 0;
-    unsigned m_nCachedRefinementCount = 0;
-    std::vector<float> m_aCachedRefinementValues;
-    bool CacheRefinementValues(unsigned nRefinementIndex);
+    lru11::Cache<unsigned, std::vector<float>> m_oCacheRefinementValues;
+    const float *GetRefinementValues(unsigned nRefinementIndex);
 
     bool GetMeanSupergridsResolution(double &dfResX, double &dfResY);
 
     double m_dfResFilterMin = 0;
     double m_dfResFilterMax = std::numeric_limits<double>::infinity();
 
-    void InitOverviewDS(BAGDataset *poParentDS, int nOvrFactor);
+    void InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize);
 
     bool m_bMetadataWritten = false;
     CPLStringList m_aosCreationOptions{};
@@ -194,6 +194,7 @@ class BAGDataset final : public GDALPamDataset
   public:
     BAGDataset();
     BAGDataset(BAGDataset *poParentDS, int nOvrFactor);
+    BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize);
     virtual ~BAGDataset();
 
     virtual CPLErr GetGeoTransform(double *) override;
@@ -393,12 +394,47 @@ class BAGResampledBand final : public BAGBaseBand
     bool m_bMinMaxSet = false;
     double m_dfMinimum = 0.0;
     double m_dfMaximum = 0.0;
-    float m_fNoSuperGridValue = 0.0;
 
   public:
     BAGResampledBand(BAGDataset *, int nBandIn, bool bHasNoData,
                      float fNoDataValue, bool bInitializeMinMax);
     virtual ~BAGResampledBand();
+
+    void InitializeMinMax();
+
+    CPLErr IReadBlock(int, int, void *) override;
+
+    double GetMinimum(int *pbSuccess = nullptr) override;
+    double GetMaximum(int *pbSuccess = nullptr) override;
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          BAGInterpolatedBand                         */
+/* ==================================================================== */
+/************************************************************************/
+
+class BAGInterpolatedBand final : public BAGBaseBand
+{
+    friend class BAGDataset;
+
+    bool m_bMinMaxSet = false;
+    double m_dfMinimum = 0.0;
+    double m_dfMaximum = 0.0;
+
+    void LoadClosestRefinedNodes(
+        double dfX, double dfY, int iXRefinedGrid, int iYRefinedGrid,
+        const std::vector<BAGRefinementGrid> &rgrids, int nLowResMinIdxX,
+        int nLowResMinIdxY, int nCountLowResX, int nCountLowResY,
+        double dfLowResMinX, double dfLowResMinY, double dfLowResResX,
+        double dfLowResResY, std::vector<double> &adfX,
+        std::vector<double> &adfY, std::vector<float> &afDepth,
+        std::vector<float> &afUncrt);
+
+  public:
+    BAGInterpolatedBand(BAGDataset *, int nBandIn, bool bHasNoData,
+                        float fNoDataValue, bool bInitializeMinMax);
+    virtual ~BAGInterpolatedBand();
 
     void InitializeMinMax();
 
@@ -1028,7 +1064,6 @@ BAGResampledBand::BAGResampledBand(BAGDataset *poDSIn, int nBandIn,
     {
         m_bHasNoData = true;
         m_fNoDataValue = bHasNoData ? fNoDataValue : fDEFAULT_NODATA;
-        m_fNoSuperGridValue = m_fNoDataValue;
         eDataType = GDT_Float32;
         GDALRasterBand::SetDescription(nBand == 1 ? "elevation"
                                                   : "uncertainty");
@@ -1122,7 +1157,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 #endif
 
     const float fNoDataValue = m_fNoDataValue;
-    const float fNoSuperGridValue = m_fNoSuperGridValue;
+    const float fNoSuperGridValue = m_fNoDataValue;
     float *depthsPtr = nullptr;
     float *uncrtPtr = nullptr;
 
@@ -1257,6 +1292,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     H5Sclose(memspaceVarresMD);
 
+    CPLErr eErr = CE_None;
     for (int y = nLowResMinIdxY; y <= nLowResMaxIdxY; y++)
     {
         for (int x = nLowResMinIdxX; x <= nLowResMaxIdxX; x++)
@@ -1358,16 +1394,15 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                     const unsigned nRefinementIndex =
                         nRefinementIndexase + super_x;
-                    if (!poGDS->CacheRefinementValues(nRefinementIndex))
+                    const auto *pafRefValues =
+                        poGDS->GetRefinementValues(nRefinementIndex);
+                    if (!pafRefValues)
                     {
-                        H5Sclose(memspaceVarresMD);
-                        return CE_Failure;
+                        eErr = CE_Failure;
+                        goto end;
                     }
 
-                    const unsigned nOffInArray =
-                        nRefinementIndex - poGDS->m_nCachedRefinementStartIndex;
-                    float depth =
-                        poGDS->m_aCachedRefinementValues[2 * nOffInArray];
+                    float depth = pafRefValues[0];
                     if (depth == fNoDataValue)
                     {
                         if (depthsPtr[nTargetIdx] == fNoSuperGridValue)
@@ -1390,9 +1425,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                         }
                         counts[nTargetIdx]++;
 
-                        auto uncrt =
-                            poGDS->m_aCachedRefinementValues[2 * nOffInArray +
-                                                             1];
+                        auto uncrt = pafRefValues[1];
                         auto &target_uncrt_ptr = uncrtPtr[nTargetIdx];
                         if (uncrt > target_uncrt_ptr ||
                             target_uncrt_ptr == fNoDataValue)
@@ -1410,9 +1443,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                              depthsPtr[nTargetIdx] == fNoSuperGridValue)
                     {
                         depthsPtr[nTargetIdx] = depth;
-                        uncrtPtr[nTargetIdx] =
-                            poGDS->m_aCachedRefinementValues[2 * nOffInArray +
-                                                             1];
+                        uncrtPtr[nTargetIdx] = pafRefValues[1];
                     }
                 }
             }
@@ -1430,14 +1461,714 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
     }
 
+end:
     if (poBlock != nullptr)
     {
         poBlock->DropLock();
         poBlock = nullptr;
     }
 
-    return CE_None;
+    return eErr;
 }
+
+/************************************************************************/
+/*                        BAGInterpolatedBand()                         */
+/************************************************************************/
+
+BAGInterpolatedBand::BAGInterpolatedBand(BAGDataset *poDSIn, int nBandIn,
+                                         bool bHasNoData, float fNoDataValue,
+                                         bool bInitializeMinMax)
+{
+    poDS = poDSIn;
+    nBand = nBandIn;
+    nRasterXSize = poDS->GetRasterXSize();
+    nRasterYSize = poDS->GetRasterYSize();
+    // Mostly for autotest purposes
+    const int nBlockSize =
+        std::max(1, atoi(CPLGetConfigOption("GDAL_BAG_BLOCK_SIZE", "256")));
+    nBlockXSize = std::min(nBlockSize, poDS->GetRasterXSize());
+    nBlockYSize = std::min(nBlockSize, poDS->GetRasterYSize());
+
+    m_bHasNoData = true;
+    m_fNoDataValue = bHasNoData ? fNoDataValue : fDEFAULT_NODATA;
+    eDataType = GDT_Float32;
+    GDALRasterBand::SetDescription(nBand == 1 ? "elevation" : "uncertainty");
+    if (bInitializeMinMax)
+    {
+        InitializeMinMax();
+    }
+}
+
+/************************************************************************/
+/*                        ~BAGInterpolatedBand()                        */
+/************************************************************************/
+
+BAGInterpolatedBand::~BAGInterpolatedBand() = default;
+
+/************************************************************************/
+/*                           InitializeMinMax()                         */
+/************************************************************************/
+
+void BAGInterpolatedBand::InitializeMinMax()
+{
+    BAGDataset *poGDS = cpl::down_cast<BAGDataset *>(poDS);
+    if (nBand == 1 &&
+        GH5_FetchAttribute(poGDS->m_hVarresRefinements, "max_depth",
+                           m_dfMaximum) &&
+        GH5_FetchAttribute(poGDS->m_hVarresRefinements, "min_depth",
+                           m_dfMinimum))
+    {
+        m_bMinMaxSet = true;
+    }
+    else if (nBand == 2 &&
+             GH5_FetchAttribute(poGDS->m_hVarresRefinements, "max_uncrt",
+                                m_dfMaximum) &&
+             GH5_FetchAttribute(poGDS->m_hVarresRefinements, "min_uncrt",
+                                m_dfMinimum))
+    {
+        m_bMinMaxSet = true;
+    }
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double BAGInterpolatedBand::GetMinimum(int *pbSuccess)
+
+{
+    if (m_bMinMaxSet)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return m_dfMinimum;
+    }
+
+    return GDALRasterBand::GetMinimum(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double BAGInterpolatedBand::GetMaximum(int *pbSuccess)
+
+{
+    if (m_bMinMaxSet)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return m_dfMaximum;
+    }
+
+    return GDALRasterBand::GetMaximum(pbSuccess);
+}
+
+/************************************************************************/
+/*                     BarycentricInterpolation()                       */
+/************************************************************************/
+
+static bool BarycentricInterpolation(double dfX, double dfY,
+                                     const double adfX[3], const double adfY[3],
+                                     double &dfCoord0, double &dfCoord1,
+                                     double &dfCoord2)
+{
+    /* See https://en.wikipedia.org/wiki/Barycentric_coordinate_system */
+    const double dfDenom = (adfY[1] - adfY[2]) * (adfX[0] - adfX[2]) +
+                           (adfX[2] - adfX[1]) * (adfY[0] - adfY[2]);
+    if (fabs(dfDenom) < 1e-5)
+    {
+        // Degenerate triangle
+        return false;
+    }
+    const double dfTerm0X = adfY[1] - adfY[2];
+    const double dfTerm0Y = adfX[2] - adfX[1];
+    const double dfTerm1X = adfY[2] - adfY[0];
+    const double dfTerm1Y = adfX[0] - adfX[2];
+    const double dfDiffX = dfX - adfX[2];
+    const double dfDiffY = dfY - adfY[2];
+    dfCoord0 = (dfTerm0X * dfDiffX + dfTerm0Y * dfDiffY) / dfDenom;
+    dfCoord1 = (dfTerm1X * dfDiffX + dfTerm1Y * dfDiffY) / dfDenom;
+    dfCoord2 = 1 - dfCoord0 - dfCoord1;
+    return (dfCoord0 >= 0 && dfCoord0 <= 1 && dfCoord1 >= 0 && dfCoord1 <= 1 &&
+            dfCoord2 >= 0 && dfCoord2 <= 1);
+}
+
+/************************************************************************/
+/*                               SQ()                                   */
+/************************************************************************/
+
+static inline double SQ(double v)
+{
+    return v * v;
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                       void *pImage)
+{
+    HDF5_GLOBAL_LOCK();
+
+    BAGDataset *poGDS = cpl::down_cast<BAGDataset *>(poDS);
+#ifdef DEBUG_VERBOSE
+    CPLDebug(
+        "BAG",
+        "IReadBlock: nRasterXSize=%d, nBlockXOff=%d, nBlockYOff=%d, nBand=%d",
+        nRasterXSize, nBlockXOff, nBlockYOff, nBand);
+#endif
+
+    float *depthsPtr = nullptr;
+    float *uncrtPtr = nullptr;
+
+    GDALRasterBlock *poBlock = nullptr;
+    if (nBand == 1)
+    {
+        depthsPtr = static_cast<float *>(pImage);
+        poBlock = poGDS->GetRasterBand(2)->GetLockedBlockRef(nBlockXOff,
+                                                             nBlockYOff, TRUE);
+        if (poBlock)
+        {
+            uncrtPtr = static_cast<float *>(poBlock->GetDataRef());
+        }
+    }
+    else
+    {
+        uncrtPtr = static_cast<float *>(pImage);
+        poBlock = poGDS->GetRasterBand(1)->GetLockedBlockRef(nBlockXOff,
+                                                             nBlockYOff, TRUE);
+        if (poBlock)
+        {
+            depthsPtr = static_cast<float *>(poBlock->GetDataRef());
+        }
+    }
+
+    if (!depthsPtr || !uncrtPtr)
+        return CE_Failure;
+
+    GDALCopyWords(&m_fNoDataValue, GDT_Float32, 0, depthsPtr, GDT_Float32,
+                  static_cast<int>(sizeof(float)), nBlockXSize * nBlockYSize);
+
+    GDALCopyWords(&m_fNoDataValue, GDT_Float32, 0, uncrtPtr, GDT_Float32,
+                  static_cast<int>(sizeof(float)), nBlockXSize * nBlockYSize);
+
+    const int nReqCountX =
+        std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
+    const int nReqCountY =
+        std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
+    // Compute extent of block in georeferenced coordinates
+    const double dfBlockMinX =
+        poGDS->adfGeoTransform[0] +
+        nBlockXOff * nBlockXSize * poGDS->adfGeoTransform[1];
+    const double dfBlockMaxX =
+        dfBlockMinX + nReqCountX * poGDS->adfGeoTransform[1];
+    const double dfBlockMaxY =
+        poGDS->adfGeoTransform[3] +
+        nBlockYOff * nBlockYSize * poGDS->adfGeoTransform[5];
+    const double dfBlockMinY =
+        dfBlockMaxY + nReqCountY * poGDS->adfGeoTransform[5];
+
+    // Compute min/max indices of intersecting supergrids (origin bottom-left)
+    // We add a margin of (dfLowResResX, dfLowResResY) to be able to
+    // properly interpolate if the edges of a GDAL block align with the edge
+    // of a low-res cell
+    const double dfLowResResX =
+        (poGDS->m_dfLowResMaxX - poGDS->m_dfLowResMinX) / poGDS->m_nLowResWidth;
+    const double dfLowResResY =
+        (poGDS->m_dfLowResMaxY - poGDS->m_dfLowResMinY) /
+        poGDS->m_nLowResHeight;
+    const int nLowResMinIdxX = std::max(
+        0,
+        static_cast<int>((dfBlockMinX - poGDS->m_dfLowResMinX - dfLowResResX) /
+                         dfLowResResX));
+    const int nLowResMinIdxY = std::max(
+        0,
+        static_cast<int>((dfBlockMinY - poGDS->m_dfLowResMinY - dfLowResResY) /
+                         dfLowResResY));
+    const int nLowResMaxIdxX = std::min(
+        poGDS->m_nLowResWidth - 1,
+        static_cast<int>((dfBlockMaxX - poGDS->m_dfLowResMinX + dfLowResResX) /
+                         dfLowResResX));
+    const int nLowResMaxIdxY = std::min(
+        poGDS->m_nLowResHeight - 1,
+        static_cast<int>((dfBlockMaxY - poGDS->m_dfLowResMinY + dfLowResResY) /
+                         dfLowResResY));
+    if (nLowResMinIdxX >= poGDS->m_nLowResWidth ||
+        nLowResMinIdxY >= poGDS->m_nLowResHeight || nLowResMaxIdxX < 0 ||
+        nLowResMaxIdxY < 0)
+    {
+        return CE_None;
+    }
+
+    // Create memory space to receive the data.
+    const int nCountLowResX = nLowResMaxIdxX - nLowResMinIdxX + 1;
+    const int nCountLowResY = nLowResMaxIdxY - nLowResMinIdxY + 1;
+    hsize_t countVarresMD[2] = {static_cast<hsize_t>(nCountLowResY),
+                                static_cast<hsize_t>(nCountLowResX)};
+    const hid_t memspaceVarresMD = H5Screate_simple(2, countVarresMD, nullptr);
+    H5OFFSET_TYPE mem_offset[2] = {static_cast<H5OFFSET_TYPE>(0),
+                                   static_cast<H5OFFSET_TYPE>(0)};
+    if (H5Sselect_hyperslab(memspaceVarresMD, H5S_SELECT_SET, mem_offset,
+                            nullptr, countVarresMD, nullptr) < 0)
+    {
+        H5Sclose(memspaceVarresMD);
+        if (poBlock != nullptr)
+        {
+            poBlock->DropLock();
+            poBlock = nullptr;
+        }
+        return CE_Failure;
+    }
+
+    std::vector<BAGRefinementGrid> rgrids(nCountLowResY * nCountLowResX);
+    if (!(poGDS->ReadVarresMetadataValue(nLowResMinIdxY, nLowResMinIdxX,
+                                         memspaceVarresMD, rgrids.data(),
+                                         nCountLowResY, nCountLowResX)))
+    {
+        H5Sclose(memspaceVarresMD);
+        if (poBlock != nullptr)
+        {
+            poBlock->DropLock();
+            poBlock = nullptr;
+        }
+        return CE_Failure;
+    }
+
+    H5Sclose(memspaceVarresMD);
+
+    CPLErr eErr = CE_None;
+    const double dfLowResMinX = poGDS->m_dfLowResMinX;
+    const double dfLowResMinY = poGDS->m_dfLowResMinY;
+
+    // georeferenced (X,Y) coordinates of the source nodes from the refinement
+    //grids
+    std::vector<double> adfX, adfY;
+    // Depth and uncertainty values from the source nodes from the refinement
+    //grids
+    std::vector<float> afDepth, afUncrt;
+    // Work variable to sort adfX, adfY, afDepth, afUncrt w.r.t to their
+    // distance with the (dfX, dfY) point to be interpolated
+    std::vector<int> anIndices;
+
+    // Maximum distance of candidate source nodes to the point to be
+    // interpolated
+    const double dfMaxDistance = 0.5 * std::max(dfLowResResX, dfLowResResY);
+
+    for (int y = 0; y < nReqCountY; ++y)
+    {
+        // Y georeference ordinate of the center of the cell to interpolate
+        const double dfY = dfBlockMaxY + (y + 0.5) * poGDS->adfGeoTransform[5];
+        // Y index of the corresponding refinement grid
+        const int iYRefinedGrid =
+            static_cast<int>(floor((dfY - dfLowResMinY) / dfLowResResY));
+        if (iYRefinedGrid < nLowResMinIdxY || iYRefinedGrid > nLowResMaxIdxY)
+            continue;
+        for (int x = 0; x < nReqCountX; ++x)
+        {
+            // X georeference ordinate of the center of the cell to interpolate
+            const double dfX =
+                dfBlockMinX + (x + 0.5) * poGDS->adfGeoTransform[1];
+            // X index of the corresponding refinement grid
+            const int iXRefinedGrid =
+                static_cast<int>((dfX - dfLowResMinX) / dfLowResResX);
+            if (iXRefinedGrid < nLowResMinIdxX ||
+                iXRefinedGrid > nLowResMaxIdxX)
+                continue;
+
+            // Correspond refinement grid
+            const auto &rgrid =
+                rgrids[(iYRefinedGrid - nLowResMinIdxY) * nCountLowResX +
+                       (iXRefinedGrid - nLowResMinIdxX)];
+            if (rgrid.nWidth == 0)
+            {
+                continue;
+            }
+            const float gridRes = std::max(rgrid.fResX, rgrid.fResY);
+            if (!(gridRes > poGDS->m_dfResFilterMin &&
+                  gridRes <= poGDS->m_dfResFilterMax))
+            {
+                continue;
+            }
+
+            // (dfMinRefinedX, dfMinRefinedY) is the georeferenced coordinate
+            // of the bottom-left corner of the refinement grid
+            const double dfMinRefinedX =
+                dfLowResMinX + iXRefinedGrid * dfLowResResX + rgrid.fSWX;
+            const double dfMinRefinedY =
+                dfLowResMinY + iYRefinedGrid * dfLowResResY + rgrid.fSWY;
+
+            // (iXInRefinedGrid, iYInRefinedGrid) is the index of the cell
+            // within the refinement grid into which (dfX, dfY) falls into.
+            const int iXInRefinedGrid =
+                static_cast<int>(floor((dfX - dfMinRefinedX) / rgrid.fResX));
+            const int iYInRefinedGrid =
+                static_cast<int>(floor((dfY - dfMinRefinedY) / rgrid.fResY));
+
+            if (iXInRefinedGrid >= 0 &&
+                iXInRefinedGrid < static_cast<int>(rgrid.nWidth) - 1 &&
+                iYInRefinedGrid >= 0 &&
+                iYInRefinedGrid < static_cast<int>(rgrid.nHeight) - 1)
+            {
+                // The point to interpolate is fully within a single refinement
+                // grid
+                const unsigned nRefinementIndexBase =
+                    rgrid.nIndex + iYInRefinedGrid * rgrid.nWidth +
+                    iXInRefinedGrid;
+                float d[2][2];
+                float u[2][2];
+                int nCountNoData = 0;
+
+                // Load the depth and uncertainty values of the 4 nodes of
+                // the refinement grid surrounding the center of the target
+                // cell.
+                for (int j = 0; j < 2; ++j)
+                {
+                    for (int i = 0; i < 2; ++i)
+                    {
+                        const unsigned nRefinementIndex =
+                            nRefinementIndexBase + j * rgrid.nWidth + i;
+                        const auto pafRefValues =
+                            poGDS->GetRefinementValues(nRefinementIndex);
+                        if (!pafRefValues)
+                        {
+                            eErr = CE_Failure;
+                            goto end;
+                        }
+                        d[j][i] = pafRefValues[0];
+                        u[j][i] = pafRefValues[1];
+                        if (d[j][i] == m_fNoDataValue)
+                            ++nCountNoData;
+                    }
+                }
+
+                // Compute the relative distance of the point to be
+                // interpolated compared to the closest bottom-left most node
+                // of the refinement grid.
+                // (alphaX,alphaY)=(0,0): point to be interpolated matches the
+                // closest bottom-left most node
+                // (alphaX,alphaY)=(1,1): point to be interpolated matches the
+                // closest top-right most node
+                const double alphaX =
+                    fmod(dfX - dfMinRefinedX, rgrid.fResX) / rgrid.fResX;
+                const double alphaY =
+                    fmod(dfY - dfMinRefinedY, rgrid.fResY) / rgrid.fResY;
+                if (nCountNoData == 0)
+                {
+                    // If the 4 nodes of the supergrid around the point
+                    // to be interpolated are valid, do bilinear interpolation
+#define BILINEAR_INTERP(var)                                                   \
+    ((1 - alphaY) * ((1 - alphaX) * var[0][0] + alphaX * var[0][1]) +          \
+     alphaY * ((1 - alphaX) * var[1][0] + alphaX * var[1][1]))
+
+                    depthsPtr[y * nBlockXSize + x] =
+                        static_cast<float>(BILINEAR_INTERP(d));
+                    uncrtPtr[y * nBlockXSize + x] =
+                        static_cast<float>(BILINEAR_INTERP(u));
+                }
+                else if (nCountNoData == 1)
+                {
+                    // If only one of the 4 nodes is at nodata, determine if the
+                    // point to be interpolated is within the triangle formed
+                    // by the remaining 3 valid nodes.
+                    // If so, do barycentric interpolation
+                    adfX.resize(3);
+                    adfY.resize(3);
+                    afDepth.resize(3);
+                    afUncrt.resize(3);
+
+                    int idx = 0;
+                    for (int j = 0; j < 2; ++j)
+                    {
+                        for (int i = 0; i < 2; ++i)
+                        {
+                            if (d[j][i] != m_fNoDataValue)
+                            {
+                                CPLAssert(idx < 3);
+                                adfX[idx] = i;
+                                adfY[idx] = j;
+                                afDepth[idx] = d[j][i];
+                                afUncrt[idx] = u[j][i];
+                                ++idx;
+                            }
+                        }
+                    }
+                    CPLAssert(idx == 3);
+                    double dfCoord0;
+                    double dfCoord1;
+                    double dfCoord2;
+                    if (BarycentricInterpolation(alphaX, alphaY, adfX.data(),
+                                                 adfY.data(), dfCoord0,
+                                                 dfCoord1, dfCoord2))
+                    {
+                        // Inside triangle
+                        depthsPtr[y * nBlockXSize + x] = static_cast<float>(
+                            dfCoord0 * afDepth[0] + dfCoord1 * afDepth[1] +
+                            dfCoord2 * afDepth[2]);
+                        uncrtPtr[y * nBlockXSize + x] = static_cast<float>(
+                            dfCoord0 * afUncrt[0] + dfCoord1 * afUncrt[1] +
+                            dfCoord2 * afUncrt[2]);
+                    }
+                }
+                // else: 2 or more nodes invalid. Target point is set at nodata
+            }
+            else
+            {
+                // Point to interpolate is on an edge or corner of the
+                // refinement grid
+                adfX.clear();
+                adfY.clear();
+                afDepth.clear();
+                afUncrt.clear();
+
+                const auto LoadValues =
+                    [this, dfX, dfY, &rgrids, nLowResMinIdxX, nLowResMinIdxY,
+                     nCountLowResX, nCountLowResY, dfLowResMinX, dfLowResMinY,
+                     dfLowResResX, dfLowResResY, &adfX, &adfY, &afDepth,
+                     &afUncrt](int iX, int iY)
+                {
+                    LoadClosestRefinedNodes(
+                        dfX, dfY, iX, iY, rgrids, nLowResMinIdxX,
+                        nLowResMinIdxY, nCountLowResX, nCountLowResY,
+                        dfLowResMinX, dfLowResMinY, dfLowResResX, dfLowResResY,
+                        adfX, adfY, afDepth, afUncrt);
+                };
+
+                // Load values of the closest point to the point to be
+                // interpolated in the current refinement grid
+                LoadValues(iXRefinedGrid, iYRefinedGrid);
+
+                const bool bAtLeft = iXInRefinedGrid < 0 && iXRefinedGrid > 0;
+                const bool bAtRight =
+                    iXInRefinedGrid >= static_cast<int>(rgrid.nWidth) - 1 &&
+                    iXRefinedGrid + 1 < poGDS->m_nLowResWidth;
+                const bool bAtBottom = iYInRefinedGrid < 0 && iYRefinedGrid > 0;
+                const bool bAtTop =
+                    iYInRefinedGrid >= static_cast<int>(rgrid.nHeight) - 1 &&
+                    iYRefinedGrid + 1 < poGDS->m_nLowResHeight;
+                const int nXShift = bAtLeft ? -1 : bAtRight ? 1 : 0;
+                const int nYShift = bAtBottom ? -1 : bAtTop ? 1 : 0;
+
+                // Load values of the closest point to the point to be
+                // interpolated in the surrounding refinement grids.
+                if (nXShift)
+                {
+                    LoadValues(iXRefinedGrid + nXShift, iYRefinedGrid);
+                    if (nYShift)
+                    {
+                        LoadValues(iXRefinedGrid + nXShift,
+                                   iYRefinedGrid + nYShift);
+                    }
+                }
+                if (nYShift)
+                {
+                    LoadValues(iXRefinedGrid, iYRefinedGrid + nYShift);
+                }
+
+                // Filter out candidate source points that are away from
+                // target point of more than dfMaxDistance
+                size_t j = 0;
+                for (size_t i = 0; i < adfX.size(); ++i)
+                {
+                    if (SQ(adfX[i] - dfX) + SQ(adfY[i] - dfY) <=
+                        dfMaxDistance * dfMaxDistance)
+                    {
+                        adfX[j] = adfX[i];
+                        adfY[j] = adfY[i];
+                        afDepth[j] = afDepth[i];
+                        afUncrt[j] = afUncrt[i];
+                        ++j;
+                    }
+                }
+                adfX.resize(j);
+                adfY.resize(j);
+                afDepth.resize(j);
+                afUncrt.resize(j);
+
+                // Now interpolate the target point from the source values
+                bool bTryIDW = false;
+                if (adfX.size() >= 3)
+                {
+                    // If there are at least 3 source nodes, sort them
+                    // by increasing distance w.r.t the point to be interpolated
+                    anIndices.clear();
+                    for (size_t i = 0; i < adfX.size(); ++i)
+                        anIndices.push_back(static_cast<int>(i));
+                    // Sort nodes by increasing distance w.r.t (dfX, dfY)
+                    std::sort(
+                        anIndices.begin(), anIndices.end(),
+                        [&adfX, &adfY, dfX, dfY](int i1, int i2)
+                        {
+                            return SQ(adfX[i1] - dfX) + SQ(adfY[i1] - dfY) <
+                                   SQ(adfX[i2] - dfX) + SQ(adfY[i2] - dfY);
+                        });
+                    double adfXSorted[3];
+                    double adfYSorted[3];
+                    float afDepthSorted[3];
+                    float afUncrtSorted[3];
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        adfXSorted[i] = adfX[anIndices[i]];
+                        adfYSorted[i] = adfY[anIndices[i]];
+                        afDepthSorted[i] = afDepth[anIndices[i]];
+                        afUncrtSorted[i] = afUncrt[anIndices[i]];
+                    }
+                    double dfCoord0;
+                    double dfCoord1;
+                    double dfCoord2;
+                    // Perform barycentric interpolation with those 3
+                    // points if they are all valid, and if the point to
+                    // be interpolated falls into it.
+                    if (afDepthSorted[0] != m_fNoDataValue &&
+                        afDepthSorted[1] != m_fNoDataValue &&
+                        afDepthSorted[2] != m_fNoDataValue)
+                    {
+                        if (BarycentricInterpolation(dfX, dfY, adfXSorted,
+                                                     adfYSorted, dfCoord0,
+                                                     dfCoord1, dfCoord2))
+                        {
+                            // Inside triangle
+                            depthsPtr[y * nBlockXSize + x] =
+                                static_cast<float>(dfCoord0 * afDepthSorted[0] +
+                                                   dfCoord1 * afDepthSorted[1] +
+                                                   dfCoord2 * afDepthSorted[2]);
+                            uncrtPtr[y * nBlockXSize + x] =
+                                static_cast<float>(dfCoord0 * afUncrtSorted[0] +
+                                                   dfCoord1 * afUncrtSorted[1] +
+                                                   dfCoord2 * afUncrtSorted[2]);
+                        }
+                        else
+                        {
+                            // Attempt inverse distance weighting in the
+                            // cases where the point to be interpolated doesn't
+                            // fall within the triangle formed by the 3
+                            // closes points.
+                            bTryIDW = true;
+                        }
+                    }
+                }
+                if (bTryIDW)
+                {
+                    // Do inverse distance weighting a a fallback.
+
+                    int nCountValid = 0;
+                    double dfTotalDepth = 0;
+                    double dfTotalUncrt = 0;
+                    double dfTotalWeight = 0;
+                    // Epsilon value to add to weights to avoid potential
+                    // divergence to infinity if a source node is too close
+                    // to the target point
+                    const double EPS = SQ(std::min(poGDS->adfGeoTransform[1],
+                                                   -poGDS->adfGeoTransform[5]) /
+                                          10);
+                    for (size_t i = 0; i < adfX.size(); ++i)
+                    {
+                        if (afDepth[i] != m_fNoDataValue)
+                        {
+                            nCountValid++;
+                            double dfSqrDistance =
+                                SQ(adfX[i] - dfX) + SQ(adfY[i] - dfY) + EPS;
+                            double dfWeight = 1. / dfSqrDistance;
+                            dfTotalDepth += dfWeight * afDepth[i];
+                            dfTotalUncrt += dfWeight * afUncrt[i];
+                            dfTotalWeight += dfWeight;
+                        }
+                    }
+                    if (nCountValid >= 3)
+                    {
+                        depthsPtr[y * nBlockXSize + x] =
+                            static_cast<float>(dfTotalDepth / dfTotalWeight);
+                        uncrtPtr[y * nBlockXSize + x] =
+                            static_cast<float>(dfTotalUncrt / dfTotalWeight);
+                    }
+                }
+            }
+        }
+    }
+end:
+    if (poBlock != nullptr)
+    {
+        poBlock->DropLock();
+        poBlock = nullptr;
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                   LoadClosestRefinedNodes()                          */
+/************************************************************************/
+
+void BAGInterpolatedBand::LoadClosestRefinedNodes(
+    double dfX, double dfY, int iXRefinedGrid, int iYRefinedGrid,
+    const std::vector<BAGRefinementGrid> &rgrids, int nLowResMinIdxX,
+    int nLowResMinIdxY, int nCountLowResX, int nCountLowResY,
+    double dfLowResMinX, double dfLowResMinY, double dfLowResResX,
+    double dfLowResResY, std::vector<double> &adfX, std::vector<double> &adfY,
+    std::vector<float> &afDepth, std::vector<float> &afUncrt)
+{
+    BAGDataset *poGDS = cpl::down_cast<BAGDataset *>(poDS);
+    CPLAssert(iXRefinedGrid >= nLowResMinIdxX);
+    CPLAssert(iXRefinedGrid < nLowResMinIdxX + nCountLowResX);
+    CPLAssert(iYRefinedGrid >= nLowResMinIdxY);
+    CPLAssert(iYRefinedGrid < nLowResMinIdxY + nCountLowResY);
+    CPL_IGNORE_RET_VAL(nCountLowResY);
+    const auto &rgrid =
+        rgrids[(iYRefinedGrid - nLowResMinIdxY) * nCountLowResX +
+               (iXRefinedGrid - nLowResMinIdxX)];
+    if (rgrid.nWidth == 0)
+    {
+        return;
+    }
+    const float gridRes = std::max(rgrid.fResX, rgrid.fResY);
+    if (!(gridRes > poGDS->m_dfResFilterMin &&
+          gridRes <= poGDS->m_dfResFilterMax))
+    {
+        return;
+    }
+
+    const double dfMinRefinedX =
+        dfLowResMinX + iXRefinedGrid * dfLowResResX + rgrid.fSWX;
+    const double dfMinRefinedY =
+        dfLowResMinY + iYRefinedGrid * dfLowResResY + rgrid.fSWY;
+    const int iXInRefinedGrid =
+        static_cast<int>(floor((dfX - dfMinRefinedX) / rgrid.fResX));
+    const int iYInRefinedGrid =
+        static_cast<int>(floor((dfY - dfMinRefinedY) / rgrid.fResY));
+
+    const auto LoadValues = [poGDS, dfMinRefinedX, dfMinRefinedY, &rgrid, &adfX,
+                             &adfY, &afDepth,
+                             &afUncrt](int iXAdjusted, int iYAdjusted)
+    {
+        const unsigned nRefinementIndex =
+            rgrid.nIndex + iYAdjusted * rgrid.nWidth + iXAdjusted;
+        const auto pafRefValues = poGDS->GetRefinementValues(nRefinementIndex);
+        if (pafRefValues)
+        {
+            adfX.push_back(dfMinRefinedX + iXAdjusted * rgrid.fResX);
+            adfY.push_back(dfMinRefinedY + iYAdjusted * rgrid.fResY);
+            afDepth.push_back(pafRefValues[0]);
+            afUncrt.push_back(pafRefValues[1]);
+        }
+    };
+
+    const int iXAdjusted = std::max(
+        0, std::min(iXInRefinedGrid, static_cast<int>(rgrid.nWidth) - 1));
+    const int iYAdjusted = std::max(
+        0, std::min(iYInRefinedGrid, static_cast<int>(rgrid.nHeight) - 1));
+    LoadValues(iXAdjusted, iYAdjusted);
+    if (iYInRefinedGrid >= 0 &&
+        iYInRefinedGrid < static_cast<int>(rgrid.nHeight) - 1)
+        LoadValues(iXAdjusted, iYInRefinedGrid + 1);
+    if (iXInRefinedGrid >= 0 &&
+        iXInRefinedGrid < static_cast<int>(rgrid.nWidth) - 1)
+        LoadValues(iXInRefinedGrid + 1, iYAdjusted);
+}
+
+/************************************************************************/
+/*                             CreateRAT()                              */
+/************************************************************************/
 
 static GDALRasterAttributeTable *
 CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
@@ -1797,10 +2528,17 @@ BAGDataset::BAGDataset()
 
 BAGDataset::BAGDataset(BAGDataset *poParentDS, int nOvrFactor)
 {
-    InitOverviewDS(poParentDS, nOvrFactor);
+    const int nXSize = poParentDS->nRasterXSize / nOvrFactor;
+    const int nYSize = poParentDS->nRasterYSize / nOvrFactor;
+    InitOverviewDS(poParentDS, nXSize, nYSize);
 }
 
-void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nOvrFactor)
+BAGDataset::BAGDataset(BAGDataset *poParentDS, int nXSize, int nYSize)
+{
+    InitOverviewDS(poParentDS, nXSize, nYSize);
+}
+
+void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
 {
     m_ePopulation = poParentDS->m_ePopulation;
     m_bMask = poParentDS->m_bMask;
@@ -1809,8 +2547,8 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nOvrFactor)
     m_poSharedResources = poParentDS->m_poSharedResources;
     m_poRootGroup = poParentDS->m_poRootGroup;
     m_oSRS = poParentDS->m_oSRS;
-    nRasterXSize = poParentDS->nRasterXSize / nOvrFactor;
-    nRasterYSize = poParentDS->nRasterYSize / nOvrFactor;
+    nRasterXSize = nXSize;
+    nRasterYSize = nYSize;
     adfGeoTransform[0] = poParentDS->adfGeoTransform[0];
     adfGeoTransform[1] = poParentDS->adfGeoTransform[1] *
                          poParentDS->nRasterXSize / nRasterXSize;
@@ -2167,6 +2905,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
          CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                            "SUPERGRIDS_INDICES") != nullptr);
     const bool bResampledGrid = EQUAL(pszMode, "RESAMPLED_GRID");
+    const bool bInterpolate = EQUAL(pszMode, "INTERPOLATED");
 
     const char *pszNoDataValue =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "NODATA_VALUE");
@@ -2176,24 +2915,23 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 
     // Fetch the elevation dataset and attach as a band.
     int nNextBand = 1;
-    const hid_t hElevation = H5Dopen(GetHDF5Handle(), "/BAG_root/elevation");
-    if (hElevation < 0)
-    {
-        return false;
-    }
 
     BAGRasterBand *poElevBand = new BAGRasterBand(this, nNextBand);
 
-    if (!poElevBand->Initialize(hElevation, "elevation"))
     {
-        delete poElevBand;
-        return false;
+        const hid_t hElevation =
+            H5Dopen(GetHDF5Handle(), "/BAG_root/elevation");
+        if (hElevation < 0 || !poElevBand->Initialize(hElevation, "elevation"))
+        {
+            delete poElevBand;
+            return false;
+        }
     }
 
     m_nLowResWidth = poElevBand->nRasterXSize;
     m_nLowResHeight = poElevBand->nRasterYSize;
 
-    if (bOpenSuperGrid || bListSubDS || bResampledGrid)
+    if (bOpenSuperGrid || bListSubDS || bResampledGrid || bInterpolate)
     {
         if (!bHasNoData)
         {
@@ -2361,7 +3099,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 
     // Load for refinements grids for variable resolution datasets
     bool bHasRefinementGrids = false;
-    if (bOpenSuperGrid || bListSubDS || bResampledGrid)
+    if (bOpenSuperGrid || bListSubDS || bResampledGrid || bInterpolate)
     {
         bHasRefinementGrids =
             LookForRefinementGrids(poOpenInfo->papszOpenOptions, nY, nX);
@@ -2429,7 +3167,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
             return false;
         }
 
-        if (!bOpenSuperGrid && !bResampledGrid)
+        if (!bOpenSuperGrid && !bResampledGrid && !bInterpolate)
         {
             GDALDataset::SetMetadataItem("MIN_RESOLUTION_X",
                                          CPLSPrintf("%f", dfMinResX));
@@ -2442,13 +3180,14 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    if (bResampledGrid)
+    if (bResampledGrid || bInterpolate)
     {
         if (!bHasRefinementGrids)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "No supergrids available. "
-                     "RESAMPLED_GRID mode not available");
+                     "%s mode not available",
+                     pszMode);
             return false;
         }
 
@@ -2626,7 +3365,19 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
              dfMinX <= m_dfLowResMinX && dfMinY <= m_dfLowResMinY &&
              dfMaxX >= m_dfLowResMaxX && dfMaxY >= m_dfLowResMaxY);
 
-        if (m_bMask || m_ePopulation == BAGDataset::Population::COUNT)
+        if (bInterpolate)
+        {
+            // Depth
+            SetBand(1,
+                    new BAGInterpolatedBand(this, 1, bHasNoData, fNoDataValue,
+                                            bInitializeMinMax));
+
+            // Uncertainty
+            SetBand(2,
+                    new BAGInterpolatedBand(this, 2, bHasNoData, fNoDataValue,
+                                            bInitializeMinMax));
+        }
+        else if (m_bMask || m_ePopulation == BAGDataset::Population::COUNT)
         {
             SetBand(1, new BAGResampledBand(this, 1, false, 0.0f, false));
         }
@@ -2645,27 +3396,66 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                                          "IMAGE_STRUCTURE");
         }
 
-        // Mostly for autotest purposes
-        const int nMinOvrSize = std::max(
-            1, atoi(CPLGetConfigOption("GDAL_BAG_MIN_OVR_SIZE", "256")));
+        const bool bCanUseLowResAsOvr = nRasterXSize > m_nLowResWidth &&
+                                        nRasterYSize > m_nLowResHeight &&
+                                        GetRasterCount() > 1;
+        const int nMinOvrSize =
+            bCanUseLowResAsOvr ? 1 + std::min(m_nLowResWidth, m_nLowResHeight)
+                               : 256;
         for (int nOvrFactor = 2; nRasterXSize / nOvrFactor >= nMinOvrSize &&
                                  nRasterYSize / nOvrFactor >= nMinOvrSize;
              nOvrFactor *= 2)
         {
-            BAGDataset *poOvrDS = new BAGDataset(this, nOvrFactor);
+            auto poOvrDS = cpl::make_unique<BAGDataset>(this, nOvrFactor);
 
             for (int i = 1; i <= GetRasterCount(); i++)
             {
-                poOvrDS->SetBand(i, new BAGResampledBand(poOvrDS, i, bHasNoData,
-                                                         fNoDataValue, false));
+                if (bInterpolate)
+                {
+                    poOvrDS->SetBand(
+                        i, new BAGInterpolatedBand(poOvrDS.get(), i, bHasNoData,
+                                                   fNoDataValue, false));
+                }
+                else
+                {
+                    poOvrDS->SetBand(
+                        i, new BAGResampledBand(poOvrDS.get(), i, bHasNoData,
+                                                fNoDataValue, false));
+                }
             }
 
-            if (poOvrDS->GetRasterCount() > 1)
+            m_apoOverviewDS.emplace_back(std::move(poOvrDS));
+        }
+
+        // Use the low resolution grid as the last overview level
+        if (bCanUseLowResAsOvr)
+        {
+            auto poOvrDS = cpl::make_unique<BAGDataset>(this, m_nLowResWidth,
+                                                        m_nLowResHeight);
+
+            poElevBand = new BAGRasterBand(poOvrDS.get(), 1);
+            const hid_t hElevation =
+                H5Dopen(GetHDF5Handle(), "/BAG_root/elevation");
+            if (hElevation < 0 ||
+                !poElevBand->Initialize(hElevation, "elevation"))
             {
-                poOvrDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                                      "IMAGE_STRUCTURE");
+                delete poElevBand;
+                return false;
             }
-            m_apoOverviewDS.push_back(std::unique_ptr<BAGDataset>(poOvrDS));
+            poOvrDS->SetBand(1, poElevBand);
+
+            const hid_t hUncertainty =
+                H5Dopen(GetHDF5Handle(), "/BAG_root/uncertainty");
+            BAGRasterBand *poUBand = new BAGRasterBand(poOvrDS.get(), 2);
+            if (hUncertainty < 0 ||
+                !poUBand->Initialize(hUncertainty, "uncertainty"))
+            {
+                delete poUBand;
+                return false;
+            }
+            poOvrDS->SetBand(2, poUBand);
+
+            m_apoOverviewDS.emplace_back(std::move(poOvrDS));
         }
     }
     else if (bOpenSuperGrid)
@@ -3134,59 +3924,55 @@ void BAGDataset::GetVarresRefinementChunkSize(unsigned &nChunkSize)
 }
 
 /************************************************************************/
-/*                        CacheRefinementValues()                       */
+/*                        GetRefinementValues()                         */
 /************************************************************************/
 
-bool BAGDataset::CacheRefinementValues(unsigned nRefinementIndex)
+const float *BAGDataset::GetRefinementValues(unsigned nRefinementIndex)
 {
-    if (!(nRefinementIndex >= m_nCachedRefinementStartIndex &&
-          nRefinementIndex <
-              m_nCachedRefinementStartIndex + m_nCachedRefinementCount))
+    unsigned nStartIndex = (nRefinementIndex / m_nChunkSizeVarresRefinement) *
+                           m_nChunkSizeVarresRefinement;
+    const auto vPtr = m_oCacheRefinementValues.getPtr(nStartIndex);
+    if (vPtr)
+        return vPtr->data() + 2 * (nRefinementIndex - nStartIndex);
+
+    const unsigned nCachedRefinementCount = std::min(
+        m_nChunkSizeVarresRefinement, m_nRefinementsSize - nStartIndex);
+    std::vector<float> values(2 * nCachedRefinementCount);
+
+    hsize_t countVarresRefinements[2] = {
+        static_cast<hsize_t>(1), static_cast<hsize_t>(nCachedRefinementCount)};
+    const hid_t memspaceVarresRefinements =
+        H5Screate_simple(2, countVarresRefinements, nullptr);
+    H5OFFSET_TYPE mem_offset[2] = {static_cast<H5OFFSET_TYPE>(0),
+                                   static_cast<H5OFFSET_TYPE>(0)};
+    if (H5Sselect_hyperslab(memspaceVarresRefinements, H5S_SELECT_SET,
+                            mem_offset, nullptr, countVarresRefinements,
+                            nullptr) < 0)
     {
-        m_nCachedRefinementStartIndex =
-            (nRefinementIndex / m_nChunkSizeVarresRefinement) *
-            m_nChunkSizeVarresRefinement;
-        m_nCachedRefinementCount =
-            std::min(m_nChunkSizeVarresRefinement,
-                     m_nRefinementsSize - m_nCachedRefinementStartIndex);
-        m_aCachedRefinementValues.resize(2 * m_nCachedRefinementCount);
-
-        hsize_t countVarresRefinements[2] = {
-            static_cast<hsize_t>(1),
-            static_cast<hsize_t>(m_nCachedRefinementCount)};
-        const hid_t memspaceVarresRefinements =
-            H5Screate_simple(2, countVarresRefinements, nullptr);
-        H5OFFSET_TYPE mem_offset[2] = {static_cast<H5OFFSET_TYPE>(0),
-                                       static_cast<H5OFFSET_TYPE>(0)};
-        if (H5Sselect_hyperslab(memspaceVarresRefinements, H5S_SELECT_SET,
-                                mem_offset, nullptr, countVarresRefinements,
-                                nullptr) < 0)
-        {
-            H5Sclose(memspaceVarresRefinements);
-            return false;
-        }
-
-        H5OFFSET_TYPE offsetRefinement[2] = {
-            static_cast<H5OFFSET_TYPE>(0),
-            static_cast<H5OFFSET_TYPE>(m_nCachedRefinementStartIndex)};
-        if (H5Sselect_hyperslab(m_hVarresRefinementsDataspace, H5S_SELECT_SET,
-                                offsetRefinement, nullptr,
-                                countVarresRefinements, nullptr) < 0)
-        {
-            H5Sclose(memspaceVarresRefinements);
-            return false;
-        }
-        if (H5Dread(m_hVarresRefinements, m_hVarresRefinementsNative,
-                    memspaceVarresRefinements, m_hVarresRefinementsDataspace,
-                    H5P_DEFAULT, m_aCachedRefinementValues.data()) < 0)
-        {
-            H5Sclose(memspaceVarresRefinements);
-            return false;
-        }
         H5Sclose(memspaceVarresRefinements);
+        return nullptr;
     }
 
-    return true;
+    H5OFFSET_TYPE offsetRefinement[2] = {
+        static_cast<H5OFFSET_TYPE>(0), static_cast<H5OFFSET_TYPE>(nStartIndex)};
+    if (H5Sselect_hyperslab(m_hVarresRefinementsDataspace, H5S_SELECT_SET,
+                            offsetRefinement, nullptr, countVarresRefinements,
+                            nullptr) < 0)
+    {
+        H5Sclose(memspaceVarresRefinements);
+        return nullptr;
+    }
+    if (H5Dread(m_hVarresRefinements, m_hVarresRefinementsNative,
+                memspaceVarresRefinements, m_hVarresRefinementsDataspace,
+                H5P_DEFAULT, values.data()) < 0)
+    {
+        H5Sclose(memspaceVarresRefinements);
+        return nullptr;
+    }
+    H5Sclose(memspaceVarresRefinements);
+    const auto &vRef =
+        m_oCacheRefinementValues.insert(nStartIndex, std::move(values));
+    return vRef.data() + 2 * (nRefinementIndex - nStartIndex);
 }
 
 /************************************************************************/
@@ -3425,8 +4211,8 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
     CPLDebug("BAG", "m_nChunkSizeVarresRefinement = %u",
              m_nChunkSizeVarresRefinement);
 
-    if (EQUAL(CSLFetchNameValueDef(l_papszOpenOptions, "MODE", ""),
-              "RESAMPLED_GRID"))
+    const char *pszMode = CSLFetchNameValueDef(l_papszOpenOptions, "MODE", "");
+    if (EQUAL(pszMode, "RESAMPLED_GRID") || EQUAL(pszMode, "INTERPOLATED"))
     {
         return true;
     }
@@ -5257,6 +6043,7 @@ void GDALRegister_BAG()
         "       <Value>LOW_RES_GRID</Value>"
         "       <Value>LIST_SUPERGRIDS</Value>"
         "       <Value>RESAMPLED_GRID</Value>"
+        "       <Value>INTERPOLATED</Value>"
         "   </Option>"
         "   <Option name='SUPERGRIDS_INDICES' type='string' description="
         "'Tuple(s) (y1,x1),(y2,x2),...  of supergrids, by indices, to expose "
@@ -5270,13 +6057,14 @@ void GDALRegister_BAG()
         "   <Option name='MAXY' type='float' description='Maximum Y value of "
         "area of interest'/>"
         "   <Option name='RESX' type='float' description="
-        "'Horizontal resolution. Only used for MODE=RESAMPLED_GRID'/>"
+        "'Horizontal resolution. Only used for "
+        "MODE=RESAMPLED_GRID/INTERPOLATED'/>"
         "   <Option name='RESY' type='float' description="
         "'Vertical resolution (positive value). Only used for "
-        "MODE=RESAMPLED_GRID'/>"
+        "MODE=RESAMPLED_GRID/INTERPOLATED'/>"
         "   <Option name='RES_STRATEGY' type='string-select' description="
         "'Which strategy to apply to select the resampled grid resolution. "
-        "Only used for MODE=RESAMPLED_GRID' default='AUTO'>"
+        "Only used for MODE=RESAMPLED_GRID/INTERPOLATED' default='AUTO'>"
         "       <Value>AUTO</Value>"
         "       <Value>MIN</Value>"
         "       <Value>MAX</Value>"
@@ -5285,11 +6073,13 @@ void GDALRegister_BAG()
         "   <Option name='RES_FILTER_MIN' type='float' description="
         "'Minimum resolution of supergrids to take into account (excluded "
         "bound). "
-        "Only used for MODE=RESAMPLED_GRID or LIST_SUPERGRIDS' default='0'/>"
+        "Only used for MODE=RESAMPLED_GRID, INTERPOLATED or LIST_SUPERGRIDS' "
+        "default='0'/>"
         "   <Option name='RES_FILTER_MAX' type='float' description="
         "'Maximum resolution of supergrids to take into account (included "
         "bound). "
-        "Only used for MODE=RESAMPLED_GRID or LIST_SUPERGRIDS' default='inf'/>"
+        "Only used for MODE=RESAMPLED_GRID, INTERPOLATED or LIST_SUPERGRIDS' "
+        "default='inf'/>"
         "   <Option name='VALUE_POPULATION' type='string-select' description="
         "'Which value population strategy to apply to compute the resampled "
         "cell "

@@ -59,6 +59,17 @@ authors:
     family-names: Dawson
     affiliation: North Road
     orcid: https://orcid.org/0000-0001-9812-7584
+  - given-names: Daniel
+    family-names: Baston
+    affiliation: ISciences, L.L.C.
+    orcid: https://orcid.org/0000-0002-2195-1716
+  - given-names: Craig
+    family-names: de Stigter
+    affiliation: Koordinates
+  - given-names: Hiroshi
+    family-names: Miura
+    orcid: https://orcid.org/0000-0001-7754-0433
+
 keywords:
   - GDAL
   - geospatial

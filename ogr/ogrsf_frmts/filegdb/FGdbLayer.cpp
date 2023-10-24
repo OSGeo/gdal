@@ -2073,7 +2073,7 @@ OGRErr FGdbLayer::AlterFieldDefn(int iFieldToAlter,
 /*                                                                      */
 /************************************************************************/
 
-static CPLXMLNode *XMLSpatialReference(OGRSpatialReference *poSRS,
+static CPLXMLNode *XMLSpatialReference(const OGRSpatialReference *poSRS,
                                        char **papszOptions)
 {
     /* We always need a SpatialReference */
@@ -2343,7 +2343,7 @@ static CPLXMLNode *XMLSpatialReference(OGRSpatialReference *poSRS,
 
 bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
                                      const std::string &feature_dataset_name,
-                                     OGRSpatialReference *poSRS,
+                                     const OGRSpatialReference *poSRS,
                                      char **papszOptions)
 {
     /* XML node */
@@ -2430,7 +2430,8 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
 /************************************************************************/
 
 bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
-                       const char *pszLayerNameIn, OGRSpatialReference *poSRS,
+                       const char *pszLayerNameIn,
+                       const OGRSpatialReference *poSRS,
                        OGRwkbGeometryType eType, char **papszOptions)
 {
     std::string parent_path = "";

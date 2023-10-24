@@ -300,6 +300,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     size_t nHeaderSize = 0;
     vsi_l_offset nBodySize = 0;
     int nHTTPCode = 0;
+    char m_szCurlErrBuf[CURL_ERROR_SIZE + 1];
+    bool m_bErrorOccurred = false;
 
     void AcquireMutex();
     void ReleaseMutex();
@@ -350,7 +352,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
         return bHasComputedFileSize;
     }
     vsi_l_offset GetFileSize();
-    int Exists();
+    bool Exists(const char *pszFilename, CSLConstList papszOptions);
     bool IsDirectory() const
     {
         return bIsDirectory;
@@ -384,6 +386,8 @@ VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS,
     ReleaseMutex();
     hCondProducer = CPLCreateCond();
     hCondConsumer = CPLCreateCond();
+
+    memset(m_szCurlErrBuf, 0, sizeof(m_szCurlErrBuf));
 }
 
 /************************************************************************/
@@ -718,39 +722,16 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 /*                                 Exists()                             */
 /************************************************************************/
 
-int VSICurlStreamingHandle::Exists()
+bool VSICurlStreamingHandle::Exists(const char *pszFilename,
+                                    CSLConstList papszOptions)
 {
     if (eExists == EXIST_UNKNOWN)
     {
-        // Consider that only the files whose extension ends up with one that is
-        // listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server.
-        // This can speeds up dramatically open experience, in case the server
-        // cannot return a file list.
-        // For example:
-        // gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif"
-        // /vsicurl_streaming/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
-        // */
-        const char *pszAllowedExtensions =
-            CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", nullptr);
-        if (pszAllowedExtensions)
+        if (!papszOptions ||
+            !CPLTestBool(CSLFetchNameValueDef(
+                papszOptions, "IGNORE_FILENAME_RESTRICTIONS", "NO")))
         {
-            char **papszExtensions =
-                CSLTokenizeString2(pszAllowedExtensions, ", ", 0);
-            const size_t nURLLen = strlen(m_pszURL);
-            bool bFound = false;
-            for (int i = 0; papszExtensions[i] != nullptr; i++)
-            {
-                const size_t nExtensionLen = strlen(papszExtensions[i]);
-                if (nURLLen > nExtensionLen &&
-                    EQUAL(m_pszURL + nURLLen - nExtensionLen,
-                          papszExtensions[i]))
-                {
-                    bFound = true;
-                    break;
-                }
-            }
-
-            if (!bFound)
+            if (!VSICurlFilesystemHandlerBase::IsAllowedFilename(pszFilename))
             {
                 eExists = EXIST_NO;
                 fileSize = 0;
@@ -764,12 +745,8 @@ int VSICurlStreamingHandle::Exists()
                 cachedFileProp.nMode = S_IFREG;
                 m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
 
-                CSLDestroy(papszExtensions);
-
-                return 0;
+                return false;
             }
-
-            CSLDestroy(papszExtensions);
         }
 
         char chFirstByte = '\0';
@@ -937,11 +914,10 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
 
         AcquireMutex();
 
-        if (eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
+        if (nHTTPCode == 0 &&
             strchr(reinterpret_cast<char *>(pabyHeaderData), '\n') != nullptr &&
             STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData), "HTTP/"))
         {
-            nHTTPCode = 0;
             const char *pszSpace =
                 strchr(const_cast<const char *>(
                            reinterpret_cast<char *>(pabyHeaderData)),
@@ -952,7 +928,8 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
             // If moved permanently/temporarily, go on.
-            if (!(InterpretRedirect() &&
+            if (eExists == EXIST_UNKNOWN &&
+                !(InterpretRedirect() &&
                   (nHTTPCode == 301 || nHTTPCode == 302)))
             {
                 eExists = nHTTPCode == 200 ? EXIST_YES : EXIST_NO;
@@ -1062,9 +1039,9 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlStreamingHandleReceivedBytes);
 
-    char szCurlErrBuf[CURL_ERROR_SIZE + 1] = {};
-    szCurlErrBuf[0] = '\0';
-    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
+    m_szCurlErrBuf[0] = '\0';
+    unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
+                               m_szCurlErrBuf);
 
     void *old_handler = CPLHTTPIgnoreSigPipe();
     CURLcode eRet = curl_easy_perform(hCurlHandle);
@@ -1078,7 +1055,18 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
-    if (!bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize)
+    m_bErrorOccurred = eRet != CURLE_OK;
+    if (m_bErrorOccurred)
+    {
+        // For autotest purposes only !
+        const char *pszSimulatedCurlError = CPLGetConfigOption(
+            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR", nullptr);
+        if (pszSimulatedCurlError)
+            snprintf(m_szCurlErrBuf, sizeof(m_szCurlErrBuf), "%s",
+                     pszSimulatedCurlError);
+    }
+
+    if (!bAskDownloadEnd && eRet == CURLE_OK && !bHasComputedFileSize)
     {
         FileProp cachedFileProp;
         m_poFS->GetCachedFileProp(m_pszURL, cachedFileProp);
@@ -1120,6 +1108,7 @@ void VSICurlStreamingHandle::StartDownload()
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
     nRingBufferFileOffset = 0;
+    m_bErrorOccurred = false;
     hThread = CPLCreateJoinableThread(VSICurlDownloadInThread, this);
 }
 
@@ -1152,6 +1141,9 @@ void VSICurlStreamingHandle::StopDownload()
 
     oRingBuffer.Reset();
     bDownloadStopped = FALSE;
+    m_bErrorOccurred = false;
+    nRingBufferFileOffset = 0;
+    bEOF = false;
 }
 
 /************************************************************************/
@@ -1193,12 +1185,17 @@ void VSICurlStreamingHandle::PutRingBufferInCache()
 size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
                                     size_t const nMemb)
 {
-    GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
     const size_t nBufferRequestSize = nSize * nMemb;
     const vsi_l_offset curOffsetOri = curOffset;
     const vsi_l_offset nRingBufferFileOffsetOri = nRingBufferFileOffset;
     if (nBufferRequestSize == 0)
         return 0;
+
+    int nRetryCount = 0;
+    double dfRetryDelay = 0;
+
+retry:
+    GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
     size_t nRemaining = nBufferRequestSize;
 
     AcquireMutex();
@@ -1256,6 +1253,8 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
     }
 
     // Has a Seek() being done since the last Read()?
+    bool bErrorOccurred = false;
+
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
     {
         // Backward seek: Need to restart the download from the beginning.
@@ -1301,6 +1300,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
                 while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
                 const int bBufferEmpty = (oRingBuffer.GetSize() == 0);
+                bErrorOccurred = m_bErrorOccurred;
                 ReleaseMutex();
 
                 if (bBufferEmpty && !bDownloadInProgress)
@@ -1310,21 +1310,21 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
 
         CPLFree(pabyTmp);
 
-        if (nBytesToSkip != 0)
+        if (nBytesToSkip != 0 && !bErrorOccurred)
         {
             bEOF = true;
             return 0;
         }
     }
 
-    if (!bEOF && nRemaining > 0)
+    if (!bEOF && nRemaining > 0 && !bErrorOccurred)
     {
         StartDownload();
         CPLAssert(curOffset == nRingBufferFileOffset);
     }
 
     // Fill the destination buffer from the ring buffer.
-    while (!bEOF && nRemaining > 0)
+    while (!bEOF && nRemaining > 0 && !bErrorOccurred)
     {
         AcquireMutex();
         size_t nToRead = oRingBuffer.GetSize();
@@ -1354,6 +1354,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
             while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                 CPLCondWait(hCondProducer, hRingBufferMutex);
             const bool bBufferEmpty = oRingBuffer.GetSize() == 0;
+            bErrorOccurred = m_bErrorOccurred;
             ReleaseMutex();
 
             if (bBufferEmpty && !bDownloadInProgress)
@@ -1390,8 +1391,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
                               reinterpret_cast<char *>(pabyHeaderData), true))
         {
             curOffset = 0;
-            nRingBufferFileOffset = 0;
-            bEOF = false;
+
             AcquireMutex();
             eExists = EXIST_UNKNOWN;
             bHasComputedFileSize = false;
@@ -1406,7 +1406,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
             cachedFileProp.eExists = EXIST_UNKNOWN;
             m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
 
-            nRet = Read(pBuffer, nSize, nMemb);
+            goto retry;
         }
         else
         {
@@ -1416,6 +1416,37 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
         }
 
         CPLFree(pabyErrorBuffer);
+    }
+
+    if (bErrorOccurred)
+    {
+        const int nMaxRetry = atoi(CPLGetConfigOption(
+            "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
+        // coverity[tainted_data]
+        if (dfRetryDelay == 0)
+            dfRetryDelay = CPLAtof(
+                CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
+                                   CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+
+        // Look if we should attempt a retry
+        AcquireMutex();
+        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+            static_cast<int>(nHTTPCode), dfRetryDelay, nullptr, m_szCurlErrBuf);
+        ReleaseMutex();
+        if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+        {
+            StopDownload();
+
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "HTTP error code: %d - %s. "
+                     "Retrying again in %.1f secs",
+                     static_cast<int>(nHTTPCode), m_pszURL, dfRetryDelay);
+            CPLSleep(dfRetryDelay);
+            dfRetryDelay = dfNewRetryDelay;
+            nRetryCount++;
+            curOffset = curOffsetOri;
+            goto retry;
+        }
     }
 
     return nRet;
@@ -1555,10 +1586,10 @@ VSICurlStreamingFSHandler::CreateFileHandle(const char *pszURL)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
-VSICurlStreamingFSHandler::Open(const char *pszFilename, const char *pszAccess,
-                                bool /* bSetError */,
-                                CSLConstList /* papszOptions */)
+VSIVirtualHandle *VSICurlStreamingFSHandler::Open(const char *pszFilename,
+                                                  const char *pszAccess,
+                                                  bool /* bSetError */,
+                                                  CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return nullptr;
@@ -1574,7 +1605,7 @@ VSICurlStreamingFSHandler::Open(const char *pszFilename, const char *pszAccess,
     VSICurlStreamingHandle *poHandle =
         CreateFileHandle(pszFilename + GetFSPrefix().size());
     // If we didn't get a filelist, check that the file really exists.
-    if (poHandle == nullptr || !poHandle->Exists())
+    if (poHandle == nullptr || !poHandle->Exists(pszFilename, papszOptions))
     {
         delete poHandle;
         return nullptr;
@@ -1650,7 +1681,7 @@ int VSICurlStreamingFSHandler::Stat(const char *pszFilename,
         pStatBuf->st_size = poHandle->GetFileSize();
     }
 
-    int nRet = (poHandle->Exists()) ? 0 : -1;
+    int nRet = (poHandle->Exists(pszFilename, nullptr)) ? 0 : -1;
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
 
     delete poHandle;
@@ -1680,16 +1711,27 @@ class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeStreamingFSHandler)
 
+  protected:
+    virtual std::string GetNonStreamingPrefix() const = 0;
+
   public:
     IVSIS3LikeStreamingFSHandler() = default;
 
-    virtual void
-    UpdateMapFromHandle(IVSIS3LikeHandleHelper * /*poHandleHelper*/)
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override
     {
+        if (STARTS_WITH(pszDirname, GetFSPrefix()))
+        {
+            return VSIReadDirEx(
+                (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
+                    .c_str(),
+                nMaxFiles);
+        }
+        return nullptr;
     }
-    virtual void
-    UpdateHandleFromMap(IVSIS3LikeHandleHelper * /*poHandleHelper*/)
+
+    const char *GetOptions() override
     {
+        return VSIGetFileSystemOptions(GetNonStreamingPrefix().c_str());
     }
 };
 
@@ -1706,19 +1748,17 @@ class VSIS3StreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsis3_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsis3/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
     VSIS3StreamingFSHandler() = default;
     ~VSIS3StreamingFSHandler() override = default;
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsis3/");
-    }
-
-    void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
-    void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
 
     void ClearCache() override
     {
@@ -1726,26 +1766,6 @@ class VSIS3StreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
         VSIS3UpdateParams::ClearCache();
     }
 };
-
-/************************************************************************/
-/*                         UpdateMapFromHandle()                        */
-/************************************************************************/
-
-void VSIS3StreamingFSHandler::UpdateMapFromHandle(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    VSIS3UpdateParams::UpdateMapFromHandle(poHandleHelper);
-}
-
-/************************************************************************/
-/*                         UpdateHandleFromMap()                        */
-/************************************************************************/
-
-void VSIS3StreamingFSHandler::UpdateHandleFromMap(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    VSIS3UpdateParams::UpdateHandleFromMap(poHandleHelper);
-}
 
 /************************************************************************/
 /*                          VSIS3LikeStreamingHandle                    */
@@ -1789,7 +1809,6 @@ VSIS3StreamingFSHandler::CreateFileHandle(const char *pszURL)
         VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if (poS3HandleHelper)
     {
-        UpdateHandleFromMap(poS3HandleHelper);
         return new VSIS3LikeStreamingHandle(this, poS3HandleHelper);
     }
     return nullptr;
@@ -1837,9 +1856,6 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError(const char *pszErrorMsg,
     if (m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
                                               bSetError))
     {
-        static_cast<IVSIS3LikeStreamingFSHandler *>(m_poFS)
-            ->UpdateMapFromHandle(m_poS3HandleHelper);
-
         SetURL(m_poS3HandleHelper->GetURL());
         return true;
     }
@@ -1857,6 +1873,12 @@ class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsigs_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsigs/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
@@ -1865,11 +1887,6 @@ class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     }
     ~VSIGSStreamingFSHandler() override
     {
-    }
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsigs/");
     }
 };
 
@@ -1900,6 +1917,12 @@ class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsiaz_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsiaz/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
@@ -1908,11 +1931,6 @@ class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     }
     ~VSIAzureStreamingFSHandler() override
     {
-    }
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsiaz/");
     }
 };
 
@@ -1940,61 +1958,29 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIOSSStreamingFSHandler)
 
-    std::map<CPLString, VSIOSSUpdateParams> oMapBucketsToOSSParams{};
-
   protected:
     CPLString GetFSPrefix() override
     {
         return "/vsioss_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsioss/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
     VSIOSSStreamingFSHandler() = default;
     ~VSIOSSStreamingFSHandler() override = default;
 
-    const char *GetOptions() override
+    void ClearCache() override
     {
-        return VSIGetFileSystemOptions("/vsioss/");
+        IVSIS3LikeStreamingFSHandler::ClearCache();
+        VSIOSSUpdateParams::ClearCache();
     }
-
-    void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
-    void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
 };
-
-/************************************************************************/
-/*                         UpdateMapFromHandle()                        */
-/************************************************************************/
-
-void VSIOSSStreamingFSHandler::UpdateMapFromHandle(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    CPLMutexHolder oHolder(&hMutex);
-
-    VSIOSSHandleHelper *poOSSHandleHelper =
-        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    oMapBucketsToOSSParams[poOSSHandleHelper->GetBucket()] =
-        VSIOSSUpdateParams(poOSSHandleHelper);
-}
-
-/************************************************************************/
-/*                         UpdateHandleFromMap()                        */
-/************************************************************************/
-
-void VSIOSSStreamingFSHandler::UpdateHandleFromMap(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    CPLMutexHolder oHolder(&hMutex);
-
-    VSIOSSHandleHelper *poOSSHandleHelper =
-        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    std::map<CPLString, VSIOSSUpdateParams>::iterator oIter =
-        oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
-    if (oIter != oMapBucketsToOSSParams.end())
-    {
-        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
-    }
-}
 
 /************************************************************************/
 /*                          CreateFileHandle()                          */
@@ -2007,7 +1993,6 @@ VSIOSSStreamingFSHandler::CreateFileHandle(const char *pszURL)
         VSIOSSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if (poOSSHandleHelper)
     {
-        UpdateHandleFromMap(poOSSHandleHelper);
         return new VSIS3LikeStreamingHandle(this, poOSSHandleHelper);
     }
     return nullptr;
@@ -2024,6 +2009,12 @@ class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsiswift_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsiswift/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
@@ -2032,11 +2023,6 @@ class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     }
     ~VSISwiftStreamingFSHandler() override
     {
-    }
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsiswift/");
     }
 };
 

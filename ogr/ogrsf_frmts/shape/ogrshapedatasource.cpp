@@ -509,7 +509,10 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
     OGRShapeLayer *poLayer = new OGRShapeLayer(
-        this, pszNewName, hSHP, hDBF, nullptr, false, bUpdate, wkbNone);
+        this, pszNewName, hSHP, hDBF,
+        /* poSRS = */ nullptr,
+        /* bSRSSet = */ false,
+        /* osPrjFilename = */ std::string(), bUpdate, wkbNone);
     poLayer->SetModificationDate(
         CSLFetchNameValue(papszOpenOptions, "DBF_DATE_LAST_UPDATE"));
     poLayer->SetAutoRepack(CPLFetchBool(papszOpenOptions, "AUTO_REPACK", true));
@@ -568,7 +571,7 @@ static CPLString LaunderLayerName(const char *pszLayerName)
 /************************************************************************/
 
 OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
-                                           OGRSpatialReference *poSRS,
+                                           const OGRSpatialReference *poSRS,
                                            OGRwkbGeometryType eType,
                                            char **papszOptions)
 
@@ -884,26 +887,24 @@ OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create the .prj file, if required.                              */
     /* -------------------------------------------------------------------- */
+    std::string osPrjFilename;
+    OGRSpatialReference *poSRSClone = nullptr;
     if (poSRS != nullptr)
     {
-        CPLString osPrjFile =
-            CPLFormFilename(nullptr, pszFilenameWithoutExt, "prj");
-
-        poSRS = poSRS->Clone();
-        poSRS->morphToESRI();
+        osPrjFilename = CPLFormFilename(nullptr, pszFilenameWithoutExt, "prj");
+        poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;
         VSILFILE *fp = nullptr;
-        if (poSRS->exportToWkt(&pszWKT) == OGRERR_NONE &&
-            (fp = VSIFOpenL(osPrjFile, "wt")) != nullptr)
+        const char *const apszOptions[] = {"FORMAT=WKT1_ESRI", nullptr};
+        if (poSRSClone->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE &&
+            (fp = VSIFOpenL(osPrjFilename.c_str(), "wt")) != nullptr)
         {
             VSIFWriteL(pszWKT, strlen(pszWKT), 1, fp);
             VSIFCloseL(fp);
         }
 
         CPLFree(pszWKT);
-
-        poSRS->morphFromESRI();
     }
 
     /* -------------------------------------------------------------------- */
@@ -915,11 +916,13 @@ OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     pszFilename =
         CPLStrdup(CPLFormFilename(nullptr, pszFilenameWithoutExt, "shp"));
 
-    OGRShapeLayer *poLayer = new OGRShapeLayer(this, pszFilename, hSHP, hDBF,
-                                               poSRS, true, true, eType);
-    if (poSRS != nullptr)
+    OGRShapeLayer *poLayer =
+        new OGRShapeLayer(this, pszFilename, hSHP, hDBF, poSRSClone,
+                          /* bSRSSet = */ true, osPrjFilename,
+                          /* bUpdate = */ true, eType);
+    if (poSRSClone != nullptr)
     {
-        poSRS->Release();
+        poSRSClone->Release();
     }
 
     CPLFree(pszFilenameWithoutExt);

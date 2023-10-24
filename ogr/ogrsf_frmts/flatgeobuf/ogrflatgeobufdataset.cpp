@@ -396,10 +396,9 @@ static CPLString LaunderLayerName(const char *pszLayerName)
     return osRet;
 }
 
-OGRLayer *OGRFlatGeobufDataset::ICreateLayer(const char *pszLayerName,
-                                             OGRSpatialReference *poSpatialRef,
-                                             OGRwkbGeometryType eGType,
-                                             char **papszOptions)
+OGRLayer *OGRFlatGeobufDataset::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSpatialRef,
+    OGRwkbGeometryType eGType, char **papszOptions)
 {
     // Verify we are in update mode.
     if (!m_bCreate)

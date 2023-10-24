@@ -318,7 +318,7 @@ def test_vicar_create_label_option_as_inline_value():
 def test_vicar_create_label_option_as_inline_value_error():
 
     filename = "/vsimem/test.vic"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.GetDriverByName("VICAR").Create(
             filename, 1, 1, 1, gdal.GDT_Byte, options=["LABEL={error"]
         )
@@ -348,7 +348,7 @@ def test_vicar_create_label_option_as_filename_error():
     filename = "/vsimem/test.vic"
     json_filename = "/vsimem/test.json"
     gdal.FileFromMemBuffer(json_filename, "error")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.GetDriverByName("VICAR").Create(
             filename, 1, 1, 1, gdal.GDT_Byte, options=["LABEL=" + json_filename]
         )
@@ -495,7 +495,7 @@ def test_vicar_write_basic2_all_ones():
 
 def test_vicar_write_compression_errors():
     filename = "/vsimem/test.vic"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Only single-band supported
         assert not gdal.GetDriverByName("VICAR").Create(
             filename, 1, 1, 2, options=["COMPRESS=BASIC"]
@@ -522,7 +522,7 @@ def test_vicar_write_compression_errors():
     )
     # Non sequential writing of lines
     ds.WriteRaster(0, 1, 1, 1, "x")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.FlushCache()
     assert gdal.GetLastErrorMsg() != ""
     ds = None

@@ -30,7 +30,6 @@
 
 import os
 
-import gdaltest
 import ogrtest
 import pytest
 
@@ -43,7 +42,7 @@ pytestmark = pytest.mark.require_driver("GPX")
 def startup_and_cleanup():
 
     # Check that the GPX driver has read support
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         if ogr.Open("data/gpx/test.gpx") is None:
             assert "Expat" in gdal.GetLastErrorMsg()
             pytest.skip("GDAL build without Expat support")
@@ -69,7 +68,7 @@ def test_ogr_gpx_1():
 
     expect = [2, None]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogrtest.check_features_against_list(lyr, "ele", expect)
 
     lyr.ResetReading()
@@ -211,7 +210,7 @@ def test_ogr_gpx_5():
 def test_ogr_gpx_6():
     gpx_ds = ogr.Open("data/gpx/test.gpx")
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ogr.GetDriverByName("CSV").DeleteDataSource("tmp/gpx.gpx")
     except Exception:
         pass
@@ -506,3 +505,22 @@ def test_ogr_gpx_metadata_write():
     ds = None
 
     gdal.Unlink("/vsimem/gpx.gpx")
+
+
+###############################################################################
+# Test CREATOR option
+
+
+@pytest.mark.parametrize(
+    "options,expected",
+    [([], b' creator="GDAL '), (["CREATOR=the_creator"], b' creator="the_creator" ')],
+)
+def test_ogr_gpx_creator(tmp_vsimem, options, expected):
+
+    filename = str(tmp_vsimem / "test_ogr_gpx_cerator.gpx")
+    ogr.GetDriverByName("GPX").CreateDataSource(filename, options=options)
+    assert ogr.Open(filename)
+    f = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, gdal.VSIStatL(filename).size, f)
+    gdal.VSIFCloseL(f)
+    assert expected in data

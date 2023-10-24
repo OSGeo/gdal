@@ -275,7 +275,7 @@ class PostGISRasterDataset final : public VRTDataset
     GBool YieldSubdatasets(PGresult *, const char *);
     GBool SetRasterProperties(const char *);
     GBool BrowseDatabase(const char *, const char *);
-    GBool AddComplexSource(PostGISRasterTileDataset *poRTDS);
+    void AddComplexSource(PostGISRasterTileDataset *poRTDS);
     void GetDstWin(PostGISRasterTileDataset *, int *, int *, int *, int *);
     BandMetadata *GetBandsMetadata(int *);
     PROverview *GetOverviewTables(int *);

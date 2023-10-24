@@ -69,7 +69,7 @@ def test_isg_approx_georeferencing_with_warning():
     gdal.ErrorReset()
     # Header of https://www.isgeoid.polimi.it/Geoid/America/Argentina/public/GEOIDEAR16_20160419.isg
     # with delta_lon modified
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/isg/approx_georeferencing_warning.isg")
         assert gdal.GetLastErrorMsg() != ""
     expected_gt = [
@@ -98,7 +98,7 @@ def test_isg_approx_georeferencing_rejected_by_default():
     gdal.ErrorReset()
     with gdal.config_option(
         "ISG_SKIP_GEOREF_CONSISTENCY_CHECK", "YES"
-    ), gdaltest.error_handler():
+    ), gdal.quiet_errors():
         ds = gdal.Open(filename)
         assert gdal.GetLastErrorMsg() != ""
     expected_gt = [
@@ -109,4 +109,17 @@ def test_isg_approx_georeferencing_rejected_by_default():
         0.0,
         -0.016667027027027027,
     ]
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)
+
+
+###############################################################################
+# Test reading a header larger than 1024 bytes
+
+
+def test_isg_header_larger_than_1024bytes():
+
+    # Header of https://isgeoid.polimi.it/Geoid/Europe/Slovenia/public/Slovenia_2016_SLO_VRP2016_Koper_hybrQ_20221122.isg
+    with gdal.quiet_errors():
+        ds = gdal.Open("data/isg/header_larger_than_1024bytes.isg")
+    expected_gt = [12.99375, 0.0125, 0.0, 47.00416666666666, 0.0, -0.008333333333333333]
     assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)

@@ -30,7 +30,6 @@
 ###############################################################################
 
 
-import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -58,7 +57,7 @@ def test_ogr_style_styletable():
 
     gdal.Unlink("/vsimem/out.txt")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = style_table.Find("non_existing_style")
     assert ret is None
 

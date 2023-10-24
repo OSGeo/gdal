@@ -35,7 +35,7 @@ jobs:
       CACHE_NUMBER: 0
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Support longpaths
       run: git config --system core.longpaths true
@@ -55,12 +55,11 @@ jobs:
         channels: conda-forge
         auto-update-conda: true
 
-
     - name: Remove conflicting libraries
-      shell: cmd
+      shell: bash -l {0}
       if: matrix.platform == 'windows-latest'
       run: |
-          rd /s /q C:\Strawberry
+          rm -rf C:/Strawberry || /bin/true
 
     - name: Setup
       shell: bash -l {0}

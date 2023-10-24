@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "ograrrowarrayhelper.h"
+#include "ogr_p.h"
 
 #include <limits>
 
@@ -69,6 +70,23 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
     mapOGRFieldToArrowField.resize(nFieldCount, -1);
     mapOGRGeomFieldToArrowField.resize(nGeomFieldCount, -1);
     abNullableFields.resize(nFieldCount);
+    anTZFlags.resize(nFieldCount);
+    int nTZFlagOverride = -1;
+    const char *pszTZOverride =
+        aosArrowArrayStreamOptions.FetchNameValue("TIMEZONE");
+    if (pszTZOverride)
+    {
+        if (EQUAL(pszTZOverride, "unknown") || EQUAL(pszTZOverride, ""))
+        {
+            nTZFlagOverride = OGR_TZFLAG_UNKNOWN;
+        }
+        else
+        {
+            // we don't really care about the actual timezone, since we
+            // will convert OGRField::Date to UTC in all cases
+            nTZFlagOverride = OGR_TZFLAG_UTC;
+        }
+    }
 
     if (bIncludeFID)
     {
@@ -78,6 +96,8 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
     {
         const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
         abNullableFields[i] = CPL_TO_BOOL(poFieldDefn->IsNullable());
+        anTZFlags[i] =
+            nTZFlagOverride >= 0 ? nTZFlagOverride : poFieldDefn->GetTZFlag();
         if (!poFieldDefn->IsIgnored())
         {
             mapOGRFieldToArrowField[i] = nChildren;

@@ -122,6 +122,16 @@ def test_ogr_sql_execute_sql(use_gdal):
         os.unlink("tmp/test_ogr_sql_execute_sql.shx")
 
 
+@pytest.mark.require_driver("SQLite")
+def test_ogr_sql_execute_sql_empty_database(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(tmp_vsimem / "test.sqlite")
+
+    with ds.ExecuteSQL("SELECT sqlite_version() AS version") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert type(f["version"]) is str
+
+
 ###############################################################################
 # Test invalid use of ReleaseResultSet()
 
@@ -474,7 +484,7 @@ def test_ogr_sql_17():
 
 def test_ogr_sql_19(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert data_ds.ExecuteSQL("") is None
 
 
@@ -766,8 +776,6 @@ def test_ogr_sql_28():
         "SELECT MAX(foo) FROM my_layer",
         "SELECT SUM(foo) FROM my_layer",
         "SELECT AVG(foo) FROM my_layer",
-        "SELECT MIN(strfield) FROM my_layer",
-        "SELECT MAX(strfield) FROM my_layer",
         "SELECT SUM(strfield) FROM my_layer",
         "SELECT AVG(strfield) FROM my_layer",
         "SELECT AVG(intfield, intfield) FROM my_layer",
@@ -812,7 +820,7 @@ def test_ogr_sql_28():
     for query in queries:
         gdal.ErrorReset()
         # print query
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL(query)
         if sql_lyr is not None:
             ds.ReleaseResultSet(sql_lyr)
@@ -985,7 +993,7 @@ def test_ogr_sql_34(data_ds):
 
         assert val == 1
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             data_ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
             is None
@@ -1204,7 +1212,7 @@ def test_ogr_sql_44(data_ds):
         "SELECT hstore_get_value('a') FROM poly",
         "SELECT hstore_get_value(1, 1) FROM poly",
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = data_ds.ExecuteSQL(sql)
         assert sql_lyr is None, sql
 
@@ -1328,7 +1336,7 @@ def test_ogr_sql_46():
         "select max('id') from 'test'",
         "select id as 'id2' from 'test'",
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL("select * from 'test'")
         assert sql_lyr is None, sql
 
@@ -1513,3 +1521,33 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
     ) as sql_lyr:
         sql_lyr.SetAttributeFilter("0")
         assert sql_lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test min/max on string fields
+
+
+def test_ogr_sql_min_max_string_field(data_ds):
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test")
+    mem_lyr.CreateField(ogr.FieldDefn("str_field"))
+
+    with mem_ds.ExecuteSQL(
+        "select min(str_field), max(str_field) from test"
+    ) as sql_lyr:
+        feat = sql_lyr.GetNextFeature()
+        assert feat["MIN_str_field"] is None
+        assert feat["MAX_str_field"] is None
+
+    for v in ("z", "b", "ab"):
+        f = ogr.Feature(mem_lyr.GetLayerDefn())
+        f["str_field"] = v
+        mem_lyr.CreateFeature(f)
+
+    with mem_ds.ExecuteSQL(
+        "select min(str_field), max(str_field) from test"
+    ) as sql_lyr:
+        feat = sql_lyr.GetNextFeature()
+        assert feat["MIN_str_field"] == "ab"
+        assert feat["MAX_str_field"] == "z"

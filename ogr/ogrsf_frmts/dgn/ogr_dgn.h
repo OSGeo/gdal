@@ -115,7 +115,7 @@ class OGRDGNDataSource final : public OGRDataSource
     int Open(const char *, int bTestOpen, int bUpdate);
     bool PreCreate(const char *, char **);
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 

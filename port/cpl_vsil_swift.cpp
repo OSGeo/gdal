@@ -232,14 +232,15 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 
     void ClearCache() override;
 
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
+
   public:
     explicit VSISwiftFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
     ~VSISwiftFSHandler() override;
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
@@ -258,14 +259,6 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
     {
         return osFilename;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
     {
@@ -296,62 +289,24 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
 };
 
 /************************************************************************/
-/*                                Open()                                */
+/*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *VSISwiftFSHandler::Open(const char *pszFilename,
-                                          const char *pszAccess, bool bSetError,
-                                          CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSISwiftFSHandler::CreateWriteHandle(const char *pszFilename,
+                                     CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
         return nullptr;
-
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
+    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+        this, pszFilename, poHandleHelper, true, papszOptions);
+    if (!poHandle->IsOK())
     {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsiswift, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
-            errno = EACCES;
-            return nullptr;
-        }
-
-        VSISwiftHandleHelper *poHandleHelper =
-            VSISwiftHandleHelper::BuildFromURI(
-                pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
-        if (poHandleHelper == nullptr)
-            return nullptr;
-        UpdateHandleFromMap(poHandleHelper);
-        VSIS3WriteHandle *poHandle = new VSIS3WriteHandle(
-            this, pszFilename, poHandleHelper, true, papszOptions);
-        if (!poHandle->IsOK())
-        {
-            delete poHandle;
-            return nullptr;
-        }
-        if (strchr(pszAccess, '+') != nullptr)
-        {
-            return VSICreateUploadOnCloseFile(poHandle);
-        }
-        return poHandle;
+        return nullptr;
     }
-
-    return VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError,
-                                              papszOptions);
-}
-
-/************************************************************************/
-/*                        SupportsRandomWrite()                         */
-/************************************************************************/
-
-bool VSISwiftFSHandler::SupportsRandomWrite(const char * /* pszPath */,
-                                            bool bAllowLocalTempFile)
-{
-    return bAllowLocalTempFile &&
-           CPLTestBool(CPLGetConfigOption(
-               "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -424,7 +379,6 @@ VSICurlHandle *VSISwiftFSHandler::CreateFileHandle(const char *pszFilename)
         pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper)
     {
-        UpdateHandleFromMap(poHandleHelper);
         return new VSISwiftHandle(this, pszFilename, poHandleHelper);
     }
     return nullptr;

@@ -121,7 +121,7 @@ class OGRILI2DataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 

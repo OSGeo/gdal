@@ -1676,7 +1676,7 @@ OGRErr OGRPGDataSource::DeleteLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
-                                        OGRSpatialReference *poSRS,
+                                        const OGRSpatialReference *poSRS,
                                         OGRwkbGeometryType eType,
                                         char **papszOptions)
 

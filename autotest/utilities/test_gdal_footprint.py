@@ -34,7 +34,7 @@ import ogrtest
 import pytest
 import test_cli_utilities
 
-from osgeo import gdal, ogr
+from osgeo import ogr
 
 pytestmark = [
     pytest.mark.require_geos,
@@ -53,18 +53,16 @@ def gdal_footprint_path():
 ###############################################################################
 
 
-def test_gdal_footprint_basic(gdal_footprint_path):
+def test_gdal_footprint_basic(gdal_footprint_path, tmp_path):
 
-    if gdal.VSIStatL("tmp/out_footprint.json"):
-        gdal.Unlink("tmp/out_footprint.json")
+    footprint_json = str(tmp_path / "out_footprint.json")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path
-        + " -f GeoJSON ../gcore/data/byte.tif tmp/out_footprint.json"
+        gdal_footprint_path + f" -f GeoJSON ../gcore/data/byte.tif {footprint_json}"
     )
     assert err is None or err == "", "got error/warning"
 
-    ds = ogr.Open("tmp/out_footprint.json")
+    ds = ogr.Open(footprint_json)
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -76,28 +74,25 @@ def test_gdal_footprint_basic(gdal_footprint_path):
 
     ds = None
 
-    gdal.Unlink("tmp/out_footprint.json")
-
 
 ###############################################################################
 
 
-def test_gdal_footprint_appending(gdal_footprint_path):
+def test_gdal_footprint_appending(gdal_footprint_path, tmp_path):
 
-    if gdal.VSIStatL("tmp/out_footprint.shp"):
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/out_footprint.shp")
+    footprint_shp = str(tmp_path / "out_footprint.shp")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " ../gcore/data/byte.tif tmp/out_footprint.shp"
+        gdal_footprint_path + f" ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " ../gcore/data/byte.tif tmp/out_footprint.shp"
+        gdal_footprint_path + f" ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
 
-    ds = ogr.Open("tmp/out_footprint.shp")
+    ds = ogr.Open(footprint_shp)
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
@@ -114,28 +109,25 @@ def test_gdal_footprint_appending(gdal_footprint_path):
 
     ds = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/out_footprint.shp")
-
 
 ###############################################################################
 
 
-def test_gdal_footprint_overwrite(gdal_footprint_path):
+def test_gdal_footprint_overwrite(gdal_footprint_path, tmp_path):
 
-    if gdal.VSIStatL("tmp/out_footprint.shp"):
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/out_footprint.shp")
+    footprint_shp = str(tmp_path / "out_footprint.shp")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " ../gcore/data/byte.tif tmp/out_footprint.shp"
+        gdal_footprint_path + f" ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " -overwrite ../gcore/data/byte.tif tmp/out_footprint.shp"
+        gdal_footprint_path + f" -overwrite ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
 
-    ds = ogr.Open("tmp/out_footprint.shp")
+    ds = ogr.Open(footprint_shp)
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -147,16 +139,14 @@ def test_gdal_footprint_overwrite(gdal_footprint_path):
 
     ds = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/out_footprint.shp")
-
 
 ###############################################################################
 
 
-def test_gdal_footprint_wrong_input_dataset(gdal_footprint_path):
+def test_gdal_footprint_wrong_input_dataset(gdal_footprint_path, tmp_vsimem):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " /vsimem/in.tif /vsimem/out.json"
+        f"{gdal_footprint_path} {tmp_vsimem}/in.tif {tmp_vsimem}/out.json"
     )
     assert "ret code = 1" in err
 

@@ -16,14 +16,15 @@ Synopsis
 
 .. code-block::
 
-    ogrinfo [--help-general] [-json] [-ro] [-q] [-where restricted_where|@filename]
-            [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
-            [-sql statement|@filename] [-dialect dialect] [-al] [-rl]
-            [-so|-features] [-fields={YES/NO}]
-            [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
-            [-nomd] [-listmdd] [-mdd domain|`all`]*
-            [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|...]
-            [-fielddomain name]
+    ogrinfo [--help] [--help-general]
+            [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
+            [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>] [-fid <fid>]
+            [-sql <statement>|@<filename>] [-dialect <sql_dialect>] [-al] [-rl]
+            [-so|-features] [-fields={YES|NO}]]
+            [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] [-oo <NAME>=<VALUE>]...
+            [-nomd] [-listmdd] [-mdd <domain>|all]...
+            [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|<other_values>]
+            [-fielddomain <name>]
             <datasource_name> [<layer> [<layer> ...]]
 
 Description
@@ -34,6 +35,8 @@ source to stdout (the terminal). By executing SQL statements it is also possible
 edit data.
 
 .. program:: ogrinfo
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -json
 
@@ -124,7 +127,7 @@ edit data.
     fact the 'fid' is a special field recognized by OGR SQL. So, `-where "fid in (1,3,5)"`
     would select features 1, 3 and 5.
 
-.. option:: -fields YES|NO:
+.. option:: -fields=YES|NO
 
     If set to ``NO``, the feature dump will not display field values. Default value
     is ``YES``.
@@ -135,7 +138,7 @@ edit data.
 
     Display details about a field domain.
 
-.. option:: -geom YES|NO|SUMMARY|WKT|ISO_WKT
+.. option:: -geom=YES|NO|SUMMARY|WKT|ISO_WKT
 
     If set to ``NO``, the feature dump will not display the geometry. If set to
     ``SUMMARY``, only a summary of the geometry will be displayed. If set to
@@ -144,7 +147,7 @@ edit data.
     value is ``YES``. (WKT and ``ISO_WKT`` are available starting with GDAL 2.1,
     which also changes the default to ISO_WKT)
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format-specific)
 
@@ -176,9 +179,7 @@ edit data.
 
     .. versionadded:: 3.1
 
-.. option:: --formats
-
-    List the format drivers that are enabled.
+.. include:: options/formats_vector.rst
 
 .. option:: -wkt_format <format>
 

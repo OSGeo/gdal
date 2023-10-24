@@ -309,6 +309,15 @@ The following open options are available:
       geotransform has been found, and that geotransform is within the bounds
       -180,360 -90,90, if YES assume OGC:CRS84.
 
+-  .. oo:: PRESERVE_AXIS_UNIT_IN_CRS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.8
+
+      Whether unusual linear axis unit (km) should be kept as such, instead of
+      being normalized to metre. The default is NO, ie that are being normalized
+      to metre (previous GDAL versions kept the original unit)
+
 
 Creation Issues
 ---------------
@@ -596,7 +605,17 @@ VSI Virtual File System API support
 -----------------------------------
 
 Since GDAL 2.4, and with Linux kernel >=4.3 and libnetcdf >=4.5, read
-operations on /vsi file systems are supported.
+operations on /vsi file systems are supported using the userfaultfd Linux system
+call. If running from a container, that system call may be unavailable by default.
+For example with Docker, ``--security-opt seccomp=unconfined`` might be needed.
+
+Corollary: operations on /vsi file systems are *not* supported on Windows or
+MacOSX. If the netCDF file is a NetCDF 4 / HDF5 file, and the HDF5 driver is
+available, you may set the :config:`GDAL_SKIP` configuration option to
+``netCDF`` to force the use of the HDF5 driver. Note that specificities of
+the netCDF driver, such as support georeferencing with the netCDF CF conventions,
+will not be available.
+
 
 NetCDF-4 groups support on reading (GDAL >= 3.0)
 ------------------------------------------------

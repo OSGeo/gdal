@@ -251,12 +251,12 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     static const char *GetOptionsStatic();
 
-    static bool IsAllowedFilename(const char *pszFilename);
-
     VSICurlFilesystemHandlerBase();
 
   public:
     ~VSICurlFilesystemHandlerBase() override;
+
+    static bool IsAllowedFilename(const char *pszFilename);
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
                            bool bSetError,
@@ -268,10 +268,6 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     int Rename(const char *oldpath, const char *newpath) override;
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
-    char **ReadDir(const char *pszDirname) override
-    {
-        return ReadDirEx(pszDirname, 0);
-    }
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
     char **SiblingFiles(const char *pszFilename) override;
 
@@ -540,10 +536,37 @@ class VSICurlHandle : public VSIVirtualHandle
 };
 
 /************************************************************************/
+/*                  VSICurlFilesystemHandlerBaseWritable                */
+/************************************************************************/
+
+class VSICurlFilesystemHandlerBaseWritable : public VSICurlFilesystemHandlerBase
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBaseWritable)
+
+  protected:
+    VSICurlFilesystemHandlerBaseWritable() = default;
+
+    virtual VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename, CSLConstList papszOptions) = 0;
+
+  public:
+    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
+                           bool bSetError, CSLConstList papszOptions) override;
+
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
+    {
+        return true;
+    }
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override;
+};
+
+/************************************************************************/
 /*                        IVSIS3LikeFSHandler                           */
 /************************************************************************/
 
-class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
+class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 
@@ -585,13 +608,6 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
                          void *pProgressData) override;
 
     virtual int DeleteObject(const char *pszFilename);
-
-    virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper *)
-    {
-    }
-    virtual void UpdateHandleFromMap(IVSIS3LikeHandleHelper *)
-    {
-    }
 
     bool Sync(const char *pszSource, const char *pszTarget,
               const char *const *papszOptions, GDALProgressFunc pProgressFunc,

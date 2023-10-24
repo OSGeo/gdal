@@ -91,8 +91,9 @@ class RequestResponse(object):
 
 
 class FileHandler(object):
-    def __init__(self, _dict):
+    def __init__(self, _dict, content_type=None):
         self.dict = _dict
+        self.content_type = content_type
 
     def final_check(self):
         pass
@@ -124,12 +125,20 @@ class FileHandler(object):
                     end = int(res[1]) + 1
                     if end > len(filedata):
                         end = len(filedata)
-            request.send_response(200)
-            if "Range" in request.headers:
-                request.send_header("Content-Range", "%d-%d" % (start, end - 1))
-            request.send_header("Content-Length", len(filedata))
-            request.end_headers()
-            request.wfile.write(filedata[start:end])
+            try:
+                data_slice = filedata[start:end]
+                request.send_response(200)
+                if "Range" in request.headers:
+                    request.send_header("Content-Range", "%d-%d" % (start, end - 1))
+                request.send_header("Content-Length", len(filedata))
+                if self.content_type:
+                    request.send_header("Content-Type", self.content_type)
+                request.end_headers()
+                request.wfile.write(data_slice)
+            except Exception as ex:
+                request.send_response(500)
+                request.end_headers()
+                request.wfile.write(str(ex).encode("utf8"))
 
 
 class SequentialHandler(object):
@@ -254,10 +263,13 @@ class SequentialHandler(object):
             request.send_response(req_resp.code)
             for k in req_resp.headers:
                 request.send_header(k, req_resp.headers[k])
-            if req_resp.add_content_length_header:
+            if (
+                req_resp.add_content_length_header
+                and "Content-Length" not in req_resp.headers
+            ):
                 if req_resp.body:
                     request.send_header("Content-Length", len(req_resp.body))
-                elif "Content-Length" not in req_resp.headers:
+                else:
                     request.send_header("Content-Length", "0")
             request.end_headers()
             if req_resp.body:

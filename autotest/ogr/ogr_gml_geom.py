@@ -1083,6 +1083,32 @@ def test_gml_Tin():
         == "TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
     ), "<gml:Tin> not correctly parsed"
 
+    gml = """<gml:Surface>
+                <gml:trianglePatches>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 0 0 0 1 0 1 0 0 0 0</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Triangle>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 0 0 0</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Triangle>
+                </gml:trianglePatches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToWkt()
+        == "TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
+    ), "<gml:Tin> not correctly parsed"
+
     # Part 2 - Create GML File from OGR Geometries
     wkt_original = "TIN Z (((0 0 0,0 0 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,0 0 0)))"
 
@@ -1096,6 +1122,135 @@ def test_gml_Tin():
     ):
         print(geom.ExportToWkt())
         pytest.fail("OGRGeometry::TriangulatedSurface incorrectly converted")
+
+
+###############################################################################
+
+
+def test_gml_Surface_with_curve_polygon_then_curve_polygon():
+
+    gml = """<gml:Surface>
+                <gml:patches>
+                    <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:PolygonPatch>
+                    <gml:PolygonPatch interpolation="planar">
+                     <gml:exterior>
+                      <gml:Ring>
+                       <gml:curveMember>
+                        <gml:Curve>
+                         <gml:segments>
+                          <gml:LineStringSegment interpolation="linear">
+                           <gml:pos>0 -1</gml:pos>
+                           <gml:pos>0 1</gml:pos>
+                          </gml:LineStringSegment>
+                          <gml:Arc interpolation="circularArc3Points" numArc="1">
+                           <gml:pos>0 1</gml:pos>
+                           <gml:pos>1 0</gml:pos>
+                           <gml:pos>0 -1</gml:pos>
+                          </gml:Arc>
+                         </gml:segments>
+                        </gml:Curve>
+                       </gml:curveMember>
+                      </gml:Ring></gml:exterior>
+                     </gml:PolygonPatch>
+                </gml:patches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToIsoWkt()
+        == "MULTISURFACE (((0 0,0 1,1 1,1 0,0 0)),CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1))))"
+    )
+
+
+###############################################################################
+
+
+def test_gml_Surface_with_curve_polygon_then_polygon_then_curve_polygon():
+
+    gml = """<gml:Surface>
+                <gml:patches>
+                    <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:PolygonPatch>
+                     <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList>0 0 0 1 1 1 1 0 0 0</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:PolygonPatch>
+                    <gml:PolygonPatch interpolation="planar">
+                     <gml:exterior>
+                      <gml:Ring>
+                       <gml:curveMember>
+                        <gml:Curve>
+                         <gml:segments>
+                          <gml:LineStringSegment interpolation="linear">
+                           <gml:pos>0 -1</gml:pos>
+                           <gml:pos>0 1</gml:pos>
+                          </gml:LineStringSegment>
+                          <gml:Arc interpolation="circularArc3Points" numArc="1">
+                           <gml:pos>0 1</gml:pos>
+                           <gml:pos>1 0</gml:pos>
+                           <gml:pos>0 -1</gml:pos>
+                          </gml:Arc>
+                         </gml:segments>
+                        </gml:Curve>
+                       </gml:curveMember>
+                      </gml:Ring></gml:exterior>
+                     </gml:PolygonPatch>
+                </gml:patches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToIsoWkt()
+        == "MULTISURFACE (((0 0,0 1,1 1,1 0,0 0)),((0 0,0 1,1 1,1 0,0 0)),CURVEPOLYGON (COMPOUNDCURVE ((0 -1,0 1),CIRCULARSTRING (0 1,1 0,0 -1))))"
+    )
+
+
+###############################################################################
+
+
+def test_gml_Surface_mix_of_triangle_and_rectangle():
+
+    gml = """<gml:Surface>
+                <gml:patches>
+                    <gml:Triangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 0 0 0 1 0 1 0 0 0 0</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:Triangle>
+                    <gml:Rectangle>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">0 0 10 0 1 10 1 1 10 1 0 10 0 0 10</gml:posList>
+                             </gml:LinearRing>
+                        </gml:exterior>
+                     </gml:Rectangle>
+                </gml:patches>
+            </gml:Surface>"""
+
+    geom = ogr.CreateGeometryFromGML(gml)
+
+    assert (
+        geom.ExportToIsoWkt()
+        == "GEOMETRYCOLLECTION Z (TRIANGLE Z ((0 0 0,0 0 1,0 1 0,0 0 0)),POLYGON Z ((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))"
+    )
 
 
 ###############################################################################
@@ -1555,10 +1710,15 @@ def test_gml_invalid_geoms():
             "<gml:Triangle><gml:exterior><gml:CompositeCurve/></gml:exterior></gml:Triangle>",
             None,
         ),
+        ("<gml:TriangulatedSurface></gml:TriangulatedSurface>", None),
+        (
+            "<gml:TriangulatedSurface><gml:patches><gml:Triangle/></gml:patches></gml:TriangulatedSurface>",
+            None,
+        ),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # print gml
             geom = ogr.CreateGeometryFromGML(gml)
         if geom is None:

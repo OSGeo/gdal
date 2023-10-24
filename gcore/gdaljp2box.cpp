@@ -574,10 +574,11 @@ GDALJP2Box *GDALJP2Box::CreateJUMBFBox(const GDALJP2Box *poJUMBFDescriptionBox,
                                        int nCount,
                                        const GDALJP2Box *const *papoBoxes)
 {
-    std::vector<const GDALJP2Box *> apoBoxes(1 + nCount);
-    apoBoxes[0] = poJUMBFDescriptionBox;
-    memcpy(&apoBoxes[1], papoBoxes, nCount * sizeof(GDALJP2Box *));
-    return CreateSuperBox("jumb", 1 + nCount, apoBoxes.data());
+    std::vector<const GDALJP2Box *> apoBoxes;
+    apoBoxes.push_back(poJUMBFDescriptionBox);
+    apoBoxes.insert(apoBoxes.end(), papoBoxes, papoBoxes + nCount);
+    return CreateSuperBox("jumb", static_cast<int>(apoBoxes.size()),
+                          apoBoxes.data());
 }
 
 /*! @endcond */

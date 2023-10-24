@@ -1506,19 +1506,19 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         poDS->SetMetadataItem("SAMP_DEN_COEFF", szValue, "RPC");
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
-                    sRPCInfo.LONG_OFF - (sRPCInfo.LONG_SCALE / 2.0));
+                    sRPCInfo.LONG_OFF - sRPCInfo.LONG_SCALE);
         poDS->SetMetadataItem("MIN_LONG", szValue, "RPC");
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
-                    sRPCInfo.LONG_OFF + (sRPCInfo.LONG_SCALE / 2.0));
+                    sRPCInfo.LONG_OFF + sRPCInfo.LONG_SCALE);
         poDS->SetMetadataItem("MAX_LONG", szValue, "RPC");
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
-                    sRPCInfo.LAT_OFF - (sRPCInfo.LAT_SCALE / 2.0));
+                    sRPCInfo.LAT_OFF - sRPCInfo.LAT_SCALE);
         poDS->SetMetadataItem("MIN_LAT", szValue, "RPC");
 
         CPLsnprintf(szValue, sizeof(szValue), "%.16g",
-                    sRPCInfo.LAT_OFF + (sRPCInfo.LAT_SCALE / 2.0));
+                    sRPCInfo.LAT_OFF + sRPCInfo.LAT_SCALE);
         poDS->SetMetadataItem("MAX_LAT", szValue, "RPC");
     }
 

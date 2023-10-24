@@ -14,6 +14,7 @@
 # gdal: DRIVER_SUPPORTED_API_VERSION = [1]
 # gdal: DRIVER_DCAP_VECTOR = "YES"
 # gdal: DRIVER_DMD_LONGNAME = "my super plugin"
+# gdal: DRIVER_DMD_OPENOPTIONLIST = "<OpenOptionList><Option name='GEOMFORMAT' type='string-select' description='Geometry format' default='WKT'><Value>WKT</Value><Value>WKB</Value><Value>WKB/bytearray</Value></Option></OpenOptionList>"
 
 # Optional driver metadata items.
 # # gdal: DRIVER_DMD_EXTENSIONS = "ext1 est2"
@@ -35,7 +36,8 @@ except ImportError:
 
 
 class Layer(BaseLayer):
-    def __init__(self):
+    def __init__(self, options):
+        self.options = options
 
         # Reserved attribute names. Either those or the corresponding method
         # must be defined
@@ -167,12 +169,23 @@ class Layer(BaseLayer):
                 "dateField": "2017-04-26",
                 "datetimeField": "2017-04-26T12:34:56.789Z",
             }
+            POINT_WKB = b"\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x80H@"
+
+            geom_format = self.options.get("GEOMFORMAT", "WKT")
+            if geom_format == "WKT":
+                geom = "POINT(2 49)"
+            elif geom_format == "WKB":
+                geom = POINT_WKB
+            elif geom_format == "WKB/bytearray":
+                geom = bytearray(POINT_WKB)
+            else:
+                raise ValueError(f"Unknown GEOMFORMAT: {geom_format}")
 
             yield {
                 "type": "OGRFeature",
                 "id": i + 1,
                 "fields": properties,
-                "geometry_fields": {"geomField": "POINT(2 49)"},
+                "geometry_fields": {"geomField": geom},
                 "style": "SYMBOL(a:0)" if i % 2 == 0 else None,
             }
 
@@ -184,10 +197,11 @@ class Layer(BaseLayer):
 class Dataset(BaseDataset):
 
     # Optional, but implementations will generally need it
-    def __init__(self, filename):
+    def __init__(self, filename, options):
         # If the layers member is set, layer_count() and layer() will not be used
-        self.layers = [Layer()]
+        self.layers = [Layer(options)]
         self.metadata = {"foo": "bar"}
+        self.options = options
 
     # Optional, called on native object destruction
     def close(self):
@@ -223,4 +237,4 @@ class Driver(BaseDriver):
     def open(self, filename, first_bytes, open_flags, open_options={}):
         if not self.identify(filename, first_bytes, open_flags):
             return None
-        return Dataset(filename)
+        return Dataset(filename, options=open_options)

@@ -33,8 +33,11 @@ import os
 import shutil
 import struct
 import sys
+import tempfile
+from pathlib import Path
 
 import gdaltest
+import pytest
 
 from osgeo import gdal, osr
 
@@ -707,6 +710,31 @@ def test_vrtmisc_blocksize_gdal_translate_indirect():
 
 
 ###############################################################################
+# Test replicating source block size if we subset with an offset multiple
+# of the source block size
+
+
+def test_vrtmisc_blocksize_gdal_translate_implicit():
+
+    src_filename = "/vsimem/src.tif"
+    gdal.GetDriverByName("GTiff").Create(
+        src_filename, 128, 512, options=["TILED=YES", "BLOCKXSIZE=48", "BLOCKYSIZE=256"]
+    )
+    filename = "/vsimem/test_vrtmisc_blocksize_gdal_translate_implicit.vrt"
+    vrt_ds = gdal.Translate(filename, src_filename, srcWin=[48 * 2, 256, 100, 256])
+    vrt_ds = None
+
+    vrt_ds = gdal.Open(filename)
+    blockxsize, blockysize = vrt_ds.GetRasterBand(1).GetBlockSize()
+    assert blockxsize == 48
+    assert blockysize == 256
+    vrt_ds = None
+
+    gdal.Unlink(filename)
+    gdal.Unlink(src_filename)
+
+
+###############################################################################
 # Test support for coordinate epoch
 
 
@@ -1009,3 +1037,44 @@ def test_vrt_write_copy_mdd():
     src_ds = None
     gdal.Unlink(filename)
     gdal.Unlink(src_filename)
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("netCDF")
+def test_vrt_read_netcdf():
+    """Test subdataset info API used by VRT driver to calculate relative path"""
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        nc_path = os.path.join(tmpdirname, "alldatatypes.nc")
+        vrt_path = os.path.join(tmpdirname, "test_vrt_read_netcdf.vrt")
+        vrt_copy_path = os.path.join(tmpdirname, "test_vrt_read_netcdf_copy.vrt")
+        shutil.copyfile(
+            Path(__file__).parent.parent / "gdrivers/data/netcdf/alldatatypes.nc",
+            nc_path,
+        )
+        subds_filename = f'NETCDF:"{nc_path}":ubyte_var'
+        buffer = f"""<VRTDataset rasterXSize="1" rasterYSize="1">
+  <VRTRasterBand dataType="Byte" band="1">
+    <NoDataValue>0</NoDataValue>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">{subds_filename}</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <DstRect xOff="0" yOff="0" xSize="1" ySize="1" />
+      <NODATA>1</NODATA>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+        with open(vrt_path, "w+") as f:
+            f.write(buffer)
+
+        ds = gdal.Open(vrt_path)
+        assert ds is not None
+        gdal.GetDriverByName("VRT").CreateCopy(vrt_copy_path, ds)
+
+        ds = None
+
+        with open(vrt_copy_path, "r") as xml:
+            assert 'NETCDF:"alldatatypes.nc":ubyte_var' in xml.read()

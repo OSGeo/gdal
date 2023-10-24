@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    Usage: gdalsrsinfo [--single-line] [-V] [-e][-o <out_type>] <srs_def>
+    Usage: gdalsrsinfo [--help] [--help-general]
+                       [--single-line] [-V] [-e][-o <out_type>] <srs_def>
 
 Description
 -----------
@@ -27,6 +28,8 @@ The :program:`gdalsrsinfo` utility reports information about a given SRS from on
 
 
 .. program:: gdalsrsinfo
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: --single-line
 

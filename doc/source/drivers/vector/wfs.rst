@@ -108,6 +108,12 @@ If only the N first features must be downloaded and paging through the whole
 layer is not desirable, the :config:`OGR_WFS_PAGING_ALLOWED`
 configuration option should be set to OFF.
 
+Starting with GDAL 3.8, if the feature count is already known before
+fetching the first feature, and the feature count is less than the page
+size, then the WFS driver will not use paging (no ``STARTINDEX`` parameter
+will be used in the requests). (This behavior improves compatibility with
+Geoserver when datasources with no primary key.)
+
 Paging with WFS 1.0 or 1.1
 ++++++++++++++++++++++++++
 
@@ -381,33 +387,33 @@ Listing the types of a WFS server :
 
 ::
 
-   ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap
+   ogrinfo -ro WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg
 
 Listing the types of a WFS server whose layer structures are cached in a
-XML file:
+XML file :
 
 ::
 
-   ogrinfo -ro mswfs_gmap.xml
+   ogrinfo -ro wfs_nw_dvg.xml
 
-Listing the features of the popplace layer, with a spatial filter :
-
-::
-
-   ogrinfo -ro WFS:http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap popplace -spat 0 0 2961766.250000 3798856.750000
-
-Retrieving the features of gml:id "world.2" and "world.3" from the
-tows:world layer :
+Listing the features of the dvg:nw_dvg2_rbz layer, with a spatial filter :
 
 ::
 
-   ogrinfo "WFS:http://www.tinyows.org/cgi-bin/tinyows" tows:world -ro -al -where "gml_id='world.2' or gml_id='world.3'"
+   ogrinfo -ro WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg dvg:nw_dvg2_rbz -spat 0 0 319874 5686804
 
-Display layer metadata:
+Retrieving the features of GN "Köln" and "Viersen" from the
+dvg:nw_dvg2_krs layer :
 
 ::
 
-   ogrinfo -ro -al "WFS:http://v2.suite.opengeo.org/geoserver/ows" WFSLayerMetadata
+   ogrinfo WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg dvg:nw_dvg2_krs -ro -al -where "GN='Köln' or GN='Viersen'"
+
+Display layer metadata :
+
+::
+
+   ogrinfo -ro -al WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg WFSLayerMetadata
 
 See Also
 --------

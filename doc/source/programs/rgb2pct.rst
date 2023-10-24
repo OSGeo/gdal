@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    rgb2pct.py [-n colors | -pct palette_file] [-of format] <source_file> <dest_file>
+    rgb2pct.py [--help] [--help-general]
+               [-n colors | -pct palette_file] [-of format] <source_file> <dest_file>
 
 Description
 -----------
@@ -27,6 +28,8 @@ This conversion utilizes Floyd-Steinberg dithering (error diffusion) to
 maximize output image visual quality.
 
 .. program:: rgb2pct
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -n <color>
 

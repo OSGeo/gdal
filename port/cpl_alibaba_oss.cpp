@@ -136,6 +136,7 @@ VSIOSSHandleHelper::VSIOSSHandleHelper(const CPLString &osSecretAccessKey,
       m_osObjectKey(osObjectKey), m_bUseHTTPS(bUseHTTPS),
       m_bUseVirtualHosting(bUseVirtualHosting)
 {
+    VSIOSSUpdateParams::UpdateHandleFromMap(this);
 }
 
 /************************************************************************/
@@ -291,15 +292,11 @@ struct curl_slist *VSIOSSHandleHelper::GetCurlHeaders(
 /************************************************************************/
 
 bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
-                                           const char *, bool bSetError,
-                                           bool *pbUpdateMap)
+                                           const char *, bool bSetError)
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("OSS", "%s", pszErrorMsg);
 #endif
-
-    if (pbUpdateMap != nullptr)
-        *pbUpdateMap = true;
 
     if (!STARTS_WITH(pszErrorMsg, "<?xml"))
     {
@@ -342,6 +339,9 @@ bool VSIOSSHandleHelper::CanRestartOnError(const char *pszErrorMsg,
             SetEndpoint(pszEndpoint);
             CPLDebug("OSS", "Switching to endpoint %s", m_osEndpoint.c_str());
             CPLDestroyXMLNode(psTree);
+
+            VSIOSSUpdateParams::UpdateMapFromHandle(this);
+
             return true;
         }
     }
@@ -450,6 +450,52 @@ CPLString VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
     AddQueryParameter("Expires", osExpires);
     AddQueryParameter("Signature", osSignature);
     return m_osURL;
+}
+
+/************************************************************************/
+/*                         UpdateMapFromHandle()                        */
+/************************************************************************/
+
+std::mutex VSIOSSUpdateParams::gsMutex{};
+
+std::map<CPLString, VSIOSSUpdateParams>
+    VSIOSSUpdateParams::goMapBucketsToOSSParams{};
+
+void VSIOSSUpdateParams::UpdateMapFromHandle(
+    VSIOSSHandleHelper *poOSSHandleHelper)
+{
+    std::lock_guard<std::mutex> guard(gsMutex);
+
+    goMapBucketsToOSSParams[poOSSHandleHelper->GetBucket()] =
+        VSIOSSUpdateParams(poOSSHandleHelper);
+}
+
+/************************************************************************/
+/*                         UpdateHandleFromMap()                        */
+/************************************************************************/
+
+void VSIOSSUpdateParams::UpdateHandleFromMap(
+    VSIOSSHandleHelper *poOSSHandleHelper)
+{
+    std::lock_guard<std::mutex> guard(gsMutex);
+
+    std::map<CPLString, VSIOSSUpdateParams>::iterator oIter =
+        goMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
+    if (oIter != goMapBucketsToOSSParams.end())
+    {
+        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
+    }
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIOSSUpdateParams::ClearCache()
+{
+    std::lock_guard<std::mutex> guard(gsMutex);
+
+    goMapBucketsToOSSParams.clear();
 }
 
 #endif  // HAVE_CURL

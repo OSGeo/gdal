@@ -103,6 +103,7 @@ class GDALDatasetPamInfo
 
     CPLString osPhysicalFilename{};
     CPLString osSubdatasetName{};
+    CPLString osDerivedDatasetName{};
     CPLString osAuxFilename{};
 
     int bHasMetadata = false;
@@ -145,6 +146,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     const char *GetPhysicalFilename();
     void SetSubdatasetName(const char *);
     const char *GetSubdatasetName();
+    void SetDerivedDatasetName(const char *);
     //! @endcond
 
   public:
@@ -188,10 +190,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                            CSLConstList papszOptions) override;
 
     // "semi private" methods.
-    void MarkPamDirty()
-    {
-        nPamFlags |= GPF_DIRTY;
-    }
+    void MarkPamDirty();
     GDALDatasetPamInfo *GetPamInfo()
     {
         return psPam;

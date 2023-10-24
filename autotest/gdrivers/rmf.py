@@ -51,14 +51,14 @@ def test_rmf_1():
 def test_rmf_2():
 
     tst = gdaltest.GDALTest("rmf", "rmf/byte-lzw.rsw", 1, 40503)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
 
 def test_rmf_3():
 
     tst = gdaltest.GDALTest("rmf", "rmf/float64.mtw", 1, 4672)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
@@ -77,30 +77,30 @@ def test_rmf_4():
 def test_rmf_5():
 
     tst = gdaltest.GDALTest("rmf", "rmf/rgbsmall-lzw.rsw", 1, 40503)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
     tst = gdaltest.GDALTest("rmf", "rmf/rgbsmall-lzw.rsw", 2, 41429)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
     tst = gdaltest.GDALTest("rmf", "rmf/rgbsmall-lzw.rsw", 3, 40238)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
 
 def test_rmf_6():
 
     tst = gdaltest.GDALTest("rmf", "rmf/big-endian.rsw", 1, 7782)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
     tst = gdaltest.GDALTest("rmf", "rmf/big-endian.rsw", 2, 8480)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
     tst = gdaltest.GDALTest("rmf", "rmf/big-endian.rsw", 3, 4195)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
 
@@ -141,7 +141,7 @@ def test_rmf_10():
 
     tst = gdaltest.GDALTest("rmf", "rmf/t100.mtw", 1, 6388)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
 
@@ -189,7 +189,7 @@ def test_rmf_11():
 def test_rmf_12a():
 
     tst = gdaltest.GDALTest("rmf", "rmf/cucled-1.rsw", 1, 4672)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
@@ -200,7 +200,7 @@ def test_rmf_12a():
 def test_rmf_12b():
 
     tst = gdaltest.GDALTest("rmf", "rmf/cucled-2.rsw", 1, 4672)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
@@ -211,7 +211,7 @@ def test_rmf_12b():
 def test_rmf_12c():
 
     tst = gdaltest.GDALTest("rmf", "rmf/invalid-subheader.rsw", 1, 4672)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 

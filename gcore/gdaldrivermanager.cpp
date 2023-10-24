@@ -767,6 +767,116 @@ char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
 }
 
 /************************************************************************/
+/*                          LoadPlugin()                                */
+/************************************************************************/
+
+/**
+ * \brief Load a single GDAL driver/plugin from shared libraries.
+ *
+ * This function will load a single named driver/plugin from shared libraries.
+ * It searches the "driver path" for .so (or .dll) files named
+ * "gdal_{name}.[so|dll|dylib]" or "ogr_{name}.[so|dll|dylib]", then tries to
+ * call a function within them called GDALRegister_{name}(), or failing that
+ * called GDALRegisterMe().
+ * 
+ * \see GDALDriverManager::AutoLoadDrivers() for the rules used to determine
+ * which paths are searched for plugin library files.
+ */
+
+CPLErr GDALDriverManager::LoadPlugin(const char *name)
+{
+#ifdef GDAL_NO_AUTOLOAD
+    CPLDebug("GDAL", "GDALDriverManager::LoadPlugin() not compiled in.");
+    return CE_Failure;
+#else
+    const char *pszGDAL_DRIVER_PATH =
+        CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr);
+    if (pszGDAL_DRIVER_PATH == nullptr)
+        pszGDAL_DRIVER_PATH = CPLGetConfigOption("OGR_DRIVER_PATH", nullptr);
+
+    /* -------------------------------------------------------------------- */
+    /*      Where should we look for stuff?                                 */
+    /* -------------------------------------------------------------------- */
+    const CPLStringList aosSearchPaths(GetSearchPaths(pszGDAL_DRIVER_PATH));
+
+    /* -------------------------------------------------------------------- */
+    /*      Format the ABI version specific subdirectory to look in.        */
+    /* -------------------------------------------------------------------- */
+    CPLString osABIVersion;
+
+    osABIVersion.Printf("%d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR);
+
+    /* -------------------------------------------------------------------- */
+    /*      Scan each directory looking for files matching                  */
+    /*      gdal_{name}.[so|dll|dylib] or ogr_{name}.[so|dll|dylib]         */
+    /* -------------------------------------------------------------------- */
+    const int nSearchPaths = aosSearchPaths.size();
+    for (int iDir = 0; iDir < nSearchPaths; ++iDir)
+    {
+        CPLString osABISpecificDir =
+            CPLFormFilename(aosSearchPaths[iDir], osABIVersion, nullptr);
+
+        VSIStatBufL sStatBuf;
+        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+            osABISpecificDir = aosSearchPaths[iDir];
+
+        CPLString gdal_or_ogr[2] = {"gdal_", "ogr_"};
+        CPLString platformExtensions[3] = {"so", "dll", "dylib"};
+
+        for (CPLString &prefix : gdal_or_ogr)
+        {
+            for (CPLString &extension : platformExtensions)
+            {
+                const char *pszFilename = CPLFormFilename(
+                    osABISpecificDir, CPLSPrintf("%s%s", prefix.c_str(), name),
+                    extension);
+                if (VSIStatL(pszFilename, &sStatBuf) != 0)
+                    continue;
+
+                CPLString osFuncName;
+                if (EQUAL(prefix, "gdal_"))
+                {
+                    osFuncName.Printf("GDALRegister_%s", name);
+                }
+                else
+                {
+                    osFuncName.Printf("RegisterOGR%s", name);
+                }
+                CPLErrorReset();
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                void *pRegister = CPLGetSymbol(pszFilename, osFuncName);
+                CPLPopErrorHandler();
+                if (pRegister == nullptr)
+                {
+                    CPLString osLastErrorMsg(CPLGetLastErrorMsg());
+                    osFuncName = "GDALRegisterMe";
+                    pRegister = CPLGetSymbol(pszFilename, osFuncName);
+                    if (pRegister == nullptr)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                                 osLastErrorMsg.c_str());
+                        return CE_Failure;
+                    }
+                }
+                CPLDebug("GDAL", "Registering %s using %s in %s", name,
+                         osFuncName.c_str(), pszFilename);
+                CPLErrorReset();
+                reinterpret_cast<void (*)()>(pRegister)();
+                if (CPLGetErrorCounter() > 0)
+                {
+                    return CE_Failure;
+                }
+                return CE_None;
+            }
+        }
+    }
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Failed to find driver %s in configured driver paths.", name);
+    return CE_Failure;
+#endif  // GDAL_NO_AUTOLOAD
+}
+
+/************************************************************************/
 /*                          AutoLoadDrivers()                           */
 /************************************************************************/
 

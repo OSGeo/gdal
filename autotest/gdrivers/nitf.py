@@ -53,12 +53,162 @@ def module_disable_exceptions():
 
 
 @pytest.fixture(scope="module")
-def not_jpeg_9b():
-    import jpeg
-
-    jpeg.test_jpeg_1()
-    if gdaltest.jpeg_version == "9b":
+def not_jpeg_9b(jpeg_version):
+    if jpeg_version == "9b":
         pytest.skip()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    yield
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/test_create.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf9.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/test_13.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/test_29.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/test_29_copy.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf36.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf37.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf38.ntf")
+        os.unlink("tmp/nitf38.ntf_0.ovr")
+    except (RuntimeError, OSError):
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf39.ntf")
+    except (RuntimeError, OSError):
+        pass
+
+    try:
+        os.stat("tmp/nitf40.ntf")
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf40.ntf")
+    except (RuntimeError, OSError):
+        pass
+
+    try:
+        os.stat("tmp/nitf42.ntf")
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf42.ntf")
+    except (OSError, RuntimeError):
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf44.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf45.ntf")
+        os.unlink("tmp/nitf45.ntf_0.ovr")
+    except (RuntimeError, OSError):
+        pass
+
+    try:
+        os.stat("tmp/nitf46.ntf")
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf46.ntf")
+        os.unlink("tmp/nitf46.ntf_0.ovr")
+    except (RuntimeError, OSError):
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf49.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf49_2.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf50.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf51.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf52.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf53.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf54.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf55.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf56.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf57.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf58.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        os.remove("tmp/nitf59.hdr")
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf59.ntf")
+    except (OSError, RuntimeError):
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf62.ntf")
+    except RuntimeError:
+        pass
+
+    try:
+        gdal.GetDriverByName("NITF").Delete("tmp/nitf63.ntf")
+    except RuntimeError:
+        pass
 
 
 def hex_string(s):
@@ -146,15 +296,6 @@ def nitf_create(creation_options, set_inverted_color_interp=True, createcopy=Fal
 
 
 ###############################################################################
-# Test direction creation of an non-compressed NITF file.
-
-
-def test_nitf_4():
-
-    return nitf_create(["ICORDS=G"])
-
-
-###############################################################################
 # Verify created file
 
 
@@ -206,10 +347,12 @@ def nitf_check_created_file(
 
 
 ###############################################################################
-# Verify file created by nitf_4()
+# Test direction creation of an non-compressed NITF file.
 
 
 def test_nitf_5():
+
+    nitf_create(["ICORDS=G"])
 
     nitf_check_created_file(32498, 42602, 38982)
 
@@ -298,13 +441,8 @@ def test_nitf_9():
     md = ds.GetMetadata("IMAGE_STRUCTURE")
     assert md["COMPRESSION"] == "JPEG", "Did not get expected compression value."
 
-
-###############################################################################
-# For esoteric reasons, createcopy from jpeg compressed nitf files can be
-# tricky.  Verify this is working.
-
-
-def test_nitf_10():
+    # For esoteric reasons, createcopy from jpeg compressed nitf files can be
+    # tricky.  Verify this is working.
 
     src_ds = gdal.Open("tmp/nitf9.ntf")
     expected_cs = src_ds.GetRasterBand(2).Checksum()
@@ -399,12 +537,8 @@ def test_nitf_13():
 
     ds = None
 
-
-###############################################################################
-# Verify previous file
-
-
-def test_nitf_14():
+    ###############################################################################
+    # Verify file
     ds = gdal.Open("tmp/test_13.ntf")
 
     chksum = ds.GetRasterBand(1).Checksum()
@@ -472,7 +606,7 @@ def test_nitf_create_copy_user_provided_IGEOLO_without_ICORDS():
         "/vsimem/test_nitf_create_copy_user_provided_IGEOLO_without_ICORDS.ntf"
     )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("NITF").CreateCopy(
                 outfilename, src_ds, options=["IGEOLO=" + ("0" * 60)]
@@ -580,7 +714,7 @@ def test_nitf_17():
 def test_nitf_18():
 
     # Shut up the warning about missing image segment
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0006A.NTF
         ds = gdal.Open("data/nitf/U_0006A.NTF")
 
@@ -606,7 +740,7 @@ def test_nitf_19():
 def test_nitf_20():
 
     # Shut up the warning about file either corrupt or empty
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0002A.NTF
         ds = gdal.Open("data/nitf/U_0002A.NTF")
 
@@ -622,7 +756,7 @@ def test_nitf_20():
 def test_nitf_21():
 
     # Shut up the warning about missing image segment
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/nitf/ns3114a.nsf")
 
     mdTEXT = ds.GetMetadata("TEXT")
@@ -839,7 +973,7 @@ def test_nitf_jp2openjpeg_npje_numerically_lossless():
 
     src_ds = gdal.Open("../gcore/data/uint16.tif")
     # May throw a warning with openjpeg < 2.5
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
             "/vsimem/tmp.ntf",
             src_ds,
@@ -931,7 +1065,7 @@ def test_nitf_jp2openjpeg_npje_visually_lossless():
 
     src_ds = gdal.Open("data/byte.tif")
     # May throw a warning with openjpeg < 2.5
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
             "/vsimem/tmp.ntf",
             src_ds,
@@ -1019,7 +1153,7 @@ def test_nitf_jp2openjpeg_npje_visually_lossless_with_quality():
 
     src_ds = gdal.Open("data/byte.tif")
     # May throw a warning with openjpeg < 2.5
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
             "/vsimem/tmp.ntf",
             src_ds,
@@ -1622,13 +1756,13 @@ def nitf_43(driver_to_test, options):
             jp2_drv = None
 
     if jp2_drv is None:
-        pytest.skip()
+        pytest.skip(f"Driver {driver_to_test} not available")
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
     try:
         ds = gdal.Open("data/byte.tif")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdal.GetDriverByName("NITF").CreateCopy(
                 "tmp/nitf_43.ntf", ds, options=options, strict=0
             )
@@ -1717,7 +1851,7 @@ def test_nitf_check_jpeg2000_overviews(driver_to_test):
 
     jp2_drv = gdal.GetDriverByName(driver_to_test)
     if jp2_drv is None:
-        pytest.skip("Driver {driver_to_test} missing")
+        pytest.skip(f"Driver {driver_to_test} missing")
 
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but(driver_to_test)
@@ -2180,7 +2314,7 @@ def test_nitf_read_IMRFCA_IMASDA():
     assert md == {}
 
     # Too short IMRFCA
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Create(
             tmpfile,
             1,
@@ -2194,7 +2328,7 @@ def test_nitf_read_IMRFCA_IMASDA():
     assert md == {}
 
     # Too short IMASDA
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Create(
             tmpfile,
             1,
@@ -2248,7 +2382,7 @@ def test_nitf_59():
 def test_nitf_60():
 
     # Shut down errors because the file is truncated
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/nitf/testtest.on9")
     wkt = ds.GetProjectionRef()
     gt = ds.GetGeoTransform()
@@ -2498,7 +2632,7 @@ def test_nitf_66():
 def test_nitf_67():
 
     src_ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("NITF").CreateCopy(
             "/vsimem/nitf_67.ntf",
             src_ds,
@@ -2912,7 +3046,7 @@ def test_nitf_72():
 
         src_ds.SetMetadata(src_md, "RPC")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.GetDriverByName("NITF").CreateCopy("/vsimem/nitf_72.ntf", src_ds)
         assert ds is not None, "fail: expected a dataset"
         ds = None
@@ -2943,7 +3077,7 @@ def test_nitf_72():
     ] = "0 9.876543e-10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9"
     src_ds.SetMetadata(src_md, "RPC")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("NITF").CreateCopy("/vsimem/nitf_72.ntf", src_ds)
     assert ds is not None, "fail: expected a dataset"
     ds = None
@@ -2966,7 +3100,7 @@ def test_nitf_72():
     assert RPC00B == expected_RPC00B, "fail: did not get expected RPC00B"
 
     # Test RPCTXT creation option
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").CreateCopy(
             "/vsimem/nitf_72.ntf", src_ds, options=["RPCTXT=YES"]
         )
@@ -3012,7 +3146,7 @@ def test_nitf_72():
 
         src_ds.SetMetadata(src_md, "RPC")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.GetDriverByName("NITF").CreateCopy("/vsimem/nitf_72.ntf", src_ds)
         assert ds is None, "fail: expected failure for %s" % key
 
@@ -3024,7 +3158,7 @@ def test_nitf_72():
     ] = "0 9.876543e10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9"
     src_ds.SetMetadata(src_md, "RPC")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("NITF").CreateCopy("/vsimem/nitf_72.ntf", src_ds)
     assert ds is None, "fail: expected failure"
 
@@ -3035,7 +3169,7 @@ def test_nitf_72():
 
 def test_nitf_73():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Open("data/nitf/oss_fuzz_1525.ntf")
 
 
@@ -4730,7 +4864,7 @@ def test_nitf_tre_overflow_des_error_missing_RESERVE_SPACE_FOR_TRE_OVERFLOW():
     des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
     des = des_header + des_data
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         gdal.GetDriverByName("NITF").Create(
             "/vsimem/nitf_DES.ntf", 1, 1, options=["DES=TRE_OVERFLOW=" + des]
@@ -4763,7 +4897,7 @@ def test_nitf_tre_overflow_des_errorinvalid_DESITEM():
     des_data = "CSEPHA" + ("%05d" % len(CSEPHA_DATA)) + CSEPHA_DATA
     des = des_header + des_data
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         gdal.GetDriverByName("NITF").Create(
             "/vsimem/nitf_DES.ntf",
@@ -5011,13 +5145,13 @@ def test_nitf_create_too_large_file():
 
     # Test 1e10 byte limit for a single image
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Create("/vsimem/out.ntf", int(1e5), int(1e5))
     assert gdal.GetLastErrorMsg() != ""
 
     # Test 1e12 byte limit for while file
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Create(
             "/vsimem/out.ntf",
             int(1e5),
@@ -5354,7 +5488,7 @@ def test_nitf_no_image_segment():
 
     src_ds = gdal.Open("data/byte.tif")
     out_filename = "/vsimem/test_nitf_no_image_segment.ntf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("NITF").CreateCopy(
                 out_filename, src_ds, strict=False, options=["NUMI=0"]
@@ -5362,14 +5496,14 @@ def test_nitf_no_image_segment():
             is not None
         )
     gdal.Unlink(out_filename + ".aux.xml")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(out_filename)
     assert ds is not None
     for domain in ds.GetMetadataDomainList():
         ds.GetMetadata(domain)
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Delete(out_filename)
 
 
@@ -5380,7 +5514,7 @@ def test_nitf_no_image_segment():
 def test_nitf_metadata_validation_tre():
 
     filename = "/vsimem/test_nitf_metadata_validation_tre.ntf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Create(
             filename,
             1,
@@ -5390,7 +5524,7 @@ def test_nitf_metadata_validation_tre():
             ],
         )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
     assert gdal.GetLastErrorMsg() != ""
     md = ds.GetMetadata("xml:TRE")[0]
@@ -5417,7 +5551,7 @@ def test_nitf_metadata_validation_tre():
 """
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
         )
@@ -5435,12 +5569,12 @@ def test_nitf_metadata_validation_des():
     filename = "/vsimem/test_nitf_metadata_validation_des.ntf"
     des_data = b"02U" + b" " * 166 + b"0004ABCD"
     escaped_data = gdal.EscapeString(des_data, gdal.CPLES_BackslashQuotable)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("NITF").Create(
             filename, 1, 1, options=[b"DES=CSATTA DES=" + escaped_data]
         )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
     assert gdal.GetLastErrorMsg() != ""
     md = ds.GetMetadata("xml:DES")[0]
@@ -5477,7 +5611,7 @@ def test_nitf_metadata_validation_des():
 """
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             filename, open_options=["VALIDATE=YES", "FAIL_IF_VALIDATION_ERROR=YES"]
         )
@@ -5506,7 +5640,7 @@ def test_nitf_online_1():
     )
 
     # Shut up the warning about missing image segment
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
 
@@ -5691,7 +5825,7 @@ def test_nitf_online_10():
     )
 
     # Shut up the warning about missing image segment
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("tmp/cache/ns3119b.nsf")
 
     mdCGM = ds.GetMetadata("CGM")
@@ -6267,156 +6401,3 @@ def test_nitf_online_25():
     ds = None
 
     assert xml_tre.find('<tre name="PIAPRD"') != -1, "did not get expected xml:TRE"
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_nitf_cleanup():
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/test_create.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf9.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/test_13.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/test_29.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/test_29_copy.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf36.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf37.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf38.ntf")
-        os.unlink("tmp/nitf38.ntf_0.ovr")
-    except (RuntimeError, OSError):
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf39.ntf")
-    except (RuntimeError, OSError):
-        pass
-
-    try:
-        os.stat("tmp/nitf40.ntf")
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf40.ntf")
-    except (RuntimeError, OSError):
-        pass
-
-    try:
-        os.stat("tmp/nitf42.ntf")
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf42.ntf")
-    except (OSError, RuntimeError):
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf44.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf45.ntf")
-        os.unlink("tmp/nitf45.ntf_0.ovr")
-    except (RuntimeError, OSError):
-        pass
-
-    try:
-        os.stat("tmp/nitf46.ntf")
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf46.ntf")
-        os.unlink("tmp/nitf46.ntf_0.ovr")
-    except (RuntimeError, OSError):
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf49.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf49_2.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf50.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf51.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf52.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf53.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf54.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf55.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf56.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf57.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf58.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        os.remove("tmp/nitf59.hdr")
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf59.ntf")
-    except (OSError, RuntimeError):
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf62.ntf")
-    except RuntimeError:
-        pass
-
-    try:
-        gdal.GetDriverByName("NITF").Delete("tmp/nitf63.ntf")
-    except RuntimeError:
-        pass

@@ -533,6 +533,18 @@ General options
       decreasing priority. The set of sources recognized by this option is
       driver-specific.
 
+-  .. config:: GDAL_OVR_PROPAGATE_NODATA
+      :choices: YES, NO
+      :default: NO
+      :since: 2.2
+
+      When computing the value of an overview pixel, determines whether a
+      single NODATA value should cause the overview pixel to be set to NODATA
+      (``YES``), or whether the NODATA values should be simply ignored
+      (``NO``).  This configuration option is not supported for all resampling
+      algorithms/data types.
+
+
 -  .. config:: USE_RRD
       :choices: YES, NO
       :default: NO
@@ -696,8 +708,8 @@ Networking options
       or a double-quote character is needed in the value, then the key: value pair
       must be enclosed in double-quote characters. In that situation, backslash
       and double quote character must be backslash-escaped.  e.g
-      GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote
-      \", end of value",Another: Header
+      GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\\\, escaped double-quote
+      \\", end of value",Another: Header
 
 -  .. config:: GDAL_HTTP_MAX_RETRY
       :since: 2.3

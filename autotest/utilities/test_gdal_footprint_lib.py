@@ -29,6 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
+import pathlib
+
 import ogrtest
 import pytest
 
@@ -366,12 +369,12 @@ def test_gdal_footprint_lib_ovr_georef():
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdal_footprint_lib_dsco_lco():
+def test_gdal_footprint_lib_dsco_lco(tmp_vsimem):
 
-    out_filename = "/vsimem/out.gpkg"
+    out_filename = tmp_vsimem / "out.gpkg"
     out_ds = gdal.Footprint(
         out_filename,
-        "../gcore/data/byte.tif",
+        pathlib.Path("../gcore/data/byte.tif"),
         format="GPKG",
         datasetCreationOptions=["ADD_GPKG_OGR_CONTENTS=NO"],
         layerCreationOptions=["GEOMETRY_NAME=my_geom"],
@@ -389,3 +392,38 @@ def test_gdal_footprint_lib_dsco_lco():
     ) as sql_lyr:
         assert sql_lyr.GetFeatureCount() == 0
     gdal.Unlink(out_filename)
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdaldem_footprint_dict_arguments():
+
+    opt = gdal.FootprintOptions(
+        "__RETURN_OPTION_LIST__",
+        datasetCreationOptions=collections.OrderedDict(
+            (("GEOMETRY_ENCODING", "WKT"), ("FORMAT", "NC4"))
+        ),
+        layerCreationOptions=collections.OrderedDict(
+            (("RECORD_DIM_NAME", "record"), ("STRING_DEFAULT_WIDTH", 10))
+        ),
+    )
+
+    dsco_idx = opt.index("-dsco")
+
+    assert opt[dsco_idx : dsco_idx + 4] == [
+        "-dsco",
+        "GEOMETRY_ENCODING=WKT",
+        "-dsco",
+        "FORMAT=NC4",
+    ]
+
+    lco_idx = opt.index("-lco")
+
+    assert opt[lco_idx : lco_idx + 4] == [
+        "-lco",
+        "RECORD_DIM_NAME=record",
+        "-lco",
+        "STRING_DEFAULT_WIDTH=10",
+    ]

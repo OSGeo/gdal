@@ -90,10 +90,6 @@ class VSIPluginFilesystemHandler : public VSIFilesystemHandler
     int Rename(const char *oldpath, const char * /*newpath*/) override;
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
-    char **ReadDir(const char *pszDirname) override
-    {
-        return ReadDirEx(pszDirname, 0);
-    }
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
     char **SiblingFiles(const char *pszFilename) override;
     int HasOptimizedReadMultiRange(const char *pszPath) override;

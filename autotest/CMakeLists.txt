@@ -99,7 +99,8 @@ endfunction ()
           osr
           gnm
           pyscripts
-          utilities)
+          utilities
+          benchmark)
     if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
         if (SKIP_COPYING_AUTOTEST_SUBDIRS)
           message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")

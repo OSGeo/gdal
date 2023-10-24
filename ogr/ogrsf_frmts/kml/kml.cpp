@@ -564,8 +564,7 @@ bool KML::isValid()
     checkValidity();
 
     if (validity == KML_VALIDITY_VALID)
-        CPLDebug("KML", "Valid: %d Version: %s", validity == KML_VALIDITY_VALID,
-                 sVersion_.c_str());
+        CPLDebug("KML", "Valid: 1 Version: %s", sVersion_.c_str());
 
     return validity == KML_VALIDITY_VALID;
 }

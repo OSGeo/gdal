@@ -5,7 +5,7 @@ Python Gotchas in the GDAL and OGR Python Bindings
 ================================================================================
 
 This page lists aspects of GDAL's and OGR's Python bindings that may catch Python programmers by surprise.
-If you find something new, feel free to add it to the list, but consider discussing it on the `gdal-dev mailing list <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__  first,
+If you find something new, feel free to open a pull request adding it to the list. Consider discussing it on the `gdal-dev mailing list <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__  first,
 to make sure you fully understand the issue and that others agree that it is unexpected, "non-Pythonic",
 or something that would catch many Python programmers by surprise.
 Be sure to reference email threads, GitHub tickets, and other sources of additional information.
@@ -14,7 +14,7 @@ This list is not the place to report bugs. If you believe something is a bug, pl
 Then consider listing it here if it is something related to Python specifically. Do not list it here if it relates to GDAL or OGR generally, and not the Python bindings specifically.
 
 Not all items listed here are bugs. Some of these are just how GDAL and OGR work and cannot be fixed easily without breaking existing code.
-If you don't like how something works and think it should be changed, feel free to discuss it on gdal-dev and see what can be done. 
+If you don't like how something works and think it should be changed, feel free to discuss it on gdal-dev and see what can be done.
 
 
 Gotchas that are by design... or per history
@@ -52,10 +52,14 @@ In Python, it is traditional to report errors by raising exceptions. You can ena
 
    >>>
 
-The GDAL team acknowledges that Python programmers expect exceptions to be enabled by default, but says that exceptions are disabled by default to `preserve backward compatibility <https://lists.osgeo.org/pipermail/gdal-dev/2010-September/026031.html>`__.
 
-Python crashes if you use an object after deleting an object it has a relationship with
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+.. warning::
+
+   It is planned that exceptions will be enabled by default in GDAL 4.0. Code that does not want exceptions to be raised in a future version of GDAL should explicitly disable them with ``gdal.DontUseExceptions()``.
+
+
+Python crashes or throws an exception if you use an object after deleting a related object
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Consider this example:
 
@@ -68,7 +72,7 @@ Consider this example:
    31212
 
 In this example, ``band`` has a relationship with ``dataset`` that requires ``dataset`` to remain allocated in order for ``band`` to work.
-If we delete ``dataset`` and then try to use ``band``, Python will crash:
+If we delete ``dataset`` and then try to use ``band``, Python will throw a confusing exception:
 
 .. code-block::
 
@@ -76,8 +80,12 @@ If we delete ``dataset`` and then try to use ``band``, Python will crash:
    >>> dataset = gdal.Open('C:\\RandomData.img')
    >>> band = dataset.GetRasterBand(1)
    >>> del dataset           # This will cause the Python garbage collector to deallocate dataset
-   >>> band.GetChecksum()    # This will now crash Python because the band's dataset is gone
-   < Python crashes >
+   >>> band.Checksum()       # This will throw an exception because the band's dataset is gone
+   # TypeError: in method 'Band_Checksum', argument 1 of type 'GDALRasterBandShadow *'
+
+.. note::
+
+   In GDAL 3.7 and earlier, using a band after the dataset has been destroyed will cause a crash instead of an exception.
 
 This problem can manifest itself in subtle ways. For example, it can occur if you try to instantiate a temporary dataset instance within a single line of code:
 
@@ -85,7 +93,7 @@ This problem can manifest itself in subtle ways. For example, it can occur if yo
 
    >>> from osgeo import gdal
    >>> print(gdal.Open('C:\\RandomData.img').GetRasterBand(1).Checksum())
-   < Python crashes >
+   # TypeError: in method 'Band_Checksum', argument 1 of type 'GDALRasterBandShadow *'
 
 In this example, the dataset instance was no longer needed after the call to ``GetRasterBand()`` so Python deallocated it *before* calling ``Checksum()``.
 
@@ -99,46 +107,24 @@ In this example, the dataset instance was no longer needed after the call to ``G
    >>>
    >>> band = load_band('c:\\RandomData.img')
    >>> print(band.Checksum())
-   < Python crashes >
-   
-this example is the same case with above but it looks different. the dataset object is only available in the ``load_band`` function and it'll be deleted right after leaving the function.
+   # TypeError: in method 'Band_Checksum', argument 1 of type 'GDALRasterBandShadow *'
 
-This problem occurs because the GDAL and OGR objects are implemented in C++ and the relationships between them are maintained in C++ using pointers. 
-When you delete the dataset instance in Python it causes the C++ object behind it to be deallocated. But the C++ object behind the band instance does not know that this happened, so it contains a pointer to the C++ dataset object that no longer exists.
-When the band tries to access the non-existing object, the process crashes.
+This example is the same case as above but it looks different. The dataset
+object is only available in the ``load_band`` function and will be deleted
+right after leaving the function.
 
-The GDAL team knows that this design is not what Python programmers expect. Unfortunately the design is difficult to correct so it is likely to remain for some time.
-Please consult the GDAL team for more information.
+The problem is not restricted to GDAL band and dataset objects and happens in
+other areas where objects have relationships with each other. The issue occurs
+because deleting an object in Python causes not only the C++ object behind it
+to be deallocated, but also other objects for which that C++ object maintains
+ownership (e.g., a Dataset owning a Band, a Feature owning a Geometry.) If the
+Python object associated with one of these child objects retains a reference to
+that object, Python will crash when the object is accessed. In common cases
+such as the Band/Dataset relationship above, the GDAL bindings invalidate
+references to objects that no longer exist so that an exception is thrown
+instead of a crash, but the work is not complete.
 
-The problem is not restricted to GDAL band and dataset objects. It happens in other areas where objects have relationships with each other. 
-Unfortunately there is no complete list, so you have to watch for it yourself. 
-One other known place involves the OGR ``GetGeometryRef()`` function:
-
-.. code-block::
-
-   >>> feat = lyr.GetNextFeature()
-   >>> geom = feat.GetGeometryRef()     # geom contains a reference into the C++ geometry object maintained by the C++ feature object
-   >>> del feat                         # This deallocates the C++ feature object, and its C++ geometry
-   >>> print(geom.ExportToWkt())        # Crash here. The C++ geometry no longer exists
-   < Python crashes >
-
-If you read the GDAL and OGR API documentation carefully, you will see that the functions that end in "Ref" obtain references to internal objects, rather than making new copies.
-This is a clue that the problem could occur. Be careful when using the "Ref" functions. Also watch out for functions that end in "Directly", such as ``SetGeometryDirectly()``, which transfer ownership of internal objects:
-
-.. code-block::
-
-   >>> point = ogr.Geometry(ogr.wkbPoint)
-   >>> feature = ogr.Feature(layer_defn)
-   >>> feature.SetGeometryDirectly(point)    # Transfers ownership of the C++ geometry from point to feature
-   >>> del feature                           # point becomes implicitly invalid, because feature owns the C++ geometry
-   >>> print(point.ExportToWkt())            # Crash here
-   < Python crashes >
-
-The advantage of the "Ref" and "Directly" functions is they provide faster performance because a duplicate object does not need to be created. The disadvantage is that you have to watch out for this problem.
-
-.. Commenting the next line out as link is duplicate of email from Even Rouault below and is related to the Destroy() method discussed below
-   The information above is based on ​`email from Even Rouault <https://lists.osgeo.org/pipermail/gdal-dev/2010-September/026027.html>`__.
-..
+Unfortunately there is no complete list of such relationships, so you have to watch for it yourself.
 
 Python crashes if you add a new field to an OGR layer when features deriving from this layer definition are still active
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -158,9 +144,9 @@ For more information, please see `#3552 <https://trac.osgeo.org/gdal/ticket/3552
 Layers with attribute filters (``SetAttributeFilter()``) will only return filtered features when using ``GetNextFeature()``
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-If you read the documentation for ``SetAttributeFilter()`` carefully you will see the caveat about ``OGR_L_GetNextFeature()``. 
-This means that if you use ``GetFeature()``, instead of ``GetNextFeature()``, then you can still access and work with features from the layer that are not covered by the filter. 
-``GetFeatureCount()`` will respect the filter and show the correct number of features filtered. However, working with ``GetFeatureCount()`` in a loop can lead to some subtle confusion. 
+If you read the documentation for ``SetAttributeFilter()`` carefully you will see the caveat about ``OGR_L_GetNextFeature()``.
+This means that if you use ``GetFeature()``, instead of ``GetNextFeature()``, then you can still access and work with features from the layer that are not covered by the filter.
+``GetFeatureCount()`` will respect the filter and show the correct number of features filtered. However, working with ``GetFeatureCount()`` in a loop can lead to some subtle confusion.
 Iterating over the Layer object or using ``GetNextFeature()`` should be the default method for accessing features:
 
 .. code-block::
@@ -169,69 +155,51 @@ Iterating over the Layer object or using ``GetNextFeature()`` should be the defa
    >>> lyr.SetAttributeFilter("PIN = '0000200001'")      # this is a unique filter for only one record
    >>> for i in range( 0, lyr.GetFeatureCount() ):
    ...    feat = lyr.GetFeature( i )
-   ...    print(feat)                                    # this will print one feat, but it's the first feat in the Layer and not the filtered feat  
+   ...    print(feat)                                    # this will print one feat, but it's the first feat in the Layer and not the filtered feat
    ...
 
 Certain objects contain a ``Destroy()`` method, but you should never use it
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 You may come across examples that call the ``Destroy()`` method. `This tutorial <https://www.gis.usu.edu/~chrisg/python/2009/lectures/ospy_slides2.pdf>`__ even gives specific advice on page 12 about when to call ``Destroy``.
-But according to `email from Even Rouault <https://lists.osgeo.org/pipermail/gdal-dev/2010-September/026027.html>`__, ``Destroy()`` never need to be called:
+
+Calling ``Destroy`` forces the underlying native object to be destroyed.  This
+is typically unnecessary because these objects are automatically destroyed
+during garbage collection when no references to the Python object remain.
+
+In most situations, it is not necessary to force the object to be destroyed
+at a specific point in time. However, because the contents of ``gdal.Dataset`` and
+``ogr.DataSource`` objects are only guaranteed to be written to disk when
+the backing native object is destroyed, it may be necessary to explicitly destroy
+these objects. In these cases, a context manager (``with`` block) is often a
+good solution, e.g.:
 
 .. code-block::
 
-   >I have some Python code that uses OGR geometry objects internally, creating
-   > them like this:
-   > 
-   > point = ogr.Geometry(ogr.wkbPoint)
-   > 
-   > Does this code need to explicitly destroy these geometries, like the
-   > following, to avoid leaks, or can it simply allow them to go out of scope
-   > and have Python's reference counting and garbage collector clean them up?
-   > 
-   > point.Destroy()
+   from osgeo import ogr
+   with ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("/tmp/test.shp") as ds:
+       lyr = ds.CreateLayer("test")
+       feat = ogr.Feature(lyr.GetLayerDefn())
+       feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT (1 2)')
+       lyr.CreateFeature(feat)
+   # contents of ds are written to disk
 
-   There's no reason to call Destroy(), at all. Native object gets destroyed when 
-   Python object goes out of scope, or when they are assigned to None. So replace 
-   foo.Destroy() by foo = None if you really want to control when the underlying 
-   C++ object is destroyed.
+If this is not possible, for example if the object needs to be destroyed within a
+function, then the ``Close()`` method may be called.
 
-   > I'm sorry for my ignorance here. I found a nice GDAL tutorial that seems to
-   > say they *should* be explicitly destroyed in certain circumstances (see
-   > http://www.gis.usu.edu/~chrisg/python/2009/lectures/ospy_slides2.pdf, page
-   > 12). But I have not really seen any other examples of this.
-   > 
+.. note::
 
-   Destroy() was perhaps necessary with old-gen bindings, but I'm not even sure 
-   of that... Perhaps this shouldn't have been exposed at all... But, as 
-   mentioned in the slides, it is true that there are situations where you 
-   shouldn't call Destroy() at all.
+   Context managers and the ``Close()`` method are available beginning in GDAL 3.8.
+   In earlier versions, ``Destroy()`` can be used for ``ogr.DataSource`` objects,
+   or garbage collection may be forced by destroying reference using ``del`` or setting
+   variables to ``None``.
 
+With some drivers, raster datasets can be intermittently saved without closing
+using ``FlushCache()``. Similarly, vector datasets can be saved using
+``SyncToDisk()``.  However, neither of these methods guarantee that the data
+are written to disk, so the preferred method is to use a context manager
+or call ``Close()``.
 
-Saving and closing datasets/datasources
-+++++++++++++++++++++++++++++++++++++++
-
-To save and close GDAL raster datasets or OGR vector datasources, the object needs to be dereferenced, such as setting it to ``None``, a different value, or deleting the object. 
-If there are more than one copies of the dataset or datasource object, then each copy needs to be dereferenced.
-
-For example, creating and saving a raster dataset:
-
-.. code-block::
-
-   >>> from osgeo import gdal
-   >>> driver = gdal.GetDriverByName('GTiff')
-   >>> dst_ds = driver.Create('new.tif', 10, 15)
-   >>> band = dst_ds.GetRasterBand(1)
-   >>> arr = band.ReadAsArray()  # raster values are all zero
-   >>> arr[2, 4:] = 50  # modify some data
-   >>> band.WriteArray(arr)  # raster file still unmodified
-   >>> band = None  # dereference band to avoid gotcha described previously
-   >>> dst_ds = None  # save, close
-
-The last dereference to the raster dataset writes the data modifications and closes the raster file. ``WriteArray(arr)`` does not write the array to disk, unless the GDAL block cache is full (typically 40 MB).
-
-With some drivers, raster datasets can be intermittently saved without closing using ``FlushCache()``. Similarly, vector datasets can be saved using ``SyncToDisk()``.
-However, neither of these methods guarantee that the data are written to disk, so the preferred method is to deallocate as shown above.
 
 Exceptions raised in custom error handlers do not get caught
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -317,8 +285,8 @@ Gotchas that result from bugs or behaviors of other software
 Python crashes in GDAL functions when you upgrade or downgrade numpy
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Much of GDAL's Python bindings are implemented in C++. Much of the core of numpy is implemented in C. The C++ part of GDAL's Python bindings interacts with the C part of numpy through numpy's ABI (application binary interface). 
-This requires GDAL's Python bindings to be compiled using numpy header files that define numpy C data structures. Those data structures sometimes change between numpy versions. When this happens, the new version of numpy is not be compatible at the binary level with the old version, and the GDAL Python bindings must be recompiled before they will work with the new version of numpy. 
+Much of GDAL's Python bindings are implemented in C++. Much of the core of numpy is implemented in C. The C++ part of GDAL's Python bindings interacts with the C part of numpy through numpy's ABI (application binary interface).
+This requires GDAL's Python bindings to be compiled using numpy header files that define numpy C data structures. Those data structures sometimes change between numpy versions. When this happens, the new version of numpy is not be compatible at the binary level with the old version, and the GDAL Python bindings must be recompiled before they will work with the new version of numpy.
 And when they are recompiled, they probably won't work with the old version.
 
 If you obtained a precompiled version of GDAL's Python bindings, such as the Windows packages from `http://gisinternals.com/sdk.php <http://gisinternals.com/sdk.php>`__ be sure you look up what version of numpy was used to compile them, and install that version of numpy on your machine.

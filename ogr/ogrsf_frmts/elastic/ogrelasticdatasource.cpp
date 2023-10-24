@@ -413,7 +413,7 @@ OGRErr OGRElasticDataSource::DeleteLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRElasticDataSource::ICreateLayer(const char *pszLayerName,
-                                             OGRSpatialReference *poSRS,
+                                             const OGRSpatialReference *poSRS,
                                              OGRwkbGeometryType eGType,
                                              char **papszOptions)
 {

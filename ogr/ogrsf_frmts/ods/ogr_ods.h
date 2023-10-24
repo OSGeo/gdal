@@ -248,7 +248,7 @@ class OGRODSDataSource final : public GDALDataset
     virtual int TestCapability(const char *) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int iLayer) override;

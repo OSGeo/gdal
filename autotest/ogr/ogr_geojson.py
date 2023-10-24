@@ -461,7 +461,7 @@ def test_ogr_geojson_13():
 @gdaltest.disable_exceptions()
 def test_ogr_geojson_14():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/geojson/ogr_geojson_14.geojson")
     lyr = ds.GetLayer(0)
 
@@ -471,7 +471,7 @@ def test_ogr_geojson_14():
         )
         out_lyr = out_ds.CreateLayer("lyr")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             for feat in lyr:
                 geom = feat.GetGeometryRef()
                 if geom is not None:
@@ -550,7 +550,7 @@ def test_ogr_geojson_20():
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = ogr.Open("/vsimem/testgj")
         if ds is None:
             print(gj)
@@ -803,7 +803,7 @@ def test_ogr_geojson_26():
 
 def test_ogr_geojson_27():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Warning 1: Integer values probably ranging out of 64bit integer range
         # have been found. Will be clamped to INT64_MIN/INT64_MAX
         ds = ogr.Open(
@@ -849,7 +849,7 @@ def test_ogr_geojson_35():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetFID(2)
         geom = ogr.Geometry(ogr.wkbPoint)
@@ -1189,7 +1189,7 @@ def test_ogr_geojson_39():
 
     # Test handling of duplicated id
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(
             """{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : 1, "properties": { "foo": "bar" }, "geometry": null },
@@ -1604,7 +1604,7 @@ def test_ogr_geojson_46():
 def test_ogr_geojson_47():
 
     # ERROR 6: Update from inline definition not supported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open('{"type": "FeatureCollection", "features":[]}', update=1)
     assert ds is None
 
@@ -2244,7 +2244,8 @@ def test_ogr_geojson_56():
       { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [[-179, 52],[179, 47]] } },
       { "type": "Feature", "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 51.0 ], [ 180.0, 49.5 ] ], [ [ -180.0, 49.5 ], [ -179.0, 48.0 ] ] ] } },
       { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[177, 51],[-175, 51],[-175, 48],[177, 48],[177, 51]]] } },
-      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } }
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ] ] } }
   ]
 }""",
         format="GeoJSON",
@@ -2255,13 +2256,14 @@ def test_ogr_geojson_56():
     gdal.Unlink("/vsimem/out.json")
     expected = """{
 "type": "FeatureCollection",
-"bbox": [ 177.0000000, 47.0000000, -175.0000000, 52.0000000 ],
+"bbox": [172.0, 47.0, -162.0, 52.0],
 "features": [
 { "type": "Feature", "properties": { }, "bbox": [ 179.0, 48.0, -179.0, 51.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 51.0 ], [ 180.0, 49.5 ] ], [ [ -180.0, 49.5 ], [ -179.0, 48.0 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 179.0, 47.0, -179.0, 52.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ -179.0, 52.0 ], [ -180.0, 49.5 ] ], [ [ 180.0, 49.5 ], [ 179.0, 47.0 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 179.0, 48.0, -179.0, 51.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 51.0 ], [ 180.0, 49.5 ] ], [ [ -180.0, 49.5 ], [ -179.0, 48.0 ] ] ] } },
 { "type": "Feature", "properties": { }, "bbox": [ 177.0, 48.0, -175.0, 51.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } },
-{ "type": "Feature", "properties": { }, "bbox": [ 177.0, 48.0, -175.0, 51.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } }
+{ "type": "Feature", "properties": { }, "bbox": [ 177.0, 48.0, -175.0, 51.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 177.0, 51.0 ], [ 177.0, 48.0 ], [ 180.0, 48.0 ], [ 180.0, 51.0 ], [ 177.0, 51.0 ] ] ], [ [ [ -180.0, 51.0 ], [ -180.0, 48.0 ], [ -175.0, 48.0 ], [ -175.0, 51.0 ], [ -180.0, 51.0 ] ] ] ] } },
+{ "type": "Feature", "bbox": [ 172, 51, -162, 52 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ] ] } }
 ]
 }
 """
@@ -2269,31 +2271,68 @@ def test_ogr_geojson_56():
     j_got = json.loads(got)
     j_expected = json.loads(expected)
     assert j_got["bbox"] == j_expected["bbox"]
-    assert len(j_expected["features"]) == 5
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"])),
+    assert len(j_expected["features"]) == 6
+    for i in range(len(j_expected["features"])):
+        assert j_got["features"][i]["bbox"] == j_expected["features"][i]["bbox"], i
+        try:
+            ogrtest.check_feature_geometry(
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_got["features"][i]["geometry"])
+                ),
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_expected["features"][i]["geometry"])
+                ),
+            )
+        except AssertionError as e:
+            pytest.fail("At geom %d: %s" % (i, str(e)))
+
+    # Test geometries that defeats antimeridian heuristics
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -80, 10 ], [-60, 10], [-60, 11], [-80, 10] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 80, 10 ], [60, 10], [60, 11], [80, 10] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 10, 10 ], [120, 10], [120, 11], [10, 10] ] ] ] } },
+      { "type": "Feature", "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -91, 10 ], [-80, 10], [-80, 11], [-91, 10] ] ] ] } }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
     )
 
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"])),
-    )
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [-163.0, 10.0, 173.0, 52.0],
+"features": [
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -80, 10 ], [-60, 10], [-60, 11], [-80, 10] ] ] ] } },
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 80, 10 ], [60, 10], [60, 11], [80, 10] ] ] ] } },
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ 10, 10 ], [120, 10], [120, 11], [10, 10] ] ] ] } },
+{ "type": "Feature", "bbox": [ -163.0, 10.0, 173.0, 52.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 172, 52 ], [ 173, 52 ], [ 173, 51 ], [ 172, 51 ], [ 172, 52 ] ] ], [ [ [ -162, 52 ], [ -163, 52 ], [ -163, 51 ], [ -162, 51 ], [ -162, 52 ] ] ], [ [ [ -91, 10 ], [-80, 10], [-80, 11], [-91, 10] ] ] ] } }
+]
+}
+"""
 
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"])),
-    )
-
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][3]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][3]["geometry"])),
-    )
-
-    ogrtest.check_feature_geometry(
-        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][4]["geometry"])),
-        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][4]["geometry"])),
-    )
+    j_got = json.loads(got)
+    j_expected = json.loads(expected)
+    assert j_got["bbox"] == j_expected["bbox"]
+    assert len(j_expected["features"]) == 4
+    for i in range(len(j_expected["features"])):
+        assert j_got["features"][i]["bbox"] == j_expected["features"][i]["bbox"], i
+        try:
+            ogrtest.check_feature_geometry(
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_got["features"][i]["geometry"])
+                ),
+                ogr.CreateGeometryFromJson(
+                    json.dumps(j_expected["features"][i]["geometry"])
+                ),
+            )
+        except AssertionError as e:
+            pytest.fail("At geom %d: %s" % (i, str(e)))
 
     # Test polygon geometry that covers the whole world (#2833)
     gdal.VectorTranslate(
@@ -2904,12 +2943,12 @@ def test_ogr_geojson_62():
         """{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":null} }, "features":[] }"""
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":1} }, "features":[] }"""
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":"x"} }, "features":[] }"""
         )
@@ -2938,12 +2977,12 @@ def test_ogr_geojson_62():
         """{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href":null} }, "features":[] }"""
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href":1} }, "features":[] }"""
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href": "1"} }, "features":[] }"""
         )
@@ -2965,12 +3004,12 @@ def test_ogr_geojson_62():
         """{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":null} }, "features":[] }"""
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":1} }, "features":[] }"""
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":"x"} }, "features":[] }"""
         )
@@ -3305,7 +3344,7 @@ def test_ogr_geojson_geom_export_failure():
 
     g = ogr.Geometry(ogr.wkbLineString)
     g.AddPoint_2D(float("nan"), 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geojson = g.ExportToJson()
     assert geojson is None
 
@@ -3322,7 +3361,7 @@ def test_ogr_geojson_geom_export_failure():
     lr.AddPoint_2D(1, 1)
     lr.AddPoint_2D(0, 0)
     g.AddGeometry(lr)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geojson = g.ExportToJson()
     assert geojson is None
 
@@ -3474,7 +3513,7 @@ def test_ogr_geojson_non_finite():
       { "type": "Feature", "properties": { "inf_prop": infinity, "minus_inf_prop": -infinity, "nan_prop": nan }, "geometry": null }
   ]
 }"""
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(json_content)
     if ds is None:
         # Might fail with older libjson-c versions
@@ -3497,7 +3536,7 @@ def test_ogr_geojson_non_finite():
 
     tmpfilename = "/vsimem/out.json"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON")
     ds = ogr.Open(tmpfilename)
     lyr = ds.GetLayer(0)
@@ -3522,6 +3561,54 @@ def test_ogr_geojson_non_finite():
         pytest.fail(str(f["nan_prop"]))
     ds = None
 
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test writing fields with and without automatic JSON interpretation
+
+
+def test_ogr_geojson_json_string_autodetect():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "properties": { "jsonish": "[5]" }, "geometry": null }
+  ]
+}"""
+    with gdal.quiet_errors():
+        ds = ogr.Open(json_content)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in range(1):
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
+    assert f["jsonish"] == "[5]"
+    ds = None
+
+    tmpfilename = "/vsimem/out.json"
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON")
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTIntegerList
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(
+            tmpfilename,
+            json_content,
+            options="-f GeoJSON -lco AUTODETECT_JSON_STRINGS=FALSE",
+        )
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
+    f = lyr.GetNextFeature()
+    assert f["jsonish"] == "[5]"
+    ds = None
     gdal.Unlink(tmpfilename)
 
 
@@ -3960,7 +4047,7 @@ def test_ogr_geojson_feature_large():
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0"):
         assert ogr.Open(filename) is not None
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0.1"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ogr.Open(filename) is None
     gdal.Unlink(filename)
 
@@ -4072,7 +4159,7 @@ def test_ogr_geojson_ids_0_1_null_1_null(read_from_file):
     connection_name = "data/geojson/ids_0_1_null_1_null.json"
     if not read_from_file:
         connection_name = open(connection_name, "rb").read().decode("ascii")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         ds = ogr.Open(connection_name)
         assert ds
@@ -4256,3 +4343,221 @@ def test_ogr_geojson_open_with_non_C_locale():
         test_ogr_geojson_2()
     finally:
         locale.setlocale(locale.LC_ALL, original_locale)
+
+
+###############################################################################
+# Test geometry validity fixing due to limited coordinate precision
+
+
+def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
+
+    # Check if MakeValid() is available
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
+        make_valid_available = g.MakeValid() is not None
+    if not make_valid_available:
+        pytest.skip("MakeValid() not available")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_write_geometry_validity_fixing.geojson"
+    )
+    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    lyr = ds.CreateLayer("foo", srs=srs, options=["RFC7946=YES"])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON (COMPOUNDCURVE ((318049.787 5688446.432,318056.628 5688447.908),CIRCULARSTRING (318056.628 5688447.908,318055.204 5688448.31,318054.25 5688449.44),(318054.25 5688449.44,318049.487 5688471.421,318049.381 5688471.91,318046.45 5688471.278,318051.318 5688448.807),CIRCULARSTRING (318051.318 5688448.807,318051.039 5688447.306,318049.787 5688446.432)))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().IsValid()
+
+
+###############################################################################
+# Test geometry validity fixing due to limited coordinate precision
+
+
+def test_ogr_geojson_write_geometry_validity_fixing(tmp_vsimem):
+
+    # Check if MakeValid() is available
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
+        make_valid_available = g.MakeValid() is not None
+    if not make_valid_available:
+        pytest.skip("MakeValid() not available")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_write_geometry_validity_fixing.geojson"
+    )
+    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer("foo", srs=srs, options=["COORDINATE_PRECISION=7"])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON ((6.38889863954163 51.3181827925179,6.38899594962816 51.3181982385094,6.38899341741945 51.3181982023144,6.38899088736512 51.3181982771017,6.3889883718375 51.3181984625056,6.3889858831369 51.3181987576155,6.38898343343252 51.3181991609928,6.38898103470357 51.3181996706617,6.38897869867934 51.3182002841327,6.38897643678313 51.3182009984033,6.38897426007491 51.3182018099849,6.38897217919885 51.3182027149033,6.38897020433018 51.3182037087387,6.38896834512585 51.3182047866288,6.38896661067703 51.3182059433019,6.38896500946527 51.3182071731038,6.3889635493198 51.3182084700195,6.38896223738132 51.3182098277102,6.38896108006473 51.3182112395339,6.38888158690724 51.3184071643413,6.3888798178826 51.3184115229661,6.38883812537253 51.3184049086286,6.38891937389822 51.3182046159251,6.38891977479799 51.3182034182797,6.38892004565215 51.3182022064019,6.38892018522285 51.318200985823,6.38892019287242 51.3181997621242,6.38892006856587 51.3181985408984,6.38891981287105 51.3181973277249,6.38891942695666 51.3181961281515,6.38891891258675 51.3181949476556,6.38891827211159 51.3181937916355,6.38891750845846 51.3181926653737,6.38891662511696 51.3181915740195,6.38891562612488 51.3181905225562,6.3889145160472 51.3181895157905,6.38891329995705 51.3181885583257,6.38891198341239 51.318187654536,6.38891057242995 51.3181868085505,6.38890907345788 51.3181860242377,6.388907493347 51.3181853051815,6.38890583931839 51.3181846546672,6.38890411893121 51.3181840756684,6.38890234004799 51.3181835708295,6.38890051079796 51.3181831424602,6.38889863954163 51.3181827925179))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().IsValid()
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_mixed_timezone.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789+01:00")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789-01:00")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "UTC"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [None, 1654000496789, None, 1653996896789, 1654004096789]
+
+    for tz in ["UTC", "+01:00", "-01:00", "Europe/Paris", "unknown"]:
+        stream = lyr.GetArrowStreamAsPyArrow(["TIMEZONE=" + tz])
+        if tz == "unknown":
+            assert stream.schema.field("datetime").type.tz is None
+        else:
+            assert stream.schema.field("datetime").type.tz == tz
+        values = []
+        for batch in stream:
+            for x in batch.field("datetime"):
+                values.append(x.value)
+        assert values == [None, 1654000496789, None, 1653996896789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_plus_five.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789+05:00")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T13:34:56.789+05:00")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "+05:00"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_utc_minus_five.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789-05:00")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T13:34:56.789-05:00")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz == "-05:00"
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
+    pytest.importorskip("pyarrow")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone.geojson"
+    )
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("datetime", "2022-05-31T13:34:56.789")
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    assert stream.schema.field("datetime").type.tz is None
+    values = []
+    for batch in stream:
+        for x in batch.field("datetime"):
+            values.append(x.value)
+    assert values == [1654000496789, 1654004096789]

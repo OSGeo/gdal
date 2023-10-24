@@ -992,7 +992,7 @@ def test_transformer_no_reverse_method():
     assert pnt[0] == pytest.approx(141270.54731856665, abs=1e-3), pnt
     assert pnt[1] == pytest.approx(4656605.104980032, abs=1e-3), pnt
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         (success, pnt) = tr.TransformPoint(1, 2, 49)
     assert not success
 
@@ -1124,4 +1124,46 @@ def test_transformer_SuggestedWarpOutput_from_options():
             0.0,
             -0.0005981119181481631,
         )
+    )
+
+
+###############################################################################
+# Test GCP antimerdian unwrap (https://github.com/OSGeo/gdal/issues/8371)
+
+
+def test_transformer_gcp_antimeridian_unwrap():
+
+    ds = gdal.Open("data/test_gcp_antimeridian_unwrap.vrt")
+
+    # Default GCP transformer
+    tr = gdal.Transformer(ds, None, [])
+
+    success, pnt = tr.TransformPoint(0, 0, 0)
+    assert success and pnt == pytest.approx((180.6645950186466, 62.45182290696794, 0.0))
+
+    success, pnt = tr.TransformPoint(0, 2525, 0)
+    assert success and pnt == pytest.approx((175.82001802587033, 62.884780066613, 0.0))
+
+    # TPS transformer
+    tr = gdal.Transformer(ds, None, ["METHOD=GCP_TPS"])
+
+    success, pnt = tr.TransformPoint(0, 0, 0)
+    assert success and pnt == pytest.approx(
+        (180.66674233559996, 62.451179551130025, 0.0)
+    )
+
+    success, pnt = tr.TransformPoint(0, 2525, 0)
+    assert success and pnt == pytest.approx((175.8219413653614, 62.8840814418221, 0.0))
+
+    tr = gdal.Transformer(ds, None, ["GCP_ANTIMERIDIAN_UNWRAP=YES"])
+
+    success, pnt = tr.TransformPoint(0, 0, 0)
+    assert success and pnt == pytest.approx((180.6645950186466, 62.45182290696794, 0.0))
+
+    # Leads to bad result
+    tr = gdal.Transformer(ds, None, ["GCP_ANTIMERIDIAN_UNWRAP=NO"])
+
+    success, pnt = tr.TransformPoint(0, 0, 0)
+    assert success and pnt == pytest.approx(
+        (-97.99753079934052, 62.45182290696794, 0.0)
     )

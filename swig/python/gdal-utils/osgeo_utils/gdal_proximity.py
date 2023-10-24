@@ -38,17 +38,20 @@ from osgeo import gdal
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
-def Usage():
+def Usage(isError):
+    f = sys.stderr if isError else sys.stdout
     print(
         """
-Usage: gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
-                  [-of format] [-co name=value]*
-                  [-ot Byte/UInt16/UInt32/Float32/etc]
-                  [-values n,n,n] [-distunits PIXEL/GEO]
-                  [-maxdist n] [-nodata n] [-use_input_nodata YES/NO]
-                  [-fixed-buf-val n] [-q] """
+Usage: gdal_proximity.py [--help] [--help-general]
+                  <srcfile> <dstfile> [-srcband <n>] [-dstband <n>]
+                  [-of <format>] [-co <name>=<value>]...
+                  [-ot {Byte|UInt16|UInt32|Float32|etc}]
+                  [-values <n>,<n>,<n>] [-distunits {PIXEL|GEO}]
+                  [-maxdist <n>] [-nodata <n>] [-use_input_nodata {YES|NO}]
+                  [-fixed-buf-val <n>] [-q] """,
+        file=f,
     )
-    return 2
+    return 2 if isError else 0
 
 
 def main(argv=sys.argv):
@@ -71,7 +74,10 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-of" or arg == "-f":
+        if arg == "--help":
+            return Usage(isError=False)
+
+        elif arg == "-of" or arg == "-f":
             i = i + 1
             driver_name = argv[i]
 
@@ -118,6 +124,10 @@ def main(argv=sys.argv):
         elif arg == "-q" or arg == "-quiet":
             quiet = True
 
+        elif arg[0] == "-":
+            sys.stderr.write("Unrecognized option : %s\n" % argv[i])
+            return Usage(isError=True)
+
         elif src_filename is None:
             src_filename = argv[i]
 
@@ -125,12 +135,17 @@ def main(argv=sys.argv):
             dst_filename = argv[i]
 
         else:
-            return Usage()
+            return Usage(isError=True)
 
         i = i + 1
 
-    if src_filename is None or dst_filename is None:
-        return Usage()
+    if src_filename is None:
+        sys.stderr.write("Missing <srcfile>\n")
+        return Usage(isError=True)
+
+    if dst_filename is None:
+        sys.stderr.write("Missing <dstfile>\n")
+        return Usage(isError=True)
 
     return gdal_proximity(
         src_filename=src_filename,

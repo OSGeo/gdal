@@ -66,13 +66,13 @@ def setup_driver():
 
 def test_ogr_openfilegdb_invalid_filename():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(
             "/vsimem/bad.extension"
         )
         assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(
             "/parent/directory/does/not/exist.gdb"
         )
@@ -118,7 +118,7 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
         )
 
         # Cannot create field with same name as an existing field (here the geometry one)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             fld_defn = ogr.FieldDefn("SHAPE", ogr.OFTString)
             assert lyr.CreateField(fld_defn) != ogr.OGRERR_NONE
 
@@ -196,7 +196,7 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
         f.SetField("float32", 1.25)
         f.SetField("int64", 12345678912345)
         f.SetField("dt", "2022-11-04T12:34:56+02:00")
-        f.SetFieldBinaryFromHexString("binary", "00FF7F")
+        f.SetField("binary", b"\x00\xFF\x7F")
         f.SetField("xml", "<some_elt/>")
         f.SetField("guid", "{12345678-9ABC-DEF0-1234-567890ABCDEF}")
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
@@ -206,7 +206,7 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
         f = ogr.Feature(lyr.GetLayerDefn())
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.ErrorReset()
             assert lyr.CreateFeature(f) == ogr.OGRERR_FAILURE
             assert (
@@ -649,7 +649,7 @@ def test_ogr_openfilegdb_write_bad_geoms(geom_type, wkt):
         f = ogr.Feature(lyr.GetLayerDefn())
         ref_geom = ogr.CreateGeometryFromWkt(wkt)
         f.SetGeometry(ref_geom)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
         ds = None
     finally:
@@ -763,7 +763,7 @@ def test_ogr_openfilegdb_write_create_feature_with_id_set(has_bitmap, ids, sync)
             if ok:
                 assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
             else:
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
             if sync:
                 lyr.SyncToDisk()
@@ -926,7 +926,7 @@ def test_ogr_openfilegdb_write_add_field_to_non_empty_table():
             "cannot_add_non_nullable_field_without_default_val", ogr.OFTString
         )
         fld_defn.SetNullable(False)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.CreateField(fld_defn) != ogr.OGRERR_NONE
 
         # No need to rewrite the file
@@ -1081,13 +1081,13 @@ def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable(
 
             fld_defn = ogr.FieldDefn("dt_invalid_default", ogr.OFTDateTime)
             fld_defn.SetDefault("'foo'")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
                 assert gdal.GetLastErrorMsg() == "Cannot parse foo as a date time"
 
             fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP", ogr.OFTDateTime)
             fld_defn.SetDefault("CURRENT_TIMESTAMP")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
                 assert (
                     gdal.GetLastErrorMsg()
@@ -1096,7 +1096,7 @@ def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable(
 
             fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP_2", ogr.OFTDateTime)
             fld_defn.SetDefault("CURRENT_TIMESTAMP")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert lyr.CreateField(fld_defn, True) == ogr.OGRERR_NONE
                 assert (
                     gdal.GetLastErrorMsg()
@@ -1166,7 +1166,7 @@ def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable_s
             fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
             fld_defn.SetNullable(False)
             fld_defn.SetDefault("'default val'")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 with gdaltest.config_option(
                     "OPENFILEGDB_SIMUL_ERROR_IN_RewriteTableToAddLastAddedField", "TRUE"
                 ):
@@ -1475,7 +1475,7 @@ def test_ogr_openfilegdb_write_feature_dataset_crs():
         other_srs = osr.SpatialReference()
         other_srs.ImportFromEPSG(4269)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = ds.CreateLayer(
                 "other_srs",
                 geom_type=ogr.wkbPoint,
@@ -1544,7 +1544,7 @@ def test_ogr_openfilegdb_write_spatial_index(numPoints, maxFeaturesPerSpxPage):
             str(maxFeaturesPerSpxPage) if maxFeaturesPerSpxPage else None,
         ):
             if maxFeaturesPerSpxPage == 2 and numPoints > 30:
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     gdal.ErrorReset()
                     lyr.SyncToDisk()
                     assert gdal.GetLastErrorMsg() != ""
@@ -1626,7 +1626,7 @@ def test_ogr_openfilegdb_write_attribute_index():
         f = None
 
         # Errors of index creation
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.ErrorReset()
             ds.ExecuteSQL("CREATE INDEX this_name_is_wayyyyy_tooo_long ON test(int16)")
             assert gdal.GetLastErrorMsg() != ""
@@ -1671,7 +1671,7 @@ def test_ogr_openfilegdb_write_attribute_index():
         fld_defn = ogr.FieldDefn("unindexed", ogr.OFTString)
         assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # Re-using an index name
             gdal.ErrorReset()
             ds.ExecuteSQL("CREATE INDEX idx_int16 ON test(unindexed)")
@@ -1840,11 +1840,11 @@ def test_ogr_openfilegdb_write_delete_layer():
         assert ds.DeleteLayer(1) != ogr.OGRERR_NONE
 
         # The following should not work
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.ErrorReset()
             ds.ExecuteSQL("DELLAYER:not_existing")
             assert gdal.GetLastErrorMsg() != ""
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.ErrorReset()
             ds.ExecuteSQL("DELLAYER:GDB_SystemCatalog")
             assert gdal.GetLastErrorMsg() != ""
@@ -2241,7 +2241,7 @@ def test_ogr_openfilegdb_write_repack():
         lyr.SyncToDisk()
         filesize = gdal.VSIStatL(table_filename).size
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.ExecuteSQL("REPACK unexisting_table") is None
 
         # Repack: nothing to do
@@ -2335,7 +2335,7 @@ def test_ogr_openfilegdb_write_recompute_extent_on():
         assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
         assert gdal.GetLastErrorMsg() == ""
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.ErrorReset()
             assert ds.ExecuteSQL("RECOMPUTE EXTENT ON non_existing_layer") is None
             assert gdal.GetLastErrorMsg() != ""
@@ -2383,7 +2383,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
         assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
 
         # Invalid index
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterFieldDefn(-1, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
             )
@@ -2401,7 +2401,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
 
         # Changing type not supported
         fld_defn = ogr.FieldDefn("str", ogr.OFTInteger)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
             )
@@ -2411,7 +2411,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
         # Changing subtype not supported
         fld_defn = ogr.FieldDefn("str", ogr.OFTString)
         fld_defn.SetSubType(ogr.OFSTUUID)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
             )
@@ -2422,7 +2422,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
         # Changing nullable state not supported
         fld_defn = ogr.FieldDefn("str", ogr.OFTString)
         fld_defn.SetNullable(False)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
             )
@@ -2431,7 +2431,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
 
         # Renaming to an other existing field not supported
         fld_defn = ogr.FieldDefn("other_field", ogr.OFTString)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
             )
@@ -2439,7 +2439,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
             assert fld_defn.GetName() == "str"
 
         fld_defn = ogr.FieldDefn("SHAPE", ogr.OFTString)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
             )
@@ -3287,7 +3287,7 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
 
         gdal.Mkdir(dirname + "/.ogrtransaction_backup", 0o755)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
         gdal.Rmdir(dirname + "/.ogrtransaction_backup")
 
@@ -3306,18 +3306,18 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
 
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.StartTransaction(True) != ogr.OGRERR_NONE
         assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
         assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.CommitTransaction() != ogr.OGRERR_NONE
 
         assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.RollbackTransaction() != ogr.OGRERR_NONE
 
         assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
@@ -3343,7 +3343,7 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         ds = ogr.Open(dirname, update=1)
         assert ds.StartTransaction(True) == ogr.OGRERR_NONE
         gdal.Rmdir(dirname + "/.ogrtransaction_backup")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.RollbackTransaction() == ogr.OGRERR_FAILURE
             ds = None
 
@@ -3375,7 +3375,7 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         ds = None
 
         gdal.Mkdir(dirname + "/.ogrtransaction_backup", 0o755)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # Cannot open in update mode with an existing backup directory
             assert ogr.Open(dirname, update=1) is None
 
@@ -3388,7 +3388,7 @@ def test_ogr_openfilegdb_write_emulated_transactions():
         # Transaction not supported in read-only mode
         ds = ogr.Open(dirname)
         assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 0
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
         ds = None
 
@@ -3493,13 +3493,13 @@ def test_ogr_openfilegdb_write_rename_layer(options):
         assert lyr.GetLayerDefn().GetName() == "bar"
 
         # Too long layer name
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.Rename("x" * 200) != ogr.OGRERR_NONE
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.Rename("bar") != ogr.OGRERR_NONE
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.Rename("other_layer") != ogr.OGRERR_NONE
 
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -3583,7 +3583,7 @@ def test_ogr_openfilegdb_field_name_laundering():
     try:
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
         lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr.CreateField(ogr.FieldDefn("FROM", ogr.OFTInteger))  # reserved keyword
             lyr.CreateField(
                 ogr.FieldDefn("1NUMBER", ogr.OFTInteger)
@@ -3654,7 +3654,7 @@ def test_ogr_openfilegdb_layer_name_laundering():
 
     try:
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             for in_name in in_names:
                 ds.CreateLayer(in_name, geom_type=ogr.wkbPoint)
 
@@ -4048,7 +4048,7 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn():
 
         # Changing geometry type not supported
         fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbPolygon)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_TYPE_FLAG)
                 != ogr.OGRERR_NONE
@@ -4057,7 +4057,7 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn():
         # Changing nullable state not supported
         fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbPolygon)
         fld_defn.SetNullable(False)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.AlterGeomFieldDefn(
                     0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG
@@ -4130,7 +4130,7 @@ def test_ogr_openfilegdb_write_create_OBJECTID(field_type):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(12)
         f[lyr.GetFIDColumn()] = 13
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
 
         lyr.ResetReading()
@@ -4148,7 +4148,7 @@ def test_ogr_openfilegdb_write_create_OBJECTID(field_type):
 
         # Can't delete or alter OBJECTID field
         field_idx = lyr.GetLayerDefn().GetFieldIndex(lyr.GetFIDColumn())
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.DeleteField(field_idx) == ogr.OGRERR_FAILURE
             assert (
                 lyr.AlterFieldDefn(

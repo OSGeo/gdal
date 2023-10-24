@@ -246,6 +246,12 @@ Dataset creation options
       win32 or LF on all other systems). This may be overridden through use
       of this option.
 
+-  .. dsco:: CREATOR
+      :since: 3.8
+
+      Name of creating application. Defaults to ``GDAL ``` followed by its
+      version number.
+
 Dataset creation options to fill the top <metadata> element have been added in
 GDAL 3.7:
 

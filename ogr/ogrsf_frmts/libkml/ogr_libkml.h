@@ -253,7 +253,7 @@ class OGRLIBKMLDataSource final : public OGRDataSource
     OGRErr DeleteLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef = nullptr,
+                           const OGRSpatialReference *poSpatialRef = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
 
@@ -329,11 +329,11 @@ class OGRLIBKMLDataSource final : public OGRDataSource
 
     /***** methods to create layers on various datasource types *****/
     OGRLIBKMLLayer *CreateLayerKml(const char *pszLayerName,
-                                   OGRSpatialReference *poOgrSRS,
+                                   const OGRSpatialReference *poOgrSRS,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions);
     OGRLIBKMLLayer *CreateLayerKmz(const char *pszLayerName,
-                                   OGRSpatialReference *poOgrSRS,
+                                   const OGRSpatialReference *poOgrSRS,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions);
 

@@ -943,7 +943,7 @@ class OGRDXFWriterDS final : public OGRDataSource
     int TestCapability(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef = nullptr,
+                           const OGRSpatialReference *poSpatialRef = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
 

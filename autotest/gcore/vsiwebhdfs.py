@@ -262,7 +262,7 @@ def test_vsiwebhdfs_write():
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         # Missing required config options
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = gdal.VSIFOpenL(gdaltest.webhdfs_base_connection + "/foo/bar", "wb")
         assert f is None
 
@@ -366,7 +366,7 @@ def test_vsiwebhdfs_write():
         {"WEBHDFS_USERNAME": "root", "WEBHDFS_DATANODE_HOST": "localhost"}
     ):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = gdal.VSIFOpenL(gdaltest.webhdfs_base_connection + "/foo/bar", "wb")
                 assert f is None
 
@@ -382,7 +382,7 @@ def test_vsiwebhdfs_write():
     )
     with gdaltest.config_options({"WEBHDFS_USERNAME": "root"}):
         with webserver.install_http_handler(handler):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = gdal.VSIFOpenL(gdaltest.webhdfs_base_connection + "/foo/bar", "wb")
                 assert f is None
 
@@ -427,7 +427,7 @@ def test_vsiwebhdfs_write():
     )
     handler.add("POST", "/redirected/webhdfs/v1/foo/bar?op=APPEND&user.name=root", 400)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with webserver.install_http_handler(handler):
             assert gdal.VSIFCloseL(f) != 0
 
@@ -476,7 +476,7 @@ def test_vsiwebhdfs_unlink():
     handler = webserver.SequentialHandler()
     handler.add("DELETE", "/webhdfs/v1/foo/bar?op=DELETE", 200, {}, '{"boolean":false}')
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink(gdaltest.webhdfs_base_connection + "/foo/bar")
     assert ret == -1
 
@@ -486,7 +486,7 @@ def test_vsiwebhdfs_unlink():
     handler = webserver.SequentialHandler()
     handler.add("DELETE", "/webhdfs/v1/foo/bar?op=DELETE", 404, {})
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink(gdaltest.webhdfs_base_connection + "/foo/bar")
     assert ret == -1
 

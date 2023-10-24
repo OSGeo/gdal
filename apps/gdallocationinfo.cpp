@@ -45,15 +45,17 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage()
+static void Usage(bool bIsError)
 
 {
-    printf("Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] "
-           "[-valonly]\n"
-           "                        [-b band]* [-overview overview_level]\n"
-           "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
-           "                        [-oo NAME=VALUE]* srcfile x y\n"
-           "\n");
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: gdallocationinfo [--help] [--help-general]\n"
+        "                        [-xml] [-lifonly] [-valonly]\n"
+        "                        [-b <band>]... [-overview <overview_level>]\n"
+        "                        [-l_srs <srs_def>] [-geoloc] [-wgs84]\n"
+        "                        [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]\n"
+        "\n");
     exit(1);
 }
 
@@ -118,6 +120,10 @@ MAIN_START(argc, argv)
             CSLDestroy(argv);
             return 0;
         }
+        else if (EQUAL(argv[i], "--help"))
+        {
+            Usage(false);
+        }
         else if (i < argc - 1 && EQUAL(argv[i], "-b"))
         {
             anBandList.push_back(atoi(argv[++i]));
@@ -161,7 +167,7 @@ MAIN_START(argc, argv)
             papszOpenOptions = CSLAddString(papszOpenOptions, argv[++i]);
         }
         else if (argv[i][0] == '-' && !isdigit(argv[i][1]))
-            Usage();
+            Usage(true);
 
         else if (pszSrcFilename == nullptr)
             pszSrcFilename = argv[i];
@@ -173,11 +179,11 @@ MAIN_START(argc, argv)
             pszLocY = argv[i];
 
         else
-            Usage();
+            Usage(true);
     }
 
     if (pszSrcFilename == nullptr || (pszLocX != nullptr && pszLocY == nullptr))
-        Usage();
+        Usage(true);
 
     /* -------------------------------------------------------------------- */
     /*      Open source file.                                               */

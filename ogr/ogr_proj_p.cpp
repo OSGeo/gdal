@@ -35,6 +35,14 @@
 
 #include "proj.h"
 
+#if defined(__MACH__) && defined(__APPLE__) && defined(HAVE_PTHREAD_ATFORK)
+// Works around a weird issue with GDAL, numpy and python threading on
+// Mac. There is definitely something not understood, but as using pthread_atfork()
+// is just an optimization, just disable it.
+// Cf https://github.com/OSGeo/gdal/issues/8497 for details
+#undef HAVE_PTHREAD_ATFORK
+#endif
+
 #ifndef _WIN32
 #include <sys/types.h>
 #include <unistd.h>

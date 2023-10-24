@@ -27,22 +27,15 @@
 ###############################################################################
 
 
-import gdaltest
 import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
 
-pytestmark = pytest.mark.require_driver("Interlis 1")
-
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-    yield
-
-    gdaltest.clean_tmp()
-
+pytestmark = [
+    pytest.mark.require_driver("Interlis 1"),
+    pytest.mark.random_order(disabled=True),
+]
 
 ###############################################################################
 # Check that Ili1 point layer is properly read.
@@ -156,7 +149,7 @@ def test_ogr_interlis1_4():
 # Write Ili1 transfer file without model.
 
 
-def test_ogr_interlis1_5():
+def test_ogr_interlis1_5(tmp_path):
 
     ds = ogr.Open("data/ili/format-default.itf,data/ili/format-default.imd")
 
@@ -164,9 +157,9 @@ def test_ogr_interlis1_5():
     feat = lyr.GetNextFeature()
 
     driver = ogr.GetDriverByName("Interlis 1")
-    outfile = "tmp/interlis1_5.itf"
+    outfile = tmp_path / "interlis1_5.itf"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_ds = driver.CreateDataSource(outfile)
 
     dst_lyr = dst_ds.CreateLayer("FormatTests__FormatTable")
@@ -199,15 +192,15 @@ ENDE"""
 # Write Ili1 transfer file.
 
 
-def test_ogr_interlis1_6():
+def test_ogr_interlis1_6(tmp_path):
 
     ds = ogr.Open("data/ili/format-default.itf,data/ili/format-default.imd")
     lyr = ds.GetLayerByName("FormatTests__FormatTable")
     feat = lyr.GetNextFeature()
 
     driver = ogr.GetDriverByName("Interlis 1")
-    outfile = "tmp/interlis1_6.itf"
-    dst_ds = driver.CreateDataSource(outfile + ",data/ili/format-default.imd")
+    outfile = tmp_path / "interlis1_6.itf"
+    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/format-default.imd")
 
     dst_lyr = dst_ds.CreateLayer("test")
 
@@ -238,7 +231,7 @@ ENDE"""
 # Ili1 character encoding test.
 
 
-def test_ogr_interlis1_7():
+def test_ogr_interlis1_7(tmp_path):
 
     ds = ogr.Open("data/ili/encoding-test.itf,data/ili/format-default.imd")
 
@@ -268,8 +261,8 @@ def test_ogr_interlis1_7():
 
     # Write back
     driver = ogr.GetDriverByName("Interlis 1")
-    outfile = "tmp/interlis1_7.itf"
-    dst_ds = driver.CreateDataSource(outfile + ",data/ili/format-default.imd")
+    outfile = tmp_path / "interlis1_7.itf"
+    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/format-default.imd")
 
     dst_lyr = dst_ds.CreateLayer("FormatTests__FormatTable")
 
@@ -811,15 +804,15 @@ def test_ogr_interlis1_13_linear():
 # Write Ili1 Arcs.
 
 
-def test_ogr_interlis1_14():
+def test_ogr_interlis1_14(tmp_path):
 
     ds = ogr.Open("data/ili/Beispiel.itf,data/ili/Beispiel.imd")
     lyr = ds.GetLayerByName("Bodenbedeckung__Strasse")
     feat = lyr.GetNextFeature()
 
     driver = ogr.GetDriverByName("Interlis 1")
-    outfile = "tmp/interlis1_14.itf"
-    dst_ds = driver.CreateDataSource(outfile + ",data/ili/Beispiel.imd")
+    outfile = tmp_path / "interlis1_14.itf"
+    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/Beispiel.imd")
 
     dst_lyr = dst_ds.CreateLayer("Bodenbedeckung__Strasse", None, ogr.wkbMultiCurve)
 
@@ -959,7 +952,7 @@ def test_ogr_interlis2_2():
 # Write Ili2 transfer file.
 
 
-def test_ogr_interlis2_3():
+def test_ogr_interlis2_3(tmp_path):
 
     ds = ogr.Open("data/ili/RoadsExdm2ien.xml,data/ili/RoadsExdm2ien.imd")
 
@@ -967,8 +960,8 @@ def test_ogr_interlis2_3():
     feat = lyr.GetNextFeature()
 
     driver = ogr.GetDriverByName("Interlis 2")
-    outfile = "tmp/interlis2_3.xtf"
-    dst_ds = driver.CreateDataSource(outfile + ",data/ili/RoadsExdm2ien.imd")
+    outfile = tmp_path / "interlis2_3.xtf"
+    dst_ds = driver.CreateDataSource(f"{outfile},data/ili/RoadsExdm2ien.imd")
 
     dst_lyr = dst_ds.CreateLayer("RoadsExdm2ien.RoadsExtended.RoadSign")
 

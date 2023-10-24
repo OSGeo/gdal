@@ -1466,6 +1466,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
 # Test adding a OGR datasource
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr(poppler_or_pdfium):
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
     data = """id,foo,WKT,style
@@ -1570,6 +1571,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
 # Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr_with_reprojection(poppler_or_pdfium):
 
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
@@ -1764,7 +1766,7 @@ def test_pdf_write_huge(poppler_or_pdfium):
         ds = None
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=["DPI=72"])
         msg = gdal.GetLastErrorMsg()
         assert msg != ""
@@ -1778,7 +1780,7 @@ def test_pdf_write_huge(poppler_or_pdfium):
     for option in ["LEFT_MARGIN=14400", "TOP_MARGIN=14400"]:
         src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options=[option])
         msg = gdal.GetLastErrorMsg()
         assert msg != ""
@@ -1811,12 +1813,9 @@ def test_pdf_overviews(poppler_or_pdfium):
     before = ds.GetRasterBand(1).GetOverviewCount()
     ds.GetRasterBand(1).GetOverview(-1)
     ds.GetRasterBand(1).GetOverview(10)
-    if before >= 1:
-        assert pdf_is_pdfium(), "No overview expected at this point!"
-        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == 5934
-    elif pdf_is_pdfium():
-        pytest.fail("Overview expected at this point!")
+    assert before >= 1
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    assert cs == 5934
     ds.BuildOverviews("NONE", [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
     assert after == 1
@@ -1836,12 +1835,12 @@ def test_pdf_password(poppler_or_pdfium_or_podofo):
     # owner_password
 
     # No password
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/pdf/byte_enc.pdf")
     assert ds is None
 
     # Wrong password
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/pdf/byte_enc.pdf", open_options=["USER_PWD=wrong_password"]
         )
@@ -1907,15 +1906,15 @@ def test_pdf_multipage(poppler_or_pdfium_or_podofo):
     ds2 = gdal.Open("PDF:2:data/pdf/byte_and_rgbsmall_2pages.pdf")
     assert ds2.RasterXSize == 50, "wrong width"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds3 = gdal.Open("PDF:0:data/pdf/byte_and_rgbsmall_2pages.pdf")
     assert ds3 is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds3 = gdal.Open("PDF:3:data/pdf/byte_and_rgbsmall_2pages.pdf")
     assert ds3 is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("PDF:1:/does/not/exist.pdf")
     assert ds is None
 
@@ -1971,6 +1970,7 @@ def test_pdf_pam_georef(poppler_or_pdfium):
 # Test XML composition
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_composition():
 
     xml_content = """<PDFComposition>
@@ -2205,7 +2205,7 @@ def test_pdf_composition_error_pdf_content_missing_filename(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2232,7 +2232,7 @@ def test_pdf_composition_error_pdf_content_non_existing(poppler_or_pdfium_or_pod
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2261,7 +2261,7 @@ def test_pdf_composition_error_pdf_content_missing_contents(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2290,7 +2290,7 @@ def test_pdf_composition_error_pdf_content_missing_contents_stream(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2301,6 +2301,7 @@ def test_pdf_composition_error_pdf_content_missing_contents_stream(
         )
     assert not out_ds
     assert gdal.GetLastErrorMsg() in (
+        "Missing Contents",
         "Missing Contents stream",
         "data/pdf/missing_stream.pdf is not a valid PDF file",
     )
@@ -2322,7 +2323,7 @@ def test_pdf_composition_error_pdf_content_missing_resources(
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2677,7 +2678,7 @@ def test_pdf_composition_outline():
 def test_pdf_composition_error_missing_file():
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2696,7 +2697,7 @@ def test_pdf_composition_error_missing_page():
     xml_content = """<PDFComposition></PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2715,7 +2716,7 @@ def test_pdf_composition_error_missing_page_width():
     xml_content = """<PDFComposition><Page/></PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2734,7 +2735,7 @@ def test_pdf_composition_error_missing_page_content():
     xml_content = """<PDFComposition><Page><Width>1</Width><Height>1</Height></Page></PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2758,7 +2759,7 @@ def test_pdf_composition_error_invalid_layer_missing_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2782,7 +2783,7 @@ def test_pdf_composition_error_invalid_layer_missing_name():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2807,7 +2808,7 @@ def test_pdf_composition_error_duplicate_layer_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2836,7 +2837,7 @@ def test_pdf_composition_error_referencing_invalid_layer_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2872,7 +2873,7 @@ def test_pdf_composition_error_missing_srs():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2906,7 +2907,7 @@ def test_pdf_composition_error_missing_control_point():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2942,7 +2943,7 @@ def test_pdf_composition_error_missing_attribute_in_control_point():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -2981,7 +2982,7 @@ def test_pdf_composition_error_invalid_bbox():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3007,7 +3008,7 @@ def test_pdf_composition_error_missing_dataset_attribute():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3033,7 +3034,7 @@ def test_pdf_composition_error_invalid_dataset():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3064,7 +3065,7 @@ def test_pdf_composition_duplicate_page_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3098,7 +3099,7 @@ def test_pdf_composition_outline_item_gotopage_action_missing_page_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3132,7 +3133,7 @@ def test_pdf_composition_outline_item_gotopage_action_pointing_to_invalid_page_i
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3169,7 +3170,7 @@ def test_pdf_composition_outline_item_setlayerstate_missing_layer_id():
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,
@@ -3203,7 +3204,7 @@ def test_pdf_composition_outline_item_setlayerstate_pointing_to_invalid_layer_id
 </PDFComposition>"""
 
     out_filename = "/vsimem/tmp.pdf"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.pdf_drv.Create(
             out_filename,
             0,

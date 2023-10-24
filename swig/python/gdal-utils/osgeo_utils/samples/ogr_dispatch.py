@@ -39,7 +39,7 @@ def Usage():
     print("Usage: ogr_dispatch.py [-f format] -src name -dst name [-field field]+")
     print("                [-25D_as_2D] [-multi_as_single]")
     print("                [-remove_dispatch_fields] [-prefix_with_layer_name]")
-    print("                [-dsco KEY=VALUE]* [-lco KEY=VALUE]* [-a_srs srs_def]")
+    print("                [-dsco KEY=VALUE]... [-lco KEY=VALUE]... [-a_srs srs_def]")
     print(
         "                [-style_as_field] [-where restricted_where] [-gt n] [-quiet]"
     )

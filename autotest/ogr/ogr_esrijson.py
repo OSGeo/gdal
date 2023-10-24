@@ -98,7 +98,7 @@ def test_ogr_esrijson_read_point():
 
     extent = (2, 2, 49, 49)
 
-    rc = validate_layer(lyr, "esripoint", 1, ogr.wkbPoint, 4, extent)
+    rc = validate_layer(lyr, "esripoint", 1, ogr.wkbPoint, 7, extent)
     assert rc
 
     ref = lyr.GetSpatialRef()
@@ -109,21 +109,13 @@ def test_ogr_esrijson_read_point():
     feature = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(feature, "POINT(2 49)")
 
-    if feature.GetFID() != 1:
-        feature.DumpReadable()
-        pytest.fail()
-
-    if feature.GetFieldAsInteger("fooInt") != 2:
-        feature.DumpReadable()
-        pytest.fail()
-
-    if feature.GetFieldAsDouble("fooDouble") != 3.4:
-        feature.DumpReadable()
-        pytest.fail()
-
-    if feature.GetFieldAsString("fooString") != "56":
-        feature.DumpReadable()
-        pytest.fail()
+    assert feature.GetFID() == 1
+    assert feature["fooSmallInt"] == 2
+    assert feature["fooInt"] == 1234567890
+    assert feature["fooSingle"] == 1.5
+    assert feature["fooDouble"] == 3.4
+    assert feature["fooString"] == "56"
+    assert feature["fooDate"] == "2021/12/31 00:00:00+00"
 
     lyr = None
     ds = None
@@ -494,7 +486,7 @@ def test_ogr_esrijson_featureservice_scrolling(prefix):
             gdal.FileFromMemBuffer(
                 "/vsimem/esrijson/test.json?resultRecordCount=10", resultOffset0
             )
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ds = ogr.Open("/vsimem/esrijson/test.json?resultRecordCount=10")
             lyr = ds.GetLayer(0)
             f = lyr.GetNextFeature()
@@ -544,7 +536,7 @@ def test_ogr_esrijson_featureservice_scrolling(prefix):
             f = lyr.GetNextFeature()
             assert f is None
 
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 fc = lyr.GetFeatureCount()
             assert fc == 2
 
@@ -555,7 +547,7 @@ def test_ogr_esrijson_featureservice_scrolling(prefix):
             fc = lyr.GetFeatureCount()
             assert fc == 123456
 
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 extent = lyr.GetExtent()
             assert extent == (2, 2, 49, 49)
 

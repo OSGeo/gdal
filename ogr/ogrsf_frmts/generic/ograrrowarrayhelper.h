@@ -53,6 +53,7 @@ class CPL_DLL OGRArrowArrayHelper
     std::vector<int> mapOGRGeomFieldToArrowField{};
     std::vector<bool> abNullableFields{};
     std::vector<uint32_t> anArrowFieldMaxAlloc{};
+    std::vector<int> anTZFlags{};
     int64_t *panFIDValues = nullptr;
     struct ArrowArray *m_out_array = nullptr;
 
@@ -182,7 +183,8 @@ class CPL_DLL OGRArrowArrayHelper
     }
 
     static void SetDateTime(struct ArrowArray *psArray, int iFeat,
-                            struct tm &brokenDown, const OGRField &ogrField)
+                            struct tm &brokenDown, int nFieldTZFlag,
+                            const OGRField &ogrField)
     {
         brokenDown.tm_year = ogrField.Date.Year - 1900;
         brokenDown.tm_mon = ogrField.Date.Month - 1;
@@ -190,9 +192,19 @@ class CPL_DLL OGRArrowArrayHelper
         brokenDown.tm_hour = ogrField.Date.Hour;
         brokenDown.tm_min = ogrField.Date.Minute;
         brokenDown.tm_sec = static_cast<int>(ogrField.Date.Second);
-        static_cast<int64_t *>(const_cast<void *>(psArray->buffers[1]))[iFeat] =
+        auto nVal =
             CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
             (static_cast<int>(ogrField.Date.Second * 1000 + 0.5) % 1000);
+        if (nFieldTZFlag >= OGR_TZFLAG_MIXED_TZ &&
+            ogrField.Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+        {
+            // Convert for ogrField.Date.TZFlag to UTC
+            const int TZOffset = (ogrField.Date.TZFlag - OGR_TZFLAG_UTC) * 15;
+            const int TZOffsetMS = TZOffset * 60 * 1000;
+            nVal -= TZOffsetMS;
+        }
+        static_cast<int64_t *>(const_cast<void *>(psArray->buffers[1]))[iFeat] =
+            nVal;
     }
 
     GByte *GetPtrForStringOrBinary(int iArrowField, int iFeat, size_t nLen)
@@ -255,7 +267,8 @@ class CPL_DLL OGRArrowArrayHelper
 
     void ClearArray()
     {
-        m_out_array->release(m_out_array);
+        if (m_out_array->release)
+            m_out_array->release(m_out_array);
         memset(m_out_array, 0, sizeof(*m_out_array));
     }
 

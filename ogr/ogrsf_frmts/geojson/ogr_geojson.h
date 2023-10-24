@@ -191,6 +191,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 
     bool bRFC7946_;
     bool bWrapDateLine_ = false;
+    bool bHasMakeValid_ = false;
     OGRCoordinateTransformation *poCT_;
     OGRGeometryFactory::TransformWithOptionsCache oTransformCache_;
     OGRGeoJSONWriteOptions oWriteOptions_;
@@ -219,7 +220,7 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     int GetLayerCount() override;
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSRS = nullptr,
+                           const OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;

@@ -798,7 +798,7 @@ void PostGISRasterDataset::GetDstWin(PostGISRasterTileDataset *psDP,
 /***********************************************************************
  * \brief Add tiles bands as complex source for raster bands.
  **********************************************************************/
-GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
+void PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
 {
     // Parameters to add the tile bands as sources
     int nDstXOff = 0;
@@ -839,8 +839,6 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
 
         prtb->poSource = prb->papoSources[prb->nSources - 1];
     }
-
-    return true;
 }
 
 /************************************************************************/
@@ -1395,22 +1393,16 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
                                                 GetRasterCount(), nullptr);
                 if (poRTDS != nullptr)
                 {
-                    if (AddComplexSource(poRTDS))
-                    {
-                        oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
-                        papoSourcesHolders =
-                            static_cast<PostGISRasterTileDataset **>(
-                                CPLRealloc(papoSourcesHolders,
-                                           sizeof(PostGISRasterTileDataset *) *
-                                               (m_nTiles + 1)));
-                        papoSourcesHolders[m_nTiles++] = poRTDS;
-                        CPLQuadTreeInsert(hQuadTree, poRTDS);
-                    }
-                    else
-                    {
-                        delete poRTDS;
-                        poRTDS = nullptr;
-                    }
+                    AddComplexSource(poRTDS);
+
+                    oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
+                    papoSourcesHolders =
+                        static_cast<PostGISRasterTileDataset **>(
+                            CPLRealloc(papoSourcesHolders,
+                                       sizeof(PostGISRasterTileDataset *) *
+                                           (m_nTiles + 1)));
+                    papoSourcesHolders[m_nTiles++] = poRTDS;
+                    CPLQuadTreeInsert(hQuadTree, poRTDS);
                 }
             }
 
@@ -2101,16 +2093,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
     for (int iSource = 0; iSource < l_nTiles; iSource++)
     {
         PostGISRasterTileDataset *poRTDS = papoSourcesHolders[iSource];
-        if (!AddComplexSource(poRTDS))
-        {
-            CPLDebug("PostGIS_Raster",
-                     "PostGISRasterDataset::ConstructOneDatasetFromTiles:"
-                     "Bounding box of tile %d does not intersect the "
-                     "bounding box of dataset ",
-                     iSource);
-
-            continue;
-        }
+        AddComplexSource(poRTDS);
         if (poRTDS->pszPKID != nullptr)
             oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
         CPLQuadTreeInsert(hQuadTree, poRTDS);
@@ -4109,6 +4092,86 @@ GBool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff,
     return true;
 }
 
+/************************************************************************/
+/*                    OGRPostGISRasterDriverGetSubdatasetInfo()            */
+/************************************************************************/
+
+struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit PostGISRasterDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "PG:"))
+        {
+            return;
+        }
+
+        char **papszParams = ParseConnectionString(m_fileName.c_str());
+
+        const int nTableIdx = CSLFindName(papszParams, "table");
+        if (nTableIdx != -1)
+        {
+            size_t nTableStart = m_fileName.find("table=");
+            bool bHasQuotes{false};
+            try
+            {
+                bHasQuotes = m_fileName.at(nTableStart + 6) == '\'';
+            }
+            catch (const std::out_of_range &)
+            {
+                // ignore error
+            }
+
+            m_subdatasetComponent = papszParams[nTableIdx];
+
+            if (bHasQuotes)
+            {
+                m_subdatasetComponent.insert(6, "'");
+                m_subdatasetComponent.push_back('\'');
+            }
+
+            m_driverPrefixComponent = "PG";
+
+            size_t nPathLength = m_subdatasetComponent.length();
+            if (nTableStart != 0)
+            {
+                nPathLength++;
+                nTableStart--;
+            }
+
+            m_pathComponent = m_fileName;
+            m_pathComponent.erase(nTableStart, nPathLength);
+            m_pathComponent.erase(0, 3);
+        }
+
+        CSLDestroy(papszParams);
+    }
+};
+
+static GDALSubdatasetInfo *
+OGRPostGISRasterDriverGetSubdatasetInfo(const char *pszFileName)
+{
+    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
+    if (PostGISRasterDataset::Identify(&poOpenInfo))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            cpl::make_unique<PostGISRasterDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
 /***********************************************************************
  * GDALRegister_PostGISRaster()
  **********************************************************************/
@@ -4132,6 +4195,8 @@ void GDALRegister_PostGISRaster()
     poDriver->pfnIdentify = PostGISRasterDataset::Identify;
     poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;
     poDriver->pfnDelete = PostGISRasterDataset::Delete;
+    poDriver->pfnGetSubdatasetInfoFunc =
+        OGRPostGISRasterDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -30,7 +30,6 @@
 ###############################################################################
 
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -164,7 +163,7 @@ def test_minixml_5():
     )
 
     for xml_str, expect in test_pairs:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             tree = gdal.ParseXMLString(xml_str)
 
         found = gdal.GetLastErrorMsg()

@@ -1,0 +1,30 @@
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+begin_of_head ================================================
+model name     : xxxxxxxxxxxxxxxxx
+model year     : yyyy
+model type     : hybrid
+data type      : quasi-geoid
+data format    : grid
+data units     : meters
+data ordering  : N-to-S, W-to-E
+ref ellipsoid  : GRS80
+ref frame      : ETRS89/D96
+height datum   : SVS2010
+tide system    : mean-tide
+coord type     : geodetic
+coord units    : deg
+map projection : ---
+EPSG code      : zzzz
+lat min        =   45.000000
+lat max        =   47.000000
+lon min        =   13.000000
+lon max        =   17.000000
+delta lat      =    0.008333
+delta lon      =    0.012500
+nrows          =         241
+ncols          =         321
+nodata         =  -9999.0000
+creation date  =  zzzzzzzzzz
+ISG format     =         2.0
+end_of_head ==================================================

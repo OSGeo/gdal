@@ -15,10 +15,12 @@ Synopsis
 
 .. code-block::
 
-    Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] [-valonly]
-                            [-b band]* [-overview overview_level]
-                            [-l_srs srs_def] [-geoloc] [-wgs84]
-                            [-oo NAME=VALUE]* srcfile [x y]
+    Usage: gdallocationinfo [--help] [--help-general]
+                            [-xml] [-lifonly] [-valonly]
+                            [-b <band>]... [-overview <overview_level>]
+                            [-l_srs <srs_def>] [-geoloc] [-wgs84]
+                            [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
+
 
 Description
 -----------
@@ -28,6 +30,8 @@ a pixel given its location in one of a variety of coordinate systems.  Several
 reporting options are provided.
 
 .. program:: gdallocationinfo
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -xml
 
@@ -66,7 +70,7 @@ reporting options are provided.
 
     Indicates input x,y points are WGS84 long, lat.
 
-.. option:: -oo NAME=VALUE
+.. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
 
@@ -77,12 +81,12 @@ reporting options are provided.
 .. option:: <x>
 
     X location of target pixel.  By default the
-    coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. 
+    coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied.
 
 .. option:: <y>
 
     Y location of target pixel.  By default the
-    coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied. 
+    coordinate system is pixel/line unless -l_srs, -wgs84 or -geoloc supplied.
 
 
 This utility is intended to provide a variety of information about a
@@ -147,7 +151,7 @@ Reading location from stdin.
     443020 3748359
     441197 3749005
     443852 3747743
-    
+
     $ cat coordinates.txt | gdallocationinfo -geoloc utmsmall.tif
     Report:
       Location: (38P,49L)

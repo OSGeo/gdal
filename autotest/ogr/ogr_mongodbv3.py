@@ -128,21 +128,21 @@ def test_ogr_mongodbv3_1():
         pytest.skip()
 
     # Might work or not depending on how the db is set up
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("mongodbv3:")
 
     # Wrong URI
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("mongodbv3:mongodb://")
     assert ds is None
 
     # URI to non existent host.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("mongodbv3:mongodb://non_existing")
     assert ds is None
 
     # Connect to non existent host.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx("mongodbv3:", open_options=["HOST=non_existing"])
     assert ds is None
 
@@ -169,7 +169,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["USER=" + ogrtest.mongodbv3_test_user]
         open_options += ["PASSWORD=" + ogrtest.mongodbv3_test_password]
     # Will succeed only against server in single mode
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
 
     # A few error cases with authentication
@@ -179,7 +179,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["PORT=" + str(ogrtest.mongodbv3_test_port)]
         open_options += ["DBNAME=" + ogrtest.mongodbv3_test_dbname]
         # Missing user and password
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
         assert ds is None
 
@@ -189,7 +189,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["DBNAME=" + ogrtest.mongodbv3_test_dbname]
         open_options += ["USER=" + ogrtest.mongodbv3_test_user]
         # Missing password
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
         assert ds is None
 
@@ -199,7 +199,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["USER=" + ogrtest.mongodbv3_test_user]
         open_options += ["PASSWORD=" + ogrtest.mongodbv3_test_password]
         # Missing DBNAME
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.OpenEx("mongodbv3:", open_options=open_options)
         assert ds is None
 
@@ -210,7 +210,7 @@ def test_ogr_mongodbv3_1():
         open_options += ["USER=" + ogrtest.mongodbv3_test_user]
         open_options += ["PASSWORDv3=" + ogrtest.mongodbv3_test_password + "_wrong"]
         # Wrong password
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.OpenEx("mongodb:", open_options=open_options)
         assert ds is None
 
@@ -247,14 +247,14 @@ def test_ogr_mongodbv3_2():
         options=["GEOMETRY_NAME=location.mygeom", "FID="],
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateGeomField(ogr.GeomFieldDefn("location.mygeom", ogr.wkbPoint))
     assert ret != 0
 
     ret = lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     assert ret == 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     assert ret != 0
 
@@ -288,7 +288,7 @@ def test_ogr_mongodbv3_2():
     ] = 1234567890123456  # put a number larger than 1 << 40 so that fromjson() doesn't pick double
     f["real"] = 1.23
     f["dt"] = "1234/12/31 23:59:59.123+00"
-    f.SetFieldBinaryFromHexString("binary", "00FF")
+    f["binary"] = b"\x00\xFF"
     f["strlist"] = ["a", "b"]
     f["intlist"] = [1, 2]
     f["int64list"] = [1234567890123456, 1234567890123456]
@@ -335,7 +335,7 @@ def test_ogr_mongodbv3_2():
         pytest.fail()
 
     # Test (not working) DeleteFeature()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.DeleteFeature(1)
     assert ret != 0
 
@@ -391,7 +391,7 @@ def test_ogr_mongodbv3_2():
     assert lyr.CreateFeature(f) == 0
 
     # Duplicate key
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SyncToDisk()
     assert ret != 0
 
@@ -402,16 +402,16 @@ def test_ogr_mongodbv3_2():
 
     # Missing _id
     f.UnsetField("_id")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(f)
     assert ret != 0
 
     # MongoDB dialect of ExecuteSQL() with invalid JSON
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ogrtest.mongodbv3_ds.ExecuteSQL("{", dialect="MongoDB")
 
     # MongoDB dialect of ExecuteSQL() with nonexistent command.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = ogrtest.mongodbv3_ds.ExecuteSQL('{ "foo": 1 }', dialect="MongoDB")
     assert sql_lyr is None
 
@@ -437,7 +437,7 @@ def test_ogr_mongodbv3_2():
     ogrtest.mongodbv3_ds.ReleaseResultSet(sql_lyr)
 
     # Test CreateLayer again with same name
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ogrtest.mongodbv3_ds.CreateLayer(ogrtest.mongodbv3_layer_name)
     assert lyr is None
 
@@ -799,47 +799,47 @@ def test_ogr_mongodbv3_2():
     f = lyr.GetNextFeature()
     assert f is not None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ogrtest.mongodbv3_ds.CreateLayer("foo")
     assert lyr is None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogrtest.mongodbv3_ds.ExecuteSQL(
             "WRITE_OGR_METADATA " + ogrtest.mongodbv3_layer_name
         )
     assert gdal.GetLastErrorMsg() != ""
 
     lyr_count_before = ogrtest.mongodbv3_ds.GetLayerCount()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogrtest.mongodbv3_ds.ExecuteSQL("DELLAYER:" + ogrtest.mongodbv3_layer_name)
     assert ogrtest.mongodbv3_ds.GetLayerCount() == lyr_count_before
 
     lyr = ogrtest.mongodbv3_ds.GetLayerByName(ogrtest.mongodbv3_layer_name)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateGeomField(ogr.GeomFieldDefn("foo", ogr.wkbPoint))
     assert ret != 0
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(f)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.DeleteFeature(1)
     assert ret != 0
 
     # Upsert fails in read-only
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.UpsertFeature(f)
     assert ret != 0
 
@@ -989,7 +989,7 @@ def test_ogr_mongodbv3_update_feature():
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(1)
     f.SetField("test", "updated")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldIndex("test")], [], False)
             != ogr.OGRERR_NONE

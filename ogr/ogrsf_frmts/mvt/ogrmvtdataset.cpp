@@ -3372,7 +3372,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     CPLErr Close() override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 
@@ -5966,12 +5966,12 @@ static bool ValidateMinMaxZoom(int nMinZoom, int nMaxZoom)
 /************************************************************************/
 
 OGRLayer *OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType,
                                             char **papszOptions)
 {
-    OGRSpatialReference *poSRSClone = poSRS;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSRS)
     {
         poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -6103,15 +6103,16 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         VSIUnlink(osTempDB);
 
     sqlite3 *hDB = nullptr;
-    CPL_IGNORE_RET_VAL(sqlite3_open_v2(
-        osTempDB, &hDB,
-        SQLITE_OPEN_READWRITE | (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
-            SQLITE_OPEN_NOMUTEX,
-        poDS->m_pMyVFS->zName));
-    if (hDB == nullptr)
+    if (sqlite3_open_v2(osTempDB, &hDB,
+                        SQLITE_OPEN_READWRITE |
+                            (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
+                            SQLITE_OPEN_NOMUTEX,
+                        poDS->m_pMyVFS->zName) != SQLITE_OK ||
+        hDB == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", osTempDB.c_str());
         delete poDS;
+        sqlite3_close(hDB);
         return nullptr;
     }
     poDS->m_osTempDB = osTempDB;
@@ -6251,11 +6252,11 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
 
     if (bMBTILES)
     {
-        CPL_IGNORE_RET_VAL(sqlite3_open_v2(
-            pszFilename, &poDS->m_hDBMBTILES,
-            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX,
-            poDS->m_pMyVFS->zName));
-        if (poDS->m_hDBMBTILES == nullptr)
+        if (sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
+                            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                                SQLITE_OPEN_NOMUTEX,
+                            poDS->m_pMyVFS->zName) != SQLITE_OK ||
+            poDS->m_hDBMBTILES == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
             delete poDS;

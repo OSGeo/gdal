@@ -62,31 +62,35 @@ static int GDALExit(int nCode)
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char *pszErrorMsg = nullptr)
+static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 
 {
-    printf(
-        "Usage: gdalwarp [--help-general] [--formats]\n"
-        "    [-b|-srcband n]* [-dstband n]*\n"
-        "    [-s_srs srs_def] [-t_srs srs_def] [-ct string]\n"
-        "    [-to \"NAME=VALUE\"]* [-vshift | -novshift]\n"
-        "    [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]\n"
-        "    [-order n | -tps | -rpc | -geoloc] [-et err_threshold]\n"
-        "    [-refine_gcps tolerance [minimum_gcps]]\n"
-        "    [-te xmin ymin xmax ymax] [-te_srs srs_def]\n"
-        "    [-tr xres yres]|[-tr square] [-tap] [-ts width height]\n"
-        "    [-ovr level|AUTO|AUTO-n|NONE] [-wo \"NAME=VALUE\"] [-ot "
+    fprintf(
+        bIsError ? stderr : stdout,
+        "Usage: gdalwarp [--help] [--help-general] [--formats]\n"
+        "    [-b|-srcband <n>]... [-dstband <n>]...\n"
+        "    [-s_srs <srs_def>] [-t_srs <srs_def>] [-ct <string>]\n"
+        "    [-to <NAME>=<VALUE>]... [-vshift | -novshift]\n"
+        "    [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]\n"
+        "    [-order n | -tps | -rpc | -geoloc] [-et <err_threshold>]\n"
+        "    [-refine_gcps <tolerance> [<minimum_gcps>]]\n"
+        "    [-te <xmin> <ymin> <xmax> <ymax>] [-te_srs <srs_def>]\n"
+        "    [-tr <xres> <yres>]|[-tr square] [-tap] [-ts <width> <height>]\n"
+        "    [-ovr <level>|AUTO|AUTO-<n>|NONE] [-wo <NAME>=<VALUE>]... [-ot "
         "Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-srcnodata \"value [value...]\"]"
-        "[-dstnodata \"value [value...]\"]\n"
+        "    [-srcnodata \"<value>[ <value>...]\"]"
+        "[-dstnodata \"<value>[ <value>...]\"]\n"
         "    [-srcalpha|-nosrcalpha] [-dstalpha]\n"
-        "    [-r resampling_method] [-wm memory_in_mb] [-multi] [-q]\n"
-        "    [-cutline datasource] [-cl layer] [-cwhere expression]\n"
-        "    [-csql statement] [-cblend dist_in_pixels] [-crop_to_cutline]\n"
-        "    [-if format]* [-of format] [-co \"NAME=VALUE\"]* [-overwrite]\n"
-        "    [-nomd] [-cvmd meta_conflict_value] [-setci] [-oo NAME=VALUE]*\n"
-        "    [-doo NAME=VALUE]*\n"
-        "    srcfile* dstfile\n"
+        "    [-r <resampling_method>] [-wm <memory_in_mb>] [-multi] [-q]\n"
+        "    [-cutline <datasource>] [-cl <layer>] [-cwhere <expression>]\n"
+        "    [-csql <statement>] [-cblend <dist_in_pixels>] "
+        "[-crop_to_cutline]\n"
+        "    [-if <format>]... [-of <format>] [-co <NAME>=<VALUE>]... "
+        "[-overwrite]\n"
+        "    [-nomd] [-cvmd <meta_conflict_value>] [-setci] [-oo "
+        "<NAME>=<VALUE>]...\n"
+        "    [-doo <NAME>=<VALUE>]...\n"
+        "    <srcfile>... <dstfile>\n"
         "\n"
         "Available resampling methods:\n"
         "    near (default), bilinear, cubic, cubicspline, lanczos, average, "
@@ -96,7 +100,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    GDALExit(1);
+    GDALExit(bIsError ? 1 : 0);
 }
 
 /************************************************************************/
@@ -183,7 +187,7 @@ MAIN_START(argc, argv)
         }
         else if (EQUAL(argv[i], "--help"))
         {
-            Usage(nullptr);
+            Usage(false, nullptr);
         }
     }
 
@@ -215,12 +219,12 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage(nullptr);
+        Usage(true, nullptr);
     }
 
     if (psOptionsForBinary->pszDstFilename == nullptr)
     {
-        Usage("No target filename specified.");
+        Usage(true, "No target filename specified.");
     }
 
     if (CSLCount(psOptionsForBinary->papszSrcFiles) == 1 &&
@@ -380,7 +384,7 @@ MAIN_START(argc, argv)
         GDALWarp(psOptionsForBinary->pszDstFilename, hDstDS, nSrcCount,
                  pahSrcDS, psOptions, &bUsageError);
     if (bUsageError)
-        Usage();
+        Usage(true);
     int nRetCode = (hOutDS) ? 0 : 1;
 
     GDALWarpAppOptionsFree(psOptions);

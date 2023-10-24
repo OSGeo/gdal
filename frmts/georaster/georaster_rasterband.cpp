@@ -972,9 +972,9 @@ int GeoRasterRasterBand::GetMaskFlags()
 
 void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
 {
-    int i = 0;
+    size_t i = 0;
     int j = 0;
-    long n = nBlockXSize * nBlockYSize;
+    size_t n = static_cast<size_t>(nBlockXSize) * nBlockYSize;
 
     switch (eDataType)
     {

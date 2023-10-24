@@ -31,6 +31,8 @@
 
 
 import array
+import collections
+import pathlib
 
 import pytest
 
@@ -135,11 +137,11 @@ def test_nearblack_lib_4(alg):
 
 
 @pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
-def test_nearblack_lib_5(alg):
+def test_nearblack_lib_5(tmp_vsimem, alg):
 
     ds = gdal.Nearblack(
-        "/vsimem/test_nearblack_lib_5.tif",
-        "../gdrivers/data/rgbsmall.tif",
+        tmp_vsimem / "test_nearblack_lib_5.tif",
+        pathlib.Path("../gdrivers/data/rgbsmall.tif"),
         format="GTiff",
         maxNonBlack=0,
         setMask=True,
@@ -152,9 +154,6 @@ def test_nearblack_lib_5(alg):
     ), "Bad checksum mask band"
 
     ds = None
-
-    gdal.Unlink("/vsimem/test_nearblack_lib_5.tif")
-    gdal.Unlink("/vsimem/test_nearblack_lib_5.tif.msk")
 
 
 ###############################################################################
@@ -559,3 +558,17 @@ def test_nearblack_lib_floodfill_concave_from_bottom_non_black():
         maxNonBlack=1,
         alg="floodfill",
     )
+
+
+def test_nearblack_lib_dict_arguments():
+
+    opt = gdal.NearblackOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

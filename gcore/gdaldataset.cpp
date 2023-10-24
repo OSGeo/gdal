@@ -2490,6 +2490,25 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
  * writing from various organization of buffers.
  *
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images. The logic of the default
+ * implementation in the base class GDALRasterBand is the following one. It
+ * computes a target_downscaling_factor from the window of interest and buffer
+ * size which is min(nXSize/nBufXSize, nYSize/nBufYSize).
+ * It then walks through overviews and will select the first one whose
+ * downscaling factor is greater than target_downscaling_factor / 1.2.
+ *
+ * Let's assume we have overviews at downscaling factors 2, 4 and 8.
+ * The relationship between target_downscaling_factor and the select overview
+ * level is the following one:
+ *
+ * target_downscaling_factor  | selected_overview
+ * -------------------------  | -----------------
+ * ]0,       2 / 1.2]         | full resolution band
+ * ]2 / 1.2, 4 / 1.2]         | 2x downsampled band
+ * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
+ * ]8 / 1.2, infinity[        | 8x downsampled band
+ *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
  * ReadBlock() and WriteBlock() methods.
@@ -4726,10 +4745,7 @@ Example:
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
+no coordinate system is available.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -4740,7 +4756,7 @@ specific.
 */
 
 OGRLayer *GDALDataset::CreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef,
+                                   const OGRSpatialReference *poSpatialRef,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions)
 
@@ -4818,10 +4834,7 @@ Example:
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param hSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
+no coordinate system is available.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -5198,7 +5211,7 @@ int GDALDataset::GetSummaryRefCount() const
 
 OGRLayer *
 GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
-                          CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                          CPL_UNUSED const OGRSpatialReference *poSpatialRef,
                           CPL_UNUSED OGRwkbGeometryType eGType,
                           CPL_UNUSED char **papszOptions)
 

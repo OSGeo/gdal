@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
+import pathlib
 import struct
 
 import gdaltest
@@ -39,13 +41,12 @@ from osgeo import gdal
 ###############################################################################
 
 
-def test_gdalmdimtranslate_no_arg():
+def test_gdalmdimtranslate_no_arg(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
 
     assert gdal.MultiDimInfo(tmpfile) == gdal.MultiDimInfo("data/mdim.vrt")
-    gdal.Unlink(tmpfile)
 
 
 ###############################################################################
@@ -65,26 +66,26 @@ def test_gdalmdimtranslate_multidim_to_mem():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_multidim_to_classic():
+def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
 
     assert gdal.MultiDimTranslate(
-        tmpfile, "data/mdim.vrt", arraySpecs=["/my_subgroup/array_in_subgroup"]
+        tmpfile,
+        pathlib.Path("data/mdim.vrt"),
+        arraySpecs=["/my_subgroup/array_in_subgroup"],
     )
-
-    gdal.Unlink(tmpfile)
 
 
 ###############################################################################
 
 
-def test_gdalmdimtranslate_multidim_1d_to_classic():
+def test_gdalmdimtranslate_multidim_1d_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     assert gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", arraySpecs=["latitude"])
     ds = gdal.Open(tmpfile)
@@ -94,30 +95,26 @@ def test_gdalmdimtranslate_multidim_1d_to_classic():
     assert struct.unpack("f" * 10, data)[0] == 90.0
     ds = None
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 
 
-def test_gdalmdimtranslate_classic_to_classic():
+def test_gdalmdimtranslate_classic_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     ds = gdal.MultiDimTranslate(tmpfile, "../gcore/data/byte.tif")
     assert ds.GetRasterBand(1).Checksum() == 4672
     ds = None
 
-    gdal.Unlink(tmpfile)
-
 
 ###############################################################################
 
 
-def test_gdalmdimtranslate_classic_to_multidim():
+def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
-    tmpgtifffile = "/vsimem/tmp.tif"
+    tmpfile = tmp_vsimem / "out.vrt"
+    tmpgtifffile = tmp_vsimem / "tmp.tif"
     ds = gdal.Translate(tmpgtifffile, "../gcore/data/byte.tif")
     ds.SetSpatialRef(None)
     ds = None
@@ -171,9 +168,9 @@ def test_gdalmdimtranslate_classic_to_multidim():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_array():
+def test_gdalmdimtranslate_array(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", arraySpecs=["not_existing"])
     with pytest.raises(Exception):
@@ -252,9 +249,9 @@ def test_gdalmdimtranslate_array():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_array_with_transpose_and_view():
+def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(
         tmpfile,
         "data/mdim.vrt",
@@ -327,9 +324,9 @@ def test_gdalmdimtranslate_array_with_transpose_and_view():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_group():
+def test_gdalmdimtranslate_group(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", groupSpecs=["not_existing"])
     with pytest.raises(Exception):
@@ -392,9 +389,9 @@ def test_gdalmdimtranslate_group():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_two_groups():
+def test_gdalmdimtranslate_two_groups(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(
         tmpfile,
         "data/mdim.vrt",
@@ -462,9 +459,9 @@ def test_gdalmdimtranslate_two_groups():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_subset():
+def test_gdalmdimtranslate_subset(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt", subsetSpecs=["latitude("])
     with pytest.raises(Exception):
@@ -717,9 +714,9 @@ def test_gdalmdimtranslate_subset():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_scaleaxes():
+def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.vrt"
+    tmpfile = tmp_vsimem / "out.vrt"
     assert gdal.MultiDimTranslate(
         tmpfile,
         "data/mdim.vrt",
@@ -791,9 +788,9 @@ def test_gdalmdimtranslate_scaleaxes():
     )
 
 
-def test_gdalmdimtranslate_dims_with_same_name_different_size():
+def test_gdalmdimtranslate_dims_with_same_name_different_size(tmp_vsimem):
 
-    srcfile = "/vsimem/in.vrt"
+    srcfile = tmp_vsimem / "in.vrt"
     gdal.FileFromMemBuffer(
         srcfile,
         """<VRTDataset>
@@ -810,7 +807,7 @@ def test_gdalmdimtranslate_dims_with_same_name_different_size():
 </VRTDataset>""",
     )
 
-    tmpfile = "/vsimem/test.vrt"
+    tmpfile = tmp_vsimem / "test.vrt"
     gdal.MultiDimTranslate(tmpfile, srcfile, groupSpecs=["/"], format="VRT")
 
     f = gdal.VSIFOpenL(tmpfile, "rb")
@@ -852,6 +849,70 @@ def test_gdalmdimtranslate_dims_with_same_name_different_size():
     gdal.Unlink(srcfile)
 
 
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdimtranslate_array_with_view():
+    ds = gdal.MultiDimTranslate(
+        "",
+        "../gdrivers/data/netcdf/byte_no_cf.nc",
+        arraySpecs=["name=Band1,view=[::2,::4]"],
+        format="MEM",
+    )
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("Band1")
+    dims = ar.GetDimensions()
+    assert dims[0].GetSize() == 10
+    assert dims[1].GetSize() == 5
+
+
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdimtranslate_array_resample():
+    ds = gdal.MultiDimTranslate(
+        "",
+        "../gdrivers/data/netcdf/fake_EMIT.nc",
+        arraySpecs=["name=reflectance,resample=true"],
+        format="MEM",
+    )
+    rg = ds.GetRootGroup()
+    resampled_ar = rg.OpenMDArray("reflectance")
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "lat"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "lon"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "bands"
+    assert dims[2].GetSize() == 2
+    assert resampled_ar.GetDataType() == gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+    assert resampled_ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert struct.unpack("f" * (3 * 3 * 2), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        -30.0,
+        40.0,
+        -40.0,
+        -9999.0,
+        -9999.0,
+        10.0,
+        -10.0,
+        20.0,
+        -20.0,
+    )
+
+    lat = dims[0].GetIndexingVariable()
+    assert lat
+    assert struct.unpack("d" * 3, lat.Read()) == (3.5, 2.5, 1.5)
+
+    lon = dims[1].GetIndexingVariable()
+    assert lon
+    assert struct.unpack("d" * 3, lon.Read()) == (1.5, 2.5, 3.5)
+
+
 def XXXX_test_all():
     while True:
         test_gdalmdimtranslate_no_arg()
@@ -864,3 +925,21 @@ def XXXX_test_all():
         test_gdalmdimtranslate_two_groups()
         test_gdalmdimtranslate_subset()
         test_gdalmdimtranslate_scaleaxes()
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdalmdimtranslate_dict_arguments():
+
+    opt = gdal.MultiDimTranslateOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    co_idx = opt.index("-co")
+
+    assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

@@ -483,6 +483,45 @@ CPLJSONObject::CPLJSONObject() : m_poJsonObject(json_object_new_object())
 {
 }
 
+CPLJSONObject::CPLJSONObject(std::nullptr_t) : m_poJsonObject(nullptr)
+{
+}
+
+CPLJSONObject::CPLJSONObject(const std::string &osVal)
+    : m_poJsonObject(json_object_new_string(osVal.c_str()))
+{
+}
+
+CPLJSONObject::CPLJSONObject(const char *pszValue)
+    : m_poJsonObject(json_object_new_string(pszValue))
+{
+}
+
+CPLJSONObject::CPLJSONObject(bool bVal)
+    : m_poJsonObject(json_object_new_boolean(bVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(int nVal)
+    : m_poJsonObject(json_object_new_int(nVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(int64_t nVal)
+    : m_poJsonObject(json_object_new_int64(nVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(uint64_t nVal)
+    : m_poJsonObject(json_object_new_uint64(nVal))
+{
+}
+
+CPLJSONObject::CPLJSONObject(double dfVal)
+    : m_poJsonObject(json_object_new_double(dfVal))
+{
+}
+
 CPLJSONObject::CPLJSONObject(const std::string &osName,
                              const CPLJSONObject &oParent)
     : m_poJsonObject(json_object_get(json_object_new_object())), m_osKey(osName)
@@ -1416,6 +1455,17 @@ int CPLJSONArray::Size() const
         return static_cast<int>(
             json_object_array_length(TO_JSONOBJ(m_poJsonObject)));
     return 0;
+}
+
+/**
+ * Add null object to array.
+ *
+ * @since GDAL 3.8
+ */
+void CPLJSONArray::AddNull()
+{
+    if (m_poJsonObject)
+        json_object_array_add(TO_JSONOBJ(m_poJsonObject), nullptr);
 }
 
 /**

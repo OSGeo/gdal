@@ -553,6 +553,16 @@ OGRErr OGREditableLayer::SetAttributeFilter(const char *poAttrFilter)
 }
 
 /************************************************************************/
+/*                           GetArrowStream()                           */
+/************************************************************************/
+
+bool OGREditableLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
+                                      CSLConstList papszOptions)
+{
+    return OGRLayer::GetArrowStream(out_stream, papszOptions);
+}
+
+/************************************************************************/
 /*                           SetSpatialFilter()                         */
 /************************************************************************/
 

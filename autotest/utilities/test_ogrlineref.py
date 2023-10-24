@@ -103,24 +103,20 @@ def test_ogrlineref_3(ogrlineref_path, parts_shp):
 # get_subline test
 
 
-def test_ogrlineref_4(ogrlineref_path, parts_shp):
+def test_ogrlineref_4(ogrlineref_path, parts_shp, tmp_path):
 
-    if os.path.exists("tmp/subline.shp"):
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/subline.shp")
+    output_shp = str(tmp_path / "subline.shp")
 
     gdaltest.runexternal(
-        ogrlineref_path
-        + f" -get_subline -r {parts_shp} -mb 13300 -me 17400 -o tmp/subline.shp"
+        f"{ogrlineref_path} -get_subline -r {parts_shp} -mb 13300 -me 17400 -o {output_shp}"
     )
 
-    ds = ogr.Open("tmp/subline.shp")
+    ds = ogr.Open(output_shp)
     assert ds is not None, "ds is None"
 
     feature_count = ds.GetLayer(0).GetFeatureCount()
     assert feature_count == 1, "feature count %d != 1" % feature_count
     ds = None
-
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/subline.shp")
 
 
 ###############################################################################
@@ -131,12 +127,8 @@ def test_ogrlineref_5(ogrlineref_path, tmp_path):
 
     parts_kml = str(tmp_path / "parts.kml")
 
-    if os.path.exists("tmp/parts.kml"):
-        ogr.GetDriverByName("KML").DeleteDataSource("tmp/parts.kml")
-
     gdaltest.runexternal_out_and_err(
-        ogrlineref_path
-        + f' -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o {parts_kml} -s 222'
+        f'{ogrlineref_path} -create -f "KML" -l data/path.shp -p data/mstones.shp -pm pos -o {parts_kml} -s 222'
     )
 
     assert os.path.exists(parts_kml)

@@ -227,6 +227,8 @@ int CPL_DLL VSISupportsSparseFiles(const char *pszPath);
 
 bool CPL_DLL VSIIsLocal(const char *pszPath);
 
+char CPL_DLL *VSIGetCanonicalFilename(const char *pszPath);
+
 bool CPL_DLL VSISupportsSequentialWrite(const char *pszPath,
                                         bool bAllowLocalTempFile);
 
@@ -476,7 +478,8 @@ void VSIInstallHdfsHandler(void);     /* No reason to export that */
 void VSIInstallWebHdfsHandler(void);  /* No reason to export that */
 void VSIInstallStdoutHandler(void);   /* No reason to export that */
 void CPL_DLL VSIInstallSparseFileHandler(void);
-void VSIInstallTarFileHandler(void); /* No reason to export that */
+void VSIInstallTarFileHandler(void);    /* No reason to export that */
+void VSIInstallCachedFileHandler(void); /* No reason to export that */
 void CPL_DLL VSIInstallCryptFileHandler(void);
 void CPL_DLL VSISetCryptKey(const GByte *pabyKey, int nKeySize);
 /*! @cond Doxygen_Suppress */

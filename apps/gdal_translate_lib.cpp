@@ -224,6 +224,12 @@ struct GDALTranslateOptions
        the specified SRS. */
     std::array<double, 4> adfULLR{{0, 0, 0, 0}};
 
+    /*! assign/override the geotransform of the output file. This
+       assigns a geotransform to the output file, ignoring what would have
+       been derived from the source file. So this does not cause reprojection to
+       the specified SRS. */
+    std::array<double, 6> adfGT{{0, 0, 0, 0, 0, 0}};
+
     /*! set a nodata value specified in GDALTranslateOptions::osNoData to the
      * output bands */
     bool bSetNoData = 0;
@@ -276,7 +282,8 @@ struct GDALTranslateOptions
         Both must be positive values. This is exclusive with
        GDALTranslateOptions::nOXSizePixel (or
        GDALTranslateOptions::dfOXSizePct), GDALTranslateOptions::nOYSizePixel
-        (or GDALTranslateOptions::dfOYSizePct) and GDALTranslateOptions::adfULLR
+        (or GDALTranslateOptions::dfOYSizePct), GDALTranslateOptions::adfULLR,
+        and GDALTranslateOptions::adfGT.
      */
     double dfXRes = 0;
     double dfYRes = 0;
@@ -709,6 +716,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
     GDALDatasetH hOutDS = nullptr;
     bool bGotBounds = false;
+    bool bGotGeoTransform = false;
 
     if (pbUsageError)
         *pbUsageError = FALSE;
@@ -716,6 +724,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->adfULLR[0] != 0.0 || psOptions->adfULLR[1] != 0.0 ||
         psOptions->adfULLR[2] != 0.0 || psOptions->adfULLR[3] != 0.0)
         bGotBounds = true;
+
+    if (psOptions->adfGT[0] != 0.0 || psOptions->adfGT[1] != 0.0 ||
+        psOptions->adfGT[2] != 0.0 || psOptions->adfGT[3] != 0.0 ||
+        psOptions->adfGT[4] != 0.0 || psOptions->adfGT[5] != 0.0)
+        bGotGeoTransform = true;
 
     GDALDataset *poSrcDS = GDALDataset::FromHandle(hSrcDataset);
     const char *pszSource = poSrcDS->GetDescription();
@@ -784,10 +797,21 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
-    if (bGotBounds && (psOptions->dfXRes != 0 && psOptions->dfYRes != 0))
+    if ((bGotBounds | bGotGeoTransform) &&
+        (psOptions->dfXRes != 0 && psOptions->dfYRes != 0))
+    {
+        CPLError(
+            CE_Failure, CPLE_IllegalArg,
+            "-a_ullr or -a_gt options cannot be used at the same time as -tr.");
+        if (pbUsageError)
+            *pbUsageError = TRUE;
+        GDALTranslateOptionsFree(psOptions);
+        return nullptr;
+    }
+    if (bGotBounds && bGotGeoTransform)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "-a_ullr and -tr options cannot be used at the same time.");
+                 "-a_ullr and -a_gt options cannot be used at the same time.");
         if (pbUsageError)
             *pbUsageError = TRUE;
         GDALTranslateOptionsFree(psOptions);
@@ -1222,13 +1246,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      virtual input source to copy from.                              */
     /* -------------------------------------------------------------------- */
 
-    const bool bSpatialArrangementPreserved =
-        psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
-        psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
-        psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() &&
+    const bool bKeepResolution =
         psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 &&
         psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0 &&
         psOptions->dfXRes == 0.0;
+    const bool bSpatialArrangementPreserved =
+        psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
+        psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
+        psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() && bKeepResolution;
 
     if (psOptions->eOutputType == GDT_Unknown &&
         psOptions->asScaleParams.empty() && psOptions->adfExponent.empty() &&
@@ -1236,7 +1261,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         !psOptions->bSetOffset && psOptions->aosMetadataOptions.empty() &&
         bAllBandsInOrder && psOptions->eMaskMode == MASK_AUTO &&
         bSpatialArrangementPreserved && !psOptions->bNoGCP &&
-        psOptions->nGCPCount == 0 && !bGotBounds &&
+        psOptions->nGCPCount == 0 && !bGotBounds && !bGotGeoTransform &&
         psOptions->osOutputSRS.empty() &&
         psOptions->dfOutputCoordinateEpoch == 0 && !psOptions->bSetNoData &&
         !psOptions->bUnsetNoData && psOptions->nRGBExpand == 0 &&
@@ -1272,7 +1297,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         /*      Compute stats if required. */
         /* --------------------------------------------------------------------
          */
-        if (psOptions->bStats)
+
+        if (psOptions->bStats && EQUAL(psOptions->osFormat.c_str(), "COG"))
+        {
+            psOptions->aosCreateOptions.SetNameValue("STATISTICS", "YES");
+        }
+        else if (psOptions->bStats)
         {
             for (int i = 0; i < poSrcDS->GetRasterCount(); i++)
             {
@@ -1597,6 +1627,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         poVDS->SetGeoTransform(adfDstGeoTransform);
     }
 
+    else if (bGotGeoTransform)
+    {
+        bHasDstGeoTransform = true;
+        for (int i = 0; i < 6; i++)
+            adfDstGeoTransform[i] = psOptions->adfGT[i];
+        poVDS->SetGeoTransform(adfDstGeoTransform);
+    }
+
     else if (bHasSrcGeoTransform && psOptions->nGCPCount == 0)
     {
         bHasDstGeoTransform = true;
@@ -1732,7 +1770,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     if (!(psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
           psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
           psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() &&
-          psOptions->nGCPCount == 0 && !bGotBounds))
+          psOptions->nGCPCount == 0 && !bGotBounds && !bGotGeoTransform))
     {
         char **papszIter = papszMetadata;
         while (papszIter && *papszIter)
@@ -1835,11 +1873,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (bSpatialArrangementPreserved)
     {
-        char **papszMD = poSrcDSOri->GetMetadata("RPC");
+        char **papszMD = poSrcDS->GetMetadata("RPC");
         if (papszMD != nullptr)
             poVDS->SetMetadata(papszMD, "RPC");
 
-        papszMD = poSrcDSOri->GetMetadata("GEOLOCATION");
+        papszMD = poSrcDS->GetMetadata("GEOLOCATION");
         if (papszMD != nullptr)
             poVDS->SetMetadata(papszMD, "GEOLOCATION");
     }
@@ -2083,10 +2121,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         /* --------------------------------------------------------------------
          */
         CPLStringList aosAddBandOptions;
-        if (bSpatialArrangementPreserved)
+        int nSrcBlockXSize, nSrcBlockYSize;
+        poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+        if (bKeepResolution &&
+            (fmod(psOptions->adfSrcWin[0], nSrcBlockXSize)) == 0 &&
+            (fmod(psOptions->adfSrcWin[1], nSrcBlockYSize)) == 0)
         {
-            int nSrcBlockXSize, nSrcBlockYSize;
-            poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
             aosAddBandOptions.SetNameValue("BLOCKXSIZE",
                                            CPLSPrintf("%d", nSrcBlockXSize));
             aosAddBandOptions.SetNameValue("BLOCKYSIZE",
@@ -2536,7 +2576,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Compute stats if required.                                      */
     /* -------------------------------------------------------------------- */
-    if (psOptions->bStats)
+    if (psOptions->bStats && EQUAL(psOptions->osFormat.c_str(), "COG"))
+    {
+        psOptions->aosCreateOptions.SetNameValue("STATISTICS", "YES");
+    }
+    else if (psOptions->bStats)
     {
         for (int i = 0; i < poVDS->GetRasterCount(); i++)
         {
@@ -2956,6 +3000,18 @@ GDALTranslateOptionsNew(char **papszArgv,
             i += 4;
         }
 
+        else if (i + 6 < argc && EQUAL(papszArgv[i], "-a_gt"))
+        {
+            psOptions->adfGT[0] = CPLAtofM(papszArgv[i + 1]);
+            psOptions->adfGT[1] = CPLAtofM(papszArgv[i + 2]);
+            psOptions->adfGT[2] = CPLAtofM(papszArgv[i + 3]);
+            psOptions->adfGT[3] = CPLAtofM(papszArgv[i + 4]);
+            psOptions->adfGT[4] = CPLAtofM(papszArgv[i + 5]);
+            psOptions->adfGT[5] = CPLAtofM(papszArgv[i + 6]);
+
+            i += 6;
+        }
+
         else if (EQUAL(papszArgv[i], "-co") && papszArgv[i + 1])
         {
             psOptions->aosCreateOptions.AddString(papszArgv[++i]);
@@ -3026,7 +3082,7 @@ GDALTranslateOptionsNew(char **papszArgv,
             else
             {
                 psOptions->asScaleParams[nIndex].dfScaleDstMin = 0.0;
-                psOptions->asScaleParams[nIndex].dfScaleDstMax = 255.999;
+                psOptions->asScaleParams[nIndex].dfScaleDstMax = 255.0;
             }
         }
 

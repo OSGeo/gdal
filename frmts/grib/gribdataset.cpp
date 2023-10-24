@@ -2920,5 +2920,9 @@ void GDALRegister_GRIB()
     poDriver->pfnCreateCopy = GRIBDataset::CreateCopy;
     poDriver->pfnUnloadDriver = GDALDeregister_GRIB;
 
+#ifdef USE_AEC
+    poDriver->SetMetadataItem("HAVE_AEC", "YES");
+#endif
+
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

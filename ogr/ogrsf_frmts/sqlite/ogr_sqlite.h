@@ -531,6 +531,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
                                            public IOGRSQLiteSelectLayer
 {
     OGRSQLiteSelectLayerCommonBehaviour *m_poBehavior = nullptr;
+    bool m_bCanReopenBaseDS = false;
 
     virtual OGRErr ResetStatement() override;
 
@@ -539,7 +540,8 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
   public:
     OGRSQLiteSelectLayer(OGRSQLiteDataSource *, const CPLString &osSQL,
                          sqlite3_stmt *, bool bUseStatementForGetNextFeature,
-                         bool bEmptyLayer, bool bAllowMultipleGeomFields);
+                         bool bEmptyLayer, bool bAllowMultipleGeomFields,
+                         bool bCanReopenBaseDS);
     virtual ~OGRSQLiteSelectLayer();
 
     virtual void ResetReading() override;
@@ -695,6 +697,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     CPLErr Close() override;
 
+    void PostInitSpatialite();
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
@@ -720,7 +724,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     GetLayerWithGetSpatialWhereByName(const char *pszName) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int) override;
@@ -762,9 +766,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     {
         return m_nFileTimestamp;
     }
-
-    bool IsSpatialiteLoaded();
-    int GetSpatialiteVersionNumber();
 
     bool IsSpatialiteDB() const
     {

@@ -128,7 +128,7 @@ OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRGeoRSSDataSource::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType /* eType */,
                                             char ** /* papszOptions */)
 {
@@ -153,10 +153,10 @@ OGRLayer *OGRGeoRSSDataSource::ICreateLayer(const char *pszLayerName,
     nLayers++;
     papoLayers = static_cast<OGRGeoRSSLayer **>(
         CPLRealloc(papoLayers, nLayers * sizeof(OGRGeoRSSLayer *)));
-    auto poSRSClone = poSRS;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSRS)
     {
-        poSRSClone = poSRSClone->Clone();
+        poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     papoLayers[nLayers - 1] =

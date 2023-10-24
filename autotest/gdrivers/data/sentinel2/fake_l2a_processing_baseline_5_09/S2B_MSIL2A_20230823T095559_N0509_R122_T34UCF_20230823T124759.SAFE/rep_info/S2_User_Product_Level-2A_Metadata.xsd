@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://psd-14.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" xmlns:dimap="https://psd-14.sentinel2.eo.esa.int/DICO/EUP-V14/PDGS/dimap/" targetNamespace="https://psd-14.sentinel2.eo.esa.int/PSD/User_Product_Level-2A.xsd" elementFormDefault="qualified" version="14">
+	<xs:import namespace="https://psd-14.sentinel2.eo.esa.int/DICO/EUP-V14/PDGS/dimap/" schemaLocation="DICO/EUP-V14/PDGS/dimap/dimap2A.xsd"/>
+	<xs:element name="Level-2A_User_Product" type="Level-2A_User_Product"/>
+	<xs:complexType name="Level-2A_User_Product">
+		<xs:sequence>
+			<xs:element name="General_Info" type="dimap:A_PRODUCT_INFO_USERL2A"/>
+			<xs:element name="Geometric_Info" type="dimap:A_GEOMETRIC_INFO_USER1C"/>
+			<xs:element name="Auxiliary_Data_Info" type="dimap:AN_AUXILIARY_DATA_INFO_USERL2A"/>
+			<xs:element name="Quality_Indicators_Info" type="dimap:A_QUALITY_INDICATORS_INFO_USER_PROD_L1C_L2A"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    pct2rgb.py [-of format] [-b band] [-rgba] [-pct palette_file] source_file dest_file
+    pct2rgb.py [--help] [--help-general]
+               [-of format] [-b band] [-rgba] [-pct palette_file] <source_file> <dest_file>
 
 Description
 -----------
@@ -24,6 +25,8 @@ This utility will convert a pseudo-color band on the input file into an output
 RGB file of the desired format.
 
 .. program:: pct2rgb
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -of <format>
 

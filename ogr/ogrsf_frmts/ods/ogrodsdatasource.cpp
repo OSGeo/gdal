@@ -1522,10 +1522,9 @@ void OGRODSDataSource::AnalyseSettings()
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRODSDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference * /* poSRS */,
-                                         OGRwkbGeometryType /* eType */,
-                                         char **papszOptions)
+OGRLayer *OGRODSDataSource::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference * /* poSRS */,
+    OGRwkbGeometryType /* eType */, char **papszOptions)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify we are in update mode.                                   */

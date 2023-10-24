@@ -39,19 +39,17 @@ if("${FILE}" MATCHES "gdal_wrap.cpp")
            _CONTENTS "${_CONTENTS}")
 endif()
 
-if(NOT "${FILE}" MATCHES "gdal_array_wrap.cpp")
-    string(REPLACE "PyObject *resultobj = 0;"
-                   "PyObject *resultobj = 0; int bLocalUseExceptionsCode = GetUseExceptions();"
-           _CONTENTS "${_CONTENTS}")
+string(REPLACE "PyObject *resultobj = 0;"
+               "PyObject *resultobj = 0; int bLocalUseExceptionsCode = GetUseExceptions();"
+       _CONTENTS "${_CONTENTS}")
 
-    string(REPLACE "#define SWIGPYTHON"
-                   "#define SWIGPYTHON\n\#define SED_HACKS"
-           _CONTENTS "${_CONTENTS}")
+string(REPLACE "#define SWIGPYTHON"
+               "#define SWIGPYTHON\n\#define SED_HACKS"
+       _CONTENTS "${_CONTENTS}")
 
-    string(REPLACE "return resultobj;"
-                   "if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;"
-           _CONTENTS "${_CONTENTS}")
-endif()
+string(REPLACE "return resultobj;"
+               "if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }\n  return resultobj;"
+       _CONTENTS "${_CONTENTS}")
 
 # Below works around https://github.com/swig/swig/issues/2638 and https://github.com/swig/swig/issues/2037#issuecomment-874372082
 # to avoid the ""swig/python detected a memory leak of type 'OSRSpatialReferenceShadow *', no destructor found."

@@ -41,3 +41,21 @@ a requirement for an excessively large and sparse feature array.
 Starting with GDAL 2.1, sparse IDs can be handled.
 
 New fields can be added or removed to a layer that already has features.
+
+Layer creation options
+~~~~~~~~~~~~~~~~~~~~~~
+
+The following layer creation options are available:
+
+-  .. lco:: ADVERTIZE_UTF8
+      :choices: YES, NO
+      :default: NO
+
+      Whether the layer will contain UTF-8 strings.
+
+-  .. lco:: FID
+      :choices: <string>
+      :default: empty string
+      :since: 3.8
+
+      Name of the FID column to create.

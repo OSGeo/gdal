@@ -166,7 +166,7 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
 /************************************************************************/
 
 OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType eType,
                                             char **papszOptions)
 
@@ -715,10 +715,13 @@ bool OGRPGDumpDataSource::Log(const char *pszStr, bool bAddSemiColumn)
         return false;
     }
 
+    VSIFWriteL(pszStr, strlen(pszStr), 1, m_fp);
     if (bAddSemiColumn)
-        VSIFPrintfL(m_fp, "%s;%s", pszStr, m_pszEOL);
-    else
-        VSIFPrintfL(m_fp, "%s%s", pszStr, m_pszEOL);
+    {
+        const char chSemiColumn = ';';
+        VSIFWriteL(&chSemiColumn, 1, 1, m_fp);
+    }
+    VSIFWriteL(m_pszEOL, strlen(m_pszEOL), 1, m_fp);
     return true;
 }
 

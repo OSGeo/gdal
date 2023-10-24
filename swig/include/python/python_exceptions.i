@@ -4,6 +4,9 @@
  * it was moved into this file.
  */
 %{
+#include "cpl_string.h"
+#include "cpl_conv.h"
+
 static int bUseExceptions=0;
 static int bUserHasSpecifiedIfUsingExceptions = FALSE;
 static thread_local int bUseExceptionsLocal = -1;
@@ -312,6 +315,13 @@ static void popErrorHandler()
           """
           self.currentUseExceptions = _GetExceptionsLocal()
           _SetExceptionsLocal(self.requestedUseExceptions)
+          if ExceptionMgr.__module__ == "osgeo.gdal":
+              try:
+                  from . import gdal_array
+              except ImportError:
+                  gdal_array = None
+              if gdal_array:
+                  gdal_array._SetExceptionsLocal(self.requestedUseExceptions)
 
       def __exit__(self, exc_type, exc_val, exc_tb):
           """
@@ -319,6 +329,14 @@ static void popErrorHandler()
           current on entry to the context
           """
           _SetExceptionsLocal(self.currentUseExceptions)
+          if ExceptionMgr.__module__ == "osgeo.gdal":
+              try:
+                  from . import gdal_array
+              except ImportError:
+                  gdal_array = None
+              if gdal_array:
+                  gdal_array._SetExceptionsLocal(self.currentUseExceptions)
+
 %}
 
 
@@ -331,6 +349,11 @@ def UseExceptions():
     try:
         from . import gdal
         gdal._UseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import gdal_array
+        gdal_array._UseExceptions()
     except ImportError:
         pass
     try:
@@ -356,6 +379,11 @@ def DontUseExceptions():
     try:
         from . import gdal
         gdal._DontUseExceptions()
+    except ImportError:
+        pass
+    try:
+        from . import gdal_array
+        gdal_array._DontUseExceptions()
     except ImportError:
         pass
     try:

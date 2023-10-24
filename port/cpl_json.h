@@ -88,6 +88,14 @@ class CPL_DLL CPLJSONObject
     CPLJSONObject();
     explicit CPLJSONObject(const std::string &osName,
                            const CPLJSONObject &oParent);
+    explicit CPLJSONObject(std::nullptr_t);
+    explicit CPLJSONObject(const std::string &osVal);
+    explicit CPLJSONObject(const char *pszValue);
+    explicit CPLJSONObject(bool bVal);
+    explicit CPLJSONObject(int nVal);
+    explicit CPLJSONObject(int64_t nVal);
+    explicit CPLJSONObject(uint64_t nVal);
+    explicit CPLJSONObject(double dfVal);
     ~CPLJSONObject();
     CPLJSONObject(const CPLJSONObject &other);
     CPLJSONObject(CPLJSONObject &&other);
@@ -227,6 +235,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     /*! @endcond */
   public:
     int Size() const;
+    void AddNull();
     void Add(const CPLJSONObject &oValue);
     void Add(const std::string &osValue);
     void Add(const char *pszValue);

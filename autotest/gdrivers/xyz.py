@@ -270,7 +270,7 @@ def test_xyz_9():
 """
 
     with gdaltest.tempfile("/vsimem/grid.xyz", content):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open("/vsimem/grid.xyz")
         assert ds.RasterXSize == 2 and ds.RasterYSize == 2
         cs = ds.GetRasterBand(1).Checksum()

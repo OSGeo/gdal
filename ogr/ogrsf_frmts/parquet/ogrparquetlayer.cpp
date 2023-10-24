@@ -90,7 +90,8 @@ void OGRParquetLayerBase::LoadGeoMetadata(
                 const auto osVersion = oRoot.GetString("version");
                 if (osVersion != "0.1.0" && osVersion != "0.2.0" &&
                     osVersion != "0.3.0" && osVersion != "0.4.0" &&
-                    osVersion != "1.0.0-beta.1")
+                    osVersion != "1.0.0-beta.1" && osVersion != "1.0.0-rc.1" &&
+                    osVersion != "1.0.0")
                 {
                     CPLDebug(
                         "PARQUET",
@@ -394,26 +395,6 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
 
-    if (EQUAL(pszCap, OLCFastGetExtent))
-    {
-        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
-        {
-            auto oIter = m_oMapGeometryColumns.find(
-                m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
-            if (oIter == m_oMapGeometryColumns.end())
-            {
-                return false;
-            }
-            const auto &oJSONDef = oIter->second;
-            const auto oBBox = oJSONDef.GetArray("bbox");
-            if (!(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
 
@@ -487,8 +468,11 @@ void OGRParquetLayer::EstablishFeatureDefn()
         if (!bParquetColValid)
             m_bHasMissingMappingToParquet = true;
 
-        if (!m_osFIDColumn.empty() && field->name() == m_osFIDColumn)
+        if (!m_osFIDColumn.empty() && field->name() == m_osFIDColumn &&
+            (field->type()->id() == arrow::Type::INT32 ||
+             field->type()->id() == arrow::Type::INT64))
         {
+            m_poFIDType = field->type();
             m_iFIDArrowColumn = i;
             if (bParquetColValid)
             {
@@ -952,6 +936,12 @@ bool OGRParquetLayer::CreateRecordBatchReader(int iStartingRowGroup)
     anRowGroups.reserve(nNumGroups - iStartingRowGroup);
     for (int i = iStartingRowGroup; i < nNumGroups; ++i)
         anRowGroups.push_back(i);
+    return CreateRecordBatchReader(anRowGroups);
+}
+
+bool OGRParquetLayer::CreateRecordBatchReader(
+    const std::vector<int> &anRowGroups)
+{
     arrow::Status status;
     if (m_bIgnoredFields)
     {
@@ -970,6 +960,73 @@ bool OGRParquetLayer::CreateRecordBatchReader(int iStartingRowGroup)
         return false;
     }
     return true;
+}
+
+/************************************************************************/
+/*                       IsConstraintPossible()                         */
+/************************************************************************/
+
+enum class IsConstraintPossibleRes
+{
+    YES,
+    NO,
+    UNKNOWN
+};
+
+template <class T>
+static IsConstraintPossibleRes IsConstraintPossible(int nOperation, T v, T min,
+                                                    T max)
+{
+    if (nOperation == SWQ_EQ)
+    {
+        if (v < min || v > max)
+        {
+            return IsConstraintPossibleRes::NO;
+        }
+    }
+    else if (nOperation == SWQ_NE)
+    {
+        if (v == min && v == max)
+        {
+            return IsConstraintPossibleRes::NO;
+        }
+    }
+    else if (nOperation == SWQ_LE)
+    {
+        if (v < min)
+        {
+            return IsConstraintPossibleRes::NO;
+        }
+    }
+    else if (nOperation == SWQ_LT)
+    {
+        if (v <= min)
+        {
+            return IsConstraintPossibleRes::NO;
+        }
+    }
+    else if (nOperation == SWQ_GE)
+    {
+        if (v > max)
+        {
+            return IsConstraintPossibleRes::NO;
+        }
+    }
+    else if (nOperation == SWQ_GT)
+    {
+        if (v >= max)
+        {
+            return IsConstraintPossibleRes::NO;
+        }
+    }
+    else
+    {
+        CPLDebug("PARQUET",
+                 "IsConstraintPossible: Unhandled operation type: %d",
+                 nOperation);
+        return IsConstraintPossibleRes::UNKNOWN;
+    }
+    return IsConstraintPossibleRes::YES;
 }
 
 /************************************************************************/
@@ -992,8 +1049,294 @@ bool OGRParquetLayer::ReadNextBatch()
 
     if (m_poRecordBatchReader == nullptr)
     {
-        if (!CreateRecordBatchReader(0))
-            return false;
+        m_anSelectedGroupsStartFeatureIdx.clear();
+
+        bool bIterateEverything = false;
+        std::vector<int> anSelectedGroups;
+        const bool bUSEBBOXFields =
+            (m_poFilterGeom && m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
+             m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
+             CPLTestBool(CPLGetConfigOption(
+                 ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")));
+
+        if (m_asAttributeFilterConstraints.empty() && !bUSEBBOXFields)
+        {
+            bIterateEverything = true;
+        }
+        else
+        {
+            const int nNumGroups = m_poArrowReader->num_row_groups();
+            OGRField sMin;
+            OGRField sMax;
+            OGR_RawField_SetNull(&sMin);
+            OGR_RawField_SetNull(&sMax);
+            bool bFoundMin = false;
+            bool bFoundMax = false;
+            OGRFieldType eType = OFTMaxType;
+            OGRFieldSubType eSubType = OFSTNone;
+            std::string osMinTmp, osMaxTmp;
+            GIntBig nFeatureIdx = 0;
+
+            for (int iRowGroup = 0;
+                 iRowGroup < nNumGroups && !bIterateEverything; ++iRowGroup)
+            {
+                bool bSelectGroup = true;
+                auto poRowGroup =
+                    GetReader()->parquet_reader()->RowGroup(iRowGroup);
+
+                if (bUSEBBOXFields)
+                {
+                    if (GetMinMaxForField(iRowGroup, m_iBBOXMinXField, true,
+                                          sMin, bFoundMin, false, sMax,
+                                          bFoundMax, eType, eSubType, osMinTmp,
+                                          osMaxTmp) &&
+                        bFoundMin && eType == OFTReal)
+                    {
+                        const double dfGroupMinX = sMin.Real;
+                        if (dfGroupMinX > m_sFilterEnvelope.MaxX)
+                        {
+                            bSelectGroup = false;
+                        }
+                        else if (GetMinMaxForField(
+                                     iRowGroup, m_iBBOXMinYField, true, sMin,
+                                     bFoundMin, false, sMax, bFoundMax, eType,
+                                     eSubType, osMinTmp, osMaxTmp) &&
+                                 bFoundMin && eType == OFTReal)
+                        {
+                            const double dfGroupMinY = sMin.Real;
+                            if (dfGroupMinY > m_sFilterEnvelope.MaxY)
+                            {
+                                bSelectGroup = false;
+                            }
+                            else if (GetMinMaxForField(
+                                         iRowGroup, m_iBBOXMaxXField, false,
+                                         sMin, bFoundMin, true, sMax, bFoundMax,
+                                         eType, eSubType, osMinTmp, osMaxTmp) &&
+                                     bFoundMax && eType == OFTReal)
+                            {
+                                const double dfGroupMaxX = sMax.Real;
+                                if (dfGroupMaxX < m_sFilterEnvelope.MinX)
+                                {
+                                    bSelectGroup = false;
+                                }
+                                else if (GetMinMaxForField(
+                                             iRowGroup, m_iBBOXMaxYField, false,
+                                             sMin, bFoundMin, true, sMax,
+                                             bFoundMax, eType, eSubType,
+                                             osMinTmp, osMaxTmp) &&
+                                         bFoundMax && eType == OFTReal)
+                                {
+                                    const double dfGroupMaxY = sMax.Real;
+                                    if (dfGroupMaxY < m_sFilterEnvelope.MinY)
+                                    {
+                                        bSelectGroup = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (bSelectGroup)
+                {
+                    for (auto &constraint : m_asAttributeFilterConstraints)
+                    {
+                        int iOGRField = constraint.iField;
+                        if (constraint.iField ==
+                            m_poFeatureDefn->GetFieldCount() + SPF_FID)
+                        {
+                            iOGRField = OGR_FID_INDEX;
+                        }
+                        if (constraint.nOperation != SWQ_ISNULL &&
+                            constraint.nOperation != SWQ_ISNOTNULL)
+                        {
+                            if (iOGRField == OGR_FID_INDEX &&
+                                m_iFIDParquetColumn < 0)
+                            {
+                                sMin.Integer64 = nFeatureIdx;
+                                sMax.Integer64 =
+                                    nFeatureIdx +
+                                    poRowGroup->metadata()->num_rows() - 1;
+                                eType = OFTInteger64;
+                            }
+                            else if (!GetMinMaxForField(
+                                         iRowGroup, iOGRField, true, sMin,
+                                         bFoundMin, true, sMax, bFoundMax,
+                                         eType, eSubType, osMinTmp, osMaxTmp) ||
+                                     !bFoundMin || !bFoundMax)
+                            {
+                                bIterateEverything = true;
+                                break;
+                            }
+                        }
+
+                        IsConstraintPossibleRes res =
+                            IsConstraintPossibleRes::UNKNOWN;
+                        if (constraint.eType ==
+                                OGRArrowLayer::Constraint::Type::Integer &&
+                            eType == OFTInteger)
+                        {
+#if 0
+                            CPLDebug("PARQUET",
+                                     "Group %d, field %s, min = %d, max = %d",
+                                     iRowGroup,
+                                     iOGRField == OGR_FID_INDEX
+                                         ? m_osFIDColumn.c_str()
+                                         : m_poFeatureDefn->GetFieldDefn(iOGRField)
+                                               ->GetNameRef(),
+                                     sMin.Integer, sMax.Integer);
+#endif
+                            res = IsConstraintPossible(
+                                constraint.nOperation,
+                                constraint.sValue.Integer, sMin.Integer,
+                                sMax.Integer);
+                        }
+                        else if (constraint.eType == OGRArrowLayer::Constraint::
+                                                         Type::Integer64 &&
+                                 eType == OFTInteger64)
+                        {
+#if 0
+                            CPLDebug("PARQUET",
+                                     "Group %d, field %s, min = " CPL_FRMT_GIB
+                                     ", max = " CPL_FRMT_GIB,
+                                     iRowGroup,
+                                     iOGRField == OGR_FID_INDEX
+                                         ? m_osFIDColumn.c_str()
+                                         : m_poFeatureDefn->GetFieldDefn(iOGRField)
+                                               ->GetNameRef(),
+                                     static_cast<GIntBig>(sMin.Integer64),
+                                     static_cast<GIntBig>(sMax.Integer64));
+#endif
+                            res = IsConstraintPossible(
+                                constraint.nOperation,
+                                constraint.sValue.Integer64, sMin.Integer64,
+                                sMax.Integer64);
+                        }
+                        else if (constraint.eType ==
+                                     OGRArrowLayer::Constraint::Type::Real &&
+                                 eType == OFTReal)
+                        {
+#if 0
+                            CPLDebug("PARQUET",
+                                     "Group %d, field %s, min = %g, max = %g",
+                                     iRowGroup,
+                                     iOGRField == OGR_FID_INDEX
+                                         ? m_osFIDColumn.c_str()
+                                         : m_poFeatureDefn->GetFieldDefn(iOGRField)
+                                               ->GetNameRef(),
+                                     sMin.Real, sMax.Real);
+#endif
+                            res = IsConstraintPossible(constraint.nOperation,
+                                                       constraint.sValue.Real,
+                                                       sMin.Real, sMax.Real);
+                        }
+                        else if (constraint.eType ==
+                                     OGRArrowLayer::Constraint::Type::String &&
+                                 eType == OFTString)
+                        {
+#if 0
+                            CPLDebug("PARQUET",
+                                     "Group %d, field %s, min = %s, max = %s",
+                                     iRowGroup,
+                                     iOGRField == OGR_FID_INDEX
+                                         ? m_osFIDColumn.c_str()
+                                         : m_poFeatureDefn->GetFieldDefn(iOGRField)
+                                               ->GetNameRef(),
+                                     sMin.String, sMax.String);
+#endif
+                            res = IsConstraintPossible(
+                                constraint.nOperation,
+                                std::string(constraint.sValue.String),
+                                std::string(sMin.String),
+                                std::string(sMax.String));
+                        }
+                        else if (constraint.nOperation == SWQ_ISNULL ||
+                                 constraint.nOperation == SWQ_ISNOTNULL)
+                        {
+                            const int iCol =
+                                iOGRField == OGR_FID_INDEX
+                                    ? m_iFIDParquetColumn
+                                    : GetMapFieldIndexToParquetColumn()
+                                          [iOGRField];
+                            if (iCol >= 0)
+                            {
+                                const auto metadata =
+                                    m_poArrowReader->parquet_reader()
+                                        ->metadata();
+                                const auto rowGroupColumnChunk =
+                                    metadata->RowGroup(iRowGroup)->ColumnChunk(
+                                        iCol);
+                                const auto rowGroupStats =
+                                    rowGroupColumnChunk->statistics();
+                                if (rowGroupColumnChunk->is_stats_set() &&
+                                    rowGroupStats)
+                                {
+                                    res = IsConstraintPossibleRes::YES;
+                                    if (constraint.nOperation == SWQ_ISNULL &&
+                                        rowGroupStats->num_values() ==
+                                            poRowGroup->metadata()->num_rows())
+                                    {
+                                        res = IsConstraintPossibleRes::NO;
+                                    }
+                                    else if (constraint.nOperation ==
+                                                 SWQ_ISNOTNULL &&
+                                             rowGroupStats->num_values() == 0)
+                                    {
+                                        res = IsConstraintPossibleRes::NO;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            CPLDebug(
+                                "PARQUET",
+                                "Unhandled combination of constraint.eType "
+                                "(%d) and eType (%d)",
+                                static_cast<int>(constraint.eType), eType);
+                        }
+
+                        if (res == IsConstraintPossibleRes::NO)
+                        {
+                            bSelectGroup = false;
+                            break;
+                        }
+                        else if (res == IsConstraintPossibleRes::UNKNOWN)
+                        {
+                            bIterateEverything = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (bSelectGroup)
+                {
+                    // CPLDebug("PARQUET", "Selecting row group %d", iRowGroup);
+                    m_anSelectedGroupsStartFeatureIdx.push_back(nFeatureIdx);
+                    anSelectedGroups.push_back(iRowGroup);
+                }
+
+                nFeatureIdx += poRowGroup->metadata()->num_rows();
+            }
+        }
+
+        if (bIterateEverything)
+        {
+            m_anSelectedGroupsStartFeatureIdx.clear();
+            if (!CreateRecordBatchReader(0))
+                return false;
+        }
+        else
+        {
+            if (anSelectedGroups.empty())
+            {
+                return false;
+            }
+            if (!CreateRecordBatchReader(anSelectedGroups))
+            {
+                return false;
+            }
+        }
     }
 
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
@@ -1019,6 +1362,13 @@ bool OGRParquetLayer::ReadNextBatch()
             else
                 m_poBatch.reset();
             return false;
+        }
+        if (!m_anSelectedGroupsStartFeatureIdx.empty())
+        {
+            CPLAssert(
+                m_iRecordBatch <
+                static_cast<int>(m_anSelectedGroupsStartFeatureIdx.size()));
+            m_nFeatureIdx = m_anSelectedGroupsStartFeatureIdx[m_iRecordBatch];
         }
     } while (poNextBatch->num_rows() == 0);
 
@@ -1076,6 +1426,17 @@ bool OGRParquetLayer::ReadNextBatch()
 #endif
 
     return true;
+}
+
+/************************************************************************/
+/*                     InvalidateCachedBatches()                        */
+/************************************************************************/
+
+void OGRParquetLayer::InvalidateCachedBatches()
+{
+    m_iRecordBatch = -1;
+    m_bSingleBatch = false;
+    ResetReading();
 }
 
 /************************************************************************/
@@ -1217,9 +1578,7 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
     ComputeConstraintsArrayIdx();
 
     // Full invalidation
-    m_iRecordBatch = -1;
-    m_bSingleBatch = false;
-    ResetReading();
+    InvalidateCachedBatches();
 
     return eErr;
 }
@@ -1237,6 +1596,79 @@ GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
             return metadata->num_rows();
     }
     return OGRLayer::GetFeatureCount(bForce);
+}
+
+/************************************************************************/
+/*                         FastGetExtent()                              */
+/************************************************************************/
+
+bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
+{
+    if (OGRParquetLayerBase::FastGetExtent(iGeomField, psExtent))
+        return true;
+
+    if (iGeomField == 0 && m_poFeatureDefn->GetGeomFieldCount() == 1)
+    {
+        // OuvertureMaps dataset have double bbox.minx, bbox.miny, bbox.maxx,
+        // bboxy.maxy fields with statistics. Use that to quickly compute
+        // extent.
+        if (m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
+            m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
+            CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES")))
+        {
+            OGREnvelope sExtent;
+            OGRField sMin, sMax;
+            OGR_RawField_SetNull(&sMin);
+            OGR_RawField_SetNull(&sMax);
+            bool bFoundMin, bFoundMax;
+            OGRFieldType eType = OFTMaxType;
+            OGRFieldSubType eSubType = OFSTNone;
+            std::string osMinTmp, osMaxTmp;
+            if (GetMinMaxForField(-1, m_iBBOXMinXField, true, sMin, bFoundMin,
+                                  false, sMax, bFoundMax, eType, eSubType,
+                                  osMinTmp, osMaxTmp) &&
+                eType == OFTReal)
+            {
+                sExtent.MinX = sMin.Real;
+
+                if (GetMinMaxForField(-1, m_iBBOXMinYField, true, sMin,
+                                      bFoundMin, false, sMax, bFoundMax, eType,
+                                      eSubType, osMinTmp, osMaxTmp) &&
+                    eType == OFTReal)
+                {
+                    sExtent.MinY = sMin.Real;
+
+                    if (GetMinMaxForField(-1, m_iBBOXMaxXField, false, sMin,
+                                          bFoundMin, true, sMax, bFoundMax,
+                                          eType, eSubType, osMinTmp,
+                                          osMaxTmp) &&
+                        eType == OFTReal)
+                    {
+                        sExtent.MaxX = sMax.Real;
+
+                        if (GetMinMaxForField(-1, m_iBBOXMaxYField, false, sMin,
+                                              bFoundMin, true, sMax, bFoundMax,
+                                              eType, eSubType, osMinTmp,
+                                              osMaxTmp) &&
+                            eType == OFTReal)
+                        {
+                            sExtent.MaxY = sMax.Real;
+
+                            CPLDebug(
+                                "PARQUET",
+                                "Using statistics of bbox.minx, bbox.miny, "
+                                "bbox.maxx, bbox.maxy columns to get extent");
+                            m_oMapExtents[iGeomField] = sExtent;
+                            *psExtent = sExtent;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -1449,4 +1881,349 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
     m_iRecordBatch = -1;
     ResetReading();
     return OGRERR_FAILURE;
+}
+
+/***********************************************************************/
+/*                            GetStats()                               */
+/***********************************************************************/
+
+template <class STAT_TYPE> struct GetStats
+{
+    using T = typename STAT_TYPE::T;
+
+    static T min(const std::shared_ptr<parquet::FileMetaData> &metadata,
+                 const int iRowGroup, const int numRowGroups, const int iCol,
+                 bool &bFound)
+    {
+        T v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
+                const auto rowGroupVal = castStats->min();
+                if (i == 0 || rowGroupVal < v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+        }
+        return v;
+    }
+
+    static T max(const std::shared_ptr<parquet::FileMetaData> &metadata,
+                 const int iRowGroup, const int numRowGroups, const int iCol,
+                 bool &bFound)
+    {
+        T v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
+                const auto rowGroupVal = castStats->max();
+                if (i == 0 || rowGroupVal > v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+            else
+            {
+                bFound = false;
+                break;
+            }
+        }
+        return v;
+    }
+};
+
+template <> struct GetStats<parquet::ByteArrayStatistics>
+{
+    static std::string
+    min(const std::shared_ptr<parquet::FileMetaData> &metadata,
+        const int iRowGroup, const int numRowGroups, const int iCol,
+        bool &bFound)
+    {
+        std::string v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats =
+                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
+                const auto rowGroupValRaw = castStats->min();
+                const std::string rowGroupVal(
+                    reinterpret_cast<const char *>(rowGroupValRaw.ptr),
+                    rowGroupValRaw.len);
+                if (i == 0 || rowGroupVal < v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+        }
+        return v;
+    }
+
+    static std::string
+    max(const std::shared_ptr<parquet::FileMetaData> &metadata,
+        const int iRowGroup, const int numRowGroups, const int iCol,
+        bool &bFound)
+    {
+        std::string v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats =
+                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
+                const auto rowGroupValRaw = castStats->max();
+                const std::string rowGroupVal(
+                    reinterpret_cast<const char *>(rowGroupValRaw.ptr),
+                    rowGroupValRaw.len);
+                if (i == 0 || rowGroupVal > v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+            else
+            {
+                bFound = false;
+                break;
+            }
+        }
+        return v;
+    }
+};
+
+/************************************************************************/
+/*                        GetMinMaxForField()                           */
+/************************************************************************/
+
+bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
+                                        int iOGRField, bool bComputeMin,
+                                        OGRField &sMin, bool &bFoundMin,
+                                        bool bComputeMax, OGRField &sMax,
+                                        bool &bFoundMax, OGRFieldType &eType,
+                                        OGRFieldSubType &eSubType,
+                                        std::string &osMinTmp,
+                                        std::string &osMaxTmp) const
+{
+    const OGRFieldDefn oDummyFIDFieldDefn(m_osFIDColumn.c_str(), OFTInteger64);
+    const OGRFieldDefn *poFieldDefn =
+        iOGRField == OGR_FID_INDEX
+            ? &oDummyFIDFieldDefn
+            : const_cast<OGRParquetLayer *>(this)->GetLayerDefn()->GetFieldDefn(
+                  iOGRField);
+
+    OGR_RawField_SetNull(&sMin);
+    OGR_RawField_SetNull(&sMax);
+    eType = OFTReal;
+    eSubType = OFSTNone;
+    bFoundMin = false;
+    bFoundMax = false;
+
+    const int iCol = iOGRField == OGR_FID_INDEX
+                         ? m_iFIDParquetColumn
+                         : GetMapFieldIndexToParquetColumn()[iOGRField];
+    if (iCol < 0)
+        return false;
+    const auto metadata = GetReader()->parquet_reader()->metadata();
+    const auto numRowGroups = metadata->num_row_groups();
+    const auto &arrowType = iOGRField == OGR_FID_INDEX
+                                ? m_poFIDType
+                                : GetArrowFieldTypes()[iOGRField];
+
+    if (numRowGroups == 0)
+        return false;
+
+    const auto rowGroup0columnChunk = metadata->RowGroup(0)->ColumnChunk(iCol);
+    const auto rowGroup0Stats = rowGroup0columnChunk->statistics();
+    if (!(rowGroup0columnChunk->is_stats_set() && rowGroup0Stats))
+    {
+        CPLDebug("PARQUET", "Statistics not available for field %s",
+                 poFieldDefn->GetNameRef());
+        return false;
+    }
+
+    const auto physicalType = rowGroup0Stats->physical_type();
+
+    if (bComputeMin)
+    {
+        if (physicalType == parquet::Type::BOOLEAN)
+        {
+            eType = OFTInteger;
+            eSubType = OFSTBoolean;
+            sMin.Integer = GetStats<parquet::BoolStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (physicalType == parquet::Type::INT32)
+        {
+            if (arrowType->id() == arrow::Type::UINT32)
+            {
+                // With parquet file version 2.0,
+                // statistics of uint32 fields are
+                // stored as signed int32 values...
+                eType = OFTInteger64;
+                int nVal = GetStats<parquet::Int32Statistics>::min(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+                if (bFoundMin)
+                {
+                    sMin.Integer64 = static_cast<uint32_t>(nVal);
+                }
+            }
+            else
+            {
+                eType = OFTInteger;
+                if (poFieldDefn->GetSubType() == OFSTInt16)
+                    eSubType = OFSTInt16;
+                sMin.Integer = GetStats<parquet::Int32Statistics>::min(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+            }
+        }
+        else if (physicalType == parquet::Type::INT64)
+        {
+            eType = OFTInteger64;
+            sMin.Integer64 = GetStats<parquet::Int64Statistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (physicalType == parquet::Type::FLOAT)
+        {
+            eType = OFTReal;
+            eSubType = OFSTFloat32;
+            sMin.Real = GetStats<parquet::FloatStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (physicalType == parquet::Type::DOUBLE)
+        {
+            eType = OFTReal;
+            sMin.Real = GetStats<parquet::DoubleStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (poFieldDefn->GetType() == OFTString &&
+                 physicalType == parquet::Type::BYTE_ARRAY)
+        {
+            osMinTmp = GetStats<parquet::ByteArrayStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+            if (bFoundMin)
+            {
+                eType = OFTString;
+                sMin.String = &osMinTmp[0];
+            }
+        }
+    }
+
+    if (bComputeMax)
+    {
+        if (physicalType == parquet::Type::BOOLEAN)
+        {
+            eType = OFTInteger;
+            eSubType = OFSTBoolean;
+            sMax.Integer = GetStats<parquet::BoolStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (physicalType == parquet::Type::INT32)
+        {
+            if (arrowType->id() == arrow::Type::UINT32)
+            {
+                // With parquet file version 2.0,
+                // statistics of uint32 fields are
+                // stored as signed int32 values...
+                eType = OFTInteger64;
+                int nVal = GetStats<parquet::Int32Statistics>::max(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+                if (bFoundMax)
+                {
+                    sMax.Integer64 = static_cast<uint32_t>(nVal);
+                }
+            }
+            else
+            {
+                eType = OFTInteger;
+                if (poFieldDefn->GetSubType() == OFSTInt16)
+                    eSubType = OFSTInt16;
+                sMax.Integer = GetStats<parquet::Int32Statistics>::max(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+            }
+        }
+        else if (physicalType == parquet::Type::INT64)
+        {
+            eType = OFTInteger64;
+            sMax.Integer64 = GetStats<parquet::Int64Statistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (physicalType == parquet::Type::FLOAT)
+        {
+            eType = OFTReal;
+            eSubType = OFSTFloat32;
+            sMax.Real = GetStats<parquet::FloatStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (physicalType == parquet::Type::DOUBLE)
+        {
+            eType = OFTReal;
+            sMax.Real = GetStats<parquet::DoubleStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (poFieldDefn->GetType() == OFTString &&
+                 physicalType == parquet::Type::BYTE_ARRAY)
+        {
+            osMaxTmp = GetStats<parquet::ByteArrayStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+            if (bFoundMax)
+            {
+                eType = OFTString;
+                sMax.String = &osMaxTmp[0];
+            }
+        }
+    }
+
+    if (eType == OFTInteger64 && poFieldDefn->GetType() == OFTDateTime &&
+        arrowType->id() == arrow::Type::TIMESTAMP)
+    {
+        const auto timestampType =
+            static_cast<arrow::TimestampType *>(arrowType.get());
+        if (bFoundMin)
+        {
+            const int64_t timestamp = sMin.Integer64;
+            OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
+                                          poFieldDefn->GetTZFlag(), &sMin);
+        }
+        if (bFoundMax)
+        {
+            const int64_t timestamp = sMax.Integer64;
+            OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
+                                          poFieldDefn->GetTZFlag(), &sMax);
+        }
+        eType = OFTDateTime;
+    }
+
+    return bFoundMin || bFoundMax;
 }

@@ -295,6 +295,36 @@ def test_read_write_color_table_from_raster():
     gdaltest.tiff_drv.Delete("tmp/ct8.tif")
 
 
+def test_utils_base_get_extension():
+    """test base.get_extension()"""
+
+    assert base.get_extension("foo.shp.zip") == "shp.zip"
+    assert base.get_extension("foo.gpkg.zip") == "gpkg.zip"
+    assert base.get_extension("foo.gpkg") == "gpkg"
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.require_driver("GeoJSONSeq")
+def test_utils_util_DoesDriverHandleExtension():
+    """test util.DoesDriverHandleExtension()"""
+
+    assert util.DoesDriverHandleExtension(gdal.GetDriverByName("GeoJSON"), "geojson")
+    assert not util.DoesDriverHandleExtension(
+        gdal.GetDriverByName("GeoJSONSeq"), "geojson"
+    )
+
+
+@pytest.mark.require_driver("HFA")
+@pytest.mark.require_driver("netCDF")
+@pytest.mark.require_driver("GeoJSON")
+def test_utils_util_GetOutputDriverFor():
+    """test util.GetOutputDriverFor()"""
+
+    assert util.GetOutputDriverFor("foo.img") == "HFA"
+    assert util.GetOutputDriverFor("foo.nc") == "netCDF"
+    assert util.GetOutputDriverFor("foo.geojson", is_raster=False) == "GeoJSON"
+
+
 def test_utils_py_cleanup():
     for filename in temp_files:
         try:

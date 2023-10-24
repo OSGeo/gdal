@@ -170,7 +170,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
 
 OGRFlatGeobufLayer::OGRFlatGeobufLayer(const char *pszLayerName,
                                        const char *pszFilename,
-                                       OGRSpatialReference *poSpatialRef,
+                                       const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType,
                                        bool bCreateSpatialIndexAtClose,
                                        VSILFILE *poFpWrite,
@@ -1374,15 +1374,13 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                           struct ArrowArray *out_array)
 {
-    if (m_poAttrQuery != nullptr ||
-        (m_poFilterGeom != nullptr &&
-         !(m_poHeader != nullptr && m_poHeader->index_node_size() > 0)) ||
-        CPLTestBool(
+    if (CPLTestBool(
             CPLGetConfigOption("OGR_FLATGEOBUF_STREAM_BASE_IMPL", "NO")))
     {
         return OGRLayer::GetNextArrowArray(stream, out_array);
     }
 
+begin:
     int errorErrno = EIO;
     memset(out_array, 0, sizeof(*out_array));
 
@@ -1420,7 +1418,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         sHelper.nMaxBatchSize = 0;
     }
 
-    for (; iFeat < sHelper.nMaxBatchSize; iFeat++)
+    while (iFeat < sHelper.nMaxBatchSize)
     {
         bEOFOrError = true;
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount)
@@ -1518,6 +1516,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         const auto feature = GetRoot<Feature>(m_featureBuf);
         const auto geometry = feature->geometry();
+        const auto properties = feature->properties();
         if (!m_poFeatureDefn->IsGeometryIgnored() && geometry != nullptr)
         {
             auto geometryType = m_geometryType;
@@ -1531,6 +1530,9 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                          "Failed to read geometry");
                 goto error;
             }
+
+            if (!FilterGeometry(poOGRGeometry.get()))
+                goto end_of_loop;
 
             const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
             const size_t nWKBSize = poOGRGeometry->WkbSize();
@@ -1547,7 +1549,6 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         abSetFields.clear();
         abSetFields.resize(sHelper.nFieldCount);
 
-        const auto properties = feature->properties();
         if (properties != nullptr)
         {
             const auto data = properties->data();
@@ -1828,6 +1829,7 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                               len, &ogrField))
                             {
                                 sHelper.SetDateTime(psArray, iFeat, brokenDown,
+                                                    sHelper.anTZFlags[i],
                                                     ogrField);
                             }
                             else
@@ -1837,8 +1839,9 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                 str[len] = '\0';
                                 if (OGRParseDate(str, &ogrField, 0))
                                 {
-                                    sHelper.SetDateTime(psArray, iFeat,
-                                                        brokenDown, ogrField);
+                                    sHelper.SetDateTime(
+                                        psArray, iFeat, brokenDown,
+                                        sHelper.anTZFlags[i], ogrField);
                                 }
                             }
                         }
@@ -1862,6 +1865,10 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             }
         }
 
+        iFeat++;
+
+    end_of_loop:
+
         if (VSIFEofL(m_poFp))
         {
             CPLDebug("FlatGeobuf", "GetNextFeature: iteration end due to EOF");
@@ -1872,10 +1879,36 @@ int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         bEOFOrError = false;
     }
 
-    if (bEOFOrError && m_featuresCount > 0)
+    if (bEOFOrError)
         m_bEOF = true;
 
     sHelper.Shrink(iFeat);
+
+    if (out_array->length != 0 && m_poAttrQuery)
+    {
+        struct ArrowSchema schema;
+        stream->get_schema(stream, &schema);
+        CPLAssert(schema.release != nullptr);
+        CPLAssert(schema.n_children == out_array->n_children);
+        // Spatial filter already evaluated
+        auto poFilterGeomBackup = m_poFilterGeom;
+        m_poFilterGeom = nullptr;
+        PostFilterArrowArray(&schema, out_array, nullptr);
+        schema.release(&schema);
+        m_poFilterGeom = poFilterGeomBackup;
+    }
+
+    if (out_array->length == 0)
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+
+        if (m_poAttrQuery || m_poFilterGeom)
+        {
+            goto begin;
+        }
+    }
+
     return 0;
 
 error:
@@ -1918,7 +1951,8 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
 
     const auto fieldCount = m_poFeatureDefn->GetFieldCount();
 
-    std::vector<uint8_t> properties;
+    std::vector<uint8_t> &properties = m_writeProperties;
+    properties.clear();
     properties.reserve(1024 * 4);
     FlatBufferBuilder fbb;
     fbb.TrackMinAlign(8);
@@ -2263,8 +2297,7 @@ int OGRFlatGeobufLayer::TestCapability(const char *pszCap)
         return m_poHeader != nullptr && m_poHeader->index_node_size() > 0;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;
-    else if (EQUAL(pszCap, OLCFastGetArrowStream) && m_poAttrQuery == nullptr &&
-             m_poFilterGeom == nullptr)
+    else if (EQUAL(pszCap, OLCFastGetArrowStream))
         return true;
     else
         return false;
@@ -2338,7 +2371,7 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
 
 OGRFlatGeobufLayer *
 OGRFlatGeobufLayer::Create(const char *pszLayerName, const char *pszFilename,
-                           OGRSpatialReference *poSpatialRef,
+                           const OGRSpatialReference *poSpatialRef,
                            OGRwkbGeometryType eGType,
                            bool bCreateSpatialIndexAtClose, char **papszOptions)
 {

@@ -137,6 +137,18 @@
  *
  *      poDS->TryLoadXML();
  * \endcode
+ *
+ * In some situations where a derived dataset (e.g. used by
+ * GDALMDArray::AsClassicDataset()) is linked to a physical file, the name of
+ * the derived dataset is set with the SetDerivedSubdatasetName() method.
+ *
+ * \code
+ *      poDS->SetDescription( poOpenInfo->pszFilename );
+ *      poDS->SetPhysicalFilename( poDS->pszFilename );
+ *      poDS->SetDerivedDatasetName( osDerivedDatasetName );
+ *
+ *      poDS->TryLoadXML();
+ * \endcode
  */
 class GDALPamDataset;
 
@@ -181,6 +193,21 @@ CPLErr GDALPamDataset::FlushCache(bool bAtClosing)
     }
     return eErr;
 }
+
+/************************************************************************/
+/*                            MarkPamDirty()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALPamDataset::MarkPamDirty()
+{
+    if ((nPamFlags & GPF_DIRTY) == 0 &&
+        CPLTestBool(CPLGetConfigOption("GDAL_PAM_ENABLE_MARK_DIRTY", "YES")))
+    {
+        nPamFlags |= GPF_DIRTY;
+    }
+}
+// @endcond
 
 /************************************************************************/
 /*                           SerializeToXML()                           */
@@ -746,6 +773,7 @@ const char *GDALPamDataset::GetPhysicalFilename()
 /*                         SetSubdatasetName()                          */
 /************************************************************************/
 
+/* Mutually exclusive with SetDerivedDatasetName() */
 void GDALPamDataset::SetSubdatasetName(const char *pszSubdataset)
 
 {
@@ -753,6 +781,20 @@ void GDALPamDataset::SetSubdatasetName(const char *pszSubdataset)
 
     if (psPam)
         psPam->osSubdatasetName = pszSubdataset;
+}
+
+/************************************************************************/
+/*                        SetDerivedDatasetName()                        */
+/************************************************************************/
+
+/* Mutually exclusive with SetSubdatasetName() */
+void GDALPamDataset::SetDerivedDatasetName(const char *pszDerivedDataset)
+
+{
+    PamInitialize();
+
+    if (psPam)
+        psPam->osDerivedDatasetName = pszDerivedDataset;
 }
 
 /************************************************************************/
@@ -901,29 +943,44 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
     /* -------------------------------------------------------------------- */
     /*      If we are looking for a subdataset, search for its subtree now. */
     /* -------------------------------------------------------------------- */
-    if (psTree && !psPam->osSubdatasetName.empty())
+    if (psTree)
     {
-        CPLXMLNode *psSubTree = psTree->psChild;
-
-        for (; psSubTree != nullptr; psSubTree = psSubTree->psNext)
+        std::string osSubNode;
+        std::string osSubNodeValue;
+        if (!psPam->osSubdatasetName.empty())
         {
-            if (psSubTree->eType != CXT_Element ||
-                !EQUAL(psSubTree->pszValue, "Subdataset"))
-                continue;
-
-            if (!EQUAL(CPLGetXMLValue(psSubTree, "name", ""),
-                       psPam->osSubdatasetName))
-                continue;
-
-            psSubTree = CPLGetXMLNode(psSubTree, "PAMDataset");
-            break;
+            osSubNode = "Subdataset";
+            osSubNodeValue = psPam->osSubdatasetName;
         }
+        else if (!psPam->osDerivedDatasetName.empty())
+        {
+            osSubNode = "DerivedDataset";
+            osSubNodeValue = psPam->osDerivedDatasetName;
+        }
+        if (!osSubNode.empty())
+        {
+            CPLXMLNode *psSubTree = psTree->psChild;
 
-        if (psSubTree != nullptr)
-            psSubTree = CPLCloneXMLTree(psSubTree);
+            for (; psSubTree != nullptr; psSubTree = psSubTree->psNext)
+            {
+                if (psSubTree->eType != CXT_Element ||
+                    !EQUAL(psSubTree->pszValue, osSubNode.c_str()))
+                    continue;
 
-        CPLDestroyXMLNode(psTree);
-        psTree = psSubTree;
+                if (!EQUAL(CPLGetXMLValue(psSubTree, "name", ""),
+                           osSubNodeValue.c_str()))
+                    continue;
+
+                psSubTree = CPLGetXMLNode(psSubTree, "PAMDataset");
+                break;
+            }
+
+            if (psSubTree != nullptr)
+                psSubTree = CPLCloneXMLTree(psSubTree);
+
+            CPLDestroyXMLNode(psTree);
+            psTree = psSubTree;
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -985,7 +1042,19 @@ CPLErr GDALPamDataset::TrySaveXML()
     /*      the subdataset tree within the whole existing pam tree,         */
     /*      after removing any old version of the same subdataset.          */
     /* -------------------------------------------------------------------- */
+    std::string osSubNode;
+    std::string osSubNodeValue;
     if (!psPam->osSubdatasetName.empty())
+    {
+        osSubNode = "Subdataset";
+        osSubNodeValue = psPam->osSubdatasetName;
+    }
+    else if (!psPam->osDerivedDatasetName.empty())
+    {
+        osSubNode = "DerivedDataset";
+        osSubNodeValue = psPam->osDerivedDatasetName;
+    }
+    if (!osSubNode.empty())
     {
         CPLXMLNode *psOldTree = nullptr;
 
@@ -1007,11 +1076,11 @@ CPLErr GDALPamDataset::TrySaveXML()
              psSubTree = psSubTree->psNext)
         {
             if (psSubTree->eType != CXT_Element ||
-                !EQUAL(psSubTree->pszValue, "Subdataset"))
+                !EQUAL(psSubTree->pszValue, osSubNode.c_str()))
                 continue;
 
             if (!EQUAL(CPLGetXMLValue(psSubTree, "name", ""),
-                       psPam->osSubdatasetName))
+                       osSubNodeValue.c_str()))
                 continue;
 
             break;
@@ -1019,9 +1088,10 @@ CPLErr GDALPamDataset::TrySaveXML()
 
         if (psSubTree == nullptr)
         {
-            psSubTree = CPLCreateXMLNode(psOldTree, CXT_Element, "Subdataset");
+            psSubTree =
+                CPLCreateXMLNode(psOldTree, CXT_Element, osSubNode.c_str());
             CPLCreateXMLNode(CPLCreateXMLNode(psSubTree, CXT_Attribute, "name"),
-                             CXT_Text, psPam->osSubdatasetName);
+                             CXT_Text, osSubNodeValue.c_str());
         }
 
         CPLXMLNode *psOldPamDataset = CPLGetXMLNode(psSubTree, "PAMDataset");

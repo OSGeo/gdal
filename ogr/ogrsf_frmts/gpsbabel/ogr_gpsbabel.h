@@ -102,7 +102,7 @@ class OGRGPSBabelWriteDataSource final : public OGRDataSource
     virtual int TestCapability(const char *) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
 

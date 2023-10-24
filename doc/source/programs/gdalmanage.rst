@@ -15,8 +15,9 @@ Synopsis
 
 .. code-block::
 
-    Usage: gdalmanage mode [-r] [-u] [-f format]
-                      datasetname [newdatasetname]
+    Usage: gdalmanage [--help] [--help-general]
+                      <mode> [-r] [-u] [-f <format>]
+                      <datasetname> [<newdatasetname>]
 
 Description
 -----------

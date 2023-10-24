@@ -121,6 +121,8 @@ class CPL_DLL OGRFieldDefn
 
     std::string m_osComment{};  // field comment. Might be empty
 
+    int m_nTZFlag = OGR_TZFLAG_UNKNOWN;
+
   public:
     OGRFieldDefn(const char *, OGRFieldType);
     explicit OGRFieldDefn(const OGRFieldDefn *);
@@ -177,6 +179,15 @@ class CPL_DLL OGRFieldDefn
     void SetPrecision(int nPrecisionIn)
     {
         nPrecision = nPrecisionIn;
+    }
+
+    int GetTZFlag() const
+    {
+        return m_nTZFlag;
+    }
+    void SetTZFlag(int nTZFlag)
+    {
+        m_nTZFlag = nTZFlag;
     }
 
     void Set(const char *, OGRFieldType, int = 0, int = 0,
@@ -1211,9 +1222,12 @@ class CPL_DLL OGRFeature
     void DumpReadable(FILE *, CSLConstList papszOptions = nullptr) const;
     std::string DumpReadableAsString(CSLConstList papszOptions = nullptr) const;
 
-    OGRErr SetFrom(const OGRFeature *, int = TRUE);
-    OGRErr SetFrom(const OGRFeature *, const int *, int = TRUE);
-    OGRErr SetFieldsFrom(const OGRFeature *, const int *, int = TRUE);
+    OGRErr SetFrom(const OGRFeature *, int bForgiving = TRUE);
+    OGRErr SetFrom(const OGRFeature *, const int *panMap, int bForgiving = TRUE,
+                   bool bUseISO8601ForDateTimeAsString = false);
+    OGRErr SetFieldsFrom(const OGRFeature *, const int *panMap,
+                         int bForgiving = TRUE,
+                         bool bUseISO8601ForDateTimeAsString = false);
 
     //! @cond Doxygen_Suppress
     OGRErr RemapFields(OGRFeatureDefn *poNewDefn, const int *panRemapSource);
@@ -1673,10 +1687,10 @@ class CPL_DLL OGRFeatureQuery
 
     char **FieldCollector(void *, char **);
 
-    GIntBig *EvaluateAgainstIndices(swq_expr_node *, OGRLayer *,
-                                    GIntBig &nFIDCount);
+    static GIntBig *EvaluateAgainstIndices(const swq_expr_node *, OGRLayer *,
+                                           GIntBig &nFIDCount);
 
-    int CanUseIndex(swq_expr_node *, OGRLayer *);
+    static int CanUseIndex(const swq_expr_node *, OGRLayer *);
 
     OGRErr Compile(OGRLayer *, OGRFeatureDefn *, const char *, int bCheck,
                    swq_custom_func_registrar *poCustomFuncRegistrar);

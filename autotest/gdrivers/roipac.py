@@ -114,5 +114,5 @@ def test_roipac_5():
 def test_roipac_6():
 
     tst = gdaltest.GDALTest("roi_pac", "byte.tif", 1, 4672)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testCreateCopy(check_gt=1, new_filename="byte.flg", vsimem=1)

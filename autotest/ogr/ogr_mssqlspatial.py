@@ -436,7 +436,7 @@ def test_ogr_mssqlspatial_datatypes():
     f["time"] = "12:34:56"
     f["datetime"] = "2021/12/11 12:34:56"
     f["uid"] = "6F9619FF-8B86-D011-B42D-00C04FC964FF"
-    f.SetFieldBinaryFromHexString("binary", "0123465789ABCDEF")
+    f["binary"] = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
     lyr.CreateFeature(f)
     lyr.CommitTransaction()
 
@@ -567,7 +567,7 @@ def test_ogr_mssqlspatial_bulk_insert():
         assert source_ds
 
         try:
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ds = gdal.VectorTranslate(
                     gdaltest.mssqlspatial_dsname,
                     "data/poly.shp",
@@ -599,7 +599,7 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
     assert source_ds
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.VectorTranslate(
                 gdaltest.mssqlspatial_dsname,
                 "data/shp/testpoly.shp",
@@ -651,28 +651,28 @@ def test_binary_field_bcp():
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-    f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
+    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
     f["strfield"] = "some text"
     f["intfield"] = 1
     src_lyr.CreateFeature(f)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
-    f.SetFieldBinaryFromHexString("binfield", "")
+    f["binfield"] = b""
     f["strfield"] = "some text"
     # leave int undefined
     src_lyr.CreateFeature(f)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
-    f.SetFieldBinaryFromHexString("binfield", "FF007FFF007F")
+    f["binfield"] = b"\xFF\x00\x7F\xFF\x00\x7F"
     f["strfield"] = "some text"
     f["intfield"] = 3
     src_lyr.CreateFeature(f)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(4 5)"))
-    f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
+    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
     # leave str undefined
     f["intfield"] = 4
     src_lyr.CreateFeature(f)

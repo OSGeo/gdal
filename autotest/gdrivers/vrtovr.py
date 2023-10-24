@@ -291,6 +291,39 @@ def test_vrtovr_virtual_with_preexisting_implicit_ovr():
 
 
 ###############################################################################
+# Test support for virtual overviews, when there are pre-existing implicit
+# overviews
+
+
+def test_vrtovr_external_ovr_has_priority_over_implicit():
+
+    src_ds = gdal.GetDriverByName("GTiff").Create("/vsimem/in.tif", 100, 100)
+    src_ds.GetRasterBand(1).Fill(255)
+    vrt_ds = gdal.Translate("/vsimem/test.vrt", src_ds, format="VRT")
+    src_ds = None
+    with gdaltest.config_option("VRT_VIRTUAL_OVERVIEWS", "YES"):
+        vrt_ds.BuildOverviews("NEAR", [2, 4])
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+    vrt_ds = None
+
+    vrt_ds = gdal.Open("/vsimem/test.vrt")
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() != 0
+    # Build external overviews
+    vrt_ds.BuildOverviews("NONE", [2])
+    vrt_ds = None
+
+    # Check that external overviews has the priority
+    vrt_ds = gdal.Open("/vsimem/test.vrt")
+    assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert vrt_ds.GetRasterBand(1).GetOverview(0).Checksum() == 0
+    vrt_ds = None
+
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/in.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/test.vrt")
+
+
+###############################################################################
 # Cleanup.
 
 

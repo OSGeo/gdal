@@ -408,14 +408,17 @@ static void ThreadFuncAdapter(void *pData)
             psThreadData->mapThreadToTransformerArg[nThreadId] =
                 pTransformerArg;
         }
+
+        if (pTransformerArg == nullptr)
+        {
+            CPLAssert(psThreadData->pTransformerArgInput != nullptr);
+            CPLAssert(!psThreadData->bTransformerArgInputAssignedToThread);
+        }
     }
 
     // If no transformer assigned to current thread, instantiate one
     if (pTransformerArg == nullptr)
     {
-        CPLAssert(psThreadData->pTransformerArgInput != nullptr);
-        CPLAssert(!psThreadData->bTransformerArgInputAssignedToThread);
-
         // This somehow assumes that GDALCloneTransformer() is thread-safe
         // which should normally be the case.
         pTransformerArg =
@@ -2962,13 +2965,9 @@ static bool GWKCubicResample4Sample(const GDALWarpKernel *poWK, int iBand,
 
 static CPL_INLINE __m128 XMMLoad4Values(const GByte *ptr)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     unsigned int i;
     memcpy(&i, ptr, 4);
     __m128i xmm_i = _mm_cvtsi32_si128(s);
-#else
-    __m128i xmm_i = _mm_cvtsi32_si128(*(unsigned int *)(ptr));
-#endif
     // Zero extend 4 packed unsigned 8-bit integers in a to packed
     // 32-bit integers.
 #if __SSE4_1__
@@ -2982,13 +2981,9 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte *ptr)
 
 static CPL_INLINE __m128 XMMLoad4Values(const GUInt16 *ptr)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     GUInt64 i;
     memcpy(&i, ptr, 8);
     __m128i xmm_i = _mm_cvtsi64_si128(s);
-#else
-    __m128i xmm_i = _mm_cvtsi64_si128(*(GUInt64 *)(ptr));
-#endif
     // Zero extend 4 packed unsigned 16-bit integers in a to packed
     // 32-bit integers.
 #if __SSE4_1__

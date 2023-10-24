@@ -390,6 +390,8 @@ int CPL_DLL OGR_Fld_GetWidth(OGRFieldDefnH);
 void CPL_DLL OGR_Fld_SetWidth(OGRFieldDefnH, int);
 int CPL_DLL OGR_Fld_GetPrecision(OGRFieldDefnH);
 void CPL_DLL OGR_Fld_SetPrecision(OGRFieldDefnH, int);
+int CPL_DLL OGR_Fld_GetTZFlag(OGRFieldDefnH);
+void CPL_DLL OGR_Fld_SetTZFlag(OGRFieldDefnH, int);
 void CPL_DLL OGR_Fld_Set(OGRFieldDefnH, const char *, OGRFieldType, int, int,
                          OGRJustification);
 int CPL_DLL OGR_Fld_IsIgnored(OGRFieldDefnH hDefn);
@@ -548,6 +550,8 @@ OGRErr CPL_DLL OGR_F_SetGeomField(OGRFeatureH hFeat, int iField,
 GIntBig CPL_DLL OGR_F_GetFID(OGRFeatureH);
 OGRErr CPL_DLL OGR_F_SetFID(OGRFeatureH, GIntBig);
 void CPL_DLL OGR_F_DumpReadable(OGRFeatureH, FILE *);
+char CPL_DLL *OGR_F_DumpReadableAsString(OGRFeatureH,
+                                         CSLConstList) CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_F_SetFrom(OGRFeatureH, OGRFeatureH, int);
 OGRErr CPL_DLL OGR_F_SetFromWithMap(OGRFeatureH, OGRFeatureH, int, const int *);
 
@@ -708,13 +712,34 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
     OGR_F_Destroy(hFeat);                                                      \
     }
 
-/** Data type for a Arrow C stream Include ogr_recordbatch.h to get the
+/** Data type for a Arrow C stream. Include ogr_recordbatch.h to get the
  * definition. */
 struct ArrowArrayStream;
 
 bool CPL_DLL OGR_L_GetArrowStream(OGRLayerH hLayer,
                                   struct ArrowArrayStream *out_stream,
                                   char **papszOptions);
+
+/** Data type for a Arrow C schema. Include ogr_recordbatch.h to get the
+ * definition. */
+struct ArrowSchema;
+
+bool CPL_DLL OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
+                                          const struct ArrowSchema *schema,
+                                          char **papszOptions,
+                                          char **ppszErrorMsg);
+bool CPL_DLL OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
+                                              const struct ArrowSchema *schema,
+                                              char **papszOptions);
+
+/** Data type for a Arrow C array. Include ogr_recordbatch.h to get the
+ * definition. */
+struct ArrowArray;
+
+bool CPL_DLL OGR_L_WriteArrowBatch(OGRLayerH hLayer,
+                                   const struct ArrowSchema *schema,
+                                   struct ArrowArray *array,
+                                   char **papszOptions);
 
 OGRErr CPL_DLL OGR_L_SetNextByIndex(OGRLayerH, GIntBig);
 OGRFeatureH CPL_DLL OGR_L_GetFeature(OGRLayerH, GIntBig) CPL_WARN_UNUSED_RESULT;

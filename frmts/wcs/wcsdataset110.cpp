@@ -269,7 +269,6 @@ std::string WCSDataset110::DescribeCoverageRequest()
                            CPLGetXMLValue(psService, "Version", "1.1.0"));
     request = CPLURLAddKVP(request, "IDENTIFIERS",
                            CPLGetXMLValue(psService, "CoverageName", ""));
-    request = CPLURLAddKVP(request, "FORMAT", "text/xml");
     CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
     if (extra != "")
     {

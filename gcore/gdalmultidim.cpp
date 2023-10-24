@@ -33,6 +33,7 @@
 #include <limits>
 #include <queue>
 #include <set>
+#include <time.h>
 
 #include <ctype.h>  // isalnum
 
@@ -4733,7 +4734,8 @@ bool GDALMDArray::ReadUsingContiguousIRead(
         if (arrayStep[i] > 0)
             anTmpStartIdx[i] = arrayStartIdx[i];
         else
-            anTmpStartIdx[i] = arrayStartIdx[i] + (count[i] - 1) * arrayStep[i];
+            anTmpStartIdx[i] =
+                arrayStartIdx[i] - (count[i] - 1) * (-arrayStep[i]);
         const uint64_t nCount =
             (count[i] - 1) * static_cast<uint64_t>(std::abs(arrayStep[i])) + 1;
         if (nCount > std::numeric_limits<size_t>::max() / nMemArraySize)
@@ -4770,8 +4772,8 @@ bool GDALMDArray::ReadUsingContiguousIRead(
     }
     auto poMEMArray =
         MEMMDArray::Create(std::string(), std::string(), apoTmpDims, oType);
-    poMEMArray->Init(static_cast<GByte *>(pTmpBuffer.get()));
-    return poMEMArray->Read(anTmpStartIdx.data(), count, arrayStep,
+    return poMEMArray->Init(static_cast<GByte *>(pTmpBuffer.get())) &&
+           poMEMArray->Read(anTmpStartIdx.data(), count, arrayStep,
                             bufferStride, bufferDataType, pDstBuffer);
 }
 
@@ -5437,6 +5439,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
 /*                             GetView()                                */
 /************************************************************************/
 
+// clang-format off
 /** Return a view of the array using slicing or field access.
  *
  * The slice expression uses the same syntax as NumPy basic slicing and
@@ -5466,17 +5469,23 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * <li>GetView("[:,2]"): returns a 1-dimensional array, sliced at index 2 in the
  *     second dimension. That is [2,6].</li>
  * <li>GetView("[:,2:3:]"): returns a 2-dimensional array, sliced at index 2 in
- * the second dimension. That is [[2],[6]].</li> <li>GetView("[::,2]"): Same as
+ * the second dimension. That is [[2],[6]].</li>
+ * <li>GetView("[::,2]"): Same as
  * above.</li> <li>GetView("[...,2]"): same as above, in that case, since the
- * ellipsis only expands to one dimension here.</li> <li>GetView("[:,::2]"):
+ * ellipsis only expands to one dimension here.</li>
+ * <li>GetView("[:,::2]"):
  * returns a 2-dimensional array, with even-indexed elements of the second
- * dimension. That is [[0,2],[4,6]].</li> <li>GetView("[:,1::2]"): returns a
+ * dimension. That is [[0,2],[4,6]].</li>
+ * <li>GetView("[:,1::2]"): returns a
  * 2-dimensional array, with odd-indexed elements of the second dimension. That
- * is [[1,3],[5,7]].</li> <li>GetView("[:,1:3:]"): returns a 2-dimensional
+ * is [[1,3],[5,7]].</li>
+ * <li>GetView("[:,1:3:]"): returns a 2-dimensional
  * array, with elements of the second dimension with index in the range [1,3[.
- * That is [[1,2],[5,6]].</li> <li>GetView("[::-1,:]"): returns a 2-dimensional
+ * That is [[1,2],[5,6]].</li>
+ * <li>GetView("[::-1,:]"): returns a 2-dimensional
  * array, with the values in first dimension reversed. That is
- * [[4,5,6,7],[0,1,2,3]].</li> <li>GetView("[newaxis,...]"): returns a
+ * [[4,5,6,7],[0,1,2,3]].</li>
+ * <li>GetView("[newaxis,...]"): returns a
  * 3-dimensional array, with an addditional dimension of size 1 put at the
  * beginning. That is [[[0,1,2,3],[4,5,6,7]]].</li>
  * </ul>
@@ -5508,6 +5517,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * @return a new array, that holds a reference to the original one, and thus is
  * a view of it (not a copy), or nullptr in case of error.
  */
+// clang-format on
 std::shared_ptr<GDALMDArray>
 GDALMDArray::GetView(const std::string &viewExpr) const
 {
@@ -7365,8 +7375,8 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
     friend class GDALMDArrayResampledDatasetRasterBand;
 
     std::shared_ptr<GDALMDArray> m_poArray;
-    size_t m_iXDim;
-    size_t m_iYDim;
+    const size_t m_iXDim;
+    const size_t m_iYDim;
     double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
@@ -7455,7 +7465,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                      GDALRasterBandFromArray()                       */
+/*                   GDALMDArrayResampledDatasetRasterBand()            */
 /************************************************************************/
 
 GDALMDArrayResampledDatasetRasterBand::GDALMDArrayResampledDatasetRasterBand(
@@ -7585,7 +7595,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
                void *pDstBuffer) const override;
 
   public:
-    static std::shared_ptr<GDALMDArrayResampled>
+    static std::shared_ptr<GDALMDArray>
     Create(const std::shared_ptr<GDALMDArray> &poParent,
            const std::vector<std::shared_ptr<GDALDimension>> &apoNewDims,
            GDALRIOResampleAlg resampleAlg,
@@ -7668,7 +7678,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
 /*                   GDALMDArrayResampled::Create()                     */
 /************************************************************************/
 
-std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
+std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
     const std::shared_ptr<GDALMDArray> &poParent,
     const std::vector<std::shared_ptr<GDALDimension>> &apoNewDimsIn,
     GDALRIOResampleAlg resampleAlg, const OGRSpatialReference *poTargetSRS,
@@ -7742,8 +7752,22 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     anBlockSize.reserve(apoNewDimsIn.size());
     const auto &anParentBlockSize = poParent->GetBlockSize();
 
-    for (unsigned i = 0; i + 2 < apoNewDimsIn.size(); ++i)
+    auto apoParentDims = poParent->GetDimensions();
+    // Special case for NASA EMIT datasets
+    const bool bYXBandOrder = (apoParentDims.size() == 3 &&
+                               apoParentDims[0]->GetName() == "downtrack" &&
+                               apoParentDims[1]->GetName() == "crosstrack" &&
+                               apoParentDims[2]->GetName() == "bands");
+
+    const size_t iYDimParent =
+        bYXBandOrder ? 0 : poParent->GetDimensionCount() - 2;
+    const size_t iXDimParent =
+        bYXBandOrder ? 1 : poParent->GetDimensionCount() - 1;
+
+    for (unsigned i = 0; i < apoNewDimsIn.size(); ++i)
     {
+        if (i == iYDimParent || i == iXDimParent)
+            continue;
         if (apoNewDimsIn[i] == nullptr)
         {
             apoNewDims.emplace_back(aoParentDims[i]);
@@ -7757,18 +7781,20 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
                      i);
             return nullptr;
         }
+        else
+        {
+            apoNewDims.emplace_back(aoParentDims[i]);
+        }
         anBlockSize.emplace_back(anParentBlockSize[i]);
     }
 
-    const size_t iYDim = poParent->GetDimensionCount() - 2;
-    const size_t iXDim = poParent->GetDimensionCount() - 1;
     std::unique_ptr<GDALMDArrayResampledDataset> poParentDS(
-        new GDALMDArrayResampledDataset(poParent, iXDim, iYDim));
+        new GDALMDArrayResampledDataset(poParent, iXDimParent, iYDimParent));
 
     double dfXStart = 0.0;
     double dfXSpacing = 0.0;
     bool gotXSpacing = false;
-    auto poNewDimX = apoNewDimsIn[iXDim];
+    auto poNewDimX = apoNewDimsIn[iXDimParent];
     if (poNewDimX)
     {
         if (poNewDimX->GetSize() > static_cast<GUInt64>(INT_MAX))
@@ -7795,7 +7821,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
 
     double dfYStart = 0.0;
     double dfYSpacing = 0.0;
-    auto poNewDimY = apoNewDimsIn[iYDim];
+    auto poNewDimY = apoNewDimsIn[iYDimParent];
     bool gotYSpacing = false;
     if (poNewDimY)
     {
@@ -7879,8 +7905,8 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
             const auto &longDims = poLongVar->GetDimensions();
             const auto latDimCount = poLatVar->GetDimensionCount();
             const auto &latDims = poLatVar->GetDimensions();
-            const auto xDimSize = aoParentDims[iXDim]->GetSize();
-            const auto yDimSize = aoParentDims[iYDim]->GetSize();
+            const auto xDimSize = aoParentDims[iXDimParent]->GetSize();
+            const auto yDimSize = aoParentDims[iYDimParent]->GetSize();
             if (longDimCount == 1 && longDims[0]->GetSize() == xDimSize &&
                 latDimCount == 1 && latDims[0]->GetSize() == yDimSize)
             {
@@ -8069,6 +8095,14 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     newAr->m_poVarY = varY;
     newAr->m_poReprojectedDS = std::move(poReprojectedDS);
     newAr->m_poParentDS = std::move(poParentDS);
+
+    // If the input array is y,x,band ordered, the above newAr is
+    // actually band,y,x ordered as it is more convenient for
+    // GDALMDArrayResampled::IRead() implementation. But transpose that
+    // array to the order of the input array
+    if (bYXBandOrder)
+        return newAr->Transpose(std::vector<int>{1, 2, 0});
+
     return newAr;
 }
 
@@ -8107,6 +8141,8 @@ bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
     // Use an array to avoid a false positive warning from CLang Static
     // Analyzer about flushCaches being never read
     bool flushCaches[] = {false};
+    const bool bYXBandOrder =
+        m_poParentDS->m_iYDim == 0 && m_poParentDS->m_iXDim == 1;
 
 lbl_next_depth:
     if (dimIdx == iDimY)
@@ -8130,11 +8166,13 @@ lbl_next_depth:
     else
     {
         stack[dimIdx].nIters = count[dimIdx];
-        if (m_poParentDS->m_anOffset[dimIdx] != arrayStartIdx[dimIdx])
+        if (m_poParentDS->m_anOffset[bYXBandOrder ? 2 : dimIdx] !=
+            arrayStartIdx[dimIdx])
         {
             flushCaches[0] = true;
         }
-        m_poParentDS->m_anOffset[dimIdx] = arrayStartIdx[dimIdx];
+        m_poParentDS->m_anOffset[bYXBandOrder ? 2 : dimIdx] =
+            arrayStartIdx[dimIdx];
         while (true)
         {
             dimIdx++;
@@ -8145,7 +8183,7 @@ lbl_next_depth:
             if ((--stack[dimIdx].nIters) == 0)
                 break;
             flushCaches[0] = true;
-            ++m_poParentDS->m_anOffset[dimIdx];
+            ++m_poParentDS->m_anOffset[bYXBandOrder ? 2 : dimIdx];
             stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
         }
     }
@@ -8163,7 +8201,11 @@ lbl_next_depth:
  *
  * This is the same as the C function GDALMDArrayGetResampled().
  *
- * Currently this method can only resample along the last 2 dimensions.
+ * Currently this method can only resample along the last 2 dimensions, unless
+ * orthorectifying a NASA EMIT dataset.
+ *
+ * For NASA EMIT netCDF datasets, if apoNewDims[] and poTargetSRS is NULL, the
+ * geometry lookup table (GLT) is used for fast orthorectification.
  *
  * @param apoNewDims New dimensions. Its size should be GetDimensionCount().
  *                   apoNewDims[i] can be NULL to let the method automatically
@@ -8205,7 +8247,18 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetResampled(
 
 class GDALDatasetFromArray;
 
-class GDALRasterBandFromArray final : public GDALRasterBand
+namespace
+{
+struct MetadataItem
+{
+    std::shared_ptr<GDALMDArray> poArray{};
+    std::string osName{};
+    std::string osDefinition{};
+    bool bDefinitionUsesPctForG = false;
+};
+}  // namespace
+
+class GDALRasterBandFromArray final : public GDALPamRasterBand
 {
     std::vector<GUInt64> m_anOffset{};
     std::vector<size_t> m_anCount{};
@@ -8223,7 +8276,10 @@ class GDALRasterBandFromArray final : public GDALRasterBand
   public:
     explicit GDALRasterBandFromArray(
         GDALDatasetFromArray *poDSIn,
-        const std::vector<GUInt64> &anOtherDimCoord);
+        const std::vector<GUInt64> &anOtherDimCoord,
+        const std::vector<std::vector<MetadataItem>>
+            &aoBandParameterMetadataItems,
+        double dfDelay, time_t nStartTime, bool &bHasWarned);
 
     double GetNoDataValue(int *pbHasNoData) override;
     int64_t GetNoDataValueAsInt64(int *pbHasNoData) override;
@@ -8231,9 +8287,10 @@ class GDALRasterBandFromArray final : public GDALRasterBand
     double GetOffset(int *pbHasOffset) override;
     double GetScale(int *pbHasScale) override;
     const char *GetUnitType() override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
-class GDALDatasetFromArray final : public GDALDataset
+class GDALDatasetFromArray final : public GDALPamDataset
 {
     friend class GDALRasterBandFromArray;
 
@@ -8250,84 +8307,12 @@ class GDALDatasetFromArray final : public GDALDataset
                          size_t iXDim, size_t iYDim)
         : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
     {
-        eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
-
-        const auto &dims(m_poArray->GetDimensions());
-        const auto nDimCount = dims.size();
-        nRasterYSize =
-            nDimCount < 2
-                ? 1
-                : static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
-                                            dims[iYDim]->GetSize()));
-        nRasterXSize = static_cast<int>(
-            std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
-        eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
-
-        const size_t nNewDimCount = nDimCount >= 2 ? nDimCount - 2 : 0;
-        std::vector<GUInt64> anOtherDimCoord(nNewDimCount);
-        std::vector<GUInt64> anStackIters(nDimCount);
-        std::vector<size_t> anMapNewToOld(nNewDimCount);
-        for (size_t i = 0, j = 0; i < nDimCount; ++i)
-        {
-            if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
-            {
-                anMapNewToOld[j] = i;
-                j++;
-            }
-        }
-
-        m_bHasGT = m_poArray->GuessGeoTransform(m_iXDim, m_iYDim, false,
-                                                m_adfGeoTransform);
-
-        const auto attrs(array->GetAttributes());
-        for (const auto &attr : attrs)
-        {
-            auto stringArray = attr->ReadAsStringArray();
-            std::string val;
-            if (stringArray.size() > 1)
-            {
-                val += '{';
-            }
-            for (int i = 0; i < stringArray.size(); ++i)
-            {
-                if (i > 0)
-                    val += ',';
-                val += stringArray[i];
-            }
-            if (stringArray.size() > 1)
-            {
-                val += '}';
-            }
-            m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
-        }
-
-        // Instantiate bands by iterating over non-XY variables
-        size_t iDim = 0;
-    lbl_next_depth:
-        if (iDim < nNewDimCount)
-        {
-            anStackIters[iDim] = dims[anMapNewToOld[iDim]]->GetSize();
-            anOtherDimCoord[iDim] = 0;
-            while (true)
-            {
-                ++iDim;
-                goto lbl_next_depth;
-            lbl_return_to_caller:
-                --iDim;
-                --anStackIters[iDim];
-                if (anStackIters[iDim] == 0)
-                    break;
-                ++anOtherDimCoord[iDim];
-            }
-        }
-        else
-        {
-            SetBand(nBands + 1,
-                    new GDALRasterBandFromArray(this, anOtherDimCoord));
-        }
-        if (iDim > 0)
-            goto lbl_return_to_caller;
     }
+
+    static GDALDatasetFromArray *
+    Create(const std::shared_ptr<GDALMDArray> &array, size_t iXDim,
+           size_t iYDim, const std::shared_ptr<GDALGroup> &poRootGroup,
+           CSLConstList papszOptions);
 
     ~GDALDatasetFromArray()
     {
@@ -8339,7 +8324,8 @@ class GDALDatasetFromArray final : public GDALDataset
         CPLErr eErr = CE_None;
         if (nOpenFlags != OPEN_FLAGS_CLOSED)
         {
-            if (GDALDatasetFromArray::FlushCache() != CE_None)
+            if (GDALDatasetFromArray::FlushCache(/*bAtClosing=*/true) !=
+                CE_None)
                 eErr = CE_Failure;
             m_poArray.reset();
         }
@@ -8397,7 +8383,9 @@ class GDALDatasetFromArray final : public GDALDataset
 /************************************************************************/
 
 GDALRasterBandFromArray::GDALRasterBandFromArray(
-    GDALDatasetFromArray *poDSIn, const std::vector<GUInt64> &anOtherDimCoord)
+    GDALDatasetFromArray *poDSIn, const std::vector<GUInt64> &anOtherDimCoord,
+    const std::vector<std::vector<MetadataItem>> &aoBandParameterMetadataItems,
+    double dfDelay, time_t nStartTime, bool &bHasWarned)
 {
     const auto &poArray(poDSIn->m_poArray);
     const auto &dims(poArray->GetDimensions());
@@ -8438,41 +8426,136 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                                           : nStartDim - (nIndex * -nIncrDim);
                 }
             }
-            SetMetadataItem(
-                CPLSPrintf("DIM_%s_INDEX", dimName.c_str()),
-                CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nIndex)));
+            if (nDimCount != 3 || dimName != "Band")
+            {
+                SetMetadataItem(
+                    CPLSPrintf("DIM_%s_INDEX", dimName.c_str()),
+                    CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nIndex)));
+            }
+
             auto indexingVar = dims[i]->GetIndexingVariable();
+
+            // If the indexing variable is also listed in band parameter arrays,
+            // then don't use our default formatting
+            if (indexingVar)
+            {
+                for (const auto &oItem : aoBandParameterMetadataItems[j])
+                {
+                    if (oItem.poArray->GetFullName() ==
+                        indexingVar->GetFullName())
+                    {
+                        indexingVar.reset();
+                        break;
+                    }
+                }
+            }
+
             if (indexingVar && indexingVar->GetDimensionCount() == 1 &&
                 indexingVar->GetDimensions()[0]->GetSize() ==
                     dims[i]->GetSize())
             {
-                size_t nCount = 1;
-                const auto &dt(indexingVar->GetDataType());
-                std::vector<GByte> abyTmp(dt.GetSize());
-                if (indexingVar->Read(&(anOtherDimCoord[j]), &nCount, nullptr,
-                                      nullptr, dt, &abyTmp[0]))
+                if (dfDelay >= 0 && time(nullptr) - nStartTime > dfDelay)
                 {
-                    char *pszTmp = nullptr;
-                    GDALExtendedDataType::CopyValue(
-                        &abyTmp[0], dt, &pszTmp,
-                        GDALExtendedDataType::CreateString());
-                    if (pszTmp)
+                    if (!bHasWarned)
                     {
-                        SetMetadataItem(
-                            CPLSPrintf("DIM_%s_VALUE", dimName.c_str()),
-                            pszTmp);
-                        CPLFree(pszTmp);
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Maximum delay to load band metadata from "
+                            "dimension indexing variables has expired. "
+                            "Increase the value of the "
+                            "LOAD_EXTRA_DIM_METADATA_DELAY "
+                            "option of GDALMDArray::AsClassicDataset() "
+                            "(also accessible as the "
+                            "GDAL_LOAD_EXTRA_DIM_METADATA_DELAY "
+                            "configuration option), "
+                            "or set it to 'unlimited' for unlimited delay. ");
+                        bHasWarned = true;
                     }
-
-                    const auto unit(indexingVar->GetUnit());
-                    if (!unit.empty())
+                }
+                else
+                {
+                    size_t nCount = 1;
+                    const auto &dt(indexingVar->GetDataType());
+                    std::vector<GByte> abyTmp(dt.GetSize());
+                    if (indexingVar->Read(&(anOtherDimCoord[j]), &nCount,
+                                          nullptr, nullptr, dt, &abyTmp[0]))
                     {
-                        SetMetadataItem(
-                            CPLSPrintf("DIM_%s_UNIT", dimName.c_str()),
-                            unit.c_str());
+                        char *pszTmp = nullptr;
+                        GDALExtendedDataType::CopyValue(
+                            &abyTmp[0], dt, &pszTmp,
+                            GDALExtendedDataType::CreateString());
+                        if (pszTmp)
+                        {
+                            SetMetadataItem(
+                                CPLSPrintf("DIM_%s_VALUE", dimName.c_str()),
+                                pszTmp);
+                            CPLFree(pszTmp);
+                        }
+
+                        const auto unit(indexingVar->GetUnit());
+                        if (!unit.empty())
+                        {
+                            SetMetadataItem(
+                                CPLSPrintf("DIM_%s_UNIT", dimName.c_str()),
+                                unit.c_str());
+                        }
                     }
                 }
             }
+
+            for (const auto &oItem : aoBandParameterMetadataItems[j])
+            {
+                CPLString osVal;
+
+                size_t nCount = 1;
+                const auto &dt(oItem.poArray->GetDataType());
+                if (oItem.bDefinitionUsesPctForG)
+                {
+                    // There is one and only one %[x][.y]f|g in osDefinition
+                    std::vector<GByte> abyTmp(dt.GetSize());
+                    if (oItem.poArray->Read(&(anOtherDimCoord[j]), &nCount,
+                                            nullptr, nullptr, dt, &abyTmp[0]))
+                    {
+                        double dfVal = 0;
+                        GDALExtendedDataType::CopyValue(
+                            &abyTmp[0], dt, &dfVal,
+                            GDALExtendedDataType::Create(GDT_Float64));
+                        osVal.Printf(oItem.osDefinition.c_str(), dfVal);
+                    }
+                }
+                else
+                {
+                    // There should be zero or one %s in osDefinition
+                    char *pszValue = nullptr;
+                    if (dt.GetClass() == GEDTC_STRING)
+                    {
+                        CPL_IGNORE_RET_VAL(oItem.poArray->Read(
+                            &(anOtherDimCoord[j]), &nCount, nullptr, nullptr,
+                            dt, &pszValue));
+                    }
+                    else
+                    {
+                        std::vector<GByte> abyTmp(dt.GetSize());
+                        if (oItem.poArray->Read(&(anOtherDimCoord[j]), &nCount,
+                                                nullptr, nullptr, dt,
+                                                &abyTmp[0]))
+                        {
+                            GDALExtendedDataType::CopyValue(
+                                &abyTmp[0], dt, &pszValue,
+                                GDALExtendedDataType::CreateString());
+                        }
+                    }
+
+                    if (pszValue)
+                    {
+                        osVal.Printf(oItem.osDefinition.c_str(), pszValue);
+                        CPLFree(pszValue);
+                    }
+                }
+                if (!osVal.empty())
+                    SetMetadataItem(oItem.osName.c_str(), osVal);
+            }
+
             m_anOffset[i] = anOtherDimCoord[j];
             j++;
         }
@@ -8656,6 +8739,428 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
 }
 
 /************************************************************************/
+/*                      GetColorInterpretation()                        */
+/************************************************************************/
+
+GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
+{
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    const auto &poArray(l_poDS->m_poArray);
+    auto poAttr = poArray->GetAttribute("COLOR_INTERPRETATION");
+    if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_STRING)
+    {
+        bool bOK = false;
+        GUInt64 nStartIndex = 0;
+        if (poArray->GetDimensionCount() == 2 &&
+            poAttr->GetDimensionCount() == 0)
+        {
+            bOK = true;
+        }
+        else if (poArray->GetDimensionCount() == 3)
+        {
+            uint64_t nExtraDimSamples = 1;
+            const auto &apoDims = poArray->GetDimensions();
+            for (size_t i = 0; i < apoDims.size(); ++i)
+            {
+                if (i != l_poDS->m_iXDim && i != l_poDS->m_iYDim)
+                    nExtraDimSamples *= apoDims[i]->GetSize();
+            }
+            if (poAttr->GetDimensionsSize() ==
+                std::vector<GUInt64>{static_cast<GUInt64>(nExtraDimSamples)})
+            {
+                bOK = true;
+            }
+            nStartIndex = nBand - 1;
+        }
+        if (bOK)
+        {
+            const auto oStringDT = GDALExtendedDataType::CreateString();
+            const size_t nCount = 1;
+            const GInt64 arrayStep = 1;
+            const GPtrDiff_t bufferStride = 1;
+            char *pszValue = nullptr;
+            poAttr->Read(&nStartIndex, &nCount, &arrayStep, &bufferStride,
+                         oStringDT, &pszValue);
+            if (pszValue)
+            {
+                const auto eColorInterp =
+                    GDALGetColorInterpretationByName(pszValue);
+                CPLFree(pszValue);
+                return eColorInterp;
+            }
+        }
+    }
+    return GCI_Undefined;
+}
+
+/************************************************************************/
+/*                    GDALDatasetFromArray::Create()                    */
+/************************************************************************/
+
+GDALDatasetFromArray *GDALDatasetFromArray::Create(
+    const std::shared_ptr<GDALMDArray> &array, size_t iXDim, size_t iYDim,
+    const std::shared_ptr<GDALGroup> &poRootGroup, CSLConstList papszOptions)
+
+{
+    const auto nDimCount(array->GetDimensionCount());
+    if (nDimCount == 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported number of dimensions");
+        return nullptr;
+    }
+    if (array->GetDataType().GetClass() != GEDTC_NUMERIC ||
+        array->GetDataType().GetNumericDataType() == GDT_Unknown)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only arrays with numeric data types "
+                 "can be exposed as classic GDALDataset");
+        return nullptr;
+    }
+    if (iXDim >= nDimCount ||
+        (nDimCount >= 2 && (iYDim >= nDimCount || iXDim == iYDim)))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid iXDim and/or iYDim");
+        return nullptr;
+    }
+    GUInt64 nTotalBands = 1;
+    const auto &dims(array->GetDimensions());
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
+        {
+            if (dims[i]->GetSize() > 65536 / nTotalBands)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too many bands. Operate on a sliced view");
+                return nullptr;
+            }
+            nTotalBands *= dims[i]->GetSize();
+        }
+    }
+
+    const char *pszBandMetadata =
+        CSLFetchNameValue(papszOptions, "BAND_METADATA");
+    const size_t nNewDimCount = nDimCount >= 2 ? nDimCount - 2 : 0;
+    std::vector<std::vector<MetadataItem>> aoBandParameterMetadataItems(
+        nNewDimCount);
+
+    if (pszBandMetadata)
+    {
+        if (!poRootGroup)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Root group should be provided when BAND_METADATA is set");
+            return nullptr;
+        }
+        CPLJSONDocument oDoc;
+        if (!oDoc.LoadMemory(pszBandMetadata))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid JSON content for BAND_METADATA");
+            return nullptr;
+        }
+        auto oRoot = oDoc.GetRoot();
+        if (oRoot.GetType() != CPLJSONObject::Type::Array)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value of BAND_METADATA should be an array");
+            return nullptr;
+        }
+
+        std::map<std::string, size_t> oMapArrayDimNameToExtraDimIdx;
+        for (size_t i = 0, j = 0; i < nDimCount; ++i)
+        {
+            if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
+            {
+                oMapArrayDimNameToExtraDimIdx[dims[i]->GetName()] = j;
+                ++j;
+            }
+        }
+
+        auto oArray = oRoot.ToArray();
+        for (int j = 0; j < oArray.Size(); ++j)
+        {
+            const auto oJsonItem = oArray[j];
+            MetadataItem oItem;
+
+            auto osBandArrayFullname = oJsonItem.GetString("array");
+            if (osBandArrayFullname.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "BAND_METADATA[%d][\"array\"] is missing", j);
+                return nullptr;
+            }
+            oItem.poArray =
+                poRootGroup->OpenMDArrayFromFullname(osBandArrayFullname);
+            if (!oItem.poArray)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Array %s cannot be found",
+                         osBandArrayFullname.c_str());
+                return nullptr;
+            }
+            if (oItem.poArray->GetDimensionCount() != 1)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Array %s is not a 1D array",
+                         osBandArrayFullname.c_str());
+                return nullptr;
+            }
+            const auto osAuxArrayDimName =
+                oItem.poArray->GetDimensions()[0]->GetName();
+            auto oIter = oMapArrayDimNameToExtraDimIdx.find(osAuxArrayDimName);
+            if (oIter == oMapArrayDimNameToExtraDimIdx.end())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Dimension %s of array %s is not a non-X/Y dimension "
+                         "of array %s",
+                         osAuxArrayDimName.c_str(), osBandArrayFullname.c_str(),
+                         array->GetName().c_str());
+                return nullptr;
+            }
+            const size_t iExtraDimIdx = oIter->second;
+            CPLAssert(iExtraDimIdx < nNewDimCount);
+
+            oItem.osName = oJsonItem.GetString("item_name");
+            if (oItem.osName.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "BAND_METADATA[%d][\"item_name\"] is missing", j);
+                return nullptr;
+            }
+
+            const auto osDefinition = oJsonItem.GetString("item_value", "%s");
+
+            // Check correctness of definition
+            bool bFirstNumericFormatter = true;
+            std::string osModDefinition;
+            bool bDefinitionUsesPctForG = false;
+            for (size_t k = 0; k < osDefinition.size(); ++k)
+            {
+                if (osDefinition[k] == '%')
+                {
+                    osModDefinition += osDefinition[k];
+                    if (k + 1 == osDefinition.size())
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of "
+                                 "BAND_METADATA[\"%s\"][%d][\"item_value\"] = "
+                                 "%s is invalid at offset %d",
+                                 osAuxArrayDimName.c_str(), j,
+                                 osDefinition.c_str(), int(k));
+                        return nullptr;
+                    }
+                    ++k;
+                    if (osDefinition[k] == '%')
+                    {
+                        osModDefinition += osDefinition[k];
+                        continue;
+                    }
+                    if (!bFirstNumericFormatter)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Value of "
+                            "BAND_METADATA[\"%s\"][%d][\"item_value\"] = %s is "
+                            "invalid at offset %d: %%[x][.y]f|g or %%s "
+                            "formatters should be specified at most once",
+                            osAuxArrayDimName.c_str(), j, osDefinition.c_str(),
+                            int(k));
+                        return nullptr;
+                    }
+                    bFirstNumericFormatter = false;
+                    for (; k < osDefinition.size(); ++k)
+                    {
+                        osModDefinition += osDefinition[k];
+                        if (!((osDefinition[k] >= '0' &&
+                               osDefinition[k] <= '9') ||
+                              osDefinition[k] == '.'))
+                            break;
+                    }
+                    if (k == osDefinition.size() ||
+                        (osDefinition[k] != 'f' && osDefinition[k] != 'g' &&
+                         osDefinition[k] != 's'))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of "
+                                 "BAND_METADATA[\"%s\"][%d][\"item_value\"] = "
+                                 "%s is invalid at offset %d: only "
+                                 "%%[x][.y]f|g or %%s formatters are accepted",
+                                 osAuxArrayDimName.c_str(), j,
+                                 osDefinition.c_str(), int(k));
+                        return nullptr;
+                    }
+                    bDefinitionUsesPctForG =
+                        (osDefinition[k] == 'f' || osDefinition[k] == 'g');
+                    if (bDefinitionUsesPctForG)
+                    {
+                        if (oItem.poArray->GetDataType().GetClass() !=
+                            GEDTC_NUMERIC)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Data type of %s array is not numeric",
+                                     osAuxArrayDimName.c_str());
+                            return nullptr;
+                        }
+                    }
+                }
+                else if (osDefinition[k] == '$' &&
+                         k + 1 < osDefinition.size() &&
+                         osDefinition[k + 1] == '{')
+                {
+                    const auto nPos = osDefinition.find('}', k);
+                    if (nPos == std::string::npos)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of "
+                                 "BAND_METADATA[\"%s\"][%d][\"item_value\"] = "
+                                 "%s is invalid at offset %d",
+                                 osAuxArrayDimName.c_str(), j,
+                                 osDefinition.c_str(), int(k));
+                        return nullptr;
+                    }
+                    const auto osAttrName =
+                        osDefinition.substr(k + 2, nPos - (k + 2));
+                    auto poAttr = oItem.poArray->GetAttribute(osAttrName);
+                    if (!poAttr)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Value of "
+                                 "BAND_METADATA[\"%s\"][%d][\"item_value\"] = "
+                                 "%s is invalid: %s is not an attribute of %s",
+                                 osAuxArrayDimName.c_str(), j,
+                                 osDefinition.c_str(), osAttrName.c_str(),
+                                 osAuxArrayDimName.c_str());
+                        return nullptr;
+                    }
+                    k = nPos;
+                    const char *pszValue = poAttr->ReadAsString();
+                    if (!pszValue)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot get value of attribute %s of %s as a "
+                                 "string",
+                                 osAttrName.c_str(), osAuxArrayDimName.c_str());
+                        return nullptr;
+                    }
+                    osModDefinition += pszValue;
+                }
+                else
+                {
+                    osModDefinition += osDefinition[k];
+                }
+            }
+
+            oItem.osDefinition = osModDefinition;
+            oItem.bDefinitionUsesPctForG = bDefinitionUsesPctForG;
+
+            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(oItem);
+        }
+    }
+
+    auto poDS = cpl::make_unique<GDALDatasetFromArray>(array, iXDim, iYDim);
+
+    poDS->eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
+
+    poDS->nRasterYSize =
+        nDimCount < 2 ? 1
+                      : static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
+                                                  dims[iYDim]->GetSize()));
+    poDS->nRasterXSize = static_cast<int>(
+        std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
+
+    std::vector<GUInt64> anOtherDimCoord(nNewDimCount);
+    std::vector<GUInt64> anStackIters(nDimCount);
+    std::vector<size_t> anMapNewToOld(nNewDimCount);
+    for (size_t i = 0, j = 0; i < nDimCount; ++i)
+    {
+        if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
+        {
+            anMapNewToOld[j] = i;
+            j++;
+        }
+    }
+
+    poDS->m_bHasGT =
+        array->GuessGeoTransform(iXDim, iYDim, false, poDS->m_adfGeoTransform);
+
+    const auto attrs(array->GetAttributes());
+    for (const auto &attr : attrs)
+    {
+        if (attr->GetName() != "COLOR_INTERPRETATION")
+        {
+            auto stringArray = attr->ReadAsStringArray();
+            std::string val;
+            if (stringArray.size() > 1)
+            {
+                val += '{';
+            }
+            for (int i = 0; i < stringArray.size(); ++i)
+            {
+                if (i > 0)
+                    val += ',';
+                val += stringArray[i];
+            }
+            if (stringArray.size() > 1)
+            {
+                val += '}';
+            }
+            poDS->m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
+        }
+    }
+
+    const char *pszDelay = CSLFetchNameValueDef(
+        papszOptions, "LOAD_EXTRA_DIM_METADATA_DELAY",
+        CPLGetConfigOption("GDAL_LOAD_EXTRA_DIM_METADATA_DELAY", "5"));
+    const double dfDelay =
+        EQUAL(pszDelay, "unlimited") ? -1 : CPLAtof(pszDelay);
+    const auto nStartTime = time(nullptr);
+    bool bHasWarned = false;
+    // Instantiate bands by iterating over non-XY variables
+    size_t iDim = 0;
+    int nCurBand = 1;
+lbl_next_depth:
+    if (iDim < nNewDimCount)
+    {
+        anStackIters[iDim] = dims[anMapNewToOld[iDim]]->GetSize();
+        anOtherDimCoord[iDim] = 0;
+        while (true)
+        {
+            ++iDim;
+            goto lbl_next_depth;
+        lbl_return_to_caller:
+            --iDim;
+            --anStackIters[iDim];
+            if (anStackIters[iDim] == 0)
+                break;
+            ++anOtherDimCoord[iDim];
+        }
+    }
+    else
+    {
+        poDS->SetBand(nCurBand, new GDALRasterBandFromArray(
+                                    poDS.get(), anOtherDimCoord,
+                                    aoBandParameterMetadataItems, dfDelay,
+                                    nStartTime, bHasWarned));
+        ++nCurBand;
+    }
+    if (iDim > 0)
+        goto lbl_return_to_caller;
+
+    if (!array->GetFilename().empty())
+    {
+        poDS->SetPhysicalFilename(array->GetFilename().c_str());
+        poDS->SetDerivedDatasetName(
+            CPLSPrintf("AsClassicDataset(%d,%d) view of %s", int(iXDim),
+                       int(iYDim), array->GetFullName().c_str()));
+        poDS->TryLoadXML();
+    }
+
+    return poDS.release();
+}
+
+/************************************************************************/
 /*                          AsClassicDataset()                         */
 /************************************************************************/
 
@@ -8671,9 +9176,65 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
  * @param iXDim Index of the dimension that will be used as the X/width axis.
  * @param iYDim Index of the dimension that will be used as the Y/height axis.
  *              Ignored if the dimension count is 1.
+ * @param poRootGroup (Added in GDAL 3.8) Root group. Used with the BAND_METADATA
+ *                    option.
+ * @param papszOptions (Added in GDAL 3.8) Null-terminated list of options, or
+ *                     nullptr. Current supported options are:
+ *                     <ul>
+ *                     <li>BAND_METADATA: JSON serialized array defining which
+ *                         arrays of the poRootGroup, indexed by non-X and Y
+ *                         dimensions, should be mapped as band metadata items.
+ *                         Each array item should be an object with the
+ *                         following members:
+ *                         - "array": full name of a band parameter array.
+ *                           Such array must be a one
+ *                           dimensional array, and its dimension must be one of
+ *                           the dimensions of the array on which the method is
+ *                           called (excluding the X and Y dimensons).
+ *                         - "item_name": band metadata item name
+ *                         - "item_value": (optional) String, where "%[x][.y]f",
+ *                           "%[x][.y]g" or "%s" printf-like formatting can be
+ *                           used to format the corresponding value of the
+ *                           parameter array. The percentage character should be
+ *                           repeated: "%%"
+ *                           "${attribute_name}" can also be used to include the
+ *                           value of an attribute for the array.
+ *                           If "item_value" is not provided, a default formatting
+ *                           of the value will be applied.
+ *
+ *                         Example:
+ *                         [
+ *                            {
+ *                              "array": "/sensor_band_parameters/wavelengths",
+ *                              "item_name": "WAVELENGTH",
+ *                              "item_value": "%.1f ${units}"
+ *                            },
+ *                            {
+ *                              "array": "/sensor_band_parameters/fwhm",
+ *                              "item_name": "FWHM"
+ *                            },
+ *                            {
+ *                              "array": "/sensor_band_parameters/fwhm",
+ *                              "item_name": "FWHM_UNIT",
+ *                              "item_value": "${units}"
+ *                            }
+ *                         ]
+ *                     </li>
+ *                     <li>LOAD_EXTRA_DIM_METADATA_DELAY: Maximum delay in
+ *                         seconds allowed to set the DIM_{dimname}_VALUE band
+ *                         metadata items from the indexing variable of the
+ *                         dimensions.
+ *                         Default value is 5. 'unlimited' can be used to mean
+ *                         unlimited delay. Can also be defined globally with
+ *                         the GDAL_LOAD_EXTRA_DIM_METADATA_DELAY configuration
+ *                         option.</li>
+ *                     </ul>
  * @return a new GDALDataset that must be freed with GDALClose(), or nullptr
  */
-GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
+GDALDataset *
+GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim,
+                              const std::shared_ptr<GDALGroup> &poRootGroup,
+                              CSLConstList papszOptions) const
 {
     auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
     if (!self)
@@ -8682,43 +9243,8 @@ GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
                  "Driver implementation issue: m_pSelf not set !");
         return nullptr;
     }
-    const auto nDimCount(GetDimensionCount());
-    if (nDimCount == 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Unsupported number of dimensions");
-        return nullptr;
-    }
-    if (GetDataType().GetClass() != GEDTC_NUMERIC ||
-        GetDataType().GetNumericDataType() == GDT_Unknown)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Only arrays with numeric data types "
-                 "can be exposed as classic GDALDataset");
-        return nullptr;
-    }
-    if (iXDim >= nDimCount ||
-        (nDimCount >= 2 && (iYDim >= nDimCount || iXDim == iYDim)))
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Invalid iXDim and/or iYDim");
-        return nullptr;
-    }
-    GUInt64 nBands = 1;
-    const auto &dims(GetDimensions());
-    for (size_t i = 0; i < nDimCount; ++i)
-    {
-        if (i != iXDim && !(nDimCount >= 2 && i == iYDim))
-        {
-            if (dims[i]->GetSize() > 65536 / nBands)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Too many bands. Operate on a sliced view");
-                return nullptr;
-            }
-            nBands *= dims[i]->GetSize();
-        }
-    }
-    return new GDALDatasetFromArray(self, iXDim, iYDim);
+    return GDALDatasetFromArray::Create(self, iXDim, iYDim, poRootGroup,
+                                        papszOptions);
 }
 
 /************************************************************************/
@@ -11536,7 +12062,8 @@ GDALMDArrayH GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions)
  *
  * This is the same as the C++ method GDALMDArray::GetResampled().
  *
- * Currently this method can only resample along the last 2 dimensions.
+ * Currently this method can only resample along the last 2 dimensions, unless
+ * orthorectifying a NASA EMIT dataset.
  *
  * The returned object should be released with GDALMDArrayRelease().
  *
@@ -12071,7 +12598,7 @@ int GDALAttributeReadAsInt(GDALAttributeH hAttr)
  *
  * It can fail if its value can be converted to double.
  *
- * This is the same as the C++ method GDALAttribute::ReadAsDoubl()
+ * This is the same as the C++ method GDALAttribute::ReadAsDouble()
  *
  * @return a double value.
  */
@@ -12538,6 +13065,39 @@ GDALDatasetH GDALMDArrayAsClassicDataset(GDALMDArrayH hArray, size_t iXDim,
     VALIDATE_POINTER1(hArray, __func__, nullptr);
     return GDALDataset::ToHandle(
         hArray->m_poImpl->AsClassicDataset(iXDim, iYDim));
+}
+
+/************************************************************************/
+/*                     GDALMDArrayAsClassicDatasetEx()                  */
+/************************************************************************/
+
+/** Return a view of this array as a "classic" GDALDataset (ie 2D)
+ *
+ * Only 2D or more arrays are supported.
+ *
+ * In the case of > 2D arrays, additional dimensions will be represented as
+ * raster bands.
+ *
+ * The "reverse" method is GDALRasterBand::AsMDArray().
+ *
+ * This is the same as the C++ method GDALMDArray::AsClassicDataset().
+ * @param hArray Array.
+ * @param iXDim Index of the dimension that will be used as the X/width axis.
+ * @param iYDim Index of the dimension that will be used as the Y/height axis.
+ *              Ignored if the dimension count is 1.
+ * @param hRootGroup Root group, or NULL. Used with the BAND_METADATA option.
+ * @param papszOptions Cf GDALMDArray::AsClassicDataset()
+ * @return a new GDALDataset that must be freed with GDALClose(), or nullptr
+ * @since GDAL 3.8
+ */
+GDALDatasetH GDALMDArrayAsClassicDatasetEx(GDALMDArrayH hArray, size_t iXDim,
+                                           size_t iYDim, GDALGroupH hRootGroup,
+                                           CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hArray, __func__, nullptr);
+    return GDALDataset::ToHandle(hArray->m_poImpl->AsClassicDataset(
+        iXDim, iYDim, hRootGroup ? hRootGroup->m_poImpl : nullptr,
+        papszOptions));
 }
 
 //! @cond Doxygen_Suppress

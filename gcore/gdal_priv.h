@@ -60,6 +60,7 @@ class GDALRelationship;
 
 #include "gdal.h"
 #include "gdal_frmts.h"
+#include "gdalsubdatasetinfo.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -880,10 +881,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     UpdateRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                        std::string &failureReason);
 
-    virtual OGRLayer *CreateLayer(const char *pszName,
-                                  OGRSpatialReference *poSpatialRef = nullptr,
-                                  OGRwkbGeometryType eGType = wkbUnknown,
-                                  char **papszOptions = nullptr);
+    virtual OGRLayer *CreateLayer(
+        const char *pszName, const OGRSpatialReference *poSpatialRef = nullptr,
+        OGRwkbGeometryType eGType = wkbUnknown, char **papszOptions = nullptr);
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                 char **papszOptions = nullptr);
 
@@ -922,10 +922,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     //! @endcond
 
   protected:
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr);
+    virtual OGRLayer *ICreateLayer(
+        const char *pszName, const OGRSpatialReference *poSpatialRef = nullptr,
+        OGRwkbGeometryType eGType = wkbUnknown, char **papszOptions = nullptr);
 
     //! @cond Doxygen_Suppress
     OGRErr ProcessSQLCreateIndex(const char *);
@@ -1812,6 +1811,13 @@ class CPL_DLL GDALDriver : public GDALMajorObject
         CSLConstList papszVectorTranslateArguments,
         GDALProgressFunc pfnProgress, void *pProgressData) = nullptr;
 
+    /**
+     * Returns a (possibly null) pointer to the Subdataset informational function
+     * from the subdataset file name.
+     */
+    GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)(const char *pszFileName) =
+        nullptr;
+
     //! @endcond
 
     /* -------------------------------------------------------------------- */
@@ -1918,6 +1924,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     void AutoLoadDrivers();
     void AutoSkipDrivers();
     void ReorderDrivers();
+    static CPLErr LoadPlugin(const char *name);
 
     static void AutoLoadPythonDrivers();
 };
@@ -2973,7 +2980,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
 
-    std::shared_ptr<GDALMDArray>
+    virtual std::shared_ptr<GDALMDArray>
     GetResampled(const std::vector<std::shared_ptr<GDALDimension>> &apoNewDims,
                  GDALRIOResampleAlg resampleAlg,
                  const OGRSpatialReference *poTargetSRS,
@@ -2985,7 +2992,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                const std::shared_ptr<GDALMDArray> &poYArray = nullptr,
                CSLConstList papszOptions = nullptr) const;
 
-    virtual GDALDataset *AsClassicDataset(size_t iXDim, size_t iYDim) const;
+    virtual GDALDataset *
+    AsClassicDataset(size_t iXDim, size_t iYDim,
+                     const std::shared_ptr<GDALGroup> &poRootGroup = nullptr,
+                     CSLConstList papszOptions = nullptr) const;
 
     virtual CPLErr GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
                                  double *pdfMax, double *pdfMean,
@@ -3629,7 +3639,7 @@ typedef CPLErr (*GDALResampleFunction)(
     int nChunkYOff, int nChunkYSize, int nDstXOff, int nDstXOff2, int nDstYOff,
     int nDstYOff2, GDALRasterBand *poOverview, void **ppDstBuffer,
     GDALDataType *peDstBufferDataType, const char *pszResampling,
-    int bHasNoData, float fNoDataValue, GDALColorTable *poColorTable,
+    bool bHasNoData, double dfNoDataValue, GDALColorTable *poColorTable,
     GDALDataType eSrcDataType, bool bPropagateNoData);
 
 GDALResampleFunction GDALGetResampleFunction(const char *pszResampling,

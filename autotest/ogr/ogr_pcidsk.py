@@ -55,10 +55,11 @@ def module_disable_exceptions():
 # Test creation
 
 
-def test_ogr_pcidsk_1():
+@pytest.fixture()
+def pcidsk_1(tmp_path):
 
     ogr_drv = ogr.GetDriverByName("PCIDSK")
-    ds = ogr_drv.CreateDataSource("tmp/ogr_pcidsk_1.pix")
+    ds = ogr_drv.CreateDataSource(tmp_path / "ogr_pcidsk_1.pix")
 
     lyr = ds.CreateLayer("nothing", geom_type=ogr.wkbNone)
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -113,20 +114,18 @@ def test_ogr_pcidsk_1():
         lyr.ResetReading()
         feat = lyr.GetNextFeature()
         assert feat is not None, layername
-        if feat.GetGeometryRef().ExportToWkt() != wkt:
-            feat.DumpReadable()
-            pytest.fail(layername)
+        assert feat.GetGeometryRef().ExportToWkt() == wkt
 
-    ds = None
+    return tmp_path / "ogr_pcidsk_1.pix"
 
 
 ###############################################################################
 # Test reading
 
 
-def test_ogr_pcidsk_2():
+def test_ogr_pcidsk_2(pcidsk_1):
 
-    ds = ogr.Open("tmp/ogr_pcidsk_1.pix")
+    ds = ogr.Open(pcidsk_1)
     assert ds.GetLayerCount() == 2 + len(wkts)
 
     lyr = ds.GetLayerByName("nothing")
@@ -165,7 +164,7 @@ def test_ogr_pcidsk_2():
 # Check with test_ogrsf
 
 
-def test_ogr_pcidsk_3():
+def test_ogr_pcidsk_3(pcidsk_1):
 
     import test_cli_utilities
 
@@ -173,7 +172,7 @@ def test_ogr_pcidsk_3():
         pytest.skip()
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " tmp/ogr_pcidsk_1.pix"
+        test_cli_utilities.get_test_ogrsf_path() + " " + str(pcidsk_1)
     )
 
     if ret.find("ERROR: The feature was not deleted") != -1:
@@ -217,9 +216,9 @@ def test_ogr_pcidsk_5():
 ###############################################################################
 
 
-def test_ogr_pcidsk_add_field_to_non_empty_layer():
+def test_ogr_pcidsk_add_field_to_non_empty_layer(tmp_vsimem):
 
-    tmpfile = "/vsimem/tmp.pix"
+    tmpfile = tmp_vsimem / "tmp.pix"
     ds = ogr.GetDriverByName("PCIDSK").CreateDataSource(tmpfile)
     lyr = ds.CreateLayer("foo")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
@@ -227,7 +226,7 @@ def test_ogr_pcidsk_add_field_to_non_empty_layer():
     f["foo"] = "bar"
     lyr.CreateFeature(f)
     f = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.CreateField(ogr.FieldDefn("bar", ogr.OFTString)) != 0
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "bar2"
@@ -235,23 +234,19 @@ def test_ogr_pcidsk_add_field_to_non_empty_layer():
     f = None
     ds = None
 
-    ogr.GetDriverByName("PCIDSK").DeleteDataSource(tmpfile)
-
 
 ###############################################################################
 
 
-def test_ogr_pcidsk_too_many_layers():
+def test_ogr_pcidsk_too_many_layers(tmp_vsimem):
 
-    tmpfile = "/vsimem/tmp.pix"
+    tmpfile = tmp_vsimem / "tmp.pix"
     ds = ogr.GetDriverByName("PCIDSK").CreateDataSource(tmpfile)
     for i in range(1023):
         ds.CreateLayer("foo%d" % i)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.CreateLayer("foo") is None
     ds = None
-
-    ogr.GetDriverByName("PCIDSK").DeleteDataSource(tmpfile)
 
 
 ###############################################################################
@@ -299,12 +294,3 @@ def test_ogr_pcidsk_online_2():
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ogr_pcidsk_cleanup():
-
-    gdal.Unlink("tmp/ogr_pcidsk_1.pix")

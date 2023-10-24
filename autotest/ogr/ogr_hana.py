@@ -683,7 +683,7 @@ def test_ogr_hana_21():
         get_test_name(), geom_type=ogr.wkbNone, options=["FID=fid", "LAUNDER=NO"]
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert layer.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == 0
         assert layer.CreateField(ogr.FieldDefn("fid", ogr.OFTString)) != 0
         assert layer.CreateField(ogr.FieldDefn("fid", ogr.OFTInteger)) != 0
@@ -770,7 +770,7 @@ def test_ogr_hana_25(ogrsf_path):
 def test_ogr_hana_26():
     ds = open_datasource()
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         layer = ds.ExecuteSQL("SELECT FROM")
     assert gdal.GetLastErrorMsg() != ""
     assert layer is None
@@ -853,7 +853,7 @@ def test_ogr_hana_28():
 def test_ogr_hana_29():
     ds_ro = open_datasource(0)
     layer = ds_ro.GetLayerByName("TPOLY")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             layer.CreateGeomField(ogr.GeomFieldDefn("GEOM_FIELD", ogr.wkbPoint))
             == ogr.OGRERR_FAILURE
@@ -864,7 +864,7 @@ def test_ogr_hana_29():
     create_tpoly_table(ds_rw, layer_name)
 
     layer = ds_rw.GetLayerByName(layer_name)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # unsupported geometry type
         assert (
             layer.CreateGeomField(ogr.GeomFieldDefn("GEOM_FIELD", ogr.wkbCompoundCurve))
@@ -952,7 +952,7 @@ def test_ogr_hana_32():
     ds = open_datasource(1)
     layer_name = get_test_name() + "_TABLE_\U0001f608"
     sql = "CREATE COLUMN TABLE %s (A INT, B INT)" % layer_name
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.ExecuteSQL(sql)
 
     ds = open_datasource(0)
@@ -1000,7 +1000,7 @@ def test_ogr_hana_33():
 
 def test_ogr_hana_34():
     def test_connection(conn_str, expected_param):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = ogr.Open("HANA:" + conn_str, update=1)
         assert ds is None
         expected_msg = (
@@ -1096,7 +1096,7 @@ def test_ogr_hana_36():
     assert ds.TestCapability(ogr.ODsCTransactions) == 1
 
     # test data source
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.StartTransaction() == 0
         assert ds.CommitTransaction() == 0
 
@@ -1114,7 +1114,7 @@ def test_ogr_hana_36():
     layer_name = get_test_name()
     create_tpoly_table(ds, layer_name)
     layer = ds.GetLayerByName(layer_name)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert layer.StartTransaction() == 0
         assert layer.CommitTransaction() == 0
 
@@ -1172,7 +1172,7 @@ def test_ogr_hana_37():
 
 
 def create_tpoly_table(ds, layer_name="TPOLY"):
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.ExecuteSQL("DELLAYER:%s" % layer_name)
 
     shp_ds = ogr.Open("data/poly.shp")
@@ -1260,7 +1260,7 @@ def create_connection():
     except ValueError as e:
         raise ValueError(f"Failed to parse connection params {conn_str} ({e})")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         conn = dbapi.connect(
             address=conn_params["HOST"],
             port=conn_params["PORT"],

@@ -15,12 +15,14 @@ Synopsis
 
 .. code-block::
 
-    ogrtindex [-lnum n]... [-lname name]... [-f output_format]
+    ogrtindex [--help] [--help-general]
+              [-lnum <n>]... [-lname <name>]... [-f <output_format>]
               [-write_absolute_path] [-skip_different_projection]
-              [-t_srs target_srs]
-              [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
+              [-t_srs <target_srs>]
+              [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
               [-accept_different_schemas]
-              <output_dataset> <src_dataset>...
+              <output_dataset> <src_dataset> <src_dataset>...
+
 
 Description
 -----------
@@ -32,6 +34,8 @@ their spatial extents. This is primarily intended to be used with
 the OGR connection type.
 
 .. program:: ogrtindex
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -lnum <n>
 
@@ -75,7 +79,7 @@ the OGR connection type.
 
     .. versionadded:: 2.2.0
 
-.. option:: -src_srs_format <format>
+.. option:: -src_srs_format {AUTO|WKT|EPSG|PROJ}
 
     The format in which the SRS of each tile must be written.
     Available formats are: ``AUTO``, ``WKT``, ``EPSG``, ``PROJ``.

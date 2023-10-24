@@ -15,10 +15,10 @@ Synopsis
 
 .. code-block::
 
-    gdal_contour [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]
-                 [-3d] [-inodata]
-                 [-snodata n] [-i <interval>]
-                 [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
+    gdal_contour [--help] [--help-general]
+                 [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]
+                 [-3d] [-inodata] [-snodata <n>] [-f <formatname>] [-i <interval>]
+                 [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
                  [-off <offset>] [-fl <level> <level>...] [-e <exp_base>]
                  [-nln <outlayername>] [-q] [-p]
                  <src_filename> <dst_filename>
@@ -33,6 +33,8 @@ The contour line-strings are oriented consistently and the high side will
 be on the right, i.e. a line string goes clockwise around a top.
 
 .. program:: gdal_contour
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <band>
 
@@ -81,11 +83,11 @@ be on the right, i.e. a line string goes clockwise around a top.
 
         If not specified, the format is guessed from the extension (previously was ESRI Shapefile).
 
-.. option:: -dsco <NAME=VALUE>
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco <NAME=VALUE>
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 

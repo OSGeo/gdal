@@ -1445,6 +1445,7 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
     friend class OGRGeometry;
 
     int nPointCount;
+    int m_nPointCapacity = 0;
     OGRRawPoint *paoPoints;
     double *padfZ;
     double *padfM;
@@ -2194,6 +2195,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
 
     OGRErr addCurve(const OGRCurve *, double dfToleranceEps = 1e-14);
     OGRErr addCurveDirectly(OGRCurve *, double dfToleranceEps = 1e-14);
+    OGRErr addCurve(std::unique_ptr<OGRCurve>, double dfToleranceEps = 1e-14);
     OGRCurve *stealCurve(int);
     virtual OGRPointIterator *getPointIterator() const override;
 
@@ -2432,6 +2434,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     virtual OGRErr addRing(OGRCurve *);
     virtual OGRErr addRingDirectly(OGRCurve *);
+    OGRErr addRing(std::unique_ptr<OGRCurve>);
 
     OGRCurve *getExteriorRingCurve();
     const OGRCurve *getExteriorRingCurve() const;
@@ -2739,9 +2742,6 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
 class CPL_DLL OGRGeometryCollection : public OGRGeometry
 {
-    OGRErr importFromWkbInternal(const unsigned char *pabyData, size_t nSize,
-                                 int nRecLevel, OGRwkbVariant,
-                                 size_t &nBytesConsumedOut);
     OGRErr importFromWktInternal(const char **ppszInput, int nRecLevel);
 
   protected:
@@ -2755,6 +2755,10 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     static OGRGeometryCollection *
     TransferMembersAndDestroy(OGRGeometryCollection *poSrc,
                               OGRGeometryCollection *poDst);
+
+    OGRErr importFromWkbInternal(const unsigned char *pabyData, size_t nSize,
+                                 int nRecLevel, OGRwkbVariant,
+                                 size_t &nBytesConsumedOut);
     //! @endcond
     virtual OGRBoolean isCompatibleSubType(OGRwkbGeometryType) const;
 
@@ -2856,6 +2860,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual void setMeasured(OGRBoolean bIsMeasured) override;
     virtual OGRErr addGeometry(const OGRGeometry *);
     virtual OGRErr addGeometryDirectly(OGRGeometry *);
+    OGRErr addGeometry(std::unique_ptr<OGRGeometry> geom);
     virtual OGRErr removeGeometry(int iIndex, int bDelete = TRUE);
 
     virtual void
@@ -3139,6 +3144,9 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     using OGRGeometry::exportToWkt;
 #endif
 
+    virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
+                                 size_t &nBytesConsumedOut) override;
+
     /// Export a multipolygon to WKT
     /// \param opts  Output options.
     /// \param err   Pointer to error code, if desired.
@@ -3312,6 +3320,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     hasCurveGeometry(int bLookForNonLinear = FALSE) const override;
     virtual OGRErr addGeometry(const OGRGeometry *);
     OGRErr addGeometryDirectly(OGRGeometry *poNewGeom);
+    OGRErr addGeometry(std::unique_ptr<OGRGeometry> poNewGeom);
+
     int getNumGeometries() const;
     OGRPolygon *getGeometryRef(int i);
     const OGRPolygon *getGeometryRef(int i) const;
@@ -3439,6 +3449,10 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
 
     // IWks Interface.
     virtual OGRErr addGeometry(const OGRGeometry *) override;
+
+#ifndef DOXYGEN_XML
+    using OGRPolyhedralSurface::addGeometry;
+#endif
 
     /** Return pointer of this in upper class */
     inline OGRPolyhedralSurface *toUpperClass()
@@ -3856,6 +3870,9 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 #ifndef DOXYGEN_XML
     using OGRGeometry::exportToWkt;
 #endif
+
+    virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
+                                 size_t &nBytesConsumedOut) override;
 
     /// Export a multilinestring to WKT
     /// \param opts  Output options.

@@ -491,24 +491,13 @@ inline void GDALCopy8Words(const Tin *pValueIn, Tout *const pValueOut)
 
 static inline void GDALCopyXMMToInt32(const __m128i xmm, void *pDest)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     int n32 = _mm_cvtsi128_si32(xmm);  // Extract lower 32 bit word
     memcpy(pDest, &n32, sizeof(n32));
-#else
-    *static_cast<int *>(pDest) = _mm_cvtsi128_si32(xmm);
-#endif
 }
 
 static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-    GInt64 n64 = _mm_cvtsi128_si64(xmm);  // Extract lower 64 bit word
-    memcpy(pDest, &n64, sizeof(n64));
-#elif defined(__i386__) || defined(_M_IX86)
     _mm_storel_epi64(reinterpret_cast<__m128i *>(pDest), xmm);
-#else
-    *static_cast<GInt64 *>(pDest) = _mm_cvtsi128_si64(xmm);
-#endif
 }
 
 #if __SSSE3__

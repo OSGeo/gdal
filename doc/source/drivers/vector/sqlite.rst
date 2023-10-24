@@ -480,7 +480,7 @@ available:
 
      YES enables extra buffering/caching
      by the GDAL/OGR I/O layer and can speed up I/O. More information
-     :ref:`here <target_user_virtual_file_systems_file_caching>`.
+     :ref:`here <vsicached>`.
      Be aware that no file locking will occur if this option is activated, so
      concurrent edits may lead to database corruption.
 

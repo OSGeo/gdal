@@ -39,6 +39,7 @@
 #include "tiffio.h"
 #include "tif_jxl.h"
 #include "xtiffio.h"
+#include <cctype>
 
 // Needed to expose WEBP_LOSSLESS option
 #ifdef WEBP_SUPPORT
@@ -252,11 +253,16 @@ void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError)
 
     GTiffDataset *const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
     poDS->m_dfMaxZError = dfMaxZError;
+    poDS->m_dfMaxZErrorOverview = dfMaxZError;
 
     poDS->ScanDirectories();
 
     for (int i = 0; i < poDS->m_nOverviewCount; ++i)
+    {
         poDS->m_papoOverviewDS[i]->m_dfMaxZError = poDS->m_dfMaxZError;
+        poDS->m_papoOverviewDS[i]->m_dfMaxZErrorOverview =
+            poDS->m_dfMaxZErrorOverview;
+    }
 }
 
 /************************************************************************/
@@ -1133,6 +1139,80 @@ CPLString GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
 }
 
 /************************************************************************/
+/*                    OGRGTiffDriverGetSubdatasetInfo()                 */
+/************************************************************************/
+
+struct GTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit GTiffDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "GTIFF_DIR:"))
+        {
+            return;
+        }
+
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
+
+        if (iPartsCount == 3 || iPartsCount == 4)
+        {
+
+            m_driverPrefixComponent = aosParts[0];
+
+            const bool hasDriveLetter{strlen(aosParts[2]) == 1 &&
+                                      std::isalpha(aosParts[2][0])};
+
+            // Check for drive letter
+            if (iPartsCount == 4)
+            {
+                // Invalid
+                if (!hasDriveLetter)
+                {
+                    return;
+                }
+                m_pathComponent = aosParts[2];
+                m_pathComponent.append(":");
+                m_pathComponent.append(aosParts[3]);
+            }
+            else  // count is 3
+            {
+                if (hasDriveLetter)
+                {
+                    return;
+                }
+                m_pathComponent = aosParts[2];
+            }
+
+            m_subdatasetComponent = aosParts[1];
+        }
+    }
+};
+
+static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
+{
+    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
+    if (GTiffDataset::Identify(&poOpenInfo))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            cpl::make_unique<GTiffDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                          GDALRegister_GTiff()                        */
 /************************************************************************/
 
@@ -1214,10 +1294,15 @@ void GDALRegister_GTiff()
             "   <Option name='ZSTD_LEVEL' type='int' description='ZSTD "
             "compression level 1(fast)-22(slow)' default='9'/>";
     if (bHasLERC)
+    {
         osOptions +=
             ""
             "   <Option name='MAX_Z_ERROR' type='float' description='Maximum "
-            "error for LERC compression' default='0'/>";
+            "error for LERC compression' default='0'/>"
+            "   <Option name='MAX_Z_ERROR_OVERVIEW' type='float' "
+            "description='Maximum error for LERC compression in overviews' "
+            "default='0'/>";
+    }
     if (bHasWebP)
     {
 #ifndef DEFAULT_WEBP_LEVEL
@@ -1415,6 +1500,7 @@ void GDALRegister_GTiff()
     poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;
     poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
     poDriver->pfnIdentify = GTiffDataset::Identify;
+    poDriver->pfnGetSubdatasetInfoFunc = GTiffDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

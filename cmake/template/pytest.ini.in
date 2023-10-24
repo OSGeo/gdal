@@ -2,7 +2,7 @@
 
 [pytest]
 python_files = *.py
-testpaths = ogr gcore gdrivers osr alg gnm utilities pyscripts
+testpaths = ogr gcore gdrivers osr alg gnm utilities pyscripts benchmark
 norecursedirs = ogr/data gdrivers/data cpp
 log_file = @AUTOTEST_LOG_FILE@
 log_file_level = INFO

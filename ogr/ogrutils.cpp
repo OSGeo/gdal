@@ -944,6 +944,94 @@ int OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 }
 
 /************************************************************************/
+/*                       OGRTimezoneToTZFlag()                          */
+/************************************************************************/
+
+/** \brief Converts a text timezone into OGR TZFlag integer representation.
+ *
+ * @param pszTZ "UTC", "Etc/UTC", or "(+/-)[0-9][0-9](:?)[0-9][0-9]"
+ * @param bEmitErrorIfUnhandledFormat Whether to emit an error if pszTZ is
+ *                                    a non-empty string with unrecognized
+ *                                    format.
+ */
+int OGRTimezoneToTZFlag(const char *pszTZ, bool bEmitErrorIfUnhandledFormat)
+{
+    int nTZFlag = OGR_TZFLAG_UNKNOWN;
+    const size_t nTZLen = strlen(pszTZ);
+    if (strcmp(pszTZ, "UTC") == 0 || strcmp(pszTZ, "Etc/UTC") == 0)
+    {
+        nTZFlag = OGR_TZFLAG_UTC;
+    }
+    else if ((pszTZ[0] == '+' || pszTZ[0] == '-') &&
+             ((nTZLen == 6 && pszTZ[3] == ':') ||
+              (nTZLen == 5 && pszTZ[3] >= '0' && pszTZ[3] <= '9')))
+    {
+        int nTZHour = atoi(pszTZ + 1);
+        int nTZMin = atoi(pszTZ + (nTZLen == 6 ? 4 : 3));
+        if (nTZHour >= 0 && nTZHour <= 14 && nTZMin >= 0 && nTZMin < 60 &&
+            (nTZMin % 15) == 0)
+        {
+            nTZFlag = (nTZHour * 4) + (nTZMin / 15);
+            if (pszTZ[0] == '+')
+            {
+                nTZFlag = OGR_TZFLAG_UTC + nTZFlag;
+            }
+            else
+            {
+                nTZFlag = OGR_TZFLAG_UTC - nTZFlag;
+            }
+        }
+    }
+    else if (pszTZ[0] != 0 && bEmitErrorIfUnhandledFormat)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unrecognized timezone: '%s'",
+                 pszTZ);
+    }
+    return nTZFlag;
+}
+
+/************************************************************************/
+/*                       OGRTZFlagToTimezone()                          */
+/************************************************************************/
+
+/** \brief Converts a OGR TZFlag integer representation into a string
+ *
+ * @param nTZFlag OGR TZFlag integer (only ones with
+ *        value > OGR_TZFLAG_MIXED_TZ will yield a non-empty output)
+ * @param pszUTCRepresentation String to return if nTZFlag == OGR_TZFLAG_UTC.
+ *                             Typically "UTC", "Z", or "+00:00"
+ */
+std::string OGRTZFlagToTimezone(int nTZFlag, const char *pszUTCRepresentation)
+{
+    if (nTZFlag == OGR_TZFLAG_UTC)
+    {
+        return pszUTCRepresentation;
+    }
+    else if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
+    {
+        char chSign;
+        const int nOffset = (nTZFlag - OGR_TZFLAG_UTC) * 15;
+        int nHours = static_cast<int>(nOffset / 60);  // Round towards zero.
+        const int nMinutes = std::abs(nOffset - nHours * 60);
+
+        if (nOffset < 0)
+        {
+            chSign = '-';
+            nHours = std::abs(nHours);
+        }
+        else
+        {
+            chSign = '+';
+        }
+        return CPLSPrintf("%c%02d:%02d", chSign, nHours, nMinutes);
+    }
+    else
+    {
+        return std::string();
+    }
+}
+
+/************************************************************************/
 /*                            OGRParseDate()                            */
 /*                                                                      */
 /*      Parse a variety of text date formats into an OGRField.          */
@@ -956,9 +1044,11 @@ int OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
  * into the OGRField.Date format suitable for use with OGR.  Generally
  * speaking this function is expecting values like:
  *
- *   YYYY-MM-DD HH:MM:SS[.sss]+nn
- *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
+ *   YYYY-MM-DD HH:MM:SS(.sss)?+nn
+ *   or YYYY-MM-DDTHH:MM:SS(.sss)?Z (ISO 8601 format)
  *   or YYYY-MM-DDZ
+ *   or THH:MM(:SS(.sss)?)?Z? (ISO 8601 extended format)
+ *   or THHMM(SS(.sss)?)?Z? (ISO 8601 basic format)
  *
  * The seconds may also have a decimal portion (parsed as milliseconds).  And
  * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported.
@@ -998,7 +1088,8 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
         ++pszInput;
 
     bool bGotSomething = false;
-    if (strstr(pszInput, "-") != nullptr || strstr(pszInput, "/") != nullptr)
+    bool bTFound = false;
+    if (strchr(pszInput, '-') || strchr(pszInput, '/'))
     {
         if (!(*pszInput == '-' || *pszInput == '+' ||
               (*pszInput >= '0' && *pszInput <= '9')))
@@ -1032,25 +1123,29 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
         else
             ++pszInput;
 
-        const int nMonth = atoi(pszInput);
-        if (nMonth <= 0 || nMonth > 12)
+        if (!(*pszInput >= '0' && *pszInput <= '9' && pszInput[1] >= '0' &&
+              pszInput[1] <= '9'))
+            return FALSE;
+        const int nMonth = (pszInput[0] - '0') * 10 + (pszInput[1] - '0');
+        if (nMonth == 0 || nMonth > 12)
             return FALSE;
         psField->Date.Month = static_cast<GByte>(nMonth);
 
-        while (*pszInput >= '0' && *pszInput <= '9')
-            ++pszInput;
+        pszInput += 2;
         if (*pszInput != '-' && *pszInput != '/')
             return FALSE;
         else
             ++pszInput;
 
-        const int nDay = atoi(pszInput);
-        if (nDay <= 0 || nDay > 31)
+        if (!(*pszInput >= '0' && *pszInput <= '9' && pszInput[1] >= '0' &&
+              pszInput[1] <= '9'))
+            return FALSE;
+        const int nDay = (pszInput[0] - '0') * 10 + (pszInput[1] - '0');
+        if (nDay == 0 || nDay > 31)
             return FALSE;
         psField->Date.Day = static_cast<GByte>(nDay);
 
-        while (*pszInput >= '0' && *pszInput <= '9')
-            ++pszInput;
+        pszInput += 2;
         if (*pszInput == '\0')
             return TRUE;
 
@@ -1058,7 +1153,10 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
 
         // If ISO 8601 format.
         if (*pszInput == 'T')
+        {
+            bTFound = true;
             ++pszInput;
+        }
         else if (*pszInput == 'Z')
             return TRUE;
         else if (*pszInput != ' ')
@@ -1070,47 +1168,58 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
     /* -------------------------------------------------------------------- */
     while (*pszInput == ' ')
         ++pszInput;
-
-    if (strstr(pszInput, ":") != nullptr)
+    if (*pszInput == 'T')
     {
-        if (!(*pszInput >= '0' && *pszInput <= '9'))
+        bTFound = true;
+        ++pszInput;
+    }
+
+    if (bTFound || strchr(pszInput, ':'))
+    {
+        if (!(*pszInput >= '0' && *pszInput <= '9' && pszInput[1] >= '0' &&
+              pszInput[1] <= '9' && (bTFound || pszInput[2] == ':')))
             return FALSE;
-        const int nHour = atoi(pszInput);
-        if (nHour < 0 || nHour > 23)
+        const int nHour = (pszInput[0] - '0') * 10 + (pszInput[1] - '0');
+        if (nHour > 23)
             return FALSE;
         psField->Date.Hour = static_cast<GByte>(nHour);
 
-        while (*pszInput >= '0' && *pszInput <= '9')
-            ++pszInput;
-        if (*pszInput != ':')
-            return FALSE;
-        else
+        pszInput += 2;
+        if (*pszInput == ':')
             ++pszInput;
 
-        if (!(*pszInput >= '0' && *pszInput <= '9'))
+        if (!(*pszInput >= '0' && *pszInput <= '9' && pszInput[1] >= '0' &&
+              pszInput[1] <= '9'))
             return FALSE;
-        const int nMinute = atoi(pszInput);
-        if (nMinute < 0 || nMinute > 59)
+        const int nMinute = (pszInput[0] - '0') * 10 + (pszInput[1] - '0');
+        if (nMinute > 59)
             return FALSE;
         psField->Date.Minute = static_cast<GByte>(nMinute);
 
-        while (*pszInput >= '0' && *pszInput <= '9')
-            ++pszInput;
-        if (*pszInput == ':')
+        pszInput += 2;
+        if ((bTFound && *pszInput >= '0' && *pszInput <= '9') ||
+            *pszInput == ':')
         {
-            ++pszInput;
+            if (*pszInput == ':')
+                ++pszInput;
 
-            if (!(*pszInput >= '0' && *pszInput <= '9'))
+            if (!(*pszInput >= '0' && *pszInput <= '9' && pszInput[1] >= '0' &&
+                  pszInput[1] <= '9'))
                 return FALSE;
             const double dfSeconds = CPLAtof(pszInput);
             // We accept second=60 for leap seconds
-            if (dfSeconds > 60.0 || dfSeconds < 0.0)
+            if (dfSeconds > 60.0)
                 return FALSE;
             psField->Date.Second = static_cast<float>(dfSeconds);
 
-            while ((*pszInput >= '0' && *pszInput <= '9') || *pszInput == '.')
+            pszInput += 2;
+            if (*pszInput == '.')
             {
                 ++pszInput;
+                while (*pszInput >= '0' && *pszInput <= '9')
+                {
+                    ++pszInput;
+                }
             }
 
             // If ISO 8601 format.

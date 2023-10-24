@@ -68,9 +68,12 @@ Layer Creation Options
 Creation Issues
 ---------------
 
-Currently, NULL geometries are not supported with :lco:`SPATIAL_INDEX=YES`.
+* Currently, NULL geometries are not supported with :lco:`SPATIAL_INDEX=YES`.
 
-`More background and dicussion on this issue at <https://github.com/flatgeobuf/flatgeobuf/discussions/260>`__
+  `More background and dicussion on this issue at <https://github.com/flatgeobuf/flatgeobuf/discussions/260>`__
+
+* The creation of the packet Hilbert R-Tree requires an amount of RAM which
+  is at least the number of features times 83 bytes.
 
 Examples
 --------

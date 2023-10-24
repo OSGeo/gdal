@@ -39,7 +39,7 @@
 
 template <class Accessors> struct GDALGeoLoc
 {
-    static bool LoadGeolocFinish(GDALGeoLocTransformInfo *psTransform);
+    static void LoadGeolocFinish(GDALGeoLocTransformInfo *psTransform);
 
     static bool GenerateBackMap(GDALGeoLocTransformInfo *psTransform);
 

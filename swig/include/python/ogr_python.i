@@ -77,15 +77,20 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 %extend OGRDataSourceShadow {
   %pythoncode {
+
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
       self.thisown = 0
+      self.this = None
+      self._invalidate_layers()
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
       self.thisown = 0
+      self.this = None
+      self._invalidate_layers()
 
     def Reference(self):
       "For backwards compatibility only."
@@ -103,9 +108,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         return self
 
     def __exit__(self, *args):
-        self._invalidate_layers()
-        self.Destroy()
-        self.this = None
+        self.Close()
 
     def __del__(self):
         self._invalidate_layers()
@@ -177,6 +180,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 %feature("pythonappend") CopyLayer %{
     self._add_layer_ref(val)
+%}
+
+%feature("pythonappend") Close %{
+    self.thisown = 0
+    self.this = None
+    self._invalidate_layers()
+    return val
 %}
 
 %feature("shadow") DeleteLayer %{
@@ -373,7 +383,7 @@ def ReleaseResultSet(self, sql_lyr):
         """Method called when using Dataset.ExecuteSQL() as a context manager"""
         if hasattr(self, "_dataset_weak_ref"):
             self._dataset_strong_ref = self._dataset_weak_ref()
-            assert self._dataset_strong_ref
+            assert self._dataset_strong_ref is not None
             del self._dataset_weak_ref
             return self
         raise Exception("__enter__() called in unexpected situation")
@@ -527,6 +537,51 @@ def ReleaseResultSet(self, sql_lyr):
 
         return Stream(stream, use_masked_arrays)
 
+
+    def IsPyArrowSchemaSupported(self, pa_schema, options=[]):
+        """Returns whether the passed pyarrow Schema is supported by the layer, as a tuple (success: bool, errorMsg: str).
+
+           This may be used as a preliminary check before calling WritePyArrowBatch()
+        """
+
+        import pyarrow as pa
+        schema = ArrowSchema()
+        pa_schema._export_to_c(schema._getPtr())
+        return self.IsArrowSchemaSupported(schema, options)
+
+
+    def CreateFieldFromPyArrowSchema(self, pa_schema, options=[]):
+        """Create a field from the passed pyarrow Schema."""
+
+        import pyarrow as pa
+        schema = ArrowSchema()
+        pa_schema._export_to_c(schema._getPtr())
+        return self.CreateFieldFromArrowSchema(schema, options)
+
+
+    def WritePyArrow(self, pa_batch, options=[]):
+        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer."""
+
+        import pyarrow as pa
+
+        # Is it a pyarrow.Table ?
+        if hasattr(pa_batch, "to_batches"):
+            for batch in pa_batch.to_batches():
+                if self.WritePyArrow(batch, options=options) != OGRERR_NONE:
+                    return OGRERR_FAILURE
+            return OGRERR_NONE
+
+        # Is it a pyarrow.RecordBatch ?
+        if hasattr(pa_batch, "columns") and hasattr(pa_batch, "schema"):
+            array = pa.StructArray.from_arrays(pa_batch.columns, names=pa_batch.schema.names)
+            return self.WritePyArrow(array, options=options)
+
+        # Assume it is a pyarrow.StructArray
+        schema = ArrowSchema()
+        array = ArrowArray()
+        pa_batch._export_to_c(array._getPtr(), schema._getPtr())
+        return self.WriteArrowBatch(schema, array, options)
+
   %}
 
 }
@@ -549,7 +604,9 @@ def ReleaseResultSet(self, sql_lyr):
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature(self)
+      self._invalidate_geom_refs()
       self.thisown = 0
+      self.this = None
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
@@ -573,8 +630,8 @@ def ReleaseResultSet(self, sql_lyr):
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
-        if key == 'this':
-            return self.__dict__[key]
+        if key in ('this', 'thisown', '_geom_references'):
+            return self.__getattribute__(key)
 
         idx = self._getfieldindex(key)
         if idx < 0:
@@ -590,8 +647,8 @@ def ReleaseResultSet(self, sql_lyr):
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
-        if key == 'this' or key == 'thisown':
-            self.__dict__[key] = value
+        if key in ('this', 'thisown', '_geom_references'):
+            super().__setattr__(key, value)
         else:
             idx = self._getfieldindex(key)
             if idx != -1:
@@ -677,6 +734,28 @@ def ReleaseResultSet(self, sql_lyr):
             # For Python3 on non-UTF8 strings
             return self.GetFieldAsBinary(fld_index)
 
+    def SetFieldBinary(self, field_index_or_name, value):
+        """
+        SetFieldBinary(Feature self, field_index_or_name: int | str, value: bytes)
+
+        Set field to binary data.
+        This function currently only has an effect on OFTBinary fields.
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters
+        -----------
+        field_index_or_name:
+            the field to set, from 0 to GetFieldCount()-1. Or the field name
+        values:
+            the data to apply.
+        """
+
+        if isinstance(field_index_or_name, str):
+            fld_index = self._getfieldindex(field_index_or_name)
+        else:
+            fld_index = field_index_or_name
+        self._SetFieldBinary(fld_index, value)
+
     def _SetField2(self, fld_index, value):
         if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
@@ -702,6 +781,10 @@ def ReleaseResultSet(self, sql_lyr):
                 return
             else:
                 raise TypeError('Unsupported type of list in _SetField2(). Type of element is %s' % str(type(value[0])))
+
+        if isinstance(value, (bytes, bytearray, memoryview)) and self.GetFieldType(fld_index) == OFTBinary:
+            self._SetFieldBinary(fld_index, value)
+            return
 
         try:
             self.SetField(fld_index, value)
@@ -742,6 +825,13 @@ def ReleaseResultSet(self, sql_lyr):
         """
 
         return self.GetGeometryRef()
+
+    def __del__(self):
+        self._invalidate_geom_refs()
+
+    def __repr__(self):
+        return self.DumpReadableAsString()
+
 
     def ExportToJson(self, as_object=False, options=None):
         """Exports a GeoJSON object which represents the Feature. The
@@ -788,6 +878,47 @@ def ReleaseResultSet(self, sql_lyr):
         return output
 
 
+    def _add_geom_ref(self, geom):
+        if geom is None:
+            return
+
+        if not hasattr(self, '_geom_references'):
+            import weakref
+
+            self._geom_references = weakref.WeakSet()
+
+        self._geom_references.add(geom)
+
+
+    def _invalidate_geom_refs(self):
+        if hasattr(self, '_geom_references'):
+            for geom in self._geom_references:
+                geom.this = None
+
+%}
+
+%feature("shadow") SetGeometryDirectly %{
+    def SetGeometryDirectly(self, geom):
+        ret = $action(self, geom)
+        if ret == OGRERR_NONE:
+            self._add_geom_ref(geom)
+        return ret
+%}
+
+%feature("shadow") SetGeomFieldDirectly %{
+    def SetGeomFieldDirectly(self, field, geom):
+        ret = $action(self, field, geom)
+        if ret == OGRERR_NONE:
+            self._add_geom_ref(geom)
+        return ret
+%}
+
+%feature("pythonappend") GetGeometryRef %{
+    self._add_geom_ref(val)
+%}
+
+%feature("pythonappend") GetGeomFieldRef %{
+    self._add_geom_ref(val)
 %}
 
 %feature("shadow") SetField %{
@@ -795,33 +926,39 @@ def ReleaseResultSet(self, sql_lyr):
     # to the right implementation, so we have to do it at hand
     def SetField(self, *args) -> "OGRErr":
         """
-        SetField(self, int id, char value)
-        SetField(self, char name, char value)
-        SetField(self, int id, int value)
-        SetField(self, char name, int value)
-        SetField(self, int id, double value)
-        SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute,
-            int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour,
-            int minute, int second, int tzflag)
+        SetField(self, fld_index, value: str)
+        SetField(self, fld_name, value: str)
+        SetField(self, fld_index, value: int)
+        SetField(self, fld_name, value: int)
+        SetField(self, fld_index, value: float)
+        SetField(self, fld_name, value: float)
+        SetField(self, fld_index, year: int, month: int, day: int, hour: int, minute: int, second: int|float, tzflag: int)
+        SetField(self, fld_name, year: int, month: int, day: int, hour: int, minute: int, second: int|float, tzflag: int)
+        SetField(self, fld_index, value: bytes)
+        SetField(self, fld_name, value: bytes)
         """
 
         if len(args) == 2 and args[1] is None:
             return _ogr.Feature_SetFieldNull(self, args[0])
 
-        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
+        if len(args) == 2 and isinstance(args[1], int):
             fld_index = args[0]
             if isinstance(fld_index, str):
                 fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
-
 
         if len(args) == 2 and isinstance(args[1], str):
             fld_index = args[0]
             if isinstance(fld_index, str):
                 fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
+
+        if len(args) == 2 and isinstance(args[1], (bytes, bytearray, memoryview)):
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self._getfieldindex(fld_index)
+            if self.GetFieldType(fld_index) == OFTBinary:
+                return self._SetFieldBinary(fld_index, args[1])
 
         return $action(self, *args)
 %}

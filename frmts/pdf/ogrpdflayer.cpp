@@ -59,6 +59,11 @@ void OGRPDFLayer::Fill(GDALPDFArray *poArray)
         if (!(poA != nullptr && poA->GetType() == PDFObjectType_Dictionary))
             continue;
 
+        auto poO = poA->GetDictionary()->Get("O");
+        if (!(poO && poO->GetType() == PDFObjectType_Name &&
+              poO->GetName() == "UserProperties"))
+            continue;
+
         // P is supposed to be required in A, but past GDAL versions could
         // generate features without attributes without a P array
         GDALPDFObject *poP = poA->GetDictionary()->Get("P");

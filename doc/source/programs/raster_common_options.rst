@@ -15,9 +15,7 @@ All GDAL command line programs support the following common options.
     Report detailed information about GDAL in use.
 
 .. _raster_common_options_formats:
-.. option:: --formats
-
-    List all raster formats supported by this GDAL build (read-only and read-write) and exit. The format support is indicated as follows: 'ro' is read-only driver; 'rw' is read or write (i.e. supports CreateCopy); 'rw+' is read, write and update (i.e. supports Create). A 'v' is appended for formats supporting virtual IO (/vsimem, /vsigzip, /vsizip, etc). A 's' is appended for formats supporting subdatasets. Note: The valid formats for the output of gdalwarp are formats that support the Create() method (marked as rw+), not just the CreateCopy() method.
+.. include:: options/formats_raster.rst
 
 .. option:: --format <format>
 

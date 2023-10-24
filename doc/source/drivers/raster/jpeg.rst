@@ -100,7 +100,7 @@ The following configuration options are available :
       :choices: YES, NO
       :default: YES
 
-      Whether to read the bitmask identifying pixels with valid date.
+      Whether to read the bitmask identifying pixels with valid data.
 
 -  .. config:: JPEG_MASK_BIT_ORDER
       :choices: AUTO, LSB, MSB

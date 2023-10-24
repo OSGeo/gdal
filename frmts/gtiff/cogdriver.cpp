@@ -687,6 +687,7 @@ struct GDALCOGCreator final
 {
     std::unique_ptr<GDALDataset> m_poReprojectedDS{};
     std::unique_ptr<GDALDataset> m_poRGBMaskDS{};
+    std::unique_ptr<GDALDataset> m_poVRTWithOrWithoutStats{};
     CPLString m_osTmpOverviewFilename{};
     CPLString m_osTmpMskOverviewFilename{};
 
@@ -703,12 +704,13 @@ struct GDALCOGCreator final
 
 GDALCOGCreator::~GDALCOGCreator()
 {
+    // Destroy m_poRGBMaskDS before m_poReprojectedDS since the former
+    // may reference the later
+    m_poRGBMaskDS.reset();
+
     if (m_poReprojectedDS)
     {
         CPLString osProjectedDSName(m_poReprojectedDS->GetDescription());
-        // Destroy m_poRGBMaskDS before m_poReprojectedDS since the former
-        // references the later
-        m_poRGBMaskDS.reset();
         m_poReprojectedDS.reset();
         VSIUnlink(osProjectedDSName);
     }
@@ -744,6 +746,30 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
 
     CPLConfigOptionSetter oSetterReportDirtyBlockFlushing(
         "GDAL_REPORT_DIRTY_BLOCK_FLUSHING", "NO", true);
+
+    const char *pszStatistics =
+        CSLFetchNameValueDef(papszOptions, "STATISTICS", "AUTO");
+    auto poSrcFirstBand = poSrcDS->GetRasterBand(1);
+    const bool bSrcHasStatistics =
+        poSrcFirstBand->GetMetadataItem("STATISTICS_MINIMUM") &&
+        poSrcFirstBand->GetMetadataItem("STATISTICS_MAXIMUM") &&
+        poSrcFirstBand->GetMetadataItem("STATISTICS_MEAN") &&
+        poSrcFirstBand->GetMetadataItem("STATISTICS_STDDEV");
+    bool bNeedStats = false;
+    bool bRemoveStats = false;
+    bool bWrkHasStatistics = bSrcHasStatistics;
+    if (EQUAL(pszStatistics, "AUTO"))
+    {
+        // nothing
+    }
+    else if (CPLTestBool(pszStatistics))
+    {
+        bNeedStats = true;
+    }
+    else
+    {
+        bRemoveStats = true;
+    }
 
     double dfCurPixels = 0;
     double dfTotalPixelsToProcess = 0;
@@ -823,6 +849,12 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
             if (!m_poReprojectedDS)
                 return nullptr;
             poCurDS = m_poReprojectedDS.get();
+
+            if (bSrcHasStatistics && !bNeedStats && !bRemoveStats)
+            {
+                bNeedStats = true;
+            }
+            bWrkHasStatistics = false;
         }
     }
 
@@ -854,11 +886,62 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
         }
         m_poRGBMaskDS.reset(GDALDataset::FromHandle(hRGBMaskDS));
         poCurDS = m_poRGBMaskDS.get();
+
+        if (bSrcHasStatistics && !bNeedStats && !bRemoveStats)
+        {
+            bNeedStats = true;
+        }
+        else if (bRemoveStats && bWrkHasStatistics)
+        {
+            poCurDS->ClearStatistics();
+            bRemoveStats = false;
+        }
     }
 
     const int nBands = poCurDS->GetRasterCount();
     const int nXSize = poCurDS->GetRasterXSize();
     const int nYSize = poCurDS->GetRasterYSize();
+
+    const auto CreateVRTWithOrWithoutStats = [this, &poCurDS]()
+    {
+        const char *const apszOptions[] = {"-of", "VRT", nullptr};
+        GDALTranslateOptions *psOptions =
+            GDALTranslateOptionsNew(const_cast<char **>(apszOptions), nullptr);
+        GDALDatasetH hVRTDS = GDALTranslate("", GDALDataset::ToHandle(poCurDS),
+                                            psOptions, nullptr);
+        GDALTranslateOptionsFree(psOptions);
+        if (!hVRTDS)
+            return false;
+        m_poVRTWithOrWithoutStats.reset(GDALDataset::FromHandle(hVRTDS));
+        poCurDS = m_poVRTWithOrWithoutStats.get();
+        return true;
+    };
+
+    if (bNeedStats && !bWrkHasStatistics)
+    {
+        if (poSrcDS == poCurDS && !CreateVRTWithOrWithoutStats())
+        {
+            return nullptr;
+        }
+
+        // Avoid source files to be modified
+        CPLConfigOptionSetter enablePamDirtyDisabler(
+            "GDAL_PAM_ENABLE_MARK_DIRTY", "NO", true);
+
+        for (int i = 1; i <= nBands; ++i)
+        {
+            poCurDS->GetRasterBand(i)->ComputeStatistics(
+                /*bApproxOK=*/FALSE, nullptr, nullptr, nullptr, nullptr,
+                nullptr, nullptr);
+        }
+    }
+    else if (bRemoveStats && bWrkHasStatistics)
+    {
+        if (!CreateVRTWithOrWithoutStats())
+            return nullptr;
+
+        m_poVRTWithOrWithoutStats->ClearStatistics();
+    }
 
     CPLString osBlockSize(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", ""));
     if (osBlockSize.empty())
@@ -1115,6 +1198,9 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     {
         aosOptions.SetNameValue("MAX_Z_ERROR",
                                 CSLFetchNameValue(papszOptions, "MAX_Z_ERROR"));
+        aosOptions.SetNameValue(
+            "MAX_Z_ERROR_OVERVIEW",
+            CSLFetchNameValue(papszOptions, "MAX_Z_ERROR_OVERVIEW"));
     }
 
     if (STARTS_WITH_CI(osCompress, "JXL"))
@@ -1376,7 +1462,10 @@ void GDALCOGDriver::InitializeCreationOptionList()
         osOptions +=
             ""
             "   <Option name='MAX_Z_ERROR' type='float' description='Maximum "
-            "error for LERC compression' default='0'/>";
+            "error for LERC compression' default='0'/>"
+            "   <Option name='MAX_Z_ERROR_OVERVIEW' type='float' "
+            "description='Maximum error for LERC compression in overviews' "
+            "default='0'/>";
     }
 #ifdef HAVE_JXL
     osOptions +=
@@ -1482,6 +1571,12 @@ void GDALCOGDriver::InitializeCreationOptionList()
 #endif
         "   <Option name='SPARSE_OK' type='boolean' description='Should empty "
         "blocks be omitted on disk?' default='FALSE'/>"
+        "   <Option name='STATISTICS' type='string-select' default='AUTO' "
+        "description='Which to add statistics to the output file'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>YES</Value>"
+        "       <Value>NO</Value>"
+        "   </Option>"
         "</CreationOptionList>";
 
     SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());

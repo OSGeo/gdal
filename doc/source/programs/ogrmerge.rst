@@ -15,12 +15,13 @@ Synopsis
 
 .. code-block::
 
-    ogrmerge.py -o out_dsname src_dsname [src_dsname]*
-                [-f format] [-single] [-nln layer_name_template]
+    ogrmerge.py [--help] [--help-general]
+                -o <out_dsname> <src_dsname> [<src_dsname>]...
+                [-f format] [-single] [-nln <layer_name_template>]
                 [-update | -overwrite_ds] [-append | -overwrite_layer]
-                [-src_geom_type geom_type_name[,geom_type_name]*]
-                [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
-                [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]
+                [-src_geom_type <geom_type_name>[,<geom_type_name>]...]
+                [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+                [-s_srs <srs_def>] [-t_srs <srs_def> | -a_srs <srs_def>]
                 [-progress] [-skipfailures] [--help-general]
 
 Options specific to the :ref:`-single <ogrmerge_single_option>` option:
@@ -28,8 +29,8 @@ Options specific to the :ref:`-single <ogrmerge_single_option>` option:
 .. code-block::
 
                 [-field_strategy FirstLayer|Union|Intersection]
-                [-src_layer_field_name name]
-                [-src_layer_field_content layer_name_template]
+                [-src_layer_field_name <name>]
+                [-src_layer_field_content <layer_name_template>]
 
 Description
 -----------
@@ -40,7 +41,7 @@ Description
 each of them having one or several vector layers, and copy them in
 a target dataset.
 
-There are essential two modes:
+There are essentially two modes:
 
 *  the default one, where each input vector layer, is copied as a
    separate layer into the target dataset
@@ -56,6 +57,8 @@ or :py:func:`gdal.VectorTranslate`. So, for advanced uses, output to VRT,
 potential manual editing of it and :program:`ogr2ogr` can be done.
 
 .. program:: ogrmerge.py
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -o <out_dsname>
 
@@ -86,7 +89,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
     -  ``{AUTO_NAME}``: equivalent to ``{DS_BASENAME}_{LAYER_NAME}`` if both
        values are different, or ``{LAYER_NAME}`` when they are identical
-       (case of shapefile). 'different
+       (case of shapefile).
     -  ``{DS_NAME}``: name of the source dataset
     -  ``{DS_BASENAME}``: base name of the source dataset
     -  ``{DS_INDEX}``: index of the source dataset
@@ -113,7 +116,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
     already exist, replace their content with the one of the input
     layer.
 
-.. option:: -src_geom_type <geom_type_name[,geom_type_name]\*]>
+.. option:: -src_geom_type <geom_type_name>[,<geom_type_name>]...
 
     Only take into account input layers whose geometry type match the
     type(s) specified. Valid values for geom_type_name are GEOMETRY,
@@ -121,11 +124,11 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
     GEOMETRYCOLLECTION, CIRCULARSTRING, CURVEPOLYGON, MULTICURVE,
     MULTISURFACE, CURVE, SURFACE, TRIANGLE, POLYHEDRALSURFACE and TIN.
 
-.. option:: -dsco <NAME=VALUE>
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco <NAME=VALUE>
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 

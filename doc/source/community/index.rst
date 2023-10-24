@@ -66,10 +66,7 @@ communication channels in most situations.
 Social media
 ------------
 
-You can follow GDAL official news on:
-
-- Twitter: https://twitter.com/GdalOrg
-- Mastodon: https://mastodon.social/@gdal / @gdal@mastodon.social
+You can follow GDAL official news on Mastodon: https://mastodon.social/@gdal / @gdal@mastodon.social
 
 
 Conference
@@ -123,11 +120,12 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Kurt Schwehr         (@schwehr)
 - Norman Barker        (@normanb)
 - Sean Gillies         (@sgillies)
-- Mateusz Łoskot       (@mloskot)
+- Javier Jimenez Shaw  (@jjimenezshaw)
 
 Past members:
 
 - Andrey Kiselev       (@strezen) (retired in 2019)
+- Mateusz Łoskot       (@mloskot) (retired in 2023)
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.

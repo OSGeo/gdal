@@ -15,13 +15,13 @@ Synopsis
 
 .. code-block::
 
-    gnmanalyse [--help][-q][-quiet][--long-usage]
-            [dijkstra <start_gfid> <end_gfid> [[-alo NAME=VALUE] ...]]]
-            [kpaths <start_gfid> <end_gfid> <k> [[-alo NAME=VALUE] ...]]]
-            [resource [[-alo NAME=VALUE] ...]]]
-            [-ds <ds_name>][-f <ds_format>][-l <layer_name>]
-            [[-dsco NAME=VALUE] ...][-lco NAME=VALUE]
-            <gnm_name>
+    gnmanalyse [--help] [--help-general] [-q] [-quiet] [--long-usage]
+               [dijkstra <start_gfid> <end_gfid [-alo <NAME>=<VALUE>]...]
+               [kpaths <start_gfid> <end_gfid> <k> [-alo <NAME>=<VALUE>]...]
+               [resource [-alo <NAME>=<VALUE>]...]
+               [-ds <ds_name>][-f <ds_format>][-l <layer_name>]
+               [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+               <gnm_name>
 
 Description
 -----------
@@ -29,6 +29,8 @@ Description
 The :program:`gnmanalyse` program provides analysing capabilities of geographical networks in GDAL. The results of calculations are return in an OGRLayer format or as a console text output if such layer is undefined. All calculations are made considering the blocking state of features.
 
 .. program:: gnmanalyse
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: dijkstra <start_gfid> <end_gfid>
 
@@ -58,14 +60,14 @@ The :program:`gnmanalyse` program provides analysing capabilities of geographica
 
     The network to work with (path and name).
 
-.. option:: -dsco NAME=VALUE
+.. option:: -dsco <NAME>=<VALUE>
 
     Dataset creation option (format specific)
 
-.. option:: -lco NAME=VALUE
+.. option:: -lco <NAME>=<VALUE>
 
     Layer creation option (format specific)
 
-.. option:: -alo NAME=VALUE
+.. option:: -alo <NAME>=<VALUE>
 
     Algorithm option (format specific)

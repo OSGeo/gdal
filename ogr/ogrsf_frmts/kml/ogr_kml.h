@@ -48,8 +48,8 @@ class OGRKMLDataSource;
 class OGRKMLLayer final : public OGRLayer
 {
   public:
-    OGRKMLLayer(const char *pszName_, OGRSpatialReference *poSRS, bool bWriter,
-                OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
+    OGRKMLLayer(const char *pszName_, const OGRSpatialReference *poSRS,
+                bool bWriter, OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
     ~OGRKMLLayer();
 
     //
@@ -121,7 +121,7 @@ class OGRKMLDataSource final : public OGRDataSource
     }
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSRS = nullptr,
+                           const OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;

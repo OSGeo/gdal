@@ -85,13 +85,14 @@ class OGRGeoJSONWriteOptions
     bool bGenerateID = false;
     OGRFieldType eForcedIDFieldType = OFTString;
     bool bAllowNonFiniteValues = false;
+    bool bAutodetectJsonStrings = true;
 
     void SetRFC7946Settings();
     void SetIDOptions(CSLConstList papszOptions);
 };
 /*! @endcond */
 
-OGREnvelope3D OGRGeoJSONGetBBox(OGRGeometry *poGeometry,
+OGREnvelope3D OGRGeoJSONGetBBox(const OGRGeometry *poGeometry,
                                 const OGRGeoJSONWriteOptions &oOptions);
 json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
                                     const OGRGeoJSONWriteOptions &oOptions);

@@ -1281,44 +1281,31 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
 #endif
 
     std::vector<GByte *> apbyBandData;
-    bool bAllocOK = true;
-
-    if (bPixelInterleaved)
+    if (nBandsIn > 0)
     {
-        apbyBandData.push_back(
-            static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, nGlobalSize)));
-
-        if (apbyBandData[0] == nullptr)
-            bAllocOK = FALSE;
-        else
+        GByte *pabyData =
+            static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, nGlobalSize));
+        if (!pabyData)
         {
-            for (int iBand = 1; iBand < nBandsIn; iBand++)
-                apbyBandData.push_back(apbyBandData[0] + iBand * nWordSize);
+            return nullptr;
         }
-    }
-    else
-    {
-        for (int iBand = 0; iBand < nBandsIn; iBand++)
+
+        if (bPixelInterleaved)
         {
-            apbyBandData.push_back(static_cast<GByte *>(VSI_CALLOC_VERBOSE(
-                1, static_cast<size_t>(nWordSize) * nXSize * nYSize)));
-            if (apbyBandData[iBand] == nullptr)
+            for (int iBand = 0; iBand < nBandsIn; iBand++)
             {
-                bAllocOK = FALSE;
-                break;
+                apbyBandData.push_back(pabyData + iBand * nWordSize);
             }
         }
-    }
-
-    if (!bAllocOK)
-    {
-        for (int iBand = 0; iBand < static_cast<int>(apbyBandData.size());
-             iBand++)
+        else
         {
-            if (apbyBandData[iBand])
-                VSIFree(apbyBandData[iBand]);
+            for (int iBand = 0; iBand < nBandsIn; iBand++)
+            {
+                apbyBandData.push_back(
+                    pabyData +
+                    (static_cast<size_t>(nWordSize) * nXSize * nYSize) * iBand);
+            }
         }
-        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1350,7 +1337,7 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
                                   nWordSize * nBandsIn, 0, iBand == 0);
         else
             poNewBand = new MEMRasterBand(poDS, iBand + 1, apbyBandData[iBand],
-                                          eType, 0, 0, TRUE);
+                                          eType, 0, 0, iBand == 0);
 
         poDS->SetBand(iBand + 1, poNewBand);
     }

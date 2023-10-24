@@ -117,10 +117,11 @@ class OGRDataSourceWithTransaction final : public OGRDataSource
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr) override;
+    virtual OGRLayer *
+    ICreateLayer(const char *pszName,
+                 const OGRSpatialReference *poSpatialRef = nullptr,
+                 OGRwkbGeometryType eGType = wkbUnknown,
+                 char **papszOptions = nullptr) override;
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                 char **papszOptions = nullptr) override;
 
@@ -324,7 +325,7 @@ int OGRDataSourceWithTransaction::TestCapability(const char *pszCap)
 }
 
 OGRLayer *OGRDataSourceWithTransaction::ICreateLayer(
-    const char *pszName, OGRSpatialReference *poSpatialRef,
+    const char *pszName, const OGRSpatialReference *poSpatialRef,
     OGRwkbGeometryType eGType, char **papszOptions)
 {
     if (!m_poBaseDataSource)

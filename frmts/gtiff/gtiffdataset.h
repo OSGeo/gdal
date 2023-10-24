@@ -173,6 +173,7 @@ class GTiffDataset final : public GDALPamDataset
 
     double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
     double m_dfMaxZError = 0.0;
+    double m_dfMaxZErrorOverview = 0.0;
     uint32_t m_anLercAddCompressionAndVersion[2]{0, 0};
 #if HAVE_JXL
     bool m_bJXLLossless = true;

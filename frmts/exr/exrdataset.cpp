@@ -224,8 +224,6 @@ class GDALEXRPreviewRasterBand final : public GDALPamRasterBand
 {
     friend class GDALEXRDataset;
 
-    std::string m_osChannelName;
-
   protected:
     CPLErr IReadBlock(int, int, void *) override;
     GDALColorInterp GetColorInterpretation() override
@@ -285,8 +283,6 @@ CPLErr GDALEXRPreviewRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 class GDALEXRRGBARasterBand final : public GDALPamRasterBand
 {
     friend class GDALEXRDataset;
-
-    std::string m_osChannelName;
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
