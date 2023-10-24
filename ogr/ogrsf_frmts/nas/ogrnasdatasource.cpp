@@ -41,8 +41,7 @@ static const char *const apszURNNames[] = {
 /************************************************************************/
 
 OGRNASDataSource::OGRNASDataSource()
-    : papoLayers(nullptr), nLayers(0),
-      pszName(nullptr), poReader(nullptr)
+    : papoLayers(nullptr), nLayers(0), pszName(nullptr), poReader(nullptr)
 {
 }
 

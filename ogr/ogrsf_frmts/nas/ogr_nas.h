@@ -76,7 +76,6 @@ class OGRNASLayer final : public OGRLayer
     int TestCapability(const char *) override;
 };
 
-
 /************************************************************************/
 /*                           OGRNASDataSource                           */
 /************************************************************************/
