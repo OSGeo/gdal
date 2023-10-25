@@ -1324,7 +1324,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
-        poGRD->poGeoRaster->bGenStatsHistogram = pszFetched;
+        poGRD->poGeoRaster->bGenStatsHistogram = EQUAL(pszFetched, "TRUE");
     }
 
     pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_LAYERNUMBERS");
