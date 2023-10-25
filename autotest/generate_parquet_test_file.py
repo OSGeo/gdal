@@ -56,6 +56,7 @@ def generate_test_parquet():
     import pathlib
     import struct
 
+    import numpy as np
     import pandas as pd
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -280,15 +281,50 @@ def generate_test_parquet():
         ],
         type=pa.list_(pa.float64()),
     )
+    list_decimal128 = pa.array(
+        [
+            [decimal.Decimal("1234.567")],
+            [decimal.Decimal("-1234.567")],
+            None,
+            [None],
+            [decimal.Decimal("-1234.567")],
+        ],
+        type=pa.list_(pa.decimal128(7, 3)),
+    )
+    list_decimal256 = pa.array(
+        [
+            [decimal.Decimal("1234.567")],
+            [decimal.Decimal("-1234.567")],
+            None,
+            [None],
+            [decimal.Decimal("-1234.567")],
+        ],
+        type=pa.list_(pa.decimal256(7, 3)),
+    )
     list_string = pa.array(
         [
             None
             if i == 2
+            else [None]
+            if i == 4
             else [
                 "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
             ]
             for i in range(5)
         ]
+    )
+    list_large_string = pa.array(
+        [
+            None
+            if i == 2
+            else [None]
+            if i == 4
+            else [
+                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
+            ]
+            for i in range(5)
+        ],
+        type=pa.list_(pa.large_string()),
     )
     fixed_size_list_boolean = pa.array(
         [[True, False], [False, True], [True, False], [False, True], [True, False]],
@@ -331,6 +367,8 @@ def generate_test_parquet():
     struct_field = pa.array(
         [{"a": 1, "b": 2.5, "c": {"d": "e", "f": "g"}, "h": [5, 6], "i": 3}] * 5
     )
+
+    list_struct = pa.array([[{"a": 1, "b": 2.5}, {"a": 3, "c": 4.5}]] * 5)
 
     # struct_val = { "a": 5 }
     # for i in range(123):
@@ -387,9 +425,51 @@ def generate_test_parquet():
         [[("x", 1.5), ("y", None)], [("z", 3)], None, [], []],
         type=pa.map_(pa.string(), pa.float64()),
     )
+    map_decimal128 = pa.array(
+        [
+            [("x", decimal.Decimal("1234.567")), ("y", None)],
+            [("z", decimal.Decimal("-1234.567"))],
+            None,
+            [],
+            [],
+        ],
+        type=pa.map_(pa.string(), pa.decimal128(7, 3)),
+    )
+    map_decimal256 = pa.array(
+        [
+            [("x", decimal.Decimal("1234.567")), ("y", None)],
+            [("z", decimal.Decimal("-1234.567"))],
+            None,
+            [],
+            [],
+        ],
+        type=pa.map_(pa.string(), pa.decimal256(7, 3)),
+    )
     map_string = pa.array(
         [[("x", "x_val"), ("y", None)], [("z", "z_val")], None, [], []],
         type=pa.map_(pa.string(), pa.string()),
+    )
+    map_large_string = pa.array(
+        [[("x", "x_val"), ("y", None)], [("z", "z_val")], None, [], []],
+        type=pa.map_(pa.string(), pa.large_string()),
+    )
+    map_list_string = pa.array(
+        [[("x", ["x_val"]), ("y", None)], [("z", [None, "z_val"])], None, [], []],
+        type=pa.map_(pa.string(), pa.list_(pa.string())),
+    )
+    map_large_list_string = pa.array(
+        [[("x", ["x_val"]), ("y", None)], [("z", [None, "z_val"])], None, [], []],
+        type=pa.map_(pa.string(), pa.large_list(pa.string())),
+    )
+    map_fixed_size_list_string = pa.array(
+        [
+            [("x", ["x_val", None]), ("y", [None, None])],
+            [("z", [None, "z_val"])],
+            None,
+            [],
+            [],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.string(), 2)),
     )
 
     indices = pa.array([0, 1, 2, None, 2], type=pa.int32())
@@ -453,7 +533,10 @@ def generate_test_parquet():
         "list_int64",
         "list_float32",
         "list_float64",
+        "list_decimal128",
+        "list_decimal256",
         "list_string",
+        "list_large_string",
         "fixed_size_list_boolean",
         "fixed_size_list_uint8",
         "fixed_size_list_int8",
@@ -467,6 +550,7 @@ def generate_test_parquet():
         "fixed_size_list_float64",
         "fixed_size_list_string",
         "struct_field",
+        "list_struct",
         "map_boolean",
         "map_uint8",
         "map_int8",
@@ -478,8 +562,13 @@ def generate_test_parquet():
         "map_int64",
         "map_float32",
         "map_float64",
+        "map_decimal128",
+        "map_decimal256",
         "map_string",
-        # "map_list",
+        "map_large_string",
+        "map_list_string",
+        "map_large_list_string",
+        "map_fixed_size_list_string",
         "dict",
         "geometry",
     ]
@@ -522,6 +611,61 @@ def generate_test_parquet():
     )
 
     import pyarrow.feather as feather
+
+    float16 = pa.array(
+        [None if i == 2 else np.float16(1.5 + i) for i in range(5)], type=pa.float16()
+    )
+    list_float16 = pa.array(
+        [
+            None
+            if i == 2
+            else [
+                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                for j in range(i)
+            ]
+            for i in range(5)
+        ],
+        type=pa.list_(pa.float16()),
+    )
+    map_float16 = pa.array(
+        [[("x", np.float16(1.5)), ("y", None)], [("z", np.float16(3))], None, [], []],
+        type=pa.map_(pa.string(), pa.float16()),
+    )
+    list_list_float16 = pa.array(
+        [
+            None
+            if i == 2
+            else [
+                None if j == 0 else [np.float16(0.5 + j + i * (i - 1) // 2)]
+                for j in range(i)
+            ]
+            for i in range(5)
+        ],
+        type=pa.list_(pa.list_(pa.float16())),
+    )
+    names += ["float16", "list_float16", "list_list_float16", "map_float16"]
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    my_schema = table.schema.with_metadata(
+        {
+            "geo": json.dumps(
+                {
+                    "version": "0.1.0",
+                    "primary_column": "geometry",
+                    "columns": {
+                        "geometry": {
+                            "crs": wkt_epsg_4326,
+                            "bbox": [0, 2, 4, 2],
+                            "encoding": "WKB",
+                        }
+                    },
+                }
+            )
+        }
+    )
+
+    table = table.cast(my_schema)
 
     feather.write_feather(table, HERE / "ogr/data/arrow/test.feather")
 
@@ -620,8 +764,10 @@ def generate_parquet_wkt_with_dict():
 
 
 def generate_nested_types():
+    import decimal
     import pathlib
 
+    import numpy as np
     import pyarrow as pa
     import pyarrow.parquet as pq
 
@@ -818,9 +964,120 @@ def generate_nested_types():
         type=pa.map_(pa.string(), pa.map_(pa.string(), pa.string())),
     )
 
+    list_list_bool = pa.array(
+        [[[True], None, [False, None, True]], None, [[False]], [], []],
+        type=pa.list_(pa.list_(pa.bool_())),
+    )
+
+    list_list_uint8 = pa.array(
+        [[[1], None, [2, None, 3]], None, [[4]], [], []],
+        type=pa.list_(pa.list_(pa.uint8())),
+    )
+
+    list_list_int8 = pa.array(
+        [[[1], None, [-2, None, 3]], None, [[-4]], [], []],
+        type=pa.list_(pa.list_(pa.int8())),
+    )
+
+    list_list_uint16 = pa.array(
+        [[[1], None, [2, None, 3]], None, [[4]], [], []],
+        type=pa.list_(pa.list_(pa.uint16())),
+    )
+
+    list_list_int16 = pa.array(
+        [[[1], None, [-2, None, 3]], None, [[-4]], [], []],
+        type=pa.list_(pa.list_(pa.int16())),
+    )
+
+    list_list_uint32 = pa.array(
+        [[[1], None, [2, None, 3]], None, [[4]], [], []],
+        type=pa.list_(pa.list_(pa.uint32())),
+    )
+
+    list_list_int32 = pa.array(
+        [[[1], None, [-2, None, 3]], None, [[-4]], [], []],
+        type=pa.list_(pa.list_(pa.int32())),
+    )
+
+    list_list_uint64 = pa.array(
+        [[[1], None, [2, None, 3]], None, [[4]], [], []],
+        type=pa.list_(pa.list_(pa.uint64())),
+    )
+
+    list_list_int64 = pa.array(
+        [[[1], None, [-2, None, 3]], None, [[-4]], [], []],
+        type=pa.list_(pa.list_(pa.int64())),
+    )
+
+    list_list_float16 = pa.array(
+        [
+            [[np.float16(1.5)], None, [np.float16(2.5), None, np.float16(3.5)]],
+            None,
+            [[np.float16(4.5)]],
+            [],
+            [],
+        ],
+        type=pa.list_(pa.list_(pa.float16())),
+    )
+
+    list_list_float32 = pa.array(
+        [[[1.5], None, [-2.5, None, 3.5]], None, [[-4.5]], [], []],
+        type=pa.list_(pa.list_(pa.float32())),
+    )
+
+    list_list_float64 = pa.array(
+        [[[1.5], None, [-2.5, None, 3.5]], None, [[-4.5]], [], []],
+        type=pa.list_(pa.list_(pa.float64())),
+    )
+
+    list_list_decimal128 = pa.array(
+        [
+            [
+                [decimal.Decimal("1234.567")],
+                None,
+                [decimal.Decimal("-1234.567"), None, decimal.Decimal("1234.567")],
+            ],
+            None,
+            [[decimal.Decimal("-1234.567")]],
+            [],
+            [],
+        ],
+        type=pa.list_(pa.list_(pa.decimal128(7, 3))),
+    )
+
+    list_list_decimal256 = pa.array(
+        [
+            [
+                [decimal.Decimal("1234.567")],
+                None,
+                [decimal.Decimal("-1234.567"), None, decimal.Decimal("1234.567")],
+            ],
+            None,
+            [[decimal.Decimal("-1234.567")]],
+            [],
+            [],
+        ],
+        type=pa.list_(pa.list_(pa.decimal256(7, 3))),
+    )
+
     list_list_string = pa.array(
         [[["a"], None, ["b", None, "cd"]], None, [["efg"]], [], []],
         type=pa.list_(pa.list_(pa.string())),
+    )
+
+    list_list_large_string = pa.array(
+        [[["a"], None, ["b", None, "cd"]], None, [["efg"]], [], []],
+        type=pa.list_(pa.list_(pa.large_string())),
+    )
+
+    list_large_list_string = pa.array(
+        [[["a"], None, ["b", None, "cd"]], None, [["efg"]], [], []],
+        type=pa.list_(pa.large_list(pa.string())),
+    )
+
+    list_fixed_size_list_string = pa.array(
+        [[["a", "b"]], None, [["e", "f"]], [["g", "h"]], [["i", "j"]]],
+        type=pa.list_(pa.list_(pa.string(), 2)),
     )
 
     list_map_string = pa.array(
@@ -852,7 +1109,24 @@ def generate_nested_types():
         "map_map_float32",
         "map_map_float64",
         "map_map_string",
+        "list_list_bool",
+        "list_list_uint8",
+        "list_list_int8",
+        "list_list_uint16",
+        "list_list_int16",
+        "list_list_uint32",
+        "list_list_int32",
+        "list_list_uint64",
+        "list_list_int64",
+        # "list_list_float16",
+        "list_list_float32",
+        "list_list_float64",
+        "list_list_decimal128",
+        "list_list_decimal256",
         "list_list_string",
+        "list_list_large_string",
+        "list_large_list_string",
+        "list_fixed_size_list_string",
         "list_map_string",
     ]
 
