@@ -275,6 +275,9 @@ Creation Options
       value won't be considered. When set to FALSE, NODATA
       pixels will be considered as regular pixels.
 
+      A NODATA value is used for cells whose values are either not known
+      or meaningless
+
 -  .. co:: QUALITY
       :choices: 0-100
       :default: 75
