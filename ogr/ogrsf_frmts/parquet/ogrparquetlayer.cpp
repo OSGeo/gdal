@@ -344,7 +344,8 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
     {
         std::shared_ptr<arrow::DataType> fieldType = field->type();
         auto fieldTypeId = fieldType->id();
-        if (fieldTypeId == arrow::Type::BINARY)
+        if (fieldTypeId == arrow::Type::BINARY ||
+            fieldTypeId == arrow::Type::LARGE_BINARY)
         {
             CPLDebug("PARQUET",
                      "Field %s detected as likely WKB geometry field",
@@ -352,7 +353,8 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
             bRegularField = false;
             m_aeGeomEncoding.push_back(OGRArrowGeomEncoding::WKB);
         }
-        else if (fieldTypeId == arrow::Type::STRING &&
+        else if ((fieldTypeId == arrow::Type::STRING ||
+                  fieldTypeId == arrow::Type::LARGE_STRING) &&
                  (field->name().find("wkt") != std::string::npos ||
                   field->name().find("WKT") != std::string::npos))
         {

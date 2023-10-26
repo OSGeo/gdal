@@ -35,6 +35,7 @@ import math
 import gdaltest
 import ogrtest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
@@ -493,7 +494,6 @@ def test_ogr_parquet_1(use_vsi):
 
 
 def test_ogr_parquet_test_ogrsf_test():
-    import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -511,7 +511,6 @@ def test_ogr_parquet_test_ogrsf_test():
 
 
 def test_ogr_parquet_test_ogrsf_example():
-    import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -529,7 +528,6 @@ def test_ogr_parquet_test_ogrsf_example():
 
 
 def test_ogr_parquet_test_ogrsf_all_geoms():
-    import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
@@ -3085,3 +3083,29 @@ def test_ogr_parquet_write_arrow_rewind_polygon(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,1 1,0 1,0 0))"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/parquet/poly_wkb_large_binary.parquet",
+        "data/parquet/poly_wkt_large_string.parquet",
+    ],
+)
+def test_ogr_parquet_read_large_binary_or_string_for_geometry(filename):
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        ret = gdaltest.runexternal(
+            test_cli_utilities.get_test_ogrsf_path() + " -ro " + filename
+        )
+
+        assert "INFO" in ret
+        assert "ERROR" not in ret
