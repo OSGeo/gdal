@@ -636,9 +636,6 @@ bool VRTSourcedRasterBand::CanUseSourcesMinMaxImplementations()
 
 double VRTSourcedRasterBand::GetMinimum(int *pbSuccess)
 {
-    if (!CanUseSourcesMinMaxImplementations())
-        return GDALRasterBand::GetMinimum(pbSuccess);
-
     const char *const pszValue = GetMetadataItem("STATISTICS_MINIMUM");
     if (pszValue != nullptr)
     {
@@ -647,6 +644,9 @@ double VRTSourcedRasterBand::GetMinimum(int *pbSuccess)
 
         return CPLAtofM(pszValue);
     }
+
+    if (!CanUseSourcesMinMaxImplementations())
+        return GDALRasterBand::GetMinimum(pbSuccess);
 
     const std::string osFctId("VRTSourcedRasterBand::GetMinimum");
     GDALAntiRecursionGuard oGuard(osFctId);
@@ -714,9 +714,6 @@ double VRTSourcedRasterBand::GetMinimum(int *pbSuccess)
 
 double VRTSourcedRasterBand::GetMaximum(int *pbSuccess)
 {
-    if (!CanUseSourcesMinMaxImplementations())
-        return GDALRasterBand::GetMaximum(pbSuccess);
-
     const char *const pszValue = GetMetadataItem("STATISTICS_MAXIMUM");
     if (pszValue != nullptr)
     {
@@ -725,6 +722,9 @@ double VRTSourcedRasterBand::GetMaximum(int *pbSuccess)
 
         return CPLAtofM(pszValue);
     }
+
+    if (!CanUseSourcesMinMaxImplementations())
+        return GDALRasterBand::GetMaximum(pbSuccess);
 
     const std::string osFctId("VRTSourcedRasterBand::GetMaximum");
     GDALAntiRecursionGuard oGuard(osFctId);
