@@ -121,17 +121,6 @@ def _check_test_parquet(
     assert srs is not None
     assert srs.GetAuthorityCode(None) == "4326"
     assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
-    assert lyr_defn.GetFieldCount() == 73
-    got_field_defns = [
-        (
-            lyr_defn.GetFieldDefn(i).GetName(),
-            ogr.GetFieldTypeName(lyr_defn.GetFieldDefn(i).GetType()),
-            ogr.GetFieldSubTypeName(lyr_defn.GetFieldDefn(i).GetSubType()),
-            lyr_defn.GetFieldDefn(i).GetWidth(),
-            lyr_defn.GetFieldDefn(i).GetPrecision(),
-        )
-        for i in range(lyr_defn.GetFieldCount())
-    ]
     # import pprint
     # pprint.pprint(got_field_defns)
     expected_field_defns = [
@@ -176,7 +165,10 @@ def _check_test_parquet(
         ("list_int64", "Integer64List", "None", 0, 0),
         ("list_float32", "RealList", "Float32", 0, 0),
         ("list_float64", "RealList", "None", 0, 0),
+        ("list_decimal128", "RealList", "None", 0, 0),
+        ("list_decimal256", "RealList", "None", 0, 0),
         ("list_string", "StringList", "None", 0, 0),
+        ("list_large_string", "StringList", "None", 0, 0),
         ("fixed_size_list_boolean", "IntegerList", "Boolean", 0, 0),
         ("fixed_size_list_uint8", "IntegerList", "None", 0, 0),
         ("fixed_size_list_int8", "IntegerList", "None", 0, 0),
@@ -195,6 +187,7 @@ def _check_test_parquet(
         ("struct_field.c.f", "String", "None", 0, 0),
         ("struct_field.h", "Integer64List", "None", 0, 0),
         ("struct_field.i", "Integer64", "None", 0, 0),
+        ("list_struct", "String", "JSON", 0, 0),
         ("map_boolean", "String", "JSON", 0, 0),
         ("map_uint8", "String", "JSON", 0, 0),
         ("map_int8", "String", "JSON", 0, 0),
@@ -206,8 +199,32 @@ def _check_test_parquet(
         ("map_int64", "String", "JSON", 0, 0),
         ("map_float32", "String", "JSON", 0, 0),
         ("map_float64", "String", "JSON", 0, 0),
+        ("map_decimal128", "String", "JSON", 0, 0),
+        ("map_decimal256", "String", "JSON", 0, 0),
         ("map_string", "String", "JSON", 0, 0),
+        ("map_large_string", "String", "JSON", 0, 0),
+        ("map_list_string", "String", "JSON", 0, 0),
+        ("map_large_list_string", "String", "JSON", 0, 0),
+        ("map_fixed_size_list_string", "String", "JSON", 0, 0),
         ("dict", "Integer", "None", 0, 0),
+    ]
+    if not filename.endswith(".parquet"):
+        expected_field_defns += [
+            ("float16", "Real", "Float32", 0, 0),
+            ("list_float16", "RealList", "Float32", 0, 0),
+            ("list_list_float16", "String", "JSON", 0, 0),
+            ("map_float16", "String", "JSON", 0, 0),
+        ]
+    assert lyr_defn.GetFieldCount() == len(expected_field_defns)
+    got_field_defns = [
+        (
+            lyr_defn.GetFieldDefn(i).GetName(),
+            ogr.GetFieldTypeName(lyr_defn.GetFieldDefn(i).GetType()),
+            ogr.GetFieldSubTypeName(lyr_defn.GetFieldDefn(i).GetSubType()),
+            lyr_defn.GetFieldDefn(i).GetWidth(),
+            lyr_defn.GetFieldDefn(i).GetPrecision(),
+        )
+        for i in range(lyr_defn.GetFieldCount())
     ]
     assert got_field_defns == expected_field_defns
     if expect_fast_feature_count:
@@ -280,7 +297,10 @@ def _check_test_parquet(
     assert f["list_int64"] == []
     assert f["list_float32"] == []
     assert f["list_float64"] == []
+    assert f["list_decimal128"] == [1234.567]
+    assert f["list_decimal256"] == [1234.567]
     assert f["list_string"] is None
+    assert f["list_large_string"] is None
     assert f["fixed_size_list_boolean"] == [1, 0]
     assert f["fixed_size_list_uint8"] == [0, 1]
     assert f["fixed_size_list_int8"] == [0, 1]
@@ -301,6 +321,7 @@ def _check_test_parquet(
     assert f["struct_field.c.f"] == "g"
     assert f["struct_field.h"] == [5, 6]
     assert f["struct_field.i"] == 3
+    assert f["list_struct"] == """[{"a":1,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]"""
     assert f["map_boolean"] == '{"x":null,"y":true}'
     assert f["map_uint8"] == '{"x":1,"y":null}'
     assert f["map_int8"] == '{"x":1,"y":null}'
@@ -308,28 +329,54 @@ def _check_test_parquet(
     assert f["map_int16"] == '{"x":1,"y":null}'
     assert f["map_uint32"] == '{"x":4000000000,"y":null}'
     assert f["map_int32"] == '{"x":2000000000,"y":null}'
-    assert f["map_uint64"] == '{"x":4000000000000.0,"y":null}'
+    assert f["map_uint64"] == '{"x":4000000000000,"y":null}'
     assert f["map_int64"] == '{"x":-2000000000000,"y":null}'
     assert f["map_float32"] == '{"x":1.5,"y":null}'
     assert f["map_float64"] == '{"x":1.5,"y":null}'
+    assert f["map_decimal128"] == '{"x":1234.567,"y":null}'
+    assert f["map_decimal256"] == '{"x":1234.567,"y":null}'
     assert f["map_string"] == '{"x":"x_val","y":null}'
+    assert f["map_large_string"] == '{"x":"x_val","y":null}'
+    assert f["map_list_string"] == '{"x":["x_val"],"y":null}'
+    assert f["map_large_list_string"] == '{"x":["x_val"],"y":null}'
+    assert f["map_fixed_size_list_string"] == '{"x":["x_val",null],"y":[null,null]}'
     assert f["dict"] == 0
+    if not filename.endswith(".parquet"):
+        assert f["float16"] == 1.5
+        assert f["list_float16"] == []
+        assert f["list_list_float16"] == "[]"
+        assert f["map_float16"] == '{"x":1.5,"y":null}'
     assert f.GetGeometryRef().ExportToWkt() == "POINT (0 2)"
 
     f = lyr.GetNextFeature()
     assert f.GetFID() == 1
     assert not f["boolean"]
     assert f["uint8"] == 2
+    if not filename.endswith(".parquet"):
+        assert f["float16"] == 2.5
+        assert str(f["list_float16"]) == str([float("nan")])
+        assert f["list_list_float16"] == "[null]"
     assert f.GetGeometryRef() is None
 
     f = lyr.GetNextFeature()
     assert f.GetFID() == 2
     assert f["uint8"] is None
+    if not filename.endswith(".parquet"):
+        assert f["float16"] is None
+        assert f["list_float16"] is None
+        assert f["list_list_float16"] is None
+        assert f["map_float16"] is None
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 2)"
 
     f = lyr.GetNextFeature()
     assert f.GetFID() == 3
     assert f["uint8"] == 4
+    assert str(f["list_decimal128"]) == str([float("nan")])
+    if not filename.endswith(".parquet"):
+        assert f["float16"] == 4.5
+        assert str(f["list_float16"]) == str([float("nan"), 4.5, 5.5])
+        assert f["list_list_float16"] == "[null,[4.5],[5.5]]"
+        assert f["map_float16"] == "{}"
     assert f.GetGeometryRef().ExportToWkt() == "POINT (3 2)"
 
     f = lyr.GetNextFeature()
@@ -1721,9 +1768,7 @@ def test_ogr_parquet_arrow_stream_numpy():
     assert numpy.array_equal(
         batches[1]["list_string"][0], numpy.array([b"A", b"BC", b"CDE"])
     )
-    assert numpy.array_equal(
-        batches[1]["list_string"][1], numpy.array([b"A", b"BC", b"CDE", b"DEFG"])
-    )
+    assert numpy.array_equal(batches[1]["list_string"][1], numpy.array([b""]))
 
     assert numpy.array_equal(batches[0]["list_uint8"][0], numpy.array([]))
     assert numpy.array_equal(batches[0]["list_uint8"][1], numpy.array([0]))
@@ -1880,9 +1925,7 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     )
     assert numpy.array_equal(batch["list_uint8"][0], numpy.array([0, 7, 8, 9]))
     assert numpy.array_equal(batch["list_uint16"][0], numpy.array([0, 7, 8, 9]))
-    assert numpy.array_equal(
-        batch["list_string"][0], numpy.array([b"A", b"BC", b"CDE", b"DEFG"])
-    )
+    assert numpy.array_equal(batch["list_string"][0], numpy.array([b""]))
     assert (
         ogr.CreateGeometryFromWkb(batch["geometry"][0]).ExportToWkt() == "POINT (4 2)"
     )
@@ -2728,12 +2771,32 @@ def test_ogr_parquet_nested_types():
     assert f["map_map_int16"] == """{"a":{"b":1,"c":null,"d":2},"e":null}"""
     assert f["map_map_uint32"] == """{"a":{"b":1,"c":null,"d":2},"e":null}"""
     assert f["map_map_int32"] == """{"a":{"b":1,"c":null,"d":2},"e":null}"""
-    assert f["map_map_uint64"] == """{"a":{"b":1.0,"c":null,"d":2.0},"e":null}"""
+    assert f["map_map_uint64"] == """{"a":{"b":1,"c":null,"d":2},"e":null}"""
     assert f["map_map_int64"] == """{"a":{"b":1,"c":null,"d":2},"e":null}"""
     assert f["map_map_float32"] == """{"a":{"b":1.0,"c":null,"d":2.0},"e":null}"""
     assert f["map_map_float64"] == """{"a":{"b":1.0,"c":null,"d":2.0},"e":null}"""
     assert f["map_map_string"] == """{"a":{"b":"c","d":null},"e":null}"""
+    assert f["list_list_bool"] == """[[true],null,[false,null,true]]"""
+    assert f["list_list_uint8"] == """[[1],null,[2,null,3]]"""
+    assert f["list_list_int8"] == """[[1],null,[-2,null,3]]"""
+    assert f["list_list_uint16"] == """[[1],null,[2,null,3]]"""
+    assert f["list_list_int16"] == """[[1],null,[-2,null,3]]"""
+    assert f["list_list_uint32"] == """[[1],null,[2,null,3]]"""
+    assert f["list_list_int32"] == """[[1],null,[-2,null,3]]"""
+    assert f["list_list_uint64"] == """[[1],null,[2,null,3]]"""
+    assert f["list_list_int64"] == """[[1],null,[-2,null,3]]"""
+    assert f["list_list_float32"] == """[[1.5],null,[-2.5,null,3.5]]"""
+    assert f["list_list_float64"] == """[[1.5],null,[-2.5,null,3.5]]"""
+    assert (
+        f["list_list_decimal128"] == """[[1234.567],null,[-1234.567,null,1234.567]]"""
+    )
+    assert (
+        f["list_list_decimal256"] == """[[1234.567],null,[-1234.567,null,1234.567]]"""
+    )
     assert f["list_list_string"] == """[["a"],null,["b",null,"cd"]]"""
+    assert f["list_list_large_string"] == """[["a"],null,["b",null,"cd"]]"""
+    assert f["list_large_list_string"] == """[["a"],null,["b",null,"cd"]]"""
+    assert f["list_fixed_size_list_string"] == """[["a","b"]]"""
     assert f["list_map_string"] == """[{"a":"b","c":"d"},{"e":"f"}]"""
 
     f = lyr.GetNextFeature()
@@ -2760,7 +2823,12 @@ def test_ogr_parquet_nested_types():
     assert f["map_map_float32"] is None
     assert f["map_map_float64"] is None
     assert f["map_map_string"] is None
+    assert f["list_list_decimal128"] is None
+    assert f["list_list_decimal256"] is None
     assert f["list_list_string"] is None
+    assert f["list_list_large_string"] is None
+    assert f["list_large_list_string"] is None
+    assert f["list_fixed_size_list_string"] is None
     assert f["list_map_string"] is None
 
     f = lyr.GetNextFeature()
@@ -2782,12 +2850,17 @@ def test_ogr_parquet_nested_types():
     assert f["map_map_int16"] == """{"f":{"g":3}}"""
     assert f["map_map_uint32"] == """{"f":{"g":3}}"""
     assert f["map_map_int32"] == """{"f":{"g":3}}"""
-    assert f["map_map_uint64"] == """{"f":{"g":3.0}}"""
+    assert f["map_map_uint64"] == """{"f":{"g":3}}"""
     assert f["map_map_int64"] == """{"f":{"g":3}}"""
     assert f["map_map_float32"] == """{"f":{"g":3.0}}"""
     assert f["map_map_float64"] == """{"f":{"g":3.0}}"""
     assert f["map_map_string"] == """{"f":{"g":"h"}}"""
+    assert f["list_list_decimal128"] == """[[-1234.567]]"""
+    assert f["list_list_decimal256"] == """[[-1234.567]]"""
     assert f["list_list_string"] == """[["efg"]]"""
+    assert f["list_list_large_string"] == """[["efg"]]"""
+    assert f["list_large_list_string"] == """[["efg"]]"""
+    assert f["list_fixed_size_list_string"] == """[["e","f"]]"""
     assert f["list_map_string"] == """[null]"""
 
     f = lyr.GetNextFeature()

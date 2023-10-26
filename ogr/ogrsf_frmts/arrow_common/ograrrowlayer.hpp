@@ -28,6 +28,7 @@
 
 #include "ogr_arrow.h"
 
+#include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
@@ -182,11 +183,17 @@ inline bool OGRArrowLayer::IsHandledListOrMapType(
            itemTypeId == arrow::Type::HALF_FLOAT ||
            itemTypeId == arrow::Type::FLOAT ||
            itemTypeId == arrow::Type::DOUBLE ||
+           itemTypeId == arrow::Type::DECIMAL128 ||
+           itemTypeId == arrow::Type::DECIMAL256 ||
            itemTypeId == arrow::Type::STRING ||
+           itemTypeId == arrow::Type::LARGE_STRING ||
+           itemTypeId == arrow::Type::STRUCT ||
            (itemTypeId == arrow::Type::MAP &&
             IsHandledMapType(
                 std::static_pointer_cast<arrow::MapType>(valueType))) ||
-           (itemTypeId == arrow::Type::LIST &&
+           ((itemTypeId == arrow::Type::LIST ||
+             itemTypeId == arrow::Type::LARGE_LIST ||
+             itemTypeId == arrow::Type::FIXED_SIZE_LIST) &&
             IsHandledListType(
                 std::static_pointer_cast<arrow::BaseListType>(valueType)));
 }
@@ -355,9 +362,12 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
                     eSubType = OFSTFloat32;
                     break;
                 case arrow::Type::DOUBLE:
+                case arrow::Type::DECIMAL128:
+                case arrow::Type::DECIMAL256:
                     eType = OFTRealList;
                     break;
                 case arrow::Type::STRING:
+                case arrow::Type::LARGE_STRING:
                     eType = OFTStringList;
                     break;
                 default:
@@ -910,153 +920,382 @@ OGRArrowLayer::GetGeometryTypeFromString(const std::string &osType)
     return eGeomType;
 }
 
+static CPLJSONObject GetObjectAsJSON(const arrow::Array *array,
+                                     const size_t nIdx);
+
 /************************************************************************/
-/*                            ReadList()                                */
+/*                               AddToArray()                           */
 /************************************************************************/
 
-static CPLJSONObject ReadMap(const arrow::MapArray *array, int64_t nIdxInArray);
-
-template <class OGRType, class ArrowType, class ArrayType>
-static CPLJSONArray ReadList(const ArrayType *array, int64_t nIdxInArray)
+static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
+                       const size_t nIdx)
 {
-    const auto values = std::static_pointer_cast<ArrowType>(array->values());
-    const auto nIdxStart = array->value_offset(nIdxInArray);
-    const int nCount = array->value_length(nIdxInArray);
-    CPLJSONArray oArray;
-    for (int k = 0; k < nCount; k++)
-    {
-        if (values->IsNull(nIdxStart + k))
-            oArray.AddNull();
-        else
-            oArray.Add(static_cast<OGRType>(values->Value(nIdxStart + k)));
-    }
-    return oArray;
-}
-
-template <class ArrayType>
-static CPLJSONArray ReadList(const ArrayType *array, int64_t nIdxInArray)
-{
-    switch (array->value_type()->id())
+    switch (array->type()->id())
     {
         case arrow::Type::BOOL:
         {
-            return ReadList<bool, arrow::BooleanArray>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::BooleanArray *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::UINT8:
         {
-            return ReadList<int, arrow::UInt8Array>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::UInt8Array *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::INT8:
         {
-            return ReadList<int, arrow::Int8Array>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::Int8Array *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::UINT16:
         {
-            return ReadList<int, arrow::UInt16Array>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::UInt16Array *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::INT16:
         {
-            return ReadList<int, arrow::Int16Array>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::Int16Array *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::INT32:
         {
-            return ReadList<int, arrow::Int32Array>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::Int32Array *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::UINT32:
         {
-            return ReadList<GInt64, arrow::UInt32Array>(array, nIdxInArray);
+            oArray.Add(static_cast<GInt64>(
+                static_cast<const arrow::UInt32Array *>(array)->Value(nIdx)));
+            break;
         }
         case arrow::Type::INT64:
         {
-            return ReadList<GInt64, arrow::Int64Array>(array, nIdxInArray);
+            oArray.Add(static_cast<GInt64>(
+                static_cast<const arrow::Int64Array *>(array)->Value(nIdx)));
+            break;
         }
         case arrow::Type::UINT64:
         {
-            return ReadList<uint64_t, arrow::UInt64Array>(array, nIdxInArray);
+            oArray.Add(static_cast<uint64_t>(
+                static_cast<const arrow::UInt64Array *>(array)->Value(nIdx)));
+            break;
         }
         case arrow::Type::HALF_FLOAT:
         {
-            return ReadList<double, arrow::HalfFloatArray>(array, nIdxInArray);
+            const uint16_t nFloat16 =
+                static_cast<const arrow::HalfFloatArray *>(array)->Value(nIdx);
+            uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
+            float f;
+            memcpy(&f, &nFloat32, sizeof(nFloat32));
+            oArray.Add(f);
+            break;
         }
         case arrow::Type::FLOAT:
         {
-            return ReadList<double, arrow::FloatArray>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::FloatArray *>(array)->Value(nIdx));
+            break;
         }
         case arrow::Type::DOUBLE:
         {
-            return ReadList<double, arrow::DoubleArray>(array, nIdxInArray);
+            oArray.Add(
+                static_cast<const arrow::DoubleArray *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::DECIMAL128:
+        case arrow::Type::DECIMAL256:
+        {
+            oArray.Add(CPLAtof(static_cast<const arrow::DecimalArray *>(array)
+                                   ->FormatValue(nIdx)
+                                   .c_str()));
+            break;
         }
         case arrow::Type::STRING:
         {
-            CPLJSONArray oArray;
-            const auto values =
-                std::static_pointer_cast<arrow::StringArray>(array->values());
-            const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
-            for (int k = 0; k < nCount; k++)
-            {
-                if (values->IsNull(nIdxStart + k))
-                {
-                    oArray.AddNull();
-                }
-                else
-                {
-                    oArray.Add(values->GetString(nIdxStart + k));
-                }
-            }
-            return oArray;
+            oArray.Add(
+                static_cast<const arrow::StringArray *>(array)->GetString(
+                    nIdx));
+            break;
         }
-
+        case arrow::Type::LARGE_STRING:
+        {
+            oArray.Add(
+                static_cast<const arrow::LargeStringArray *>(array)->GetString(
+                    nIdx));
+            break;
+        }
         case arrow::Type::LIST:
-        {
-            CPLJSONArray oArray;
-            const auto values =
-                std::static_pointer_cast<arrow::ListArray>(array->values());
-            const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
-            for (int k = 0; k < nCount; k++)
-            {
-                if (values->IsNull(nIdxStart + k))
-                {
-                    oArray.AddNull();
-                }
-                else
-                {
-                    oArray.Add(ReadList(values.get(), nIdxStart + k));
-                }
-            }
-            return oArray;
-        }
-
+        case arrow::Type::LARGE_LIST:
+        case arrow::Type::FIXED_SIZE_LIST:
         case arrow::Type::MAP:
+        case arrow::Type::STRUCT:
         {
-            CPLJSONArray oArray;
-            const auto values =
-                std::static_pointer_cast<arrow::MapArray>(array->values());
-            const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
-            for (int k = 0; k < nCount; k++)
-            {
-                if (values->IsNull(nIdxStart + k))
-                {
-                    oArray.AddNull();
-                }
-                else
-                {
-                    oArray.Add(ReadMap(values.get(), nIdxStart + k));
-                }
-            }
-            return oArray;
+            oArray.Add(GetObjectAsJSON(array, nIdx));
+            break;
         }
 
         default:
         {
-            CPLDebug("ARROW", "ReadList(): unexpected data type %s",
-                     array->values()->type()->ToString().c_str());
+            CPLDebug("ARROW", "AddToArray(): unexpected data type %s",
+                     array->type()->ToString().c_str());
             break;
         }
     }
-    return CPLJSONArray();
+}
+
+/************************************************************************/
+/*                         GetListAsJSON()                              */
+/************************************************************************/
+
+template <class ArrowType>
+static CPLJSONObject GetListAsJSON(const ArrowType *array,
+                                   const size_t nIdxInArray)
+{
+    const auto values = std::static_pointer_cast<ArrowType>(array->values());
+    const auto nIdxStart = array->value_offset(nIdxInArray);
+    const auto nCount = array->value_length(nIdxInArray);
+    CPLJSONArray oArray;
+    for (auto k = decltype(nCount){0}; k < nCount; k++)
+    {
+        if (values->IsNull(nIdxStart + k))
+            oArray.AddNull();
+        else
+            AddToArray(oArray, values.get(), nIdxStart + k);
+    }
+    return oArray;
+}
+
+/************************************************************************/
+/*                              AddToDict()                             */
+/************************************************************************/
+
+static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
+                      const arrow::Array *array, const size_t nIdx)
+{
+    switch (array->type()->id())
+    {
+        case arrow::Type::BOOL:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::BooleanArray *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::UINT8:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::UInt8Array *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::INT8:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::Int8Array *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::UINT16:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::UInt16Array *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::INT16:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::Int16Array *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::INT32:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::Int32Array *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::UINT32:
+        {
+            oDict.Add(osKey,
+                      static_cast<GInt64>(
+                          static_cast<const arrow::UInt32Array *>(array)->Value(
+                              nIdx)));
+            break;
+        }
+        case arrow::Type::INT64:
+        {
+            oDict.Add(osKey,
+                      static_cast<GInt64>(
+                          static_cast<const arrow::Int64Array *>(array)->Value(
+                              nIdx)));
+            break;
+        }
+        case arrow::Type::UINT64:
+        {
+            oDict.Add(osKey,
+                      static_cast<uint64_t>(
+                          static_cast<const arrow::UInt64Array *>(array)->Value(
+                              nIdx)));
+            break;
+        }
+        case arrow::Type::HALF_FLOAT:
+        {
+            const uint16_t nFloat16 =
+                static_cast<const arrow::HalfFloatArray *>(array)->Value(nIdx);
+            uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
+            float f;
+            memcpy(&f, &nFloat32, sizeof(nFloat32));
+            oDict.Add(osKey, f);
+            break;
+        }
+        case arrow::Type::FLOAT:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::FloatArray *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::DOUBLE:
+        {
+            oDict.Add(
+                osKey,
+                static_cast<const arrow::DoubleArray *>(array)->Value(nIdx));
+            break;
+        }
+        case arrow::Type::DECIMAL128:
+        case arrow::Type::DECIMAL256:
+        {
+            oDict.Add(osKey,
+                      CPLAtof(static_cast<const arrow::DecimalArray *>(array)
+                                  ->FormatValue(nIdx)
+                                  .c_str()));
+            break;
+        }
+
+        case arrow::Type::STRING:
+        {
+            oDict.Add(osKey,
+                      static_cast<const arrow::StringArray *>(array)->GetString(
+                          nIdx));
+            break;
+        }
+        case arrow::Type::LARGE_STRING:
+        {
+            oDict.Add(osKey, static_cast<const arrow::LargeStringArray *>(array)
+                                 ->GetString(nIdx));
+            break;
+        }
+        case arrow::Type::LIST:
+        case arrow::Type::LARGE_LIST:
+        case arrow::Type::FIXED_SIZE_LIST:
+        case arrow::Type::MAP:
+        case arrow::Type::STRUCT:
+        {
+            oDict.Add(osKey, GetObjectAsJSON(array, nIdx));
+            break;
+        }
+
+        default:
+        {
+            CPLDebug("ARROW", "AddToDict(): unexpected data type %s",
+                     array->type()->ToString().c_str());
+            break;
+        }
+    }
+}
+
+/************************************************************************/
+/*                         GetMapAsJSON()                               */
+/************************************************************************/
+
+static CPLJSONObject GetMapAsJSON(const arrow::Array *array,
+                                  const size_t nIdxInArray)
+{
+    const auto mapArray = static_cast<const arrow::MapArray *>(array);
+    const auto keys =
+        std::static_pointer_cast<arrow::StringArray>(mapArray->keys());
+    const auto values = mapArray->items();
+    const auto nIdxStart = mapArray->value_offset(nIdxInArray);
+    const int nCount = mapArray->value_length(nIdxInArray);
+    CPLJSONObject oRoot;
+    for (int k = 0; k < nCount; k++)
+    {
+        if (!keys->IsNull(nIdxStart + k))
+        {
+            const auto osKey = keys->GetString(nIdxStart + k);
+            if (!values->IsNull(nIdxStart + k))
+                AddToDict(oRoot, osKey, values.get(), nIdxStart + k);
+            else
+                oRoot.AddNull(osKey);
+        }
+    }
+    return oRoot;
+}
+
+/************************************************************************/
+/*                        GetStructureAsJSON()                          */
+/************************************************************************/
+
+static CPLJSONObject GetStructureAsJSON(const arrow::Array *array,
+                                        const size_t nIdxInArray)
+{
+    CPLJSONObject oRoot;
+    const auto structArray = static_cast<const arrow::StructArray *>(array);
+    const auto structArrayType = structArray->type();
+    for (int i = 0; i < structArrayType->num_fields(); ++i)
+    {
+        const auto field = structArray->field(i);
+        if (!field->IsNull(nIdxInArray))
+        {
+            AddToDict(oRoot, structArrayType->field(i)->name(), field.get(),
+                      nIdxInArray);
+        }
+        else
+            oRoot.AddNull(structArrayType->field(i)->name());
+    }
+
+    return oRoot;
+}
+
+/************************************************************************/
+/*                        GetObjectAsJSON()                             */
+/************************************************************************/
+
+static CPLJSONObject GetObjectAsJSON(const arrow::Array *array,
+                                     const size_t nIdxInArray)
+{
+    switch (array->type()->id())
+    {
+        case arrow::Type::MAP:
+            return GetMapAsJSON(array, nIdxInArray);
+        case arrow::Type::LIST:
+            return GetListAsJSON(static_cast<const arrow::ListArray *>(array),
+                                 nIdxInArray);
+        case arrow::Type::LARGE_LIST:
+            return GetListAsJSON(
+                static_cast<const arrow::LargeListArray *>(array), nIdxInArray);
+        case arrow::Type::FIXED_SIZE_LIST:
+            return GetListAsJSON(
+                static_cast<const arrow::FixedSizeListArray *>(array),
+                nIdxInArray);
+        case arrow::Type::STRUCT:
+            return GetStructureAsJSON(array, nIdxInArray);
+        default:
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetObjectAsJSON(): unhandled value format: %s",
+                     array->type()->ToString().c_str());
+            return CPLJSONObject();
+        }
+    }
 }
 
 template <class OGRType, class ArrowType, class ArrayType>
@@ -1152,8 +1391,26 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
         }
         case arrow::Type::HALF_FLOAT:
         {
-            ReadListDouble<arrow::HalfFloatArray>(poFeature, i, nIdxInArray,
-                                                  array);
+            const auto values = std::static_pointer_cast<arrow::HalfFloatArray>(
+                array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const int nCount = array->value_length(nIdxInArray);
+            std::vector<double> aValues;
+            aValues.reserve(nCount);
+            for (int k = 0; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                    aValues.push_back(std::numeric_limits<double>::quiet_NaN());
+                else
+                {
+                    const uint16_t nFloat16 = values->Value(nIdxStart + k);
+                    uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
+                    float f;
+                    memcpy(&f, &nFloat32, sizeof(nFloat32));
+                    aValues.push_back(f);
+                }
+            }
+            poFeature->SetField(i, nCount, aValues.data());
             break;
         }
         case arrow::Type::FLOAT:
@@ -1165,6 +1422,26 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
         {
             ReadListDouble<arrow::DoubleArray>(poFeature, i, nIdxInArray,
                                                array);
+            break;
+        }
+        case arrow::Type::DECIMAL128:
+        case arrow::Type::DECIMAL256:
+        {
+            const auto values =
+                std::static_pointer_cast<arrow::DecimalArray>(array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const int nCount = array->value_length(nIdxInArray);
+            std::vector<double> aValues;
+            aValues.reserve(nCount);
+            for (int k = 0; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                    aValues.push_back(std::numeric_limits<double>::quiet_NaN());
+                else
+                    aValues.push_back(
+                        CPLAtof(values->FormatValue(nIdxStart + k).c_str()));
+            }
+            poFeature->SetField(i, nCount, aValues.data());
             break;
         }
         case arrow::Type::STRING:
@@ -1185,12 +1462,33 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             poFeature->SetField(i, aosList.List());
             break;
         }
-
+        case arrow::Type::LARGE_STRING:
+        {
+            const auto values =
+                std::static_pointer_cast<arrow::LargeStringArray>(
+                    array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const auto nCount = array->value_length(nIdxInArray);
+            CPLStringList aosList;
+            for (auto k = decltype(nCount){0}; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                    aosList.AddString(
+                        "");  // we cannot have null strings in a list
+                else
+                    aosList.AddString(values->GetString(nIdxStart + k).c_str());
+            }
+            poFeature->SetField(i, aosList.List());
+            break;
+        }
         case arrow::Type::LIST:
+        case arrow::Type::LARGE_LIST:
+        case arrow::Type::FIXED_SIZE_LIST:
         case arrow::Type::MAP:
+        case arrow::Type::STRUCT:
         {
             poFeature->SetField(i,
-                                ReadList(array, nIdxInArray)
+                                GetListAsJSON(array, nIdxInArray)
                                     .Format(CPLJSONObject::PrettyFormat::Plain)
                                     .c_str());
             break;
@@ -1203,160 +1501,6 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             break;
         }
     }
-}
-
-/************************************************************************/
-/*                            ReadMap()                                 */
-/************************************************************************/
-
-template <class OGRType, class ArrowType>
-static CPLJSONObject ReadMap(const arrow::MapArray *array, int64_t nIdxInArray)
-{
-    const auto keys =
-        std::static_pointer_cast<arrow::StringArray>(array->keys());
-    const auto values = std::static_pointer_cast<ArrowType>(array->items());
-    const auto nIdxStart = array->value_offset(nIdxInArray);
-    const int nCount = array->value_length(nIdxInArray);
-    CPLJSONObject oRoot;
-    for (int k = 0; k < nCount; k++)
-    {
-        if (!keys->IsNull(nIdxStart + k))
-        {
-            const auto osKey = keys->GetString(nIdxStart + k);
-            if (!values->IsNull(nIdxStart + k))
-                oRoot.Add(osKey,
-                          static_cast<OGRType>(values->Value(nIdxStart + k)));
-            else
-                oRoot.AddNull(osKey);
-        }
-    }
-    return oRoot;
-}
-
-static CPLJSONObject ReadMap(const arrow::MapArray *array, int64_t nIdxInArray)
-{
-    const auto mapType =
-        static_cast<const arrow::MapType *>(array->data()->type.get());
-    const auto itemTypeId = mapType->item_type()->id();
-    if (mapType->key_type()->id() == arrow::Type::STRING)
-    {
-        if (itemTypeId == arrow::Type::BOOL)
-        {
-            return ReadMap<bool, arrow::BooleanArray>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::UINT8)
-        {
-            return ReadMap<int, arrow::UInt8Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::INT8)
-        {
-            return ReadMap<int, arrow::Int8Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::UINT16)
-        {
-            return ReadMap<int, arrow::UInt16Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::INT16)
-        {
-            return ReadMap<int, arrow::Int16Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::UINT32)
-        {
-            return ReadMap<GIntBig, arrow::UInt32Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::INT32)
-        {
-            return ReadMap<int, arrow::Int32Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::UINT64)
-        {
-            return ReadMap<double, arrow::UInt64Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::INT64)
-        {
-            return ReadMap<GIntBig, arrow::Int64Array>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::FLOAT)
-        {
-            return ReadMap<double, arrow::FloatArray>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::DOUBLE)
-        {
-            return ReadMap<double, arrow::DoubleArray>(array, nIdxInArray);
-        }
-        else if (itemTypeId == arrow::Type::STRING)
-        {
-            const auto keys =
-                std::static_pointer_cast<arrow::StringArray>(array->keys());
-            const auto values =
-                std::static_pointer_cast<arrow::StringArray>(array->items());
-            const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
-            CPLJSONObject oRoot;
-            for (int k = 0; k < nCount; k++)
-            {
-                if (!keys->IsNull(nIdxStart + k))
-                {
-                    const auto osKey = keys->GetString(nIdxStart + k);
-                    if (!values->IsNull(nIdxStart + k))
-                        oRoot.Add(osKey, values->GetString(nIdxStart + k));
-                    else
-                        oRoot.AddNull(osKey);
-                }
-            }
-            return oRoot;
-        }
-        else if (itemTypeId == arrow::Type::LIST)
-        {
-            const auto keys =
-                std::static_pointer_cast<arrow::StringArray>(array->keys());
-            const auto values =
-                std::static_pointer_cast<arrow::ListArray>(array->items());
-            const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
-            CPLJSONObject oRoot;
-            for (int k = 0; k < nCount; k++)
-            {
-                if (!keys->IsNull(nIdxStart + k))
-                {
-                    const auto osKey = keys->GetString(nIdxStart + k);
-                    if (!values->IsNull(nIdxStart + k))
-                        oRoot.Add(osKey, ReadList(values.get(), nIdxStart + k));
-                    else
-                        oRoot.AddNull(osKey);
-                }
-            }
-            return oRoot;
-        }
-        else if (itemTypeId == arrow::Type::MAP)
-        {
-            const auto keys =
-                std::static_pointer_cast<arrow::StringArray>(array->keys());
-            const auto values =
-                std::static_pointer_cast<arrow::MapArray>(array->items());
-            const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
-            CPLJSONObject oRoot;
-            for (int k = 0; k < nCount; k++)
-            {
-                if (!keys->IsNull(nIdxStart + k))
-                {
-                    const auto osKey = keys->GetString(nIdxStart + k);
-                    if (!values->IsNull(nIdxStart + k))
-                        oRoot.Add(osKey, ReadMap(values.get(), nIdxStart + k));
-                    else
-                        oRoot.AddNull(osKey);
-                }
-            }
-            return oRoot;
-        }
-        else
-        {
-            CPLDebug("ARROW", "ReadMap(): unexpected data type %s",
-                     array->items()->type()->ToString().c_str());
-        }
-    }
-    return CPLJSONObject();
 }
 
 /************************************************************************/
@@ -1636,8 +1780,11 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             {
                 const auto castArray =
                     static_cast<const arrow::HalfFloatArray *>(array);
-                poFeature->SetFieldSameTypeUnsafe(
-                    i, castArray->Value(nIdxInBatch));
+                const uint16_t nFloat16 = castArray->Value(nIdxInBatch);
+                uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
+                float f;
+                memcpy(&f, &nFloat32, sizeof(nFloat32));
+                poFeature->SetFieldSameTypeUnsafe(i, f);
                 break;
             }
             case arrow::Type::FLOAT:
@@ -1763,18 +1910,10 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             }
 
             case arrow::Type::DECIMAL128:
-            {
-                const auto castArray =
-                    static_cast<const arrow::Decimal128Array *>(array);
-                poFeature->SetField(
-                    i, CPLAtof(castArray->FormatValue(nIdxInBatch).c_str()));
-                break;
-            }
-
             case arrow::Type::DECIMAL256:
             {
                 const auto castArray =
-                    static_cast<const arrow::Decimal256Array *>(array);
+                    static_cast<const arrow::DecimalArray *>(array);
                 poFeature->SetField(
                     i, CPLAtof(castArray->FormatValue(nIdxInBatch).c_str()));
                 break;
@@ -1838,7 +1977,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::MapArray *>(array);
                 poFeature->SetField(
-                    i, ReadMap(castArray, nIdxInBatch)
+                    i, GetMapAsJSON(castArray, nIdxInBatch)
                            .Format(CPLJSONObject::PrettyFormat::Plain)
                            .c_str());
                 break;
@@ -2911,9 +3050,11 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
             {
                 const auto castArray =
                     static_cast<const arrow::HalfFloatArray *>(array);
-                if (!ConstraintEvaluator(
-                        constraint,
-                        static_cast<double>(castArray->Value(m_nIdxInBatch))))
+                const uint16_t nFloat16 = castArray->Value(m_nIdxInBatch);
+                uint32_t nFloat32 = CPLHalfToFloat(nFloat16);
+                float f;
+                memcpy(&f, &nFloat32, sizeof(nFloat32));
+                if (!ConstraintEvaluator(constraint, static_cast<double>(f)))
                 {
                     return true;
                 }
