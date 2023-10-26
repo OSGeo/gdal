@@ -1822,7 +1822,9 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
             const auto oMetadata =
                 OGRParseArrowMetadata(schema->children[i]->metadata);
             auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
-            if (oIter != oMetadata.end() && oIter->second == EXTENSION_NAME_WKB)
+            if (oIter != oMetadata.end() &&
+                (oIter->second == EXTENSION_NAME_OGC_WKB ||
+                 oIter->second == EXTENSION_NAME_GEOARROW_WKB))
             {
                 pszSingleGeomFieldName = schema->children[i]->name;
             }

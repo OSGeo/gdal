@@ -31,6 +31,7 @@
 #include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_time.h"
+#include "ogrlayerarrow.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
 #include "ogr_wkb.h"
@@ -758,7 +759,9 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
 
     if (osEncoding == "WKT" ||  // As used in Parquet geo metadata
         osEncoding ==
-            "ogc.wkt"  // As used in ARROW:extension:name field metadata
+            "ogc.wkt" ||  // As used in ARROW:extension:name field metadata
+        osEncoding ==
+            "geoarrow.wkt"  // As used in ARROW:extension:name field metadata
     )
     {
         if (fieldTypeId != arrow::Type::STRING)
@@ -775,7 +778,9 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
 
     if (osEncoding == "WKB" ||  // As used in Parquet geo metadata
         osEncoding ==
-            "ogc.wkb"  // As used in ARROW:extension:name field metadata
+            "ogc.wkb" ||  // As used in ARROW:extension:name field metadata
+        osEncoding ==
+            "geoarrow.wkb"  // As used in ARROW:extension:name field metadata
     )
     {
         if (fieldTypeId != arrow::Type::BINARY)
@@ -3991,6 +3996,26 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
     int j = 0;
     const char *pszReqGeomEncoding =
         m_aosArrowArrayStreamOptions.FetchNameValueDef("GEOMETRY_ENCODING", "");
+
+    const char *pszExtensionName = EXTENSION_NAME_OGC_WKB;
+    if (EQUAL(pszReqGeomEncoding, "WKB") || EQUAL(pszReqGeomEncoding, ""))
+    {
+        const char *const pszGeometryMetadataEncoding =
+            m_aosArrowArrayStreamOptions.FetchNameValue(
+                "GEOMETRY_METADATA_ENCODING");
+        if (pszGeometryMetadataEncoding)
+        {
+            if (EQUAL(pszGeometryMetadataEncoding, "OGC"))
+                pszExtensionName = EXTENSION_NAME_OGC_WKB;
+            else if (EQUAL(pszGeometryMetadataEncoding, "GEOARROW"))
+                pszExtensionName = EXTENSION_NAME_GEOARROW_WKB;
+            else
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported GEOMETRY_METADATA_ENCODING value: %s",
+                         pszGeometryMetadataEncoding);
+        }
+    }
+
     for (int i = 0; i < out_schema->n_children; ++i)
     {
         if (fieldDesc[i].nIdx < 0)
@@ -4036,8 +4061,8 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                         m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
                     CPLAssert(strcmp(out_schema->children[i]->name,
                                      poGeomFieldDefn->GetNameRef()) == 0);
-                    auto poSchema =
-                        CreateSchemaForWKBGeometryColumn(poGeomFieldDefn, "z");
+                    auto poSchema = CreateSchemaForWKBGeometryColumn(
+                        poGeomFieldDefn, "z", pszExtensionName);
                     out_schema->children[i]->release(out_schema->children[i]);
                     *(out_schema->children[j]) = *poSchema;
                     CPLFree(poSchema);
@@ -4074,7 +4099,7 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                         m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
                     // Set ARROW:extension:name = ogc:wkb
                     auto poSchema = CreateSchemaForWKBGeometryColumn(
-                        poGeomFieldDefn, pszFormat);
+                        poGeomFieldDefn, pszFormat, pszExtensionName);
                     out_schema->children[i]->release(out_schema->children[i]);
                     *(out_schema->children[j]) = *poSchema;
                     CPLFree(poSchema);
