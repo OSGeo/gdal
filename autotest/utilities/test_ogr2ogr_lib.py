@@ -31,7 +31,6 @@
 
 import collections
 import json
-import os
 import pathlib
 import tempfile
 
@@ -2241,43 +2240,42 @@ def test_json_types(tmp_vsimem):
 
     with gdal.ExceptionMgr(useExceptions=True):
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            src = os.path.join(temp_dir, "test_json.geojson")
-            dst = os.path.join(temp_dir, "test_json.gpkg")
+        src = str(tmp_vsimem / "test_json.geojson")
+        dst = str(tmp_vsimem / "test_json.gpkg")
 
-            with open(src, "w+") as f:
-                f.write(
-                    """{
-                    "type": "FeatureCollection",
-                    "features": [
-                        { "type": "Feature", "properties": { "str": "[5]", "int_list": [5], "map": {"foo": "bar", "baz": 5}, "int_lit": 5 }, "geometry": {"type": "Point", "coordinates": [ 1, 2 ]} }
-                    ]
-                }"""
-                )
+        data = """{
+                "type": "FeatureCollection",
+                "features": [
+                    { "type": "Feature", "properties": { "str": "[5]", "int_list": [5], "map": {"foo": "bar", "baz": 5}, "int_lit": 5 }, "geometry": {"type": "Point", "coordinates": [ 1, 2 ]} }
+                ]
+            }"""
+        f = gdal.VSIFOpenL(src, "wb")
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
 
-            with gdal.OpenEx(src, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
-                lyr = ds.GetLayer(0)
-                test_extended_types(lyr)
+        with gdal.OpenEx(src, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+            lyr = ds.GetLayer(0)
+            test_extended_types(lyr)
 
-            options = gdal.VectorTranslateOptions(layerName="test")
+        options = gdal.VectorTranslateOptions(layerName="test")
 
-            ds_output = gdal.VectorTranslate(
-                srcDS=src, destNameOrDestDS=dst, options=options
-            )
-            lyr = ds_output.GetLayerByName("test")
+        ds_output = gdal.VectorTranslate(
+            srcDS=src, destNameOrDestDS=dst, options=options
+        )
+        lyr = ds_output.GetLayerByName("test")
 
-            test_types(lyr)
+        test_types(lyr)
 
-            # Write it back to json
-            round_trip_dst = os.path.join(temp_dir, "test_json_back.geojson")
+        # Write it back to json
+        round_trip_dst = str(tmp_vsimem / "test_json_back.geojson")
 
-            options = gdal.VectorTranslateOptions(
-                layerCreationOptions={"AUTODETECT_JSON_STRINGS": "FALSE"}
-            )
-            gdal.VectorTranslate(
-                srcDS=dst, destNameOrDestDS=round_trip_dst, options=options
-            )
+        options = gdal.VectorTranslateOptions(
+            layerCreationOptions={"AUTODETECT_JSON_STRINGS": "FALSE"}
+        )
+        gdal.VectorTranslate(
+            srcDS=dst, destNameOrDestDS=round_trip_dst, options=options
+        )
 
-            with gdal.OpenEx(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
-                lyr = ds.GetLayer(0)
-                test_extended_types(lyr)
+        with gdal.OpenEx(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+            lyr = ds.GetLayer(0)
+            test_extended_types(lyr)
