@@ -320,7 +320,7 @@ def test_vrtovr_external_ovr_has_priority_over_implicit():
     vrt_ds = None
 
     gdal.GetDriverByName("GTiff").Delete("/vsimem/in.tif")
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/test.vrt")
+    gdal.Unlink("/vsimem/test.vrt")
 
 
 ###############################################################################

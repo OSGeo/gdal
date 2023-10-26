@@ -734,22 +734,6 @@ void VRTSimpleSource::GetFileList(char ***ppapszFileList, int *pnSize,
     if (!m_osSrcDSName.empty())
     {
         const char *pszFilename = m_osSrcDSName.c_str();
-        /* --------------------------------------------------------------------
-         */
-        /*      Is the filename even a real filesystem object? */
-        /* --------------------------------------------------------------------
-         */
-        if (IsSlowSource(pszFilename))
-        {
-            // Testing the existence of remote resources can be excruciating
-            // slow, so just suppose they exist.
-        }
-        else
-        {
-            VSIStatBufL sStat;
-            if (VSIStatExL(pszFilename, &sStat, VSI_STAT_EXISTS_FLAG) != 0)
-                return;
-        }
 
         /* --------------------------------------------------------------------
          */
