@@ -1367,3 +1367,54 @@ def test_tiff_srs_read_compound_without_EPSG_code():
     assert got_srs.IsSame(srs)
     ds = None
     gdal.Unlink(filename)
+
+
+def test_tiff_srs_projection_method_unknown_of_geotiff_with_crs_code():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(8857)  # "WGS 84 / Equal Earth Greenwich"
+    filename = (
+        "/vsimem/test_tiff_srs_projection_method_unknown_of_geotiff_with_crs_code.tif"
+    )
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    assert gdal.VSIStatL(filename + ".aux.xml") is None
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    srs = ds.GetSpatialRef()
+    assert srs.GetAuthorityCode(None) == "8857"
+    ds = None
+    gdal.Unlink(filename)
+
+
+@pytest.mark.require_proj(9, 0)
+def test_tiff_srs_projection_method_unknown_of_geotiff_without_crs_code():
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        """PROJCS["WGS_1984_Equal_Earth_Greenwich",
+    GEOGCS["GCS_WGS_1984",
+        DATUM["D_WGS_1984",
+            SPHEROID["WGS_1984",6378137.0,298.257223563]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.0174532925199433]],
+    PROJECTION["Equal_Earth"],
+    PARAMETER["False_Easting",0.0],
+    PARAMETER["False_Northing",0.0],
+    PARAMETER["Central_Meridian",0.0],
+    UNIT["Meter",1.0]]"""
+    )
+    filename = "/vsimem/test_tiff_srs_projection_method_unknown_of_geotiff_without_crs_code.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename, 1, 1, options=["GEOTIFF_KEYS_FLAVOR=ESRI_PE"]
+    )
+    ds.SetSpatialRef(srs)
+    ds = None
+    assert gdal.VSIStatL(filename + ".aux.xml") is None
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert got_srs.IsSame(srs), got_srs.ExportToWkt()
+    ds = None
+    gdal.Unlink(filename)

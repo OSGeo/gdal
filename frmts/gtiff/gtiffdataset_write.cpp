@@ -3398,9 +3398,17 @@ static void GTiffWriteDummyGeokeyDirectory(TIFF *hTIFF)
 /*                    IsSRSCompatibleOfGeoTIFF()                        */
 /************************************************************************/
 
-static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS)
+static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS,
+                                     GTIFFKeysFlavorEnum eGeoTIFFKeysFlavor)
 {
     char *pszWKT = nullptr;
+    if ((poSRS->IsGeographic() || poSRS->IsProjected()) && !poSRS->IsCompound())
+    {
+        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
+        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
+            return true;
+    }
     OGRErr eErr;
     {
         CPLErrorStateBackuper oErrorStateBackuper;
@@ -3418,6 +3426,14 @@ static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS)
             const char *const apszOptions[] = {
                 poSRS->IsGeographic() ? nullptr : "FORMAT=WKT1", nullptr};
             eErr = poSRS->exportToWkt(&pszWKT, apszOptions);
+            if (eErr == OGRERR_FAILURE && poSRS->IsProjected() &&
+                eGeoTIFFKeysFlavor == GEOTIFF_KEYS_ESRI_PE)
+            {
+                CPLFree(pszWKT);
+                const char *const apszOptionsESRIWKT[] = {"FORMAT=WKT1_ESRI",
+                                                          nullptr};
+                eErr = poSRS->exportToWkt(&pszWKT, apszOptionsESRIWKT);
+            }
         }
     }
     const bool bCompatibleOfGeoTIFF =
@@ -3606,7 +3622,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         // Set according to coordinate system.
         if (bHasProjection)
         {
-            if (IsSRSCompatibleOfGeoTIFF(&m_oSRS))
+            if (IsSRSCompatibleOfGeoTIFF(&m_oSRS, m_eGeoTIFFKeysFlavor))
             {
                 GTIFSetFromOGISDefnEx(psGTIF,
                                       OGRSpatialReference::ToHandle(&m_oSRS),
@@ -7198,14 +7214,14 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
         if (bHasProjection)
         {
-            if (IsSRSCompatibleOfGeoTIFF(l_poSRS))
+            const auto eGeoTIFFKeysFlavor = GetGTIFFKeysFlavor(papszOptions);
+            if (IsSRSCompatibleOfGeoTIFF(l_poSRS, eGeoTIFFKeysFlavor))
             {
                 GTIFSetFromOGISDefnEx(
                     psGTIF,
                     OGRSpatialReference::ToHandle(
                         const_cast<OGRSpatialReference *>(l_poSRS)),
-                    GetGTIFFKeysFlavor(papszOptions),
-                    GetGeoTIFFVersion(papszOptions));
+                    eGeoTIFFKeysFlavor, GetGeoTIFFVersion(papszOptions));
             }
             else
             {
