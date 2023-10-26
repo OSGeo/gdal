@@ -263,6 +263,26 @@ def test_vrt_read_6():
 
 
 ###############################################################################
+# Test GetMinimum() and GetMaximum()
+
+
+def test_vrt_read_min_max_several_sources(tmp_path):
+
+    src1 = str(tmp_path / "left.tif")
+    src2 = str(tmp_path / "right.tif")
+    vrt = str(tmp_path / "tmp.vrt")
+    ds = gdal.Translate(src1, "data/byte.tif", srcWin=[0, 0, 10, 20])
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    ds = gdal.Translate(src2, "data/byte.tif", srcWin=[10, 0, 10, 20])
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    ds = gdal.BuildVRT(vrt, [src1, src2])
+    assert ds.GetRasterBand(1).GetMinimum() == 74
+    assert ds.GetRasterBand(1).GetMaximum() == 255
+
+
+###############################################################################
 # Test GDALOpen() anti-recursion mechanism
 
 
