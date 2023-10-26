@@ -1621,7 +1621,7 @@ void GDALDataset::MarkAsShared()
 }
 
 /************************************************************************/
-/*                            MarkAsShared()                            */
+/*                        MarkSuppressOnClose()                         */
 /************************************************************************/
 
 /** Set that the dataset must be deleted on close. */
@@ -3333,6 +3333,44 @@ GDALDatasetH CPL_STDCALL GDALOpen(const char *pszFilename, GDALAccess eAccess)
 }
 
 /************************************************************************/
+/*                             GetSharedDS()                            */
+/************************************************************************/
+
+static GDALDataset *GetSharedDS(const char *pszFilename,
+                                unsigned int nOpenFlags,
+                                const char *const *papszOpenOptions)
+{
+    CPLMutexHolderD(&hDLMutex);
+
+    if (phSharedDatasetSet != nullptr)
+    {
+        const GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
+        SharedDatasetCtxt sStruct;
+
+        sStruct.nPID = nThisPID;
+        sStruct.pszDescription = const_cast<char *>(pszFilename);
+        sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
+        std::string osConcatenatedOpenOptions =
+            GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+        sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
+        sStruct.poDS = nullptr;
+        SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
+            CPLHashSetLookup(phSharedDatasetSet, &sStruct));
+        if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)
+        {
+            sStruct.nOpenFlags |= GDAL_OF_UPDATE;
+            psStruct = static_cast<SharedDatasetCtxt *>(
+                CPLHashSetLookup(phSharedDatasetSet, &sStruct));
+        }
+        if (psStruct)
+        {
+            return psStruct->poDS;
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                             GDALOpenEx()                             */
 /************************************************************************/
 
@@ -3451,33 +3489,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             return nullptr;
         }
 
-        CPLMutexHolderD(&hDLMutex);
-
-        if (phSharedDatasetSet != nullptr)
+        auto poSharedDS =
+            GetSharedDS(pszFilename, nOpenFlags, papszOpenOptions);
+        if (poSharedDS)
         {
-            const GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
-            SharedDatasetCtxt sStruct;
-
-            sStruct.nPID = nThisPID;
-            sStruct.pszDescription = const_cast<char *>(pszFilename);
-            sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
-            std::string osConcatenatedOpenOptions =
-                GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
-            sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
-            sStruct.poDS = nullptr;
-            SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
-                CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-            if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)
-            {
-                sStruct.nOpenFlags |= GDAL_OF_UPDATE;
-                psStruct = static_cast<SharedDatasetCtxt *>(
-                    CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-            }
-            if (psStruct)
-            {
-                psStruct->poDS->Reference();
-                return psStruct->poDS;
-            }
+            poSharedDS->Reference();
+            return poSharedDS;
         }
     }
 
@@ -3697,7 +3714,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                         poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
                         poDS->papszOpenOptions = CSLSetNameValue(
                             poDS->papszOpenOptions, "OVERVIEW_LEVEL", nullptr);
-                        poDS->MarkAsShared();
                     }
                 }
                 poDS->ReleaseRef();
