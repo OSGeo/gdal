@@ -1198,8 +1198,7 @@ struct GTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
 
 static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
 {
-    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
-    if (GTiffDataset::Identify(&poOpenInfo))
+    if (STARTS_WITH_CI(pszFileName, "GTIFF_DIR:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             cpl::make_unique<GTiffDriverSubdatasetInfo>(pszFileName);
