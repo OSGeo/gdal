@@ -606,6 +606,18 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                 }
             }
         }
+        else if (paosGeomCols == nullptr && nColType == SQLITE_NULL &&
+                 !STARTS_WITH_CI(pszFieldName, "Gpkg") &&
+                 !STARTS_WITH_CI(pszFieldName, "AsGPB(") &&
+                 !STARTS_WITH_CI(pszFieldName, "CastAutomagic(") &&
+                 OGRSQLiteIsSpatialFunctionReturningGeometry(pszFieldName))
+        {
+            auto poGeomFieldDefn =
+                cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName, iCol);
+            poGeomFieldDefn->m_eGeomFormat = OSGF_SpatiaLite;
+            m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
+            continue;
+        }
 
         // SpatialLite / Gaia
         if (paosGeomCols == nullptr && EQUAL(pszFieldName, "GaiaGeometry") &&

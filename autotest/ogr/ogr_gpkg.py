@@ -9421,3 +9421,28 @@ def test_ogr_gpkg_write_arrow_fallback_types(tmp_vsimem):
     assert f["int64list"] == "[ 12345678901234, 2 ]"
     assert f["reallist"] == "[ 1.5, 2.5 ]"
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
+# Test a SQL request with the geometry in the first row being null
+
+
+def test_ogr_gpkg_sql_first_geom_null():
+
+    ds = ogr.Open("data/gpkg/first_geometry_null.gpkg")
+    if not _has_spatialite_4_3_or_later(ds):
+        pytest.skip("spatialite missing")
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1) FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1), * FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.5) AS geom FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "geom"
+        sql_lyr.GetNextFeature()
+        f = sql_lyr.GetNextFeature()
+        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.5) AS geom, * FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "geom"
+        sql_lyr.GetNextFeature()
+        f = sql_lyr.GetNextFeature()
+        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon

@@ -947,6 +947,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn(const char *pszLayerName,
     }
 #endif
 
+    bool bGeometryColumnGuessed = false;
     for (int iCol = 0; iCol < nRawColumns; iCol++)
     {
         OGRFieldDefn oField(SQLUnescape(sqlite3_column_name(hStmt, iCol)),
@@ -983,14 +984,19 @@ void OGRGeoPackageLayer::BuildFeatureDefn(const char *pszLayerName,
             OGRLayer *poLayer = m_poDS->GetLayerByName(pszTableName);
             if (poLayer != nullptr)
             {
-                if (m_poFeatureDefn->GetGeomFieldCount() == 0 &&
-                    EQUAL(pszOriginName, poLayer->GetGeometryColumn()))
+                if (EQUAL(pszOriginName, poLayer->GetGeometryColumn()))
                 {
-                    OGRGeomFieldDefn oGeomField(
-                        poLayer->GetLayerDefn()->GetGeomFieldDefn(0));
-                    oGeomField.SetName(oField.GetNameRef());
-                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
-                    m_iGeomCol = iCol;
+                    if (bGeometryColumnGuessed ||
+                        m_poFeatureDefn->GetGeomFieldCount() == 0)
+                    {
+                        if (bGeometryColumnGuessed)
+                            m_poFeatureDefn->DeleteGeomFieldDefn(0);
+                        OGRGeomFieldDefn oGeomField(
+                            poLayer->GetLayerDefn()->GetGeomFieldDefn(0));
+                        oGeomField.SetName(oField.GetNameRef());
+                        m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                        m_iGeomCol = iCol;
+                    }
                     continue;
                 }
                 else if (EQUAL(pszOriginName, poLayer->GetFIDColumn()) &&
@@ -1021,12 +1027,36 @@ void OGRGeoPackageLayer::BuildFeatureDefn(const char *pszLayerName,
 #endif
 
         const int nColType = sqlite3_column_type(hStmt, iCol);
-        if (m_pszFidColumn == nullptr && nColType == SQLITE_INTEGER &&
+        if (m_poFeatureDefn->GetGeomFieldCount() == 0 &&
+            m_pszFidColumn == nullptr && nColType == SQLITE_INTEGER &&
             EQUAL(oField.GetNameRef(), "FID"))
         {
             m_pszFidColumn = CPLStrdup(oField.GetNameRef());
             m_iFIDCol = iCol;
             continue;
+        }
+
+        // Heuristics to help for https://github.com/OSGeo/gdal/issues/8587
+        if (nColType == SQLITE_NULL && m_iGeomCol < 0
+#ifdef SQLITE_HAS_COLUMN_METADATA
+            && !pszTableName && !pszOriginName
+#endif
+        )
+        {
+            bool bIsLikelyGeomColName = EQUAL(oField.GetNameRef(), "geom") ||
+                                        EQUAL(oField.GetNameRef(), "geometry");
+            bool bIsGeomFunction = false;
+            if (!bIsLikelyGeomColName)
+                bIsGeomFunction = OGRSQLiteIsSpatialFunctionReturningGeometry(
+                    oField.GetNameRef());
+            if (bIsLikelyGeomColName || bIsGeomFunction)
+            {
+                bGeometryColumnGuessed = bIsLikelyGeomColName;
+                OGRGeomFieldDefn oGeomField(oField.GetNameRef(), wkbUnknown);
+                m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                m_iGeomCol = iCol;
+                continue;
+            }
         }
 
         const char *pszDeclType = sqlite3_column_decltype(hStmt, iCol);

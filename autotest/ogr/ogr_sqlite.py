@@ -3954,3 +3954,16 @@ def test_ogr_sqlite_delete(sqlite_test_db):
 
     lyr = sqlite_test_db.GetLayer("tpoly")
     assert lyr is None
+
+
+###############################################################################
+# Test a SQL request with the geometry in the first row being null
+
+
+def test_ogr_sql_sql_first_geom_null(require_spatialite):
+
+    ds = ogr.Open("data/sqlite/first_geometry_null.db")
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1) FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1), * FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"
