@@ -809,19 +809,20 @@ char **GeoRasterDataset::GetFileList()
     return papszFileList;
 }
 
-static bool ValidateCommaSeperatedNumbers(const char *str)
+static bool ParseCommaSeparatedString(const char *str, double pfValues[],
+                                      int nMaxValues)
 {
-    const size_t nStrLength = strlen(str);
-    for (size_t nPos = 0; nPos < nStrLength; ++nPos)
+    int nValues = 0;
+    char **papszTokens = CSLTokenizeString2(str, ",", 0);
+
+    for (int i = 0; papszTokens && papszTokens[i] && nValues < nMaxValues;
+         i++)
     {
-        // Allow only commas, numbers, and spaces
-        if (!(isdigit(str[nPos]) || str[nPos] == ',' || str[nPos] == ' ' ||
-              str[nPos] == '.'))
-        {
-            return false;
-        }
+        pfValues[nValues++] = CPLAtof(papszTokens[i]);
     }
-    return true;
+
+    CSLDestroy(papszTokens);
+    return nValues == nMaxValues;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1298,7 +1299,6 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
-        poGRD->poGeoRaster->bGenStats = true;
         poGRD->poGeoRaster->nGenStatsSamplingFactor = atoi(pszFetched);
     }
 
@@ -1306,11 +1306,10 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
-        if (ValidateCommaSeperatedNumbers(pszFetched))
-        {
-            poGRD->poGeoRaster->sGenStatsSamplingWindow = pszFetched;
-        }
-        else
+        // Sampling window contains 4 double values
+        const int nSize = 4;
+        if (!ParseCommaSeparatedString(pszFetched, 
+            poGRD->poGeoRaster->dfGenStatsSamplingWindow, nSize))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Wrong comma separated string for sampling window (%s)",
@@ -1318,6 +1317,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
             delete poGRD;
             return nullptr;
         }
+
+        poGRD->poGeoRaster->bGenStatsUseSamplingWindow = true;
+
     }
 
     pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_HISTOGRAM");
@@ -1345,11 +1347,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
-        if (ValidateCommaSeperatedNumbers(pszFetched))
-        {
-            poGRD->poGeoRaster->sGenStatsBinFunction = pszFetched;
-        }
-        else
+        const int nSize = 5;
+        if (!ParseCommaSeparatedString(pszFetched,
+            poGRD->poGeoRaster->dfGenStatsBinFunction, nSize))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Wrong comma separated string for bin function (%s)",

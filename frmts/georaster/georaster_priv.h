@@ -394,9 +394,9 @@ class GeoRasterWrapper
     char *GetVAT(int nBand);
     bool GeneratePyramid(int nLevels, const char *pszResampling,
                          bool bInternal = false);
-    bool GenerateStatistics(int nSamplingFactor, const char *pszSamplingWindow,
-                            bool bHistogram, const char *pszLayerNumbers,
-                            bool bUseBin, const char *pszBinFunction,
+    bool GenerateStatistics(int nSamplingFactor, double *pdfSamplingWindow, 
+                            bool bHistogram, const char *pszLayerNumbers, 
+                            bool bUseBin, double *pdfBinFunction,
                             bool bNodata);
     void DeletePyramid();
     void PrepareToOverwrite();
@@ -474,11 +474,12 @@ class GeoRasterWrapper
 
     bool bGenStats;
     int nGenStatsSamplingFactor;
-    CPLString sGenStatsSamplingWindow;
+    bool bGenStatsUseSamplingWindow;
+    double dfGenStatsSamplingWindow[4];
     bool bGenStatsHistogram;
     CPLString sGenStatsLayerNumbers;
     bool bGenStatsUseBin;
-    CPLString sGenStatsBinFunction;
+    double dfGenStatsBinFunction[5];
     bool bGenStatsNodata;
 
     int eModelCoordLocation;

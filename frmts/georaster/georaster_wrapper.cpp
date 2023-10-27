@@ -40,8 +40,7 @@
 
 GeoRasterWrapper::GeoRasterWrapper()
     : sPyramidResampling("NN"), sCompressionType("NONE"), sInterleaving("BSQ"),
-      sGenStatsSamplingWindow(""), sGenStatsLayerNumbers(""),
-      sGenStatsBinFunction("")
+      bGenStatsUseSamplingWindow(false), sGenStatsLayerNumbers(""),
 {
     nRasterId = -1;
     phMetadata = nullptr;
@@ -3709,9 +3708,9 @@ bool GeoRasterWrapper::FlushMetadata()
     if (bGenStats)
     {
         if (GenerateStatistics(
-                nGenStatsSamplingFactor, sGenStatsSamplingWindow.c_str(),
+                nGenStatsSamplingFactor, dfGenStatsSamplingWindow,
                 bGenStatsHistogram, sGenStatsLayerNumbers.c_str(),
-                bGenStatsUseBin, sGenStatsBinFunction.c_str(), bGenStatsNodata))
+                bGenStatsUseBin, dfGenStatsBinFunction, bGenStatsNodata))
         {
             CPLDebug("GEOR", "Generated statistics successfully.");
         }
@@ -3883,13 +3882,31 @@ void GeoRasterWrapper::DeletePyramid()
 //                                                         GenerateStatistics()
 //  ---------------------------------------------------------------------------
 bool GeoRasterWrapper::GenerateStatistics(
-    int nSamplingFactor, const char *pszSamplingWindow, bool bHistogram,
-    const char *pszLayerNumbers, bool bUseBin, const char *pszBinFunction,
+    int nSamplingFactor, double *pdfSamplingWindow, bool bHistogram,
+    const char *pszLayerNumbers, bool bUseBin, double *pdfBinFunction,
     bool bNodata)
 {
-    const char *pszHistogram = bHistogram ? "TRUE" : "FALSE";
-    const char *pszNodata = bNodata ? "TRUE" : "FALSE";
-    const char *pszUsebin = bUseBin ? "TRUE" : "FALSE";
+    // Length is 6 because it's the length of string FALSE.
+    char szHistogram[] = "FALSE";
+    char szNodata[] = "FALSE";
+    char szUseBin[] = "FALSE";
+    char szUseWin[] = "FALSE";
+    if (bHistogram)
+    {
+        strncpy(szHistogram, "TRUE", 5);
+    }
+    if (bNodata)
+    {
+        strncpy(szNodata, "TRUE", 5);
+    }
+    if (bUseBin)
+    {
+        strncpy(szUseBin, "TRUE", 5);
+    }
+    if (bGenStatsUseSamplingWindow)
+    {
+        strncpy(szUseWin, "TRUE", 5);
+    }
 
     char szLayerNumbers[OWTEXT];
     snprintf(szLayerNumbers, sizeof(szLayerNumbers), "%s", pszLayerNumbers);
@@ -3897,29 +3914,44 @@ bool GeoRasterWrapper::GenerateStatistics(
     OWStatement *poStmt = poConnection->CreateStatement(
         CPLSPrintf("DECLARE\n"
                    "  gr sdo_georaster;\n"
-                   "  swin SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(%s);\n"
-                   "  binfunc SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(%s);\n"
+                   "  swin SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:1, :2, :3,"
+                   "  :4);\n"
+                   "  binfunc SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:5, :6, :7, "
+                     ":8, :9);\n"
                    "  res VARCHAR2(5);\n"
                    "BEGIN\n"
-                   "  IF swin.count = 0 THEN\n"
+                   "  IF :usewin = 'FALSE' THEN\n"
                    "    swin := NULL;\n"
                    "  END IF;"
-                   "  IF binfunc.count = 0 THEN\n"
+                   "  IF :usebin = 'FALSE' THEN\n"
                    "    binfunc := NULL;\n"
                    "  END IF;"
                    "  SELECT %s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
                    "  res := sdo_geor.generateStatistics(gr, "
                    "'samplingFactor='||:samplingfactor, swin,\n"
-                   "  '%s', :layernums, '%s', binfunc, '%s');\n"
+                   "  :histogram, :layernums, :usebin, binfunc, :nodata);\n"
                    "  UPDATE %s t SET %s = gr WHERE %s;\n"
                    "  COMMIT;\n"
                    "END;\n",
-                   pszSamplingWindow, pszBinFunction, sColumn.c_str(),
-                   sTable.c_str(), sWhere.c_str(), pszHistogram, pszUsebin,
-                   pszNodata, sTable.c_str(), sColumn.c_str(), sWhere.c_str()));
+                   sColumn.c_str(), sTable.c_str(), sWhere.c_str(),
+                   sTable.c_str(), sColumn.c_str(), sWhere.c_str()));
 
+    // Bind sampling window
+    for (int i = 0; i < 4; i++)
+    {
+        poStmt->Bind(&pdfSamplingWindow[i]);
+    }
+    // Bind bin function
+    for (int i = 0; i < 5; i++)
+    {
+        poStmt->Bind(&pdfBinFunction[i]);
+    }
     poStmt->BindName(":samplingfactor", &nSamplingFactor);
     poStmt->BindName(":layernums", szLayerNumbers);
+    poStmt->BindName(":histogram", szHistogram);
+    poStmt->BindName(":nodata", szNodata);
+    poStmt->BindName(":usebin", szUseBin);
+    poStmt->BindName(":usewin", szUseWin);
 
     bool bResult = poStmt->Execute();
     delete poStmt;
