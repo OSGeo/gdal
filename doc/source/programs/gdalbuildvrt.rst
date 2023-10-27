@@ -163,9 +163,13 @@ changed in later versions.
 
 .. option:: -separate
 
-    Place each input file into a separate band. In that case, only the first
-    band of each dataset will be placed into a new band. Contrary to the default mode, it is not
+    Place each input file into a separate band. Contrary to the default mode, it is not
     required that all bands have the same datatype.
+
+    Starting with GDAL 3.8, all bands of each input file are added as separate
+    VRT bands, unless :option:`-b` is specified to select a subset of them.
+    Before GDAL 3.8, only the first band of each input file was placed into a
+    new VRT band, and :option:`-b` was ignored.
 
 .. option:: -allow_projection_difference
 
