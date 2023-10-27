@@ -159,7 +159,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     static struct ArrowSchema *
     CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
-                                     const char *pszArrowFormat = "z");
+                                     const char *pszArrowFormat,
+                                     const char *pszExtensionName);
 
     virtual bool
     CanPostFilterArrowArray(const struct ArrowSchema *schema) const;

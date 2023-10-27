@@ -498,6 +498,22 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
             psChild->children[0]->format = item_format;
         }
     }
+
+    const char *const pszGeometryMetadataEncoding =
+        m_aosArrowArrayStreamOptions.FetchNameValue(
+            "GEOMETRY_METADATA_ENCODING");
+    const char *pszExtensionName = EXTENSION_NAME_OGC_WKB;
+    if (pszGeometryMetadataEncoding)
+    {
+        if (EQUAL(pszGeometryMetadataEncoding, "OGC"))
+            pszExtensionName = EXTENSION_NAME_OGC_WKB;
+        else if (EQUAL(pszGeometryMetadataEncoding, "GEOARROW"))
+            pszExtensionName = EXTENSION_NAME_GEOARROW_WKB;
+        else
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported GEOMETRY_METADATA_ENCODING value: %s",
+                     pszGeometryMetadataEncoding);
+    }
     for (int i = 0; i < nGeomFieldCount; ++i)
     {
         const auto poFieldDefn = poLayerDefn->GetGeomFieldDefn(i);
@@ -506,8 +522,8 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
             continue;
         }
 
-        out_schema->children[iSchemaChild] =
-            CreateSchemaForWKBGeometryColumn(poFieldDefn);
+        out_schema->children[iSchemaChild] = CreateSchemaForWKBGeometryColumn(
+            poFieldDefn, "z", pszExtensionName);
 
         ++iSchemaChild;
     }
@@ -528,10 +544,19 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
 /* static */
 struct ArrowSchema *
 OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
-                                           const char *pszArrowFormat)
+                                           const char *pszArrowFormat,
+                                           const char *pszExtensionName)
 {
     CPLAssert(strcmp(pszArrowFormat, "z") == 0 ||
               strcmp(pszArrowFormat, "Z") == 0);
+    if (!EQUAL(pszExtensionName, EXTENSION_NAME_OGC_WKB) &&
+        !EQUAL(pszExtensionName, EXTENSION_NAME_GEOARROW_WKB))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported extension name '%s'. Defaulting to '%s'",
+                 pszExtensionName, EXTENSION_NAME_OGC_WKB);
+        pszExtensionName = EXTENSION_NAME_OGC_WKB;
+    }
     auto psSchema = static_cast<struct ArrowSchema *>(
         CPLCalloc(1, sizeof(struct ArrowSchema)));
     psSchema->release = OGRLayer::ReleaseSchema;
@@ -542,12 +567,42 @@ OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
     if (poFieldDefn->IsNullable())
         psSchema->flags = ARROW_FLAG_NULLABLE;
     psSchema->format = strcmp(pszArrowFormat, "z") == 0 ? "z" : "Z";
-    char *pszMetadata = static_cast<char *>(CPLMalloc(
-        sizeof(int32_t) + sizeof(int32_t) + strlen(ARROW_EXTENSION_NAME_KEY) +
-        sizeof(int32_t) + strlen(EXTENSION_NAME_WKB)));
+    std::string osExtensionMetadata;
+    if (EQUAL(pszExtensionName, EXTENSION_NAME_GEOARROW_WKB))
+    {
+        const auto poSRS = poFieldDefn->GetSpatialRef();
+        if (poSRS)
+        {
+            char *pszPROJJSON = nullptr;
+            poSRS->exportToPROJJSON(&pszPROJJSON, nullptr);
+            if (pszPROJJSON)
+            {
+                osExtensionMetadata = "{\"crs\":";
+                osExtensionMetadata += pszPROJJSON;
+                osExtensionMetadata += '}';
+                CPLFree(pszPROJJSON);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot export CRS of geometry field %s to PROJJSON",
+                         poFieldDefn->GetNameRef());
+            }
+        }
+    }
+    size_t nLen = sizeof(int32_t) + sizeof(int32_t) +
+                  strlen(ARROW_EXTENSION_NAME_KEY) + sizeof(int32_t) +
+                  strlen(pszExtensionName);
+    if (!osExtensionMetadata.empty())
+    {
+        nLen += sizeof(int32_t) + strlen(ARROW_EXTENSION_METADATA_KEY) +
+                sizeof(int32_t) + osExtensionMetadata.size();
+    }
+    char *pszMetadata = static_cast<char *>(CPLMalloc(nLen));
     psSchema->metadata = pszMetadata;
-    int offsetMD = 0;
-    *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) = 1;
+    size_t offsetMD = 0;
+    *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+        osExtensionMetadata.empty() ? 1 : 2;
     offsetMD += sizeof(int32_t);
     *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
         static_cast<int32_t>(strlen(ARROW_EXTENSION_NAME_KEY));
@@ -556,10 +611,27 @@ OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
            strlen(ARROW_EXTENSION_NAME_KEY));
     offsetMD += static_cast<int>(strlen(ARROW_EXTENSION_NAME_KEY));
     *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
-        static_cast<int32_t>(strlen(EXTENSION_NAME_WKB));
+        static_cast<int32_t>(strlen(pszExtensionName));
     offsetMD += sizeof(int32_t);
-    memcpy(pszMetadata + offsetMD, EXTENSION_NAME_WKB,
-           strlen(EXTENSION_NAME_WKB));
+    memcpy(pszMetadata + offsetMD, pszExtensionName, strlen(pszExtensionName));
+    offsetMD += strlen(pszExtensionName);
+    if (!osExtensionMetadata.empty())
+    {
+        *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+            static_cast<int32_t>(strlen(ARROW_EXTENSION_METADATA_KEY));
+        offsetMD += sizeof(int32_t);
+        memcpy(pszMetadata + offsetMD, ARROW_EXTENSION_METADATA_KEY,
+               strlen(ARROW_EXTENSION_METADATA_KEY));
+        offsetMD += static_cast<int>(strlen(ARROW_EXTENSION_METADATA_KEY));
+        *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+            static_cast<int32_t>(osExtensionMetadata.size());
+        offsetMD += sizeof(int32_t);
+        memcpy(pszMetadata + offsetMD, osExtensionMetadata.c_str(),
+               osExtensionMetadata.size());
+        offsetMD += osExtensionMetadata.size();
+    }
+    CPLAssert(offsetMD == nLen);
+    CPL_IGNORE_RET_VAL(offsetMD);
     return psSchema;
 }
 
@@ -2067,6 +2139,24 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
 YES.</li>
  * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
  *     a ArrowArray batch. Defaults to 65 536.</li>
+ * <li>TIMEZONE="unknown", "UTC", "(+|:)HH:MM" or any other value supported by
+ *     Arrow. (GDAL >= 3.8)
+ *     Override the timezone flag nominally provided by
+ *     OGRFieldDefn::GetTZFlag(), and used for the Arrow field timezone
+ *     declaration, with a user specified timezone.
+ *     Note that datetime values in Arrow arrays are always stored in UTC, and
+ *     that the time zone flag used by GDAL to convert to UTC is the one of the
+ *     OGRField::Date::TZFlag member at the OGRFeature level. The conversion
+ *     to UTC of a OGRField::Date is only done if both the timezone indicated by
+ *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
+ *     this TIMEZONE option) are not unknown.</li>
+ * <li>GEOMETRY_METADATA_ENCODING=OGC/GEOARROW (GDAL >= 3.8).
+ *     The default is OGC, which will lead to setting
+ *     the Arrow geometry column metadata to ARROW:extension:name=ogc.wkb.
+ *     If setting to GEOMETRY_METADATA_ENCODING to GEOARROW,
+ *     ARROW:extension:name=geoarrow.wkb and
+ *     ARROW:extension:metadata={"crs": &lt;projjson CRS representation>&gt; are set.
+ * </li>
  * </ul>
  *
  * The Arrow/Parquet drivers recognize the following option:
@@ -2239,6 +2329,13 @@ YES.</li>
  *     to UTC of a OGRField::Date is only done if both the timezone indicated by
  *     OGRField::Date::TZFlag and the one at the OGRFieldDefn level (or set by
  *     this TIMEZONE option) are not unknown.</li>
+ * <li>GEOMETRY_METADATA_ENCODING=OGC/GEOARROW (GDAL >= 3.8).
+ *     The default is OGC, which will lead to setting
+ *     the Arrow geometry column metadata to ARROW:extension:name=ogc.wkb.
+ *     If setting to GEOMETRY_METADATA_ENCODING to GEOARROW,
+ *     ARROW:extension:name=geoarrow.wkb and
+ *     ARROW:extension:metadata={"crs": &lt;projjson CRS representation>&gt; are set.
+ * </li>
  * </ul>
  *
  * The Arrow/Parquet drivers recognize the following option:
@@ -2552,7 +2649,8 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
                              fieldSchema->name, ARROW_EXTENSION_NAME_KEY);
                     return false;
                 }
-                if (oIter->second != EXTENSION_NAME_WKB)
+                if (oIter->second != EXTENSION_NAME_OGC_WKB &&
+                    oIter->second != EXTENSION_NAME_GEOARROW_WKB)
                 {
                     CPLDebug("OGR",
                              "Geometry field %s has unexpected "
@@ -5633,7 +5731,7 @@ static bool BuildOGRFieldInfo(
                 }
                 else
                 {
-                    // Check if ARROW:extension:name = ogc.wkb
+                    // Check if ARROW:extension:name = ogc.wkb or geoarrow.wkb
                     const char *pabyMetadata = schema->metadata;
                     if (pabyMetadata)
                     {
@@ -5641,7 +5739,8 @@ static bool BuildOGRFieldInfo(
                             OGRParseArrowMetadata(pabyMetadata);
                         auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
                         if (oIter != oMetadata.end() &&
-                            oIter->second == EXTENSION_NAME_WKB)
+                            (oIter->second == EXTENSION_NAME_OGC_WKB ||
+                             oIter->second == EXTENSION_NAME_GEOARROW_WKB))
                         {
                             if (poFeatureDefn->GetGeomFieldCount() == 0)
                             {
