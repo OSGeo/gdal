@@ -2280,6 +2280,7 @@ def test_json_types(tmp_vsimem):
             lyr = ds.GetLayer(0)
             test_extended_types(lyr)
 
+
 ###############################################################################
 
 
@@ -2318,4 +2319,3 @@ def test_ogr2ogr_lib_accumulerated_errors(tmp_vsimem, enable_exceptions, enable_
                         )
                         is None
                     )
-
