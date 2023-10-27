@@ -40,19 +40,6 @@
 #include <new>
 
 /************************************************************************/
-/*                          GetPAM()                                    */
-/************************************************************************/
-
-static std::shared_ptr<GDALPamMultiDim>
-GetPAM(const std::shared_ptr<GDALMDArray> &poParent)
-{
-    auto poPamArray = dynamic_cast<GDALPamMDArray *>(poParent.get());
-    if (poPamArray)
-        return poPamArray->GetPAM();
-    return nullptr;
-}
-
-/************************************************************************/
 /*                         GDALMDArrayGridded                           */
 /************************************************************************/
 
@@ -89,9 +76,9 @@ class GDALMDArrayGridded final : public GDALPamMDArray
         double dfResY, double dfRadius)
         : GDALAbstractMDArray(std::string(),
                               "Gridded view of " + poParent->GetFullName()),
-          GDALPamMDArray(std::string(),
-                         "Gridded view of " + poParent->GetFullName(),
-                         ::GetPAM(poParent)),
+          GDALPamMDArray(
+              std::string(), "Gridded view of " + poParent->GetFullName(),
+              GDALPamMultiDim::GetPAM(poParent), poParent->GetContext()),
           m_poParent(std::move(poParent)), m_apoDims(apoDims), m_poVarX(poVarX),
           m_poVarY(poVarY), m_poVectorDS(std::move(poVectorDS)), m_eAlg(eAlg),
           m_poGridOptions(std::move(poGridOptions)),

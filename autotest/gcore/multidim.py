@@ -811,3 +811,160 @@ def test_multidim_asclassicsubdataset_band_metadata():
         "OTHER_STRING_ATTR": "string_attr_value",
         "AUX_VAR": "bar",
     }
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_SubsetDimensionFromSelection():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+
+    numeric_attr = rg.CreateAttribute(
+        "numeric_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert numeric_attr.Write(1) == gdal.CE_None
+
+    subgroup = rg.CreateGroup("band_properties")
+
+    dimBand = rg.CreateDimension("band", None, None, 3)
+    validity = subgroup.CreateMDArray(
+        "validity", [dimBand], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
+    )
+    validity.Write(array.array("i", [1, 0, 1]))
+    dimBand.SetIndexingVariable(validity)
+
+    dimX = rg.CreateDimension("X", None, None, 2)
+    X = rg.CreateMDArray("X", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+    X.Write(array.array("d", [10, 20]))
+    dimX.SetIndexingVariable(X)
+
+    dimY = rg.CreateDimension("Y", None, None, 2)
+
+    ar = rg.CreateMDArray(
+        "ar", [dimBand, dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert ar.Write(array.array("d", [i for i in range(3 * 2 * 2)])) == gdal.CE_None
+    ar.SetUnit("foo")
+    ar.SetNoDataValueDouble(5)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ar.SetSpatialRef(srs)
+
+    ar_numeric_attr = ar.CreateAttribute(
+        "ar_numeric_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    assert ar_numeric_attr.Write(1) == gdal.CE_None
+
+    subgroup = rg.CreateGroup("subgroup")
+
+    indexed_twice_by_band = subgroup.CreateMDArray(
+        "indexed_twice_by_band",
+        [dimBand, dimX, dimBand],
+        gdal.ExtendedDataType.Create(gdal.GDT_Float64),
+    )
+    assert (
+        indexed_twice_by_band.Write(array.array("d", [i for i in range(3 * 3 * 2)]))
+        == gdal.CE_None
+    )
+
+    rg.CreateMDArray("non_numeric_ar", [dimBand], gdal.ExtendedDataType.CreateString())
+
+    too_large_dim = rg.CreateDimension(
+        "too_large_dim", None, None, 10 * 1024 * 1024 + 1
+    )
+    rg.CreateMDArray(
+        "too_large_dim_ar", [too_large_dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    same_value = rg.CreateMDArray(
+        "same_value", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    same_value.Write(array.array("d", [10, 10]))
+
+    with pytest.raises(Exception, match="Invalid value for selection"):
+        rg.SubsetDimensionFromSelection("")
+    with pytest.raises(Exception, match="Invalid value for selection"):
+        rg.SubsetDimensionFromSelection("/band_properties/validity")
+    with pytest.raises(Exception, match="Non-numeric value in selection criterion"):
+        rg.SubsetDimensionFromSelection("/band_properties/validity='foo'")
+    with pytest.raises(Exception, match="Cannot find array /i/do/not/exist"):
+        rg.SubsetDimensionFromSelection("/i/do/not/exist=1")
+    with pytest.raises(Exception, match="Array /ar is not single dimensional"):
+        rg.SubsetDimensionFromSelection("/ar=1")
+    with pytest.raises(Exception, match="Array /non_numeric_ar is not of numeric type"):
+        rg.SubsetDimensionFromSelection("/non_numeric_ar=1")
+    with pytest.raises(Exception, match="Too many values in /too_large_dim_ar"):
+        rg.SubsetDimensionFromSelection("/too_large_dim_ar=1")
+    with pytest.raises(
+        Exception, match="No value in /band_properties/validity matching 2.000000"
+    ):
+        rg.SubsetDimensionFromSelection("/band_properties/validity=2")
+
+    # In C++, should return the same object as rg, but we can't easily check
+    rg.SubsetDimensionFromSelection("/same_value=10")
+
+    rg_subset = rg.SubsetDimensionFromSelection("/band_properties/validity=1")
+    assert rg_subset
+    dims = rg_subset.GetDimensions()
+    assert len(dims) == 4
+    bandFound = False
+    for dim in dims:
+        if dim.GetName() == "band":
+            bandFound = True
+            assert dim.GetFullName() == "/band"
+            assert dim.GetSize() == 2
+            var = dim.GetIndexingVariable()
+            assert var
+            assert var.GetName() == "validity"
+            assert var.GetFullName() == "/band_properties/validity"
+    assert bandFound
+
+    assert rg_subset.GetGroupNames() == rg.GetGroupNames()
+    with pytest.raises(Exception, match="Group i_do_not_exist does not exist"):
+        assert rg_subset.OpenGroup("i_do_not_exist") is None
+    assert len(rg_subset.GetAttributes()) == 1
+    assert rg_subset.GetAttribute("numeric_attr") is not None
+
+    subgroup_subset = rg_subset.OpenGroup("band_properties")
+    assert subgroup_subset.GetFullName() == "/band_properties"
+    assert subgroup_subset.GetMDArrayNames() == ["validity"]
+    validity_subset = subgroup_subset.OpenMDArray("validity")
+    assert validity_subset.GetFullName() == "/band_properties/validity"
+    assert validity_subset.Read() == array.array("i", [1, 1])
+
+    assert rg_subset.GetMDArrayNames() == rg.GetMDArrayNames()
+    with pytest.raises(Exception, match="Array i_do_not_exist does not exist"):
+        assert rg_subset.OpenMDArray("i_do_not_exist") is None
+    ar_subset = rg_subset.OpenMDArray("ar")
+    assert ar_subset.GetFullName() == "/ar"
+    assert [dim.GetFullName() for dim in ar_subset.GetDimensions()] == [
+        "/band",
+        "/Y",
+        "/X",
+    ]
+    assert ar_subset.GetDataType() == ar.GetDataType()
+    assert ar_subset.Read() == array.array(
+        "d", [0.0, 1.0, 2.0, 3.0, 8.0, 9.0, 10.0, 11.0]
+    )
+    assert ar_subset.Read(
+        array_start_idx=[1, 0, 0], array_step=[-1, 1, 1]
+    ) == array.array("d", [8.0, 9.0, 10.0, 11.0, 0.0, 1.0, 2.0, 3.0])
+    assert len(ar_subset.GetAttributes()) == 1
+    assert ar_subset.GetAttribute("ar_numeric_attr") is not None
+    assert ar_subset.GetUnit() == ar.GetUnit()
+    assert ar_subset.GetSpatialRef().IsSame(ar.GetSpatialRef())
+    assert ar_subset.GetNoDataValueAsRaw() == ar.GetNoDataValueAsRaw()
+    assert ar_subset.GetBlockSize() == [0, 1, 0]
+
+    subgroup_subset = rg_subset.OpenGroup("subgroup")
+    indexed_twice_by_band_subset = subgroup_subset.OpenMDArray("indexed_twice_by_band")
+    assert (
+        indexed_twice_by_band_subset.GetFullName() == "/subgroup/indexed_twice_by_band"
+    )
+    assert indexed_twice_by_band_subset.Read() == array.array(
+        "d", [0.0, 2.0, 3.0, 5.0, 12.0, 14.0, 15.0, 17.0]
+    )
+    assert indexed_twice_by_band_subset.Read(
+        array_start_idx=[1, 0, 0], array_step=[-1, 1, 1]
+    ) == array.array("d", [12.0, 14.0, 15.0, 17.0, 0.0, 2.0, 3.0, 5.0])

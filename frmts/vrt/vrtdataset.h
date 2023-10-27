@@ -1449,9 +1449,24 @@ class VRTGroup final : public GDALGroup
     void SetRootGroupRef(const std::weak_ptr<Ref> &rgRef);
     std::weak_ptr<Ref> GetRootGroupRef() const;
 
-  public:
+  protected:
+    friend class VRTMDArray;
+    friend std::shared_ptr<GDALMDArray>
+    VRTDerivedArrayCreate(const char *pszVRTPath, const CPLXMLNode *psTree);
+
     explicit VRTGroup(const char *pszVRTPath);
     VRTGroup(const std::string &osParentName, const std::string &osName);
+
+  public:
+    static std::shared_ptr<VRTGroup> Create(const std::string &osParentName,
+                                            const std::string &osName)
+    {
+        auto poGroup =
+            std::shared_ptr<VRTGroup>(new VRTGroup(osParentName, osName));
+        poGroup->SetSelf(poGroup);
+        return poGroup;
+    }
+
     ~VRTGroup();
 
     bool XMLInit(const std::shared_ptr<VRTGroup> &poRoot,

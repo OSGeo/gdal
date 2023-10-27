@@ -33,6 +33,7 @@
 #include <limits>
 #include <queue>
 #include <set>
+#include <utility>
 #include <time.h>
 
 #include <ctype.h>  // isalnum
@@ -48,19 +49,6 @@
 #if defined(__clang__) || defined(_MSC_VER)
 #define COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT
 #endif
-
-/************************************************************************/
-/*                          GetPAM()                                    */
-/************************************************************************/
-
-static std::shared_ptr<GDALPamMultiDim>
-GetPAM(const std::shared_ptr<GDALMDArray> &poParent)
-{
-    auto poPamArray = dynamic_cast<GDALPamMDArray *>(poParent.get());
-    if (poPamArray)
-        return poPamArray->GetPAM();
-    return nullptr;
-}
 
 /************************************************************************/
 /*                       GDALMDArrayUnscaled                            */
@@ -82,9 +70,9 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
                                  double dfOverriddenDstNodata, GDALDataType eDT)
         : GDALAbstractMDArray(std::string(),
                               "Unscaled view of " + poParent->GetFullName()),
-          GDALPamMDArray(std::string(),
-                         "Unscaled view of " + poParent->GetFullName(),
-                         ::GetPAM(poParent)),
+          GDALPamMDArray(
+              std::string(), "Unscaled view of " + poParent->GetFullName(),
+              GDALPamMultiDim::GetPAM(poParent), poParent->GetContext()),
           m_poParent(std::move(poParent)),
           m_dt(GDALExtendedDataType::Create(eDT)),
           m_bHasNoData(m_poParent->GetRawNoDataValue() != nullptr),
@@ -356,12 +344,14 @@ bool GDALIHasAttribute::DeleteAttribute(CPL_UNUSED const std::string &osName,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-GDALGroup::GDALGroup(const std::string &osParentName, const std::string &osName)
+GDALGroup::GDALGroup(const std::string &osParentName, const std::string &osName,
+                     const std::string &osContext)
     : m_osName(osParentName.empty() ? "/" : osName),
       m_osFullName(
           !osParentName.empty()
               ? ((osParentName == "/" ? "/" : osParentName + "/") + osName)
-              : "/")
+              : "/"),
+      m_osContext(osContext)
 {
 }
 //! @endcond
@@ -3644,10 +3634,13 @@ bool GDALAttribute::Write(const double *vals, size_t nVals)
 
 //! @cond Doxygen_Suppress
 GDALMDArray::GDALMDArray(CPL_UNUSED const std::string &osParentName,
-                         CPL_UNUSED const std::string &osName)
+                         CPL_UNUSED const std::string &osName,
+                         const std::string &osContext)
+    :
 #if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
-    : GDALAbstractMDArray(osParentName, osName)
+      GDALAbstractMDArray(osParentName, osName),
 #endif
+      m_osContext(osContext)
 {
 }
 //! @endcond
@@ -4382,7 +4375,14 @@ void CopyToFinalBufferSameDataType(const void *pSrcBuffer, void *pDstBuffer,
     std::vector<size_t> anStackCount(nDims);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
     const GByte *pabySrcBuffer = static_cast<const GByte *>(pSrcBuffer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     size_t iDim = 0;
 
 lbl_next_depth:
@@ -4822,7 +4822,8 @@ class GDALSlicedMDArray final : public GDALPamMDArray
           GDALPamMDArray(std::string(),
                          "Sliced view of " + poParent->GetFullName() + " (" +
                              viewExpr + ")",
-                         ::GetPAM(poParent)),
+                         GDALPamMultiDim::GetPAM(poParent),
+                         poParent->GetContext()),
           m_poParent(std::move(poParent)), m_dims(std::move(dims)),
           m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
           m_parentRanges(std::move(parentRanges)),
@@ -5288,10 +5289,10 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
         : GDALAbstractMDArray(std::string(), "Extract field " + fieldName +
                                                  " of " +
                                                  poParent->GetFullName()),
-          GDALPamMDArray(std::string(),
-                         "Extract field " + fieldName + " of " +
-                             poParent->GetFullName(),
-                         ::GetPAM(poParent)),
+          GDALPamMDArray(
+              std::string(),
+              "Extract field " + fieldName + " of " + poParent->GetFullName(),
+              GDALPamMultiDim::GetPAM(poParent), poParent->GetContext()),
           m_poParent(poParent), m_dt(srcComp->GetType()),
           m_srcCompName(srcComp->GetName())
     {
@@ -5707,7 +5708,8 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
           GDALPamMDArray(std::string(),
                          "Transposed view of " + poParent->GetFullName() +
                              " along " + MappingToStr(anMapNewAxisToOldAxis),
-                         ::GetPAM(poParent)),
+                         GDALPamMultiDim::GetPAM(poParent),
+                         poParent->GetContext()),
           m_poParent(std::move(poParent)),
           m_anMapNewAxisToOldAxis(anMapNewAxisToOldAxis),
           m_dims(std::move(dims)),
@@ -6465,7 +6467,8 @@ class GDALMDArrayMask final : public GDALPamMDArray
         : GDALAbstractMDArray(std::string(),
                               "Mask of " + poParent->GetFullName()),
           GDALPamMDArray(std::string(), "Mask of " + poParent->GetFullName(),
-                         ::GetPAM(poParent)),
+                         GDALPamMultiDim::GetPAM(poParent),
+                         poParent->GetContext()),
           m_poParent(std::move(poParent))
     {
     }
@@ -7611,9 +7614,9 @@ class GDALMDArrayResampled final : public GDALPamMDArray
         const std::vector<GUInt64> &anBlockSize)
         : GDALAbstractMDArray(std::string(),
                               "Resampled view of " + poParent->GetFullName()),
-          GDALPamMDArray(std::string(),
-                         "Resampled view of " + poParent->GetFullName(),
-                         ::GetPAM(poParent)),
+          GDALPamMDArray(
+              std::string(), "Resampled view of " + poParent->GetFullName(),
+              GDALPamMultiDim::GetPAM(poParent), poParent->GetContext()),
           m_poParent(std::move(poParent)), m_apoDims(apoDims),
           m_anBlockSize(anBlockSize), m_dt(m_poParent->GetDataType())
     {
@@ -9183,9 +9186,15 @@ lbl_next_depth:
     if (!array->GetFilename().empty())
     {
         poDS->SetPhysicalFilename(array->GetFilename().c_str());
-        poDS->SetDerivedDatasetName(
+        std::string osDerivedDatasetName(
             CPLSPrintf("AsClassicDataset(%d,%d) view of %s", int(iXDim),
                        int(iYDim), array->GetFullName().c_str()));
+        if (!array->GetContext().empty())
+        {
+            osDerivedDatasetName += " with context ";
+            osDerivedDatasetName += array->GetContext();
+        }
+        poDS->SetDerivedDatasetName(osDerivedDatasetName.c_str());
         poDS->TryLoadXML();
     }
 
@@ -11162,6 +11171,31 @@ bool GDALGroupRename(GDALGroupH hGroup, const char *pszNewName)
     VALIDATE_POINTER1(hGroup, __func__, false);
     VALIDATE_POINTER1(pszNewName, __func__, false);
     return hGroup->m_poImpl->Rename(pszNewName);
+}
+
+/************************************************************************/
+/*                 GDALGroupSubsetDimensionFromSelection()              */
+/************************************************************************/
+
+/** Return a virtual group whose one dimension has been subset according to a
+ * selection.
+ *
+ * This is the same as the C++ method GDALGroup::SubsetDimensionFromSelection().
+ *
+ * @return a virtual group, to be freed with GDALGroupRelease(), or nullptr.
+ */
+GDALGroupH
+GDALGroupSubsetDimensionFromSelection(GDALGroupH hGroup,
+                                      const char *pszSelection,
+                                      CPL_UNUSED CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hGroup, __func__, nullptr);
+    VALIDATE_POINTER1(pszSelection, __func__, nullptr);
+    auto hNewGroup = hGroup->m_poImpl->SubsetDimensionFromSelection(
+        std::string(pszSelection));
+    if (!hNewGroup)
+        return nullptr;
+    return new GDALGroupHS(hNewGroup);
 }
 
 /************************************************************************/
@@ -13361,7 +13395,8 @@ struct GDALPamMultiDim::Private
         Statistics stats{};
     };
 
-    std::map<std::string, ArrayInfo> m_oMapArray{};
+    typedef std::pair<std::string, std::string> NameContext;
+    std::map<NameContext, ArrayInfo> m_oMapArray{};
     std::vector<CPLXMLTreeCloser> m_apoOtherNodes{};
     bool m_bDirty = false;
     bool m_bLoaded = false;
@@ -13422,6 +13457,9 @@ void GDALPamMultiDim::Load()
             const char *pszName = CPLGetXMLValue(psIter, "name", nullptr);
             if (!pszName)
                 continue;
+            const char *pszContext = CPLGetXMLValue(psIter, "context", "");
+            const auto oKey =
+                std::pair<std::string, std::string>(pszName, pszContext);
 
             /* --------------------------------------------------------------------
              */
@@ -13460,7 +13498,7 @@ void GDALPamMultiDim::Load()
                 if (pszCoordinateEpoch)
                     poSRS->SetCoordinateEpoch(CPLAtof(pszCoordinateEpoch));
 
-                d->m_oMapArray[pszName].poSRS = poSRS;
+                d->m_oMapArray[oKey].poSRS = poSRS;
             }
 
             const CPLXMLNode *psStatistics =
@@ -13481,7 +13519,7 @@ void GDALPamMultiDim::Load()
                     CPLAtofM(CPLGetXMLValue(psStatistics, "StdDev", "0"));
                 sStats.nValidCount = static_cast<GUInt64>(CPLAtoGIntBig(
                     CPLGetXMLValue(psStatistics, "ValidSampleCount", "0")));
-                d->m_oMapArray[pszName].stats = sStats;
+                d->m_oMapArray[oKey].stats = sStats;
             }
         }
         else
@@ -13511,7 +13549,12 @@ void GDALPamMultiDim::Save()
     {
         CPLXMLNode *psArrayNode =
             CPLCreateXMLNode(oTree.get(), CXT_Element, "Array");
-        CPLAddXMLAttributeAndValue(psArrayNode, "name", kv.first.c_str());
+        CPLAddXMLAttributeAndValue(psArrayNode, "name", kv.first.first.c_str());
+        if (!kv.first.second.empty())
+        {
+            CPLAddXMLAttributeAndValue(psArrayNode, "context",
+                                       kv.first.second.c_str());
+        }
         if (kv.second.poSRS)
         {
             char *pszWKT = nullptr;
@@ -13603,10 +13646,12 @@ void GDALPamMultiDim::Save()
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference>
-GDALPamMultiDim::GetSpatialRef(const std::string &osArrayFullName)
+GDALPamMultiDim::GetSpatialRef(const std::string &osArrayFullName,
+                               const std::string &osContext)
 {
     Load();
-    auto oIter = d->m_oMapArray.find(osArrayFullName);
+    auto oIter =
+        d->m_oMapArray.find(std::make_pair(osArrayFullName, osContext));
     if (oIter != d->m_oMapArray.end())
         return oIter->second.poSRS;
     return nullptr;
@@ -13617,14 +13662,17 @@ GDALPamMultiDim::GetSpatialRef(const std::string &osArrayFullName)
 /************************************************************************/
 
 void GDALPamMultiDim::SetSpatialRef(const std::string &osArrayFullName,
+                                    const std::string &osContext,
                                     const OGRSpatialReference *poSRS)
 {
     Load();
     d->m_bDirty = true;
     if (poSRS && !poSRS->IsEmpty())
-        d->m_oMapArray[osArrayFullName].poSRS.reset(poSRS->Clone());
+        d->m_oMapArray[std::make_pair(osArrayFullName, osContext)].poSRS.reset(
+            poSRS->Clone());
     else
-        d->m_oMapArray[osArrayFullName].poSRS.reset();
+        d->m_oMapArray[std::make_pair(osArrayFullName, osContext)]
+            .poSRS.reset();
 }
 
 /************************************************************************/
@@ -13632,12 +13680,14 @@ void GDALPamMultiDim::SetSpatialRef(const std::string &osArrayFullName,
 /************************************************************************/
 
 CPLErr GDALPamMultiDim::GetStatistics(const std::string &osArrayFullName,
+                                      const std::string &osContext,
                                       bool bApproxOK, double *pdfMin,
                                       double *pdfMax, double *pdfMean,
                                       double *pdfStdDev, GUInt64 *pnValidCount)
 {
     Load();
-    auto oIter = d->m_oMapArray.find(osArrayFullName);
+    auto oIter =
+        d->m_oMapArray.find(std::make_pair(osArrayFullName, osContext));
     if (oIter == d->m_oMapArray.end())
         return CE_Failure;
     const auto &stats = oIter->second.stats;
@@ -13663,13 +13713,15 @@ CPLErr GDALPamMultiDim::GetStatistics(const std::string &osArrayFullName,
 /************************************************************************/
 
 void GDALPamMultiDim::SetStatistics(const std::string &osArrayFullName,
+                                    const std::string &osContext,
                                     bool bApproxStats, double dfMin,
                                     double dfMax, double dfMean,
                                     double dfStdDev, GUInt64 nValidCount)
 {
     Load();
     d->m_bDirty = true;
-    auto &stats = d->m_oMapArray[osArrayFullName].stats;
+    auto &stats =
+        d->m_oMapArray[std::make_pair(osArrayFullName, osContext)].stats;
     stats.bHasStats = true;
     stats.bApproxStats = bApproxStats;
     stats.dfMin = dfMin;
@@ -13683,11 +13735,13 @@ void GDALPamMultiDim::SetStatistics(const std::string &osArrayFullName,
 /*                           ClearStatistics()                          */
 /************************************************************************/
 
-void GDALPamMultiDim::ClearStatistics(const std::string &osArrayFullName)
+void GDALPamMultiDim::ClearStatistics(const std::string &osArrayFullName,
+                                      const std::string &osContext)
 {
     Load();
     d->m_bDirty = true;
-    d->m_oMapArray[osArrayFullName].stats.bHasStats = false;
+    d->m_oMapArray[std::make_pair(osArrayFullName, osContext)].stats.bHasStats =
+        false;
 }
 
 /************************************************************************/
@@ -13703,17 +13757,31 @@ void GDALPamMultiDim::ClearStatistics()
 }
 
 /************************************************************************/
+/*                             GetPAM()                                 */
+/************************************************************************/
+
+/*static*/ std::shared_ptr<GDALPamMultiDim>
+GDALPamMultiDim::GetPAM(const std::shared_ptr<GDALMDArray> &poParent)
+{
+    auto poPamArray = dynamic_cast<GDALPamMDArray *>(poParent.get());
+    if (poPamArray)
+        return poPamArray->GetPAM();
+    return nullptr;
+}
+
+/************************************************************************/
 /*                           GDALPamMDArray                             */
 /************************************************************************/
 
 GDALPamMDArray::GDALPamMDArray(const std::string &osParentName,
                                const std::string &osName,
-                               const std::shared_ptr<GDALPamMultiDim> &poPam)
+                               const std::shared_ptr<GDALPamMultiDim> &poPam,
+                               const std::string &osContext)
     :
 #if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
       GDALAbstractMDArray(osParentName, osName),
 #endif
-      GDALMDArray(osParentName, osName), m_poPam(poPam)
+      GDALMDArray(osParentName, osName, osContext), m_poPam(poPam)
 {
 }
 
@@ -13725,7 +13793,7 @@ bool GDALPamMDArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
     if (!m_poPam)
         return false;
-    m_poPam->SetSpatialRef(GetFullName(), poSRS);
+    m_poPam->SetSpatialRef(GetFullName(), GetContext(), poSRS);
     return true;
 }
 
@@ -13737,7 +13805,7 @@ std::shared_ptr<OGRSpatialReference> GDALPamMDArray::GetSpatialRef() const
 {
     if (!m_poPam)
         return nullptr;
-    return m_poPam->GetSpatialRef(GetFullName());
+    return m_poPam->GetSpatialRef(GetFullName(), GetContext());
 }
 
 /************************************************************************/
@@ -13751,9 +13819,9 @@ CPLErr GDALPamMDArray::GetStatistics(bool bApproxOK, bool bForce,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
-    if (m_poPam &&
-        m_poPam->GetStatistics(GetFullName(), bApproxOK, pdfMin, pdfMax,
-                               pdfMean, pdfStdDev, pnValidCount) == CE_None)
+    if (m_poPam && m_poPam->GetStatistics(GetFullName(), GetContext(),
+                                          bApproxOK, pdfMin, pdfMax, pdfMean,
+                                          pdfStdDev, pnValidCount) == CE_None)
     {
         return CE_None;
     }
@@ -13776,8 +13844,8 @@ bool GDALPamMDArray::SetStatistics(bool bApproxStats, double dfMin,
 {
     if (!m_poPam)
         return false;
-    m_poPam->SetStatistics(GetFullName(), bApproxStats, dfMin, dfMax, dfMean,
-                           dfStdDev, nValidCount);
+    m_poPam->SetStatistics(GetFullName(), GetContext(), bApproxStats, dfMin,
+                           dfMax, dfMean, dfStdDev, nValidCount);
     return true;
 }
 
@@ -13789,7 +13857,7 @@ void GDALPamMDArray::ClearStatistics()
 {
     if (!m_poPam)
         return;
-    m_poPam->ClearStatistics(GetFullName());
+    m_poPam->ClearStatistics(GetFullName(), GetContext());
 }
 
 //! @endcond
