@@ -93,8 +93,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ExploreExprNode(const swq_expr_node *poNode);
     bool UseRecordBatchBaseImplementation() const;
 
+    template <typename SourceOffset>
     static struct ArrowArray *
-    CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+    CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray);
 
     int GetArrowSchemaInternal(struct ArrowSchema *out) const;
 
@@ -116,6 +117,7 @@ class OGRArrowLayer CPL_NON_FINAL
     int m_iBBOXMaxYField = -1;
 
     const arrow::BinaryArray *m_poArrayWKB = nullptr;
+    const arrow::LargeBinaryArray *m_poArrayWKBLarge = nullptr;
     const arrow::Array *m_poArrayBBOX = nullptr;
     const arrow::DoubleArray *m_poArrayMinX = nullptr;
     const arrow::DoubleArray *m_poArrayMinY = nullptr;
