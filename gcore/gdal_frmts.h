@@ -103,6 +103,7 @@ void CPL_DLL GDALRegister_IDA(void);
 void CPL_DLL GDALRegister_NDF(void);
 void CPL_DLL GDALRegister_RMF(void);
 void CPL_DLL GDALRegister_BAG(void);
+void CPL_DLL GDALRegister_S102(void);
 void CPL_DLL GDALRegister_HDF5(void);
 void CPL_DLL GDALRegister_HDF5Image(void);
 void CPL_DLL GDALRegister_MSGN(void);

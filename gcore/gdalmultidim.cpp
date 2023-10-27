@@ -70,26 +70,33 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
 {
   private:
     std::shared_ptr<GDALMDArray> m_poParent{};
-    GDALExtendedDataType m_dt;
+    const GDALExtendedDataType m_dt;
     bool m_bHasNoData;
-    double m_adfNoData[2]{std::numeric_limits<double>::quiet_NaN(),
-                          std::numeric_limits<double>::quiet_NaN()};
+    const double m_dfScale;
+    const double m_dfOffset;
+    std::vector<GByte> m_abyRawNoData{};
 
   protected:
-    explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray> &poParent)
+    explicit GDALMDArrayUnscaled(const std::shared_ptr<GDALMDArray> &poParent,
+                                 double dfScale, double dfOffset,
+                                 double dfOverriddenDstNodata, GDALDataType eDT)
         : GDALAbstractMDArray(std::string(),
                               "Unscaled view of " + poParent->GetFullName()),
           GDALPamMDArray(std::string(),
                          "Unscaled view of " + poParent->GetFullName(),
                          ::GetPAM(poParent)),
           m_poParent(std::move(poParent)),
-          m_dt(GDALExtendedDataType::Create(
-              GDALDataTypeIsComplex(
-                  m_poParent->GetDataType().GetNumericDataType())
-                  ? GDT_CFloat64
-                  : GDT_Float64)),
-          m_bHasNoData(m_poParent->GetRawNoDataValue() != nullptr)
+          m_dt(GDALExtendedDataType::Create(eDT)),
+          m_bHasNoData(m_poParent->GetRawNoDataValue() != nullptr),
+          m_dfScale(dfScale), m_dfOffset(dfOffset)
     {
+        m_abyRawNoData.resize(m_dt.GetSize());
+        const auto eNonComplexDT =
+            GDALGetNonComplexDataType(m_dt.GetNumericDataType());
+        GDALCopyWords(&dfOverriddenDstNodata, GDT_Float64, 0,
+                      m_abyRawNoData.data(), eNonComplexDT,
+                      GDALGetDataTypeSizeBytes(eNonComplexDT),
+                      GDALDataTypeIsComplex(m_dt.GetNumericDataType()) ? 2 : 1);
     }
 
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -110,10 +117,11 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
 
   public:
     static std::shared_ptr<GDALMDArrayUnscaled>
-    Create(const std::shared_ptr<GDALMDArray> &poParent)
+    Create(const std::shared_ptr<GDALMDArray> &poParent, double dfScale,
+           double dfOffset, double dfDstNodata, GDALDataType eDT)
     {
-        auto newAr(std::shared_ptr<GDALMDArrayUnscaled>(
-            new GDALMDArrayUnscaled(poParent)));
+        auto newAr(std::shared_ptr<GDALMDArrayUnscaled>(new GDALMDArrayUnscaled(
+            poParent, dfScale, dfOffset, dfDstNodata, eDT)));
         newAr->SetSelf(newAr);
         return newAr;
     }
@@ -151,13 +159,13 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
 
     const void *GetRawNoDataValue() const override
     {
-        return m_bHasNoData ? &m_adfNoData[0] : nullptr;
+        return m_bHasNoData ? m_abyRawNoData.data() : nullptr;
     }
 
     bool SetRawNoDataValue(const void *pRawNoData) override
     {
         m_bHasNoData = true;
-        memcpy(m_adfNoData, pRawNoData, m_dt.GetSize());
+        memcpy(m_abyRawNoData.data(), pRawNoData, m_dt.GetSize());
         return true;
     }
 
@@ -6010,18 +6018,20 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
                                 const GDALExtendedDataType &bufferDataType,
                                 void *pDstBuffer) const
 {
-    const double dfScale = m_poParent->GetScale();
-    const double dfOffset = m_poParent->GetOffset();
-    const bool bDTIsComplex = m_dt.GetNumericDataType() == GDT_CFloat64;
-    const size_t nDTSize = m_dt.GetSize();
-    const bool bTempBufferNeeded = (m_dt != bufferDataType);
+    const double dfScale = m_dfScale;
+    const double dfOffset = m_dfOffset;
+    const bool bDTIsComplex = GDALDataTypeIsComplex(m_dt.GetNumericDataType());
+    const auto dtDouble =
+        GDALExtendedDataType::Create(bDTIsComplex ? GDT_CFloat64 : GDT_Float64);
+    const size_t nDTSize = dtDouble.GetSize();
+    const bool bTempBufferNeeded = (dtDouble != bufferDataType);
 
     double adfSrcNoData[2] = {0, 0};
     if (m_bHasNoData)
     {
         GDALExtendedDataType::CopyValue(m_poParent->GetRawNoDataValue(),
                                         m_poParent->GetDataType(),
-                                        &adfSrcNoData[0], m_dt);
+                                        &adfSrcNoData[0], dtDouble);
     }
 
     const auto nDims = GetDimensions().size();
@@ -6029,7 +6039,7 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
     {
         double adfVal[2];
         if (!m_poParent->Read(arrayStartIdx, count, arrayStep, bufferStride,
-                              m_dt, &adfVal[0]))
+                              dtDouble, &adfVal[0]))
         {
             return false;
         }
@@ -6040,13 +6050,13 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
             {
                 adfVal[1] = adfVal[1] * dfScale + dfOffset;
             }
-            GDALExtendedDataType::CopyValue(&adfVal[0], m_dt, pDstBuffer,
+            GDALExtendedDataType::CopyValue(&adfVal[0], dtDouble, pDstBuffer,
                                             bufferDataType);
         }
         else
         {
-            GDALExtendedDataType::CopyValue(&m_adfNoData[0], m_dt, pDstBuffer,
-                                            bufferDataType);
+            GDALExtendedDataType::CopyValue(m_abyRawNoData.data(), m_dt,
+                                            pDstBuffer, bufferDataType);
         }
         return true;
     }
@@ -6073,7 +6083,7 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
             return false;
     }
     if (!m_poParent->Read(arrayStartIdx, count, arrayStep,
-                          actualBufferStridePtr, m_dt, pTempBuffer))
+                          actualBufferStridePtr, dtDouble, pTempBuffer))
     {
         if (bTempBufferNeeded)
             VSIFree(pTempBuffer);
@@ -6104,7 +6114,7 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
     const size_t nDimsMinus1 = nDims - 1;
     GByte abyDstNoData[16];
     CPLAssert(nBufferDTSize <= sizeof(abyDstNoData));
-    GDALExtendedDataType::CopyValue(&m_adfNoData[0], m_dt, abyDstNoData,
+    GDALExtendedDataType::CopyValue(m_abyRawNoData.data(), m_dt, abyDstNoData,
                                     bufferDataType);
 
 lbl_next_depth:
@@ -6124,8 +6134,8 @@ lbl_next_depth:
                 }
                 if (bTempBufferNeeded)
                 {
-                    GDALExtendedDataType::CopyValue(&padfVal[0], m_dt, dst_ptr,
-                                                    bufferDataType);
+                    GDALExtendedDataType::CopyValue(&padfVal[0], dtDouble,
+                                                    dst_ptr, bufferDataType);
                 }
             }
             else
@@ -6174,21 +6184,28 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
                                  const GDALExtendedDataType &bufferDataType,
                                  const void *pSrcBuffer)
 {
-    const double dfScale = m_poParent->GetScale();
-    const double dfOffset = m_poParent->GetOffset();
-    const bool bDTIsComplex = m_dt.GetNumericDataType() == GDT_CFloat64;
-    const size_t nDTSize = m_dt.GetSize();
-    CPLAssert(nDTSize == 8 || nDTSize == 16);
-    const bool bIsBufferDataTypeNativeDataType = (m_dt == bufferDataType);
+    const double dfScale = m_dfScale;
+    const double dfOffset = m_dfOffset;
+    const bool bDTIsComplex = GDALDataTypeIsComplex(m_dt.GetNumericDataType());
+    const auto dtDouble =
+        GDALExtendedDataType::Create(bDTIsComplex ? GDT_CFloat64 : GDT_Float64);
+    const size_t nDTSize = dtDouble.GetSize();
+    const bool bIsBufferDataTypeNativeDataType = (dtDouble == bufferDataType);
     const bool bSelfAndParentHaveNoData =
         m_bHasNoData && m_poParent->GetRawNoDataValue() != nullptr;
+    double dfNoData = 0;
+    if (m_bHasNoData)
+    {
+        GDALCopyWords(m_abyRawNoData.data(), m_dt.GetNumericDataType(), 0,
+                      &dfNoData, GDT_Float64, 0, 1);
+    }
 
     double adfSrcNoData[2] = {0, 0};
     if (bSelfAndParentHaveNoData)
     {
         GDALExtendedDataType::CopyValue(m_poParent->GetRawNoDataValue(),
                                         m_poParent->GetDataType(),
-                                        &adfSrcNoData[0], m_dt);
+                                        &adfSrcNoData[0], dtDouble);
     }
 
     const auto nDims = GetDimensions().size();
@@ -6196,9 +6213,9 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
     {
         double adfVal[2];
         GDALExtendedDataType::CopyValue(pSrcBuffer, bufferDataType, &adfVal[0],
-                                        m_dt);
+                                        dtDouble);
         if (bSelfAndParentHaveNoData &&
-            (std::isnan(adfVal[0]) || adfVal[0] == m_adfNoData[0]))
+            (std::isnan(adfVal[0]) || adfVal[0] == dfNoData))
         {
             return m_poParent->Write(arrayStartIdx, count, arrayStep,
                                      bufferStride, m_poParent->GetDataType(),
@@ -6212,7 +6229,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
                 adfVal[1] = (adfVal[1] - dfOffset) / dfScale;
             }
             return m_poParent->Write(arrayStartIdx, count, arrayStep,
-                                     bufferStride, m_dt, &adfVal[0]);
+                                     bufferStride, dtDouble, &adfVal[0]);
         }
     }
 
@@ -6272,12 +6289,12 @@ lbl_next_depth:
             else
             {
                 GDALExtendedDataType::CopyValue(src_ptr, bufferDataType,
-                                                &adfVal[0], m_dt);
+                                                &adfVal[0], dtDouble);
                 padfSrcVal = adfVal;
             }
 
             if (bSelfAndParentHaveNoData &&
-                (std::isnan(padfSrcVal[0]) || padfSrcVal[0] == m_adfNoData[0]))
+                (std::isnan(padfSrcVal[0]) || padfSrcVal[0] == dfNoData))
             {
                 dst_ptr[0] = adfSrcNoData[0];
                 if (bDTIsComplex)
@@ -6328,7 +6345,7 @@ lbl_next_depth:
     if (nParentDTSize <= nDTSize / 2)
     {
         // Copy in-place by making sure that source and target do not overlap
-        const auto eNumericDT = m_dt.GetNumericDataType();
+        const auto eNumericDT = dtDouble.GetNumericDataType();
         const auto eParentNumericDT = eParentDT.GetNumericDataType();
 
         // Copy first element
@@ -6372,10 +6389,15 @@ lbl_next_depth:
  *
  * This is the same as the C function GDALMDArrayGetUnscaled().
  *
+ * @param dfOverriddenScale Custom scale value instead of GetScale()
+ * @param dfOverriddenOffset Custom offset value instead of GetOffset()
+ * @param dfOverriddenDstNodata Custom target nodata value instead of NaN
  * @return a new array, that holds a reference to the original one, and thus is
  * a view of it (not a copy), or nullptr in case of error.
  */
-std::shared_ptr<GDALMDArray> GDALMDArray::GetUnscaled() const
+std::shared_ptr<GDALMDArray>
+GDALMDArray::GetUnscaled(double dfOverriddenScale, double dfOverriddenOffset,
+                         double dfOverriddenDstNodata) const
 {
     auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
     if (!self)
@@ -6390,12 +6412,22 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetUnscaled() const
                  "GetUnscaled() only supports numeric data type");
         return nullptr;
     }
-    const double dfScale = GetScale();
-    const double dfOffset = GetOffset();
+    const double dfScale =
+        std::isnan(dfOverriddenScale) ? GetScale() : dfOverriddenScale;
+    const double dfOffset =
+        std::isnan(dfOverriddenOffset) ? GetOffset() : dfOverriddenOffset;
     if (dfScale == 1.0 && dfOffset == 0.0)
         return self;
 
-    return GDALMDArrayUnscaled::Create(self);
+    GDALDataType eDT = GDALDataTypeIsComplex(GetDataType().GetNumericDataType())
+                           ? GDT_CFloat64
+                           : GDT_Float64;
+    if (dfOverriddenScale == -1 && dfOverriddenOffset == 0 &&
+        GetDataType().GetNumericDataType() == GDT_Float32)
+        eDT = GDT_Float32;
+
+    return GDALMDArrayUnscaled::Create(self, dfScale, dfOffset,
+                                       dfOverriddenDstNodata, eDT);
 }
 
 /************************************************************************/
