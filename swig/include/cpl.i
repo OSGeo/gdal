@@ -77,7 +77,9 @@ void CPLSetCurrentErrorHandlerCatchDebug( int bCatchDebug );
 %{
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
-void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* pszErrorMsg)
+extern "C" void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, CPLErrorNum err_no, const char* pszErrorMsg);
+
+void PyCPLErrorHandler(CPLErr eErrClass, CPLErrorNum err_no, const char* pszErrorMsg)
 {
     if( GDALIsInGlobalDestructor() )
     {

@@ -681,7 +681,6 @@ int GDALTermProgress( double, const char *, void * );
     }
 %#endif
     if( result != NULL && bLocalUseExceptions ) {
-        StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
 %#endif
@@ -714,7 +713,6 @@ GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray, bool binterleave)
     }
 %#endif
     if( result != NULL && bLocalUseExceptions ) {
-        StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
 %#endif
