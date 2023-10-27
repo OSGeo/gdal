@@ -800,10 +800,9 @@ OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
     }
     else
     {
-        if (static_cast<uint64_t>(nFeatureId) >= m_featuresCount)
+        if (nFeatureId < 0 ||
+            static_cast<uint64_t>(nFeatureId) >= m_featuresCount)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Requested feature id is out of bounds");
             return nullptr;
         }
         ResetReading();
@@ -1374,7 +1373,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                           struct ArrowArray *out_array)
 {
-    if (CPLTestBool(
+    if (!m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.empty() ||
+        CPLTestBool(
             CPLGetConfigOption("OGR_FLATGEOBUF_STREAM_BASE_IMPL", "NO")))
     {
         return OGRLayer::GetNextArrowArray(stream, out_array);
@@ -1417,6 +1417,8 @@ begin:
         CPLDebugOnly("FlatGeobuf", "GetNextFeature: no features found");
         sHelper.nMaxBatchSize = 0;
     }
+
+    const GIntBig nFeatureIdxStart = m_featuresPos;
 
     while (iFeat < sHelper.nMaxBatchSize)
     {
@@ -1893,7 +1895,13 @@ begin:
         // Spatial filter already evaluated
         auto poFilterGeomBackup = m_poFilterGeom;
         m_poFilterGeom = nullptr;
-        PostFilterArrowArray(&schema, out_array, nullptr);
+        CPLStringList aosOptions;
+        if (!m_poFilterGeom)
+        {
+            aosOptions.SetNameValue("BASE_SEQUENTIAL_FID",
+                                    CPLSPrintf(CPL_FRMT_GIB, nFeatureIdxStart));
+        }
+        PostFilterArrowArray(&schema, out_array, aosOptions.List());
         schema.release(&schema);
         m_poFilterGeom = poFilterGeomBackup;
     }

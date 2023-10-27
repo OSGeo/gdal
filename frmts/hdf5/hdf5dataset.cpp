@@ -199,6 +199,7 @@ void GDALRegister_HDF5()
 #ifdef HDF5_PLUGIN
     GDALRegister_HDF5Image();
     GDALRegister_BAG();
+    GDALRegister_S102();
 #endif
 }
 
@@ -645,8 +646,6 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->ReadGlobalAttributes(true);
 
-    poDS->SetMetadata(poDS->m_aosMetadata.List());
-
     if (STARTS_WITH(poDS->m_aosMetadata.FetchNameValueDef("mission_name", ""),
                     "Sentinel 3") &&
         EQUAL(
@@ -660,6 +659,22 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
         delete poDS;
         return nullptr;
     }
+
+    // Safety belt if S102Dataset::Identify() failed
+    if (STARTS_WITH(
+            poDS->m_aosMetadata.FetchNameValueDef("productSpecification", ""),
+            "INT.IHO.S-102.") &&
+        GDALGetDriverByName("S102") != nullptr)
+    {
+        delete poDS;
+        std::string osS102Filename("S102:\"");
+        osS102Filename +=
+            CPLString(poOpenInfo->pszFilename).replaceAll("\"", "\\\"");
+        osS102Filename += '"';
+        return GDALDataset::Open(osS102Filename.c_str(), GDAL_OF_RASTER);
+    }
+
+    poDS->SetMetadata(poDS->m_aosMetadata.List());
 
     if (CSLCount(poDS->papszSubDatasets) / 2 >= 1)
         poDS->SetMetadata(poDS->papszSubDatasets, "SUBDATASETS");

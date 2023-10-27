@@ -76,7 +76,8 @@ void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray> &array) const
     {
         m_aosArrays.emplace_back(array->GetName());
     }
-    array->RegisterGroup(m_pSelf);
+    array->RegisterGroup(
+        std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()));
 }
 
 /************************************************************************/
@@ -314,9 +315,10 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
                  "A dimension with same name already exists");
         return nullptr;
     }
-    auto newDim(std::make_shared<ZarrDimension>(m_poSharedResource, m_pSelf,
-                                                GetFullName(), osName, osType,
-                                                osDirection, nSize));
+    auto newDim(std::make_shared<ZarrDimension>(
+        m_poSharedResource,
+        std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()), GetFullName(),
+        osName, osType, osDirection, nSize));
     newDim->SetXArrayDimension();
     m_oMapDimensions[osName] = newDim;
     return newDim;
@@ -507,7 +509,8 @@ bool ZarrGroupBase::Rename(const std::string &osNewName)
         {
             pParent->m_oMapGroups.erase(oIter);
             CPLAssert(m_pSelf.lock());
-            pParent->m_oMapGroups[osNewName] = m_pSelf.lock();
+            pParent->m_oMapGroups[osNewName] =
+                std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
         }
 
         for (auto &osName : pParent->m_aosGroups)

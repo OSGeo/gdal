@@ -66,6 +66,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load/*)
+	  continue
+	  ;;
+
 	*swig/*)
 	  continue
 	  ;;

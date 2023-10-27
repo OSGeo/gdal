@@ -4093,7 +4093,7 @@ GBool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                    OGRPostGISRasterDriverGetSubdatasetInfo()            */
+/*                    PostGISRasterDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
 struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
@@ -4156,10 +4156,9 @@ struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
 };
 
 static GDALSubdatasetInfo *
-OGRPostGISRasterDriverGetSubdatasetInfo(const char *pszFileName)
+PostGISRasterDriverGetSubdatasetInfo(const char *pszFileName)
 {
-    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
-    if (PostGISRasterDataset::Identify(&poOpenInfo))
+    if (STARTS_WITH_CI(pszFileName, "PG:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             cpl::make_unique<PostGISRasterDriverSubdatasetInfo>(pszFileName);
@@ -4195,8 +4194,7 @@ void GDALRegister_PostGISRaster()
     poDriver->pfnIdentify = PostGISRasterDataset::Identify;
     poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;
     poDriver->pfnDelete = PostGISRasterDataset::Delete;
-    poDriver->pfnGetSubdatasetInfoFunc =
-        OGRPostGISRasterDriverGetSubdatasetInfo;
+    poDriver->pfnGetSubdatasetInfoFunc = PostGISRasterDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -45,6 +45,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
+#include "gdalgenericinverse.h"
 
 CPL_CVSID("$Id$")
 
@@ -363,7 +364,26 @@ int GDALTPSTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 
         if (bDstToSrc)
         {
+            // Compute initial guess
             psInfo->poReverse->get_point(x[i], y[i], xy_out);
+
+            const auto ForwardTransformer = [](double xIn, double yIn,
+                                               double &xOut, double &yOut,
+                                               void *pUserData)
+            {
+                double xyOut[2] = {0.0, 0.0};
+                TPSTransformInfo *l_psInfo =
+                    static_cast<TPSTransformInfo *>(pUserData);
+                l_psInfo->poForward->get_point(xIn, yIn, xyOut);
+                xOut = xyOut[0];
+                yOut = xyOut[1];
+                return true;
+            };
+
+            // Refine the initial guess
+            GDALGenericInverse2D(x[i], y[i], xy_out[0], xy_out[1],
+                                 ForwardTransformer, psInfo, xy_out[0],
+                                 xy_out[1]);
             x[i] = xy_out[0];
             y[i] = xy_out[1];
         }

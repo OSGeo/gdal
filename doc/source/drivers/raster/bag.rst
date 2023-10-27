@@ -474,3 +474,4 @@ See Also
    1.6 <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/BAG_FSD_Release_1.6.3.doc>`__
 -  `Variable resolution grid extension for BAG
    files <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/VariableResolution/2017-08-10_VariableResolution.docx>`__
+-  :ref:`S-102 driver <raster.s102>`

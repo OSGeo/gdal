@@ -152,6 +152,8 @@ GUInt32 CPL_DLL CPL_STDCALL CPLGetErrorCounter(void);
 void CPL_DLL *CPL_STDCALL CPLGetErrorHandlerUserData(void);
 void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
                               const char *pszMsg);
+void CPL_DLL CPLCallPreviousHandler(CPLErr eErrClass, CPLErrorNum err_no,
+                                    const char *pszMsg);
 /*! @cond Doxygen_Suppress */
 void CPL_DLL CPLCleanupErrorMutex(void);
 /*! @endcond */

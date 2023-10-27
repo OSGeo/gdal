@@ -2328,12 +2328,21 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
   protected:
     //! @cond Doxygen_Suppress
     std::string m_osName{};
+
+    // This is actually a path of the form "/parent_path/{m_osName}"
     std::string m_osFullName{};
+
+    // Used for example by GDALSubsetGroup to distinguish a derived group
+    //from its original, without altering its name
+    const std::string m_osContext{};
+
+    std::weak_ptr<GDALGroup> m_pSelf{};
 
     //! Can be set to false by the owing group, when deleting this object
     bool m_bValid = true;
 
-    GDALGroup(const std::string &osParentName, const std::string &osName);
+    GDALGroup(const std::string &osParentName, const std::string &osName,
+              const std::string &osContext = std::string());
 
     const GDALGroup *
     GetInnerMostGroup(const std::string &osPathOrArrayOrDim,
@@ -2343,6 +2352,11 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     void BaseRename(const std::string &osNewName);
 
     bool CheckValidAndErrorOutIfNot() const;
+
+    void SetSelf(const std::shared_ptr<GDALGroup> &self)
+    {
+        m_pSelf = self;
+    }
 
     virtual void NotifyChildrenOfRenaming()
     {
@@ -2446,12 +2460,20 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     virtual bool Rename(const std::string &osNewName);
 
+    std::shared_ptr<GDALGroup>
+    SubsetDimensionFromSelection(const std::string &osSelection) const;
+
     //! @cond Doxygen_Suppress
     virtual void ParentRenamed(const std::string &osNewParentFullName);
 
     virtual void Deleted();
 
     virtual void ParentDeleted();
+
+    const std::string &GetContext() const
+    {
+        return m_osContext;
+    }
     //! @endcond
 
     //! @cond Doxygen_Suppress
@@ -2473,6 +2495,8 @@ class CPL_DLL GDALAbstractMDArray
   protected:
     //! @cond Doxygen_Suppress
     std::string m_osName{};
+
+    // This is actually a path of the form "/parent_path/{m_osName}"
     std::string m_osFullName{};
     std::weak_ptr<GDALAbstractMDArray> m_pSelf{};
 
@@ -2828,12 +2852,17 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
         return atInternal(indices, tail...);
     }
 
+    // Used for example by GDALSubsetGroup to distinguish a derived group
+    //from its original, without altering its name
+    const std::string m_osContext{};
+
     mutable bool m_bHasTriedCachedArray = false;
     mutable std::shared_ptr<GDALMDArray> m_poCachedArray{};
 
   protected:
     //! @cond Doxygen_Suppress
-    GDALMDArray(const std::string &osParentName, const std::string &osName);
+    GDALMDArray(const std::string &osParentName, const std::string &osName,
+                const std::string &osContext = std::string());
 
     virtual bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                              CSLConstList papszOptions) const;
@@ -2975,7 +3004,11 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual std::shared_ptr<GDALMDArray>
     Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const;
 
-    std::shared_ptr<GDALMDArray> GetUnscaled() const;
+    std::shared_ptr<GDALMDArray> GetUnscaled(
+        double dfOverriddenScale = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenOffset = std::numeric_limits<double>::quiet_NaN(),
+        double dfOverriddenDstNodata =
+            std::numeric_limits<double>::quiet_NaN()) const;
 
     virtual std::shared_ptr<GDALMDArray>
     GetMask(CSLConstList papszOptions) const;
@@ -3065,6 +3098,11 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual std::shared_ptr<GDALMDArray>
     GetView(const std::string &viewExpr, bool bRenameDimensions,
             std::vector<ViewSpec> &viewSpecs) const;
+
+    const std::string &GetContext() const
+    {
+        return m_osContext;
+    }
     //! @endcond
 };
 

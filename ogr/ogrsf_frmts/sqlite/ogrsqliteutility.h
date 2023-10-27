@@ -100,4 +100,6 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
 
 bool OGRSQLiteRTreeRequiresTrustedSchemaOn();
 
+bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName);
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

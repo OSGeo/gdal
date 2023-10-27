@@ -157,6 +157,7 @@ Raster drivers
    rpftoc
    rraster
    rs2
+   s102
    safe
    sar_ceos
    sdat

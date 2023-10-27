@@ -37,6 +37,7 @@
 #include "metaname.h"
 
 #include "cpl_port.h"
+#include "cpl_error.h"
 
 #define SECT0LEN_BYTE 16
 
@@ -985,7 +986,9 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
                             * there are multiple grids in the same message. */
    wordType word;       /* Used to parse the prodType out of Sect 0. */
    int ans;             /* The return error code of ReadSect0. */
+#if 0
    char *msg;           /* Used to pop messages off the error Stack. */
+#endif
    int version;         /* Which version of GRIB is in this message. */
    uChar prodType;      /* Which GRIB2 type of product, 0 is meteo, 1 is
                          * hydro, 2 is land, 3 is space, 10 is oceanographic.
@@ -1054,6 +1057,7 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
             return -2;
          } else {
             /* Handle case where there are trailing bytes. */
+#if 0
             msg = errSprintf (nullptr);
             printf ("Warning: Inside GRIB2Inventory, Message # %d\n",
                     msgNum);
@@ -1066,6 +1070,16 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
             /* fseek (fp, 0L, SEEK_SET); */
             printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
                     fileLen - offset);
+#endif
+#else
+#ifdef DEBUG
+            /* find out how big the file is. */
+            VSIFSeekL (fp, 0L, SEEK_END);
+            fileLen = VSIFTellL(fp);
+            CPLDebug("GRIB", CPL_FRMT_GUIB " trailing byte(s) found after message #%d", fileLen - offset, msgNum);
+#else
+            CPLDebug("GRIB", "Trailing byte(s) found after message #%d", msgNum);
+#endif
 #endif
             free (buffer);
             free (buff);

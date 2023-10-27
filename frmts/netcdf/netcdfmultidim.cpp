@@ -228,7 +228,6 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
     CPLStringList m_aosStructuralInfo{};
-    std::weak_ptr<netCDFGroup> m_poSelf{};
     std::weak_ptr<netCDFGroup> m_poParent{};
     std::set<GDALGroup *> m_oSetGroups{};
     std::set<GDALDimension *> m_oSetDimensions{};
@@ -274,10 +273,14 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 
     void NotifyChildrenOfRenaming() override;
 
-  public:
     netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
                 int gid);
+
+  public:
     ~netCDFGroup();
+
+    static std::shared_ptr<netCDFGroup>
+    Create(const std::shared_ptr<netCDFSharedResources> &poShared, int cdfid);
 
     static std::shared_ptr<netCDFGroup>
     Create(const std::shared_ptr<netCDFSharedResources> &poShared,
@@ -344,10 +347,15 @@ class netCDFVirtualGroupBySameDimension final : public GDALGroup
     std::shared_ptr<netCDFGroup> m_poGroup;
     std::string m_osDimName{};
 
-  public:
+  protected:
     netCDFVirtualGroupBySameDimension(
         const std::shared_ptr<netCDFGroup> &poGroup,
         const std::string &osDimName);
+
+  public:
+    static std::shared_ptr<netCDFVirtualGroupBySameDimension>
+    Create(const std::shared_ptr<netCDFGroup> &poGroup,
+           const std::string &osDimName);
 
     std::vector<std::string>
     GetMDArrayNames(CSLConstList papszOptions) const override;
@@ -795,11 +803,25 @@ netCDFGroup::~netCDFGroup()
 /* static */
 std::shared_ptr<netCDFGroup>
 netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
+                    int cdfid)
+{
+    auto poGroup =
+        std::shared_ptr<netCDFGroup>(new netCDFGroup(poShared, cdfid));
+    poGroup->SetSelf(poGroup);
+    return poGroup;
+}
+
+/************************************************************************/
+/*                              Create()                                */
+/************************************************************************/
+
+/* static */
+std::shared_ptr<netCDFGroup>
+netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
                     const std::shared_ptr<netCDFGroup> &poParent,
                     int nSubGroupId)
 {
-    auto poSubGroup = std::make_shared<netCDFGroup>(poShared, nSubGroupId);
-    poSubGroup->m_poSelf = poSubGroup;
+    auto poSubGroup = netCDFGroup::Create(poShared, nSubGroupId);
     poSubGroup->m_poParent = poParent;
     if (poParent)
         poParent->RegisterSubGroup(poSubGroup.get());
@@ -827,7 +849,9 @@ netCDFGroup::CreateGroup(const std::string &osName,
     NCDF_ERR(ret);
     if (ret != NC_NOERR)
         return nullptr;
-    return netCDFGroup::Create(m_poShared, m_poSelf.lock(), nSubGroupId);
+    return netCDFGroup::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        nSubGroupId);
 }
 
 /************************************************************************/
@@ -853,8 +877,9 @@ netCDFGroup::CreateDimension(const std::string &osName,
                         static_cast<size_t>(bUnlimited ? 0 : nSize), &nDimId));
     if (nDimId < 0)
         return nullptr;
-    return netCDFDimension::Create(m_poShared, m_poSelf.lock(), m_gid, nDimId,
-                                   static_cast<size_t>(nSize), osType);
+    return netCDFDimension::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, nDimId, static_cast<size_t>(nSize), osType);
 }
 
 /************************************************************************/
@@ -1032,9 +1057,10 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
             if (nc_inq_dimid(m_gid, dim->GetName().c_str(), &nDimId) ==
                 NC_NOERR)
             {
-                netCDFDim =
-                    netCDFDimension::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                            nDimId, 0, dim->GetType());
+                netCDFDim = netCDFDimension::Create(
+                    m_poShared,
+                    std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+                    m_gid, nDimId, 0, dim->GetType());
                 if (netCDFDim->GetSize() != dim->GetSize())
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -1180,8 +1206,9 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
             return nullptr;
     }
 
-    return netCDFVariable::Create(m_poShared, m_poSelf.lock(), m_gid, nVarId,
-                                  dims, papszOptions, true);
+    return netCDFVariable::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, nVarId, dims, papszOptions, true);
 }
 
 /************************************************************************/
@@ -1192,9 +1219,9 @@ std::shared_ptr<GDALAttribute> netCDFGroup::CreateAttribute(
     const std::string &osName, const std::vector<GUInt64> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
-    return netCDFAttribute::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                   NC_GLOBAL, osName, anDimensions, oDataType,
-                                   papszOptions);
+    return netCDFAttribute::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, NC_GLOBAL, osName, anDimensions, oDataType, papszOptions);
 }
 
 /************************************************************************/
@@ -1298,9 +1325,8 @@ netCDFGroup::OpenGroup(const std::string &osName,
             {
                 if (osCandidateGroupName == osName)
                 {
-                    auto poThisGroup =
-                        std::make_shared<netCDFGroup>(m_poShared, m_gid);
-                    return std::make_shared<netCDFVirtualGroupBySameDimension>(
+                    auto poThisGroup = netCDFGroup::Create(m_poShared, m_gid);
+                    return netCDFVirtualGroupBySameDimension::Create(
                         poThisGroup, osName);
                 }
             }
@@ -1311,7 +1337,9 @@ netCDFGroup::OpenGroup(const std::string &osName,
     if (nc_inq_grp_ncid(m_gid, osName.c_str(), &nSubGroupId) != NC_NOERR ||
         nSubGroupId <= 0)
         return nullptr;
-    return netCDFGroup::Create(m_poShared, m_poSelf.lock(), nSubGroupId);
+    return netCDFGroup::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        nSubGroupId);
 }
 
 /************************************************************************/
@@ -1495,8 +1523,9 @@ netCDFGroup::OpenMDArray(const std::string &osName,
     if (nc_inq_varid(m_gid, osName.c_str(), &nVarId) != NC_NOERR)
         return nullptr;
     auto poVar = netCDFVariable::Create(
-        m_poShared, m_poSelf.lock(), m_gid, nVarId,
-        std::vector<std::shared_ptr<GDALDimension>>(), nullptr, false);
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, nVarId, std::vector<std::shared_ptr<GDALDimension>>(), nullptr,
+        false);
     if (poVar)
     {
         poVar->SetUseDefaultFillAsNoData(CPLTestBool(CSLFetchNameValueDef(
@@ -1525,9 +1554,10 @@ netCDFGroup::GetDimensions(CSLConstList) const
         auto poCachedDim = m_poShared->GetCachedDimension(dimids[i]);
         if (poCachedDim == nullptr)
         {
-            poCachedDim =
-                netCDFDimension::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                        dimids[i], 0, std::string());
+            poCachedDim = netCDFDimension::Create(
+                m_poShared,
+                std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()), m_gid,
+                dimids[i], 0, std::string());
             m_poShared->CacheDimension(dimids[i], poCachedDim);
         }
         res.emplace_back(poCachedDim);
@@ -1576,8 +1606,9 @@ netCDFGroup::GetAttribute(const std::string &osName) const
         }
         return nullptr;
     }
-    return netCDFAttribute::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                   NC_GLOBAL, osName);
+    return netCDFAttribute::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, NC_GLOBAL, osName);
 }
 
 /************************************************************************/
@@ -1600,7 +1631,9 @@ netCDFGroup::GetAttributes(CSLConstList) const
         if (!EQUAL(szAttrName, "_NCProperties"))
         {
             res.emplace_back(netCDFAttribute::Create(
-                m_poShared, m_poSelf.lock(), m_gid, NC_GLOBAL, szAttrName));
+                m_poShared,
+                std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()), m_gid,
+                NC_GLOBAL, szAttrName));
         }
     }
 
@@ -1654,6 +1687,20 @@ netCDFVirtualGroupBySameDimension::netCDFVirtualGroupBySameDimension(
     : GDALGroup(poGroup->GetName(), osDimName), m_poGroup(poGroup),
       m_osDimName(osDimName)
 {
+}
+
+/************************************************************************/
+/*                              Create()                                */
+/************************************************************************/
+
+/* static */ std::shared_ptr<netCDFVirtualGroupBySameDimension>
+netCDFVirtualGroupBySameDimension::Create(
+    const std::shared_ptr<netCDFGroup> &poGroup, const std::string &osDimName)
+{
+    auto poNewGroup = std::shared_ptr<netCDFVirtualGroupBySameDimension>(
+        new netCDFVirtualGroupBySameDimension(poGroup, osDimName));
+    poNewGroup->SetSelf(poNewGroup);
+    return poNewGroup;
 }
 
 /************************************************************************/
@@ -5413,7 +5460,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    poDS->m_poRootGroup.reset(new netCDFGroup(poSharedResources, cdfid));
+    poDS->m_poRootGroup = netCDFGroup::Create(poSharedResources, cdfid);
 
     poDS->TryLoadXML();
 

@@ -1178,8 +1178,7 @@ struct WMSDriverSubdatasetInfo : public GDALSubdatasetInfo
 
 static GDALSubdatasetInfo *WMSDriverGetSubdatasetInfo(const char *pszFileName)
 {
-    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
-    if (GDALWMSDataset::Identify(&poOpenInfo))
+    if (STARTS_WITH(pszFileName, "WMS:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             cpl::make_unique<WMSDriverSubdatasetInfo>(pszFileName);

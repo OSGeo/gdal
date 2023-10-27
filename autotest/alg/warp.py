@@ -1515,7 +1515,7 @@ def test_warp_55():
 
     ds = gdal.Open("data/warpedvrt_with_ovr.vrt")
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    assert cs == 25478
+    assert cs == 51966
     ds = None
 
 

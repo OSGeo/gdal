@@ -148,6 +148,16 @@ binary encoding must be done.
 
 Starting with Spatialite 4.3, CastAutomagic is no longer needed.
 
+Note that due to the loose typing mechanism of SQLite, if a geometry expression
+returns a NULL value for the first row, this will generally cause OGR not to
+recognize the column as a geometry column. It might be then useful to sort
+the results by making sure that non-null geometries are returned first:
+
+::
+
+   ogrinfo poly.gpkg -sql "SELECT * FROM (SELECT ST_Buffer(geom,5) AS geom, * FROM poly) ORDER BY geom IS NULL ASC"
+
+
 Transaction support
 -------------------
 

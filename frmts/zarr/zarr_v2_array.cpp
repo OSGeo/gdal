@@ -1402,8 +1402,10 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             return nullptr;
         }
         aoDims.emplace_back(std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, std::string(), CPLSPrintf("dim%d", i),
-            std::string(), std::string(), nSize));
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
+            nSize));
     }
 
     // XArray extension
@@ -1511,8 +1513,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         }
 
         auto poDimLocal = std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, GetFullName(), osDimName, osType,
-            osDirection, poDim->GetSize());
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
         poDimLocal->SetXArrayDimension();
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
@@ -1553,7 +1556,8 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         const auto arrayDims = nczarrArrayDimrefs.ToArray();
         if (arrayDims.Size() == oShape.Size())
         {
-            auto poRG = m_pSelf.lock();
+            auto poRG =
+                std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
             CPLAssert(poRG != nullptr);
             while (true)
             {
@@ -1617,7 +1621,10 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                                     auto poDimLocal =
                                         std::make_shared<ZarrDimension>(
                                             m_poSharedResource,
-                                            poDimParentGroup->m_pSelf,
+                                            std::dynamic_pointer_cast<
+                                                ZarrGroupBase>(
+                                                poDimParentGroup->m_pSelf
+                                                    .lock()),
                                             poDimParentGroup->GetFullName(),
                                             poDim->GetName(), osType,
                                             osDirection, poDim->GetSize());

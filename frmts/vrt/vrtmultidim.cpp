@@ -480,7 +480,7 @@ std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
         return nullptr;
     }
     SetDirty();
-    auto newGroup(std::make_shared<VRTGroup>(GetFullName(), osName.c_str()));
+    auto newGroup(VRTGroup::Create(GetFullName(), osName.c_str()));
     newGroup->SetRootGroupRef(GetRootGroupRef());
     m_oMapGroups[osName] = newGroup;
     return newGroup;
@@ -1106,7 +1106,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const char *pszVRTPath,
                                                const CPLXMLNode *psNode)
 {
     auto poDummyGroup =
-        std::make_shared<VRTGroup>(pszVRTPath ? pszVRTPath : "");
+        std::shared_ptr<VRTGroup>(new VRTGroup(pszVRTPath ? pszVRTPath : ""));
     auto poArray = Create(poDummyGroup, std::string(), psNode);
     if (poArray)
         poArray->m_poDummyOwningGroup = poDummyGroup;
@@ -2753,8 +2753,8 @@ CPLXMLNode *VRTArraySource::SerializeToXML(const char * /*pszVRTPath*/)
 /*                     VRTDerivedArrayCreate()                          */
 /************************************************************************/
 
-static std::shared_ptr<GDALMDArray>
-VRTDerivedArrayCreate(const char *pszVRTPath, const CPLXMLNode *psTree)
+std::shared_ptr<GDALMDArray> VRTDerivedArrayCreate(const char *pszVRTPath,
+                                                   const CPLXMLNode *psTree)
 {
     auto poArray = ParseArray(psTree, pszVRTPath, "DerivedArray");
 
@@ -2822,8 +2822,8 @@ VRTDerivedArrayCreate(const char *pszVRTPath, const CPLXMLNode *psTree)
                      CPLGetXMLNode(psStep, "Resample"))
         {
             std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
-            auto poDummyGroup =
-                std::make_shared<VRTGroup>(pszVRTPath ? pszVRTPath : "");
+            auto poDummyGroup = std::shared_ptr<VRTGroup>(
+                new VRTGroup(pszVRTPath ? pszVRTPath : ""));
             for (const CPLXMLNode *psDimension =
                      CPLGetXMLNode(psResample, "Dimension");
                  psDimension; psDimension = psDimension->psNext)

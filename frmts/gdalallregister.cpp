@@ -47,14 +47,14 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
 /************************************************************************/
 
 /**
- * \brief Register a plugin by name, returning an error if not found      
- * 
+ * \brief Register a plugin by name, returning an error if not found
+ *
  * This function will call GDALDriverManager::LoadPlugin() to register a
  * specific plugin by name.
- * 
+ *
  * This method is intended to be called instead of GDALAllRegister() or
  * GDALRegisterPlugins() when fine tuning which drivers are needed at runtime.
- * 
+ *
  * @see GDALDriverManager::LoadPlugin()
  * @see GDALDriverManager::AutoLoadDrivers()
  * @since GDAL 3.8
@@ -74,15 +74,15 @@ CPLErr GDALRegisterPlugin(const char *name)
 
 /**
  * \brief Register drivers and support code available as a plugin.
- * 
+ *
  * This function will call GDALDriverManager::AutoLoadDrivers() to
  * register all drivers or supporting code (for example VRT pixelfunctions
  * or VSI adapters) that have not been compiled into the GDAL core but instead
  * are made available through GDAL's plugin mechanism.
- * 
+ *
  * This method is intended to be called instead of GDALAllRegister() when
  * fine tuning which drivers are needed at runtime.
- * 
+ *
  * @see GDALDriverManager::AutoLoadDrivers()
  * @since GDAL 3.8
 */
@@ -513,6 +513,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_hdf5
     GDALRegister_BAG();
+    GDALRegister_S102();
     GDALRegister_HDF5();
     GDALRegister_HDF5Image();
 #endif

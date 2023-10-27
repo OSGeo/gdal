@@ -33,6 +33,7 @@
 #include "cpl_md5.h"
 #include "cpl_time.h"
 #include "ogr_p.h"
+#include "sqlite_rtree_bulk_load/wrapper.h"
 
 #include <algorithm>
 #include <cassert>
@@ -2619,9 +2620,7 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
     {
         if (SQLCommand(m_hAsyncDBHandle,
                        "PRAGMA journal_mode = OFF;\n"
-                       "PRAGMA synchronous = OFF;\n"
-                       "CREATE VIRTUAL TABLE my_rtree USING rtree(id, minx, "
-                       "maxx, miny, maxy)") == OGRERR_NONE)
+                       "PRAGMA synchronous = OFF;") == OGRERR_NONE)
         {
             char *pszSQL = sqlite3_mprintf("ATTACH DATABASE '%q' AS '%q'",
                                            m_osAsyncDBName.c_str(),
@@ -2638,6 +2637,8 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
                     m_oThreadRTree =
                         std::thread([this]() { AsyncRTreeThreadFunction(); });
                     m_bThreadRTreeStarted = true;
+
+                    m_hRTree = gdal_sqlite_rtree_bl_new(4096);
                 }
                 catch (const std::exception &e)
                 {
@@ -2693,6 +2694,8 @@ void OGRGeoPackageTableLayer::CancelAsyncRTree()
         sqlite3_close(m_hAsyncDBHandle);
         m_hAsyncDBHandle = nullptr;
     }
+    gdal_sqlite_rtree_bl_free(m_hRTree);
+    m_hRTree = nullptr;
     m_bErrorDuringRTreeThread = true;
     RemoveAsyncRTreeTempDB();
 }
@@ -2711,30 +2714,131 @@ void OGRGeoPackageTableLayer::FinishOrDisableThreadedRTree()
 }
 
 /************************************************************************/
+/*                       FlushInMemoryRTree()                           */
+/************************************************************************/
+
+bool OGRGeoPackageTableLayer::FlushInMemoryRTree(sqlite3 *hRTreeDB,
+                                                 const char *pszRTreeName)
+{
+    if (hRTreeDB == m_hAsyncDBHandle)
+        SQLCommand(hRTreeDB, "BEGIN");
+
+    char *pszErrMsg = nullptr;
+    bool bRet = gdal_sqlite_rtree_bl_serialize(m_hRTree, hRTreeDB, pszRTreeName,
+                                               "id", "minx", "miny", "maxx",
+                                               "maxy", &pszErrMsg);
+    if (hRTreeDB == m_hAsyncDBHandle)
+    {
+        if (bRet)
+            bRet = SQLCommand(hRTreeDB, "COMMIT") == OGRERR_NONE;
+        else
+            SQLCommand(hRTreeDB, "ROLLBACK");
+    }
+
+    gdal_sqlite_rtree_bl_free(m_hRTree);
+    m_hRTree = nullptr;
+
+    if (!bRet)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "sqlite_rtree_bl_serialize() failed with %s",
+                 pszErrMsg ? pszErrMsg : "(null)");
+
+        m_bErrorDuringRTreeThread = true;
+
+        if (m_hAsyncDBHandle)
+        {
+            sqlite3_close(m_hAsyncDBHandle);
+            m_hAsyncDBHandle = nullptr;
+        }
+
+        VSIUnlink(m_osAsyncDBName.c_str());
+
+        m_oQueueRTreeEntries.clear();
+    }
+    sqlite3_free(pszErrMsg);
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                     GetMaxRAMUsageAllowedForRTree()                  */
+/************************************************************************/
+
+static size_t GetMaxRAMUsageAllowedForRTree()
+{
+    const uint64_t nUsableRAM = CPLGetUsablePhysicalRAM();
+    uint64_t nMaxRAMUsageAllowed =
+        (nUsableRAM ? nUsableRAM / 10 : 100 * 1024 * 1024);
+    const char *pszMaxRAMUsageAllowed =
+        CPLGetConfigOption("OGR_GPKG_MAX_RAM_USAGE_RTREE", nullptr);
+    if (pszMaxRAMUsageAllowed)
+    {
+        nMaxRAMUsageAllowed = static_cast<uint64_t>(
+            std::strtoull(pszMaxRAMUsageAllowed, nullptr, 10));
+    }
+    if (nMaxRAMUsageAllowed > std::numeric_limits<size_t>::max() - 1U)
+    {
+        nMaxRAMUsageAllowed = std::numeric_limits<size_t>::max() - 1U;
+    }
+    return static_cast<size_t>(nMaxRAMUsageAllowed);
+}
+
+/************************************************************************/
 /*                      AsyncRTreeThreadFunction()                      */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
 {
+    const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
     sqlite3_stmt *hStmt = nullptr;
-    const char *pszInsertSQL = "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
-    if (sqlite3_prepare_v2(m_hAsyncDBHandle, pszInsertSQL, -1, &hStmt,
-                           nullptr) != SQLITE_OK)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s",
-                 pszInsertSQL);
-        m_oQueueRTreeEntries.clear();
-        m_bErrorDuringRTreeThread = true;
-        return;
-    }
-
-    SQLCommand(m_hAsyncDBHandle, "BEGIN");
     GIntBig nCount = 0;
     while (true)
     {
         const auto aoEntries = m_oQueueRTreeEntries.get_and_pop_front();
         if (aoEntries.empty())
             break;
+
+        if (m_hRTree)
+        {
+            if (gdal_sqlite_rtree_bl_ram_usage(m_hRTree) > nMaxRAMUsageAllowed)
+            {
+                CPLDebug("GPKG", "Too large in-memory RTree. "
+                                 "Flushing it and using memory friendly "
+                                 "algorithm for the rest");
+                if (!FlushInMemoryRTree(m_hAsyncDBHandle, "my_rtree"))
+                    break;
+            }
+            else
+            {
+                for (const auto &entry : aoEntries)
+                {
+                    ++nCount;
+                    gdal_sqlite_rtree_bl_insert(m_hRTree, entry.nId,
+                                                entry.fMinX, entry.fMinY,
+                                                entry.fMaxX, entry.fMaxY);
+                }
+                continue;
+            }
+        }
+
+        if (hStmt == nullptr)
+        {
+            const char *pszInsertSQL =
+                "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
+            if (sqlite3_prepare_v2(m_hAsyncDBHandle, pszInsertSQL, -1, &hStmt,
+                                   nullptr) != SQLITE_OK)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "failed to prepare SQL: %s", pszInsertSQL);
+                m_oQueueRTreeEntries.clear();
+                m_bErrorDuringRTreeThread = true;
+                return;
+            }
+
+            SQLCommand(m_hAsyncDBHandle, "BEGIN");
+        }
+
 #ifdef DEBUG_VERBOSE
         CPLDebug("GPKG",
                  "AsyncRTreeThreadFunction(): "
@@ -2776,30 +2880,34 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
             }
         }
     }
-    if (m_bErrorDuringRTreeThread)
-    {
-        SQLCommand(m_hAsyncDBHandle, "ROLLBACK");
-    }
-    else if (SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE)
-    {
-        m_bErrorDuringRTreeThread = true;
-    }
 
-    sqlite3_finalize(hStmt);
+    if (!m_hRTree)
+    {
+        if (m_bErrorDuringRTreeThread)
+        {
+            SQLCommand(m_hAsyncDBHandle, "ROLLBACK");
+        }
+        else if (SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE)
+        {
+            m_bErrorDuringRTreeThread = true;
+        }
+
+        sqlite3_finalize(hStmt);
+
+        if (m_bErrorDuringRTreeThread)
+        {
+            sqlite3_close(m_hAsyncDBHandle);
+            m_hAsyncDBHandle = nullptr;
+
+            VSIUnlink(m_osAsyncDBName.c_str());
+
+            m_oQueueRTreeEntries.clear();
+        }
+    }
     CPLDebug("GPKG",
              "AsyncRTreeThreadFunction(): " CPL_FRMT_GIB
              " rows inserted into RTree",
              nCount);
-
-    if (m_bErrorDuringRTreeThread)
-    {
-        sqlite3_close(m_hAsyncDBHandle);
-        m_hAsyncDBHandle = nullptr;
-
-        VSIUnlink(m_osAsyncDBName.c_str());
-
-        m_oQueueRTreeEntries.clear();
-    }
 }
 
 /************************************************************************/
@@ -3819,50 +3927,81 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 }
 
 /************************************************************************/
-/*                        findMinOrMax()                                */
+/*                      GetExtentFromRTree()                            */
 /************************************************************************/
 
-static bool findMinOrMax(GDALGeoPackageDataset *poDS,
-                         const CPLString &osRTreeName, const char *pszVarName,
-                         bool isMin, double &val)
+static bool GetExtentFromRTree(sqlite3 *hDB, const std::string &osRTreeName,
+                               double &minx, double &miny, double &maxx,
+                               double &maxy)
 {
-    // We proceed by dichotomic search since unfortunately SELECT MIN(minx)
-    // in a RTree is a slow operation
-    double minval = -1e10;
-    double maxval = 1e10;
-    val = 0.0;
-    double oldval = 0.0;
-    for (int i = 0; i < 100 && maxval - minval > 1e-18; i++)
+    // Cf https://github.com/sqlite/sqlite/blob/master/ext/rtree/rtree.c
+    // for the description of the content of the rtree _node table
+    // We fetch the root node (nodeno = 1) and iterates over its cells, to
+    // take the min/max of their minx/maxx/miny/maxy values.
+    char *pszSQL = sqlite3_mprintf(
+        "SELECT data FROM \"%w_node\" WHERE nodeno = 1", osRTreeName.c_str());
+    sqlite3_stmt *hStmt = nullptr;
+    CPL_IGNORE_RET_VAL(sqlite3_prepare_v2(hDB, pszSQL, -1, &hStmt, nullptr));
+    sqlite3_free(pszSQL);
+    bool bOK = false;
+    if (hStmt)
     {
-        val = (minval + maxval) / 2;
-        if (i > 0 && val == oldval)
+        if (sqlite3_step(hStmt) == SQLITE_ROW &&
+            sqlite3_column_type(hStmt, 0) == SQLITE_BLOB)
         {
-            break;
+            const int nBytes = sqlite3_column_bytes(hStmt, 0);
+            // coverity[tainted_data_return]
+            const GByte *pabyData =
+                static_cast<const GByte *>(sqlite3_column_blob(hStmt, 0));
+            constexpr int BLOB_HEADER_SIZE = 4;
+            if (nBytes > BLOB_HEADER_SIZE)
+            {
+                const int nCellCount = (pabyData[2] << 8) | pabyData[3];
+                constexpr int SIZEOF_CELL = 24;  // int64_t + 4 float
+                if (nCellCount >= 1 &&
+                    nBytes >= BLOB_HEADER_SIZE + SIZEOF_CELL * nCellCount)
+                {
+                    minx = std::numeric_limits<double>::max();
+                    miny = std::numeric_limits<double>::max();
+                    maxx = -std::numeric_limits<double>::max();
+                    maxy = -std::numeric_limits<double>::max();
+                    size_t offset = BLOB_HEADER_SIZE;
+                    for (int i = 0; i < nCellCount; ++i)
+                    {
+                        offset += sizeof(int64_t);
+
+                        float fMinX;
+                        memcpy(&fMinX, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMinX);
+                        minx = std::min(minx, static_cast<double>(fMinX));
+
+                        float fMaxX;
+                        memcpy(&fMaxX, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMaxX);
+                        maxx = std::max(maxx, static_cast<double>(fMaxX));
+
+                        float fMinY;
+                        memcpy(&fMinY, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMinY);
+                        miny = std::min(miny, static_cast<double>(fMinY));
+
+                        float fMaxY;
+                        memcpy(&fMaxY, pabyData + offset, sizeof(float));
+                        offset += sizeof(float);
+                        CPL_MSBPTR32(&fMaxY);
+                        maxy = std::max(maxy, static_cast<double>(fMaxY));
+                    }
+
+                    bOK = true;
+                }
+            }
         }
-        oldval = val;
-        CPLString osSQL = "SELECT 1 FROM ";
-        osSQL += "\"" + SQLEscapeName(osRTreeName) + "\"";
-        osSQL += " WHERE ";
-        osSQL += pszVarName;
-        osSQL += isMin ? " < " : " > ";
-        osSQL += CPLSPrintf("%.18g", val);
-        osSQL += " LIMIT 1";
-        auto oResult = SQLQuery(poDS->GetDB(), osSQL);
-        if (!oResult)
-        {
-            return false;
-        }
-        const bool bHasValue = oResult->RowCount() != 0;
-        if ((isMin && !bHasValue) || (!isMin && bHasValue))
-        {
-            minval = val;
-        }
-        else
-        {
-            maxval = val;
-        }
+        sqlite3_finalize(hStmt);
     }
-    return true;
+    return bOK;
 }
 
 /************************************************************************/
@@ -3888,39 +4027,28 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
     CancelAsyncNextArrowArray();
 
+    if (m_poFeatureDefn->GetGeomFieldCount() && HasSpatialIndex() &&
+        CPLTestBool(
+            CPLGetConfigOption("OGR_GPKG_USE_RTREE_FOR_GET_EXTENT", "TRUE")))
+    {
+        if (GetExtentFromRTree(m_poDS->GetDB(), m_osRTreeName, psExtent->MinX,
+                               psExtent->MinY, psExtent->MaxX, psExtent->MaxY))
+        {
+            m_poExtent = new OGREnvelope(*psExtent);
+            m_bExtentChanged = true;
+            SaveExtent();
+            return OGRERR_NONE;
+        }
+        else
+        {
+            UpdateContentsToNullExtent();
+            return OGRERR_FAILURE;
+        }
+    }
+
     /* User is OK with expensive calculation */
     if (bForce && m_poFeatureDefn->GetGeomFieldCount())
     {
-        if (HasSpatialIndex() &&
-            CPLTestBool(CPLGetConfigOption("OGR_GPKG_USE_RTREE_FOR_GET_EXTENT",
-                                           "TRUE")))
-        {
-            CPLString osSQL = "SELECT 1 FROM ";
-            osSQL += "\"" + SQLEscapeName(m_osRTreeName) + "\"";
-            osSQL += " LIMIT 1";
-            if (SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) == 0)
-            {
-                UpdateContentsToNullExtent();
-                return OGRERR_FAILURE;
-            }
-
-            double minx, miny, maxx, maxy;
-            if (findMinOrMax(m_poDS, m_osRTreeName, "MINX", true, minx) &&
-                findMinOrMax(m_poDS, m_osRTreeName, "MINY", true, miny) &&
-                findMinOrMax(m_poDS, m_osRTreeName, "MAXX", false, maxx) &&
-                findMinOrMax(m_poDS, m_osRTreeName, "MAXY", false, maxy))
-            {
-                psExtent->MinX = minx;
-                psExtent->MinY = miny;
-                psExtent->MaxX = maxx;
-                psExtent->MaxY = maxy;
-                m_poExtent = new OGREnvelope(*psExtent);
-                m_bExtentChanged = true;
-                SaveExtent();
-                return OGRERR_NONE;
-            }
-        }
-
         /* fall back to default implementation (scan all features) and save */
         /* the result for later */
         const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
@@ -4134,7 +4262,9 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
             CPLDebug("GPKG", "Waiting for background RTree building to finish");
         m_oThreadRTree.join();
         if (!bThreadHasFinished)
+        {
             CPLDebug("GPKG", "Background RTree building finished");
+        }
         m_bAllowedRTreeThread = false;
         m_bThreadRTreeStarted = false;
 
@@ -4151,20 +4281,28 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
 
     m_poDS->SoftStartTransaction();
 
-    /* Create virtual table */
-    char *pszSQL = sqlite3_mprintf(
-        "CREATE VIRTUAL TABLE \"%w\" USING rtree(id, minx, maxx, miny, maxy)",
-        m_osRTreeName.c_str());
-    err = SQLCommand(m_poDS->GetDB(), pszSQL);
-    sqlite3_free(pszSQL);
-    if (err != OGRERR_NONE)
+    if (m_hRTree)
     {
-        m_poDS->SoftRollbackTransaction();
-        return false;
+        if (!FlushInMemoryRTree(m_poDS->GetDB(), m_osRTreeName.c_str()))
+        {
+            m_poDS->SoftRollbackTransaction();
+            return false;
+        }
     }
-
-    if (bPopulateFromThreadRTree)
+    else if (bPopulateFromThreadRTree)
     {
+        /* Create virtual table */
+        char *pszSQL = sqlite3_mprintf("CREATE VIRTUAL TABLE \"%w\" USING "
+                                       "rtree(id, minx, maxx, miny, maxy)",
+                                       m_osRTreeName.c_str());
+        err = SQLCommand(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if (err != OGRERR_NONE)
+        {
+            m_poDS->SoftRollbackTransaction();
+            return false;
+        }
+
         pszSQL = sqlite3_mprintf(
             "DELETE FROM \"%w_node\";\n"
             "INSERT INTO \"%w_node\" SELECT * FROM \"%w\".my_rtree_node;\n"
@@ -4188,143 +4326,27 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
     else
     {
         /* Populate the RTree */
-#ifdef NO_PROGRESSIVE_RTREE_INSERTION
-        pszSQL =
-            sqlite3_mprintf("INSERT INTO \"%w\" "
-                            "SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
-                            "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
-                            "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
-                            m_osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC,
-                            pszT, pszC, pszC);
-        err = SQLCommand(m_poDS->GetDB(), pszSQL);
-        sqlite3_free(pszSQL);
-        if (err != OGRERR_NONE)
-        {
-            m_poDS->SoftRollbackTransaction();
-            return false;
-        }
-#else
-        pszSQL =
-            sqlite3_mprintf("SELECT \"%w\", ST_MinX(\"%w\"), ST_MaxX(\"%w\"), "
-                            "ST_MinY(\"%w\"), ST_MaxY(\"%w\") FROM \"%w\" "
-                            "WHERE \"%w\" NOT NULL AND NOT ST_IsEmpty(\"%w\")",
-                            pszI, pszC, pszC, pszC, pszC, pszT, pszC, pszC);
-        sqlite3_stmt *hIterStmt = nullptr;
-        if (sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hIterStmt,
-                               nullptr) != SQLITE_OK)
+        const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
+        char *pszErrMsg = nullptr;
+        if (!gdal_sqlite_rtree_bl_from_feature_table(
+                m_poDS->GetDB(), pszT, pszI, pszC, m_osRTreeName.c_str(), "id",
+                "minx", "miny", "maxx", "maxy", nMaxRAMUsageAllowed,
+                &pszErrMsg))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "failed to prepare SQL: %s: %s", pszSQL,
-                     sqlite3_errmsg(m_poDS->GetDB()));
-            sqlite3_free(pszSQL);
+                     "gdal_sqlite_rtree_bl_from_feature_table() failed "
+                     "with %s",
+                     pszErrMsg ? pszErrMsg : "(null)");
             m_poDS->SoftRollbackTransaction();
+            sqlite3_free(pszErrMsg);
             return false;
         }
-        sqlite3_free(pszSQL);
-
-        pszSQL = sqlite3_mprintf("INSERT INTO \"%w\" VALUES (?,?,?,?,?)",
-                                 m_osRTreeName.c_str());
-        sqlite3_stmt *hInsertStmt = nullptr;
-        if (sqlite3_prepare_v2(m_poDS->GetDB(), pszSQL, -1, &hInsertStmt,
-                               nullptr) != SQLITE_OK)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "failed to prepare SQL: %s",
-                     pszSQL);
-            sqlite3_free(pszSQL);
-            sqlite3_finalize(hIterStmt);
-            m_poDS->SoftRollbackTransaction();
-            return false;
-        }
-        sqlite3_free(pszSQL);
-
-        // Insert entries in RTree by chunks of 500K features
-        std::vector<GPKGRTreeEntry> aoEntries;
-        GUIntBig nEntryCount = 0;
-        constexpr size_t nChunkSize = 500 * 1000;
-#ifdef ENABLE_GPKG_OGR_CONTENTS
-        if (m_nTotalFeatureCount > 0)
-        {
-            aoEntries.reserve(static_cast<size_t>(std::min(
-                m_nTotalFeatureCount, static_cast<GIntBig>(nChunkSize))));
-        }
-#endif
-        while (true)
-        {
-            int sqlite_err = sqlite3_step(hIterStmt);
-            bool bFinished = false;
-            if (sqlite_err == SQLITE_ROW)
-            {
-                GPKGRTreeEntry sEntry;
-                sEntry.nId = sqlite3_column_int64(hIterStmt, 0);
-                sEntry.fMinX =
-                    rtreeValueDown(sqlite3_column_double(hIterStmt, 1));
-                sEntry.fMaxX =
-                    rtreeValueUp(sqlite3_column_double(hIterStmt, 2));
-                sEntry.fMinY =
-                    rtreeValueDown(sqlite3_column_double(hIterStmt, 3));
-                sEntry.fMaxY =
-                    rtreeValueUp(sqlite3_column_double(hIterStmt, 4));
-                aoEntries.push_back(sEntry);
-            }
-            else if (sqlite_err == SQLITE_DONE)
-            {
-                bFinished = true;
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to iterate over features while inserting in "
-                         "RTree: %s",
-                         sqlite3_errmsg(m_poDS->GetDB()));
-                sqlite3_finalize(hIterStmt);
-                sqlite3_finalize(hInsertStmt);
-                m_poDS->SoftRollbackTransaction();
-                return false;
-            }
-
-            if (aoEntries.size() == nChunkSize || bFinished)
-            {
-                for (size_t i = 0; i < aoEntries.size(); ++i)
-                {
-                    sqlite3_reset(hInsertStmt);
-
-                    sqlite3_bind_int64(hInsertStmt, 1, aoEntries[i].nId);
-                    sqlite3_bind_double(hInsertStmt, 2, aoEntries[i].fMinX);
-                    sqlite3_bind_double(hInsertStmt, 3, aoEntries[i].fMaxX);
-                    sqlite3_bind_double(hInsertStmt, 4, aoEntries[i].fMinY);
-                    sqlite3_bind_double(hInsertStmt, 5, aoEntries[i].fMaxY);
-                    sqlite_err = sqlite3_step(hInsertStmt);
-                    if (sqlite_err != SQLITE_OK && sqlite_err != SQLITE_DONE)
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "failed to execute insertion in RTree : %s",
-                                 sqlite3_errmsg(m_poDS->GetDB()));
-                        sqlite3_finalize(hIterStmt);
-                        sqlite3_finalize(hInsertStmt);
-                        m_poDS->SoftRollbackTransaction();
-                        return false;
-                    }
-                }
-
-                nEntryCount += aoEntries.size();
-                CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into %s",
-                         nEntryCount, m_osRTreeName.c_str());
-
-                aoEntries.clear();
-                if (bFinished)
-                    break;
-            }
-        }
-
-        sqlite3_finalize(hIterStmt);
-        sqlite3_finalize(hInsertStmt);
-#endif
     }
 
     CPLString osSQL;
 
     /* Register the table in gpkg_extensions */
-    pszSQL = sqlite3_mprintf(
+    char *pszSQL = sqlite3_mprintf(
         "INSERT INTO gpkg_extensions "
         "(table_name,column_name,extension_name,definition,scope) "
         "VALUES ('%q', '%q', 'gpkg_rtree_index', "
@@ -5297,16 +5319,9 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
                 // If we do have a spatial index, and our filter contains the
                 // bounding box of the RTree, then just filter on non-null
                 // non-empty geometries.
-                CPLString osSQL = "SELECT 1 FROM ";
-                osSQL += "\"" + SQLEscapeName(m_osRTreeName) + "\"";
-                osSQL += " LIMIT 1";
-
                 double minx, miny, maxx, maxy;
-                if (SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) != 0 &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MINX", true, minx) &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MINY", true, miny) &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MAXX", false, maxx) &&
-                    findMinOrMax(m_poDS, m_osRTreeName, "MAXY", false, maxy) &&
+                if (GetExtentFromRTree(m_poDS->GetDB(), m_osRTreeName, minx,
+                                       miny, maxx, maxy) &&
                     sEnvelope.MinX <= minx && sEnvelope.MinY <= miny &&
                     sEnvelope.MaxX >= maxx && sEnvelope.MaxY >= maxy)
                 {

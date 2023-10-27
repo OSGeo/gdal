@@ -2219,6 +2219,8 @@ GDALAttributeH CPL_DLL GDALGroupCreateAttribute(
 bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
                                       CSLConstList papszOptions);
 bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
+GDALGroupH CPL_DLL GDALGroupSubsetDimensionFromSelection(
+    GDALGroupH hGroup, const char *pszSelection, CSLConstList papszOptions);
 
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
 const char CPL_DLL *GDALMDArrayGetName(GDALMDArrayH hArray);

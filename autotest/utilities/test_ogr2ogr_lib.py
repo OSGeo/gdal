@@ -2279,3 +2279,43 @@ def test_json_types(tmp_vsimem):
         with gdal.OpenEx(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
             lyr = ds.GetLayer(0)
             test_extended_types(lyr)
+
+###############################################################################
+
+
+@pytest.mark.parametrize("enable_exceptions", [True, False])
+@pytest.mark.parametrize("enable_debug", [True, False])
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_accumulerated_errors(tmp_vsimem, enable_exceptions, enable_debug):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFID(1)
+    src_lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_accumulerated_errors.gpkg")
+    gdal.VectorTranslate(out_filename, src_ds)
+
+    def my_handler(errorClass, errno, msg):
+        pass
+
+    with gdaltest.error_handler(my_handler if enable_debug else None):
+        with gdaltest.config_option("CPL_DEBUG", "ON" if enable_debug else "OFF"):
+            with gdal.ExceptionMgr(useExceptions=enable_exceptions):
+                if enable_exceptions:
+                    with pytest.raises(
+                        Exception,
+                        match=r"Unable to write feature 1 from layer test\.\nMay be caused by: failed to execute insert : UNIQUE constraint failed: test\.fid",
+                    ):
+                        gdal.VectorTranslate(
+                            out_filename, src_ds, options="-preserve_fid -append"
+                        )
+                else:
+                    assert (
+                        gdal.VectorTranslate(
+                            out_filename, src_ds, options="-preserve_fid -append"
+                        )
+                        is None
+                    )
+

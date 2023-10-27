@@ -250,6 +250,12 @@ public:
     return GDALGroupRename( self, newName ) ? CE_None : CE_Failure;
   }
 
+%newobject SubsetDimensionFromSelection;
+  GDALGroupHS *SubsetDimensionFromSelection( const char *selection,
+                                             char **options = 0 ) {
+    return GDALGroupSubsetDimensionFromSelection(self, selection, options);
+  }
+
 } /* extend */
 }; /* GDALGroupH */
 

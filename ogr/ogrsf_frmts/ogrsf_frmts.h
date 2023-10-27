@@ -132,6 +132,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
         bool m_bArrowArrayStreamInProgress = false;
         bool m_bEOF = false;
         OGRLayer *m_poLayer = nullptr;
+        std::vector<GIntBig> m_anQueriedFIDs{};
+        size_t m_iQueriedFIDS = 0;
     };
     std::shared_ptr<ArrowArrayStreamPrivateData>
         m_poSharedArrowArrayStreamPrivateData{};

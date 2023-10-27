@@ -309,8 +309,7 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
 static GDALSubdatasetInfo *
 OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
 {
-    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
-    if (OGRGeoPackageDriverIdentify(&poOpenInfo))
+    if (STARTS_WITH_CI(pszFileName, "GPKG:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             cpl::make_unique<OGRGeoPackageDriverSubdatasetInfo>(pszFileName);

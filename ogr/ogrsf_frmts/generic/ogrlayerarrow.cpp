@@ -1591,15 +1591,47 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
     out_array->release = OGRLayerDefaultReleaseArray;
 
-    for (int i = 0; i < nMaxBatchSize; i++)
+    if (!m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.empty())
     {
-        auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
-        if (!poFeature)
+        if (m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS == 0)
+        {
+            CPLDebug("OGR", "Using fast FID filtering");
+        }
+        while (
+            apoFeatures.size() < static_cast<size_t>(nMaxBatchSize) &&
+            m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS <
+                m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.size())
+        {
+            const auto nFID =
+                m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs
+                    [m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS];
+            auto poFeature = std::unique_ptr<OGRFeature>(GetFeature(nFID));
+            ++m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS;
+            if (poFeature && (m_poFilterGeom == nullptr ||
+                              FilterGeometry(poFeature->GetGeomFieldRef(
+                                  m_iGeomFieldFilter))))
+            {
+                apoFeatures.emplace_back(std::move(poFeature));
+            }
+        }
+        if (m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS ==
+            m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.size())
         {
             poPrivate->poShared->m_bEOF = true;
-            break;
         }
-        apoFeatures.emplace_back(std::move(poFeature));
+    }
+    else
+    {
+        for (int i = 0; i < nMaxBatchSize; i++)
+        {
+            auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
+            if (!poFeature)
+            {
+                poPrivate->poShared->m_bEOF = true;
+                break;
+            }
+            apoFeatures.emplace_back(std::move(poFeature));
+        }
     }
     if (apoFeatures.empty())
     {
@@ -2077,6 +2109,37 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
         m_poSharedArrowArrayStreamPrivateData->m_poLayer = this;
     }
     m_poSharedArrowArrayStreamPrivateData->m_bArrowArrayStreamInProgress = true;
+
+    // Special case for "FID = constant", or "FID IN (constant1, ...., constantN)"
+    m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.clear();
+    m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS = 0;
+    if (m_poAttrQuery)
+    {
+        swq_expr_node *poNode =
+            static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
+        if (poNode->eNodeType == SNT_OPERATION &&
+            (poNode->nOperation == SWQ_IN || poNode->nOperation == SWQ_EQ) &&
+            poNode->papoSubExpr[0]->eNodeType == SNT_COLUMN &&
+            poNode->papoSubExpr[0]->field_index ==
+                GetLayerDefn()->GetFieldCount() + SPF_FID &&
+            TestCapability(OLCRandomRead))
+        {
+            std::set<GIntBig> oSetAlreadyListed;
+            for (int i = 1; i < poNode->nSubExprCount; ++i)
+            {
+                if (poNode->papoSubExpr[i]->eNodeType == SNT_CONSTANT &&
+                    poNode->papoSubExpr[i]->field_type == SWQ_INTEGER64 &&
+                    oSetAlreadyListed.find(poNode->papoSubExpr[i]->int_value) ==
+                        oSetAlreadyListed.end())
+                {
+                    oSetAlreadyListed.insert(poNode->papoSubExpr[i]->int_value);
+                    m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs
+                        .push_back(poNode->papoSubExpr[i]->int_value);
+                }
+            }
+        }
+    }
+
     auto poPrivateData = new ArrowArrayStreamPrivateDataSharedDataWrapper();
     poPrivateData->poShared = m_poSharedArrowArrayStreamPrivateData;
     out_stream->private_data = poPrivateData;
@@ -4853,7 +4916,6 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
         return false;
     }
 }
-//! @endcond
 
 /** Returns whether the provided ArrowSchema is supported for writing.
  *
