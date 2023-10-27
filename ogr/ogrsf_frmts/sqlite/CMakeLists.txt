@@ -20,7 +20,9 @@ add_gdal_driver(
           ogrsqliteutility.cpp
           ogrsqliteapiroutines.c
           rasterlite2_header.h
-          rasterlite2.cpp)
+          rasterlite2.cpp
+          sqlite_rtree_bulk_load/wrapper.cpp
+)
 gdal_standard_includes(ogr_SQLite)
 
 target_compile_definitions(ogr_SQLite PRIVATE -DHAVE_SQLITE)
