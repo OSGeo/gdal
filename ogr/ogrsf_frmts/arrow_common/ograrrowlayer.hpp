@@ -3659,7 +3659,7 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
         InvalidateCachedBatches();
 
     m_bSpatialFilterIntersectsLayerExtent = true;
-    if (iGeomField >= 0 && iGeomField < GetLayerDefn()->GetGeomFieldCount())
+    if (iGeomField < GetLayerDefn()->GetGeomFieldCount())
     {
         m_iGeomFieldFilter = iGeomField;
         if (InstallFilter(poGeomIn))

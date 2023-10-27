@@ -1786,6 +1786,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     {
         const int nOldPageSize{m_poDS->m_nPageSize};
         m_poDS->DeterminePageSizeFromAPI(m_osURL);
+        // cppcheck-suppress knownConditionTrueFalse
         if (nOldPageSize != m_poDS->m_nPageSize)
         {
             m_osGetURL = CPLURLAddKVP(m_osGetURL, "limit",

@@ -7210,7 +7210,6 @@ struct GeometryTypeAggregateContext
     sqlite3 *m_hDB = nullptr;
     int m_nFlags = 0;
     bool m_bIsGeometryTypeAggregateInterrupted = false;
-    std::string m_osGeometryTypeAggregateResult{};
     std::map<OGRwkbGeometryType, int64_t> m_oMapCount{};
     std::set<OGRwkbGeometryType> m_oSetNotNull{};
 

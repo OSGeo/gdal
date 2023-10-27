@@ -550,7 +550,7 @@ GDALGroup::SubsetDimensionFromSelection(const std::string &osSelection) const
         poSpecificShared->m_osDimFullName =
             poArray->GetDimensions()[0]->GetFullName();
         poSpecificShared->m_anMapNewDimToOldDim =
-            std::move(anMapNewDimToOldDim);
+            poShared->m_anMapNewDimToOldDim;
         poSpecificShared->m_poNewDim = poNewDim;
         auto poNewIndexingVar =
             GDALSubsetArray::Create(poIndexingVar, poSpecificShared,
