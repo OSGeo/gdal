@@ -40,7 +40,7 @@
 
 GeoRasterWrapper::GeoRasterWrapper()
     : sPyramidResampling("NN"), sCompressionType("NONE"), sInterleaving("BSQ"),
-      bGenStatsUseSamplingWindow(false), sGenStatsLayerNumbers(""),
+      bGenStatsUseSamplingWindow(false), sGenStatsLayerNumbers("")
 {
     nRasterId = -1;
     phMetadata = nullptr;
@@ -117,6 +117,15 @@ GeoRasterWrapper::GeoRasterWrapper()
     bGenStatsHistogram = false;
     bGenStatsUseBin = true;
     bGenStatsNodata = false;
+    dfGenStatsBinFunction[0] = 0.0;
+    dfGenStatsBinFunction[1] = 0.0;
+    dfGenStatsBinFunction[2] = 0.0;
+    dfGenStatsBinFunction[3] = 0.0;
+    dfGenStatsBinFunction[4] = 0.0;
+    dfGenStatsSamplingWindow[0] = 0.0;
+    dfGenStatsSamplingWindow[1] = 0.0;
+    dfGenStatsSamplingWindow[2] = 0.0;
+    dfGenStatsSamplingWindow[3] = 0.0;
 }
 
 //  ---------------------------------------------------------------------------
@@ -3707,10 +3716,10 @@ bool GeoRasterWrapper::FlushMetadata()
 
     if (bGenStats)
     {
-        if (GenerateStatistics(
-                nGenStatsSamplingFactor, dfGenStatsSamplingWindow,
-                bGenStatsHistogram, sGenStatsLayerNumbers.c_str(),
-                bGenStatsUseBin, dfGenStatsBinFunction, bGenStatsNodata))
+        if (GenerateStatistics(nGenStatsSamplingFactor,
+                               dfGenStatsSamplingWindow, bGenStatsHistogram,
+                               sGenStatsLayerNumbers.c_str(), bGenStatsUseBin,
+                               dfGenStatsBinFunction, bGenStatsNodata))
         {
             CPLDebug("GEOR", "Generated statistics successfully.");
         }
@@ -3881,10 +3890,12 @@ void GeoRasterWrapper::DeletePyramid()
 //  ---------------------------------------------------------------------------
 //                                                         GenerateStatistics()
 //  ---------------------------------------------------------------------------
-bool GeoRasterWrapper::GenerateStatistics(
-    int nSamplingFactor, double *pdfSamplingWindow, bool bHistogram,
-    const char *pszLayerNumbers, bool bUseBin, double *pdfBinFunction,
-    bool bNodata)
+bool GeoRasterWrapper::GenerateStatistics(int nSamplingFactor,
+                                          double *pdfSamplingWindow,
+                                          bool bHistogram,
+                                          const char *pszLayerNumbers,
+                                          bool bUseBin, double *pdfBinFunction,
+                                          bool bNodata)
 {
     // Length is 6 because it's the length of string FALSE.
     char szHistogram[] = "FALSE";
@@ -3916,8 +3927,8 @@ bool GeoRasterWrapper::GenerateStatistics(
                    "  gr sdo_georaster;\n"
                    "  swin SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:1, :2, :3,"
                    "  :4);\n"
-                   "  binfunc SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:5, :6, :7, "
-                     ":8, :9);\n"
+                   "  binfunc SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:5, :6, :7,"
+                   "  :8, :9);\n"
                    "  res VARCHAR2(5);\n"
                    "BEGIN\n"
                    "  IF :usewin = 'FALSE' THEN\n"

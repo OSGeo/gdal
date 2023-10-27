@@ -815,8 +815,7 @@ static bool ParseCommaSeparatedString(const char *str, double pfValues[],
     int nValues = 0;
     char **papszTokens = CSLTokenizeString2(str, ",", 0);
 
-    for (int i = 0; papszTokens && papszTokens[i] && nValues < nMaxValues;
-         i++)
+    for (int i = 0; papszTokens && papszTokens[i] && nValues < nMaxValues; i++)
     {
         pfValues[nValues++] = CPLAtof(papszTokens[i]);
     }
@@ -1308,8 +1307,9 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     {
         // Sampling window contains 4 double values
         const int nSize = 4;
-        if (!ParseCommaSeparatedString(pszFetched, 
-            poGRD->poGeoRaster->dfGenStatsSamplingWindow, nSize))
+        if (!ParseCommaSeparatedString(
+                pszFetched, poGRD->poGeoRaster->dfGenStatsSamplingWindow,
+                nSize))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Wrong comma separated string for sampling window (%s)",
@@ -1319,7 +1319,6 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         }
 
         poGRD->poGeoRaster->bGenStatsUseSamplingWindow = true;
-
     }
 
     pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_HISTOGRAM");
@@ -1348,8 +1347,8 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     if (pszFetched != nullptr)
     {
         const int nSize = 5;
-        if (!ParseCommaSeparatedString(pszFetched,
-            poGRD->poGeoRaster->dfGenStatsBinFunction, nSize))
+        if (!ParseCommaSeparatedString(
+                pszFetched, poGRD->poGeoRaster->dfGenStatsBinFunction, nSize))
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Wrong comma separated string for bin function (%s)",
@@ -3010,7 +3009,8 @@ void CPL_DLL GDALRegister_GEOR()
         "description='Generate statistics from the given rasters'"
         "default='FALSE' />"
         " <Option name='GENSTATS_SAMPLINGFACTOR' type='int'"
-        "description='Number of cells skipped in both row and column dimensions when "
+        "description='Number of cells skipped in both row and column "
+        "dimensions when "
         "the statistics are computed'"
         "default='1' />"
         " <Option name='GENSTATS_SAMPLINGWINDOW' type='string'"
@@ -3022,7 +3022,8 @@ void CPL_DLL GDALRegister_GEOR()
         "description='Layer numbers and/or ranges for which to compute "
         "the statistics' />"
         " <Option name='GENSTATS_USEBIN' type='boolean'"
-        "description='Specifies if the statistics should use the bin function provided by GENSTATS_USEBIN "
+        "description='Specifies if the statistics should use the bin function "
+        "provided by GENSTATS_USEBIN "
         "to compute the statistics' default='FALSE' />"
         " default='TRUE' />"
         " <Option name='GENSTATS_BINFUNCTION' type='string'"

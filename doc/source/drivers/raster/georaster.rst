@@ -242,13 +242,13 @@ Creation Options
       function specified by the <binFunction> element in the
       GeoRaster XML metadata. (3) a dynamically generated bin
       function generated as follows: 
-      - min and max are the actual min and max values of the raster
-      - numbins is defined as:
-        - celldepth = 1, numbins = 2.
-        - cellDepth = 2, numbins = 4.
-        - cellDepth = 4, numbins = 8.
-        cellDepth >= 8, numbins = 256. 
-      
+      Min and max are the actual min and max values of the raster
+      Numbins is defined as:
+      * celldepth = 1, numbins = 2.
+      * cellDepth = 2, numbins = 4.
+      * cellDepth = 4, numbins = 8.
+      * cellDepth >= 8, numbins = 256. 
+
       When this value is set to FALSE, then the bin function
       to use is the one generated dynamically as previously
       described.
