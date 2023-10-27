@@ -4098,9 +4098,11 @@ netCDFVariable::GetCoordinateVariables() const
 
     // Special case for NASA EMIT datasets
     auto apoDims = GetDimensions();
-    if (apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
-        apoDims[1]->GetName() == "crosstrack" &&
-        apoDims[2]->GetName() == "bands")
+    if ((apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
+         apoDims[1]->GetName() == "crosstrack" &&
+         apoDims[2]->GetName() == "bands") ||
+        (apoDims.size() == 2 && apoDims[0]->GetName() == "downtrack" &&
+         apoDims[1]->GetName() == "crosstrack"))
     {
         auto poRootGroup = netCDFGroup::Create(m_poShared, nullptr, m_gid);
         if (poRootGroup)
@@ -4348,12 +4350,16 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
         poDimX->SetIndexingVariable(varX);
         apoNewDims.emplace_back(poDimX);
 
-        apoNewDims.emplace_back(poParent->GetDimensions()[2]);
+        if (poParent->GetDimensionCount() == 3)
+            apoNewDims.emplace_back(poParent->GetDimensions()[2]);
 
-        const std::vector<GUInt64> anBlockSize = std::vector<GUInt64>{
+        std::vector<GUInt64> anBlockSize = std::vector<GUInt64>{
             std::min<GUInt64>(apoNewDims[0]->GetSize(), 512),
-            std::min<GUInt64>(apoNewDims[1]->GetSize(), 512),
-            poParent->GetDimensions()[2]->GetSize()};
+            std::min<GUInt64>(apoNewDims[1]->GetSize(), 512)};
+        if (poParent->GetDimensionCount() == 3)
+        {
+            anBlockSize.push_back(poParent->GetDimensions()[2]->GetSize());
+        }
 
         auto newAr(std::shared_ptr<GLTOrthoRectifiedArray>(
             new GLTOrthoRectifiedArray(poParent, apoNewDims, anBlockSize)));
@@ -4515,6 +4521,12 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                       abyNoData.data(), eBufferDT, 0, 1);
 
     const auto nBufferDTSize = bufferDataType.GetSize();
+    const int nCopyWordsDstStride =
+        m_apoDims.size() == 3
+            ? static_cast<int>(bufferStride[2] * nBufferDTSize)
+            : 0;
+    const int nCopyWordsCount =
+        m_apoDims.size() == 3 ? static_cast<int>(count[2]) : 1;
     if (nMinX > nMaxX || nMinY > nMaxY)
     {
         for (size_t iY = 0; iY < count[0]; ++iY)
@@ -4526,20 +4538,20 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                     (iY * bufferStride[0] + iX * bufferStride[1]) *
                         static_cast<int>(nBufferDTSize);
                 GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT,
-                              static_cast<int>(bufferStride[2] * nBufferDTSize),
-                              static_cast<int>(count[2]));
+                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
             }
         }
         return true;
     }
 
-    GUInt64 parentArrayIdxStart[3] = {static_cast<GUInt64>(nMinY),
-                                      static_cast<GUInt64>(nMinX),
-                                      arrayStartIdx[2]};
+    GUInt64 parentArrayIdxStart[3] = {
+        static_cast<GUInt64>(nMinY), static_cast<GUInt64>(nMinX),
+        m_apoDims.size() == 3 ? arrayStartIdx[2] : 0};
     size_t parentCount[3] = {static_cast<size_t>(nMaxY - nMinY + 1),
-                             static_cast<size_t>(nMaxX - nMinX + 1), count[2]};
-    GInt64 parentArrayStep[3] = {1, 1, arrayStep[2]};
+                             static_cast<size_t>(nMaxX - nMinX + 1),
+                             m_apoDims.size() == 3 ? count[2] : 1};
+    GInt64 parentArrayStep[3] = {1, 1,
+                                 m_apoDims.size() == 3 ? arrayStep[2] : 0};
 
     size_t nParentValueSize = nBufferDTSize;
     for (int i = 0; i < 3; ++i)
@@ -4576,6 +4588,8 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
     }
 
     size_t iGLTIndex = 0;
+    const size_t nXCount = parentCount[1];
+    const size_t nBandCount = m_apoDims.size() == 3 ? parentCount[2] : 1;
     for (size_t iY = 0; iY < count[0]; ++iY)
     {
         for (size_t iX = 0; iX < count[1]; ++iX, ++iGLTIndex)
@@ -4594,20 +4608,16 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
                 const int32_t iSrcX = static_cast<int32_t>(nX64) - nMinX;
                 const int32_t iSrcY = static_cast<int32_t>(nY64) - nMinY;
                 const GByte *pabySrcBuffer =
-                    parentValues.data() + (iSrcY * parentCount[1] + iSrcX) *
-                                              parentCount[2] * nBufferDTSize;
+                    parentValues.data() +
+                    (iSrcY * nXCount + iSrcX) * nBandCount * nBufferDTSize;
                 GDALCopyWords(pabySrcBuffer, eBufferDT,
                               static_cast<int>(nBufferDTSize), pabyDstBuffer,
-                              eBufferDT,
-                              static_cast<int>(bufferStride[2] * nBufferDTSize),
-                              static_cast<int>(count[2]));
+                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
             }
             else
             {
                 GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT,
-                              static_cast<int>(bufferStride[2] * nBufferDTSize),
-                              static_cast<int>(count[2]));
+                              eBufferDT, nCopyWordsDstStride, nCopyWordsCount);
             }
         }
     }
@@ -4626,13 +4636,17 @@ std::shared_ptr<GDALMDArray> netCDFVariable::GetResampled(
 {
     // Special case for NASA EMIT datasets
     auto apoDims = GetDimensions();
-    if (apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
-        apoDims[1]->GetName() == "crosstrack" &&
-        apoDims[2]->GetName() == "bands" && poTargetSRS == nullptr &&
-        (apoNewDims == std::vector<std::shared_ptr<GDALDimension>>(3) ||
-         apoNewDims ==
-             std::vector<std::shared_ptr<GDALDimension>>{nullptr, nullptr,
-                                                         apoDims[2]}) &&
+    if (poTargetSRS == nullptr &&
+        ((apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
+          apoDims[1]->GetName() == "crosstrack" &&
+          apoDims[2]->GetName() == "bands" &&
+          (apoNewDims == std::vector<std::shared_ptr<GDALDimension>>(3) ||
+           apoNewDims ==
+               std::vector<std::shared_ptr<GDALDimension>>{nullptr, nullptr,
+                                                           apoDims[2]})) ||
+         (apoDims.size() == 2 && apoDims[0]->GetName() == "downtrack" &&
+          apoDims[1]->GetName() == "crosstrack" &&
+          apoNewDims == std::vector<std::shared_ptr<GDALDimension>>(2))) &&
         CPLTestBool(CSLFetchNameValueDef(papszOptions,
                                          "EMIT_ORTHORECTIFICATION", "YES")))
     {

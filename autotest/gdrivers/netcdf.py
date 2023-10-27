@@ -6421,17 +6421,17 @@ def test_netcdf_proj4string_geospatial_bounds_crs():
 
 
 ###############################################################################
-# test opening a NASA EMIT dataset and check we get correct dimension mapping
+# test opening a NASA EMIT L2A dataset and check we get correct dimension mapping
 # and a geolocation array
 
 
-def test_netcdf_NASA_EMIT():
+def test_netcdf_NASA_EMIT_L2A():
 
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip("Requires NC4 support")
 
     # Original dataset is https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/EMITL2ARFL.001/EMIT_L2A_RFL_001_20220903T163129_2224611_012/EMIT_L2A_RFL_001_20220903T163129_2224611_012.nc
-    ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT.nc":reflectance')
+    ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT_L2A.nc":reflectance')
     assert ds.RasterXSize == 2
     assert ds.RasterYSize == 2
     assert ds.RasterCount == 2
@@ -6447,9 +6447,41 @@ def test_netcdf_NASA_EMIT():
         "PIXEL_STEP": "1",
         "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         "X_BAND": "1",
-        "X_DATASET": 'NETCDF:"data/netcdf/fake_EMIT.nc":/location/lon',
+        "X_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2A.nc":/location/lon',
         "Y_BAND": "1",
-        "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT.nc":/location/lat',
+        "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2A.nc":/location/lat',
+    }
+
+
+###############################################################################
+# test opening a NASA EMIT L2B_MIN dataset and check we get correct dimension mapping
+# and a geolocation array
+
+
+def test_netcdf_NASA_EMIT_L2B_MIN():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip("Requires NC4 support")
+
+    # Genuine dataset can be found at  https://search.earthdata.nasa.gov/search?q=C2408034484-LPCLOUD
+    ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":some_var')
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).ReadRaster() == struct.pack("f" * 4, 30, 40, 10, 20)
+
+    md = ds.GetMetadata("GEOLOCATION")
+    assert md == {
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":/location/lon',
+        "Y_BAND": "1",
+        "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":/location/lat',
     }
 
 

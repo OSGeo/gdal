@@ -3578,9 +3578,9 @@ def test_netcdf_multidim_compute_statistics_update_metadata():
         gdal.Unlink(filename + ".aux.xml")
 
 
-def test_netcdf_multidim_getresampled_with_geoloc_EMIT():
+def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
 
-    ds = gdal.OpenEx("data/netcdf/fake_EMIT.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.OpenEx("data/netcdf/fake_EMIT_L2A.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     ar = rg.OpenMDArray("reflectance")
@@ -3634,7 +3634,7 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT():
     # result
     with gdaltest.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
         warped_ds = gdal.Warp(
-            "", 'NETCDF:"data/netcdf/fake_EMIT.nc":reflectance', format="MEM"
+            "", 'NETCDF:"data/netcdf/fake_EMIT_L2A.nc":reflectance', format="MEM"
         )
     assert warped_ds.ReadRaster() == resampled_ar_transposed.Read()
     xoff = 1
@@ -3739,6 +3739,123 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT():
             "f", resampled_ar.Read(array_start_idx=[2, 1, 1], count=[1, 1, 1])
         )[0]
         == -10
+    )
+
+
+def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2B_MIN():
+
+    ds = gdal.OpenEx("data/netcdf/fake_EMIT_L2B_MIN.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArray("some_var")
+    coordinate_vars = ar.GetCoordinateVariables()
+    assert len(coordinate_vars) == 2
+    assert coordinate_vars[0].GetName() == "lon"
+    assert coordinate_vars[1].GetName() == "lat"
+
+    resampled_ar = ar.GetResampled(
+        [None, None],
+        gdal.GRIORA_NearestNeighbour,
+        None,
+        ["EMIT_ORTHORECTIFICATION=NO"],
+    )
+    assert resampled_ar is not None
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "dimY"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "dimX"
+    assert dims[1].GetSize() == 3
+
+    resampled_ar = ar.GetResampled(
+        [None] * ar.GetDimensionCount(),
+        gdal.GRIORA_NearestNeighbour,
+        None,
+        ["EMIT_ORTHORECTIFICATION=NO"],
+    )
+    assert resampled_ar is not None
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "dimY"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "dimX"
+    assert dims[1].GetSize() == 3
+
+    # By default, the classic netCDF driver would use bottom-up reordering,
+    # which slightly modifies the output of the geolocation interpolation,
+    # and would not make it possible to compare exactly with the GetResampled()
+    # result
+    with gdaltest.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
+        warped_ds = gdal.Warp(
+            "", 'NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":some_var', format="MEM"
+        )
+    assert warped_ds.ReadRaster() == resampled_ar.Read()
+    xoff = 1
+    yoff = 2
+    xsize = 2
+    ysize = 1
+    assert warped_ds.ReadRaster(xoff, yoff, xsize, ysize) == resampled_ar.Read(
+        array_start_idx=[yoff, xoff], count=[ysize, xsize]
+    )
+
+    # Use glt_x and glt_y arrays
+    resampled_ar = ar.GetResampled([None, None], gdal.GRIORA_NearestNeighbour, None)
+    assert resampled_ar is not None
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "lat"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "lon"
+    assert dims[1].GetSize() == 3
+    assert resampled_ar.GetDataType() == ar.GetDataType()
+    assert resampled_ar.GetBlockSize() == [3, 3]
+    assert resampled_ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert resampled_ar.GetNoDataValue() == ar.GetNoDataValue()
+    assert resampled_ar.GetUnit() == ar.GetUnit()
+    assert (
+        resampled_ar.GetAttribute("long_name").ReadAsString()
+        == ar.GetAttribute("long_name").ReadAsString()
+    )
+    assert struct.unpack("f" * (3 * 3), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        40.0,
+        -9999.0,
+        10.0,
+        20.0,
+    )
+    assert struct.unpack(
+        "d" * (3 * 3),
+        resampled_ar.Read(
+            buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        ),
+    ) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        40.0,
+        -9999.0,
+        10.0,
+        20.0,
+    )
+
+    resampled_ds = resampled_ar.AsClassicDataset(1, 0)
+    assert resampled_ds.GetGeoTransform() == pytest.approx(
+        rg.GetAttribute("geotransform").ReadAsDoubleArray()
+    )
+
+    assert (
+        struct.unpack("f", resampled_ar.Read(array_start_idx=[0, 0], count=[1, 1]))[0]
+        == -9999
+    )
+    assert struct.unpack(
+        "f" * 2, resampled_ar.Read(array_start_idx=[0, 0], count=[1, 2])
+    ) == (-9999, -9999)
+    assert (
+        struct.unpack("f", resampled_ar.Read(array_start_idx=[2, 1], count=[1, 1]))[0]
+        == 10
     )
 
 
