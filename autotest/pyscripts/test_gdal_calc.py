@@ -141,7 +141,7 @@ def test_gdal_calc_py_1(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
-        f"-Z {infile} --Z_band=2 --calc=Z --overwrite --outfile {out[2]}",
+        f"-Z {infile} --Z_band=2 --calc=Z --overwrite --format GTiff --outfile {out[2]}",
     )
 
     for i, checksum in zip(
