@@ -318,6 +318,9 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
         return OGRLayer::WriteArrowBatch(schema, array, papszOptions);
     }
 #else
+    bool IsArrowSchemaSupported(const struct ArrowSchema *schema,
+                                CSLConstList papszOptions,
+                                std::string &osErrorMsg) const override;
     bool WriteArrowBatch(const struct ArrowSchema *schema,
                          struct ArrowArray *array,
                          CSLConstList papszOptions = nullptr) override;

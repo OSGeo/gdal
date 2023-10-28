@@ -792,3 +792,29 @@ inline int OGRParquetWriterLayer::TestCapability(const char *pszCap)
 #endif
     return OGRArrowWriterLayer::TestCapability(pszCap);
 }
+
+/************************************************************************/
+/*                        IsArrowSchemaSupported()                      */
+/************************************************************************/
+
+#if PARQUET_VERSION_MAJOR > 10
+bool OGRParquetWriterLayer::IsArrowSchemaSupported(
+    const struct ArrowSchema *schema, CSLConstList papszOptions,
+    std::string &osErrorMsg) const
+{
+    if (schema->format[0] == 'e' && schema->format[1] == 0)
+    {
+        osErrorMsg = "float16 not supported";
+        return false;
+    }
+    for (int64_t i = 0; i < schema->n_children; ++i)
+    {
+        if (!IsArrowSchemaSupported(schema->children[i], papszOptions,
+                                    osErrorMsg))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+#endif

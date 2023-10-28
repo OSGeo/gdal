@@ -3051,6 +3051,32 @@ def test_ogr_parquet_write_arrow(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.require_driver("Arrow")
+def test_ogr_parquet_IsArrowSchemaSupported_float16(tmp_vsimem):
+
+    src_ds = ogr.Open("data/arrow/test.feather")
+    src_lyr = src_ds.GetLayer(0)
+
+    outfilename = str(
+        tmp_vsimem / "test_ogr_parquet_IsArrowSchemaSupported_float16.parquet"
+    )
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer(
+            "test", srs=src_lyr.GetSpatialRef(), geom_type=ogr.wkbPoint, options=[]
+        )
+
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert not success
+        assert error_msg == "float16 not supported"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
 def test_ogr_parquet_write_arrow_rewind_polygon(tmp_vsimem):
 
     src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
