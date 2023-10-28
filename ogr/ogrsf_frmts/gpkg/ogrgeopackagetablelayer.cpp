@@ -192,6 +192,11 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         }
     }
 
+    if (soColumns.empty())
+    {
+        // Can happen if ignoring all fields on a view...
+        soColumns = "NULL";
+    }
     m_soColumns = soColumns;
     return OGRERR_NONE;
 }

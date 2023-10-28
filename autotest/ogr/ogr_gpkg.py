@@ -4370,6 +4370,13 @@ def test_ogr_gpkg_46(tmp_vsimem):
     assert f is not None
     f = lyr.GetNextFeature()
     assert f is None
+    lyr.SetSpatialFilter(None)
+
+    lyr.SetIgnoredFields(["my_fid", "my_geom"])
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f is not None
+    lyr.SetIgnoredFields([])
 
     # View with FID in non-first position
     lyr = ds.GetLayerByName("my_view2")
