@@ -1531,6 +1531,72 @@ int OGRLayer::InstallFilter(OGRGeometry *poFilter)
 //! @endcond
 
 /************************************************************************/
+/*                   DoesGeometryIntersectEnvelope()                    */
+/************************************************************************/
+
+static bool DoesGeometryIntersectEnvelope(const OGRGeometry *poGeometry,
+                                          const OGREnvelope &sEnvelope)
+{
+    const OGRLineString *poLS = nullptr;
+
+    switch (wkbFlatten(poGeometry->getGeometryType()))
+    {
+        case wkbPoint:
+        {
+            const auto poPoint = poGeometry->toPoint();
+            const double x = poPoint->getX();
+            const double y = poPoint->getY();
+            return (x >= sEnvelope.MinX && y >= sEnvelope.MinY &&
+                    x <= sEnvelope.MaxX && y <= sEnvelope.MaxY);
+        }
+
+        case wkbLineString:
+            poLS = poGeometry->toLineString();
+            break;
+
+        case wkbPolygon:
+        {
+            const OGRPolygon *poPoly = poGeometry->toPolygon();
+            poLS = poPoly->getExteriorRing();
+            break;
+        }
+
+        case wkbMultiPoint:
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            for (const auto &poSubGeom : *(poGeometry->toGeometryCollection()))
+            {
+                if (DoesGeometryIntersectEnvelope(poSubGeom, sEnvelope))
+                    return true;
+            }
+            return false;
+        }
+
+        default:
+            return false;
+    }
+
+    if (poLS != nullptr)
+    {
+        const int nNumPoints = poLS->getNumPoints();
+        for (int i = 0; i < nNumPoints; i++)
+        {
+            const double x = poLS->getX(i);
+            const double y = poLS->getY(i);
+            if (x >= sEnvelope.MinX && y >= sEnvelope.MinY &&
+                x <= sEnvelope.MaxX && y <= sEnvelope.MaxY)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                           FilterGeometry()                           */
 /*                                                                      */
 /*      Compare the passed in geometry to the currently installed       */
@@ -1582,57 +1648,13 @@ int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
     }
     else
     {
-        /* --------------------------------------------------------------------
-         */
-        /*      If the filter geometry is its own envelope and if the */
-        /*      the geometry (line, or polygon without hole) h has at least one
-         */
-        /*      point inside the filter geometry, the geometry itself is inside
-         */
-        /*      the filter geometry. */
-        /* --------------------------------------------------------------------
-         */
+        // If the filter geometry is its own envelope and if the geometry has
+        // at least one point inside the filter geometry, the geometry itself
+        // intersects the filter geometry.
         if (m_bFilterIsEnvelope)
         {
-            OGRLineString *poLS = nullptr;
-
-            switch (wkbFlatten(poGeometry->getGeometryType()))
-            {
-                case wkbPolygon:
-                {
-                    OGRPolygon *poPoly = poGeometry->toPolygon();
-                    OGRLinearRing *poRing = poPoly->getExteriorRing();
-                    if (poRing != nullptr && poPoly->getNumInteriorRings() == 0)
-                    {
-                        poLS = poRing;
-                    }
-                    break;
-                }
-
-                case wkbLineString:
-                    poLS = poGeometry->toLineString();
-                    break;
-
-                default:
-                    break;
-            }
-
-            if (poLS != nullptr)
-            {
-                int nNumPoints = poLS->getNumPoints();
-                for (int i = 0; i < nNumPoints; i++)
-                {
-                    double x = poLS->getX(i);
-                    double y = poLS->getY(i);
-                    if (x >= m_sFilterEnvelope.MinX &&
-                        y >= m_sFilterEnvelope.MinY &&
-                        x <= m_sFilterEnvelope.MaxX &&
-                        y <= m_sFilterEnvelope.MaxY)
-                    {
-                        return TRUE;
-                    }
-                }
-            }
+            if (DoesGeometryIntersectEnvelope(poGeometry, m_sFilterEnvelope))
+                return true;
         }
 
         /* --------------------------------------------------------------------
