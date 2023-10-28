@@ -5312,11 +5312,34 @@ bool netCDFDataset::ProcessNASAEMITGeoLocation(int nGroupId, int nVarId)
           } // group location
 
     }
+    or
+    netcdf EMIT_L2B_MIN_001_20231024T055538_2329704_040 {
+        dimensions:
+                downtrack = 1664 ;
+                crosstrack = 1242 ;
+                [...]
+        variables:
+                float group_1_band_depth(downtrack, crosstrack) ;
+                        group_1_band_depth:_FillValue = -9999.f ;
+                        group_1_band_depth:long_name = "Group 1 Band Depth" ;
+                        group_1_band_depth:units = "unitless" ;
+                [...]
+        group: location {
+          variables:
+                double lon(downtrack, crosstrack) ;
+                        lon:_FillValue = -9999. ;
+                        lon:long_name = "Longitude (WGS-84)" ;
+                        lon:units = "degrees east" ;
+                double lat(downtrack, crosstrack) ;
+                        lat:_FillValue = -9999. ;
+                        lat:long_name = "Latitude (WGS-84)" ;
+                        lat:units = "degrees north" ;
+        }
     */
 
     int nVarDims = 0;
     NCDF_ERR(nc_inq_varndims(nGroupId, nVarId, &nVarDims));
-    if (nVarDims != 3)
+    if (nVarDims != 2 && nVarDims != 3)
         return false;
 
     int nLocationGrpId = 0;

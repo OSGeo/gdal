@@ -868,7 +868,7 @@ def test_gdalmdimtranslate_array_with_view():
 def test_gdalmdimtranslate_array_resample():
     ds = gdal.MultiDimTranslate(
         "",
-        "../gdrivers/data/netcdf/fake_EMIT.nc",
+        "../gdrivers/data/netcdf/fake_EMIT_L2A.nc",
         arraySpecs=["name=reflectance,resample=true"],
         format="MEM",
     )
