@@ -3858,9 +3858,6 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
     }
 #endif
 
-    if (m_poFilterGeom != nullptr && !m_bFilterIsEnvelope)
-        return OGRGeoPackageLayer::GetFeatureCount();
-
     if (m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
         return 0;
 
@@ -3869,6 +3866,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
+    bool bUnregisterSQLFunction = false;
     if (m_bIsTable && m_poFilterGeom != nullptr &&
         m_pszAttrQueryString == nullptr && HasSpatialIndex())
     {
@@ -3885,6 +3883,34 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
                          SQLEscapeName(m_osRTreeName).c_str(),
                          sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
                          sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11);
+
+            if (OGRGeometryFactory::haveGEOS() &&
+                !(m_bFilterIsEnvelope &&
+                  wkbFlatten(
+                      m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)
+                          ->GetType()) == wkbPoint))
+            {
+                bUnregisterSQLFunction = true;
+                sqlite3_create_function(
+                    m_poDS->hDB, "OGR_GPKG_Intersects_Spatial_Filter", 1,
+                    SQLITE_UTF8, this, OGR_GPKG_Intersects_Spatial_Filter,
+                    nullptr, nullptr);
+                const char *pszC =
+                    m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)
+                        ->GetNameRef();
+                soSQL.Printf("SELECT COUNT(*) FROM \"%s\" m "
+                             "JOIN \"%s\" r "
+                             "ON m.\"%s\" = r.id WHERE "
+                             "r.maxx >= %.12f AND r.minx <= %.12f AND "
+                             "r.maxy >= %.12f AND r.miny <= %.12f AND "
+                             "OGR_GPKG_Intersects_Spatial_Filter(m.\"%s\")",
+                             SQLEscapeName(m_pszTableName).c_str(),
+                             SQLEscapeName(m_osRTreeName).c_str(),
+                             SQLEscapeName(m_osFIDForRTree).c_str(),
+                             sEnvelope.MinX - 1e-11, sEnvelope.MaxX + 1e-11,
+                             sEnvelope.MinY - 1e-11, sEnvelope.MaxY + 1e-11,
+                             SQLEscapeName(pszC).c_str());
+            }
         }
     }
 
@@ -3902,6 +3928,13 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
     /* Just run the query directly and get back integer */
     GIntBig iFeatureCount =
         SQLGetInteger64(m_poDS->GetDB(), soSQL.c_str(), &err);
+
+    if (bUnregisterSQLFunction)
+    {
+        sqlite3_create_function(m_poDS->hDB,
+                                "OGR_GPKG_Intersects_Spatial_Filter", 1,
+                                SQLITE_UTF8, this, nullptr, nullptr, nullptr);
+    }
 
     /* Generic implementation uses -1 for error condition, so we will too */
     if (err == OGRERR_NONE)

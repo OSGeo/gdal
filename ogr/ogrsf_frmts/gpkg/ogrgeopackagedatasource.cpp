@@ -7706,6 +7706,7 @@ static bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
                 &(psHeader->MaxY)) == OGRERR_NONE)
         {
             psHeader->bEmpty = bEmpty;
+            psHeader->bExtentHasXY = !bEmpty;
             if (!(bEmpty && bNeedExtent))
                 return true;
         }
@@ -7737,6 +7738,61 @@ static bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
         delete poGeom;
     }
     return true;
+}
+
+/************************************************************************/
+/*                    OGR_GPKG_Intersects_Spatial_Filter()              */
+/************************************************************************/
+
+void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext, int argc,
+                                        sqlite3_value **argv)
+{
+    if (sqlite3_value_type(argv[0]) != SQLITE_BLOB)
+    {
+        sqlite3_result_int(pContext, 0);
+        return;
+    }
+
+    auto poLayer =
+        static_cast<OGRGeoPackageTableLayer *>(sqlite3_user_data(pContext));
+
+    GPkgHeader sHeader;
+    if (poLayer->m_bFilterIsEnvelope &&
+        OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false) &&
+        sHeader.bExtentHasXY)
+    {
+        OGREnvelope sEnvelope;
+        sEnvelope.MinX = sHeader.MinX;
+        sEnvelope.MinY = sHeader.MinY;
+        sEnvelope.MaxX = sHeader.MaxX;
+        sEnvelope.MaxY = sHeader.MaxY;
+        if (poLayer->m_sFilterEnvelope.Contains(sEnvelope))
+        {
+            sqlite3_result_int(pContext, 1);
+            return;
+        }
+    }
+
+    const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+    auto poGeom = std::unique_ptr<OGRGeometry>(
+        GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
+    if (poGeom == nullptr)
+    {
+        // Try also spatialite geometry blobs
+        OGRGeometry *poGeomSpatialite = nullptr;
+        if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
+                                              &poGeomSpatialite) != OGRERR_NONE)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+            sqlite3_result_int(pContext, 0);
+            return;
+        }
+        poGeom.reset(poGeomSpatialite);
+    }
+
+    sqlite3_result_int(pContext, poLayer->FilterGeometry(poGeom.get()));
 }
 
 /************************************************************************/
