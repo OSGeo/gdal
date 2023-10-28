@@ -3135,3 +3135,40 @@ def test_ogr_parquet_read_large_binary_or_string_for_geometry(filename):
 
         assert "INFO" in ret
         assert "ERROR" not in ret
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_write_from_wkb_large_binary(tmp_vsimem):
+
+    src_ds = ogr.Open("data/parquet/poly_wkb_large_binary.parquet")
+    src_lyr = src_ds.GetLayer(0)
+
+    outfilename = str(
+        tmp_vsimem / "test_ogr_parquet_write_from_wkb_large_binary.parquet"
+    )
+    with ogr.GetDriverByName("Parquet").CreateDataSource(outfilename) as dst_ds:
+        dst_lyr = dst_ds.CreateLayer("test", geom_type=ogr.wkbPolygon, options=[])
+
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+        assert success
+
+        for i in range(schema.GetChildrenCount()):
+            if schema.GetChild(i).GetName() not in ("geometry"):
+                dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+        while True:
+            array = stream.GetNextRecordBatch()
+            if array is None:
+                break
+            assert dst_lyr.WriteArrowBatch(schema, array) == ogr.OGRERR_NONE
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    src_lyr.ResetReading()
+    ogrtest.compare_layers(src_lyr, lyr)
