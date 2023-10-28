@@ -1677,7 +1677,8 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
         else
         {
             if (m_bFilterIsEnvelope &&
-                OGRWKBIsWithinPessimistic(pabyWKB, nWKBSize, m_sFilterEnvelope))
+                OGRWKBIntersectsPessimistic(pabyWKB, nWKBSize,
+                                            m_sFilterEnvelope))
             {
                 return true;
             }

@@ -524,10 +524,10 @@ bool OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
 }
 
 /************************************************************************/
-/*              OGRWKBIsWithinPointSequencePessimistic()                */
+/*              OGRWKBIntersectsPointSequencePessimistic()              */
 /************************************************************************/
 
-static bool OGRWKBIsWithinPointSequencePessimistic(
+static bool OGRWKBIntersectsPointSequencePessimistic(
     const uint8_t *data, const size_t size, const OGRwkbByteOrder eByteOrder,
     const int nDim, size_t &iOffsetInOut, const OGREnvelope &sEnvelope,
     bool &bErrorOut)
@@ -563,10 +563,10 @@ static bool OGRWKBIsWithinPointSequencePessimistic(
 }
 
 /************************************************************************/
-/*               OGRWKBIsWithinRingSequencePessimistic()                */
+/*               OGRWKBIntersectsRingSequencePessimistic()              */
 /************************************************************************/
 
-static bool OGRWKBIsWithinRingSequencePessimistic(
+static bool OGRWKBIntersectsRingSequencePessimistic(
     const uint8_t *data, const size_t size, const OGRwkbByteOrder eByteOrder,
     const int nDim, size_t &iOffsetInOut, const OGREnvelope &sEnvelope,
     bool &bErrorOut)
@@ -585,7 +585,7 @@ static bool OGRWKBIsWithinRingSequencePessimistic(
         bErrorOut = true;
         return false;
     }
-    if (OGRWKBIsWithinPointSequencePessimistic(
+    if (OGRWKBIntersectsPointSequencePessimistic(
             data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut))
     {
         return true;
@@ -614,13 +614,13 @@ static bool OGRWKBIsWithinRingSequencePessimistic(
 }
 
 /************************************************************************/
-/*                  OGRWKBIsWithinPessimistic()                         */
+/*                  OGRWKBIntersectsPessimistic()                         */
 /************************************************************************/
 
-static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
-                                      size_t &iOffsetInOut,
-                                      const OGREnvelope &sEnvelope,
-                                      const int nRec, bool &bErrorOut)
+static bool OGRWKBIntersectsPessimistic(const GByte *data, const size_t size,
+                                        size_t &iOffsetInOut,
+                                        const OGREnvelope &sEnvelope,
+                                        const int nRec, bool &bErrorOut)
 {
     if (size - iOffsetInOut < MIN_WKB_SIZE)
     {
@@ -644,13 +644,13 @@ static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
 
     if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
     {
-        return OGRWKBIsWithinPointSequencePessimistic(
+        return OGRWKBIntersectsPointSequencePessimistic(
             data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut);
     }
 
     if (eFlatType == wkbPolygon)
     {
-        return OGRWKBIsWithinRingSequencePessimistic(
+        return OGRWKBIntersectsRingSequencePessimistic(
             data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut);
     }
 
@@ -671,9 +671,9 @@ static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
                 return false;
             }
             iOffsetInOut += WKB_PREFIX_SIZE;
-            if (OGRWKBIsWithinPointSequencePessimistic(data, size, eByteOrder,
-                                                       nDim, iOffsetInOut,
-                                                       sEnvelope, bErrorOut))
+            if (OGRWKBIntersectsPointSequencePessimistic(data, size, eByteOrder,
+                                                         nDim, iOffsetInOut,
+                                                         sEnvelope, bErrorOut))
             {
                 return true;
             }
@@ -703,9 +703,9 @@ static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
             }
             CPLAssert(data[iOffsetInOut] == eByteOrder);
             iOffsetInOut += WKB_PREFIX_SIZE;
-            if (OGRWKBIsWithinRingSequencePessimistic(data, size, eByteOrder,
-                                                      nDim, iOffsetInOut,
-                                                      sEnvelope, bErrorOut))
+            if (OGRWKBIntersectsRingSequencePessimistic(data, size, eByteOrder,
+                                                        nDim, iOffsetInOut,
+                                                        sEnvelope, bErrorOut))
             {
                 return true;
             }
@@ -735,8 +735,8 @@ static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
         }
         for (uint32_t k = 0; k < nParts; k++)
         {
-            if (OGRWKBIsWithinPessimistic(data, size, iOffsetInOut, sEnvelope,
-                                          nRec + 1, bErrorOut))
+            if (OGRWKBIntersectsPessimistic(data, size, iOffsetInOut, sEnvelope,
+                                            nRec + 1, bErrorOut))
             {
                 return true;
             }
@@ -753,21 +753,21 @@ static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
 }
 
 /************************************************************************/
-/*                  OGRWKBIsWithinPessimistic()                         */
+/*                  OGRWKBIntersectsPessimistic()                       */
 /************************************************************************/
 
-/* Returns whether the geometry (pabyWkb, nWKBSize) is, for sure, within
+/* Returns whether the geometry (pabyWkb, nWKBSize) intersects, for sure,
  * the passed envelope.
- * When it returns true, the geometry is within the envelope.
- * When it returns false, the geometry may or may not be within the envelope.
+ * When it returns true, the geometry intersects the envelope.
+ * When it returns false, the geometry may or may not intersect the envelope.
  */
-bool OGRWKBIsWithinPessimistic(const GByte *pabyWkb, size_t nWKBSize,
-                               const OGREnvelope &sEnvelope)
+bool OGRWKBIntersectsPessimistic(const GByte *pabyWkb, size_t nWKBSize,
+                                 const OGREnvelope &sEnvelope)
 {
     size_t iOffsetInOut = 0;
     bool bErrorOut = false;
-    bool bRet = OGRWKBIsWithinPessimistic(pabyWkb, nWKBSize, iOffsetInOut,
-                                          sEnvelope, 0, bErrorOut);
+    bool bRet = OGRWKBIntersectsPessimistic(pabyWkb, nWKBSize, iOffsetInOut,
+                                            sEnvelope, 0, bErrorOut);
     if (!bRet && !bErrorOut)
     {
         // The following assert only holds if there is no trailing data

@@ -42,8 +42,8 @@ bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
 bool CPL_DLL OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
                                   OGREnvelope &sEnvelope);
 
-bool CPL_DLL OGRWKBIsWithinPessimistic(const GByte *pabyWkb, size_t nWKBSize,
-                                       const OGREnvelope &sEnvelope);
+bool CPL_DLL OGRWKBIntersectsPessimistic(const GByte *pabyWkb, size_t nWKBSize,
+                                         const OGREnvelope &sEnvelope);
 
 void CPL_DLL OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb,
                                                      size_t nWKBSize);
