@@ -117,6 +117,9 @@ struct OGRGPKGTableLayerFillArrowArray
     const OGRLayer *poLayerForFilterGeom = nullptr;
 };
 
+void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext, int argc,
+                                        sqlite3_value **argv);
+
 /************************************************************************/
 /*                          GDALGeoPackageDataset                       */
 /************************************************************************/
@@ -763,6 +766,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int GetNextArrowArrayAsynchronous(struct ArrowArray *out_array);
     void GetNextArrowArrayAsynchronousWorker();
     void CancelAsyncNextArrowArray();
+
+  protected:
+    friend void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext,
+                                                   int /*argc*/,
+                                                   sqlite3_value **argv);
 
   public:
     OGRGeoPackageTableLayer(GDALGeoPackageDataset *poDS,

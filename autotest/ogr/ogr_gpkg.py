@@ -9488,3 +9488,30 @@ def test_ogr_gpkg_sql_first_geom_null():
         sql_lyr.GetNextFeature()
         f = sql_lyr.GetNextFeature()
         assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon
+
+
+###############################################################################
+
+
+@pytest.mark.require_geos
+def test_ogr_gpkg_sql_exact_spatial_filter_for_feature_count(tmp_vsimem):
+
+    filename = str(
+        tmp_vsimem / "test_ogr_gpkg_sql_exact_spatial_filter_for_feature_count.gpkg"
+    )
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer(
+        "test",
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0,1 1)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0.1 0.25,0.15 0.25)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(0.1, 0.2, 0.15, 0.3)
+    assert lyr.GetFeatureCount() == 1
