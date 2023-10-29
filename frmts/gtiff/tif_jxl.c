@@ -514,33 +514,139 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
     if (nFirstExtraChannel < info.num_extra_channels)
     {
         // first reorder the main buffer
-        int nMainChannels = bAlphaEmbedded ? info.num_color_channels + 1
-                                           : info.num_color_channels;
-        unsigned int mainPixSize = nMainChannels * nBytesPerSample;
-        unsigned int fullPixSize = td->td_samplesperpixel * nBytesPerSample;
+        const int nMainChannels = bAlphaEmbedded ? info.num_color_channels + 1
+                                                 : info.num_color_channels;
+        const unsigned int mainPixSize = nMainChannels * nBytesPerSample;
+        const unsigned int fullPixSize =
+            td->td_samplesperpixel * nBytesPerSample;
+        assert(fullPixSize > mainPixSize);
+
+        /* Find min value of k such that k * fullPixSize >= (k + 1) * mainPixSize:
+         * ==> k = ceil(mainPixSize / (fullPixSize - mainPixSize))
+         * ==> k = (mainPixSize + (fullPixSize - mainPixSize) - 1) / (fullPixSize - mainPixSize)
+         * ==> k = (fullPixSize - 1) / (fullPixSize - mainPixSize)
+         */
+        const unsigned int nNumPixels = info.xsize * info.ysize;
         unsigned int outOff = sp->uncompressed_size - fullPixSize;
         unsigned int inOff = main_buffer_size - mainPixSize;
-        while (TRUE)
+        const unsigned int kThreshold =
+            (fullPixSize - 1) / (fullPixSize - mainPixSize);
+        if (mainPixSize == 1)
         {
-            memcpy(sp->uncompressed_buffer + outOff,
-                   sp->uncompressed_buffer + inOff, mainPixSize);
-            if (inOff < mainPixSize)
-                break;
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, /*mainPixSize=*/1);
+                inOff -= /*mainPixSize=*/1;
+                outOff -= fullPixSize;
+            }
+        }
+        else if (mainPixSize == 2)
+        {
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, /*mainPixSize=*/2);
+                inOff -= /*mainPixSize=*/2;
+                outOff -= fullPixSize;
+            }
+        }
+        else if (mainPixSize == 3)
+        {
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, /*mainPixSize=*/3);
+                inOff -= /*mainPixSize=*/3;
+                outOff -= fullPixSize;
+            }
+        }
+        else if (mainPixSize == 4)
+        {
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, /*mainPixSize=*/4);
+                inOff -= /*mainPixSize=*/4;
+                outOff -= fullPixSize;
+            }
+        }
+        else if (mainPixSize == 3 * 2)
+        {
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, /*mainPixSize=*/3 * 2);
+                inOff -= /*mainPixSize=*/3 * 2;
+                outOff -= fullPixSize;
+            }
+        }
+        else if (mainPixSize == 4 * 2)
+        {
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, /*mainPixSize=*/4 * 2);
+                inOff -= /*mainPixSize=*/4 * 2;
+                outOff -= fullPixSize;
+            }
+        }
+        else
+        {
+            for (unsigned int k = kThreshold; k < nNumPixels; ++k)
+            {
+                memcpy(sp->uncompressed_buffer + outOff,
+                       sp->uncompressed_buffer + inOff, mainPixSize);
+                inOff -= mainPixSize;
+                outOff -= fullPixSize;
+            }
+        }
+        /* Last iterations need memmove() because of overlapping between */
+        /* source and target regions. */
+        for (unsigned int k = kThreshold; k > 1;)
+        {
+            --k;
+            memmove(sp->uncompressed_buffer + outOff,
+                    sp->uncompressed_buffer + inOff, mainPixSize);
             inOff -= mainPixSize;
             outOff -= fullPixSize;
         }
         // then copy over the data from the extra_channel_buffer
-        int nExtraChannelsToExtract =
+        const int nExtraChannelsToExtract =
             info.num_extra_channels - nFirstExtraChannel;
         for (int i = 0; i < nExtraChannelsToExtract; ++i)
         {
             outOff = (i + nMainChannels) * nBytesPerSample;
             uint8_t *channel_buffer = extra_channel_buffer + i * channel_size;
-            for (; outOff < sp->uncompressed_size;
-                 outOff += fullPixSize, channel_buffer += nBytesPerSample)
+            if (nBytesPerSample == 1)
             {
-                memcpy(sp->uncompressed_buffer + outOff, channel_buffer,
-                       nBytesPerSample);
+                for (; outOff < sp->uncompressed_size;
+                     outOff += fullPixSize,
+                     channel_buffer += /*nBytesPerSample=*/1)
+                {
+                    memcpy(sp->uncompressed_buffer + outOff, channel_buffer,
+                           /*nBytesPerSample=*/1);
+                }
+            }
+            else if (nBytesPerSample == 2)
+            {
+                for (; outOff < sp->uncompressed_size;
+                     outOff += fullPixSize,
+                     channel_buffer += /*nBytesPerSample=*/2)
+                {
+                    memcpy(sp->uncompressed_buffer + outOff, channel_buffer,
+                           /*nBytesPerSample=*/2);
+                }
+            }
+            else
+            {
+                assert(nBytesPerSample == 4);
+                for (; outOff < sp->uncompressed_size;
+                     outOff += fullPixSize, channel_buffer += nBytesPerSample)
+                {
+                    memcpy(sp->uncompressed_buffer + outOff, channel_buffer,
+                           nBytesPerSample);
+                }
             }
         }
         _TIFFfreeExt(tif, extra_channel_buffer);
