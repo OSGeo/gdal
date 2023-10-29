@@ -8223,7 +8223,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         m_oQueueArrowArrayPrefetchTasks.empty() &&
         m_iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <=
             m_nTotalFeatureCount &&
-        sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2)
+        sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2 &&
+        CPLGetUsablePhysicalRAM() > 1024 * 1024 * 1024)
     {
         const int nMaxTasks = static_cast<int>(std::min<GIntBig>(
             DIV_ROUND_UP(m_nTotalFeatureCount - m_iNextShapeId, nMaxBatchSize),
