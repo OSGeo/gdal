@@ -297,7 +297,7 @@ static bool node_split_rstartree(struct sqlite_rtree_bl *tr,
 #endif
 
     int iBestDim = 0;
-    int iBestSplit = 0;
+    int iBestSplit = tr->node_capacity / 2;
     double fBestMargin = INFINITY;
     for (int idim = 0; idim < DIMS; ++idim) {
         double margin = 0;
@@ -421,7 +421,7 @@ static int node_choose(struct sqlite_rtree_bl * tr,
         return iBestIndex;
     }
 
-    // Fallback to using che "choose least enlargment" algorithm.
+    // Fallback to using che "choose least enlargement" algorithm.
     int i = node_choose_least_enlargement(node, rect);
 #ifdef USE_PATHHINT
     tr->path_hint[depth] = i;
