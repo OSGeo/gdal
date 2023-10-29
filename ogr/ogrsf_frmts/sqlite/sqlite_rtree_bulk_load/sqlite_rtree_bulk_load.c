@@ -119,6 +119,16 @@ struct sqlite_rtree_bl {
     void (*free)(void *);
 };
 
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define CPL_UNUSED __attribute((__unused__))
+#else
+#define CPL_UNUSED
+#endif
+
+static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int v) {
+    (void)v;
+}
+
 static inline NUMTYPE min0(NUMTYPE x, NUMTYPE y) {
     return x < y ? x : y;
 }
@@ -835,7 +845,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
 
     sqlite3_stmt *hStmtNode = NULL;
     sql = sqlite3_mprintf("INSERT INTO \"%w_node\" VALUES (?, ?)", rtree_name);
-    sqlite3_prepare_v2(hDB, sql, -1, &hStmtNode, NULL);
+    CPL_IGNORE_RET_VAL_INT(sqlite3_prepare_v2(hDB, sql, -1, &hStmtNode, NULL));
     sqlite3_free(sql);
     if (!hStmtNode) {
         return false;
@@ -843,7 +853,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
 
     sqlite3_stmt *hStmtParent = NULL;
     sql = sqlite3_mprintf("INSERT INTO \"%w_parent\" VALUES (?, ?)", rtree_name);
-    sqlite3_prepare_v2(hDB, sql, -1, &hStmtParent, NULL);
+    CPL_IGNORE_RET_VAL_INT(sqlite3_prepare_v2(hDB, sql, -1, &hStmtParent, NULL));
     sqlite3_free(sql);
     if (!hStmtParent) {
         sqlite3_finalize(hStmtNode);
@@ -852,7 +862,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
 
     sqlite3_stmt *hStmtRowid = NULL;
     sql = sqlite3_mprintf("INSERT INTO \"%w_rowid\" VALUES (?, ?)", rtree_name);
-    sqlite3_prepare_v2(hDB, sql, -1, &hStmtRowid, NULL);
+    CPL_IGNORE_RET_VAL_INT(sqlite3_prepare_v2(hDB, sql, -1, &hStmtRowid, NULL));
     sqlite3_free(sql);
     if (!hStmtRowid) {
         sqlite3_finalize(hStmtNode);
@@ -925,7 +935,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
                             feature_table_name,
                             feature_table_geom_colname,
                             feature_table_geom_colname);
-    sqlite3_prepare_v2(hDB, pszSQL, -1, &hStmt, NULL);
+    CPL_IGNORE_RET_VAL_INT(sqlite3_prepare_v2(hDB, pszSQL, -1, &hStmt, NULL));
     sqlite3_free(pszSQL);
     if (!hStmt) {
         if (p_error_msg)
@@ -971,7 +981,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
         pszSQL =
                 sqlite3_mprintf("INSERT INTO \"%w\" VALUES (?,?,?,?,?)",
                                 rtree_name);
-        sqlite3_prepare_v2(hDB, pszSQL, -1, &hStmtInsert, NULL);
+        CPL_IGNORE_RET_VAL_INT(sqlite3_prepare_v2(hDB, pszSQL, -1, &hStmtInsert, NULL));
         sqlite3_free(pszSQL);
         if (!hStmtInsert) {
             if (p_error_msg)
