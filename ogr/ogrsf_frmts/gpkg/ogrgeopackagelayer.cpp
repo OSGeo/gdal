@@ -560,7 +560,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
     const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     int iFeat = 0;
-    while (iFeat < sHelper.nMaxBatchSize)
+    while (iFeat < sHelper.m_nMaxBatchSize)
     {
         /* --------------------------------------------------------------------
          */
@@ -608,9 +608,9 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         else
             nFID = m_iNextShapeId;
 
-        if (sHelper.panFIDValues)
+        if (sHelper.m_panFIDValues)
         {
-            sHelper.panFIDValues[iFeat] = nFID;
+            sHelper.m_panFIDValues[iFeat] = nFID;
         }
 
         /* --------------------------------------------------------------------
@@ -618,9 +618,9 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         /*      Process Geometry if we have a column. */
         /* --------------------------------------------------------------------
          */
-        if (m_iGeomCol >= 0 && sHelper.mapOGRGeomFieldToArrowField[0] >= 0)
+        if (m_iGeomCol >= 0 && sHelper.m_mapOGRGeomFieldToArrowField[0] >= 0)
         {
-            const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
+            const int iArrowField = sHelper.m_mapOGRGeomFieldToArrowField[0];
             auto psArray = out_array->children[iArrowField];
 
             size_t nWKBSize = 0;
@@ -722,9 +722,9 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             }
         }
 
-        for (int iField = 0; iField < sHelper.nFieldCount; iField++)
+        for (int iField = 0; iField < sHelper.m_nFieldCount; iField++)
         {
-            const int iArrowField = sHelper.mapOGRFieldToArrowField[iField];
+            const int iArrowField = sHelper.m_mapOGRFieldToArrowField[iField];
             if (iArrowField < 0)
                 continue;
             const OGRFieldDefn *poFieldDefn =
@@ -851,7 +851,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                            &ogrField, poFieldDefn, nFID))
                     {
                         sHelper.SetDateTime(psArray, iFeat, brokenDown,
-                                            sHelper.anTZFlags[iField],
+                                            sHelper.m_anTZFlags[iField],
                                             ogrField);
                     }
                     break;

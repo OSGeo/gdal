@@ -7484,7 +7484,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         sqlite3_user_data(pContext));
 
     if (psFillArrowArray->nCountRows >=
-        psFillArrowArray->psHelper->nMaxBatchSize)
+        psFillArrowArray->psHelper->m_nMaxBatchSize)
     {
         if (psFillArrowArray->bAsynchronousMode)
         {
@@ -7521,16 +7521,16 @@ begin:
     int iCol = 0;
 
     GIntBig nFID = sqlite3_value_int64(argv[iCol]);
-    if (psHelper->panFIDValues)
+    if (psHelper->m_panFIDValues)
     {
-        psHelper->panFIDValues[iFeat] = nFID;
+        psHelper->m_panFIDValues[iFeat] = nFID;
     }
     iCol++;
 
-    if (!psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+    if (!psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
+        psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
     {
-        const int iArrowField = psHelper->mapOGRGeomFieldToArrowField[0];
+        const int iArrowField = psHelper->m_mapOGRGeomFieldToArrowField[0];
         auto psArray = psHelper->m_out_array->children[iArrowField];
         size_t nWKBSize = 0;
         const int nSqlite3ColType = sqlite3_value_type(argv[iCol]);
@@ -7674,9 +7674,9 @@ begin:
         iCol++;
     }
 
-    for (int iField = 0; iField < psHelper->nFieldCount; iField++)
+    for (int iField = 0; iField < psHelper->m_nFieldCount; iField++)
     {
-        const int iArrowField = psHelper->mapOGRFieldToArrowField[iField];
+        const int iArrowField = psHelper->m_mapOGRFieldToArrowField[iField];
         if (iArrowField < 0)
             continue;
 
@@ -7828,7 +7828,7 @@ begin:
                 {
                     psHelper->SetDateTime(
                         psArray, iFeat, psFillArrowArray->brokenDown,
-                        psHelper->anTZFlags[iField], ogrField);
+                        psHelper->m_anTZFlags[iField], ogrField);
                 }
                 break;
             }
@@ -8041,19 +8041,19 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
             osSQL += "NULL";
         }
 
-        if (!m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField
+        if (!m_poFillArrowArray->psHelper->m_mapOGRGeomFieldToArrowField
                  .empty() &&
-            m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+            m_poFillArrowArray->psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
         {
             osSQL += ",m.\"";
             osSQL += SQLEscapeName(GetGeometryColumn());
             osSQL += '"';
         }
-        for (int iField = 0; iField < m_poFillArrowArray->psHelper->nFieldCount;
-             iField++)
+        for (int iField = 0;
+             iField < m_poFillArrowArray->psHelper->m_nFieldCount; iField++)
         {
             const int iArrowField =
-                m_poFillArrowArray->psHelper->mapOGRFieldToArrowField[iField];
+                m_poFillArrowArray->psHelper->m_mapOGRFieldToArrowField[iField];
             if (iArrowField >= 0)
             {
                 const OGRFieldDefn *poFieldDefn =
@@ -8495,19 +8495,19 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += SQLEscapeName(m_pszFidColumn);
     osSQL += '"';
 
-    if (!sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+    if (!sFillArrowArray.psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
+        sFillArrowArray.psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
     {
         osSQL += ',';
         osSQL += '"';
         osSQL += SQLEscapeName(GetGeometryColumn());
         osSQL += '"';
     }
-    for (int iField = 0; iField < sFillArrowArray.psHelper->nFieldCount;
+    for (int iField = 0; iField < sFillArrowArray.psHelper->m_nFieldCount;
          iField++)
     {
         const int iArrowField =
-            sFillArrowArray.psHelper->mapOGRFieldToArrowField[iField];
+            sFillArrowArray.psHelper->m_mapOGRFieldToArrowField[iField];
         if (iArrowField >= 0)
         {
             const OGRFieldDefn *poFieldDefn =
@@ -8526,7 +8526,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += std::to_string(m_iNextShapeId + 1);
     osSQL += " AND ";
     osSQL += std::to_string(m_iNextShapeId +
-                            sFillArrowArray.psHelper->nMaxBatchSize);
+                            sFillArrowArray.psHelper->m_nMaxBatchSize);
 
     // CPLDebug("GPKG", "%s", osSQL.c_str());
 
