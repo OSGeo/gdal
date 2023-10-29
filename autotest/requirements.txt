@@ -3,6 +3,9 @@ pytest-sugar<=0.9.6; python_version < '3.7'
 pytest-sugar; python_version >= '3.7'
 pytest-env
 pytest-benchmark
+pytest-random-order
+pytest-timeout
+pytest-xdist
 lxml
 jsonschema
 filelock
