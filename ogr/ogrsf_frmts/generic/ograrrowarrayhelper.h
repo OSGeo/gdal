@@ -57,6 +57,8 @@ class CPL_DLL OGRArrowArrayHelper
     int64_t *panFIDValues = nullptr;
     struct ArrowArray *m_out_array = nullptr;
 
+    static uint32_t GetMemLimit();
+
     static int
     GetMaxFeaturesInBatch(const CPLStringList &aosArrowArrayStreamOptions);
 

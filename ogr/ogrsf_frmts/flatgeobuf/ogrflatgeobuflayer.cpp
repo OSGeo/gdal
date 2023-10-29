@@ -1420,6 +1420,7 @@ begin:
 
     const GIntBig nFeatureIdxStart = m_featuresPos;
 
+    const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     while (iFeat < sHelper.nMaxBatchSize)
     {
         bEOFOrError = true;
@@ -1538,6 +1539,20 @@ begin:
 
             const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
             const size_t nWKBSize = poOGRGeometry->WkbSize();
+
+            if (iFeat > 0)
+            {
+                auto psArray = out_array->children[iArrowField];
+                auto panOffsets = static_cast<int32_t *>(
+                    const_cast<void *>(psArray->buffers[1]));
+                const uint32_t nCurLength =
+                    static_cast<uint32_t>(panOffsets[iFeat]);
+                if (nWKBSize <= nMemLimit && nWKBSize > nMemLimit - nCurLength)
+                {
+                    goto after_loop;
+                }
+            }
+
             GByte *outPtr =
                 sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
             if (outPtr == nullptr)
@@ -1794,6 +1809,19 @@ begin:
                         }
                         if (!isIgnored)
                         {
+                            if (iFeat > 0)
+                            {
+                                auto panOffsets = static_cast<int32_t *>(
+                                    const_cast<void *>(psArray->buffers[1]));
+                                const uint32_t nCurLength =
+                                    static_cast<uint32_t>(panOffsets[iFeat]);
+                                if (len <= nMemLimit &&
+                                    len > nMemLimit - nCurLength)
+                                {
+                                    goto after_loop;
+                                }
+                            }
+
                             GByte *outPtr = sHelper.GetPtrForStringOrBinary(
                                 iArrowField, iFeat, len);
                             if (outPtr == nullptr)
@@ -1880,7 +1908,7 @@ begin:
         m_featuresPos++;
         bEOFOrError = false;
     }
-
+after_loop:
     if (bEOFOrError)
         m_bEOF = true;
 

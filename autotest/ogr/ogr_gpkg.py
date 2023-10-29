@@ -9515,3 +9515,74 @@ def test_ogr_gpkg_sql_exact_spatial_filter_for_feature_count(tmp_vsimem):
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(0.1, 0.2, 0.15, 0.3)
     assert lyr.GetFeatureCount() == 1
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("too_big_field", ["huge_string", "huge_binary", "geometry"])
+def test_ogr_gpkg_arrow_stream_huge_array(tmp_vsimem, too_big_field):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test_ogr_gpkg_arrow_stream_huge_array.gpkg"
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("foo")
+    lyr.CreateField(ogr.FieldDefn("huge_string", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("huge_binary", ogr.OFTBinary))
+    for i in range(50):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if too_big_field == "huge_string":
+            if i > 10:
+                f["huge_string"] = "x" * 10000
+        elif too_big_field == "huge_binary":
+            if i > 10:
+                f["huge_binary"] = b"x" * 10000
+        else:
+            geom = ogr.Geometry(ogr.wkbLineString)
+            geom.SetPoint_2D(500, 0, 0)
+            f.SetGeometry(geom)
+        lyr.CreateFeature(f)
+    ds.ExecuteSQL(
+        "CREATE VIEW my_view AS SELECT fid AS my_fid, geom AS my_geom, huge_string, huge_binary FROM foo"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 0 )"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 0, 0, 0)"
+    )
+    ds = None
+
+    ds = ogr.Open(filename)
+    for lyr_name in ["foo", "my_view"]:
+        lyr = ds.GetLayer(lyr_name)
+
+        with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "20000", thread_local=False):
+            stream = lyr.GetArrowStreamAsNumPy(
+                ["INCLUDE_FID=YES", "MAX_FEATURES_IN_BATCH=10", "USE_MASKED_ARRAYS=NO"]
+            )
+            batch_count = 0
+            got_fids = []
+            for batch in stream:
+                batch_count += 1
+                for fid in batch[lyr.GetFIDColumn()]:
+                    got_fids.append(fid)
+            assert got_fids == [i + 1 for i in range(50)]
+            assert batch_count == (25 if too_big_field == "geometry" else 21), lyr_name
+            del stream
+
+    with ds.ExecuteSQL("SELECT * FROM foo") as sql_lyr:
+        with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "20000", thread_local=False):
+            stream = sql_lyr.GetArrowStreamAsNumPy(
+                ["INCLUDE_FID=YES", "MAX_FEATURES_IN_BATCH=10", "USE_MASKED_ARRAYS=NO"]
+            )
+            batch_count = 0
+            got_fids = []
+            for batch in stream:
+                batch_count += 1
+                for fid in batch[sql_lyr.GetFIDColumn()]:
+                    got_fids.append(fid)
+            assert got_fids == [i + 1 for i in range(50)]
+            assert batch_count == (25 if too_big_field == "geometry" else 21), lyr_name
+            del stream

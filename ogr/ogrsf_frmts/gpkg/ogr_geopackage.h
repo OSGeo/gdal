@@ -101,6 +101,7 @@ struct OGRGPKGTableLayerFillArrowArray
     std::unique_ptr<OGRArrowArrayHelper> psHelper{};
     int nCountRows = 0;
     bool bErrorOccurred = false;
+    bool bMemoryLimitReached = false;
     std::string osErrorMsg{};
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
@@ -113,6 +114,7 @@ struct OGRGPKGTableLayerFillArrowArray
     std::mutex oMutex{};
     std::condition_variable oCV{};
     bool bIsFinished = false;
+    uint32_t nMemLimit = 0;
     // For spatial filtering
     const OGRLayer *poLayerForFilterGeom = nullptr;
 };
@@ -745,6 +747,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
         bool m_bArrayReady = false;
         bool m_bFetchRows = false;
         bool m_bStop = false;
+        bool m_bMemoryLimitReached = false;
         std::string m_osErrorMsg{};
         std::unique_ptr<GDALGeoPackageDataset> m_poDS{};
         OGRGeoPackageTableLayer *m_poLayer{};
@@ -762,7 +765,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     virtual int GetNextArrowArray(struct ArrowArrayStream *,
                                   struct ArrowArray *out_array) override;
     int GetNextArrowArrayInternal(struct ArrowArray *out_array,
-                                  std::string &osErrorMsg);
+                                  std::string &osErrorMsg,
+                                  bool &bMemoryLimitReached);
     int GetNextArrowArrayAsynchronous(struct ArrowArray *out_array);
     void GetNextArrowArrayAsynchronousWorker();
     void CancelAsyncNextArrowArray();

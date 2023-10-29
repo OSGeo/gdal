@@ -739,18 +739,19 @@ static uint8_t *AllocValidityBitmap(size_t nSize)
 
 template <class T, typename TMember>
 static bool FillArray(struct ArrowArray *psChild,
-                      std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                      const bool bIsNullable, TMember member, const int i)
+                      std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                      const size_t nFeatureCountLimit, const bool bIsNullable,
+                      TMember member, const int i)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     T *panValues = static_cast<T *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * apoFeatures.size()));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * nFeatureCountLimit));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -764,7 +765,7 @@ static bool FillArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
                     return false;
@@ -785,19 +786,20 @@ static bool FillArray(struct ArrowArray *psChild,
 
 template <typename TMember>
 static bool FillBoolArray(struct ArrowArray *psChild,
-                          std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          const size_t nFeatureCountLimit,
                           const bool bIsNullable, TMember member, const int i)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     uint8_t *panValues = static_cast<uint8_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nFeatureCountLimit + 7) / 8));
     if (panValues == nullptr)
         return false;
-    memset(panValues, 0, (apoFeatures.size() + 7) / 8);
+    memset(panValues, 0, (nFeatureCountLimit + 7) / 8);
     psChild->buffers[1] = panValues;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -811,7 +813,7 @@ static bool FillBoolArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
                     return false;
@@ -866,22 +868,25 @@ struct GetFromRealList
 };
 
 template <class OffsetType, class T, class GetFromList>
-static bool FillListArray(struct ArrowArray *psChild,
-                          std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                          const bool bIsNullable, const int i)
+static size_t
+FillListArray(struct ArrowArray *psChild,
+              std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+              const size_t nFeatureCountLimit, const bool bIsNullable,
+              const int i, const size_t nMemLimit)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     OffsetType *panOffsets =
         static_cast<OffsetType *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-            sizeof(OffsetType) * (1 + apoFeatures.size())));
+            sizeof(OffsetType) * (1 + nFeatureCountLimit)));
     if (panOffsets == nullptr)
-        return false;
+        return 0;
     psChild->buffers[1] = panOffsets;
 
     OffsetType nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
     {
         panOffsets[iFeat] = nOffset;
         auto &poFeature = apoFeatures[iFeat];
@@ -889,9 +894,12 @@ static bool FillListArray(struct ArrowArray *psChild,
         if (IsValidField(psRawField))
         {
             const unsigned nCount = GetFromList::getCount(psRawField);
-            if (nCount > static_cast<size_t>(
-                             std::numeric_limits<OffsetType>::max() - nOffset))
-                return false;
+            if (nCount > static_cast<size_t>(nMemLimit - nOffset))
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                break;
+            }
             nOffset += static_cast<OffsetType>(nCount);
         }
         else if (bIsNullable)
@@ -899,15 +907,15 @@ static bool FillListArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
-                    return false;
+                    return 0;
             }
             UnsetBit(pabyValidity, iFeat);
         }
     }
-    panOffsets[apoFeatures.size()] = nOffset;
+    panOffsets[nFeatCount] = nOffset;
 
     psChild->n_children = 1;
     psChild->children = static_cast<struct ArrowArray **>(
@@ -924,11 +932,11 @@ static bool FillListArray(struct ArrowArray *psChild,
     T *panValues =
         static_cast<T *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * nOffset));
     if (panValues == nullptr)
-        return false;
+        return 0;
     psValueChild->buffers[1] = panValues;
 
     nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatCount; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -949,27 +957,29 @@ static bool FillListArray(struct ArrowArray *psChild,
         }
     }
 
-    return true;
+    return nFeatCount;
 }
 
 template <class OffsetType, class GetFromList>
-static bool
+static size_t
 FillListArrayBool(struct ArrowArray *psChild,
-                  std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                  const bool bIsNullable, const int i)
+                  std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                  const size_t nFeatureCountLimit, const bool bIsNullable,
+                  const int i, const size_t nMemLimit)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     OffsetType *panOffsets =
         static_cast<OffsetType *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-            sizeof(OffsetType) * (1 + apoFeatures.size())));
+            sizeof(OffsetType) * (1 + nFeatureCountLimit)));
     if (panOffsets == nullptr)
-        return false;
+        return 0;
     psChild->buffers[1] = panOffsets;
 
     OffsetType nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
     {
         panOffsets[iFeat] = nOffset;
         auto &poFeature = apoFeatures[iFeat];
@@ -977,9 +987,12 @@ FillListArrayBool(struct ArrowArray *psChild,
         if (IsValidField(psRawField))
         {
             const unsigned nCount = GetFromList::getCount(psRawField);
-            if (nCount > static_cast<size_t>(
-                             std::numeric_limits<OffsetType>::max() - nOffset))
-                return false;
+            if (nCount > static_cast<size_t>(nMemLimit - nOffset))
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                break;
+            }
             nOffset += static_cast<OffsetType>(nCount);
         }
         else if (bIsNullable)
@@ -987,15 +1000,15 @@ FillListArrayBool(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
-                    return false;
+                    return 0;
             }
             UnsetBit(pabyValidity, iFeat);
         }
     }
-    panOffsets[apoFeatures.size()] = nOffset;
+    panOffsets[nFeatCount] = nOffset;
 
     psChild->n_children = 1;
     psChild->children = static_cast<struct ArrowArray **>(
@@ -1012,12 +1025,12 @@ FillListArrayBool(struct ArrowArray *psChild,
     uint8_t *panValues = static_cast<uint8_t *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nOffset + 7) / 8));
     if (panValues == nullptr)
-        return false;
+        return 0;
     memset(panValues, 0, (nOffset + 7) / 8);
     psValueChild->buffers[1] = panValues;
 
     nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -1035,7 +1048,7 @@ FillListArrayBool(struct ArrowArray *psChild,
         }
     }
 
-    return true;
+    return nFeatCount;
 }
 
 /************************************************************************/
@@ -1043,31 +1056,36 @@ FillListArrayBool(struct ArrowArray *psChild,
 /************************************************************************/
 
 template <class T>
-static bool
+static size_t
 FillStringArray(struct ArrowArray *psChild,
-                std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                const bool bIsNullable, const int i)
+                std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                const size_t nFeatureCountLimit, const bool bIsNullable,
+                const int i, const size_t nMemLimit)
 {
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     T *panOffsets = static_cast<T *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + nFeatureCountLimit)));
     if (panOffsets == nullptr)
-        return false;
+        return 0;
     psChild->buffers[1] = panOffsets;
 
     size_t nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
     {
         panOffsets[iFeat] = static_cast<T>(nOffset);
         const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
         if (IsValidField(psRawField))
         {
             const size_t nLen = strlen(psRawField->String);
-            if (nLen >
-                static_cast<size_t>(std::numeric_limits<T>::max()) - nOffset)
-                return false;
+            if (nLen > nMemLimit - nOffset)
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                break;
+            }
             nOffset += static_cast<T>(nLen);
         }
         else if (bIsNullable)
@@ -1075,24 +1093,24 @@ FillStringArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
-                    return false;
+                    return 0;
             }
             UnsetBit(pabyValidity, iFeat);
         }
     }
-    panOffsets[apoFeatures.size()] = static_cast<T>(nOffset);
+    panOffsets[nFeatCount] = static_cast<T>(nOffset);
 
     char *pachValues =
         static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
     if (pachValues == nullptr)
-        return false;
+        return 0;
     psChild->buffers[2] = pachValues;
 
     nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatCount; ++iFeat)
     {
         const size_t nLen =
             static_cast<size_t>(panOffsets[iFeat + 1] - panOffsets[iFeat]);
@@ -1104,7 +1122,7 @@ FillStringArray(struct ArrowArray *psChild,
         }
     }
 
-    return true;
+    return nFeatCount;
 }
 
 /************************************************************************/
@@ -1112,24 +1130,26 @@ FillStringArray(struct ArrowArray *psChild,
 /************************************************************************/
 
 template <class OffsetType>
-static bool
+static size_t
 FillStringListArray(struct ArrowArray *psChild,
-                    std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                    const bool bIsNullable, const int i)
+                    std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                    const size_t nFeatureCountLimit, const bool bIsNullable,
+                    const int i, const size_t nMemLimit)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     OffsetType *panOffsets =
         static_cast<OffsetType *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-            sizeof(OffsetType) * (1 + apoFeatures.size())));
+            sizeof(OffsetType) * (1 + nFeatureCountLimit)));
     if (panOffsets == nullptr)
         return false;
     psChild->buffers[1] = panOffsets;
 
     OffsetType nStrings = 0;
     OffsetType nCountChars = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
     {
         panOffsets[iFeat] = nStrings;
         auto &poFeature = apoFeatures[iFeat];
@@ -1138,16 +1158,21 @@ FillStringListArray(struct ArrowArray *psChild,
         {
             const int nCount = psRawField->StringList.nCount;
             if (static_cast<size_t>(nCount) >
-                static_cast<size_t>(std::numeric_limits<OffsetType>::max() -
-                                    nStrings))
-                return false;
+                static_cast<size_t>(nMemLimit - nStrings))
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                goto after_loop;
+            }
             for (int j = 0; j < nCount; ++j)
             {
                 const size_t nLen = strlen(psRawField->StringList.paList[j]);
-                if (nLen >
-                    static_cast<size_t>(std::numeric_limits<OffsetType>::max() -
-                                        nCountChars))
-                    return false;
+                if (nLen > static_cast<size_t>(nMemLimit - nCountChars))
+                {
+                    if (nFeatCount == 0)
+                        return 0;
+                    goto after_loop;
+                }
                 nCountChars += static_cast<OffsetType>(nLen);
             }
             nStrings += static_cast<OffsetType>(nCount);
@@ -1157,15 +1182,16 @@ FillStringListArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
-                    return false;
+                    return 0;
             }
             UnsetBit(pabyValidity, iFeat);
         }
     }
-    panOffsets[apoFeatures.size()] = nStrings;
+after_loop:
+    panOffsets[nFeatCount] = nStrings;
 
     psChild->n_children = 1;
     psChild->children = static_cast<struct ArrowArray **>(
@@ -1183,18 +1209,18 @@ FillStringListArray(struct ArrowArray *psChild,
     OffsetType *panChildOffsets = static_cast<OffsetType *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(OffsetType) * (1 + nStrings)));
     if (panChildOffsets == nullptr)
-        return false;
+        return 0;
     psValueChild->buffers[1] = panChildOffsets;
 
     char *pachValues =
         static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars));
     if (pachValues == nullptr)
-        return false;
+        return 0;
     psValueChild->buffers[2] = pachValues;
 
     nStrings = 0;
     nCountChars = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatCount; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -1214,7 +1240,7 @@ FillStringListArray(struct ArrowArray *psChild,
     }
     panChildOffsets[nStrings] = nCountChars;
 
-    return true;
+    return nFeatCount;
 }
 
 /************************************************************************/
@@ -1222,31 +1248,36 @@ FillStringListArray(struct ArrowArray *psChild,
 /************************************************************************/
 
 template <class T>
-static bool
+static size_t
 FillBinaryArray(struct ArrowArray *psChild,
-                std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                const bool bIsNullable, const int i)
+                std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                const size_t nFeatureCountLimit, const bool bIsNullable,
+                const int i, const size_t nMemLimit)
 {
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     T *panOffsets = static_cast<T *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + nFeatureCountLimit)));
     if (panOffsets == nullptr)
-        return false;
+        return 0;
     psChild->buffers[1] = panOffsets;
 
     T nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
     {
         panOffsets[iFeat] = nOffset;
         const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
         if (IsValidField(psRawField))
         {
             const size_t nLen = psRawField->Binary.nCount;
-            if (nLen >
-                static_cast<size_t>(std::numeric_limits<T>::max() - nOffset))
-                return false;
+            if (nLen > static_cast<size_t>(nMemLimit - nOffset))
+            {
+                if (iFeat == 0)
+                    return 0;
+                break;
+            }
             nOffset += static_cast<T>(nLen);
         }
         else if (bIsNullable)
@@ -1254,24 +1285,24 @@ FillBinaryArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
-                    return false;
+                    return 0;
             }
             UnsetBit(pabyValidity, iFeat);
         }
     }
-    panOffsets[apoFeatures.size()] = nOffset;
+    panOffsets[nFeatCount] = nOffset;
 
     GByte *pabyValues =
         static_cast<GByte *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
     if (pabyValues == nullptr)
-        return false;
+        return 0;
     psChild->buffers[2] = pabyValues;
 
     nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatCount; ++iFeat)
     {
         const size_t nLen =
             static_cast<size_t>(panOffsets[iFeat + 1] - panOffsets[iFeat]);
@@ -1283,7 +1314,7 @@ FillBinaryArray(struct ArrowArray *psChild,
         }
     }
 
-    return true;
+    return nFeatCount;
 }
 
 /************************************************************************/
@@ -1292,22 +1323,22 @@ FillBinaryArray(struct ArrowArray *psChild,
 
 static bool
 FillFixedWidthBinaryArray(struct ArrowArray *psChild,
-                          std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          const size_t nFeatureCountLimit,
                           const bool bIsNullable, const int nWidth, const int i)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
 
-    if (apoFeatures.size() > std::numeric_limits<size_t>::max() / nWidth)
-        return false;
+    assert(nFeatureCountLimit <= std::numeric_limits<size_t>::max() / nWidth);
     GByte *pabyValues = static_cast<GByte *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(apoFeatures.size() * nWidth));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nFeatureCountLimit * nWidth));
     if (pabyValues == nullptr)
         return false;
     psChild->buffers[1] = pabyValues;
 
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         const auto psRawField = apoFeatures[iFeat]->GetRawFieldRef(i);
         if (IsValidField(psRawField))
@@ -1333,7 +1364,7 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
                 ++psChild->null_count;
                 if (pabyValidity == nullptr)
                 {
-                    pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                    pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                     psChild->buffers[0] = pabyValidity;
                     if (pabyValidity == nullptr)
                         return false;
@@ -1351,19 +1382,21 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
 /************************************************************************/
 
 template <class T>
-static bool
+static size_t
 FillWKBGeometryArray(struct ArrowArray *psChild,
-                     std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                     const OGRGeomFieldDefn *poFieldDefn, const int i)
+                     std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                     const size_t nFeatureCountLimit,
+                     const OGRGeomFieldDefn *poFieldDefn, const int i,
+                     const size_t nMemLimit)
 {
     const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     T *panOffsets = static_cast<T *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + nFeatureCountLimit)));
     if (panOffsets == nullptr)
-        return false;
+        return 0;
     psChild->buffers[1] = panOffsets;
     const auto eGeomType = poFieldDefn->GetType();
     auto poEmptyGeom =
@@ -1373,16 +1406,20 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
                 : eGeomType));
 
     size_t nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    size_t nFeatCount = 0;
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat, ++nFeatCount)
     {
         panOffsets[iFeat] = static_cast<T>(nOffset);
         const auto poGeom = apoFeatures[iFeat]->GetGeomFieldRef(i);
         if (poGeom != nullptr)
         {
             const size_t nLen = poGeom->WkbSize();
-            if (nLen >
-                static_cast<size_t>(std::numeric_limits<T>::max()) - nOffset)
-                return false;
+            if (nLen > nMemLimit - nOffset)
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                break;
+            }
             nOffset += static_cast<T>(nLen);
         }
         else if (bIsNullable)
@@ -1390,32 +1427,35 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
-                    return false;
+                    return 0;
             }
             UnsetBit(pabyValidity, iFeat);
         }
         else if (poEmptyGeom)
         {
             const size_t nLen = poEmptyGeom->WkbSize();
-            if (nLen >
-                static_cast<size_t>(std::numeric_limits<T>::max()) - nOffset)
-                return false;
+            if (nLen > nMemLimit - nOffset)
+            {
+                if (nFeatCount == 0)
+                    return 0;
+                break;
+            }
             nOffset += static_cast<T>(nLen);
         }
     }
-    panOffsets[apoFeatures.size()] = static_cast<T>(nOffset);
+    panOffsets[nFeatCount] = static_cast<T>(nOffset);
 
     GByte *pabyValues =
         static_cast<GByte *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
     if (pabyValues == nullptr)
-        return false;
+        return 0;
     psChild->buffers[2] = pabyValues;
 
     nOffset = 0;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatCount; ++iFeat)
     {
         const size_t nLen =
             static_cast<size_t>(panOffsets[iFeat + 1] - panOffsets[iFeat]);
@@ -1433,7 +1473,7 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
         }
     }
 
-    return true;
+    return nFeatCount;
 }
 
 /************************************************************************/
@@ -1441,18 +1481,19 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
 /************************************************************************/
 
 static bool FillDateArray(struct ArrowArray *psChild,
-                          std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          const size_t nFeatureCountLimit,
                           const bool bIsNullable, const int i)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     int32_t *panValues = static_cast<int32_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * apoFeatures.size()));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * nFeatureCountLimit));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -1472,7 +1513,7 @@ static bool FillDateArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
                     return false;
@@ -1492,18 +1533,19 @@ static bool FillDateArray(struct ArrowArray *psChild,
 /************************************************************************/
 
 static bool FillTimeArray(struct ArrowArray *psChild,
-                          std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                          const size_t nFeatureCountLimit,
                           const bool bIsNullable, const int i)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     int32_t *panValues = static_cast<int32_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * apoFeatures.size()));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * nFeatureCountLimit));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -1520,7 +1562,7 @@ static bool FillTimeArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
                     return false;
@@ -1541,20 +1583,21 @@ static bool FillTimeArray(struct ArrowArray *psChild,
 
 static bool
 FillDateTimeArray(struct ArrowArray *psChild,
-                  std::vector<std::unique_ptr<OGRFeature>> &apoFeatures,
-                  const bool bIsNullable, const int i, int nFieldTZFlag)
+                  std::deque<std::unique_ptr<OGRFeature>> &apoFeatures,
+                  const size_t nFeatureCountLimit, const bool bIsNullable,
+                  const int i, int nFieldTZFlag)
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     int64_t *panValues = static_cast<int64_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * apoFeatures.size()));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * nFeatureCountLimit));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
     struct tm brokenDown;
     memset(&brokenDown, 0, sizeof(brokenDown));
-    for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+    for (size_t iFeat = 0; iFeat < nFeatureCountLimit; ++iFeat)
     {
         auto &poFeature = apoFeatures[iFeat];
         const auto psRawField = poFeature->GetRawFieldRef(i);
@@ -1595,7 +1638,7 @@ FillDateTimeArray(struct ArrowArray *psChild,
             ++psChild->null_count;
             if (pabyValidity == nullptr)
             {
-                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                pabyValidity = AllocValidityBitmap(nFeatureCountLimit);
                 psChild->buffers[0] = pabyValidity;
                 if (pabyValidity == nullptr)
                     return false;
@@ -1637,22 +1680,10 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     if (nMaxBatchSize > INT_MAX - 1)
         nMaxBatchSize = INT_MAX - 1;
 
-    std::vector<std::unique_ptr<OGRFeature>> apoFeatures;
-    try
-    {
-        apoFeatures.reserve(nMaxBatchSize);
-    }
-    catch (const std::exception &e)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return ENOMEM;
-    }
+    auto &oFeatureQueue =
+        m_poSharedArrowArrayStreamPrivateData->m_oFeatureQueue;
 
     memset(out_array, 0, sizeof(*out_array));
-    if (poPrivate->poShared->m_bEOF)
-    {
-        return 0;
-    }
 
     auto poLayerDefn = GetLayerDefn();
     const int nFieldCount = poLayerDefn->GetFieldCount();
@@ -1661,16 +1692,18 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         (bIncludeFID ? 1 : 0) + nFieldCount + nGeomFieldCount;
     int iSchemaChild = 0;
 
-    out_array->release = OGRLayerDefaultReleaseArray;
-
     if (!m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.empty())
     {
+        if (poPrivate->poShared->m_bEOF)
+        {
+            return 0;
+        }
         if (m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS == 0)
         {
             CPLDebug("OGR", "Using fast FID filtering");
         }
         while (
-            apoFeatures.size() < static_cast<size_t>(nMaxBatchSize) &&
+            oFeatureQueue.size() < static_cast<size_t>(nMaxBatchSize) &&
             m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS <
                 m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.size())
         {
@@ -1683,7 +1716,7 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                               FilterGeometry(poFeature->GetGeomFieldRef(
                                   m_iGeomFieldFilter))))
             {
-                apoFeatures.emplace_back(std::move(poFeature));
+                oFeatureQueue.emplace_back(std::move(poFeature));
             }
         }
         if (m_poSharedArrowArrayStreamPrivateData->m_iQueriedFIDS ==
@@ -1692,9 +1725,9 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             poPrivate->poShared->m_bEOF = true;
         }
     }
-    else
+    else if (!poPrivate->poShared->m_bEOF)
     {
-        for (int i = 0; i < nMaxBatchSize; i++)
+        while (oFeatureQueue.size() < static_cast<size_t>(nMaxBatchSize))
         {
             auto poFeature = std::unique_ptr<OGRFeature>(GetNextFeature());
             if (!poFeature)
@@ -1702,17 +1735,15 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 poPrivate->poShared->m_bEOF = true;
                 break;
             }
-            apoFeatures.emplace_back(std::move(poFeature));
+            oFeatureQueue.emplace_back(std::move(poFeature));
         }
     }
-    if (apoFeatures.empty())
+    if (oFeatureQueue.empty())
     {
-        out_array->release(out_array);
-        memset(out_array, 0, sizeof(*out_array));
         return 0;
     }
 
-    out_array->length = apoFeatures.size();
+    out_array->release = OGRLayerDefaultReleaseArray;
     out_array->null_count = 0;
 
     out_array->n_children = nMaxChildren;
@@ -1723,6 +1754,8 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     out_array->buffers =
         static_cast<const void **>(CPLCalloc(1, sizeof(void *)));
 
+    size_t nFeatureCount = oFeatureQueue.size();
+    const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     if (bIncludeFID)
     {
         out_array->children[iSchemaChild] = static_cast<struct ArrowArray *>(
@@ -1730,19 +1763,18 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         auto psChild = out_array->children[iSchemaChild];
         ++iSchemaChild;
         psChild->release = OGRLayerDefaultReleaseArray;
-        psChild->length = apoFeatures.size();
         psChild->n_buffers = 2;
         psChild->buffers =
             static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
         int64_t *panValues =
             static_cast<int64_t *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-                sizeof(int64_t) * apoFeatures.size()));
+                sizeof(int64_t) * oFeatureQueue.size()));
         if (panValues == nullptr)
             goto error;
         psChild->buffers[1] = panValues;
-        for (size_t iFeat = 0; iFeat < apoFeatures.size(); ++iFeat)
+        for (size_t iFeat = 0; iFeat < oFeatureQueue.size(); ++iFeat)
         {
-            panValues[iFeat] = apoFeatures[iFeat]->GetFID();
+            panValues[iFeat] = oFeatureQueue[iFeat]->GetFID();
         }
     }
 
@@ -1759,7 +1791,6 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         auto psChild = out_array->children[iSchemaChild];
         ++iSchemaChild;
         psChild->release = OGRLayerDefaultReleaseArray;
-        psChild->length = apoFeatures.size();
         const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
         const auto eSubType = poFieldDefn->GetSubType();
         switch (poFieldDefn->GetType())
@@ -1768,19 +1799,21 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             {
                 if (eSubType == OFSTBoolean)
                 {
-                    if (!FillBoolArray(psChild, apoFeatures, bIsNullable,
-                                       &OGRField::Integer, i))
+                    if (!FillBoolArray(psChild, oFeatureQueue, nFeatureCount,
+                                       bIsNullable, &OGRField::Integer, i))
                         goto error;
                 }
                 else if (eSubType == OFSTInt16)
                 {
-                    if (!FillArray<int16_t>(psChild, apoFeatures, bIsNullable,
+                    if (!FillArray<int16_t>(psChild, oFeatureQueue,
+                                            nFeatureCount, bIsNullable,
                                             &OGRField::Integer, i))
                         goto error;
                 }
                 else
                 {
-                    if (!FillArray<int32_t>(psChild, apoFeatures, bIsNullable,
+                    if (!FillArray<int32_t>(psChild, oFeatureQueue,
+                                            nFeatureCount, bIsNullable,
                                             &OGRField::Integer, i))
                         goto error;
                 }
@@ -1810,8 +1843,8 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
             case OFTInteger64:
             {
-                if (!FillArray<int64_t>(psChild, apoFeatures, bIsNullable,
-                                        &OGRField::Integer64, i))
+                if (!FillArray<int64_t>(psChild, oFeatureQueue, nFeatureCount,
+                                        bIsNullable, &OGRField::Integer64, i))
                     goto error;
                 break;
             }
@@ -1820,13 +1853,14 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             {
                 if (eSubType == OFSTFloat32)
                 {
-                    if (!FillArray<float>(psChild, apoFeatures, bIsNullable,
-                                          &OGRField::Real, i))
+                    if (!FillArray<float>(psChild, oFeatureQueue, nFeatureCount,
+                                          bIsNullable, &OGRField::Real, i))
                         goto error;
                 }
                 else
                 {
-                    if (!FillArray<double>(psChild, apoFeatures, bIsNullable,
+                    if (!FillArray<double>(psChild, oFeatureQueue,
+                                           nFeatureCount, bIsNullable,
                                            &OGRField::Real, i))
                         goto error;
                 }
@@ -1836,9 +1870,15 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             case OFTString:
             case OFTWideString:
             {
-                if (!FillStringArray<int32_t>(psChild, apoFeatures, bIsNullable,
-                                              i))
-                    goto error;
+                const size_t nThisFeatureCount = FillStringArray<int32_t>(
+                    psChild, oFeatureQueue, nFeatureCount, bIsNullable, i,
+                    nMemLimit);
+                if (nThisFeatureCount == 0)
+                {
+                    goto error_max_mem;
+                }
+                if (nThisFeatureCount < nFeatureCount)
+                    nFeatureCount = nThisFeatureCount;
                 break;
             }
 
@@ -1847,90 +1887,141 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 const int nWidth = poFieldDefn->GetWidth();
                 if (nWidth > 0)
                 {
-                    if (!FillFixedWidthBinaryArray(psChild, apoFeatures,
-                                                   bIsNullable, nWidth, i))
+                    if (nFeatureCount > nMemLimit / nWidth)
+                    {
+                        nFeatureCount = nMemLimit / nWidth;
+                        if (nFeatureCount == 0)
+                            goto error_max_mem;
+                    }
+                    if (!FillFixedWidthBinaryArray(psChild, oFeatureQueue,
+                                                   nFeatureCount, bIsNullable,
+                                                   nWidth, i))
                         goto error;
                 }
-                else if (!FillBinaryArray<int32_t>(psChild, apoFeatures,
-                                                   bIsNullable, i))
-                    goto error;
+                else
+                {
+                    const size_t nThisFeatureCount = FillBinaryArray<int32_t>(
+                        psChild, oFeatureQueue, nFeatureCount, bIsNullable, i,
+                        nMemLimit);
+                    if (nThisFeatureCount == 0)
+                    {
+                        goto error_max_mem;
+                    }
+                    if (nThisFeatureCount < nFeatureCount)
+                        nFeatureCount = nThisFeatureCount;
+                }
                 break;
             }
 
             case OFTIntegerList:
             {
+                size_t nThisFeatureCount;
                 if (eSubType == OFSTBoolean)
                 {
-                    if (!FillListArrayBool<int32_t, GetFromIntegerList>(
-                            psChild, apoFeatures, bIsNullable, i))
-                        goto error;
+                    nThisFeatureCount =
+                        FillListArrayBool<int32_t, GetFromIntegerList>(
+                            psChild, oFeatureQueue, nFeatureCount, bIsNullable,
+                            i, nMemLimit);
                 }
                 else if (eSubType == OFSTInt16)
                 {
-                    if (!FillListArray<int32_t, int16_t, GetFromIntegerList>(
-                            psChild, apoFeatures, bIsNullable, i))
-                        goto error;
+                    nThisFeatureCount =
+                        FillListArray<int32_t, int16_t, GetFromIntegerList>(
+                            psChild, oFeatureQueue, nFeatureCount, bIsNullable,
+                            i, nMemLimit);
                 }
                 else
                 {
-                    if (!FillListArray<int32_t, int32_t, GetFromIntegerList>(
-                            psChild, apoFeatures, bIsNullable, i))
-                        goto error;
+                    nThisFeatureCount =
+                        FillListArray<int32_t, int32_t, GetFromIntegerList>(
+                            psChild, oFeatureQueue, nFeatureCount, bIsNullable,
+                            i, nMemLimit);
                 }
+                if (nThisFeatureCount == 0)
+                {
+                    goto error_max_mem;
+                }
+                if (nThisFeatureCount < nFeatureCount)
+                    nFeatureCount = nThisFeatureCount;
                 break;
             }
 
             case OFTInteger64List:
             {
-                if (!FillListArray<int32_t, int64_t, GetFromInteger64List>(
-                        psChild, apoFeatures, bIsNullable, i))
-                    goto error;
+                const size_t nThisFeatureCount =
+                    FillListArray<int32_t, int64_t, GetFromInteger64List>(
+                        psChild, oFeatureQueue, nFeatureCount, bIsNullable, i,
+                        nMemLimit);
+                if (nThisFeatureCount == 0)
+                {
+                    goto error_max_mem;
+                }
+                if (nThisFeatureCount < nFeatureCount)
+                    nFeatureCount = nThisFeatureCount;
                 break;
             }
 
             case OFTRealList:
             {
+                size_t nThisFeatureCount;
                 if (eSubType == OFSTFloat32)
                 {
-                    if (!FillListArray<int32_t, float, GetFromRealList>(
-                            psChild, apoFeatures, bIsNullable, i))
-                        goto error;
+                    nThisFeatureCount =
+                        FillListArray<int32_t, float, GetFromRealList>(
+                            psChild, oFeatureQueue, nFeatureCount, bIsNullable,
+                            i, nMemLimit);
                 }
                 else
                 {
-                    if (!FillListArray<int32_t, double, GetFromRealList>(
-                            psChild, apoFeatures, bIsNullable, i))
-                        goto error;
+                    nThisFeatureCount =
+                        FillListArray<int32_t, double, GetFromRealList>(
+                            psChild, oFeatureQueue, nFeatureCount, bIsNullable,
+                            i, nMemLimit);
                 }
+                if (nThisFeatureCount == 0)
+                {
+                    goto error_max_mem;
+                }
+                if (nThisFeatureCount < nFeatureCount)
+                    nFeatureCount = nThisFeatureCount;
                 break;
             }
 
             case OFTStringList:
             case OFTWideStringList:
             {
-                if (!FillStringListArray<int32_t>(psChild, apoFeatures,
-                                                  bIsNullable, i))
-                    goto error;
+                const size_t nThisFeatureCount = FillStringListArray<int32_t>(
+                    psChild, oFeatureQueue, nFeatureCount, bIsNullable, i,
+                    nMemLimit);
+                if (nThisFeatureCount == 0)
+                {
+                    goto error_max_mem;
+                }
+                if (nThisFeatureCount < nFeatureCount)
+                    nFeatureCount = nThisFeatureCount;
                 break;
             }
 
             case OFTDate:
             {
-                if (!FillDateArray(psChild, apoFeatures, bIsNullable, i))
+                if (!FillDateArray(psChild, oFeatureQueue, nFeatureCount,
+                                   bIsNullable, i))
                     goto error;
                 break;
             }
 
             case OFTTime:
             {
-                if (!FillTimeArray(psChild, apoFeatures, bIsNullable, i))
+                if (!FillTimeArray(psChild, oFeatureQueue, nFeatureCount,
+                                   bIsNullable, i))
                     goto error;
                 break;
             }
 
             case OFTDateTime:
             {
-                if (!FillDateTimeArray(psChild, apoFeatures, bIsNullable, i,
+                if (!FillDateTimeArray(psChild, oFeatureQueue, nFeatureCount,
+                                       bIsNullable, i,
                                        poFieldDefn->GetTZFlag()))
                     goto error;
                 break;
@@ -1950,17 +2041,43 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         auto psChild = out_array->children[iSchemaChild];
         ++iSchemaChild;
         psChild->release = OGRLayerDefaultReleaseArray;
-        psChild->length = apoFeatures.size();
-        if (!FillWKBGeometryArray<int32_t>(psChild, apoFeatures, poFieldDefn,
-                                           i))
-            goto error;
+        psChild->length = oFeatureQueue.size();
+        const size_t nThisFeatureCount = FillWKBGeometryArray<int32_t>(
+            psChild, oFeatureQueue, nFeatureCount, poFieldDefn, i, nMemLimit);
+        if (nThisFeatureCount == 0)
+        {
+            goto error_max_mem;
+        }
+        if (nThisFeatureCount < nFeatureCount)
+            nFeatureCount = nThisFeatureCount;
+    }
+
+    // Remove consumed features from the queue
+    if (nFeatureCount == oFeatureQueue.size())
+        oFeatureQueue.clear();
+    else
+    {
+        for (size_t i = 0; i < nFeatureCount; ++i)
+        {
+            oFeatureQueue.pop_front();
+        }
     }
 
     out_array->n_children = iSchemaChild;
+    out_array->length = nFeatureCount;
+    for (int i = 0; i < out_array->n_children; ++i)
+    {
+        out_array->children[i]->length = nFeatureCount;
+    }
 
     return 0;
 
+error_max_mem:
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Too large feature: not even a single feature can be returned");
 error:
+    oFeatureQueue.clear();
+    poPrivate->poShared->m_bEOF = true;
     out_array->release(out_array);
     memset(out_array, 0, sizeof(*out_array));
     return ENOMEM;

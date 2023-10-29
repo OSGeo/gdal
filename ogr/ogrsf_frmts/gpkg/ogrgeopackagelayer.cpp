@@ -558,6 +558,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     struct tm brokenDown;
     memset(&brokenDown, 0, sizeof(brokenDown));
 
+    const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     int iFeat = 0;
     while (iFeat < sHelper.nMaxBatchSize)
     {
@@ -675,6 +676,20 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
                 if (nWKBSize != 0)
                 {
+                    if (iFeat > 0)
+                    {
+                        auto panOffsets = static_cast<int32_t *>(
+                            const_cast<void *>(psArray->buffers[1]));
+                        const uint32_t nCurLength =
+                            static_cast<uint32_t>(panOffsets[iFeat]);
+                        if (nWKBSize <= nMemLimit &&
+                            nWKBSize > nMemLimit - nCurLength)
+                        {
+                            m_bDoStep = false;
+                            break;
+                        }
+                    }
+
                     GByte *outPtr = sHelper.GetPtrForStringOrBinary(
                         iArrowField, iFeat, nWKBSize);
                     if (outPtr == nullptr)
@@ -785,6 +800,22 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                         sqlite3_column_blob(hStmt, iRawField);
                     if (pabyData != nullptr || nBytes == 0)
                     {
+                        if (iFeat > 0)
+                        {
+                            auto panOffsets = static_cast<int32_t *>(
+                                const_cast<void *>(psArray->buffers[1]));
+                            const uint32_t nCurLength =
+                                static_cast<uint32_t>(panOffsets[iFeat]);
+                            if (nBytes <= nMemLimit &&
+                                nBytes > nMemLimit - nCurLength)
+                            {
+                                m_bDoStep = false;
+                                m_iNextShapeId--;
+                                m_nFeaturesRead--;
+                                goto after_loop;
+                            }
+                        }
+
                         GByte *outPtr = sHelper.GetPtrForStringOrBinary(
                             iArrowField, iFeat, nBytes);
                         if (outPtr == nullptr)
@@ -833,6 +864,22 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                     if (pszTxt != nullptr)
                     {
                         const size_t nBytes = strlen(pszTxt);
+                        if (iFeat > 0)
+                        {
+                            auto panOffsets = static_cast<int32_t *>(
+                                const_cast<void *>(psArray->buffers[1]));
+                            const uint32_t nCurLength =
+                                static_cast<uint32_t>(panOffsets[iFeat]);
+                            if (nBytes <= nMemLimit &&
+                                nBytes > nMemLimit - nCurLength)
+                            {
+                                m_bDoStep = false;
+                                m_iNextShapeId--;
+                                m_nFeaturesRead--;
+                                goto after_loop;
+                            }
+                        }
+
                         GByte *outPtr = sHelper.GetPtrForStringOrBinary(
                             iArrowField, iFeat, nBytes);
                         if (outPtr == nullptr)
@@ -859,7 +906,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         ++iFeat;
     }
-
+after_loop:
     sHelper.Shrink(iFeat);
     if (iFeat == 0)
         sHelper.ClearArray();

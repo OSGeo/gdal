@@ -887,6 +887,182 @@ def test_ogr_mem_arrow_stream_numpy():
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize(
+    "limited_field",
+    [
+        "str",
+        "strlist",
+        "int32list",
+        "int64list",
+        "float64list",
+        "boollist",
+        "binary",
+        "binary_fixed_width",
+        "geometry",
+    ],
+)
+def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    field = ogr.FieldDefn("str", ogr.OFTString)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("bool", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int32", ogr.OFTInteger)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64", ogr.OFTInteger64)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32", ogr.OFTReal)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64", ogr.OFTReal)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("date", ogr.OFTDate)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("time", ogr.OFTTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("binary", ogr.OFTBinary)
+    lyr.CreateField(field)
+
+    if limited_field == "binary_fixed_width":
+        field = ogr.FieldDefn("binary_fixed_width", ogr.OFTBinary)
+        field.SetWidth(50)
+        lyr.CreateField(field)
+
+    field = ogr.FieldDefn("strlist", ogr.OFTStringList)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("boollist", ogr.OFTIntegerList)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16list", ogr.OFTIntegerList)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int32list", ogr.OFTIntegerList)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64list", ogr.OFTInteger64List)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32list", ogr.OFTRealList)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64list", ogr.OFTRealList)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("bool", 1)
+    f.SetField("int16", -12345)
+    f.SetField("int32", 12345678)
+    f.SetField("int64", 12345678901234)
+    f.SetField("float32", 1.25)
+    f.SetField("float64", 1.250123)
+    f.SetField("str", "abc")
+    f.SetField("date", "2022-05-31")
+    f.SetField("time", "12:34:56.789")
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    f.SetField("boollist", "[False,True]")
+    f.SetField("int16list", "[-12345,12345]")
+    f.SetField("int32list", "[-12345678,12345678]")
+    f.SetField("int64list", "[-12345678901234,12345678901234]")
+    f.SetField("float32list", "[-1.25,1.25]")
+    f.SetField("float64list", "[-1.250123,1.250123]")
+    f.SetField("strlist", '["abc","defghi"]')
+    f.SetField("binary", b"\xDE\xAD")
+    if limited_field == "binary_fixed_width":
+        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    if limited_field == "str":
+        f["str"] = "x" * 100
+    elif limited_field == "strlist":
+        f["strlist"] = ["x" * 100]
+    elif limited_field == "int32list":
+        f["int32list"] = [0] * 100
+    elif limited_field == "int64list":
+        f["int64list"] = [0] * 100
+    elif limited_field == "float64list":
+        f["float64list"] = [0] * 100
+    elif limited_field == "boollist":
+        f["boollist"] = [False] * 100
+    elif limited_field == "binary":
+        f["binary"] = b"x" * 100
+    elif limited_field == "binary_fixed_width":
+        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+    elif limited_field == "geometry":
+        g = ogr.Geometry(ogr.wkbLineString)
+        sizeof_first_point = 21
+        sizeof_linestring_preamble = 9
+        sizeof_coord_pair = 2 * 8
+        g.SetPoint_2D(
+            (100 - sizeof_linestring_preamble - sizeof_first_point)
+            // sizeof_coord_pair,
+            0,
+            0,
+        )
+        f.SetGeometry(g)
+    lyr.CreateFeature(f)
+
+    with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "100", thread_local=False):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+    assert len(batches) == 2
+    assert [x for x in batches[0]["OGC_FID"]] == [0, 1]
+    assert [x for x in batches[1]["OGC_FID"]] == [2]
+
+    with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "1", thread_local=False):
+
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        with gdal.quiet_errors():
+            gdal.ErrorReset()
+            batches = [batch for batch in stream]
+            assert (
+                gdal.GetLastErrorMsg()
+                == "Too large feature: not even a single feature can be returned"
+            )
+            assert len(batches) == 0
+
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        with gdaltest.enable_exceptions():
+            with pytest.raises(
+                Exception,
+                match="Too large feature: not even a single feature can be returned",
+            ):
+                batches = [batch for batch in stream]
+                assert len(batches) == 0
+
+
+###############################################################################
 # Test optimization to save memory on string fields with huge strings compared
 # to the average size
 
