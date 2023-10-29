@@ -1931,13 +1931,13 @@ def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize("preserveFID", (True, False))
-def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
+def test_translate_explodecollections_preserve_fid(preserveFID):
     """Test issue #8523 when -preserve_fid was set even if -explodecollections was set"""
 
     with gdal.ExceptionMgr(useExceptions=True):
 
-        src = tmp_vsimem / "test_collection.gpkg"
-        dst = tmp_vsimem / "test_collection_exploded.gpkg"
+        src = "/vsimem/test_collection.gpkg"
+        dst = "/vsimem/test_collection_exploded.gpkg"
 
         ds = ogr.GetDriverByName("GPKG").CreateDataSource(src)
         lyr = ds.CreateLayer("test_collection", None, ogr.wkbMultiPoint)
@@ -1971,3 +1971,7 @@ def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
             assert lyr.GetFeatureCount() == 2
             del lyr
             del ds_output
+
+        gdal.Unlink(src)
+        if gdal.VSIStatL(dst):
+            gdal.Unlink(dst)
