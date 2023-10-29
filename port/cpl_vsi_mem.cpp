@@ -575,7 +575,9 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     std::shared_ptr<VSIMemFile> poFile = nullptr;
     if (oFileList.find(osFilename) != oFileList.end())
+    {
         poFile = oFileList[osFilename];
+    }
 
     // If no file and opening in read, error out.
     if (strstr(pszAccess, "w") == nullptr &&
@@ -592,6 +594,19 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     // Create.
     if (poFile == nullptr)
     {
+        const char *pszFileDir = CPLGetPath(osFilename.c_str());
+        if (VSIMkdirRecursive(pszFileDir, 0755) == -1)
+        {
+            if (bSetError)
+            {
+                VSIError(VSIE_FileError,
+                         "Could not create directory %s for writing",
+                         pszFileDir);
+            }
+            errno = ENOENT;
+            return nullptr;
+        }
+
         poFile = std::make_shared<VSIMemFile>();
         poFile->osFilename = osFilename;
         oFileList[poFile->osFilename] = poFile;
@@ -995,6 +1010,20 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
     const CPLString osFilename =
         pszFilename ? VSIMemFilesystemHandler::NormalizePath(pszFilename)
                     : std::string();
+
+    // Try to create the parent directory, if needed, before taking
+    // ownership of pabyData.
+    if (!osFilename.empty())
+    {
+        const char *pszFileDir = CPLGetPath(osFilename.c_str());
+        if (VSIMkdirRecursive(pszFileDir, 0755) == -1)
+        {
+            VSIError(VSIE_FileError,
+                     "Could not create directory %s for writing", pszFileDir);
+            errno = ENOENT;
+            return nullptr;
+        }
+    }
 
     std::shared_ptr<VSIMemFile> poFile = std::make_shared<VSIMemFile>();
 

@@ -975,11 +975,6 @@ OGRFeature *OGRPLScenesDataV1Layer::GetNextRawFeature()
     if (m_nFeatureIdx ==
         static_cast<int>(json_object_array_length(m_poFeatures)))
     {
-        if (m_nFeatureIdx < m_nPageSize &&
-            m_poDS->GetBaseURL().find("/vsimem/") != 0)
-        {
-            return nullptr;
-        }
         m_osRequestURL = m_osNextURL;
         m_bStillInFirstPage = false;
         if (!GetNextPage())

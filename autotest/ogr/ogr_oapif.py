@@ -1842,7 +1842,7 @@ def test_ogr_oapif_collection_items_page_size():
             self.last_path = request.path
             return super().do_GET(request)
 
-    handler = LoggingHandler(filedata, "application/json")
+    handler = LoggingHandler(filedata, content_type="application/json")
 
     # Test default page size 1000
     with webserver.install_http_handler(handler):
@@ -1862,7 +1862,7 @@ def test_ogr_oapif_collection_items_page_size():
     for k in filedata:
         if k.startswith("/oapif/collections/castles/items"):
             filedata[k] = j_data
-    handler.dict = filedata
+    handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
         ds = gdal.OpenEx(
@@ -1881,7 +1881,7 @@ def test_ogr_oapif_collection_items_page_size():
     ]
     j_data = json.dumps(j_data).encode("utf8")
     filedata["/oapif/openapi"] = j_data
-    handler.dict = filedata
+    handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
         ds = gdal.OpenEx(
@@ -1900,7 +1900,7 @@ def test_ogr_oapif_collection_items_page_size():
     ]
     j_data = json.dumps(j_data).encode("utf8")
     filedata["/oapif/openapi"] = j_data
-    handler.dict = filedata
+    handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
         ds = gdal.OpenEx(
@@ -1920,7 +1920,7 @@ def test_ogr_oapif_collection_items_page_size():
     j_data["components"]["parameters"]["limit"]["schema"]["default"] = 5000
     j_data = json.dumps(j_data).encode("utf8")
     filedata["/oapif/openapi"] = j_data
-    handler.dict = filedata
+    handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
         ds = gdal.OpenEx(
@@ -1941,7 +1941,7 @@ def test_ogr_oapif_collection_items_page_size():
     j_data["components"]["parameters"]["limit"]["schema"]["maximum"] = 100
     j_data = json.dumps(j_data).encode("utf8")
     filedata["/oapif/openapi"] = j_data
-    handler.dict = filedata
+    handler = LoggingHandler(filedata, content_type="application/json")
 
     with webserver.install_http_handler(handler):
         ds = gdal.OpenEx(

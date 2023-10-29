@@ -454,7 +454,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
 
             if (psFC != nullptr)
             {
-                osGMLTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.gml", this);
+                osGMLTmpFile = CPLSPrintf("/vsimem/gmljp2_%p/my.gml", this);
                 // Create temporary .gml file.
                 CPLSerializeXMLTreeToFile(psFC, osGMLTmpFile);
             }
@@ -490,7 +490,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                                 if (papszBoxData != nullptr)
                                 {
                                     osXSDTmpFile = CPLSPrintf(
-                                        "/vsimem/gmljp2/%p/my.xsd", this);
+                                        "/vsimem/gmljp2_%p/my.xsd", this);
                                     CPL_IGNORE_RET_VAL(
                                         VSIFCloseL(VSIFileFromMemBuffer(
                                             osXSDTmpFile,
@@ -546,9 +546,6 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                                              poSrcLyr->GetName());
                         poMemDS->CopyLayer(poSrcLyr, pszLayerName, nullptr);
                     }
-
-                    // If there was no schema, a .gfs might have been generated.
-                    VSIUnlink(CPLSPrintf("/vsimem/gmljp2/%p/my.gfs", this));
                 }
             }
             else
@@ -557,10 +554,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
                          "No GML driver found to read feature collection");
             }
 
-            if (!STARTS_WITH(osGMLTmpFile, "/vsicurl/"))
-                VSIUnlink(osGMLTmpFile);
-            if (!osXSDTmpFile.empty())
-                VSIUnlink(osXSDTmpFile);
+            VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
         }
     }
 
@@ -599,7 +593,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
             // Create temporary .kml file.
             CPLXMLNode *const psKML = psGCorGMLJP2FeaturesChildIter->psChild;
             CPLString osKMLTmpFile(
-                CPLSPrintf("/vsimem/gmljp2/%p/my.kml", this));
+                CPLSPrintf("/vsimem/gmljp2_%p_my.kml", this));
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
             GDALDatasetUniquePtr poTmpDS(GDALDataset::Open(
