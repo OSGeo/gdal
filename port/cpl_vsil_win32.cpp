@@ -317,7 +317,15 @@ int VSIWin32Handle::Flush()
 
     // Add this as a hack to make ogr_mitab_30 and _31 tests pass
     if (CPLTestBool(CPLGetConfigOption("VSI_FLUSH", "FALSE")))
-        FlushFileBuffers(hFile);
+    {
+        if (!FlushFileBuffers(hFile))
+        {
+            errno = ErrnoFromGetLastError();
+            CPLDebug("CPL", "VSIWin32Handle::Flush() failed with errno=%d (%s)",
+                     errno, strerror(errno));
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -363,6 +371,8 @@ size_t VSIWin32Handle::Write(const void *pBuffer, size_t nSize, size_t nCount)
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
+        CPLDebug("CPL", "VSIWin32Handle::Write() failed with errno=%d (%s)",
+                 errno, strerror(errno));
     }
     else if (nSize == 0)
         nResult = 0;
@@ -593,9 +603,17 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     HANDLE hFile;
 
     // GENERICs are used instead of FILE_GENERIC_READ.
-    dwDesiredAccess = GENERIC_READ;
-    if (strchr(pszAccess, '+') != nullptr || strchr(pszAccess, 'w') != nullptr)
-        dwDesiredAccess |= GENERIC_WRITE;
+    if (strcmp(pszAccess, "w") == 0 || strcmp(pszAccess, "wb") == 0)
+    {
+        dwDesiredAccess = GENERIC_WRITE;
+    }
+    else
+    {
+        dwDesiredAccess = GENERIC_READ;
+        if (strchr(pszAccess, '+') != nullptr ||
+            strchr(pszAccess, 'w') != nullptr)
+            dwDesiredAccess |= GENERIC_WRITE;
+    }
 
     // Append mode only makes sense on files and pipes, have to use FILE_ access
     // these are very different from the GENERICs
