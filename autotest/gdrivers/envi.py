@@ -1028,3 +1028,31 @@ def test_envi_write_warn_different_nodata(tmp_vsimem, nd1, nd2, expected_warning
         assert gdal.GetLastErrorType() == (
             gdal.CE_Warning if expected_warning else gdal.CE_None
         )
+
+
+###############################################################################
+# Test reading "default bands" in RGB mode
+
+
+def test_envi_read_metadata_with_leading_space():
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.hdr",
+        """ENVI
+samples = 1
+lines = 1
+bands = 3
+header offset = 0
+file type = ENVI Standard
+data type = 1
+interleave = bip
+sensor type = Unknown
+byte order = 0
+ wavelength = {3, 2, 1}""",
+    )
+    gdal.FileFromMemBuffer("/vsimem/test.bin", "xyz")
+
+    ds = gdal.Open("/vsimem/test.bin")
+    assert ds.GetRasterBand(1).GetMetadataItem("wavelength") == "3"
+    ds = None
+    gdal.GetDriverByName("ENVI").Delete("/vsimem/test.bin")

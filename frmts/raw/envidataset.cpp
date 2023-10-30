@@ -1937,7 +1937,12 @@ bool ENVIDataset::ReadHeader(VSILFILE *fpHdr)
         if (pszNewLine == nullptr)
             break;
 
-        if (strstr(pszNewLine, "=") == nullptr)
+        // Skip leading spaces. This may happen for example with
+        // AVIRIS datasets (https://aviris.jpl.nasa.gov/dataportal/) whose
+        // wavelength metadata starts with a leading space.
+        while (*pszNewLine == ' ')
+            ++pszNewLine;
+        if (strchr(pszNewLine, '=') == nullptr)
             continue;
 
         CPLString osWorkingLine(pszNewLine);
@@ -1956,7 +1961,7 @@ bool ENVIDataset::ReadHeader(VSILFILE *fpHdr)
                 if (osWorkingLine.size() > 10 * 1024 * 1024)
                     return false;
             } while (pszNewLine != nullptr &&
-                     strstr(pszNewLine, "}") == nullptr);
+                     strchr(pszNewLine, '}') == nullptr);
         }
 
         // Try to break input into name and value portions.  Trim whitespace.
