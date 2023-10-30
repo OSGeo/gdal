@@ -70,6 +70,8 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     std::string m_osFIDColumn{};
 
+    GDALDataset *m_poDS{};
+
     // Only use it in the lifetime of a function where the list of features
     // doesn't change.
     IOGRMemLayerFeatureIterator *GetIterator();
@@ -154,6 +156,16 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     GIntBig GetNextReadFID()
     {
         return m_iNextReadFID;
+    }
+
+    void SetDataset(GDALDataset *poDS)
+    {
+        m_poDS = poDS;
+    }
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
     }
 };
 

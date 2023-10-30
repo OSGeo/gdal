@@ -85,6 +85,7 @@ OGRLayer *OGRMemDataSource::ICreateLayer(const char *pszLayerName,
     if (CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false))
         poLayer->SetAdvertizeUTF8(true);
 
+    poLayer->SetDataset(this);
     poLayer->SetFIDColumn(CSLFetchNameValueDef(papszOptions, "FID", ""));
 
     // Add layer to data source layer list.
