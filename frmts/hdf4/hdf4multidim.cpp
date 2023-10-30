@@ -591,6 +591,11 @@ class HDF4EOSGridArray final : public GDALPamMDArray
     const std::string &GetUnit() const override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return HDF4Group::Create(std::string(), "/", m_poShared);
+    }
 };
 
 /************************************************************************/
@@ -749,6 +754,11 @@ class HDF4SDSArray final : public GDALPamMDArray
     const std::string &GetUnit() const override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return HDF4Group::Create(std::string(), "/", m_poShared);
+    }
 };
 
 /************************************************************************/
@@ -883,6 +893,11 @@ class HDF4GRArray final : public GDALPamMDArray
 
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList papszOptions = nullptr) const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return HDF4Group::Create(std::string(), "/", m_poShared);
+    }
 };
 
 /************************************************************************/

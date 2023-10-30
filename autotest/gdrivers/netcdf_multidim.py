@@ -3741,6 +3741,40 @@ def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2A():
         == -10
     )
 
+    rg_subset = rg.SubsetDimensionFromSelection("/band_indexed_var=1")
+    ar = rg_subset.OpenMDArray("reflectance")
+    # Use glt_x and glt_y arrays
+    resampled_ar = ar.GetResampled(
+        [None, None, None], gdal.GRIORA_NearestNeighbour, None
+    )
+    assert resampled_ar is not None
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "lat"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "lon"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "bands"
+    assert dims[2].GetSize() == 1
+    assert resampled_ar.GetDataType() == ar.GetDataType()
+    assert resampled_ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert resampled_ar.GetNoDataValue() == ar.GetNoDataValue()
+    assert resampled_ar.GetUnit() == ar.GetUnit()
+    assert (
+        resampled_ar.GetAttribute("long_name").ReadAsString()
+        == ar.GetAttribute("long_name").ReadAsString()
+    )
+    assert struct.unpack("f" * (3 * 3), resampled_ar.Read()) == (
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        -9999.0,
+        30.0,
+        40.0,
+        -9999.0,
+        10.0,
+        20.0,
+    )
+
 
 def test_netcdf_multidim_getresampled_with_geoloc_EMIT_L2B_MIN():
 

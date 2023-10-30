@@ -1529,6 +1529,7 @@ class VRTGroup final : public GDALGroup
         return m_poRefSelf;
     }
     VRTGroup *GetRootGroup() const;
+    std::shared_ptr<GDALGroup> GetRootGroupSharedPtr() const;
 
     const std::string &GetVRTPath() const
     {
@@ -1840,6 +1841,14 @@ class VRTMDArray final : public GDALMDArray
     const std::string &GetVRTPath() const
     {
         return m_osVRTPath;
+    }
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        auto poGroup = m_poGroupRef.lock();
+        if (poGroup)
+            return poGroup->m_ptr->GetRootGroupSharedPtr();
+        return nullptr;
     }
 };
 

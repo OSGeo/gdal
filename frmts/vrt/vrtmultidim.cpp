@@ -155,6 +155,18 @@ VRTGroup *VRTGroup::GetRootGroup() const
 }
 
 /************************************************************************/
+/*                       GetRootGroupSharedPtr()                        */
+/************************************************************************/
+
+std::shared_ptr<GDALGroup> VRTGroup::GetRootGroupSharedPtr() const
+{
+    auto group = GetRootGroup();
+    if (group)
+        return group->m_pSelf.lock();
+    return nullptr;
+}
+
+/************************************************************************/
 /*                               XMLInit()                              */
 /************************************************************************/
 

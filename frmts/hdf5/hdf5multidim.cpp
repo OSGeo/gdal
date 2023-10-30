@@ -388,6 +388,11 @@ class HDF5Array final : public GDALMDArray
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poShared->GetRootGroup();
+    }
 };
 
 /************************************************************************/
@@ -2585,7 +2590,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
-    std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources)
+    const std::shared_ptr<GDAL::HDF5SharedResources> &poSharedResources)
 {
     HDF5_GLOBAL_LOCK();
 
