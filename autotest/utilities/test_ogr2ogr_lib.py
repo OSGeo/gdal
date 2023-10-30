@@ -2141,12 +2141,25 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     fld_defn = ogr.FieldDefn("field_unique")
     fld_defn.SetUnique(True)
     src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_domain")
+    fld_defn.SetDomainName("my_domain")
+    src_lyr.CreateField(fld_defn)
     for i in range(2):
         f = ogr.Feature(src_lyr.GetLayerDefn())
         f["str_field"] = "foo%d" % i
         f["json_field"] = '{"foo":"bar"}'
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 2)" % i))
         src_lyr.CreateFeature(f)
+
+    assert src_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            "my_domain",
+            "desc",
+            ogr.OFTString,
+            ogr.OFSTNone,
+            {1: "one", 2: "two", 3: None},
+        )
+    )
 
     got_msg = []
 
@@ -2186,6 +2199,8 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetWidth() == 10
     assert out_lyr.GetLayerDefn().GetFieldDefn(6).GetName() == "field_unique"
     assert out_lyr.GetLayerDefn().GetFieldDefn(6).IsUnique()
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetName() == "field_with_domain"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetDomainName() == "my_domain"
     assert out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount())
 
     f = out_lyr.GetNextFeature()

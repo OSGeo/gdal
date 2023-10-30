@@ -52,6 +52,7 @@ constexpr const char *MD_GDAL_OGR_DEFAULT = "GDAL:OGR:default";
 constexpr const char *MD_GDAL_OGR_SUBTYPE = "GDAL:OGR:subtype";
 constexpr const char *MD_GDAL_OGR_WIDTH = "GDAL:OGR:width";
 constexpr const char *MD_GDAL_OGR_UNIQUE = "GDAL:OGR:unique";
+constexpr const char *MD_GDAL_OGR_DOMAIN_NAME = "GDAL:OGR:domain_name";
 
 constexpr char ARROW_LETTER_BOOLEAN = 'b';
 constexpr char ARROW_LETTER_INT8 = 'c';
@@ -540,6 +541,11 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         {
             oMetadata.push_back(std::pair<std::string, std::string>(
                 MD_GDAL_OGR_UNIQUE, "true"));
+        }
+        if (!poFieldDefn->GetDomainName().empty())
+        {
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_DOMAIN_NAME, poFieldDefn->GetDomainName()));
         }
 
         if (!oMetadata.empty())
@@ -2185,6 +2191,7 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
  *     string)</li>
  * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
  *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
  * </ul>
  *
  * A potential usage can be:
@@ -2377,6 +2384,7 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
  *     string)</li>
  * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
  *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
  * </ul>
  *
  * A potential usage can be:
@@ -5251,9 +5259,9 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     }
 
     const auto AddField = [this, schema, fieldName, &aosNativeTypes,
-                           &osFieldPrefix](OGRFieldType eTypeIn,
-                                           OGRFieldSubType eSubTypeIn,
-                                           int nWidth, int nPrecision)
+                           &osFieldPrefix, poDS](OGRFieldType eTypeIn,
+                                                 OGRFieldSubType eSubTypeIn,
+                                                 int nWidth, int nPrecision)
     {
         const char *pszTypeName = OGRFieldDefn::GetFieldTypeName(eTypeIn);
         auto eTypeOut = eTypeIn;
@@ -5311,6 +5319,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                     oFieldDefn.SetWidth(atoi(oIter.second.c_str()));
                 else if (oIter.first == MD_GDAL_OGR_UNIQUE)
                     oFieldDefn.SetUnique(oIter.second == "true");
+                else if (oIter.first == MD_GDAL_OGR_DOMAIN_NAME)
+                {
+                    if (poDS && poDS->GetFieldDomain(oIter.second))
+                        oFieldDefn.SetDomainName(oIter.second);
+                }
                 else
                 {
                     CPLDebug("OGR", "Unknown field metadata: %s",
@@ -5455,6 +5468,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
  *     string)</li>
  * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
  *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
  * </ul>
  *
  * This method and CreateField() are mutually exclusive in the same session.
@@ -5500,6 +5514,7 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  *     string)</li>
  * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
  *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
  * </ul>
  *
  * This method and CreateField() are mutually exclusive in the same session.
