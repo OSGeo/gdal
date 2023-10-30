@@ -7484,7 +7484,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         sqlite3_user_data(pContext));
 
     if (psFillArrowArray->nCountRows >=
-        psFillArrowArray->psHelper->nMaxBatchSize)
+        psFillArrowArray->psHelper->m_nMaxBatchSize)
     {
         if (psFillArrowArray->bAsynchronousMode)
         {
@@ -7510,22 +7510,27 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     }
     if (psFillArrowArray->nCountRows < 0)
         return;
+
+    if (psFillArrowArray->nMemLimit == 0)
+        psFillArrowArray->nMemLimit = OGRArrowArrayHelper::GetMemLimit();
+    const auto nMemLimit = psFillArrowArray->nMemLimit;
+begin:
     const int iFeat = psFillArrowArray->nCountRows;
     auto psHelper = psFillArrowArray->psHelper.get();
 
     int iCol = 0;
 
     GIntBig nFID = sqlite3_value_int64(argv[iCol]);
-    if (psHelper->panFIDValues)
+    if (psHelper->m_panFIDValues)
     {
-        psHelper->panFIDValues[iFeat] = nFID;
+        psHelper->m_panFIDValues[iFeat] = nFID;
     }
     iCol++;
 
-    if (!psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+    if (!psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
+        psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
     {
-        const int iArrowField = psHelper->mapOGRGeomFieldToArrowField[0];
+        const int iArrowField = psHelper->m_mapOGRGeomFieldToArrowField[0];
         auto psArray = psHelper->m_out_array->children[iArrowField];
         size_t nWKBSize = 0;
         const int nSqlite3ColType = sqlite3_value_type(argv[iCol]);
@@ -7609,6 +7614,42 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                     }
                 }
 
+                if (psFillArrowArray->nCountRows > 0)
+                {
+                    auto panOffsets = static_cast<int32_t *>(
+                        const_cast<void *>(psArray->buffers[1]));
+                    const uint32_t nCurLength =
+                        static_cast<uint32_t>(panOffsets[iFeat]);
+                    if (nWKBSize <= nMemLimit &&
+                        nWKBSize > nMemLimit - nCurLength)
+                    {
+                        CPLDebug("GPKG",
+                                 "OGR_GPKG_FillArrowArray_Step(): premature "
+                                 "notification of %d features to consumer due "
+                                 "to too big array",
+                                 psFillArrowArray->nCountRows);
+                        psFillArrowArray->bMemoryLimitReached = true;
+                        if (psFillArrowArray->bAsynchronousMode)
+                        {
+                            std::unique_lock<std::mutex> oLock(
+                                psFillArrowArray->oMutex);
+                            psFillArrowArray->psHelper->Shrink(
+                                psFillArrowArray->nCountRows);
+                            psFillArrowArray->oCV.notify_one();
+                            while (psFillArrowArray->nCountRows > 0)
+                            {
+                                psFillArrowArray->oCV.wait(oLock);
+                            }
+                            goto begin;
+                        }
+                        else
+                        {
+                            sqlite3_interrupt(psFillArrowArray->hDB);
+                            return;
+                        }
+                    }
+                }
+
                 GByte *outPtr = psHelper->GetPtrForStringOrBinary(
                     iArrowField, iFeat, nWKBSize);
                 if (outPtr == nullptr)
@@ -7633,9 +7674,9 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         iCol++;
     }
 
-    for (int iField = 0; iField < psHelper->nFieldCount; iField++)
+    for (int iField = 0; iField < psHelper->m_nFieldCount; iField++)
     {
-        const int iArrowField = psHelper->mapOGRFieldToArrowField[iField];
+        const int iArrowField = psHelper->m_mapOGRFieldToArrowField[iField];
         if (iArrowField < 0)
             continue;
 
@@ -7709,6 +7750,42 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                 const void *pabyData = sqlite3_value_blob(argv[iCol]);
                 if (pabyData != nullptr || nBytes == 0)
                 {
+                    if (psFillArrowArray->nCountRows > 0)
+                    {
+                        auto panOffsets = static_cast<int32_t *>(
+                            const_cast<void *>(psArray->buffers[1]));
+                        const uint32_t nCurLength =
+                            static_cast<uint32_t>(panOffsets[iFeat]);
+                        if (nBytes <= nMemLimit &&
+                            nBytes > nMemLimit - nCurLength)
+                        {
+                            CPLDebug("GPKG",
+                                     "OGR_GPKG_FillArrowArray_Step(): "
+                                     "premature notification of %d features to "
+                                     "consumer due to too big array",
+                                     psFillArrowArray->nCountRows);
+                            psFillArrowArray->bMemoryLimitReached = true;
+                            if (psFillArrowArray->bAsynchronousMode)
+                            {
+                                std::unique_lock<std::mutex> oLock(
+                                    psFillArrowArray->oMutex);
+                                psFillArrowArray->psHelper->Shrink(
+                                    psFillArrowArray->nCountRows);
+                                psFillArrowArray->oCV.notify_one();
+                                while (psFillArrowArray->nCountRows > 0)
+                                {
+                                    psFillArrowArray->oCV.wait(oLock);
+                                }
+                                goto begin;
+                            }
+                            else
+                            {
+                                sqlite3_interrupt(psFillArrowArray->hDB);
+                                return;
+                            }
+                        }
+                    }
+
                     GByte *outPtr = psHelper->GetPtrForStringOrBinary(
                         iArrowField, iFeat, nBytes);
                     if (outPtr == nullptr)
@@ -7751,7 +7828,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                 {
                     psHelper->SetDateTime(
                         psArray, iFeat, psFillArrowArray->brokenDown,
-                        psHelper->anTZFlags[iField], ogrField);
+                        psHelper->m_anTZFlags[iField], ogrField);
                 }
                 break;
             }
@@ -7763,6 +7840,42 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                 if (pszTxt != nullptr)
                 {
                     const size_t nBytes = strlen(pszTxt);
+                    if (psFillArrowArray->nCountRows > 0)
+                    {
+                        auto panOffsets = static_cast<int32_t *>(
+                            const_cast<void *>(psArray->buffers[1]));
+                        const uint32_t nCurLength =
+                            static_cast<uint32_t>(panOffsets[iFeat]);
+                        if (nBytes <= nMemLimit &&
+                            nBytes > nMemLimit - nCurLength)
+                        {
+                            CPLDebug("GPKG",
+                                     "OGR_GPKG_FillArrowArray_Step(): "
+                                     "premature notification of %d features to "
+                                     "consumer due to too big array",
+                                     psFillArrowArray->nCountRows);
+                            psFillArrowArray->bMemoryLimitReached = true;
+                            if (psFillArrowArray->bAsynchronousMode)
+                            {
+                                std::unique_lock<std::mutex> oLock(
+                                    psFillArrowArray->oMutex);
+                                psFillArrowArray->psHelper->Shrink(
+                                    psFillArrowArray->nCountRows);
+                                psFillArrowArray->oCV.notify_one();
+                                while (psFillArrowArray->nCountRows > 0)
+                                {
+                                    psFillArrowArray->oCV.wait(oLock);
+                                }
+                                goto begin;
+                            }
+                            else
+                            {
+                                sqlite3_interrupt(psFillArrowArray->hDB);
+                                return;
+                            }
+                        }
+                    }
+
                     GByte *outPtr = psHelper->GetPtrForStringOrBinary(
                         iArrowField, iFeat, nBytes);
                     if (outPtr == nullptr)
@@ -7878,8 +7991,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     // error)
     {
         std::unique_lock<std::mutex> oLock(m_poFillArrowArray->oMutex);
-        while (m_poFillArrowArray->nCountRows <
-                   m_poFillArrowArray->nMaxBatchSize &&
+        while (m_poFillArrowArray->nCountRows == 0 &&
                !m_poFillArrowArray->bIsFinished)
         {
             m_poFillArrowArray->oCV.wait(oLock);
@@ -7929,19 +8041,19 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
             osSQL += "NULL";
         }
 
-        if (!m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField
+        if (!m_poFillArrowArray->psHelper->m_mapOGRGeomFieldToArrowField
                  .empty() &&
-            m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+            m_poFillArrowArray->psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
         {
             osSQL += ",m.\"";
             osSQL += SQLEscapeName(GetGeometryColumn());
             osSQL += '"';
         }
-        for (int iField = 0; iField < m_poFillArrowArray->psHelper->nFieldCount;
-             iField++)
+        for (int iField = 0;
+             iField < m_poFillArrowArray->psHelper->m_nFieldCount; iField++)
         {
             const int iArrowField =
-                m_poFillArrowArray->psHelper->mapOGRFieldToArrowField[iField];
+                m_poFillArrowArray->psHelper->m_mapOGRFieldToArrowField[iField];
             if (iArrowField >= 0)
             {
                 const OGRFieldDefn *poFieldDefn =
@@ -8170,11 +8282,18 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                    sizeof(struct ArrowArray));
             memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
+            if (task->m_bMemoryLimitReached)
+            {
+                m_nIsCompatOfOptimizedGetNextArrowArray = false;
+                stopThread();
+                CancelAsyncNextArrowArray();
+                return 0;
+            }
             // Are the records still available for reading beyond the current
             // queued tasks ? If so, recycle this task to read them
-            if (task->m_iStartShapeId +
-                    static_cast<GIntBig>(nTasks) * nMaxBatchSize <=
-                m_nTotalFeatureCount)
+            else if (task->m_iStartShapeId +
+                         static_cast<GIntBig>(nTasks) * nMaxBatchSize <=
+                     m_nTotalFeatureCount)
             {
                 task->m_iStartShapeId +=
                     static_cast<GIntBig>(nTasks) * nMaxBatchSize;
@@ -8223,7 +8342,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         m_oQueueArrowArrayPrefetchTasks.empty() &&
         m_iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <=
             m_nTotalFeatureCount &&
-        sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2)
+        sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2 &&
+        CPLGetUsablePhysicalRAM() > 1024 * 1024 * 1024)
     {
         const int nMaxTasks = static_cast<int>(std::min<GIntBig>(
             DIV_ROUND_UP(m_nTotalFeatureCount - m_iNextShapeId, nMaxBatchSize),
@@ -8287,9 +8407,12 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 {
                     taskPtr->m_bFetchRows = false;
                     taskPtr->m_poLayer->GetNextArrowArrayInternal(
-                        taskPtr->m_psArrowArray.get(), taskPtr->m_osErrorMsg);
+                        taskPtr->m_psArrowArray.get(), taskPtr->m_osErrorMsg,
+                        taskPtr->m_bMemoryLimitReached);
                     taskPtr->m_bArrayReady = true;
                     taskPtr->m_oCV.notify_one();
+                    if (taskPtr->m_bMemoryLimitReached)
+                        break;
                     // cppcheck-suppress knownConditionTrueFalse
                     while (!taskPtr->m_bStop && !taskPtr->m_bFetchRows)
                     {
@@ -8314,9 +8437,16 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     }
 
     std::string osErrorMsg;
-    int ret = GetNextArrowArrayInternal(out_array, osErrorMsg);
+    bool bMemoryLimitReached = false;
+    int ret =
+        GetNextArrowArrayInternal(out_array, osErrorMsg, bMemoryLimitReached);
     if (!osErrorMsg.empty())
         CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
+    if (bMemoryLimitReached)
+    {
+        CancelAsyncNextArrowArray();
+        m_nIsCompatOfOptimizedGetNextArrowArray = false;
+    }
     return ret;
 }
 
@@ -8325,8 +8455,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
-    struct ArrowArray *out_array, std::string &osErrorMsg)
+    struct ArrowArray *out_array, std::string &osErrorMsg,
+    bool &bMemoryLimitReached)
 {
+    bMemoryLimitReached = false;
     memset(out_array, 0, sizeof(*out_array));
 
     if (m_iNextShapeId >= m_nTotalFeatureCount)
@@ -8344,6 +8476,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     OGRGPKGTableLayerFillArrowArray sFillArrowArray;
     sFillArrowArray.psHelper = std::move(psHelper);
     sFillArrowArray.nCountRows = 0;
+    sFillArrowArray.bMemoryLimitReached = false;
     sFillArrowArray.bErrorOccurred = false;
     sFillArrowArray.poFeatureDefn = m_poFeatureDefn;
     sFillArrowArray.poLayer = this;
@@ -8362,19 +8495,19 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += SQLEscapeName(m_pszFidColumn);
     osSQL += '"';
 
-    if (!sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+    if (!sFillArrowArray.psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
+        sFillArrowArray.psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
     {
         osSQL += ',';
         osSQL += '"';
         osSQL += SQLEscapeName(GetGeometryColumn());
         osSQL += '"';
     }
-    for (int iField = 0; iField < sFillArrowArray.psHelper->nFieldCount;
+    for (int iField = 0; iField < sFillArrowArray.psHelper->m_nFieldCount;
          iField++)
     {
         const int iArrowField =
-            sFillArrowArray.psHelper->mapOGRFieldToArrowField[iField];
+            sFillArrowArray.psHelper->m_mapOGRFieldToArrowField[iField];
         if (iArrowField >= 0)
         {
             const OGRFieldDefn *poFieldDefn =
@@ -8393,7 +8526,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += std::to_string(m_iNextShapeId + 1);
     osSQL += " AND ";
     osSQL += std::to_string(m_iNextShapeId +
-                            sFillArrowArray.psHelper->nMaxBatchSize);
+                            sFillArrowArray.psHelper->m_nMaxBatchSize);
 
     // CPLDebug("GPKG", "%s", osSQL.c_str());
 
@@ -8401,12 +8534,15 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     if (sqlite3_exec(m_poDS->GetDB(), osSQL.c_str(), nullptr, nullptr,
                      &pszErrMsg) != SQLITE_OK)
     {
-        if (!sFillArrowArray.bErrorOccurred)
+        if (!sFillArrowArray.bErrorOccurred &&
+            !sFillArrowArray.bMemoryLimitReached)
         {
             osErrorMsg = pszErrMsg ? pszErrMsg : "unknown error";
         }
     }
     sqlite3_free(pszErrMsg);
+
+    bMemoryLimitReached = sFillArrowArray.bMemoryLimitReached;
 
     // Delete function
     sqlite3_create_function(m_poDS->GetDB(), "OGR_GPKG_FillArrowArray_INTERNAL",

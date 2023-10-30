@@ -37,6 +37,7 @@
 #include "gdal_priv.h"
 
 #include <memory>
+#include <deque>
 
 /**
  * \file ogrsf_frmts.h
@@ -134,6 +135,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
         OGRLayer *m_poLayer = nullptr;
         std::vector<GIntBig> m_anQueriedFIDs{};
         size_t m_iQueriedFIDS = 0;
+        std::deque<std::unique_ptr<OGRFeature>> m_oFeatureQueue{};
     };
     std::shared_ptr<ArrowArrayStreamPrivateData>
         m_poSharedArrowArrayStreamPrivateData{};

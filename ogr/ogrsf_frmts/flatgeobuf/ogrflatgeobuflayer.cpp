@@ -1404,7 +1404,7 @@ begin:
         return ENOMEM;
     }
 
-    std::vector<bool> abSetFields(sHelper.nFieldCount);
+    std::vector<bool> abSetFields(sHelper.m_nFieldCount);
 
     struct tm brokenDown;
     memset(&brokenDown, 0, sizeof(brokenDown));
@@ -1415,12 +1415,13 @@ begin:
     if (m_queriedSpatialIndex && m_featuresCount == 0)
     {
         CPLDebugOnly("FlatGeobuf", "GetNextFeature: no features found");
-        sHelper.nMaxBatchSize = 0;
+        sHelper.m_nMaxBatchSize = 0;
     }
 
     const GIntBig nFeatureIdxStart = m_featuresPos;
 
-    while (iFeat < sHelper.nMaxBatchSize)
+    const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
+    while (iFeat < sHelper.m_nMaxBatchSize)
     {
         bEOFOrError = true;
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount)
@@ -1444,8 +1445,8 @@ begin:
             fid = m_featuresPos;
         }
 
-        if (sHelper.panFIDValues)
-            sHelper.panFIDValues[iFeat] = fid;
+        if (sHelper.m_panFIDValues)
+            sHelper.m_panFIDValues[iFeat] = fid;
 
         if (m_featuresPos == 0)
             seek = true;
@@ -1536,8 +1537,22 @@ begin:
             if (!FilterGeometry(poOGRGeometry.get()))
                 goto end_of_loop;
 
-            const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
+            const int iArrowField = sHelper.m_mapOGRGeomFieldToArrowField[0];
             const size_t nWKBSize = poOGRGeometry->WkbSize();
+
+            if (iFeat > 0)
+            {
+                auto psArray = out_array->children[iArrowField];
+                auto panOffsets = static_cast<int32_t *>(
+                    const_cast<void *>(psArray->buffers[1]));
+                const uint32_t nCurLength =
+                    static_cast<uint32_t>(panOffsets[iFeat]);
+                if (nWKBSize <= nMemLimit && nWKBSize > nMemLimit - nCurLength)
+                {
+                    goto after_loop;
+                }
+            }
+
             GByte *outPtr =
                 sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
             if (outPtr == nullptr)
@@ -1549,7 +1564,7 @@ begin:
         }
 
         abSetFields.clear();
-        abSetFields.resize(sHelper.nFieldCount);
+        abSetFields.resize(sHelper.m_nFieldCount);
 
         if (properties != nullptr)
         {
@@ -1592,7 +1607,7 @@ begin:
                 abSetFields[i] = true;
                 const auto column = columns->Get(i);
                 const auto type = column->type();
-                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
+                const int iArrowField = sHelper.m_mapOGRFieldToArrowField[i];
                 const bool isIgnored = iArrowField < 0;
                 auto psArray =
                     isIgnored ? nullptr : out_array->children[iArrowField];
@@ -1794,6 +1809,19 @@ begin:
                         }
                         if (!isIgnored)
                         {
+                            if (iFeat > 0)
+                            {
+                                auto panOffsets = static_cast<int32_t *>(
+                                    const_cast<void *>(psArray->buffers[1]));
+                                const uint32_t nCurLength =
+                                    static_cast<uint32_t>(panOffsets[iFeat]);
+                                if (len <= nMemLimit &&
+                                    len > nMemLimit - nCurLength)
+                                {
+                                    goto after_loop;
+                                }
+                            }
+
                             GByte *outPtr = sHelper.GetPtrForStringOrBinary(
                                 iArrowField, iFeat, len);
                             if (outPtr == nullptr)
@@ -1831,7 +1859,7 @@ begin:
                                               len, &ogrField))
                             {
                                 sHelper.SetDateTime(psArray, iFeat, brokenDown,
-                                                    sHelper.anTZFlags[i],
+                                                    sHelper.m_anTZFlags[i],
                                                     ogrField);
                             }
                             else
@@ -1843,7 +1871,7 @@ begin:
                                 {
                                     sHelper.SetDateTime(
                                         psArray, iFeat, brokenDown,
-                                        sHelper.anTZFlags[i], ogrField);
+                                        sHelper.m_anTZFlags[i], ogrField);
                                 }
                             }
                         }
@@ -1855,11 +1883,11 @@ begin:
         }
 
         // Mark null fields
-        for (int i = 0; i < sHelper.nFieldCount; i++)
+        for (int i = 0; i < sHelper.m_nFieldCount; i++)
         {
-            if (!abSetFields[i] && sHelper.abNullableFields[i])
+            if (!abSetFields[i] && sHelper.m_abNullableFields[i])
             {
-                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
+                const int iArrowField = sHelper.m_mapOGRFieldToArrowField[i];
                 if (iArrowField >= 0)
                 {
                     sHelper.SetNull(iArrowField, iFeat);
@@ -1880,7 +1908,7 @@ begin:
         m_featuresPos++;
         bEOFOrError = false;
     }
-
+after_loop:
     if (bEOFOrError)
         m_bEOF = true;
 

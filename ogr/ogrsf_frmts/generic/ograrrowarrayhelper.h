@@ -44,18 +44,20 @@ class CPL_DLL OGRArrowArrayHelper
     OGRArrowArrayHelper &operator=(const OGRArrowArrayHelper &) = delete;
 
   public:
-    bool bIncludeFID = false;
-    int nMaxBatchSize = 0;
-    int nChildren = 0;
-    int nFieldCount = 0;
-    int nGeomFieldCount = 0;
-    std::vector<int> mapOGRFieldToArrowField{};
-    std::vector<int> mapOGRGeomFieldToArrowField{};
-    std::vector<bool> abNullableFields{};
-    std::vector<uint32_t> anArrowFieldMaxAlloc{};
-    std::vector<int> anTZFlags{};
-    int64_t *panFIDValues = nullptr;
+    bool m_bIncludeFID = false;
+    int m_nMaxBatchSize = 0;
+    int m_nChildren = 0;
+    const int m_nFieldCount = 0;
+    const int m_nGeomFieldCount = 0;
+    std::vector<int> m_mapOGRFieldToArrowField{};
+    std::vector<int> m_mapOGRGeomFieldToArrowField{};
+    std::vector<bool> m_abNullableFields{};
+    std::vector<uint32_t> m_anArrowFieldMaxAlloc{};
+    std::vector<int> m_anTZFlags{};
+    int64_t *m_panFIDValues = nullptr;
     struct ArrowArray *m_out_array = nullptr;
+
+    static uint32_t GetMemLimit();
 
     static int
     GetMaxFeaturesInBatch(const CPLStringList &aosArrowArrayStreamOptions);
@@ -73,12 +75,12 @@ class CPL_DLL OGRArrowArrayHelper
         if (psArray->buffers[0] == nullptr)
         {
             pabyNull = static_cast<uint8_t *>(
-                VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nMaxBatchSize + 7) / 8));
+                VSI_MALLOC_ALIGNED_AUTO_VERBOSE((m_nMaxBatchSize + 7) / 8));
             if (pabyNull == nullptr)
             {
                 return false;
             }
-            memset(pabyNull, 0xFF, (nMaxBatchSize + 7) / 8);
+            memset(pabyNull, 0xFF, (m_nMaxBatchSize + 7) / 8);
             psArray->buffers[0] = pabyNull;
         }
         pabyNull[iFeat / 8] &= static_cast<uint8_t>(~(1 << (iFeat % 8)));
@@ -213,7 +215,7 @@ class CPL_DLL OGRArrowArrayHelper
         auto panOffsets =
             static_cast<int32_t *>(const_cast<void *>(psArray->buffers[1]));
         const uint32_t nCurLength = static_cast<uint32_t>(panOffsets[iFeat]);
-        if (nLen > anArrowFieldMaxAlloc[iArrowField] - nCurLength)
+        if (nLen > m_anArrowFieldMaxAlloc[iArrowField] - nCurLength)
         {
             if (nLen >
                 static_cast<uint32_t>(std::numeric_limits<int32_t>::max()) -
@@ -224,17 +226,17 @@ class CPL_DLL OGRArrowArrayHelper
                 return nullptr;
             }
             uint32_t nNewSize = nCurLength + static_cast<uint32_t>(nLen);
-            if ((anArrowFieldMaxAlloc[iArrowField] >> 31) == 0)
+            if ((m_anArrowFieldMaxAlloc[iArrowField] >> 31) == 0)
             {
                 const uint32_t nDoubleSize =
-                    2U * anArrowFieldMaxAlloc[iArrowField];
+                    2U * m_anArrowFieldMaxAlloc[iArrowField];
                 if (nNewSize < nDoubleSize)
                     nNewSize = nDoubleSize;
             }
             void *newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewSize);
             if (newBuffer == nullptr)
                 return nullptr;
-            anArrowFieldMaxAlloc[iArrowField] = nNewSize;
+            m_anArrowFieldMaxAlloc[iArrowField] = nNewSize;
             memcpy(newBuffer, psArray->buffers[2], nCurLength);
             VSIFreeAligned(const_cast<void *>(psArray->buffers[2]));
             psArray->buffers[2] = newBuffer;
@@ -255,10 +257,10 @@ class CPL_DLL OGRArrowArrayHelper
 
     void Shrink(int nFeatures)
     {
-        if (nFeatures < nMaxBatchSize)
+        if (nFeatures < m_nMaxBatchSize)
         {
             m_out_array->length = nFeatures;
-            for (int i = 0; i < nChildren; i++)
+            for (int i = 0; i < m_nChildren; i++)
             {
                 m_out_array->children[i]->length = nFeatures;
             }
