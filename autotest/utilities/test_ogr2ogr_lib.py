@@ -2126,12 +2126,40 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     fld_defn = ogr.FieldDefn("json_field")
     fld_defn.SetSubType(ogr.OFSTJSON)
     src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_alternative_name")
+    fld_defn.SetAlternativeName("alias")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_comment")
+    fld_defn.SetComment("my_comment")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_default")
+    fld_defn.SetDefault("'default_val'")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_width")
+    fld_defn.SetWidth(10)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_unique")
+    fld_defn.SetUnique(True)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_domain")
+    fld_defn.SetDomainName("my_domain")
+    src_lyr.CreateField(fld_defn)
     for i in range(2):
         f = ogr.Feature(src_lyr.GetLayerDefn())
         f["str_field"] = "foo%d" % i
         f["json_field"] = '{"foo":"bar"}'
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 2)" % i))
         src_lyr.CreateFeature(f)
+
+    assert src_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            "my_domain",
+            "desc",
+            ogr.OFTString,
+            ogr.OFSTNone,
+            {1: "one", 2: "two", 3: None},
+        )
+    )
 
     got_msg = []
 
@@ -2158,6 +2186,21 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "json_field"
     assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
     assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTJSON
+    assert (
+        out_lyr.GetLayerDefn().GetFieldDefn(2).GetName()
+        == "field_with_alternative_name"
+    )
+    assert out_lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "alias"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "field_with_comment"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(3).GetComment() == "my_comment"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(4).GetName() == "field_with_default"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(4).GetDefault() == "'default_val'"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetName() == "field_with_width"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetWidth() == 10
+    assert out_lyr.GetLayerDefn().GetFieldDefn(6).GetName() == "field_unique"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(6).IsUnique()
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetName() == "field_with_domain"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetDomainName() == "my_domain"
     assert out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount())
 
     f = out_lyr.GetNextFeature()

@@ -42,7 +42,17 @@
 #include <cassert>
 #include <cinttypes>
 #include <limits>
+#include <utility>
 #include <set>
+
+constexpr const char *MD_GDAL_OGR_ALTERNATIVE_NAME =
+    "GDAL:OGR:alternative_name";
+constexpr const char *MD_GDAL_OGR_COMMENT = "GDAL:OGR:comment";
+constexpr const char *MD_GDAL_OGR_DEFAULT = "GDAL:OGR:default";
+constexpr const char *MD_GDAL_OGR_SUBTYPE = "GDAL:OGR:subtype";
+constexpr const char *MD_GDAL_OGR_WIDTH = "GDAL:OGR:width";
+constexpr const char *MD_GDAL_OGR_UNIQUE = "GDAL:OGR:unique";
+constexpr const char *MD_GDAL_OGR_DOMAIN_NAME = "GDAL:OGR:domain_name";
 
 constexpr char ARROW_LETTER_BOOLEAN = 'b';
 constexpr char ARROW_LETTER_INT8 = 'c';
@@ -496,6 +506,81 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
             psChild->children[0]->release = OGRLayer::ReleaseSchema;
             psChild->children[0]->name = CPLStrdup("item");
             psChild->children[0]->format = item_format;
+        }
+
+        std::vector<std::pair<std::string, std::string>> oMetadata;
+        const char *pszAlternativeName = poFieldDefn->GetAlternativeNameRef();
+        if (pszAlternativeName && pszAlternativeName[0])
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_ALTERNATIVE_NAME, pszAlternativeName));
+
+        const char *pszDefault = poFieldDefn->GetDefault();
+        if (pszDefault && pszDefault[0])
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_DEFAULT, pszDefault));
+
+        const std::string &osComment = poFieldDefn->GetComment();
+        if (!osComment.empty())
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_COMMENT, osComment));
+
+        if (poFieldDefn->GetSubType() != OFSTNone &&
+            poFieldDefn->GetSubType() != OFSTBoolean &&
+            poFieldDefn->GetSubType() != OFSTFloat32)
+        {
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_SUBTYPE,
+                OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
+        }
+        if (poFieldDefn->GetType() == OFTString && poFieldDefn->GetWidth() > 0)
+        {
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_WIDTH, CPLSPrintf("%d", poFieldDefn->GetWidth())));
+        }
+        if (poFieldDefn->IsUnique())
+        {
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_UNIQUE, "true"));
+        }
+        if (!poFieldDefn->GetDomainName().empty())
+        {
+            oMetadata.push_back(std::pair<std::string, std::string>(
+                MD_GDAL_OGR_DOMAIN_NAME, poFieldDefn->GetDomainName()));
+        }
+
+        if (!oMetadata.empty())
+        {
+            size_t nLen = sizeof(int32_t);
+            for (const auto &oPair : oMetadata)
+            {
+                nLen += sizeof(int32_t) + oPair.first.size() + sizeof(int32_t) +
+                        oPair.second.size();
+            }
+            char *pszMetadata = static_cast<char *>(CPLMalloc(nLen));
+            psChild->metadata = pszMetadata;
+            size_t offsetMD = 0;
+            *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+                static_cast<int>(oMetadata.size());
+            offsetMD += sizeof(int32_t);
+            for (const auto &oPair : oMetadata)
+            {
+                *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+                    static_cast<int32_t>(oPair.first.size());
+                offsetMD += sizeof(int32_t);
+                memcpy(pszMetadata + offsetMD, oPair.first.data(),
+                       oPair.first.size());
+                offsetMD += oPair.first.size();
+
+                *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+                    static_cast<int32_t>(oPair.second.size());
+                offsetMD += sizeof(int32_t);
+                memcpy(pszMetadata + offsetMD, oPair.second.data(),
+                       oPair.second.size());
+                offsetMD += oPair.second.size();
+            }
+
+            CPLAssert(offsetMD == nLen);
+            CPL_IGNORE_RET_VAL(offsetMD);
         }
     }
 
@@ -2179,18 +2264,17 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
 /** Get a Arrow C stream.
  *
  * On successful return, and when the stream interfaces is no longer needed, it
-must must
- * be freed with out_stream->release(out_stream). Please carefully read
- * https://arrow.apache.org/docs/format/CStreamInterface.html for more details
- * on using Arrow C stream.
+ * must must be freed with out_stream->release(out_stream). Please carefully
+ * read https://arrow.apache.org/docs/format/CStreamInterface.html for more
+ * details on using Arrow C stream.
  *
  * The method may take into account ignored fields set with SetIgnoredFields()
  * (the default implementation does), and should take into account filters set
-with
- * SetSpatialFilter() and SetAttributeFilter(). Note however that specialized
- * implementations may fallback to the default (slower) implementation when
- * filters are set. Drivers that have a specialized implementation should
- * advertise the OLCFastGetArrowStream capability.
+ * with SetSpatialFilter() and SetAttributeFilter(). Note however that
+ * specialized implementations may fallback to the default (slower)
+ * implementation when filters are set.
+ * Drivers that have a specialized implementation should advertise the
+ * OLCFastGetArrowStream capability.
  *
  * There are extra precautions to take into account in a OGR context. Unless
  * otherwise specified by a particular driver implementation, the get_schema(),
@@ -2200,19 +2284,32 @@ with
  * dataset closing). The reason is that those function pointers will typically
  * point to methods of the OGRLayer instance.
  * However, the ArrowSchema and ArrowArray structures filled from those
-callbacks
- * can be used and must be released independently from the
+ * callbacks can be used and must be released independently from the
  * ArrowArrayStream or the layer.
  *
  * Furthermore, unless otherwise specified by a particular driver
  * implementation, only one ArrowArrayStream can be active at a time on
  * a given layer (that is the last active one must be explicitly released before
  * a next one is asked). Changing filter state, ignored columns, modifying the
-schema
- * or using ResetReading()/GetNextFeature() while using a ArrowArrayStream is
- * strongly discouraged and may lead to unexpected results. As a rule of thumb,
- * no OGRLayer methods that affect the state of a layer should be called on a
- * layer, while an ArrowArrayStream on it is active.
+ * schema or using ResetReading()/GetNextFeature() while using a
+ * ArrowArrayStream is strongly discouraged and may lead to unexpected results.
+ * As a rule of thumb, no OGRLayer methods that affect the state of a layer
+ * should be called on a layer, while an ArrowArrayStream on it is active.
+ *
+ * Starting with GDAL 3.8, the ArrowSchema::metadata field filled by the
+ * get_schema() callback may be set with the potential following items:
+ * <ul>
+ * <li>"GDAL:OGR:alternative_name": value of
+ *     OGRFieldDefn::GetAlternativeNameRef()</li>
+ * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
+ * <li>"GDAL:OGR:default": value of OGRFieldDefn::GetDefault()</li>
+ * <li>"GDAL:OGR:subtype": value of OGRFieldDefn::GetSubType()</li>
+ * <li>"GDAL:OGR:width": value of OGRFieldDefn::GetWidth() (serialized as a
+ *     string)</li>
+ * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
+ *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
+ * </ul>
  *
  * A potential usage can be:
 \code{.cpp}
@@ -2252,8 +2349,8 @@ From OGR using the Arrow C Stream data interface</a> tutorial.
  * Options may be driver specific. The default implementation recognizes the
  * following options:
  * <ul>
- * <li>INCLUDE_FID=YES/NO. Whether to include the FID column. Defaults to
-YES.</li>
+ * <li>INCLUDE_FID=YES/NO. Whether to include the FID column. Defaults to YES.
+ * </li>
  * <li>MAX_FEATURES_IN_BATCH=integer. Maximum number of features to retrieve in
  *     a ArrowArray batch. Defaults to 65 536.</li>
  * <li>TIMEZONE="unknown", "UTC", "(+|:)HH:MM" or any other value supported by
@@ -2391,6 +2488,21 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
  * ArrowArrayStream is strongly discouraged and may lead to unexpected results.
  * As a rule of thumb, no OGRLayer methods that affect the state of a layer
  * should be called on a layer, while an ArrowArrayStream on it is active.
+ *
+ * Starting with GDAL 3.8, the ArrowSchema::metadata field filled by the
+ * get_schema() callback may be set with the potential following items:
+ * <ul>
+ * <li>"GDAL:OGR:alternative_name": value of
+ *     OGRFieldDefn::GetAlternativeNameRef()</li>
+ * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
+ * <li>"GDAL:OGR:default": value of OGRFieldDefn::GetDefault()</li>
+ * <li>"GDAL:OGR:subtype": value of OGRFieldDefn::GetSubType()</li>
+ * <li>"GDAL:OGR:width": value of OGRFieldDefn::GetWidth() (serialized as a
+ *     string)</li>
+ * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
+ *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
+ * </ul>
  *
  * A potential usage can be:
 \code{.cpp}
@@ -5264,9 +5376,9 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     }
 
     const auto AddField = [this, schema, fieldName, &aosNativeTypes,
-                           &osFieldPrefix](OGRFieldType eTypeIn,
-                                           OGRFieldSubType eSubTypeIn,
-                                           int nWidth, int nPrecision)
+                           &osFieldPrefix, poDS](OGRFieldType eTypeIn,
+                                                 OGRFieldSubType eSubTypeIn,
+                                                 int nWidth, int nPrecision)
     {
         const char *pszTypeName = OGRFieldDefn::GetFieldTypeName(eTypeIn);
         auto eTypeOut = eTypeIn;
@@ -5290,6 +5402,53 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             oFieldDefn.SetPrecision(nPrecision);
         }
         oFieldDefn.SetNullable((schema->flags & ARROW_FLAG_NULLABLE) != 0);
+
+        if (schema->metadata)
+        {
+            const auto oMetadata = OGRParseArrowMetadata(schema->metadata);
+            for (const auto &oIter : oMetadata)
+            {
+                if (oIter.first == MD_GDAL_OGR_ALTERNATIVE_NAME)
+                    oFieldDefn.SetAlternativeName(oIter.second.c_str());
+                else if (oIter.first == MD_GDAL_OGR_COMMENT)
+                    oFieldDefn.SetComment(oIter.second);
+                else if (oIter.first == MD_GDAL_OGR_DEFAULT)
+                    oFieldDefn.SetDefault(oIter.second.c_str());
+                else if (oIter.first == MD_GDAL_OGR_SUBTYPE)
+                {
+                    const auto &osSubType = oIter.second;
+                    for (auto eSubType = OFSTNone; eSubType <= OFSTMaxSubType;)
+                    {
+                        if (OGRFieldDefn::GetFieldSubTypeName(eSubType) ==
+                            osSubType)
+                        {
+                            oFieldDefn.SetSubType(eSubType);
+                            break;
+                        }
+                        if (eSubType == OFSTMaxSubType)
+                            break;
+                        else
+                            eSubType =
+                                static_cast<OGRFieldSubType>(eSubType + 1);
+                    }
+                }
+                else if (oIter.first == MD_GDAL_OGR_WIDTH)
+                    oFieldDefn.SetWidth(atoi(oIter.second.c_str()));
+                else if (oIter.first == MD_GDAL_OGR_UNIQUE)
+                    oFieldDefn.SetUnique(oIter.second == "true");
+                else if (oIter.first == MD_GDAL_OGR_DOMAIN_NAME)
+                {
+                    if (poDS && poDS->GetFieldDomain(oIter.second))
+                        oFieldDefn.SetDomainName(oIter.second);
+                }
+                else
+                {
+                    CPLDebug("OGR", "Unknown field metadata: %s",
+                             oIter.first.c_str());
+                }
+            }
+        }
+
         return CreateField(&oFieldDefn) == OGRERR_NONE;
     };
 
@@ -5297,14 +5456,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     {
         if (strcmp(format, sType.arrowType) == 0)
         {
-            OGRFieldSubType eSubType = sType.eSubType;
-            if (sType.eType == OFTString &&
-                EQUAL(CSLFetchNameValueDef(papszOptions, "SUBTYPE", ""),
-                      "JSON"))
-            {
-                eSubType = OFSTJSON;
-            }
-            return AddField(sType.eType, eSubType, 0, 0);
+            return AddField(sType.eType, sType.eSubType, 0, 0);
         }
     }
 
@@ -5421,15 +5573,27 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
  * struct (format=+s) (unless writing a set of fields grouped together in the
  * same structure).
  *
- * This method and CreateField() are mutually exclusive in the same session.
+ * Additional field metadata can be speciffed through the ArrowSchema::metadata
+ * field with the potential following items:
+ * <ul>
+ * <li>"GDAL:OGR:alternative_name": value of
+ *     OGRFieldDefn::GetAlternativeNameRef()</li>
+ * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
+ * <li>"GDAL:OGR:default": value of OGRFieldDefn::GetDefault()</li>
+ * <li>"GDAL:OGR:subtype": value of OGRFieldDefn::GetSubType()</li>
+ * <li>"GDAL:OGR:width": value of OGRFieldDefn::GetWidth() (serialized as a
+ *     string)</li>
+ * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
+ *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
+ * </ul>
  *
- * The base implementation of CreateFieldFromArrowSchema() supports the
- * option SUBTYPE=JSON for fields of type string.
+ * This method and CreateField() are mutually exclusive in the same session.
  *
  * This method is the same as the C function OGR_L_CreateFieldFromArrowSchema().
  *
  * @param schema Schema of the field to create.
- * @param papszOptions Options. Null terminated list, or nullptr.
+ * @param papszOptions Options (none currently). Null terminated list, or nullptr.
  * @return true in case of success
  * @since 3.8
  */
@@ -5455,16 +5619,28 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  * struct (format=+s) (unless writing a set of fields grouped together in the
  * same structure).
  *
- * This method and CreateField() are mutually exclusive in the same session.
+ * Additional field metadata can be speciffed through the ArrowSchema::metadata
+ * field with the potential following items:
+ * <ul>
+ * <li>"GDAL:OGR:alternative_name": value of
+ *     OGRFieldDefn::GetAlternativeNameRef()</li>
+ * <li>"GDAL:OGR:comment": value of OGRFieldDefn::GetComment()</li>
+ * <li>"GDAL:OGR:default": value of OGRFieldDefn::GetDefault()</li>
+ * <li>"GDAL:OGR:subtype": value of OGRFieldDefn::GetSubType()</li>
+ * <li>"GDAL:OGR:width": value of OGRFieldDefn::GetWidth() (serialized as a
+ *     string)</li>
+ * <li>"GDAL:OGR:unique": value of OGRFieldDefn::IsUnique() (serialized as
+ *     "true" or "false")</li>
+ * <li>"GDAL:OGR:domain_name": value of OGRFieldDefn::GetDomainName()</li>
+ * </ul>
  *
- * The base implementation of CreateFieldFromArrowSchema() supports the
- * option SUBTYPE=JSON for fields of type string.
+ * This method and CreateField() are mutually exclusive in the same session.
  *
  * This method is the same as the C++ method OGRLayer::CreateFieldFromArrowSchema().
  *
  * @param hLayer Layer.
  * @param schema Schema of the field to create.
- * @param papszOptions Options. Null terminated list, or nullptr.
+ * @param papszOptions Options (none currently). Null terminated list, or nullptr.
  * @return true in case of success
  * @since 3.8
  */

@@ -3886,49 +3886,66 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                         poDstFDefn->GetGeomFieldCount() ==
                             poSrcFDefn->GetGeomFieldCount())
                     {
-                        std::map<std::string, OGRFieldSubType>
-                            oMapFieldNameToSubType;
-                        for (int i = 0; i < poSrcFDefn->GetFieldCount(); ++i)
-                        {
-                            const auto poSrcFieldDefn =
-                                poSrcFDefn->GetFieldDefn(i);
-                            if (poSrcFieldDefn->GetSubType() == OFSTJSON)
-                                oMapFieldNameToSubType[poSrcFieldDefn
-                                                           ->GetNameRef()] =
-                                    poSrcFieldDefn->GetSubType();
-                        }
-                        std::set<std::string> oSetGeomFieldNames;
-                        for (int i = 0; i < poSrcFDefn->GetGeomFieldCount();
-                             ++i)
-                        {
-                            const auto poSrcGeomFieldDefn =
-                                poSrcFDefn->GetGeomFieldDefn(i);
-                            oSetGeomFieldNames.insert(
-                                poSrcGeomFieldDefn->GetNameRef());
-                        }
-
                         // Create output fields using CreateFieldFromArrowSchema()
                         for (int i = 0; i < schemaSrc.n_children; ++i)
                         {
                             const char *pszFieldName =
                                 schemaSrc.children[i]->name;
-                            CPLStringList aosOptions;
-                            auto oIterSubType =
-                                oMapFieldNameToSubType.find(pszFieldName);
-                            if (oIterSubType != oMapFieldNameToSubType.end())
+
+                            const auto iSrcField =
+                                poSrcFDefn->GetFieldIndex(pszFieldName);
+                            if (iSrcField >= 0)
                             {
-                                aosOptions.SetNameValue(
-                                    "SUBTYPE", OGR_GetFieldSubTypeName(
-                                                   oIterSubType->second));
+                                const auto poSrcFieldDefn =
+                                    poSrcFDefn->GetFieldDefn(iSrcField);
+                                // Create field domain in output dataset if not already existing.
+                                const auto osDomainName =
+                                    poSrcFieldDefn->GetDomainName();
+                                if (!osDomainName.empty())
+                                {
+                                    if (m_poDstDS->TestCapability(
+                                            ODsCAddFieldDomain) &&
+                                        m_poDstDS->GetFieldDomain(
+                                            osDomainName) == nullptr)
+                                    {
+                                        const auto poSrcDomain =
+                                            m_poSrcDS->GetFieldDomain(
+                                                osDomainName);
+                                        if (poSrcDomain)
+                                        {
+                                            std::string failureReason;
+                                            if (!m_poDstDS->AddFieldDomain(
+                                                    std::unique_ptr<
+                                                        OGRFieldDomain>(
+                                                        poSrcDomain->Clone()),
+                                                    failureReason))
+                                            {
+                                                CPLDebug("OGR2OGR",
+                                                         "Cannot create domain "
+                                                         "%s: %s",
+                                                         osDomainName.c_str(),
+                                                         failureReason.c_str());
+                                            }
+                                        }
+                                        else
+                                        {
+                                            CPLDebug("OGR2OGR",
+                                                     "Cannot find domain %s in "
+                                                     "source dataset",
+                                                     osDomainName.c_str());
+                                        }
+                                    }
+                                }
                             }
+
                             if (!EQUAL(pszFieldName, "OGC_FID") &&
                                 !EQUAL(pszFieldName, "wkb_geometry") &&
                                 !EQUAL(pszFieldName,
                                        poSrcLayer->GetFIDColumn()) &&
-                                oSetGeomFieldNames.find(pszFieldName) ==
-                                    oSetGeomFieldNames.end() &&
+                                poSrcFDefn->GetGeomFieldIndex(pszFieldName) <
+                                    0 &&
                                 !poDstLayer->CreateFieldFromArrowSchema(
-                                    schemaSrc.children[i], aosOptions.List()))
+                                    schemaSrc.children[i], nullptr))
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
                                          "Cannot create field %s",
