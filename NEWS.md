@@ -1,3 +1,145 @@
+# GDAL/OGR 3.7.3 Release Notes
+
+GDAL 3.7.3 is a bugfix release.
+
+## Build
+
+* CheckDependentLibraries.cmake: don't use libjpeg if disabled
+* frmts/mrf/CMakeLists.txt: ignore HAVE_JPEGTURBO_DUAL_MODE_8_12 if
+  GDAL_USE_JPEG is OFF (tune #8336)
+* FindPostgreSQL.cmake: Update the list of released PgSQL versions
+* Add support for PoDoFo >= 0.10.0 (#8356)
+* Add support for TileDB 2.17
+* Fix build with -DRENAME_INTERNAL_SHAPELIB_SYMBOLS=OFF (#8532)
+
+## GDAL 3.7.3
+
+### Algorithms
+
+* Rasterize: avoid burning the same pixel twice in MERGE_ALG=ADD mode within
+  a same geometry (#8437)
+* OpenCL warp: scan multiple devices for each platform (#8540)
+* GDALSerializeReprojectionTransformer(): fallback to WKT2 for SourceCRS/
+  TargetCRS if WKT1 cannot be used
+
+### Port
+
+* VSIReadDirRecursive(): make it work properly with a trailing slash
+  (especially on /vsizip/) (#8474)
+* /vsi7z/: accept ArcGIS Pro Project Packages
+
+### Utilities
+
+* gdal_translate -ovr: properly rescale RPC (#8386)
+* gdal_translate: when specifying -srcwin, preserve source block size in the
+  temporary VRT if srcwin top,left is a multiple of the block size
+* gdal2tiles: raise explicit exception if bad value for --s_srs (#8331)
+
+### Raster drivers
+
+ENVI driver:
+ * skip leading spaces at front of metadata keys
+
+GIF driver:
+ * Internal giflib: fix memleak on animations (#8380)
+ * Internal giflib: fix memleak on truncate files (#8383)
+
+GTiff driver:
+ * multithreaded reading/writing: fix a deadlock and/or data corruption
+   situation (#8470)
+ * DirectIO(): fix integer overflow when requesting more than 2 GB at once
+ * Support writing a CRS of known code but unknown GeoTIFF projection method
+   (#8611). Support also a CRS of unknown code but that can be encoded as
+    ESRI_WKT if GEOTIFF_KEYS_FLAVOR=ESRI_PE creation option is used
+ * JXL codec: fix wrong use of memcpy() in decoding, and add memcpy()
+   optimizations
+
+MBTiles driver:
+ * BuildOverviews(): correctly set minzoom metadata (#8565)
+
+netCDF driver:
+ * multidim: add write support for Int8 data type (#8421)
+
+VRT driver:
+ * IRasterIO(): avoid edge effects at sources boundaries when downsampling
+   with non-nearest resampling
+
+WCS driver:
+ * remove 'FORMAT' parameter from 'DescribeCoverage' requests
+
+## OGR 3.7.3
+
+### Core
+
+* OGRSQL: fix incorrect interaction of LIMIT clause and SetNextByIndex()(#8585)
+* OGRWKBGetBoundingBox(): properly initialize envelope
+
+### OGRSpatialReference
+
+* TransformBounds(): do not emit errors when trying to reproject
+  points at poles
+* ogr_proj_p.cpp: disable pthread_atfork() optimization on MacOS (#8497)
+
+### Utilities
+
+* ogr2ogr: fix -gt 0 to disable transactions
+* ogr2ogr: make -select '' work (or gdal.VectorTranslate(selectFields=[]))
+* ogr2ogr: fix preserve_fid and explodecollections incompatible options (#8523)
+
+### Vector drivers
+
+Arrow/Parquet drivers:
+ * fix crash on ArrowArray interface when there is a fid column
+
+CSV driver:
+ * avoid extra comma at end of header line with GEOMETRY=AS_XYZ and a single
+   attribute (#8410)
+
+FlatGeoBuf driver:
+ * ArrowStream: return a released array when there are no rows (#8509)
+
+GeoPackage driver:
+ * GPKG SQL layer GetNextArrowArray(): fix wrong array size when spatial
+   filtering occurs
+ * ArrowStream: immediately return a release array when there are no rows
+   (#8509)
+ * declare OGR_GPKG_GeometryTypeAggregate_INTERNAL only when needed
+
+GPKG/SQLITE drivers:
+ * declare relevant SQL functions as SQLITE_INNOCUOUS (#8514)
+ * turn PRAGMA trusted_schema = 1 when loading Spatialite (#8514)
+ * turn PRAGMA trusted_schema = 1 if RTree+update mode or if views use
+   Spatialite functions (#8514)
+
+OAPIF driver:
+ * make comparison of rel case insensitive to account for describedBy ->
+   describedby change
+
+OpenFileGDB driver:
+ * fix opening of .gdb directories whose last component starts with 'a' and
+   is 18 character long... (#8357)
+
+NTF driver:
+ * fix assertion on corrupted dataset (ossfuzz#63531)
+
+Shapefile driver:
+ * Reader: correct bad (multi)polygons as written by QGIS < 3.28.11 with
+   GDAL >= 3.7 (qgis/qgis#54537)
+
+SQLite driver:
+ * ignore 'SRID=' layer creation option (qgis/QGIS#54560)
+
+XLSX driver:
+ * do not write empty 'cols' element on empty layers, and change heuristics to
+   detect 'default' empty layers from intended empty ones (qgis/qgis#42945)
+
+## Python bindings
+
+* GetArrowStreamAsNumPy(): fix reading fixed size list arrays that were
+  ignoring the parent offset (affects Parquet)
+* GetArrowStreamAsNumPy(): fix reading fixed width binary that were misusing
+  the offset (affects Parquet)
+
 # GDAL/OGR 3.7.2 Release Notes
 
 GDAL 3.7.2 is a bugfix release.

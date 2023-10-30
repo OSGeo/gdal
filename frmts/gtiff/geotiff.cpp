@@ -2886,7 +2886,7 @@ static void ThreadDecompressionFunc(void *pData)
                 psJob->nXBlock, psJob->nYBlock);
             if (apoBlocks[i] == nullptr)
             {
-                // Temporary disabling of dirty block fushing, otherwise
+                // Temporary disabling of dirty block flushing, otherwise
                 // we can be in a deadlock situation, where the
                 // GTiffDataset::SubmitCompressionJob() method waits for jobs
                 // to be finished, that can't finish (actually be started)
