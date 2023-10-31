@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <math.h>
+#include <stddef.h>
+
 #include "geotiff.h"
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
@@ -42,18 +45,16 @@
 static int inv_geotransform( double *gt_in, double *gt_out )
 
 {
-    double	det, inv_det;
-
     /* we assume a 3rd row that is [0 0 1] */
 
     /* Compute determinate */
 
-    det = gt_in[0] * gt_in[4] - gt_in[1] * gt_in[3];
+    const double det = gt_in[0] * gt_in[4] - gt_in[1] * gt_in[3];
 
     if( fabs(det) < 0.000000000000001 )
         return 0;
 
-    inv_det = 1.0 / det;
+    const double inv_det = 1.0 / det;
 
     /* compute adjoint, and divide by determinate */
 
@@ -118,21 +119,21 @@ int GTIFTiepointTranslate( int gcp_count, double * gcps_in, double * gcps_out,
 int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 
 {
-    int     res = FALSE;
-    int     tiepoint_count, count, transform_count;
     tiff_t *tif=gtif->gt_tif;
+
+    int     tiepoint_count;
     double *tiepoints   = 0;
-    double *pixel_scale = 0;
-    double *transform   = 0;
-
-
     if (!(gtif->gt_methods.get)(tif, GTIFF_TIEPOINTS,
                               &tiepoint_count, &tiepoints ))
         tiepoint_count = 0;
 
+    int     count;
+    double *pixel_scale = 0;
     if (!(gtif->gt_methods.get)(tif, GTIFF_PIXELSCALE, &count, &pixel_scale ))
         count = 0;
 
+    int     transform_count;
+    double *transform   = 0;
     if (!(gtif->gt_methods.get)(tif, GTIFF_TRANSMATRIX,
                                 &transform_count, &transform ))
         transform_count = 0;
@@ -141,6 +142,7 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 /*      If the pixelscale count is zero, but we have tiepoints use      */
 /*      the tiepoint based approach.                                    */
 /* -------------------------------------------------------------------- */
+    int res = FALSE;
     if( tiepoint_count > 6 && count == 0 )
     {
         res = GTIFTiepointTranslate( tiepoint_count / 6,
@@ -153,7 +155,8 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 /* -------------------------------------------------------------------- */
     else if( transform_count == 16 )
     {
-        double x_in = *x, y_in = *y;
+        const double x_in = *x;
+        const double y_in = *y;
 
         *x = x_in * transform[0] + y_in * transform[1] + transform[3];
         *y = x_in * transform[4] + y_in * transform[5] + transform[7];
@@ -215,23 +218,25 @@ int GTIFImageToPCS( GTIF *gtif, double *x, double *y )
 int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
 
 {
-    double 	*tiepoints = NULL;
-    int 	tiepoint_count, count, transform_count = 0;
-    double	*pixel_scale = NULL;
-    double 	*transform   = NULL;
     tiff_t 	*tif=gtif->gt_tif;
     int		result = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch tiepoints and pixel scale.                                */
 /* -------------------------------------------------------------------- */
+    double 	*tiepoints = NULL;
+    int 	tiepoint_count;
     if (!(gtif->gt_methods.get)(tif, GTIFF_TIEPOINTS,
                               &tiepoint_count, &tiepoints ))
         tiepoint_count = 0;
 
+    int 	count;
+    double	*pixel_scale = NULL;
     if (!(gtif->gt_methods.get)(tif, GTIFF_PIXELSCALE, &count, &pixel_scale ))
         count = 0;
 
+    int 	transform_count = 0;
+    double 	*transform   = NULL;
     if (!(gtif->gt_methods.get)(tif, GTIFF_TRANSMATRIX,
                                 &transform_count, &transform ))
         transform_count = 0;
@@ -253,9 +258,9 @@ int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
 /* -------------------------------------------------------------------- */
     else if( transform_count == 16 )
     {
-        double  x_in = *x, y_in = *y;
-        double	gt_in[6], gt_out[6];
-
+        const double x_in = *x;
+	const double y_in = *y;
+        double gt_in[6];
         gt_in[0] = transform[0];
         gt_in[1] = transform[1];
         gt_in[2] = transform[3];
@@ -263,6 +268,7 @@ int GTIFPCSToImage( GTIF *gtif, double *x, double *y )
         gt_in[4] = transform[5];
         gt_in[5] = transform[7];
 
+        double gt_out[6];
         if( !inv_geotransform( gt_in, gt_out ) )
             result = FALSE;
         else

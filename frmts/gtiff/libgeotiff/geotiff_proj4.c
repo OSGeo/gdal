@@ -29,6 +29,10 @@
  ******************************************************************************
  */
 
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "cpl_serv.h"
 #include "geotiff.h"
 #include "geo_normalize.h"
@@ -76,21 +80,18 @@ static void GTIFProj4AppendEllipsoid(GTIFDefn* psDefn, char* pszProjection)
 static char **OSRProj4Tokenize( const char *pszFull )
 
 {
-    char *pszStart = NULL;
-    char *pszFullWrk;
-    char **papszTokens;
-    int  i;
-    int  nTokens = 0;
     static const int nMaxTokens = 200;
 
     if( pszFull == NULL )
         return NULL;
 
-    papszTokens = (char **) calloc(sizeof(char*),nMaxTokens);
+    char **papszTokens = (char **) calloc(sizeof(char*),nMaxTokens);
 
-    pszFullWrk = CPLStrdup(pszFull);
+    char *pszFullWrk = CPLStrdup(pszFull);
 
-    for( i=0; pszFullWrk[i] != '\0' && nTokens != nMaxTokens-1; i++ )
+    int  nTokens = 0;
+    char *pszStart = NULL;
+    for( int i=0; pszFullWrk[i] != '\0' && nTokens != nMaxTokens-1; i++ )
     {
         switch( pszFullWrk[i] )
         {
@@ -146,13 +147,12 @@ static char **OSRProj4Tokenize( const char *pszFull )
 static const char *OSR_GSV( char **papszNV, const char * pszField )
 
 {
-    size_t field_len = strlen(pszField);
-    int i;
-
     if( !papszNV )
         return NULL;
 
-    for( i = 0; papszNV[i] != NULL; i++ )
+    const size_t field_len = strlen(pszField);
+
+    for( int i = 0; papszNV[i] != NULL; i++ )
     {
         if( EQUALN(papszNV[i],pszField,field_len) )
         {
@@ -198,9 +198,7 @@ static double OSR_GDV( char **papszNV, const char * pszField,
 static void OSRFreeStringList( char ** list )
 
 {
-    int i;
-
-    for( i = 0; list != NULL && list[i] != NULL; i++ )
+    for( int i = 0; list != NULL && list[i] != NULL; i++ )
         free( list[i] );
     free(list);
 }
@@ -216,14 +214,11 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
     char **papszNV = OSRProj4Tokenize( proj4 );
     short nSpheroid = KvUserDefined;
     double dfSemiMajor=0.0, dfSemiMinor=0.0, dfInvFlattening=0.0;
-    int	   nDatum = KvUserDefined;
-    int    nGCS = KvUserDefined;
-    const char  *value;
 
 /* -------------------------------------------------------------------- */
 /*      Get the ellipsoid definition.                                   */
 /* -------------------------------------------------------------------- */
-    value = OSR_GSV( papszNV, "ellps" );
+    const char  *value = OSR_GSV( papszNV, "ellps" );
 
     if( value == NULL )
     {
@@ -251,6 +246,9 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
 /*      Get the GCS/Datum code.                                         */
 /* -------------------------------------------------------------------- */
     value = OSR_GSV( papszNV, "datum" );
+
+    int nDatum = KvUserDefined;
+    int nGCS = KvUserDefined;
 
     if( value == NULL )
     {
@@ -873,14 +871,10 @@ int GTIFSetFromProj4( GTIF *gtif, const char *proj4 )
 char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 
 {
-    char	szProjection[512];
     char	szUnits[64];
-    double      dfFalseEasting, dfFalseNorthing;
 
     if( psDefn == NULL || !psDefn->DefnSet )
         return CPLStrdup("");
-
-    szProjection[0] = '\0';
 
 /* ==================================================================== */
 /*      Translate the units of measure.                                 */
@@ -930,8 +924,8 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 /*      false easting and northing are in meters and that is what       */
 /*      PROJ.4 wants regardless of the linear units.                    */
 /* -------------------------------------------------------------------- */
-    dfFalseEasting = psDefn->ProjParm[5];
-    dfFalseNorthing = psDefn->ProjParm[6];
+    const double dfFalseEasting = psDefn->ProjParm[5];
+    const double dfFalseNorthing = psDefn->ProjParm[6];
 
 /* ==================================================================== */
 /*      Handle general projection methods.                              */
@@ -940,6 +934,9 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*      Geographic.                                                     */
 /* -------------------------------------------------------------------- */
+    char szProjection[512];
+    szProjection[0] = '\0';
+
     if(psDefn->Model==ModelTypeGeographic)
     {
         sprintf(szProjection+strlen(szProjection),"+proj=latlong ");
@@ -1380,26 +1377,22 @@ int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
                           double *padfX, double *padfY )
 
 {
-    char        szLongLat[256];
-    char	*pszProjection;
-    PJ	        *psPJ;
-    int		i;
-    PJ_CONTEXT* ctx;
 
 /* -------------------------------------------------------------------- */
 /*      Get a projection definition.                                    */
 /* -------------------------------------------------------------------- */
-    pszProjection = GTIFGetProj4Defn( psDefn );
+    char *pszProjection = GTIFGetProj4Defn( psDefn );
 
     if( pszProjection == NULL )
         return FALSE;
 
-    ctx = proj_context_create();
+    PJ_CONTEXT* ctx = proj_context_create();
 
+    char szLongLat[256];
     strcpy(szLongLat, "+proj=longlat ");
     GTIFProj4AppendEllipsoid(psDefn, szLongLat);
 
-    psPJ = proj_create_crs_to_crs( ctx, szLongLat, pszProjection, NULL );
+    PJ *psPJ = proj_create_crs_to_crs( ctx, szLongLat, pszProjection, NULL );
     CPLFree( pszProjection );
 
     if( psPJ == NULL )
@@ -1411,7 +1404,7 @@ int GTIFProj4FromLatLong( GTIFDefn * psDefn, int nPoints,
 /* -------------------------------------------------------------------- */
 /*      Process each of the points.                                     */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nPoints; i++ )
+    for( int i = 0; i < nPoints; i++ )
     {
         PJ_COORD coord;
         coord.xyzt.x = padfX[i];
@@ -1442,26 +1435,21 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
                         double *padfX, double *padfY )
 
 {
-    char        szLongLat[256];
-    char	*pszProjection;
-    PJ	        *psPJ;
-    int		i;
-    PJ_CONTEXT* ctx;
-
 /* -------------------------------------------------------------------- */
 /*      Get a projection definition.                                    */
 /* -------------------------------------------------------------------- */
-    pszProjection = GTIFGetProj4Defn( psDefn );
+    char *pszProjection = GTIFGetProj4Defn( psDefn );
 
     if( pszProjection == NULL )
         return FALSE;
 
-    ctx = proj_context_create();
+    PJ_CONTEXT* ctx = proj_context_create();
 
+    char szLongLat[256];
     strcpy(szLongLat, "+proj=longlat ");
     GTIFProj4AppendEllipsoid(psDefn, szLongLat);
 
-    psPJ = proj_create_crs_to_crs( ctx, pszProjection, szLongLat, NULL );
+    PJ *psPJ = proj_create_crs_to_crs( ctx, pszProjection, szLongLat, NULL );
     CPLFree( pszProjection );
 
     if( psPJ == NULL )
@@ -1473,7 +1461,7 @@ int GTIFProj4ToLatLong( GTIFDefn * psDefn, int nPoints,
 /* -------------------------------------------------------------------- */
 /*      Process each of the points.                                     */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nPoints; i++ )
+    for( int i = 0; i < nPoints; i++ )
     {
         PJ_COORD coord;
         coord.xyzt.x = padfX[i];
