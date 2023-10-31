@@ -29,8 +29,10 @@
 #include "sqlite_rtree_bulk_load.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #if defined(__cplusplus) && !defined(DISABLE_CPLUSPLUS)
@@ -896,6 +898,8 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
     return ok;
 }
 
+#define NOTIFICATION_INTERVAL (500 * 1000)
+
 bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
                                sqlite3* hDB,
                                const char* feature_table_name,
@@ -908,7 +912,9 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
                                const char* maxx_colname,
                                const char* maxy_colname,
                                size_t max_ram_usage,
-                               char** p_error_msg)
+                               char** p_error_msg,
+                               sqlite_rtree_progress_callback progress_cbk,
+                               void* progress_cbk_user_data)
 {
     char** papszResult = NULL;
     sqlite3_get_table(hDB, "PRAGMA page_size", &papszResult, NULL, NULL, NULL);
@@ -944,6 +950,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
     }
 
     bool bMaxMemReached = false;
+    uint64_t nRows = 0;
     while (sqlite3_step(hStmt) == SQLITE_ROW) {
         int64_t id = sqlite3_column_int64(hStmt, 0);
         const double minx = sqlite3_column_double(hStmt, 1);
@@ -961,6 +968,19 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
             bMaxMemReached = true;
             break;
         }
+        if (progress_cbk && ((++nRows) % NOTIFICATION_INTERVAL) == 0) {
+            char szMsg[256];
+            snprintf(szMsg, sizeof(szMsg),
+                     "%" PRIu64 " rows inserted in %s (in RAM)",
+                     nRows, rtree_name);
+            if (!progress_cbk(szMsg, progress_cbk_user_data)) {
+                SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_free)(t);
+                sqlite3_finalize(hStmt);
+                if (p_error_msg)
+                    *p_error_msg = my_sqlite3_strdup("Processing interrupted");
+                return false;
+            }
+        }
     }
 
     bool bOK = SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
@@ -976,6 +996,11 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
     SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_free)(t);
 
     if (bOK && bMaxMemReached) {
+        if (progress_cbk) {
+            CPL_IGNORE_RET_VAL_INT(progress_cbk(
+                "Max RAM reached. Falling back to slower "
+                "insertion method", progress_cbk_user_data));
+        }
 
         sqlite3_stmt *hStmtInsert = NULL;
         pszSQL =
@@ -1009,8 +1034,27 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
                 bOK = false;
                 break;
             }
+            if (progress_cbk && ((++nRows) % NOTIFICATION_INTERVAL) == 0) {
+                char szMsg[256];
+                snprintf(szMsg, sizeof(szMsg),
+                         "%" PRIu64 " rows inserted in %s", nRows, rtree_name);
+                if (!progress_cbk(szMsg, progress_cbk_user_data)) {
+                    bOK = false;
+                    if (p_error_msg)
+                        *p_error_msg = my_sqlite3_strdup("Processing interrupted");
+                    break;
+                }
+            }
         }
         sqlite3_finalize(hStmtInsert);
+    }
+
+    if (bOK && progress_cbk && (nRows % NOTIFICATION_INTERVAL) != 0)
+    {
+        char szMsg[256];
+        snprintf(szMsg, sizeof(szMsg), "%" PRIu64 " rows inserted in %s",
+                 nRows, rtree_name);
+        CPL_IGNORE_RET_VAL_INT(progress_cbk(szMsg, progress_cbk_user_data));
     }
 
     sqlite3_finalize(hStmt);

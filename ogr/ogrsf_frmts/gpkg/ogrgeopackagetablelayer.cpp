@@ -4366,10 +4366,19 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
         /* Populate the RTree */
         const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
         char *pszErrMsg = nullptr;
+        struct ProgressCbk
+        {
+            static bool progressCbk(const char *pszMessage, void *)
+            {
+                CPLDebug("GPKG", "%s", pszMessage);
+                return true;
+            }
+        };
+
         if (!gdal_sqlite_rtree_bl_from_feature_table(
                 m_poDS->GetDB(), pszT, pszI, pszC, m_osRTreeName.c_str(), "id",
-                "minx", "miny", "maxx", "maxy", nMaxRAMUsageAllowed,
-                &pszErrMsg))
+                "minx", "miny", "maxx", "maxy", nMaxRAMUsageAllowed, &pszErrMsg,
+                ProgressCbk::progressCbk, nullptr))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "gdal_sqlite_rtree_bl_from_feature_table() failed "

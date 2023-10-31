@@ -112,6 +112,9 @@ size_t SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_ram_usage)(const sqlite_rtree_bl* 
  */
 void SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_free)(sqlite_rtree_bl* tr);
 
+/** Progress callback. */
+typedef bool (*sqlite_rtree_progress_callback)(const char* message, void* user_data);
+
 /** Creates a SQLite R*Tree from an existing feature table.
  *
  * This method issues a
@@ -140,6 +143,9 @@ void SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_free)(sqlite_rtree_bl* tr);
  *                      table will be used. 0 means unlimited.
  * @param p_error_msg NULL, or pointer to a string that will receive an error
  *                    message. *p_error_msg must be freed with sqlite3_free().
+ * @param progress_cbk Optional progress callback (that can return false to
+ *                     stop processing), or NULL
+ * @param progress_cbk_user_data User data to provide to the callback, or NULL
  * @return true in case of success, false in case of error
  */
 bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
@@ -154,7 +160,9 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
                                const char* maxx_colname,
                                const char* maxy_colname,
                                size_t max_ram_usage,
-                               char** p_error_msg);
+                               char** p_error_msg,
+                               sqlite_rtree_progress_callback progress_cbk,
+                               void* progress_cbk_user_data);
 
 #ifdef __cplusplus
 }
