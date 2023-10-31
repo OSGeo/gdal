@@ -2237,6 +2237,12 @@ the ``install`` CMake target.
     option of ``python3 setup.py install``. It is only taken into account on
     MacOS systems, when the Python installation is a framework.
 
+.. note::
+
+    The Python bindings are made of several modules (osgeo.gdal, osgeo.ogr, etc.)
+    which link each against libgdal. Consequently, a static build of libgdal is
+    not compatible with the bindings.
+
 Java bindings options
 +++++++++++++++++++++
 
@@ -2276,6 +2282,12 @@ Option only to be used by maintainers:
 
     GPG pass phrase to sign build artifacts.
 
+.. note::
+
+    The Java bindings are made of several modules (org.osgeo.gdal, org.osgeo.ogr, etc.)
+    which link each against libgdal. Consequently, a static build of libgdal is
+    not compatible with the bindings.
+
 C# bindings options
 +++++++++++++++++++
 
@@ -2304,6 +2316,12 @@ For more details on how to build and use the C# bindings read the dedicated sect
 .. option:: GDAL_CSHARP_ONLY=OFF/ON
 
     Build the C# bindings without building GDAL. This should be used when building the bindings on top of an existing GDAL installation - for instance on top of the CONDA package.
+
+.. note::
+
+    The C# bindings are made of several modules (OSGeo.GDAL, OSGeo.OGR, etc.)
+    which link each against libgdal. Consequently, a static build of libgdal is
+    not compatible with the bindings.
 
 Driver specific options
 +++++++++++++++++++++++
