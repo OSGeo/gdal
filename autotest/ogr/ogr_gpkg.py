@@ -9509,12 +9509,18 @@ def test_ogr_gpkg_sql_exact_spatial_filter_for_feature_count(tmp_vsimem):
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0.1 0.25,0.15 0.25)"))
     lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0.12 0.25,1 1)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING EMPTY"))
+    lyr.CreateFeature(f)
     ds = None
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(0.1, 0.2, 0.15, 0.3)
-    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetFeatureCount() == 2
 
 
 ###############################################################################
