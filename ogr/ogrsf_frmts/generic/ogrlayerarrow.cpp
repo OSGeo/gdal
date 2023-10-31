@@ -5328,6 +5328,37 @@ bool OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
 }
 
 /************************************************************************/
+/*                     IsKnownCodedFieldDomain()                        */
+/************************************************************************/
+
+static bool IsKnownCodedFieldDomain(OGRLayer *poLayer,
+                                    const char *arrowMetadata)
+{
+    if (arrowMetadata)
+    {
+        const auto oMetadata = OGRParseArrowMetadata(arrowMetadata);
+        for (const auto &oIter : oMetadata)
+        {
+            if (oIter.first == MD_GDAL_OGR_DOMAIN_NAME)
+            {
+                auto poDS = poLayer->GetDataset();
+                if (poDS)
+                {
+                    const auto poFieldDomain =
+                        poDS->GetFieldDomain(oIter.second);
+                    if (poFieldDomain &&
+                        poFieldDomain->GetDomainType() == OFDT_CODED)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                OGRLayer::CreateFieldFromArrowSchema()                */
 /************************************************************************/
 
@@ -5351,7 +5382,8 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     }
 
     CPLStringList aosNativeTypes;
-    auto poDS = const_cast<OGRLayer *>(this)->GetDataset();
+    auto poLayer = const_cast<OGRLayer *>(this);
+    auto poDS = poLayer->GetDataset();
     if (poDS)
     {
         auto poDriver = poDS->GetDriver();
@@ -5361,7 +5393,8 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
     }
 
-    if (schema->dictionary)
+    if (schema->dictionary &&
+        !IsKnownCodedFieldDomain(poLayer, schema->metadata))
     {
         if (!IsValidDictionaryIndexType(format))
         {
@@ -5671,18 +5704,21 @@ struct FieldInfo
     OGRFieldType eTargetFieldType =
         OFTMaxType;  // actual OGR data type of the layer field
     bool bIsGeomCol = false;
+    bool bUseDictionary = false;
     int nWidthInBytes = 0;  // only used for decimal fields
     int nPrecision = 0;     // only used for decimal fields
     int nScale = 0;         // only used for decimal fields
 };
 
-static bool BuildOGRFieldInfo(
-    const struct ArrowSchema *schema, struct ArrowArray *array,
-    const OGRFeatureDefn *poFeatureDefn, const std::string &osFieldPrefix,
-    const CPLStringList &aosNativeTypes, bool &bFallbackTypesUsed,
-    std::vector<FieldInfo> &asFieldInfo, const char *pszFIDName,
-    const char *pszGeomFieldName, const struct ArrowSchema *&schemaFIDColumn,
-    struct ArrowArray *&arrayFIDColumn)
+static bool
+BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
+                  const OGRFeatureDefn *poFeatureDefn,
+                  const std::string &osFieldPrefix,
+                  const CPLStringList &aosNativeTypes, bool &bFallbackTypesUsed,
+                  std::vector<FieldInfo> &asFieldInfo, const char *pszFIDName,
+                  const char *pszGeomFieldName, OGRLayer *poLayer,
+                  const struct ArrowSchema *&schemaFIDColumn,
+                  struct ArrowArray *&arrayFIDColumn)
 {
     const char *fieldName = schema->name;
     const char *format = schema->format;
@@ -5694,7 +5730,7 @@ static bool BuildOGRFieldInfo(
             if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
                                    poFeatureDefn, osNewPrefix, aosNativeTypes,
                                    bFallbackTypesUsed, asFieldInfo, pszFIDName,
-                                   pszGeomFieldName, schemaFIDColumn,
+                                   pszGeomFieldName, poLayer, schemaFIDColumn,
                                    arrayFIDColumn))
             {
                 return false;
@@ -5703,7 +5739,10 @@ static bool BuildOGRFieldInfo(
         return true;
     }
 
-    if (schema->dictionary)
+    FieldInfo sInfo;
+
+    if (schema->dictionary &&
+        !IsKnownCodedFieldDomain(poLayer, schema->metadata))
     {
         if (!IsValidDictionaryIndexType(format))
         {
@@ -5713,12 +5752,12 @@ static bool BuildOGRFieldInfo(
             return false;
         }
 
+        sInfo.bUseDictionary = true;
         schema = schema->dictionary;
         format = schema->format;
         array = array->dictionary;
     }
 
-    FieldInfo sInfo;
     sInfo.osName = osFieldPrefix + fieldName;
     sInfo.format = format;
     if (pszFIDName && sInfo.osName == pszFIDName)
@@ -6123,7 +6162,8 @@ static inline uint64_t GetUInt64Value(const struct ArrowSchema *schema,
 
 static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
                                    const struct ArrowArray *array,
-                                   size_t iFeature)
+                                   size_t iFeature, int &iArrowIdxInOut,
+                                   const std::vector<FieldInfo> &asFieldInfo)
 {
     const char *fieldName = schema->name;
     const char *format = schema->format;
@@ -6132,13 +6172,16 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         size_t nRet = 0;
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
-            nRet += GetWorkingBufferSize(schema->children[i],
-                                         array->children[i], iFeature);
+            nRet +=
+                GetWorkingBufferSize(schema->children[i], array->children[i],
+                                     iFeature, iArrowIdxInOut, asFieldInfo);
         }
         return nRet;
     }
+    const int iArrowIdx = iArrowIdxInOut;
+    ++iArrowIdxInOut;
 
-    if (schema->dictionary)
+    if (asFieldInfo[iArrowIdx].bUseDictionary)
     {
         if (schema->dictionary->format[0] != ARROW_LETTER_STRING &&
             schema->dictionary->format[0] != ARROW_LETTER_LARGE_STRING)
@@ -6157,7 +6200,7 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         return 0;
     }
 
-    if (schema->dictionary)
+    if (asFieldInfo[iArrowIdx].bUseDictionary)
     {
         const uint64_t nDictIdx = GetUInt64Value(schema, array, iFeature);
         const auto dictArray = array->dictionary;
@@ -6364,7 +6407,7 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
         }
     }
 
-    if (array->dictionary)
+    if (asFieldInfo[iArrowIdx].bUseDictionary)
     {
         const uint64_t nDictIdx = GetUInt64Value(schema, array, iFeature);
         auto dictArray = array->dictionary;
@@ -6744,10 +6787,11 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     bool bFallbackTypesUsed = false;
     for (int64_t i = 0; i < schema->n_children; ++i)
     {
-        if (!BuildOGRFieldInfo(
-                schema->children[i], array->children[i], poLayerDefn,
-                std::string(), aosNativeTypes, bFallbackTypesUsed, asFieldInfo,
-                pszFIDName, pszGeomFieldName, schemaFIDColumn, arrayFIDColumn))
+        if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
+                               poLayerDefn, std::string(), aosNativeTypes,
+                               bFallbackTypesUsed, asFieldInfo, pszFIDName,
+                               pszGeomFieldName, this, schemaFIDColumn,
+                               arrayFIDColumn))
         {
             return false;
         }
@@ -6864,15 +6908,16 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     {
         oFeature.SetFID(OGRNullFID);
 
-        const size_t nWorkingBufferSize =
-            GetWorkingBufferSize(schema, array, iFeature);
+        int iArrowIdx = 0;
+        const size_t nWorkingBufferSize = GetWorkingBufferSize(
+            schema, array, iFeature, iArrowIdx, asFieldInfo);
         osWorkingBuffer.clear();
         osWorkingBuffer.reserve(nWorkingBufferSize);
 #ifdef DEBUG
         const char *pszWorkingBuffer = osWorkingBuffer.c_str();
         CPL_IGNORE_RET_VAL(pszWorkingBuffer);
 #endif
-        int iArrowIdx = 0;
+        iArrowIdx = 0;
         for (int64_t i = 0; i < schema->n_children; ++i)
         {
             if (!FillFeature(this, schema->children[i], array->children[i],
