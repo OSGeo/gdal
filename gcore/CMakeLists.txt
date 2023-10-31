@@ -45,6 +45,7 @@ add_library(
   rawdataset.cpp
   gdalmultidim.cpp
   gdalmultidim_gridded.cpp
+  gdalmultidim_gltorthorectification.cpp
   gdalmultidim_subsetdimension.cpp
   gdalpython.cpp
   gdalpythondriverloader.cpp

@@ -271,8 +271,8 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
-    static std::shared_ptr<GDALGroup>
-    OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources);
+    static std::shared_ptr<GDALGroup> OpenGroup(
+        const std::shared_ptr<GDAL::HDF5SharedResources> &poSharedResources);
     static int Identify(GDALOpenInfo *);
 
     static GDALDataType GetDataType(hid_t);

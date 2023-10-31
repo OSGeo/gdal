@@ -4320,6 +4320,26 @@ bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
                         bufferDataType, pDstBuffer);
 }
 
+/************************************************************************/
+/*                          GetRootGroup()                              */
+/************************************************************************/
+
+/** Return the root group to which this arrays belongs too.
+ *
+ * Note that arrays may be free standing and some drivers may not implement
+ * this method, hence nullptr may be returned.
+ *
+ * It is used internally by the GetResampled() method to detect if GLT
+ * orthorectification is available.
+ *
+ * @return the root group, or nullptr.
+ * @since GDAL 3.8
+ */
+std::shared_ptr<GDALGroup> GDALMDArray::GetRootGroup() const
+{
+    return nullptr;
+}
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -8239,7 +8259,7 @@ lbl_next_depth:
  * Currently this method can only resample along the last 2 dimensions, unless
  * orthorectifying a NASA EMIT dataset.
  *
- * For NASA EMIT netCDF datasets, if apoNewDims[] and poTargetSRS is NULL, the
+ * For NASA EMIT datasets, if apoNewDims[] and poTargetSRS is NULL, the
  * geometry lookup table (GLT) is used for fast orthorectification.
  *
  * @param apoNewDims New dimensions. Its size should be GetDimensionCount().
@@ -8272,6 +8292,61 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetResampled(
                  "GetResampled() only supports numeric data type");
         return nullptr;
     }
+
+    // Special case for NASA EMIT datasets
+    auto apoDims = GetDimensions();
+    if (poTargetSRS == nullptr &&
+        ((apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
+          apoDims[1]->GetName() == "crosstrack" &&
+          apoDims[2]->GetName() == "bands" &&
+          (apoNewDims == std::vector<std::shared_ptr<GDALDimension>>(3) ||
+           apoNewDims ==
+               std::vector<std::shared_ptr<GDALDimension>>{nullptr, nullptr,
+                                                           apoDims[2]})) ||
+         (apoDims.size() == 2 && apoDims[0]->GetName() == "downtrack" &&
+          apoDims[1]->GetName() == "crosstrack" &&
+          apoNewDims == std::vector<std::shared_ptr<GDALDimension>>(2))) &&
+        CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                         "EMIT_ORTHORECTIFICATION", "YES")))
+    {
+        auto poRootGroup = GetRootGroup();
+        if (poRootGroup)
+        {
+            auto poAttrGeotransform = poRootGroup->GetAttribute("geotransform");
+            auto poLocationGroup = poRootGroup->OpenGroup("location");
+            if (poAttrGeotransform &&
+                poAttrGeotransform->GetDataType().GetClass() == GEDTC_NUMERIC &&
+                poAttrGeotransform->GetDimensionCount() == 1 &&
+                poAttrGeotransform->GetDimensionsSize()[0] == 6 &&
+                poLocationGroup)
+            {
+                auto poGLT_X = poLocationGroup->OpenMDArray("glt_x");
+                auto poGLT_Y = poLocationGroup->OpenMDArray("glt_y");
+                if (poGLT_X && poGLT_X->GetDimensionCount() == 2 &&
+                    poGLT_X->GetDimensions()[0]->GetName() == "ortho_y" &&
+                    poGLT_X->GetDimensions()[1]->GetName() == "ortho_x" &&
+                    poGLT_Y && poGLT_Y->GetDimensionCount() == 2 &&
+                    poGLT_Y->GetDimensions()[0]->GetName() == "ortho_y" &&
+                    poGLT_Y->GetDimensions()[1]->GetName() == "ortho_x")
+                {
+                    return CreateGLTOrthorectified(
+                        self, poGLT_X, poGLT_Y,
+                        /* nGLTIndexOffset = */ -1,
+                        poAttrGeotransform->ReadAsDoubleArray());
+                }
+            }
+        }
+    }
+
+    if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                         "EMIT_ORTHORECTIFICATION", "NO")))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "EMIT_ORTHORECTIFICATION required, but dataset and/or "
+                 "parameters are not compatible with it");
+        return nullptr;
+    }
+
     return GDALMDArrayResampled::Create(self, apoNewDims, resampleAlg,
                                         poTargetSRS, papszOptions);
 }

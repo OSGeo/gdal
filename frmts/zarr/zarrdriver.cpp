@@ -107,10 +107,9 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
-    auto poRG = poSharedResource->OpenRootGroup();
+    auto poRG = poSharedResource->GetRootGroup();
     if (!poRG)
         return nullptr;
-    poSharedResource->SetRootGroup(poRG);
     return new ZarrDataset(poRG);
 }
 
@@ -1043,7 +1042,6 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
     }
     if (!poRG)
         return nullptr;
-    poSharedResource->SetRootGroup(poRG);
 
     auto poDS = new ZarrDataset(poRG);
     poDS->SetDescription(pszFilename);

@@ -256,6 +256,8 @@ class ZarrSharedResource
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
 
+    std::shared_ptr<ZarrGroupBase> OpenRootGroup();
+
   public:
     static std::shared_ptr<ZarrSharedResource>
     Create(const std::string &osRootDirectoryName, bool bUpdatable);
@@ -295,10 +297,18 @@ class ZarrSharedResource
         m_aosOpenOptions = papszOpenOptions;
     }
 
-    std::shared_ptr<ZarrGroupBase> OpenRootGroup();
-
     void
     UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
+
+    std::shared_ptr<ZarrGroupBase> GetRootGroup()
+    {
+        auto poRootGroup = m_poWeakRootGroup.lock();
+        if (poRootGroup)
+            return poRootGroup;
+        poRootGroup = OpenRootGroup();
+        m_poWeakRootGroup = poRootGroup;
+        return poRootGroup;
+    }
 
     void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
     {
@@ -995,6 +1005,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     void ParentRenamed(const std::string &osNewParentFullName) override;
 
     virtual void Flush() = 0;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poSharedResource->GetRootGroup();
+    }
 
     bool CacheTilePresence();
 

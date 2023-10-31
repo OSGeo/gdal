@@ -48,6 +48,7 @@ static std::string GetParentName(const std::string &osPath)
 
 struct GDALSubsetGroupSharedResources
 {
+    std::shared_ptr<GDALGroup> m_poRootGroup{};  // may be nullptr
     std::string m_osDimFullName{};
     std::vector<int> m_anMapNewDimToOldDim{};
     std::string m_osSelection{};
@@ -252,6 +253,16 @@ class GDALSubsetArray final : public GDALPamMDArray
     GetAttributes(CSLConstList papszOptions = nullptr) const override
     {
         return m_poParent->GetAttributes(papszOptions);
+    }
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        if (m_poShared->m_poRootGroup)
+        {
+            return GDALSubsetGroup::Create(m_poShared->m_poRootGroup,
+                                           m_poShared);
+        }
+        return nullptr;
     }
 };
 
@@ -528,6 +539,8 @@ GDALGroup::SubsetDimensionFromSelection(const std::string &osSelection) const
 
     auto poDim = poArray->GetDimensions()[0];
     auto poShared = std::make_shared<GDALSubsetGroupSharedResources>();
+    if (GetFullName() == "/")
+        poShared->m_poRootGroup = self;
     poShared->m_osSelection = osSelection;
     poShared->m_osDimFullName = poArray->GetDimensions()[0]->GetFullName();
     poShared->m_anMapNewDimToOldDim = std::move(anMapNewDimToOldDim);
@@ -546,6 +559,7 @@ GDALGroup::SubsetDimensionFromSelection(const std::string &osSelection) const
         // objects not being freed !
         auto poSpecificShared =
             std::make_shared<GDALSubsetGroupSharedResources>();
+        poSpecificShared->m_poRootGroup = poShared->m_poRootGroup;
         poSpecificShared->m_osSelection = osSelection;
         poSpecificShared->m_osDimFullName =
             poArray->GetDimensions()[0]->GetFullName();

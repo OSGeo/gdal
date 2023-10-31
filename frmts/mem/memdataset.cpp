@@ -1455,6 +1455,8 @@ std::shared_ptr<MEMGroup> MEMGroup::Create(const std::string &osParentName,
     auto newGroup(
         std::shared_ptr<MEMGroup>(new MEMGroup(osParentName, pszName)));
     newGroup->SetSelf(newGroup);
+    if (osParentName.empty())
+        newGroup->m_poRootGroupWeak = newGroup;
     return newGroup;
 }
 
@@ -1481,6 +1483,7 @@ std::shared_ptr<GDALGroup> MEMGroup::CreateGroup(const std::string &osName,
     }
     auto newGroup = MEMGroup::Create(GetFullName(), osName.c_str());
     newGroup->m_pParent = std::dynamic_pointer_cast<MEMGroup>(m_pSelf.lock());
+    newGroup->m_poRootGroupWeak = m_poRootGroupWeak;
     m_oMapGroups[osName] = newGroup;
     return newGroup;
 }

@@ -2905,6 +2905,13 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
 
+    static std::shared_ptr<GDALMDArray>
+    CreateGLTOrthorectified(const std::shared_ptr<GDALMDArray> &poParent,
+                            const std::shared_ptr<GDALMDArray> &poGLTX,
+                            const std::shared_ptr<GDALMDArray> &poGLTY,
+                            int nGLTIndexOffset,
+                            const std::vector<double> &adfGeoTransform);
+
     //! @endcond
 
   public:
@@ -3065,6 +3072,8 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
          const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
          const void *pDstBufferAllocStart = nullptr,
          size_t nDstBufferAllocSize = 0) const override final;
+
+    virtual std::shared_ptr<GDALGroup> GetRootGroup() const;
 
     //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
