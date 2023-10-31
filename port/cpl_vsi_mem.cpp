@@ -1010,6 +1010,12 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
     const CPLString osFilename =
         pszFilename ? VSIMemFilesystemHandler::NormalizePath(pszFilename)
                     : std::string();
+    if (osFilename == "/vsimem/")
+    {
+        CPLDebug("VSIMEM", "VSIFileFromMemBuffer(): illegal filename: %s",
+                 pszFilename);
+        return nullptr;
+    }
 
     // Try to create the parent directory, if needed, before taking
     // ownership of pabyData.

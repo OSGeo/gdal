@@ -1232,3 +1232,7 @@ def test_vsifile_copyfile():
     assert gdal.VSIStatL(dstfilename).size != 1000 * 1000
 
     gdal.Unlink(dstfilename)
+
+
+def test_vsimem_illegal_filename():
+    assert gdal.FileFromMemBuffer("/vsimem/\\\\", "foo") == -1
