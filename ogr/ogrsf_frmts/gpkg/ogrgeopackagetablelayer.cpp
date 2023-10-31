@@ -2507,16 +2507,30 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
                 sEntry.fMaxX = rtreeValueUp(oEnv.MaxX);
                 sEntry.fMinY = rtreeValueDown(oEnv.MinY);
                 sEntry.fMaxY = rtreeValueUp(oEnv.MaxY);
-                m_aoRTreeEntries.push_back(sEntry);
-                if (m_aoRTreeEntries.size() == m_nRTreeBatchSize)
+                try
                 {
-                    m_oQueueRTreeEntries.push(std::move(m_aoRTreeEntries));
-                    m_aoRTreeEntries = std::vector<GPKGRTreeEntry>();
+                    m_aoRTreeEntries.push_back(sEntry);
+                    if (m_aoRTreeEntries.size() == m_nRTreeBatchSize)
+                    {
+                        m_oQueueRTreeEntries.push(std::move(m_aoRTreeEntries));
+                        m_aoRTreeEntries = std::vector<GPKGRTreeEntry>();
+                    }
+                    if (!m_bThreadRTreeStarted &&
+                        m_oQueueRTreeEntries.size() ==
+                            m_nRTreeBatchesBeforeStart)
+                    {
+                        StartAsyncRTree();
+                    }
                 }
-                if (!m_bThreadRTreeStarted &&
-                    m_oQueueRTreeEntries.size() == m_nRTreeBatchesBeforeStart)
+                catch (const std::bad_alloc &)
                 {
-                    StartAsyncRTree();
+                    CPLDebug("GPKG",
+                             "Memory allocation error regarding RTree "
+                             "structures. Falling back to slower method");
+                    if (m_bThreadRTreeStarted)
+                        CancelAsyncRTree();
+                    else
+                        m_bAllowedRTreeThread = false;
                 }
             }
         }
@@ -2804,27 +2818,36 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
         if (aoEntries.empty())
             break;
 
+        constexpr int NOTIFICATION_INTERVAL = 500 * 1000;
+
+        auto oIter = aoEntries.begin();
         if (m_hRTree)
         {
-            if (gdal_sqlite_rtree_bl_ram_usage(m_hRTree) > nMaxRAMUsageAllowed)
+            for (; oIter != aoEntries.end(); ++oIter)
             {
-                CPLDebug("GPKG", "Too large in-memory RTree. "
-                                 "Flushing it and using memory friendly "
-                                 "algorithm for the rest");
-                if (!FlushInMemoryRTree(m_hAsyncDBHandle, "my_rtree"))
-                    break;
-            }
-            else
-            {
-                for (const auto &entry : aoEntries)
+                const auto &entry = *oIter;
+                if (gdal_sqlite_rtree_bl_ram_usage(m_hRTree) >
+                        nMaxRAMUsageAllowed ||
+                    !gdal_sqlite_rtree_bl_insert(m_hRTree, entry.nId,
+                                                 entry.fMinX, entry.fMinY,
+                                                 entry.fMaxX, entry.fMaxY))
                 {
-                    ++nCount;
-                    gdal_sqlite_rtree_bl_insert(m_hRTree, entry.nId,
-                                                entry.fMinX, entry.fMinY,
-                                                entry.fMaxX, entry.fMaxY);
+                    CPLDebug("GPKG", "Too large in-memory RTree. "
+                                     "Flushing it and using memory friendly "
+                                     "algorithm for the rest");
+                    if (!FlushInMemoryRTree(m_hAsyncDBHandle, "my_rtree"))
+                        return;
+                    break;
                 }
-                continue;
+                ++nCount;
+                if ((nCount % NOTIFICATION_INTERVAL) == 0)
+                {
+                    CPLDebug("GPKG", CPL_FRMT_GIB " rows indexed in rtree",
+                             nCount);
+                }
             }
+            if (oIter == aoEntries.end())
+                continue;
         }
 
         if (hStmt == nullptr)
@@ -2853,22 +2876,11 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
                  static_cast<int>(aoEntries.size()), aoEntries.front().nId,
                  aoEntries.back().nId);
 #endif
-        for (const auto &entry : aoEntries)
+        for (; oIter != aoEntries.end(); ++oIter)
         {
-            if ((entry.nId % 500000) == 0)
-            {
-                CPLDebug("GPKG", CPL_FRMT_GIB " rows indexed in rtree",
-                         entry.nId);
-                if (SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE)
-                {
-                    m_bErrorDuringRTreeThread = true;
-                    break;
-                }
-                SQLCommand(m_hAsyncDBHandle, "BEGIN");
-            }
+            const auto &entry = *oIter;
             sqlite3_reset(hStmt);
 
-            nCount++;
             sqlite3_bind_int64(hStmt, 1, entry.nId);
             sqlite3_bind_double(hStmt, 2, entry.fMinX);
             sqlite3_bind_double(hStmt, 3, entry.fMaxX);
@@ -2883,9 +2895,19 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
                 m_bErrorDuringRTreeThread = true;
                 break;
             }
+            ++nCount;
+            if ((nCount % NOTIFICATION_INTERVAL) == 0)
+            {
+                CPLDebug("GPKG", CPL_FRMT_GIB " rows indexed in rtree", nCount);
+                if (SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE)
+                {
+                    m_bErrorDuringRTreeThread = true;
+                    break;
+                }
+                SQLCommand(m_hAsyncDBHandle, "BEGIN");
+            }
         }
     }
-
     if (!m_hRTree)
     {
         if (m_bErrorDuringRTreeThread)
@@ -4366,10 +4388,19 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
         /* Populate the RTree */
         const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
         char *pszErrMsg = nullptr;
+        struct ProgressCbk
+        {
+            static bool progressCbk(const char *pszMessage, void *)
+            {
+                CPLDebug("GPKG", "%s", pszMessage);
+                return true;
+            }
+        };
+
         if (!gdal_sqlite_rtree_bl_from_feature_table(
                 m_poDS->GetDB(), pszT, pszI, pszC, m_osRTreeName.c_str(), "id",
-                "minx", "miny", "maxx", "maxy", nMaxRAMUsageAllowed,
-                &pszErrMsg))
+                "minx", "miny", "maxx", "maxy", nMaxRAMUsageAllowed, &pszErrMsg,
+                ProgressCbk::progressCbk, nullptr))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "gdal_sqlite_rtree_bl_from_feature_table() failed "
