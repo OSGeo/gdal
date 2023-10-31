@@ -7756,26 +7756,40 @@ void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext, int argc,
     auto poLayer =
         static_cast<OGRGeoPackageTableLayer *>(sqlite3_user_data(pContext));
 
+    const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+
     GPkgHeader sHeader;
     if (poLayer->m_bFilterIsEnvelope &&
-        OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false) &&
-        sHeader.bExtentHasXY)
+        OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, 0))
     {
-        OGREnvelope sEnvelope;
-        sEnvelope.MinX = sHeader.MinX;
-        sEnvelope.MinY = sHeader.MinY;
-        sEnvelope.MaxX = sHeader.MaxX;
-        sEnvelope.MaxY = sHeader.MaxY;
-        if (poLayer->m_sFilterEnvelope.Contains(sEnvelope))
+        if (sHeader.bExtentHasXY)
+        {
+            OGREnvelope sEnvelope;
+            sEnvelope.MinX = sHeader.MinX;
+            sEnvelope.MinY = sHeader.MinY;
+            sEnvelope.MaxX = sHeader.MaxX;
+            sEnvelope.MaxY = sHeader.MaxY;
+            if (poLayer->m_sFilterEnvelope.Contains(sEnvelope))
+            {
+                sqlite3_result_int(pContext, 1);
+                return;
+            }
+        }
+
+        // Check if at least one point falls into the layer filter envelope
+        // nHeaderLen is > 0 for GeoPackage geometries
+        if (sHeader.nHeaderLen > 0 &&
+            OGRWKBIntersectsPessimistic(pabyBLOB + sHeader.nHeaderLen,
+                                        nBLOBLen - sHeader.nHeaderLen,
+                                        poLayer->m_sFilterEnvelope))
         {
             sqlite3_result_int(pContext, 1);
             return;
         }
     }
 
-    const int nBLOBLen = sqlite3_value_bytes(argv[0]);
-    const GByte *pabyBLOB =
-        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
     auto poGeom = std::unique_ptr<OGRGeometry>(
         GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
     if (poGeom == nullptr)
