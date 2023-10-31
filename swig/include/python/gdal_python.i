@@ -3930,6 +3930,105 @@ def ApplyVerticalShiftGrid(*args, **kwargs):
     return _ApplyVerticalShiftGrid(*args, **kwargs)
 
 
+class VSIFile:
+
+    def __init__(self, path, mode, encoding="utf-8"):
+        self._path = path
+        self._mode = mode
+
+        self._binary = "b" in mode
+        self._encoding = encoding
+
+        self._fp = VSIFOpenL(self._path, self._mode)
+        self._closed = False
+        self._buffer = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        chunk_size = 1024
+        buffer_max_size = 1024 * 1024
+
+        if not self._buffer:
+            self._buffer = b'' if self._binary else ''
+            self._pos = 0
+            self._seekchar = b'\n'[0] if self._binary else '\n'
+
+        while True:
+
+            for i in range(self._pos, len(self._buffer)):
+                if self._buffer[i] == self._seekchar:
+                    lastpos = self._pos
+                    self._pos = i+1
+                    ret = self._buffer[lastpos:i]
+                    if len(self._buffer) > buffer_max_size:
+                        self._buffer = self._buffer[self._pos:]
+                        self._pos = 0
+
+                    return ret
+
+            next_chunk = self.read(chunk_size)
+            if next_chunk:
+                self._buffer += next_chunk
+            else:
+                ret = self._buffer[self._pos:]
+
+                if len(ret) == 0:
+                    raise StopIteration
+
+                self._buffer = None
+                return ret
+
+
+    def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
+        VSIFCloseL(self._fp)
+
+    def read(self, size = -1):
+        if size == -1:
+            pos = self.tell()
+            self.seek(0, 2)
+            size = self.tell()
+            self.seek(pos)
+
+        raw = VSIFReadL(1, size, self._fp)
+
+        if self._binary:
+            return bytes(raw)
+        else:
+            return raw.decode(self._encoding)
+
+    def write(self, x):
+
+        if self._binary:
+            assert type(x) in (bytes, bytearray, memoryview)
+        else:
+            assert type(x) is str
+            x = x.encode(self._encoding)
+
+        VSIFWriteL(x, 1, len(x), self._fp)
+
+    def seek(self, offset, whence = 0):
+        VSIFSeekL(self._fp, offset, whence)
+
+    def tell(self):
+        return VSIFTellL(self._fp)
+
+
+def vsi_open(path, mode = "r"):
+    return VSIFile(path, mode)
+
+
 import contextlib
 @contextlib.contextmanager
 def config_options(options, thread_local=True):
