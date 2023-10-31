@@ -54,8 +54,6 @@ jobs:
         use-mamba: true
         channels: conda-forge
         auto-update-conda: true
-        # anaconda-client is broken with 3.12 currently. See https://github.com/OSGeo/gdal/actions/runs/6700873032/job/18207482980#step:10:1607 with a No module named 'imp' error
-        python-version: "3.11"
 
     - name: Remove conflicting libraries
       shell: bash -l {0}
