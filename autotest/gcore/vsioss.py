@@ -50,22 +50,61 @@ def open_for_read(uri):
 ###############################################################################
 
 
-def test_vsioss_init():
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
 
-    gdaltest.oss_vars = {}
-    for var in (
-        "OSS_SECRET_ACCESS_KEY",
-        "OSS_ACCESS_KEY_ID",
-        "OSS_TIMESTAMP",
-        "OSS_HTTPS",
-        "OSS_VIRTUAL_HOSTING",
-        "OSS_ENDPOINT",
+    with gdal.config_options(
+        {
+            "OSS_SECRET_ACCESS_KEY": "",
+            "OSS_ACCESS_KEY_ID": "",
+            "OSS_HTTPS": "",
+            "OSS_VIRTUAL_HOSTING": "",
+            "OSS_ENDPOINT": "",
+        },
+        thread_local=False,
     ):
-        gdaltest.oss_vars[var] = gdal.GetConfigOption(var)
-        if gdaltest.oss_vars[var] is not None:
-            gdal.SetConfigOption(var, "")
+        assert gdal.GetSignedURL("/vsioss/foo/bar") is None
 
-    assert gdal.GetSignedURL("/vsioss/foo/bar") is None
+        yield
+
+
+@pytest.fixture(scope="module")
+def server_backend():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if port == 0:
+        pytest.skip()
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(
+    scope="function"
+)  # function scope because not all tests run with the config options set below
+def server(server_backend):
+
+    with gdal.config_options(
+        {
+            "OSS_SECRET_ACCESS_KEY": "OSS_SECRET_ACCESS_KEY",
+            "OSS_ACCESS_KEY_ID": "OSS_ACCESS_KEY_ID",
+            "CPL_OSS_TIMESTAMP": "my_timestamp",
+            "OSS_HTTPS": "NO",
+            "OSS_VIRTUAL_HOSTING": "NO",
+            "OSS_ENDPOINT": "127.0.0.1:%d" % server_backend.port,
+        },
+        thread_local=False,
+    ):
+        yield server_backend
 
 
 ###############################################################################
@@ -78,22 +117,29 @@ def test_vsioss_1():
     gdal.ErrorReset()
     with gdal.quiet_errors():
         f = open_for_read("/vsioss/foo/bar")
-    assert f is None and gdal.VSIGetLastErrorMsg().find("OSS_SECRET_ACCESS_KEY") >= 0
+    assert f is None
+    assert gdal.VSIGetLastErrorMsg().find("OSS_SECRET_ACCESS_KEY") >= 0
+
+
+def test_vsioss_1a():
 
     gdal.ErrorReset()
     with gdal.quiet_errors():
         f = open_for_read("/vsioss_streaming/foo/bar")
-    assert f is None and gdal.VSIGetLastErrorMsg().find("OSS_SECRET_ACCESS_KEY") >= 0
+    assert f is None
+    assert gdal.VSIGetLastErrorMsg().find("OSS_SECRET_ACCESS_KEY") >= 0
 
-    gdal.SetConfigOption("OSS_SECRET_ACCESS_KEY", "OSS_SECRET_ACCESS_KEY")
 
-    # Missing OSS_ACCESS_KEY_ID
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        f = open_for_read("/vsioss/foo/bar")
-    assert f is None and gdal.VSIGetLastErrorMsg().find("OSS_ACCESS_KEY_ID") >= 0
+def test_vsioss_1b():
 
-    gdal.SetConfigOption("OSS_ACCESS_KEY_ID", "OSS_ACCESS_KEY_ID")
+    with gdal.config_option("OSS_SECRET_ACCESS_KEY", "OSS_SECRET_ACCESS_KEY"):
+
+        # Missing OSS_ACCESS_KEY_ID
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = open_for_read("/vsioss/foo/bar")
+        assert f is None
+        assert gdal.VSIGetLastErrorMsg().find("OSS_ACCESS_KEY_ID") >= 0
 
 
 def test_vsioss_real_test():
@@ -115,28 +161,6 @@ def test_vsioss_real_test():
     with gdal.quiet_errors():
         f = open_for_read("/vsioss_streaming/foo/bar.baz")
     assert f is None and gdal.VSIGetLastErrorMsg() != ""
-
-
-###############################################################################
-
-
-def test_vsioss_start_webserver():
-
-    gdaltest.webserver_process = None
-    gdaltest.webserver_port = 0
-
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    gdal.SetConfigOption("OSS_SECRET_ACCESS_KEY", "OSS_SECRET_ACCESS_KEY")
-    gdal.SetConfigOption("OSS_ACCESS_KEY_ID", "OSS_ACCESS_KEY_ID")
-    gdal.SetConfigOption("CPL_OSS_TIMESTAMP", "my_timestamp")
-    gdal.SetConfigOption("OSS_HTTPS", "NO")
-    gdal.SetConfigOption("OSS_VIRTUAL_HOSTING", "NO")
-    gdal.SetConfigOption("OSS_ENDPOINT", "127.0.0.1:%d" % gdaltest.webserver_port)
 
 
 ###############################################################################
@@ -170,10 +194,7 @@ def get_oss_fake_bucket_resource_method(request):
 
 
 @gdaltest.disable_exceptions()
-def test_vsioss_2():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_2(server):
 
     signed_url = gdal.GetSignedURL(
         "/vsioss/oss_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
@@ -428,10 +449,7 @@ def test_vsioss_2():
 # Test ReadDir() with a fake OSS server
 
 
-def test_vsioss_3():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_3(server):
 
     handler = webserver.SequentialHandler()
 
@@ -645,10 +663,7 @@ def test_vsioss_3():
 
 
 @gdaltest.disable_exceptions()
-def test_vsioss_4():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_4(server):
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdal.quiet_errors():
@@ -774,10 +789,7 @@ def test_vsioss_4():
 
 
 @gdaltest.disable_exceptions()
-def test_vsioss_5():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_5(server):
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         with gdal.quiet_errors():
@@ -831,10 +843,7 @@ def test_vsioss_5():
     gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
 )
 @gdaltest.disable_exceptions()
-def test_vsioss_6():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_6(server):
 
     with gdaltest.config_option("VSIOSS_CHUNK_SIZE", "1"):  # 1 MB
         with webserver.install_http_handler(webserver.SequentialHandler()):
@@ -1113,10 +1122,7 @@ def test_vsioss_6():
 
 
 @gdaltest.disable_exceptions()
-def test_vsioss_7():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_7(server):
 
     handler = webserver.SequentialHandler()
     handler.add("GET", "/oss_bucket_test_mkdir/dir/", 404, {"Connection": "close"})
@@ -1185,10 +1191,7 @@ def test_vsioss_7():
 # Test handling of file and directory with same name
 
 
-def test_vsioss_8():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_vsioss_8(server):
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1222,21 +1225,6 @@ def test_vsioss_8():
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         assert stat.S_ISDIR(gdal.VSIStatL("/vsioss/vsioss_8/test/").mode)
-
-
-###############################################################################
-
-
-def test_vsioss_stop_webserver():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    # Clearcache needed to close all connections, since the Python server
-    # can only handle one connection at a time
-    gdal.VSICurlClearCache()
-
-    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################
@@ -1361,12 +1349,3 @@ def test_vsioss_extra_1():
     gdal.VSIFCloseL(f)
 
     assert len(ret) == 1
-
-
-###############################################################################
-
-
-def test_vsioss_cleanup():
-
-    for var in gdaltest.oss_vars:
-        gdal.SetConfigOption(var, gdaltest.oss_vars[var])
