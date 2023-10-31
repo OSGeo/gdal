@@ -498,6 +498,7 @@ class SetupTargetLayer
     GDALDataset *m_poDstDS;
     char **m_papszLCO;
     OGRSpatialReference *m_poOutputSRS;
+    bool m_bTransform = false;
     bool m_bNullifyOutputSRS;
     bool m_bSelFieldsSet = false;
     char **m_papszSelFields;
@@ -2753,6 +2754,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oSetup.m_poDstDS = poODS;
     oSetup.m_papszLCO = psOptions->aosLCO.List();
     oSetup.m_poOutputSRS = oOutputSRSHolder.get();
+    oSetup.m_bTransform = psOptions->bTransform;
     oSetup.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oSetup.m_bSelFieldsSet = psOptions->bSelFieldsSet;
     oSetup.m_papszSelFields = psOptions->aosSelFields.List();
@@ -4417,7 +4419,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
         // Cf https://github.com/OSGeo/gdal/issues/6859
         // warn if the user requests -t_srs but the driver uses a different SRS.
-        if (m_poOutputSRS != nullptr && !psOptions->bQuiet)
+        if (m_poOutputSRS != nullptr && m_bTransform && !psOptions->bQuiet &&
+            // MapInfo is somewhat lossy regarding SRS, so do not warn
+            !EQUAL(m_poDstDS->GetDriver()->GetDescription(), "MapInfo File"))
         {
             auto poCreatedSRS = poDstLayer->GetSpatialRef();
             if (poCreatedSRS != nullptr)
