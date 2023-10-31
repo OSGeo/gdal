@@ -1531,11 +1531,11 @@ int OGRLayer::InstallFilter(OGRGeometry *poFilter)
 //! @endcond
 
 /************************************************************************/
-/*                   DoesGeometryIntersectEnvelope()                    */
+/*                   DoesGeometryHavePointInEnvelope()                  */
 /************************************************************************/
 
-static bool DoesGeometryIntersectEnvelope(const OGRGeometry *poGeometry,
-                                          const OGREnvelope &sEnvelope)
+static bool DoesGeometryHavePointInEnvelope(const OGRGeometry *poGeometry,
+                                            const OGREnvelope &sEnvelope)
 {
     const OGRLineString *poLS = nullptr;
 
@@ -1568,7 +1568,7 @@ static bool DoesGeometryIntersectEnvelope(const OGRGeometry *poGeometry,
         {
             for (const auto &poSubGeom : *(poGeometry->toGeometryCollection()))
             {
-                if (DoesGeometryIntersectEnvelope(poSubGeom, sEnvelope))
+                if (DoesGeometryHavePointInEnvelope(poSubGeom, sEnvelope))
                     return true;
             }
             return false;
@@ -1653,7 +1653,7 @@ int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
         // intersects the filter geometry.
         if (m_bFilterIsEnvelope)
         {
-            if (DoesGeometryIntersectEnvelope(poGeometry, m_sFilterEnvelope))
+            if (DoesGeometryHavePointInEnvelope(poGeometry, m_sFilterEnvelope))
                 return true;
         }
 
