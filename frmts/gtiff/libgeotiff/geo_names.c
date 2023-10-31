@@ -46,12 +46,11 @@ static const KeyInfo _tagInfo[] =  {
 
 static const char *FindName(const KeyInfo *info,int key)
 {
-   static char errmsg[80];
-
    while (info->ki_key>=0 && info->ki_key != key) info++;
 
    if (info->ki_key<0)
    {
+	   static char errmsg[80];
 	   sprintf(errmsg,"Unknown-%d", key );
 	   return errmsg;
    }
@@ -163,7 +162,6 @@ static void GetNameFromDatabase(GTIF* gtif,
 
 const char *GTIFValueNameEx(GTIF* gtif, geokey_t key, int value)
 {
-    const KeyInfo *info = FindTable(key);
     int useHardcodedTables = 0;
 
     if( value == KvUndefined || value == KvUserDefined )
@@ -187,6 +185,8 @@ const char *GTIFValueNameEx(GTIF* gtif, geokey_t key, int value)
     {
         useHardcodedTables = 1;
     }
+
+    const KeyInfo *info = FindTable(key);
     if( useHardcodedTables )
     {
         while (info->ki_key>=0 && info->ki_key != value) info++;

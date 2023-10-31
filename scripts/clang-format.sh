@@ -42,6 +42,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/gtiff/libgeotiff/*)
+	  continue
+	  ;;
+
 	*frmts/gtiff/libtiff/*)
 	  continue
 	  ;;

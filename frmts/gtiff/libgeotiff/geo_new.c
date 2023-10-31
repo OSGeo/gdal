@@ -9,12 +9,11 @@
  *  Permission granted to use this software, so long as this copyright
  *  notice accompanies any products derived therefrom.
  *
- *    20 June, 1995      Niles D. Ritter         New
- *    7 July,  1995      Greg Martin             Fix index
- *
  **********************************************************************/
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "geotiffio.h"   /* public interface        */
 #include "geo_tiffp.h" /* external TIFF interface */
@@ -28,8 +27,8 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
 
 static void GTIFErrorFunction(GTIF* gt, int level, const char* msg, ...)
 {
-    va_list list;
     (void)gt;
+    va_list list;
 
     va_start(list, msg);
     if( level == LIBGEOTIFF_WARNING )
@@ -110,17 +109,12 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
 GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
                            GTErrorCallback error_callback, void* user_data)
 {
-    GTIF* gt;
-    int count,bufcount,nIndex;
-    GeoKey *keyptr;
-    pinfo_t *data;
-    KeyEntry *entptr;
-    KeyHeader *header;
     TempKeyData tempData;
-
     memset( &tempData, 0, sizeof(tempData) );
-    gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
+
+    GTIF* gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
     if (!gt) goto failure;
+
     gt->gt_error_callback = error_callback;
     gt->gt_user_data = user_data;
 
@@ -129,13 +123,14 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
     memcpy( &gt->gt_methods, methods, sizeof(TIFFMethod) );
 
     /* since this is an array, GTIF will allocate the memory */
+    pinfo_t *data;
     if ( tif == NULL
          || !(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
     {
         /* No ProjectionInfo, create a blank one */
         data=(pinfo_t*)_GTIFcalloc((4+MAX_VALUES)*sizeof(pinfo_t));
         if (!data) goto failure;
-        header = (KeyHeader *)data;
+        KeyHeader *header = (KeyHeader *)data;
         header->hdr_version = GvCurrentVersion;
         header->hdr_rev_major = GvCurrentRevision;
         header->hdr_rev_minor = GvCurrentMinorRev;
@@ -147,7 +142,7 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
         data = (pinfo_t*) _GTIFrealloc(data,(4+MAX_VALUES)*sizeof(pinfo_t));
     }
     gt->gt_short = data;
-    header = (KeyHeader *)data;
+    KeyHeader *header = (KeyHeader *)data;
 
     if (header->hdr_version > GvCurrentVersion) goto failure;
     if (header->hdr_rev_major > GvCurrentRevision)
@@ -156,7 +151,7 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
     }
 
     /* If we got here, then the geokey can be parsed */
-    count = header->hdr_num_keys;
+    const int count = header->hdr_num_keys;
 
     if (count * sizeof(KeyEntry) >= (4 + MAX_VALUES) * sizeof(pinfo_t))
         goto failure;
@@ -166,7 +161,7 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
     gt->gt_rev_major  = header->hdr_rev_major;
     gt->gt_rev_minor  = header->hdr_rev_minor;
 
-    bufcount = count+MAX_KEYS; /* allow for expansion */
+    const int bufcount = count + MAX_KEYS; /* allow for expansion */
 
     /* Get the PARAMS Tags, if any */
     if (tif == NULL
@@ -184,6 +179,7 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
         gt->gt_double = (double*) _GTIFrealloc(gt->gt_double,
                                                (MAX_VALUES)*sizeof(double));
     }
+
     if ( tif == NULL
          || !(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
                                   &tempData.tk_asciiParamsLength,
@@ -209,11 +205,11 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
     if (!gt->gt_keyindex) goto failure;
 
     /*  Loop to get all GeoKeys */
-    entptr = ((KeyEntry *)data) + 1;
-    keyptr = gt->gt_keys;
+    KeyEntry *entptr = ((KeyEntry *)data) + 1;
+    GeoKey *keyptr = gt->gt_keys;
     gt->gt_keymin = MAX_KEYINDEX;
     gt->gt_keymax = 0;
-    for (nIndex=1; nIndex<=count; nIndex++,entptr++)
+    for (int nIndex=1; nIndex<=count; nIndex++,entptr++)
     {
         if (!ReadKey(gt, &tempData, entptr, ++keyptr))
             goto failure;
@@ -249,12 +245,10 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
 static int ReadKey(GTIF* gt, TempKeyData* tempData,
                    KeyEntry* entptr, GeoKey* keyptr)
 {
-    int offset,count;
-
     keyptr->gk_key = entptr->ent_key;
     keyptr->gk_count = entptr->ent_count;
-    count = entptr->ent_count;
-    offset = entptr->ent_val_offset;
+    int count = entptr->ent_count;
+    const int offset = entptr->ent_val_offset;
     if (gt->gt_keymin > keyptr->gk_key)  gt->gt_keymin=keyptr->gk_key;
     if (gt->gt_keymax < keyptr->gk_key)  gt->gt_keymax=keyptr->gk_key;
 

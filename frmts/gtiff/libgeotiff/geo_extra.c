@@ -27,11 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-/*
-#include "geotiff.h"
-#include "geo_tiffp.h"
-#include "geo_keyp.h"
-*/
+#include <stddef.h>
 
 #include "geo_normalize.h"
 #include "geovalues.h"
@@ -428,10 +424,8 @@ int	GTIFMapSysToPCS( int MapSys, int Datum, int nZone )
     }
     else if( MapSys == MapSys_State_Plane_27 )
     {
-	int		i;
-
         PCSCode = 10000 + nZone;
-	for( i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
+	for( int i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
 	{
 	    if( StatePlaneTable[i+1] == PCSCode )
 	        PCSCode = StatePlaneTable[i];
@@ -443,11 +437,9 @@ int	GTIFMapSysToPCS( int MapSys, int Datum, int nZone )
     }
     else if( MapSys == MapSys_State_Plane_83 )
     {
-	int		i;
-
         PCSCode = 10000 + nZone + 30;
 
-	for( i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
+	for( int i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
 	{
 	    if( StatePlaneTable[i+1] == PCSCode )
 	        PCSCode = StatePlaneTable[i];
@@ -540,7 +532,7 @@ int GTIFPCSToMapSys( int PCSCode, int * pDatum, int * pZone )
 
 {
     int		Datum = KvUserDefined, Proj = KvUserDefined;
-    int		nZone = KvUserDefined, i;
+    int		nZone = KvUserDefined;
 
 /* -------------------------------------------------------------------- */
 /*      UTM with various datums.  Note there are lots of PCS UTM        */
@@ -623,7 +615,7 @@ int GTIFPCSToMapSys( int PCSCode, int * pDatum, int * pZone )
 /*      State Plane zones, first we translate any PCS_ codes to		*/
 /*	a Proj_ code that we can get a handle on.			*/
 /* -------------------------------------------------------------------- */
-    for( i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
+    for( int i = 0; StatePlaneTable[i] != KvUserDefined; i += 2 )
     {
 	if( StatePlaneTable[i] == PCSCode )
 	    PCSCode = StatePlaneTable[i+1];
