@@ -98,6 +98,7 @@ class VSIWin32Handle final : public VSIVirtualHandle
   public:
     HANDLE hFile = nullptr;
     bool bEOF = false;
+    bool m_bWriteThrough = false;
 
     VSIWin32Handle() = default;
 
@@ -316,7 +317,8 @@ int VSIWin32Handle::Flush()
     /* See http://trac.osgeo.org/gdal/ticket/5556 */
 
     // Add this as a hack to make ogr_mitab_30 and _31 tests pass
-    if (CPLTestBool(CPLGetConfigOption("VSI_FLUSH", "FALSE")))
+    if (!m_bWriteThrough &&
+        CPLTestBool(CPLGetConfigOption("VSI_FLUSH", "FALSE")))
     {
         if (!FlushFileBuffers(hFile))
         {
@@ -592,9 +594,10 @@ static bool VSIWin32IsLongFilename(const wchar_t *pwszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
-VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
-                                bool bSetError, CSLConstList /* papszOptions */)
+VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
+                                                  const char *pszAccess,
+                                                  bool bSetError,
+                                                  CSLConstList papszOptions)
 
 {
     DWORD dwDesiredAccess;
@@ -663,6 +666,13 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ)
                                ? FILE_ATTRIBUTE_READONLY
                                : FILE_ATTRIBUTE_NORMAL;
+
+    const bool bWriteThrough =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_THROUGH", "NO"));
+    if (bWriteThrough)
+    {
+        dwFlagsAndAttributes |= FILE_FLAG_WRITE_THROUGH;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      On Win32 consider treating the filename as utf-8 and            */
@@ -757,6 +767,7 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     VSIWin32Handle *poHandle = new VSIWin32Handle;
 
     poHandle->hFile = hFile;
+    poHandle->m_bWriteThrough = bWriteThrough;
 
     if (strchr(pszAccess, 'a') != nullptr)
         poHandle->Seek(0, SEEK_END);
