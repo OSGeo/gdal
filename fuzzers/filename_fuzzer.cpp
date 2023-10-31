@@ -103,6 +103,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         VSIFCloseL(fp);
         delete GDALDataset::Open(osRealFilename.c_str());
     }
+    else
+    {
+        VSIFree(paby);
+    }
 
     VSIRmdirRecursive("/vsimem/");
 
