@@ -1921,6 +1921,19 @@ VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
+ * The following options are supported:
+ * <ul>
+ * <li>MIME headers such as Content-Type and Content-Encoding
+ * are supported for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ file systems.</li>
+ * <li>DISABLE_READDIR_ON_OPEN=YES/NO (GDAL >= 3.6) for /vsicurl/ and other
+ * network-based file systems. By default, directory file listing is done,
+ * unless YES is specified.</li>
+ * <li>WRITE_THROUGH=YES (GDAL >= 3.8) for the Windows regular files to
+ * set the FILE_FLAG_WRITE_THROUGH flag to the CreateFile() function. In that
+ * mode, the data is written to the system cache but is flushed to disk without
+ * delay.</li>
+ * </ul>
+ *
  * Analog of the POSIX fopen() function.
  *
  * @param pszFilename the file to open.  UTF-8 encoded.
@@ -1929,12 +1942,7 @@ VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
  * should set VSIErrors on failure.
  * @param papszOptions NULL or NULL-terminated list of strings. The content is
  *                     highly file system dependent.
- *                     MIME headers such as Content-Type and Content-Encoding
- * are supported for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ file systems.
- *                     Starting with GDAL 3.6, the
- * DISABLE_READDIR_ON_OPEN=YES/NO option is supported for /vsicurl/ and other
- * network-based file systems. By default, directory file listing is done,
- *                     unless YES is specified.
+ *
  *
  * @return NULL on failure, or the file handle.
  *
@@ -2137,6 +2145,10 @@ void VSIRewindL(VSILFILE *fp)
  *
  * Analog of the POSIX fflush() call.
  *
+ * On Windows regular files, this method does nothing, unless the
+ * VSI_FLUSH configuration option is set to YES (and only when the file has
+ * *not* been opened with the WRITE_THROUGH option).
+ *
  * @return 0 on success or -1 on error.
  */
 
@@ -2150,6 +2162,10 @@ void VSIRewindL(VSILFILE *fp)
  * work on unusual filesystems such as in memory.
  *
  * Analog of the POSIX fflush() call.
+ *
+ * On Windows regular files, this method does nothing, unless the
+ * VSI_FLUSH configuration option is set to YES (and only when the file has
+ * *not* been opened with the WRITE_THROUGH option).
  *
  * @param fp file handle opened with VSIFOpenL().
  *

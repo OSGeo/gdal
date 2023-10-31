@@ -51,11 +51,11 @@ def module_disable_exceptions():
 # Generic test
 
 
-def vsifile_generic(filename):
+def vsifile_generic(filename, options=[]):
 
     start_time = time.time()
 
-    fp = gdal.VSIFOpenL(filename, "wb+")
+    fp = gdal.VSIFOpenExL(filename, "wb+", False, options)
     assert fp is not None
 
     assert gdal.VSIFWriteL("0123456789", 1, 10, fp) == 10
@@ -84,7 +84,7 @@ def vsifile_generic(filename):
     assert statBuf.size == 7
     assert start_time == pytest.approx(statBuf.mtime, abs=2)
 
-    fp = gdal.VSIFOpenL(filename, "rb")
+    fp = gdal.VSIFOpenExL(filename, "rb", False, options)
     assert gdal.VSIFReadL(1, 0, fp) is None
     assert gdal.VSIFReadL(0, 1, fp) is None
     buf = gdal.VSIFReadL(1, 7, fp)
@@ -95,7 +95,7 @@ def vsifile_generic(filename):
     assert buf.decode("ascii") == "01234XX"
 
     # Test append mode on existing file
-    fp = gdal.VSIFOpenL(filename, "ab")
+    fp = gdal.VSIFOpenExL(filename, "ab", False, options)
     gdal.VSIFWriteL("XX", 1, 2, fp)
     gdal.VSIFCloseL(fp)
 
@@ -111,7 +111,7 @@ def vsifile_generic(filename):
     assert statBuf is None
 
     # Test append mode on non existing file
-    fp = gdal.VSIFOpenL(filename, "ab")
+    fp = gdal.VSIFOpenExL(filename, "ab", False, options)
     gdal.VSIFWriteL("XX", 1, 2, fp)
     gdal.VSIFCloseL(fp)
 
@@ -138,6 +138,15 @@ def test_vsifile_1():
 
 def test_vsifile_2():
     vsifile_generic("tmp/vsifile_2.bin")
+
+
+###############################################################################
+# Test Windows specific WRITE_THROUGH=YES
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_vsifile_WRITE_THROUGH():
+    vsifile_generic("tmp/vsifile_WRITE_THROUGH.bin", ["WRITE_THROUGH=YES"])
 
 
 ###############################################################################
