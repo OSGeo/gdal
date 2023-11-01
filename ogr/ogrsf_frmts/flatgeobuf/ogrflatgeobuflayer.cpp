@@ -216,7 +216,8 @@ OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
     return ogrType;
 }
 
-static ColumnType toColumnType(OGRFieldType type, OGRFieldSubType subType)
+static ColumnType toColumnType(const char *pszFieldName, OGRFieldType type,
+                               OGRFieldSubType subType)
 {
     switch (type)
     {
@@ -240,8 +241,10 @@ static ColumnType toColumnType(OGRFieldType type, OGRFieldSubType subType)
         case OGRFieldType::OFTBinary:
             return ColumnType::Binary;
         default:
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "toColumnType: Unknown OGRFieldType %d", type);
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "toColumnType: %s field is of type %s, which is not "
+                     "handled natively. Falling back to String.",
+                     pszFieldName, OGRFieldDefn::GetFieldTypeName(type));
     }
     return ColumnType::String;
 }
@@ -297,7 +300,7 @@ OGRFlatGeobufLayer::writeColumns(FlatBufferBuilder &fbb)
         const auto field = m_poFeatureDefn->GetFieldDefn(i);
         const auto name = field->GetNameRef();
         const auto columnType =
-            toColumnType(field->GetType(), field->GetSubType());
+            toColumnType(name, field->GetType(), field->GetSubType());
         auto title = field->GetAlternativeNameRef();
         if (EQUAL(title, ""))
             title = nullptr;
