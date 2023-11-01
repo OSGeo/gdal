@@ -1536,6 +1536,10 @@ def test_ogr_parquet_read_partitioned_flat(use_vsi, use_metadata_file, prefix):
             assert lyr.GetNextFeature() is None
             lyr.ResetReading()
 
+        s = lyr.GetArrowStream()
+        assert s.GetSchema().GetChildrenCount() == 2
+        del s
+
 
 ###############################################################################
 # Test reading a HIVE partitioned dataset

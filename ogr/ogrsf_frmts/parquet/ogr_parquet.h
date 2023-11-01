@@ -180,7 +180,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 {
     std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
 
-    void EstablishFeatureDefn(const std::shared_ptr<arrow::Schema> &schema);
+    void EstablishFeatureDefn();
 
   protected:
     std::string GetDriverUCName() const override
