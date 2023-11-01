@@ -39,7 +39,10 @@ import webserver
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.require_driver("EEDAI")
+pytestmark = [
+    pytest.mark.require_driver("EEDAI"),
+    pytest.mark.random_order(disabled=True),
+]
 
 ###############################################################################
 # Find EEDAI driver
