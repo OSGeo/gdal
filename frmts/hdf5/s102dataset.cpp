@@ -482,7 +482,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                 if (VSIStatL(poDS->m_osMetadataFile.c_str(), &sStat) != 0)
                 {
                     // Test products from https://data.admiralty.co.uk/portal/apps/sites/#/marine-data-portal/pages/s-100
-                    // advertize a metadata filename starting with "MD_", per the spec,
+                    // advertise a metadata filename starting with "MD_", per the spec,
                     // but the actual filename does not start with "MD_"...
                     if (STARTS_WITH(pszVal, "MD_"))
                     {
