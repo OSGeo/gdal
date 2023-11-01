@@ -3554,16 +3554,29 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             : INT_MIN;
 #endif
 
-    const int nDriverCount = poDM->GetDriverCount();
-    for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
+    const int nDriverCount = poDM->GetDriverCount(/*bIncludeHidden=*/true);
+    std::string osMissingPluginName;
+    std::string osMissingPluginFileName;
+    std::vector<GDALDriver *> apoSecondPassDrivers;
+    int iPass = 1;
+retry:
+    for (int iDriver = 0;
+         iDriver < (iPass == 1 ? nDriverCount
+                               : static_cast<int>(apoSecondPassDrivers.size()));
+         ++iDriver)
     {
-        GDALDriver *poDriver = poDM->GetDriver(iDriver);
+        GDALDriver *poDriver =
+            iPass == 1 ? poDM->GetDriver(iDriver, /*bIncludeHidden=*/true)
+                       : apoSecondPassDrivers[iDriver];
         if (papszAllowedDrivers != nullptr &&
             CSLFindString(papszAllowedDrivers,
                           GDALGetDriverShortName(poDriver)) == -1)
         {
             continue;
         }
+
+        if (poDriver->GetMetadataItem(GDAL_DCAP_OPEN) == nullptr)
+            continue;
 
         if ((nOpenFlags & GDAL_OF_RASTER) != 0 &&
             (nOpenFlags & GDAL_OF_VECTOR) == 0 &&
@@ -3577,11 +3590,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             (nOpenFlags & GDAL_OF_RASTER) == 0 &&
             poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) == nullptr)
             continue;
-        if (poDriver->pfnOpen == nullptr &&
-            poDriver->pfnOpenWithDriverArg == nullptr)
-        {
-            continue;
-        }
 
         // Remove general OVERVIEW_LEVEL open options from list before passing
         // it to the driver, if it isn't a driver specific option already.
@@ -3605,11 +3613,25 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             papszTmpOpenOptionsToValidate = papszOptionsToValidate;
         }
 
-        const bool bIdentifyRes =
+        const int nIdentifyRes =
             poDriver->pfnIdentifyEx
-                ? poDriver->pfnIdentifyEx(poDriver, &oOpenInfo) > 0
-                : poDriver->pfnIdentify &&
-                      poDriver->pfnIdentify(&oOpenInfo) > 0;
+                ? poDriver->pfnIdentifyEx(poDriver, &oOpenInfo)
+            : poDriver->pfnIdentify ? poDriver->pfnIdentify(&oOpenInfo)
+                                    : GDAL_IDENTIFY_UNKNOWN;
+        if (nIdentifyRes == FALSE)
+        {
+            continue;
+        }
+        else if (iPass == 1 && nIdentifyRes < 0 &&
+                 poDriver->pfnOpen == nullptr &&
+                 poDriver->GetMetadataItem("IS_NON_LOADED_PLUGIN"))
+        {
+            // Not loaded plugin
+            apoSecondPassDrivers.push_back(poDriver);
+            continue;
+        }
+
+        const bool bIdentifyRes = nIdentifyRes == GDAL_IDENTIFY_TRUE;
         if (bIdentifyRes)
         {
             GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
@@ -3624,6 +3646,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         sAntiRecursion.aosDatasetNamesWithFlags.insert(dsCtxt);
 
         GDALDataset *poDS = poDriver->Open(&oOpenInfo, false);
+
+        sAntiRecursion.nRecLevel--;
+        sAntiRecursion.aosDatasetNamesWithFlags.erase(dsCtxt);
+
         if (poDriver->pfnOpen != nullptr)
         {
             // If we couldn't determine for sure with Identify() (it returned
@@ -3635,9 +3661,28 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                 GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
             }
         }
-
-        sAntiRecursion.nRecLevel--;
-        sAntiRecursion.aosDatasetNamesWithFlags.erase(dsCtxt);
+        else if (poDriver->pfnOpenWithDriverArg != nullptr)
+        {
+            // do nothing
+        }
+        else if (bIdentifyRes &&
+                 poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME"))
+        {
+            if (osMissingPluginName.empty())
+            {
+                osMissingPluginName = poDriver->GetDescription();
+                osMissingPluginFileName =
+                    poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME");
+            }
+        }
+        else
+        {
+            // should not happen given the GDAL_DCAP_OPEN check
+            CSLDestroy(papszTmpOpenOptions);
+            CSLDestroy(papszTmpOpenOptionsToValidate);
+            oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
+            continue;
+        }
 
         CSLDestroy(papszTmpOpenOptions);
         CSLDestroy(papszTmpOpenOptionsToValidate);
@@ -3769,6 +3814,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 #endif
     }
 
+    // cppcheck-suppress knownConditionTrueFalse
+    if (iPass == 1 && !apoSecondPassDrivers.empty())
+    {
+        CPLDebugOnly("GDAL", "GDALOpen(): Second pass");
+        iPass = 2;
+        goto retry;
+    }
+
     CSLDestroy(papszOpenOptionsCleaned);
 
 #ifdef OGRAPISPY_ENABLED
@@ -3791,9 +3844,22 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             }
             else if (oOpenInfo.bStatOK)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "`%s' not recognized as a supported file format.",
-                         pszFilename);
+                if (osMissingPluginName.empty())
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "`%s' not recognized as a supported file format.",
+                             pszFilename);
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "`%s' not recognized as a supported file format. "
+                             "It could have been recognized by driver %s, "
+                             "but plugin %s is not available in your "
+                             "installation.",
+                             pszFilename, osMissingPluginName.c_str(),
+                             osMissingPluginFileName.c_str());
+                }
             }
             else
             {

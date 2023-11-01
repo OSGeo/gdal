@@ -76,6 +76,7 @@ class GDALRelationship;
 #include <limits>
 #include <map>
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "ogr_core.h"
@@ -1748,25 +1749,51 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     // Not aimed at being used outside of GDAL. Use GDALDataset::Open() instead
     GDALDataset *Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions);
 
-    GDALDataset *(*pfnOpen)(GDALOpenInfo *) = nullptr;
+    typedef GDALDataset *(*OpenCallback)(GDALOpenInfo *);
 
-    GDALDataset *(*pfnCreate)(const char *pszName, int nXSize, int nYSize,
-                              int nBands, GDALDataType eType,
-                              char **papszOptions) = nullptr;
+    OpenCallback pfnOpen = nullptr;
+    virtual OpenCallback GetOpenCallback()
+    {
+        return pfnOpen;
+    }
+
+    typedef GDALDataset *(*CreateCallback)(const char *pszName, int nXSize,
+                                           int nYSize, int nBands,
+                                           GDALDataType eType,
+                                           char **papszOptions);
+
+    CreateCallback pfnCreate = nullptr;
+    virtual CreateCallback GetCreateCallback()
+    {
+        return pfnCreate;
+    }
 
     GDALDataset *(*pfnCreateEx)(GDALDriver *, const char *pszName, int nXSize,
                                 int nYSize, int nBands, GDALDataType eType,
                                 char **papszOptions) = nullptr;
 
-    GDALDataset *(*pfnCreateMultiDimensional)(
+    typedef GDALDataset *(*CreateMultiDimensionalCallback)(
         const char *pszName, CSLConstList papszRootGroupOptions,
-        CSLConstList papszOptions) = nullptr;
+        CSLConstList papszOptions);
+
+    CreateMultiDimensionalCallback pfnCreateMultiDimensional = nullptr;
+    virtual CreateMultiDimensionalCallback GetCreateMultiDimensionalCallback()
+    {
+        return pfnCreateMultiDimensional;
+    }
 
     CPLErr (*pfnDelete)(const char *pszName) = nullptr;
 
-    GDALDataset *(*pfnCreateCopy)(const char *, GDALDataset *, int, char **,
-                                  GDALProgressFunc pfnProgress,
-                                  void *pProgressData) = nullptr;
+    typedef GDALDataset *(*CreateCopyCallback)(const char *, GDALDataset *, int,
+                                               char **,
+                                               GDALProgressFunc pfnProgress,
+                                               void *pProgressData);
+
+    CreateCopyCallback pfnCreateCopy = nullptr;
+    virtual CreateCopyCallback GetCreateCopyCallback()
+    {
+        return pfnCreateCopy;
+    }
 
     void *pDriverData = nullptr;
 
@@ -1881,6 +1908,65 @@ class CPL_DLL GDALDriver : public GDALMajorObject
 /*                          GDALDriverManager                           */
 /* ******************************************************************** */
 
+/** Data structure used for plugin declaration. */
+struct CPL_DLL GDALPluginDriverFeatures
+{
+    /** Identify method. Required for driver with open capabilities.
+     * If the method returns -1 (unknown), the underlying driver will be
+     * loaded by GDALDataset::Open().
+     */
+    int (*pfnIdentify)(GDALOpenInfo *) = nullptr;
+
+    /**
+     * Returns a (possibly null) pointer to the Subdataset informational function
+     * from the subdataset file name.
+     */
+    GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)(const char *pszFileName) =
+        nullptr;
+
+    /** Long name. Must be equal to the value of
+     * GDAL_DMD_LONG_NAME on the underlying driver. */
+    const char *pszLongName = nullptr;
+
+    /** Extensions. Must be equal to the value of
+     * GDAL_DMD_EXTENSIONS on the underlying driver. */
+    const char *pszExtensions = nullptr;
+
+    /** Open option list. Must be equal to the value of
+     * GDAL_DMD_OPENOPTIONLIST on the underlying driver.*/
+    const char *pszOpenOptionList = nullptr;
+
+    /** Whether the driver exposes GDAL_DCAP_RASTER */
+    bool bHasRasterCapabilities = false;
+
+    /** Whether the driver exposes GDAL_DCAP_MULTIDIM_RASTER */
+    bool bHasMultiDimRasterCapabilities = false;
+
+    /** Whether the driver exposes GDAL_DCAP_VECTOR */
+    bool bHasVectorCapabilities = false;
+
+    /** Whether the driver exposes GDAL_DCAP_OPEN */
+    bool bHasOpen = true;
+
+    /** Whether the driver exposes GDAL_DCAP_CREATE */
+    bool bHasCreate = false;
+
+    /** Whether the driver exposes GDAL_DCAP_CREATE_MULTIDIMENSIONAL */
+    bool bHasCreateMultiDimensional = false;
+
+    /** Whether the driver exposes GDAL_DCAP_CREATE_COPY */
+    bool bHasCreateCopy = false;
+
+    /** Whether the driver exposes GDAL_DMD_SUBDATASETS */
+    bool bHasSubdatasets = false;
+
+    /** Whether the driver exposes GDAL_DCAP_MULTIPLE_VECTOR_LAYERS */
+    bool bHasMultipleVectorLayers = false;
+
+    /** Whether the driver exposes GDAL_DCAP_NONSPATIAL */
+    bool bIsNonspatial = false;
+};
+
 /**
  * Class for managing the registration of file format drivers.
  *
@@ -1893,7 +1979,13 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     int nDrivers = 0;
     GDALDriver **papoDrivers = nullptr;
     std::map<CPLString, GDALDriver *> oMapNameToDrivers{};
+    std::string m_osPluginPath{};
     std::string m_osDriversIniPath{};
+    mutable std::string m_osLastTriedDirectory{};
+    std::set<std::string> m_oSetPluginFileNames{};
+    bool m_bInDeferedDriverLoading = false;
+    std::map<std::string, std::unique_ptr<GDALDriver>> m_oMapRealDrivers{};
+    std::vector<std::unique_ptr<GDALDriver>> m_aoHiddenDrivers{};
 
     GDALDriver *GetDriver_unlocked(int iDriver)
     {
@@ -1907,11 +1999,27 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
         return oIter == oMapNameToDrivers.end() ? nullptr : oIter->second;
     }
 
-    static char **GetSearchPaths(const char *pszGDAL_DRIVER_PATH);
-
     static void CleanupPythonDrivers();
 
+    std::string GetPluginFullPath(const char *pszFilename) const;
+
+    int RegisterDriver(GDALDriver *, bool bHidden);
+
     CPL_DISALLOW_COPY_ASSIGN(GDALDriverManager)
+
+  protected:
+    friend class GDALPluginDriverProxy;
+    friend GDALDatasetH CPL_STDCALL
+    GDALOpenEx(const char *pszFilename, unsigned int nOpenFlags,
+               const char *const *papszAllowedDrivers,
+               const char *const *papszOpenOptions,
+               const char *const *papszSiblingFiles);
+
+    //! @cond Doxygen_Suppress
+    static char **GetSearchPaths(const char *pszGDAL_DRIVER_PATH);
+    int GetDriverCount(bool bIncludeHidden) const;
+    GDALDriver *GetDriver(int iDriver, bool bIncludeHidden);
+    //! @endcond
 
   public:
     GDALDriverManager();
@@ -1931,6 +2039,10 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     static CPLErr LoadPlugin(const char *name);
 
     static void AutoLoadPythonDrivers();
+
+    void DeclareDeferredPluginDriver(const char *pszDriverName,
+                                     const char *pszPluginFileName,
+                                     const GDALPluginDriverFeatures &oFeatures);
 };
 
 CPL_C_START
