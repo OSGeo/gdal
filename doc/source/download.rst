@@ -321,9 +321,9 @@ the ``mamba`` package manager.
 ::
 
     conda update -n base -c conda-forge conda
+    conda install -n base --override-channels -c conda-forge mamba 'python_abi=*=*cp*'
     conda create --name gdal_master_env
     conda activate gdal_master_env
-    conda install -c conda-forge mamba
 
 Then install GDAL from the ``gdal-master`` channel:
 
