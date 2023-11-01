@@ -32,57 +32,12 @@
 #include <map>
 
 #include "ogr_parquet.h"
+#include "ogrparquetdrivercore.h"
+
 #include "../arrow_common/ograrrowrandomaccessfile.h"
 #include "../arrow_common/ograrrowwritablefile.h"
 #include "../arrow_common/ograrrowdataset.hpp"
 #include "../arrow_common/ograrrowlayer.hpp"  // for the destructor
-
-/************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-template <size_t N> constexpr int constexpr_length(const char (&)[N])
-{
-    return static_cast<int>(N - 1);
-}
-
-static int OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo)
-{
-#ifdef GDAL_USE_ARROWDATASET
-    if (poOpenInfo->bIsDirectory)
-        return -1;
-#endif
-    if (STARTS_WITH(poOpenInfo->pszFilename, "PARQUET:"))
-        return TRUE;
-
-    // See https://github.com/apache/parquet-format#file-format
-    bool bRet = false;
-    constexpr const char SIGNATURE[] = "PAR1";
-    constexpr int SIGNATURE_SIZE = constexpr_length(SIGNATURE);
-    static_assert(SIGNATURE_SIZE == 4, "SIGNATURE_SIZE == 4");
-    constexpr int METADATASIZE_SIZE = 4;
-    if (poOpenInfo->fpL != nullptr &&
-        poOpenInfo->nHeaderBytes >=
-            SIGNATURE_SIZE + METADATASIZE_SIZE + SIGNATURE_SIZE &&
-        memcmp(poOpenInfo->pabyHeader, SIGNATURE, SIGNATURE_SIZE) == 0)
-    {
-        VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
-        const auto nFileSize = VSIFTellL(poOpenInfo->fpL);
-        VSIFSeekL(poOpenInfo->fpL,
-                  nFileSize - (METADATASIZE_SIZE + SIGNATURE_SIZE), SEEK_SET);
-        uint32_t nMetadataSize = 0;
-        static_assert(sizeof(nMetadataSize) == METADATASIZE_SIZE,
-                      "sizeof(nMetadataSize) == METADATASIZE_SIZE");
-        VSIFReadL(&nMetadataSize, 1, sizeof(nMetadataSize), poOpenInfo->fpL);
-        CPL_LSBPTR32(&nMetadataSize);
-        unsigned char abyTrailingBytes[SIGNATURE_SIZE] = {0};
-        VSIFReadL(&abyTrailingBytes[0], 1, SIGNATURE_SIZE, poOpenInfo->fpL);
-        bRet = memcmp(abyTrailingBytes, SIGNATURE, SIGNATURE_SIZE) == 0 &&
-               nMetadataSize < nFileSize;
-        VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
-    }
-    return bRet;
-}
 
 #ifdef GDAL_USE_ARROWDATASET
 
@@ -794,16 +749,16 @@ void OGRParquetDriver::InitMetadata()
 
 void RegisterOGRParquet()
 {
-    if (GDALGetDriverByName("Parquet") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     auto poDriver = std::make_unique<OGRParquetDriver>();
 
-    poDriver->SetDescription("Parquet");
+    poDriver->SetDescription(DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "(Geo)Parquet");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "parquet");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, LONG_NAME);
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, EXTENSIONS);
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/vector/parquet.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
@@ -822,16 +777,7 @@ void RegisterOGRParquet()
                               "AlternativeName Domain");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "  <Option name='GEOM_POSSIBLE_NAMES' type='string' description='Comma "
-        "separated list of possible names for geometry column(s).' "
-        "default='geometry,wkb_geometry,wkt_geometry'/>"
-        "  <Option name='CRS' type='string' "
-        "description='Set/override CRS, typically defined as AUTH:CODE "
-        "(e.g EPSG:4326), of geometry column(s)'/>"
-        "</OpenOptionList>");
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, OPENOPTIONLIST);
 
     poDriver->pfnOpen = OGRParquetDriverOpen;
     poDriver->pfnIdentify = OGRParquetDriverIdentify;

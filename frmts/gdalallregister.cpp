@@ -123,6 +123,11 @@ void CPL_STDCALL GDALAllRegister()
 
 {
     auto poDriverManager = GetGDALDriverManager();
+
+#if defined(DEFERRED_PARQUET_DRIVER)
+    DeclareDeferredOGRParquetPlugin();
+#endif
+
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     poDriverManager->AutoLoadDrivers();
 
