@@ -573,10 +573,12 @@ def test_ecw_17():
 # Open byte.jp2.gz (test use of the VSIL API)
 
 
-def test_ecw_18():
+def test_ecw_18(tmp_path):
 
     if gdaltest.jp2ecw_drv is None:
         pytest.skip()
+
+    shutil.copy("data/jpeg2000/byte.jp2.gz", tmp_path)
 
     srs = """PROJCS["NAD27 / UTM zone 11N",
     GEOGCS["NAD27",
@@ -600,10 +602,9 @@ def test_ecw_18():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest(
-        "JP2ECW", "/vsigzip/data/jpeg2000/byte.jp2.gz", 1, 50054, filename_absolute=1
+        "JP2ECW", f"/vsigzip/{tmp_path}/byte.jp2.gz", 1, 50054, filename_absolute=True
     )
     tst.testOpen(check_prj=srs, check_gt=gt)
-    gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
 
 
 ###############################################################################
