@@ -15,7 +15,10 @@ set(SOURCE
     s102dataset.cpp
 )
 
-add_gdal_driver(TARGET gdal_HDF5 SOURCES ${SOURCE} PLUGIN_CAPABLE)
+add_gdal_driver(TARGET gdal_HDF5
+                SOURCES ${SOURCE}
+                CORE_SOURCES hdf5drivercore.cpp
+                PLUGIN_CAPABLE)
 
 # Try to detect if libhdf5 has thread-safety enabled
 if(NOT DEFINED GDAL_ENABLE_HDF5_GLOBAL_LOCK AND UNIX AND
