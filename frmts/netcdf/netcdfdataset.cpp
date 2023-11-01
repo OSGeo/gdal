@@ -11279,6 +11279,46 @@ static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
 /*                          GDALRegister_netCDF()                       */
 /************************************************************************/
 
+class GDALnetCDFDriver final : public GDALDriver
+{
+  public:
+    GDALnetCDFDriver() = default;
+
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain) override
+    {
+        if (EQUAL(pszName, GDAL_DCAP_VIRTUALIO))
+        {
+            InitializeDCAPVirtualIO();
+        }
+        return GDALDriver::GetMetadataItem(pszName, pszDomain);
+    }
+
+    char **GetMetadata(const char *pszDomain) override
+    {
+        InitializeDCAPVirtualIO();
+        return GDALDriver::GetMetadata(pszDomain);
+    }
+
+  private:
+    bool m_bInitialized = false;
+
+    void InitializeDCAPVirtualIO()
+    {
+        if (!m_bInitialized)
+        {
+            m_bInitialized = true;
+
+#ifdef ENABLE_UFFD
+            if (CPLIsUserFaultMappingSupported())
+            {
+                SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+            }
+#endif
+        }
+    }
+};
+
 void GDALRegister_netCDF()
 
 {
@@ -11288,7 +11328,7 @@ void GDALRegister_netCDF()
     if (GDALGetDriverByName("netCDF") != nullptr)
         return;
 
-    GDALDriver *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALnetCDFDriver();
 
     // Set the driver details.
     poDriver->SetDescription("netCDF");
@@ -11480,13 +11520,6 @@ void GDALRegister_netCDF()
 
 #ifdef ENABLE_NCDUMP
     poDriver->SetMetadataItem("ENABLE_NCDUMP", "YES");
-#endif
-
-#ifdef ENABLE_UFFD
-    if (CPLIsUserFaultMappingSupported())
-    {
-        poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    }
 #endif
 
 #ifdef NETCDF_HAS_NC4
