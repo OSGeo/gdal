@@ -1044,11 +1044,19 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
             break;
         }
         case arrow::Type::DECIMAL128:
+        {
+            oArray.Add(
+                CPLAtof(static_cast<const arrow::Decimal128Array *>(array)
+                            ->FormatValue(nIdx)
+                            .c_str()));
+            break;
+        }
         case arrow::Type::DECIMAL256:
         {
-            oArray.Add(CPLAtof(static_cast<const arrow::DecimalArray *>(array)
-                                   ->FormatValue(nIdx)
-                                   .c_str()));
+            oArray.Add(
+                CPLAtof(static_cast<const arrow::Decimal256Array *>(array)
+                            ->FormatValue(nIdx)
+                            .c_str()));
             break;
         }
         case arrow::Type::STRING:
@@ -1206,15 +1214,21 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
             break;
         }
         case arrow::Type::DECIMAL128:
-        case arrow::Type::DECIMAL256:
         {
             oDict.Add(osKey,
-                      CPLAtof(static_cast<const arrow::DecimalArray *>(array)
+                      CPLAtof(static_cast<const arrow::Decimal128Array *>(array)
                                   ->FormatValue(nIdx)
                                   .c_str()));
             break;
         }
-
+        case arrow::Type::DECIMAL256:
+        {
+            oDict.Add(osKey,
+                      CPLAtof(static_cast<const arrow::Decimal256Array *>(array)
+                                  ->FormatValue(nIdx)
+                                  .c_str()));
+            break;
+        }
         case arrow::Type::STRING:
         {
             oDict.Add(osKey,
@@ -1459,11 +1473,12 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                                                array);
             break;
         }
+
         case arrow::Type::DECIMAL128:
-        case arrow::Type::DECIMAL256:
         {
             const auto values =
-                std::static_pointer_cast<arrow::DecimalArray>(array->values());
+                std::static_pointer_cast<arrow::Decimal128Array>(
+                    array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
             const int nCount = array->value_length(nIdxInArray);
             std::vector<double> aValues;
@@ -1479,6 +1494,28 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             poFeature->SetField(i, nCount, aValues.data());
             break;
         }
+
+        case arrow::Type::DECIMAL256:
+        {
+            const auto values =
+                std::static_pointer_cast<arrow::Decimal256Array>(
+                    array->values());
+            const auto nIdxStart = array->value_offset(nIdxInArray);
+            const int nCount = array->value_length(nIdxInArray);
+            std::vector<double> aValues;
+            aValues.reserve(nCount);
+            for (int k = 0; k < nCount; k++)
+            {
+                if (values->IsNull(nIdxStart + k))
+                    aValues.push_back(std::numeric_limits<double>::quiet_NaN());
+                else
+                    aValues.push_back(
+                        CPLAtof(values->FormatValue(nIdxStart + k).c_str()));
+            }
+            poFeature->SetField(i, nCount, aValues.data());
+            break;
+        }
+
         case arrow::Type::STRING:
         {
             const auto values =
@@ -1945,10 +1982,18 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             }
 
             case arrow::Type::DECIMAL128:
+            {
+                const auto castArray =
+                    static_cast<const arrow::Decimal128Array *>(array);
+                poFeature->SetField(
+                    i, CPLAtof(castArray->FormatValue(nIdxInBatch).c_str()));
+                break;
+            }
+
             case arrow::Type::DECIMAL256:
             {
                 const auto castArray =
-                    static_cast<const arrow::DecimalArray *>(array);
+                    static_cast<const arrow::Decimal256Array *>(array);
                 poFeature->SetField(
                     i, CPLAtof(castArray->FormatValue(nIdxInBatch).c_str()));
                 break;
