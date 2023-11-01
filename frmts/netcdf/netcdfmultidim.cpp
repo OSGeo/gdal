@@ -30,6 +30,7 @@
 #include <map>
 
 #include "netcdfdataset.h"
+#include "netcdfdrivercore.h"
 
 #ifdef HAVE_NETCDF_MEM
 #include "netcdf_mem.h"
@@ -4885,7 +4886,8 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     else
     {
         osFilename = poOpenInfo->pszFilename;
-        poDS->eFormat = IdentifyFormat(poOpenInfo, /* bCheckExt = */ true);
+        poDS->eFormat =
+            netCDFIdentifyFormat(poOpenInfo, /* bCheckExt = */ true);
     }
 
     poDS->SetDescription(poOpenInfo->pszFilename);
