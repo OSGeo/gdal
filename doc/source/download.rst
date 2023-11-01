@@ -315,15 +315,15 @@ GDAL master Conda builds
 GDAL master builds are available in the `gdal-master <https://anaconda.org/gdal-master/gdal>`__
 channel. They are based on dependencies from the ``conda-forge`` channel.
 
-First create a dedicated ``gdal_master_env`` environment, activate it and install
-the ``mamba`` package manager.
+First, install mamba into the ``base`` environment, create a dedicated ``gdal_master_env`` 
+environment, and then activate the dedicated ``gdal_master_env`` environment.
 
 ::
 
     conda update -n base -c conda-forge conda
+    conda install -n base --override-channels -c conda-forge mamba 'python_abi=*=*cp*'
     conda create --name gdal_master_env
     conda activate gdal_master_env
-    conda install -c conda-forge mamba
 
 Then install GDAL from the ``gdal-master`` channel:
 
