@@ -1911,6 +1911,10 @@ static const struct sqlite3_module sOGR2SQLITEModule = {
 #if SQLITE_VERSION_NUMBER >=                                                   \
     3025003L /* should be the first version with the below symbols */
     nullptr,  // xShadowName
+#if SQLITE_VERSION_NUMBER >=                                                   \
+    3044000L /* should be the first version with the below symbols */
+    nullptr,  // xIntegrity
+#endif
 #endif
 #endif
 };
