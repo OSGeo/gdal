@@ -3111,7 +3111,13 @@ static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
     const size_t nDataSize = poGeom->WkbSize();
     unsigned char *pabyData =
         static_cast<unsigned char *>(CPLMalloc(nDataSize));
-    if (poGeom->exportToWkb(wkbNDR, pabyData) == OGRERR_NONE)
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 12)
+    OGRwkbVariant eWkbVariant = wkbVariantIso;
+#else
+    OGRwkbVariant eWkbVariant = wkbVariantOldOgc;
+#endif
+    if (poGeom->exportToWkb(wkbNDR, pabyData, eWkbVariant) == OGRERR_NONE)
         hGeom = GEOSGeomFromWKB_buf_r(hGEOSCtxt, pabyData, nDataSize);
     CPLFree(pabyData);
     return hGeom;
@@ -3141,13 +3147,15 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     if (hGEOSCtxt == nullptr)
         return nullptr;
 
+    const OGRwkbGeometryType eType = wkbFlatten(getGeometryType());
+#if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
     // POINT EMPTY is exported to WKB as if it were POINT(0 0),
     // so that particular case is necessary.
-    const OGRwkbGeometryType eType = wkbFlatten(getGeometryType());
     if (eType == wkbPoint && IsEmpty())
     {
         return GEOSGeomFromWKT_r(hGEOSCtxt, "POINT EMPTY");
     }
+#endif
 
     GEOSGeom hGeom = nullptr;
 
@@ -3155,17 +3163,23 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     if (hasCurveGeometry())
     {
         poLinearGeom = getLinearGeometry();
+#if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
+        // GEOS < 3.12 doesn't support M dimension
         if (poLinearGeom->IsMeasured())
             poLinearGeom->setMeasured(FALSE);
+#endif
     }
     else
     {
         poLinearGeom = const_cast<OGRGeometry *>(this);
+#if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
+        // GEOS < 3.12 doesn't support M dimension
         if (IsMeasured())
         {
             poLinearGeom = clone();
             poLinearGeom->setMeasured(FALSE);
         }
+#endif
     }
     if (eType == wkbTriangle)
     {
