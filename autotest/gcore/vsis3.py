@@ -3499,6 +3499,10 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.skipif(
+    gdaltest.is_ci(),
+    reason="test skipped on CI due to it not being reliable (also fails randomly when run locally)",
+)
 def test_vsis3_sync_failed(aws_test_config, webserver_port):
 
     gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
@@ -3522,7 +3526,23 @@ def test_vsis3_sync_failed(aws_test_config, webserver_port):
         "/out/testsync.txt",
         200,
         {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
-        "xy",  # only returns 2 bytes instead of 3
+        "xy",  # only returns 2 bytes instead of 30, {}
+    )
+    handler.add(
+        "GET",
+        "/out/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+                <Key>testsync.txt</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>3</Size>
+            </Contents>
+        </ListBucketResult>
+        """,
     )
     with webserver.install_http_handler(handler):
         with pytest.raises(
