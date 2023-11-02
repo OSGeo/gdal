@@ -8,6 +8,11 @@ add_gdal_driver(TARGET ogr_Parquet
                         ogrparquetdrivercore.cpp
                 PLUGIN_CAPABLE
                 STRONG_CXX_WFLAGS)
+
+if(NOT TARGET ogr_Parquet)
+    return()
+endif()
+
 gdal_standard_includes(ogr_Parquet)
 target_include_directories(ogr_Parquet PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                                                $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)

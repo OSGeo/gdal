@@ -2172,6 +2172,60 @@ This can be done with:
     Set to OFF to disable loading of GDAL plugins. Default is ON.
 
 
+Deferred loaded plugins
++++++++++++++++++++++++
+
+Starting with GDAL 3.9, a number of in-tree drivers, that can be built as
+plugins, are loaded in a deferred way. This involves that some part of their
+code, which does not depend on external libraries, is included in core libgdal,
+whereas most of the driver code is in a separated dynamically loaded library.
+For builds where libgdal and its plugins are built in a single operation, this
+is fully transparent to the user.
+
+For more specific builds where libgdal would be first built, and then plugin
+drivers built in later incremental builds, this approach would not work, given
+that the core libgdal built initially would lack code needed to declare the
+plugin(s).
+
+In that situation, the user building GDAL will need to explicitly declare at
+initial libgdal build time that one or several plugin(s) will be later built.
+Note that it is safe to distribute such a libgdal library, even if the plugins
+are not always available at runtime.
+
+This can be done with the following option:
+
+.. option:: GDAL_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN:BOOL=ON
+
+.. option:: OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN:BOOL=ON
+
+    Declares that a driver will be later built as a plugin.
+
+Setting this option to drivers not ready for it will lead to an explicit
+CMake error.
+
+
+For some drivers, like netCDF (only case at time of writing), the dataset
+identification code embedded in libgdal, will depend on optional capabilities
+of the dependent library (libnetcdf)
+In that situation, it is desirable that the dependent library is available at
+CMake configuration time for the core libgdal built, but disabled with
+GDAL_USE_NETCDF=OFF. It must of course be re-enabled later when the plugin is
+built.
+
+For example::
+
+    cmake .. -DGDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON -DGDAL_USE_NETCDF=OFF
+    cmake --build .
+
+    cmake .. -DGDAL_USE_NETCDF=ON -DGDAL_ENABLE_DRIVER_NETCDF=ON -DGDAL_ENABLE_DRIVER_NETCDF_PLUGIN=ON
+    cmake --build . --target gdal_netCDF
+
+
+For other drivers, GDAL_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN /
+OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN can be declared at
+libgdal build time without requiring the dependent libraries needed to build
+the pluging later to be available.
+
 .. _building-python-bindings:
 
 Python bindings options

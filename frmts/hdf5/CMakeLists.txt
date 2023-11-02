@@ -20,6 +20,10 @@ add_gdal_driver(TARGET gdal_HDF5
                 CORE_SOURCES hdf5drivercore.cpp
                 PLUGIN_CAPABLE)
 
+if(NOT TARGET gdal_HDF5)
+    return()
+endif()
+
 # Try to detect if libhdf5 has thread-safety enabled
 if(NOT DEFINED GDAL_ENABLE_HDF5_GLOBAL_LOCK AND UNIX AND
    (HDF5_C_LIBRARIES MATCHES ".so" OR HDF5_C_LIBRARIES MATCHES ".dylib"))

@@ -15,12 +15,11 @@ add_gdal_driver(TARGET gdal_netCDF
                 PLUGIN_CAPABLE)
 unset(_SOURCES)
 
-gdal_standard_includes(gdal_netCDF)
-gdal_target_link_libraries(gdal_netCDF PRIVATE ${NetCDF_TARGET})
-
 function(declare_def DEF)
-    target_compile_definitions(gdal_netCDF PRIVATE ${DEF})
-    if (GDAL_ENABLE_DRIVER_NETCDF_PLUGIN)
+    if(TARGET gdal_netCDF)
+        target_compile_definitions(gdal_netCDF PRIVATE ${DEF})
+    endif()
+    if(TARGET gdal_netCDF_core)
         target_compile_definitions(gdal_netCDF_core PRIVATE ${DEF})
     endif()
 endfunction()
@@ -44,4 +43,11 @@ endif ()
 if (HAVE_HDF5)
   declare_def(-DHAVE_HDF5)
 endif ()
+
+if(NOT TARGET gdal_netCDF)
+    return()
+endif()
+
+gdal_standard_includes(gdal_netCDF)
+gdal_target_link_libraries(gdal_netCDF PRIVATE ${NetCDF_TARGET})
 

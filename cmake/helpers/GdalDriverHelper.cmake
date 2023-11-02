@@ -68,6 +68,18 @@ GdalDriverHelper
 
 #]=======================================================================]
 
+function(_set_driver_core_sources _KEY _DRIVER_TARGET _DRIVER_CORE_SOURCES)
+
+    add_library(${_DRIVER_TARGET}_core OBJECT ${_DRIVER_CORE_SOURCES})
+    set_property(TARGET ${_DRIVER_TARGET}_core PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
+    target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:${_DRIVER_TARGET}_core>)
+    target_compile_definitions(${_DRIVER_TARGET}_core PRIVATE "-DPLUGIN_FILENAME=\"${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+    gdal_standard_includes(${_DRIVER_TARGET}_core)
+
+    target_compile_definitions(gdal_frmts PRIVATE -DDEFERRED_${_KEY}_DRIVER)
+
+endfunction()
+
 function(add_gdal_driver)
     set(_options BUILTIN PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX NO_CXX_WFLAGS)
     set(_oneValueArgs TARGET DESCRIPTION DEF PLUGIN_CAPABLE_IF DRIVER_NAME_OPTION)
@@ -164,6 +176,23 @@ function(add_gdal_driver)
         endif()
     endif()
 
+    if ((GDAL_REGISTER_DRIVER_${_KEY}_FOR_LATER_PLUGIN OR
+         OGR_REGISTER_DRIVER_${_KEY}_FOR_LATER_PLUGIN) AND
+         NOT GDAL_ENABLE_DRIVER_${_KEY} AND
+         NOT OGR_ENABLE_DRIVER_${_KEY})
+        if (NOT _DRIVER_CORE_SOURCES)
+            if (GDAL_REGISTER_DRIVER_${_KEY}_FOR_LATER_PLUGIN)
+                message(FATAL_ERROR "GDAL_REGISTER_DRIVER_${_KEY}_FOR_LATER_PLUGIN is set but that driver has no deferred plugin capabilities")
+            else()
+                message(FATAL_ERROR "OGR_REGISTER_DRIVER_${_KEY}_FOR_LATER_PLUGIN is set but that driver has no deferred plugin capabilities")
+            endif()
+        endif()
+
+        _set_driver_core_sources(${_KEY} ${_DRIVER_TARGET} ${_DRIVER_CORE_SOURCES})
+
+        return()
+    endif()
+
     # target configuration
     if (_DRIVER_PLUGIN_BUILD)
         # target become *.so *.dll or *.dylib
@@ -192,13 +221,7 @@ function(add_gdal_driver)
         set_property(GLOBAL APPEND PROPERTY PLUGIN_MODULES ${_DRIVER_TARGET})
 
         if (_DRIVER_CORE_SOURCES)
-            add_library(${_DRIVER_TARGET}_core OBJECT ${_DRIVER_CORE_SOURCES})
-            set_property(TARGET ${_DRIVER_TARGET}_core PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-            target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:${_DRIVER_TARGET}_core>)
-            target_compile_definitions(${_DRIVER_TARGET}_core PRIVATE "-DPLUGIN_FILENAME=\"${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-            gdal_standard_includes(${_DRIVER_TARGET}_core)
-
-            target_compile_definitions(gdal_frmts PRIVATE -DDEFERRED_${_KEY}_DRIVER)
+            _set_driver_core_sources(${_KEY} ${_DRIVER_TARGET} ${_DRIVER_CORE_SOURCES})
         endif ()
 
     else ()
@@ -388,7 +411,7 @@ macro(gdal_dependent_format format desc depends)
     cmake_dependent_option(GDAL_ENABLE_DRIVER_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS}
                            "${depends}" OFF)
     add_feature_info(gdal_${key} GDAL_ENABLE_DRIVER_${key} "${desc}")
-    if (GDAL_ENABLE_DRIVER_${key} AND NOT _GDF_SKIP_ADD_SUBDIRECTORY)
+    if ((GDAL_ENABLE_DRIVER_${key} AND NOT _GDF_SKIP_ADD_SUBDIRECTORY) OR GDAL_REGISTER_DRIVER_${key}_FOR_LATER_PLUGIN)
         add_subdirectory(${format})
     endif ()
 endmacro()
@@ -412,7 +435,7 @@ macro(gdal_optional_format format desc)
     endif()
     option(GDAL_ENABLE_DRIVER_${key} "Set ON to build ${desc} format" ${GDAL_BUILD_OPTIONAL_DRIVERS})
     add_feature_info(gdal_${key} GDAL_ENABLE_DRIVER_${key} "${desc}")
-    if (GDAL_ENABLE_DRIVER_${key})
+    if (GDAL_ENABLE_DRIVER_${key} OR GDAL_REGISTER_DRIVER_${key}_FOR_LATER_PLUGIN)
         add_subdirectory(${format})
     endif ()
 endmacro()
@@ -430,7 +453,7 @@ macro(ogr_dependent_driver name desc depend)
                                "${depend}" OFF)
     endif()
     add_feature_info(ogr_${key} OGR_ENABLE_DRIVER_${key} "${desc}")
-    if (OGR_ENABLE_DRIVER_${key})
+    if (OGR_ENABLE_DRIVER_${key} OR OGR_REGISTER_DRIVER_${key}_FOR_LATER_PLUGIN)
         add_subdirectory(${name})
     endif ()
 endmacro()
@@ -442,7 +465,7 @@ macro(ogr_optional_driver name desc)
     string(TOUPPER ${name} key)
     option(OGR_ENABLE_DRIVER_${key} "Set ON to build OGR ${desc} driver" ${OGR_BUILD_OPTIONAL_DRIVERS})
     add_feature_info(ogr_${key} OGR_ENABLE_DRIVER_${key} "${desc}")
-    if (OGR_ENABLE_DRIVER_${key})
+    if (OGR_ENABLE_DRIVER_${key} OR OGR_REGISTER_DRIVER_${key}_FOR_LATER_PLUGIN)
         add_subdirectory(${name})
     endif ()
 endmacro()
