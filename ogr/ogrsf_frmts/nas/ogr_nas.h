@@ -77,42 +77,6 @@ class OGRNASLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                         OGRNASRelationLayer                          */
-/************************************************************************/
-
-class OGRNASRelationLayer final : public OGRLayer
-{
-    OGRFeatureDefn *poFeatureDefn;
-    OGRNASDataSource *poDS;
-
-    bool bPopulated;
-    int iNextFeature;
-    std::vector<CPLString> aoRelationCollection;
-
-  public:
-    explicit OGRNASRelationLayer(OGRNASDataSource *poDS);
-    ~OGRNASRelationLayer();
-
-    void ResetReading() override;
-    OGRFeature *GetNextFeature() override;
-
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
-    OGRFeatureDefn *GetLayerDefn() override
-    {
-        return poFeatureDefn;
-    }
-    int TestCapability(const char *) override;
-
-    // For use populating.
-    void AddRelation(const char *pszFromID, const char *pszType,
-                     const char *pszToID);
-    void MarkRelationsPopulated()
-    {
-        bPopulated = true;
-    }
-};
-
-/************************************************************************/
 /*                           OGRNASDataSource                           */
 /************************************************************************/
 
@@ -120,8 +84,6 @@ class OGRNASDataSource final : public OGRDataSource
 {
     OGRLayer **papoLayers;
     int nLayers;
-
-    OGRNASRelationLayer *poRelationLayer;
 
     char *pszName;
 
@@ -157,8 +119,6 @@ class OGRNASDataSource final : public OGRDataSource
     }
 
     void GrowExtents(OGREnvelope *psGeomBounds);
-
-    void PopulateRelations();
 };
 
 #endif /* OGR_NAS_H_INCLUDED */

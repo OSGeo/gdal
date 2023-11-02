@@ -44,8 +44,7 @@
 GMLFeature::GMLFeature(GMLFeatureClass *poClass)
     : m_poClass(poClass), m_pszFID(nullptr), m_nPropertyCount(0),
       m_pasProperties(nullptr), m_nGeometryCount(0),
-      m_papsGeometry(m_apsGeometry),  // TODO(schwehr): Allowed in init list?
-      m_papszOBProperties(nullptr)
+      m_papsGeometry(m_apsGeometry)  // TODO(schwehr): Allowed in init list?
 {
     m_apsGeometry[0] = nullptr;
     m_apsGeometry[1] = nullptr;
@@ -90,7 +89,6 @@ GMLFeature::~GMLFeature()
         CPLDestroyXMLNode(m_psBoundedByGeometry);
 
     CPLFree(m_pasProperties);
-    CSLDestroy(m_papszOBProperties);
 }
 
 /************************************************************************/
@@ -298,34 +296,4 @@ void GMLFeature::SetBoundedByGeometry(CPLXMLNode *psGeom)
     if (m_psBoundedByGeometry)
         CPLDestroyXMLNode(m_psBoundedByGeometry);
     m_psBoundedByGeometry = psGeom;
-}
-
-/************************************************************************/
-/*                           AddOBProperty()                            */
-/************************************************************************/
-
-void GMLFeature::AddOBProperty(const char *pszName, const char *pszValue)
-
-{
-    m_papszOBProperties =
-        CSLAddNameValue(m_papszOBProperties, pszName, pszValue);
-}
-
-/************************************************************************/
-/*                           GetOBProperty()                            */
-/************************************************************************/
-
-const char *GMLFeature::GetOBProperty(const char *pszName)
-
-{
-    return CSLFetchNameValue(m_papszOBProperties, pszName);
-}
-
-/************************************************************************/
-/*                          GetOBProperties()                           */
-/************************************************************************/
-
-char **GMLFeature::GetOBProperties()
-{
-    return m_papszOBProperties;
 }

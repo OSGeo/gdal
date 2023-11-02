@@ -44,7 +44,6 @@
 IGMLReader *CreateNASReader();
 
 class NASReader;
-class OGRNASRelationLayer;
 
 CPL_C_START
 OGRGeometryH OGR_G_CreateFromGML3(const char *pszGML);
@@ -70,25 +69,20 @@ class NASHandler final : public DefaultHandler
     int m_nDepth;
     int m_nDepthFeature;
     bool m_bIgnoreFeature;
-    bool m_bInUpdate;
-    bool m_bInUpdateProperty;
-    int m_nUpdateOrDeleteDepth;
-    int m_nUpdatePropertyDepth;
-    int m_nNameOrValueDepth;
 
-    CPLString m_osLastTypeName;
-    CPLString m_osLastReplacingFID;
-    CPLString m_osLastSafeToIgnore;
-    CPLString m_osLastPropertyName;
-    CPLString m_osLastPropertyValue;
-    CPLString m_osLastEnded;
-
-    std::list<CPLString> m_LastOccasions;
+    CPLString m_osDeleteContext;
+    CPLString m_osTypeName;
+    CPLString m_osReplacingFID;
+    CPLString m_osSafeToIgnore;
+    CPLString m_osUpdatePropertyName;
+    CPLString m_osUpdateEnds;
+    CPLString m_osFeatureId;
+    std::list<CPLString> m_UpdateOccasions;
 
     CPLString m_osElementName;
-    CPLString m_osAttrName;
-    CPLString m_osAttrValue;
     CPLString m_osCharacters;
+
+    const Locator *m_Locator;
 
   public:
     explicit NASHandler(NASReader *poReader);
@@ -106,6 +100,8 @@ class NASHandler final : public DefaultHandler
 #endif
 
     void fatalError(const SAXParseException &) override;
+
+    void setDocumentLocator(const Locator *locator) override;
 
     CPLString GetAttributes(const Attributes *attr);
 };
@@ -234,7 +230,7 @@ class NASReader final : public IGMLReader
     void PushState(GMLReadState *);
 
     bool IsFeatureElement(const char *pszElement);
-    bool IsAttributeElement(const char *pszElement);
+    bool IsAttributeElement(const char *pszElement, const Attributes &attrs);
 
     void PushFeature(const char *pszElement, const Attributes &attrs);
 
@@ -249,10 +245,10 @@ class NASReader final : public IGMLReader
         return m_bStopParsing;
     }
 
-    void CheckForFID(const Attributes &attrs, char **ppszCurField);
-    void CheckForRID(const Attributes &attrs, char **ppszCurField);
-    void CheckForRelations(const char *pszElement, const Attributes &attrs,
-                           char **ppszCurField);
+    int GetAttributeElementIndex(const char *pszElement, int nLen,
+                                 const char *pszAttrKey);
+    void DealWithAttributes(const char *pszElement, int nLenName,
+                            const Attributes &attrs);
 
     virtual const char *GetGlobalSRSName() override
     {

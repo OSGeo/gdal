@@ -41,8 +41,7 @@ static const char *const apszURNNames[] = {
 /************************************************************************/
 
 OGRNASDataSource::OGRNASDataSource()
-    : papoLayers(nullptr), nLayers(0), poRelationLayer(nullptr),
-      pszName(nullptr), poReader(nullptr)
+    : papoLayers(nullptr), nLayers(0), pszName(nullptr), poReader(nullptr)
 {
 }
 
@@ -193,25 +192,6 @@ int OGRNASDataSource::Open(const char *pszNewName)
         nLayers++;
     }
 
-    if (EQUAL(CPLGetConfigOption("NAS_NO_RELATION_LAYER", "NO"), "NO") ||
-        poReader->GetClassCount() == 0)
-    {
-        poRelationLayer = new OGRNASRelationLayer(this);
-
-        // keep delete the last layer
-        if (nLayers > 0 && EQUAL(papoLayers[nLayers - 1]->GetName(), "Delete"))
-        {
-            papoLayers[nLayers] = papoLayers[nLayers - 1];
-            papoLayers[nLayers - 1] = poRelationLayer;
-        }
-        else
-        {
-            papoLayers[nLayers] = poRelationLayer;
-        }
-
-        nLayers++;
-    }
-
     return TRUE;
 }
 
@@ -349,47 +329,4 @@ OGRLayer *OGRNASDataSource::GetLayer(int iLayer)
 int OGRNASDataSource::TestCapability(const char * /* pszCap */)
 {
     return FALSE;
-}
-
-/************************************************************************/
-/*                         PopulateRelations()                          */
-/************************************************************************/
-
-void OGRNASDataSource::PopulateRelations()
-
-{
-    poReader->ResetReading();
-
-    GMLFeature *poFeature = nullptr;
-    while ((poFeature = poReader->NextFeature()) != nullptr)
-    {
-        char **papszOBProperties = poFeature->GetOBProperties();
-
-        for (int i = 0;
-             papszOBProperties != nullptr && papszOBProperties[i] != nullptr;
-             i++)
-        {
-            const int nGMLIdIndex =
-                poFeature->GetClass()->GetPropertyIndex("gml_id");
-            const GMLProperty *psGMLId =
-                (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex)
-                                   : nullptr;
-            char *l_pszName = nullptr;
-            const char *pszValue =
-                CPLParseNameValue(papszOBProperties[i], &l_pszName);
-
-            if (l_pszName != nullptr && pszValue != nullptr &&
-                STARTS_WITH_CI(pszValue, "urn:adv:oid:") &&
-                psGMLId != nullptr && psGMLId->nSubProperties == 1)
-            {
-                poRelationLayer->AddRelation(psGMLId->papszSubProperties[0],
-                                             l_pszName, pszValue + 12);
-            }
-            CPLFree(l_pszName);
-        }
-
-        delete poFeature;
-    }
-
-    poRelationLayer->MarkRelationsPopulated();
 }

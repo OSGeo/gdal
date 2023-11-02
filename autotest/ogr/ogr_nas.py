@@ -80,7 +80,7 @@ def test_ogr_nas_1():
         ds = ogr.Open("tmp/cache/BKG_NAS_Peine.xml")
     assert ds is not None, "could not open dataset"
 
-    assert ds.GetLayerCount() == 41, "did not get expected layer count"
+    assert ds.GetLayerCount() == 40, "did not get expected layer count"
 
     lyr = ds.GetLayerByName("AX_Wohnplatz")
     feat = lyr.GetNextFeature()
@@ -140,7 +140,7 @@ def test_ogr_nas_2():
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
         ds = ogr.Open("tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml")
 
-    assert ds.GetLayerCount() == 85, "did not get expected layer count"
+    assert ds.GetLayerCount() == 84, "did not get expected layer count"
 
     lyr = ds.GetLayerByName("AX_Flurstueck")
 
@@ -170,7 +170,7 @@ def test_ogr_nas_3():
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
         ds = ogr.Open("data/nas/empty_nas.xml")
 
-    assert ds.GetLayerCount() == 1, "did not get expected layer count"
+    assert ds.GetLayerCount() == 0, "did not get expected layer count"
 
     ds = None
 
@@ -190,7 +190,7 @@ def test_ogr_nas_4():
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
         ds = ogr.Open("data/nas/delete_nas.xml")
 
-    assert ds.GetLayerCount() == 2, "did not get expected layer count"
+    assert ds.GetLayerCount() == 1, "did not get expected layer count"
 
     del_lyr = ds.GetLayerByName("Delete")
 
@@ -233,7 +233,7 @@ def test_ogr_nas_5():
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
         ds = ogr.Open("data/nas/replace_nas.xml")
 
-    assert ds.GetLayerCount() == 3, "did not get expected layer count"
+    assert ds.GetLayerCount() == 2, "did not get expected layer count"
 
     # Check the delete operation created for the replace
 
