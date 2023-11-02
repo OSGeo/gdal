@@ -451,7 +451,8 @@ def test_ogr_basic_10():
         test_cli_utilities.get_test_ogrsf_path() + " -all_drivers"
     )
 
-    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+    assert "INFO" in ret
+    assert "ERROR" not in ret, ret
 
 
 ###############################################################################
