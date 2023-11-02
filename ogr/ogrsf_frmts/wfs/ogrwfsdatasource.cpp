@@ -2230,6 +2230,9 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
                                        const char *pszDialect)
 
 {
+    while (*pszSQLCommand && isspace(*pszSQLCommand))
+        ++pszSQLCommand;
+
     swq_select_parse_options oParseOptions;
     oParseOptions.poCustomFuncRegistrar = WFSGetCustomFuncRegistrar();
 
