@@ -136,7 +136,9 @@ def pytest_collection_modifyitems(config, items):
         for mark in item.iter_markers("require_driver"):
             driver_name = mark.args[0]
             if driver_name not in drivers_checked:
-                driver = gdal.GetDriverByName(driver_name)
+                driver = gdal.GetDriverByName(driver_name) or ogr.GetDriverByName(
+                    driver_name
+                )
                 drivers_checked[driver_name] = bool(driver)
                 if driver:
                     # Store the driver on gdaltest module so test functions can assume it's there.

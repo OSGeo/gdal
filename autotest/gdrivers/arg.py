@@ -37,6 +37,11 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = [
+    pytest.mark.require_driver("ARG"),
+    pytest.mark.random_order(disabled=True),
+]
+
 # given fmt and nodata, encodes a value as bytes
 
 ###############################################################################

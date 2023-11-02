@@ -38,6 +38,7 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
+pytestmark = pytest.mark.require_driver("MongoDBv3")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")

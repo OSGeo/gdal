@@ -700,26 +700,7 @@ def test_ogr_mvt_errors():
 
 
 @pytest.mark.require_curl()
-def test_ogr_mvt_http_start():
-
-    gdaltest.webserver_process = None
-    gdaltest.webserver_port = 0
-
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-
-###############################################################################
-
-
-@pytest.mark.require_curl()
-def test_ogr_mvt_http():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_ogr_mvt_http(server):
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -744,7 +725,7 @@ def test_ogr_mvt_http():
         open("data/mvt/linestring/0/0/0.pbf", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f is not None
@@ -756,7 +737,7 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
         with pytest.raises(Exception):
-            ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+            ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
 
     # No metadata file, but tiles
     handler = webserver.SequentialHandler()
@@ -777,7 +758,7 @@ def test_ogr_mvt_http():
         open("data/mvt/linestring/0/0/0.pbf", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f is not None
@@ -794,7 +775,7 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception):
             lyr.GetNextFeature()
@@ -812,7 +793,7 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception):
             lyr.GetNextFeature()
@@ -827,24 +808,10 @@ def test_ogr_mvt_http():
         open("data/mvt/linestring/0/0/0.pbf", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open(
-            "MVT:http://127.0.0.1:%d/linestring/0/0/0.pbf" % gdaltest.webserver_port
-        )
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0/0/0.pbf" % server.port)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f is not None
-
-
-###############################################################################
-
-
-@pytest.mark.require_curl()
-def test_ogr_mvt_http_stop():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################

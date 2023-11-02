@@ -109,6 +109,10 @@ class GDALTest(object):
         self.driver = None
         self.drivername = drivername
         self.filename = filename
+
+        if isinstance(self.filename, os.PathLike):
+            self.filename = str(self.filename)
+
         self.filename_absolute = filename_absolute
         self.band = band
         self.chksum = chksum
