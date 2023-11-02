@@ -2732,16 +2732,17 @@ static void SplitLineStringAtDateline(OGRGeometryCollection *poMulti,
                 const double dfRatio = (180 - dfX1) / (dfX2 - dfX1);
                 const double dfY = dfRatio * dfY2 + (1 - dfRatio) * dfY1;
                 const double dfZ = dfRatio * dfZ2 + (1 - dfRatio) * dfZ1;
-                if (bIs3D)
-                    poNewLS->addPoint(
-                        poLS->getX(i - 1) + dfXOffset > dfLeftBorderX ? 180
-                                                                      : -180,
-                        dfY, dfZ);
-                else
-                    poNewLS->addPoint(
-                        poLS->getX(i - 1) + dfXOffset > dfLeftBorderX ? 180
-                                                                      : -180,
-                        dfY);
+                double dfNewX =
+                    poLS->getX(i - 1) + dfXOffset > dfLeftBorderX ? 180 : -180;
+                if (poNewLS->getNumPoints() == 0 ||
+                    poNewLS->getX(poNewLS->getNumPoints() - 1) != dfNewX ||
+                    poNewLS->getY(poNewLS->getNumPoints() - 1) != dfY)
+                {
+                    if (bIs3D)
+                        poNewLS->addPoint(dfNewX, dfY, dfZ);
+                    else
+                        poNewLS->addPoint(dfNewX, dfY);
+                }
                 poNewLS = new OGRLineString();
                 if (bIs3D)
                     poNewLS->addPoint(
@@ -2968,24 +2969,12 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
                 {
                     double dfMaxSmallDiffLong = 0;
                     bool bHasBigDiff = false;
-                    // If one longitude is at +/- 180deg, assume that the
-                    // geometry was properly cut.
-                    bool bLongFoundAtPlusMinus180 =
-                        poLS->getNumPoints() > 0 &&
-                        (fabs(fabs(poLS->getX(0)) - 180) < 1e-10);
                     // Detect big gaps in longitude.
-                    for (int i = 1;
-                         !bLongFoundAtPlusMinus180 && i < poLS->getNumPoints();
-                         i++)
+                    for (int i = 1; i < poLS->getNumPoints(); i++)
                     {
                         const double dfPrevX = poLS->getX(i - 1) + dfXOffset;
                         const double dfX = poLS->getX(i) + dfXOffset;
                         const double dfDiffLong = fabs(dfX - dfPrevX);
-                        if (fabs(fabs(poLS->getX(i)) - 180) < 1e-10)
-                        {
-                            bLongFoundAtPlusMinus180 = true;
-                            break;
-                        }
 
                         if (dfDiffLong > dfDiffSpace &&
                             ((dfX > dfLeftBorderX &&
@@ -2995,8 +2984,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
                         else if (dfDiffLong > dfMaxSmallDiffLong)
                             dfMaxSmallDiffLong = dfDiffLong;
                     }
-                    if (bHasBigDiff && !bLongFoundAtPlusMinus180 &&
-                        dfMaxSmallDiffLong < dfDateLineOffset)
+                    if (bHasBigDiff && dfMaxSmallDiffLong < dfDateLineOffset)
                     {
                         if (eGeomType == wkbLineString)
                             bSplitLineStringAtDateline = true;
@@ -3006,10 +2994,13 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
                             CPLError(CE_Failure, CPLE_NotSupported,
                                      "GEOS support not enabled.");
 #else
-                            bWrapDateline = true;
                             poDupGeom = poGeom->clone();
                             FixPolygonCoordinatesAtDateLine(
                                 poDupGeom->toPolygon(), dfDateLineOffset);
+
+                            OGREnvelope sEnvelope;
+                            poDupGeom->getEnvelope(&sEnvelope);
+                            bWrapDateline = sEnvelope.MinX != sEnvelope.MaxX;
 #endif
                         }
                     }
