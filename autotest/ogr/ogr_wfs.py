@@ -3729,7 +3729,8 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 ###############################################################################
 
 
-def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
+@pytest.mark.parametrize("numberMatched", ["unknown", "4"])
+def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming, numberMatched):
 
     with gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -3841,7 +3842,7 @@ def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
 """,
     ), gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2",
-        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        f"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3849,7 +3850,7 @@ xmlns:ows="http://www.opengis.net/ows"
 xmlns:xlink="http://www.w3.org/1999/xlink"
 xmlns:gml="http://www.opengis.net/gml"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-numberMatched="unknown" numberReturned="2"
+numberMatched="{numberMatched}" numberReturned="2"
 timeStamp="2015-04-17T14:14:24.859Z"
 xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
                     http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
@@ -3877,7 +3878,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 """,
     ), gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=2&COUNT=2",
-        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        f"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3885,7 +3886,7 @@ xmlns:ows="http://www.opengis.net/ows"
 xmlns:xlink="http://www.w3.org/1999/xlink"
 xmlns:gml="http://www.opengis.net/gml"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-numberMatched="unknown" numberReturned="1"
+numberMatched="{numberMatched}" numberReturned="1"
 timeStamp="2015-04-17T14:14:24.859Z"
 xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
                     http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
@@ -3897,7 +3898,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
 """,
     ), gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=3&COUNT=2",
-        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        f"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3905,7 +3906,7 @@ xmlns:ows="http://www.opengis.net/ows"
 xmlns:xlink="http://www.w3.org/1999/xlink"
 xmlns:gml="http://www.opengis.net/gml"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-numberMatched="unknown" numberReturned="1"
+numberMatched="{numberMatched}" numberReturned="1"
 timeStamp="2015-04-17T14:14:24.859Z"
 xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
                     http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
@@ -3915,28 +3916,15 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
     </gml:featureMembers>
 </wfs:FeatureCollection>
 """,
-    ), gdaltest.tempfile(
-        "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=4&COUNT=2",
-        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
-xmlns:ogc="http://www.opengis.net/ogc"
-xmlns:foo="http://foo"
-xmlns:wfs="http://www.opengis.net/wfs"
-xmlns:ows="http://www.opengis.net/ows"
-xmlns:xlink="http://www.w3.org/1999/xlink"
-xmlns:gml="http://www.opengis.net/gml"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-numberMatched="unknown" numberReturned="0"
-timeStamp="2015-04-17T14:14:24.859Z"
-xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
-                    http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
-</wfs:FeatureCollection>
-""",
     ):
         f = lyr.GetNextFeature()
         assert f is not None
         if f.gml_id != "my_layer.1":
             f.DumpReadable()
             pytest.fail()
+
+        if numberMatched != "unknown":
+            assert lyr.GetFeatureCount() == 4
 
         f = lyr.GetNextFeature()
         assert f is not None
@@ -3956,15 +3944,33 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
             f.DumpReadable()
             pytest.fail()
 
-        f = lyr.GetNextFeature()
-        if f is not None:
-            f.DumpReadable()
-            pytest.fail()
-
-        # if lyr.GetFeatureCount() != 3:
-        #    gdaltest.post_reason('fail')
-        #    print(lyr.GetFeatureCount())
-        #    return 'fail'
+        if numberMatched == "unknown":
+            with gdaltest.tempfile(
+                "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=4&COUNT=2",
+                """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberMatched="unknown" numberReturned="0"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+</wfs:FeatureCollection>
+""",
+            ):
+                f = lyr.GetNextFeature()
+                if f is not None:
+                    f.DumpReadable()
+                    pytest.fail()
+        else:
+            f = lyr.GetNextFeature()
+            if f is not None:
+                f.DumpReadable()
+                pytest.fail()
 
 
 def test_ogr_wfs_vsimem_wfs200_with_no_primary_key(with_and_without_streaming):

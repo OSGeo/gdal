@@ -99,6 +99,7 @@ class OGRWFSLayer final : public OGRLayer
     CPLString osGeometryColumnName;
     OGRwkbGeometryType eGeomType;
     GIntBig nFeatures;
+    GIntBig m_nNumberMatched = -1;
     bool m_bHasReadAtLeastOneFeatureInThisPage = false;
     bool bCountFeaturesInGetNextFeature;
 
