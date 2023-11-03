@@ -2334,6 +2334,10 @@ def test_ogr_geojson_56():
         except AssertionError as e:
             pytest.fail("At geom %d: %s" % (i, str(e)))
 
+
+@pytest.mark.require_geos
+def test_ogr_geojson_56_world():
+
     # Test polygon geometry that covers the whole world (#2833)
     gdal.VectorTranslate(
         "/vsimem/out.json",
@@ -2359,6 +2363,10 @@ def test_ogr_geojson_56():
 """
     assert json.loads(got) == json.loads(expected)
 
+
+@pytest.mark.require_geos
+def test_ogr_geojson_56_next():
+
     # Test polygon geometry with one longitude at +/- 180deg (#6250)
     gdal.VectorTranslate(
         "/vsimem/out.json",
@@ -2376,13 +2384,23 @@ def test_ogr_geojson_56():
     gdal.Unlink("/vsimem/out.json")
     expected = """{
 "type": "FeatureCollection",
+"bbox": [ 179.5000000, 40.0000000, 180.0000000, 50.0000000 ],
 "features": [
-{ "type": "Feature", "properties": { }, "bbox": [ -180.0, 40.0, 179.5, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ -180.0, 50.0 ], [ -180.0, 45.0 ], [ 179.5, 40.0 ], [ 179.5, 50.0 ], [ -180.0, 50.0 ] ] ] } }
-],
-"bbox": [ -180.0000000, 40.0000000, 179.5000000, 50.0000000 ]
+{ "type": "Feature", "properties": { }, "bbox": [ 179.5, 40.0, 180.0, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 179.5, 40.0 ], [ 180.0, 45.0 ], [ 180.0, 50.0 ], [ 179.5, 50.0 ], [ 179.5, 40.0 ] ] ] } }
+]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+    expected_older_geos = """{
+"type": "FeatureCollection",
+"bbox": [ 179.5000000, 40.0000000, 180.0000000, 50.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 179.5, 40.0, 180.0, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 180.0, 45.0 ], [ 180.0, 50.0 ], [ 179.5, 50.0 ], [ 179.5, 40.0 ], [ 180.0, 45.0 ] ] ] } }
+]
+}
+"""
+    assert json.loads(got) == json.loads(expected) or json.loads(got) == json.loads(
+        expected_older_geos
+    )
 
     # Test WRAPDATELINE=NO (#6250)
     gdal.VectorTranslate(
@@ -2400,6 +2418,56 @@ def test_ogr_geojson_56():
 { "type": "Feature", "properties": { }, "bbox": [ -179.0, 50.0, 179.0, 50.0 ], "geometry": { "type": "LineString", "coordinates": [ [ 179.0, 50.0 ], [ -179.0, 50.0 ] ] } }
 ],
 "bbox": [ -179.0000000, 50.0000000, 179.0000000, 50.0000000 ]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+    # Test line geometry with one longitude at +/- 180deg (#8645)
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"LineString","coordinates":[[-179,0],[-180,0],[179,0]]} }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
+    )
+
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [ 179.0000000, 0.0000000, -179.0000000, 0.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 179.0, 0.0, -179.0, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ -179.0, 0.0 ], [ -180.0, 0.0 ] ], [ [ 180.0, 0.0 ], [ 179.0, 0.0 ] ] ] } }
+]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+    # Test line geometry with one longitude at +/- 180deg (#8645)
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"LineString","coordinates":[[179,0],[180,0],[-179,0]]} }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
+    )
+
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [ 179.0000000, 0.0000000, -179.0000000, 0.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 179.0, 0.0, -179.0, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 0.0 ], [ 180.0, 0.0 ] ], [ [ -180.0, 0.0 ], [ -179.0, 0.0 ] ] ] } }
+]
 }
 """
     assert json.loads(got) == json.loads(expected)
