@@ -1056,6 +1056,141 @@ def test_grib_grib2_write_projections():
 
 
 ###############################################################################
+# Test GRIB2 write support for projections
+
+
+@pytest.mark.require_proj(9, 0)
+def test_grib_grib2_write_rotated_lat_lon_from_projstring(tmp_vsimem):
+
+    filename = str(
+        tmp_vsimem / "test_grib_grib2_write_rotated_lat_lon_from_projstring.grb2"
+    )
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        "+proj=ob_tran +o_proj=longlat +o_lon_p=-10 +o_lat_p=39.25 +lon_0=18 +a=6367470 +rf=594.313048347956 +no_defs"
+    )
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    gdal.Translate(filename, src_ds, format="GRIB")
+    assert gdal.VSIStatL(filename + ".aux.xml") is None
+    out_ds = gdal.Open(filename)
+    assert (
+        out_ds.GetSpatialRef().ExportToProj4()
+        == "+proj=ob_tran +o_proj=longlat +o_lon_p=-10 +o_lat_p=39.25 +lon_0=18 +a=6367470 +rf=594.313048347956 +no_defs"
+    )
+    assert out_ds.GetGeoTransform() == pytest.approx([2, 1, 0, 49, 0, -1])
+
+
+###############################################################################
+# Test GRIB2 write support for projections
+
+
+@pytest.mark.require_proj(9, 0)
+def test_grib_grib2_write_rotated_lat_lon_from_grib_convention(tmp_vsimem):
+
+    filename = str(
+        tmp_vsimem / "test_grib_grib2_write_rotated_lat_lon_from_grib_convention.grb2"
+    )
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        """GEOGCRS["Coordinate System imported from GRIB file",
+    BASEGEOGCRS["Coordinate System imported from GRIB file",
+        DATUM["unnamed",
+            ELLIPSOID["Spheroid imported from GRIB file",6367470,594.313048347956,
+                LENGTHUNIT["metre",1,
+                    ID["EPSG",9001]]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]],
+    DERIVINGCONVERSION["Pole rotation (GRIB convention)",
+        METHOD["Pole rotation (GRIB convention)"],
+        PARAMETER["Latitude of the southern pole (GRIB convention)",-39.25,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        PARAMETER["Longitude of the southern pole (GRIB convention)",18,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        PARAMETER["Axis rotation (GRIB convention)",10,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]],
+    CS[ellipsoidal,2],
+        AXIS["latitude",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        AXIS["longitude",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]]"""
+    )
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    gdal.Translate(filename, src_ds, format="GRIB")
+    assert gdal.VSIStatL(filename + ".aux.xml") is None
+    out_ds = gdal.Open(filename)
+    assert (
+        out_ds.GetSpatialRef().ExportToProj4()
+        == "+proj=ob_tran +o_proj=longlat +o_lon_p=-10 +o_lat_p=39.25 +lon_0=18 +a=6367470 +rf=594.313048347956 +no_defs"
+    )
+
+
+###############################################################################
+# Test GRIB2 write support for projections
+
+
+@pytest.mark.require_proj(9, 0)
+def test_grib_grib2_write_rotated_lat_lon_from_netcdf_convention(tmp_vsimem):
+
+    filename = str(
+        tmp_vsimem / "test_grib_grib2_write_rotated_lat_lon_from_netcdf_convention.grb2"
+    )
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        """GEOGCRS["Rotated_pole",
+    BASEGEOGCRS["unknown",
+        DATUM["unnamed",
+            ELLIPSOID["Spheroid",6367470,594.313048347956,
+                LENGTHUNIT["metre",1,
+                    ID["EPSG",9001]]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]],
+    DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",
+        METHOD["Pole rotation (netCDF CF convention)"],
+        PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        PARAMETER["North pole grid longitude (netCDF CF convention)",-10,
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]],
+    CS[ellipsoidal,2],
+        AXIS["latitude",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]],
+        AXIS["longitude",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433,
+                ID["EPSG",9122]]]]"""
+    )
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    gdal.Translate(filename, src_ds, format="GRIB")
+    assert gdal.VSIStatL(filename + ".aux.xml") is None
+    out_ds = gdal.Open(filename)
+    assert (
+        out_ds.GetSpatialRef().ExportToProj4()
+        == "+proj=ob_tran +o_proj=longlat +o_lon_p=-10 +o_lat_p=39.25 +lon_0=18 +a=6367470 +rf=594.313048347956 +no_defs"
+    )
+
+
+###############################################################################
 
 
 def _grib_read_section(filename, sect_num_to_read):

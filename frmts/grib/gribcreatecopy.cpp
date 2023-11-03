@@ -175,6 +175,8 @@ class GRIB2Section3Writer
     bool WriteEllipsoidAndRasterSize();
 
     bool WriteGeographic();
+    bool WriteRotatedLatLon(double dfLatSouthernPole, double dfLonSouthernPole,
+                            double dfAxisRotation);
     bool WriteMercator1SP();
     bool WriteMercator2SP(OGRSpatialReference *poSRS = nullptr);
     bool WriteTransverseMercator();
@@ -343,6 +345,68 @@ bool GRIB2Section3Writer::WriteGeographic()
     WriteScaled(adfGeoTransform[1], dfAngUnit);
     WriteScaled(fabs(adfGeoTransform[5]), dfAngUnit);
     WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+
+    return true;
+}
+
+/************************************************************************/
+/*                         WriteRotatedLatLon()                         */
+/************************************************************************/
+
+bool GRIB2Section3Writer::WriteRotatedLatLon(double dfLatSouthernPole,
+                                             double dfLonSouthernPole,
+                                             double dfAxisRotation)
+{
+    WriteUInt16(fp, GS3_ROTATED_LATLON);  // Grid template number
+
+    WriteEllipsoidAndRasterSize();
+
+    if (dfLLX < 0 &&
+        CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")))
+    {
+        CPLDebug("GRIB", "Source longitude range is %lf to %lf", dfLLX, dfURX);
+        double dfOrigLLX = dfLLX;
+        dfLLX = Lon180to360(dfLLX);
+        dfURX = Lon180to360(dfURX);
+
+        if (dfLLX > dfURX)
+        {
+            if (fabs(360 - poSrcDS->GetRasterXSize() * adfGeoTransform[1]) <
+                adfGeoTransform[1] / 4)
+            {
+                // Find the first row number east of the prime meridian
+                nSplitAndSwapColumn = static_cast<int>(
+                    ceil((0 - dfOrigLLX) / adfGeoTransform[1]));
+                CPLDebug("GRIB",
+                         "Rewrapping around the prime meridian at column %d",
+                         nSplitAndSwapColumn);
+                dfLLX = 0;
+                dfURX = 360 - adfGeoTransform[1];
+            }
+            else
+            {
+                CPLDebug("GRIB", "Writing a GRIB with 0-360 longitudes "
+                                 "crossing the prime meridian");
+            }
+        }
+        CPLDebug("GRIB", "Target longitudes range is %lf %lf", dfLLX, dfURX);
+    }
+
+    WriteUInt32(fp, 0);  // Basic angle. 0 equivalent of 1
+    // Subdivisions of basic angle used. ~0 equivalent of 10^6
+    WriteUInt32(fp, GRIB2MISSING_u4);
+    const double dfAngUnit = 1e-6;
+    WriteScaled(dfLLY, dfAngUnit);
+    WriteScaled(dfLLX, dfAngUnit);
+    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
+    WriteScaled(dfURY, dfAngUnit);
+    WriteScaled(dfURX, dfAngUnit);
+    WriteScaled(adfGeoTransform[1], dfAngUnit);
+    WriteScaled(fabs(adfGeoTransform[5]), dfAngUnit);
+    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    WriteScaled(dfLatSouthernPole, dfAngUnit);
+    WriteScaled(Lon180to360(dfLonSouthernPole), dfAngUnit);
+    WriteScaled(dfAxisRotation, dfAngUnit);
 
     return true;
 }
@@ -642,7 +706,87 @@ bool GRIB2Section3Writer::Write()
     bool bRet = false;
     if (oSRS.IsGeographic())
     {
-        bRet = WriteGeographic();
+        if (oSRS.IsDerivedGeographic())
+        {
+            const OGR_SRSNode *poConversion =
+                oSRS.GetAttrNode("DERIVINGCONVERSION");
+            const char *pszMethod = oSRS.GetAttrValue("METHOD");
+            if (!pszMethod)
+                pszMethod = "unknown";
+
+            std::map<std::string, double> oValMap;
+            if (poConversion)
+            {
+                for (int iChild = 0; iChild < poConversion->GetChildCount();
+                     iChild++)
+                {
+                    const OGR_SRSNode *poNode = poConversion->GetChild(iChild);
+                    if (!EQUAL(poNode->GetValue(), "PARAMETER") ||
+                        poNode->GetChildCount() <= 2)
+                        continue;
+                    const char *pszParamStr = poNode->GetChild(0)->GetValue();
+                    const char *pszParamVal = poNode->GetChild(1)->GetValue();
+                    oValMap[pszParamStr] = CPLAtof(pszParamVal);
+                }
+            }
+
+            if (poConversion && EQUAL(pszMethod, "PROJ ob_tran o_proj=longlat"))
+            {
+                const double dfLon0 = oValMap["lon_0"];
+                const double dfLonp = oValMap["o_lon_p"];
+                const double dfLatp = oValMap["o_lat_p"];
+
+                const double dfLatSouthernPole = -dfLatp;
+                const double dfLonSouthernPole = dfLon0;
+                const double dfAxisRotation = -dfLonp;
+                bRet = WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
+                                          dfAxisRotation);
+            }
+            else if (poConversion &&
+                     EQUAL(pszMethod, "Pole rotation (netCDF CF convention)"))
+            {
+                const double dfGridNorthPoleLat =
+                    oValMap["Grid north pole latitude (netCDF CF convention)"];
+                const double dfGridNorthPoleLong =
+                    oValMap["Grid north pole longitude (netCDF CF convention)"];
+                const double dfNorthPoleGridLong =
+                    oValMap["North pole grid longitude (netCDF CF convention)"];
+
+                const double dfLon0 = 180.0 + dfGridNorthPoleLong;
+                const double dfLonp = dfNorthPoleGridLong;
+                const double dfLatp = dfGridNorthPoleLat;
+
+                const double dfLatSouthernPole = -dfLatp;
+                const double dfLonSouthernPole = dfLon0;
+                const double dfAxisRotation = -dfLonp;
+                bRet = WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
+                                          dfAxisRotation);
+            }
+            else if (poConversion &&
+                     EQUAL(pszMethod, "Pole rotation (GRIB convention)"))
+            {
+                const double dfLatSouthernPole =
+                    oValMap["Latitude of the southern pole (GRIB convention)"];
+                const double dfLonSouthernPole =
+                    oValMap["Longitude of the southern pole (GRIB convention)"];
+                const double dfAxisRotation =
+                    oValMap["Axis rotation (GRIB convention)"];
+
+                bRet = WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
+                                          dfAxisRotation);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported method for DerivedGeographicCRS: %s",
+                         pszMethod);
+                return false;
+            }
+        }
+        else
+        {
+            bRet = WriteGeographic();
+        }
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_MERCATOR_1SP))
     {
