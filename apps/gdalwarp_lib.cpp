@@ -1126,6 +1126,14 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                GDALDatasetH *pahSrcDS,
                                GDALWarpAppOptions *psOptions)
 {
+    if (!(psOptions->dfMinX == 0 && psOptions->dfMinY == 0 &&
+          psOptions->dfMaxX == 0 && psOptions->dfMaxY == 0 &&
+          psOptions->dfXRes == 0 && psOptions->dfYRes == 0 &&
+          psOptions->nForcePixels == 0 && psOptions->nForceLines == 0))
+    {
+        return true;
+    }
+
     GDALWarpAppOptions oClonedOptions(*psOptions);
     oClonedOptions.bQuiet = true;
     CPLString osTmpFilename;
@@ -1154,11 +1162,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     double dfMinY = 0;
     double dfMaxX = 0;
     double dfMaxY = 0;
-    if (psOptions->dfMinX == 0 && psOptions->dfMinY == 0 &&
-        psOptions->dfMaxX == 0 && psOptions->dfMaxY == 0 &&
-        psOptions->dfXRes == 0 && psOptions->dfYRes == 0 &&
-        psOptions->nForcePixels == 0 && psOptions->nForceLines == 0 &&
-        COGGetWarpingCharacteristics(GDALDataset::FromHandle(hTmpDS),
+    if (COGGetWarpingCharacteristics(GDALDataset::FromHandle(hTmpDS),
                                      aosCreateOptions.List(), osResampling,
                                      osTargetSRS, nXSize, nYSize, dfMinX,
                                      dfMinY, dfMaxX, dfMaxY))
