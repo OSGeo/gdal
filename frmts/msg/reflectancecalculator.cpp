@@ -38,7 +38,7 @@ using namespace std;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-ReflectanceCalculator::ReflectanceCalculator(std::string sTimeStamp,
+ReflectanceCalculator::ReflectanceCalculator(const std::string &sTimeStamp,
                                              double rRTOA)
     : m_rRTOA(rRTOA)
 {

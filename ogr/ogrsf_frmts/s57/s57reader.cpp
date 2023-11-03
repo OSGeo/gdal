@@ -3401,7 +3401,7 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
         CPLString extension;
         CPLString dirname;
 
-        if (1 <= iUpdate && iUpdate < 10)
+        if (iUpdate < 10)
         {
             char buf[2];
             CPLsnprintf(buf, sizeof(buf), "%i", iUpdate);

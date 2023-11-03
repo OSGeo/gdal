@@ -248,6 +248,7 @@ static void ApplyErrorHandler(CPLErrorContext *psCtx, CPLErr eErrClass,
                     psCtx->psHandlerStack = psNode;
                     CPLErrorHandlerNode *psNewCurNode = psCtx->psHandlerStack;
                     psNode->pfnHandler(eErrClass, err_no, pszMessage);
+                    // cppcheck-suppress knownConditionTrueFalse
                     if (psNewCurNode != psCtx->psHandlerStack)
                     {
                         fprintf(stderr,

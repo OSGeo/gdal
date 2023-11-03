@@ -13986,9 +13986,9 @@ CPLErr netCDFDataset::FilterVars(
 // resulting from the scanning of a NetCDF (or group) ID.
 CPLErr netCDFDataset::CreateGrpVectorLayers(
     int nCdfId, CPLString osFeatureType,
-    std::vector<int> anPotentialVectorVarID,
-    std::map<int, int> oMapDimIdToCount, int nVarXId, int nVarYId, int nVarZId,
-    int nProfileDimId, int nParentIndexVarID, bool bKeepRasters)
+    const std::vector<int> &anPotentialVectorVarID,
+    const std::map<int, int> &oMapDimIdToCount, int nVarXId, int nVarYId,
+    int nVarZId, int nProfileDimId, int nParentIndexVarID, bool bKeepRasters)
 {
     char *pszGroupName = nullptr;
     NCDFGetGroupFullName(nCdfId, &pszGroupName);

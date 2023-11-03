@@ -1935,12 +1935,15 @@ CPLErr HFABand::GetPCT(int *pnColors, double **ppadfRed, double **ppadfGreen,
 /*      Set the PCT information for this band.                          */
 /************************************************************************/
 
-CPLErr HFABand::SetPCT(int nColors, double *padfRed, double *padfGreen,
-                       double *padfBlue, double *padfAlpha)
+CPLErr HFABand::SetPCT(int nColors, const double *padfRed,
+                       const double *padfGreen, const double *padfBlue,
+                       const double *padfAlpha)
 
 {
     static const char *const apszColNames[4] = {"Red", "Green", "Blue",
                                                 "Opacity"};
+    const double *const apadfValues[] = {padfRed, padfGreen, padfBlue,
+                                         padfAlpha};
     HFAEntry *poEdsc_Table;
 
     // Do we need to try and clear any existing color table?
@@ -1990,17 +1993,8 @@ CPLErr HFABand::SetPCT(int nColors, double *padfRed, double *padfGreen,
     // Process each color component.
     for (int iColumn = 0; iColumn < 4; iColumn++)
     {
-        double *padfValues = nullptr;
+        const double *padfValues = apadfValues[iColumn];
         const char *pszName = apszColNames[iColumn];
-
-        if (iColumn == 0)
-            padfValues = padfRed;
-        else if (iColumn == 1)
-            padfValues = padfGreen;
-        else if (iColumn == 2)
-            padfValues = padfBlue;
-        else if (iColumn == 3)
-            padfValues = padfAlpha;
 
         // Create the Edsc_Column.
         HFAEntry *poEdsc_Column = poEdsc_Table->GetNamedChild(pszName);

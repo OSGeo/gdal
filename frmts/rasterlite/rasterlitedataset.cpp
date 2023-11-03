@@ -500,9 +500,7 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                             {
                                 const GDALColorEntry *psEntry =
                                     poTileCT->GetColorEntry(i);
-                                if (iOtherBand == 1)
-                                    abyCT[i] = static_cast<GByte>(psEntry->c1);
-                                else if (iOtherBand == 2)
+                                if (iOtherBand == 2)
                                     abyCT[i] = static_cast<GByte>(psEntry->c2);
                                 else
                                     abyCT[i] = static_cast<GByte>(psEntry->c3);
