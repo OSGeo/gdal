@@ -1134,6 +1134,17 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3(
     if (filename == nullptr)
         filename = "-";
 
+    // The filename and comment length must fit in 16 bits.
+    if ((filename != nullptr) && (strlen(filename) > 0xffff))
+        return ZIP_PARAMERROR;
+    if ((comment != nullptr) && (strlen(comment) > 0xffff))
+        return ZIP_PARAMERROR;
+    // The extra field length must fit in 16 bits. If the member also requires
+    // a Zip64 extra block, that will also need to fit within that 16-bit
+    // length, but that will be checked for later.
+    if ((size_extrafield_local > 0xffff) || (size_extrafield_global > 0xffff))
+        return ZIP_PARAMERROR;
+
     if (comment == nullptr)
         size_comment = 0;
     else
