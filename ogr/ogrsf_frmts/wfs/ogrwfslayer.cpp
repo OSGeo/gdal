@@ -767,7 +767,8 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
     {
         const char *pszNumberMatched = strstr(pszData, " numberMatched=\"");
         if (!pszNumberMatched)
-            pszNumberMatched = strstr(pszData, "\nnumberMatched=\"");
+            pszNumberMatched = strstr(pszData, "\n"
+                                               "numberMatched=\"");
         if (pszNumberMatched)
         {
             pszNumberMatched += strlen(" numberMatched=\"");
