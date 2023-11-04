@@ -522,7 +522,7 @@ std::shared_ptr<GDALMDArray> TileDBGroup::CreateMDArray(
     if (!EnsureOpenAs(TILEDB_WRITE))
         return nullptr;
 
-    auto poSelf = m_pSelf.lock();
+    auto poSelf = std::dynamic_pointer_cast<TileDBGroup>(m_pSelf.lock());
     CPLAssert(poSelf);
     auto poArray =
         TileDBArray::CreateOnDisk(m_poSharedResource, poSelf, osName,
