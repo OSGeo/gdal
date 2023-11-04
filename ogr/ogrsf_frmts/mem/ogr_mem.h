@@ -46,27 +46,27 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 {
     CPL_DISALLOW_COPY_ASSIGN(OGRMemLayer)
 
-    typedef std::map<GIntBig, OGRFeature *> FeatureMap;
-    typedef std::map<GIntBig, OGRFeature *>::iterator FeatureIterator;
+    typedef std::map<GIntBig, std::unique_ptr<OGRFeature>> FeatureMap;
+    typedef FeatureMap::iterator FeatureIterator;
 
-    OGRFeatureDefn *m_poFeatureDefn;
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
 
-    GIntBig m_nFeatureCount;
+    GIntBig m_nFeatureCount = 0;
 
-    GIntBig m_iNextReadFID;
-    GIntBig m_nMaxFeatureCount;  // Max size of papoFeatures.
-    OGRFeature **m_papoFeatures;
-    bool m_bHasHoles;
+    GIntBig m_iNextReadFID = 0;
+    GIntBig m_nMaxFeatureCount = 0;  // Max size of papoFeatures.
+    OGRFeature **m_papoFeatures = nullptr;
+    bool m_bHasHoles = false;
 
-    FeatureMap m_oMapFeatures;
-    FeatureIterator m_oMapFeaturesIter;
+    FeatureMap m_oMapFeatures{};
+    FeatureIterator m_oMapFeaturesIter{};
 
-    GIntBig m_iNextCreateFID;
+    GIntBig m_iNextCreateFID = 0;
 
-    bool m_bUpdatable;
-    bool m_bAdvertizeUTF8;
+    bool m_bUpdatable = true;
+    bool m_bAdvertizeUTF8 = false;
 
-    bool m_bUpdated;
+    bool m_bUpdated = false;
 
     std::string m_osFIDColumn{};
 
