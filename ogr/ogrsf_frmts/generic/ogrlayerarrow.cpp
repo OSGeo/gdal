@@ -5481,7 +5481,6 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                 }
             }
         }
-
         return CreateField(&oFieldDefn) == OGRERR_NONE;
     };
 
@@ -5703,8 +5702,11 @@ struct FieldInfo
         OFTMaxType;  // OGR data type that would best match the Arrow type
     OGRFieldType eTargetFieldType =
         OFTMaxType;  // actual OGR data type of the layer field
+    // OGR data type of the feature passed to FillFeature()
+    OGRFieldType eSetFeatureFieldType = OFTMaxType;
     bool bIsGeomCol = false;
     bool bUseDictionary = false;
+    bool bUseStringOptim = false;
     int nWidthInBytes = 0;  // only used for decimal fields
     int nPrecision = 0;     // only used for decimal fields
     int nScale = 0;         // only used for decimal fields
@@ -5790,6 +5792,7 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
             {
                 if (strcmp(format, sType.arrowType) == 0)
                 {
+                    sInfo.bUseStringOptim = sType.eType == OFTString;
                     sInfo.eNominalFieldType = sType.eType;
                     if (eOGRType == sInfo.eNominalFieldType)
                     {
@@ -6181,14 +6184,7 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
     const int iArrowIdx = iArrowIdxInOut;
     ++iArrowIdxInOut;
 
-    if (asFieldInfo[iArrowIdx].bUseDictionary)
-    {
-        if (schema->dictionary->format[0] != ARROW_LETTER_STRING &&
-            schema->dictionary->format[0] != ARROW_LETTER_LARGE_STRING)
-            return 0;
-    }
-    else if (format[0] != ARROW_LETTER_STRING &&
-             format[0] != ARROW_LETTER_LARGE_STRING)
+    if (!asFieldInfo[iArrowIdx].bUseStringOptim)
         return 0;
 
     const uint8_t *pabyValidity =
@@ -6219,13 +6215,13 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         iFeature = static_cast<size_t>(nDictIdx);
     }
 
-    if (format[0] == ARROW_LETTER_STRING)
+    if (IsString(format))
     {
         const auto *panOffsets =
             static_cast<const uint32_t *>(array->buffers[1]) + array->offset;
         return 1 + (panOffsets[iFeature + 1] - panOffsets[iFeature]);
     }
-    else if (format[0] == ARROW_LETTER_LARGE_STRING)
+    else if (IsLargeString(format))
     {
         const auto *panOffsets =
             static_cast<const uint64_t *>(array->buffers[1]) + array->offset;
@@ -6253,20 +6249,29 @@ inline static void FillField(const struct ArrowArray *array, int iOGRFieldIdx,
 /************************************************************************/
 
 template <typename OffsetType>
-inline static void FillFieldString(const struct ArrowArray *array,
-                                   int iOGRFieldIdx, size_t iFeature,
-                                   std::string &osWorkingBuffer,
-                                   OGRFeature &oFeature)
+inline static void
+FillFieldString(const struct ArrowArray *array, int iOGRFieldIdx,
+                size_t iFeature, int iArrowIdx,
+                const std::vector<FieldInfo> &asFieldInfo,
+                std::string &osWorkingBuffer, OGRFeature &oFeature)
 {
     const auto *panOffsets =
         static_cast<const OffsetType *>(array->buffers[1]) + array->offset;
     const char *pszStr = static_cast<const char *>(array->buffers[2]);
-    oFeature.SetFieldSameTypeUnsafe(iOGRFieldIdx, &osWorkingBuffer[0] +
-                                                      osWorkingBuffer.size());
     const size_t nLen =
         static_cast<size_t>(panOffsets[iFeature + 1] - panOffsets[iFeature]);
-    osWorkingBuffer.append(pszStr + panOffsets[iFeature], nLen);
-    osWorkingBuffer.push_back(0);  // append null character
+    if (asFieldInfo[iArrowIdx].bUseStringOptim)
+    {
+        oFeature.SetFieldSameTypeUnsafe(
+            iOGRFieldIdx, &osWorkingBuffer[0] + osWorkingBuffer.size());
+        osWorkingBuffer.append(pszStr + panOffsets[iFeature], nLen);
+        osWorkingBuffer.push_back(0);  // append null character
+    }
+    else
+    {
+        const std::string osTmp(pszStr, nLen);
+        oFeature.SetField(iOGRFieldIdx, osTmp.c_str());
+    }
 }
 
 /************************************************************************/
@@ -6354,6 +6359,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
     const int iArrowIdx = iArrowIdxInOut;
     ++iArrowIdxInOut;
     const int iOGRFieldIdx = asFieldInfo[iArrowIdx].iOGRFieldIdx;
+
+    if (asFieldInfo[iArrowIdx].bUseDictionary)
+    {
+        format = schema->dictionary->format;
+    }
+
     if (array->null_count != 0)
     {
         const uint8_t *pabyValidity =
@@ -6366,20 +6377,26 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
                 oFeature.SetFID(OGRNullFID);
             else if (asFieldInfo[iArrowIdx].bIsGeomCol)
                 oFeature.SetGeomFieldDirectly(iOGRFieldIdx, nullptr);
-            else if (asFieldInfo[iArrowIdx].eNominalFieldType == OFTString &&
-                     (IsMap(format) || IsList(format)))
+            else if (asFieldInfo[iArrowIdx].eSetFeatureFieldType == OFTString)
             {
                 OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIdx);
-                if (IsValidField(psField))
+                if (!asFieldInfo[iArrowIdx].bUseStringOptim)
                 {
-                    CPLFree(psField->String);
+                    if (IsValidField(psField))
+                    {
+                        CPLFree(psField->String);
+                        OGR_RawField_SetNull(psField);
+                    }
+                }
+                else
+                {
                     OGR_RawField_SetNull(psField);
                 }
             }
             else
             {
                 OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIdx);
-                switch (asFieldInfo[iArrowIdx].eTargetFieldType)
+                switch (asFieldInfo[iArrowIdx].eSetFeatureFieldType)
                 {
                     case OFTRealList:
                     case OFTIntegerList:
@@ -6422,7 +6439,6 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
         }
         array = dictArray;
         schema = schema->dictionary;
-        format = schema->format;
         iFeature = static_cast<size_t>(nDictIdx);
     }
 
@@ -6508,14 +6524,14 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
     }
     else if (IsString(format))
     {
-        FillFieldString<uint32_t>(array, iOGRFieldIdx, iFeature,
-                                  osWorkingBuffer, oFeature);
+        FillFieldString<uint32_t>(array, iOGRFieldIdx, iFeature, iArrowIdx,
+                                  asFieldInfo, osWorkingBuffer, oFeature);
         return true;
     }
     else if (IsLargeString(format))
     {
-        FillFieldString<uint64_t>(array, iOGRFieldIdx, iFeature,
-                                  osWorkingBuffer, oFeature);
+        FillFieldString<uint64_t>(array, iOGRFieldIdx, iFeature, iArrowIdx,
+                                  asFieldInfo, osWorkingBuffer, oFeature);
         return true;
     }
     else if (IsBinary(format))
@@ -6798,7 +6814,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     }
 
     std::map<int, int> oMapOGRFieldIndexToFieldInfoIndex;
-    std::vector<bool> abIsRegularStringField(poLayerDefn->GetFieldCount(), 0);
+    std::vector<bool> abUseStringOptim(poLayerDefn->GetFieldCount(), false);
     for (int i = 0; i < static_cast<int>(asFieldInfo.size()); ++i)
     {
         if (asFieldInfo[i].iOGRFieldIdx >= 0 && !asFieldInfo[i].bIsGeomCol)
@@ -6807,11 +6823,8 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                           asFieldInfo[i].iOGRFieldIdx) ==
                       oMapOGRFieldIndexToFieldInfoIndex.end());
             oMapOGRFieldIndexToFieldInfoIndex[asFieldInfo[i].iOGRFieldIdx] = i;
-            if (asFieldInfo[i].eNominalFieldType == OFTString &&
-                !IsMap(asFieldInfo[i].format) && !IsList(asFieldInfo[i].format))
-            {
-                abIsRegularStringField[asFieldInfo[i].iOGRFieldIdx] = true;
-            }
+            abUseStringOptim[asFieldInfo[i].iOGRFieldIdx] =
+                asFieldInfo[i].bUseStringOptim;
         }
     }
 
@@ -6846,6 +6859,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                 oIter == oMapOGRFieldIndexToFieldInfoIndex.end()
                     ? poSrcFieldDefn->GetType()
                     : asFieldInfo[oIter->second].eNominalFieldType);
+            if (oIter != oMapOGRFieldIndexToFieldInfoIndex.end())
+                asFieldInfo[oIter->second].eSetFeatureFieldType =
+                    asFieldInfo[oIter->second].eNominalFieldType;
             oLayerDefnTmp.AddFieldDefn(&oFieldDefn);
         }
         for (int i = 0; i < poLayerDefn->GetGeomFieldCount(); ++i)
@@ -6853,17 +6869,20 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             oLayerDefnTmp.AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
         }
     }
+    else
+    {
+        for (auto &sFieldInfo : asFieldInfo)
+            sFieldInfo.eSetFeatureFieldType = sFieldInfo.eTargetFieldType;
+    }
 
     struct FeatureCleaner
     {
         OGRFeature &m_oFeature;
-        const std::vector<bool> &m_abIsRegularStringField;
+        const std::vector<bool> &m_abUseStringOptim;
 
-        explicit FeatureCleaner(
-            OGRFeature &oFeature,
-            const std::vector<bool> &abIsRegularStringFieldIn)
-            : m_oFeature(oFeature),
-              m_abIsRegularStringField(abIsRegularStringFieldIn)
+        explicit FeatureCleaner(OGRFeature &oFeature,
+                                const std::vector<bool> &abUseStringOptim)
+            : m_oFeature(oFeature), m_abUseStringOptim(abUseStringOptim)
         {
         }
 
@@ -6876,7 +6895,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             const int nFieldCount = poLayerDefn->GetFieldCount();
             for (int i = 0; i < nFieldCount; ++i)
             {
-                if (m_abIsRegularStringField[i])
+                if (m_abUseStringOptim[i])
                 {
                     if (m_oFeature.IsFieldSetAndNotNullUnsafe(i))
                         m_oFeature.SetFieldSameTypeUnsafe(
@@ -6887,7 +6906,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     };
 
     OGRFeature oFeature(bFallbackTypesUsed ? &oLayerDefnTmp : poLayerDefn);
-    FeatureCleaner oCleaner(oFeature, abIsRegularStringField);
+    FeatureCleaner oCleaner(oFeature, abUseStringOptim);
     OGRFeature oFeatureTarget(poLayerDefn);
     OGRFeature *const poFeatureTarget =
         bFallbackTypesUsed ? &oFeatureTarget : &oFeature;
