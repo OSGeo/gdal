@@ -374,7 +374,14 @@ bool GDALSubsetArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     std::vector<size_t> anStackIter(nDims);
     std::vector<GUInt64> anStackArrayIdx(nDims);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     size_t iDim = 0;
 lbl_next_depth:
     if (iDim == nDims)
