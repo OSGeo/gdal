@@ -7998,6 +7998,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
             m_poFillArrowArray.reset();
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot start worker thread: %s", e.what());
+            out_array->release(out_array);
             return ENOMEM;
         }
     }
@@ -8008,6 +8009,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
                      m_poFillArrowArray->osErrorMsg.c_str());
+            out_array->release(out_array);
             return EIO;
         }
 
