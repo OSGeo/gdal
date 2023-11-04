@@ -28,6 +28,10 @@ GDAL 3.7.x bugfix release.
 
 See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.8/MIGRATION_GUIDE.TXT)
 
+## New optional dependencies
+
+* libaec to enable CCSDS Adaptive Entropy Coding decompression in the GRIB driver
+
 ## Build
 
 * emit better error message when a raster driver cannot be enabled
@@ -210,7 +214,7 @@ ESRIC driver:
 
 GRIB driver:
  * allow opening files with invalid Earth of shape (#7811)
- * implement CCSDS Adaptive Entropy Coding decompression (template 5.42) (#8092)
+ * implement CCSDS Adaptive Entropy Coding decompression. Requires libaec (#8092)
  * only emit a CPLDebug() instead of a message on stdout when there are trailing
    bytes (#8574)
  * GRIB2 SRS writing: add support for Rotated LatLong grids (fixes #8536)
