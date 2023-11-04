@@ -869,14 +869,16 @@ def test_wms_19():
 # Test reading data via MRF/LERC
 
 
+@pytest.mark.require_creation_option("MRF", "LERC")
 def test_wms_data_via_mrf():
 
-    mrfdrv = gdal.GetDriverByName("MRF")
+    srv = "http://astro.arcgis.com"
+    if gdaltest.gdalurlopen(srv, timeout=5) is None:
+        pytest.skip(reason=f"{srv} is down")
 
-    if mrfdrv is None or "LERC" not in mrfdrv.GetMetadataItem("DMD_CREATIONOPTIONLIST"):
-        pytest.skip()
-
-    url = "http://astro.arcgis.com/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    url = (
+        srv + "/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    )
     dstemplate = """<GDAL_WMS>
 <Service name="TMS" ServerUrl="{url}"/>
 <DataWindow SizeX="513" SizeY="513"/>
