@@ -494,6 +494,7 @@ def test_ogr_mem_16(mem_ds):
     f.SetFID(100000000)
     ret = lyr.CreateFeature(f)
     assert ret == 0
+    assert lyr.GetNextFeature() is None
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(100000000)
