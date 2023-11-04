@@ -2940,7 +2940,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
 
             // Naive heuristics... Place to improve.
 #ifdef HAVE_GEOS
-            OGRGeometry *poDupGeom = nullptr;
+            std::unique_ptr<OGRGeometry> poDupGeom;
             bool bWrapDateline = false;
 #endif
 
@@ -2994,7 +2994,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
                             CPLError(CE_Failure, CPLE_NotSupported,
                                      "GEOS support not enabled.");
 #else
-                            poDupGeom = poGeom->clone();
+                            poDupGeom.reset(poGeom->clone());
                             FixPolygonCoordinatesAtDateLine(
                                 poDupGeom->toPolygon(), dfDateLineOffset);
 
@@ -3016,7 +3016,8 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
 #ifdef HAVE_GEOS
             else if (bWrapDateline)
             {
-                const OGRGeometry *poWorkGeom = poDupGeom ? poDupGeom : poGeom;
+                const OGRGeometry *poWorkGeom =
+                    poDupGeom ? poDupGeom.get() : poGeom;
                 OGRGeometry *poRectangle1 = nullptr;
                 OGRGeometry *poRectangle2 = nullptr;
                 const char *pszWKT1 =
@@ -3032,25 +3033,24 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
                                                   &poRectangle1);
                 OGRGeometryFactory::createFromWkt(pszWKT2, nullptr,
                                                   &poRectangle2);
-                OGRGeometry *poGeom1 = poWorkGeom->Intersection(poRectangle1);
-                OGRGeometry *poGeom2 = poWorkGeom->Intersection(poRectangle2);
+                auto poGeom1 = std::unique_ptr<OGRGeometry>(
+                    poWorkGeom->Intersection(poRectangle1));
+                auto poGeom2 = std::unique_ptr<OGRGeometry>(
+                    poWorkGeom->Intersection(poRectangle2));
                 delete poRectangle1;
                 delete poRectangle2;
 
                 if (poGeom1 != nullptr && poGeom2 != nullptr)
                 {
-                    AddSimpleGeomToMulti(poMulti, poGeom1);
-                    AddOffsetToLon(poGeom2, !bAroundMinus180 ? -360.0 : 360.0);
-                    AddSimpleGeomToMulti(poMulti, poGeom2);
+                    AddSimpleGeomToMulti(poMulti, poGeom1.get());
+                    AddOffsetToLon(poGeom2.get(),
+                                   !bAroundMinus180 ? -360.0 : 360.0);
+                    AddSimpleGeomToMulti(poMulti, poGeom2.get());
                 }
                 else
                 {
                     AddSimpleGeomToMulti(poMulti, poGeom);
                 }
-
-                delete poGeom1;
-                delete poGeom2;
-                delete poDupGeom;
             }
 #endif
             else
