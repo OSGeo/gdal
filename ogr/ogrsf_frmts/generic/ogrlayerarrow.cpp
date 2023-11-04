@@ -6808,8 +6808,10 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                       oMapOGRFieldIndexToFieldInfoIndex.end());
             oMapOGRFieldIndexToFieldInfoIndex[asFieldInfo[i].iOGRFieldIdx] = i;
             if (asFieldInfo[i].eNominalFieldType == OFTString &&
-                !IsMap(asFieldInfo[i].format))
+                !IsMap(asFieldInfo[i].format) && !IsList(asFieldInfo[i].format))
+            {
                 abIsRegularStringField[asFieldInfo[i].iOGRFieldIdx] = true;
+            }
         }
     }
 
