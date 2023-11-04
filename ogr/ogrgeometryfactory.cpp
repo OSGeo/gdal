@@ -2839,17 +2839,22 @@ static void AddOffsetToLon(OGRGeometry *poGeom, double dfOffset)
     switch (wkbFlatten(poGeom->getGeometryType()))
     {
         case wkbPolygon:
+        {
+            for (auto poSubGeom : *(poGeom->toPolygon()))
+            {
+                AddOffsetToLon(poSubGeom, dfOffset);
+            }
+
+            break;
+        }
+
         case wkbMultiLineString:
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            const int nSubGeomCount =
-                OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom));
-            for (int iGeom = 0; iGeom < nSubGeomCount; iGeom++)
+            for (auto poSubGeom : *(poGeom->toGeometryCollection()))
             {
-                AddOffsetToLon(OGRGeometry::FromHandle(OGR_G_GetGeometryRef(
-                                   OGRGeometry::ToHandle(poGeom), iGeom)),
-                               dfOffset);
+                AddOffsetToLon(poSubGeom, dfOffset);
             }
 
             break;
@@ -2898,15 +2903,8 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection *poMulti,
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            // TODO(schwehr): Can the const_casts be removed or improved?
-            const int nSubGeomCount = OGR_G_GetGeometryCount(
-                OGRGeometry::ToHandle(const_cast<OGRGeometry *>(poGeom)));
-            for (int iGeom = 0; iGeom < nSubGeomCount; iGeom++)
+            for (const auto poSubGeom : *(poGeom->toGeometryCollection()))
             {
-                OGRGeometry *poSubGeom = OGRGeometry::FromHandle(
-                    OGR_G_GetGeometryRef(OGRGeometry::ToHandle(
-                                             const_cast<OGRGeometry *>(poGeom)),
-                                         iGeom));
                 AddSimpleGeomToMulti(poMulti, poSubGeom);
             }
             break;
@@ -3064,15 +3062,8 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            // TODO(schwehr): Fix the const_cast.
-            int nSubGeomCount = OGR_G_GetGeometryCount(
-                OGRGeometry::ToHandle(const_cast<OGRGeometry *>(poGeom)));
-            for (int iGeom = 0; iGeom < nSubGeomCount; iGeom++)
+            for (const auto poSubGeom : *(poGeom->toGeometryCollection()))
             {
-                OGRGeometry *poSubGeom = OGRGeometry::FromHandle(
-                    OGR_G_GetGeometryRef(OGRGeometry::ToHandle(
-                                             const_cast<OGRGeometry *>(poGeom)),
-                                         iGeom));
                 CutGeometryOnDateLineAndAddToMulti(poMulti, poSubGeom,
                                                    dfDateLineOffset);
             }
