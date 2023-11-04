@@ -116,7 +116,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd mongocxx \
     && mkdir build_cmake \
     && cd build_cmake \
-    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DBSONCXX_POLY_USE_BOOST=ON -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
     && make -j$(nproc) \
     && make install DESTDIR="/build_thirdparty" \
     && make install \
@@ -126,7 +126,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.17.3
+ARG TILEDB_VERSION=2.17.4
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -137,7 +137,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd tiledb \
     && mkdir build_cmake \
     && cd build_cmake \
-    && ../bootstrap --prefix=/usr --disable-werror \
+    && ../bootstrap --prefix=/usr --disable-werror --disable-tests \
     && make -j$(nproc) \
     && make install-tiledb DESTDIR="/build_thirdparty" \
     && make install-tiledb \
