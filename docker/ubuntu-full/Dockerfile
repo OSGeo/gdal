@@ -227,11 +227,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Arrow C++
-ARG ARROW_VERSION=13.0.0-1
+ARG ARROW_VERSION=14.0.0-1
 # ARROW_SOVERSION to be updated in the "Build final image" section too
-ARG ARROW_SOVERSION=1300
+ARG ARROW_SOVERSION=1400
 RUN . /buildscripts/bh-set-envvars.sh \
-    && if test "${TARGET_ARCH}" = "arm64"; then export ARROW_VERSION=11.0.0-1; export ARROW_SOVERSION=1100; fi \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
@@ -289,7 +288,7 @@ FROM $TARGET_BASE_IMAGE as runner
 USER root
 RUN date
 ARG JAVA_VERSION=17
-ARG ARROW_SOVERSION=1300
+ARG ARROW_SOVERSION=1400
 
 # Update distro
 RUN apt-get update -y && apt-get upgrade -y \
@@ -297,7 +296,6 @@ RUN apt-get update -y && apt-get upgrade -y \
 
 ARG TARGET_ARCH=
 RUN apt-get update \
-    && if test "${TARGET_ARCH}" = "arm64"; then export ARROW_VERSION=11.0.0-1; export ARROW_SOVERSION=1100; fi \
 # PROJ dependencies
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libsqlite3-0 libtiff5 libcurl4 \
