@@ -4194,7 +4194,7 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                     out_schema->children[j] = out_schema->children[i];
                 out_schema->n_children = j;
 
-                OverrideArrowRelease(m_poArrowDS, out_schema);
+                out_schema->release(out_schema);
 
                 return EIO;
             }
