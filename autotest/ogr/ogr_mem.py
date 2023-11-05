@@ -1041,6 +1041,18 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
     assert [x for x in batches[0]["OGC_FID"]] == [0, 1]
     assert [x for x in batches[1]["OGC_FID"]] == [2]
 
+    if limited_field not in ("binary_fixed_width", "geometry"):
+        lyr.SetNextByIndex(2)
+        with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "99", thread_local=False):
+            stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+            with gdaltest.enable_exceptions():
+                with pytest.raises(
+                    Exception,
+                    match="Too large feature: not even a single feature can be returned",
+                ):
+                    batches = [batch for batch in stream]
+                    assert len(batches) == 0
+
     with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "1", thread_local=False):
 
         stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
