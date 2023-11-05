@@ -1744,6 +1744,10 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     /*      drivers.                                                        */
     /* -------------------------------------------------------------------- */
     //! @cond Doxygen_Suppress
+
+    // Not aimed at being used outside of GDAL. Use GDALDataset::Open() instead
+    GDALDataset *Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions);
+
     GDALDataset *(*pfnOpen)(GDALOpenInfo *) = nullptr;
 
     GDALDataset *(*pfnCreate)(const char *pszName, int nXSize, int nYSize,

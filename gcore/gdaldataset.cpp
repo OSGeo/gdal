@@ -3623,10 +3623,9 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         sAntiRecursion.nRecLevel++;
         sAntiRecursion.aosDatasetNamesWithFlags.insert(dsCtxt);
 
-        GDALDataset *poDS = nullptr;
+        GDALDataset *poDS = poDriver->Open(&oOpenInfo, false);
         if (poDriver->pfnOpen != nullptr)
         {
-            poDS = poDriver->pfnOpen(&oOpenInfo);
             // If we couldn't determine for sure with Identify() (it returned
             // -1), but Open() managed to open the file, post validate options.
             if (poDS != nullptr &&
@@ -3635,10 +3634,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             {
                 GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
             }
-        }
-        else if (poDriver->pfnOpenWithDriverArg != nullptr)
-        {
-            poDS = poDriver->pfnOpenWithDriverArg(poDriver, &oOpenInfo);
         }
 
         sAntiRecursion.nRecLevel--;
@@ -3650,35 +3645,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 
         if (poDS != nullptr)
         {
-            poDS->nOpenFlags = nOpenFlags;
-
-            if (strlen(poDS->GetDescription()) == 0)
-                poDS->SetDescription(pszFilename);
-
-            if (poDS->poDriver == nullptr)
-                poDS->poDriver = poDriver;
-
             if (poDS->papszOpenOptions == nullptr)
             {
                 poDS->papszOpenOptions = papszOpenOptionsCleaned;
                 papszOpenOptionsCleaned = nullptr;
-            }
-
-            if (!(nOpenFlags & GDAL_OF_INTERNAL))
-            {
-                if (CPLGetPID() != GDALGetResponsiblePIDForCurrentThread())
-                    CPLDebug("GDAL",
-                             "GDALOpen(%s, this=%p) succeeds as "
-                             "%s (pid=%d, responsiblePID=%d).",
-                             pszFilename, poDS, poDriver->GetDescription(),
-                             static_cast<int>(CPLGetPID()),
-                             static_cast<int>(
-                                 GDALGetResponsiblePIDForCurrentThread()));
-                else
-                    CPLDebug("GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
-                             pszFilename, poDS, poDriver->GetDescription());
-
-                poDS->AddToDatasetOpenList();
             }
 
             // Deal with generic OVERVIEW_LEVEL open option, unless it is
