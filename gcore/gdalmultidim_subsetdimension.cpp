@@ -349,8 +349,15 @@ bool GDALSubsetArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         std::copy_n(arrayStep, nDims, newArrayStep.data());
         GUInt64 arrayIdx = arrayStartIdx[0];
         GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         newCount[0] = 1;
         newArrayStep[0] = 1;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (size_t i = 0; i < count[0]; ++i)
         {
             newArrayStartIdx[0] =
