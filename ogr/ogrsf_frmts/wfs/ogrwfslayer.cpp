@@ -797,61 +797,59 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
             osStreamingName += osURL;
         }
 
-        GDALDataset *poOutputDS = nullptr;
-
         /* Try streaming when the output format is GML and that we have a .xsd
          */
         /* that we are able to understand */
         CPLString osXSDFileName =
             CPLSPrintf("/vsimem/tempwfs_%p/file.xsd", this);
         VSIStatBufL sBuf;
+        GDALDriver *poDriver = nullptr;
         if ((osOutputFormat.empty() ||
              osOutputFormat.ifind("GML") != std::string::npos) &&
             VSIStatL(osXSDFileName, &sBuf) == 0 &&
-            GDALGetDriverByName("GML") != nullptr)
+            (poDriver = GDALDriver::FromHandle(GDALGetDriverByName("GML"))) !=
+                nullptr &&
+            poDriver->pfnOpen)
         {
             bStreamingDS = true;
-            const char *const apszAllowedDrivers[] = {"GML", nullptr};
-            const char *apszOpenOptions[6] = {nullptr, nullptr, nullptr,
-                                              nullptr, nullptr, nullptr};
-            apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
-            apszOpenOptions[1] = CPLSPrintf(
-                "EMPTY_AS_NULL=%s", poDS->IsEmptyAsNull() ? "YES" : "NO");
-            int iGMLOOIdex = 2;
+            CPLStringList aosOptions;
+            aosOptions.SetNameValue("XSD", osXSDFileName.c_str());
+            aosOptions.SetNameValue("EMPTY_AS_NULL",
+                                    poDS->IsEmptyAsNull() ? "YES" : "NO");
             if (CPLGetConfigOption("GML_INVERT_AXIS_ORDER_IF_LAT_LONG",
                                    nullptr) == nullptr)
             {
-                apszOpenOptions[iGMLOOIdex] =
-                    CPLSPrintf("INVERT_AXIS_ORDER_IF_LAT_LONG=%s",
-                               poDS->InvertAxisOrderIfLatLong() ? "YES" : "NO");
-                iGMLOOIdex++;
+                aosOptions.SetNameValue(
+                    "INVERT_AXIS_ORDER_IF_LAT_LONG",
+                    poDS->InvertAxisOrderIfLatLong() ? "YES" : "NO");
             }
             if (CPLGetConfigOption("GML_CONSIDER_EPSG_AS_URN", nullptr) ==
                 nullptr)
             {
-                apszOpenOptions[iGMLOOIdex] =
-                    CPLSPrintf("CONSIDER_EPSG_AS_URN=%s",
-                               poDS->GetConsiderEPSGAsURN().c_str());
-                iGMLOOIdex++;
+                aosOptions.SetNameValue("CONSIDER_EPSG_AS_URN",
+                                        poDS->GetConsiderEPSGAsURN().c_str());
             }
             if (CPLGetConfigOption("GML_EXPOSE_GML_ID", nullptr) == nullptr)
             {
-                apszOpenOptions[iGMLOOIdex] = CPLSPrintf(
-                    "EXPOSE_GML_ID=%s", poDS->ExposeGMLId() ? "YES" : "NO");
+                aosOptions.SetNameValue("EXPOSE_GML_ID",
+                                        poDS->ExposeGMLId() ? "YES" : "NO");
                 // iGMLOOIdex ++;
             }
 
             GDALOpenInfo oOpenInfo(osStreamingName.c_str(), GA_ReadOnly);
-            if (oOpenInfo.nHeaderBytes)
+            if (oOpenInfo.nHeaderBytes && m_nNumberMatched < 0)
             {
                 const char *pszData =
                     reinterpret_cast<const char *>(oOpenInfo.pabyHeader);
                 ReadNumberMatched(pszData);
             }
+            oOpenInfo.papszOpenOptions = aosOptions.List();
 
-            poOutputDS = (GDALDataset *)GDALOpenEx(
-                osStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
-                apszOpenOptions, nullptr);
+            auto poOutputDS = poDriver->Open(&oOpenInfo, true);
+            if (poOutputDS)
+            {
+                return poOutputDS;
+            }
         }
         /* Try streaming when the output format is FlatGeobuf */
         else if ((osOutputFormat.empty() ||
@@ -867,18 +865,12 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
                                           apszAllowedDrivers, nullptr, nullptr);
             if (poFlatGeobuf_DS)
             {
-                bStreamingDS = true;
                 return poFlatGeobuf_DS;
             }
         }
         else
         {
             bStreamingDS = false;
-        }
-
-        if (poOutputDS)
-        {
-            return poOutputDS;
         }
 
         if (bStreamingDS)
@@ -1035,7 +1027,8 @@ GDALDataset *OGRWFSLayer::FetchGetFeature(int nRequestMaxFeatures)
         return nullptr;
     }
 
-    ReadNumberMatched(pszData);
+    if (m_nNumberMatched < 0)
+        ReadNumberMatched(pszData);
 
     CPLString osTmpFileName;
 
