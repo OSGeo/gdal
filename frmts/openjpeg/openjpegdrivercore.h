@@ -1,9 +1,11 @@
 /******************************************************************************
  *
- * Author:   Aaron Boxer, <boxerab at protonmail dot com>
+ * Project:  GDAL
+ * Purpose:  OPENJPEG driver
+ * Author:   Even Rouault, <even.rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2023, Grok Image Compression Inc.
+ * Copyright (c) 2023, Even Rouault, <even.rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,31 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "jp2opjlikedataset.h"
-#include "jp2opjlikedataset.cpp"
+#ifndef OPENJPEGDRIVERCORE_H
+#define OPENJPEGDRIVERCORE_H
 
-#include "opjdatasetbase.h"
-#include "openjpegdrivercore.h"
+#include "gdal_priv.h"
 
-/************************************************************************/
-/*                      GDALRegister_JP2OpenJPEG()                      */
-/************************************************************************/
+constexpr const char *DRIVER_NAME = "JP2OpenJPEG";
 
-void GDALRegister_JP2OpenJPEG()
-{
-    if (!GDAL_CHECK_VERSION("JP2OpenJPEG driver"))
-        return;
+void CPL_DLL OPENJPEGDriverSetCommonMetadata(GDALDriver *poDriver);
 
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
-
-    GDALDriver *poDriver = new GDALDriver();
-    OPENJPEGDriverSetCommonMetadata(poDriver);
-
-    poDriver->pfnOpen =
-        JP2OPJLikeDataset<OPJCodecWrapper, JP2OPJDatasetBase>::Open;
-    poDriver->pfnCreateCopy =
-        JP2OPJLikeDataset<OPJCodecWrapper, JP2OPJDatasetBase>::CreateCopy;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+#endif
