@@ -29,6 +29,7 @@
 
 #include "cpl_port.h"
 #include "jp2kakdataset.h"
+#include "jp2kakdrivercore.h"
 
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -50,31 +51,14 @@
 #include <limits>
 #include <vector>
 
-// Before v7.5 Kakadu does not advertise its version well
-// After v7.5 Kakadu has KDU_{MAJOR,MINOR,PATCH}_VERSION defines so it is easier
-// For older releases compile with them manually specified
-#ifndef KDU_MAJOR_VERSION
-#error Compile with eg. -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2 to specify Kakadu library version
-#endif
-
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 5)
 using namespace kdu_core;
 using namespace kdu_supp;
 #endif
 
-#if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
-// Before Kakdu 7.8, kdu_roi_rect was missing from libkdu_aXY
-#define KDU_HAS_ROI_RECT
-#endif
-
 // #define KAKADU_JPX 1
 
 static bool kakadu_initialized = false;
-
-constexpr unsigned char jp2_header[] = {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50,
-                                        0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a};
-
-constexpr unsigned char jpc_header[] = {0xff, 0x4f};
 
 /* -------------------------------------------------------------------- */
 /*      The number of tiles at a time we will push through the          */
@@ -753,58 +737,6 @@ void JP2KAKDataset::KakaduInitialize()
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int JP2KAKDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    // Check header.
-    if (poOpenInfo->nHeaderBytes < static_cast<int>(sizeof(jp2_header)))
-    {
-        if ((STARTS_WITH_CI(poOpenInfo->pszFilename, "http://") ||
-             STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
-             STARTS_WITH_CI(poOpenInfo->pszFilename, "jpip://")) &&
-            EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "jp2"))
-        {
-#ifdef USE_JPIP
-            return TRUE;
-#else
-            return FALSE;
-#endif
-        }
-        else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "J2K_SUBFILE:"))
-            return TRUE;
-        else
-            return FALSE;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Any extension is supported for JP2 files.  Only selected        */
-    /*      extensions are supported for JPC files since the standard       */
-    /*      prefix is so short (two bytes).                                 */
-    /* -------------------------------------------------------------------- */
-    if (memcmp(poOpenInfo->pabyHeader, jp2_header, sizeof(jp2_header)) == 0)
-        return TRUE;
-    else if (memcmp(poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header)) ==
-             0)
-    {
-        const char *const pszExtension =
-            CPLGetExtension(poOpenInfo->pszFilename);
-        if (EQUAL(pszExtension, "jpc") || EQUAL(pszExtension, "j2k") ||
-            EQUAL(pszExtension, "jp2") || EQUAL(pszExtension, "jpx") ||
-            EQUAL(pszExtension, "j2c") || EQUAL(pszExtension, "jhc"))
-            return TRUE;
-
-        // We also want to handle jpc datastreams vis /vsisubfile.
-        if (strstr(poOpenInfo->pszFilename, "vsisubfile") != nullptr)
-            return TRUE;
-    }
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -813,7 +745,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
-    if (!Identify(poOpenInfo))
+    if (!JP2KAKDatasetIdentify(poOpenInfo))
         return nullptr;
 #endif
 
@@ -3193,79 +3125,8 @@ void GDALRegister_JP2KAK()
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("JP2KAK");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_LONGNAME, "JPEG-2000 (based on Kakadu " KDU_CORE_VERSION ")");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jp2kak.html");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Int32 UInt32");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jp2");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2 j2k");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "   <Option name='1BIT_ALPHA_PROMOTION' type='boolean' description="
-        "'Whether a 1-bit alpha channel should be promoted to 8-bit' "
-        "default='YES'/>"
-        "   <Option name='OPEN_REMOTE_GML' type='boolean' description="
-        "'Whether to load remote vector layers referenced by "
-        "a link in a GMLJP2 v2 box' default='NO'/>"
-        "   <Option name='GEOREF_SOURCES' type='string' description="
-        "'Comma separated list made with values "
-        "INTERNAL/GMLJP2/GEOJP2/WORLDFILE/PAM/NONE that describe the priority "
-        "order "
-        "for georeferencing' default='PAM,GEOJP2,GMLJP2,WORLDFILE'/>"
-        "</OpenOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='CODEC' type='string-select' "
-        "default='according to file extension. If unknown, default to JP2'>"
-        "       <Value>JP2</Value>"
-        "       <Value>J2K</Value>"
-        "   </Option>"
-        "   <Option name='QUALITY' type='integer' description="
-        "'0.01-100, 100 is lossless'/>"
-        "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
-        "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
-        "   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
-        "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
-        "   <Option name='GMLJP2V2_DEF' type='string' description="
-        "'Definition file to describe how a GMLJP2 v2 box should be generated. "
-        "If set to YES, a minimal instance will be created'/>"
-        "   <Option name='LAYERS' type='integer'/>"
-#ifdef KDU_HAS_ROI_RECT
-        "   <Option name='ROI' type='string'/>"
-#endif
-        "   <Option name='COMSEG' type='boolean' />"
-        "   <Option name='FLUSH' type='boolean' />"
-        "   <Option name='NBITS' type='int' description="
-        "'BITS (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
-        "   <Option name='RATE' type='string' description='bit-rates separated "
-        "by commas'/>"
-        "   <Option name='Creversible' type='boolean'/>"
-        "   <Option name='Corder' type='string'/>"
-        "   <Option name='Cprecincts' type='string'/>"
-        "   <Option name='Cmodes' type='string'/>"
-        "   <Option name='Clevels' type='string'/>"
-        "   <Option name='ORGgen_plt' type='string'/>"
-        "   <Option name='ORGgen_tlm' type='string'/>"
-        "   <Option name='ORGtparts' type='string'/>"
-        "   <Option name='Qguard' type='integer'/>"
-        "   <Option name='Sprofile' type='string'/>"
-        "   <Option name='Rshift' type='string'/>"
-        "   <Option name='Rlevels' type='string'/>"
-        "   <Option name='Rweight' type='string'/>"
-        "</CreationOptionList>");
-
+    JP2KAKDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = JP2KAKDataset::Open;
-    poDriver->pfnIdentify = JP2KAKDataset::Identify;
     poDriver->pfnCreateCopy = JP2KAKCreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

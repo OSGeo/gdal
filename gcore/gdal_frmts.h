@@ -60,6 +60,7 @@ void CPL_DLL GDALRegister_DDS(void);
 void CPL_DLL GDALRegister_GTA(void);
 void CPL_DLL GDALRegister_JPEG(void);
 void CPL_DLL GDALRegister_JP2KAK(void);
+void DeclareDeferredJP2KAKPlugin(void);
 void CPL_DLL GDALRegister_JPIPKAK(void);
 void CPL_DLL GDALRegister_MEM(void);
 void CPL_DLL GDALRegister_JDEM(void);
