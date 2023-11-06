@@ -124,6 +124,9 @@ void CPL_STDCALL GDALAllRegister()
 {
     auto poDriverManager = GetGDALDriverManager();
 
+#if defined(DEFERRED_ECW_DRIVER)
+    DeclareDeferredECWPlugin();
+#endif
 #if defined(DEFERRED_HDF5_DRIVER)
     DeclareDeferredHDF5Plugin();
 #endif
