@@ -81,6 +81,7 @@ void CPL_DLL GDALRegister_VRT(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
 void CPL_DLL GDALRegister_FAST(void);
 void CPL_DLL GDALRegister_HDF4(void);
+void CPL_DLL DeclareDeferredHDF4Plugin(void);
 void CPL_DLL GDALRegister_HDF4Image(void);
 void CPL_DLL GDALRegister_L1B(void);
 void CPL_DLL GDALRegister_LDF(void);

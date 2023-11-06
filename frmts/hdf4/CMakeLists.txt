@@ -13,8 +13,16 @@ set(_SOURCES
     hdf4imagedataset.cpp
     hdf4multidim.cpp)
 
-add_gdal_driver(TARGET gdal_HDF4 SOURCES ${_SOURCES} PLUGIN_CAPABLE)
+add_gdal_driver(TARGET gdal_HDF4
+                SOURCES ${_SOURCES}
+                CORE_SOURCES hdf4drivercore.cpp
+                PLUGIN_CAPABLE)
 unset(_SOURCES)
+
+if(NOT TARGET gdal_HDF4)
+    return()
+endif()
+
 if (GDAL_ENABLE_DRIVER_HDF4_PLUGIN)
   # When build as plugin, it initialize HDF4Image driver too.
   target_compile_definitions(gdal_HDF4 PRIVATE -DHDF4_PLUGIN)
