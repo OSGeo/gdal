@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Delete all containers from gdal-deps without tags
-      uses: Chizkiyahu/delete-untagged-ghcr-action@v2
+      uses: Chizkiyahu/delete-untagged-ghcr-action@v3
       with:
         token: ${{ secrets.PAT_TOKEN_DELETE_UNTAGGED_CONTAINERS }}
         repository_owner: ${{ github.repository_owner }}
