@@ -401,8 +401,13 @@ class CPL_UNSTABLE_API swq_select
 
     int PushField(swq_expr_node *poExpr, const char *pszAlias = nullptr,
                   int distinct_flag = FALSE);
-    int result_columns = 0;
-    swq_col_def *column_defs = nullptr;
+
+    int result_columns() const
+    {
+        return static_cast<int>(column_defs.size());
+    }
+
+    std::vector<swq_col_def> column_defs{};
     std::vector<swq_summary> column_summary{};
 
     int PushTableDef(const char *pszDataSource, const char *pszTableName,

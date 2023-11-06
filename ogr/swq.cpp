@@ -317,7 +317,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                                  const char *value)
 
 {
-    swq_col_def *def = select_info->column_defs + dest_column;
+    swq_col_def *def = &select_info->column_defs[dest_column];
 
     /* -------------------------------------------------------------------- */
     /*      Do various checking.                                            */
@@ -325,7 +325,8 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
     if (select_info->query_mode == SWQM_RECORDSET)
         return "swq_select_summarize() called on non-summary query.";
 
-    if (dest_column < 0 || dest_column >= select_info->result_columns)
+    if (dest_column < 0 ||
+        dest_column >= static_cast<int>(select_info->column_defs.size()))
         return "dest_column out of range in swq_select_summarize().";
 
     if (def->col_func == SWQCF_NONE && !def->distinct_flag)
@@ -348,8 +349,8 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
     /* -------------------------------------------------------------------- */
     if (select_info->column_summary.empty())
     {
-        select_info->column_summary.resize(select_info->result_columns);
-        for (int i = 0; i < select_info->result_columns; i++)
+        select_info->column_summary.resize(select_info->column_defs.size());
+        for (std::size_t i = 0; i < select_info->column_defs.size(); i++)
         {
             if (def->distinct_flag)
             {
@@ -357,7 +358,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                 if (select_info->order_specs > 0)
                 {
                     CPLAssert(select_info->order_specs == 1);
-                    CPLAssert(select_info->result_columns == 1);
+                    CPLAssert(select_info->column_defs.size() == 1);
                     oComparator.bSortAsc =
                         CPL_TO_BOOL(select_info->order_defs[0].ascending_flag);
                 }
