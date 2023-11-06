@@ -74,9 +74,54 @@ Details
 -------
 
 The main idea if that drivers using the new capability will register a proxy
-driver with a new GDALDriverManager::DeclareDeferredPluginDriver() method.
+driver (of type GDALPluginDriverProxy, or extending it) with a new
+GDALDriverManager::DeclareDeferredPluginDriver() method.
 
-The proxy driver uses the hints provided in the GDALPluginDriverFeatures argument
+.. code-block:: cpp
+
+    /** Proxy for a plugin driver.
+     *
+     * Such proxy must be registered with
+     * GDALDriverManager::DeclareDeferredPluginDriver().
+     *
+     * If the real driver defines any of the following metadata items, the
+     * proxy driver should also define them with the same value:
+     * <ul>
+     * <li>GDAL_DMD_LONGNAME</li>
+     * <li>GDAL_DMD_EXTENSIONS</li>
+     * <li>GDAL_DMD_EXTENSION</li>
+     * <li>GDAL_DCAP_RASTER</li>
+     * <li>GDAL_DCAP_MULTIDIM_RASTER</li>
+     * <li>GDAL_DCAP_VECTOR</li>
+     * <li>GDAL_DCAP_GNM</li>
+     * <li>GDAL_DMD_OPENOPTIONLIST</li>
+     * <li>GDAL_DMD_SUBDATASETS</li>
+     * <li>GDAL_DCAP_MULTIPLE_VECTOR_LAYERS</li>
+     * <li>GDAL_DCAP_NONSPATIAL</li>
+     * </ul>
+     *
+     * The pfnIdentify and pfnGetSubdatasetInfoFunc callbacks, if they are
+     * defined in the real driver, should also be set on the proxy driver.
+     *
+     * Furthermore, the following metadata items must be defined if the real
+     * driver sets the corresponding callback:
+     * <ul>
+     * <li>GDAL_DCAP_OPEN: must be set to YES if the real driver defines pfnOpen</li>
+     * <li>GDAL_DCAP_CREATE: must be set to YES if the real driver defines pfnCreate</li>
+     * <li>GDAL_DCAP_CREATE_MULTIDIMENSIONAL: must be set to YES if the real driver defines pfnCreateMultiDimensional</li>
+     * <li>GDAL_DCAP_CREATECOPY: must be set to YES if the real driver defines pfnCreateCopy</li>
+     * </ul>
+     *
+     * @since 3.9
+     */
+    class GDALPluginDriverProxy : public GDALDriver
+    {
+      public:
+        GDALPluginDriverProxy(const std::string &osPluginFileName);
+    }
+
+
+The proxy driver uses the metadata items that have been set on it
 to declare a minimum set of capabilities (GDAL_DCAP_RASTER, GDAL_DCAP_MULTIDIM_RASTER,
 GDAL_DCAP_VECTOR, GDAL_DCAP_OPEN, etc.) to which it can answer directly, and
 which are the ones used by GDALOpen() to open a dataset. For other metadata items,
@@ -87,95 +132,25 @@ it will fallback to loading the actual driver and forward the requests to it.
 
     /** Declare a driver that will be loaded as a plugin, when actually needed.
      *
-     * @param pszDriverName Driver name, such as returned by GetDescription()
-     * @param pszPluginFileName Plugin filename. e.g "ogr_Parquet.so"
-     * @param oFeatures Driver features
+     * @param poProxyDriver Plugin driver proxy
      *
      * @since 3.9
      */
-    void GDALDriverManager::DeclareDeferredPluginDriver(
-        const char *pszDriverName,
-        const char *pszPluginFileName,
-        const GDALPluginDriverFeatures &oFeatures);
+     void GDALDriverManager::DeclareDeferredPluginDriver(GDALPluginDriverProxy *poProxyDriver);
 
 
-That method will also keep track of pszPluginFileName to avoid automatically
+DeclareDeferredPluginDriver() method will also keep track of the plugin filename to avoid automatically
 loading it in the GDALDriverManager::AutoLoadDrivers() method (that method
 will only load out-of-tree drivers or in-tree drivers that have not been
 converted to use DeclareDeferredPluginDriver()).
 
-
-The GDALPluginDriverFeatures structure is defined below:
-
-.. code-block:: cpp
-
-    /** Data structure used for plugin declaration. */
-    struct CPL_DLL GDALPluginDriverFeatures
-    {
-        /** Identify method. Required for driver with open capabilities.
-         * If the method returns -1 (unknown), the underlying driver will be
-         * loaded by GDALDataset::Open().
-         */
-        int (*pfnIdentify)(GDALOpenInfo *) = nullptr;
-
-        /**
-         * Returns a (possibly null) pointer to the Subdataset informational function
-         * from the subdataset file name.
-         */
-        GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)(const char *pszFileName) =
-            nullptr;
-
-        /** Long name. Must be equal to the value of
-         * GDAL_DMD_LONG_NAME on the underlying driver. */
-        const char *pszLongName = nullptr;
-
-        /** Extensions. Must be equal to the value of
-         * GDAL_DMD_EXTENSIONS on the underlying driver. */
-        const char *pszExtensions = nullptr;
-
-        /** Open option list. Must be equal to the value of
-         * GDAL_DMD_OPENOPTIONLIST on the underlying driver.*/
-        const char *pszOpenOptionList = nullptr;
-
-        /** Whether the driver exposes GDAL_DCAP_RASTER */
-        bool bHasRasterCapabilities = false;
-
-        /** Whether the driver exposes GDAL_DCAP_MULTIDIM_RASTER */
-        bool bHasMultiDimRasterCapabilities = false;
-
-        /** Whether the driver exposes GDAL_DCAP_VECTOR */
-        bool bHasVectorCapabilities = false;
-
-        /** Whether the driver exposes GDAL_DCAP_OPEN */
-        bool bHasOpen = true;
-
-        /** Whether the driver exposes GDAL_DCAP_CREATE */
-        bool bHasCreate = false;
-
-        /** Whether the driver exposes GDAL_DCAP_CREATE_MULTIDIMENSIONAL */
-        bool bHasCreateMultiDimensional = false;
-
-        /** Whether the driver exposes GDAL_DCAP_CREATE_COPY */
-        bool bHasCreateCopy = false;
-
-        /** Whether the driver exposes GDAL_DMD_SUBDATASETS */
-        bool bHasSubdatasets = false;
-
-        /** Whether the driver exposes GDAL_DCAP_MULTIPLE_VECTOR_LAYERS */
-        bool bHasMultipleVectorLayers = false;
-
-        /** Whether the driver exposes GDAL_DCAP_NONSPATIAL */
-        bool bIsNonspatial = false;
-    };
-
-
-The main point is that they provide the Identify() method to the proxy driver.
+The main point is that drivers set the Identify() method on the proxy driver.
 That Identify() method must be compiled in libgdal itself, and thus be
 defined in a C++ file that does not depend on any external library.
 Similarly for the GetSubdatasetInfoFunc() optional method.
 
 When loading the actual driver, the GDALPluginDriverProxy::GetRealDriver()
-method will check that all information set in GDALPluginDriverFeatures is
+method will check that all information set in its metadata is
 consistent with the actual metadata of the underlying driver, and will warn
 when there are differences.
 
@@ -233,16 +208,17 @@ A typical :file:`mydrivercore.h`` header will declare the identify method:
 
     // Used by both DeclareDeferredFOOPlugin() and GDALRegisterFoo()
     constexpr const char* FOO_DRIVER_NAME = "FOO";
-    constexpr const char* FOO_LONG_NAME = "The FOO format";
-    constexpr const char* FOO_EXTENSIONS = "foo";
 
     int CPL_DLL FOODatasetIdentify(GDALOpenInfo* poOpenInfo);
 
+    void CPL_DLL FOODriverSetCommonMetadata(GDALDriver *poDriver);
 
 And :file:`mydrivercore.cpp` will contain the implementation of the identify method,
-as well as a DeclareDeferredXXXPlugin() method that will be called by
-GDALAllRegister() when the driver is built as a plugin (the PLUGIN_FILENAME
-macro is automatically set by the CMake scripts with the filename of the
+a ``FOODriverSetCommonMetadata()`` method (with most of the content of the normal
+driver registration method, except for function pointers such as pfnOpen, pfnCreate,
+pfnCreateCopy or pfnCreateMultiDimensional), as well as a ``DeclareDeferredXXXPlugin()``
+method that will be called by GDALAllRegister() when the driver is built as a plugin
+(the PLUGIN_FILENAME macro is automatically set by the CMake scripts with the filename of the
 plugin, e.g. "gdal_FOO.so"):
 
 .. code-block:: cpp
@@ -253,6 +229,17 @@ plugin, e.g. "gdal_FOO.so"):
                memcmp(poOpenInfo->pabyHeader, "FOO", 3) == 0;
     }
 
+    // Called both by DeclareDeferredFOOPlugin() and GDALRegisterFoo()
+    void FOODriverSetCommonMetadata(GDALDriver* poDriver)
+    {
+        poDriver->SetDescription(FOO_DRIVER_NAME);
+        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "The FOO format");
+        poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "foo");
+        poDriver->pfnIdentify = FOODatasetIdentify;
+        poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES"); // since the actual driver defines pfnOpen
+    }
+
     #ifdef PLUGIN_FILENAME
     void DeclareDeferredFOOPlugin()
     {
@@ -260,20 +247,34 @@ plugin, e.g. "gdal_FOO.so"):
         {
             return;
         }
-        GDALPluginDriverFeatures oFeatures;
-        oFeatures.pfnIdentify = FOODatasetIdentify;
-        oFeatures.pszLongName = FOO_LONG_NAME;
-        oFeatures.pszExtensions = FOO_EXTENSIONS;
-        oFeatures.bHasRasterCapabilities = true;
-        GetGDALDriverManager()->DeclareDeferredPluginDriver(
-            FOO_DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+        FOODriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     #endif
 
 
-The GDALRegisterFoo() method itself is just slightly modified to change
-its pfnIdentify (and pfnGetSubdatasetInfoFunc) function pointers to the
-function that has been moved to :file:`mydrivercore.cpp`.
+The GDALRegisterFoo() method itself, which is defined in the plugin code,
+calls ``FOODriverSetCommonMetadata``,
+and defines the pfnOpen, pfnCreate, pfnCreateCopy, pfnCreateMultiDimensional
+callbacks when they exist:
+
+.. code-block:: cpp
+
+    void GDALRegisterFoo()
+    {
+        if (!GDAL_CHECK_VERSION(DRIVER_NAME))
+            return;
+
+        if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+            return;
+
+        GDALDriver *poDriver = new GDALDriver();
+        FOODriverSetCommonMetadata(poDriver);
+        poDriver->pfnOpen = FOODataset::Open;
+        GetGDALDriverManager()->RegisterDriver(poDriver);
+    }
+
 
 The modified :file:`gdalallregister.cpp` file will look like:
 
@@ -310,7 +311,7 @@ still be fully loaded at :cpp:func:`GDALAllRegister` time (or at
 
 One could imagine a further enhancement for out-of-tree plugins where they
 would be accompanied by a sidecar text file that would for example declare the
-information of GDALPluginDriverFeatures, as well as a limited implementation
+driver capabilities, as well as a limited implementation
 of the identify method as a regular expression. But that is out-of-scope of
 this RFC.
 
