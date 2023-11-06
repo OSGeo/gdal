@@ -1,3 +1,13 @@
-add_gdal_driver(TARGET gdal_JPIPKAK SOURCES jpipkak_headers.h jpipkakdataset.h jpipkakdataset.cpp PLUGIN_CAPABLE)
+add_gdal_driver(TARGET gdal_JPIPKAK
+                SOURCES jpipkak_headers.h
+                        jpipkakdataset.h
+                        jpipkakdataset.cpp
+                CORE_SOURCES jpipkakdrivercore.cpp
+                PLUGIN_CAPABLE)
+
+if(NOT TARGET gdal_JPIPKAK)
+    return()
+endif()
+
 gdal_standard_includes(gdal_JPIPKAK)
 gdal_target_link_libraries(gdal_JPIPKAK PRIVATE KDU::KDU)
