@@ -6001,40 +6001,9 @@ void GDALRegister_BAG()
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription(BAG_DRIVER_NAME);
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, BAG_LONG_NAME);
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/bag.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, BAG_EXTENSIONS);
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
-
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, BAG_OPENOPTIONLIST);
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='VAR_*' type='string' description="
-        "'Value to substitute to a variable in the template'/>"
-        "  <Option name='TEMPLATE' type='string' description="
-        "'.xml template to use'/>"
-        "  <Option name='BAG_VERSION' type='string' description="
-        "'Version to write in the Bag Version attribute' default='1.6.2'/>"
-        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
-        "    <Value>NONE</Value>"
-        "    <Value>DEFLATE</Value>"
-        "  </Option>"
-        "  <Option name='ZLEVEL' type='int' "
-        "description='DEFLATE compression level 1-9' default='6' />"
-        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
-        "</CreationOptionList>");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    BAGDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = BAGDataset::Open;
-    poDriver->pfnIdentify = BAGDatasetIdentify;
     poDriver->pfnUnloadDriver = BAGDatasetDriverUnload;
     poDriver->pfnCreateCopy = BAGDataset::CreateCopy;
     poDriver->pfnCreate = BAGDataset::Create;

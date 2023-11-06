@@ -68,9 +68,9 @@ GdalDriverHelper
 
 #]=======================================================================]
 
-function(_set_driver_core_sources _KEY _DRIVER_TARGET _DRIVER_CORE_SOURCES)
+function(_set_driver_core_sources _KEY _DRIVER_TARGET)
 
-    add_library(${_DRIVER_TARGET}_core OBJECT ${_DRIVER_CORE_SOURCES})
+    add_library(${_DRIVER_TARGET}_core OBJECT ${ARGN})
     set_property(TARGET ${_DRIVER_TARGET}_core PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
     target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:${_DRIVER_TARGET}_core>)
     target_compile_definitions(${_DRIVER_TARGET}_core PRIVATE "-DPLUGIN_FILENAME=\"${_DRIVER_TARGET}${CMAKE_SHARED_LIBRARY_SUFFIX}\"")

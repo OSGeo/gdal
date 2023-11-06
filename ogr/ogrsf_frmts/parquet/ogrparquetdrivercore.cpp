@@ -82,6 +82,51 @@ int OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                OGRParquetDriverSetCommonMetadata()                   */
+/************************************************************************/
+
+void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "(Geo)Parquet");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "parquet");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "drivers/vector/parquet.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONFIELDDATATYPES,
+        "Integer Integer64 Real String Date Time DateTime "
+        "Binary IntegerList Integer64List RealList StringList");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
+                              "Boolean Int16 Float32 JSON UUID");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "WidthPrecision Nullable Comment "
+                              "AlternativeName Domain");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='GEOM_POSSIBLE_NAMES' type='string' description='Comma "
+        "separated list of possible names for geometry column(s).' "
+        "default='geometry,wkb_geometry,wkt_geometry'/>"
+        "  <Option name='CRS' type='string' "
+        "description='Set/override CRS, typically defined as AUTH:CODE "
+        "(e.g EPSG:4326), of geometry column(s)'/>"
+        "</OpenOptionList>");
+
+    poDriver->pfnIdentify = OGRParquetDriverIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+}
+
+/************************************************************************/
 /*                  DeclareDeferredOGRParquetPlugin()                   */
 /************************************************************************/
 
@@ -92,14 +137,8 @@ void DeclareDeferredOGRParquetPlugin()
     {
         return;
     }
-    GDALPluginDriverFeatures oFeatures;
-    oFeatures.pfnIdentify = OGRParquetDriverIdentify;
-    oFeatures.pszLongName = LONG_NAME;
-    oFeatures.pszExtensions = EXTENSIONS;
-    oFeatures.pszOpenOptionList = OPENOPTIONLIST;
-    oFeatures.bHasVectorCapabilities = true;
-    oFeatures.bHasCreate = true;
-    GetGDALDriverManager()->DeclareDeferredPluginDriver(
-        DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+    OGRParquetDriverSetCommonMetadata(poDriver);
+    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
 #endif

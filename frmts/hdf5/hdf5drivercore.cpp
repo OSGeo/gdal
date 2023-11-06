@@ -208,7 +208,7 @@ struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
     }
 };
 
-GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
+static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 {
     if (STARTS_WITH_CI(pszFileName, "HDF5:"))
     {
@@ -301,6 +301,179 @@ int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                   HDF5DriverSetCommonMetadata()                      */
+/************************************************************************/
+
+void HDF5DriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(HDF5_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Hierarchical Data Format Release 5");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+
+    poDriver->pfnIdentify = HDF5DatasetIdentify;
+    poDriver->pfnGetSubdatasetInfoFunc = HDF5DriverGetSubdatasetInfo;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
+/*                 HDF5ImageDriverSetCommonMetadata()                   */
+/************************************************************************/
+
+void HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(HDF5_IMAGE_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HDF5 Dataset");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+
+    poDriver->pfnIdentify = HDF5ImageDatasetIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
+/*                     BAGDriverSetCommonMetadata()                     */
+/************************************************************************/
+
+void BAGDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(BAG_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/bag.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bag");
+
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='MODE' type='string-select' default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>LOW_RES_GRID</Value>"
+        "       <Value>LIST_SUPERGRIDS</Value>"
+        "       <Value>RESAMPLED_GRID</Value>"
+        "       <Value>INTERPOLATED</Value>"
+        "   </Option>"
+        "   <Option name='SUPERGRIDS_INDICES' type='string' description="
+        "'Tuple(s) (y1,x1),(y2,x2),...  of supergrids, by indices, to expose "
+        "as subdatasets'/>"
+        "   <Option name='MINX' type='float' description='Minimum X value of "
+        "area of interest'/>"
+        "   <Option name='MINY' type='float' description='Minimum Y value of "
+        "area of interest'/>"
+        "   <Option name='MAXX' type='float' description='Maximum X value of "
+        "area of interest'/>"
+        "   <Option name='MAXY' type='float' description='Maximum Y value of "
+        "area of interest'/>"
+        "   <Option name='RESX' type='float' description="
+        "'Horizontal resolution. Only used for "
+        "MODE=RESAMPLED_GRID/INTERPOLATED'/>"
+        "   <Option name='RESY' type='float' description="
+        "'Vertical resolution (positive value). Only used for "
+        "MODE=RESAMPLED_GRID/INTERPOLATED'/>"
+        "   <Option name='RES_STRATEGY' type='string-select' description="
+        "'Which strategy to apply to select the resampled grid resolution. "
+        "Only used for MODE=RESAMPLED_GRID/INTERPOLATED' default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>MIN</Value>"
+        "       <Value>MAX</Value>"
+        "       <Value>MEAN</Value>"
+        "   </Option>"
+        "   <Option name='RES_FILTER_MIN' type='float' description="
+        "'Minimum resolution of supergrids to take into account (excluded "
+        "bound). "
+        "Only used for MODE=RESAMPLED_GRID, INTERPOLATED or LIST_SUPERGRIDS' "
+        "default='0'/>"
+        "   <Option name='RES_FILTER_MAX' type='float' description="
+        "'Maximum resolution of supergrids to take into account (included "
+        "bound). "
+        "Only used for MODE=RESAMPLED_GRID, INTERPOLATED or LIST_SUPERGRIDS' "
+        "default='inf'/>"
+        "   <Option name='VALUE_POPULATION' type='string-select' description="
+        "'Which value population strategy to apply to compute the resampled "
+        "cell "
+        "values. Only used for MODE=RESAMPLED_GRID' default='MAX'>"
+        "       <Value>MIN</Value>"
+        "       <Value>MAX</Value>"
+        "       <Value>MEAN</Value>"
+        "       <Value>COUNT</Value>"
+        "   </Option>"
+        "   <Option name='SUPERGRIDS_MASK' type='boolean' description="
+        "'Whether the dataset should consist of a mask band indicating if a "
+        "supergrid node matches each target pixel. Only used for "
+        "MODE=RESAMPLED_GRID' default='NO'/>"
+        "   <Option name='NODATA_VALUE' type='float' default='1000000'/>"
+        "   <Option name='REPORT_VERTCRS' type='boolean' default='YES'/>"
+        "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='VAR_*' type='string' description="
+        "'Value to substitute to a variable in the template'/>"
+        "  <Option name='TEMPLATE' type='string' description="
+        "'.xml template to use'/>"
+        "  <Option name='BAG_VERSION' type='string' description="
+        "'Version to write in the Bag Version attribute' default='1.6.2'/>"
+        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
+        "    <Value>NONE</Value>"
+        "    <Value>DEFLATE</Value>"
+        "  </Option>"
+        "  <Option name='ZLEVEL' type='int' "
+        "description='DEFLATE compression level 1-9' default='6' />"
+        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
+        "</CreationOptionList>");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+
+    poDriver->pfnIdentify = BAGDatasetIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+}
+
+/************************************************************************/
+/*                    S102DriverSetCommonMetadata()                     */
+/************************************************************************/
+
+void S102DriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(S102_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "S-102 Bathymetric Surface Product");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s102.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='DEPTH_OR_ELEVATION' type='string-select' "
+        "default='DEPTH'>"
+        "       <Value>DEPTH</Value>"
+        "       <Value>ELEVATION</Value>"
+        "   </Option>"
+        "   <Option name='NORTH_UP' type='boolean' default='YES' "
+        "description='Whether the top line of the dataset should be the "
+        "northern-most one'/>"
+        "</OpenOptionList>");
+    poDriver->pfnIdentify = S102DatasetIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
 /*                    DeclareDeferredHDF5Plugin()                       */
 /************************************************************************/
 
@@ -312,48 +485,24 @@ void DeclareDeferredHDF5Plugin()
         return;
     }
     {
-        GDALPluginDriverFeatures oFeatures;
-        oFeatures.pfnIdentify = HDF5DatasetIdentify;
-        oFeatures.pfnGetSubdatasetInfoFunc = HDF5DriverGetSubdatasetInfo;
-        oFeatures.pszLongName = HDF5_LONG_NAME;
-        oFeatures.pszExtensions = HDF5_EXTENSIONS;
-        oFeatures.bHasRasterCapabilities = true;
-        oFeatures.bHasMultiDimRasterCapabilities = true;
-        oFeatures.bHasSubdatasets = true;
-        GetGDALDriverManager()->DeclareDeferredPluginDriver(
-            HDF5_DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+        HDF5DriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
-        GDALPluginDriverFeatures oFeatures;
-        oFeatures.pfnIdentify = HDF5ImageDatasetIdentify;
-        oFeatures.pszLongName = HDF5_IMAGE_LONG_NAME;
-        oFeatures.bHasRasterCapabilities = true;
-        GetGDALDriverManager()->DeclareDeferredPluginDriver(
-            HDF5_IMAGE_DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+        HDF5ImageDriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
-        GDALPluginDriverFeatures oFeatures;
-        oFeatures.pfnIdentify = BAGDatasetIdentify;
-        oFeatures.pszLongName = BAG_LONG_NAME;
-        oFeatures.pszExtensions = BAG_EXTENSIONS;
-        oFeatures.pszOpenOptionList = BAG_OPENOPTIONLIST;
-        oFeatures.bHasRasterCapabilities = true;
-        oFeatures.bHasVectorCapabilities = true;
-        oFeatures.bHasMultiDimRasterCapabilities = true;
-        oFeatures.bHasCreate = true;
-        oFeatures.bHasCreateCopy = true;
-        GetGDALDriverManager()->DeclareDeferredPluginDriver(
-            BAG_DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+        BAGDriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
-        GDALPluginDriverFeatures oFeatures;
-        oFeatures.pfnIdentify = S102DatasetIdentify;
-        oFeatures.pszLongName = S102_LONG_NAME;
-        oFeatures.pszExtensions = S102_EXTENSIONS;
-        oFeatures.bHasRasterCapabilities = true;
-        oFeatures.bHasMultiDimRasterCapabilities = true;
-        GetGDALDriverManager()->DeclareDeferredPluginDriver(
-            S102_DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+        S102DriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
 }
 #endif

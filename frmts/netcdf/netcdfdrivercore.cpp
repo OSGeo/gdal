@@ -199,7 +199,7 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
 /*                              Identify()                              */
 /************************************************************************/
 
-int netCDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
+static int netCDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:"))
@@ -271,7 +271,7 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
     }
 };
 
-GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
+static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
 {
     if (STARTS_WITH_CI(pszFileName, "NETCDF:"))
     {
@@ -287,6 +287,284 @@ GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
+/*                   netCDFDriverSetCommonMetadata()                    */
+/************************************************************************/
+
+void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    // Set the driver details.
+    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Network Common Data Format");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/netcdf.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "nc");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='HONOUR_VALID_RANGE' type='boolean' scope='raster' "
+        "description='Whether to set to nodata pixel values outside of the "
+        "validity range' default='YES'/>"
+        "   <Option name='IGNORE_XY_AXIS_NAME_CHECKS' type='boolean' "
+        "scope='raster' "
+        "description='Whether X/Y dimensions should be always considered as "
+        "geospatial axis, even if the lack conventional attributes confirming "
+        "it.'"
+        " default='NO'/>"
+        "   <Option name='VARIABLES_AS_BANDS' type='boolean' scope='raster' "
+        "description='Whether 2D variables that share the same indexing "
+        "dimensions "
+        "should be exposed as several bands of a same dataset instead of "
+        "several "
+        "subdatasets.' default='NO'/>"
+        "   <Option name='ASSUME_LONGLAT' type='boolean' scope='raster' "
+        "description='Whether when all else has failed for determining a CRS, "
+        "a "
+        "meaningful geotransform has been found, and is within the  "
+        "bounds -180,360 -90,90, assume OGC:CRS84.' default='NO'/>"
+        "   <Option name='PRESERVE_AXIS_UNIT_IN_CRS' type='boolean' "
+        "scope='raster' description='Whether unusual linear axis unit (km) "
+        "should be kept as such, instead of being normalized to metre' "
+        "default='NO'/>"
+        "</OpenOptionList>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONDATATYPES,
+#ifdef NETCDF_HAS_NC4
+        "Byte Int8 UInt16 Int16 UInt32 Int32 Int64 UInt64 "
+#else
+        "Byte Int8 Int16 Int32 "
+#endif
+        "Float32 Float64 "
+        "CInt16 CInt32 CFloat32 CFloat64");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "   <Option name='FORMAT' type='string-select' default='NC'>"
+        "     <Value>NC</Value>"
+#ifdef NETCDF_HAS_NC2
+        "     <Value>NC2</Value>"
+#endif
+#ifdef NETCDF_HAS_NC4
+        "     <Value>NC4</Value>"
+        "     <Value>NC4C</Value>"
+#endif
+        "   </Option>"
+#ifdef NETCDF_HAS_NC4
+        "   <Option name='COMPRESS' type='string-select' scope='raster' "
+        "default='NONE'>"
+        "     <Value>NONE</Value>"
+        "     <Value>DEFLATE</Value>"
+        "   </Option>"
+        "   <Option name='ZLEVEL' type='int' scope='raster' "
+        "description='DEFLATE compression level 1-9' default='1'/>"
+#endif
+        "   <Option name='WRITE_BOTTOMUP' type='boolean' scope='raster' "
+        "default='YES'>"
+        "   </Option>"
+        "   <Option name='WRITE_GDAL_TAGS' type='boolean' default='YES'>"
+        "   </Option>"
+        "   <Option name='WRITE_LONLAT' type='string-select' scope='raster'>"
+        "     <Value>YES</Value>"
+        "     <Value>NO</Value>"
+        "     <Value>IF_NEEDED</Value>"
+        "   </Option>"
+        "   <Option name='TYPE_LONLAT' type='string-select' scope='raster'>"
+        "     <Value>float</Value>"
+        "     <Value>double</Value>"
+        "   </Option>"
+        "   <Option name='PIXELTYPE' type='string-select' scope='raster' "
+        "description='(deprecated, use Int8 datatype) only used in Create()'>"
+        "       <Value>DEFAULT</Value>"
+        "       <Value>SIGNEDBYTE</Value>"
+        "   </Option>"
+        "   <Option name='CHUNKING' type='boolean' scope='raster' "
+        "default='YES' description='define chunking when creating netcdf4 "
+        "file'/>"
+        "   <Option name='MULTIPLE_LAYERS' type='string-select' scope='vector' "
+        "description='Behaviour regarding multiple vector layer creation' "
+        "default='NO'>"
+        "       <Value>NO</Value>"
+        "       <Value>SEPARATE_FILES</Value>"
+#ifdef NETCDF_HAS_NC4
+        "       <Value>SEPARATE_GROUPS</Value>"
+#endif
+        "   </Option>"
+        "   <Option name='GEOMETRY_ENCODING' type='string' scope='vector' "
+        "default='CF_1.8' description='Specifies the type of geometry encoding "
+        "when creating a netCDF dataset'>"
+        "       <Value>WKT</Value>"
+        "       <Value>CF_1.8</Value>"
+        "   </Option>"
+        "   <Option name='CONFIG_FILE' type='string' scope='vector' "
+        "description='Path to a XML configuration file (or content inlined)'/>"
+        "   <Option name='WRITE_GDAL_VERSION' type='boolean' default='YES'/>"
+        "   <Option name='WRITE_GDAL_HISTORY' type='boolean' default='YES'/>"
+        "</CreationOptionList>");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "   <Option name='RECORD_DIM_NAME' type='string' description='Name of "
+        "the unlimited dimension' default='record'/>"
+        "   <Option name='STRING_DEFAULT_WIDTH' type='int' description='"
+#ifdef NETCDF_HAS_NC4
+        "For non-NC4 format, "
+#endif
+        "default width of strings. Default is 10 in autogrow mode, 80 "
+        "otherwise.'/>"
+        "   <Option name='WKT_DEFAULT_WIDTH' type='int' description='"
+#ifdef NETCDF_HAS_NC4
+        "For non-NC4 format, "
+#endif
+        "default width of WKT strings. Default is 1000 in autogrow mode, 10000 "
+        "otherwise.'/>"
+        "   <Option name='AUTOGROW_STRINGS' type='boolean' "
+        "description='Whether to auto-grow non-bounded string fields of "
+        "bidimensional char variable' default='YES'/>"
+#ifdef NETCDF_HAS_NC4
+        "   <Option name='USE_STRING_IN_NC4' type='boolean' "
+        "description='Whether to use NetCDF string type for strings in NC4 "
+        "format. If NO, bidimensional char variable are used' default='YES'/>"
+#if 0
+"   <Option name='NCDUMP_COMPAT' type='boolean' description='When USE_STRING_IN_NC4=YEs, whether to use empty string instead of null string to avoid crashes with ncdump' default='NO'/>"
+#endif
+#endif
+        "   <Option name='FEATURE_TYPE' type='string-select' description='CF "
+        "FeatureType' default='AUTO'>"
+        "       <Value>AUTO</Value>"
+        "       <Value>POINT</Value>"
+        "       <Value>PROFILE</Value>"
+        "   </Option>"
+        "   <Option name='BUFFER_SIZE' type='int' default='' "
+        "description='Specifies the soft limit of buffer translation in bytes. "
+        "Minimum size is 4096. Does not apply to datasets with CF version less "
+        "than 1.8.'/>"
+        "   <Option name='GROUPLESS_WRITE_BACK' type='boolean' default='NO' "
+        "description='Enables or disables array building write back for "
+        "CF-1.8.'/>"
+        "   <Option name='PROFILE_DIM_NAME' type='string' description='Name of "
+        "the profile dimension and variable' default='profile'/>"
+        "   <Option name='PROFILE_DIM_INIT_SIZE' type='string' "
+        "description='Initial size of profile dimension (default 100), or "
+        "UNLIMITED for NC4 files'/>"
+        "   <Option name='PROFILE_VARIABLES' type='string' description='Comma "
+        "separated list of field names that must be indexed by the profile "
+        "dimension'/>"
+        "</LayerCreationOptionList>");
+
+    // Make driver config and capabilities available.
+#ifdef NETCDF_HAS_NC2
+    poDriver->SetMetadataItem("NETCDF_HAS_NC2", "YES");
+#endif
+#ifdef NETCDF_HAS_NC4
+    poDriver->SetMetadataItem("NETCDF_HAS_NC4", "YES");
+#endif
+#ifdef NETCDF_HAS_HDF4
+    poDriver->SetMetadataItem("NETCDF_HAS_HDF4", "YES");
+#endif
+#ifdef HAVE_HDF4
+    poDriver->SetMetadataItem("GDAL_HAS_HDF4", "YES");
+#endif
+#ifdef HAVE_HDF5
+    poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
+#endif
+#ifdef HAVE_NETCDF_MEM
+    poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
+#endif
+
+#ifdef ENABLE_NCDUMP
+    poDriver->SetMetadataItem("ENABLE_NCDUMP", "YES");
+#endif
+
+#ifdef NETCDF_HAS_NC4
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+        "<MultiDimDatasetCreationOptionList>"
+        "   <Option name='FORMAT' type='string-select' default='NC4'>"
+        "     <Value>NC</Value>"
+#ifdef NETCDF_HAS_NC2
+        "     <Value>NC2</Value>"
+#endif
+        "     <Value>NC4</Value>"
+        "     <Value>NC4C</Value>"
+        "   </Option>"
+        "   <Option name='CONVENTIONS' type='string' default='CF-1.6' "
+        "description='Value of the Conventions attribute'/>"
+        "</MultiDimDatasetCreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_DIMENSION_CREATIONOPTIONLIST,
+        "<MultiDimDimensionCreationOptionList>"
+        "   <Option name='UNLIMITED' type='boolean' description='Whether the "
+        "dimension should be unlimited' default='false'/>"
+        "</MultiDimDimensionCreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+        "<MultiDimArrayCreationOptionList>"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size in "
+        "pixels'/>"
+        "   <Option name='COMPRESS' type='string-select' default='NONE'>"
+        "     <Value>NONE</Value>"
+        "     <Value>DEFLATE</Value>"
+        "   </Option>"
+        "   <Option name='ZLEVEL' type='int' description='DEFLATE compression "
+        "level 1-9' default='1'/>"
+        "   <Option name='NC_TYPE' type='string-select' default='netCDF data "
+        "type'>"
+        "     <Value>AUTO</Value>"
+        "     <Value>NC_BYTE</Value>"
+        "     <Value>NC_INT64</Value>"
+        "     <Value>NC_UINT64</Value>"
+        "   </Option>"
+        "</MultiDimArrayCreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST,
+        "<MultiDimArrayOpenOptionList>"
+        "   <Option name='USE_DEFAULT_FILL_AS_NODATA' type='boolean' "
+        "description='Whether the default fill value should be used as nodata "
+        "when there is no _FillValue or missing_value attribute' default='NO'/>"
+        "</MultiDimArrayOpenOptionList>");
+
+    poDriver->SetMetadataItem(GDAL_DMD_MULTIDIM_ATTRIBUTE_CREATIONOPTIONLIST,
+                              "<MultiDimAttributeCreationOptionList>"
+                              "   <Option name='NC_TYPE' type='string-select' "
+                              "default='netCDF data type'>"
+                              "     <Value>AUTO</Value>"
+                              "     <Value>NC_BYTE</Value>"
+                              "     <Value>NC_CHAR</Value>"
+                              "     <Value>NC_INT64</Value>"
+                              "     <Value>NC_UINT64</Value>"
+                              "   </Option>"
+                              "</MultiDimAttributeCreationOptionList>");
+#endif
+
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
+                              "Integer Integer64 Real String Date DateTime");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "Comment AlternativeName");
+
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->pfnIdentify = netCDFDatasetIdentify;
+    poDriver->pfnGetSubdatasetInfoFunc = NCDFDriverGetSubdatasetInfo;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+#ifdef NETCDF_HAS_NC4
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
+#endif
+}
+
+/************************************************************************/
 /*                    DeclareDeferredNetCDFPlugin()                     */
 /************************************************************************/
 
@@ -297,22 +575,8 @@ void DeclareDeferredNetCDFPlugin()
     {
         return;
     }
-    GDALPluginDriverFeatures oFeatures;
-    oFeatures.pfnIdentify = netCDFDatasetIdentify;
-    oFeatures.pfnGetSubdatasetInfoFunc = NCDFDriverGetSubdatasetInfo;
-    oFeatures.pszLongName = LONG_NAME;
-    oFeatures.pszExtensions = EXTENSIONS;
-    oFeatures.pszOpenOptionList = OPENOPTIONLIST;
-    oFeatures.bHasRasterCapabilities = true;
-    oFeatures.bHasVectorCapabilities = true;
-#ifdef NETCDF_HAS_NC4
-    oFeatures.bHasMultiDimRasterCapabilities = true;
-#endif
-    oFeatures.bHasCreate = true;
-    oFeatures.bHasCreateMultiDimensional = true;
-    oFeatures.bHasCreateCopy = true;
-    oFeatures.bHasSubdatasets = true;
-    GetGDALDriverManager()->DeclareDeferredPluginDriver(
-        DRIVER_NAME, PLUGIN_FILENAME, oFeatures);
+    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+    netCDFDriverSetCommonMetadata(poDriver);
+    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
 #endif

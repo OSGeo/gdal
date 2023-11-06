@@ -753,34 +753,9 @@ void RegisterOGRParquet()
         return;
 
     auto poDriver = std::make_unique<OGRParquetDriver>();
-
-    poDriver->SetDescription(DRIVER_NAME);
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, LONG_NAME);
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, EXTENSIONS);
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/vector/parquet.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONFIELDDATATYPES,
-        "Integer Integer64 Real String Date Time DateTime "
-        "Binary IntegerList Integer64List RealList StringList");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-                              "Boolean Int16 Float32 JSON UUID");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
-                              "WidthPrecision Nullable Comment "
-                              "AlternativeName Domain");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
-
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, OPENOPTIONLIST);
+    OGRParquetDriverSetCommonMetadata(poDriver.get());
 
     poDriver->pfnOpen = OGRParquetDriverOpen;
-    poDriver->pfnIdentify = OGRParquetDriverIdentify;
     poDriver->pfnCreate = OGRParquetDriverCreate;
 
 #ifdef GDAL_USE_ARROWDATASET

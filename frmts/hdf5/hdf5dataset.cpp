@@ -109,20 +109,10 @@ void GDALRegister_HDF5()
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription(HDF5_DRIVER_NAME);
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, HDF5_LONG_NAME);
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, HDF5_EXTENSIONS);
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    HDF5DriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = HDF5Dataset::Open;
-    poDriver->pfnIdentify = HDF5DatasetIdentify;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
-    poDriver->pfnGetSubdatasetInfoFunc = HDF5DriverGetSubdatasetInfo;
     GetGDALDriverManager()->RegisterDriver(poDriver);
 
 #ifdef HDF5_PLUGIN

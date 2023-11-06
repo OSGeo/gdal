@@ -502,17 +502,8 @@ void GDALRegister_S102()
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription(S102_DRIVER_NAME);
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, S102_LONG_NAME);
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s102.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, S102_EXTENSIONS);
-
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, S102_OPENOPTIONLIST);
+    S102DriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = S102Dataset::Open;
-    poDriver->pfnIdentify = S102DatasetIdentify;
     poDriver->pfnUnloadDriver = S102DatasetDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

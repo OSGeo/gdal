@@ -32,18 +32,9 @@
 #include "gdal_priv.h"
 
 constexpr const char *DRIVER_NAME = "Parquet";
-constexpr const char *LONG_NAME = "(Geo)Parquet";
-constexpr const char *EXTENSIONS = "parquet";
-constexpr const char *OPENOPTIONLIST =
-    "<OpenOptionList>"
-    "  <Option name='GEOM_POSSIBLE_NAMES' type='string' description='Comma "
-    "separated list of possible names for geometry column(s).' "
-    "default='geometry,wkb_geometry,wkt_geometry'/>"
-    "  <Option name='CRS' type='string' "
-    "description='Set/override CRS, typically defined as AUTH:CODE "
-    "(e.g EPSG:4326), of geometry column(s)'/>"
-    "</OpenOptionList>";
 
 int CPL_DLL OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void CPL_DLL OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

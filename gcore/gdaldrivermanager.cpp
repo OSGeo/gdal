@@ -1223,72 +1223,124 @@ void GDALDriverManager::ReorderDrivers()
 /*                       GDALPluginDriverProxy                          */
 /************************************************************************/
 
-class GDALPluginDriverProxy : public GDALDriver
+/** Constructor for a plugin driver proxy.
+ *
+ * @param osPluginFileName Plugin filename. e.g "ogr_Parquet.so"
+ */
+GDALPluginDriverProxy::GDALPluginDriverProxy(
+    const std::string &osPluginFileName)
+    : m_osPluginFileName(osPluginFileName)
 {
-    const std::string m_osPluginFileName;
-    const std::string m_osPluginFullPath;
-    const GDALPluginDriverFeatures m_oFeatures;
-    std::unique_ptr<GDALDriver> m_poRealDriver{};
+}
 
-    GDALDriver *GetRealDriver();
+//! @cond Doxygen_Suppress
+GDALDriver::OpenCallback GDALPluginDriverProxy::GetOpenCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetOpenCallback();
+}
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALPluginDriverProxy)
+GDALDriver::CreateCallback GDALPluginDriverProxy::GetCreateCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetCreateCallback();
+}
 
-  public:
-    GDALPluginDriverProxy(const char *pszDriverName,
-                          const std::string &osPluginFileName,
-                          const std::string &osPluginFullPath,
-                          const GDALPluginDriverFeatures &oFeatures)
-        : m_osPluginFileName(osPluginFileName),
-          m_osPluginFullPath(osPluginFullPath), m_oFeatures(oFeatures)
+GDALDriver::CreateMultiDimensionalCallback
+GDALPluginDriverProxy::GetCreateMultiDimensionalCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetCreateMultiDimensionalCallback();
+}
+
+GDALDriver::CreateCopyCallback GDALPluginDriverProxy::GetCreateCopyCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetCreateCopyCallback();
+}
+
+GDALDriver::DeleteCallback GDALPluginDriverProxy::GetDeleteCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetDeleteCallback();
+}
+
+GDALDriver::RenameCallback GDALPluginDriverProxy::GetRenameCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetRenameCallback();
+}
+
+GDALDriver::CopyFilesCallback GDALPluginDriverProxy::GetCopyFilesCallback()
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetCopyFilesCallback();
+}
+//! @endcond
+
+char **GDALPluginDriverProxy::GetMetadata(const char *pszDomain)
+{
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetMetadata(pszDomain);
+}
+
+CPLErr GDALPluginDriverProxy::SetMetadataItem(const char *pszName,
+                                              const char *pszValue,
+                                              const char *pszDomain)
+{
+    if (!pszDomain || pszDomain[0] == 0)
+        m_oSetMetadataItems.insert(pszName);
+    return GDALDriver::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+static const char *const apszProxyMetadataItems[] = {
+    GDAL_DMD_LONGNAME,
+    GDAL_DMD_EXTENSIONS,
+    GDAL_DMD_EXTENSION,
+    GDAL_DCAP_RASTER,
+    GDAL_DCAP_MULTIDIM_RASTER,
+    GDAL_DCAP_VECTOR,
+    GDAL_DCAP_GNM,
+    GDAL_DMD_OPENOPTIONLIST,
+    GDAL_DCAP_OPEN,
+    GDAL_DCAP_CREATE,
+    GDAL_DCAP_CREATE_MULTIDIMENSIONAL,
+    GDAL_DCAP_CREATECOPY,
+    GDAL_DMD_SUBDATASETS,
+    GDAL_DCAP_MULTIPLE_VECTOR_LAYERS,
+    GDAL_DCAP_NONSPATIAL,
+};
+
+const char *GDALPluginDriverProxy::GetMetadataItem(const char *pszName,
+                                                   const char *pszDomain)
+{
+    const auto IsListedProxyMetadataItem = [](const char *pszItem)
     {
-        SetDescription(pszDriverName);
-        pfnIdentify = oFeatures.pfnIdentify;
-        pfnGetSubdatasetInfoFunc = oFeatures.pfnGetSubdatasetInfoFunc;
-    }
+        for (const char *pszListedItem : apszProxyMetadataItems)
+        {
+            if (EQUAL(pszItem, pszListedItem))
+                return true;
+        }
+        return false;
+    };
 
-    OpenCallback GetOpenCallback() override
-    {
-        auto poRealDriver = GetRealDriver();
-        if (!poRealDriver)
-            return nullptr;
-        return poRealDriver->GetOpenCallback();
-    }
-
-    CreateCallback GetCreateCallback() override
-    {
-        auto poRealDriver = GetRealDriver();
-        if (!poRealDriver)
-            return nullptr;
-        return poRealDriver->GetCreateCallback();
-    }
-
-    CreateMultiDimensionalCallback GetCreateMultiDimensionalCallback() override
-    {
-        auto poRealDriver = GetRealDriver();
-        if (!poRealDriver)
-            return nullptr;
-        return poRealDriver->GetCreateMultiDimensionalCallback();
-    }
-
-    CreateCopyCallback GetCreateCopyCallback() override
-    {
-        auto poRealDriver = GetRealDriver();
-        if (!poRealDriver)
-            return nullptr;
-        return poRealDriver->GetCreateCopyCallback();
-    }
-
-    char **GetMetadata(const char *pszDomain) override
-    {
-        auto poRealDriver = GetRealDriver();
-        if (!poRealDriver)
-            return nullptr;
-        return poRealDriver->GetMetadata(pszDomain);
-    }
-
-    const char *GetMetadataItem(const char *pszName,
-                                const char *pszDomain) override
+    if (!pszDomain || pszDomain[0] == 0)
     {
         if (EQUAL(pszName, "IS_NON_LOADED_PLUGIN"))
         {
@@ -1299,52 +1351,35 @@ class GDALPluginDriverProxy : public GDALDriver
             return m_osPluginFullPath.empty() ? m_osPluginFileName.c_str()
                                               : nullptr;
         }
-        else if (EQUAL(pszName, GDAL_DMD_LONGNAME))
+        else if (IsListedProxyMetadataItem(pszName))
         {
-            return m_oFeatures.pszLongName ? m_oFeatures.pszLongName : "";
-        }
-        else if (EQUAL(pszName, GDAL_DMD_EXTENSIONS))
-        {
-            return m_oFeatures.pszExtensions;
-        }
-        else if (EQUAL(pszName, GDAL_DMD_EXTENSION))
-        {
-            if (m_oFeatures.pszExtensions)
+            const char *pszValue =
+                GDALDriver::GetMetadataItem(pszName, pszDomain);
+            if (!pszValue && EQUAL(pszName, GDAL_DMD_EXTENSION))
             {
-                if (strchr(m_oFeatures.pszExtensions, ' ') == nullptr)
-                    return m_oFeatures.pszExtensions;
+                const char *pszOtherValue =
+                    GDALDriver::GetMetadataItem(GDAL_DMD_EXTENSIONS, pszDomain);
+                if (pszOtherValue && strchr(pszOtherValue, ' '))
+                    return pszOtherValue;
             }
-            return nullptr;
+            else if (!pszValue && EQUAL(pszName, GDAL_DMD_EXTENSIONS))
+            {
+                return GDALDriver::GetMetadataItem(GDAL_DMD_EXTENSION,
+                                                   pszDomain);
+            }
+            return pszValue;
         }
-        else if (EQUAL(pszName, GDAL_DCAP_RASTER))
-            return m_oFeatures.bHasRasterCapabilities ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_MULTIDIM_RASTER))
-            return m_oFeatures.bHasMultiDimRasterCapabilities ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_VECTOR))
-            return m_oFeatures.bHasVectorCapabilities ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DMD_OPENOPTIONLIST))
-            return m_oFeatures.pszOpenOptionList;
-        else if (EQUAL(pszName, GDAL_DCAP_OPEN))
-            return m_oFeatures.bHasOpen ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_CREATE))
-            return m_oFeatures.bHasCreate ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_CREATE_MULTIDIMENSIONAL))
-            return m_oFeatures.bHasCreateMultiDimensional ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_CREATECOPY))
-            return m_oFeatures.bHasCreateCopy ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DMD_SUBDATASETS))
-            return m_oFeatures.bHasSubdatasets ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_MULTIPLE_VECTOR_LAYERS))
-            return m_oFeatures.bHasMultipleVectorLayers ? "YES" : nullptr;
-        else if (EQUAL(pszName, GDAL_DCAP_NONSPATIAL))
-            return m_oFeatures.bIsNonspatial ? "YES" : nullptr;
-
-        auto poRealDriver = GetRealDriver();
-        if (!poRealDriver)
-            return nullptr;
-        return poRealDriver->GetMetadataItem(pszName, pszDomain);
+        else if (m_oSetMetadataItems.find(pszName) != m_oSetMetadataItems.end())
+        {
+            return GDALDriver::GetMetadataItem(pszName, pszDomain);
+        }
     }
-};
+
+    auto poRealDriver = GetRealDriver();
+    if (!poRealDriver)
+        return nullptr;
+    return poRealDriver->GetMetadataItem(pszName, pszDomain);
+}
 
 /************************************************************************/
 /*                           GetRealDriver()                            */
@@ -1450,92 +1485,100 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
                 GetDescription(), m_poRealDriver->GetDescription());
         }
 
-        if (m_poRealDriver->GetMetadataItem(GDAL_DMD_LONGNAME) &&
-            (!m_oFeatures.pszLongName ||
-             strcmp(m_poRealDriver->GetMetadataItem(GDAL_DMD_LONGNAME),
-                    m_oFeatures.pszLongName) != 0))
+        for (const auto &osItem : m_oSetMetadataItems)
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Driver %s declares GDAL_DMD_LONGNAME whereas its proxy "
-                     "doesn't declare it or with a different value",
-                     GetDescription());
-        }
-        else if (!m_poRealDriver->GetMetadataItem(GDAL_DMD_LONGNAME) &&
-                 m_oFeatures.pszLongName)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Driver %s does not declare GDAL_DMD_LONGNAME whereas its "
-                     "proxy declare it",
-                     GetDescription());
-        }
-
-        if (m_poRealDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS) &&
-            (!m_oFeatures.pszExtensions ||
-             strcmp(m_poRealDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS),
-                    m_oFeatures.pszExtensions) != 0))
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Driver %s declares GDAL_DMD_EXTENSIONS whereas its proxy "
-                     "doesn't declare it or with a different value",
-                     GetDescription());
-        }
-        else if (!m_poRealDriver->GetMetadataItem(GDAL_DMD_EXTENSIONS) &&
-                 m_oFeatures.pszExtensions)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Driver %s does not declare GDAL_DMD_EXTENSIONS whereas "
-                     "its proxy declare it",
-                     GetDescription());
-        }
-
-        if (pfnIdentify != m_poRealDriver->pfnIdentify)
-        {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Driver %s and its proxy declare different pfnIdentify methods",
-                GetDescription());
-        }
-
-        if (pfnGetSubdatasetInfoFunc !=
-            m_poRealDriver->pfnGetSubdatasetInfoFunc)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Driver %s and its proxy declare different "
-                     "pfnGetSubdatasetInfoFunc methods",
-                     GetDescription());
-        }
-
-        const auto CheckBooleanCap = [this](const char *pszCapName, bool bFlag)
-        {
-            if (m_poRealDriver->GetMetadataItem(pszCapName) && !bFlag)
+            const char *pszProxyValue = GetMetadataItem(osItem.c_str());
+            const char *pszRealValue =
+                m_poRealDriver->GetMetadataItem(osItem.c_str());
+            if (pszProxyValue &&
+                (!pszRealValue || strcmp(pszProxyValue, pszRealValue) != 0))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Driver %s declares %s whereas its proxy "
-                         "doesn't declare it",
-                         GetDescription(), pszCapName);
+                         "Proxy driver %s declares %s whereas its real driver "
+                         "doesn't declare it or with a different value",
+                         GetDescription(), osItem.c_str());
             }
-            else if (!m_poRealDriver->GetMetadataItem(pszCapName) && bFlag)
+        }
+        for (const char *pszListedItem : apszProxyMetadataItems)
+        {
+            const char *pszRealValue =
+                m_poRealDriver->GetMetadataItem(pszListedItem);
+            if (pszRealValue)
+            {
+                const char *pszProxyValue = GetMetadataItem(pszListedItem);
+                if (!pszProxyValue || strcmp(pszProxyValue, pszRealValue) != 0)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Driver %s declares %s whereas its proxy "
+                             "doesn't declare it or with a different value",
+                             GetDescription(), pszListedItem);
+                }
+            }
+        }
+
+        const auto CheckFunctionPointer =
+            [this](void *pfnFuncProxy, void *pfnFuncReal, const char *pszFunc)
+        {
+            if (pfnFuncReal && !pfnFuncProxy)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Driver %s does not declare %s whereas its "
-                         "proxy does declare it",
-                         GetDescription(), pszCapName);
+                         "Driver %s declares a %s callback whereas its proxy "
+                         "does not declare it",
+                         GetDescription(), pszFunc);
+            }
+            else if (!pfnFuncReal && pfnFuncProxy)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Proxy driver %s declares a %s callback whereas the "
+                         "real driver does not.",
+                         GetDescription(), pszFunc);
             }
         };
 
-        CheckBooleanCap(GDAL_DCAP_RASTER, m_oFeatures.bHasRasterCapabilities);
-        CheckBooleanCap(GDAL_DCAP_MULTIDIM_RASTER,
-                        m_oFeatures.bHasMultiDimRasterCapabilities);
-        CheckBooleanCap(GDAL_DCAP_VECTOR, m_oFeatures.bHasVectorCapabilities);
-        CheckBooleanCap(GDAL_DCAP_OPEN, m_oFeatures.bHasOpen);
-        CheckBooleanCap(GDAL_DCAP_CREATE, m_oFeatures.bHasCreate);
-        CheckBooleanCap(GDAL_DCAP_CREATE_MULTIDIMENSIONAL,
-                        m_oFeatures.bHasCreateMultiDimensional);
-        CheckBooleanCap(GDAL_DCAP_CREATECOPY, m_oFeatures.bHasCreateCopy);
-        CheckBooleanCap(GDAL_DMD_SUBDATASETS, m_oFeatures.bHasSubdatasets);
-        CheckBooleanCap(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS,
-                        m_oFeatures.bHasMultipleVectorLayers);
-        CheckBooleanCap(GDAL_DCAP_NONSPATIAL, m_oFeatures.bIsNonspatial);
+        CheckFunctionPointer(
+            reinterpret_cast<void *>(m_poRealDriver->pfnIdentify),
+            reinterpret_cast<void *>(pfnIdentify), "pfnIdentify");
+
+        // The real driver might provide a more accurate identification method
+        if (m_poRealDriver->pfnIdentify)
+            pfnIdentify = m_poRealDriver->pfnIdentify;
+
+        CheckFunctionPointer(
+            reinterpret_cast<void *>(m_poRealDriver->pfnGetSubdatasetInfoFunc),
+            reinterpret_cast<void *>(pfnGetSubdatasetInfoFunc),
+            "pfnGetSubdatasetInfoFunc");
+
+        const auto CheckFunctionPointerVersusCap =
+            [this](void *pfnFunc, const char *pszFunc, const char *pszItemName)
+        {
+            if (pfnFunc && !GetMetadataItem(pszItemName))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Driver %s declares a %s callback whereas its proxy "
+                         "doest not declare %s",
+                         GetDescription(), pszFunc, pszItemName);
+            }
+            else if (!pfnFunc && GetMetadataItem(pszItemName))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Proxy driver %s declares %s whereas the real "
+                         "driver does not declare a %s callback",
+                         GetDescription(), pszItemName, pszFunc);
+            }
+        };
+
+        CheckFunctionPointerVersusCap(
+            reinterpret_cast<void *>(m_poRealDriver->pfnOpen), "pfnOpen",
+            GDAL_DCAP_OPEN);
+        CheckFunctionPointerVersusCap(
+            reinterpret_cast<void *>(m_poRealDriver->pfnCreate), "pfnCreate",
+            GDAL_DCAP_CREATE);
+        CheckFunctionPointerVersusCap(
+            reinterpret_cast<void *>(m_poRealDriver->pfnCreateCopy),
+            "pfnCreateCopy", GDAL_DCAP_CREATECOPY);
+        CheckFunctionPointerVersusCap(
+            reinterpret_cast<void *>(m_poRealDriver->pfnCreateMultiDimensional),
+            "pfnCreateMultiDimensional", GDAL_DCAP_CREATE_MULTIDIMENSIONAL);
     }
 
     return m_poRealDriver.get();
@@ -1617,18 +1660,17 @@ std::string GDALDriverManager::GetPluginFullPath(const char *pszFilename) const
 
 /** Declare a driver that will be loaded as a plugin, when actually needed.
  *
- * @param pszDriverName Driver name, such as returned by GetDescription()
- * @param pszPluginFileName Plugin filename. e.g "ogr_Parquet.so"
- * @param oFeatures Driver features
+ * @param poProxyDriver Plugin driver proxy
  *
  * @since 3.9
  */
 void GDALDriverManager::DeclareDeferredPluginDriver(
-    const char *pszDriverName, const char *pszPluginFileName,
-    const GDALPluginDriverFeatures &oFeatures)
+    GDALPluginDriverProxy *poProxyDriver)
 {
     CPLMutexHolderD(&hDMMutex);
 
+    const auto &osPluginFileName = poProxyDriver->GetPluginFileName();
+    const char *pszPluginFileName = osPluginFileName.c_str();
     if ((!STARTS_WITH(pszPluginFileName, "gdal_") &&
          !STARTS_WITH(pszPluginFileName, "ogr_")) ||
         !strchr(pszPluginFileName, '.'))
@@ -1638,23 +1680,23 @@ void GDALDriverManager::DeclareDeferredPluginDriver(
         return;
     }
 
-    if (GDALGetDriverByName(pszDriverName))
+    if (GDALGetDriverByName(poProxyDriver->GetDescription()))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "DeclarePluginDriver(): trying to register %s several times",
-                 pszDriverName);
+                 poProxyDriver->GetDescription());
+        delete poProxyDriver;
         return;
     }
 
     const std::string osFullPath = GetPluginFullPath(pszPluginFileName);
+    poProxyDriver->SetPluginFullPath(osFullPath);
 
-    auto poProxyDriver = new GDALPluginDriverProxy(
-        pszDriverName, pszPluginFileName, osFullPath, oFeatures);
     if (osFullPath.empty())
     {
         CPLDebug("GDAL",
                  "Proxy driver %s *not* registered due to %s not being found",
-                 pszDriverName, pszPluginFileName);
+                 poProxyDriver->GetDescription(), pszPluginFileName);
         RegisterDriver(poProxyDriver, /*bHidden=*/true);
     }
     else

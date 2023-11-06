@@ -1578,6 +1578,7 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
 
     CPLDebug("GDAL", "QuietDelete(%s) invoking Delete()", pszName);
 
+    poDriver->pfnDelete = poDriver->GetDeleteCallback();
     const bool bQuiet = !bExists && poDriver->pfnDelete == nullptr &&
                         poDriver->pfnDeleteDataSource == nullptr;
     if (bQuiet)
@@ -1618,6 +1619,7 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
 CPLErr GDALDriver::Delete(const char *pszFilename)
 
 {
+    pfnDelete = GetDeleteCallback();
     if (pfnDelete != nullptr)
         return pfnDelete(pszFilename);
     else if (pfnDeleteDataSource != nullptr)
@@ -1795,6 +1797,7 @@ CPLErr GDALDriver::DefaultRename(const char *pszNewName, const char *pszOldName)
 CPLErr GDALDriver::Rename(const char *pszNewName, const char *pszOldName)
 
 {
+    pfnRename = GetRenameCallback();
     if (pfnRename != nullptr)
         return pfnRename(pszNewName, pszOldName);
 
@@ -1920,6 +1923,7 @@ CPLErr GDALDriver::DefaultCopyFiles(const char *pszNewName,
 CPLErr GDALDriver::CopyFiles(const char *pszNewName, const char *pszOldName)
 
 {
+    pfnCopyFiles = GetCopyFilesCallback();
     if (pfnCopyFiles != nullptr)
         return pfnCopyFiles(pszNewName, pszOldName);
 

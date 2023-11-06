@@ -990,14 +990,9 @@ void GDALRegister_HDF5Image()
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription(HDF5_IMAGE_DRIVER_NAME);
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, HDF5_IMAGE_LONG_NAME);
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    HDF5ImageDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = HDF5ImageDataset::Open;
-    poDriver->pfnIdentify = HDF5ImageDatasetIdentify;
     poDriver->pfnUnloadDriver = HDF5ImageDatasetDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
