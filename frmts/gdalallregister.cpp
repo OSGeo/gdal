@@ -124,6 +124,9 @@ void CPL_STDCALL GDALAllRegister()
 {
     auto poDriverManager = GetGDALDriverManager();
 
+#if defined(DEFERRED_ARROW_DRIVER)
+    DeclareDeferredOGRArrowPlugin();
+#endif
 #if defined(DEFERRED_ECW_DRIVER)
     DeclareDeferredECWPlugin();
 #endif

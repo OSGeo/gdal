@@ -701,6 +701,7 @@ void CPL_DLL RegisterOGRHANA();
 void CPL_DLL RegisterOGRParquet();
 void DeclareDeferredOGRParquetPlugin();
 void CPL_DLL RegisterOGRArrow();
+void DeclareDeferredOGRArrowPlugin();
 void CPL_DLL RegisterOGRGTFS();
 void CPL_DLL RegisterOGRPMTiles();
 void CPL_DLL RegisterOGRJSONFG();
