@@ -2226,6 +2226,21 @@ OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN can be declared at
 libgdal build time without requiring the dependent libraries needed to build
 the pluging later to be available.
 
+Out-of-tree deferred loaded plugins
++++++++++++++++++++++++++++++++++++
+
+Out-of-tree drivers can also benefit from the deferred loading capability, provided
+libgdal is built with CMake variable(s) pointing to external code containing the
+code for registering a proxy driver.
+
+This can be done with the following option:
+
+.. option:: ADD_EXTERNAL_DEFERRED_PLUGIN_<driver_name>:FILEPATH=/path/to/some/file.cpp
+
+The pointed file must declare a ``void DeclareDeferred<driver_name>(void)``
+method with C linkage that takes care of creating a GDALPluginDriverProxy
+instance and calling :cpp:func:`GDALDriverManager::DeclareDeferredPluginDriver` on it.
+
 .. _building-python-bindings:
 
 Python bindings options
