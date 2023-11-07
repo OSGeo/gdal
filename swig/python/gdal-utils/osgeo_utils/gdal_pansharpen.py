@@ -71,7 +71,7 @@ def Usage(isError):
 def main(argv=sys.argv):
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return -1
+        return 0
 
     pan_name = None
     spectral_names = []
