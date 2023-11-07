@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_SWQ_SWQ_PARSER_HPP_INCLUDED
 #define YY_SWQ_SWQ_PARSER_HPP_INCLUDED
@@ -44,48 +45,54 @@
 extern int swqdebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 #define YYTOKENTYPE
 enum yytokentype
 {
-    END = 0,
-    SWQT_INTEGER_NUMBER = 258,
-    SWQT_FLOAT_NUMBER = 259,
-    SWQT_STRING = 260,
-    SWQT_IDENTIFIER = 261,
-    SWQT_IN = 262,
-    SWQT_LIKE = 263,
-    SWQT_ILIKE = 264,
-    SWQT_ESCAPE = 265,
-    SWQT_BETWEEN = 266,
-    SWQT_NULL = 267,
-    SWQT_IS = 268,
-    SWQT_SELECT = 269,
-    SWQT_LEFT = 270,
-    SWQT_JOIN = 271,
-    SWQT_WHERE = 272,
-    SWQT_ON = 273,
-    SWQT_ORDER = 274,
-    SWQT_BY = 275,
-    SWQT_FROM = 276,
-    SWQT_AS = 277,
-    SWQT_ASC = 278,
-    SWQT_DESC = 279,
-    SWQT_DISTINCT = 280,
-    SWQT_CAST = 281,
-    SWQT_UNION = 282,
-    SWQT_ALL = 283,
-    SWQT_LIMIT = 284,
-    SWQT_OFFSET = 285,
-    SWQT_VALUE_START = 286,
-    SWQT_SELECT_START = 287,
-    SWQT_NOT = 288,
-    SWQT_OR = 289,
-    SWQT_AND = 290,
-    SWQT_UMINUS = 291,
-    SWQT_RESERVED_KEYWORD = 292
+    YYEMPTY = -2,
+    END = 0,                    /* "end of string"  */
+    YYerror = 256,              /* error  */
+    YYUNDEF = 257,              /* "invalid token"  */
+    SWQT_INTEGER_NUMBER = 258,  /* "integer number"  */
+    SWQT_FLOAT_NUMBER = 259,    /* "floating point number"  */
+    SWQT_STRING = 260,          /* "string"  */
+    SWQT_IDENTIFIER = 261,      /* "identifier"  */
+    SWQT_IN = 262,              /* "IN"  */
+    SWQT_LIKE = 263,            /* "LIKE"  */
+    SWQT_ILIKE = 264,           /* "ILIKE"  */
+    SWQT_ESCAPE = 265,          /* "ESCAPE"  */
+    SWQT_BETWEEN = 266,         /* "BETWEEN"  */
+    SWQT_NULL = 267,            /* "NULL"  */
+    SWQT_IS = 268,              /* "IS"  */
+    SWQT_SELECT = 269,          /* "SELECT"  */
+    SWQT_LEFT = 270,            /* "LEFT"  */
+    SWQT_JOIN = 271,            /* "JOIN"  */
+    SWQT_WHERE = 272,           /* "WHERE"  */
+    SWQT_ON = 273,              /* "ON"  */
+    SWQT_ORDER = 274,           /* "ORDER"  */
+    SWQT_BY = 275,              /* "BY"  */
+    SWQT_FROM = 276,            /* "FROM"  */
+    SWQT_AS = 277,              /* "AS"  */
+    SWQT_ASC = 278,             /* "ASC"  */
+    SWQT_DESC = 279,            /* "DESC"  */
+    SWQT_DISTINCT = 280,        /* "DISTINCT"  */
+    SWQT_CAST = 281,            /* "CAST"  */
+    SWQT_UNION = 282,           /* "UNION"  */
+    SWQT_ALL = 283,             /* "ALL"  */
+    SWQT_LIMIT = 284,           /* "LIMIT"  */
+    SWQT_OFFSET = 285,          /* "OFFSET"  */
+    SWQT_EXCEPT = 286,          /* "EXCEPT"  */
+    SWQT_EXCLUDE = 287,         /* "EXCLUDE"  */
+    SWQT_VALUE_START = 288,     /* SWQT_VALUE_START  */
+    SWQT_SELECT_START = 289,    /* SWQT_SELECT_START  */
+    SWQT_NOT = 290,             /* "NOT"  */
+    SWQT_OR = 291,              /* "OR"  */
+    SWQT_AND = 292,             /* "AND"  */
+    SWQT_UMINUS = 293,          /* SWQT_UMINUS  */
+    SWQT_RESERVED_KEYWORD = 294 /* "reserved keyword"  */
 };
+typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */

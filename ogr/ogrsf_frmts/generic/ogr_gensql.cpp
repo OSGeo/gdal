@@ -432,7 +432,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(GDALDataset *poSrcDSIn,
     /*      Add implicit geometry field.                                    */
     /* -------------------------------------------------------------------- */
     if (psSelectInfo->query_mode == SWQM_RECORDSET &&
-        poDefn->GetGeomFieldCount() == 0 && poSrcDefn->GetGeomFieldCount() == 1)
+        poDefn->GetGeomFieldCount() == 0 &&
+        poSrcDefn->GetGeomFieldCount() == 1 && !psSelectInfo->bExcludedGeometry)
     {
         psSelectInfo->column_defs.emplace_back();
 

@@ -27,6 +27,8 @@
 #include "cpl_string.h"
 #include "ogr_core.h"
 
+#include <list>
+#include <map>
 #include <vector>
 #include <set>
 
@@ -402,6 +404,8 @@ class CPL_UNSTABLE_API swq_select
     int PushField(swq_expr_node *poExpr, const char *pszAlias = nullptr,
                   int distinct_flag = FALSE);
 
+    int PushExcludeField(swq_expr_node *poExpr);
+
     int result_columns() const
     {
         return static_cast<int>(column_defs.size());
@@ -444,6 +448,17 @@ class CPL_UNSTABLE_API swq_select
 
     char *Unparse();
     void Dump(FILE *);
+
+    bool bExcludedGeometry = false;
+
+  private:
+    bool IsFieldExcluded(int src_index, const char *table, const char *field);
+
+    // map of EXCLUDE columns keyed according to the index of the
+    // asterisk with which it should be associated. key of -1 is
+    // used for column lists that have not yet been associated with
+    // an asterisk.
+    std::map<int, std::list<swq_col_def>> m_exclude_fields{};
 };
 
 CPLErr CPL_UNSTABLE_API swq_select_parse(swq_select *select_info,

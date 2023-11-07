@@ -239,6 +239,10 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
             nReturn = SWQT_ILIKE;
         else if (EQUAL(osToken, "ESCAPE"))
             nReturn = SWQT_ESCAPE;
+        else if (EQUAL(osToken, "EXCEPT"))
+            nReturn = SWQT_EXCEPT;
+        else if (EQUAL(osToken, "EXCLUDE"))
+            nReturn = SWQT_EXCLUDE;
         else if (EQUAL(osToken, "NULL"))
             nReturn = SWQT_NULL;
         else if (EQUAL(osToken, "IS"))

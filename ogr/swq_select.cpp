@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_swq.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -75,6 +76,18 @@ swq_select::~swq_select()
         CPLFree(col.field_alias);
 
         delete col.expr;
+    }
+
+    for (auto &entry : m_exclude_fields)
+    {
+        for (auto &col : entry.second)
+        {
+            CPLFree(col.table_name);
+            CPLFree(col.field_name);
+            CPLFree(col.field_alias);
+
+            delete col.expr;
+        }
     }
 
     for (int i = 0; i < order_specs; i++)
@@ -439,6 +452,21 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
         col_def->table_name =
             CPLStrdup(poExpr->table_name ? poExpr->table_name : "");
         col_def->field_name = CPLStrdup(poExpr->string_value);
+
+        // Associate a column list from an EXCEPT () clause with its associated
+        // wildcard
+        if (EQUAL(col_def->field_name, "*"))
+        {
+            auto it = m_exclude_fields.find(-1);
+
+            if (it != m_exclude_fields.end())
+            {
+                int curr_asterisk_pos =
+                    static_cast<int>(column_defs.size() - 1);
+                m_exclude_fields[curr_asterisk_pos] = std::move(it->second);
+                m_exclude_fields.erase(it);
+            }
+        }
     }
     else if (poExpr->eNodeType == SNT_OPERATION &&
              (poExpr->nOperation == SWQ_CAST ||
@@ -682,6 +710,43 @@ int swq_select::PushField(swq_expr_node *poExpr, const char *pszAlias,
     return TRUE;
 }
 
+int swq_select::PushExcludeField(swq_expr_node *poExpr)
+{
+    if (poExpr->eNodeType != SNT_COLUMN)
+    {
+        return FALSE;
+    }
+
+    // Check if this column has already been excluded
+    for (const auto &col_def : m_exclude_fields[-1])
+    {
+        if (EQUAL(poExpr->string_value, col_def.field_name) &&
+            EQUAL(poExpr->table_name ? poExpr->table_name : "",
+                  col_def.table_name))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field %s.%s repeated in EXCEPT/EXCLUDE expression.",
+                     col_def.table_name, col_def.field_name);
+
+            return FALSE;
+        }
+    }
+
+    m_exclude_fields[-1].emplace_back();
+    swq_col_def *col_def = &m_exclude_fields[-1].back();
+    memset(col_def, 0, sizeof(swq_col_def));
+
+    col_def->table_name =
+        CPLStrdup(poExpr->table_name ? poExpr->table_name : "");
+    col_def->field_name = CPLStrdup(poExpr->string_value);
+    col_def->table_index = -1;
+    col_def->field_index = -1;
+
+    delete poExpr;
+
+    return TRUE;
+}
+
 /************************************************************************/
 /*                            PushTableDef()                            */
 /************************************************************************/
@@ -789,6 +854,8 @@ CPLErr swq_select::expand_wildcard(swq_field_list *field_list,
                                    int bAlwaysPrefixWithTableName)
 
 {
+    int columns_added = 0;
+
     /* ==================================================================== */
     /*      Check each pre-expansion field.                                 */
     /* ==================================================================== */
@@ -839,6 +906,24 @@ CPLErr swq_select::expand_wildcard(swq_field_list *field_list,
             if (itable != -1 && itable != field_list->table_ids[i])
                 continue;
 
+            auto table_id = field_list->table_ids[i];
+
+            // Skip this field if we've excluded it with SELECT * EXCEPT ()
+            if (IsFieldExcluded(isrc - columns_added,
+                                field_list->table_defs[table_id].table_name,
+                                field_list->names[i]))
+            {
+                if (field_list->types[i] == SWQ_GEOMETRY)
+                {
+                    // Need to store the fact that we explicitly excluded
+                    // the geometry so we can prevent it from being implicitly
+                    // included by OGRGenSQLResultsLayer
+                    bExcludedGeometry = true;
+                }
+
+                continue;
+            }
+
             // Set up some default values.
             expanded_columns.emplace_back();
             swq_col_def *def = &expanded_columns.back();
@@ -882,6 +967,21 @@ CPLErr swq_select::expand_wildcard(swq_field_list *field_list,
 
         column_defs.insert(pos, expanded_columns.begin(),
                            expanded_columns.end());
+
+        columns_added += static_cast<int>(expanded_columns.size() - 1);
+
+        auto it = m_exclude_fields.find(isrc);
+        if (it != m_exclude_fields.end())
+        {
+            for (const auto &field : it->second)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Field %s specified in EXCEPT/EXCLUDE expression not found",
+                    field.field_name);
+                return CE_Failure;
+            }
+        }
     }
 
     return CE_None;
@@ -1157,4 +1257,45 @@ CPLErr swq_select::parse(swq_field_list *field_list,
 
     return CE_None;
 }
+
+bool swq_select::IsFieldExcluded(int src_index, const char *pszTableName,
+                                 const char *pszFieldName)
+{
+    auto list_it = m_exclude_fields.find(src_index);
+
+    if (list_it == m_exclude_fields.end())
+    {
+        return false;
+    }
+
+    auto &excluded_fields = list_it->second;
+
+    auto it = std::partition(
+        excluded_fields.begin(), excluded_fields.end(),
+        [pszTableName, pszFieldName](const swq_col_def &exclude_field)
+        {
+            if (!(EQUAL(exclude_field.table_name, "") ||
+                  EQUAL(pszTableName, exclude_field.table_name)))
+            {
+                return true;
+            }
+
+            return !EQUAL(pszFieldName, exclude_field.field_name);
+        });
+
+    if (it != excluded_fields.end())
+    {
+        CPLFree(it->table_name);
+        CPLFree(it->field_name);
+        CPLFree(it->field_alias);
+
+        delete it->expr;
+
+        excluded_fields.erase(it);
+        return true;
+    }
+
+    return false;
+}
+
 //! @endcond
