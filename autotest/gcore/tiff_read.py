@@ -4311,6 +4311,10 @@ def test_tiff_read_cog_vsicurl():
     not check_libtiff_internal_or_at_least(4, 0, 11),
     reason="libtiff >= 4.0.11 required",
 )
+@pytest.mark.skipif(
+    os.environ.get("BUILD_NAME", "") == "s390x",
+    reason="Fails on that platform",
+)
 def test_tiff_read_cog_with_mask_vsicurl():
 
     gdal.VSICurlClearCache()

@@ -33,6 +33,6 @@ sh -c "cd $PWD/build && CCACHE_CPP2=yes make -j3"
 sudo sh -c "rm -f /usr/lib/libgdal.so*"
 sudo sh -c "cd $PWD/build && make install"
 sudo sh -c "sudo ldconfig"
-sudo sh -c "ln -s libgdal.so /usr/lib/libgdal.so.20"
+sudo sh -c "ln -s libgdal.so /usr/lib/libgdal.so.30"
 
 ccache -s
