@@ -216,3 +216,24 @@ def test_gdal_create_input_file_overrrides(gdal_create_path, tmp_path):
     assert ds.GetGeoTransform() == ref_ds.GetGeoTransform()
     assert ds.GetProjectionRef() == ref_ds.GetProjectionRef()
     ds = None
+
+
+###############################################################################
+
+
+def test_gdal_create_input_file_gcps(gdal_create_path, tmp_path):
+
+    output_tif = str(tmp_path / "tmp.tif")
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        gdal_create_path + f" {output_tif} -if ../gcore/data/gcps.vrt"
+    )
+    assert err is None or err == "", "got error/warning"
+
+    assert os.path.exists(output_tif)
+
+    ds = gdal.Open(output_tif)
+    ref_ds = gdal.Open("../gcore/data/gcps.vrt")
+    assert ds.GetGCPCount() == ref_ds.GetGCPCount()
+    assert ds.GetGCPSpatialRef().IsSame(ref_ds.GetGCPSpatialRef())
+    ds = None
