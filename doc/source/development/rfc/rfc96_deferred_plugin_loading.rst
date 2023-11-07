@@ -1,7 +1,7 @@
 .. _rfc-96:
 
 ==================================================================
-RFC 96: Deferred in-tree C++ plugin loading
+RFC 96: Deferred C++ plugin loading
 ==================================================================
 
 ============== =============================================
@@ -15,10 +15,14 @@ Target:        GDAL 3.9
 Summary
 -------
 
-This RFC adds a mechanism to defer the loading of in-tree C++ plugin drivers to
+This RFC adds a mechanism to defer the loading of C++ plugin drivers to
 the point where their executable code is actually needed, and converts a number
 of relevant drivers to use that mechanism. The aim is to allow for more modular
 GDAL builds, while improving the performance of plugin loading.
+
+It mostly targets in-tree plugin drivers, but it also provides a way for
+out-of-tree plugin drivers to benefit from deferred loading capabilities,
+provided libgdal is built in a specific way
 
 Context and motivation
 ----------------------
@@ -69,6 +73,10 @@ We want the new mechanism to be opt-in and fully backwards compatible:
   to be built in libgdal core, or as plugins depending on the CMake variables.
 
 - to progressively convert existing in-tree drivers to use it.
+
+- to provide the capability to out-of-tree drivers to optionally benefit from
+  the new capability, provided they build GDAL with the code needed to declared
+  a plugin proxy driver.
 
 Details
 -------
@@ -300,14 +308,23 @@ The modified :file:`gdalallregister.cpp` file will look like:
         #endif
     }
 
+Out-of-tree deferred loaded plugins
++++++++++++++++++++++++++++++++++++
+
+Out-of-tree drivers can also benefit from the deferred loading capability, provided
+libgdal is built with CMake variable(s) pointing to external code containing the
+code for registering a proxy driver.
+
+This can be done with the following CMake option:
+
+.. option:: ADD_EXTERNAL_DEFERRED_PLUGIN_<driver_name>:FILEPATH=/path/to/some/file.cpp
+
+The pointed file must declare a ``void DeclareDeferred<driver_name>(void)``
+method with C linkage that takes care of creating a GDALPluginDriverProxy
+instance and calling GDALDriverManager::DeclareDeferredPluginDriver() on it.
 
 Limitations
 -----------
-
-That mechanism only applies to in-tree plugins, since it requires a fraction
-of the driver code to be embedded in libgdal. Out-of-tree plugins will
-still be fully loaded at :cpp:func:`GDALAllRegister` time (or at
-:cpp:func:`GDALDriverManager::LoadPlugin` time)
 
 One could imagine a further enhancement for out-of-tree plugins where they
 would be accompanied by a sidecar text file that would for example declare the
