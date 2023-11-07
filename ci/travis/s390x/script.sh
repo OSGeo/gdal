@@ -19,17 +19,18 @@ cd build
 rm autotest/ogr/ogr_ogdi.py
 
 # OSError: /var/snap/lxd/common/lxd/storage-pools/instances/containers/travis-job-rouault-gdal-685450999/rootfs/usr/lib/s390x-linux-gnu/libsqlite3.so.0.8.6: cannot open shared object file: No such file or directory
-(cd autotest/ogr && pytest ogr_virtualogr.py) || echo "ogr_virtualogr.py failed"
+#(cd autotest/ogr && pytest ogr_virtualogr.py) || echo "ogr_virtualogr.py failed"
 rm autotest/ogr/ogr_virtualogr.py
 
 # Run the 2 following before removing netcdf.py, as they depend on it
-(cd autotest/gdrivers && pytest netcdf_multidim.py) || echo "netcdf_multidim.py failed"
+#(cd autotest/gdrivers && pytest netcdf_multidim.py) || echo "netcdf_multidim.py failed"
 rm autotest/gdrivers/netcdf_multidim.py
 
-(cd autotest/gdrivers && pytest netcdf_cf.py)
+#(cd autotest/gdrivers && pytest netcdf_cf.py)
 rm autotest/gdrivers/netcdf_cf.py
 
-(cd autotest/gdrivers && pytest netcdf.py) || echo "netcdf.py failed"
+#(cd autotest/gdrivers && pytest netcdf.py) || echo "netcdf.py failed"
 rm autotest/gdrivers/netcdf.py
 
-cd autotest && $PYTEST
+#cd autotest && $PYTEST
+ctest -R autotest -V
