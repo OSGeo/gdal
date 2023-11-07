@@ -14,7 +14,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: false
-      dist: bionic
+      dist: jammy
       cache:
         apt: true
         directories:
@@ -33,7 +33,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: false
-      dist: bionic
+      dist: jammy
       cache:
         apt: true
         directories:
