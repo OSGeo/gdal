@@ -31,6 +31,7 @@
 #include "cpl_progress.h"
 #include "cpl_string.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
