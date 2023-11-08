@@ -624,6 +624,7 @@ CPL_C_START
 void OGRRegisterAllInternal();
 
 void CPL_DLL RegisterOGRFileGDB();
+void DeclareDeferredOGRFileGDBPlugin();
 void CPL_DLL RegisterOGRShape();
 void CPL_DLL RegisterOGRNTF();
 void CPL_DLL RegisterOGRSDTS();

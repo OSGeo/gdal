@@ -141,6 +141,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_ECW_DRIVER)
     DeclareDeferredECWPlugin();
 #endif
+#if defined(DEFERRED_FILEGDB_DRIVER)
+    DeclareDeferredOGRFileGDBPlugin();
+#endif
 #if defined(DEFERRED_HDF4_DRIVER)
     DeclareDeferredHDF4Plugin();
 #endif
