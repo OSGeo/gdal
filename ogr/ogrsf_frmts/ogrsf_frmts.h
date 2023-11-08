@@ -703,6 +703,7 @@ void CPL_DLL RegisterOGRNGW();
 void CPL_DLL RegisterOGRMapML();
 void CPL_DLL RegisterOGRLVBAG();
 void CPL_DLL RegisterOGRHANA();
+void DeclareDeferredOGRHANAPlugin();
 void CPL_DLL RegisterOGRParquet();
 void DeclareDeferredOGRParquetPlugin();
 void CPL_DLL RegisterOGRArrow();

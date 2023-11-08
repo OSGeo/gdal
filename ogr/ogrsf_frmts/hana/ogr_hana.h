@@ -384,9 +384,6 @@ class OGRHanaDataSource final : public GDALDataset
 
   public:
     static const char *GetPrefix();
-    static const char *GetLayerCreationOptions();
-    static const char *GetOpenOptions();
-    static const char *GetSupportedDataTypes();
 
   public:
     OGRHanaDataSource();

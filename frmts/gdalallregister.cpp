@@ -144,6 +144,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_FILEGDB_DRIVER)
     DeclareDeferredOGRFileGDBPlugin();
 #endif
+#if defined(DEFERRED_HANA_DRIVER)
+    DeclareDeferredOGRHANAPlugin();
+#endif
 #if defined(DEFERRED_HDF4_DRIVER)
     DeclareDeferredHDF4Plugin();
 #endif
