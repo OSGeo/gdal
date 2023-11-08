@@ -64,6 +64,7 @@ def check_no_file_leaks():
         or gdaltest.is_travis_branch("ubuntu_1804_32bit")
         or gdaltest.is_travis_branch("fedora")
         or gdaltest.is_travis_branch("alpine")
+        or gdaltest.is_travis_branch("alpine_32bit")
     ):
         print("Mysterious leak of file handle on some CI setups")
         return

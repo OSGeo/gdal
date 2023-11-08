@@ -62,6 +62,13 @@ jobs:
             container: alpine
             build_script: build.sh
 
+          - name: Alpine, gcc 32-bit
+            id: alpine_32bit
+            container: alpine_32bit
+            build_script: build.sh
+            test_script: test.sh
+            travis_branch: alpine_32bit
+
           - name: Fedora Rawhide, clang++
             id: fedora_rawhide
             travis_branch: sanitize
