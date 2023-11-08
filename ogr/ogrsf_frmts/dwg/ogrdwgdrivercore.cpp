@@ -26,65 +26,56 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_dwg.h"
-#include "cpl_conv.h"
-#include "ogrteigha.h"
+#include "ogrsf_frmts.h"
+
 #include "ogrdwgdrivercore.h"
 
 /************************************************************************/
-/*                          OGRDWGDriverUnload()                        */
+/*                         OGRDWGDriverIdentify()                       */
 /************************************************************************/
 
-static void OGRDWGDriverUnload(GDALDriver *)
+int OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo)
+
 {
-    CPLDebug("DWG", "Driver cleanup");
-    OGRTEIGHADeinitialize();
+    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "dwg");
 }
 
 /************************************************************************/
-/*                                Open()                                */
+/*                  OGRDWGDriverSetCommonMetadata()                   */
 /************************************************************************/
 
-static GDALDataset *OGRDWGDriverOpen(GDALOpenInfo *poOpenInfo)
+void OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    if (!OGRDWGDriverIdentify(poOpenInfo))
-        return nullptr;
+    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "AutoCAD DWG");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dwg");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/dwg.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_READ, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
-    // Check that this is a real file since the driver doesn't support
-    // VSI*L API
-    VSIStatBuf sStat;
-    if (VSIStat(poOpenInfo->pszFilename, &sStat) != 0)
-        return nullptr;
-
-    if (!OGRTEIGHAInitialize())
-        return nullptr;
-
-    OGRDWGDataSource *poDS = new OGRDWGDataSource();
-
-    if (!poDS->Open(OGRDWGGetServices(), poOpenInfo->pszFilename))
-    {
-        delete poDS;
-        poDS = nullptr;
-    }
-
-    return poDS;
+    poDriver->pfnIdentify = OGRDWGDriverIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
 }
 
 /************************************************************************/
-/*                           RegisterOGRDWG()                           */
+/*                   DeclareDeferredOGRDWGPlugin()                      */
 /************************************************************************/
 
-void RegisterOGRDWG()
-
+#ifdef PLUGIN_FILENAME
+void DeclareDeferredOGRDWGPlugin()
 {
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    {
         return;
-
-    GDALDriver *poDriver = new GDALDriver();
+    }
+    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
     OGRDWGDriverSetCommonMetadata(poDriver);
-
-    poDriver->pfnOpen = OGRDWGDriverOpen;
-    poDriver->pfnUnloadDriver = OGRDWGDriverUnload;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
+#endif
