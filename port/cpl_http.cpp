@@ -966,8 +966,8 @@ int CPLHTTPPopFetchCallback(void)
  *                  For example "Accept: application/x-ogcwkt"</li>
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
  *     (GDAL >= 2.2)</li>
- * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY] to specify an authentication scheme
- * to use.</li>
+ * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY/ANYSAFE] to specify an authentication
+ * scheme to use.</li>
  * <li>USERPWD=userid:password to specify a user and password for
  * authentication</li>
  * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed
@@ -982,7 +982,7 @@ int CPLHTTPPopFetchCallback(void)
  * only for HTTPS URLs.</li>
  * <li>PROXYUSERPWD=val, where val is of the form
  * username:password</li>
- * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY] to
+ * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY/ANYSAFE] to
  * specify an proxy authentication scheme to use.</li>
  * <li>NETRC=[YES/NO] to
  * enable or disable use of $HOME/.netrc (or NETRC_FILE), default YES.</li>
@@ -2146,6 +2146,9 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                    CURLAUTH_NTLM);
     else if (EQUAL(pszHttpAuth, "ANY"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+    else if (EQUAL(pszHttpAuth, "ANYSAFE"))
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
+                                   CURLAUTH_ANYSAFE);
 #ifdef CURLAUTH_NEGOTIATE
     else if (EQUAL(pszHttpAuth, "NEGOTIATE"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
@@ -2253,6 +2256,9 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     else if (EQUAL(pszProxyAuth, "ANY"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH,
                                    CURLAUTH_ANY);
+    else if (EQUAL(pszProxyAuth, "ANYSAFE"))
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH,
+                                   CURLAUTH_ANYSAFE);
 #ifdef CURLAUTH_NEGOTIATE
     else if (EQUAL(pszProxyAuth, "NEGOTIATE"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH,
