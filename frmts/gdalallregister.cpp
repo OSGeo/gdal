@@ -142,6 +142,9 @@ void CPL_STDCALL GDALAllRegister()
     DeclareDeferredOGRDWGPlugin();
     DeclareDeferredOGRDGNV8Plugin();
 #endif
+#if defined(DEFERRED_EXR_DRIVER)
+    DeclareDeferredEXRPlugin();
+#endif
 #if defined(DEFERRED_ECW_DRIVER)
     DeclareDeferredECWPlugin();
 #endif

@@ -205,6 +205,7 @@ void CPL_DLL GDALRegister_DAAS(void);
 void CPL_DLL GDALRegister_COG(void);
 void CPL_DLL GDALRegister_RDB(void);
 void CPL_DLL GDALRegister_EXR(void);
+void DeclareDeferredEXRPlugin(void);
 void CPL_DLL GDALRegister_HEIF(void);
 void CPL_DLL GDALRegister_TGA(void);
 void CPL_DLL GDALRegister_OGCAPI(void);
