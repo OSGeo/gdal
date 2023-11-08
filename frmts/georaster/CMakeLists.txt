@@ -2,7 +2,13 @@ add_gdal_driver(
   TARGET gdal_GEOR
   SOURCES georaster_dataset.cpp georaster_priv.h georaster_rasterband.cpp georaster_wrapper.cpp oci_wrapper.cpp
           cpl_vsil_ocilob.cpp
-  DEF FRMT_georaster PLUGIN_CAPABLE_IF "NOT GDAL_USE_ZLIB_INTERNAL;NOT GDAL_USE_JPEG_INTERNAL")
+  CORE_SOURCES georasterdrivercore.cpp
+  DEF FRMT_georaster PLUGIN_CAPABLE_IF "NOT GDAL_USE_ZLIB_INTERNAL\\\;NOT GDAL_USE_JPEG_INTERNAL")
+
+if(NOT TARGET gdal_GEOR)
+    return()
+endif()
+
 gdal_standard_includes(gdal_GEOR)
 if (GDAL_USE_ZLIB_INTERNAL)
   gdal_add_vendored_lib(gdal_GEOR libz)

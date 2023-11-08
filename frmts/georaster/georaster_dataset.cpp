@@ -39,6 +39,7 @@
 #include "ogr_spatialref.h"
 
 #include "georaster_priv.h"
+#include "georasterdrivercore.h"
 
 #include <memory>
 
@@ -90,27 +91,6 @@ GeoRasterDataset::~GeoRasterDataset()
 }
 
 //  ---------------------------------------------------------------------------
-//                                                                   Identify()
-//  ---------------------------------------------------------------------------
-
-int GeoRasterDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    //  -------------------------------------------------------------------
-    //  Verify georaster prefix
-    //  -------------------------------------------------------------------
-
-    char *pszFilename = poOpenInfo->pszFilename;
-
-    if (STARTS_WITH_CI(pszFilename, "georaster:") == false &&
-        STARTS_WITH_CI(pszFilename, "geor:") == false)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-//  ---------------------------------------------------------------------------
 //                                                                       Open()
 //  ---------------------------------------------------------------------------
 
@@ -129,7 +109,7 @@ GDALDataset *GeoRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     //  Check identification string and usage
     //  -------------------------------------------------------------------
 
-    if (!Identify(poOpenInfo))
+    if (!GEORDriverIdentify(poOpenInfo))
     {
         return nullptr;
     }
@@ -2865,111 +2845,15 @@ void CPL_DLL GDALRegister_GEOR()
     if (!GDAL_CHECK_VERSION("GeoRaster driver"))
         return;
 
-    if (GDALGetDriverByName("GeoRaster") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("GeoRaster");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Oracle Spatial GeoRaster");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/georaster.html");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                              "Float64 CFloat32 CFloat64");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='DESCRIPTION' type='string' description='Table "
-        "Description'/>"
-        "  <Option name='INSERT'      type='string' description='Column "
-        "Values'/>"
-        "  <Option name='BLOCKXSIZE'  type='int'    description='Column Block "
-        "Size' "
-        "default='512'/>"
-        "  <Option name='BLOCKYSIZE'  type='int'    description='Row Block "
-        "Size' "
-        "default='512'/>"
-        "  <Option name='BLOCKBSIZE'  type='int'    description='Band Block "
-        "Size'/>"
-        "  <Option name='BLOCKING'    type='string-select' default='YES'>"
-        "       <Value>YES</Value>"
-        "       <Value>NO</Value>"
-        "       <Value>OPTIMALPADDING</Value>"
-        "  </Option>"
-        "  <Option name='SRID'        type='int'    description='Overwrite "
-        "EPSG code'/>"
-        "  <Option name='GENPYRAMID'  type='string-select' "
-        " description='Generate Pyramid, inform resampling method'>"
-        "       <Value>NN</Value>"
-        "       <Value>BILINEAR</Value>"
-        "       <Value>BIQUADRATIC</Value>"
-        "       <Value>CUBIC</Value>"
-        "       <Value>AVERAGE4</Value>"
-        "       <Value>AVERAGE16</Value>"
-        "  </Option>"
-        "  <Option name='GENPYRLEVELS'  type='int'  description='Number of "
-        "pyramid level to generate'/>"
-        "  <Option name='OBJECTTABLE' type='boolean' "
-        "description='Create RDT as object table'/>"
-        "  <Option name='SPATIALEXTENT' type='boolean' "
-        "description='Generate Spatial Extent' "
-        "default='TRUE'/>"
-        "  <Option name='EXTENTSRID'  type='int'    description='Spatial "
-        "ExtentSRID code'/>"
-        "  <Option name='COORDLOCATION'    type='string-select' "
-        "default='CENTER'>"
-        "       <Value>CENTER</Value>"
-        "       <Value>UPPERLEFT</Value>"
-        "  </Option>"
-        "  <Option name='VATNAME'     type='string' description='Value "
-        "Attribute Table Name'/>"
-        "  <Option name='NBITS'       type='int'    description='BITS for "
-        "sub-byte "
-        "data types (1,2,4) bits'/>"
-        "  <Option name='INTERLEAVE'  type='string-select'>"
-        "       <Value>BSQ</Value>"
-        "       <Value>BIP</Value>"
-        "       <Value>BIL</Value>"
-        "   </Option>"
-        "  <Option name='COMPRESS'    type='string-select'>"
-        "       <Value>NONE</Value>"
-        "       <Value>JPEG-F</Value>"
-        "       <Value>JP2-F</Value>"
-        "       <Value>DEFLATE</Value>"
-        "  </Option>"
-        "  <Option name='QUALITY'     type='int'    description='JPEG quality "
-        "0..100' "
-        "default='75'/>"
-        "  <Option name='JP2_QUALITY'     type='string' description='For JP2-F "
-        "compression, single quality value or comma separated list "
-        "of increasing quality values for several layers, each in the 0-100 "
-        "range' default='25'/>"
-        "  <Option name='JP2_BLOCKXSIZE'  type='int' description='For JP2 "
-        "compression, tile Width' default='1024'/>"
-        "  <Option name='JP2_BLOCKYSIZE'  type='int' description='For JP2 "
-        "compression, tile Height' default='1024'/>"
-        "  <Option name='JP2_REVERSIBLE'  type='boolean' description='For "
-        "JP2-F compression, True if the compression is reversible' "
-        "default='false'/>"
-        "  <Option name='JP2_RESOLUTIONS' type='int' description='For JP2-F "
-        "compression, Number of resolutions.' min='1' max='30'/>"
-        "  <Option name='JP2_PROGRESSION' type='string-select' "
-        "description='For JP2-F compression, progression order' default='LRCP'>"
-        "    <Value>LRCP</Value>"
-        "    <Value>RLCP</Value>"
-        "    <Value>RPCL</Value>"
-        "    <Value>PCRL</Value>"
-        "    <Value>CPRL</Value>"
-        "  </Option>"
-        "</CreationOptionList>");
-
+    GEORDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = GeoRasterDataset::Open;
     poDriver->pfnCreate = GeoRasterDataset::Create;
     poDriver->pfnCreateCopy = GeoRasterDataset::CreateCopy;
-    poDriver->pfnIdentify = GeoRasterDataset::Identify;
     poDriver->pfnDelete = GeoRasterDataset::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

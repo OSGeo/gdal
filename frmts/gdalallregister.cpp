@@ -154,6 +154,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_FILEGDB_DRIVER)
     DeclareDeferredOGRFileGDBPlugin();
 #endif
+#if defined(DEFERRED_GEOR_DRIVER)
+    DeclareDeferredGEORPlugin();
+#endif
 #if defined(DEFERRED_HANA_DRIVER)
     DeclareDeferredOGRHANAPlugin();
 #endif
