@@ -153,6 +153,7 @@ void CPL_DLL GDALRegister_TIL(void);
 void CPL_DLL GDALRegister_R(void);
 void CPL_DLL GDALRegister_Rasterlite(void);
 void CPL_DLL GDALRegister_PostGISRaster(void);
+void DeclareDeferredPostGISRasterPlugin(void);
 void CPL_DLL GDALRegister_NWT_GRD(void);
 void CPL_DLL GDALRegister_NWT_GRC(void);
 void CPL_DLL GDALRegister_SAGA(void);
