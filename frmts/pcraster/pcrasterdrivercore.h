@@ -26,25 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_frmts.h"
-#include "gdal_pam.h"
-#include "pcrasterdataset.h"
-#include "pcrasterdrivercore.h"
+#ifndef PCRASTERDRIVERCORE_H
+#define PCRASTERDRIVERCORE_H
 
-void GDALRegister_PCRaster()
-{
-    if (!GDAL_CHECK_VERSION("PCRaster driver"))
-        return;
+#include "gdal_priv.h"
 
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
+constexpr const char *DRIVER_NAME = "PCRaster";
 
-    GDALDriver *poDriver = new GDALDriver();
-    PCRasterDriverSetCommonMetadata(poDriver);
+int CPL_DLL PCRasterDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-    poDriver->pfnOpen = PCRasterDataset::open;
-    poDriver->pfnCreate = PCRasterDataset::create;
-    poDriver->pfnCreateCopy = PCRasterDataset::createCopy;
+void CPL_DLL PCRasterDriverSetCommonMetadata(GDALDriver *poDriver);
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+#endif
