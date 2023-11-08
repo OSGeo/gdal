@@ -174,6 +174,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_PDF_DRIVER)
     DeclareDeferredPDFPlugin();
 #endif
+#if defined(DEFERRED_PG_DRIVER)
+    DeclareDeferredOGRPGPlugin();
+#endif
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     poDriverManager->AutoLoadDrivers();
