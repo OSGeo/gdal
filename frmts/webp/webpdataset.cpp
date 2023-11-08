@@ -31,6 +31,7 @@
 #include "gdal_pam.h"
 
 #include "webp_headers.h"
+#include "webpdrivercore.h"
 
 #include <limits>
 
@@ -77,7 +78,6 @@ class WEBPDataset final : public GDALPamDataset
 
     static GDALPamDataset *OpenPAM(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    char **papszOptions,
@@ -510,34 +510,13 @@ CPLErr WEBPDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int WEBPDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    int nHeaderBytes = poOpenInfo->nHeaderBytes;
-
-    GByte *pabyHeader = poOpenInfo->pabyHeader;
-
-    if (nHeaderBytes < 20)
-        return FALSE;
-
-    return memcmp(pabyHeader, "RIFF", 4) == 0 &&
-           memcmp(pabyHeader + 8, "WEBP", 4) == 0 &&
-           (memcmp(pabyHeader + 12, "VP8 ", 4) == 0 ||
-            memcmp(pabyHeader + 12, "VP8L", 4) == 0 ||
-            memcmp(pabyHeader + 12, "VP8X", 4) == 0);
-}
-
-/************************************************************************/
 /*                          OpenPAM()                                   */
 /************************************************************************/
 
 GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+    if (!WEBPDriverIdentify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
     int nWidth, nHeight;
@@ -1108,81 +1087,12 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
 void GDALRegister_WEBP()
 
 {
-    if (GDALGetDriverByName("WEBP") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    WEBPDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("WEBP");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "WEBP");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/webp.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "webp");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/webp");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>\n"
-        "   <Option name='QUALITY' type='float' description='good=100, bad=0' "
-        "default='75'/>\n"
-#if WEBP_ENCODER_ABI_VERSION >= 0x0100
-        "   <Option name='LOSSLESS' type='boolean' description='Whether "
-        "lossless compression should be used' default='FALSE'/>\n"
-#endif
-        "   <Option name='LOSSLESS_COPY' type='string-select' "
-        "description='Whether conversion should be lossless' default='AUTO'>"
-        "     <Value>AUTO</Value>"
-        "     <Value>YES</Value>"
-        "     <Value>NO</Value>"
-        "   </Option>"
-        "   <Option name='PRESET' type='string-select' description='kind of "
-        "image' default='DEFAULT'>\n"
-        "       <Value>DEFAULT</Value>\n"
-        "       <Value>PICTURE</Value>\n"
-        "       <Value>PHOTO</Value>\n"
-        "       <Value>DRAWING</Value>\n"
-        "       <Value>ICON</Value>\n"
-        "       <Value>TEXT</Value>\n"
-        "   </Option>\n"
-        "   <Option name='TARGETSIZE' type='int' description='if non-zero, "
-        "desired target size in bytes. Has precedence over QUALITY'/>\n"
-        "   <Option name='PSNR' type='float' description='if non-zero, minimal "
-        "distortion to to achieve. Has precedence over TARGETSIZE'/>\n"
-        "   <Option name='METHOD' type='int' description='quality/speed "
-        "trade-off. fast=0, slower-better=6' default='4'/>\n"
-        "   <Option name='SEGMENTS' type='int' description='maximum number of "
-        "segments [1-4]' default='4'/>\n"
-        "   <Option name='SNS_STRENGTH' type='int' description='Spatial Noise "
-        "Shaping. off=0, maximum=100' default='50'/>\n"
-        "   <Option name='FILTER_STRENGTH' type='int' description='Filter "
-        "strength. off=0, strongest=100' default='20'/>\n"
-        "   <Option name='FILTER_SHARPNESS' type='int' description='Filter "
-        "sharpness. off=0, least sharp=7' default='0'/>\n"
-        "   <Option name='FILTER_TYPE' type='int' description='Filtering type. "
-        "simple=0, strong=1' default='0'/>\n"
-        "   <Option name='AUTOFILTER' type='int' description=\"Auto adjust "
-        "filter's strength. off=0, on=1\" default='0'/>\n"
-        "   <Option name='PASS' type='int' description='Number of entropy "
-        "analysis passes [1-10]' default='1'/>\n"
-        "   <Option name='PREPROCESSING' type='int' description='Preprocessing "
-        "filter. none=0, segment-smooth=1' default='0'/>\n"
-        "   <Option name='PARTITIONS' type='int' description='log2(number of "
-        "token partitions) in [0..3]' default='0'/>\n"
-#if WEBP_ENCODER_ABI_VERSION >= 0x0002
-        "   <Option name='PARTITION_LIMIT' type='int' description='quality "
-        "degradation allowed to fit the 512k limit on prediction modes coding "
-        "(0=no degradation, 100=full)' default='0'/>\n"
-#endif
-#if WEBP_ENCODER_ABI_VERSION >= 0x0209
-        "   <Option name='EXACT' type='int' description='preserve the exact "
-        "RGB values under transparent area. off=0, on=1' default='0'/>\n"
-#endif
-        "</CreationOptionList>\n");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->pfnIdentify = WEBPDataset::Identify;
     poDriver->pfnOpen = WEBPDataset::Open;
     poDriver->pfnCreateCopy = WEBPDataset::CreateCopy;
 
