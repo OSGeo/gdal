@@ -191,7 +191,14 @@ MAIN_START(argc, argv)
 
     for (int i = 0; i < argc; i++)
     {
-        if (EQUAL(argv[i], "--help"))
+        if (EQUAL(argv[i], "--utility_version"))
+        {
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
+                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage(false);
         }
@@ -199,14 +206,6 @@ MAIN_START(argc, argv)
 
     if (argc < 3)
         Usage(true);
-
-    if (EQUAL(argv[1], "--utility_version"))
-    {
-        printf(
-            "%s was compiled against GDAL %s and is running against GDAL %s\n",
-            argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-        return 0;
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a driver specifier?                                  */
