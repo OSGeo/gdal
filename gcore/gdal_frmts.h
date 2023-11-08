@@ -170,7 +170,6 @@ void CPL_DLL GDALRegister_XYZ(void);
 void CPL_DLL GDALRegister_HF2(void);
 void CPL_DLL GDALRegister_PDF(void);
 void DeclareDeferredPDFPlugin(void);
-void CPL_DLL GDALRegister_JPEGLS(void);
 void CPL_DLL GDALRegister_MAP(void);
 void CPL_DLL GDALRegister_OZI(void);
 void CPL_DLL GDALRegister_ACE2(void);
