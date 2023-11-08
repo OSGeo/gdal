@@ -174,6 +174,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_NETCDF_DRIVER)
     DeclareDeferredNetCDFPlugin();
 #endif
+#if defined(DEFERRED_OCI_DRIVER)
+    DeclareDeferredOGROCIPlugin();
+#endif
 #if defined(DEFERRED_PARQUET_DRIVER)
     DeclareDeferredOGRParquetPlugin();
 #endif
