@@ -646,6 +646,7 @@ void DeclareDeferredOGROCIPlugin();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRLIBKML();
+void DeclareDeferredOGRLIBKMLPlugin();
 void CPL_DLL RegisterOGRKML();
 void CPL_DLL RegisterOGRFlatGeobuf();
 void CPL_DLL RegisterOGRGeoJSON();

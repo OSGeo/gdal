@@ -165,6 +165,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_JPIPKAK_DRIVER)
     DeclareDeferredJPIPKAKPlugin();
 #endif
+#if defined(DEFERRED_LIBKML_DRIVER)
+    DeclareDeferredOGRLIBKMLPlugin();
+#endif
 #if defined(DEFERRED_MRSID_DRIVER)
     DeclareDeferredMrSIDPlugin();
 #endif
