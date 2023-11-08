@@ -358,8 +358,15 @@ Backward compatibility
 
 Expected to be backward compatible for most practical purposes.
 
-Pedantically, if external code would directly use the pfnOpen, pfnCreate,
-pfnCreateCopy function pointers of a GDALDriver instance, it would see them
+Drivers that would request a driver instance with GDALGetDriverByName() may
+now get a GDALPluginDriverProxy instance instead of the "real" driver instance.
+This is usually not an issue as few drivers subclass GDALDriver, but that issue
+was hit on the PostGISRasterDriver that did subclass it. The solution was to
+store the real PostGISRasterDriver instance when it is built in a global variable,
+and use that global variable instead of the one returned by GDALGetDriverByName().
+
+Another potential issue is that if external code would directly use the pfnOpen, pfnCreate,
+pfnCreateCopy, etc. function pointers of a GDALDriver instance, it would see them
 null before the actual driver is loading, but direct access to
 those function pointers has never been documented (instead users should use
 GDALOpen(), GDALCreate(), GDALCreateCopy() etc), and is not expected to be
