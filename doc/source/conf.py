@@ -66,7 +66,6 @@ author = "Frank Warmerdam, Even Rouault, and others"
 extensions = [
     "breathe",
     "configoptions",
-    "redirects",
     "driverproperties",
     "source_file",
     "sphinx.ext.napoleon",
@@ -130,14 +129,6 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
-
-html_static_path = [
-    "_static",
-]
-
-html_extra_path = [
-    "../build/html_extra",
-]
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False
@@ -537,7 +528,3 @@ source_file_url_template = "https://github.com/OSGeo/gdal/blob/master/{}"
 
 # -- GDAL Config option listing ------------------------------------------
 options_since_ignore_before = "3.0"
-
-# -- Redirects --------------------------------------------------
-
-enable_redirects = False
