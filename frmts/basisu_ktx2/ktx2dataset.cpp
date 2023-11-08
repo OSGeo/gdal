@@ -29,6 +29,7 @@
 #include "gdal_pam.h"
 #include "common.h"
 #include "include_basisu_sdk.h"
+#include "ktx2drivercore.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -63,7 +64,6 @@ class KTX2Dataset final : public GDALPamDataset
     KTX2Dataset(uint32_t iLayer, uint32_t iFace, void *pEncodedData);
     KTX2Dataset(KTX2Dataset *poParent, uint32_t iLevel);
 
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
@@ -87,23 +87,6 @@ class KTX2RasterBand final : public GDALPamRasterBand
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int nIdx) override;
 };
-
-/************************************************************************/
-/*                                Identify()                            */
-/************************************************************************/
-
-int KTX2Dataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    constexpr GByte KTX2Signature[] = {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32,
-                                       0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
-    if (STARTS_WITH(poOpenInfo->pszFilename, "KTX2:"))
-        return true;
-    return poOpenInfo->fpL != nullptr &&
-           poOpenInfo->nHeaderBytes >=
-               static_cast<int>(sizeof(KTX2Signature)) &&
-           memcmp(poOpenInfo->pabyHeader, KTX2Signature,
-                  sizeof(KTX2Signature)) == 0;
-}
 
 /************************************************************************/
 /*                           KTX2Dataset()                              */
@@ -259,7 +242,7 @@ GDALRasterBand *KTX2RasterBand::GetOverview(int nIdx)
 
 GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
+    if (!KTX2DriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
     VSILFILE *fpL = nullptr;
@@ -455,25 +438,12 @@ GDALDataset *KTX2Dataset::CreateCopy(const char *pszFilename,
 
 void GDALRegister_KTX2()
 {
-    if (GDALGetDriverByName("KTX2") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    KTX2DriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("KTX2");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "KTX2 texture format");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/ktx2.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "ktx2");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        GDAL_KTX2_BASISU_GetCreationOptions(/* bIsKTX2 = */ true).c_str());
-
-    poDriver->pfnIdentify = KTX2Dataset::Identify;
     poDriver->pfnOpen = KTX2Dataset::Open;
     poDriver->pfnCreateCopy = KTX2Dataset::CreateCopy;
 

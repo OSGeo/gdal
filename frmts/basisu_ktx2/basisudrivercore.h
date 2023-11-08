@@ -26,12 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef BASISUDRIVERCORE_H
+#define BASISUDRIVERCORE_H
+
 #include "gdal_priv.h"
 
-void GDALInitBasisUTranscoder();
-void GDALInitBasisUEncoder();
+constexpr const char *DRIVER_NAME = "BASISU";
 
-bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                 bool bIsKTX2, CSLConstList papszOptions,
-                                 GDALProgressFunc pfnProgress,
-                                 void *pProgressData);
+int CPL_DLL BASISUDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void CPL_DLL BASISUDriverSetCommonMetadata(GDALDriver *poDriver);
+
+#endif

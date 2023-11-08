@@ -26,12 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include <string>
 
-void GDALInitBasisUTranscoder();
-void GDALInitBasisUEncoder();
+std::string GDAL_KTX2_BASISU_GetCreationOptions(bool bIsKTX2);
 
-bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                 bool bIsKTX2, CSLConstList papszOptions,
-                                 GDALProgressFunc pfnProgress,
-                                 void *pProgressData);
+void DeclareDeferredBASISUPlugin();
+void DeclareDeferredKTX2Plugin();

@@ -138,6 +138,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_ARROW_DRIVER)
     DeclareDeferredOGRArrowPlugin();
 #endif
+#if defined(DEFERRED_BASISU_KTX2_DRIVER)
+    DeclareDeferredBASISU_KTX2Plugin();
+#endif
 #if defined(DEFERRED_DWG_DRIVER)
     DeclareDeferredOGRDWGPlugin();
     DeclareDeferredOGRDGNV8Plugin();
@@ -175,6 +178,7 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_JPIPKAK_DRIVER)
     DeclareDeferredJPIPKAKPlugin();
 #endif
+
 #if defined(DEFERRED_LIBKML_DRIVER)
     DeclareDeferredOGRLIBKMLPlugin();
 #endif

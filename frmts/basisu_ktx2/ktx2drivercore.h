@@ -26,12 +26,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef KTX2DRIVERCORE_H
+#define KTX2DRIVERCORE_H
+
 #include "gdal_priv.h"
 
-void GDALInitBasisUTranscoder();
-void GDALInitBasisUEncoder();
+constexpr const char *DRIVER_NAME = "KTX2";
 
-bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                 bool bIsKTX2, CSLConstList papszOptions,
-                                 GDALProgressFunc pfnProgress,
-                                 void *pProgressData);
+int CPL_DLL KTX2DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void CPL_DLL KTX2DriverSetCommonMetadata(GDALDriver *poDriver);
+
+#endif

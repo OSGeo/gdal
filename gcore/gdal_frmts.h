@@ -218,6 +218,7 @@ void DeclareDeferredJPEGXLPlugin(void);
 void CPL_DLL GDALRegister_BASISU(void);
 void CPL_DLL GDALRegister_KTX2(void);
 void CPL_DLL GDALRegister_BASISU_KTX2(void);
+void DeclareDeferredBASISU_KTX2Plugin(void);
 void CPL_DLL GDALRegister_NOAA_B(void);
 void CPL_DLL GDALRegister_NSIDCbin(void);
 CPL_C_END
