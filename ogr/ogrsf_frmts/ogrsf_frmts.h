@@ -639,6 +639,7 @@ void CPL_DLL RegisterOGRPG();
 void DeclareDeferredOGRPGPlugin();
 void CPL_DLL RegisterOGRMSSQLSpatial();
 void CPL_DLL RegisterOGRMySQL();
+void DeclareDeferredOGRMySQLPlugin();
 void CPL_DLL RegisterOGROCI();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();

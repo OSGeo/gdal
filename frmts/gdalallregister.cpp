@@ -165,6 +165,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_MRSID_DRIVER)
     DeclareDeferredMrSIDPlugin();
 #endif
+#if defined(DEFERRED_MYSQL_DRIVER)
+    DeclareDeferredOGRMySQLPlugin();
+#endif
 #if defined(DEFERRED_NETCDF_DRIVER)
     DeclareDeferredNetCDFPlugin();
 #endif
