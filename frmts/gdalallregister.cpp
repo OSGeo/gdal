@@ -220,6 +220,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_PG_DRIVER)
     DeclareDeferredOGRPGPlugin();
 #endif
+#if defined(DEFERRED_RASTERLITE_DRIVER)
+    DeclareDeferredRasterlitePlugin();
+#endif
 #if defined(DEFERRED_TILEDB_DRIVER)
     DeclareDeferredTileDBPlugin();
 #endif
