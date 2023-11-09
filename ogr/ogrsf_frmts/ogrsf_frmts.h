@@ -699,6 +699,7 @@ void CPL_DLL RegisterOGRJML();
 void CPL_DLL RegisterOGRPLSCENES();
 void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDBv3();
+void DeclareDeferredOGRMongoDBv3Plugin();
 void CPL_DLL RegisterOGRVDV();
 void CPL_DLL RegisterOGRGMLAS();
 void CPL_DLL RegisterOGRMVT();
