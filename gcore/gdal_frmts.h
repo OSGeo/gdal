@@ -58,6 +58,7 @@ void CPL_DLL GDALRegister_HKV(void);
 void CPL_DLL GDALRegister_PNG(void);
 void DeclareDeferredPNGPlugin(void);
 void CPL_DLL GDALRegister_DDS(void);
+void CPL_DLL DeclareDeferredDDSPlugin(void);
 void CPL_DLL GDALRegister_GTA(void);
 void CPL_DLL GDALRegister_JPEG(void);
 void CPL_DLL GDALRegister_JP2KAK(void);

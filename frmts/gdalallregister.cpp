@@ -141,6 +141,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_BASISU_KTX2_DRIVER)
     DeclareDeferredBASISU_KTX2Plugin();
 #endif
+#if defined(DEFERRED_DDS_DRIVER)
+    DeclareDeferredDDSPlugin();
+#endif
 #if defined(DEFERRED_DWG_DRIVER)
     DeclareDeferredOGRDWGPlugin();
     DeclareDeferredOGRDGNV8Plugin();
