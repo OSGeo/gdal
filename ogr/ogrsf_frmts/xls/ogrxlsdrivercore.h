@@ -26,52 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_xls.h"
-#include "ogrxlsdrivercore.h"
-#include "cpl_conv.h"
+#ifndef OGRXLSDRIVERCORE_H
+#define OGRXLSDRIVERCORE_H
 
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
+#include "gdal_priv.h"
 
-static GDALDataset *OGRXLSDriverOpen(GDALOpenInfo *poOpenInfo)
+constexpr const char *DRIVER_NAME = "XLS";
 
-{
-    if ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0)
-    {
-        return nullptr;
-    }
+void CPL_DLL OGRXLSDriverSetCommonMetadata(GDALDriver *poDriver);
 
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLS"))
-    {
-        return nullptr;
-    }
-
-    OGRXLSDataSource *poDS = new OGRXLSDataSource();
-
-    if (!poDS->Open(poOpenInfo->pszFilename, false))
-    {
-        delete poDS;
-        poDS = nullptr;
-    }
-
-    return poDS;
-}
-
-/************************************************************************/
-/*                           RegisterOGRXLS()                           */
-/************************************************************************/
-
-void RegisterOGRXLS()
-
-{
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
-
-    GDALDriver *poDriver = new GDALDriver();
-    OGRXLSDriverSetCommonMetadata(poDriver);
-
-    poDriver->pfnOpen = OGRXLSDriverOpen;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+#endif

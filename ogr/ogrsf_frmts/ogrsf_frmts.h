@@ -688,6 +688,7 @@ void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRSVG();
 void CPL_DLL RegisterOGRIdrisi();
 void CPL_DLL RegisterOGRXLS();
+void DeclareDeferredOGRXLSPlugin();
 void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();
 void CPL_DLL RegisterOGRElastic();

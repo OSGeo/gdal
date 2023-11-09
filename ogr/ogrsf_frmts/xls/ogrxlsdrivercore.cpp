@@ -26,52 +26,53 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_xls.h"
+#include "ogrsf_frmts.h"
+
 #include "ogrxlsdrivercore.h"
-#include "cpl_conv.h"
 
 /************************************************************************/
-/*                                Open()                                */
+/*                    OGRXLSDriverIdentify()                            */
 /************************************************************************/
 
-static GDALDataset *OGRXLSDriverOpen(GDALOpenInfo *poOpenInfo)
+static int OGRXLSDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0)
-    {
-        return nullptr;
-    }
-
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLS"))
-    {
-        return nullptr;
-    }
-
-    OGRXLSDataSource *poDS = new OGRXLSDataSource();
-
-    if (!poDS->Open(poOpenInfo->pszFilename, false))
-    {
-        delete poDS;
-        poDS = nullptr;
-    }
-
-    return poDS;
+    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLS");
 }
 
 /************************************************************************/
-/*                           RegisterOGRXLS()                           */
+/*                  OGRXLSDriverSetCommonMetadata()                  */
 /************************************************************************/
 
-void RegisterOGRXLS()
+void OGRXLSDriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MS Excel format");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xls");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/xls.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_NONSPATIAL, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->pfnIdentify = OGRXLSDriverIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
+/*                   DeclareDeferredOGRXLSPlugin()                      */
+/************************************************************************/
+
+#ifdef PLUGIN_FILENAME
+void DeclareDeferredOGRXLSPlugin()
 {
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    {
         return;
-
-    GDALDriver *poDriver = new GDALDriver();
+    }
+    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
     OGRXLSDriverSetCommonMetadata(poDriver);
-
-    poDriver->pfnOpen = OGRXLSDriverOpen;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
+#endif
