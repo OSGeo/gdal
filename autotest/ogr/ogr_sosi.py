@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import shutil
+
 import gdaltest
 import pytest
 
@@ -64,13 +66,17 @@ def test_ogr_sosi_1():
 
 def test_ogr_sosi_2():
 
-    ds = gdal.OpenEx("data/sosi/test_duplicate_fields.sos", open_options=[])
-    lyr = ds.GetLayer(0)
-    assert lyr.GetFeatureCount() == 17
-    lyr = ds.GetLayer(1)
-    assert lyr.GetFeatureCount() == 1
-    f = lyr.GetNextFeature()
-    assert f["REINBEITEBRUKERID"] == "YD"
+    try:
+        ds = gdal.OpenEx("data/sosi/test_duplicate_fields.sos", open_options=[])
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 17
+        lyr = ds.GetLayer(1)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["REINBEITEBRUKERID"] == "YD"
+        ds.Close()
+    finally:
+        shutil.rmtree("data/sosi/test_duplicate_fields")
 
 
 ###############################################################################
@@ -79,16 +85,20 @@ def test_ogr_sosi_2():
 
 def test_ogr_sosi_3():
 
-    ds = gdal.OpenEx(
-        "data/sosi/test_duplicate_fields.sos",
-        open_options=["appendFieldsMap=BEITEBRUKERID&OPPHAV"],
-    )
-    lyr = ds.GetLayer(0)
-    assert lyr.GetFeatureCount() == 17
-    lyr = ds.GetLayer(1)
-    assert lyr.GetFeatureCount() == 1
-    f = lyr.GetNextFeature()
-    assert f["REINBEITEBRUKERID"] == "YD,YG"
+    try:
+        ds = gdal.OpenEx(
+            "data/sosi/test_duplicate_fields.sos",
+            open_options=["appendFieldsMap=BEITEBRUKERID&OPPHAV"],
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 17
+        lyr = ds.GetLayer(1)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["REINBEITEBRUKERID"] == "YD,YG"
+        ds.Close()
+    finally:
+        shutil.rmtree("data/sosi/test_duplicate_fields")
 
 
 ###############################################################################
@@ -97,13 +107,17 @@ def test_ogr_sosi_3():
 
 def test_ogr_sosi_4():
 
-    ds = gdal.OpenEx(
-        "data/sosi/test_duplicate_fields.sos",
-        open_options=["appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;"],
-    )
-    lyr = ds.GetLayer(0)
-    assert lyr.GetFeatureCount() == 17
-    lyr = ds.GetLayer(1)
-    assert lyr.GetFeatureCount() == 1
-    f = lyr.GetNextFeature()
-    assert f["REINBEITEBRUKERID"] == "YD;YG"
+    try:
+        ds = gdal.OpenEx(
+            "data/sosi/test_duplicate_fields.sos",
+            open_options=["appendFieldsMap=BEITEBRUKERID:;&OPPHAV:;"],
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 17
+        lyr = ds.GetLayer(1)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["REINBEITEBRUKERID"] == "YD;YG"
+        ds.Close()
+    finally:
+        shutil.rmtree("data/sosi/test_duplicate_fields")
