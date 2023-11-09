@@ -74,6 +74,7 @@ void CPL_DLL GDALRegister_GIF(void);
 void CPL_DLL GDALRegister_BIGGIF(void);
 void CPL_DLL GDALRegister_Envisat(void);
 void CPL_DLL GDALRegister_FITS(void);
+void CPL_DLL DeclareDeferredFITSPlugin(void);
 void CPL_DLL GDALRegister_ECW(void);
 void DeclareDeferredECWPlugin(void);
 void CPL_DLL GDALRegister_JP2ECW(void);

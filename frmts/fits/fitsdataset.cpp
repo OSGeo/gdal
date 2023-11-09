@@ -36,6 +36,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+#include "fitsdrivercore.h"
 
 #include <string.h>
 #include <fitsio.h>
@@ -99,7 +100,6 @@ class FITSDataset final : public GDALPamDataset
     ~FITSDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
@@ -2267,25 +2267,6 @@ void FITSDataset::LoadMetadata(GDALMajorObject *poTarget)
 }
 
 /************************************************************************/
-/*                           Identify()                                 */
-/************************************************************************/
-
-int FITSDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "FITS:"))
-        return true;
-
-    const char *fitsID = "SIMPLE  =                    T";  // Spaces important!
-    const size_t fitsIDLen = strlen(fitsID);  // Should be 30 chars long
-
-    if (static_cast<size_t>(poOpenInfo->nHeaderBytes) < fitsIDLen)
-        return false;
-    if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen) != 0)
-        return false;
-    return true;
-}
-
-/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -2386,7 +2367,7 @@ int FITSDataset::TestCapability(const char *pszCap)
 GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
 
-    if (!Identify(poOpenInfo))
+    if (!FITSDriverIdentify(poOpenInfo))
         return nullptr;
 
     CPLString osFilename(poOpenInfo->pszFilename);
@@ -3723,44 +3704,14 @@ void FITSDataset::LoadFITSInfo()
 void GDALRegister_FITS()
 
 {
-    if (GDALGetDriverByName("FITS") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    FITSDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("FITS");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Flexible Image Transport System");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/fits.html");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32 Float64");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "fits");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
-                              "Integer Integer64 Real String IntegerList "
-                              "Integer64List RealList");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-                              "Boolean Int16 Float32");
-
-    poDriver->SetMetadataItem(
-        GDAL_DS_LAYER_CREATIONOPTIONLIST,
-        "<LayerCreationOptionList>"
-        "  <Option name='REPEAT_*' type='int' description='Repeat value for "
-        "fields of type List'/>"
-        "  <Option name='COMPUTE_REPEAT' type='string-select' "
-        "description='Determine when the repeat value for fields is computed'>"
-        "    <Value>AT_FIELD_CREATION</Value>"
-        "    <Value>AT_FIRST_FEATURE_CREATION</Value>"
-        "  </Option>"
-        "</LayerCreationOptionList>");
     poDriver->pfnOpen = FITSDataset::Open;
-    poDriver->pfnIdentify = FITSDataset::Identify;
     poDriver->pfnCreate = FITSDataset::Create;
-    poDriver->pfnCreateCopy = nullptr;
     poDriver->pfnDelete = FITSDataset::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
