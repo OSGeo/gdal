@@ -241,6 +241,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_RASTERLITE_DRIVER)
     DeclareDeferredRasterlitePlugin();
 #endif
+#if defined(DEFERRED_SOSI_DRIVER)
+    DeclareDeferredOGRSOSIPlugin();
+#endif
 #if defined(DEFERRED_TILEDB_DRIVER)
     DeclareDeferredTileDBPlugin();
 #endif
