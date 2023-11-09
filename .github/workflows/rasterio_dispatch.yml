@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: POST
         run: |
-          curl -L \
+          curl -L -v \
             -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.RASTERIO_REPO_DISPATCH_TOKEN }}" \
