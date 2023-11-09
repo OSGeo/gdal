@@ -27,80 +27,50 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_idb.h"
-#include "cpl_conv.h"
+#include "ogrsf_frmts.h"
 
 #include "ogridbdrivercore.h"
 
 /************************************************************************/
-/*                                Open()                                */
+/*                     OGRIDBDriverIdentify()                           */
 /************************************************************************/
 
-static GDALDataset *OGRIDBDriverOpen(GDALOpenInfo *poOpenInfo)
+int OGRIDBDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    OGRIDBDataSource *poDS;
-
-    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "IDB:"))
-        return nullptr;
-
-    poDS = new OGRIDBDataSource();
-
-    if (!poDS->Open(poOpenInfo->pszFilename,
-                    (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0, TRUE))
-    {
-        delete poDS;
-        return nullptr;
-    }
-    else
-        return poDS;
+    return STARTS_WITH_CI(poOpenInfo->pszFilename, "IDB:");
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                  OGRIDBDriverSetCommonMetadata()                     */
 /************************************************************************/
 
-static GDALDataset *OGRIDBDriverCreate(const char *pszName, int /* nBands */,
-                                       int /* nXSize */, int /* nYSize */,
-                                       GDALDataType /* eDT */,
-                                       char ** /*papszOptions*/)
-
+void OGRIDBDriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    OGRIDBDataSource *poDS;
+    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "IDB");
 
-    if (!STARTS_WITH_CI(pszName, "IDB:"))
-        return nullptr;
+    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, "IDB:");
 
-    poDS = new OGRIDBDataSource();
-
-    if (!poDS->Open(pszName, TRUE, TRUE))
-    {
-        delete poDS;
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "IDB driver doesn't currently support database creation.");
-        return nullptr;
-    }
-
-    return poDS;
+    poDriver->pfnIdentify = OGRIDBDriverIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
 }
 
 /************************************************************************/
-/*                           RegisterOGRIDB()                            */
+/*                   DeclareDeferredOGRIDBPlugin()                      */
 /************************************************************************/
 
-void RegisterOGRIDB()
-
+#ifdef PLUGIN_FILENAME
+void DeclareDeferredOGRIDBPlugin()
 {
-    if (!GDAL_CHECK_VERSION("IDB driver"))
-        return;
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    {
         return;
-
-    GDALDriver *poDriver = new GDALDriver();
+    }
+    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
     OGRIDBDriverSetCommonMetadata(poDriver);
-
-    poDriver->pfnOpen = OGRIDBDriverOpen;
-    poDriver->pfnCreate = OGRIDBDriverCreate;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
+#endif

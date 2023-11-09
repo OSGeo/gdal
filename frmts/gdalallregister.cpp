@@ -178,6 +178,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_HDF5_DRIVER)
     DeclareDeferredHDF5Plugin();
 #endif
+#if defined(DEFERRED_IDB_DRIVER)
+    DeclareDeferredOGRIDBPlugin();
+#endif
 #if defined(DEFERRED_JP2KAK_DRIVER)
     DeclareDeferredJP2KAKPlugin();
 #endif

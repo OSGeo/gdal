@@ -669,6 +669,7 @@ void CPL_DLL RegisterOGRDGNV8();
 void DeclareDeferredOGRDWGPlugin();
 void DeclareDeferredOGRDGNV8Plugin();
 void CPL_DLL RegisterOGRIDB();
+void DeclareDeferredOGRIDBPlugin();
 void CPL_DLL RegisterOGRGMT();
 void CPL_DLL RegisterOGRGPX();
 void CPL_DLL RegisterOGRGeoconcept();
