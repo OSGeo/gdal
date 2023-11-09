@@ -52,7 +52,7 @@ void MM_InitializeField(struct MM_CAMP *camp)
 	camp->TipusDeCamp='C';
 	camp->mostrar_camp=MM_CAMP_MOSTRABLE;
     camp->simbolitzable=MM_CAMP_SIMBOLITZABLE;
-	camp->CampDescHipervincle=MM_MAX_TIPUS_NUMERADOR_CAMP_DBF;	
+	camp->CampDescHipervincle=MM_MAX_EXT_DBF_N_FIELDS_TYPE;	
     camp->TractamentVariable=MM_CAMP_INDETERMINAT;
 	camp->TipusCampGeoTopo=MM_NO_ES_CAMP_GEOTOPO;
 }//Fi de MM_InitializeField()
@@ -60,7 +60,7 @@ void MM_InitializeField(struct MM_CAMP *camp)
 struct MM_CAMP *MM_CreateAllFields(int ncamps)
 {
 struct MM_CAMP *camp;
-MM_NUMERATOR_DBF_FIELD_TYPE i;
+MM_EXT_DBF_N_FIELDS i;
 
     if ((camp=calloc_function(ncamps*sizeof(*camp)))==NULL)
         return NULL;
@@ -71,7 +71,7 @@ MM_NUMERATOR_DBF_FIELD_TYPE i;
 }//Fi de CreaTotsElsCamps()
 
 
-struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps)
+struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS n_camps)
 {
 struct MM_BASE_DADES_XP *base_dades_XP;
 
@@ -96,12 +96,12 @@ struct MM_BASE_DADES_XP *base_dades_XP;
 	return base_dades_XP;
 }
 
-struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps,
+struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
                         MM_BYTE charset)
 {
 struct MM_BASE_DADES_XP *bd_xp;
 struct MM_CAMP *camp;
-MM_NUMERATOR_DBF_FIELD_TYPE i;
+MM_EXT_DBF_N_FIELDS i;
 
 	if (NULL==(bd_xp=MM_CreateEmptyHeader(n_camps)))
     	return NULL;
@@ -111,10 +111,10 @@ MM_NUMERATOR_DBF_FIELD_TYPE i;
     strcpy(bd_xp->ModeLectura,"a+b");
 
 	bd_xp->CampIdGrafic=n_camps;
-    bd_xp->CampIdEntitat=MM_MAX_TIPUS_NUMERADOR_CAMP_DBF;
+    bd_xp->CampIdEntitat=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
 	bd_xp->versio_dbf=(MM_BYTE)((n_camps>MM_MAX_N_CAMPS_DBF_CLASSICA)?MM_MARCA_VERSIO_1_DBF_ESTESA:MM_MARCA_DBASE4);
 
-    //bd_xp->CampQueTeFitxerObert=MM_MAX_TIPUS_NUMERADOR_CAMP_DBF;
+    //bd_xp->CampQueTeFitxerObert=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
     //bd_xp->CampRelacional=n_camps; //No hi ha camps relacional.
 
 	for(i=0, camp=bd_xp->Camp; i<n_camps; i++, camp++)
@@ -270,7 +270,7 @@ MM_BYTE MM_CalculateBytesExtendedFieldName(struct MM_CAMP *camp)
 MM_TIPUS_BYTES_ACUMULATS_DBF MM_CalculateBytesExtendedFieldNames(const struct MM_BASE_DADES_XP *bd_xp)
 {
 MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats=0;
-MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
+MM_EXT_DBF_N_FIELDS i_camp;
 
 	for(i_camp=0;i_camp<bd_xp->ncamps;i_camp++)
     {
@@ -281,7 +281,7 @@ MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
 	return bytes_acumulats;
 }
 
-MM_TIPUS_OFFSET_PRIMERA_FITXA MM_CalculateBytesFirstRecordOffset(struct MM_BASE_DADES_XP *bd_xp)
+MM_FIRST_RECORD_OFFSET_TYPE MM_CalculateBytesFirstRecordOffset(struct MM_BASE_DADES_XP *bd_xp)
 {
 	if(bd_xp)
 		return (32+32*bd_xp->ncamps+1+MM_CalculateBytesExtendedFieldNames(bd_xp));
@@ -291,7 +291,7 @@ MM_TIPUS_OFFSET_PRIMERA_FITXA MM_CalculateBytesFirstRecordOffset(struct MM_BASE_
 void MM_CheckDBFHeader(struct MM_BASE_DADES_XP * bd_xp)
 {
 struct MM_CAMP *camp;
-MM_NUMERATOR_DBF_FIELD_TYPE i;
+MM_EXT_DBF_N_FIELDS i;
 MM_BOOLEAN cal_DBF_estesa=FALSE;
 
 	bd_xp->BytesPerFitxa=1;
@@ -318,11 +318,11 @@ MM_BOOLEAN cal_DBF_estesa=FALSE;
 } // Fi de MM_CheckDBFHeader()
 
 
-void MM_InitializeOffsetExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_NUMERATOR_DBF_FIELD_TYPE i_camp)
+void MM_InitializeOffsetExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
 {
 	memset((char*)(&bd_xp->Camp[i_camp].reservat_2)+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES, 0, 4);
 }
-void MM_InitializeBytesExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_NUMERATOR_DBF_FIELD_TYPE i_camp)
+void MM_InitializeBytesExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
 {
 	memset((char*)(&bd_xp->Camp[i_camp].reservat_2)+MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES, 0, 1);
 }
@@ -369,7 +369,7 @@ short int error_retornat=0;
 MM_BOOLEAN MM_CheckClassicFieldNameEqual(const struct MM_BASE_DADES_XP * base_dades_XP,
 							const char *nom_camp_classic)
 {
-MM_NUMERATOR_DBF_FIELD_TYPE i;
+MM_EXT_DBF_N_FIELDS i;
 
 	for(i=0; i<base_dades_XP->ncamps; i++)
     {				
@@ -397,7 +397,7 @@ size_t i;
 	return ptr;
 } // Fi de DonaNovaCadenaAmbCaracterDavant()
 
-char *MM_SetSubIndexFieldNam(char *nom_camp, MM_NUMERATOR_DBF_FIELD_TYPE index, size_t ampladamax)
+char *MM_SetSubIndexFieldNam(char *nom_camp, MM_EXT_DBF_N_FIELDS index, size_t ampladamax)
 {
 char *NomCamp_SubIndex;
 char *_subindex;
@@ -431,9 +431,9 @@ size_t longnomcamp;
     return NomCamp_SubIndex;
 }
 
-MM_TIPUS_OFFSET_PRIMERA_FITXA MM_GiveOffsetExtendedFieldName(const struct MM_CAMP *camp)
+MM_FIRST_RECORD_OFFSET_TYPE MM_GiveOffsetExtendedFieldName(const struct MM_CAMP *camp)
 {
-MM_TIPUS_OFFSET_PRIMERA_FITXA offset_nom_camp;
+MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
 
     memcpy(&offset_nom_camp, (char*)(&camp->reservat_2)+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES, 4);
     return offset_nom_camp;
@@ -443,12 +443,12 @@ MM_TIPUS_OFFSET_PRIMERA_FITXA offset_nom_camp;
 MM_BOOLEAN MM_UpdateEntireHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 {
 MM_BYTE variable_byte;
-MM_NUMERATOR_DBF_FIELD_TYPE i, j=0;  // Per a fer callar el compilador
+MM_EXT_DBF_N_FIELDS i, j=0;  // Per a fer callar el compilador
 const size_t max_n_zeros=11;
 char *zero;
 const MM_BYTE byte_zero=0;
 char ModeLectura_previ[4]="";
-MM_TIPUS_OFFSET_PRIMERA_FITXA bytes_acumulats;
+MM_FIRST_RECORD_OFFSET_TYPE bytes_acumulats;
 MM_BYTE mida_nom;
 int estat;
 char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
@@ -836,7 +836,7 @@ MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitx
 
 void MM_ReleaseMainFields(struct MM_BASE_DADES_XP * base_dades_XP)
 {
-MM_NUMERATOR_DBF_FIELD_TYPE i;
+MM_EXT_DBF_N_FIELDS i;
 size_t j;
 char **cadena;
 
@@ -875,7 +875,7 @@ void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(struct MM_CAMP *camp,
 			struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom)
 {
-MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
+MM_EXT_DBF_N_FIELDS i_camp;
 unsigned n_digits_i=0, i;
 int retorn=0;
 
@@ -1112,7 +1112,7 @@ int retorn_valida_nom_camp;
 size_t MM_DefineFirstPolygonFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp,
 				MM_BYTE n_decimals)
 {
-MM_NUMERATOR_DBF_FIELD_TYPE i_camp=0;
+MM_EXT_DBF_N_FIELDS i_camp=0;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampIdGraficDefecte,
 			"Internal graphic identifier", 'N',
@@ -1161,7 +1161,7 @@ MM_NUMERATOR_DBF_FIELD_TYPE i_camp=0;
 
 size_t MM_DefineFirstArcFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp, MM_BYTE n_decimals)
 {
-MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
+MM_EXT_DBF_N_FIELDS i_camp;
 
 	i_camp=0;
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampIdGraficDefecte,
@@ -1204,7 +1204,7 @@ MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
 
 size_t MM_DefineFirstNodeFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp)
 {
-MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
+MM_EXT_DBF_N_FIELDS i_camp;
 
 	i_camp=0;
 
@@ -1389,7 +1389,7 @@ char *ptr;
 
 int MM_SecureCopyStringFieldValue(char **pszStringDst,
                                  const char *pszStringSrc,
-                                 MM_NUMERATOR_DBF_FIELD_TYPE *nStringCurrentLenght)
+                                 MM_EXT_DBF_N_FIELDS *nStringCurrentLenght)
 {
     if(!pszStringSrc)
     {
@@ -1398,7 +1398,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst,
             (*pszStringDst)=realloc_function(*pszStringDst, 2);
             if(!(*pszStringDst))
                 return 1;
-            *nStringCurrentLenght=(MM_NUMERATOR_DBF_FIELD_TYPE)2;
+            *nStringCurrentLenght=(MM_EXT_DBF_N_FIELDS)2;
         }
         strcpy(*pszStringDst, "\0");
         return 0;
@@ -1409,7 +1409,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst,
         (*pszStringDst)=realloc_function(*pszStringDst, strlen(pszStringSrc)+1);
         if(!(*pszStringDst))
             return 1;
-        *nStringCurrentLenght=(MM_NUMERATOR_DBF_FIELD_TYPE)(strlen(pszStringSrc)+1);
+        *nStringCurrentLenght=(MM_EXT_DBF_N_FIELDS)(strlen(pszStringSrc)+1);
     }
     strcpy(*pszStringDst, pszStringSrc);
     return 0;
@@ -1417,17 +1417,17 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst,
 
 // This function assumes that all the file is saved in disk and closed.
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
-							MM_NUMERATOR_DBF_FIELD_TYPE nIField,
+							MM_EXT_DBF_N_FIELDS nIField,
 							MM_TIPUS_BYTES_PER_CAMP_DBF nNewWidth,
                             MM_BYTE nNewPrecision,
 							MM_BYTE que_fer_amb_reformatat_decimals)
 {
 char *record, *whites=NULL;
 MM_TIPUS_BYTES_PER_CAMP_DBF l_glop1, l_glop2, i_glop2;
-MM_NUMERATOR_RECORD i_reg, nfitx;
+MM_EXT_DBF_N_RECORDS i_reg, nfitx;
 int canvi_amplada;
 signed __int32 j;
-MM_NUMERATOR_DBF_FIELD_TYPE i_camp;
+MM_EXT_DBF_N_FIELDS i_camp;
 size_t retorn_fwrite;
 int retorn_TruncaFitxer;
 
@@ -1666,7 +1666,7 @@ int retorn_printf;
     {
 		base_dades_XP->Camp[nIField].BytesPerCamp = nNewWidth;
         base_dades_XP->BytesPerFitxa+=canvi_amplada;
-        for (i_camp=(MM_NUMERATOR_DBF_FIELD_TYPE)(nIField+1); i_camp< base_dades_XP->ncamps; i_camp++)
+        for (i_camp=(MM_EXT_DBF_N_FIELDS)(nIField+1); i_camp< base_dades_XP->ncamps; i_camp++)
             base_dades_XP->Camp[i_camp].BytesAcumulats+=canvi_amplada;
     }
 	base_dades_XP->Camp[nIField].DecimalsSiEsFloat = nNewPrecision;

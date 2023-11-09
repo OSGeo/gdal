@@ -20,7 +20,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 void MM_InitializeField(struct MM_CAMP *camp);
-struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_NUMERATOR_DBF_FIELD_TYPE n_camps, MM_BYTE nCharSet);
+struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps, MM_BYTE nCharSet);
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP);
 MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitxer);
 int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp_inicial);
@@ -39,9 +39,9 @@ int MMWriteValueToRecordDBXP(struct MiraMonLayerInfo *hMiraMonLayer,
                             MM_BOOLEAN is_64);
 int MM_SecureCopyStringFieldValue(char **pszStringDst,
                                  const char *pszStringSrc,
-                                 MM_NUMERATOR_DBF_FIELD_TYPE *nStringCurrentLenght);
+                                 MM_EXT_DBF_N_FIELDS *nStringCurrentLenght);
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
-							MM_NUMERATOR_DBF_FIELD_TYPE quincamp,
+							MM_EXT_DBF_N_FIELDS quincamp,
 							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
                             MM_BYTE nou_decimals,
 							MM_BYTE que_fer_amb_reformatat_decimals);

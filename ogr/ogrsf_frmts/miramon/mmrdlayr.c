@@ -1,9 +1,37 @@
+/******************************************************************************
+ *
+ * Project:  OpenGIS Simple Features Reference Implementation
+ * Purpose:  C API to create a MiraMon layer
+ * Author:   Abel Pau, a.pau@creaf.uab.cat
+ *
+ ******************************************************************************
+ * Copyright (c) 2023,  MiraMon
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+#ifndef GDAL_COMPILATION
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "mmrdlayr.h"
 #include "giraarc.h"
 #include "env.h"
 #include "DefTopMM.h"
@@ -12,34 +40,49 @@
 #include "NomsFitx.h" // Per a OmpleExtensio()
 #include "ExtensMM.h"	//Per a ExtPoligons,...
 
+//#include "mm_gdal\mm_gdal_driver_structs.h"    // SECCIO_VERSIO
+//#include "mm_gdal\mm_wrlayr.h" 
+//#include "mm_gdal\mm_gdal_functions.h"
+#include "mm_gdal\mm_gdal_constants.h"
+#else
+#include "ogr_api.h"    // For CPL_C_START
+#include "mm_wrlayr.h" 
+#include "mm_gdal_functions.h"
+#include "mm_gdal_constants.h"
+#endif
+
+#include "mmrdlayr.h"
+
+#ifdef GDAL_COMPILATION
+CPL_C_START  // Necessary for compiling in GDAL project
+#endif
+
 static MM_TIPUS_ERROR lastErrorMM;
-#define MIDA_MISSATGE 		512
-#define MIDA_PATH 			1024
-int crea_dvc(FILE *f, MM_HANDLE_CAPA_VECTOR htlmm);
 
 MM_TIPUS_ERROR MMRecuperaUltimError(void)
 {
 	return lastErrorMM;
 }
-struct SMM_HANDLE_CAPA_VECTOR
+
+/*struct SMM_HANDLE_CAPA_VECTOR
 {
 	int tipus_fitxer;
 	struct TREBALL_ARC_NOD an;
-    char nom_fitxer[_MAX_PATH];
-    char nom_fitxer_arc[_MAX_PATH];
+    char nom_fitxer[MM_MAX_PATH];
+    char nom_fitxer_arc[MM_MAX_PATH];
 	struct Capcalera_Top cap_top;
     struct Capcalera_Top cap_top_arc;
-    BOOL es_3d;
-    struct CAPCALERA_VECTOR_3D *cap_arc_3d;  // pel cas en que necessitem llegir les capçaleres 3d amb el "pic i la pala".
-    FILE *pf, *pfarc;
-};
-
+    MM_BOOLEAN es_3d;
+    struct CAPCALERA_VECTOR_3D *cap_arc_3d;  // pel cas en que necessitem llegir les capÃ§aleres 3d amb el "pic i la pala".
+    FILE_TYPE *pf, *pfarc;
+};*/
+#ifdef TO_BE_REVISED
 MM_HANDLE_CAPA_VECTOR MMIniciaCapaVector(const char *nom_fitxer)
 {
 struct SMM_HANDLE_CAPA_VECTOR *shlayer;
 char ext[MAX_MIDA_EXTENSIO_FITXER];
 
-//Aquests defines fan que no es miri el tema de la llicència.
+//Aquests defines fan que no es miri el tema de la llicÃ¨ncia.
 #define ANY_CADUCITAT 2008
 #define MES_CADUCITAT 8
 #define DIA_CADUCITAT 1
@@ -50,8 +93,8 @@ time_t t;
 #endif
 
 #if defined ANY_CADUCITAT && defined MES_CADUCITAT && defined DIA_CADUCITAT
-   //   La llicència temporal. En aquest cas no es valida la llicència basada
-   //   en paràmetres.
+   //   La llicÃ¨ncia temporal. En aquest cas no es valida la llicÃ¨ncia basada
+   //   en parÃ metres.
 
    t = time(NULL);
    tm_local = localtime(&t);
@@ -81,19 +124,19 @@ time_t t;
     OmpleExtensio(ext,MAX_MIDA_EXTENSIO_FITXER, nom_fitxer);
     if(!stricmp(ext, ExtPoligons+1))
     {
-    	shlayer->tipus_fitxer=MM32DLL_POL;
+        shlayer->bIsPolygon=TRUE;
     }
     else if(!stricmp(ext, ExtArcs+1))
     {
-    	shlayer->tipus_fitxer=MM32DLL_ARC;
+        shlayer->bIsArc=TRUE;
     }
     else if(!stricmp(ext, ExtNodes+1))
     {
-    	shlayer->tipus_fitxer=MM32DLL_NOD;
+    	shlayer->bIsNode=TRUE;
     }
     else if(!stricmp(ext, ExtPunts+1))
     {
-    	shlayer->tipus_fitxer=MM32DLL_PNT;
+        shlayer->bIsPoint=TRUE;
     }
     else
     {
@@ -102,12 +145,12 @@ time_t t;
         return NULL;
     }
 
-	strcpy(shlayer->nom_fitxer, nom_fitxer);
+    shlayer->pszSrcLayerName=strdup_function(nom_fitxer);
 
     if(shlayer->tipus_fitxer==MM32DLL_POL)
     {
         DonaNomArcDelPol(shlayer->nom_fitxer_arc, shlayer->nom_fitxer);
-        if ((shlayer->pfarc=fopenAO(shlayer->nom_fitxer_arc, "rb"))==0 || lect_capcalera_topo(shlayer->pfarc, ExtArcs, &(shlayer->cap_top_arc)))
+        if ((shlayer->pfarc=fopen_function(shlayer->nom_fitxer_arc, "rb"))==0 || lect_capcalera_topo(shlayer->pfarc, ExtArcs, &(shlayer->cap_top_arc)))
         {
             lastErrorMM=No_puc_obrir_origen;
             free(shlayer);
@@ -116,7 +159,7 @@ time_t t;
 
         LlegeixStructTreballArcNod(shlayer->nom_fitxer, shlayer->nom_fitxer_arc, &(shlayer->an));
 
-        if ((shlayer->pf=fopenAO(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtPoligons, &(shlayer->cap_top)))
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtPoligons, &(shlayer->cap_top)))
         {
             lastErrorMM=No_puc_obrir_origen;
             MMFinalitzaCapaVector(shlayer);
@@ -124,7 +167,7 @@ time_t t;
             return NULL;
         }
         shlayer->cap_arc_3d=NULL;
-        shlayer->es_3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
+        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
     }
     else if(shlayer->tipus_fitxer==MM32DLL_ARC)
     {
@@ -132,14 +175,14 @@ time_t t;
         shlayer->pfarc=NULL;
 
         LlegeixStructTreballArcNod(NULL, shlayer->nom_fitxer, &(shlayer->an));
-        if ((shlayer->pf=fopenAO(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtArcs, &(shlayer->cap_top)))
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtArcs, &(shlayer->cap_top)))
         {
             lastErrorMM=UltimErrorStb0;
             MMFinalitzaCapaVector(shlayer);
             free(shlayer);
             return NULL;
         }
-        shlayer->es_3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
+        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
     }
     else if(shlayer->tipus_fitxer==MM32DLL_NOD)
     {
@@ -147,7 +190,7 @@ time_t t;
 
         LlegeixStructTreballArcNod(NULL, shlayer->nom_fitxer_arc, &(shlayer->an));
 
-        if ((shlayer->pfarc=fopenAO(shlayer->nom_fitxer_arc, "rb"))==0)
+        if ((shlayer->pfarc=fopen_function(shlayer->nom_fitxer_arc, "rb"))==0)
         {
             lastErrorMM=No_puc_obrir_origen;
             MMFinalitzaCapaVector(shlayer);
@@ -161,7 +204,7 @@ time_t t;
             free(shlayer);
             return NULL;
         }
-        if ((shlayer->pf=fopenAO(shlayer->nom_fitxer, "rb"))==0)
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0)
         {
             lastErrorMM=No_puc_obrir_origen;
             MMFinalitzaCapaVector(shlayer);
@@ -176,16 +219,16 @@ time_t t;
             return NULL;
         }
 		if(shlayer->an.arcZ)
-    	    shlayer->es_3d=TRUE;
+    	    hMiraMonLayer->TopHeader.bIs3d=TRUE;
         else
-	        shlayer->es_3d=FALSE;
+	        hMiraMonLayer->TopHeader.bIs3d=FALSE;
 	}
     else if(shlayer->tipus_fitxer==MM32DLL_PNT)
     {
     	*(shlayer->nom_fitxer_arc)='\0';
         shlayer->pfarc=NULL;
 
-        if ((shlayer->pf=fopenAO(shlayer->nom_fitxer, "rb"))==0)
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0)
         {
             lastErrorMM=No_puc_obrir_origen;
             MMFinalitzaCapaVector(shlayer);
@@ -199,10 +242,10 @@ time_t t;
             free(shlayer);
             return NULL;
         }
-        shlayer->es_3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
+        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
 	}
 
-    if(shlayer->es_3d && shlayer->tipus_fitxer==MM32DLL_ARC)
+    if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_ARC)
     {
 	    if(NULL==(shlayer->cap_arc_3d=Llegeix_cap_arcZ(shlayer->pf, shlayer->an.cap_arc, shlayer->an.n_arc, NULL, NULL)))
         {
@@ -212,7 +255,7 @@ time_t t;
   			return NULL;
         }
     }
-    if(shlayer->es_3d && shlayer->tipus_fitxer==MM32DLL_NOD)
+    if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_NOD)
     {
     	if(NULL==(shlayer->cap_arc_3d=Llegeix_cap_arcZ(shlayer->pfarc, shlayer->an.cap_arc, shlayer->an.n_arc, NULL, NULL)))
   		{
@@ -222,7 +265,7 @@ time_t t;
   			return NULL;
         }
     }
-    else if(shlayer->es_3d && shlayer->tipus_fitxer==MM32DLL_PNT)
+    else if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_PNT)
     {
 	    if (NULL==(shlayer->cap_arc_3d=calloc(shlayer->cap_top.n_elem, sizeof(*(shlayer->cap_arc_3d)))))
         {
@@ -231,10 +274,10 @@ time_t t;
             free(shlayer);
   			return NULL;
         }
-        // Saltem la part de punts i llegim les capçaleres 3d
-        fseek(shlayer->pf, MIDA_CAPCALERA_TOP+shlayer->cap_top.n_elem*sizeof(double)*2+16+sizeof(double)*2,SEEK_SET);
-        // LLegim les capçaleres
-        if (fread(shlayer->cap_arc_3d, sizeof(struct CAPCALERA_VECTOR_3D), shlayer->cap_top.n_elem, shlayer->pf)!=(size_t)shlayer->cap_top.n_elem)
+        // Saltem la part de punts i llegim les capÃ§aleres 3d
+        fseek_function(shlayer->pf, MIDA_CAPCALERA_TOP+shlayer->cap_top.n_elem*sizeof(double)*2+16+sizeof(double)*2,SEEK_SET);
+        // LLegim les capÃ§aleres
+        if (fread_function(shlayer->cap_arc_3d, sizeof(struct CAPCALERA_VECTOR_3D), shlayer->cap_top.n_elem, shlayer->pf)!=(size_t)shlayer->cap_top.n_elem)
         {
             lastErrorMM=Mida_incoherent_Corromput;
         	MMFinalitzaCapaVector(shlayer);
@@ -244,7 +287,233 @@ time_t t;
     }
     return (MM_HANDLE_CAPA_VECTOR)shlayer;
 }
+#else
+int MMInitLayerToRead(struct MiraMonLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, const char *pszFilename)
+{
+char *aRELLayerName=NULL;
 
+    memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
+    MMReadHeader(m_fp, &hMiraMonLayer->TopHeader);
+    hMiraMonLayer->ReadOrWrite=MM_READING_MODE;
+    strcpy(hMiraMonLayer->pszFlags, "rb");
+    
+    hMiraMonLayer->pszSrcLayerName=strdup_function(pszFilename);
+    aRELLayerName=calloc_function(strlen(hMiraMonLayer->pszSrcLayerName)+6);
+    
+    hMiraMonLayer->LayerVersion = (char)MMGetVectorVersion(&hMiraMonLayer->TopHeader);
+    if (hMiraMonLayer->LayerVersion == MM_UNKNOWN_VERSION)
+        return 1;
+    if(hMiraMonLayer->LayerVersion==MM_LAST_VERSION)
+        hMiraMonLayer->nHeaderDiskSize=MM_HEADER_SIZE_64_BITS;
+    else if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
+        hMiraMonLayer->nHeaderDiskSize=MM_HEADER_SIZE_32_BITS;
+    else
+        hMiraMonLayer->nHeaderDiskSize=MM_HEADER_SIZE_64_BITS;
+    
+    if (hMiraMonLayer->TopHeader.aFileType[0] == 'P' &&
+        hMiraMonLayer->TopHeader.aFileType[1] == 'N' &&
+        hMiraMonLayer->TopHeader.aFileType[2] == 'T')
+    {
+        if (hMiraMonLayer->TopHeader.Flag & MM_LAYER_3D_INFO)
+        {
+            hMiraMonLayer->TopHeader.bIs3d = 1;
+            hMiraMonLayer->eLT = MM_LayerType_Point3d;
+        }
+        else
+            hMiraMonLayer->eLT = MM_LayerType_Point;
+
+        hMiraMonLayer->bIsPoint=TRUE;
+        if(MMResetExtensionAndLastLetter(aRELLayerName, 
+                    hMiraMonLayer->pszSrcLayerName, "T.rel"))
+            return 1;
+    }
+    else if (hMiraMonLayer->TopHeader.aFileType[0] == 'A' &&
+        hMiraMonLayer->TopHeader.aFileType[1] == 'R' &&
+        hMiraMonLayer->TopHeader.aFileType[2] == 'C')
+    {
+        if (hMiraMonLayer->TopHeader.Flag & MM_LAYER_3D_INFO)
+        {
+            hMiraMonLayer->TopHeader.bIs3d = 1;
+            hMiraMonLayer->eLT = MM_LayerType_Arc3d;
+        }
+        else
+            hMiraMonLayer->eLT = MM_LayerType_Arc;
+
+        hMiraMonLayer->bIsArc=TRUE;
+        if(MMResetExtensionAndLastLetter(aRELLayerName, 
+                    hMiraMonLayer->pszSrcLayerName, "A.rel"))
+            return 1;
+    }
+    else if (hMiraMonLayer->TopHeader.aFileType[0] == 'P' &&
+        hMiraMonLayer->TopHeader.aFileType[1] == 'O' &&
+        hMiraMonLayer->TopHeader.aFileType[2] == 'L')
+    {
+        // 3D
+        if (hMiraMonLayer->TopHeader.Flag & MM_LAYER_3D_INFO)
+        {
+            hMiraMonLayer->TopHeader.bIs3d = 1;
+            hMiraMonLayer->eLT = MM_LayerType_Pol3d;
+        }
+        else
+            hMiraMonLayer->eLT = MM_LayerType_Pol;
+
+        // MULTIPOLYGON Ã‚Â·$Ã‚Â·
+        hMiraMonLayer->bIsPolygon=TRUE;
+        if(MMResetExtensionAndLastLetter(aRELLayerName, 
+                    hMiraMonLayer->pszSrcLayerName, "P.rel"))
+            return 1;
+    }
+    
+    hMiraMonLayer->Version=MM_VECTOR_LAYER_LAST_VERSION;
+    
+    // Don't free in destructor
+    hMiraMonLayer->pLayerDB=NULL; //Â·$Â·
+
+    hMiraMonLayer->pSRS=strdup(ReturnEPSGCodeSRSFromMMIDSRS(
+        ReturnValueFromSectionINIFile(aRELLayerName, 
+        "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier")));
+
+    if(MMInitLayerByType(hMiraMonLayer))
+        return 1;
+    hMiraMonLayer->bIsBeenInit=1;
+    
+    // If more nNumStringToOperate is needed, it'll be increased.
+    hMiraMonLayer->nNumStringToOperate=500; 
+    hMiraMonLayer->szStringToOperate=
+            calloc_function(hMiraMonLayer->nNumStringToOperate);
+    if(!hMiraMonLayer->szStringToOperate)
+    {
+        error_message_function("Not enough memory");
+        return 1;
+    }
+
+    // Â·$Â· hMiraMonLayer->nCharSet=MM_JOC_CARAC_ANSI_DBASE;
+              
+    if(hMiraMonLayer->bIsPolygon)
+    {
+        #ifdef JA_NO_FALTA
+        DonaNomArcDelPol(shlayer->nom_fitxer_arc, shlayer->nom_fitxer);
+        if ((shlayer->pfarc=fopen_function(shlayer->nom_fitxer_arc, "rb"))==0 || 
+            lect_capcalera_topo(shlayer->pfarc, ExtArcs, &(shlayer->cap_top_arc)))
+        {
+            lastErrorMM=No_puc_obrir_origen;
+            free(shlayer);
+            return NULL;
+        }
+
+        LlegeixStructTreballArcNod(shlayer->nom_fitxer, shlayer->nom_fitxer_arc, &(shlayer->an));
+
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtPoligons, &(shlayer->cap_top)))
+        {
+            lastErrorMM=No_puc_obrir_origen;
+            MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+            return NULL;
+        }
+        shlayer->cap_arc_3d=NULL;
+        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
+        #endif
+    }
+    else if(hMiraMonLayer->bIsArc)
+    {
+        #ifdef JA_NO_FALTA
+    	*(shlayer->nom_fitxer_arc)='\0';
+        shlayer->pfarc=NULL;
+
+        LlegeixStructTreballArcNod(NULL, shlayer->nom_fitxer, &(shlayer->an));
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtArcs, &(shlayer->cap_top)))
+        {
+            lastErrorMM=UltimErrorStb0;
+            MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+            return NULL;
+        }
+        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
+        #endif
+    }
+    #ifdef JA_NO_FALTA
+    else if(hMiraMonLayer->tipus_fitxer==MM32DLL_NOD)
+    {
+        sprintf(shlayer->nom_fitxer_arc, "%s%s", TreuExtensio(nom_fitxer), ExtArcs);
+
+        LlegeixStructTreballArcNod(NULL, shlayer->nom_fitxer_arc, &(shlayer->an));
+
+        if ((shlayer->pfarc=fopen_function(shlayer->nom_fitxer_arc, "rb"))==0)
+        {
+            lastErrorMM=No_puc_obrir_origen;
+            MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+            return NULL;
+        }
+        if (lect_capcalera_topo(shlayer->pfarc, ExtArcs, &(shlayer->cap_top_arc)))
+        {
+            lastErrorMM=UltimErrorStb0;
+            MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+            return NULL;
+        }
+        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0)
+        {
+            lastErrorMM=No_puc_obrir_origen;
+            MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+            return NULL;
+        }
+        if (lect_capcalera_topo(shlayer->pf, ExtNodes, &(shlayer->cap_top)))
+        {
+            lastErrorMM=UltimErrorStb0;
+            MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+            return NULL;
+        }
+		if(shlayer->an.arcZ)
+    	    hMiraMonLayer->TopHeader.bIs3d=TRUE;
+        else
+	        hMiraMonLayer->TopHeader.bIs3d=FALSE;
+	}
+    #endif
+    
+    if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->bIsArc)
+    {
+        #ifdef JA_NO_FALTA
+	    if(NULL==(shlayer->cap_arc_3d=Llegeix_cap_arcZ(shlayer->pf, shlayer->an.cap_arc, shlayer->an.n_arc, NULL, NULL)))
+        {
+        	lastErrorMM=UltimErrorStb0;
+        	MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+  			return NULL;
+        }
+    #endif
+    }
+
+    #ifdef JA_NO_FALTA
+    if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_NOD)
+    {
+    	if(NULL==(shlayer->cap_arc_3d=Llegeix_cap_arcZ(shlayer->pfarc, shlayer->an.cap_arc, shlayer->an.n_arc, NULL, NULL)))
+  		{
+        	lastErrorMM=UltimErrorStb0;
+        	MMFinalitzaCapaVector(shlayer);
+            free(shlayer);
+  			return NULL;
+        }
+    }
+    else
+    #endif
+    if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->bIsPoint)
+    {
+        if(MMReadZSection(hMiraMonLayer, hMiraMonLayer->MMPoint.pF, 
+                   &hMiraMonLayer->MMPoint.pZSection))
+            return 1;
+
+        if(MMReadZDescriptionHeaders(hMiraMonLayer, hMiraMonLayer->MMPoint.pF, 
+            hMiraMonLayer->TopHeader.nElemCount, &hMiraMonLayer->MMPoint.pZSection))
+            return 1;
+    }
+    return 0;
+}
+#endif // TO_BE_REVISED
+
+#ifdef IS_COMING
 MM_TIPUS_I_ELEM_CAPA_VECTOR MMRecuperaNElemCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
 {
 struct SMM_HANDLE_CAPA_VECTOR *shlayer;
@@ -286,11 +555,11 @@ struct SMM_HANDLE_CAPA_VECTOR *shlayer;
     return shlayer->cap_top.envolupant[VY_MAX];
 }
 
-MM_TIPUS_I_ANELL_CAPA_VECTOR MMRecuperMaxNAnellsCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
+MM_POLYGON_RINGS_COUNT MMRecuperMaxNAnellsCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
 {
 struct SMM_HANDLE_CAPA_VECTOR *shlayer;
 unsigned long int i;
-MM_TIPUS_I_ANELL_CAPA_VECTOR max=0;
+MM_POLYGON_RINGS_COUNT max=0;
 
 	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
     if(shlayer->tipus_fitxer!=MM32DLL_POL)
@@ -304,14 +573,14 @@ MM_TIPUS_I_ANELL_CAPA_VECTOR max=0;
     return max;
 }
 
-MM_TIPUS_I_COORD_CAPA_VECTOR MMRecuperaMaxNCoordCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
+MM_N_VERTICES_TYPE MMRecuperaMaxNCoordCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
 {
 struct SMM_HANDLE_CAPA_VECTOR *shlayer;
-MM_TIPUS_I_COORD_CAPA_VECTOR maxncoord;
-TIPUS_N_VERTEXS *n_vrt_ring;
+MM_N_VERTICES_TYPE maxncoord;
+MM_N_VERTICES_TYPE *n_vrt_ring;
 TIPUS_N_POLIGONS n_mini_pol;
 TIPUS_NUMERADOR_OBJECTE i_elem;
-TIPUS_N_VERTEXS n_ring;
+MM_N_VERTICES_TYPE n_ring;
 long int j;
 struct VARIABLES_LLEGEIX_POLS var_pols;
 
@@ -356,86 +625,105 @@ struct VARIABLES_LLEGEIX_POLS var_pols;
     }
 	return maxncoord;
 }
+#endif
 
-MM_TIPUS_BOLEA MMRecuperaElemCapaVector(MM_HANDLE_CAPA_VECTOR hlayer, MM_TIPUS_I_ELEM_CAPA_VECTOR i_elem,
-				MM_TIPUS_COORD coord_x[], MM_TIPUS_COORD coord_y[], MM_TIPUS_COORD coord_z[],
-                MM_TIPUS_I_COORD_CAPA_VECTOR n_vrt_ring[], MM_TIPUS_I_ANELL_CAPA_VECTOR *n_ring, MM_TIPUS_SELEC_COORDZ select_coordz)
+int MMGetFeatureFromVector(struct MiraMonLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem)
 {
-struct SMM_HANDLE_CAPA_VECTOR *shlayer;
+FILE_TYPE *pF, *pFArc;
+struct MM_ZD *pZDescription;
 unsigned long int flag_z;
 size_t k, i_coord_acumulat;
 size_t i_ring;
-struct POINT_DOUBLE_2D *coord=NULL;
-struct POINT_DOUBLE_2D un_punt;
+struct MM_POINT_2D *coord=NULL;
+//struct MM_POINT_2D un_punt;
 double *z=NULL;
 int num;
-double *punts_z, cz;
-struct POINT_DOUBLE_2D *punts;
-TIPUS_N_VERTEXS *n_vrt_ring_interna=NULL;
-struct VARIABLES_LLEGEIX_POLS var_pols;
+double cz;
+struct MM_POINT_2D *punts;
+MM_N_VERTICES_TYPE *n_vrt_ring_interna=NULL;
+// DESPRES struct VARIABLES_LLEGEIX_POLS var_pols;
+struct MM_AH *pArcHeader;
+struct MM_PH *pPolHeader;
 
-	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
-
-    if (select_coordz==MM_SELECT_COORDZ_MES_ALTA)
-    	flag_z=ARC_ALCADA_MES_ALTA;
-	else if (select_coordz==MM_SELECT_COORDZ_MES_BAIXA)
-        flag_z=ARC_ALCADA_MES_BAIXA;
+    if (hMiraMonLayer->nSelectCoordz==MM_SELECT_HIGHEST_COORDZ)
+    	flag_z=MM_STRING_HIGHEST_ALTITUDE;
+	else if (hMiraMonLayer->nSelectCoordz==MM_SELECT_LOWEST_COORDZ)
+        flag_z=MM_STRING_LOWEST_ALTITUDE;
     else
         flag_z=0L;
 
-    if(shlayer->tipus_fitxer==MM32DLL_PNT)
+    if(hMiraMonLayer->bIsPoint)
     {
-    	fseek(shlayer->pf, MIDA_CAPCALERA_TOP+sizeof(double)*2*i_elem, SEEK_SET);
-        // LLegim els punts
-        if (1!=fread(&un_punt, sizeof(double)*2, 1, shlayer->pf))
-        {
-            lastErrorMM=Error_lectura_Corromput;
-            return FALSE;
-        }
-        coord_x[0]=un_punt.x;
-        coord_y[0]=un_punt.y;
+        pF=hMiraMonLayer->MMPoint.pF;
+        
+        // Getting to the i-th element offset
+        fseek_function(pF, hMiraMonLayer->nHeaderDiskSize+sizeof(MM_COORD_TYPE)*2*i_elem, SEEK_SET);
 
-        if(shlayer->es_3d && coord_z)
+        // Reading the point
+        if(MMResizeMM_POINT2DPointer(&hMiraMonLayer->nCoordXY, 
+            &hMiraMonLayer->nMaxCoordXY, 
+            hMiraMonLayer->nNumCoordXY, 1, 1))
+            return 1;
+
+        if (1!=fread_function(hMiraMonLayer->nCoordXY, sizeof(MM_COORD_TYPE)*2, 1, pF))
         {
-            num=ARC_N_TOTAL_ALCADES_DISC(shlayer->cap_arc_3d[i_elem].n_alcades, 1);
-            if(num==0)coord_z[0]=NODATA_COORD_Z;
+            #ifndef GDAL_COMPILATION
+            lastErrorMM=Error_lectura_Corromput;
+            #endif
+            return 1;
+        }
+
+        if(hMiraMonLayer->TopHeader.bIs3d)
+        {
+            pZDescription=hMiraMonLayer->MMPoint.pZSection.pZDescription+i_elem;
+            num=MM_ARC_N_TOTAL_ALCADES_DISC(pZDescription->nZCount, 1);
+            if(num==0)
+                hMiraMonLayer->nCoordZ[0]=MM_NODATA_COORD_Z;
             else
             {
-                punts_z=calloc(num, sizeof(double));
-                if((size_t)num!=fread(punts_z,sizeof(*punts_z),num,shlayer->pf))
+                if(MMResizeDoublePointer(&hMiraMonLayer->nCoordZ, 
+                    &hMiraMonLayer->nMaxCoordZ, 
+                    hMiraMonLayer->nNumCoordZ, 1, 1))
+                    return 1;
+
+                fseek_function(pF, pZDescription->nOffsetZ ,SEEK_SET);
+                if((size_t)num!=fread_function(hMiraMonLayer->nCoordZ,sizeof(*hMiraMonLayer->nCoordZ),num,pF))
                 {
+                    #ifndef GDAL_COMPILATION
                     lastErrorMM=Error_lectura_Corromput;
-                    return FALSE;
+                    #endif
+                    return 1;
                 }
 
-                if (flag_z==ARC_ALCADA_MES_ALTA)
-                    cz=shlayer->cap_arc_3d[i_elem].zmax;
-                else if (flag_z==ARC_ALCADA_MES_BAIXA)
-                    cz=shlayer->cap_arc_3d[i_elem].zmin;
-                else
-                    cz=punts_z[0];
+                // Â·$Â· De moment agafarem el primer
+                /*if (flag_z==MM_STRING_HIGHEST_ALTITUDE)
+                    cz=pZDescription->dfBBmaxz;
+                else if (flag_z==MM_STRING_LOWEST_ALTITUDE)
+                    cz=pZDescription->dfBBminz;
+                else*/
+                    cz=hMiraMonLayer->nCoordZ[0];
 
-                if(!DOUBLES_DIFERENTS_DJ(cz, NODATA_COORD_Z))
-                    coord_z[0]=-DBL_MAX;
-                else coord_z[0]=cz; // Només ens quedem el primer.
-
-                free(punts_z);
+                // Â·$Â· Which value is nodata por Z en GDAL?
+                /*if(!DOUBLES_DIFERENTS_DJ(cz, MM_NODATA_COORD_Z))
+                    hMiraMonLayer->nCoordZ[0]=-DBL_MAX;
+                else */hMiraMonLayer->nCoordZ[0]=cz; // NomÃ©s ens quedem el primer.
             }
         }
-        if(n_ring)*n_ring=1;
-        if(n_vrt_ring)n_vrt_ring[0]=1;
-        return TRUE;
+        hMiraMonLayer->nNRing=1;
+        if(hMiraMonLayer->nNVrtRing)hMiraMonLayer->nNVrtRing[0]=1;
+        return 0;
     }
 
-    if(shlayer->tipus_fitxer==MM32DLL_NOD)
+    #ifdef TODO
+    if(hMiraMonLayer->bIsNode)
     {
-    	if(shlayer->es_3d && coord_z)
+    	if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->nCoordZ)
         {
             DonaPosicioNode(&un_punt, &cz, i_elem,
                 shlayer->an.cap_nod, shlayer->cap_top.n_elem,
                 shlayer->pf, shlayer->an.cap_arc, shlayer->cap_arc_3d,
                 shlayer->cap_top_arc.n_elem, shlayer->pfarc, flag_z);
-            coord_z[0]=cz;
+            hMiraMonLayer->nCoordZ[0]=cz;
         }
         else
         {
@@ -444,105 +732,124 @@ struct VARIABLES_LLEGEIX_POLS var_pols;
                 shlayer->pf, shlayer->an.cap_arc, NULL,
                 shlayer->cap_top_arc.n_elem, shlayer->pfarc, flag_z);
         }
-        coord_x[0]=un_punt.x;
-        coord_y[0]=un_punt.y;
+        hMiraMonLayer->nCoordX[0]=un_punt.x;
+        hMiraMonLayer->nCoordY[0]=un_punt.y;
 
-        if(n_ring)*n_ring=1;
-        if(n_vrt_ring)n_vrt_ring[0]=1;
-        return TRUE;
+        hMiraMonLayer->nNRing=1;
+        if(hMiraMonLayer->nNVrtRing)hMiraMonLayer->nNVrtRing[0]=1;
+        return 0;
     }
+    
 
-    if(shlayer->tipus_fitxer==MM32DLL_ARC)
+    if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
-    	fseek(shlayer->pf, shlayer->an.cap_arc[i_elem].offset_0, SEEK_SET);
+        pF=hMiraMonLayer->MMArc.pF;
+        pArcHeader=hMiraMonLayer->MMArc.pArcHeader;
+                
+        fseek_function(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
         // LLegim els vertexs de l'arc
-        punts=calloc(shlayer->an.cap_arc[i_elem].nomb_vertex, sizeof(struct POINT_DOUBLE_2D));
-        if((size_t)shlayer->an.cap_arc[i_elem].nomb_vertex!=fread(punts,sizeof(struct POINT_DOUBLE_2D),shlayer->an.cap_arc[i_elem].nomb_vertex,shlayer->pf))
+        punts=calloc_function(pArcHeader[i_elem].nElemCount*sizeof(*punts));
+        if(pArcHeader[i_elem].nElemCount!=
+            fread_function(punts,sizeof(*punts),pArcHeader[i_elem].nElemCount, pF))
         {
+            #ifndef GDAL_COMPILATION
             lastErrorMM=Mida_incoherent_Corromput;
-            return FALSE;
+            #endif
+            return 1;
         }
 
-        for(k=0;k<shlayer->an.cap_arc[i_elem].nomb_vertex;k++)
+        for(k=0;k<pArcHeader[i_elem].nElemCount;k++)
         {
-        	coord_x[k]=punts[k].x;
-	        coord_y[k]=punts[k].y;
+        	hMiraMonLayer->nCoordX[k]=punts[k].dfX;
+	        hMiraMonLayer->nCoordY[k]=punts[k].dfY;
         }
-        free(punts);
+        free_function(punts);
 
-        if(shlayer->es_3d && coord_z)
+        if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->nCoordZ)
         {
-            punts_z=calloc(shlayer->an.cap_arc[i_elem].nomb_vertex, sizeof(double));
-            DonaAlcadesDArc(punts_z, shlayer->pf, shlayer->an.cap_arc[i_elem].nomb_vertex,
-                &shlayer->cap_arc_3d[i_elem], flag_z);
+            pZDescription=hMiraMonLayer->MMArc.pZSection.pZDescription;
 
-            for(k=0; k<(shlayer->an.cap_arc[i_elem].nomb_vertex); k++)
+            punts_z=calloc(pArcHeader[i_elem].nElemCount, sizeof(double));
+            DonaAlcadesDArc(punts_z, pF, pArcHeader[i_elem].nElemCount,
+                pZDescription+i_elem, flag_z);
+
+            for(k=0; k<(pArcHeader[i_elem].nElemCount); k++)
             {
-                if(!DOUBLES_DIFERENTS_DJ(punts_z[k], NODATA_COORD_Z))
+                // Â·$Â· Which value is nodata por Z en GDAL?
+                /*if(!DOUBLES_DIFERENTS_DJ(punts_z[k], MM_NODATA_COORD_Z))
                     cz=-DBL_MAX;
-                else cz=punts_z[k]; // Només ens quedem el primer.
+                else */cz=punts_z[k]; // NomÃ©s ens quedem el primer.
 
-                coord_z[k]=cz;
+                hMiraMonLayer->nCoordZ[k]=cz;
             }
-            free(punts_z);
+            free_function(punts_z);
         }
-        if(n_ring)*n_ring=1;
-        n_vrt_ring[0]=shlayer->an.cap_arc[i_elem].nomb_vertex;
-        return TRUE;
+        hMiraMonLayer->nNRing=1;
+        hMiraMonLayer->nNVrtRing[0]=pArcHeader[i_elem].nElemCount;
+        return 0;
     }
+    #endif // TODO
+#ifdef QUAN_OBRI_POLIGONS
+    pFArc=hMiraMonLayer->MMPolygon.MMArc.pF;
+    pF=hMiraMonLayer->MMPolygon.pF;
+    pPolHeader=hMiraMonLayer->MMPolygon.pPolHeader;
+    pArcHeader=hMiraMonLayer->MMPolygon.MMArc.pArcHeader;
 
-    // Ara he llegir la capçalera de l'arc i llavors l'offset del primer vèrtex, llegirlos i afegirlos
-    // a la llista que anirà al final.
-    if(shlayer->es_3d && coord_z)
+    // Ara he llegir la capÃ§alera de l'arc i llavors l'offset del primer vÃ¨rtex, llegirlos i afegirlos
+    // a la llista que anirÃ  al final.
+    if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->nCoordZ)
     {
-        LlegeixPoliPoligon3D_POL(&coord, (TIPUS_N_VERTEXS **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)n_ring, NULL, &z, NULL, NULL,
-            NULL, NULL, shlayer->pf, shlayer->pfarc,
-            shlayer->an.cap_arc, shlayer->an.arcZ, shlayer->an.cap_pol, i_elem, FALSE, flag_z, &var_pols);
+        pZDescription=hMiraMonLayer->MMPolygon.MMArc.pZSection.pZDescription;
+
+        LlegeixPoliPoligon3D_POL(&coord, (MM_N_VERTICES_TYPE **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)&hMiraMonLayer->nNRing, NULL, &z, NULL, NULL,
+            NULL, NULL, pF, pFArc,
+            pArcHeader, pZDescription, pPolHeader, i_elem, FALSE, flag_z, &var_pols);
     }
     else
     {
-        LlegeixPoliPoligon3D_POL(&coord, (TIPUS_N_VERTEXS **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)n_ring, NULL,	NULL, NULL, NULL,
-            NULL, NULL, shlayer->pf, shlayer->pfarc,
-            shlayer->an.cap_arc, NULL, shlayer->an.cap_pol, i_elem, FALSE, flag_z, &var_pols);
+        LlegeixPoliPoligon3D_POL(&coord, (MM_N_VERTICES_TYPE **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)&hMiraMonLayer->nNRing, NULL,	NULL, NULL, NULL,
+            NULL, NULL, pF, pFArc,
+            pArcHeader, NULL, pPolHeader, i_elem, FALSE, flag_z, &var_pols);
     }
 
-    for(i_ring=0, i_coord_acumulat=0; i_ring<*n_ring; i_ring++)
+    for(i_ring=0, i_coord_acumulat=0; i_ring<hMiraMonLayer->nNRing; i_ring++)
     {
-        for(k=0; k<n_vrt_ring[i_ring]; k++, i_coord_acumulat++)
+        for(k=0; k<hMiraMonLayer->nNVrtRing[i_ring]; k++, i_coord_acumulat++)
         {
-            coord_x[i_coord_acumulat]=coord[i_coord_acumulat].x;
-            coord_y[i_coord_acumulat]=coord[i_coord_acumulat].y;
-            if (coord_z)
+            hMiraMonLayer->nCoordX[i_coord_acumulat]=coord[i_coord_acumulat].dfX;
+            hMiraMonLayer->nCoordY[i_coord_acumulat]=coord[i_coord_acumulat].dfY;
+            if (hMiraMonLayer->nCoordZ)
             {
-	            if(shlayer->es_3d && z)
-    	        	coord_z[i_coord_acumulat]=z[i_coord_acumulat];
+	            if(hMiraMonLayer->TopHeader.bIs3d && z)
+    	        	hMiraMonLayer->nCoordZ[i_coord_acumulat]=z[i_coord_acumulat];
         	    else
-            		coord_z[i_coord_acumulat]=NODATA_COORD_Z;
+            		hMiraMonLayer->nCoordZ[i_coord_acumulat]=MM_NODATA_COORD_Z;
             }
         }
-        n_vrt_ring[i_ring]=n_vrt_ring_interna[i_ring];
+        hMiraMonLayer->nNVrtRing[i_ring]=n_vrt_ring_interna[i_ring];
     }
 
-    if(shlayer->es_3d && coord_z)
+    if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->nCoordZ)
     {
-        AlliberaIAnullaPoliPoligon3D_POL(&coord, (TIPUS_N_VERTEXS **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)n_ring,	&z, NULL, NULL,
+        AlliberaIAnullaPoliPoligon3D_POL(&coord, (MM_N_VERTICES_TYPE **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)&hMiraMonLayer->nNRing,	&z, NULL, NULL,
             NULL, NULL, &var_pols);
     }
     else
     {
-        AlliberaIAnullaPoliPoligon3D_POL(&coord, (TIPUS_N_VERTEXS **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)n_ring,	NULL, NULL, NULL,
+        AlliberaIAnullaPoliPoligon3D_POL(&coord, (MM_N_VERTICES_TYPE **)&n_vrt_ring_interna, (TIPUS_N_POLIGONS *)&hMiraMonLayer->nNRing,	NULL, NULL, NULL,
             NULL, NULL, &var_pols);
     }
-
-	return TRUE;
+#endif //QUAN_OBRI_POLIGONS
+	return 0;
 }
 
+#ifdef IS_COMING
 MM_TIPUS_BOLEA MMEs3DCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
 {
 struct SMM_HANDLE_CAPA_VECTOR *shlayer;
 
 	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
- 	return (MM_TIPUS_BOLEA)shlayer->es_3d;
+ 	return (MM_TIPUS_BOLEA)hMiraMonLayer->TopHeader.bIs3d;
 }
 
 MM_TIPUS_TIPUS_FITXER MMTipusFitxerCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
@@ -559,197 +866,12 @@ struct SMM_HANDLE_CAPA_VECTOR *shlayer;
 
 	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
 	AlliberaStructTreballArcNod(&(shlayer->an));
-    if(shlayer->pf)fclose(shlayer->pf);
-    if(shlayer->pfarc)fclose(shlayer->pfarc);
+    if(shlayer->pf)fclose_64(shlayer->pf);
+    if(shlayer->pfarc)fclose_64(shlayer->pfarc);
     if(shlayer->cap_arc_3d)free(shlayer->cap_arc_3d);
 }
+#endif //#ifdef IS_COMING
 
-#ifdef KK
-#ifndef __DLL__
-
-char missatge_local[MIDA_MISSATGE], missatge_local2[MIDA_MISSATGE];
-int main(int argc, char *argv[])
-{
-MM_HANDLE_CAPA_VECTOR hltmm;
-MM_TIPUS_COORD *coord_x, *coord_y, *coord_z;
-MM_TIPUS_I_COORD_CAPA_VECTOR maxNcoord;
-MM_TIPUS_I_ANELL_CAPA_VECTOR maxNRings;
-MM_TIPUS_I_ELEM_CAPA_VECTOR nelem;
-MM_TIPUS_I_ELEM_CAPA_VECTOR i_elem;
-MM_TIPUS_I_COORD_CAPA_VECTOR *n_vrt_ring;
-MM_TIPUS_I_ANELL_CAPA_VECTOR n_ring;
-MM_TIPUS_BOLEA es_3d;
-unsigned long int i_acum, i, j;
-char nom_vec[MIDA_PATH];
-char nom_dvc[MIDA_PATH];
-FILE *f, *fdvc;
-
-	if(argc>2)
-    {
-	    sprintf(missatge_local, "Nombre d'arguments incorrecte");
-    	puts(missatge_local);
-        return 1;
-    }
-
-    hltmm=MMIniciaCapaVector(argv[1]);
-    if (hltmm==NULL)
-    {
-        sprintf(missatge_local, "Error a mm32dll amb codi: %d", MMRecuperaUltimError());
-    	puts(missatge_local);
-        return 1;
-    }
-
-    maxNcoord=MMRecuperaMaxNCoordCapaVector(hltmm);
-    maxNRings=MMRecuperMaxNAnellsCapaVector(hltmm);
-
-    if(maxNcoord==0)
-    {
-	    sprintf(missatge_local, "Fitxer buit");
-    	puts(missatge_local);
-    	return 0;
-    }
-
-    if(NULL==(coord_x=calloc(maxNcoord, sizeof(*coord_x))))
-    {
-	    sprintf(missatge_local, "Falta memòria");
-    	puts(missatge_local);
-    	return 1;
-    }
-    if(NULL==(coord_y=calloc(maxNcoord, sizeof(*coord_y))))
-    {
-	    sprintf(missatge_local, "Falta memòria");
-    	puts(missatge_local);
-    	return 1;
-    }
-    if(NULL==(coord_z=calloc(maxNcoord, sizeof(*coord_z))))
-    {
-	    sprintf(missatge_local, "Falta memòria");
-    	puts(missatge_local);
-	    return 1;
-    }
-
-    if(NULL==(n_vrt_ring=calloc(maxNRings, sizeof(*n_vrt_ring))))
-    {
-	    sprintf(missatge_local, "Falta memòria");
-    	puts(missatge_local);
-	    return 1;
-    }
-
-    // Fitxer per a la creació d'un VEC de MiraMon
-    strcpy(nom_vec, "vec_exemple_MM.vec");
-    if ((f=fopen(nom_vec, "wt"))==NULL)
-    {
-    	sprintf(missatge_local, "No puc escriure el fitxer %s", nom_vec);
-        puts(missatge_local);
-        return 1;
-    }
-    strcpy(nom_dvc, "vec_exemple_MM.dvc");
-    if ((fdvc=fopen(nom_dvc, "wt"))==NULL)
-    {
-    	sprintf(missatge_local, "No puc escriure el fitxer %s", nom_dvc);
-        puts(missatge_local);
-        return 1;
-    }
-
-    es_3d=MMEs3DCapaVector(hltmm);
-
-    nelem=MMRecuperaNElemCapaVector(hltmm);
-    sprintf(missatge_local, "Tenim %d elements", nelem);
-    puts(missatge_local);
-    for(i_elem=0; i_elem<nelem; i_elem++)
-    {
-        if(!MMRecuperaElemCapaVector(hltmm, i_elem, coord_x, coord_y, coord_z,
-                n_vrt_ring, &n_ring, MM_SELECT_COORDZ_MES_ALTA))
-        {
-            sprintf(missatge_local, "Error amb codi (%d)\n", MMRecuperaUltimError());
-            puts(missatge_local);
-            return 1;
-        }
-
-        // Vèrtexs per pantalla
-        printf("Elements (%d) de (%d) anells\n", i_elem, n_ring);
-        for(i=0, i_acum=0; i<n_ring; i++)
-        {
-            printf("Nombre de vèrtex per a l'anell (%d) de l'element (%d): (%d)\n", i, i_elem, n_vrt_ring[i]);
-            for(j=0; j<n_vrt_ring[i]; j++,i_acum++)
-            {
-                printf("\tVèrtex (%d): x(%f) y(%f) ", i_acum, coord_x[i_acum], coord_y[i_acum]);
-                if(es_3d)
-                    printf("z(%f) ", coord_z[i_acum]);
-
-                printf(" ");
-                printf("\n");
-            }
-            printf("\n");
-        }
-
-        // Vèrtexs per a un VEC de MiraMon
-        for(i=0, i_acum=0; i<n_ring; i++)
-        {
-            fprintf(f, "%d %d\n", i_elem, n_vrt_ring[i]);
-            for(j=0; j<n_vrt_ring[i]; j++,i_acum++)
-            {
-                fprintf(f, "%f %f", coord_x[i_acum], coord_y[i_acum]);
-                if(es_3d)
-                    fprintf(f, " %f", coord_z[i_acum]);
-                fprintf(f, "\n");
-            }
-        }
-    }
-    fprintf(f, "0 0");
-
-    if(crea_dvc(fdvc, hltmm))
-    {
-	    sprintf(missatge_local, "No es pot crear la dvf del fitxer VEC");
-        puts(missatge_local);
-	    return 1;
-    }
-
-    fclose(f);
-    fclose(fdvc);
-
-    free(coord_x);
-    free(coord_y);
-    free(coord_z);
-    free(n_vrt_ring);
-
-    MMFinalitzaCapaVector(hltmm);
-    free(hltmm);
-    return 0;
-}
-
-
-int crea_dvc(FILE *f, MM_HANDLE_CAPA_VECTOR htlmm)
-{
-	fprintf(f,"file title  : \n");
-	fprintf(f,"id type     : integer\n");
-	fprintf(f,"file type   : ascii\n");
-    switch ((int)MMTipusFitxerCapaVector(htlmm))
-    {
-    	case MM32DLL_POL:
-        	fprintf(f,"object type : polygon\n");
-        break;
-        case MM32DLL_ARC:
-        	fprintf(f,"object type : line\n");
-        break;
-        case MM32DLL_NOD:
-        case MM32DLL_PNT:
-        	fprintf(f,"object type : point\n");
-        break;
-
-    }
-	fprintf(f,"ref. system : plane\n");
-	fprintf(f,"ref. units  : píxels\n");
-	fprintf(f,"unit dist.  : 1.000000\n");
-	fprintf(f,"min. X      : %f\n", MMRecuperaMinXCapaVector(htlmm));
-	fprintf(f,"max. X      : %f\n", MMRecuperaMaxXCapaVector(htlmm));
-	fprintf(f,"min. Y      : %f\n", MMRecuperaMinYCapaVector(htlmm));
-	fprintf(f,"max. Y      : %f\n", MMRecuperaMaxYCapaVector(htlmm));
-	fprintf(f,"pos'n error : unknown\n");
-	fprintf(f,"resolution  : unknown");
-    return 0;
-}
-
-
+#ifdef GDAL_COMPILATION
+CPL_C_END // Necessary for compiling in GDAL project
 #endif
-#endif //KK

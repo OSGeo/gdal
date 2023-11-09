@@ -36,25 +36,39 @@ CPL_C_START // Necessary for compiling C in GDAL project
 #define MM_MAX_LON_UNITATS                  66
 #define MM_MAX_LON_UNITATS_CAMP MM_MAX_LON_UNITATS
 
-#define MM_NUMERATOR_DBF_FIELD_TYPE             unsigned __int32   //(TIPUS_NUMERADOR_CAMP)
-#define MM_NUMERATOR_RECORD                     unsigned __int32   // ·$· <-- 64
-#define MM_FILE_OFFSET                          unsigned __int64 
-typedef size_t MM_TIPUS_N_VERTEXS;
+// Types of all components of a MiraMon feature
 
-//#define MM_TIPUS_MIDA_FITXER                    __int64  
-typedef __int64 MM_TIPUS_MIDA_FITXER;
-#define MM_TIPUS_OFFSET_PRIMERA_FITXA           __int32 
-#define MM_TIPUS_NUMERADOR_TAULA_ASSOC          size_t 
-#define MM_MAX_TIPUS_NUMERADOR_CAMP_DBF         _UI32_MAX
-#define MM_MAX_N_CAMPS_DBF_CLASSICA             255 
-#define MM_MAX_AMPLADA_CAMP_C_DBF_CLASSICA      254 
+// Common types
+// Type of the Feature ID: determines the maximum number of features in a layer.
+typedef unsigned __int64 MM_INTERNAL_FID;
+// Offset to the coordinates of the Features.
+typedef unsigned __int64 MM_FILE_OFFSET;
 
-#define MM_MARCA_VERSIO_1_DBF_ESTESA            0x90
-#define MM_MARCA_DBASE4                         0x03
-#define MM_MAX_LON_RESERVAT_1_BASE_DADES_XP     2
-#define MM_MAX_LON_DBF_ON_A_LAN_BASE_DADES_XP   12
-#define MM_MAX_LON_RESERVAT_2_BASE_DADES_XP     2
+// Type of the coordinates of a Point, Arc or Polygons points.
+typedef double MM_COORD_TYPE;
 
+// Points
+
+// StringLines (or Arcs)
+typedef size_t MM_N_VERTICES_TYPE;
+
+// Polygons (or polypolygons)
+typedef unsigned __int64 MM_POLYGON_ARCS_COUNT;
+typedef unsigned __int64 MM_POLYGON_RINGS_COUNT; 
+
+
+// Z Part
+typedef int MM_SELEC_COORDZ_TYPE;
+#define MM_SELECT_LOWEST_COORDZ 	0
+#define MM_SELECT_HIGHEST_COORDZ  	1
+
+#define MM_STRING_HIGHEST_ALTITUDE  0x0001
+#define MM_STRING_LOWEST_ALTITUDE   0x0002
+
+#define /*double*/ MM_NODATA_COORD_Z -1.0E+300
+
+
+// General static variables
 #define MM_MAX_LEN_LAYER_NAME           255
 #define MM_MAX_LEN_LAYER_IDENTIFIER     255
 
@@ -64,6 +78,25 @@ typedef __int64 MM_TIPUS_MIDA_FITXER;
 #define MM_FINAL_NODE                   3
 
 #define MM_MAX_ID_SNY                    41
+
+
+// Extended DBF
+// Type of the number of fields of an extended DBF
+typedef unsigned __int32 MM_EXT_DBF_N_FIELDS;  //(TIPUS_NUMERADOR_CAMP in MiraMon internal code) 
+// Type of the number of records of an extended DBF
+typedef unsigned __int32 MM_EXT_DBF_N_RECORDS; // ·$· <-- 64
+typedef __int32 MM_FIRST_RECORD_OFFSET_TYPE;
+
+#define MM_MAX_EXT_DBF_N_FIELDS_TYPE            _UI32_MAX
+#define MM_MAX_N_CAMPS_DBF_CLASSICA             255 
+#define MM_MAX_AMPLADA_CAMP_C_DBF_CLASSICA      254 
+
+#define MM_MARCA_VERSIO_1_DBF_ESTESA            0x90
+#define MM_MARCA_DBASE4                         0x03
+#define MM_MAX_LON_RESERVAT_1_BASE_DADES_XP     2
+#define MM_MAX_LON_DBF_ON_A_LAN_BASE_DADES_XP   12
+#define MM_MAX_LON_RESERVAT_2_BASE_DADES_XP     2
+
 
 #define MM_TIPUS_BYTES_PER_CAMP_DBF     unsigned __int32
 #define MM_TIPUS_BYTES_ACUMULATS_DBF    unsigned __int32
@@ -134,6 +167,7 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 #define MM_PRIVATE_POLYGON_DB_FIELDS    6
 
 typedef unsigned char       MM_BYTE;
+typedef signed __int32 MM_TIPUS_N_ALCADES;
 
 #define MM_NOU_N_DECIMALS_NO_APLICA		    0
 #define MM_APLICAR_NOU_N_DECIMALS			1
@@ -141,6 +175,11 @@ typedef unsigned char       MM_BYTE;
 #define MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM	3
 #define MM_CARACTERS_DOUBLE                 40
 
+#define MM_ARC_ALCADA_PER_CADA_VERTEX  1
+#define MM_ARC_ALCADA_CONSTANT        -1
+#define MM_ARC_TIPUS_ALCADA(n)        (((n)<0) ? MM_ARC_ALCADA_CONSTANT : MM_ARC_ALCADA_PER_CADA_VERTEX)
+#define MM_ARC_N_ALCADES(n)           labs(n)
+#define MM_ARC_N_TOTAL_ALCADES_DISC(n,n_vrt) (((n)<0) ? labs(n) : (n)*(MM_TIPUS_N_ALCADES)(n_vrt))
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

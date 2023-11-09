@@ -84,9 +84,6 @@ CPL_C_START // Necessary for compiling in GDAL project
 #define MM_250MB   262144000
 #define MM_500MB   524288000
 
-#define MM_INTERNAL_FID     unsigned __int64
-#define MM_EXT_DBF_N_FIELDS unsigned __int32
-
 // Version asked for user
 #define MM_UNKNOWN_VERSION    0
 #define MM_LAST_VERSION       1
@@ -196,6 +193,16 @@ struct ARC_VRT_STRUCTURE
 	MM_INTERNAL_FID nINod;	// Internal node index, empty at the beginning */
 };
 
+struct MM_VARIABLES_LLEGEIX_POLS
+{
+	size_t Nomb_Max_Coord;
+	size_t Bloc_Max_Coord;
+	size_t Nomb_Max_Coord_Z;
+	size_t Nomb_Max_avnp;
+	size_t Nomb_Max_Elem;
+	size_t Nomb_Max_vora_de_qui;
+};
+
 struct MM_FLUSH_INFO
 {
     __int32 nMyDiskSize;
@@ -213,8 +220,8 @@ struct MM_FLUSH_INFO
     unsigned __int64 SizeOfBlockToBeSaved;
     void *pBlockToBeSaved;
 
-    // Block where to save the pBlockToBeSaved
-    void *pBlockWhereToSave;
+    // Block where to save the pBlockToBeSaved or read from
+    void *pBlockWhereToSaveOrRead;
     // Number of full bytes: flushed every time it's needed
     unsigned __int64 nNumBytes;
     // Number of bytes allocated: flushed every time it's needed
@@ -303,7 +310,7 @@ struct MiraMonFieldValue
 {
     MM_BOOLEAN bIsValid;   // If 1 the value is filled. If 0, there is no value.
     #define MM_INIT_STRING_FIELD_VALUE   50000  // Never less than 10
-	MM_NUMERATOR_DBF_FIELD_TYPE nNumDinValue; // Size of the reserved string value
+	MM_EXT_DBF_N_FIELDS nNumDinValue; // Size of the reserved string value
     char *pDinValue;       // Used if MM_MAX_STRING_FIELD_VALUE is not enough
 	double dValue;     // For double and 32 bit integer numeric values and 
     __int64 iValue;    // For 64 bit integer values. 
@@ -413,7 +420,7 @@ struct MM_ZSection
 struct MM_AH
 {
     struct MMBoundingBox dfBB;
-    MM_TIPUS_N_VERTEXS nElemCount; // 4/8 bytes depending on the version
+    MM_N_VERTICES_TYPE nElemCount; // 4/8 bytes depending on the version
     MM_FILE_OFFSET nOffset; // 4/8 bytes depending on the version
     MM_INTERNAL_FID nFirstIdNode; // 4/8 bytes depending on the version
     MM_INTERNAL_FID nLastIdNode; // 4/8 bytes depending on the version
@@ -434,9 +441,9 @@ struct MM_PH
 {
     // Common Arc & Polyons section
     struct MMBoundingBox dfBB;
-    unsigned __int64 nArcsCount; // 4/8 bytes depending on the version
-    unsigned __int64 nExternalRingsCount; // 4/8 bytes depending on the version
-    unsigned __int64 nRingsCount; // 4/8 bytes depending on the version
+    MM_POLYGON_ARCS_COUNT nArcsCount; // 4/8 bytes depending on the version
+    MM_POLYGON_RINGS_COUNT nExternalRingsCount; // 4/8 bytes depending on the version
+    MM_POLYGON_RINGS_COUNT nRingsCount; // 4/8 bytes depending on the version
     MM_FILE_OFFSET nOffset; // 4/8 bytes depending on the version
     double dfPerimeter;
     double dfArea;
@@ -577,17 +584,17 @@ struct MiraMonPolygonLayer
 struct MiraMonFeature
 {
     // Number of parts
-    unsigned __int64 nNRings; // =1 for lines and points
-    unsigned __int64 nIRing; // The ring is being processed
+    MM_POLYGON_RINGS_COUNT nNRings; // =1 for lines and points
+    MM_POLYGON_RINGS_COUNT nIRing; // The ring is being processed
     
     // Number of reserved elements in *pNCoord
-    MM_TIPUS_N_VERTEXS nMaxpNCoord; 
-    MM_TIPUS_N_VERTEXS *pNCoord; // [0]=1 for lines and points
+    MM_N_VERTICES_TYPE nMaxpNCoord; 
+    MM_N_VERTICES_TYPE *pNCoord; // [0]=1 for lines and points
 
     // Number of reserved elements in *pCoord
-    MM_TIPUS_N_VERTEXS nMaxpCoord; 
+    MM_N_VERTICES_TYPE nMaxpCoord; 
     // Coordinate index thats is being processed
-    MM_TIPUS_N_VERTEXS nICoord; 
+    MM_N_VERTICES_TYPE nICoord; 
     // List of the coordinates of the feature
     struct MM_POINT_2D *pCoord; 
 
@@ -603,9 +610,9 @@ struct MiraMonFeature
     double *pZCoord; 
 
     // Records of the feature
-	MM_NUMERATOR_RECORD nNumRecords;
+	MM_EXT_DBF_N_RECORDS nNumRecords;
     // Number of reserved elements in *pRecords
-    MM_NUMERATOR_RECORD nMaxRecords; 
+    MM_EXT_DBF_N_RECORDS nMaxRecords; 
 	struct MiraMonRecord *pRecords;
 };
 
@@ -621,10 +628,16 @@ struct MiraMonLayerInfo
     char LayerVersion;
 
     char *pszSrcLayerName;
+
+    // To know if we are writting or reading
+    #define MM_READING_MODE     0
+    #define MM_WRITTING_MODE    1
+    MM_BOOLEAN ReadOrWrite;
     
     char pszFlags[10]; // To Open the file
     int bIsPolygon;
     int bIsArc; // Also 1 in a polygon layer
+    int bIsNode; // Not used in GDAL
     int bIsPoint;
     
     // Final number of elements of the layer. 
@@ -666,8 +679,22 @@ struct MiraMonLayerInfo
     // Dinamic string that is used as temporary buffer
     // with variable size as needed. Its value is 
     // very temporary. Copy in a safe place to save its value.
-    MM_NUMERATOR_DBF_FIELD_TYPE nNumStringToOperate;
+    MM_EXT_DBF_N_FIELDS nNumStringToOperate;
     char *szStringToOperate;
+
+    // Temporary elements when reading features from MiraMon files
+    MM_N_VERTICES_TYPE nNumCoordXY;
+    MM_N_VERTICES_TYPE nMaxCoordXY;
+    struct MM_POINT_2D *nCoordXY;
+
+    MM_N_VERTICES_TYPE nNumCoordZ;
+    MM_N_VERTICES_TYPE nMaxCoordZ;
+    MM_COORD_TYPE *nCoordZ;
+    
+    MM_POLYGON_RINGS_COUNT nNRing;
+    MM_N_VERTICES_TYPE *nNVrtRing;
+    
+    MM_SELEC_COORDZ_TYPE nSelectCoordz;
 };
 
 enum DataType {MMDTByte, MMDTInteger, MMDTuInteger, 
