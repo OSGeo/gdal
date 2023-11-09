@@ -172,6 +172,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_JP2KAK_DRIVER)
     DeclareDeferredJP2KAKPlugin();
 #endif
+#if defined(DEFERRED_JP2LURA_DRIVER)
+    DeclareDeferredJP2LuraPlugin();
+#endif
 #if defined(DEFERRED_JP2OPENJPEG_DRIVER)
     DeclareDeferredOPENJPEGPlugin();
 #endif
