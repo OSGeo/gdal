@@ -1,0 +1,31 @@
+FROM i386/alpine:3.18
+
+RUN apk add \
+    bash \
+    linux-headers gnu-libiconv-dev \
+    g++ make ccache cmake \
+    proj-dev proj proj-util \
+    curl-dev tiff-dev \
+    zlib-dev zstd-dev xz-dev snappy-dev \
+    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
+    py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip swig \
+    poppler-dev postgresql-dev \
+    openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
+    netcdf-dev libaec-dev hdf5-dev freexl-dev \
+    lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
+    libarchive-dev \
+    kealib-dev libjxl-dev \
+    json-c-dev giflib-dev \
+    libspatialite-dev librasterlite2-dev \
+    mariadb-connector-c-dev \
+    pcre2-dev \
+    qhull-dev \
+    unixodbc-dev \
+    libpq-dev \
+    apache-arrow-dev \
+    py3-pyarrow \
+    libxml2-dev libxslt-dev \
+    podofo-dev
+
+COPY requirements.txt /tmp/
+RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt

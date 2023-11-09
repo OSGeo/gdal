@@ -1193,7 +1193,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv, test_gdb):
     # File "ogr_fgdb.py", line 1664, in ogr_fgdb_19
     # if ds.StartTransaction(force=True) != 0:
     if (
-        gdaltest.is_travis_branch("ubuntu_2004")
+        gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
         or gdaltest.is_travis_branch("trusty_clang")
@@ -1669,10 +1670,11 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv, test_gdb):
 # this was what was tested in previous step)
 
 
-def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv):
+def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv, test_gdb):
 
     if (
-        gdaltest.is_travis_branch("ubuntu_2004")
+        gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
         or gdaltest.is_travis_branch("trusty_clang")
@@ -1702,7 +1704,8 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv, tmp_path):
         pytest.skip("No OpenFileGDB driver available")
 
     if (
-        gdaltest.is_travis_branch("ubuntu_2004")
+        gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
         or gdaltest.is_travis_branch("trusty_clang")
@@ -2189,7 +2192,8 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv, tmp_path):
 def test_ogr_fgdb_21(fgdb_drv, fgdb_sdk_1_4_or_later, tmp_path):
     # Fails on MULTIPOINT ZM
     if (
-        gdaltest.is_travis_branch("ubuntu_2004")
+        gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
         or gdaltest.is_travis_branch("python3")
