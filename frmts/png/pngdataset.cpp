@@ -40,6 +40,7 @@
  */
 
 #include "pngdataset.h"
+#include "pngdrivercore.h"
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -1774,23 +1775,6 @@ const char *PNGDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int PNGDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 4)
-        return FALSE;
-
-    if (png_sig_cmp(poOpenInfo->pabyHeader, static_cast<png_size_t>(0),
-                    poOpenInfo->nHeaderBytes) != 0)
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1799,7 +1783,7 @@ GDALDataset *PNGDataset::Open(GDALOpenInfo *poOpenInfo)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
-    if (!Identify(poOpenInfo))
+    if (!PNGDriverIdentify(poOpenInfo))
         return nullptr;
 #else
     if (poOpenInfo->fpL == nullptr)
@@ -2925,56 +2909,14 @@ static void png_gdal_warning(CPL_UNUSED png_structp png_ptr,
 void GDALRegister_PNG()
 
 {
-    if (GDALGetDriverByName("PNG") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("PNG");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Portable Network Graphics");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/png.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "png");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/png");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte UInt16");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>\n"
-        "   <Option name='WORLDFILE' type='boolean' description='Create world "
-        "file' default='FALSE'/>\n"
-        "   <Option name='ZLEVEL' type='int' description='DEFLATE compression "
-        "level 1-9' default='6'/>\n"
-        "   <Option name='SOURCE_ICC_PROFILE' type='string' description='ICC "
-        "Profile'/>\n"
-        "   <Option name='SOURCE_ICC_PROFILE_NAME' type='string' "
-        "description='ICC Profile name'/>\n"
-        "   <Option name='SOURCE_PRIMARIES_RED' type='string' "
-        "description='x,y,1.0 (xyY) red chromaticity'/>\n"
-        "   <Option name='SOURCE_PRIMARIES_GREEN' type='string' "
-        "description='x,y,1.0 (xyY) green chromaticity'/>\n"
-        "   <Option name='SOURCE_PRIMARIES_BLUE' type='string' "
-        "description='x,y,1.0 (xyY) blue chromaticity'/>\n"
-        "   <Option name='SOURCE_WHITEPOINT' type='string' "
-        "description='x,y,1.0 (xyY) whitepoint'/>\n"
-        "   <Option name='PNG_GAMMA' type='string' description='Gamma'/>\n"
-        "   <Option name='TITLE' type='string' description='Title'/>\n"
-        "   <Option name='DESCRIPTION' type='string' "
-        "description='Description'/>\n"
-        "   <Option name='COPYRIGHT' type='string' description='Copyright'/>\n"
-        "   <Option name='COMMENT' type='string' description='Comment'/>\n"
-        "   <Option name='WRITE_METADATA_AS_TEXT' type='boolean' "
-        "description='Whether to write source dataset metadata in TEXT chunks' "
-        "default='FALSE'/>\n"
-        "   <Option name='NBITS' type='int' description='Force output bit "
-        "depth: 1, 2 or 4'/>\n"
-        "</CreationOptionList>\n");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    PNGDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = PNGDataset::Open;
     poDriver->pfnCreateCopy = PNGDataset::CreateCopy;
-    poDriver->pfnIdentify = PNGDataset::Identify;
 #ifdef SUPPORT_CREATE
     poDriver->pfnCreate = PNGDataset::Create;
 #endif
