@@ -2696,6 +2696,55 @@ def test_gdalwarp_lib_to_cog_reprojection_options(tmp_vsimem):
 
 
 ###############################################################################
+# Test warping of single source to COG with reprojection options and -te
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options_and_te(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "cog.tif"
+    ds = gdal.Warp(
+        tmpfilename,
+        "../gcore/data/byte.tif",
+        options="-f COG -co TILING_SCHEME=GoogleMapsCompatible -te -13110479.091 4011415.244 -13090911.212 4030983.124",
+    )
+    assert ds.GetRasterBand(1).Checksum() != 0
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test warping of single source to COG with reprojection options and conflicting
+# -t_srs
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options_and_conflicting_t_srs(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "cog.tif"
+    with pytest.raises(Exception):
+        gdal.Warp(
+            tmpfilename,
+            "../gcore/data/byte.tif",
+            options="-f COG -co TILING_SCHEME=GoogleMapsCompatible -t_srs EPSG:4326",
+        )
+
+
+###############################################################################
+# Test warping of single source to COG with reprojection options and conflicting
+# -t_srs
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options_te_and_conflicting_t_srs(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "cog.tif"
+    with pytest.raises(Exception):
+        gdal.Warp(
+            tmpfilename,
+            "../gcore/data/byte.tif",
+            options="-f COG -co TILING_SCHEME=GoogleMapsCompatible -te -13110479.091 4011415.244 -13090911.212 4030983.124 -t_srs EPSG:4326",
+        )
+
+
+###############################################################################
 # Test warping of multiple source, compatible of BuildVRT mosaicing, to COG
 
 
