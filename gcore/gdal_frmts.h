@@ -184,6 +184,7 @@ void CPL_DLL GDALRegister_MBTiles(void);
 void CPL_DLL GDALRegister_IRIS(void);
 void CPL_DLL GDALRegister_KRO(void);
 void CPL_DLL GDALRegister_KEA(void);
+void DeclareDeferredKEAPlugin(void);
 void CPL_DLL GDALRegister_ROIPAC(void);
 void CPL_DLL GDALRegister_PLMOSAIC(void);
 void CPL_DLL GDALRegister_CALS(void);

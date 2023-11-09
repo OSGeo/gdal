@@ -184,7 +184,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_JPIPKAK_DRIVER)
     DeclareDeferredJPIPKAKPlugin();
 #endif
-
+#if defined(DEFERRED_KEA_DRIVER)
+    DeclareDeferredKEAPlugin();
+#endif
 #if defined(DEFERRED_LIBKML_DRIVER)
     DeclareDeferredOGRLIBKMLPlugin();
 #endif

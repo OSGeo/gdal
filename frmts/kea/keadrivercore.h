@@ -1,10 +1,7 @@
 /*
- *  keadriver.cpp
+ *  keadrivercore.h
  *
- *  Created by Pete Bunting on 01/08/2012.
  *  Copyright 2012 LibKEA. All rights reserved.
- *
- *  This file is part of LibKEA.
  *
  *  Permission is hereby granted, free of charge, to any person
  *  obtaining a copy of this software and associated documentation
@@ -27,26 +24,15 @@
  *
  */
 
-#include "gdal_frmts.h"
-#include "keadataset.h"
-#include "keadrivercore.h"
+#ifndef KEADRIVERCORE_H
+#define KEADRIVERCORE_H
 
-// method to register this driver
-void GDALRegister_KEA()
-{
-    if (!GDAL_CHECK_VERSION("KEA"))
-        return;
+#include "gdal_priv.h"
 
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
+constexpr const char *DRIVER_NAME = "KEA";
 
-    GDALDriver *poDriver = new GDALDriver();
-    KEADriverSetCommonMetadata(poDriver);
+int CPL_DLL KEADriverIdentify(GDALOpenInfo *poOpenInfo);
 
-    poDriver->pfnOpen = KEADataset::Open;
-    poDriver->pfnCreate = KEADataset::Create;
-    poDriver->pfnCreateCopy = KEADataset::CreateCopy;
-    poDriver->pfnUnloadDriver = KEADatasetDriverUnload;
+void CPL_DLL KEADriverSetCommonMetadata(GDALDriver *poDriver);
 
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+#endif
