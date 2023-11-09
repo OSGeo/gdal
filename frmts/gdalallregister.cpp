@@ -215,6 +215,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_PG_DRIVER)
     DeclareDeferredOGRPGPlugin();
 #endif
+#if defined(DEFERRED_TILEDB_DRIVER)
+    DeclareDeferredTileDBPlugin();
+#endif
 #if defined(DEFERRED_WEBP_DRIVER)
     DeclareDeferredWEBPPlugin();
 #endif
