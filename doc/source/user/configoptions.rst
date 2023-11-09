@@ -837,7 +837,7 @@ Networking options
       :config:`GDAL_HTTP_AUTH=NEGOTIATE`.
 
 -  .. config:: GDAL_HTTP_BEARER
-      :since: 3.8
+      :since: 3.9
 
       Set HTTP OAuth 2.0 Bearer Access Token to use for the connection. Must be used
       with :config:`GDAL_HTTP_AUTH=BEARER`.
