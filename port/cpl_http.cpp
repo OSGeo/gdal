@@ -551,6 +551,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
     {"GDAL_HTTP_HEADER_FILE", "HEADER_FILE"},
     {"GDAL_HTTP_AUTH", "HTTPAUTH"},
     {"GDAL_GSSAPI_DELEGATION", "GSSAPI_DELEGATION"},
+    {"GDAL_HTTP_BEARER", "HTTP_BEARER"},
     {"GDAL_HTTP_COOKIE", "COOKIE"},
     {"GDAL_HTTP_COOKIEFILE", "COOKIEFILE"},
     {"GDAL_HTTP_COOKIEJAR", "COOKIEJAR"},
@@ -966,12 +967,14 @@ int CPLHTTPPopFetchCallback(void)
  *                  For example "Accept: application/x-ogcwkt"</li>
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
  *     (GDAL >= 2.2)</li>
- * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY] to specify an authentication scheme
- * to use.</li>
+ * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY/ANYSAFE/BEARER] to specify an
+ * authentication scheme to use.</li>
  * <li>USERPWD=userid:password to specify a user and password for
  * authentication</li>
  * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed
  * GSS-API delegation. Relevant only with HTTPAUTH=NEGOTIATE (GDAL >= 3.3).</li>
+ * <li>HTTP_BEARER=val set OAuth 2.0 Bearer Access Token.
+ * Relevant only with HTTPAUTH=BEARER (GDAL >= 3.8).</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the
  * server with a POST request.</li>
  * <li>PROXY=val, to make requests go through a
@@ -982,7 +985,7 @@ int CPLHTTPPopFetchCallback(void)
  * only for HTTPS URLs.</li>
  * <li>PROXYUSERPWD=val, where val is of the form
  * username:password</li>
- * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY] to
+ * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY/ANYSAFE] to
  * specify an proxy authentication scheme to use.</li>
  * <li>NETRC=[YES/NO] to
  * enable or disable use of $HOME/.netrc (or NETRC_FILE), default YES.</li>
@@ -1054,7 +1057,7 @@ int CPLHTTPPopFetchCallback(void)
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD,
  * PROXYAUTH, NETRC, NETRC_FILE, MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION,
- * SSL_VERIFYSTATUS, USE_CAPI_STORE, GSSAPI_DELEGATION, TCP_KEEPALIVE,
+ * SSL_VERIFYSTATUS, USE_CAPI_STORE, GSSAPI_DELEGATION, HTTP_BEARER, TCP_KEEPALIVE,
  * TCP_KEEPIDLE, TCP_KEEPINTVL, USERAGENT, SSLCERT, SSLCERTTYPE, SSLKEY,
  * KEYPASSWD values are searched in the configuration options
  * respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
@@ -1062,7 +1065,7 @@ int CPLHTTPPopFetchCallback(void)
  * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_NETC_FILE, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
- * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION,
+ * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION, GDAL_HTTP_BEARER,
  * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL,
  * GDAL_HTTP_USERAGENT, GDAL_HTTP_SSLCERT, GDAL_HTTP_SSLCERTTYPE,
  * GDAL_HTTP_SSLKEY and GDAL_HTTP_KEYPASSWD.
@@ -2146,6 +2149,22 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                    CURLAUTH_NTLM);
     else if (EQUAL(pszHttpAuth, "ANY"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+    else if (EQUAL(pszHttpAuth, "ANYSAFE"))
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
+                                   CURLAUTH_ANYSAFE);
+#ifdef CURLAUTH_BEARER
+    else if (EQUAL(pszHttpAuth, "BEARER"))
+    {
+        const char *pszBearer = CSLFetchNameValue(papszOptions, "HTTP_BEARER");
+        if (pszBearer == nullptr)
+            pszBearer = CPLGetConfigOption("GDAL_HTTP_BEARER", nullptr);
+        if (pszBearer != nullptr)
+            unchecked_curl_easy_setopt(http_handle, CURLOPT_XOAUTH2_BEARER,
+                                       pszBearer);
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
+                                   CURLAUTH_BEARER);
+    }
+#endif  // CURLAUTH_BEARER
 #ifdef CURLAUTH_NEGOTIATE
     else if (EQUAL(pszHttpAuth, "NEGOTIATE"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_HTTPAUTH,
@@ -2253,6 +2272,9 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     else if (EQUAL(pszProxyAuth, "ANY"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH,
                                    CURLAUTH_ANY);
+    else if (EQUAL(pszProxyAuth, "ANYSAFE"))
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH,
+                                   CURLAUTH_ANYSAFE);
 #ifdef CURLAUTH_NEGOTIATE
     else if (EQUAL(pszProxyAuth, "NEGOTIATE"))
         unchecked_curl_easy_setopt(http_handle, CURLOPT_PROXYAUTH,

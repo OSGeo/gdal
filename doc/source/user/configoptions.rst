@@ -812,7 +812,7 @@ Networking options
       into a single request.
 
 -  .. config:: GDAL_HTTP_AUTH
-      :choices: BASIC, NTLM, GSSNEGOTIATE, ANY
+      :choices: BASIC, NTLM, NEGOTIATE, ANY, ANYSAFE, BEARER
 
       Set value to tell libcurl which authentication method(s) you want it to
       use. See http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTHTTPAUTH
@@ -828,6 +828,19 @@ Networking options
       separating the domain and name with a forward (/) or backward slash (\). Like
       this: "domain/user:password" or "domain\user:password". Some HTTP servers (on
       Windows) support this style even for Basic authentication.
+
+-  .. config:: GDAL_GSSAPI_DELEGATION
+      :since: 3.3
+      :choices: NONE, POLICY, ALWAYS
+
+      Set allowed GSS-API delegation. Relevant only with
+      :config:`GDAL_HTTP_AUTH=NEGOTIATE`.
+
+-  .. config:: GDAL_HTTP_BEARER
+      :since: 3.9
+
+      Set HTTP OAuth 2.0 Bearer Access Token to use for the connection. Must be used
+      with :config:`GDAL_HTTP_AUTH=BEARER`.
 
 -  .. config:: GDAL_HTTP_PROXY
 
@@ -852,7 +865,7 @@ Networking options
       in the form of [user name]:[password].
 
 -  .. config:: GDAL_PROXY_AUTH
-      :choices: BASIC, NTLM, DIGEST, ANY
+      :choices: BASIC, NTLM, NEGOTIATE, DIGEST, ANY, ANYSAFE
 
       Set value to  to tell libcurl which authentication method(s) you want it to use
       for your proxy authentication. See

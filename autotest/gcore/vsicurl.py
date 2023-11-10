@@ -1088,3 +1088,22 @@ def test_vsicurl_NETRC_FILE():
         pytest.skip("got exception %s" % str(e))
 
     assert "/i_do/not_exist" in err
+
+
+###############################################################################
+# Check auth with bearer token
+
+
+def test_vsicurl_bearer():
+    if gdaltest.is_travis_branch("ubuntu_1804") or gdaltest.is_travis_branch(
+        "ubuntu_1804_32bit"
+    ):
+        pytest.skip("Too old libcurl version, requires at least 7.61.0")
+    token = "myuniqtok"
+    with gdal.config_options({"GDAL_HTTP_AUTH": "BEARER", "GDAL_HTTP_BEARER": token}):
+        f = gdal.VSIFOpenL("/vsicurl/http://httpbin.org/bearer", "rb")
+        gdal.VSIFSeekL(f, 0, 2)
+        vsilen = gdal.VSIFTellL(f)
+        gdal.VSIFSeekL(f, 0, 0)
+        data = gdal.VSIFReadL(1, vsilen, f).decode("ascii")
+        assert token in data
