@@ -4,6 +4,7 @@
 # This file is available at the option of the licensee under:
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
+
 ARG PROJ_INSTALL_PREFIX=/usr/local
 ARG BASE_IMAGE=ubuntu:22.04
 ARG TARGET_BASE_IMAGE=ubuntu:22.04
@@ -133,6 +134,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST} \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so \
     && rm /build${PROJ_INSTALL_PREFIX}/lib/libproj.*  \
+    && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO} \
     && ln -s libinternalproj.so.${PROJ_SO} /build${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST} \
     && ${GCC_ARCH}-linux-gnu-strip -s /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
     && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
@@ -170,14 +172,14 @@ RUN . /buildscripts/bh-set-envvars.sh \
     fi \
     && mkdir build \
     && cd build \
-    && CFLAGS='-DPROJ_RENAME_SYMBOLS -g3 -O0' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -g3 -O0' \
+    && CFLAGS='-DPROJ_RENAME_SYMBOLS -O2' CXXFLAGS='-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2' \
        cmake .. \
-        -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && cd .. \
@@ -199,10 +201,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
     && mv /build/usr/include/gdal_version.h /build_gdal_version_changing/usr/include \
     && mv /build/usr/bin/*.py               /build_gdal_python/usr/bin \
-    && mv /build/usr/bin                    /build_gdal_version_changing/usr
-    # && for i in /build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
-    # && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
-    # && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
+    && mv /build/usr/bin                    /build_gdal_version_changing/usr \
+    && for i in /build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
+    && for i in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done
 
 # Build final image
 FROM $TARGET_BASE_IMAGE as runner
