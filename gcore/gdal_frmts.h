@@ -139,6 +139,7 @@ void CPL_DLL GDALRegister_GSAG(void);
 void CPL_DLL GDALRegister_GSBG(void);
 void CPL_DLL GDALRegister_GS7BG(void);
 void CPL_DLL GDALRegister_GRIB(void);
+void DeclareDeferredGRIBPlugin(void);
 void CPL_DLL GDALRegister_INGR(void);
 void CPL_DLL GDALRegister_ERS(void);
 void CPL_DLL GDALRegister_PALSARJaxa(void);

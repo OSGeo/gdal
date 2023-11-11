@@ -46,9 +46,16 @@ add_gdal_driver(
           degrib/g2clib/dec_jpeg2000.cpp
           degrib/g2clib/jpcunpack.c
           degrib/degrib/hazard.c
-          PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_PNG_INTERNAL;NOT GDAL_USE_ZLIB_INTERNAL"
-          NO_DEPS)
+      CORE_SOURCES
+          gribdrivercore.cpp
+      PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
+      NO_DEPS)
+
+if(NOT TARGET gdal_GRIB)
+    return()
+endif()
+
 gdal_standard_includes(gdal_GRIB)
 
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
