@@ -275,6 +275,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_WEBP_DRIVER)
     DeclareDeferredWEBPPlugin();
 #endif
+#if defined(DEFERRED_WMS_DRIVER)
+    DeclareDeferredWMSPlugin();
+#endif
 #if defined(DEFERRED_XLS_DRIVER)
     DeclareDeferredOGRXLSPlugin();
 #endif

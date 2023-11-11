@@ -140,6 +140,7 @@ void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
 void DeclareDeferredWCSPlugin(void);
 void CPL_DLL GDALRegister_WMS(void);
+void DeclareDeferredWMSPlugin(void);
 void CPL_DLL GDALRegister_HTTP(void);
 void CPL_DLL GDALRegister_GSAG(void);
 void CPL_DLL GDALRegister_GSBG(void);
