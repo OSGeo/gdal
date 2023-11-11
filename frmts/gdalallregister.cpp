@@ -257,6 +257,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_XLS_DRIVER)
     DeclareDeferredOGRXLSPlugin();
 #endif
+#if defined(DEFERRED_ZARR_DRIVER)
+    DeclareDeferredZarrPlugin();
+#endif
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
     poDriverManager->AutoLoadDrivers();
