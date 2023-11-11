@@ -203,6 +203,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_MONGODBV3_DRIVER)
     DeclareDeferredOGRMongoDBv3Plugin();
 #endif
+#if defined(DEFERRED_MRF_DRIVER)
+    DeclareDeferredMRFPlugin();
+#endif
 #if defined(DEFERRED_MRSID_DRIVER)
     DeclareDeferredMrSIDPlugin();
 #endif

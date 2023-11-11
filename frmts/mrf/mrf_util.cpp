@@ -51,6 +51,7 @@
 #include <zlib.h>
 #include <algorithm>
 #include <limits>
+#include "mrfdrivercore.h"
 
 // LERC and QB3 only work on little endian machines
 #if defined(WORDS_BIGENDIAN)
@@ -582,20 +583,11 @@ USING_NAMESPACE_MRF
 
 void GDALRegister_mrf()
 {
-    if (GDALGetDriverByName("MRF") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *driver = new GDALDriver();
-    driver->SetDescription("MRF");
-    driver->SetMetadataItem(GDAL_DMD_LONGNAME, "Meta Raster Format");
-    driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/marfa.html");
-    driver->SetMetadataItem(GDAL_DMD_EXTENSION, "mrf");
-    driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    driver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-
-    // These will need to be revisited, do we support complex data types too?
-    driver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                            "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
+    MRFDriverSetCommonMetadata(driver);
 
     driver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
@@ -694,17 +686,7 @@ void GDALRegister_mrf()
         "'/>"
         "</CreationOptionList>\n");
 
-    driver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "    <Option name='NOERRORS' type='boolean' description='Ignore "
-        "decompression errors' default='FALSE'/>"
-        "    <Option name='ZSLICE' type='int' description='For a third "
-        "dimension MRF, pick a slice' default='0'/>"
-        "</OpenOptionList>");
-
     driver->pfnOpen = MRFDataset::Open;
-    driver->pfnIdentify = MRFDataset::Identify;
     driver->pfnCreateCopy = MRFDataset::CreateCopy;
     driver->pfnCreate = MRFDataset::Create;
     driver->pfnDelete = MRFDataset::Delete;
