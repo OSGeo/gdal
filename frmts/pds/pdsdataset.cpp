@@ -1710,4 +1710,11 @@ void GDALRegister_PDS()
     poDriver->pfnIdentify = PDSDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef PDS_PLUGIN
+    GDALRegister_ISIS3();
+    GDALRegister_ISIS2();
+    GDALRegister_PDS4();
+    GDALRegister_VICAR();
+#endif
 }
