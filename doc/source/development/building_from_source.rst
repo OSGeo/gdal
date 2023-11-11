@@ -2204,15 +2204,16 @@ Setting this option to drivers not ready for it will lead to an explicit
 CMake error.
 
 
-For some drivers, like netCDF (only case at time of writing), the dataset
-identification code embedded in libgdal, will depend on optional capabilities
-of the dependent library (libnetcdf)
+For some drivers (ECW, HEIF, JP2KAK, JPEG, JPEGXL, KEA, LERC, MrSID,
+MSSQLSpatial, netCDF, OpenJPEG, PDF, TileDB, WEBP), the metadata and/or dataset
+identification code embedded on libgdal, will depend on optional capabilities
+of the dependent library (e.g. libnetcdf for netCDF)
 In that situation, it is desirable that the dependent library is available at
 CMake configuration time for the core libgdal built, but disabled with
-GDAL_USE_NETCDF=OFF. It must of course be re-enabled later when the plugin is
+GDAL_USE_<driver_name>=OFF. It must of course be re-enabled later when the plugin is
 built.
 
-For example::
+For example for netCDF::
 
     cmake .. -DGDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON -DGDAL_USE_NETCDF=OFF
     cmake --build .
