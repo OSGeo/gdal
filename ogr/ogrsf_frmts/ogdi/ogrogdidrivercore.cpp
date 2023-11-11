@@ -27,78 +27,52 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrogdi.h"
+#include "ogrsf_frmts.h"
+
 #include "ogrogdidrivercore.h"
 
-#include "cpl_conv.h"
-
 /************************************************************************/
-/*                         MyOGDIReportErrorFunction()                  */
+/*                    OGROGDIDriverIdentify()                           */
 /************************************************************************/
 
-#if OGDI_RELEASEDATE >= 20160705
-static int MyOGDIReportErrorFunction(int errorcode, const char *error_message)
-{
-    CPLError(CE_Failure, CPLE_AppDefined, "OGDI error %d: %s", errorcode,
-             error_message);
-    return FALSE;  // go on
-}
-#endif
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-static GDALDataset *OGROGDIDriverOpen(GDALOpenInfo *poOpenInfo)
+static int OGROGDIDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    const char *pszFilename = poOpenInfo->pszFilename;
-    if (!STARTS_WITH_CI(pszFilename, "gltp:"))
-        return nullptr;
-
-#if OGDI_RELEASEDATE >= 20160705
-    // Available only in post OGDI 3.2.0beta2
-    // and only called if env variable OGDI_STOP_ON_ERROR is set to NO
-    ecs_SetReportErrorFunction(MyOGDIReportErrorFunction);
-#endif
-
-    OGROGDIDataSource *poDS = new OGROGDIDataSource();
-
-    if (!poDS->Open(pszFilename))
-    {
-        delete poDS;
-        poDS = nullptr;
-    }
-
-    const bool bUpdate = (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0;
-    if (poDS != nullptr && bUpdate)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "OGDI Driver doesn't support update.");
-        delete poDS;
-        poDS = nullptr;
-    }
-
-    return poDS;
+    return STARTS_WITH(poOpenInfo->pszFilename, "gltp:");
 }
 
 /************************************************************************/
-/*                          RegisterOGROGDI()                           */
+/*                  OGROGDIDriverSetCommonMetadata()                    */
 /************************************************************************/
 
-void RegisterOGROGDI()
-
+void OGROGDIDriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    if (!GDAL_CHECK_VERSION("OGR/OGDI driver"))
-        return;
+    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "OGDI Vectors (VPF, VMAP, DCW)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/ogdi.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->pfnIdentify = OGROGDIDriverIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
+/*                   DeclareDeferredOGROGDIPlugin()                     */
+/************************************************************************/
+
+#ifdef PLUGIN_FILENAME
+void DeclareDeferredOGROGDIPlugin()
+{
     if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    {
         return;
-
-    GDALDriver *poDriver = new GDALDriver();
+    }
+    auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
     OGROGDIDriverSetCommonMetadata(poDriver);
-
-    poDriver->pfnOpen = OGROGDIDriverOpen;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
+    GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }
+#endif

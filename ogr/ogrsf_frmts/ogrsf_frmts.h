@@ -633,6 +633,7 @@ void CPL_DLL RegisterOGRS57();
 void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
+void DeclareDeferredOGROGDIPlugin();
 void CPL_DLL RegisterOGRODBC();
 void CPL_DLL RegisterOGRWAsP();
 void CPL_DLL RegisterOGRPG();
