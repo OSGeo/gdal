@@ -710,3 +710,9 @@ void GDALRegister_mrf()
     driver->pfnDelete = MRFDataset::Delete;
     GetGDALDriverManager()->RegisterDriver(driver);
 }
+
+extern "C" void CPL_DLL GDALRegister_MRF(void);
+void GDALRegister_MRF()
+{
+    GDALRegister_mrf();
+}
