@@ -202,6 +202,7 @@ void CPL_DLL GDALRegister_PLMOSAIC(void);
 void CPL_DLL GDALRegister_CALS(void);
 void CPL_DLL GDALRegister_ISCE(void);
 void CPL_DLL GDALRegister_WMTS(void);
+void DeclareDeferredWMTSPlugin(void);
 void CPL_DLL GDALRegister_SAFE(void);
 void CPL_DLL GDALRegister_SENTINEL2(void);
 void CPL_DLL GDALRegister_mrf(void);

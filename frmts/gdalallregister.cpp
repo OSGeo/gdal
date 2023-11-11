@@ -278,6 +278,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_WMS_DRIVER)
     DeclareDeferredWMSPlugin();
 #endif
+#if defined(DEFERRED_WMTS_DRIVER)
+    DeclareDeferredWMTSPlugin();
+#endif
 #if defined(DEFERRED_XLS_DRIVER)
     DeclareDeferredOGRXLSPlugin();
 #endif
