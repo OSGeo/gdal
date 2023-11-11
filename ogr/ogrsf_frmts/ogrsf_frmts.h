@@ -665,6 +665,7 @@ void CPL_DLL RegisterOGRILI2();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXF();
 void CPL_DLL RegisterOGRCAD();
+void DeclareDeferredOGRCADPlugin();
 void CPL_DLL RegisterOGRDWG();
 void CPL_DLL RegisterOGRDGNV8();
 void DeclareDeferredOGRDWGPlugin();
