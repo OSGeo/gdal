@@ -12,7 +12,14 @@ add_gdal_driver(
           reflectancecalculator.cpp
           xritheaderparser.cpp
           xritheaderparser.h
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          msgdrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET gdal_MSG)
+    return()
+endif()
+
 gdal_standard_includes(gdal_MSG)
 
 set(PUBLICDECOMPWT_URL

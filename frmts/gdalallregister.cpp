@@ -206,6 +206,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_MRSID_DRIVER)
     DeclareDeferredMrSIDPlugin();
 #endif
+#if defined(DEFERRED_MSG_DRIVER)
+    DeclareDeferredMSGPlugin();
+#endif
 #if defined(DEFERRED_MSSQLSPATIAL_DRIVER)
     DeclareDeferredOGRMSSQLSpatialPlugin();
 #endif
