@@ -41,6 +41,7 @@
 #include "wcsdataset.h"
 #include "wcsrasterband.h"
 #include "wcsutils.h"
+#include "wcsdrivercore.h"
 
 using namespace WCSUtils;
 
@@ -794,45 +795,6 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
 }
 
 /************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-int WCSDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    /* -------------------------------------------------------------------- */
-    /*      Filename is WCS:URL                                             */
-    /*                                                                      */
-    /* -------------------------------------------------------------------- */
-    if (poOpenInfo->nHeaderBytes == 0 &&
-        STARTS_WITH_CI((const char *)poOpenInfo->pszFilename, "WCS:"))
-        return TRUE;
-
-    /* -------------------------------------------------------------------- */
-    /*      Is this a WCS_GDAL service description file or "in url"         */
-    /*      equivalent?                                                     */
-    /* -------------------------------------------------------------------- */
-    if (poOpenInfo->nHeaderBytes == 0 &&
-        STARTS_WITH_CI((const char *)poOpenInfo->pszFilename, "<WCS_GDAL>"))
-        return TRUE;
-
-    else if (poOpenInfo->nHeaderBytes >= 10 &&
-             STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "<WCS_GDAL>"))
-        return TRUE;
-
-    /* -------------------------------------------------------------------- */
-    /*      Is this apparently a WCS subdataset reference?                  */
-    /* -------------------------------------------------------------------- */
-    else if (STARTS_WITH_CI((const char *)poOpenInfo->pszFilename,
-                            "WCS_SDS:") &&
-             poOpenInfo->nHeaderBytes == 0)
-        return TRUE;
-
-    else
-        return FALSE;
-}
-
-/************************************************************************/
 /*                            WCSParseVersion()                         */
 /************************************************************************/
 
@@ -1218,7 +1180,7 @@ static void ParseURL(std::string &url, std::string &version,
 GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo))
+    if (!WCSDriverIdentify(poOpenInfo))
     {
         return nullptr;
     }
@@ -1759,20 +1721,13 @@ char **WCSDataset::GetMetadata(const char *pszDomain)
 void GDALRegister_WCS()
 
 {
-    if (GDALGetDriverByName("WCS") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("WCS");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "OGC Web Coverage Service");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/wcs.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
+    WCSDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = WCSDataset::Open;
-    poDriver->pfnIdentify = WCSDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

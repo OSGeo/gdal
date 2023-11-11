@@ -138,6 +138,7 @@ void CPL_DLL GDALRegister_VICAR(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
+void DeclareDeferredWCSPlugin(void);
 void CPL_DLL GDALRegister_WMS(void);
 void CPL_DLL GDALRegister_HTTP(void);
 void CPL_DLL GDALRegister_GSAG(void);

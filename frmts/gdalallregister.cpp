@@ -269,6 +269,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_TILEDB_DRIVER)
     DeclareDeferredTileDBPlugin();
 #endif
+#if defined(DEFERRED_WCS_DRIVER)
+    DeclareDeferredWCSPlugin();
+#endif
 #if defined(DEFERRED_WEBP_DRIVER)
     DeclareDeferredWEBPPlugin();
 #endif
