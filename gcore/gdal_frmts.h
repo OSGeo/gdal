@@ -94,6 +94,7 @@ void CPL_DLL GDALRegister_XPM(void);
 void CPL_DLL GDALRegister_BMP(void);
 void CPL_DLL GDALRegister_GSC(void);
 void CPL_DLL GDALRegister_NITF(void);
+void DeclareDeferredNITFPlugin(void);
 void CPL_DLL GDALRegister_RPFTOC(void);
 void CPL_DLL GDALRegister_ECRGTOC(void);
 void CPL_DLL GDALRegister_MrSID(void);
