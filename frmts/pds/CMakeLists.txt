@@ -13,6 +13,10 @@ add_gdal_driver(
   PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL\\\;NOT GDAL_USE_GEOTIFF_INTERNAL\\\;NOT GDAL_USE_TIFF_INTERNAL"
 )
 
+if(NOT TARGET gdal_PDS)
+    return()
+endif()
+
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE isis2dataset.cpp isis3dataset.cpp pdsdataset.cpp vicardataset.cpp vicarkeywordhandler.cpp
                       nasakeywordhandler.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)

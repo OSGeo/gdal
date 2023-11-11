@@ -259,6 +259,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_PDF_DRIVER)
     DeclareDeferredPDFPlugin();
 #endif
+#if defined(DEFERRED_PDS_DRIVER)
+    DeclareDeferredPDSPlugin();
+#endif
 #if defined(DEFERRED_PG_DRIVER)
     DeclareDeferredOGRPGPlugin();
 #endif

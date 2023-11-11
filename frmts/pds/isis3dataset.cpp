@@ -48,6 +48,7 @@
 #include "rawdataset.h"
 #include "vrtdataset.h"
 #include "cpl_safemaths.hpp"
+#include "pdsdrivercore.h"
 
 // For gethostname()
 #ifdef _WIN32
@@ -211,7 +212,6 @@ class ISIS3Dataset final : public RawDataset
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
 
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
@@ -1551,19 +1551,6 @@ CPLErr ISIS3Dataset::SetMetadata(char **papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-int ISIS3Dataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->fpL != nullptr && poOpenInfo->pabyHeader != nullptr &&
-        strstr((const char *)poOpenInfo->pabyHeader, "IsisCube") != nullptr)
-        return TRUE;
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                        GetRawBinaryLayout()                          */
 /************************************************************************/
 
@@ -1642,7 +1629,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Does this look like a CUBE dataset?                             */
     /* -------------------------------------------------------------------- */
-    if (!Identify(poOpenInfo))
+    if (!ISIS3DriverIdentify(poOpenInfo))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -4329,95 +4316,13 @@ GDALDataset *ISIS3Dataset::CreateCopy(const char *pszFilename,
 void GDALRegister_ISIS3()
 
 {
-    if (GDALGetDriverByName("ISIS3") != nullptr)
+    if (GDALGetDriverByName(ISIS3_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("ISIS3");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "USGS Astrogeology ISIS cube (Version 3)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/isis3.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "lbl cub");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 Float32");
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='DATA_LOCATION' type='string-select' "
-        "description='Location of pixel data' default='LABEL'>"
-        "     <Value>LABEL</Value>"
-        "     <Value>EXTERNAL</Value>"
-        "     <Value>GEOTIFF</Value>"
-        "  </Option>"
-        "  <Option name='GEOTIFF_AS_REGULAR_EXTERNAL' type='boolean' "
-        "description='Whether the GeoTIFF file, if uncompressed, should be "
-        "registered as a regular raw file' default='YES'/>"
-        "  <Option name='GEOTIFF_OPTIONS' type='string' "
-        "description='Comma separated list of KEY=VALUE tuples to forward "
-        "to the GeoTIFF driver'/>"
-        "  <Option name='EXTERNAL_FILENAME' type='string' "
-        "description='Override default external filename. "
-        "Only for DATA_LOCATION=EXTERNAL or GEOTIFF'/>"
-        "  <Option name='TILED' type='boolean' "
-        "description='Whether the pixel data should be tiled' default='NO'/>"
-        "  <Option name='BLOCKXSIZE' type='int' "
-        "description='Tile width' default='256'/>"
-        "  <Option name='BLOCKYSIZE' type='int' "
-        "description='Tile height' default='256'/>"
-        "  <Option name='COMMENT' type='string' "
-        "description='Comment to add into the label'/>"
-        "  <Option name='LATITUDE_TYPE' type='string-select' "
-        "description='Value of Mapping.LatitudeType' default='Planetocentric'>"
-        "     <Value>Planetocentric</Value>"
-        "     <Value>Planetographic</Value>"
-        "  </Option>"
-        "  <Option name='LONGITUDE_DIRECTION' type='string-select' "
-        "description='Value of Mapping.LongitudeDirection' "
-        "default='PositiveEast'>"
-        "     <Value>PositiveEast</Value>"
-        "     <Value>PositiveWest</Value>"
-        "  </Option>"
-        "  <Option name='TARGET_NAME' type='string' description='Value of "
-        "Mapping.TargetName'/>"
-        "  <Option name='FORCE_360' type='boolean' "
-        "description='Whether to force longitudes in [0,360] range' "
-        "default='NO'/>"
-        "  <Option name='WRITE_BOUNDING_DEGREES' type='boolean' "
-        "description='Whether to write Min/MaximumLong/Latitude values' "
-        "default='YES'/>"
-        "  <Option name='BOUNDING_DEGREES' type='string' "
-        "description='Manually set bounding box with the syntax "
-        "min_long,min_lat,max_long,max_lat'/>"
-        "  <Option name='USE_SRC_LABEL' type='boolean' "
-        "description='Whether to use source label in ISIS3 to ISIS3 "
-        "conversions' "
-        "default='YES'/>"
-        "  <Option name='USE_SRC_MAPPING' type='boolean' "
-        "description='Whether to use Mapping group from source label in "
-        "ISIS3 to ISIS3 conversions' "
-        "default='NO'/>"
-        "  <Option name='USE_SRC_HISTORY' type='boolean' "
-        "description='Whether to use content pointed by the History object in "
-        "ISIS3 to ISIS3 conversions' "
-        "default='YES'/>"
-        "  <Option name='ADD_GDAL_HISTORY' type='boolean' "
-        "description='Whether to add GDAL specific history in the content "
-        "pointed "
-        "by the History object in "
-        "ISIS3 to ISIS3 conversions' "
-        "default='YES'/>"
-        "  <Option name='GDAL_HISTORY' type='string' "
-        "description='Manually defined GDAL history. Must be formatted as "
-        "ISIS3 "
-        "PDL. If not specified, it is automatically composed.'/>"
-        "</CreationOptionList>");
+    ISIS3DriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = ISIS3Dataset::Open;
-    poDriver->pfnIdentify = ISIS3Dataset::Identify;
     poDriver->pfnCreate = ISIS3Dataset::Create;
     poDriver->pfnCreateCopy = ISIS3Dataset::CreateCopy;
 
