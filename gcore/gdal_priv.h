@@ -3914,9 +3914,11 @@ int CPL_DLL GDALReadWorldFile2(const char *pszBaseFilename,
                                double *padfGeoTransform,
                                char **papszSiblingFiles,
                                char **ppszWorldFileNameOut);
-int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
-                     char **ppszWKT, int *pnGCPCount, GDAL_GCP **ppasGCPs,
-                     char **papszSiblingFiles, char **ppszTabFileNameOut);
+int CPL_DLL GDALReadTabFile2(const char *pszBaseFilename,
+                             double *padfGeoTransform, char **ppszWKT,
+                             int *pnGCPCount, GDAL_GCP **ppasGCPs,
+                             char **papszSiblingFiles,
+                             char **ppszTabFileNameOut);
 
 void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
                                       GDALRasterIOExtraArg *psSrcArg);

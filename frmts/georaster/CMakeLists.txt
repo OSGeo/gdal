@@ -32,8 +32,3 @@ gdal_target_link_libraries(gdal_GEOR PRIVATE Oracle::OCI)
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(gdal_GEOR PRIVATE ZLIB::ZLIB)
 endif ()
-
-if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_ENABLE_DRIVER_GEOR_PLUGIN)
-  # A bit ugly to add this file from the JPEG driver !
-  target_sources(gdal_GEOR PRIVATE ../jpeg/vsidataio.cpp)
-endif ()

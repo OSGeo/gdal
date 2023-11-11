@@ -1,7 +1,9 @@
 add_gdal_driver(
   TARGET gdal_JPEG
   SOURCES vsidataio.h jpgdataset.h vsidataio.cpp jpgdataset.cpp
-  BUILTIN)
+  PLUGIN_CAPABLE_IF
+      "NOT GDAL_USE_JPEG_INTERNAL\\\;NOT GDAL_USE_JPEG12_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
+)
 gdal_standard_includes(gdal_JPEG)
 
 target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)

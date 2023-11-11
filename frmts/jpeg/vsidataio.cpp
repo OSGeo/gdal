@@ -38,6 +38,8 @@ CPL_C_END
 
 // Expanded data source object for stdio input.
 
+namespace
+{
 typedef struct
 {
     struct jpeg_source_mgr pub;  // public fields.
@@ -46,6 +48,7 @@ typedef struct
     JOCTET *buffer;         // Start of buffer.
     boolean start_of_file;  // Have we gotten any data yet?
 } my_source_mgr;
+}  // namespace
 
 typedef my_source_mgr *my_src_ptr;
 
@@ -273,6 +276,8 @@ void jpeg_vsiio_src(j_decompress_ptr cinfo, VSILFILE *infile)
 
 // Expanded data destination object for stdio output.
 
+namespace
+{
 typedef struct
 {
     struct jpeg_destination_mgr pub;  // Public fields.
@@ -280,6 +285,7 @@ typedef struct
     VSILFILE *outfile;  // Target stream.
     JOCTET *buffer;     // Start of buffer.
 } my_destination_mgr;
+}  // namespace
 
 typedef my_destination_mgr *my_dest_ptr;
 
