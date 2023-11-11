@@ -294,7 +294,9 @@ set(QUICKTEST_LIST
     test-multi-threaded-writing
     test-destroy
     test-bug1488
-    test-log)
+    test-log
+    test-deferred-plugin
+)
 
 gdal_gtest_target(testcopywords test-copy-words testcopywords.cpp)
 gdal_gtest_target(testclosedondestroydm test-closed-on-destroy-DM testclosedondestroydm.cpp)
@@ -308,6 +310,11 @@ gdal_autotest_target(test_include_from_c_file test-include-from-C-file test_incl
 gdal_autotest_target(test_c_include_from_cpp_file test-C-include-from-CPP-file test_c_include_from_cpp_file.cpp "")
 gdal_gtest_target(bug1488 test-bug1488 bug1488.cpp)
 gdal_gtest_target(testlog test-log testlog.cpp)
+gdal_gtest_target(test_deferred_plugin test-deferred-plugin test_deferred_plugin.cpp)
+
+if (GDAL_ENABLE_DRIVER_JPEG_PLUGIN)
+    target_compile_definitions(test_deferred_plugin PRIVATE -DJPEG_PLUGIN)
+endif()
 
 if (UNIX)
   list(APPEND QUICKTEST_LIST test-osr-set-proj-search-paths)
