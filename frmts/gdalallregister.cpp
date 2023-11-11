@@ -239,6 +239,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_PARQUET_DRIVER)
     DeclareDeferredOGRParquetPlugin();
 #endif
+#if defined(DEFERRED_PCIDSK_DRIVER)
+    DeclareDeferredPCIDSKPlugin();
+#endif
 #if defined(DEFERRED_PCRASTER_DRIVER)
     DeclareDeferredPCRasterPlugin();
 #endif
