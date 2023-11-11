@@ -28,8 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("EIR")
 
 ###############################################################################
 # Test a fake EIR dataset

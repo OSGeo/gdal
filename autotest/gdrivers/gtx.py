@@ -30,6 +30,10 @@
 
 
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("GTX")
+
 
 ###############################################################################
 # Test reading a small gtx file.
