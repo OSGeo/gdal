@@ -14,7 +14,10 @@ add_gdal_driver(
           nitf_gcprpc.cpp
           nitfwritejpeg.cpp
           nitfwritejpeg_12.cpp
-  BUILTIN)
+  PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_JPEG_INTERNAL\\\;NOT GDAL_USE_JPEG12_INTERNALL\\\;NOT GDAL_USE_TIFF_INTERNAL"
+)
+
 gdal_standard_includes(gdal_NITF)
 target_include_directories(gdal_NITF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff
                                              ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt)
@@ -32,6 +35,9 @@ if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG_INTERNAL)
 endif()
 
 if (GDAL_ENABLE_DRIVER_JPEG)
+  if (GDAL_ENABLE_DRIVER_NITF_PLUGIN)
+    target_sources(gdal_NITF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg/vsidataio.cpp)
+  endif()
   target_compile_definitions(gdal_NITF PRIVATE -DJPEG_SUPPORTED)
   # Include libjpeg first so that if we want to use jpeg-turbo on homebrew
   # /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
@@ -43,6 +49,9 @@ if (GDAL_ENABLE_DRIVER_JPEG)
     target_compile_definitions(gdal_NITF PRIVATE -DJPEG_DUAL_MODE_8_12)
     target_include_directories(gdal_NITF PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   elseif (NOT GDAL_USE_JPEG_INTERNAL AND HAVE_JPEGTURBO_DUAL_MODE_8_12 )
+    if (GDAL_ENABLE_DRIVER_NITF_PLUGIN)
+      target_sources(gdal_NITF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/jpeg/vsidataio_12.cpp)
+    endif()
     target_compile_definitions(gdal_NITF PRIVATE JPEG_DUAL_MODE_8_12 HAVE_JPEGTURBO_DUAL_MODE_8_12)
   endif ()
 endif()
