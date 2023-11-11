@@ -191,6 +191,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_JP2OPENJPEG_DRIVER)
     DeclareDeferredOPENJPEGPlugin();
 #endif
+#if defined(DEFERRED_JPEG_DRIVER)
+    DeclareDeferredJPEGPlugin();
+#endif
 #if defined(DEFERRED_JPEGXL_DRIVER)
     DeclareDeferredJPEGXLPlugin();
 #endif

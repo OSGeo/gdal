@@ -76,6 +76,7 @@ CPL_C_END
 #include "rawdataset.h"
 #include "vsidataio.h"
 #include "vrt/vrtdataset.h"
+#include "jpegdrivercore.h"
 
 #if defined(EXPECTED_JPEG_LIB_VERSION) && !defined(LIBJPEG_12_PATH)
 #if EXPECTED_JPEG_LIB_VERSION != JPEG_LIB_VERSION
@@ -2631,97 +2632,6 @@ CPLErr JPGDatasetCommon::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                    JPEGDatasetIsJPEGLS()                             */
-/************************************************************************/
-
-static bool JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo)
-
-{
-    GByte *pabyHeader = poOpenInfo->pabyHeader;
-    int nHeaderBytes = poOpenInfo->nHeaderBytes;
-
-    if (nHeaderBytes < 10)
-        return false;
-
-    if (pabyHeader[0] != 0xff || pabyHeader[1] != 0xd8)
-        return false;
-
-    for (int nOffset = 2; nOffset + 4 < nHeaderBytes;)
-    {
-        if (pabyHeader[nOffset] != 0xFF)
-            return false;
-
-        int nMarker = pabyHeader[nOffset + 1];
-        if (nMarker == 0xDA)
-            return false;
-
-        if (nMarker == 0xF7)  // JPEG Extension 7, JPEG-LS.
-            return true;
-        if (nMarker == 0xF8)  // JPEG Extension 8, JPEG-LS Extension.
-            return true;
-        if (nMarker == 0xC3)  // Start of Frame 3 (Lossless Huffman)
-            return true;
-        if (nMarker ==
-            0xC7)  // Start of Frame 7 (Differential Lossless Huffman)
-            return true;
-        if (nMarker == 0xCB)  // Start of Frame 11 (Lossless Arithmetic)
-            return true;
-        if (nMarker ==
-            0xCF)  // Start of Frame 15 (Differential Lossless Arithmetic)
-            return true;
-
-        nOffset += 2 + pabyHeader[nOffset + 2] * 256 + pabyHeader[nOffset + 3];
-    }
-
-    return false;
-}
-
-/************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int JPGDatasetCommon::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    // If it is a subfile, read the JPEG header.
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "JPEG_SUBFILE:"))
-        return TRUE;
-    if (STARTS_WITH(poOpenInfo->pszFilename, "JPEG:"))
-        return TRUE;
-
-    // First we check to see if the file has the expected header bytes.
-    const int nHeaderBytes = poOpenInfo->nHeaderBytes;
-
-    if (nHeaderBytes < 10)
-        return FALSE;
-
-    GByte *const pabyHeader = poOpenInfo->pabyHeader;
-    if (pabyHeader[0] != 0xff || pabyHeader[1] != 0xd8 || pabyHeader[2] != 0xff)
-        return FALSE;
-
-        // libjpeg-turbo >= 2.2 supports lossless mode
-#if !defined(D_LOSSLESS_SUPPORTED)
-    if (JPEGDatasetIsJPEGLS(poOpenInfo))
-    {
-        return FALSE;
-    }
-#endif
-
-    // Some files like
-    // http://dionecanali.hd.free.fr/~mdione/mapzen/N65E039.hgt.gz could be
-    // mis-identfied as JPEG
-    CPLString osFilenameLower = CPLString(poOpenInfo->pszFilename).tolower();
-    if (osFilenameLower.endsWith(".hgt") ||
-        osFilenameLower.endsWith(".hgt.gz") ||
-        osFilenameLower.endsWith(".hgt.zip"))
-    {
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -2730,7 +2640,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
-    if (!Identify(poOpenInfo))
+    if (!JPEGDriverIdentify(poOpenInfo))
         return nullptr;
 #endif
 
@@ -4950,45 +4860,14 @@ const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
 void GDALRegister_JPEG()
 
 {
-    if (GDALGetDriverByName("JPEG") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALJPGDriver();
+    JPEGDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("JPEG");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "JPEG JFIF");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jpeg.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jpg");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "jpg jpeg");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jpeg");
-
-#if defined(JPEG_LIB_MK1_OR_12BIT) || defined(JPEG_DUAL_MODE_8_12)
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte UInt16");
-#else
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
-#endif
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    const char *pszOpenOptions =
-        "<OpenOptionList>\n"
-        "   <Option name='USE_INTERNAL_OVERVIEWS' type='boolean' "
-        "description='whether to use implicit internal overviews' "
-        "default='YES'/>\n"
-        "   <Option name='APPLY_ORIENTATION' type='boolean' "
-        "description='whether to take into account EXIF Orientation to "
-        "rotate/flip the image' default='NO'/>\n"
-        "</OpenOptionList>\n";
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, pszOpenOptions);
-
-    poDriver->pfnIdentify = JPGDatasetCommon::Identify;
     poDriver->pfnOpen = JPGDatasetCommon::Open;
     poDriver->pfnCreateCopy = JPGDataset::CreateCopy;
-
-#ifdef D_LOSSLESS_SUPPORTED
-    // For autotest purposes
-    poDriver->SetMetadataItem("LOSSLESS_JPEG_SUPPORTED", "YES", "JPEG");
-#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
