@@ -707,4 +707,8 @@ void GDALRegister_GIF()
     poDriver->pfnIdentify = GIFAbstractDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef GIF_PLUGIN
+    GDALRegister_BIGGIF();
+#endif
 }
