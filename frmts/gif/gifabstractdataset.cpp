@@ -265,23 +265,6 @@ const GDAL_GCP *GIFAbstractDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-int GIFAbstractDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->nHeaderBytes < 8)
-        return FALSE;
-
-    if (!STARTS_WITH((const char *)poOpenInfo->pabyHeader, "GIF87a") &&
-        !STARTS_WITH((const char *)poOpenInfo->pabyHeader, "GIF89a"))
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                            GetFileList()                             */
 /************************************************************************/
 

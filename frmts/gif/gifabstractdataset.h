@@ -77,8 +77,6 @@ class GIFAbstractDataset CPL_NON_FINAL : public GDALPamDataset
 
     char **GetFileList() override;
 
-    static int Identify(GDALOpenInfo *);
-
     static GifFileType *myDGifOpen(void *userPtr, InputFunc readFunc);
     static int myDGifCloseFile(GifFileType *hGifFile);
     static int myEGifCloseFile(GifFileType *hGifFile);

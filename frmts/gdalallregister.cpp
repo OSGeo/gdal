@@ -158,6 +158,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_GEOR_DRIVER)
     DeclareDeferredGEORPlugin();
 #endif
+#if defined(DEFERRED_GIF_DRIVER)
+    DeclareDeferredGIFPlugin();
+#endif
 #if defined(DEFERRED_GRIB_DRIVER)
     DeclareDeferredGRIBPlugin();
 #endif

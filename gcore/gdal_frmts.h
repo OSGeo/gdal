@@ -71,6 +71,7 @@ void CPL_DLL GDALRegister_JDEM(void);
 void CPL_DLL GDALRegister_RASDAMAN(void);
 void CPL_DLL GDALRegister_PNM(void);
 void CPL_DLL GDALRegister_GIF(void);
+void CPL_DLL DeclareDeferredGIFPlugin(void);
 void CPL_DLL GDALRegister_BIGGIF(void);
 void CPL_DLL GDALRegister_Envisat(void);
 void CPL_DLL GDALRegister_FITS(void);
