@@ -78,7 +78,13 @@ static int OGRS57DriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return false;
     }
-    return strstr(pachLeader, "DSID") != nullptr;
+    // Test for S-57 DSID field structure (to distinguish it from S-101)
+    return strstr(pachLeader, "DSID") != nullptr &&
+           (strstr(pachLeader,
+                   "RCNM!RCID!EXPP!INTU!DSNM!EDTN!UPDN!UADT!ISDT!"
+                   "STED!PRSP!PSDN!PRED!PROF!AGEN!COMT") != nullptr ||
+            // Below is for autotest/ogr/data/s57/fake_s57.000 fake dataset that has a shortened structure
+            strstr(pachLeader, "RCNM!RCID!EXPP!xxxx") != nullptr);
 }
 
 /************************************************************************/
