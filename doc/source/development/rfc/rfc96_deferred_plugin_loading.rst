@@ -391,9 +391,9 @@ all artifacts (libgdal.so and libparquet.so) at a single time, and dispatch
 them appropriately in libgdal and libgdal-arrow-parquet packages, rather than
 doing two builds. However, CondaForge builds support several libarrow versions,
 and produce thus different Arrow/Parquet plugins, so this approach would not be
-practial.
+practical.
 
-To solve this, the following idea was implemented. Extract from the updated
+To solve this, the following idea has been implemented. Extract from the updated
 :ref:`building_from_source` document::
 
     Starting with GDAL 3.9, a number of in-tree drivers, that can be built as
@@ -402,6 +402,29 @@ To solve this, the following idea was implemented. Extract from the updated
     whereas most of the driver code is in a separated dynamically loaded library.
     For builds where libgdal and its plugins are built in a single operation, this
     is fully transparent to the user.
+
+    When a plugin driver is known of core libgdal, but not available as a plugin at
+    runtime, GDAL will inform the user that the plugin is not available, but could
+    be installed. It is possible to give more hints on how to install a plugin
+    by setting the following option:
+
+    .. option:: GDAL_DRIVER_<driver_name>_PLUGIN_INSTALLATION_MESSAGE:STRING
+
+    .. option:: OGR_DRIVER_<driver_name>_PLUGIN_INSTALLATION_MESSAGE:STRING
+
+        Custom message to give a hint to the user how to install a missing plugin
+
+
+    For example, if doing a build with::
+
+        cmake .. -DOGR_DRIVER_PARQUET_PLUGIN_INSTALLATION_MESSAGE="You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'"
+
+    and opening a Parquet file while the plugin is not installed will display the
+    follwing error::
+
+        $ ogrinfo poly.parquet
+        ERROR 4: `poly.parquet' not recognized as a supported file format. It could have been recognized by driver Parquet, but plugin ogr_Parquet.so is not available in your installation. You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'
+
 
     For more specific builds where libgdal would be first built, and then plugin
     drivers built in later incremental builds, this approach would not work, given
@@ -425,15 +448,16 @@ To solve this, the following idea was implemented. Extract from the updated
     CMake error.
 
 
-    For some drivers, like netCDF (only case at time of writing), the dataset
-    identification code embedded in libgdal, will depend on optional capabilities
-    of the dependent library (libnetcdf)
+    For some drivers (ECW, HEIF, JP2KAK, JPEG, JPEGXL, KEA, LERC, MrSID,
+    MSSQLSpatial, netCDF, OpenJPEG, PDF, TileDB, WEBP), the metadata and/or dataset
+    identification code embedded on libgdal, will depend on optional capabilities
+    of the dependent library (e.g. libnetcdf for netCDF)
     In that situation, it is desirable that the dependent library is available at
     CMake configuration time for the core libgdal built, but disabled with
-    GDAL_USE_NETCDF=OFF. It must of course be re-enabled later when the plugin is
+    GDAL_USE_<driver_name>=OFF. It must of course be re-enabled later when the plugin is
     built.
 
-    For example::
+    For example for netCDF::
 
         cmake .. -DGDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON -DGDAL_USE_NETCDF=OFF
         cmake --build .
@@ -465,7 +489,7 @@ is not loaded in other situations.
 Related issues and PRs
 ----------------------
 
-- https://github.com/OSGeo/gdal/compare/master...rouault:gdal:deferred_plugin?expand=1: candidate implementation
+- https://github.com/OSGeo/gdal/pull/8695: candidate implementation
 
 Voting history
 --------------
