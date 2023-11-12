@@ -2182,6 +2182,29 @@ whereas most of the driver code is in a separated dynamically loaded library.
 For builds where libgdal and its plugins are built in a single operation, this
 is fully transparent to the user.
 
+When a plugin driver is known of core libgdal, but not available as a plugin at
+runtime, GDAL will inform the user that the plugin is not available, but could
+be installed. It is possible to give more hints on how to install a plugin
+by setting the following option:
+
+.. option:: GDAL_DRIVER_<driver_name>_PLUGIN_INSTALLATION_MESSAGE:STRING
+
+.. option:: OGR_DRIVER_<driver_name>_PLUGIN_INSTALLATION_MESSAGE:STRING
+
+    Custom message to give a hint to the user how to install a missing plugin
+
+
+For example, if doing a build with::
+
+    cmake .. -DOGR_DRIVER_PARQUET_PLUGIN_INSTALLATION_MESSAGE="You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'"
+
+and opening a Parquet file while the plugin is not installed will display the
+following error::
+
+    $ ogrinfo poly.parquet
+    ERROR 4: `poly.parquet' not recognized as a supported file format. It could have been recognized by driver Parquet, but plugin ogr_Parquet.so is not available in your installation. You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'
+
+
 For more specific builds where libgdal would be first built, and then plugin
 drivers built in later incremental builds, this approach would not work, given
 that the core libgdal built initially would lack code needed to declare the

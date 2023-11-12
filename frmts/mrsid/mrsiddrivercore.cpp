@@ -180,12 +180,20 @@ void DeclareDeferredMrSIDPlugin()
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         MrSIDDriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
 #ifdef MRSID_J2K
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         JP2MrSIDDriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }

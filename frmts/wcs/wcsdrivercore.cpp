@@ -97,6 +97,10 @@ void DeclareDeferredWCSPlugin()
         return;
     }
     auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+    poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                              PLUGIN_INSTALLATION_MESSAGE);
+#endif
     WCSDriverSetCommonMetadata(poDriver);
     GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
 }

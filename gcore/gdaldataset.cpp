@@ -3555,8 +3555,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 #endif
 
     const int nDriverCount = poDM->GetDriverCount(/*bIncludeHidden=*/true);
-    std::string osMissingPluginName;
-    std::string osMissingPluginFileName;
+    GDALDriver *poMissingPluginDriver = nullptr;
     std::vector<GDALDriver *> apoSecondPassDrivers;
     int iPass = 1;
 retry:
@@ -3668,11 +3667,9 @@ retry:
         else if (bIdentifyRes &&
                  poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME"))
         {
-            if (osMissingPluginName.empty())
+            if (!poMissingPluginDriver)
             {
-                osMissingPluginName = poDriver->GetDescription();
-                osMissingPluginFileName =
-                    poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME");
+                poMissingPluginDriver = poDriver;
             }
         }
         else
@@ -3844,7 +3841,7 @@ retry:
             }
             else if (oOpenInfo.bStatOK)
             {
-                if (osMissingPluginName.empty())
+                if (!poMissingPluginDriver)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
                              "`%s' not recognized as a supported file format.",
@@ -3852,13 +3849,20 @@ retry:
                 }
                 else
                 {
+                    const char *pszInstallationMsg =
+                        poMissingPluginDriver->GetMetadataItem(
+                            GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE);
                     CPLError(CE_Failure, CPLE_OpenFailed,
                              "`%s' not recognized as a supported file format. "
                              "It could have been recognized by driver %s, "
                              "but plugin %s is not available in your "
-                             "installation.",
-                             pszFilename, osMissingPluginName.c_str(),
-                             osMissingPluginFileName.c_str());
+                             "installation.%s%s",
+                             pszFilename,
+                             poMissingPluginDriver->GetDescription(),
+                             poMissingPluginDriver->GetMetadataItem(
+                                 "MISSING_PLUGIN_FILENAME"),
+                             pszInstallationMsg ? " " : "",
+                             pszInstallationMsg ? pszInstallationMsg : "");
                 }
             }
             else

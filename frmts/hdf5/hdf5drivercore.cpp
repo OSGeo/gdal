@@ -486,21 +486,37 @@ void DeclareDeferredHDF5Plugin()
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         HDF5DriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         HDF5ImageDriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         BAGDriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         S102DriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }

@@ -1369,7 +1369,8 @@ const char *GDALPluginDriverProxy::GetMetadataItem(const char *pszName,
             }
             return pszValue;
         }
-        else if (m_oSetMetadataItems.find(pszName) != m_oSetMetadataItems.end())
+        else if (!EQUAL(pszName, GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE) &&
+                 m_oSetMetadataItems.find(pszName) != m_oSetMetadataItems.end())
         {
             return GDALDriver::GetMetadataItem(pszName, pszDomain);
         }

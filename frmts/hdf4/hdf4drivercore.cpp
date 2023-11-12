@@ -205,11 +205,19 @@ void DeclareDeferredHDF4Plugin()
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         HDF4DriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
     {
         auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
         HDF4ImageDriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
