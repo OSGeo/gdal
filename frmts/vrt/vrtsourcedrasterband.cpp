@@ -1233,23 +1233,32 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         if (poBand != nullptr && poBand != this)
         {
             auto l_poDS = dynamic_cast<VRTDataset *>(poDS);
+            CPLErr eErr;
             if (l_poDS && !l_poDS->m_apoOverviews.empty() &&
                 dynamic_cast<VRTSourcedRasterBand *>(poBand) != nullptr)
             {
                 auto apoTmpOverviews = std::move(l_poDS->m_apoOverviews);
                 l_poDS->m_apoOverviews.clear();
-                auto eErr = poBand->GDALRasterBand::ComputeStatistics(
+                eErr = poBand->GDALRasterBand::ComputeStatistics(
                     TRUE, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
                     pProgressData);
                 l_poDS->m_apoOverviews = std::move(apoTmpOverviews);
-                return eErr;
             }
             else
             {
-                return poBand->ComputeStatistics(TRUE, pdfMin, pdfMax, pdfMean,
+                eErr = poBand->ComputeStatistics(TRUE, pdfMin, pdfMax, pdfMean,
                                                  pdfStdDev, pfnProgress,
                                                  pProgressData);
             }
+            if (eErr == CE_None && pdfMin && pdfMax && pdfMean && pdfStdDev)
+            {
+                SetMetadataItem("STATISTICS_APPROXIMATE", "YES");
+                SetMetadataItem(
+                    "STATISTICS_VALID_PERCENT",
+                    poBand->GetMetadataItem("STATISTICS_VALID_PERCENT"));
+                SetStatistics(*pdfMin, *pdfMax, *pdfMean, *pdfStdDev);
+            }
+            return eErr;
         }
     }
 
