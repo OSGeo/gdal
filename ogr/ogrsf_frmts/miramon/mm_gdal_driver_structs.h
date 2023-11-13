@@ -693,6 +693,7 @@ struct MiraMonLayerInfo
     MM_COORD_TYPE *nCoordZ;
     
     MM_POLYGON_RINGS_COUNT nNRing;
+    MM_POLYGON_RINGS_COUNT nMaxVrtRing; // Reserved elements for nNVrtRing
     MM_N_VERTICES_TYPE *nNVrtRing;
     
     MM_SELEC_COORDZ_TYPE nSelectCoordz;

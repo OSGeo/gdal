@@ -824,13 +824,16 @@ struct MiraMonArcLayer *pMMArcLayer;
     else
         pMMArcLayer=&hMiraMonLayer->MMArc;
 
-    // Init header structure
-    pMMArcLayer->TopNodeHeader.aFileType[0]='N';
-    pMMArcLayer->TopNodeHeader.aFileType[1]='O';
-    pMMArcLayer->TopNodeHeader.aFileType[2]='D';
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        // Init header structure
+        pMMArcLayer->TopNodeHeader.aFileType[0] = 'N';
+        pMMArcLayer->TopNodeHeader.aFileType[1] = 'O';
+        pMMArcLayer->TopNodeHeader.aFileType[2] = 'D';
 
-    pMMArcLayer->TopNodeHeader.bIs3d=bIs3d;
-    MMInitBoundingBox(&pMMArcLayer->TopNodeHeader.hBB);
+        pMMArcLayer->TopNodeHeader.bIs3d = bIs3d;
+        MMInitBoundingBox(&pMMArcLayer->TopNodeHeader.hBB);
+    }
 
     // Opening the binary file where sections TH, NH and NL[...]
     // are going to be written.
@@ -843,43 +846,45 @@ struct MiraMonArcLayer *pMMArcLayer;
         return 1;
     fseek_function(pMMArcLayer->MMNode.pF, 0, SEEK_SET);
 
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        // Node Header
+        pMMArcLayer->MMNode.nMaxNodeHeader = MM_FIRST_NUMBER_OF_NODES;
+        if (NULL == (pMMArcLayer->MMNode.pNodeHeader = (struct MM_NH*)calloc_function(
+            pMMArcLayer->MMNode.nMaxNodeHeader *
+            sizeof(*pMMArcLayer->MMNode.pNodeHeader))))
+            return 1;
 
-    // Node Header
-    pMMArcLayer->MMNode.nMaxNodeHeader=MM_FIRST_NUMBER_OF_NODES;
-    if(NULL==(pMMArcLayer->MMNode.pNodeHeader=(struct MM_NH *)calloc_function(
-                            pMMArcLayer->MMNode.nMaxNodeHeader*
-                            sizeof(*pMMArcLayer->MMNode.pNodeHeader))))
-        return 1;
+        if (hMiraMonLayer->LayerVersion == MM_32BITS_VERSION)
+            pMMArcLayer->MMNode.nSizeNodeHeader = MM_SIZE_OF_NH_32BITS;
+        else
+            pMMArcLayer->MMNode.nSizeNodeHeader = MM_SIZE_OF_NH_64BITS;
 
-    if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
-        pMMArcLayer->MMNode.nSizeNodeHeader=MM_SIZE_OF_NH_32BITS;
-    else
-        pMMArcLayer->MMNode.nSizeNodeHeader=MM_SIZE_OF_NH_64BITS;
-
-    // NL Section
-    pMMArcLayer->MMNode.pszNLName=strdup_function(pMMArcLayer->pszLayerName);
-            strcpy(pMMArcLayer->MMNode.pszNLName, 
+        // NL Section
+        pMMArcLayer->MMNode.pszNLName = strdup_function(pMMArcLayer->pszLayerName);
+        strcpy(pMMArcLayer->MMNode.pszNLName,
             reset_extension(pMMArcLayer->MMNode.pszNLName, "~NL"));
 
-    if(NULL==(pMMArcLayer->MMNode.pFNL = 
-            fopen_function(pMMArcLayer->MMNode.pszNLName, 
-            hMiraMonLayer->pszFlags)))
-        return 1;
-    fseek_function(pMMArcLayer->MMNode.pFNL, 0, SEEK_SET);
-
-    if(MMInitFlush(&pMMArcLayer->MMNode.FlushNL, pMMArcLayer->MMNode.pFNL, 
-            MM_250MB, &pMMArcLayer->MMNode.pNL, 0, 0))
-           return 1;
-
-    // Creating the DBF file name
-    pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName=
-        calloc_function(strlen(pMMArcLayer->MMNode.pszLayerName)+6);
-    strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, 
-        pMMArcLayer->MMNode.pszLayerName);
-
-    if(MMResetExtensionAndLastLetter(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, 
-                pMMArcLayer->MMNode.pszLayerName, "N.dbf"))
+        if (NULL == (pMMArcLayer->MMNode.pFNL =
+            fopen_function(pMMArcLayer->MMNode.pszNLName,
+                hMiraMonLayer->pszFlags)))
             return 1;
+        fseek_function(pMMArcLayer->MMNode.pFNL, 0, SEEK_SET);
+
+        if (MMInitFlush(&pMMArcLayer->MMNode.FlushNL, pMMArcLayer->MMNode.pFNL,
+            MM_250MB, &pMMArcLayer->MMNode.pNL, 0, 0))
+            return 1;
+
+        // Creating the DBF file name
+        pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName =
+            calloc_function(strlen(pMMArcLayer->MMNode.pszLayerName) + 6);
+        strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName,
+            pMMArcLayer->MMNode.pszLayerName);
+
+        if (MMResetExtensionAndLastLetter(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName,
+            pMMArcLayer->MMNode.pszLayerName, "N.dbf"))
+            return 1;
+    }
 
     return 0;
 }
@@ -904,18 +909,22 @@ struct MM_TH *pArcTopHeader;
 
     // Init header structure
     hMiraMonLayer->bIsArc=1;
-    pArcTopHeader->bIs3d=bIs3d;
-    MMInitBoundingBox(&pArcTopHeader->hBB);
-    
-    pArcTopHeader->aFileType[0]='A';
-    pArcTopHeader->aFileType[1]='R';
-    pArcTopHeader->aFileType[2]='C';
 
-    if(hMiraMonLayer->bNameNeedsCorrection)
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
     {
-        if(MMOpenCorrectMiraMonFile(&pMMArcLayer->pszLayerName, "arc"))
-            return 1;
-        hMiraMonLayer->bNameNeedsCorrection=0;
+        pArcTopHeader->bIs3d = bIs3d;
+        MMInitBoundingBox(&pArcTopHeader->hBB);
+
+        pArcTopHeader->aFileType[0] = 'A';
+        pArcTopHeader->aFileType[1] = 'R';
+        pArcTopHeader->aFileType[2] = 'C';
+
+        if (hMiraMonLayer->bNameNeedsCorrection)
+        {
+            if (MMOpenCorrectMiraMonFile(&pMMArcLayer->pszLayerName, "arc"))
+                return 1;
+            hMiraMonLayer->bNameNeedsCorrection = 0;
+        }
     }
 
     if(NULL==(pMMArcLayer->pF = fopen_function(pMMArcLayer->pszLayerName, 
@@ -924,43 +933,60 @@ struct MM_TH *pArcTopHeader;
     fseek_function(pMMArcLayer->pF, 0, SEEK_SET);
 
     // AH
-    if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
-        pMMArcLayer->nSizeArcHeader=MM_SIZE_OF_AH_32BITS;
+    if (hMiraMonLayer->LayerVersion == MM_32BITS_VERSION)
+        pMMArcLayer->nSizeArcHeader = MM_SIZE_OF_AH_32BITS;
     else
-        pMMArcLayer->nSizeArcHeader=MM_SIZE_OF_AH_64BITS;
+        pMMArcLayer->nSizeArcHeader = MM_SIZE_OF_AH_64BITS;
 
-    pMMArcLayer->nMaxArcHeader=MM_FIRST_NUMBER_OF_ARCS;
-    if(NULL==(pMMArcLayer->pArcHeader=(struct MM_AH *)calloc_function(
-                            pMMArcLayer->nMaxArcHeader*
-                            sizeof(*pMMArcLayer->pArcHeader))))
-        return 1;
-
-    // AL
-    pMMArcLayer->nALElementSize=MM_SIZE_OF_AL;
-    pMMArcLayer->pszALName=strdup_function(pMMArcLayer->pszLayerName);
-    strcpy(pMMArcLayer->pszALName, 
-        reset_extension(pMMArcLayer->pszALName, "~AL"));
-        
-    if(NULL==(pMMArcLayer->pFAL = fopen_function(pMMArcLayer->pszALName, 
-        hMiraMonLayer->pszFlags)))
-        return 1;
-    fseek_function(pMMArcLayer->pFAL, 0, SEEK_SET);
-
-    if(MMInitFlush(&pMMArcLayer->FlushAL, pMMArcLayer->pFAL, 
-            MM_500MB, &pMMArcLayer->pAL, 0, 0))
-           return 1;
-
-    // 3D
-    if(pArcTopHeader->bIs3d)
-    {
-        pMMArcLayer->psz3DLayerName=strdup_function(pMMArcLayer->pszLayerName);
-            strcpy(pMMArcLayer->psz3DLayerName, 
-                reset_extension(pMMArcLayer->psz3DLayerName, "~z"));
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+        pMMArcLayer->nMaxArcHeader = MM_FIRST_NUMBER_OF_ARCS;
+    else
+        pMMArcLayer->nMaxArcHeader = pArcTopHeader->nElemCount;
     
-        if(NULL==(pMMArcLayer->pF3d=fopen_function(pMMArcLayer->psz3DLayerName, 
+    if (NULL == (pMMArcLayer->pArcHeader = (struct MM_AH*)calloc_function(
+            pMMArcLayer->nMaxArcHeader *
+            sizeof(*pMMArcLayer->pArcHeader))))
+            return 1;
+
+    if (hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
+    {
+        if(MMReadAHArcSection(hMiraMonLayer))
+            return 1;
+    }
+    
+    // AL
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        pMMArcLayer->nALElementSize = MM_SIZE_OF_AL;
+
+        pMMArcLayer->pszALName = strdup_function(pMMArcLayer->pszLayerName);
+        strcpy(pMMArcLayer->pszALName,
+            reset_extension(pMMArcLayer->pszALName, "~AL"));
+
+        if (NULL == (pMMArcLayer->pFAL = fopen_function(pMMArcLayer->pszALName,
             hMiraMonLayer->pszFlags)))
             return 1;
-        fseek_function(pMMArcLayer->pF3d, 0, SEEK_SET);
+        fseek_function(pMMArcLayer->pFAL, 0, SEEK_SET);
+
+        if (MMInitFlush(&pMMArcLayer->FlushAL, pMMArcLayer->pFAL,
+            MM_500MB, &pMMArcLayer->pAL, 0, 0))
+            return 1;
+    }
+
+    // 3D
+    if (pArcTopHeader->bIs3d)
+    {
+        if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+        {
+            pMMArcLayer->psz3DLayerName = strdup_function(pMMArcLayer->pszLayerName);
+            strcpy(pMMArcLayer->psz3DLayerName,
+                reset_extension(pMMArcLayer->psz3DLayerName, "~z"));
+
+            if (NULL == (pMMArcLayer->pF3d = fopen_function(pMMArcLayer->psz3DLayerName,
+                hMiraMonLayer->pszFlags)))
+                return 1;
+            fseek_function(pMMArcLayer->pF3d, 0, SEEK_SET);
+        }
 
         if(MMInitZSectionLayer(hMiraMonLayer, 
                         pMMArcLayer->pF3d, 
@@ -980,6 +1006,7 @@ struct MM_TH *pArcTopHeader;
         MMSet2_0Version(&pMMArcLayer->TopNodeHeader);
 
     // MIRAMON DATA BASE
+    // ·$· In which mode?
     // Creating the DBF file name
     pMMArcLayer->MMAdmDB.pszExtDBFLayerName=
         calloc_function(strlen(pMMArcLayer->pszLayerName)+6);
@@ -1923,12 +1950,12 @@ unsigned __int64 nElementCount;
     if(hMiraMonLayer->bIsPolygon)
     {
         pMMArcLayer=&hMiraMonLayer->MMPolygon.MMArc;
-        nElem=hMiraMonLayer->TopHeader.nElemCount;
+        nElem=hMiraMonLayer->MMPolygon.TopArcHeader.nElemCount;
     }
     else
     {
         pMMArcLayer=&hMiraMonLayer->MMArc;
-        nElem=hMiraMonLayer->MMPolygon.TopArcHeader.nElemCount;
+        nElem=hMiraMonLayer->TopHeader.nElemCount;
     }
 
     nBlockSize=nElem*(pMMArcLayer->nSizeArcHeader);
@@ -3506,10 +3533,10 @@ int MMResizeArcHeaderPointer(struct MM_AH **pArcHeader,
 }
 
 int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64, 
-                        MM_N_VERTICES_TYPE *nMax, 
-                        MM_N_VERTICES_TYPE nNum, 
-                        MM_N_VERTICES_TYPE nIncr,
-                        MM_N_VERTICES_TYPE nProposedMax)
+                        MM_POLYGON_RINGS_COUNT *nMax, 
+                        MM_POLYGON_RINGS_COUNT nNum, 
+                        MM_POLYGON_RINGS_COUNT nIncr,
+                        MM_POLYGON_RINGS_COUNT nProposedMax)
 {
     if(nNum<*nMax)
         return 0;

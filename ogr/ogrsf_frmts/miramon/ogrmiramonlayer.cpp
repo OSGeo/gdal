@@ -536,6 +536,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 {
     CPLString osFieldData;
     OGRGeometry *poGeom = nullptr;
+    OGRPoint *poPoint = nullptr;
     
     /* -------------------------------------------------------------------- */
     /*      Read iNextFID feature directly from the file.                   */
@@ -543,6 +544,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     if(iNextFID>=hMiraMonLayer.TopHeader.nElemCount)
         return nullptr;
 
+    MM_INTERNAL_FID nIElem = (MM_INTERNAL_FID)iNextFID;
     switch(hMiraMonLayer.eLT)
     {
         case MM_LayerType_Point:
@@ -550,9 +552,8 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
             // Read point
             poGeom = new OGRPoint();
             
-            OGRPoint *poPoint = poGeom->toPoint();
-            // Get X,Y
-            MM_INTERNAL_FID nIElem = (MM_INTERNAL_FID)iNextFID;
+            poPoint = poGeom->toPoint();
+            // Get X,Y (z). MiraMon has no multipoints
             if (MMGetFeatureFromVector(&hMiraMonLayer, nIElem))
                 return nullptr;
 
@@ -561,12 +562,28 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
             if (hMiraMonLayer.TopHeader.bIs3d)
                 poPoint->setZ(hMiraMonLayer.nCoordZ[0]);
             break;
-        /*    
+           
         case MM_LayerType_Arc:
         case MM_LayerType_Arc3d:
-            // Read stringline
-            OGRLineString *poLine = poGeom->toLineString();
+            poGeom = new OGRLineString();
+            OGRLineString *poLS = poGeom->toLineString();
+
+            // Get X,Y (Z) n times MiraMon has no multilines
+            if (MMGetFeatureFromVector(&hMiraMonLayer, nIElem))
+                return nullptr;
+
+            for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < hMiraMonLayer.nNVrtRing[0]; nIVrt++)
+            {
+                if (hMiraMonLayer.TopHeader.bIs3d)
+                    poLS->addPoint(hMiraMonLayer.nCoordXY[nIVrt].dfX,
+                        hMiraMonLayer.nCoordXY[nIVrt].dfY,
+                        hMiraMonLayer.nCoordZ[nIVrt]);
+                else
+                    poLS->addPoint(hMiraMonLayer.nCoordXY[nIVrt].dfX,
+                        hMiraMonLayer.nCoordXY[nIVrt].dfY);
+            }
             break;
+        /* 
         case MM_LayerType_Pol:
         case MM_LayerType_Pol3d:
             // Read polygon

@@ -367,7 +367,7 @@ char *aRELLayerName=NULL;
     hMiraMonLayer->Version=MM_VECTOR_LAYER_LAST_VERSION;
     
     // Don't free in destructor
-    hMiraMonLayer->pLayerDB=NULL; //Â·$Â·
+    hMiraMonLayer->pLayerDB=NULL; //·$·
 
     hMiraMonLayer->pSRS=strdup(ReturnValueFromSectionINIFile(aRELLayerName, 
         "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier"));
@@ -711,7 +711,13 @@ struct MM_PH *pPolHeader;
             }
         }
         hMiraMonLayer->nNRing=1;
-        if(hMiraMonLayer->nNVrtRing)hMiraMonLayer->nNVrtRing[0]=1;
+        
+        if(MMResize_MM_N_VERTICES_TYPE_Pointer(&hMiraMonLayer->nNVrtRing, 
+                        &hMiraMonLayer->nMaxVrtRing, 
+                        hMiraMonLayer->nMaxVrtRing, 0, 1))
+            return 1;
+
+        hMiraMonLayer->nNVrtRing[0]=1;
         return 0;
     }
 
@@ -740,6 +746,7 @@ struct MM_PH *pPolHeader;
         if(hMiraMonLayer->nNVrtRing)hMiraMonLayer->nNVrtRing[0]=1;
         return 0;
     }
+    #endif //TODO
     
 
     if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
@@ -748,10 +755,17 @@ struct MM_PH *pPolHeader;
         pArcHeader=hMiraMonLayer->MMArc.pArcHeader;
                 
         fseek_function(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
-        // LLegim els vertexs de l'arc
-        punts=calloc_function(pArcHeader[i_elem].nElemCount*sizeof(*punts));
+        // Reading arcs vertices
+        hMiraMonLayer->nNumCoordXY=pArcHeader[i_elem].nElemCount;
+        if(MMResizeMM_POINT2DPointer(&hMiraMonLayer->nCoordXY, 
+            &hMiraMonLayer->nMaxCoordXY, 
+            hMiraMonLayer->nNumCoordXY,
+            pArcHeader[i_elem].nElemCount,
+            pArcHeader[i_elem].nElemCount))
+            return 1;
+
         if(pArcHeader[i_elem].nElemCount!=
-            fread_function(punts,sizeof(*punts),pArcHeader[i_elem].nElemCount, pF))
+            fread_function(hMiraMonLayer->nCoordXY,sizeof(*hMiraMonLayer->nCoordXY),hMiraMonLayer->nNumCoordXY, pF))
         {
             #ifndef GDAL_COMPILATION
             lastErrorMM=Mida_incoherent_Corromput;
@@ -759,18 +773,18 @@ struct MM_PH *pPolHeader;
             return 1;
         }
 
-        for(k=0;k<pArcHeader[i_elem].nElemCount;k++)
-        {
-        	hMiraMonLayer->nCoordX[k]=punts[k].dfX;
-	        hMiraMonLayer->nCoordY[k]=punts[k].dfY;
-        }
-        free_function(punts);
-
+        #ifdef CAL_FER_3D_ARCS
         if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->nCoordZ)
         {
             pZDescription=hMiraMonLayer->MMArc.pZSection.pZDescription;
 
-            punts_z=calloc(pArcHeader[i_elem].nElemCount, sizeof(double));
+            if(MMResizeDoublePointer(&hMiraMonLayer->nCoordZ, 
+                    &hMiraMonLayer->nMaxCoordZ, 
+                    hMiraMonLayer->nNumCoordZ,
+                    pArcHeader[i_elem].nElemCount,
+                    pArcHeader[i_elem].nElemCount1))
+                return 1;
+
             DonaAlcadesDArc(punts_z, pF, pArcHeader[i_elem].nElemCount,
                 pZDescription+i_elem, flag_z);
 
@@ -783,13 +797,19 @@ struct MM_PH *pPolHeader;
 
                 hMiraMonLayer->nCoordZ[k]=cz;
             }
-            free_function(punts_z);
         }
+        #endif //CAL_FER_3D_ARCS
+
         hMiraMonLayer->nNRing=1;
+        if(MMResize_MM_N_VERTICES_TYPE_Pointer(&hMiraMonLayer->nNVrtRing, 
+                        &hMiraMonLayer->nMaxVrtRing, 
+                        hMiraMonLayer->nNRing, 0, 1))
+            return 1;
+
         hMiraMonLayer->nNVrtRing[0]=pArcHeader[i_elem].nElemCount;
         return 0;
     }
-    #endif // TODO
+    
 #ifdef QUAN_OBRI_POLIGONS
     pFArc=hMiraMonLayer->MMPolygon.MMArc.pF;
     pF=hMiraMonLayer->MMPolygon.pF;

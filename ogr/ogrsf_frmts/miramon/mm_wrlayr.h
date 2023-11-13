@@ -107,6 +107,7 @@ int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer);
 void MMDestroyLayer(struct MiraMonLayerInfo **hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
 int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion);
+int MMReadAHArcSection(struct MiraMonLayerInfo *hMiraMonLayer);
 int MMReadZDescriptionHeaders(struct MiraMonLayerInfo *hMiraMonLayer, 
                         FILE_TYPE *pF, MM_INTERNAL_FID nElements, 
                         struct MM_ZSection *pZSection);
@@ -147,10 +148,10 @@ int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord,
                         unsigned __int32 nProposedMax);
 
 int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64, 
-                        MM_N_VERTICES_TYPE *nMax, 
-                        MM_N_VERTICES_TYPE nNum, 
-                        MM_N_VERTICES_TYPE nIncr,
-                        MM_N_VERTICES_TYPE nProposedMax);
+                        MM_POLYGON_RINGS_COUNT *nMax, 
+                        MM_POLYGON_RINGS_COUNT nNum, 
+                        MM_POLYGON_RINGS_COUNT nIncr,
+                        MM_POLYGON_RINGS_COUNT nProposedMax);
 
 int MMResizeIntPointer(int **pInt, 
                         unsigned __int64 *nMax, 
