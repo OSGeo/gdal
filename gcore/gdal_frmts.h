@@ -169,7 +169,6 @@ void CPL_DLL GDALRegister_WEBP(void);
 void CPL_DLL GDALRegister_ZMap(void);
 void CPL_DLL GDALRegister_NGSGEOID(void);
 void CPL_DLL GDALRegister_MBTiles(void);
-void CPL_DLL GDALRegister_ARG(void);
 void CPL_DLL GDALRegister_IRIS(void);
 void CPL_DLL GDALRegister_KRO(void);
 void CPL_DLL GDALRegister_KEA(void);
