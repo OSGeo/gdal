@@ -241,6 +241,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_OCI_DRIVER)
     DeclareDeferredOGROCIPlugin();
 #endif
+#if defined(DEFERRED_ODBC_DRIVER)
+    DeclareDeferredOGRODBCPlugin();
+#endif
 #if defined(DEFERRED_OGDI_DRIVER)
     DeclareDeferredOGROGDIPlugin();
 #endif

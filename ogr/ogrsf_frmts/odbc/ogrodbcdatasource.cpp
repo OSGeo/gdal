@@ -30,6 +30,7 @@
 #include "ogr_odbc.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogrodbcdrivercore.h"
 
 /************************************************************************/
 /*                         OGRODBCDataSource()                          */
@@ -212,7 +213,8 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
     const char *pszNewName = poOpenInfo->pszFilename;
 
     if (!STARTS_WITH_CI(pszNewName, "ODBC:") &&
-        IsSupportedMsAccessFileExtension(CPLGetExtension(pszNewName)))
+        OGRODBCDriverIsSupportedMsAccessFileExtension(
+            CPLGetExtension(pszNewName)))
         return OpenMDB(poOpenInfo);
 
     /* -------------------------------------------------------------------- */
@@ -662,16 +664,4 @@ void OGRODBCDataSource::ReleaseResultSet(OGRLayer *poLayer)
 
 {
     delete poLayer;
-}
-
-/************************************************************************/
-/*                  IsSupportedMsAccessFileExtension()                  */
-/************************************************************************/
-
-bool OGRODBCDataSource::IsSupportedMsAccessFileExtension(
-    const char *pszExtension)
-{
-    // these are all possible extensions for MS Access databases
-    return EQUAL(pszExtension, "MDB") || EQUAL(pszExtension, "ACCDB") ||
-           EQUAL(pszExtension, "STYLE");
 }

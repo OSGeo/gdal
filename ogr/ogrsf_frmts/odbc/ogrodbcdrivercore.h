@@ -26,44 +26,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_odbc.h"
-#include "cpl_conv.h"
-#include "ogrodbcdrivercore.h"
+#ifndef OGRODBCDRIVERCORE_H
+#define OGRODBCDRIVERCORE_H
 
-/************************************************************************/
-/*                      OGRODBCDriverOpen()                             */
-/************************************************************************/
+#include "gdal_priv.h"
 
-static GDALDataset *OGRODBCDriverOpen(GDALOpenInfo *poOpenInfo)
+constexpr const char *DRIVER_NAME = "ODBC";
 
-{
-    if (OGRODBCDriverIdentify(poOpenInfo) == FALSE)
-        return nullptr;
+bool CPL_DLL
+OGRODBCDriverIsSupportedMsAccessFileExtension(const char *pszExtension);
 
-    OGRODBCDataSource *poDS = new OGRODBCDataSource();
+int CPL_DLL OGRODBCDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-    if (!poDS->Open(poOpenInfo))
-    {
-        delete poDS;
-        return nullptr;
-    }
-    else
-        return poDS;
-}
+void CPL_DLL OGRODBCDriverSetCommonMetadata(GDALDriver *poDriver);
 
-/************************************************************************/
-/*                           RegisterOGRODBC()                            */
-/************************************************************************/
-
-void RegisterOGRODBC()
-
-{
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
-
-    GDALDriver *poDriver = new GDALDriver;
-    OGRODBCDriverSetCommonMetadata(poDriver);
-    poDriver->pfnOpen = OGRODBCDriverOpen;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+#endif
