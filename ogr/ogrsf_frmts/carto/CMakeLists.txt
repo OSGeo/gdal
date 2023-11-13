@@ -6,8 +6,15 @@ add_gdal_driver(
           ogrcartolayer.cpp
           ogrcartoresultlayer.cpp
           ogrcartotablelayer.cpp
-          PLUGIN_CAPABLE_IF
+  CORE_SOURCES
+          ogrcartodrivercore.cpp
+  PLUGIN_CAPABLE_IF
           "NOT GDAL_USE_JSONC_INTERNAL")
+
+if(NOT TARGET ogr_Carto)
+    return()
+endif()
+
 gdal_standard_includes(ogr_Carto)
 target_include_directories(ogr_Carto PRIVATE $<TARGET_PROPERTY:ogr_PGDump,SOURCE_DIR>
                                              $<TARGET_PROPERTY:ogr_geojson,SOURCE_DIR>)

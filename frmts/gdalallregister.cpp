@@ -141,6 +141,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_CAD_DRIVER)
     DeclareDeferredOGRCADPlugin();
 #endif
+#if defined(DEFERRED_CARTO_DRIVER)
+    DeclareDeferredOGRCartoPlugin();
+#endif
 #if defined(DEFERRED_DDS_DRIVER)
     DeclareDeferredDDSPlugin();
 #endif
