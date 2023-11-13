@@ -707,6 +707,7 @@ void DeclareDeferredOGROpenFileGDBPlugin();
 void CPL_DLL RegisterOGRSelafin();
 void CPL_DLL RegisterOGRJML();
 void CPL_DLL RegisterOGRPLSCENES();
+void DeclareDeferredOGRPLSCENESPlugin();
 void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDBv3();
 void DeclareDeferredOGRMongoDBv3Plugin();

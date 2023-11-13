@@ -268,6 +268,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_POSTGISRASTER_DRIVER)
     DeclareDeferredPostGISRasterPlugin();
 #endif
+#if defined(DEFERRED_PLSCENES_DRIVER)
+    DeclareDeferredOGRPLSCENESPlugin();
+#endif
 #if defined(DEFERRED_PDF_DRIVER)
     DeclareDeferredPDFPlugin();
 #endif
