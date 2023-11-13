@@ -3825,9 +3825,6 @@ int GDALCanFileAcceptSidecarFile(const char *pszFilename);
 
 bool GDALCanReliablyUseSiblingFileList(const char *pszFilename);
 
-bool CPL_DLL GDALIsDriverDeprecatedForGDAL39StillEnabled(
-    const char *pszDriverName, const char *pszExtraMsg = "");
-
 typedef enum
 {
     GSF_UNSIGNED_INT,
