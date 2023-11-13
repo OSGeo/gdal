@@ -151,6 +151,9 @@ void CPL_STDCALL GDALAllRegister()
     DeclareDeferredOGRDWGPlugin();
     DeclareDeferredOGRDGNV8Plugin();
 #endif
+#if defined(DEFERRED_ELASTIC_DRIVER)
+    DeclareDeferredOGRElasticPlugin();
+#endif
 #if defined(DEFERRED_EXR_DRIVER)
     DeclareDeferredEXRPlugin();
 #endif
