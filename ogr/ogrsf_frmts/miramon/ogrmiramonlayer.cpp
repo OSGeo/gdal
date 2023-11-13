@@ -311,14 +311,12 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             else
                 bValidFile = false;
 
-            // ·$· osEPSG = ReturnValueFromSectionINIFile()
-            osEPSG = hMiraMonLayer.pSRS;
-            osEPSG = "25831";
-            if (osEPSG.length())
+
+            if (hMiraMonLayer.nSRS_EPSG != 0)
             {
                 m_poSRS = new OGRSpatialReference();
                 m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (m_poSRS->importFromEPSG(atoi(osEPSG)) != OGRERR_NONE)
+                if (m_poSRS->importFromEPSG(hMiraMonLayer.nSRS_EPSG) != OGRERR_NONE)
                 {
                     delete m_poSRS;
                     m_poSRS = nullptr;
@@ -542,8 +540,6 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     /* -------------------------------------------------------------------- */
     /*      Read iNextFID feature directly from the file.                   */
     /* -------------------------------------------------------------------- */
-    if(iNextFID==2376)
-        int a =0;
     if(iNextFID>=hMiraMonLayer.TopHeader.nElemCount)
         return nullptr;
 
@@ -1002,7 +998,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
                         bool bExternalRing, int eLT)
 {
-    if (MMResizeUI64Pointer(&hMMFeature.pNCoord, &hMMFeature.nMaxpNCoord,
+    if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoord, &hMMFeature.nMaxpNCoord,
         hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
     {
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",

@@ -47,7 +47,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     OGRSpatialReference *m_poSRS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
 
-    GIntBig iNextFID;
+    GUIntBig iNextFID;
 
     struct MiraMonLayerInfo hMiraMonLayer;
     struct MM_TH pMMHeader;

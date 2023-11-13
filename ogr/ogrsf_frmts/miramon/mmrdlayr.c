@@ -73,7 +73,7 @@ MM_TIPUS_ERROR MMRecuperaUltimError(void)
 	struct Capcalera_Top cap_top;
     struct Capcalera_Top cap_top_arc;
     MM_BOOLEAN es_3d;
-    struct CAPCALERA_VECTOR_3D *cap_arc_3d;  // pel cas en que necessitem llegir les capÃ§aleres 3d amb el "pic i la pala".
+    struct CAPCALERA_VECTOR_3D *cap_arc_3d;  // pel cas en que necessitem llegir les capçaleres 3d amb el "pic i la pala".
     FILE_TYPE *pf, *pfarc;
 };*/
 #ifdef TO_BE_REVISED
@@ -82,7 +82,7 @@ MM_HANDLE_CAPA_VECTOR MMIniciaCapaVector(const char *nom_fitxer)
 struct SMM_HANDLE_CAPA_VECTOR *shlayer;
 char ext[MAX_MIDA_EXTENSIO_FITXER];
 
-//Aquests defines fan que no es miri el tema de la llicÃ¨ncia.
+//Aquests defines fan que no es miri el tema de la llicència.
 #define ANY_CADUCITAT 2008
 #define MES_CADUCITAT 8
 #define DIA_CADUCITAT 1
@@ -93,8 +93,8 @@ time_t t;
 #endif
 
 #if defined ANY_CADUCITAT && defined MES_CADUCITAT && defined DIA_CADUCITAT
-   //   La llicÃ¨ncia temporal. En aquest cas no es valida la llicÃ¨ncia basada
-   //   en parÃ metres.
+   //   La llicència temporal. En aquest cas no es valida la llicència basada
+   //   en paràmetres.
 
    t = time(NULL);
    tm_local = localtime(&t);
@@ -274,9 +274,9 @@ time_t t;
             free(shlayer);
   			return NULL;
         }
-        // Saltem la part de punts i llegim les capÃ§aleres 3d
+        // Saltem la part de punts i llegim les capçaleres 3d
         fseek_function(shlayer->pf, MIDA_CAPCALERA_TOP+shlayer->cap_top.n_elem*sizeof(double)*2+16+sizeof(double)*2,SEEK_SET);
-        // LLegim les capÃ§aleres
+        // LLegim les capçaleres
         if (fread_function(shlayer->cap_arc_3d, sizeof(struct CAPCALERA_VECTOR_3D), shlayer->cap_top.n_elem, shlayer->pf)!=(size_t)shlayer->cap_top.n_elem)
         {
             lastErrorMM=Mida_incoherent_Corromput;
@@ -357,7 +357,7 @@ char *aRELLayerName=NULL;
         else
             hMiraMonLayer->eLT = MM_LayerType_Pol;
 
-        // MULTIPOLYGON Ã‚Â·$Ã‚Â·
+        // MULTIPOLYGON Â·$Â·
         hMiraMonLayer->bIsPolygon=TRUE;
         if(MMResetExtensionAndLastLetter(aRELLayerName, 
                     hMiraMonLayer->pszSrcLayerName, "P.rel"))
@@ -369,9 +369,10 @@ char *aRELLayerName=NULL;
     // Don't free in destructor
     hMiraMonLayer->pLayerDB=NULL; //Â·$Â·
 
-    hMiraMonLayer->pSRS=strdup(ReturnEPSGCodeSRSFromMMIDSRS(
-        ReturnValueFromSectionINIFile(aRELLayerName, 
-        "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier")));
+    hMiraMonLayer->pSRS=strdup(ReturnValueFromSectionINIFile(aRELLayerName, 
+        "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier"));
+
+    hMiraMonLayer->nSRS_EPSG=ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS);
 
     if(MMInitLayerByType(hMiraMonLayer))
         return 1;
@@ -387,7 +388,7 @@ char *aRELLayerName=NULL;
         return 1;
     }
 
-    // Â·$Â· hMiraMonLayer->nCharSet=MM_JOC_CARAC_ANSI_DBASE;
+    // ·$· hMiraMonLayer->nCharSet=MM_JOC_CARAC_ANSI_DBASE;
               
     if(hMiraMonLayer->bIsPolygon)
     {
@@ -695,7 +696,7 @@ struct MM_PH *pPolHeader;
                     return 1;
                 }
 
-                // Â·$Â· De moment agafarem el primer
+                // ·$· De moment agafarem el primer
                 /*if (flag_z==MM_STRING_HIGHEST_ALTITUDE)
                     cz=pZDescription->dfBBmaxz;
                 else if (flag_z==MM_STRING_LOWEST_ALTITUDE)
@@ -703,10 +704,10 @@ struct MM_PH *pPolHeader;
                 else*/
                     cz=hMiraMonLayer->nCoordZ[0];
 
-                // Â·$Â· Which value is nodata por Z en GDAL?
+                // ·$· Which value is nodata por Z en GDAL?
                 /*if(!DOUBLES_DIFERENTS_DJ(cz, MM_NODATA_COORD_Z))
                     hMiraMonLayer->nCoordZ[0]=-DBL_MAX;
-                else */hMiraMonLayer->nCoordZ[0]=cz; // NomÃ©s ens quedem el primer.
+                else */hMiraMonLayer->nCoordZ[0]=cz; // Només ens quedem el primer.
             }
         }
         hMiraMonLayer->nNRing=1;
@@ -775,10 +776,10 @@ struct MM_PH *pPolHeader;
 
             for(k=0; k<(pArcHeader[i_elem].nElemCount); k++)
             {
-                // Â·$Â· Which value is nodata por Z en GDAL?
+                // ·$· Which value is nodata por Z en GDAL?
                 /*if(!DOUBLES_DIFERENTS_DJ(punts_z[k], MM_NODATA_COORD_Z))
                     cz=-DBL_MAX;
-                else */cz=punts_z[k]; // NomÃ©s ens quedem el primer.
+                else */cz=punts_z[k]; // Només ens quedem el primer.
 
                 hMiraMonLayer->nCoordZ[k]=cz;
             }
@@ -795,8 +796,8 @@ struct MM_PH *pPolHeader;
     pPolHeader=hMiraMonLayer->MMPolygon.pPolHeader;
     pArcHeader=hMiraMonLayer->MMPolygon.MMArc.pArcHeader;
 
-    // Ara he llegir la capÃ§alera de l'arc i llavors l'offset del primer vÃ¨rtex, llegirlos i afegirlos
-    // a la llista que anirÃ  al final.
+    // Ara he llegir la capçalera de l'arc i llavors l'offset del primer vèrtex, llegirlos i afegirlos
+    // a la llista que anirà al final.
     if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->nCoordZ)
     {
         pZDescription=hMiraMonLayer->MMPolygon.MMArc.pZSection.pZDescription;

@@ -65,7 +65,7 @@ typedef int MM_SELEC_COORDZ_TYPE;
 #define MM_STRING_HIGHEST_ALTITUDE  0x0001
 #define MM_STRING_LOWEST_ALTITUDE   0x0002
 
-#define /*double*/ MM_NODATA_COORD_Z -1.0E+300
+#define /*double*/ MM_NODATA_COORD_Z (-1.0E+300)
 
 
 // General static variables

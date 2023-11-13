@@ -665,6 +665,7 @@ struct MiraMonLayerInfo
 
     // EPSG code of the coordinate system information.
     char *pSRS; // User has to free it.
+    int nSRS_EPSG; // Ref. system if has EPSG code. 
 
     // Layer database read from origin.
     struct MiraMonDataBase *pLayerDB;

@@ -1856,11 +1856,11 @@ size_t bytesRead, bytesWritten;
 
 void GetOffsetAlignedTo8(MM_FILE_OFFSET *Offset)
 {
-size_t reajust;
+MM_FILE_OFFSET reajust;
 
     if ((*Offset) % 8L)
 	{
-		reajust=(size_t)8-((*Offset)%8L);
+		reajust=8-((*Offset)%8L);
 		(*Offset)+=reajust;
 	}
 }
@@ -1918,6 +1918,7 @@ struct MM_FLUSH_INFO FlushTMP;
 char *pBuffer=NULL;
 MM_FILE_OFFSET nBlockSize;
 struct MiraMonArcLayer *pMMArcLayer;
+unsigned __int64 nElementCount;
 
     if(hMiraMonLayer->bIsPolygon)
     {
@@ -1986,12 +1987,14 @@ struct MiraMonArcLayer *pMMArcLayer;
         }
 
         // Element count: number of vertices of the arc
+        nElementCount=pMMArcLayer->pArcHeader[iElem].nElemCount;
         if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
-            &pMMArcLayer->pArcHeader[iElem].nElemCount))
+            &nElementCount))
         {
             if(pBuffer)free_function(pBuffer);
             return 1;
         }
+        pMMArcLayer->pArcHeader[iElem].nElemCount=(MM_N_VERTICES_TYPE)nElementCount;
         
         // Offset: offset of the first vertice of the arc
         if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
@@ -3502,11 +3505,11 @@ int MMResizeArcHeaderPointer(struct MM_AH **pArcHeader,
     return 0;
 }
 
-int MMResizeUI64Pointer(unsigned __int64 **pUI64, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64, 
+                        MM_N_VERTICES_TYPE *nMax, 
+                        MM_N_VERTICES_TYPE nNum, 
+                        MM_N_VERTICES_TYPE nIncr,
+                        MM_N_VERTICES_TYPE nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -3714,7 +3717,8 @@ char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF];
     return aMMIDSRS;
 }
 
-char *ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS)
+// Returns 0 if no EPSG code is found.
+int ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS)
 {
 static char aEPSGCodeSRS[MM_MAX_ID_SNY], aTempIDSRS[MM_MAX_ID_SNY];
 char aMMIDDBFFile[MM_MAX_PATH]; //m_idofic.dbf
@@ -3730,7 +3734,7 @@ char *p;
 
     memset(aEPSGCodeSRS, '\0', sizeof(*aEPSGCodeSRS));
     #ifdef GDAL_COMPILATION
-    strcpy(aMMIDDBFFile, "m_idofic.dbf"); 
+    strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf"); //·$· !! How to get that file
     #else
     strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf");
     #endif
@@ -3739,7 +3743,7 @@ char *p;
     hIDOfic = GDALOpenEx_function(aMMIDDBFFile, GDAL_OF_VECTOR, NULL, NULL, NULL);
     if (hIDOfic == NULL) {
         printf("Error opening the DBF file.\n");
-        return aEPSGCodeSRS;
+        return 0;
     }
 
     // Get the layer from the dataset (assuming there is only one layer)
@@ -3765,14 +3769,19 @@ char *p;
                     MM_strnzcpy(pszFieldName,OGR_Fld_GetNameRef_function(hFieldDefn), MM_MAX_LON_FIELD_NAME_DBF);
                     if(0==stricmp(pszFieldName, "PSIDGEODES"))
                     {
+                        size_t nLong;
                         MM_strnzcpy(aEPSGCodeSRS, OGR_F_GetFieldAsString_function(hFeature, j),MM_MAX_ID_SNY);
                         p=strstr(aEPSGCodeSRS, "EPSG:");
-                        OGR_F_Destroy_function(hFeature);
-                        GDALClose_function(hIDOfic);
-                        if(p)
-                            return p;
-                        else 
-                            return "";
+                        nLong=strlen("EPSG:");
+                        if (p && !strncmp(p, aEPSGCodeSRS, nLong))
+                        {
+                            OGR_F_Destroy_function(hFeature);
+                            GDALClose_function(hIDOfic);
+                            if (p + nLong)
+                                return atoi(p + nLong);
+                            else
+                                return 0;
+                        }
                     }
                 }
                 break;
@@ -3784,7 +3793,7 @@ char *p;
     }
     GDALClose_function(hIDOfic);
 
-    return aEPSGCodeSRS;
+    return 0;
 }
 
 char *GenerateFileIdentifierFromMetadataFileName(char *pMMFN)

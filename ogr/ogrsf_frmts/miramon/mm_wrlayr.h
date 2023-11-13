@@ -146,11 +146,11 @@ int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord,
                         unsigned __int32 nIncr,
                         unsigned __int32 nProposedMax);
 
-int MMResizeUI64Pointer(unsigned __int64 **pUI64, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64, 
+                        MM_N_VERTICES_TYPE *nMax, 
+                        MM_N_VERTICES_TYPE nNum, 
+                        MM_N_VERTICES_TYPE nIncr,
+                        MM_N_VERTICES_TYPE nProposedMax);
 
 int MMResizeIntPointer(int **pInt, 
                         unsigned __int64 *nMax, 
@@ -174,7 +174,7 @@ int IsEmptyString(const char *string);
 char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord);
 // Metadata functions
 char *ReturnMMIDSRSFromEPSGCodeSRS (char *pSRS);
-char *ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS);
+int ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS);
 int MMWriteVectorMetadata(struct MiraMonLayerInfo *hMiraMonLayer);
 
 #ifdef GDAL_COMPILATION
