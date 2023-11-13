@@ -28,45 +28,15 @@
  * SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_vfk.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogrvfkdrivercore.h"
+#ifndef OGRVFKDRIVERCORE_H
+#define OGRVFKDRIVERCORE_H
 
-/*
-  \brief Open existing data source
-  \return NULL on failure
-*/
-static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->eAccess == GA_Update || !OGRVFKDriverIdentify(poOpenInfo))
-        return nullptr;
+#include "gdal_priv.h"
 
-    OGRVFKDataSource *poDS = new OGRVFKDataSource();
+constexpr const char *DRIVER_NAME = "VFK";
 
-    if (!poDS->Open(poOpenInfo) || poDS->GetLayerCount() == 0)
-    {
-        delete poDS;
-        return nullptr;
-    }
-    else
-        return poDS;
-}
+int CPL_DLL OGRVFKDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-/*!
-  \brief Register VFK driver
-*/
-void RegisterOGRVFK()
-{
-    if (!GDAL_CHECK_VERSION("OGR/VFK driver"))
-        return;
+void CPL_DLL OGRVFKDriverSetCommonMetadata(GDALDriver *poDriver);
 
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
-
-    GDALDriver *poDriver = new GDALDriver();
-    OGRVFKDriverSetCommonMetadata(poDriver);
-    poDriver->pfnOpen = OGRVFKDriverOpen;
-
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+#endif

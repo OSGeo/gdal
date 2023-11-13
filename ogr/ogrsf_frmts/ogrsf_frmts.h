@@ -678,6 +678,7 @@ void CPL_DLL RegisterOGRGeoconcept();
 void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
 void CPL_DLL RegisterOGRVFK();
+void DeclareDeferredOGRVFKPlugin();
 void CPL_DLL RegisterOGRPGDump();
 void CPL_DLL RegisterOGROSM();
 void CPL_DLL RegisterOGRGPSBabel();
