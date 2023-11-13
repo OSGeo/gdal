@@ -71,7 +71,7 @@ static void InvertGeometries(GDALDatasetH hDstDS,
                              std::vector<OGRGeometryH> &ahGeometries)
 
 {
-    OGRGeometryH hInvertMultiPolygon = OGR_G_CreateGeometry(wkbMultiPolygon);
+    OGRMultiPolygon *poInvertMP = new OGRMultiPolygon();
 
     /* -------------------------------------------------------------------- */
     /*      Create a ring that is a bit outside the raster dataset.         */
@@ -82,46 +82,83 @@ static void InvertGeometries(GDALDatasetH hDstDS,
     double adfGeoTransform[6] = {};
     GDALGetGeoTransform(hDstDS, adfGeoTransform);
 
-    OGRGeometryH hUniverseRing = OGR_G_CreateGeometry(wkbLinearRing);
+    OGRLinearRing *poUniverseRing = new OGRLinearRing();
 
-    OGR_G_AddPoint_2D(
-        hUniverseRing,
+    poUniverseRing->addPoint(
         adfGeoTransform[0] + -2 * adfGeoTransform[1] + -2 * adfGeoTransform[2],
         adfGeoTransform[3] + -2 * adfGeoTransform[4] + -2 * adfGeoTransform[5]);
 
-    OGR_G_AddPoint_2D(hUniverseRing,
-                      adfGeoTransform[0] + brx * adfGeoTransform[1] +
-                          -2 * adfGeoTransform[2],
-                      adfGeoTransform[3] + brx * adfGeoTransform[4] +
-                          -2 * adfGeoTransform[5]);
+    poUniverseRing->addPoint(adfGeoTransform[0] + brx * adfGeoTransform[1] +
+                                 -2 * adfGeoTransform[2],
+                             adfGeoTransform[3] + brx * adfGeoTransform[4] +
+                                 -2 * adfGeoTransform[5]);
 
-    OGR_G_AddPoint_2D(hUniverseRing,
-                      adfGeoTransform[0] + brx * adfGeoTransform[1] +
-                          bry * adfGeoTransform[2],
-                      adfGeoTransform[3] + brx * adfGeoTransform[4] +
-                          bry * adfGeoTransform[5]);
+    poUniverseRing->addPoint(adfGeoTransform[0] + brx * adfGeoTransform[1] +
+                                 bry * adfGeoTransform[2],
+                             adfGeoTransform[3] + brx * adfGeoTransform[4] +
+                                 bry * adfGeoTransform[5]);
 
-    OGR_G_AddPoint_2D(hUniverseRing,
-                      adfGeoTransform[0] + -2 * adfGeoTransform[1] +
-                          bry * adfGeoTransform[2],
-                      adfGeoTransform[3] + -2 * adfGeoTransform[4] +
-                          bry * adfGeoTransform[5]);
+    poUniverseRing->addPoint(adfGeoTransform[0] + -2 * adfGeoTransform[1] +
+                                 bry * adfGeoTransform[2],
+                             adfGeoTransform[3] + -2 * adfGeoTransform[4] +
+                                 bry * adfGeoTransform[5]);
 
-    OGR_G_AddPoint_2D(
-        hUniverseRing,
+    poUniverseRing->addPoint(
         adfGeoTransform[0] + -2 * adfGeoTransform[1] + -2 * adfGeoTransform[2],
         adfGeoTransform[3] + -2 * adfGeoTransform[4] + -2 * adfGeoTransform[5]);
 
-    OGRGeometryH hUniversePoly = OGR_G_CreateGeometry(wkbPolygon);
-    OGR_G_AddGeometryDirectly(hUniversePoly, hUniverseRing);
+    OGRPolygon *poUniversePoly = new OGRPolygon();
+    poUniversePoly->addRingDirectly(poUniverseRing);
+    poInvertMP->addGeometryDirectly(poUniversePoly);
 
-    OGR_G_AddGeometryDirectly(hInvertMultiPolygon, hUniversePoly);
-
-    /* -------------------------------------------------------------------- */
-    /*      Add outer rings of polygons as inner rings of hUniversePoly     */
-    /*      and inner rings as sub-polygons.                                */
-    /* -------------------------------------------------------------------- */
     bool bFoundNonPoly = false;
+    // If we have GEOS, use it to "subtract" each polygon from the universe
+    // multipolygon
+    if (OGRGeometryFactory::haveGEOS())
+    {
+        OGRGeometry *poInvertMPAsGeom = poInvertMP;
+        poInvertMP = nullptr;
+        CPL_IGNORE_RET_VAL(poInvertMP);
+        for (unsigned int iGeom = 0; iGeom < ahGeometries.size(); iGeom++)
+        {
+            auto poGeom = OGRGeometry::FromHandle(ahGeometries[iGeom]);
+            const auto eGType = OGR_GT_Flatten(poGeom->getGeometryType());
+            if (eGType != wkbPolygon && eGType != wkbMultiPolygon)
+            {
+                if (!bFoundNonPoly)
+                {
+                    bFoundNonPoly = true;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Ignoring non-polygon geometries in -i mode");
+                }
+            }
+            else
+            {
+                auto poNewGeom = poInvertMPAsGeom->Difference(poGeom);
+                if (poNewGeom)
+                {
+                    delete poInvertMPAsGeom;
+                    poInvertMPAsGeom = poNewGeom;
+                }
+            }
+
+            delete poGeom;
+        }
+
+        ahGeometries.resize(1);
+        ahGeometries[0] = OGRGeometry::ToHandle(poInvertMPAsGeom);
+        return;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      If we don't have GEOS, add outer rings of polygons as inner     */
+    /*      rings of poUniversePoly and inner rings as sub-polygons. Note   */
+    /*      that this only works properly if the polygons are disjoint, in  */
+    /*      the sense that the outer ring of any polygon is not inside the  */
+    /*      outer ring of another one. So the scenario of                   */
+    /*      https://github.com/OSGeo/gdal/issues/8689 with an "island" in   */
+    /*      the middle of a hole will not work properly.                    */
+    /* -------------------------------------------------------------------- */
     for (unsigned int iGeom = 0; iGeom < ahGeometries.size(); iGeom++)
     {
         const auto eGType =
@@ -139,19 +176,15 @@ static void InvertGeometries(GDALDatasetH hDstDS,
         }
 
         const auto ProcessPoly =
-            [hUniversePoly, hInvertMultiPolygon](OGRPolygon *poPoly)
+            [poUniversePoly, poInvertMP](OGRPolygon *poPoly)
         {
             for (int i = poPoly->getNumInteriorRings() - 1; i >= 0; --i)
             {
                 auto poNewPoly = new OGRPolygon();
                 poNewPoly->addRingDirectly(poPoly->stealInteriorRing(i));
-                OGRGeometry::FromHandle(hInvertMultiPolygon)
-                    ->toMultiPolygon()
-                    ->addGeometryDirectly(poNewPoly);
+                poInvertMP->addGeometryDirectly(poNewPoly);
             }
-            OGRGeometry::FromHandle(hUniversePoly)
-                ->toPolygon()
-                ->addRingDirectly(poPoly->stealExteriorRing());
+            poUniversePoly->addRingDirectly(poPoly->stealExteriorRing());
         };
 
         if (eGType == wkbPolygon)
@@ -165,16 +198,16 @@ static void InvertGeometries(GDALDatasetH hDstDS,
         {
             auto poMulti =
                 OGRGeometry::FromHandle(ahGeometries[iGeom])->toMultiPolygon();
-            for (int i = 0; i < poMulti->getNumGeometries(); i++)
+            for (auto *poPoly : *poMulti)
             {
-                ProcessPoly(poMulti->getGeometryRef(i));
+                ProcessPoly(poPoly);
             }
             delete poMulti;
         }
     }
 
     ahGeometries.resize(1);
-    ahGeometries[0] = hInvertMultiPolygon;
+    ahGeometries[0] = OGRGeometry::ToHandle(poInvertMP);
 }
 
 /************************************************************************/
