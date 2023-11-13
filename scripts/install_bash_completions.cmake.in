@@ -43,6 +43,7 @@ set(INSTALL_DIR "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@BASH_COMPLETIONS_DIR@")
 file(MAKE_DIRECTORY "${INSTALL_DIR}")
 message(STATUS "Installing ${INSTALL_DIR}/gdalinfo")
 configure_file("@CMAKE_CURRENT_SOURCE_DIR@/gdal-bash-completion.sh" "${INSTALL_DIR}/gdalinfo" COPYONLY)
+file(APPEND @PROJECT_BINARY_DIR@/install_manifest_extra.txt "${INSTALL_DIR}/gdalinfo\n")
 
 foreach (program IN LISTS PROGRAMS)
   message(STATUS "Installing ${INSTALL_DIR}/${program}")
