@@ -177,6 +177,9 @@ struct GDALWarpAppOptions
         q1, q3, sum */
     GDALResampleAlg eResampleAlg = GRA_NearestNeighbour;
 
+    /*! whether -r was specified */
+    bool bResampleAlgSpecifiedByUser = false;
+
     /*! nodata masking values for input bands (different values can be supplied
         for each band). ("value1 value2 ..."). Masked values will not be used
         in interpolation. Use a value of "None" to ignore intrinsic nodata
@@ -1126,11 +1129,48 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
                                GDALDatasetH *pahSrcDS,
                                GDALWarpAppOptions *psOptions)
 {
+    const auto SetDstSRS = [psOptions](const std::string &osTargetSRS)
+    {
+        const char *pszExistingDstSRS =
+            psOptions->aosTransformerOptions.FetchNameValue("DST_SRS");
+        if (pszExistingDstSRS)
+        {
+            OGRSpatialReference oSRS1;
+            oSRS1.SetFromUserInput(pszExistingDstSRS);
+            OGRSpatialReference oSRS2;
+            oSRS2.SetFromUserInput(osTargetSRS.c_str());
+            if (!oSRS1.IsSame(&oSRS2))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Target SRS implied by COG creation options is not "
+                         "the same as the one specified by -t_srs");
+                return false;
+            }
+        }
+        psOptions->aosTransformerOptions.SetNameValue("DST_SRS",
+                                                      osTargetSRS.c_str());
+        return true;
+    };
+
     if (!(psOptions->dfMinX == 0 && psOptions->dfMinY == 0 &&
           psOptions->dfMaxX == 0 && psOptions->dfMaxY == 0 &&
           psOptions->dfXRes == 0 && psOptions->dfYRes == 0 &&
           psOptions->nForcePixels == 0 && psOptions->nForceLines == 0))
     {
+        CPLString osTargetSRS;
+        if (COGGetTargetSRS(aosCreateOptions.List(), osTargetSRS))
+        {
+            if (!SetDstSRS(osTargetSRS))
+                return false;
+        }
+        if (!psOptions->bResampleAlgSpecifiedByUser && nSrcCount > 0)
+        {
+            GetResampleAlg(
+                COGGetResampling(GDALDataset::FromHandle(pahSrcDS[0]),
+                                 aosCreateOptions.List())
+                    .c_str(),
+                psOptions->eResampleAlg);
+        }
         return true;
     }
 
@@ -1162,13 +1202,16 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     double dfMinY = 0;
     double dfMaxX = 0;
     double dfMaxY = 0;
+    bool bRet = true;
     if (COGGetWarpingCharacteristics(GDALDataset::FromHandle(hTmpDS),
                                      aosCreateOptions.List(), osResampling,
                                      osTargetSRS, nXSize, nYSize, dfMinX,
                                      dfMinY, dfMaxX, dfMaxY))
     {
-        GetResampleAlg(osResampling, psOptions->eResampleAlg);
-        psOptions->aosTransformerOptions.SetNameValue("DST_SRS", osTargetSRS);
+        if (!psOptions->bResampleAlgSpecifiedByUser)
+            GetResampleAlg(osResampling, psOptions->eResampleAlg);
+        if (!SetDstSRS(osTargetSRS))
+            bRet = false;
         psOptions->dfMinX = dfMinX;
         psOptions->dfMinY = dfMinY;
         psOptions->dfMaxX = dfMaxX;
@@ -1179,7 +1222,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
     }
     GDALClose(hTmpDS);
     VSIUnlink(osTmpFilename);
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -5486,6 +5529,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
             {
                 return nullptr;
             }
+            psOptions->bResampleAlgSpecifiedByUser = true;
         }
 
         else if (EQUAL(papszArgv[i], "-cutline"))

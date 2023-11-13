@@ -126,15 +126,12 @@ static const char *GetPredictor(GDALDataset *poSrcDS, const char *pszPredictor)
 }
 
 /************************************************************************/
-/*                     COGGetWarpingCharacteristics()                   */
+/*                            COGGetTargetSRS()                         */
 /************************************************************************/
 
-static bool COGGetWarpingCharacteristics(
-    GDALDataset *poSrcDS, const char *const *papszOptions,
-    CPLString &osResampling, CPLString &osTargetSRS, int &nXSize, int &nYSize,
-    double &dfMinX, double &dfMinY, double &dfMaxX, double &dfMaxY,
-    double &dfRes, std::unique_ptr<gdal::TileMatrixSet> &poTM, int &nZoomLevel,
-    int &nAlignedLevels)
+static bool COGGetTargetSRS(const char *const *papszOptions,
+                            CPLString &osTargetSRS,
+                            std::unique_ptr<gdal::TileMatrixSet> &poTM)
 {
     osTargetSRS = CSLFetchNameValueDef(papszOptions, "TARGET_SRS", "");
     CPLString osTilingScheme(
@@ -142,8 +139,6 @@ static bool COGGetWarpingCharacteristics(
     if (EQUAL(osTargetSRS, "") && EQUAL(osTilingScheme, "CUSTOM"))
         return false;
 
-    const CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
-    const CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
     if (!EQUAL(osTilingScheme, "CUSTOM"))
     {
         poTM = gdal::TileMatrixSet::parse(osTilingScheme);
@@ -190,6 +185,39 @@ static bool COGGetWarpingCharacteristics(
             osTargetSRS += pszAuthCode;
         }
     }
+
+    return true;
+}
+
+// Used by gdalwarp
+bool COGGetTargetSRS(const char *const *papszOptions, CPLString &osTargetSRS)
+{
+    std::unique_ptr<gdal::TileMatrixSet> poTM;
+    return COGGetTargetSRS(papszOptions, osTargetSRS, poTM);
+}
+
+// Used by gdalwarp
+std::string COGGetResampling(GDALDataset *poSrcDS,
+                             const char *const *papszOptions)
+{
+    return CSLFetchNameValueDef(papszOptions, "WARP_RESAMPLING",
+                                CSLFetchNameValueDef(papszOptions, "RESAMPLING",
+                                                     GetResampling(poSrcDS)));
+}
+
+/************************************************************************/
+/*                     COGGetWarpingCharacteristics()                   */
+/************************************************************************/
+
+static bool COGGetWarpingCharacteristics(
+    GDALDataset *poSrcDS, const char *const *papszOptions,
+    CPLString &osResampling, CPLString &osTargetSRS, int &nXSize, int &nYSize,
+    double &dfMinX, double &dfMinY, double &dfMaxX, double &dfMaxY,
+    double &dfRes, std::unique_ptr<gdal::TileMatrixSet> &poTM, int &nZoomLevel,
+    int &nAlignedLevels)
+{
+    if (!COGGetTargetSRS(papszOptions, osTargetSRS, poTM))
+        return false;
 
     CPLStringList aosTO;
     aosTO.SetNameValue("DST_SRS", osTargetSRS);
@@ -296,6 +324,8 @@ static bool COGGetWarpingCharacteristics(
     dfMaxY = adfExtent[3];
     dfRes = adfGeoTransform[1];
 
+    const CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
+    const CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
     if (poTM)
     {
         if (!osExtent.empty())
@@ -501,10 +531,7 @@ static bool COGGetWarpingCharacteristics(
     nXSize = static_cast<int>(std::round((dfMaxX - dfMinX) / dfRes));
     nYSize = static_cast<int>(std::round((dfMaxY - dfMinY) / dfRes));
 
-    osResampling =
-        CSLFetchNameValueDef(papszOptions, "WARP_RESAMPLING",
-                             CSLFetchNameValueDef(papszOptions, "RESAMPLING",
-                                                  GetResampling(poSrcDS)));
+    osResampling = COGGetResampling(poSrcDS, papszOptions);
 
     return true;
 }
