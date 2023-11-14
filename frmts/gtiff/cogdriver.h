@@ -34,6 +34,11 @@
 
 bool COGHasWarpingOptions(CSLConstList papszOptions);
 
+bool COGGetTargetSRS(const char *const *papszOptions, CPLString &osTargetSRS);
+
+std::string COGGetResampling(GDALDataset *poSrcDS,
+                             const char *const *papszOptions);
+
 bool COGGetWarpingCharacteristics(GDALDataset *poSrcDS,
                                   const char *const *papszOptions,
                                   CPLString &osResampling,
