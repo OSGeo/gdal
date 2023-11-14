@@ -2535,3 +2535,32 @@ def test_vrt_read_complex_source_nodata_out_of_range(tmp_vsimem, data_type):
     got_data = vrt_ds.ReadRaster(buf_type=data_type)
     got_data = struct.unpack(array_type, got_data)
     assert got_data == (1,)
+
+
+###############################################################################
+# Test serialization of approximate ComputeStatistics() when there is
+# external overview
+
+
+def test_vrt_read_compute_statistics_approximate(tmp_vsimem):
+
+    gtiff_filename = str(tmp_vsimem / "tmp.tif")
+    gdal.Translate(
+        gtiff_filename, gdal.Open("data/byte.tif"), format="GTiff", width=256
+    )
+    vrt_filename = str(tmp_vsimem / "tmp.vrt")
+    gdal.Translate(vrt_filename, gtiff_filename)
+    ds = gdal.Open(vrt_filename)
+    ds.BuildOverviews("NEAR", [2])
+    ds = None
+    ds = gdal.Open(vrt_filename)
+    ds.GetRasterBand(1).ComputeStatistics(True)
+    ds = None
+    ds = gdal.Open(vrt_filename)
+    md = ds.GetRasterBand(1).GetMetadata()
+    assert md["STATISTICS_APPROXIMATE"] == "YES"
+    assert "STATISTICS_MINIMUM" in md
+    assert "STATISTICS_MAXIMUM" in md
+    assert "STATISTICS_MEAN" in md
+    assert "STATISTICS_STDDEV" in md
+    assert md["STATISTICS_VALID_PERCENT"] == "100"
