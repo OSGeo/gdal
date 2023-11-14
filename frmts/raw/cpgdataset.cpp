@@ -627,7 +627,7 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
     /* -------------------------------------------------------------------- */
     /*      Initialize dataset.                                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<CPGDataset>();
+    auto poDS = std::make_unique<CPGDataset>();
 
     poDS->nRasterXSize = nSamples;
     poDS->nRasterYSize = nLines;

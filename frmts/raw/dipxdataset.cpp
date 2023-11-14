@@ -153,7 +153,7 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<DIPExDataset>();
+    auto poDS = std::make_unique<DIPExDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fp = poOpenInfo->fpL;

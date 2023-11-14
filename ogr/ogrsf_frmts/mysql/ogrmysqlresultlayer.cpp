@@ -225,7 +225,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         char **papszRow;
 
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRMySQLGeomFieldDefn>(poDS, pszGeomColumn);
+            std::make_unique<OGRMySQLGeomFieldDefn>(poDS, pszGeomColumn);
 
         if (poDS->GetMajorVersion() < 8 || poDS->IsMariaDB())
         {

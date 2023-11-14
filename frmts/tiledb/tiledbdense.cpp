@@ -1091,7 +1091,7 @@ char **TileDBRasterDataset::GetMetadata(const char *pszDomain)
 GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    auto poDS = cpl::make_unique<TileDBRasterDataset>();
+    auto poDS = std::make_unique<TileDBRasterDataset>();
 
     const char *pszConfig =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
@@ -1777,7 +1777,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
             return nullptr;
         }
 
-        auto poDS = cpl::make_unique<TileDBRasterDataset>();
+        auto poDS = std::make_unique<TileDBRasterDataset>();
         poDS->nRasterXSize = nXSize;
         poDS->nRasterYSize = nYSize;
         poDS->eDataType = eType;

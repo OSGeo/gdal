@@ -898,7 +898,7 @@ GDALDataset *STACITDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 {
     if (!Identify(poOpenInfo))
         return nullptr;
-    auto poDS = cpl::make_unique<STACITDataset>();
+    auto poDS = std::make_unique<STACITDataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();

@@ -1201,7 +1201,7 @@ static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
     if (STARTS_WITH_CI(pszFileName, "GTIFF_DIR:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<GTiffDriverSubdatasetInfo>(pszFileName);
+            std::make_unique<GTiffDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

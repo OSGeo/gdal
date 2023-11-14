@@ -1694,7 +1694,7 @@ GDALPamDataset *JPEGXLDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
-    auto poDS = cpl::make_unique<JPEGXLDataset>();
+    auto poDS = std::make_unique<JPEGXLDataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
 
@@ -1721,7 +1721,7 @@ GDALDataset *JPEGXLDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
             if (nOrientation >= 2 && nOrientation <= 8)
             {
                 std::unique_ptr<GDALDataset> poOriDS(poDS);
-                auto poOrientedDS = cpl::make_unique<GDALOrientedDataset>(
+                auto poOrientedDS = std::make_unique<GDALOrientedDataset>(
                     std::move(poOriDS),
                     static_cast<GDALOrientedDataset::Origin>(nOrientation));
                 poDS = poOrientedDS.release();

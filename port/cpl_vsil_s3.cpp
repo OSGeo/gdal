@@ -2039,7 +2039,7 @@ VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+    auto poHandle = std::make_unique<VSIS3WriteHandle>(
         this, pszFilename, poHandleHelper, false, papszOptions);
     if (!poHandle->IsOK())
     {

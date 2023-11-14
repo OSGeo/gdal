@@ -924,7 +924,7 @@ OGRGeometry *OGRESRIJSONReadPolygon(json_object *poObj)
         }
 
         OGRPolygon *poPoly = new OGRPolygon();
-        auto poLine = cpl::make_unique<OGRLinearRing>();
+        auto poLine = std::make_unique<OGRLinearRing>();
         papoGeoms[iRing] = poPoly;
 
         const auto nPoints = json_object_array_length(poObjRing);

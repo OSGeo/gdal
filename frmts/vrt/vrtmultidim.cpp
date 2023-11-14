@@ -958,7 +958,7 @@ VRTMDArray::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
     std::unique_ptr<OGRSpatialReference> poSRS;
     if (psSRSNode)
     {
-        poSRS = cpl::make_unique<OGRSpatialReference>();
+        poSRS = std::make_unique<OGRSpatialReference>();
         poSRS->SetFromUserInput(
             CPLGetXMLValue(psSRSNode, nullptr, ""),
             OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
@@ -1343,7 +1343,7 @@ VRTMDArraySourceInlinedValues::Create(const VRTMDArray *array,
         pabyPtr += nDTSize;
     }
 
-    return cpl::make_unique<VRTMDArraySourceInlinedValues>(
+    return std::make_unique<VRTMDArraySourceInlinedValues>(
         array, bIsConstantValue, std::move(anOffset), std::move(anCount),
         std::move(abyValues));
 }
@@ -1743,7 +1743,7 @@ VRTMDArraySourceFromArray::Create(const VRTMDArray *poDstArray,
         }
     }
 
-    return cpl::make_unique<VRTMDArraySourceFromArray>(
+    return std::make_unique<VRTMDArraySourceFromArray>(
         poDstArray, bRelativeToVRTSet, bRelativeToVRT, pszFilename, pszArray,
         pszSourceBand, std::move(anTransposedAxis), pszView,
         std::move(anSrcOffset), std::move(anCount), std::move(anStep),
@@ -2725,7 +2725,7 @@ CPLErr VRTArraySource::XMLInit(
     if (!m_poDS)
         return CE_Failure;
 
-    m_poSimpleSource = cpl::make_unique<VRTSimpleSource>();
+    m_poSimpleSource = std::make_unique<VRTSimpleSource>();
     auto poBand = m_poDS->GetRasterBand(1);
     m_poSimpleSource->SetSrcBand(poBand);
     m_poDS->Reference();
@@ -2862,7 +2862,7 @@ std::shared_ptr<GDALMDArray> VRTDerivedArrayCreate(const char *pszVRTPath,
             const char *pszSRS = CPLGetXMLValue(psResample, "SRS", nullptr);
             if (pszSRS)
             {
-                poSRS = cpl::make_unique<OGRSpatialReference>();
+                poSRS = std::make_unique<OGRSpatialReference>();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 if (poSRS->SetFromUserInput(
                         pszSRS, OGRSpatialReference::

@@ -1067,7 +1067,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<SAFEDataset>();
+    auto poDS = std::make_unique<SAFEDataset>();
 
     poDS->psManifest = psManifest;
 
@@ -1481,7 +1481,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                 else if (bCalibrated &&
                          (eRequestType == UNKNOWN || eRequestType == COMPLEX))
                 {
-                    auto poBand = cpl::make_unique<SAFECalibratedRasterBand>(
+                    auto poBand = std::make_unique<SAFECalibratedRasterBand>(
                         poDS.get(), eDataType, osSwath, osPolarization,
                         std::move(poBandFile), osCalibrationFilePath,
                         eCalibrationType);

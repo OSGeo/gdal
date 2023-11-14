@@ -269,7 +269,7 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<NOAA_B_Dataset>();
+    auto poDS = std::make_unique<NOAA_B_Dataset>();
 
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;

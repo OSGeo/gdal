@@ -456,7 +456,7 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<SNODASDataset>();
+    auto poDS = std::make_unique<SNODASDataset>();
 
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
@@ -498,7 +498,7 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */
     /* -------------------------------------------------------------------- */
-    auto poBand = cpl::make_unique<SNODASRasterBand>(fpRaw, nCols, nRows);
+    auto poBand = std::make_unique<SNODASRasterBand>(fpRaw, nCols, nRows);
     if (!poBand->IsValid())
         return nullptr;
     poDS->SetBand(1, std::move(poBand));

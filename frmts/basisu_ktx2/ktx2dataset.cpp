@@ -297,7 +297,7 @@ GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
     const uint32_t nSize = static_cast<uint32_t>(nSizeLarge);
 
-    auto poDS = cpl::make_unique<KTX2Dataset>(
+    auto poDS = std::make_unique<KTX2Dataset>(
         nLayer != static_cast<uint32_t>(-1) ? nLayer : 0,
         nFace != static_cast<uint32_t>(-1) ? nFace : 0, pabyRet);
     auto &transcoder = poDS->m_transcoder;
@@ -409,7 +409,7 @@ GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
             if (level_index > 0)
             {
                 auto poOverviewDS =
-                    cpl::make_unique<KTX2Dataset>(poDS.get(), level_index);
+                    std::make_unique<KTX2Dataset>(poDS.get(), level_index);
                 for (int i = 1; i <= l_nBands; ++i)
                 {
                     poOverviewDS->SetBand(

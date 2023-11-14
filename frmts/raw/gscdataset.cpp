@@ -170,7 +170,7 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<GSCDataset>();
+    auto poDS = std::make_unique<GSCDataset>();
 
     poDS->nRasterXSize = nPixels;
     poDS->nRasterYSize = nLines;

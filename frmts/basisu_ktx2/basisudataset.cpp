@@ -306,7 +306,7 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     const uint32_t nSize = static_cast<uint32_t>(nSizeLarge);
 
-    auto poDS = cpl::make_unique<BASISUDataset>(
+    auto poDS = std::make_unique<BASISUDataset>(
         nImageIdx != static_cast<uint32_t>(-1) ? nImageIdx : 0, pabyRet, nSize);
     auto &transcoder = poDS->m_transcoder;
     basist::basisu_file_info file_info;
@@ -376,7 +376,7 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
                                             poDS->m_iImageIdx, level_index))
         {
             auto poOverviewDS =
-                cpl::make_unique<BASISUDataset>(poDS.get(), level_index);
+                std::make_unique<BASISUDataset>(poDS.get(), level_index);
             for (int i = 1; i <= l_nBands; ++i)
             {
                 poOverviewDS->SetBand(

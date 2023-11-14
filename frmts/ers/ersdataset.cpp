@@ -929,7 +929,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<ERSDataset>();
+    auto poDS = std::make_unique<ERSDataset>();
     poDS->poHeader = poHeader;
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -1092,7 +1092,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
             for (int iBand = 0; iBand < nBands; iBand++)
             {
                 // Assume pixel interleaved.
-                auto poBand = cpl::make_unique<ERSRasterBand>(
+                auto poBand = std::make_unique<ERSRasterBand>(
                     poDS.get(), iBand + 1, poDS->fpImage,
                     nHeaderOffset + iWordSize * iBand * poDS->nRasterXSize,
                     iWordSize, iWordSize * nBands * poDS->nRasterXSize, eType,

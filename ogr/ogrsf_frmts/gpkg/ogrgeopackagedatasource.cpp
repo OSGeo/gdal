@@ -138,7 +138,7 @@ GetTilingScheme(const char *pszName)
                  "width");
         return nullptr;
     }
-    auto poTilingScheme = cpl::make_unique<TilingSchemeDefinition>();
+    auto poTilingScheme = std::make_unique<TilingSchemeDefinition>();
     poTilingScheme->pszName = pszName;
 
     OGRSpatialReference oSRS;
@@ -4214,7 +4214,7 @@ char **GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                                 {
                                     const int nColors = aosTokens.size() / 4;
                                     m_poCTFromMetadata =
-                                        cpl::make_unique<GDALColorTable>();
+                                        std::make_unique<GDALColorTable>();
                                     for (int iColor = 0; iColor < nColors;
                                          ++iColor)
                                     {

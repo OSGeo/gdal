@@ -729,7 +729,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<MFFDataset>();
+    auto poDS = std::make_unique<MFFDataset>();
 
     poDS->papszHdrLines = papszHdrLines;
 
@@ -937,7 +937,7 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (bTiled)
         {
-            poBand = cpl::make_unique<MFFTiledBand>(poDS.get(), nBand, fpRaw,
+            poBand = std::make_unique<MFFTiledBand>(poDS.get(), nBand, fpRaw,
                                                     nTileXSize, nTileYSize,
                                                     eDataType, eByteOrder);
         }

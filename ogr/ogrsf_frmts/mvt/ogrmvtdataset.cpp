@@ -3739,7 +3739,7 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     const int nLastYOri = nLastY;
     GUInt32 nLineToCount = 0;
     const int nPoints = poRing->getNumPoints() - 1;
-    auto poOutLinearRing = cpl::make_unique<OGRLinearRing>();
+    auto poOutLinearRing = std::make_unique<OGRLinearRing>();
     poOutLinearRing->setNumPoints(nPoints);
     for (int i = 0; i < nPoints; i++)
     {
@@ -3824,7 +3824,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 #endif
 
     dfArea = 0;
-    auto poOutOuterRing = cpl::make_unique<OGRLinearRing>();
+    auto poOutOuterRing = std::make_unique<OGRLinearRing>();
     for (int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++)
     {
         const OGRLinearRing *poRing = (i == 0) ? poPoly->getExteriorRing()
@@ -3850,7 +3850,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         const GUInt32 nMinLineTo = 2;
         std::unique_ptr<OGRLinearRing> poOutInnerRing;
         if (i > 0)
-            poOutInnerRing = cpl::make_unique<OGRLinearRing>();
+            poOutInnerRing = std::make_unique<OGRLinearRing>();
         OGRLinearRing *poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
@@ -4301,7 +4301,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                 {
                     const OGRPolygon *poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
-                    auto poOutPoly = cpl::make_unique<OGRPolygon>();
+                    auto poOutPoly = std::make_unique<OGRPolygon>();
                     bGeomOK |= EncodePolygon(poGPBFeature.get(), poPoly,
                                              poOutPoly.get(), dfTopX, dfTopY,
                                              dfTileDim, bCanRecurse, nLastX,

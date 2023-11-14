@@ -198,7 +198,7 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
     aosOptions.SetNameValue("DECOMPRESS_TILES", "NO");
     aosOptions.SetNameValue("ACCEPT_ANY_TILE_TYPE", "YES");
     oOpenInfo.papszOpenOptions = aosOptions.List();
-    auto poDS = cpl::make_unique<OGRPMTilesDataset>();
+    auto poDS = std::make_unique<OGRPMTilesDataset>();
     {
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         if (!poDS->Open(&oOpenInfo))

@@ -548,7 +548,7 @@ GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
     int nBands = 3;
 
-    auto poDS = cpl::make_unique<WEBPDataset>();
+    auto poDS = std::make_unique<WEBPDataset>();
 
 #if WEBP_DECODER_ABI_VERSION >= 0x0002
     WebPDecoderConfig config;

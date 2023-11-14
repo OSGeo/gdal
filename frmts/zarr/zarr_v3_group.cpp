@@ -678,7 +678,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
             oInputArrayMetadata.anBlockSizes.push_back(
                 static_cast<size_t>(nSize));
         oInputArrayMetadata.oElt = aoDtypeElts.back();
-        poCodecs = cpl::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
+        poCodecs = std::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
         if (!poCodecs->InitFromJson(oCodecs))
             return nullptr;
     }

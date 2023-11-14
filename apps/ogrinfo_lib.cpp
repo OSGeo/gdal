@@ -2030,7 +2030,7 @@ GDALVectorInfoOptions *
 GDALVectorInfoOptionsNew(char **papszArgv,
                          GDALVectorInfoOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALVectorInfoOptions>();
+    auto psOptions = std::make_unique<GDALVectorInfoOptions>();
     bool bGotFilename = false;
     bool bFeatures = false;
     bool bSummary = false;
@@ -2095,7 +2095,7 @@ GDALVectorInfoOptionsNew(char **papszArgv,
             oRing.addPoint(CPLAtof(papszArgv[iArg + 1]),
                            CPLAtof(papszArgv[iArg + 2]));
 
-            auto poPolygon = cpl::make_unique<OGRPolygon>();
+            auto poPolygon = std::make_unique<OGRPolygon>();
             poPolygon->addRing(&oRing);
             psOptions->poSpatialFilter.reset(poPolygon.release());
             iArg += 4;

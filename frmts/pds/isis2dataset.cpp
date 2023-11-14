@@ -237,7 +237,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     VSILFILE *fpQube = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
-    auto poDS = cpl::make_unique<ISIS2Dataset>();
+    auto poDS = std::make_unique<ISIS2Dataset>();
 
     if (!poDS->oKeywords.Ingest(fpQube, 0))
     {

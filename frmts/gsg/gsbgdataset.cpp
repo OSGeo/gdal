@@ -506,7 +506,7 @@ GDALDataset *GSBGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<GSBGDataset>();
+    auto poDS = std::make_unique<GSBGDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fp = poOpenInfo->fpL;

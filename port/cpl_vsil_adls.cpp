@@ -739,7 +739,7 @@ VSIADLSFSHandler::CreateWriteHandle(const char *pszFilename,
     if (poHandleHelper == nullptr)
         return nullptr;
     auto poHandle =
-        cpl::make_unique<VSIADLSWriteHandle>(this, pszFilename, poHandleHelper);
+        std::make_unique<VSIADLSWriteHandle>(this, pszFilename, poHandleHelper);
     if (!poHandle->CreateFile(papszOptions))
     {
         return nullptr;

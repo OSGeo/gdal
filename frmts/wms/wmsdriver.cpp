@@ -1181,7 +1181,7 @@ static GDALSubdatasetInfo *WMSDriverGetSubdatasetInfo(const char *pszFileName)
     if (STARTS_WITH(pszFileName, "WMS:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<WMSDriverSubdatasetInfo>(pszFileName);
+            std::make_unique<WMSDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

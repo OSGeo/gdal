@@ -4033,7 +4033,7 @@ HFAPCSStructToOSR(const Eprj_Datum *psDatum, const Eprj_ProParameters *psPro,
 
     // We make a particular effort to adapt the mapinfo->proname as
     // the PROJCS[] name per #2422.
-    auto poSRS = cpl::make_unique<OGRSpatialReference>();
+    auto poSRS = std::make_unique<OGRSpatialReference>();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if (psPro == nullptr && psMapInfo != nullptr)

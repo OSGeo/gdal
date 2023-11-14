@@ -1056,7 +1056,7 @@ void OGRAmigoCloudTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
         eGType = wkbMultiPolygon25D;
     if (eGType != wkbNone)
     {
-        auto poFieldDefn = cpl::make_unique<OGRAmigoCloudGeomFieldDefn>(
+        auto poFieldDefn = std::make_unique<OGRAmigoCloudGeomFieldDefn>(
             "wkb_geometry", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
         if (poSRS != nullptr)

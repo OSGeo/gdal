@@ -152,7 +152,7 @@ static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
     if (STARTS_WITH_CI(pszFileName, "HDF5:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<HDF5DriverSubdatasetInfo>(pszFileName);
+            std::make_unique<HDF5DriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

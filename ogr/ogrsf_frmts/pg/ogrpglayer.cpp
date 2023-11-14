@@ -2085,7 +2085,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
                  nTypeOID == poDS->GetGeographyOID())
         {
             auto poGeomFieldDefn =
-                cpl::make_unique<OGRPGGeomFieldDefn>(this, oField.GetNameRef());
+                std::make_unique<OGRPGGeomFieldDefn>(this, oField.GetNameRef());
             if (iGeomFuncPrefix >= 0 &&
                 oField.GetNameRef()[strlen(
                     apszKnownGeomFuncPrefixes[iGeomFuncPrefix])] == '_')
@@ -2116,7 +2116,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
             if (nTypeOID == OIDOID)
                 bWkbAsOid = TRUE;
             auto poGeomFieldDefn =
-                cpl::make_unique<OGRPGGeomFieldDefn>(this, oField.GetNameRef());
+                std::make_unique<OGRPGGeomFieldDefn>(this, oField.GetNameRef());
             poGeomFieldDefn->ePostgisType = GEOM_TYPE_WKB;
             poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
             continue;

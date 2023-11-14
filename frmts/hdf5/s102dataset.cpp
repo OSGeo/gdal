@@ -277,7 +277,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    auto poDS = cpl::make_unique<S102Dataset>();
+    auto poDS = std::make_unique<S102Dataset>();
 
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));

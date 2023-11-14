@@ -264,7 +264,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<NDFDataset>();
+    auto poDS = std::make_unique<NDFDataset>();
     poDS->papszHeader = papszHeader;
 
     poDS->nRasterXSize = atoi(poDS->Get("PIXELS_PER_LINE", ""));

@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
             oRing.addPoint(CPLAtof(argv[iArg + 3]), CPLAtof(argv[iArg + 2]));
             oRing.addPoint(CPLAtof(argv[iArg + 1]), CPLAtof(argv[iArg + 2]));
 
-            poSpatialFilter = cpl::make_unique<OGRPolygon>();
+            poSpatialFilter = std::make_unique<OGRPolygon>();
             poSpatialFilter->addRing(&oRing);
 
             iArg += 4;

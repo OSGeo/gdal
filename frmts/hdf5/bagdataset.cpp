@@ -3406,7 +3406,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                                  nRasterYSize / nOvrFactor >= nMinOvrSize;
              nOvrFactor *= 2)
         {
-            auto poOvrDS = cpl::make_unique<BAGDataset>(this, nOvrFactor);
+            auto poOvrDS = std::make_unique<BAGDataset>(this, nOvrFactor);
 
             for (int i = 1; i <= GetRasterCount(); i++)
             {
@@ -3430,7 +3430,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         // Use the low resolution grid as the last overview level
         if (bCanUseLowResAsOvr)
         {
-            auto poOvrDS = cpl::make_unique<BAGDataset>(this, m_nLowResWidth,
+            auto poOvrDS = std::make_unique<BAGDataset>(this, m_nLowResWidth,
                                                         m_nLowResHeight);
 
             poElevBand = new BAGRasterBand(poOvrDS.get(), 1);

@@ -1703,7 +1703,7 @@ static OGRFeature *OGR2SQLITE_FeatureFromArgs(OGR2SQLITE_vtab *pMyVTab,
         return nullptr;
     }
 
-    auto poFeature = cpl::make_unique<OGRFeature>(poLayerDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
 
     if (pMyVTab->bHasFIDColumn)
     {

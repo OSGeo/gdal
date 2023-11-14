@@ -4595,7 +4595,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         }
 
         poJob->oDstBufferHolder =
-            cpl::make_unique<PointerHolder>(poJob->pDstBuffer);
+            std::make_unique<PointerHolder>(poJob->pDstBuffer);
 
         {
             std::lock_guard<std::mutex> guard(poJob->mutex);

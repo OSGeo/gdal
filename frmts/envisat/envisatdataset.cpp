@@ -922,7 +922,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<EnvisatDataset>();
+    auto poDS = std::make_unique<EnvisatDataset>();
 
     poDS->hEnvisatFile = hEnvisatFile;
 

@@ -7962,7 +7962,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         return 0;
     }
 
-    auto psHelper = cpl::make_unique<OGRArrowArrayHelper>(
+    auto psHelper = std::make_unique<OGRArrowArrayHelper>(
         m_poDS, m_poFeatureDefn, m_aosArrowArrayStreamOptions, out_array);
     if (out_array->release == nullptr)
     {
@@ -7972,7 +7972,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     if (m_poFillArrowArray == nullptr)
     {
         m_poFillArrowArray =
-            cpl::make_unique<OGRGPKGTableLayerFillArrowArray>();
+            std::make_unique<OGRGPKGTableLayerFillArrowArray>();
         m_poFillArrowArray->psHelper = std::move(psHelper);
         m_poFillArrowArray->nCountRows = 0;
         m_poFillArrowArray->bErrorOccurred = false;
@@ -8386,11 +8386,11 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
         for (int iTask = 0; iTask < nMaxTasks; ++iTask)
         {
-            auto task = cpl::make_unique<ArrowArrayPrefetchTask>();
+            auto task = std::make_unique<ArrowArrayPrefetchTask>();
             task->m_iStartShapeId =
                 m_iNextShapeId +
                 static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
-            task->m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
+            task->m_poDS = std::make_unique<GDALGeoPackageDataset>();
             if (!task->m_poDS->Open(&oOpenInfo, m_poDS->m_osFilenameInZip))
             {
                 break;
@@ -8412,7 +8412,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             }
 
             task->m_poLayer = poOtherLayer;
-            task->m_psArrowArray = cpl::make_unique<struct ArrowArray>();
+            task->m_psArrowArray = std::make_unique<struct ArrowArray>();
             memset(task->m_psArrowArray.get(), 0, sizeof(struct ArrowArray));
 
             poOtherLayer->m_nTotalFeatureCount = m_nTotalFeatureCount;
@@ -8499,7 +8499,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
         return 0;
     }
 
-    auto psHelper = cpl::make_unique<OGRArrowArrayHelper>(
+    auto psHelper = std::make_unique<OGRArrowArrayHelper>(
         m_poDS, m_poFeatureDefn, m_aosArrowArrayStreamOptions, out_array);
     if (out_array->release == nullptr)
     {

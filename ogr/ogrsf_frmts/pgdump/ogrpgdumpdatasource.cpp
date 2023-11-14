@@ -612,7 +612,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     const bool bWriteAsHex =
         !CPLFetchBool(papszOptions, "WRITE_EWKT_GEOM", false);
 
-    auto poLayer = cpl::make_unique<OGRPGDumpLayer>(
+    auto poLayer = std::make_unique<OGRPGDumpLayer>(
         this, osSchema.c_str(), osTable.c_str(),
         !osFIDColumnName.empty() ? osFIDColumnName.c_str() : nullptr,
         bWriteAsHex, bCreateTable);
@@ -652,7 +652,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     if (eType != wkbNone)
     {
         OGRGeomFieldDefn oTmp(pszGFldName, eType);
-        auto poGeomField = cpl::make_unique<OGRPGDumpGeomFieldDefn>(&oTmp);
+        auto poGeomField = std::make_unique<OGRPGDumpGeomFieldDefn>(&oTmp);
         poGeomField->m_nSRSId = nSRSId;
         poGeomField->m_nGeometryTypeFlags = nGeometryTypeFlags;
         poLayer->GetLayerDefn()->AddGeomFieldDefn(std::move(poGeomField));

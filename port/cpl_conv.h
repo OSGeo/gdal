@@ -425,22 +425,4 @@ extern "C++"
 
 #endif /* def __cplusplus */
 
-#if defined(__cplusplus) && defined(GDAL_COMPILATION)
-
-extern "C++"
-{
-#include <memory>  // for std::unique_ptr
-    namespace cpl
-    {
-    /** std::make_unique<> implementation borrowed from C++14 */
-    template <typename T, typename... Args>
-    std::unique_ptr<T> make_unique(Args &&...args)
-    {
-        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-    }
-    }  // namespace cpl
-}  // extern "C++"
-
-#endif /* def __cplusplus */
-
 #endif /* ndef CPL_CONV_H_INCLUDED */

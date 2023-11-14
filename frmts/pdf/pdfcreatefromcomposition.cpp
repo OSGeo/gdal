@@ -284,7 +284,7 @@ bool GDALPDFComposerWriter::CreateLayerTree(const CPLXMLNode *psNode,
             auto nThisObjId = WriteOCG(pszName, nParentId);
             m_oMapLayerIdToOCG[pszId] = nThisObjId;
 
-            auto newTreeOfOCG = cpl::make_unique<TreeOfOCG>();
+            auto newTreeOfOCG = std::make_unique<TreeOfOCG>();
             newTreeOfOCG->m_nNum = nThisObjId;
             newTreeOfOCG->m_bInitiallyVisible = bInitiallyVisible;
             parent->m_children.emplace_back(std::move(newTreeOfOCG));
@@ -319,7 +319,7 @@ bool GDALPDFComposerWriter::ParseActions(
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "GotoPageAction") == 0)
         {
-            auto poAction = cpl::make_unique<GotoPageAction>();
+            auto poAction = std::make_unique<GotoPageAction>();
             const char *pszPageId = CPLGetXMLValue(psIter, "pageId", nullptr);
             if (!pszPageId)
             {
@@ -395,7 +395,7 @@ bool GDALPDFComposerWriter::ParseActions(
         else if (psIter->eType == CXT_Element &&
                  strcmp(psIter->pszValue, "JavascriptAction") == 0)
         {
-            auto poAction = cpl::make_unique<JavascriptAction>();
+            auto poAction = std::make_unique<JavascriptAction>();
             poAction->m_osScript = CPLGetXMLValue(psIter, nullptr, "");
             actions.push_back(std::move(poAction));
         }
@@ -403,7 +403,7 @@ bool GDALPDFComposerWriter::ParseActions(
 
     if (!anONLayers.empty() || !anOFFLayers.empty())
     {
-        auto poAction = cpl::make_unique<SetLayerStateAction>();
+        auto poAction = std::make_unique<SetLayerStateAction>();
         poAction->m_anONLayers = std::move(anONLayers);
         poAction->m_anOFFLayers = std::move(anOFFLayers);
         actions.push_back(std::move(poAction));
@@ -424,7 +424,7 @@ bool GDALPDFComposerWriter::CreateOutlineFirstPass(const CPLXMLNode *psNode,
         if (psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "OutlineItem") == 0)
         {
-            auto newItem = cpl::make_unique<OutlineItem>();
+            auto newItem = std::make_unique<OutlineItem>();
             const char *pszName = CPLGetXMLValue(psIter, "name", nullptr);
             if (!pszName)
             {
@@ -736,7 +736,7 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
         CPLError(CE_Failure, CPLE_NotSupported, "Missing SRS");
         return false;
     }
-    auto poSRS = cpl::make_unique<OGRSpatialReference>();
+    auto poSRS = std::make_unique<OGRSpatialReference>();
     if (poSRS->SetFromUserInput(pszSRS) != OGRERR_NONE)
     {
         return false;

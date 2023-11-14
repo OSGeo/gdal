@@ -105,7 +105,7 @@ OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
                         const auto osName = oColumn.GetName();
                         const auto osType = oColumn.GetString("type");
                         const auto osSubType = oColumn.GetString("subtype");
-                        auto poFieldDefn = cpl::make_unique<OGRFieldDefn>(
+                        auto poFieldDefn = std::make_unique<OGRFieldDefn>(
                             osName.c_str(), OFTString);
                         for (int iType = 0;
                              iType <= static_cast<int>(OFTMaxType); iType++)
@@ -589,7 +589,7 @@ inline std::unique_ptr<OGRFieldDomain> OGRArrowLayer::BuildDomainFromBatch(
             asValues.emplace_back(val);
         }
     }
-    return cpl::make_unique<OGRCodedFieldDomain>(
+    return std::make_unique<OGRCodedFieldDomain>(
         osDomainName, std::string(), eType, OFSTNone, std::move(asValues));
 }
 

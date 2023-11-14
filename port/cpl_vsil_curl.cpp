@@ -1712,7 +1712,7 @@ std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
     }
     else
     {
-        auto poRegionInDownload = cpl::make_unique<RegionInDownload>();
+        auto poRegionInDownload = std::make_unique<RegionInDownload>();
         poRegionInDownload->bDownloadInProgress = true;
         m_oMapRegionInDownload[osId] = std::move(poRegionInDownload);
         m_oMutex.unlock();
@@ -3190,7 +3190,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
             if (m_aoAdviseReadRanges[iRequest] == nullptr)
                 m_aoAdviseReadRanges[iRequest] =
-                    cpl::make_unique<AdviseReadRange>();
+                    std::make_unique<AdviseReadRange>();
             // coverity[missing_lock]
             m_aoAdviseReadRanges[iRequest]->bDone = false;
             m_aoAdviseReadRanges[iRequest]->nStartOffset = panOffsets[i];

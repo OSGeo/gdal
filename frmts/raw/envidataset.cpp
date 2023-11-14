@@ -2113,7 +2113,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Create a corresponding GDALDataset.
-    auto poDS = cpl::make_unique<ENVIDataset>();
+    auto poDS = std::make_unique<ENVIDataset>();
     poDS->pszHDRFilename = CPLStrdup(osHdrFilename);
     poDS->fp = fpHeader;
 
@@ -2409,7 +2409,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // Create band information objects.
     for (int i = 0; i < nBands; i++)
     {
-        auto poBand = cpl::make_unique<ENVIRasterBand>(
+        auto poBand = std::make_unique<ENVIRasterBand>(
             poDS.get(), i + 1, poDS->fpImage, nHeaderSize + nBandOffset * i,
             nPixelOffset, nLineOffset, eType, eByteOrder);
         if (!poBand->IsValid())

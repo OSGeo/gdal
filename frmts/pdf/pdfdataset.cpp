@@ -648,7 +648,7 @@ void PDFDataset::InitOverviews()
             nXSize = (nXSize + 1) / 2;
             nYSize = (nYSize + 1) / 2;
 
-            auto poOvrDS = cpl::make_unique<PDFDataset>(this, nXSize, nYSize);
+            auto poOvrDS = std::make_unique<PDFDataset>(this, nXSize, nYSize);
 
             for (int i = 0; i < nBands; i++)
                 poOvrDS->SetBand(
@@ -4758,7 +4758,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         PoDoFo::PdfError::EnableLogging(false);
 #endif
 
-        poDocPodofo = cpl::make_unique<PoDoFo::PdfMemDocument>();
+        poDocPodofo = std::make_unique<PoDoFo::PdfMemDocument>();
         try
         {
             poDocPodofo->Load(pszFilename);
@@ -4782,7 +4782,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #if PODOFO_VERSION_MAJOR > 0 ||                                                \
     (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
                         poDocPodofo =
-                            cpl::make_unique<PoDoFo::PdfMemDocument>();
+                            std::make_unique<PoDoFo::PdfMemDocument>();
                         poDocPodofo->Load(pszFilename, pszUserPwd);
 #else
                         poDocPodofo->SetPassword(pszUserPwd);

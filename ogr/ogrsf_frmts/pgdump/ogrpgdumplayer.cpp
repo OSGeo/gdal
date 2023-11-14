@@ -1711,7 +1711,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
 
     CPLString osCommand;
     auto poGeomField =
-        cpl::make_unique<OGRPGDumpGeomFieldDefn>(&oTmpGeomFieldDefn);
+        std::make_unique<OGRPGDumpGeomFieldDefn>(&oTmpGeomFieldDefn);
 
     /* -------------------------------------------------------------------- */
     /*      Do we want to "launder" the column names into Postgres          */

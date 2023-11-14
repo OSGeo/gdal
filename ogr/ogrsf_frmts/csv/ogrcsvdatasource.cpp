@@ -894,14 +894,14 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         osLayerName = "layer";
 
     auto poCSVLayer =
-        cpl::make_unique<OGRCSVLayer>(osLayerName, fp, nMaxLineSize,
+        std::make_unique<OGRCSVLayer>(osLayerName, fp, nMaxLineSize,
                                       pszFilename, FALSE, bUpdate, chDelimiter);
     poCSVLayer->BuildFeatureDefn(pszNfdcRunwaysGeomField,
                                  pszGeonamesGeomFieldPrefix,
                                  papszOpenOptionsIn);
     if (bUpdate)
     {
-        m_apoLayers.emplace_back(cpl::make_unique<OGRCSVEditableLayer>(
+        m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(
             poCSVLayer.release(), papszOpenOptionsIn));
     }
     else
@@ -1009,7 +1009,7 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
 
     // Create a layer.
 
-    auto poCSVLayer = cpl::make_unique<OGRCSVLayer>(
+    auto poCSVLayer = std::make_unique<OGRCSVLayer>(
         pszLayerName, nullptr, -1, osFilename, true, true, chDelimiter);
 
     poCSVLayer->BuildFeatureDefn();
@@ -1121,7 +1121,7 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
         poCSVLayer->SetWriteBOM(CPLTestBool(pszWriteBOM));
 
     if (osFilename != "/vsistdout/")
-        m_apoLayers.emplace_back(cpl::make_unique<OGRCSVEditableLayer>(
+        m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(
             poCSVLayer.release(), nullptr));
     else
         m_apoLayers.emplace_back(std::move(poCSVLayer));

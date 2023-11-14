@@ -2601,7 +2601,7 @@ std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
     if (HDF5EOSParser::HasHDFEOS(poGroup->GetID()))
     {
         poSharedResources->m_poHDF5EOSParser =
-            cpl::make_unique<HDF5EOSParser>();
+            std::make_unique<HDF5EOSParser>();
         if (poSharedResources->m_poHDF5EOSParser->Parse(poGroup->GetID()))
         {
             CPLDebug("HDF5", "Successfully parsed HDFEOS metadata");

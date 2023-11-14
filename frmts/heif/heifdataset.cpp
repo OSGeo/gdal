@@ -548,7 +548,7 @@ void GDALHEIFDataset::OpenThumbnails()
     }
 #endif
 
-    auto poOvrDS = cpl::make_unique<GDALHEIFDataset>();
+    auto poOvrDS = std::make_unique<GDALHEIFDataset>();
     poOvrDS->m_hImageHandle = hThumbnailHandle;
     poOvrDS->m_bIsThumbnail = true;
     poOvrDS->nRasterXSize = heif_image_handle_get_width(hThumbnailHandle);
@@ -575,7 +575,7 @@ GDALDataset *GDALHEIFDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    auto poDS = cpl::make_unique<GDALHEIFDataset>();
+    auto poDS = std::make_unique<GDALHEIFDataset>();
     if (!poDS->Init(poOpenInfo))
         return nullptr;
 

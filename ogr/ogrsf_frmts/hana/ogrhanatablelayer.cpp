@@ -1612,7 +1612,7 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn *geomField, int)
         return OGRERR_FAILURE;
     }
 
-    auto newGeomField = cpl::make_unique<OGRGeomFieldDefn>(
+    auto newGeomField = std::make_unique<OGRGeomFieldDefn>(
         clmName.c_str(), geomField->GetType());
     newGeomField->SetNullable(geomField->IsNullable());
     newGeomField->SetSpatialRef(geomField->GetSpatialRef());

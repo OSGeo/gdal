@@ -373,7 +373,7 @@ void OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc *pasDesc,
     for (int i = 0; i < nGeomFieldCount; i++)
     {
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRPGGeomFieldDefn>(this, pasDesc[i].pszName);
+            std::make_unique<OGRPGGeomFieldDefn>(this, pasDesc[i].pszName);
         poGeomFieldDefn->SetNullable(pasDesc[i].bNullable);
         poGeomFieldDefn->nSRSId = pasDesc[i].nSRID;
         poGeomFieldDefn->GeometryTypeFlags = pasDesc[i].GeometryTypeFlags;
@@ -632,7 +632,7 @@ int OGRPGTableLayer::ReadTableDefinition()
                 if (pszGeomColForced == nullptr ||
                     EQUAL(pszGeomColForced, oField.GetNameRef()))
                 {
-                    auto poGeomFieldDefn = cpl::make_unique<OGRPGGeomFieldDefn>(
+                    auto poGeomFieldDefn = std::make_unique<OGRPGGeomFieldDefn>(
                         this, oField.GetNameRef());
                     InitGeomField(poGeomFieldDefn.get());
                     poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
@@ -810,7 +810,7 @@ void OGRPGTableLayer::SetTableDefinition(const char *pszFIDColumnName,
     if (eType != wkbNone)
     {
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRPGGeomFieldDefn>(this, pszGFldName);
+            std::make_unique<OGRPGGeomFieldDefn>(this, pszGFldName);
         poGeomFieldDefn->SetType(eType);
         poGeomFieldDefn->GeometryTypeFlags = GeometryTypeFlags;
 
@@ -2431,7 +2431,7 @@ OGRErr OGRPGTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
     m_osFirstGeometryFieldName = "";  // reset for potential next geom columns
 
     auto poGeomField =
-        cpl::make_unique<OGRPGGeomFieldDefn>(this, osGeomFieldName);
+        std::make_unique<OGRPGGeomFieldDefn>(this, osGeomFieldName);
     if (EQUAL(poGeomField->GetNameRef(), ""))
     {
         if (poFeatureDefn->GetGeomFieldCount() == 0)

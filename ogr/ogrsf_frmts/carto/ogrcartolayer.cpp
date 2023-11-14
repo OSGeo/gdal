@@ -379,7 +379,7 @@ void OGRCARTOLayer::EstablishLayerDefn(const char *pszLayerName,
                     if (!EQUAL(pszColName, "the_geom_webmercator"))
                     {
                         auto poFieldDefn =
-                            cpl::make_unique<OGRCartoGeomFieldDefn>(pszColName,
+                            std::make_unique<OGRCartoGeomFieldDefn>(pszColName,
                                                                     wkbUnknown);
                         OGRSpatialReference *l_poSRS =
                             GetSRS(pszColName, &poFieldDefn->nSRID);
@@ -411,7 +411,7 @@ void OGRCARTOLayer::EstablishLayerDefn(const char *pszLayerName,
             {
                 /* FIXME? manual creations of geometry columns return integer
                  * types */
-                auto poFieldDefn = cpl::make_unique<OGRCartoGeomFieldDefn>(
+                auto poFieldDefn = std::make_unique<OGRCartoGeomFieldDefn>(
                     pszColName, wkbUnknown);
                 OGRSpatialReference *l_poSRS =
                     GetSRS(pszColName, &poFieldDefn->nSRID);

@@ -11265,7 +11265,7 @@ static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
     if (STARTS_WITH_CI(pszFileName, "NETCDF:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<NCDFDriverSubdatasetInfo>(pszFileName);
+            std::make_unique<NCDFDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

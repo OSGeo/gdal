@@ -156,7 +156,7 @@ GDALDataset *CTable2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<CTable2Dataset>();
+    auto poDS = std::make_unique<CTable2Dataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     std::swap(poDS->fpImage, poOpenInfo->fpL);
 

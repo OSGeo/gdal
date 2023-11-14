@@ -1176,7 +1176,7 @@ static bool TranslateArray(
     if (!bSrcArrayAccessibleThroughSrcGroup &&
         tmpArray->IsRegularlySpaced(dfStart, dfIncrement))
     {
-        auto poSource = cpl::make_unique<VRTMDArraySourceRegularlySpaced>(
+        auto poSource = std::make_unique<VRTMDArraySourceRegularlySpaced>(
             dfStart, dfIncrement);
         dstArrayVRT->AddSource(std::move(poSource));
     }

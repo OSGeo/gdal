@@ -461,7 +461,7 @@ static CPLErr CropToCutline(const OGRGeometry *poCutline, CSLConstList papszTO,
         GetSrcDSProjection(nSrcCount > 0 ? pahSrcDS[0] : nullptr, papszTO);
     if (!osThisSourceSRS.empty())
     {
-        poSrcSRS = cpl::make_unique<OGRSpatialReference>();
+        poSrcSRS = std::make_unique<OGRSpatialReference>();
         poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poSrcSRS->SetFromUserInput(osThisSourceSRS) != OGRERR_NONE)
         {
@@ -492,7 +492,7 @@ static CPLErr CropToCutline(const OGRGeometry *poCutline, CSLConstList papszTO,
 
     if (pszThisTargetSRS)
     {
-        poDstSRS = cpl::make_unique<OGRSpatialReference>();
+        poDstSRS = std::make_unique<OGRSpatialReference>();
         poDstSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poDstSRS->SetFromUserInput(pszThisTargetSRS) != OGRERR_NONE)
         {
@@ -3336,7 +3336,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /*      Collect the geometries from this layer, and build list of       */
     /*      burn values.                                                    */
     /* -------------------------------------------------------------------- */
-    auto poMultiPolygon = cpl::make_unique<OGRMultiPolygon>();
+    auto poMultiPolygon = std::make_unique<OGRMultiPolygon>();
 
     for (auto &&poFeature : poLayer)
     {
@@ -4776,7 +4776,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
         GetSrcDSProjection(GDALDataset::ToHandle(poSrcDS), papszTO_In);
     if (!osProjection.empty())
     {
-        poRasterSRS = cpl::make_unique<OGRSpatialReference>();
+        poRasterSRS = std::make_unique<OGRSpatialReference>();
         poRasterSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poRasterSRS->SetFromUserInput(osProjection) != OGRERR_NONE)
         {
@@ -4788,7 +4788,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     const char *pszThisTargetSRS = CSLFetchNameValue(papszTO_In, "DST_SRS");
     if (pszThisTargetSRS)
     {
-        poDstSRS = cpl::make_unique<OGRSpatialReference>();
+        poDstSRS = std::make_unique<OGRSpatialReference>();
         poDstSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (poDstSRS->SetFromUserInput(pszThisTargetSRS) != OGRERR_NONE)
         {
@@ -5204,7 +5204,7 @@ GDALWarpAppOptions *
 GDALWarpAppOptionsNew(char **papszArgv,
                       GDALWarpAppOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALWarpAppOptions>();
+    auto psOptions = std::make_unique<GDALWarpAppOptions>();
 
     /* -------------------------------------------------------------------- */
     /*      Parse arguments.                                                */

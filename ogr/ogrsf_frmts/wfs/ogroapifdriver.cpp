@@ -762,7 +762,7 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
     }
 
     const auto oLinks = oCollection.GetArray("links");
-    auto poLayer = cpl::make_unique<OGROAPIFLayer>(
+    auto poLayer = std::make_unique<OGROAPIFLayer>(
         this, osName, oBBOX, osBBOXCrs, std::move(oCRSList), osActiveCRS,
         dfCoordinateEpoch, oLinks);
     if (!osTitle.empty())
@@ -1670,7 +1670,7 @@ void OGROAPIFLayer::GetSchema()
                 const char *pszName =
                     poProperty->GetName() +
                     (bAllPrefixed ? osPropertyNamePrefix.size() : 0);
-                auto poField = cpl::make_unique<OGRFieldDefn>(pszName, eFType);
+                auto poField = std::make_unique<OGRFieldDefn>(pszName, eFType);
                 poField->SetSubType(eSubType);
                 m_apoFieldsFromSchema.emplace_back(std::move(poField));
             }
@@ -1749,7 +1749,7 @@ void OGROAPIFLayer::GetSchema()
                             }
                         }
 
-                        auto poField = cpl::make_unique<OGRFieldDefn>(
+                        auto poField = std::make_unique<OGRFieldDefn>(
                             oProp.GetName().c_str(), eType);
                         poField->SetSubType(eSubType);
                         m_apoFieldsFromSchema.emplace_back(std::move(poField));
@@ -3120,7 +3120,7 @@ static GDALDataset *OGROAPIFDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     if (!OGROAPIFDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
         return nullptr;
-    auto poDataset = cpl::make_unique<OGROAPIFDataset>();
+    auto poDataset = std::make_unique<OGROAPIFDataset>();
     if (!poDataset->Open(poOpenInfo))
         return nullptr;
     return poDataset.release();

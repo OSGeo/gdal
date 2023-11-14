@@ -562,7 +562,7 @@ GDALDataset *ARGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<ARGDataset>();
+    auto poDS = std::make_unique<ARGDataset>();
 
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
     poDS->SetMetadataItem("LAYER", pszLayer, nullptr);

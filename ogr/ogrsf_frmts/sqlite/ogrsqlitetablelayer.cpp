@@ -234,7 +234,7 @@ void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
             nSRSId = m_poDS->GetUndefinedSRID();
         OGRSQLiteGeomFormat eGeomFormat = GetGeomFormat(pszGeomFormat);
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
+            std::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
         poGeomFieldDefn->SetType(eGeomType);
         poGeomFieldDefn->m_nSRSId = nSRSId;
         poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
@@ -1656,7 +1656,7 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
-    auto poGeomField = cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+    auto poGeomField = std::make_unique<OGRSQLiteGeomFieldDefn>(
         poGeomFieldIn->GetNameRef(), -1);
     if (EQUAL(poGeomField->GetNameRef(), ""))
     {

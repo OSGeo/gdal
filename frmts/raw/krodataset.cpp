@@ -133,7 +133,7 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<KRODataset>();
+    auto poDS = std::make_unique<KRODataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     std::swap(poDS->fpImage, poOpenInfo->fpL);
 

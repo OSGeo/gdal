@@ -262,7 +262,7 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<DOQ1Dataset>();
+    auto poDS = std::make_unique<DOQ1Dataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file that is of interest.     */
