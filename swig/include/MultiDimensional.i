@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include RasterAttributeTable.i
+
 %rename (ExtendedDataTypeSubType) GDALExtendedDataTypeSubType;
 typedef enum {
     GEDTST_NONE = 0,
@@ -1564,3 +1566,22 @@ public:
 } /* extend */
 }; /* GDALEDTComponentHS */
 
+
+#if defined(SWIGPYTHON)
+%apply (int object_list_count, GDALMDArrayHS **poObjects) {(int nArrays, GDALMDArrayHS **ahArrays)};
+%apply (int nUsages, GDALRATFieldUsage *paeUsages) {(int nUsages, GDALRATFieldUsage *paeUsages)};
+%newobject CreateRasterAttributeTableFromMDArrays;
+%inline %{
+GDALRasterAttributeTableShadow* CreateRasterAttributeTableFromMDArrays(
+    GDALRATTableType eTableType, int nArrays, GDALMDArrayHS **ahArrays,
+    int nUsages = 0, GDALRATFieldUsage *paeUsages = NULL )
+{
+  if( nUsages != 0 && nUsages != nArrays )
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "nUsages != nArrays");
+      return NULL;
+  }
+  return GDALCreateRasterAttributeTableFromMDArrays( eTableType, nArrays, (const GDALMDArrayH *)ahArrays, paeUsages );
+}
+%}
+#endif

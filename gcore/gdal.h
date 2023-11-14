@@ -2347,6 +2347,10 @@ void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName);
 
+GDALRasterAttributeTableH CPL_DLL GDALCreateRasterAttributeTableFromMDArrays(
+    GDALRATTableType eTableType, int nArrays, const GDALMDArrayH *ahArrays,
+    const GDALRATFieldUsage *paeUsages);
+
 void CPL_DLL GDALAttributeRelease(GDALAttributeH hAttr);
 void CPL_DLL GDALReleaseAttributes(GDALAttributeH *attributes, size_t nCount);
 const char CPL_DLL *GDALAttributeGetName(GDALAttributeH hAttr);

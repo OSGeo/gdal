@@ -3396,3 +3396,55 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   CPLFree($2);
 }
 
+/***************************************************
+ * Typemap for gdal.CreateRasterAttributeTableFromMDArrays()
+ ***************************************************/
+
+OBJECT_LIST_INPUT(GDALMDArrayHS);
+
+%typemap(in, numinputs=1) (int nUsages, GDALRATFieldUsage *paeUsages)
+{
+  /*  %typemap(in) (int nUsages, GDALRATFieldUsage *paeUsages)*/
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  Py_ssize_t size = PySequence_Size($input);
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(int) ) {
+    PyErr_SetString(PyExc_TypeError, "too big sequence");
+    SWIG_fail;
+  }
+  $1 = (int)size;
+  $2 = (GDALRATFieldUsage*) VSIMalloc($1*sizeof(GDALRATFieldUsage));
+  if( !$2) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    SWIG_fail;
+  }
+
+  for( int i = 0; i<$1; i++ ) {
+    PyObject *o = PySequence_GetItem($input,i);
+    int nVal = 0;
+    if ( !PyArg_Parse(o,"i",&nVal) ) {
+        PyErr_SetString(PyExc_TypeError, "not a valid GDALRATFieldUsage");
+        Py_DECREF(o);
+        SWIG_fail;
+    }
+    Py_DECREF(o);
+    if( nVal < 0 || nVal >= GFU_MaxCount )
+    {
+        PyErr_SetString(PyExc_TypeError, "not a valid GDALRATFieldUsage");
+        SWIG_fail;
+    }
+    ($2)[i] = static_cast<GDALRATFieldUsage>(nVal);
+  }
+}
+
+%typemap(freearg) (int nUsages, GDALRATFieldUsage *paeUsages)
+{
+  /* %typemap(freearg) (int nUsages, GDALRATFieldUsage *paeUsages)*/
+  CPLFree( $2 );
+}
