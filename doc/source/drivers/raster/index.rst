@@ -30,7 +30,6 @@ Raster drivers
    adrg
    aig
    airsar
-   arg
    bag
    basisu
    blx

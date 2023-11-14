@@ -86,7 +86,6 @@ gdal_optional_format(stacta "STACTA")
 # optional Formats
 gdal_optional_format(bsb "Maptech/NOAA BSB Nautical Chart Format")
 gdal_dependent_format(aigrid "Arc/Info Binary Grid Format" "OGR_ENABLE_DRIVER_AVC")
-gdal_optional_format(arg "ARG: Azavea Raster Grid")
 gdal_optional_format(usgsdem "USGS ASCII DEM (and CDED)")
 gdal_optional_format(airsar "AirSAR Polarimetric Format")
 gdal_optional_format(ozi "OZF2/OZFX3 raster")
