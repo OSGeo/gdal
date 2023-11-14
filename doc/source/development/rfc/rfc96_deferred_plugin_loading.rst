@@ -98,14 +98,16 @@ GDALDriverManager::DeclareDeferredPluginDriver() method.
      * <li>GDAL_DMD_LONGNAME</li>
      * <li>GDAL_DMD_EXTENSIONS</li>
      * <li>GDAL_DMD_EXTENSION</li>
+     * <li>GDAL_DMD_OPENOPTIONLIST</li>
+     * <li>GDAL_DMD_SUBDATASETS</li>
+     * <li>GDAL_DMD_CONNECTION_PREFIX</li>
      * <li>GDAL_DCAP_RASTER</li>
      * <li>GDAL_DCAP_MULTIDIM_RASTER</li>
      * <li>GDAL_DCAP_VECTOR</li>
      * <li>GDAL_DCAP_GNM</li>
-     * <li>GDAL_DMD_OPENOPTIONLIST</li>
-     * <li>GDAL_DMD_SUBDATASETS</li>
      * <li>GDAL_DCAP_MULTIPLE_VECTOR_LAYERS</li>
      * <li>GDAL_DCAP_NONSPATIAL</li>
+     * <li>GDAL_DCAP_VECTOR_TRANSLATE_FROM</li>
      * </ul>
      *
      * The pfnIdentify and pfnGetSubdatasetInfoFunc callbacks, if they are
