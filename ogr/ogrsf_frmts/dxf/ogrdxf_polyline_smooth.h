@@ -88,6 +88,11 @@ class DXFSmoothPolylineVertex
     }
 };
 
+// Quiet warning from gcc (possibly https://gcc.gnu.org/bugzilla/show_bug.cgi?id=112370)
+#if defined(__GNUC__) && __GNUC__ >= 13
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
+#endif
 class DXFSmoothPolyline
 {
     // A DXF polyline that includes vertex bulge information.
@@ -151,5 +156,8 @@ class DXFSmoothPolyline
     void EmitLine(const DXFSmoothPolylineVertex &,
                   const DXFSmoothPolylineVertex &, OGRLineString *) const;
 };
+#if defined(__GNUC__) && __GNUC__ >= 13
+#pragma GCC diagnostic pop
+#endif
 
 #endif /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */
