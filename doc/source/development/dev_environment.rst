@@ -15,7 +15,7 @@ The minimum requirements to build GDAL are:
 
 - CMake >= 3.10, and an associated build system (make, ninja, Visual Studio, etc.)
 - C99 compiler
-- C++11 compiler
+- C++17 compiler since GDAL 3.9 (C++11 in previous versions)
 - PROJ >= 6.0
 
 Additional requirements to run the GDAL test suite are:
