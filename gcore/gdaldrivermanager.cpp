@@ -1325,6 +1325,8 @@ static const char *const apszProxyMetadataItems[] = {
     GDAL_DMD_SUBDATASETS,
     GDAL_DCAP_MULTIPLE_VECTOR_LAYERS,
     GDAL_DCAP_NONSPATIAL,
+    GDAL_DMD_CONNECTION_PREFIX,
+    GDAL_DCAP_VECTOR_TRANSLATE_FROM,
 };
 
 const char *GDALPluginDriverProxy::GetMetadataItem(const char *pszName,
