@@ -3248,3 +3248,151 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
       Py_INCREF(Py_None);
   }
 }
+
+/***************************************************
+ * Typemap for RasterAttributeTable.ReadValuesIOAsString()
+ ***************************************************/
+
+%typemap(in,numinputs=1) (int iLength, char **ppszData) (int iLength)
+{
+  /* %typemap(in,numinputs=1) (int iLength, char **ppszData) (int iLength) */
+  if ( !PyArg_Parse($input,"i",&iLength) )
+  {
+      PyErr_SetString(PyExc_TypeError, "not a integer");
+      SWIG_fail;
+  }
+  if( iLength <= 0 || iLength > INT_MAX - 1 )
+  {
+      PyErr_SetString(PyExc_TypeError, "invalid length");
+      SWIG_fail;
+  }
+  $1 = iLength;
+  $2 = (char**)VSICalloc(iLength + 1, sizeof(char*));
+  if( !$2 )
+  {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+  }
+}
+
+%typemap(argout) (int iLength, char **ppszData)
+{
+  /* %typemap(argout) (int iLength, char **ppszData) */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  if( !out ) {
+      SWIG_fail;
+  }
+  for( int i=0; i<$1; i++ ) {
+    if( $2[i] )
+    {
+        PyObject *val = GDALPythonObjectFromCStr( $2[i] );
+        PyList_SetItem( out, i, val );
+    }
+    else
+    {
+        Py_INCREF(Py_None);
+        PyList_SetItem( out, i, Py_None );
+    }
+  }
+  $result = out;
+}
+
+%typemap(freearg) (int iLength, char **ppszData)
+{
+  /* %typemap(freearg) (int iLength, char **ppszData) */
+  CSLDestroy($2);
+}
+
+/***************************************************
+ * Typemap for RasterAttributeTable.ReadValuesIOAsInt()
+ ***************************************************/
+
+%typemap(in,numinputs=1) (int iLength, int *pnData) (int iLength)
+{
+  /* %typemap(in,numinputs=1) (int iLength, int *pnData) (int iLength) */
+  if ( !PyArg_Parse($input,"i",&iLength) ) {
+    PyErr_SetString(PyExc_TypeError, "not a integer");
+    SWIG_fail;
+  }
+  if( iLength <= 0 )
+  {
+      PyErr_SetString(PyExc_TypeError, "invalid length");
+      SWIG_fail;
+  }
+  $1 = iLength;
+  $2 = (int*)VSICalloc(iLength, sizeof(int));
+  if( !$2 )
+  {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+  }
+}
+
+%typemap(argout) (int iLength, int *pnData)
+{
+  /* %typemap(argout) (int iLength, int *pnData) */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  if( !out ) {
+      SWIG_fail;
+  }
+  for( int i=0; i<$1; i++ ) {
+    PyObject *val = PyLong_FromLong( ($2)[i] );
+    PyList_SetItem( out, i, val );
+  }
+  $result = out;
+}
+
+%typemap(freearg) (int iLength, int *pnData)
+{
+  /* %typemap(freearg) (int iLength, int *pnData) */
+  CPLFree($2);
+}
+
+/***************************************************
+ * Typemap for RasterAttributeTable.ReadValuesIOAsDouble()
+ ***************************************************/
+
+%typemap(in,numinputs=1) (int iLength, double *pdfData) (int iLength)
+{
+  /* %typemap(in,numinputs=1) (int iLength, double *pdfData) (int iLength) */
+  if ( !PyArg_Parse($input,"i",&iLength) ) {
+    PyErr_SetString(PyExc_TypeError, "not a integer");
+    SWIG_fail;
+  }
+  if( iLength <= 0 )
+  {
+      PyErr_SetString(PyExc_TypeError, "invalid length");
+      SWIG_fail;
+  }
+  $1 = iLength;
+  $2 = (double*)CPLCalloc(iLength, sizeof(double));
+  if( !$2 )
+  {
+      PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+      SWIG_fail;
+  }
+}
+
+%typemap(argout) (int iLength, double *pdfData)
+{
+  /* %typemap(argout) (int iLength, double *pdfData)  */
+  Py_DECREF($result);
+  PyObject *out = PyList_New( $1 );
+  if( !out ) {
+      SWIG_fail;
+  }
+  for( int i=0; i<$1; i++ ) {
+    PyObject *val = PyFloat_FromDouble( ($2)[i] );
+    PyList_SetItem( out, i, val );
+  }
+  $result = out;
+}
+
+%typemap(freearg) (int iLength, double *pdfData)
+{
+  /* %typemap(freearg) (int iLength, double *pdfData) */
+  CPLFree($2);
+}
+
