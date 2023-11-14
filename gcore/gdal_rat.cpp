@@ -290,13 +290,13 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 CPLErr CPL_STDCALL GDALRATValuesIOAsString(GDALRasterAttributeTableH hRAT,
                                            GDALRWFlag eRWFlag, int iField,
                                            int iStartRow, int iLength,
-                                           CSLConstList papszStrList)
+                                           char **papszStrList)
 
 {
     VALIDATE_POINTER1(hRAT, "GDALRATValuesIOAsString", CE_Failure);
 
     return GDALRasterAttributeTable::FromHandle(hRAT)->ValuesIO(
-        eRWFlag, iField, iStartRow, iLength, const_cast<char **>(papszStrList));
+        eRWFlag, iField, iStartRow, iLength, papszStrList);
 }
 
 /************************************************************************/

@@ -1929,7 +1929,7 @@ GDALRATValuesIOAsInteger(GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
                          int iField, int iStartRow, int iLength, int *pnData);
 CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsString(
     GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag, int iField,
-    int iStartRow, int iLength, CSLConstList papszStrList);
+    int iStartRow, int iLength, char **papszStrList);
 
 void CPL_DLL CPL_STDCALL GDALRATSetRowCount(GDALRasterAttributeTableH, int);
 CPLErr CPL_DLL CPL_STDCALL GDALRATCreateColumn(GDALRasterAttributeTableH,
