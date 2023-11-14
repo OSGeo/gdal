@@ -300,7 +300,7 @@ OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object *poObjIn)
                         if (nDim == 3)
                             eType = wkbSetZ(eType);
                         auto poFieldDefn =
-                            cpl::make_unique<OGRCartoGeomFieldDefn>(pszAttname,
+                            std::make_unique<OGRCartoGeomFieldDefn>(pszAttname,
                                                                     eType);
                         if (bNotNull)
                             poFieldDefn->SetNullable(FALSE);
@@ -652,7 +652,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     auto poGeomField =
-        cpl::make_unique<OGRCartoGeomFieldDefn>(pszNameIn, eType);
+        std::make_unique<OGRCartoGeomFieldDefn>(pszNameIn, eType);
     if (EQUAL(poGeomField->GetNameRef(), ""))
     {
         if (poFeatureDefn->GetGeomFieldCount() == 0)
@@ -1905,7 +1905,7 @@ void OGRCARTOTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
     if (eGType != wkbNone)
     {
         auto poFieldDefn =
-            cpl::make_unique<OGRCartoGeomFieldDefn>("the_geom", eGType);
+            std::make_unique<OGRCartoGeomFieldDefn>("the_geom", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
         if (poSRSIn != nullptr)
         {

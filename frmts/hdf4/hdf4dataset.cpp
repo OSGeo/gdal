@@ -1392,7 +1392,7 @@ static GDALSubdatasetInfo *HDF4DriverGetSubdatasetInfo(const char *pszFileName)
         STARTS_WITH_CI(pszFileName, "HDF4_EOS:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<HDF4DriverSubdatasetInfo>(pszFileName);
+            std::make_unique<HDF4DriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

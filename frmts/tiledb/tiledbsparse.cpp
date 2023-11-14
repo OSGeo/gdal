@@ -216,7 +216,7 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
                                     tiledb::Object::Type objectType)
 
 {
-    auto poDS = cpl::make_unique<OGRTileDBDataset>();
+    auto poDS = std::make_unique<OGRTileDBDataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     const char *pszConfig =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
@@ -247,7 +247,7 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
                               const std::optional<std::string> &osLayerName =
                                   std::optional<std::string>())
     {
-        auto poLayer = cpl::make_unique<OGRTileDBLayer>(
+        auto poLayer = std::make_unique<OGRTileDBLayer>(
             osLayerFilename.c_str(),
             osLayerName.has_value() ? (*osLayerName).c_str()
                                     : CPLGetBasename(osLayerFilename.c_str()),
@@ -382,7 +382,7 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
         }
         osFilename = CPLFormFilename(osFilename.c_str(), pszName, nullptr);
     }
-    auto poLayer = cpl::make_unique<OGRTileDBLayer>(osFilename.c_str(), pszName,
+    auto poLayer = std::make_unique<OGRTileDBLayer>(osFilename.c_str(), pszName,
                                                     eGType, poSpatialRef);
     poLayer->m_bUpdatable = true;
     poLayer->m_ctx.reset(new tiledb::Context(*m_ctx));
@@ -533,7 +533,7 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
 GDALDataset *OGRTileDBDataset::Create(const char *pszFilename,
                                       CSLConstList papszOptions)
 {
-    auto poDS = cpl::make_unique<OGRTileDBDataset>();
+    auto poDS = std::make_unique<OGRTileDBDataset>();
     poDS->SetDescription(TileDBDataset::VSI_to_tiledb_uri(pszFilename));
     poDS->eAccess = GA_Update;
 
@@ -1602,7 +1602,7 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
     {
         if (!m_query)
         {
-            m_query = cpl::make_unique<tiledb::Query>(*m_ctx, *m_array);
+            m_query = std::make_unique<tiledb::Query>(*m_ctx, *m_array);
             m_query->set_layout(TILEDB_UNORDERED);
             if (queryCondition)
                 m_query->set_condition(*queryCondition);
@@ -2320,7 +2320,7 @@ CreateQueryConditionForIntType(tiledb::Context &ctx,
     if (nVal >= static_cast<int>(std::numeric_limits<T>::min()) &&
         nVal <= static_cast<int>(std::numeric_limits<T>::max()))
     {
-        return cpl::make_unique<tiledb::QueryCondition>(
+        return std::make_unique<tiledb::QueryCondition>(
             tiledb::QueryCondition::create(ctx, poFieldDefn->GetNameRef(),
                                            static_cast<T>(nVal), tiledb_op));
     }
@@ -2437,7 +2437,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                 {
                     if (nVal == 0 || nVal == 1)
                     {
-                        return cpl::make_unique<tiledb::QueryCondition>(
+                        return std::make_unique<tiledb::QueryCondition>(
                             tiledb::QueryCondition::create(
                                 *(m_ctx.get()), poFieldDefn->GetNameRef(),
                                 static_cast<uint8_t>(nVal), tiledb_op));
@@ -2475,7 +2475,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                 }
                 else
                 {
-                    return cpl::make_unique<tiledb::QueryCondition>(
+                    return std::make_unique<tiledb::QueryCondition>(
                         tiledb::QueryCondition::create(
                             *(m_ctx.get()), poFieldDefn->GetNameRef(), nVal,
                             tiledb_op));
@@ -2497,7 +2497,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     CPLAssert(false);
                     return nullptr;
                 }
-                return cpl::make_unique<tiledb::QueryCondition>(
+                return std::make_unique<tiledb::QueryCondition>(
                     tiledb::QueryCondition::create(*(m_ctx.get()),
                                                    poFieldDefn->GetNameRef(),
                                                    nVal, tiledb_op));
@@ -2514,13 +2514,13 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                 }
                 if (poFieldDefn->GetSubType() == OFSTFloat32)
                 {
-                    return cpl::make_unique<tiledb::QueryCondition>(
+                    return std::make_unique<tiledb::QueryCondition>(
                         tiledb::QueryCondition::create(
                             *(m_ctx.get()), poFieldDefn->GetNameRef(),
                             static_cast<float>(poValue->float_value),
                             tiledb_op));
                 }
-                return cpl::make_unique<tiledb::QueryCondition>(
+                return std::make_unique<tiledb::QueryCondition>(
                     tiledb::QueryCondition::create(
                         *(m_ctx.get()), poFieldDefn->GetNameRef(),
                         poValue->float_value, tiledb_op));
@@ -2540,7 +2540,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     TILEDB_STRING_ASCII)
                     return nullptr;
 #endif
-                return cpl::make_unique<tiledb::QueryCondition>(
+                return std::make_unique<tiledb::QueryCondition>(
                     tiledb::QueryCondition::create(
                         *(m_ctx.get()), poFieldDefn->GetNameRef(),
                         std::string(poValue->string_value), tiledb_op));
@@ -2555,7 +2555,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     OGRField sField;
                     if (OGRParseDate(poValue->string_value, &sField, 0))
                     {
-                        return cpl::make_unique<tiledb::QueryCondition>(
+                        return std::make_unique<tiledb::QueryCondition>(
                             tiledb::QueryCondition::create(
                                 *(m_ctx.get()), poFieldDefn->GetNameRef(),
                                 OGRFieldToDateTimeMS(sField), tiledb_op));
@@ -2579,7 +2579,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     OGRField sField;
                     if (OGRParseDate(poValue->string_value, &sField, 0))
                     {
-                        return cpl::make_unique<tiledb::QueryCondition>(
+                        return std::make_unique<tiledb::QueryCondition>(
                             tiledb::QueryCondition::create(
                                 *(m_ctx.get()), poFieldDefn->GetNameRef(),
                                 OGRFieldToDateDay(sField), tiledb_op));
@@ -2606,7 +2606,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     OGRField sField;
                     if (OGRParseDate(poValue->string_value, &sField, 0))
                     {
-                        return cpl::make_unique<tiledb::QueryCondition>(
+                        return std::make_unique<tiledb::QueryCondition>(
                             tiledb::QueryCondition::create(
                                 *(m_ctx.get()), poFieldDefn->GetNameRef(),
                                 OGRFieldToTimeMS(sField), tiledb_op));
@@ -2664,7 +2664,7 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
         }
         if (left && right)
         {
-            return cpl::make_unique<tiledb::QueryCondition>(
+            return std::make_unique<tiledb::QueryCondition>(
                 left->combine(*(right.get()), TILEDB_AND));
         }
         // Returning only left or right member is OK for a AND
@@ -2705,7 +2705,7 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
         }
         if (left && right)
         {
-            return cpl::make_unique<tiledb::QueryCondition>(
+            return std::make_unique<tiledb::QueryCondition>(
                 left->combine(*(right.get()), TILEDB_OR));
         }
         m_bAttributeFilterPartiallyTranslated = true;
@@ -2742,7 +2742,7 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
                 }
                 else
                 {
-                    cond = cpl::make_unique<tiledb::QueryCondition>(
+                    cond = std::make_unique<tiledb::QueryCondition>(
                         cond->combine(*(newCond.get()), TILEDB_OR));
                 }
             }
@@ -2791,7 +2791,7 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
             bAlwaysFalse = true;
             return nullptr;
         }
-        auto qc = cpl::make_unique<tiledb::QueryCondition>(*(m_ctx.get()));
+        auto qc = std::make_unique<tiledb::QueryCondition>(*(m_ctx.get()));
         qc->init(poFieldDefn->GetNameRef(), nullptr, 0, TILEDB_EQ);
         return qc;
     }
@@ -2820,7 +2820,7 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
             bAlwaysTrue = true;
             return nullptr;
         }
-        auto qc = cpl::make_unique<tiledb::QueryCondition>(*(m_ctx.get()));
+        auto qc = std::make_unique<tiledb::QueryCondition>(*(m_ctx.get()));
         qc->init(poFieldDefn->GetNameRef(), nullptr, 0, TILEDB_NE);
         return qc;
     }

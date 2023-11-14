@@ -209,7 +209,7 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    auto poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+    auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
     if (poDS->Open(poOpenInfo))
     {
         if (poDS->GetSubdatasets().size() == 2)
@@ -218,7 +218,7 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
             GDALOpenInfo oOpenInfo(
                 poDS->GetSubdatasets().FetchNameValue("SUBDATASET_1_NAME"),
                 poOpenInfo->nOpenFlags);
-            poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+            poDS = std::make_unique<OGROpenFileGDBDataSource>();
             if (poDS->Open(&oOpenInfo))
             {
                 poDS->SetDescription(poOpenInfo->pszFilename);
@@ -251,7 +251,7 @@ static GDALDataset *OGROpenFileGDBDriverCreate(const char *pszName, int nXSize,
         return nullptr;
     }
 
-    auto poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+    auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
     if (!poDS->Create(pszName))
         return nullptr;
     return poDS.release();

@@ -1017,7 +1017,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             return -1;
         }
 
-        auto poRing = cpl::make_unique<OGRLinearRing>();
+        auto poRing = std::make_unique<OGRLinearRing>();
 
         const int MAX_INITIAL_POINTS = 100000;
         const int nInitialNumPoints = (numSectionVertices < MAX_INITIAL_POINTS)

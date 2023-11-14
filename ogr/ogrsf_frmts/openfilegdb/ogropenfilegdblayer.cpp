@@ -212,7 +212,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
         if (bHasM)
             m_eGeomType = wkbSetM(m_eGeomType);
 
-        auto poGeomFieldDefn = cpl::make_unique<OGROpenFileGDBGeomFieldDefn>(
+        auto poGeomFieldDefn = std::make_unique<OGROpenFileGDBGeomFieldDefn>(
             nullptr, pszShapeFieldName, m_eGeomType);
 
         CPLXMLNode *psGPFieldInfoExs = CPLGetXMLNode(psInfo, "GPFieldInfoExs");
@@ -507,7 +507,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
         {
             auto poGeomFieldDefn =
-                cpl::make_unique<OGROpenFileGDBGeomFieldDefn>(nullptr, pszName,
+                std::make_unique<OGROpenFileGDBGeomFieldDefn>(nullptr, pszName,
                                                               m_eGeomType);
             poGeomFieldDefn->SetNullable(poGDBGeomField->IsNullable());
 

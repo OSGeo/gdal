@@ -391,7 +391,7 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char *pszLayerName,
                 else if (EQUAL(fieldType.c_str(), "geometry"))
                 {
                     auto poFieldDefn =
-                        cpl::make_unique<OGRAmigoCloudGeomFieldDefn>(
+                        std::make_unique<OGRAmigoCloudGeomFieldDefn>(
                             fieldName.c_str(), wkbUnknown);
                     OGRSpatialReference *poSRS =
                         GetSRS(fieldName.c_str(), &poFieldDefn->nSRID);

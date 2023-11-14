@@ -59,8 +59,8 @@ TEST_F(test_ogr_swq, basic)
         swq_expr_node(SWQ_OR),
         swq_expr_node(SWQ_NOT),
         swq_expr_node(static_cast<OGRGeometry *>(nullptr)),
-        swq_expr_node(cpl::make_unique<OGRPoint>(1, 2).get()),
-        swq_expr_node(cpl::make_unique<OGRPoint>(1, 3).get()),
+        swq_expr_node(std::make_unique<OGRPoint>(1, 2).get()),
+        swq_expr_node(std::make_unique<OGRPoint>(1, 3).get()),
     };
     {
         auto node = swq_expr_node(SWQ_NOT);

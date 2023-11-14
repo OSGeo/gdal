@@ -104,7 +104,7 @@ MAIN_START(argc, argv)
     argv = CSLAddString(argv, "-stdout");
 
     auto psOptionsForBinary =
-        cpl::make_unique<GDALVectorInfoOptionsForBinary>();
+        std::make_unique<GDALVectorInfoOptionsForBinary>();
 
     GDALVectorInfoOptions *psOptions =
         GDALVectorInfoOptionsNew(argv + 1, psOptionsForBinary.get());

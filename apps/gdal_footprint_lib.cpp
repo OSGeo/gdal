@@ -694,7 +694,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         {
             bGlobalMask = false;
             apoTmpNoDataMaskBands.emplace_back(
-                cpl::make_unique<GDALNoDataMaskBand>(
+                std::make_unique<GDALNoDataMaskBand>(
                     poBand, adfSrcNoData.size() == 1 ? adfSrcNoData[0]
                                                      : adfSrcNoData[i]));
             apoSrcMaskBands.push_back(apoTmpNoDataMaskBands.back().get());
@@ -798,7 +798,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
             double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
         adfGeoTransform[5] *=
             double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
-        poCT_GT = cpl::make_unique<GeoTransformCoordinateTransformation>(
+        poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(
             adfGeoTransform);
     }
     else if (psOptions->bOutCSGeorefRequested)
@@ -819,7 +819,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         adfGeoTransform[4] = 0;
         adfGeoTransform[5] =
             double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
-        poCT_GT = cpl::make_unique<GeoTransformCoordinateTransformation>(
+        poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(
             adfGeoTransform);
     }
 
@@ -827,16 +827,16 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
     if (bGlobalMask || anBands.size() == 1)
     {
         poMaskForRasterize =
-            cpl::make_unique<GDALFootprintMaskBand>(apoSrcMaskBands[0]);
+            std::make_unique<GDALFootprintMaskBand>(apoSrcMaskBands[0]);
     }
     else
     {
-        poMaskForRasterize = cpl::make_unique<GDALFootprintCombinedMaskBand>(
+        poMaskForRasterize = std::make_unique<GDALFootprintCombinedMaskBand>(
             apoSrcMaskBands, psOptions->bCombineBandsUnion);
     }
 
     auto hBand = GDALRasterBand::ToHandle(poMaskForRasterize.get());
-    auto poMemLayer = cpl::make_unique<OGRMemLayer>("", nullptr, wkbUnknown);
+    auto poMemLayer = std::make_unique<OGRMemLayer>("", nullptr, wkbUnknown);
     const CPLErr eErr =
         GDALPolygonize(hBand, hBand, OGRLayer::ToHandle(poMemLayer.get()),
                        /* iPixValField = */ -1,
@@ -849,7 +849,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
 
     if (!psOptions->bSplitPolys)
     {
-        auto poMP = cpl::make_unique<OGRMultiPolygon>();
+        auto poMP = std::make_unique<OGRMultiPolygon>();
         for (auto &&poFeature : poMemLayer.get())
         {
             auto poGeom =
@@ -860,9 +860,9 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                 poMP->addGeometryDirectly(poGeom.release());
             }
         }
-        poMemLayer = cpl::make_unique<OGRMemLayer>("", nullptr, wkbUnknown);
+        poMemLayer = std::make_unique<OGRMemLayer>("", nullptr, wkbUnknown);
         auto poFeature =
-            cpl::make_unique<OGRFeature>(poMemLayer->GetLayerDefn());
+            std::make_unique<OGRFeature>(poMemLayer->GetLayerDefn());
         poFeature->SetGeometryDirectly(poMP.release());
         CPL_IGNORE_RET_VAL(poMemLayer->CreateFeature(poFeature.get()));
     }
@@ -875,7 +875,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
             continue;
 
         auto poDstFeature =
-            cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
+            std::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
         poDstFeature->SetFrom(poFeature.get());
 
         if (poCT_GT)
@@ -912,10 +912,10 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         {
             if (poGeom->getGeometryType() == wkbMultiPolygon)
             {
-                auto poMP = cpl::make_unique<OGRMultiPolygon>();
+                auto poMP = std::make_unique<OGRMultiPolygon>();
                 for (auto *poPoly : poGeom->toMultiPolygon())
                 {
-                    auto poNewPoly = cpl::make_unique<OGRPolygon>();
+                    auto poNewPoly = std::make_unique<OGRPolygon>();
                     for (auto *poRing : poPoly)
                     {
                         if (poRing->get_Area() >= psOptions->dfMinRingArea)
@@ -930,7 +930,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
             }
             else if (poGeom->getGeometryType() == wkbPolygon)
             {
-                auto poNewPoly = cpl::make_unique<OGRPolygon>();
+                auto poNewPoly = std::make_unique<OGRPolygon>();
                 for (auto *poRing : poGeom->toPolygon())
                 {
                     if (poRing->get_Area() >= psOptions->dfMinRingArea)
@@ -1145,7 +1145,7 @@ GDALFootprintOptions *
 GDALFootprintOptionsNew(char **papszArgv,
                         GDALFootprintOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALFootprintOptions>();
+    auto psOptions = std::make_unique<GDALFootprintOptions>();
 
     bool bGotSourceFilename = false;
     bool bGotDestFilename = false;

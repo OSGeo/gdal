@@ -282,7 +282,7 @@ OGRLineString *OGRWAsPLayer::Simplify(const OGRLineString &line) const
     if (pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {
         /* remove consecutive points that are too close */
-        auto newLine = cpl::make_unique<OGRLineString>();
+        auto newLine = std::make_unique<OGRLineString>();
         const double dist = *pdfAdjacentPointTolerance;
         OGRPoint pt;
         poLine->StartPoint(&pt);
@@ -789,7 +789,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         return nullptr;
     }
 
-    auto poFeature = cpl::make_unique<OGRFeature>(poLayerDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
     poFeature->SetFID(++iFeatureCount);
     for (int i = 0; i < iNumValues - 1; i++)
         poFeature->SetField(i, dfValues[i]);
@@ -812,7 +812,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         CPLError(CE_Failure, CPLE_FileIO, "No enough values for linestring");
         return nullptr;
     }
-    auto poLine = cpl::make_unique<OGRLineString>();
+    auto poLine = std::make_unique<OGRLineString>();
     poLine->setCoordinateDimension(3);
     poLine->assignSpatialReference(poSpatialReference);
     for (int i = 0; i < iNumValuesToRead; i += 2)

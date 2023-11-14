@@ -9169,7 +9169,7 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
         }
     }
 
-    auto poDS = cpl::make_unique<GDALDatasetFromArray>(array, iXDim, iYDim);
+    auto poDS = std::make_unique<GDALDatasetFromArray>(array, iXDim, iYDim);
 
     poDS->eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
 

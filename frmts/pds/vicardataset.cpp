@@ -2558,7 +2558,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         return Open(&oOpenInfo);
     }
 
-    auto poDS = cpl::make_unique<VICARDataset>();
+    auto poDS = std::make_unique<VICARDataset>();
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
     if (!poDS->oKeywords.Ingest(poDS->fpImage, poOpenInfo->pabyHeader))
@@ -2858,12 +2858,12 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->m_eCompress == COMPRESS_BASIC ||
             poDS->m_eCompress == COMPRESS_BASIC2)
         {
-            poBand = cpl::make_unique<VICARBASICRasterBand>(poDS.get(), i + 1,
+            poBand = std::make_unique<VICARBASICRasterBand>(poDS.get(), i + 1,
                                                             eDataType);
         }
         else
         {
-            auto poRawBand = cpl::make_unique<VICARRawRasterBand>(
+            auto poRawBand = std::make_unique<VICARRawRasterBand>(
                 poDS.get(), i + 1, poDS->fpImage,
                 static_cast<vsi_l_offset>(nImageOffsetWithoutNBB + nNBB +
                                           nBandOffset * i),

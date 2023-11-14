@@ -216,7 +216,7 @@ OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
         m_bIsRSSeparated = CPLTestBool(pszRS);
     }
 
-    m_apoLayers.emplace_back(cpl::make_unique<OGRGeoJSONSeqLayer>(
+    m_apoLayers.emplace_back(std::make_unique<OGRGeoJSONSeqLayer>(
         this, pszNameIn, papszOptions, std::move(poCT)));
     return m_apoLayers.back().get();
 }

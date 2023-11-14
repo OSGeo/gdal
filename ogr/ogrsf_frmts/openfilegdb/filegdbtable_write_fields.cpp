@@ -872,7 +872,7 @@ bool FileGDBTable::AlterField(int iField, const std::string &osName,
     GetIndexCount();
     auto poIndex = m_apoFields[iField]->m_poIndex;
 
-    m_apoFields[iField] = cpl::make_unique<FileGDBField>(
+    m_apoFields[iField] = std::make_unique<FileGDBField>(
         osName, osAlias, eType, bNullable, nMaxWidth, sDefault);
     m_apoFields[iField]->SetParent(this);
     m_apoFields[iField]->m_poIndex = poIndex;

@@ -260,7 +260,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
             { /* Area */
                 oGType = wkbPolygon;
                 auto poOuter =
-                    cpl::make_unique<OGRLinearRing>(); /* Initialize a new
+                    std::make_unique<OGRLinearRing>(); /* Initialize a new
                                                           closed polygon */
                 long nRefNr;
                 unsigned char nRefStatus;
@@ -319,7 +319,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
 
                 if (correct)
                 {
-                    auto poLy = cpl::make_unique<OGRPolygon>();
+                    auto poLy = std::make_unique<OGRPolygon>();
                     poOuter->closeRings();
                     poLy->addRingDirectly(poOuter.release());
 

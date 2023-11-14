@@ -346,7 +346,7 @@ bool OGRPMTilesDataset::Open(GDALOpenInfo *poOpenInfo)
                 OGRMVTFindAttributesFromTileStat(oTileStatLayers,
                                                  oId.ToString().c_str());
 
-            m_apoLayers.push_back(cpl::make_unique<OGRPMTilesVectorLayer>(
+            m_apoLayers.push_back(std::make_unique<OGRPMTilesVectorLayer>(
                 this, oId.ToString().c_str(), oFields, oAttributesFromTileStats,
                 bJsonField, dfMinX, dfMinY, dfMaxX, dfMaxY, eGeomType,
                 nZoomLevel, bZoomLevelFromSpatialFilter));

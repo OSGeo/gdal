@@ -117,7 +117,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     const GDALNearblackOptions *psOptions = psOptionsIn;
     if (!psOptionsIn)
     {
-        psTmpOptions = cpl::make_unique<GDALNearblackOptions>();
+        psTmpOptions = std::make_unique<GDALNearblackOptions>();
         psOptions = psTmpOptions.get();
     }
 
@@ -769,7 +769,7 @@ GDALNearblackOptions *
 GDALNearblackOptionsNew(char **papszArgv,
                         GDALNearblackOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALNearblackOptions>();
+    auto psOptions = std::make_unique<GDALNearblackOptions>();
 
     /* -------------------------------------------------------------------- */
     /*      Handle command line arguments.                                  */

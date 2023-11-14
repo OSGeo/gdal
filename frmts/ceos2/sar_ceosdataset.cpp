@@ -1813,7 +1813,7 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
 
-    auto poDS = cpl::make_unique<SAR_CEOSDataset>();
+    auto poDS = std::make_unique<SAR_CEOSDataset>();
     std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     CeosSARVolume_t *psVolume = &(poDS->sVolume);

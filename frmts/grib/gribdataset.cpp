@@ -1340,7 +1340,7 @@ GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
         CPLDebug("GRIB", "Reading inventories from sidecar file %s",
                  sSideCarFilename.c_str());
         // Contains an GRIB2 message inventory of the file.
-        pInventories = cpl::make_unique<InventoryWrapperSidecar>(fpSideCar);
+        pInventories = std::make_unique<InventoryWrapperSidecar>(fpSideCar);
         if (pInventories->result() <= 0 || pInventories->length() == 0)
             pInventories = nullptr;
         VSIFCloseL(fpSideCar);
@@ -1353,7 +1353,7 @@ GRIBDataset::Inventory(VSILFILE *fp, GDALOpenInfo *poOpenInfo)
         CPLDebug("GRIB", "Reading inventories from GRIB file %s",
                  poOpenInfo->pszFilename);
         // Contains an GRIB2 message inventory of the file.
-        pInventories = cpl::make_unique<InventoryWrapperGrib>(fp);
+        pInventories = std::make_unique<InventoryWrapperGrib>(fp);
     }
 
     return pInventories;
@@ -2224,7 +2224,7 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 
     // Contains an GRIB2 message inventory of the file.
     // We can't use the potential .idx file
-    auto pInventories = cpl::make_unique<InventoryWrapperGrib>(poShared->m_fp);
+    auto pInventories = std::make_unique<InventoryWrapperGrib>(poShared->m_fp);
 
     if (pInventories->result() <= 0)
     {

@@ -4161,7 +4161,7 @@ PostGISRasterDriverGetSubdatasetInfo(const char *pszFileName)
     if (STARTS_WITH_CI(pszFileName, "PG:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<PostGISRasterDriverSubdatasetInfo>(pszFileName);
+            std::make_unique<PostGISRasterDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

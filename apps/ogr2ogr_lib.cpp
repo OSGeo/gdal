@@ -2166,8 +2166,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     }
 
     auto psOptions =
-        psOptionsIn ? cpl::make_unique<GDALVectorTranslateOptions>(*psOptionsIn)
-                    : cpl::make_unique<GDALVectorTranslateOptions>();
+        psOptionsIn ? std::make_unique<GDALVectorTranslateOptions>(*psOptionsIn)
+                    : std::make_unique<GDALVectorTranslateOptions>();
 
     bool bAppend = false;
     bool bUpdate = false;
@@ -6466,7 +6466,7 @@ static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
 GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
     char **papszArgv, GDALVectorTranslateOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALVectorTranslateOptions>();
+    auto psOptions = std::make_unique<GDALVectorTranslateOptions>();
 
     int nArgc = CSLCount(papszArgv);
     for (int i = 0; papszArgv != nullptr && i < nArgc; i++)

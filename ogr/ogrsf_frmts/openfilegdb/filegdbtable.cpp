@@ -1009,7 +1009,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                 m_iObjectIdField = static_cast<int>(m_apoFields.size());
             }
 
-            auto poField = cpl::make_unique<FileGDBField>(this);
+            auto poField = std::make_unique<FileGDBField>(this);
             poField->m_osName = osName;
             poField->m_osAlias = osAlias;
             poField->m_eType = eType;
@@ -2113,7 +2113,7 @@ int FileGDBTable::GetIndexCount()
             if (VSIStatExL(osAtxFilename.c_str(), &sStat,
                            VSI_STAT_EXISTS_FLAG) == 0)
             {
-                auto poIndex = cpl::make_unique<FileGDBIndex>();
+                auto poIndex = std::make_unique<FileGDBIndex>();
                 poIndex->m_osIndexName = "blk_key_index";
                 poIndex->m_osExpression = "block_key";
                 m_apoFields[iBlockKeyFieldIdx]->m_poIndex = poIndex.get();
@@ -2164,7 +2164,7 @@ int FileGDBTable::GetIndexCount()
         // Skip magic field
         pabyCur += 2;
 
-        auto poIndex = cpl::make_unique<FileGDBIndex>();
+        auto poIndex = std::make_unique<FileGDBIndex>();
         poIndex->m_osIndexName = osIndexName;
         poIndex->m_osExpression = osExpression;
 

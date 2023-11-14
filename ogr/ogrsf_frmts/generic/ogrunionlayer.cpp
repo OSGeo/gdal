@@ -260,7 +260,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
         for (int i = 0; i < nGeomFields; i++)
         {
             poFeatureDefn->AddGeomFieldDefn(
-                cpl::make_unique<OGRUnionLayerGeomFieldDefn>(
+                std::make_unique<OGRUnionLayerGeomFieldDefn>(
                     papoGeomFields[i]));
             OGRUnionLayerGeomFieldDefn *poGeomFieldDefn =
                 cpl::down_cast<OGRUnionLayerGeomFieldDefn *>(
@@ -317,7 +317,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
         {
             OGRGeomFieldDefn *poFldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
-                cpl::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
+                std::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
         }
     }
     else if (eFieldStrategy == FIELD_UNION_ALL_LAYERS)
@@ -325,7 +325,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
         if (nGeomFields == 1)
         {
             poFeatureDefn->AddGeomFieldDefn(
-                cpl::make_unique<OGRUnionLayerGeomFieldDefn>(
+                std::make_unique<OGRUnionLayerGeomFieldDefn>(
                     papoGeomFields[0]));
         }
 
@@ -362,7 +362,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
                 if (nIndex < 0)
                 {
                     poFeatureDefn->AddGeomFieldDefn(
-                        cpl::make_unique<OGRUnionLayerGeomFieldDefn>(
+                        std::make_unique<OGRUnionLayerGeomFieldDefn>(
                             poSrcFieldDefn));
                     if (poFeatureDefn->GetGeomFieldCount() == 1 &&
                         nGeomFields == 0 && GetSpatialRef() != nullptr)
@@ -407,7 +407,7 @@ OGRFeatureDefn *OGRUnionLayer::GetLayerDefn()
         {
             OGRGeomFieldDefn *poFldDefn = poSrcFeatureDefn->GetGeomFieldDefn(i);
             poFeatureDefn->AddGeomFieldDefn(
-                cpl::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
+                std::make_unique<OGRUnionLayerGeomFieldDefn>(poFldDefn));
         }
 
         /* Remove any field that is not found in the source layers */

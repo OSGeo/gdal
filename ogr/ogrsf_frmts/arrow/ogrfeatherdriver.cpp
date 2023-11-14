@@ -223,7 +223,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
     auto options = arrow::ipc::IpcReadOptions::Defaults();
     options.memory_pool = poMemoryPool.get();
 
-    auto poDS = cpl::make_unique<OGRFeatherDataset>(poMemoryPool);
+    auto poDS = std::make_unique<OGRFeatherDataset>(poMemoryPool);
     if (bIsStreamingFormat)
     {
         auto result =
@@ -242,7 +242,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
         std::string osLayername = CPLGetBasename(poOpenInfo->pszFilename);
         if (osLayername.empty())
             osLayername = "layer";
-        auto poLayer = cpl::make_unique<OGRFeatherLayer>(
+        auto poLayer = std::make_unique<OGRFeatherLayer>(
             poDS.get(), osLayername.c_str(), infile, bSeekable, options,
             poRecordBatchStreamReader);
         poDS->SetLayer(std::move(poLayer));
@@ -278,7 +278,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         auto poRecordBatchReader = *result;
-        auto poLayer = cpl::make_unique<OGRFeatherLayer>(
+        auto poLayer = std::make_unique<OGRFeatherLayer>(
             poDS.get(), CPLGetBasename(poOpenInfo->pszFilename),
             poRecordBatchReader);
         poDS->SetLayer(std::move(poLayer));
@@ -462,7 +462,7 @@ void RegisterOGRArrow()
     if (GDALGetDriverByName("Arrow") != nullptr)
         return;
 
-    auto poDriver = cpl::make_unique<OGRFeatherDriver>();
+    auto poDriver = std::make_unique<OGRFeatherDriver>();
 
     poDriver->SetDescription("Arrow");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");

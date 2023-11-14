@@ -345,7 +345,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 
     auto poRG = poDSMultiDim->GetRootGroup();
 
-    auto poDS = cpl::make_unique<ZarrDataset>(nullptr);
+    auto poDS = std::make_unique<ZarrDataset>(nullptr);
     std::shared_ptr<GDALMDArray> poMainArray;
     std::vector<std::string> aosArrays;
     std::string osMainArray;
@@ -1113,7 +1113,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     if (!poRG)
         return nullptr;
 
-    auto poDS = cpl::make_unique<ZarrDataset>(poRG);
+    auto poDS = std::make_unique<ZarrDataset>(poRG);
     poDS->SetDescription(pszName);
     poDS->nRasterYSize = nYSize;
     poDS->nRasterXSize = nXSize;

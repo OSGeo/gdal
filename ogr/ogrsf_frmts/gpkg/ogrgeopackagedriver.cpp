@@ -312,7 +312,7 @@ OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
     if (STARTS_WITH_CI(pszFileName, "GPKG:"))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<OGRGeoPackageDriverSubdatasetInfo>(pszFileName);
+            std::make_unique<OGRGeoPackageDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

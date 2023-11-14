@@ -120,7 +120,7 @@ RawRasterBand::Create(GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawLIn,
                       int nLineOffsetIn, GDALDataType eDataTypeIn,
                       ByteOrder eByteOrderIn, OwnFP bOwnsFPIn)
 {
-    auto poBand = cpl::make_unique<RawRasterBand>(
+    auto poBand = std::make_unique<RawRasterBand>(
         poDSIn, nBandIn, fpRawLIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn,
         eDataTypeIn, eByteOrderIn, bOwnsFPIn);
     if (!poBand->IsValid())
@@ -159,7 +159,7 @@ RawRasterBand::Create(VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
                       GDALDataType eDataTypeIn, ByteOrder eByteOrderIn,
                       int nXSizeIn, int nYSizeIn, OwnFP bOwnsFPIn)
 {
-    auto poBand = cpl::make_unique<RawRasterBand>(
+    auto poBand = std::make_unique<RawRasterBand>(
         fpRawIn, nImgOffsetIn, nPixelOffsetIn, nLineOffsetIn, eDataTypeIn,
         eByteOrderIn, nXSizeIn, nYSizeIn, bOwnsFPIn);
     if (!poBand->IsValid())

@@ -578,7 +578,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
 
     try
     {
-        auto poDS = cpl::make_unique<GDALEXRDataset>();
+        auto poDS = std::make_unique<GDALEXRDataset>();
         poDS->m_pIStream.reset(new GDALEXRIOStream(fp, osFilename));
         poDS->m_pMPIF.reset(new MultiPartInputFile(*poDS->m_pIStream));
         if (iPart > 0 && iPart > poDS->m_pMPIF->parts())
@@ -742,7 +742,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         break;
                     }
-                    auto poOvrDS = cpl::make_unique<GDALEXRDataset>();
+                    auto poOvrDS = std::make_unique<GDALEXRDataset>();
                     // coverity[escape]
                     poOvrDS->m_poParent = poDS.get();
                     poOvrDS->m_iLevel = iLevel;

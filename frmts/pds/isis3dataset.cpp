@@ -1648,7 +1648,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Open the file using the large file API.                         */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<ISIS3Dataset>();
+    auto poDS = std::make_unique<ISIS3Dataset>();
 
     if (!poDS->m_oKeywords.Ingest(poOpenInfo->fpL, 0))
     {
@@ -2418,7 +2418,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (poDS->m_poExternalDS != nullptr)
         {
-            auto poISISBand = cpl::make_unique<ISIS3WrapperRasterBand>(
+            auto poISISBand = std::make_unique<ISIS3WrapperRasterBand>(
                 poDS->m_poExternalDS->GetRasterBand(i + 1));
             poISISBand->SetMaskBand(new ISISMaskBand(poISISBand.get()));
             poDS->SetBand(i + 1, std::move(poISISBand));
@@ -2426,7 +2426,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (poDS->m_bIsTiled)
         {
-            auto poISISBand = cpl::make_unique<ISISTiledBand>(
+            auto poISISBand = std::make_unique<ISISTiledBand>(
                 poDS.get(), poDS->m_fpImage, i + 1, eDataType, tileSizeX,
                 tileSizeY, nSkipBytes, 0, 0, bNativeOrder);
             if (!poISISBand->IsValid())
@@ -2439,7 +2439,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            auto poISISBand = cpl::make_unique<ISIS3RawRasterBand>(
+            auto poISISBand = std::make_unique<ISIS3RawRasterBand>(
                 poDS.get(), i + 1, poDS->m_fpImage,
                 nSkipBytes + nBandOffset * i, nPixelOffset, nLineOffset,
                 eDataType, bNativeOrder);

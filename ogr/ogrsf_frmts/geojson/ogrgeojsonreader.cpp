@@ -1293,7 +1293,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
         OGRFieldSubType eSubType;
         const OGRFieldType eType =
             GeoJSONPropertyToFieldType(poVal, eSubType, bArrayAsString);
-        auto poFieldDefn = cpl::make_unique<OGRFieldDefn>(pszKey, eType);
+        auto poFieldDefn = std::make_unique<OGRFieldDefn>(pszKey, eType);
         poFieldDefn->SetSubType(eSubType);
         if (eSubType == OFSTBoolean)
             poFieldDefn->SetWidth(1);
@@ -1637,7 +1637,7 @@ void OGRGeoJSONGenerateFeatureDefnDealWithID(
                             eType = OFTInteger64;
                     }
                     apoFieldDefn.emplace_back(
-                        cpl::make_unique<OGRFieldDefn>("id", eType));
+                        std::make_unique<OGRFieldDefn>("id", eType));
                     const int nIdx = static_cast<int>(apoFieldDefn.size()) - 1;
                     oMapFieldNameToIdx["id"] = nIdx;
                     nPrevFieldIdx = nIdx;

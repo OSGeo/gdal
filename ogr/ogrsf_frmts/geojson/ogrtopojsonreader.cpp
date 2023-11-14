@@ -524,7 +524,7 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                     std::set<int> aoSetUndeterminedTypeFieldsLocal;
 
                     apoFieldDefnLocal.emplace_back(
-                        cpl::make_unique<OGRFieldDefn>("id", OFTString));
+                        std::make_unique<OGRFieldDefn>("id", OFTString));
                     oMapFieldNameToIdxLocal["id"] = 0;
                     dagLocal.addNode(0, "id");
                     const int nPrevFieldIdx = 0;
@@ -582,7 +582,7 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                     *ppoMainLayer = new OGRGeoJSONLayer(
                         "TopoJSON", nullptr, wkbUnknown, poDS, nullptr);
                     apoFieldDefn.emplace_back(
-                        cpl::make_unique<OGRFieldDefn>("id", OFTString));
+                        std::make_unique<OGRFieldDefn>("id", OFTString));
                     oMapFieldNameToIdx["id"] = 0;
                     dag.addNode(0, "id");
                 }

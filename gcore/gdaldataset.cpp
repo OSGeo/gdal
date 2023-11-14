@@ -2048,7 +2048,7 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
         if (pszKey && pszValue)
         {
             apoConfigOptionSetter.emplace_back(
-                cpl::make_unique<CPLConfigOptionSetter>(pszKey, pszValue,
+                std::make_unique<CPLConfigOptionSetter>(pszKey, pszValue,
                                                         false));
         }
         CPLFree(pszKey);
@@ -5401,7 +5401,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
             CPLErrorReset();
             auto poDstFeature =
-                cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
+                std::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
             if (poDstFeature->SetFrom(poFeature.get(), anMap.data(), TRUE) !=
                 OGRERR_NONE)
@@ -5477,7 +5477,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
                 CPLErrorReset();
                 apoDstFeatures[nFeatCount] =
-                    cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
+                    std::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
                 if (apoDstFeatures[nFeatCount]->SetFrom(
                         poFeature.get(), anMap.data(), TRUE) != OGRERR_NONE)

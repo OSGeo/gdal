@@ -217,7 +217,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
             const auto oDataFields = oGrid.GetObj("DataField");
             const auto oDimensions = oGrid.GetObj("Dimension");
             std::map<std::string, int> oMapDimensionNameToSize;
-            auto poGridMetadata = cpl::make_unique<GridMetadata>();
+            auto poGridMetadata = std::make_unique<GridMetadata>();
             poGridMetadata->osGridName = osGridName;
             for (const auto &oDimension : oDimensions.GetChildren())
             {
@@ -342,7 +342,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 
             const auto oDimensions = oSwath.GetObj("Dimension");
             std::map<std::string, int> oMapDimensionNameToSize;
-            auto poSwathMetadata = cpl::make_unique<SwathMetadata>();
+            auto poSwathMetadata = std::make_unique<SwathMetadata>();
             poSwathMetadata->osSwathName = osSwathName;
             for (const auto &oDimension : oDimensions.GetChildren())
             {
@@ -667,7 +667,7 @@ std::unique_ptr<OGRSpatialReference> HDF5EOSParser::GridMetadata::GetSRS() const
 {
     std::vector<double> l_adfProjParams = adfProjParams;
     l_adfProjParams.resize(15);
-    auto poSRS = cpl::make_unique<OGRSpatialReference>();
+    auto poSRS = std::make_unique<OGRSpatialReference>();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromUSGS(nProjCode, nZone, l_adfProjParams.data(),
                               nSphereCode) == OGRERR_NONE)

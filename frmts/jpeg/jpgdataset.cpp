@@ -2791,7 +2791,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
             int nOrientation = atoi(pszOrientation);
             if (nOrientation >= 2 && nOrientation <= 8)
             {
-                auto poOrientedDS = cpl::make_unique<GDALOrientedDataset>(
+                auto poOrientedDS = std::make_unique<GDALOrientedDataset>(
                     std::move(poDS),
                     static_cast<GDALOrientedDataset::Origin>(nOrientation));
                 poDS = std::move(poOrientedDS);

@@ -321,7 +321,7 @@ OGRLayer *OGRElasticDataSource::GetLayerByName(const char *pszName)
         return nullptr;
 
     m_apoLayers.push_back(
-        cpl::make_unique<OGRElasticLayer>(pszName, poReferenceLayer));
+        std::make_unique<OGRElasticLayer>(pszName, poReferenceLayer));
     return m_apoLayers.back().get();
 }
 

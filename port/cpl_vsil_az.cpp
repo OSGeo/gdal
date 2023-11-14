@@ -724,7 +724,7 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
             pszFilename + GetFSPrefix().size(), GetFSPrefix());
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = cpl::make_unique<VSIAzureWriteHandle>(
+    auto poHandle = std::make_unique<VSIAzureWriteHandle>(
         this, pszFilename, poHandleHelper, papszOptions);
     if (!poHandle->IsOK())
     {
