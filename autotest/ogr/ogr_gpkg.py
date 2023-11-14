@@ -6460,6 +6460,7 @@ def test_ogr_gpkg_views(tmp_vsimem, tmp_path):
     filename = tmp_vsimem / "test_ogr_gpkg_views.gpkg"
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
     lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("str_field"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
     lyr.CreateFeature(f)
@@ -6477,7 +6478,7 @@ def test_ogr_gpkg_views(tmp_vsimem, tmp_path):
         "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'POINT', 0, 0, 0)"
     )
 
-    ds.ExecuteSQL("CREATE VIEW attr_view AS SELECT fid AS my_fid FROM foo")
+    ds.ExecuteSQL("CREATE VIEW attr_view AS SELECT fid AS my_fid, str_field FROM foo")
     ds.ExecuteSQL(
         "INSERT INTO gpkg_contents (table_name, identifier, data_type) VALUES ( 'attr_view', 'attr_view', 'attributes' )"
     )
@@ -6486,7 +6487,7 @@ def test_ogr_gpkg_views(tmp_vsimem, tmp_path):
 
     assert validate(filename, tmpdir=tmp_path), "validation failed"
 
-    ds = ogr.Open(filename)
+    ds = ogr.Open(filename, update=1)
     assert ds.GetLayerCount() == 3
 
     lyr = ds.GetLayerByName("geom_view")
@@ -6494,6 +6495,34 @@ def test_ogr_gpkg_views(tmp_vsimem, tmp_path):
 
     lyr = ds.GetLayerByName("attr_view")
     assert lyr.GetGeomType() == ogr.wkbNone
+
+    f = lyr.GetFeature(1)
+    f["str_field"] = "bar"
+    with gdal.quiet_errors():
+        assert lyr.SetFeature(f) == ogr.OGRERR_FAILURE
+
+    ds.ExecuteSQL(
+        "CREATE TRIGGER attr_view_str_field_chng INSTEAD OF UPDATE OF str_field ON attr_view BEGIN UPDATE foo SET str_field=NEW.str_field WHERE fid=NEW.my_fid; END;"
+    )
+
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    assert lyr.UpdateFeature(f, [0], [], False) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(100)
+    f["str_field"] = "bar"
+    assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.UpdateFeature(f, [0], [], False) == ogr.OGRERR_NON_EXISTING_FEATURE
+
+    with gdal.quiet_errors():
+        assert lyr.DeleteFeature(1) == ogr.OGRERR_FAILURE
+
+    ds.ExecuteSQL(
+        "CREATE TRIGGER attr_view_delete INSTEAD OF DELETE ON attr_view BEGIN DELETE FROM foo WHERE fid=OLD.my_fid; END;"
+    )
+
+    assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
+    assert lyr.DeleteFeature(100) == ogr.OGRERR_NON_EXISTING_FEATURE
 
     ds = None
 
