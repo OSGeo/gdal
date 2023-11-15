@@ -437,7 +437,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
             {
                 // CPLError( CE_Warning, CPLE_OpenFailed, "Geometry of type
                 // SYMBOL treated as point (PUNKT).");
-                CPL_FALLTHROUGH
+                [[fallthrough]];
             }
             case L_PUNKT:
             { /* point */
