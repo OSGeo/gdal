@@ -57,6 +57,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_gdal_edit_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_edit", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_edit_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_edit", "--version"
+    )
+
+
+###############################################################################
 # Test -a_srs, -a_ullr, -a_nodata, -mo, -unit
 
 

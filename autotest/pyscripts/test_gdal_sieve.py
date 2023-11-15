@@ -47,6 +47,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_gdal_sieve_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_sieve", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_sieve_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_sieve", "--version"
+    )
+
+
+###############################################################################
 # Test a fairly default case.
 
 

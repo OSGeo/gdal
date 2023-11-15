@@ -49,6 +49,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_gdal_polygonize_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_polygonize", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_polygonize_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_polygonize", "--version"
+    )
+
+
+###############################################################################
 # Test a fairly simple case, with nodata masking.
 
 
