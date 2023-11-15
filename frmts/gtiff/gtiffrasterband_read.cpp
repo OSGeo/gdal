@@ -1604,7 +1604,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nByteCount));
         }
     }
-    else if (pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_"))
+    else if (pszName && pszDomain && EQUAL(pszDomain, "_DEBUG_"))
     {
         if (EQUAL(pszName, "HAS_BLOCK_CACHE"))
             return HasBlockCache() ? "1" : "0";
@@ -1612,7 +1612,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
     const char *pszRet = m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
 
-    if (pszRet == nullptr && eDataType == GDT_Byte && pszDomain != nullptr &&
+    if (pszRet == nullptr && eDataType == GDT_Byte && pszName && pszDomain &&
         EQUAL(pszDomain, "IMAGE_STRUCTURE") && EQUAL(pszName, "PIXELTYPE"))
     {
         // to get a chance of emitting the warning about this legacy usage
