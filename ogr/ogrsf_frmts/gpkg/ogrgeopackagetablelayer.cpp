@@ -2977,6 +2977,13 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
     if (!RunDeferredSpatialIndexUpdate())
         return OGRERR_FAILURE;
 
+    const sqlite3_int64 nTotalChangesBefore =
+#if SQLITE_VERSION_NUMBER >= 3036000L
+        sqlite3_total_changes64(m_poDS->GetDB());
+#else
+        sqlite3_total_changes(m_poDS->GetDB());
+#endif
+
     CheckGeometryType(poFeature);
 
     if (!m_osUpdateStatementSQL.empty())
@@ -3031,8 +3038,15 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
     sqlite3_reset(m_poUpdateStatement);
     sqlite3_clear_bindings(m_poUpdateStatement);
 
+    const sqlite3_int64 nTotalChangesAfter =
+#if SQLITE_VERSION_NUMBER >= 3036000L
+        sqlite3_total_changes64(m_poDS->GetDB());
+#else
+        sqlite3_total_changes(m_poDS->GetDB());
+#endif
+
     /* Only update the envelope if we changed something */
-    OGRErr eErr = (sqlite3_changes(m_poDS->GetDB()) > 0)
+    OGRErr eErr = nTotalChangesAfter != nTotalChangesBefore
                       ? OGRERR_NONE
                       : OGRERR_NON_EXISTING_FEATURE;
     if (eErr == OGRERR_NONE)
@@ -3230,6 +3244,13 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
         return OGRERR_FAILURE;
     }
 
+    const sqlite3_int64 nTotalChangesBefore =
+#if SQLITE_VERSION_NUMBER >= 3036000L
+        sqlite3_total_changes64(m_poDS->GetDB());
+#else
+        sqlite3_total_changes(m_poDS->GetDB());
+#endif
+
     /* From here execute the statement and check errors */
     int err = sqlite3_step(m_poUpdateStatement);
     if (!(err == SQLITE_OK || err == SQLITE_DONE))
@@ -3244,8 +3265,15 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     sqlite3_reset(m_poUpdateStatement);
     sqlite3_clear_bindings(m_poUpdateStatement);
 
+    const sqlite3_int64 nTotalChangesAfter =
+#if SQLITE_VERSION_NUMBER >= 3036000L
+        sqlite3_total_changes64(m_poDS->GetDB());
+#else
+        sqlite3_total_changes(m_poDS->GetDB());
+#endif
+
     /* Only update the envelope if we changed something */
-    OGRErr eErr = (sqlite3_changes(m_poDS->GetDB()) > 0)
+    OGRErr eErr = nTotalChangesAfter != nTotalChangesBefore
                       ? OGRERR_NONE
                       : OGRERR_NON_EXISTING_FEATURE;
     if (eErr == OGRERR_NONE)
@@ -3570,10 +3598,24 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
                  SQLEscapeName(m_pszTableName).c_str(),
                  SQLEscapeName(m_pszFidColumn).c_str(), nFID);
 
+    const sqlite3_int64 nTotalChangesBefore =
+#if SQLITE_VERSION_NUMBER >= 3036000L
+        sqlite3_total_changes64(m_poDS->GetDB());
+#else
+        sqlite3_total_changes(m_poDS->GetDB());
+#endif
+
     OGRErr eErr = SQLCommand(m_poDS->GetDB(), soSQL.c_str());
     if (eErr == OGRERR_NONE)
     {
-        eErr = (sqlite3_changes(m_poDS->GetDB()) > 0)
+        const sqlite3_int64 nTotalChangesAfter =
+#if SQLITE_VERSION_NUMBER >= 3036000L
+            sqlite3_total_changes64(m_poDS->GetDB());
+#else
+            sqlite3_total_changes(m_poDS->GetDB());
+#endif
+
+        eErr = nTotalChangesAfter != nTotalChangesBefore
                    ? OGRERR_NONE
                    : OGRERR_NON_EXISTING_FEATURE;
 
