@@ -486,13 +486,14 @@ def find_diff(
 #######################################################
 
 
-def Usage():
-    print("Usage: gdalcompare.py [--help] [--help-general]")
-    print("                      [-dumpdiffs] [-skip_binary] [-skip_overviews]")
-    print("                      [-skip_geolocation] [-skip_geotransform]")
-    print("                      [-skip_metadata] [-skip_rpc] [-skip_srs]")
-    print("                      [-sds] <golden_file> <new_file>")
-    return 2
+def Usage(isError=True):
+    f = sys.stderr if isError else sys.stdout
+    print("Usage: gdalcompare.py [--help] [--help-general]", file=f)
+    print("                      [-dumpdiffs] [-skip_binary] [-skip_overviews]", file=f)
+    print("                      [-skip_geolocation] [-skip_geotransform]", file=f)
+    print("                      [-skip_metadata] [-skip_rpc] [-skip_srs]", file=f)
+    print("                      [-sds] <golden_file> <new_file>", file=f)
+    return 2 if isError else 0
 
 
 #######################################################
@@ -507,9 +508,6 @@ def main(argv=sys.argv):
     if argv is None:
         return 0
 
-    if len(argv) == 1:
-        return Usage()
-
     # Script argument parsing.
     golden_file = None
     new_file = None
@@ -520,7 +518,7 @@ def main(argv=sys.argv):
     while i < len(argv):
 
         if argv[i] == "--help":
-            return Usage()
+            return Usage(isError=False)
 
         elif argv[i] == "-sds":
             check_sds = 1
@@ -561,6 +559,9 @@ def main(argv=sys.argv):
 
         i = i + 1
         # next argument
+
+    if len(argv) == 1:
+        return Usage()
 
     found_diff = find_diff(golden_file, new_file, check_sds, options)
     print("Differences Found: " + str(found_diff))

@@ -52,6 +52,28 @@ def script_path():
     return test_py_scripts.get_py_script("gdal2tiles")
 
 
+###############################################################################
+#
+
+
+def test_gdal2tiles_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal2tiles", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal2tiles_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal2tiles", "--version"
+    )
+
+
 def _verify_raster_band_checksums(filename, expected_cs=[]):
     ds = gdal.Open(filename)
     if ds is None:

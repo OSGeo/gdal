@@ -38,13 +38,15 @@ from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
-def Usage():
+def Usage(isError=True):
+    f = sys.stderr if isError else sys.stdout
     print(
         """Usage: gdal_sieve [--help] [--help-general]
                              [-q] [-st threshold] [-4] [-8] [-o name=value]
-                             <srcfile> [-nomask] [-mask filename] [-of format] [<dstfile>]"""
+                             <srcfile> [-nomask] [-mask filename] [-of format] [<dstfile>]""",
+        file=f,
     )
-    return 2
+    return 2 if isError else 0
 
 
 def main(argv=sys.argv):
@@ -68,7 +70,7 @@ def main(argv=sys.argv):
         arg = argv[i]
 
         if arg == "--help":
-            return Usage()
+            return Usage(isError=False)
 
         elif arg == "-of" or arg == "-f":
             i = i + 1

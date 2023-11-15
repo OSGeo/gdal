@@ -70,6 +70,28 @@ def small_world_pan_tif(tmp_path_factory):
 
 
 ###############################################################################
+#
+
+
+def test_gdal_pansharpen_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_pansharpen", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_pansharpen_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_pansharpen", "--version"
+    )
+
+
+###############################################################################
 # Simple test
 
 
