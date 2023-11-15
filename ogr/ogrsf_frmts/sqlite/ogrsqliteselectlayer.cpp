@@ -95,18 +95,20 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(
                 m_poFeatureDefn->myGetGeomFieldDefn(iField);
             if (wkbFlatten(poGeomFieldDefn->GetType()) != wkbUnknown)
                 continue;
-
-            if (sqlite3_column_type(m_hStmt, poGeomFieldDefn->m_iCol) ==
-                    SQLITE_BLOB &&
-                sqlite3_column_bytes(m_hStmt, poGeomFieldDefn->m_iCol) > 39)
+            const auto nColType =
+                sqlite3_column_type(m_hStmt, poGeomFieldDefn->m_iCol);
+            if (nColType == SQLITE_BLOB)
             {
+                // Is it a Spatialite geometry ?
                 const GByte *pabyBlob = (const GByte *)sqlite3_column_blob(
                     m_hStmt, poGeomFieldDefn->m_iCol);
-                int eByteOrder = pabyBlob[1];
-                if (pabyBlob[0] == 0x00 &&
-                    (eByteOrder == wkbNDR || eByteOrder == wkbXDR) &&
+                if (sqlite3_column_bytes(m_hStmt, poGeomFieldDefn->m_iCol) >
+                        39 &&
+                    pabyBlob[0] == 0x00 &&
+                    (pabyBlob[1] == wkbNDR || pabyBlob[1] == wkbXDR) &&
                     pabyBlob[38] == 0x7C)
                 {
+                    const int eByteOrder = pabyBlob[1];
                     int nSRSId = 0;
                     memcpy(&nSRSId, pabyBlob + 2, 4);
 #ifdef CPL_LSB
@@ -126,31 +128,36 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(
                     }
                     else
                         CPLErrorReset();
+
+                    continue;
                 }
+            }
+
 #ifdef SQLITE_HAS_COLUMN_METADATA
-                else if (iField == 0)
+            if (iField == 0 &&
+                (nColType == SQLITE_NULL || nColType == SQLITE_BLOB))
+            {
+                const char *pszTableName =
+                    sqlite3_column_table_name(m_hStmt, poGeomFieldDefn->m_iCol);
+                if (pszTableName != nullptr)
                 {
-                    const char *pszTableName = sqlite3_column_table_name(
-                        m_hStmt, poGeomFieldDefn->m_iCol);
-                    if (pszTableName != nullptr)
+                    CPLErrorStateBackuper oErrorStateBackuper;
+                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                    OGRSQLiteLayer *m_poLayer =
+                        cpl::down_cast<OGRSQLiteLayer *>(
+                            m_poDS->GetLayerByName(pszTableName));
+                    if (m_poLayer != nullptr &&
+                        m_poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
                     {
-                        OGRSQLiteLayer *m_poLayer =
-                            (OGRSQLiteLayer *)m_poDS->GetLayerByName(
-                                pszTableName);
-                        if (m_poLayer != nullptr &&
-                            m_poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
-                        {
-                            OGRSQLiteGeomFieldDefn *poSrcGFldDefn =
-                                m_poLayer->myGetLayerDefn()->myGetGeomFieldDefn(
-                                    0);
-                            poGeomFieldDefn->m_nSRSId = poSrcGFldDefn->m_nSRSId;
-                            poGeomFieldDefn->SetSpatialRef(
-                                poSrcGFldDefn->GetSpatialRef());
-                        }
+                        OGRSQLiteGeomFieldDefn *poSrcGFldDefn =
+                            m_poLayer->myGetLayerDefn()->myGetGeomFieldDefn(0);
+                        poGeomFieldDefn->m_nSRSId = poSrcGFldDefn->m_nSRSId;
+                        poGeomFieldDefn->SetSpatialRef(
+                            poSrcGFldDefn->GetSpatialRef());
                     }
                 }
-#endif
             }
+#endif
         }
     }
     else
