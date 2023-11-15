@@ -3760,14 +3760,16 @@ OGRGeometryH OGR_G_CreateFromGMLTree(const CPLXMLNode *psTree)
  * The following GML2 elements are parsed : Point, LineString, Polygon,
  * MultiPoint, MultiLineString, MultiPolygon, MultiGeometry.
  *
- * (OGR >= 1.8.0) The following GML3 elements are parsed : Surface,
+ * The following GML3 elements are parsed : Surface,
  * MultiSurface, PolygonPatch, Triangle, Rectangle, Curve, MultiCurve,
  * CompositeCurve, LineStringSegment, Arc, Circle, CompositeSurface,
  * OrientableSurface, Solid, Tin, TriangulatedSurface.
  *
- * Arc and Circle elements are stroked to linestring, by using a
- * 4 degrees step, unless the user has overridden the value with the
- * OGR_ARC_STEPSIZE configuration variable.
+ * Arc and Circle elements are returned as curves by default. Stroking to
+ * linestrings can be done with
+ * OGR_G_ForceTo(hGeom, OGR_GT_GetLinear(OGR_G_GetGeometryType(hGeom)), NULL).
+ * A 4 degrees step is used by default, unless the user
+ * has overridden the value with the OGR_ARC_STEPSIZE configuration variable.
  *
  * The C++ method OGRGeometryFactory::createFromGML() is the same as
  * this function.
@@ -3775,6 +3777,10 @@ OGRGeometryH OGR_G_CreateFromGMLTree(const CPLXMLNode *psTree)
  * @param pszGML The GML fragment for the geometry.
  *
  * @return a geometry on success, or NULL on error.
+ *
+ * @see OGR_G_ForceTo()
+ * @see OGR_GT_GetLinear()
+ * @see OGR_G_GetGeometryType()
  */
 
 OGRGeometryH OGR_G_CreateFromGML(const char *pszGML)

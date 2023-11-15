@@ -2175,20 +2175,26 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
  * The following GML2 elements are parsed : Point, LineString, Polygon,
  * MultiPoint, MultiLineString, MultiPolygon, MultiGeometry.
  *
- * (OGR >= 1.8.0) The following GML3 elements are parsed : Surface,
+ * The following GML3 elements are parsed : Surface,
  * MultiSurface, PolygonPatch, Triangle, Rectangle, Curve, MultiCurve,
  * LineStringSegment, Arc, Circle, CompositeSurface, OrientableSurface, Solid,
  * Tin, TriangulatedSurface.
  *
- * Arc and Circle elements are stroked to linestring, by using a
- * 4 degrees step, unless the user has overridden the value with the
- * OGR_ARC_STEPSIZE configuration variable.
+ * Arc and Circle elements are returned as curves by default. Stroking to
+ * linestrings can be done with
+ * OGR_G_ForceTo(hGeom, OGR_GT_GetLinear(OGR_G_GetGeometryType(hGeom)), NULL).
+ * A 4 degrees step is used by default, unless the user
+ * has overridden the value with the OGR_ARC_STEPSIZE configuration variable.
  *
  * The C function OGR_G_CreateFromGML() is the same as this method.
  *
  * @param pszData The GML fragment for the geometry.
  *
  * @return a geometry on success, or NULL on error.
+ *
+ * @see OGR_G_ForceTo()
+ * @see OGR_GT_GetLinear()
+ * @see OGR_G_GetGeometryType()
  */
 
 OGRGeometry *OGRGeometryFactory::createFromGML(const char *pszData)
