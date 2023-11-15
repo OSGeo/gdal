@@ -68,13 +68,6 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         /* -------------------------------------------------------------------- */
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
-            CPLString osFieldNames;
-            CPLString osFieldTypes;
-            CPLString osGeometryType;
-            CPLString osRegion;
-            CPLString osWKT;
-            CPLString osProj4;
-            CPLString osEPSG;
             int nMMVersion;
 
             MMReadHeader(m_fp, &pMMHeader);
@@ -164,92 +157,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 hMiraMonLayer.bIsBeenInit = 0;
                 hMiraMonLayer.bNameNeedsCorrection = 1;
             }
-
-            /* --------------------------------------------------------------------
-             */
-             /*      Handle coordinate system. */
-             /* --------------------------------------------------------------------
-              */
-            if (osWKT.length())
-            {
-                m_poSRS = new OGRSpatialReference();
-                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (m_poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
-                {
-                    delete m_poSRS;
-                    m_poSRS = nullptr;
-                }
-            }
-            else if (osEPSG.length())
-            {
-                m_poSRS = new OGRSpatialReference();
-                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (m_poSRS->importFromEPSG(atoi(osEPSG)) != OGRERR_NONE)
-                {
-                    delete m_poSRS;
-                    m_poSRS = nullptr;
-                }
-            }
-            else if (osProj4.length())
-            {
-                m_poSRS = new OGRSpatialReference();
-                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (m_poSRS->importFromProj4(osProj4) != OGRERR_NONE)
-                {
-                    delete m_poSRS;
-                    m_poSRS = nullptr;
-                }
-            }
-
-            /* -----------------------------------------------------------------*/
-            /*      Process fields.                                             */
-            /* -----------------------------------------------------------------*/
-            if (osFieldNames.length() || osFieldTypes.length())
-            {
-                char** papszFN =
-                    CSLTokenizeStringComplex(osFieldNames, "|", TRUE, TRUE);
-                char** papszFT =
-                    CSLTokenizeStringComplex(osFieldTypes, "|", TRUE, TRUE);
-                const int nFNCount = CSLCount(papszFN);
-                const int nFTCount = CSLCount(papszFT);
-                const int nFieldCount = std::max(nFNCount, nFTCount);
-
-                for (int iField = 0; iField < nFieldCount; iField++)
-                {
-                    OGRFieldDefn oField("", OFTString);
-
-                    if (iField < nFNCount)
-                        oField.SetName(papszFN[iField]);
-                    else
-                        oField.SetName(CPLString().Printf("Field_%d", iField + 1));
-
-                    if (iField < nFTCount)
-                    {
-                        if (EQUAL(papszFT[iField], "integer"))
-                            oField.SetType(OFTInteger);
-                        else if (EQUAL(papszFT[iField], "double"))
-                            oField.SetType(OFTReal);
-                        else if (EQUAL(papszFT[iField], "datetime"))
-                            oField.SetType(OFTDateTime);
-                    }
-
-                    poFeatureDefn->AddFieldDefn(&oField);
-                }
-
-                CSLDestroy(papszFN);
-                CSLDestroy(papszFT);
-            }
         }
-        else
-        {
-            if (poSRS)
-            {
-                m_poSRS = poSRS->Clone();
-                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            }
-        }
-
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     }
     else
     {
@@ -283,7 +191,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 else
                     poFeatureDefn->SetGeomType(wkbPoint);
             }
-            else if (hMiraMonLayer.bIsArc)
+            else if (hMiraMonLayer.bIsArc && !hMiraMonLayer.bIsPolygon)
             {
                 if (hMiraMonLayer.TopHeader.bIs3d)
                     poFeatureDefn->SetGeomType(wkbLineString25D);
@@ -537,14 +445,27 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     CPLString osFieldData;
     OGRGeometry *poGeom = nullptr;
     OGRPoint *poPoint = nullptr;
+    OGRLineString *poLS = nullptr;
+    OGRMultiPolygon *poMP = nullptr;
+    MM_INTERNAL_FID nIElem;
     
     /* -------------------------------------------------------------------- */
     /*      Read iNextFID feature directly from the file.                   */
     /* -------------------------------------------------------------------- */
-    if(iNextFID>=hMiraMonLayer.TopHeader.nElemCount)
-        return nullptr;
-
-    MM_INTERNAL_FID nIElem = (MM_INTERNAL_FID)iNextFID;
+    if (hMiraMonLayer.bIsPolygon)
+    {
+        // First polygon is not returned because it's the universal polygon
+        if (iNextFID+1 >= hMiraMonLayer.TopHeader.nElemCount)
+            return nullptr;
+        nIElem = (MM_INTERNAL_FID)iNextFID+1;
+    }
+    else
+    {
+        if(iNextFID>=hMiraMonLayer.TopHeader.nElemCount)
+            return nullptr;
+        nIElem = (MM_INTERNAL_FID)iNextFID;
+    }
+    
     switch(hMiraMonLayer.eLT)
     {
         case MM_LayerType_Point:
@@ -557,236 +478,99 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
             if (MMGetFeatureFromVector(&hMiraMonLayer, nIElem))
                 return nullptr;
 
-            poPoint->setX(hMiraMonLayer.nCoordXY[0].dfX);
-            poPoint->setY(hMiraMonLayer.nCoordXY[0].dfY);
+            poPoint->setX(hMiraMonLayer.ReadedFeature.pCoord[0].dfX);
+            poPoint->setY(hMiraMonLayer.ReadedFeature.pCoord[0].dfY);
             if (hMiraMonLayer.TopHeader.bIs3d)
-                poPoint->setZ(hMiraMonLayer.nCoordZ[0]);
+                poPoint->setZ(hMiraMonLayer.ReadedFeature.pZCoord[0]);
             break;
            
         case MM_LayerType_Arc:
         case MM_LayerType_Arc3d:
             poGeom = new OGRLineString();
-            OGRLineString *poLS = poGeom->toLineString();
+            poLS = poGeom->toLineString();
 
             // Get X,Y (Z) n times MiraMon has no multilines
             if (MMGetFeatureFromVector(&hMiraMonLayer, nIElem))
                 return nullptr;
 
-            for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < hMiraMonLayer.nNVrtRing[0]; nIVrt++)
+            for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < hMiraMonLayer.ReadedFeature.pNCoordRing[0]; nIVrt++)
             {
                 if (hMiraMonLayer.TopHeader.bIs3d)
-                    poLS->addPoint(hMiraMonLayer.nCoordXY[nIVrt].dfX,
-                        hMiraMonLayer.nCoordXY[nIVrt].dfY,
-                        hMiraMonLayer.nCoordZ[nIVrt]);
+                    poLS->addPoint(hMiraMonLayer.ReadedFeature.pCoord[nIVrt].dfX,
+                        hMiraMonLayer.ReadedFeature.pCoord[nIVrt].dfY,
+                        hMiraMonLayer.ReadedFeature.pZCoord[nIVrt]);
                 else
-                    poLS->addPoint(hMiraMonLayer.nCoordXY[nIVrt].dfX,
-                        hMiraMonLayer.nCoordXY[nIVrt].dfY);
+                    poLS->addPoint(hMiraMonLayer.ReadedFeature.pCoord[nIVrt].dfX,
+                        hMiraMonLayer.ReadedFeature.pCoord[nIVrt].dfY);
             }
             break;
-        /* 
+        
         case MM_LayerType_Pol:
         case MM_LayerType_Pol3d:
             // Read polygon
-            break;
-            */
-    }
-     /*
-    for (; true; ReadLine())
-    {
-        if (osLine.length() == 0)
-            break;
+            OGRPolygon poPoly;
+            MM_POLYGON_RINGS_COUNT nIRing;
+            MM_N_VERTICES_TYPE nIVrtAcum;
 
-        if (osLine[0] == '>')
-        {
-            OGRwkbGeometryType eType = wkbUnknown;
-            if (poGeom)
-                eType = wkbFlatten(poGeom->getGeometryType());
-            if (eType == wkbMultiPolygon)
+            if (hMiraMonLayer.TopHeader.bIsMultipolygon)
             {
-                OGRMultiPolygon *poMP = poGeom->toMultiPolygon();
-                if (ScanAheadForHole())
-                {
-                    // Add a hole to the current polygon.
-                    poMP->getGeometryRef(poMP->getNumGeometries() - 1)
-                        ->addRingDirectly(new OGRLinearRing());
-                }
-                else if (!NextIsFeature())
-                {
-                    OGRPolygon *poPoly = new OGRPolygon();
+                poGeom = new OGRMultiPolygon();
+                poMP = poGeom->toMultiPolygon();
+            }
+            else
+                poGeom = new OGRPolygon();
 
-                    poPoly->addRingDirectly(new OGRLinearRing());
+            // Get X,Y (Z) n times MiraMon has no multilines
+            if (MMGetFeatureFromVector(&hMiraMonLayer, nIElem))
+                return nullptr;
 
-                    poMP->addGeometryDirectly(poPoly);
-                }
-                else
-                    break; 
-            }
-            else if (eType == wkbPolygon)
+            nIVrtAcum=0;
+            if(!hMiraMonLayer.ReadedFeature.pbArcInfo[0])
             {
-                if (ScanAheadForHole())
-                    poGeom->toPolygon()->addRingDirectly(new OGRLinearRing());
-                else
-                    break; 
+                CPLError(CE_Failure, CPLE_NoWriteAccess,
+                    "\nWrong polygon format.");
+                return nullptr;
             }
-            else if (eType == wkbMultiLineString && !NextIsFeature())
-            {
-                poGeom->toMultiLineString()->addGeometryDirectly(
-                    new OGRLineString());
-            }
-            else if (poGeom != nullptr)
-            {
-                break;
-            }
-            else if (poFeatureDefn->GetGeomType() == wkbUnknown)
-            {
-                poFeatureDefn->SetGeomType(wkbLineString);
-                // bMultiVertex = true;
-            }
-        }
-        else if (osLine[0] == '#')
-        {
-            for (int i = 0;
-                 papszKeyedValues != nullptr && papszKeyedValues[i] != nullptr;
-                 i++)
-            {
-                if (papszKeyedValues[i][0] == 'D')
-                    osFieldData = papszKeyedValues[i] + 1;
-            }
-        }
-        else
-        {
-            // Parse point line.
+            int IAmExternal;
             
-            const int nDim = CPLsscanf(osLine, "%lf %lf %lf", &dfX, &dfY, &dfZ);
-
-            if (nDim >= 2)
+            for (nIRing=0; nIRing< hMiraMonLayer.ReadedFeature.nNRings; nIRing++)
             {
-                if (poGeom == nullptr)
+                OGRLinearRing poRing;
+
+                IAmExternal=hMiraMonLayer.ReadedFeature.pbArcInfo[nIRing];
+
+                for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < hMiraMonLayer.ReadedFeature.pNCoordRing[nIRing]; nIVrt++)
                 {
-                    switch (poFeatureDefn->GetGeomType())
+                    if (hMiraMonLayer.TopHeader.bIs3d)
                     {
-                        case wkbLineString:
-                            poGeom = new OGRLineString();
-                            break;
-
-                        case wkbPolygon:
-                        {
-                            OGRPolygon *poPoly = new OGRPolygon();
-                            poGeom = poPoly;
-                            poPoly->addRingDirectly(new OGRLinearRing());
-                            break;
-                        }
-
-                        case wkbMultiPolygon:
-                        {
-                            OGRPolygon *poPoly = new OGRPolygon();
-                            poPoly->addRingDirectly(new OGRLinearRing());
-
-                            OGRMultiPolygon *poMP = new OGRMultiPolygon();
-                            poGeom = poMP;
-                            poMP->addGeometryDirectly(poPoly);
-                        }
-                        break;
-
-                        case wkbMultiPoint:
-                            poGeom = new OGRMultiPoint();
-                            break;
-
-                        case wkbMultiLineString:
-                        {
-                            OGRMultiLineString *poMLS =
-                                new OGRMultiLineString();
-                            poGeom = poMLS;
-                            poMLS->addGeometryDirectly(new OGRLineString());
-                            break;
-                        }
-
-                        case wkbPoint:
-                        case wkbUnknown:
-                        default:
-                            poGeom = new OGRPoint();
-                            break;
+                        poRing.addPoint(hMiraMonLayer.ReadedFeature.pCoord[nIVrtAcum].dfX,
+                            hMiraMonLayer.ReadedFeature.pCoord[nIVrtAcum].dfY,
+                            hMiraMonLayer.ReadedFeature.pZCoord[nIVrtAcum]);
                     }
+                    else
+                    {
+                        poRing.addPoint(hMiraMonLayer.ReadedFeature.pCoord[nIVrtAcum].dfX,
+                            hMiraMonLayer.ReadedFeature.pCoord[nIVrtAcum].dfY);
+                    }
+
+                    nIVrtAcum++;
                 }
 
-                CPLAssert(poGeom != nullptr);
-                // cppcheck-suppress nullPointerRedundantCheck
-                switch (wkbFlatten(poGeom->getGeometryType()))
+                // If I'm going to start a new polygon...
+                if((IAmExternal && nIRing+1<hMiraMonLayer.ReadedFeature.nNRings &&
+                    hMiraMonLayer.ReadedFeature.pbArcInfo[nIRing+1]) ||
+                    nIRing+1>=hMiraMonLayer.ReadedFeature.nNRings)
                 {
-                    case wkbPoint:
-                    {
-                        OGRPoint *poPoint = poGeom->toPoint();
-                        poPoint->setX(dfX);
-                        poPoint->setY(dfY);
-                        if (nDim == 3)
-                            poPoint->setZ(dfZ);
-                        break;
-                    }
-
-                    case wkbLineString:
-                    {
-                        OGRLineString *poLS = poGeom->toLineString();
-                        if (nDim == 3)
-                            poLS->addPoint(dfX, dfY, dfZ);
-                        else
-                            poLS->addPoint(dfX, dfY);
-                        break;
-                    }
-
-                    case wkbPolygon:
-                    case wkbMultiPolygon:
-                    {
-                        OGRPolygon *poPoly = nullptr;
-
-                        if (wkbFlatten(poGeom->getGeometryType()) ==
-                            wkbMultiPolygon)
-                        {
-                            OGRMultiPolygon *poMP = poGeom->toMultiPolygon();
-                            poPoly = poMP->getGeometryRef(
-                                poMP->getNumGeometries() - 1);
-                        }
-                        else
-                            poPoly = poGeom->toPolygon();
-
-                        OGRLinearRing *poRing = nullptr;
-                        if (poPoly->getNumInteriorRings() == 0)
-                            poRing = poPoly->getExteriorRing();
-                        else
-                            poRing = poPoly->getInteriorRing(
-                                poPoly->getNumInteriorRings() - 1);
-
-                        if (nDim == 3)
-                            poRing->addPoint(dfX, dfY, dfZ);
-                        else
-                            poRing->addPoint(dfX, dfY);
-                    }
-                    break;
-
-                    case wkbMultiLineString:
-                    {
-                        OGRMultiLineString *poML = poGeom->toMultiLineString();
-                        OGRLineString *poLine =
-                            poML->getGeometryRef(poML->getNumGeometries() - 1);
-
-                        if (nDim == 3)
-                            poLine->addPoint(dfX, dfY, dfZ);
-                        else
-                            poLine->addPoint(dfX, dfY);
-                    }
-                    break;
-
-                    default:
-                        CPLAssert(false);
+                    poPoly.addRing(&poRing);
+                    poMP->addGeometry(&poPoly);
+                    poPoly.empty();                    
                 }
+                else
+                    poPoly.addRing(&poRing);
             }
-        }
-
-        if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        {
-            ReadLine();
+            
             break;
-        }
-    }*/
+    }
 
     if (poGeom == nullptr)
         return nullptr;
@@ -825,7 +609,10 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 /************************************************************************/
 GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 {
-    return (GIntBig)hMiraMonLayer.TopHeader.nElemCount;
+    if(hMiraMonLayer.bIsPolygon)
+        return (GIntBig)hMiraMonLayer.TopHeader.nElemCount-1;
+    else
+        return (GIntBig)hMiraMonLayer.TopHeader.nElemCount;
 }
 
 /************************************************************************/
@@ -1015,7 +802,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
                         bool bExternalRing, int eLT)
 {
-    if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoord, &hMMFeature.nMaxpNCoord,
+    if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoordRing, &hMMFeature.nMaxpNCoordRing,
         hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
     {
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
@@ -1035,10 +822,10 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
     else
         hMMFeature.pbArcInfo[hMMFeature.nIRing] = 0;
 
-    hMMFeature.pNCoord[hMMFeature.nIRing] = OGR_G_GetPointCount(hGeom);
+    hMMFeature.pNCoordRing[hMMFeature.nIRing] = OGR_G_GetPointCount(hGeom);
 
     if (MMResizeMM_POINT2DPointer(&hMMFeature.pCoord, &hMMFeature.nMaxpCoord,
-        hMMFeature.nICoord + hMMFeature.pNCoord[hMMFeature.nIRing],
+        hMMFeature.nICoord + hMMFeature.pNCoordRing[hMMFeature.nIRing],
         MM_MEAN_NUMBER_OF_NCOORDS, 0))
     {
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
@@ -1048,7 +835,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
     if (hMiraMonLayer.TopHeader.bIs3d)
     {
         if (MMResizeDoublePointer(&hMMFeature.pZCoord, &hMMFeature.nMaxpZCoord,
-            hMMFeature.nICoord + hMMFeature.pNCoord[hMMFeature.nIRing],
+            hMMFeature.nICoord + hMMFeature.pNCoordRing[hMMFeature.nIRing],
             MM_MEAN_NUMBER_OF_NCOORDS, 0))
         {
             CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
@@ -1057,7 +844,7 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
         }
     }
 
-    for (int iPoint = 0; iPoint < hMMFeature.pNCoord[hMMFeature.nIRing]; iPoint++)
+    for (int iPoint = 0; iPoint < hMMFeature.pNCoordRing[hMMFeature.nIRing]; iPoint++)
     {
         hMMFeature.pCoord[hMMFeature.nICoord].dfX = OGR_G_GetX(hGeom, iPoint);
         hMMFeature.pCoord[hMMFeature.nICoord].dfY = OGR_G_GetY(hGeom, iPoint);

@@ -37,6 +37,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define TruncateFile_function(a,b) TruncaFitxer_64((a),(b))
     #define strdup_function(p)  strdup((p))
     #define get_filename_function TreuAdreca
+    #define get_path_function DonaAdreca
     #define error_message_function puts
     #define info_message_function puts
     #define printf_function fprintf_64
@@ -54,6 +55,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_GetNextFeature_function(a)    ptr_MM_OGR_L_GetNextFeature((a))
     #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
+    #define form_filename_function(a,b)         MuntaPath((a),(b),TRUE)
 #else
     #define calloc_function(a) CPLCalloc(1,(a))
     #define realloc_function CPLRealloc
@@ -69,6 +71,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define TruncateFile_function(a,b) VSIFTruncateL((a),(b))
     #define strdup_function(p)  CPLStrdup((p))
     #define get_filename_function CPLGetFilename
+    #define get_path_function CPLGetPath
     #define error_message_function puts //CPLError
     #define info_message_function puts
     #define printf_function VSIFPrintfL
@@ -86,45 +89,58 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_GetNextFeature_function(a)    OGR_L_GetNextFeature((a))
     #define OGR_L_ResetReading_function(a)      OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
+    #define form_filename_function(a,b)       CPLFormFilename((a),(b),NULL)
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Functions                                                       */
 /* -------------------------------------------------------------------- */
 // Layer functions
-struct MiraMonLayerInfo * MMCreateLayer(char *pzFileName, 
+struct MiraMonVectLayerInfo * MMCreateLayer(char *pzFileName, 
                 __int32 LayerVersion, 
                 struct MiraMonDataBase *attributes,
                 MM_BOOLEAN ReadOrWrite);
-int MMInitLayer(struct MiraMonLayerInfo *hMiraMonLayer, 
+int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, 
                 const char *pzFileName, 
                 __int32 LayerVersion, 
                 struct MiraMonDataBase *pLayerDB,
                 MM_BOOLEAN ReadOrWrite);
-int MMInitLayerByType(struct MiraMonLayerInfo *hMiraMonLayer);
-int MMFreeLayer(struct MiraMonLayerInfo *hMiraMonLayer);
-int MMCloseLayer(struct MiraMonLayerInfo *hMiraMonLayer);
-void MMDestroyLayer(struct MiraMonLayerInfo **hMiraMonLayer);
+int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer);
+int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
+int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
+void MMDestroyLayer(struct MiraMonVectLayerInfo **hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
 int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion);
-int MMReadAHArcSection(struct MiraMonLayerInfo *hMiraMonLayer);
-int MMReadZDescriptionHeaders(struct MiraMonLayerInfo *hMiraMonLayer, 
+int MMReadAHArcSection(struct MiraMonVectLayerInfo *hMiraMonLayer);
+int MMReadPHPolygonSection(struct MiraMonVectLayerInfo *hMiraMonLayer);
+int MMReadZDescriptionHeaders(struct MiraMonVectLayerInfo *hMiraMonLayer, 
                         FILE_TYPE *pF, MM_INTERNAL_FID nElements, 
                         struct MM_ZSection *pZSection);
-int MMReadZSection(struct MiraMonLayerInfo *hMiraMonLayer,
+int MMReadZSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
                    FILE_TYPE *pF, 
                    struct MM_ZSection *pZSection);
 
-int MMReadZDescriptionHeaders(struct MiraMonLayerInfo *hMiraMonLayer, 
+int MMReadZDescriptionHeaders(struct MiraMonVectLayerInfo *hMiraMonLayer, 
                         FILE_TYPE *pF, MM_INTERNAL_FID nElements, 
                         struct MM_ZSection *pZSection);
 // Feature functions
 int MMInitFeature(struct MiraMonFeature *MMFeature);
 void MMResetFeature(struct MiraMonFeature *MMFeature);
 void MMDestroyFeature(struct MiraMonFeature *MMFeature);
-int AddMMFeature(struct MiraMonLayerInfo *hMiraMonLayer, 
+int AddMMFeature(struct MiraMonVectLayerInfo *hMiraMonLayer, 
             struct MiraMonFeature *hMiraMonFeature);
 int MMGetVectorVersion(struct MM_TH *pTopHeader);
+int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, 
+            unsigned __int64 nBlockSize, char **pBuffer, 
+            MM_FILE_OFFSET DiskOffsetWhereToFlush, 
+            __int32 nMyDiskSize);
+int MMReadFlush(struct MM_FLUSH_INFO *pFlush);
+int MM_ReadBlockFromBuffer(struct MM_FLUSH_INFO *FlushInfo);
+int MMReadIntegerDependingOnVersion(
+                            struct MiraMonVectLayerInfo *hMiraMonLayer,
+                            struct MM_FLUSH_INFO *FlushInfo, 
+                                unsigned __int64 *nUI64);
+
 
 // Tool functions
 int MMResetExtensionAndLastLetter(char *pzNewLayerName, 
@@ -140,6 +156,12 @@ int MMResizeMiraMonFieldValue(struct MiraMonFieldValue **pFieldValue,
                         unsigned __int32 nNum, 
                         unsigned __int32 nIncr,
                         unsigned __int32 nProposedMax);
+
+int MMResizeMiraMonPolygonArcs(struct MM_PAL_MEM **pFID, 
+                        MM_POLYGON_ARCS_COUNT *nMax, 
+                        MM_POLYGON_ARCS_COUNT nNum, 
+                        MM_POLYGON_ARCS_COUNT nIncr,
+                        MM_POLYGON_ARCS_COUNT nProposedMax);
 
 int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord, 
                         unsigned __int32 *nMax, 
@@ -176,7 +198,7 @@ char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord);
 // Metadata functions
 char *ReturnMMIDSRSFromEPSGCodeSRS (char *pSRS);
 int ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS);
-int MMWriteVectorMetadata(struct MiraMonLayerInfo *hMiraMonLayer);
+int MMWriteVectorMetadata(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

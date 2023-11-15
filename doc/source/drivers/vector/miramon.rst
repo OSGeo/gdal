@@ -1,15 +1,13 @@
 .. _vector.miramon:
 
-ESRI Shapefile / DBF
+MiraMon (TO FINALIZE)
 ====================
 
-.. shortname:: MiraMon vector file
+.. shortname:: MiraMon
 
 .. built_in_by_default::
 
-All varieties of ESRI Shapefiles should be available for reading, creation and
-editing. The driver can also handle standalone
-DBF files without associated .shp files.
+All varieties of MiraMon files should be available for reading and creation.
 
 Normally the OGR Shapefile driver treats a whole directory of shapefiles
 as a dataset, and a single shapefile within that directory as a layer.
@@ -59,8 +57,6 @@ Driver capabilities
 .. supports_create::
 
 .. supports_georeferencing::
-
-.. supports_virtualio::
 
 Encoding
 --------

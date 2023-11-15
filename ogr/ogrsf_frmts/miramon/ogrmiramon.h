@@ -49,7 +49,7 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     GUIntBig iNextFID;
 
-    struct MiraMonLayerInfo hMiraMonLayer;
+    struct MiraMonVectLayerInfo hMiraMonLayer;
     struct MM_TH pMMHeader;
     struct MiraMonFeature hMMFeature;
 

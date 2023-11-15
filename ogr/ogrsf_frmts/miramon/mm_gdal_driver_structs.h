@@ -234,8 +234,8 @@ struct MM_FLUSH_INFO
 // MIRAMON METADATA
 struct MiraMonVectorMetaData
 {
-    char aLayerName[MM_MAX_LEN_LAYER_NAME];
-    char aArcFile[MM_MAX_LEN_LAYER_NAME]; // Polygon's arc name
+    char *aLayerName;
+    char *aArcFile; // Polygon's arc name
     int ePlainLT; // Plain layer type (no 3D specified): MM_LayerType_Point, 
                 // MM_LayerType_Arc, MM_LayerType_Node, MM_LayerType_Pol
 	char *pSRS; // EPSG code of the coordinate system information.
@@ -450,6 +450,12 @@ struct MM_PH
     //struct GEOMETRIC_I_TOPOLOGIC_POL GeoTopoPol;
 };
 
+struct MM_PAL_MEM
+{
+    unsigned char VFG;
+    MM_INTERNAL_FID nIArc; // 4/8 bytes depending on the version
+};
+
 /*  Every MiraMon file is composed as is specified in documentation.
     Here are the structures to every file where we can find two ways
     of keeping the information in memory (to be, finally, flushed to the disk)
@@ -484,6 +490,9 @@ struct MiraMonPointLayer
 
     // MiraMon Database (extended DBF)
     struct MMAdmDatabase MMAdmDB;
+
+    // Metadata name
+    char *pszREL_LayerName; 
 };
 
 struct MiraMonNodeLayer
@@ -503,6 +512,9 @@ struct MiraMonNodeLayer
     FILE_TYPE *pFNL; // Pointer to temporary file where to flush
 
     struct MMAdmDatabase MMAdmDB;
+
+    // Metadata name
+    char *pszREL_LayerName; 
 };
 
 struct MiraMonArcLayer
@@ -544,6 +556,9 @@ struct MiraMonArcLayer
     MM_FILE_OFFSET nOffsetArc; // It's an auxiliary offset
 
     struct MMAdmDatabase MMAdmDB;
+
+    // Metadata name
+    char *pszREL_LayerName; 
 };
 
 struct MiraMonPolygonLayer
@@ -565,6 +580,7 @@ struct MiraMonPolygonLayer
     
     // PAL
     struct MM_FLUSH_INFO FlushPAL;
+    int nPALElementSize;
     char *pPAL; // Polygon Arc List  // (II mode)
     char *pszPALName; // Temporary file where to flush
     FILE_TYPE *pFPAL; // Pointer to temporary file where to flush
@@ -574,6 +590,9 @@ struct MiraMonPolygonLayer
     struct MiraMonArcLayer MMArc;
 
     struct MMAdmDatabase MMAdmDB;
+
+    // Metadata name
+    char *pszREL_LayerName; 
 };
 
 #define MM_VECTOR_LAYER_LAST_VERSION    1
@@ -587,12 +606,14 @@ struct MiraMonFeature
     MM_POLYGON_RINGS_COUNT nNRings; // =1 for lines and points
     MM_POLYGON_RINGS_COUNT nIRing; // The ring is being processed
     
-    // Number of reserved elements in *pNCoord
-    MM_N_VERTICES_TYPE nMaxpNCoord; 
-    MM_N_VERTICES_TYPE *pNCoord; // [0]=1 for lines and points
+    // Number of reserved elements in *pNCoord (a vector with number of vertices in each ring)
+    MM_N_VERTICES_TYPE nMaxpNCoordRing;
+    MM_N_VERTICES_TYPE *pNCoordRing; // [0]=1 for lines and points
 
     // Number of reserved elements in *pCoord
-    MM_N_VERTICES_TYPE nMaxpCoord; 
+    MM_N_VERTICES_TYPE nMaxpCoord;
+    // Number of used elements in *pCoord (only for reading features)
+    MM_N_VERTICES_TYPE nNumpCoord; 
     // Coordinate index thats is being processed
     MM_N_VERTICES_TYPE nICoord; 
     // List of the coordinates of the feature
@@ -606,8 +627,10 @@ struct MiraMonFeature
 
     // List of the Z-coordinates (as many as pCoord)
     // Number of reserved elements in *pZCoord
-    unsigned __int64 nMaxpZCoord; 
-    double *pZCoord; 
+    MM_N_VERTICES_TYPE nMaxpZCoord;
+    // Number of used elements in *pZCoord
+    MM_N_VERTICES_TYPE nNumpZCoord; 
+    MM_COORD_TYPE *pZCoord; 
 
     // Records of the feature
 	MM_EXT_DBF_N_RECORDS nNumRecords;
@@ -617,7 +640,7 @@ struct MiraMonFeature
 };
 
 // MIRAMON OBJECT: Contains everything
-struct MiraMonLayerInfo
+struct MiraMonVectLayerInfo
 {
     // Version of the structure
     __int32 Version; 
@@ -627,11 +650,15 @@ struct MiraMonLayerInfo
     // MM_64BITS_LAYER_VERSION: more than 2 Gb files
     char LayerVersion;
 
+    // Layer name
     char *pszSrcLayerName;
 
+    // Pointer to the main REL name (do not free it)
+    char *pszMainREL_LayerName;
+
     // To know if we are writting or reading
-    #define MM_READING_MODE     0
-    #define MM_WRITTING_MODE    1
+    #define MM_READING_MODE     0  // Reading MiraMon layer
+    #define MM_WRITTING_MODE    1  // Writing MiraMon layer
     MM_BOOLEAN ReadOrWrite;
     
     char pszFlags[10]; // To Open the file
@@ -684,19 +711,17 @@ struct MiraMonLayerInfo
     char *szStringToOperate;
 
     // Temporary elements when reading features from MiraMon files
-    MM_N_VERTICES_TYPE nNumCoordXY;
-    MM_N_VERTICES_TYPE nMaxCoordXY;
-    struct MM_POINT_2D *nCoordXY;
+    struct MiraMonFeature ReadedFeature;
 
-    MM_N_VERTICES_TYPE nNumCoordZ;
-    MM_N_VERTICES_TYPE nMaxCoordZ;
-    MM_COORD_TYPE *nCoordZ;
-    
-    MM_POLYGON_RINGS_COUNT nNRing;
-    MM_POLYGON_RINGS_COUNT nMaxVrtRing; // Reserved elements for nNVrtRing
-    MM_N_VERTICES_TYPE *nNVrtRing;
-    
     MM_SELEC_COORDZ_TYPE nSelectCoordz;
+
+    // For polygon layer this is an efficient space to read 
+    // the PAL section
+    MM_POLYGON_ARCS_COUNT nMaxArcs;
+    MM_POLYGON_ARCS_COUNT nNumArcs;
+    struct MM_PAL_MEM *pArcs;
+
+    struct MM_FLUSH_INFO FlushPAL;
 };
 
 enum DataType {MMDTByte, MMDTInteger, MMDTuInteger, 

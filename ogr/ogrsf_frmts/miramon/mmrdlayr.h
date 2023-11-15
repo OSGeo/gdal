@@ -20,7 +20,7 @@ typedef int MM_TIPUS_ERROR;
 typedef int MM_TIPUS_TIPUS_FITXER;
 typedef MM_BOOLEAN MM_TIPUS_BOLEA;
 
-int MMInitLayerToRead(struct MiraMonLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, 
+int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, 
                       const char *pszFilename);
 
 
@@ -44,7 +44,7 @@ MM_TIPUS_TIPUS_FITXER MMTipusFitxerCapaVector(MM_HANDLE_CAPA_VECTOR hlayer);
 MM_TIPUS_BOLEA MMEs3DCapaVector(MM_HANDLE_CAPA_VECTOR hlayer);
 
 
-int MMGetFeatureFromVector(struct MiraMonLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem);
+int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem);
 
 void MMFinalitzaCapaVector(MM_HANDLE_CAPA_VECTOR hlayer);
 

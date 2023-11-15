@@ -32,7 +32,7 @@ size_t MM_DefineFirstPointFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp);
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(struct MM_CAMP *camp,
 			struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom);
 
-int MMWriteValueToRecordDBXP(struct MiraMonLayerInfo *hMiraMonLayer,
+int MMWriteValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
                             char *registre, 
                             const struct MM_CAMP *camp, 
                             const void *valor,

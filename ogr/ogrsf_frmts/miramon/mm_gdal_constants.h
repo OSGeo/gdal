@@ -56,6 +56,10 @@ typedef size_t MM_N_VERTICES_TYPE;
 typedef unsigned __int64 MM_POLYGON_ARCS_COUNT;
 typedef unsigned __int64 MM_POLYGON_RINGS_COUNT; 
 
+#define MM_POL_EXTERIOR_SIDE  0x01
+#define MM_POL_END_RING       0x02
+#define MM_POL_REVERSE_ARC    0x04
+
 
 // Z Part
 typedef int MM_SELEC_COORDZ_TYPE;
