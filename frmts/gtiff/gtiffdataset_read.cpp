@@ -36,6 +36,7 @@
 #include "gtiffsplitbitmapband.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -937,6 +938,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             psContext->bCacheAllBands ? psContext->panBandMap[i] - 1
             : poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i
                                                            : 0;
+        assert(iSrcBandIdx >= 0);
         const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
                                     ? i
                                     : psJob->iDstBandIdxSeparate;

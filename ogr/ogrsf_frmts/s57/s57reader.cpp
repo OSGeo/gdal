@@ -3409,7 +3409,7 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
             extension.append(buf);
             dirname.append(buf);
         }
-        else if (10 <= iUpdate && iUpdate < 100)
+        else if (iUpdate < 100)
         {
             char buf[3];
             CPLsnprintf(buf, sizeof(buf), "%i", iUpdate);
@@ -3417,7 +3417,7 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
             extension.append(buf);
             dirname.append(buf);
         }
-        else if (100 <= iUpdate && iUpdate < 1000)
+        else if (iUpdate < 1000)
         {
             char buf[4];
             CPLsnprintf(buf, sizeof(buf), "%i", iUpdate);

@@ -296,6 +296,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
     {
         const int iField =
             nUpdatedFieldsCount < 0 ? idx : panUpdatedFieldsIdx[idx];
+        assert(iField >= 0);
         if (iField == m_iFIDAsRegularColumnIndex ||
             m_abGeneratedColumns[iField])
             continue;
