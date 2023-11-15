@@ -50,7 +50,7 @@ it takes ~ 300 ms to complete for a build with 126 plugins, which is a substanti
 time for short lived GDAL-based processes (for example a script which would run
 gdalinfo or ogrinfo on many files). This time is entirely spent in the dlopen()
 method of the operating system and there is, to the best of our knowledge,
-nothing we can do reduce it... besides limiting the amount of dynamic loading
+nothing we can do to reduce it... besides limiting the amount of dynamic loading
 (attempts have been made to load plugins in parallel in multiple threads, but
 this does not improve total loading time)
 For developers, that plugin loading phase is actually considerably slower, of
