@@ -54,13 +54,13 @@ inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
     tMinValue = std::numeric_limits<Tin>::min();
 
     // Compute the actual minimum value of Tout in terms of Tin.
-    if (std::numeric_limits<Tout>::is_signed &&
-        std::numeric_limits<Tout>::is_integer)
+    if constexpr (std::numeric_limits<Tout>::is_signed &&
+                  std::numeric_limits<Tout>::is_integer)
     {
         // the minimum value is less than zero
-        if (std::numeric_limits<Tout>::digits <
-                std::numeric_limits<Tin>::digits ||
-            !std::numeric_limits<Tin>::is_integer)
+        if constexpr (std::numeric_limits<Tout>::digits <
+                          std::numeric_limits<Tin>::digits ||
+                      !std::numeric_limits<Tin>::is_integer)
         {
             // Tout is smaller than Tin, so we need to clamp values in input
             // to the range of Tout's min/max values
@@ -71,12 +71,12 @@ inline void GDALGetDataLimits(Tin &tMaxValue, Tin &tMinValue)
             tMaxValue = static_cast<Tin>(std::numeric_limits<Tout>::max());
         }
     }
-    else if (std::numeric_limits<Tout>::is_integer)
+    else if constexpr (std::numeric_limits<Tout>::is_integer)
     {
         // the output is unsigned, so we just need to determine the max
         /* coverity[same_on_both_sides] */
-        if (std::numeric_limits<Tout>::digits <=
-            std::numeric_limits<Tin>::digits)
+        if constexpr (std::numeric_limits<Tout>::digits <=
+                      std::numeric_limits<Tin>::digits)
         {
             // Tout is smaller than Tin, so we need to clamp the input values
             // to the range of Tout's max
