@@ -1055,7 +1055,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             const int nSrcBandIdx = nSelectedBands > 0
                                         ? panSelectedBandList[iBandToIter] - 1
                                         : iBandToIter;
-
+            assert(nSrcBandIdx >= 0);
             GDALAddBand(hVRTDS, psDatasetProperties->aeBandType[nSrcBandIdx],
                         nullptr);
 

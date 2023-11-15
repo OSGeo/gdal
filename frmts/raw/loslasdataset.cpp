@@ -280,7 +280,7 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->adfGeoTransform[2] = 0.0;
     poDS->adfGeoTransform[3] = min_lat + (poDS->nRasterYSize - 0.5) * delta_lat;
     poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -1 * delta_lat;
+    poDS->adfGeoTransform[5] = -1.0 * delta_lat;
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
