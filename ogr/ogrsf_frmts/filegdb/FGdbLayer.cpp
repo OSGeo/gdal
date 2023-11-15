@@ -121,7 +121,7 @@ OGRFeature *FGdbBaseLayer::GetNextFeature()
 
         OGRFeature *pOGRFeature = nullptr;
 
-        if (!OGRFeatureFromGdbRow(&row, &pOGRFeature))
+        if (!OGRFeatureFromGdbRow(&row, &pOGRFeature) || !pOGRFeature)
         {
             int32 oid = -1;
             CPL_IGNORE_RET_VAL(row.GetOID(oid));
@@ -3828,7 +3828,7 @@ OGRFeature *FGdbLayer::GetNextFeature()
             OGRFeature *pOGRFeature = nullptr;
             Row rowFull;
             if (GetRow(enumRows, rowFull, oid) != OGRERR_NONE ||
-                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature))
+                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature) || !pOGRFeature)
             {
                 GDBErr(hr,
                        CPLSPrintf(

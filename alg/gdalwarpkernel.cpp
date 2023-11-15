@@ -5700,14 +5700,14 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal(void *pData)
             for (int iBand = 0; iBand < poWK->nBands; iBand++)
             {
                 T value = 0;
-                if (eResample == GRA_NearestNeighbour)
+                if constexpr (eResample == GRA_NearestNeighbour)
                 {
                     value = reinterpret_cast<T *>(
                         poWK->papabySrcImage[iBand])[iSrcOffset];
                 }
-                else if (bUse4SamplesFormula)
+                else if constexpr (bUse4SamplesFormula)
                 {
-                    if (eResample == GRA_Bilinear)
+                    if constexpr (eResample == GRA_Bilinear)
                         GWKBilinearResampleNoMasks4SampleT(
                             poWK, iBand, padfX[iDstX] - poWK->nSrcXOff,
                             padfY[iDstX] - poWK->nSrcYOff, &value);
@@ -5774,7 +5774,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread(void *pData)
 {
     GWKJobStruct *psJob = static_cast<GWKJobStruct *>(pData);
     GDALWarpKernel *poWK = psJob->poWK;
-    CPLAssert(eResample == GRA_Bilinear || eResample == GRA_Cubic);
+    static_assert(eResample == GRA_Bilinear || eResample == GRA_Cubic);
     const bool bUse4SamplesFormula =
         poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95;
     if (bUse4SamplesFormula)

@@ -3501,7 +3501,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             size_t j =
                 (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize);
 #ifdef USE_SSE2
-            if (eWrkDataType == GDT_Float32)
+            if constexpr (eWrkDataType == GDT_Float32)
             {
 #ifdef __AVX__
                 for (; iFilteredPixelOff + 15 < nDstXSize;

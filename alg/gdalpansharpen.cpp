@@ -541,7 +541,7 @@ void GDALPansharpenOperation::WeightedBroveyWithNoData(
     WorkDataType noData, validValue;
     GDALCopyWord(psOptions->dfNoData, noData);
 
-    if (!(std::numeric_limits<WorkDataType>::is_integer))
+    if constexpr (!(std::numeric_limits<WorkDataType>::is_integer))
         validValue = static_cast<WorkDataType>(noData + 1e-5);
     else if (noData == std::numeric_limits<WorkDataType>::min())
         validValue = std::numeric_limits<WorkDataType>::min() + 1;
@@ -655,8 +655,11 @@ void GDALPansharpenOperation::WeightedBrovey3(
                                          j];
             WorkDataType nPansharpenedValue;
             GDALCopyWord(nRawValue * dfFactor, nPansharpenedValue);
-            if (bHasBitDepth && nPansharpenedValue > nMaxValue)
-                nPansharpenedValue = nMaxValue;
+            if constexpr (bHasBitDepth)
+            {
+                if (nPansharpenedValue > nMaxValue)
+                    nPansharpenedValue = nMaxValue;
+            }
             GDALCopyWord(nPansharpenedValue, pDataBuf[i * nBandValues + j]);
         }
     }
@@ -673,15 +676,15 @@ size_t GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     const T *pPanBuffer, const T *pUpsampledSpectralBuffer, T *pDataBuf,
     size_t nValues, size_t nBandValues, T nMaxValue) const
 {
-    CPL_STATIC_ASSERT(NINPUT == 3 || NINPUT == 4);
-    CPL_STATIC_ASSERT(NOUTPUT == 3 || NOUTPUT == 4);
+    static_assert(NINPUT == 3 || NINPUT == 4);
+    static_assert(NOUTPUT == 3 || NOUTPUT == 4);
     const XMMReg4Double w0 =
         XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 0);
     const XMMReg4Double w1 =
         XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 1);
     const XMMReg4Double w2 =
         XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 2);
-    const XMMReg4Double w3 =
+    [[maybe_unused]] const XMMReg4Double w3 =
         (NINPUT == 3)
             ? XMMReg4Double::Zero()
             : XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 3);
@@ -703,7 +706,7 @@ size_t GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
         XMMReg4Double val2 = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer +
                                                      2 * nBandValues + j);
         XMMReg4Double val3;
-        if (NINPUT == 4 || NOUTPUT == 4)
+        if constexpr (NINPUT == 4 || NOUTPUT == 4)
         {
             val3 = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer +
                                            3 * nBandValues + j);
@@ -712,7 +715,7 @@ size_t GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
         pseudoPanchro += w0 * val0;
         pseudoPanchro += w1 * val1;
         pseudoPanchro += w2 * val2;
-        if (NINPUT == 4)
+        if constexpr (NINPUT == 4)
             pseudoPanchro += w3 * val3;
 
         /* Little trick to avoid use of ternary operator due to one of the
@@ -724,14 +727,14 @@ size_t GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
         val0 = XMMReg4Double::Min(val0 * factor, maxValue);
         val1 = XMMReg4Double::Min(val1 * factor, maxValue);
         val2 = XMMReg4Double::Min(val2 * factor, maxValue);
-        if (NOUTPUT == 4)
+        if constexpr (NOUTPUT == 4)
         {
             val3 = XMMReg4Double::Min(val3 * factor, maxValue);
         }
         val0.Store4Val(pDataBuf + 0 * nBandValues + j);
         val1.Store4Val(pDataBuf + 1 * nBandValues + j);
         val2.Store4Val(pDataBuf + 2 * nBandValues + j);
-        if (NOUTPUT == 4)
+        if constexpr (NOUTPUT == 4)
         {
             val3.Store4Val(pDataBuf + 3 * nBandValues + j);
         }
@@ -746,13 +749,13 @@ size_t GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     const T *pPanBuffer, const T *pUpsampledSpectralBuffer, T *pDataBuf,
     size_t nValues, size_t nBandValues, T nMaxValue) const
 {
-    // cppcheck-suppress knownConditionTrueFalse
-    CPLAssert(NINPUT == 3 || NINPUT == 4);
+    static_assert(NINPUT == 3 || NINPUT == 4);
     const double dfw0 = psOptions->padfWeights[0];
     const double dfw1 = psOptions->padfWeights[1];
     const double dfw2 = psOptions->padfWeights[2];
     // cppcheck-suppress knownConditionTrueFalse
-    const double dfw3 = (NINPUT == 3) ? 0 : psOptions->padfWeights[3];
+    [[maybe_unused]] const double dfw3 =
+        (NINPUT == 3) ? 0 : psOptions->padfWeights[3];
     size_t j = 0;  // Used after for.
     for (; j + 1 < nValues; j += 2)
     {
@@ -772,7 +775,7 @@ size_t GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
         dfPseudoPanchro2 +=
             dfw2 * pUpsampledSpectralBuffer[2 * nBandValues + j + 1];
 
-        if (NINPUT == 4)
+        if constexpr (NINPUT == 4)
         {
             dfPseudoPanchro +=
                 dfw3 * pUpsampledSpectralBuffer[3 * nBandValues + j];

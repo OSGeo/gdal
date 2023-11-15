@@ -415,7 +415,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
 
     // We try to read the zlib compressed data into pData, if there is
     // enough room for that
-    size_t pDataSize = 0;
+    size_t nDataSize = 0;
     std::vector<GByte> abyCompressedData;  // keep in this scope
     GByte *pabyCompressedData = static_cast<GByte *>(pSingleBuffer);
     size_t nCompressedDataSize = 0;
@@ -424,14 +424,14 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         if (nPixelSpace == nBands && nLineSpace == nPixelSpace * nRasterXSize &&
             (nBands == 1 || nBandSpace == 1))
         {
-            pDataSize =
+            nDataSize =
                 static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
         }
         else if (nPixelSpace == 1 && nLineSpace == nRasterXSize &&
                  nBandSpace ==
                      static_cast<GSpacing>(nRasterXSize) * nRasterYSize)
         {
-            pDataSize =
+            nDataSize =
                 static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
         }
     }
@@ -485,7 +485,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                 }
             }
 
-            if (nCompressedDataSize + nChunkSize > pDataSize)
+            if (nCompressedDataSize + nChunkSize > nDataSize)
             {
                 const bool bVectorEmptyBefore = abyCompressedData.empty();
                 // unlikely situation: would mean that the zlib compressed
@@ -502,9 +502,12 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                     bError = true;
                     break;
                 }
-                if (bVectorEmptyBefore && nCompressedDataSize > 0)
+                if (bVectorEmptyBefore && pSingleBuffer &&
+                    nCompressedDataSize > 0)
+                {
                     memcpy(pabyCompressedData, pSingleBuffer,
                            nCompressedDataSize);
+                }
             }
             VSIFReadL(pabyCompressedData + nCompressedDataSize, nChunkSize, 1,
                       fpImage);
@@ -1202,7 +1205,8 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         else if (nBlockYSize > 1)
         {
             void *apabyBuffers[4];
-            GDALRasterBlock *apoBlocks[4];
+            GDALRasterBlock *apoBlocks[4] = {nullptr, nullptr, nullptr,
+                                             nullptr};
             CPLErr eErr = CE_None;
             bool bNeedToUseDefaultCase = true;
             for (int i = 0; i < poGDS->nBands; ++i)
@@ -1212,7 +1216,6 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     bNeedToUseDefaultCase = false;
                     apabyBuffers[i] = pData;
-                    apoBlocks[i] = nullptr;
                 }
                 else
                 {
