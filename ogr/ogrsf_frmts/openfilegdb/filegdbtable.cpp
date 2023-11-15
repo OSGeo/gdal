@@ -3394,7 +3394,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
         case SHPT_POINTZ:
         case SHPT_POINTZM:
             bHasZ = true; /* go on */
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case SHPT_POINT:
         case SHPT_POINTM:
         case SHPT_GENERALPOINT:
@@ -3454,7 +3454,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
         case SHPT_MULTIPOINTZM:
         case SHPT_MULTIPOINTZ:
             bHasZ = true; /* go on */
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case SHPT_MULTIPOINT:
         case SHPT_MULTIPOINTM:
         {
@@ -3522,7 +3522,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
         case SHPT_ARCZ:
         case SHPT_ARCZM:
             bHasZ = true; /* go on */
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case SHPT_ARC:
         case SHPT_ARCM:
         case SHPT_GENERALPOLYLINE:
@@ -3652,7 +3652,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
         case SHPT_POLYGONZ:
         case SHPT_POLYGONZM:
             bHasZ = true; /* go on */
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case SHPT_POLYGON:
         case SHPT_POLYGONM:
         case SHPT_GENERALPOLYGON:
@@ -3858,7 +3858,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
         case SHPT_MULTIPATCHM:
         case SHPT_MULTIPATCH:
             bHasZ = true; /* go on */
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case SHPT_GENERALMULTIPATCH:
         {
             returnErrorIf(!ReadPartDefs(pabyCur, pabyEnd, nPoints, nParts,

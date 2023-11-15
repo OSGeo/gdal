@@ -1037,14 +1037,14 @@ netCDFRasterBand::netCDFRasterBand(
                 nc_datatype = NC_USHORT;
                 break;
             }
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case GDT_UInt32:
             if (poNCDFDS->eFormat == NCDF_FORMAT_NC4)
             {
                 nc_datatype = NC_UINT;
                 break;
             }
-            CPL_FALLTHROUGH
+            [[fallthrough]];
 #endif
         default:
             if (nBand == 1)

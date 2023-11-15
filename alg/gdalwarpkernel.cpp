@@ -4594,13 +4594,13 @@ static CPLErr GWKOpenCLCase(GDALWarpKernel *poWK)
             break;
         case GDT_CInt16:
             bUseImag = true;
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case GDT_Int16:
             imageFormat = CL_SNORM_INT16;
             break;
         case GDT_CFloat32:
             bUseImag = true;
-            CPL_FALLTHROUGH
+            [[fallthrough]];
         case GDT_Float32:
             imageFormat = CL_FLOAT;
             break;

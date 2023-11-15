@@ -189,7 +189,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
 
                 break;
             }
-            CPL_FALLTHROUGH
+            [[fallthrough]];
 
             /***** fallthrough *****/
 
