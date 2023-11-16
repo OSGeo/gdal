@@ -135,6 +135,16 @@ Typical usage is by AlterFieldDefn() / AlterGeomFieldDefn() is:
     }
 
 
+For punctual changes, a convenience ``whileUnsealing`` function is also
+provided.
+
+It can be used as in the following:
+
+.. code-block:: c++
+
+    whileUnsealing(poFieldDefn)->SetType(eNewType);
+
+
 For OGRFeatureDefn, similar changes are done but with an extra subtelty.
 For convenience of drivers, we want a driver to be able to call GetTemporaryUnsealer()
 in a nested way, where only the first/most external call does something, and
@@ -202,6 +212,9 @@ fields owned by the OGRFeatureDefn to be sealed/unsealed at the same time.
     OGRFeatureDefn::GetTemporaryUnsealer(bool bSealFields = true);
 
 
+For punctual changes, a convenience ``whileUnsealing`` function is also
+provided.
+
 In practice, the only Seal() invocation in driver core should be done on
 the OGRFeatureDefn instance they return with GetLayerDefn(). All subsequent
 sealing/unsealing operations should be done through
@@ -230,8 +243,7 @@ Simple CreateField() implementation:
 
     OGRErr OGRMyLayer::CreateField(OGRFieldDefn* poNewFieldDefn, int bApproxOK)
     {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddFieldDefn(poNewFieldDefn);
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poNewFieldDefn);
         return OGRERR_NONE
     }
 
