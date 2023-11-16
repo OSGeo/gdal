@@ -231,6 +231,8 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
     bRewindOnWrite = CPLTestBool(CPLGetConfigOption(
         "SHAPE_REWIND_ON_WRITE",
         hSHP != nullptr && hSHP->nShapeType != SHPT_MULTIPATCH ? "NO" : "YES"));
+
+    poFeatureDefn->Seal(/* bSealFields = */ true);
 }
 
 /************************************************************************/
@@ -1344,6 +1346,7 @@ OGRErr OGRShapeLayer::ICreateFeature(OGRFeature *poFeature)
 
         if (nShapeType != -1)
         {
+            auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
             poFeatureDefn->SetGeomType(eRequestedGeomType);
             ResetGeomType(nShapeType);
         }
@@ -2060,7 +2063,10 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
     {
         m_oSetUCFieldName.insert(osNewFieldNameUC);
 
-        poFeatureDefn->AddFieldDefn(&oModFieldDefn);
+        {
+            auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
+            poFeatureDefn->AddFieldDefn(&oModFieldDefn);
+        }
 
         if (bDBFJustCreated)
         {
@@ -2101,6 +2107,7 @@ OGRErr OGRShapeLayer::DeleteField(int iField)
     {
         TruncateDBF();
 
+        auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
         return poFeatureDefn->DeleteFieldDefn(iField);
     }
 
@@ -2125,6 +2132,7 @@ OGRErr OGRShapeLayer::ReorderFields(int *panMap)
 
     if (DBFReorderFields(hDBF, panMap))
     {
+        auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
         return poFeatureDefn->ReorderFieldDefns(panMap);
     }
 
@@ -2151,6 +2159,8 @@ OGRErr OGRShapeLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 
     OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
     OGRFieldType eType = poFieldDefn->GetType();
+
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
 
     // On reading we support up to 11 characters
     char szFieldName[XBASE_FLDNAME_LEN_READ + 1] = {};
@@ -2254,6 +2264,7 @@ OGRErr OGRShapeLayer::AlterGeomFieldDefn(
 
     auto poFieldDefn = cpl::down_cast<OGRShapeGeomFieldDefn *>(
         poFeatureDefn->GetGeomFieldDefn(iGeomField));
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
 
     if (nFlagsIn & ALTER_GEOM_FIELD_DEFN_NAME_FLAG)
     {
@@ -3774,6 +3785,7 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     if (!ReopenFileDescriptors())
         return OGRERR_FAILURE;
 
+    auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
     SetDescription(pszNewName);
     poFeatureDefn->SetName(pszNewName);
 
