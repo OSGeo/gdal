@@ -2133,6 +2133,9 @@ void OGRFieldDefn::Unseal()
  *
  * This method should only be called by driver implementations.
  *
+ * It is also possible to use the helper method whileUnsealing(). Example:
+ * whileUnsealing(poFieldDefn)->some_method()
+ *
  * @since GDAL 3.9
  */
 OGRFieldDefn::TemporaryUnsealer OGRFieldDefn::GetTemporaryUnsealer()

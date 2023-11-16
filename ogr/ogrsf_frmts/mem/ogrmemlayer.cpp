@@ -623,15 +623,13 @@ OGRErr OGRMemLayer::CreateField(const OGRFieldDefn *poField,
     // Simple case, no features exist yet.
     if (m_nFeatureCount == 0)
     {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddFieldDefn(poField);
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
         return OGRERR_NONE;
     }
 
     // Add field definition and setup remap definition.
     {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddFieldDefn(poField);
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
     }
 
     // Remap all the internal features.  Hopefully there aren't any
@@ -688,8 +686,7 @@ OGRErr OGRMemLayer::DeleteField(int iField)
 
     m_bUpdated = true;
 
-    auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-    return m_poFeatureDefn->DeleteFieldDefn(iField);
+    return whileUnsealing(m_poFeatureDefn)->DeleteFieldDefn(iField);
 }
 
 /************************************************************************/
@@ -719,8 +716,7 @@ OGRErr OGRMemLayer::ReorderFields(int *panMap)
 
     m_bUpdated = true;
 
-    auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-    return m_poFeatureDefn->ReorderFieldDefns(panMap);
+    return whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
 }
 
 /************************************************************************/
@@ -950,16 +946,12 @@ OGRErr OGRMemLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
     // Simple case, no features exist yet.
     if (m_nFeatureCount == 0)
     {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddGeomFieldDefn(poGeomField);
+        whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(poGeomField);
         return OGRERR_NONE;
     }
 
     // Add field definition and setup remap definition.
-    {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddGeomFieldDefn(poGeomField);
-    }
+    whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(poGeomField);
 
     const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
     std::vector<int> anRemap(nGeomFieldCount);

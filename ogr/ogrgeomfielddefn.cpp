@@ -776,6 +776,9 @@ void OGRGeomFieldDefn::Unseal()
  *
  * This method should only be called by driver implementations.
  *
+ * It is also possible to use the helper method whileUnsealing(). Example:
+ * whileUnsealing(poGeomFieldDefn)->some_method()
+ *
  * @since GDAL 3.9
  */
 OGRGeomFieldDefn::TemporaryUnsealer OGRGeomFieldDefn::GetTemporaryUnsealer()

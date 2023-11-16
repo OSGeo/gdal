@@ -1128,8 +1128,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
         }
 
         m_iFIDAsRegularColumnIndex = m_poFeatureDefn->GetFieldCount();
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddFieldDefn(poField);
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
         return OGRERR_NONE;
     }
 
@@ -1270,10 +1269,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
             m_iLengthField = m_poFeatureDefn->GetFieldCount();
     }
 
-    {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddFieldDefn(poField);
-    }
+    whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
 
     if (m_bRegisteredTable)
     {
@@ -1826,10 +1822,7 @@ OGRErr OGROpenFileGDBLayer::DeleteField(int iFieldToDelete)
     const std::string osOldDomainName =
         std::string(poFieldDefn->GetDomainName());
 
-    {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
-    }
+    whileUnsealing(m_poFeatureDefn)->DeleteFieldDefn(iFieldToDelete);
 
     if (m_iFIDAsRegularColumnIndex > iFieldToDelete)
         m_iFIDAsRegularColumnIndex--;
@@ -3041,10 +3034,7 @@ OGRErr OGROpenFileGDBLayer::Rename(const char *pszDstTableName)
 
     m_osName = pszDstTableName;
     SetDescription(pszDstTableName);
-    {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->SetName(pszDstTableName);
-    }
+    whileUnsealing(m_poFeatureDefn)->SetName(pszDstTableName);
 
     auto nLastSlashPos = m_osPath.rfind('\\');
     if (nLastSlashPos != std::string::npos)

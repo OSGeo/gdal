@@ -2295,10 +2295,7 @@ OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
         }
     }
 
-    {
-        auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-        poFeatureDefn->AddFieldDefn(&oField);
-    }
+    whileUnsealing(poFeatureDefn)->AddFieldDefn(&oField);
     m_abGeneratedColumns.resize(poFeatureDefn->GetFieldCount());
 
     if (pszFIDColumn != nullptr && EQUAL(oField.GetNameRef(), pszFIDColumn))
@@ -2522,8 +2519,7 @@ OGRErr OGRPGTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
-    auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-    poFeatureDefn->AddGeomFieldDefn(std::move(poGeomField));
+    whileUnsealing(poFeatureDefn)->AddGeomFieldDefn(std::move(poGeomField));
 
     return OGRERR_NONE;
 }
@@ -2575,8 +2571,7 @@ OGRErr OGRPGTableLayer::DeleteField(int iField)
 
     m_abGeneratedColumns.erase(m_abGeneratedColumns.begin() + iField);
 
-    auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-    return poFeatureDefn->DeleteFieldDefn(iField);
+    return whileUnsealing(poFeatureDefn)->DeleteFieldDefn(iField);
 }
 
 /************************************************************************/
@@ -3623,9 +3618,8 @@ OGRErr OGRPGTableLayer::Rename(const char *pszNewName)
         CPLFree(pszSqlTableName);
         pszSqlTableName = pszNewSqlTableName;
 
-        auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
         SetDescription(pszNewName);
-        poFeatureDefn->SetName(pszNewName);
+        whileUnsealing(poFeatureDefn)->SetName(pszNewName);
     }
 
     OGRPGClearResult(hResult);

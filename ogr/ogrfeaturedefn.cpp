@@ -1746,6 +1746,9 @@ void OGRFeatureDefn::Unseal(bool bUnsealFields)
  *
  * This method should only be called by driver implementations.
  *
+ * It is also possible to use the helper method whileUnsealing(). Example:
+ * whileUnsealing(poFeatureDefn)->some_method()
+ *
  * @param bSealFields Whether fields and geometry fields should be unsealed and
  *                    resealed.
  *                    This is generally desirabled, but in case of deferred

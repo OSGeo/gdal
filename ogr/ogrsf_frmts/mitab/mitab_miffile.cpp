@@ -1775,10 +1775,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * Add the FieldDefn to the FeatureDefn
      *----------------------------------------------------*/
-    {
-        auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
-        m_poDefn->AddFieldDefn(poFieldDefn);
-    }
+    whileUnsealing(m_poDefn)->AddFieldDefn(poFieldDefn);
     m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
     delete poFieldDefn;
 

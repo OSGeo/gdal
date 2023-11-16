@@ -1346,8 +1346,7 @@ OGRErr OGRShapeLayer::ICreateFeature(OGRFeature *poFeature)
 
         if (nShapeType != -1)
         {
-            auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-            poFeatureDefn->SetGeomType(eRequestedGeomType);
+            whileUnsealing(poFeatureDefn)->SetGeomType(eRequestedGeomType);
             ResetGeomType(nShapeType);
         }
     }
@@ -2063,10 +2062,7 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
     {
         m_oSetUCFieldName.insert(osNewFieldNameUC);
 
-        {
-            auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-            poFeatureDefn->AddFieldDefn(&oModFieldDefn);
-        }
+        whileUnsealing(poFeatureDefn)->AddFieldDefn(&oModFieldDefn);
 
         if (bDBFJustCreated)
         {
@@ -2107,8 +2103,7 @@ OGRErr OGRShapeLayer::DeleteField(int iField)
     {
         TruncateDBF();
 
-        auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-        return poFeatureDefn->DeleteFieldDefn(iField);
+        return whileUnsealing(poFeatureDefn)->DeleteFieldDefn(iField);
     }
 
     return OGRERR_FAILURE;
@@ -2132,8 +2127,7 @@ OGRErr OGRShapeLayer::ReorderFields(int *panMap)
 
     if (DBFReorderFields(hDBF, panMap))
     {
-        auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
-        return poFeatureDefn->ReorderFieldDefns(panMap);
+        return whileUnsealing(poFeatureDefn)->ReorderFieldDefns(panMap);
     }
 
     return OGRERR_FAILURE;
@@ -3785,9 +3779,8 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
     if (!ReopenFileDescriptors())
         return OGRERR_FAILURE;
 
-    auto oTemporaryUnsealer(poFeatureDefn->GetTemporaryUnsealer());
     SetDescription(pszNewName);
-    poFeatureDefn->SetName(pszNewName);
+    whileUnsealing(poFeatureDefn)->SetName(pszNewName);
 
     return OGRERR_NONE;
 }

@@ -267,6 +267,11 @@ class CPL_DLL OGRFieldDefn
         {
             m_poFieldDefn->Seal();
         }
+
+        OGRFieldDefn *operator->()
+        {
+            return m_poFieldDefn;
+        }
     };
     /*! @endcond */
 
@@ -275,6 +280,24 @@ class CPL_DLL OGRFieldDefn
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
+
+#ifdef GDAL_COMPILATION
+/** Return an object that temporary unseals the OGRFieldDefn.
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ *
+ * This method should only be called by driver implementations.
+ *
+ * Usage: whileUnsealing(poFieldDefn)->some_method();
+ *
+ * @since GDAL 3.9
+ */
+inline OGRFieldDefn::TemporaryUnsealer whileUnsealing(OGRFieldDefn *object)
+{
+    return object->GetTemporaryUnsealer();
+}
+#endif
 
 /************************************************************************/
 /*                          OGRGeomFieldDefn                            */
@@ -391,6 +414,11 @@ class CPL_DLL OGRGeomFieldDefn
         {
             m_poFieldDefn->Seal();
         }
+
+        OGRGeomFieldDefn *operator->()
+        {
+            return m_poFieldDefn;
+        }
     };
     /*! @endcond */
 
@@ -399,6 +427,25 @@ class CPL_DLL OGRGeomFieldDefn
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
+
+#ifdef GDAL_COMPILATION
+/** Return an object that temporary unseals the OGRGeomFieldDefn.
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ *
+ * This method should only be called by driver implementations.
+ *
+ * Usage: whileUnsealing(poGeomFieldDefn)->some_method();
+ *
+ * @since GDAL 3.9
+ */
+inline OGRGeomFieldDefn::TemporaryUnsealer
+whileUnsealing(OGRGeomFieldDefn *object)
+{
+    return object->GetTemporaryUnsealer();
+}
+#endif
 
 /************************************************************************/
 /*                            OGRFeatureDefn                            */
@@ -735,6 +782,11 @@ class CPL_DLL OGRFeatureDefn
                                    bool bSealFields);
 
         ~TemporaryUnsealer();
+
+        OGRFeatureDefn *operator->()
+        {
+            return m_poFeatureDefn;
+        }
     };
     /*! @endcond */
 
@@ -743,6 +795,34 @@ class CPL_DLL OGRFeatureDefn
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
 };
+
+#ifdef GDAL_COMPILATION
+/** Return an object that temporary unseals the OGRFeatureDefn
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ * This method should be called on a OGRFeatureDefn that has been sealed
+ * previously.
+ * GetTemporaryUnsealer() calls may be nested, in which case only the first
+ * one has an effect (similarly to a recursive mutex locked in a nested way
+ * from the same thread).
+ *
+ * This method should only be called by driver implementations.
+ *
+ * Usage: whileUnsealing(poFeatureDefn)->some_method();
+ *
+ * @param bSealFields Whether fields and geometry fields should be unsealed and
+ *                    resealed.
+ *                    This is generally desirabled, but in case of deferred
+ *                    resolution of them, this parameter should be set to false.
+ * @since GDAL 3.9
+ */
+inline OGRFeatureDefn::TemporaryUnsealer whileUnsealing(OGRFeatureDefn *object,
+                                                        bool bSealFields = true)
+{
+    return object->GetTemporaryUnsealer(bSealFields);
+}
+#endif
 
 /************************************************************************/
 /*                              OGRFeature                              */

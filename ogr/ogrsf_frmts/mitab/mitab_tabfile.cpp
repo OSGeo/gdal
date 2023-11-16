@@ -2238,10 +2238,7 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * Add the FieldDefn to the FeatureDefn
      *----------------------------------------------------*/
-    {
-        auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
-        m_poDefn->AddFieldDefn(poFieldDefn);
-    }
+    whileUnsealing(m_poDefn)->AddFieldDefn(poFieldDefn);
     m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
     delete poFieldDefn;
 
@@ -2768,10 +2765,7 @@ OGRErr TABFile::DeleteField(int iField)
                     (m_poDefn->GetFieldCount() - 1 - iField) * sizeof(int));
         }
 
-        {
-            auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
-            m_poDefn->DeleteFieldDefn(iField);
-        }
+        whileUnsealing(m_poDefn)->DeleteFieldDefn(iField);
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();
@@ -2814,10 +2808,7 @@ OGRErr TABFile::ReorderFields(int *panMap)
         CPLFree(m_panIndexNo);
         m_panIndexNo = panNewIndexedField;
 
-        {
-            auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
-            m_poDefn->ReorderFieldDefns(panMap);
-        }
+        whileUnsealing(m_poDefn)->ReorderFieldDefns(panMap);
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();

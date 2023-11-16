@@ -1765,10 +1765,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
         }
     }
 
-    {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
-    }
+    whileUnsealing(m_poFeatureDefn)->AddFieldDefn(&oFieldDefn);
 
     m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
@@ -1944,10 +1941,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
             return err;
     }
 
-    {
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-        m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
-    }
+    whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(&oGeomField);
 
     if (!m_bDeferredCreation)
     {
@@ -5340,9 +5334,8 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
     {
         m_poDS->ClearCachedRelationships();
 
-        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
         SetDescription(pszDstTableName);
-        m_poFeatureDefn->SetName(pszDstTableName);
+        whileUnsealing(m_poFeatureDefn)->SetName(pszDstTableName);
     }
 
     return eErr;
@@ -6322,8 +6315,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
         eErr = m_poDS->SoftCommitTransaction();
         if (eErr == OGRERR_NONE)
         {
-            auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-            eErr = m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+            eErr = whileUnsealing(m_poFeatureDefn)
+                       ->DeleteFieldDefn(iFieldToDelete);
 
             if (eErr == OGRERR_NONE)
             {
@@ -7293,8 +7286,7 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields(int *panMap)
 
         if (eErr == OGRERR_NONE)
         {
-            auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
-            eErr = m_poFeatureDefn->ReorderFieldDefns(panMap);
+            eErr = whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
         }
 
         if (eErr == OGRERR_NONE)

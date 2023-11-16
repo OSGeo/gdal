@@ -520,9 +520,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         if (poName && json_object_get_type(poName) == json_type_string)
         {
             const char *pszValue = json_object_get_string(poName);
-            auto poFDefn = poLayer->GetLayerDefn();
-            auto oTemporaryUnsealer(poFDefn->GetTemporaryUnsealer());
-            poFDefn->SetName(pszValue);
+            whileUnsealing(poLayer->GetLayerDefn())->SetName(pszValue);
             poLayer->SetDescription(pszValue);
         }
 
@@ -552,8 +550,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         if (eGeomType != wkbNone && poSRS != nullptr)
         {
             auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
-            auto oTemporaryUnsealer(poGeomFieldDefn->GetTemporaryUnsealer());
-            poGeomFieldDefn->SetSpatialRef(poSRS);
+            whileUnsealing(poGeomFieldDefn)->SetSpatialRef(poSRS);
         }
         if (poSRS)
             poSRS->Release();
@@ -913,8 +910,7 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
     }
     {
         auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
-        auto oTemporaryUnsealer(poGeomFieldDefn->GetTemporaryUnsealer());
-        poGeomFieldDefn->SetSpatialRef(poSRS);
+        whileUnsealing(poGeomFieldDefn)->SetSpatialRef(poSRS);
     }
 
     if (!GenerateLayerDefn(poLayer, poObj))
@@ -1232,10 +1228,7 @@ void OGRGeoJSONBaseReader::FinalizeLayerDefn(OGRLayer *poLayer,
     OGRFeatureDefn *poLayerDefn = poLayer->GetLayerDefn();
     CPLAssert(nullptr != poLayerDefn);
 
-    {
-        auto oTemporaryUnsealer(poLayerDefn->GetTemporaryUnsealer());
-        poLayerDefn->SetGeomType(m_eLayerGeomType);
-    }
+    whileUnsealing(poLayerDefn)->SetGeomType(m_eLayerGeomType);
 
     if (m_bNeedFID64)
     {
