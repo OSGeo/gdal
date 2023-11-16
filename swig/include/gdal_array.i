@@ -32,18 +32,6 @@
 
 %module (package="osgeo") gdal_array
 
-%{
-// Define this unconditionally of whether DEBUG_BOOL is defined or not,
-// since we do not pass -DDEBUG_BOOL when building the bindings
-#define DO_NOT_USE_DEBUG_BOOL
-
-// So that override is properly defined
-#ifndef GDAL_COMPILATION
-#define GDAL_COMPILATION
-#endif
-
-%}
-
 %include constraints.i
 
 %import typemaps_python.i
