@@ -614,6 +614,9 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
         m_poDefn->GetGeomFieldCount() != 0)
         m_poDefn->GetGeomFieldDefn(0)->SetSpatialRef(GetSpatialRef());
 
+    if (m_poDefn)
+        m_poDefn->Seal(/* bSealFields = */ true);
+
     return 0;
 }
 
@@ -2235,7 +2238,10 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * Add the FieldDefn to the FeatureDefn
      *----------------------------------------------------*/
-    m_poDefn->AddFieldDefn(poFieldDefn);
+    {
+        auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
+        m_poDefn->AddFieldDefn(poFieldDefn);
+    }
     m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
     delete poFieldDefn;
 
@@ -2762,7 +2768,10 @@ OGRErr TABFile::DeleteField(int iField)
                     (m_poDefn->GetFieldCount() - 1 - iField) * sizeof(int));
         }
 
-        m_poDefn->DeleteFieldDefn(iField);
+        {
+            auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
+            m_poDefn->DeleteFieldDefn(iField);
+        }
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();
@@ -2805,7 +2814,10 @@ OGRErr TABFile::ReorderFields(int *panMap)
         CPLFree(m_panIndexNo);
         m_panIndexNo = panNewIndexedField;
 
-        m_poDefn->ReorderFieldDefns(panMap);
+        {
+            auto oTemporaryUnsealer(m_poDefn->GetTemporaryUnsealer());
+            m_poDefn->ReorderFieldDefns(panMap);
+        }
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();
@@ -2841,6 +2853,7 @@ OGRErr TABFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         m_bNeedTABRewrite = TRUE;
 
         OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
+        auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
         if ((nFlagsIn & ALTER_TYPE_FLAG) &&
             poNewFieldDefn->GetType() != poFieldDefn->GetType())
         {
