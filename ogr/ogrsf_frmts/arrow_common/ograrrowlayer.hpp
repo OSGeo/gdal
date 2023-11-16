@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <cinttypes>
 #include <limits>
+#include <string_view>
 
 #define SWQ_ISNOTNULL (-SWQ_ISNULL)
 
@@ -2943,24 +2944,14 @@ static bool ConstraintEvaluator(const OGRArrowLayer::Constraint &constraint,
     return b;
 }
 
-struct StringView
-{
-    const char *m_ptr;
-    size_t m_len;
-
-    StringView(const char *ptr, size_t len) : m_ptr(ptr), m_len(len)
-    {
-    }
-};
-
-inline bool CompareStr(int op, const StringView &val1, const std::string &val2)
+inline bool CompareStr(int op, const std::string_view &val1,
+                       const std::string &val2)
 {
     if (op == SWQ_EQ)
     {
-        return val1.m_len == val2.size() &&
-               memcmp(val1.m_ptr, val2.data(), val1.m_len) == 0;
+        return val1 == val2;
     }
-    const int cmpRes = val2.compare(0, val2.size(), val1.m_ptr, val1.m_len);
+    const int cmpRes = val2.compare(val1);
     switch (op)
     {
         case SWQ_LE:
@@ -2982,7 +2973,7 @@ inline bool CompareStr(int op, const StringView &val1, const std::string &val2)
 }
 
 inline bool ConstraintEvaluator(const OGRArrowLayer::Constraint &constraint,
-                                const StringView &value)
+                                const std::string_view &value)
 {
     return CompareStr(constraint.nOperation, value, constraint.osValue);
 }
@@ -3202,8 +3193,8 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
                     castArray->GetValue(m_nIdxInBatch, &out_length);
                 if (!ConstraintEvaluator(
                         constraint,
-                        StringView(reinterpret_cast<const char *>(data),
-                                   out_length)))
+                        std::string_view(reinterpret_cast<const char *>(data),
+                                         out_length)))
                 {
                     return true;
                 }
