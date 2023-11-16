@@ -805,7 +805,7 @@ Networking options
 -  .. config:: GDAL_HTTP_MERGE_CONSECUTIVE_RANGES
       :since: 2.3
       :choices: YES, NO
-      :default: NO
+      :default: YES
 
       Only applies when :config:`GDAL_HTTP_MULTIRANGE` is YES. Defines if ranges
       of a single ReadMultiRange() request that are consecutive should be merged
