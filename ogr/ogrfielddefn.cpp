@@ -148,6 +148,12 @@ void OGR_Fld_Destroy(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetName().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param pszNameIn the new name to apply.
  */
 
@@ -168,6 +174,12 @@ void OGRFieldDefn::SetName(const char *pszNameIn)
  * \brief Reset the name of this field.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetName().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to apply the new name to.
  * @param pszName the new name to apply.
@@ -236,6 +248,12 @@ const char *OGR_Fld_GetNameRef(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetAlternativeName().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param pszAlternativeNameIn the new alternative name to apply.
  *
  * @since GDAL 3.2
@@ -267,6 +285,12 @@ void OGRFieldDefn::SetAlternativeName(const char *pszAlternativeNameIn)
  *
  * This function is the same as the CPP method
  * OGRFieldDefn::SetAlternativeName().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to apply the new alternative name
  * to.
@@ -391,6 +415,12 @@ OGRFieldType OGR_Fld_GetType(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetType().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param eTypeIn the new field type.
  */
 
@@ -415,6 +445,12 @@ void OGRFieldDefn::SetType(OGRFieldType eTypeIn)
  * that is already part of an OGRFeatureDefn.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetType().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to set type to.
  * @param eType the new field type.
@@ -477,6 +513,12 @@ OGRFieldSubType OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetSubType().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param eSubTypeIn the new field subtype.
  * @since GDAL 2.0
  */
@@ -504,6 +546,12 @@ void OGRFieldDefn::SetSubType(OGRFieldSubType eSubTypeIn)
  * that is already part of an OGRFeatureDefn.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetSubType().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to set type to.
  * @param eSubType the new field subtype.
@@ -542,6 +590,12 @@ void OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
  *
  * This function is the same as the C function OGR_Fld_SetDefault().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param pszDefaultIn new default field value or NULL pointer.
  *
@@ -610,6 +664,12 @@ void OGRFieldDefn::SetDefault(const char *pszDefaultIn)
  * GDAL_DCAP_DEFAULT_FIELDS driver metadata item.
  *
  * This function is the same as the C++ method OGRFieldDefn::SetDefault().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition.
  * @param pszDefault new default field value or NULL pointer.
@@ -1014,6 +1074,12 @@ int OGR_Fld_GetWidth(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetWidth().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param nWidth the new width.
  */
 
@@ -1024,6 +1090,12 @@ int OGR_Fld_GetWidth(OGRFieldDefnH hDefn)
  * \brief Set the formatting width for this field in characters.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetWidth().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to set width to.
  * @param nNewWidth the new width.
@@ -1084,6 +1156,12 @@ int OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetPrecision().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param nPrecision the new precision.
  */
 
@@ -1096,6 +1174,12 @@ int OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
  * This should normally be zero for fields of types other than OFTReal.
  *
  * This function is the same as the CPP method OGRFieldDefn::SetPrecision().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to set precision to.
  * @param nPrecision the new precision.
@@ -1165,6 +1249,12 @@ int OGR_Fld_GetTZFlag(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetTZFlag().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
+ *
  * @param nTZFlag the new time zone flag.
  * @since GDAL 3.8
  */
@@ -1181,6 +1271,12 @@ int OGR_Fld_GetTZFlag(OGRFieldDefnH hDefn)
  *
  * Cf OGR_TZFLAG_UNKNOWN, OGR_TZFLAG_LOCALTIME, OGR_TZFLAG_MIXED_TZ and
  * OGR_TZFLAG_UTC
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to set precision to.
  * @param nTZFlag the new time zone flag.
@@ -1201,6 +1297,12 @@ void OGR_Fld_SetTZFlag(OGRFieldDefnH hDefn, int nTZFlag)
  * \brief Set defining parameters for a field in one call.
  *
  * This method is the same as the C function OGR_Fld_Set().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param pszNameIn the new name to assign.
  * @param eTypeIn the new type (one of the OFT values like OFTInteger).
@@ -1230,6 +1332,12 @@ void OGRFieldDefn::Set(const char *pszNameIn, OGRFieldType eTypeIn,
  * \brief Set defining parameters for a field in one call.
  *
  * This function is the same as the CPP method OGRFieldDefn::Set().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
  * @param hDefn handle to the field definition to set to.
  * @param pszNameIn the new name to assign.
@@ -1294,6 +1402,10 @@ int OGR_Fld_IsIgnored(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetIgnored().
  *
+ * This method should not be called on a object returned with
+ * OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead, the
+ * OGRLayer::SetIgnoredFields() method should be called.
+ *
  * @param ignore ignore state
  */
 
@@ -1305,6 +1417,10 @@ int OGR_Fld_IsIgnored(OGRFieldDefnH hDefn)
  * \brief Set whether this field should be omitted when fetching features
  *
  * This method is the same as the C++ method OGRFieldDefn::SetIgnored().
+ *
+ * This method should not be called on a object returned with
+ * OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead, the
+ * OGRLayer::SetIgnoredFields() method should be called.
  *
  * @param hDefn handle to the field definition
  * @param ignore ignore state
@@ -1405,6 +1521,12 @@ int OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetNullable().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param bNullableIn FALSE if the field must have a not-null constraint.
  * @since GDAL 2.0
  */
@@ -1423,6 +1545,12 @@ int OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
  * GDAL_DCAP_NOTNULL_FIELDS driver metadata item.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetNullable().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the field definition
  * @param bNullableIn FALSE if the field must have a not-null constraint.
@@ -1489,6 +1617,12 @@ int OGR_Fld_IsUnique(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetUnique().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param bUniqueIn TRUE if the field must have a unique constraint.
  * @since GDAL 3.2
  */
@@ -1508,6 +1642,12 @@ int OGR_Fld_IsUnique(OGRFieldDefnH hDefn)
  *field can receive null values.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetUnique().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the field definition
  * @param bUniqueIn TRUE if the field must have a unique constraint.
@@ -1576,6 +1716,12 @@ const char *OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetDomainName().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param osDomainName Field domain name.
  * @since GDAL 3.3
  */
@@ -1590,6 +1736,12 @@ const char *OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
  * Field domains (OGRFieldDomain) are attached at the GDALDataset level.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetDomainName().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the field definition
  * @param pszFieldName Field domain name.
@@ -1651,6 +1803,12 @@ const char *OGR_Fld_GetComment(OGRFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_Fld_SetComment().
  *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param osComment Field comment.
  * @since GDAL 3.7
  */
@@ -1663,6 +1821,12 @@ const char *OGR_Fld_GetComment(OGRFieldDefnH hDefn)
  * \brief Set the comment for this field.
  *
  * This method is the same as the C++ method OGRFieldDefn::SetComment().
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the field definition
  * @param pszComment Field comment.

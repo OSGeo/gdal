@@ -98,6 +98,12 @@ class OGRStyleTable;
  * retrieving features.  See SetIgnored() / IsIgnored()</li> <li>a field domain
  * name (optional). See SetDomainName() / Get DomainName()</li>
  * </ul>
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  */
 
 class CPL_DLL OGRFieldDefn
@@ -279,6 +285,12 @@ class CPL_DLL OGRFieldDefn
  * / IsNullable()</li> <li>a boolean to indicate whether it should be ignored
  * when retrieving features.  See SetIgnored() / IsIgnored()</li>
  * </ul>
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @since OGR 1.11
  */

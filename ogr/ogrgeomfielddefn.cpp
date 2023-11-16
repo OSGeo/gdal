@@ -165,6 +165,12 @@ void OGR_GFld_Destroy(OGRGeomFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_GFld_SetName().
  *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param pszNameIn the new name to apply.
  *
  * @since GDAL 1.11
@@ -187,6 +193,12 @@ void OGRGeomFieldDefn::SetName(const char *pszNameIn)
  * \brief Reset the name of this field.
  *
  * This function is the same as the CPP method OGRGeomFieldDefn::SetName().
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the geometry field definition to apply the
  * new name to.
@@ -306,6 +318,12 @@ OGRwkbGeometryType OGR_GFld_GetType(OGRGeomFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_GFld_SetType().
  *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param eTypeIn the new field geometry type.
  *
  * @since GDAL 1.11
@@ -326,6 +344,12 @@ void OGRGeomFieldDefn::SetType(OGRwkbGeometryType eTypeIn)
  * that is already part of an OGRFeatureDefn.
  *
  * This function is the same as the CPP method OGRGeomFieldDefn::SetType().
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the geometry field definition to set type to.
  * @param eType the new field geometry type.
@@ -390,6 +414,10 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  *
  * This method is the same as the C function OGR_GFld_SetIgnored().
  *
+ * This method should not be called on a object returned with
+ * OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead, the
+ * OGRLayer::SetIgnoredFields() method should be called.
+ *
  * @param ignore ignore state
  *
  * @since GDAL 1.11
@@ -403,6 +431,10 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
  * \brief Set whether this field should be omitted when fetching features
  *
  * This method is the same as the C++ method OGRGeomFieldDefn::SetIgnored().
+ *
+ * This method should not be called on a object returned with
+ * OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead, the
+ * OGRLayer::SetIgnoredFields() method should be called.
  *
  * @param hDefn handle to the geometry field definition
  * @param ignore ignore state
@@ -478,6 +510,12 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  * This method drops the reference of the previously set SRS object and
  * acquires a new reference on the passed object (if non-NULL).
  *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param poSRSIn the new SRS to apply.
  *
  * @since GDAL 1.11
@@ -503,6 +541,12 @@ void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
  *
  * This function drops the reference of the previously set SRS object and
  * acquires a new reference on the passed object (if non-NULL).
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param hDefn handle to the geometry field definition
  * @param hSRS the new SRS to apply.
@@ -586,6 +630,12 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  *
  * This method is the same as the C++ method OGRGeomFieldDefn::IsNullable().
  *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @param hDefn handle to the field definition
  * @return TRUE if the field is authorized to be null.
  * @since GDAL 2.0
@@ -612,6 +662,12 @@ int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
  * GDAL_DCAP_NOTNULL_GEOMFIELDS driver metadata item.
  *
  * This method is the same as the C function OGR_GFld_SetNullable().
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  *
  * @param bNullableIn FALSE if the field must have a not-null constraint.
  * @since GDAL 2.0
