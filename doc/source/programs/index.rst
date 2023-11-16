@@ -33,6 +33,7 @@ Raster programs
    gdalbuildvrt
    gdal_contour
    gdaldem
+   gdalenhance
    rgb2pct
    pct2rgb
    gdalattachpct
@@ -72,6 +73,7 @@ Raster programs
     - :ref:`gdalbuildvrt`: Builds a VRT from a list of datasets.
     - :ref:`gdal_contour`: Builds vector contour lines from a raster elevation model.
     - :ref:`gdaldem`: Tools to analyze and visualize DEMs.
+    - :ref: `gdalenhance`: Performs image enhancement on raster.
     - :ref:`rgb2pct`: Convert a 24bit RGB image to 8bit paletted.
     - :ref:`pct2rgb`: Convert an 8bit paletted image to 24bit RGB.
     - :ref:`gdalattachpct`: Attach a color table to a raster file from an input file.

@@ -1,6 +1,6 @@
 # This file may be used to create an environment using:
 # $ pip install --upgrade -r <this file>
-sphinx
+sphinx < 7.0.0
 breathe
 sphinx_bootstrap_theme
 sphinxcontrib-bibtex
@@ -9,3 +9,4 @@ recommonmark
 sphinx-markdown-tables
 sphinxcontrib-spelling
 sphinxcontrib-jquery
+
