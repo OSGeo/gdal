@@ -511,41 +511,38 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         std::vector<std::pair<std::string, std::string>> oMetadata;
         const char *pszAlternativeName = poFieldDefn->GetAlternativeNameRef();
         if (pszAlternativeName && pszAlternativeName[0])
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_ALTERNATIVE_NAME, pszAlternativeName));
+            oMetadata.emplace_back(
+                std::pair(MD_GDAL_OGR_ALTERNATIVE_NAME, pszAlternativeName));
 
         const char *pszDefault = poFieldDefn->GetDefault();
         if (pszDefault && pszDefault[0])
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_DEFAULT, pszDefault));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_DEFAULT, pszDefault));
 
         const std::string &osComment = poFieldDefn->GetComment();
         if (!osComment.empty())
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_COMMENT, osComment));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_COMMENT, osComment));
 
         if (poFieldDefn->GetSubType() != OFSTNone &&
             poFieldDefn->GetSubType() != OFSTBoolean &&
             poFieldDefn->GetSubType() != OFSTFloat32)
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_SUBTYPE,
-                OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
+            oMetadata.emplace_back(
+                std::pair(MD_GDAL_OGR_SUBTYPE,
+                          OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
         }
         if (poFieldDefn->GetType() == OFTString && poFieldDefn->GetWidth() > 0)
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
+            oMetadata.emplace_back(std::pair(
                 MD_GDAL_OGR_WIDTH, CPLSPrintf("%d", poFieldDefn->GetWidth())));
         }
         if (poFieldDefn->IsUnique())
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_UNIQUE, "true"));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_UNIQUE, "true"));
         }
         if (!poFieldDefn->GetDomainName().empty())
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_DOMAIN_NAME, poFieldDefn->GetDomainName()));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_DOMAIN_NAME,
+                                             poFieldDefn->GetDomainName()));
         }
 
         if (!oMetadata.empty())

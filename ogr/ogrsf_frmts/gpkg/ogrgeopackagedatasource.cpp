@@ -9110,7 +9110,7 @@ GDALGeoPackageDataset::GetLayerWithGetSpatialWhereByName(const char *pszName)
 {
     OGRGeoPackageLayer *poRet =
         cpl::down_cast<OGRGeoPackageLayer *>(GetLayerByName(pszName));
-    return std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>(poRet, poRet);
+    return std::pair(poRet, poRet);
 }
 
 /************************************************************************/

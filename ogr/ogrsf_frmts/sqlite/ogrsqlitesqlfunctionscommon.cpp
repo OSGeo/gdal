@@ -46,7 +46,7 @@ class OGRSQLiteExtensionData
 #ifdef DEBUG
     void *pDummy = nullptr; /* to track memory leaks */
 #endif
-    std::map<std::pair<int, int>, OGRCoordinateTransformation *>
+    std::map<std::pair<int, int>, std::unique_ptr<OGRCoordinateTransformation>>
         oCachedTransformsMap{};
     std::map<std::string, std::unique_ptr<GDALDataset>> oCachedDS{};
 
@@ -105,11 +105,6 @@ OGRSQLiteExtensionData::~OGRSQLiteExtensionData()
     CPLFree(pDummy);
 #endif
 
-    std::map<std::pair<int, int>, OGRCoordinateTransformation *>::iterator
-        oIter = oCachedTransformsMap.begin();
-    for (; oIter != oCachedTransformsMap.end(); ++oIter)
-        delete oIter->second;
-
     OGRSQLiteFreeRegExpCache(hRegExpCache);
 
     OGRGeocodeDestroySession(hGeocodingSession);
@@ -123,25 +118,23 @@ OGRSQLiteExtensionData::~OGRSQLiteExtensionData()
 OGRCoordinateTransformation *OGRSQLiteExtensionData::GetTransform(int nSrcSRSId,
                                                                   int nDstSRSId)
 {
-    std::map<std::pair<int, int>, OGRCoordinateTransformation *>::iterator
-        oIter = oCachedTransformsMap.find(
-            std::pair<int, int>(nSrcSRSId, nDstSRSId));
+    auto oIter = oCachedTransformsMap.find(std::pair(nSrcSRSId, nDstSRSId));
     if (oIter == oCachedTransformsMap.end())
     {
-        OGRCoordinateTransformation *poCT = nullptr;
+        std::unique_ptr<OGRCoordinateTransformation> poCT;
         OGRSpatialReference oSrcSRS, oDstSRS;
         oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (oSrcSRS.importFromEPSG(nSrcSRSId) == OGRERR_NONE &&
             oDstSRS.importFromEPSG(nDstSRSId) == OGRERR_NONE)
         {
-            poCT = OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS);
+            poCT.reset(OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS));
         }
-        oCachedTransformsMap[std::pair<int, int>(nSrcSRSId, nDstSRSId)] = poCT;
-        return poCT;
+        oIter = oCachedTransformsMap
+                    .insert({std::pair(nSrcSRSId, nDstSRSId), std::move(poCT)})
+                    .first;
     }
-    else
-        return oIter->second;
+    return oIter->second.get();
 }
 #endif
 
@@ -161,8 +154,8 @@ GDALDataset *OGRSQLiteExtensionData::GetDataset(const char *pszDSName)
     {
         return nullptr;
     }
-    oCachedDS[pszDSName] = std::move(poDS);
-    return oCachedDS[pszDSName].get();
+    oIter = oCachedDS.insert({pszDSName, std::move(poDS)}).first;
+    return oIter->second.get();
 }
 
 }  // namespace

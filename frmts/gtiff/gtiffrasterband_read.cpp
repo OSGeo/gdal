@@ -792,7 +792,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             {
                 // Sparse tile
                 m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                    nBlockId, std::pair<vsi_l_offset, vsi_l_offset>(0, 0));
+                    nBlockId, std::pair(0, 0));
                 continue;
             }
 
@@ -855,8 +855,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                          nBlockId, nRealOffset, nRealSize);
 #endif
                 m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
-                    nBlockId, std::pair<vsi_l_offset, vsi_l_offset>(nRealOffset,
-                                                                    nRealSize));
+                    nBlockId, std::pair(nRealOffset, nRealSize));
             }
 
             // Processing of mask
@@ -915,8 +914,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
 #endif
 
                     m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.insert(
-                        nBlockId, std::pair<vsi_l_offset, vsi_l_offset>(
-                                      nRealOffset, nRealSize));
+                        nBlockId, std::pair(nRealOffset, nRealSize));
                 }
             }
             if (!bOK)
@@ -983,8 +981,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                                  iX, iY, nOffset,
                                  nOffset + static_cast<size_t>(nSize) - 1);
 #endif
-                        aOffsetSize.push_back(std::pair<vsi_l_offset, size_t>(
-                            nOffset, static_cast<size_t>(nSize)));
+                        aOffsetSize.push_back(
+                            std::pair(nOffset, static_cast<size_t>(nSize)));
                         nTotalSize += static_cast<size_t>(nSize);
                     }
                     else
