@@ -392,6 +392,14 @@ class CPL_DLL OGRGeomFieldDefn
  *
  * It is reasonable for different translators to derive classes from
  * OGRFeatureDefn with additional translator specific information.
+ *
+ * Note that adding, modifying, removing, reordering a OGRFieldDefn (or a
+ * OGRGeomFieldDefn) from/to a OGRFeatureDefn that belongs to a OGRLayer should
+ * not be done through the OGRFeatureDefn::AddFieldDefn(),
+ * OGRFeatureDefn::DeleteFieldDefn() or OGRFeatureDefn::ReorderFieldDefns()
+ * methods, but rather through OGRLayer::CreateField(),
+ * OGRLayer::AlterFieldDefn() or OGRLayer::ReorderFields(), for drivers that
+ * support those operations.
  */
 
 class CPL_DLL OGRFeatureDefn

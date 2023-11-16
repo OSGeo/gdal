@@ -205,6 +205,9 @@ OGRFeatureDefn *OGRFeatureDefn::Clone() const
 /**
  * \brief Change name of this OGRFeatureDefn.
  *
+ * To rename a layer, do not use this function directly, but use
+ * OGRLayer::Rename() instead.
+ *
  * @param pszName feature definition name
  * @since GDAL 2.3
  */
