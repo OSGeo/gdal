@@ -1906,6 +1906,10 @@ def gdalurlopen(url, timeout=10):
         print(f"HTTP service for {url} is down (URL Error: {e.reason})")
         socket.setdefaulttimeout(old_timeout)
         return None
+    except socket.timeout:
+        print(f"HTTP service for {url} timed out")
+        socket.setdefaulttimeout(old_timeout)
+        return None
 
 
 def runexternal(
