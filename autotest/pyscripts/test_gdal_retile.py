@@ -47,6 +47,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_gdal_retile_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_retile", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_retile_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_retile", "--version"
+    )
+
+
+###############################################################################
 # Test gdal_retile.py
 
 

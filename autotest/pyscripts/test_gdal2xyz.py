@@ -58,6 +58,28 @@ def script_path():
     return test_py_scripts.get_py_script("gdal2xyz")
 
 
+###############################################################################
+#
+
+
+def test_gdal2xyz_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal2xyz", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal2xyz_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal2xyz", "--version"
+    )
+
+
 def test_gdal2xyz_py_1():
     """test get_ovr_idx, create_flat_raster"""
     pytest.importorskip("numpy")

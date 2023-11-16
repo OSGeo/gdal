@@ -48,6 +48,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_gdal_proximity_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_proximity", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_proximity_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_proximity", "--version"
+    )
+
+
+###############################################################################
 # Test a fairly default case.
 
 

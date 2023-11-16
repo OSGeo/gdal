@@ -84,6 +84,28 @@ def sample_tifs(tmp_path_factory):
 
 
 ###############################################################################
+#
+
+
+def test_gdal_merge_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_merge", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_merge_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_merge", "--version"
+    )
+
+
+###############################################################################
 # Basic test
 
 

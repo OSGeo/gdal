@@ -47,6 +47,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_gdal_fillnodata_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_fillnodata", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_fillnodata_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_fillnodata", "--version"
+    )
+
+
+###############################################################################
 # Dummy test : there is no nodata value in the source dataset !
 
 

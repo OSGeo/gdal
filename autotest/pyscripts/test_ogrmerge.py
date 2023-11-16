@@ -49,6 +49,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_ogrmerge_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "ogrmerge", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_ogrmerge_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "ogrmerge", "--version"
+    )
+
+
+###############################################################################
 # Test -single
 
 
