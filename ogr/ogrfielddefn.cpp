@@ -160,6 +160,12 @@ void OGR_Fld_Destroy(OGRFieldDefnH hDefn)
 void OGRFieldDefn::SetName(const char *pszNameIn)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetName() not allowed on a sealed object");
+        return;
+    }
     if (pszName != pszNameIn)
     {
         CPLFree(pszName);
@@ -262,6 +268,13 @@ const char *OGR_Fld_GetNameRef(OGRFieldDefnH hDefn)
 void OGRFieldDefn::SetAlternativeName(const char *pszAlternativeNameIn)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetAlternativeName() not allowed on a sealed "
+                 "object");
+        return;
+    }
     if (pszAlternativeName != pszAlternativeNameIn)
     {
         CPLFree(pszAlternativeName);
@@ -426,6 +439,12 @@ OGRFieldType OGR_Fld_GetType(OGRFieldDefnH hDefn)
 
 void OGRFieldDefn::SetType(OGRFieldType eTypeIn)
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetType() not allowed on a sealed object");
+        return;
+    }
     if (!OGR_AreTypeSubTypeCompatible(eTypeIn, eSubType))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -524,6 +543,12 @@ OGRFieldSubType OGR_Fld_GetSubType(OGRFieldDefnH hDefn)
  */
 void OGRFieldDefn::SetSubType(OGRFieldSubType eSubTypeIn)
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetSubType() not allowed on a sealed object");
+        return;
+    }
     if (!OGR_AreTypeSubTypeCompatible(eType, eSubTypeIn))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -605,6 +630,12 @@ void OGR_Fld_SetSubType(OGRFieldDefnH hDefn, OGRFieldSubType eSubType)
 void OGRFieldDefn::SetDefault(const char *pszDefaultIn)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetDefault() not allowed on a sealed object");
+        return;
+    }
     CPLFree(pszDefault);
     pszDefault = nullptr;
 
@@ -1068,8 +1099,6 @@ int OGR_Fld_GetWidth(OGRFieldDefnH hDefn)
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetWidth( int nWidth );
- *
  * \brief Set the formatting width for this field in characters.
  *
  * This method is the same as the C function OGR_Fld_SetWidth().
@@ -1080,8 +1109,18 @@ int OGR_Fld_GetWidth(OGRFieldDefnH hDefn)
  * OGRLayer::AlterFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
- * @param nWidth the new width.
+ * @param nWidthIn the new width.
  */
+void OGRFieldDefn::SetWidth(int nWidthIn)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetWidth() not allowed on a sealed object");
+        return;
+    }
+    nWidth = MAX(0, nWidthIn);
+}
 
 /************************************************************************/
 /*                          OGR_Fld_SetWidth()                          */
@@ -1148,8 +1187,6 @@ int OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetPrecision( int nPrecision );
- *
  * \brief Set the formatting precision for this field in characters.
  *
  * This should normally be zero for fields of types other than OFTReal.
@@ -1162,8 +1199,18 @@ int OGR_Fld_GetPrecision(OGRFieldDefnH hDefn)
  * OGRLayer::AlterFieldDefn() should be called on a new instance of
  * OGRFieldDefn, for drivers that support AlterFieldDefn.
  *
- * @param nPrecision the new precision.
+ * @param nPrecisionIn the new precision.
  */
+void OGRFieldDefn::SetPrecision(int nPrecisionIn)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetPrecision() not allowed on a sealed object");
+        return;
+    }
+    nPrecision = nPrecisionIn;
+}
 
 /************************************************************************/
 /*                        OGR_Fld_SetPrecision()                        */
@@ -1238,8 +1285,6 @@ int OGR_Fld_GetTZFlag(OGRFieldDefnH hDefn)
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetTZFlag( int nTZFlag );
- *
  * \brief Set the time zone flag.
  *
  * Only applies to OFTTime, OFTDate and OFTDateTime fields.
@@ -1258,6 +1303,16 @@ int OGR_Fld_GetTZFlag(OGRFieldDefnH hDefn)
  * @param nTZFlag the new time zone flag.
  * @since GDAL 3.8
  */
+void OGRFieldDefn::SetTZFlag(int nTZFlag)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetTZFlag() not allowed on a sealed object");
+        return;
+    }
+    m_nTZFlag = nTZFlag;
+}
 
 /************************************************************************/
 /*                         OGR_Fld_SetTZFlag()                          */
@@ -1318,6 +1373,12 @@ void OGRFieldDefn::Set(const char *pszNameIn, OGRFieldType eTypeIn,
                        int nWidthIn, int nPrecisionIn,
                        OGRJustification eJustifyIn)
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::Set() not allowed on a sealed object");
+        return;
+    }
     SetName(pszNameIn);
     SetType(eTypeIn);
     SetWidth(nWidthIn);
@@ -1530,6 +1591,16 @@ int OGR_Fld_IsNullable(OGRFieldDefnH hDefn)
  * @param bNullableIn FALSE if the field must have a not-null constraint.
  * @since GDAL 2.0
  */
+void OGRFieldDefn::SetNullable(int bNullableIn)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetNullable() not allowed on a sealed object");
+        return;
+    }
+    bNullable = bNullableIn;
+}
 
 /************************************************************************/
 /*                        OGR_Fld_SetNullable()                          */
@@ -1563,7 +1634,7 @@ void OGR_Fld_SetNullable(OGRFieldDefnH hDefn, int bNullableIn)
 }
 
 /************************************************************************/
-/*                             IsUnique()                             */
+/*                             IsUnique()                               */
 /************************************************************************/
 
 /**
@@ -1600,13 +1671,11 @@ int OGR_Fld_IsUnique(OGRFieldDefnH hDefn)
     return OGRFieldDefn::FromHandle(hDefn)->IsUnique();
 }
 
-/************************************************************************/
+/*********************************************************  ***************/
 /*                            SetUnique()                             */
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetUnique( int bUniqueIn );
- *
  * \brief Set whether this field has a unique constraint.
  *
  * By default, fields have no unique constraint, so this method is generally
@@ -1626,9 +1695,19 @@ int OGR_Fld_IsUnique(OGRFieldDefnH hDefn)
  * @param bUniqueIn TRUE if the field must have a unique constraint.
  * @since GDAL 3.2
  */
+void OGRFieldDefn::SetUnique(int bUniqueIn)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetUnique() not allowed on a sealed object");
+        return;
+    }
+    bUnique = bUniqueIn;
+}
 
 /************************************************************************/
-/*                        OGR_Fld_SetUnique()                          */
+/*                        OGR_Fld_SetUnique()                            */
 /************************************************************************/
 
 /**
@@ -1708,8 +1787,6 @@ const char *OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetDomainName( const std:string& osDomainName );
- *
  * \brief Set the name of the field domain for this field.
  *
  * Field domains (OGRFieldDomain) are attached at the GDALDataset level.
@@ -1725,6 +1802,17 @@ const char *OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)
  * @param osDomainName Field domain name.
  * @since GDAL 3.3
  */
+void OGRFieldDefn::SetDomainName(const std::string &osDomainName)
+{
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFieldDefn::SetDomainName() not allowed on a sealed object");
+        return;
+    }
+    m_osDomainName = osDomainName;
+}
 
 /************************************************************************/
 /*                      OGR_Fld_SetDomainName()                         */
@@ -1797,8 +1885,6 @@ const char *OGR_Fld_GetComment(OGRFieldDefnH hDefn)
 /************************************************************************/
 
 /**
- * \fn void OGRFieldDefn::SetComment( const std:string& osComment );
- *
  * \brief Set the comment for this field.
  *
  * This method is the same as the C function OGR_Fld_SetComment().
@@ -1812,6 +1898,16 @@ const char *OGR_Fld_GetComment(OGRFieldDefnH hDefn)
  * @param osComment Field comment.
  * @since GDAL 3.7
  */
+void OGRFieldDefn::SetComment(const std::string &osComment)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFieldDefn::SetComment() not allowed on a sealed object");
+        return;
+    }
+    m_osComment = osComment;
+}
 
 /************************************************************************/
 /*                      OGR_Fld_SetComment()                            */
@@ -1988,6 +2084,60 @@ void OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
     {
         poFDefn->SetType(OFTStringList);
     }
+}
+
+/************************************************************************/
+/*                        OGRFieldDefn::Seal()                          */
+/************************************************************************/
+
+/** Seal a OGRFieldDefn.
+ *
+ * A sealed OGRFieldDefn can not be modified while it is sealed.
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @since GDAL 3.9
+ */
+void OGRFieldDefn::Seal()
+{
+    m_bSealed = true;
+}
+
+/************************************************************************/
+/*                        OGRFieldDefn::Unseal()                        */
+/************************************************************************/
+
+/** Unseal a OGRFieldDefn.
+ *
+ * Undo OGRFieldDefn::Seal()
+ *
+ * Using GetTemporaryUnsealer() is recommended for most use cases.
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @since GDAL 3.9
+ */
+void OGRFieldDefn::Unseal()
+{
+    m_bSealed = false;
+}
+
+/************************************************************************/
+/*                    OGRFieldDefn::GetTemporaryUnsealer()              */
+/************************************************************************/
+
+/** Return an object that temporary unseals the OGRFieldDefn
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @since GDAL 3.9
+ */
+OGRFieldDefn::TemporaryUnsealer OGRFieldDefn::GetTemporaryUnsealer()
+{
+    return TemporaryUnsealer(this);
 }
 
 /************************************************************************/

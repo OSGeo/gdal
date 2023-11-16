@@ -179,6 +179,13 @@ void OGR_GFld_Destroy(OGRGeomFieldDefnH hDefn)
 void OGRGeomFieldDefn::SetName(const char *pszNameIn)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRGeomFieldDefn::SetComment() not allowed on a sealed object");
+        return;
+    }
     if (pszName != pszNameIn)
     {
         CPLFree(pszName);
@@ -332,6 +339,12 @@ OGRwkbGeometryType OGR_GFld_GetType(OGRGeomFieldDefnH hDefn)
 void OGRGeomFieldDefn::SetType(OGRwkbGeometryType eTypeIn)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeomFieldDefn::SetType() not allowed on a sealed object");
+        return;
+    }
     eGeomType = eTypeIn;
 }
 
@@ -522,6 +535,13 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef(OGRGeomFieldDefnH hDefn)
  */
 void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
 {
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRGeomFieldDefn::SetSpatialRef() not allowed on a sealed object");
+        return;
+    }
     if (poSRS != nullptr)
         const_cast<OGRSpatialReference *>(poSRS)->Release();
     poSRS = poSRSIn;
@@ -672,6 +692,17 @@ int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
  * @param bNullableIn FALSE if the field must have a not-null constraint.
  * @since GDAL 2.0
  */
+void OGRGeomFieldDefn::SetNullable(int bNullableIn)
+{
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRGeomFieldDefn::SetNullable() not allowed on a sealed object");
+        return;
+    }
+    bNullable = bNullableIn;
+}
 
 /************************************************************************/
 /*                        OGR_GFld_SetNullable()                        */
@@ -696,4 +727,58 @@ int OGR_GFld_IsNullable(OGRGeomFieldDefnH hDefn)
 void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
 {
     OGRGeomFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
+}
+
+/************************************************************************/
+/*                       OGRGeomFieldDefn::Seal()                       */
+/************************************************************************/
+
+/** Seal a OGRGeomFieldDefn.
+ *
+ * A sealed OGRGeomFieldDefn can not be modified while it is sealed.
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @since GDAL 3.9
+ */
+void OGRGeomFieldDefn::Seal()
+{
+    m_bSealed = true;
+}
+
+/************************************************************************/
+/*                       OGRGeomFieldDefn::Unseal()                     */
+/************************************************************************/
+
+/** Unseal a OGRGeomFieldDefn.
+ *
+ * Undo OGRGeomFieldDefn::Seal()
+ *
+ * Using GetTemporaryUnsealer() is recommended for most use cases.
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @since GDAL 3.9
+ */
+void OGRGeomFieldDefn::Unseal()
+{
+    m_bSealed = false;
+}
+
+/************************************************************************/
+/*                  OGRGeomFieldDefn::GetTemporaryUnsealer()            */
+/************************************************************************/
+
+/** Return an object that temporary unseals the OGRGeomFieldDefn
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @since GDAL 3.9
+ */
+OGRGeomFieldDefn::TemporaryUnsealer OGRGeomFieldDefn::GetTemporaryUnsealer()
+{
+    return TemporaryUnsealer(this);
 }

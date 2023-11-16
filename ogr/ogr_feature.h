@@ -128,6 +128,7 @@ class CPL_DLL OGRFieldDefn
     std::string m_osComment{};  // field comment. Might be empty
 
     int m_nTZFlag = OGR_TZFLAG_UNKNOWN;
+    bool m_bSealed = false;
 
   public:
     OGRFieldDefn(const char *, OGRFieldType);
@@ -173,28 +174,19 @@ class CPL_DLL OGRFieldDefn
     {
         return nWidth;
     }
-    void SetWidth(int nWidthIn)
-    {
-        nWidth = MAX(0, nWidthIn);
-    }
+    void SetWidth(int nWidthIn);
 
     int GetPrecision() const
     {
         return nPrecision;
     }
-    void SetPrecision(int nPrecisionIn)
-    {
-        nPrecision = nPrecisionIn;
-    }
+    void SetPrecision(int nPrecisionIn);
 
     int GetTZFlag() const
     {
         return m_nTZFlag;
     }
-    void SetTZFlag(int nTZFlag)
-    {
-        m_nTZFlag = nTZFlag;
-    }
+    void SetTZFlag(int nTZFlag);
 
     void Set(const char *, OGRFieldType, int = 0, int = 0,
              OGRJustification = OJUndefined);
@@ -216,37 +208,25 @@ class CPL_DLL OGRFieldDefn
     {
         return bNullable;
     }
-    void SetNullable(int bNullableIn)
-    {
-        bNullable = bNullableIn;
-    }
+    void SetNullable(int bNullableIn);
 
     int IsUnique() const
     {
         return bUnique;
     }
-    void SetUnique(int bUniqueIn)
-    {
-        bUnique = bUniqueIn;
-    }
+    void SetUnique(int bUniqueIn);
 
     const std::string &GetDomainName() const
     {
         return m_osDomainName;
     }
-    void SetDomainName(const std::string &osDomainName)
-    {
-        m_osDomainName = osDomainName;
-    }
+    void SetDomainName(const std::string &osDomainName);
 
     const std::string &GetComment() const
     {
         return m_osComment;
     }
-    void SetComment(const std::string &osComment)
-    {
-        m_osComment = osComment;
-    }
+    void SetComment(const std::string &osComment);
 
     int IsSame(const OGRFieldDefn *) const;
 
@@ -265,6 +245,32 @@ class CPL_DLL OGRFieldDefn
     {
         return reinterpret_cast<OGRFieldDefn *>(hFieldDefn);
     }
+
+    void Seal();
+
+    void Unseal();
+
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL TemporaryUnsealer
+    {
+      private:
+        OGRFieldDefn *m_poFieldDefn = nullptr;
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryUnsealer)
+      public:
+        explicit TemporaryUnsealer(OGRFieldDefn *poFieldDefn)
+            : m_poFieldDefn(poFieldDefn)
+        {
+            m_poFieldDefn->Unseal();
+        }
+
+        ~TemporaryUnsealer()
+        {
+            m_poFieldDefn->Seal();
+        }
+    };
+    /*! @endcond */
+
+    TemporaryUnsealer GetTemporaryUnsealer();
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
@@ -306,6 +312,7 @@ class CPL_DLL OGRGeomFieldDefn
 
     int bIgnore = false;
     mutable int bNullable = true;
+    bool m_bSealed = false;
 
     void Initialize(const char *, OGRwkbGeometryType);
     //! @endcond
@@ -343,10 +350,7 @@ class CPL_DLL OGRGeomFieldDefn
     {
         return bNullable;
     }
-    void SetNullable(int bNullableIn)
-    {
-        bNullable = bNullableIn;
-    }
+    void SetNullable(int bNullableIn);
 
     int IsSame(const OGRGeomFieldDefn *) const;
 
@@ -365,6 +369,32 @@ class CPL_DLL OGRGeomFieldDefn
     {
         return reinterpret_cast<OGRGeomFieldDefn *>(hGeomFieldDefn);
     }
+
+    void Seal();
+
+    void Unseal();
+
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL TemporaryUnsealer
+    {
+      private:
+        OGRGeomFieldDefn *m_poFieldDefn = nullptr;
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryUnsealer)
+      public:
+        explicit TemporaryUnsealer(OGRGeomFieldDefn *poFieldDefn)
+            : m_poFieldDefn(poFieldDefn)
+        {
+            m_poFieldDefn->Unseal();
+        }
+
+        ~TemporaryUnsealer()
+        {
+            m_poFieldDefn->Seal();
+        }
+    };
+    /*! @endcond */
+
+    TemporaryUnsealer GetTemporaryUnsealer();
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
@@ -414,6 +444,10 @@ class CPL_DLL OGRFeatureDefn
     char *pszFeatureClassName = nullptr;
 
     bool bIgnoreStyle = false;
+
+    friend class TemporaryUnsealer;
+    bool m_bSealed = false;
+    int m_nTemporaryUnsealCount = 0;
     //! @endcond
 
   public:
@@ -684,6 +718,27 @@ class CPL_DLL OGRFeatureDefn
     {
         return reinterpret_cast<OGRFeatureDefn *>(hFeatureDefn);
     }
+
+    void Seal(bool bSealFields);
+
+    void Unseal(bool bUnsealFields);
+
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL TemporaryUnsealer
+    {
+      private:
+        OGRFeatureDefn *m_poFeatureDefn = nullptr;
+        bool m_bSealFields = false;
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryUnsealer)
+      public:
+        explicit TemporaryUnsealer(OGRFeatureDefn *poFeatureDefn,
+                                   bool bSealFields);
+
+        ~TemporaryUnsealer();
+    };
+    /*! @endcond */
+
+    TemporaryUnsealer GetTemporaryUnsealer(bool bSealFields = true);
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
