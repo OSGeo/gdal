@@ -158,10 +158,13 @@ void OGRESRIJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS,
 bool OGRESRIJSONReader::GenerateLayerDefn()
 {
     CPLAssert(nullptr != poGJObject_);
-    CPLAssert(nullptr != poLayer_->GetLayerDefn());
-    CPLAssert(0 == poLayer_->GetLayerDefn()->GetFieldCount());
 
     bool bSuccess = true;
+
+    OGRFeatureDefn *poDefn = poLayer_->GetLayerDefn();
+    CPLAssert(nullptr != poDefn);
+    CPLAssert(0 == poDefn->GetFieldCount());
+    auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
 
     /* -------------------------------------------------------------------- */
     /*      Scan all features and generate layer definition.                */
@@ -187,7 +190,6 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
         if (nullptr != poFields &&
             json_object_get_type(poFields) == json_type_object)
         {
-            OGRFeatureDefn *poDefn = poLayer_->GetLayerDefn();
             json_object_iter it;
             it.key = nullptr;
             it.val = nullptr;

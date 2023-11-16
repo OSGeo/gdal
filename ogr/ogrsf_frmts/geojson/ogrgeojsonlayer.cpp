@@ -540,7 +540,12 @@ void OGRGeoJSONLayer::DetectGeometryType()
             }
         }
     }
-    GetLayerDefn()->SetGeomType(eLayerGeomType);
+
+    {
+        auto poFDefn = GetLayerDefn();
+        auto oTemporaryUnsealer(poFDefn->GetTemporaryUnsealer());
+        poFDefn->SetGeomType(eLayerGeomType);
+    }
 
     ResetReading();
 }

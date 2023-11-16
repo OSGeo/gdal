@@ -1299,68 +1299,67 @@ def test_ogr_mem_write_arrow():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     src_lyr = ds.CreateLayer("src_lyr")
 
-    feat_def = src_lyr.GetLayerDefn()
-
     field_def = ogr.FieldDefn("field_bool", ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTBoolean)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer", ogr.OFTInteger)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_int16", ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTInt16)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer64", ogr.OFTInteger64)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_float32", ogr.OFTReal)
     field_def.SetSubType(ogr.OFSTFloat32)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_real", ogr.OFTReal)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_string", ogr.OFTString)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_binary", ogr.OFTBinary)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_date", ogr.OFTDate)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_time", ogr.OFTTime)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_datetime", ogr.OFTDateTime)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_boollist", ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTBoolean)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integerlist", ogr.OFTIntegerList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_int16list", ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTInt16)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer64list", ogr.OFTInteger64List)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_float32list", ogr.OFTRealList)
     field_def.SetSubType(ogr.OFSTFloat32)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_reallist", ogr.OFTRealList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
+    feat_def = src_lyr.GetLayerDefn()
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField("field_bool", True)
     src_feature.SetField("field_integer", 17)

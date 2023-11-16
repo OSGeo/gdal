@@ -1212,6 +1212,8 @@ void OGRODSDataSource::endElementRow(
                                  eValType == OFTInteger &&
                                  eValSubType != OFSTBoolean)
                         {
+                            auto oTemporaryUnsealer(
+                                poFieldDefn->GetTemporaryUnsealer());
                             poFieldDefn->SetSubType(OFSTNone);
                         }
                     }

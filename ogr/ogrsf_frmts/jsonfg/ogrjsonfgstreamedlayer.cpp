@@ -49,6 +49,8 @@ OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer(const char *pszName,
         poFeatureDefn_->GetGeomFieldDefn(0)->SetSpatialRef(poSRSClone);
         poSRSClone->Release();
     }
+
+    poFeatureDefn_->Seal(/* bSealFields = */ true);
 }
 
 /************************************************************************/
