@@ -3474,7 +3474,9 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
     dbname = tmp_vsimem / "ogr_gpkg_36.gpkg"
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
-    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+    field = ogr.FieldDefn("foo", ogr.OFTString)
+    field.SetAlternativeName("constraint")
+    lyr.CreateField(field)
     lyr.CreateField(ogr.FieldDefn("baz", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(10)
@@ -3483,19 +3485,6 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
     lyr.CreateFeature(f)
     f = None
 
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_columns (
-  table_name TEXT NOT NULL,
-  column_name TEXT NOT NULL,
-  name TEXT,
-  title TEXT,
-  description TEXT,
-  mime_type TEXT,
-  constraint_name TEXT,
-  CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
-  CONSTRAINT gdc_tn UNIQUE (table_name, name)
-)"""
-    )
     ds.ExecuteSQL(
         """CREATE TABLE gpkg_data_column_constraints (
             constraint_name TEXT NOT NULL,
@@ -3510,12 +3499,16 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
             constraint_type, value))"""
     )
     ds.ExecuteSQL(
-        "INSERT INTO gpkg_data_columns VALUES('test', 'foo', 'constraint', NULL, NULL, NULL, NULL)"
-    )
-    ds.ExecuteSQL(
         "INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'read-write')"
     )
     ds.ExecuteSQL("CREATE INDEX my_idx ON test(foo)")
+
+    # gpkg_data_columns should have been created because of AlternativeName set on field
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'foo'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
 
     # Metadata
     lyr.SetMetadataItem("FOO", "BAR")
@@ -3563,7 +3556,14 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
 
     # Full table rewrite
     new_field_defn.SetUnique(True)
+    new_field_defn.SetAlternativeName("alt name")
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'bar'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
 
     # Violation of not-null constraint
     new_field_defn = ogr.FieldDefn("baz", ogr.OFTString)
@@ -3582,17 +3582,46 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
         pytest.fail()
     f = None
 
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'bar'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
     # Just change the name, and run it outside an existing transaction
     lyr.StartTransaction()
     new_field_defn = ogr.FieldDefn("baw2", ogr.OFTString)
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_NAME_FLAG) == 0
+    lyr.CommitTransaction()
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'baw2'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    if (
+        f.GetFID() != 10
+        or f["baw2"] != 10.5
+        or f.GetGeometryRef().ExportToWkt() != "POLYGON ((0 0,0 1,1 1,0 0))"
+    ):
+        f.DumpReadable()
+        pytest.fail()
+    f = None
+
+    # Change the name and type, comment and alternative name,
+    # and run it under an existing transaction
+    lyr.StartTransaction()
+    new_field_defn = ogr.FieldDefn("baw", ogr.OFTString)
+    new_field_defn.SetAlternativeName("baw alt")
+    new_field_defn.SetComment("baw comment")
     assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
     lyr.CommitTransaction()
 
-    # Just change the name, and run it under an existing transaction
-    lyr.StartTransaction()
-    new_field_defn = ogr.FieldDefn("baw", ogr.OFTString)
-    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALL_FLAG) == 0
-    lyr.CommitTransaction()
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "baw alt"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "baw comment"
 
     lyr.ResetReading()
     f = lyr.GetNextFeature()
@@ -3662,6 +3691,56 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
     assert ret != 0
     with gdal.quiet_errors():
         ds = None
+
+
+###############################################################################
+# Test AlterFieldDefn()
+
+
+def test_ogr_gpkg_36_alter_comment_after_alternative_name(tmp_vsimem, tmp_path):
+
+    dbname = tmp_vsimem / "ogr_gpkg_36a.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPolygon)
+    field = ogr.FieldDefn("foo", ogr.OFTString)
+    lyr.CreateField(field)
+
+    new_field_defn = ogr.FieldDefn(field.GetName(), field.GetType())
+    new_field_defn.SetAlternativeName("alt name")
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_ALTERNATIVE_NAME_FLAG) == 0
+
+    # gpkg_data_columns should have been created because of AlternativeName set on field
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'foo'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    new_field_defn = ogr.FieldDefn(field.GetName(), field.GetType())
+    new_field_defn.SetComment("alt comment")
+    assert lyr.AlterFieldDefn(0, new_field_defn, ogr.ALTER_COMMENT_FLAG) == 0
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT * FROM gpkg_data_columns WHERE table_name = 'test' AND column_name = 'foo'"
+    )
+    assert sql_lyr.GetFeatureCount() == 1
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt name"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "alt comment"
+
+    ds.ExecuteSQL("VACUUM")
+
+    ds = None
+
+    assert validate(dbname, tmpdir=tmp_path)
+
+    # Try on read-only dataset
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetAlternativeName() == "alt name"
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetComment() == "alt comment"
 
 
 ###############################################################################

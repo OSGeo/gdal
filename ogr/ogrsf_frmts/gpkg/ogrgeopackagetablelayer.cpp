@@ -6810,96 +6810,83 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
 
         if (eErr == OGRERR_NONE)
         {
-            bool bRunDoSpecialProcessingForColumnCreation = false;
-            bool bDeleteFromGpkgDataColumns = false;
+            bool bNeedsEntryInGpkgDataColumns = false;
+
+            // field type
             if (nActualFlags & ALTER_TYPE_FLAG)
             {
-                if (poFieldDefnToAlter->GetSubType() == OFSTJSON &&
-                    poNewFieldDefn->GetSubType() == OFSTNone)
-                {
-                    bDeleteFromGpkgDataColumns = true;
-                }
-                else if (poFieldDefnToAlter->GetSubType() == OFSTNone &&
-                         poNewFieldDefn->GetType() == OFTString &&
-                         poNewFieldDefn->GetSubType() == OFSTJSON)
-                {
-                    bRunDoSpecialProcessingForColumnCreation = true;
-                }
-
                 poFieldDefnToAlter->SetSubType(OFSTNone);
                 poFieldDefnToAlter->SetType(poNewFieldDefn->GetType());
                 poFieldDefnToAlter->SetSubType(poNewFieldDefn->GetSubType());
             }
+            if (poFieldDefnToAlter->GetType() == OFTString &&
+                poFieldDefnToAlter->GetSubType() == OFSTJSON)
+            {
+                bNeedsEntryInGpkgDataColumns = true;
+            }
+
+            // name
             if (nActualFlags & ALTER_NAME_FLAG)
             {
                 poFieldDefnToAlter->SetName(poNewFieldDefn->GetNameRef());
             }
+
+            // width/precision
             if (nActualFlags & ALTER_WIDTH_PRECISION_FLAG)
             {
                 poFieldDefnToAlter->SetWidth(poNewFieldDefn->GetWidth());
                 poFieldDefnToAlter->SetPrecision(
                     poNewFieldDefn->GetPrecision());
             }
+
+            // constraints
             if (nActualFlags & ALTER_NULLABLE_FLAG)
                 poFieldDefnToAlter->SetNullable(poNewFieldDefn->IsNullable());
             if (nActualFlags & ALTER_DEFAULT_FLAG)
                 poFieldDefnToAlter->SetDefault(poNewFieldDefn->GetDefault());
             if (nActualFlags & ALTER_UNIQUE_FLAG)
                 poFieldDefnToAlter->SetUnique(poNewFieldDefn->IsUnique());
+
+            // domain
             if ((nActualFlags & ALTER_DOMAIN_FLAG) &&
                 poFieldDefnToAlter->GetDomainName() !=
                     poNewFieldDefn->GetDomainName())
             {
-                if (!poFieldDefnToAlter->GetDomainName().empty())
-                {
-                    bDeleteFromGpkgDataColumns = true;
-                }
-
-                if (!poNewFieldDefn->GetDomainName().empty())
-                {
-                    bRunDoSpecialProcessingForColumnCreation = true;
-                }
-
                 poFieldDefnToAlter->SetDomainName(
                     poNewFieldDefn->GetDomainName());
             }
+            if (!poFieldDefnToAlter->GetDomainName().empty())
+            {
+                bNeedsEntryInGpkgDataColumns = true;
+            }
+
+            // alternative name
             if ((nActualFlags & ALTER_ALTERNATIVE_NAME_FLAG) &&
                 strcmp(poFieldDefnToAlter->GetAlternativeNameRef(),
                        poNewFieldDefn->GetAlternativeNameRef()) != 0)
             {
-                if (!std::string(poFieldDefnToAlter->GetAlternativeNameRef())
-                         .empty())
-                {
-                    bDeleteFromGpkgDataColumns = true;
-                }
-
-                if (!std::string(poNewFieldDefn->GetAlternativeNameRef())
-                         .empty())
-                {
-                    bRunDoSpecialProcessingForColumnCreation = true;
-                }
-
                 poFieldDefnToAlter->SetAlternativeName(
                     poNewFieldDefn->GetAlternativeNameRef());
             }
+            if (!std::string(poFieldDefnToAlter->GetAlternativeNameRef())
+                     .empty())
+            {
+                bNeedsEntryInGpkgDataColumns = true;
+            }
+
+            // comment
             if ((nActualFlags & ALTER_COMMENT_FLAG) &&
                 poFieldDefnToAlter->GetComment() !=
                     poNewFieldDefn->GetComment())
             {
-                if (!poFieldDefnToAlter->GetComment().empty())
-                {
-                    bDeleteFromGpkgDataColumns = true;
-                }
-
-                if (!poNewFieldDefn->GetComment().empty())
-                {
-                    bRunDoSpecialProcessingForColumnCreation = true;
-                }
-
                 poFieldDefnToAlter->SetComment(poNewFieldDefn->GetComment());
             }
+            if (!poFieldDefnToAlter->GetComment().empty())
+            {
+                bNeedsEntryInGpkgDataColumns = true;
+            }
 
-            if (bDeleteFromGpkgDataColumns)
+            if (m_poDS->HasDataColumnsTable())
             {
                 char *pszSQL = sqlite3_mprintf(
                     "DELETE FROM gpkg_data_columns WHERE "
@@ -6910,7 +6897,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
                 sqlite3_free(pszSQL);
             }
 
-            if (bRunDoSpecialProcessingForColumnCreation)
+            if (bNeedsEntryInGpkgDataColumns)
             {
                 if (!DoSpecialProcessingForColumnCreation(poFieldDefnToAlter))
                     eErr = OGRERR_FAILURE;
