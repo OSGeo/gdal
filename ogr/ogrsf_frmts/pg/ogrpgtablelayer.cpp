@@ -2413,7 +2413,7 @@ OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+OGRErr OGRPGTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                         CPL_UNUSED int bApproxOK)
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();

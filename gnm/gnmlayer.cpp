@@ -323,7 +323,7 @@ OGRErr GNMGenericLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     return m_poLayer->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
 }
 
-OGRErr GNMGenericLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr GNMGenericLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                         int bApproxOK)
 {
     return m_poLayer->CreateGeomField(poField, bApproxOK);

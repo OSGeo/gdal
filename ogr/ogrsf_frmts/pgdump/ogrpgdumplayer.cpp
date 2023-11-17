@@ -1677,7 +1677,7 @@ OGRErr OGRPGDumpLayer::CreateField(const OGRFieldDefn *poFieldIn, int bApproxOK)
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                        int /* bApproxOK */)
 {
     if (m_poFeatureDefn->GetFieldCount() +

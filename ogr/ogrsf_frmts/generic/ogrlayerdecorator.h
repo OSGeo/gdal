@@ -99,7 +99,7 @@ class CPL_DLL OGRLayerDecorator : public OGRLayer
                        const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlags) override;
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRErr SyncToDisk() override;

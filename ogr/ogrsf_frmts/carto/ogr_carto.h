@@ -164,7 +164,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,

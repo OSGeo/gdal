@@ -202,7 +202,7 @@ class OGRMongoDBv3Layer final : public OGRLayer
     int TestCapability(const char *pszCap) override;
     OGRFeatureDefn *GetLayerDefn() override;
     OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poFieldIn, int) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poFieldIn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
@@ -1474,7 +1474,8 @@ OGRErr OGRMongoDBv3Layer::CreateField(const OGRFieldDefn *poFieldIn, int)
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRMongoDBv3Layer::CreateGeomField(OGRGeomFieldDefn *poFieldIn, int)
+OGRErr OGRMongoDBv3Layer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
+                                          int)
 
 {
     if (m_poDS->GetAccess() != GA_Update)

@@ -1192,7 +1192,8 @@ OGRErr OGRGMLLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK)
+OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
+                                    int bApproxOK)
 
 {
     if (!bWriter || iNextGMLId != 0)

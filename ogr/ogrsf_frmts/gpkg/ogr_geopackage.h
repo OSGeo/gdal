@@ -795,7 +795,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int TestCapability(const char *) override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                            int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,

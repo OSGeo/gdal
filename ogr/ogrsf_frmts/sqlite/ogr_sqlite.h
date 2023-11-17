@@ -386,7 +386,7 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;

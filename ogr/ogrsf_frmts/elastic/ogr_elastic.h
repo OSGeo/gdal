@@ -189,7 +189,7 @@ class OGRElasticLayer final : public OGRLayer
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK) override;
 
     virtual const char *GetName() override

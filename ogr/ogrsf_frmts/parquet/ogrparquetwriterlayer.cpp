@@ -620,7 +620,7 @@ void OGRParquetWriterLayer::CreateSchema()
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRParquetWriterLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGRParquetWriterLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                               int bApproxOK)
 {
     OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);

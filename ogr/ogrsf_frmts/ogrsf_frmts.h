@@ -273,7 +273,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                        const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlagsIn);
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE);
 
     virtual OGRErr SyncToDisk();

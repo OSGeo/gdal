@@ -1874,8 +1874,9 @@ bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                                int /* bApproxOK */)
+OGRErr
+OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                         int /* bApproxOK */)
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();

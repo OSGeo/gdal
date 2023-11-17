@@ -2951,7 +2951,7 @@ OGRErr OGRElasticLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateGeomField(OGRGeomFieldDefn *poFieldIn,
+OGRErr OGRElasticLayer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
                                         int /*bApproxOK*/)
 
 {

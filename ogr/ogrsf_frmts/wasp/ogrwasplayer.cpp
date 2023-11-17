@@ -716,7 +716,7 @@ OGRErr OGRWAsPLayer::CreateField(const OGRFieldDefn *poField,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRWAsPLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+OGRErr OGRWAsPLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                      CPL_UNUSED int bApproxOK)
 {
     OGRGeomFieldDefn oFieldDefn(poGeomFieldIn);

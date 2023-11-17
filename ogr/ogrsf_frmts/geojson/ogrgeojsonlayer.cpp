@@ -423,7 +423,7 @@ OGRErr OGRGeoJSONLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 /*                         CreateGeomField()                            */
 /************************************************************************/
 
-OGRErr OGRGeoJSONLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRGeoJSONLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                         int bApproxOK)
 {
     if (!IsUpdatable() || !IngestAll())

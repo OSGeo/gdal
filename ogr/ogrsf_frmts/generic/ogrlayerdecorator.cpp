@@ -276,7 +276,7 @@ OGRErr OGRLayerDecorator::AlterGeomFieldDefn(
                                                   poNewGeomFieldDefn, nFlagsIn);
 }
 
-OGRErr OGRLayerDecorator::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGRLayerDecorator::CreateGeomField(const OGRGeomFieldDefn *poField,
                                           int bApproxOK)
 {
     if (!m_poDecoratedLayer)

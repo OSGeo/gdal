@@ -535,7 +535,7 @@ class GNMGenericLayer : public OGRLayer
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlagsIn) override;
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRErr SyncToDisk() override;
@@ -723,7 +723,7 @@ class OGRGNMWrappedResultLayer : public OGRLayer
     virtual int TestCapability(const char *pszCap) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;

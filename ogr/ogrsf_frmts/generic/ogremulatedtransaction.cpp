@@ -64,7 +64,7 @@ class OGRLayerWithTransaction final : public OGRLayerDecorator
     AlterGeomFieldDefn(int iField, const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlags) override;
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetNextFeature() override;
@@ -626,7 +626,7 @@ OGRErr OGRLayerWithTransaction::CreateField(const OGRFieldDefn *poField,
     return eErr;
 }
 
-OGRErr OGRLayerWithTransaction::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGRLayerWithTransaction::CreateGeomField(const OGRGeomFieldDefn *poField,
                                                 int bApproxOK)
 {
     if (!m_poDecoratedLayer)

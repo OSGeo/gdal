@@ -932,7 +932,7 @@ OGRErr OGRMemLayer::AlterGeomFieldDefn(
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRMemLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                     int /* bApproxOK */)
 {
     if (!m_bUpdatable)

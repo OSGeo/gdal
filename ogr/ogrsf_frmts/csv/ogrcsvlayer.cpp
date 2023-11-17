@@ -1864,7 +1864,7 @@ OGRErr OGRCSVLayer::CreateField(const OGRFieldDefn *poNewField, int bApproxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                     int /* bApproxOK */)
 {
     if (!TestCapability(OLCCreateGeomField))

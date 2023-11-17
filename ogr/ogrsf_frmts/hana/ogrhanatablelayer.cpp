@@ -1544,7 +1544,8 @@ OGRErr OGRHanaTableLayer::CreateField(const OGRFieldDefn *srsField,
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn *geomField, int)
+OGRErr OGRHanaTableLayer::CreateGeomField(const OGRGeomFieldDefn *geomField,
+                                          int)
 {
     if (!updateMode_)
     {

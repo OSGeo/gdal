@@ -99,8 +99,9 @@ OGRErr OGRGNMWrappedResultLayer::CreateField(const OGRFieldDefn *poField,
     return poLayer->CreateField(poField, bApproxOK);
 }
 
-OGRErr OGRGNMWrappedResultLayer::CreateGeomField(OGRGeomFieldDefn *poField,
-                                                 int bApproxOK)
+OGRErr
+OGRGNMWrappedResultLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
+                                          int bApproxOK)
 {
     return poLayer->CreateGeomField(poField, bApproxOK);
 }

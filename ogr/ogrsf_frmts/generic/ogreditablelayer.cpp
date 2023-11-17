@@ -852,7 +852,7 @@ OGRErr OGREditableLayer::AlterGeomFieldDefn(
 /*                          CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGREditableLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGREditableLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                          int bApproxOK)
 {
     if (!m_poDecoratedLayer || !m_bSupportsCreateGeomField)

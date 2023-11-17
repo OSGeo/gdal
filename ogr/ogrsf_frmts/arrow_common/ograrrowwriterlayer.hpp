@@ -689,8 +689,9 @@ OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-inline OGRErr OGRArrowWriterLayer::CreateGeomField(OGRGeomFieldDefn *poField,
-                                                   int /* bApproxOK */)
+inline OGRErr
+OGRArrowWriterLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
+                                     int /* bApproxOK */)
 {
     if (m_poSchema)
     {

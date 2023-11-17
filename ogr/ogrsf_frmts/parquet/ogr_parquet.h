@@ -292,7 +292,7 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
                     const OGRSpatialReference *poSpatialRef,
                     OGRwkbGeometryType eGType);
 
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
 
     int TestCapability(const char *pszCap) override;
