@@ -287,6 +287,20 @@ bool OGRPMTilesDataset::Open(GDALOpenInfo *poOpenInfo)
 
     m_nMinZoomLevel = m_sHeader.min_zoom;
     m_nMaxZoomLevel = m_sHeader.max_zoom;
+    if (m_nMinZoomLevel > m_nMaxZoomLevel)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "min_zoom(=%d) > max_zoom(=%d)",
+                 m_nMinZoomLevel, m_nMaxZoomLevel);
+        return false;
+    }
+    if (m_nMinZoomLevel > 30)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Clamping min_zoom (and max_zoom) from %d to %d",
+                 m_nMinZoomLevel, 30);
+        m_nMinZoomLevel = 30;
+        m_nMaxZoomLevel = 30;
+    }
 
     if (bAcceptAnyTileType)
         return true;
