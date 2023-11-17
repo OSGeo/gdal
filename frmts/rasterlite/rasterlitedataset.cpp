@@ -1012,7 +1012,7 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
 #endif
-        if (poOpenInfo->nHeaderBytes >= 1024 &&
+        if (poOpenInfo->nHeaderBytes >= 1024 && poOpenInfo->pabyHeader &&
             STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
                            "SQLite Format 3"))
     {
