@@ -329,7 +329,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
             ->GetFileList();
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -356,7 +356,8 @@ OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCSVEditableLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
+OGRErr OGRCSVEditableLayer::CreateField(const OGRFieldDefn *poNewField,
+                                        int bApproxOK)
 
 {
     if (m_poEditableFeatureDefn->GetFieldCount() >= 10000)

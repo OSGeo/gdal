@@ -1558,7 +1558,7 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn *poFieldDefn)
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
+OGRErr OGRPGDumpLayer::CreateField(const OGRFieldDefn *poFieldIn, int bApproxOK)
 {
     if (m_poFeatureDefn->GetFieldCount() +
             m_poFeatureDefn->GetGeomFieldCount() ==
@@ -1677,7 +1677,7 @@ OGRErr OGRPGDumpLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRPGDumpLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                        int /* bApproxOK */)
 {
     if (m_poFeatureDefn->GetFieldCount() +

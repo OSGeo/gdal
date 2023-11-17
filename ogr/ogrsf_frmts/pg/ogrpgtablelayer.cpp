@@ -2161,7 +2161,8 @@ int OGRPGTableLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
+OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                    int bApproxOK)
 
 {
     PGconn *hPGConn = poDS->GetPGConn();
@@ -2412,7 +2413,7 @@ OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+OGRErr OGRPGTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                         CPL_UNUSED int bApproxOK)
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();

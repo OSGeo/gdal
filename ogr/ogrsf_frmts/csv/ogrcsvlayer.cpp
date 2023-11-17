@@ -1750,7 +1750,7 @@ int OGRCSVLayer::TestCapability(const char *pszCap)
 OGRCSVCreateFieldAction
 OGRCSVLayer::PreCreateField(OGRFeatureDefn *poFeatureDefn,
                             const std::set<CPLString> &oSetFields,
-                            OGRFieldDefn *poNewField, int bApproxOK)
+                            const OGRFieldDefn *poNewField, int bApproxOK)
 {
     // Does this duplicate an existing field?
     if (oSetFields.find(CPLString(poNewField->GetNameRef()).toupper()) !=
@@ -1813,7 +1813,7 @@ OGRCSVLayer::PreCreateField(OGRFeatureDefn *poFeatureDefn,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
+OGRErr OGRCSVLayer::CreateField(const OGRFieldDefn *poNewField, int bApproxOK)
 
 {
     // If we have already written our field names, then we are not
@@ -1864,7 +1864,7 @@ OGRErr OGRCSVLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                     int /* bApproxOK */)
 {
     if (!TestCapability(OLCCreateGeomField))

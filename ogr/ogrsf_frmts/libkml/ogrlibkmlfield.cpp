@@ -1533,7 +1533,7 @@ void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
  function create a simplefield from a FieldDefn
 ******************************************************************************/
 
-SimpleFieldPtr FieldDef2kml(OGRFieldDefn *poOgrFieldDef,
+SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
                             KmlFactory *poKmlFactory)
 {
     /***** Get the field config. *****/

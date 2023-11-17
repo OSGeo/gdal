@@ -970,7 +970,8 @@ OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
+OGRErr OGRMySQLTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                       int bApproxOK)
 
 {
 

@@ -268,8 +268,8 @@ class OGRHanaTableLayer final : public OGRHanaLayer
     OGRErr DeleteFeature(GIntBig nFID) override;
     OGRErr ISetFeature(OGRFeature *feature) override;
 
-    OGRErr CreateField(OGRFieldDefn *field, int approxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *geomField,
+    OGRErr CreateField(const OGRFieldDefn *field, int approxOK = TRUE) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *geomField,
                            int approxOK = TRUE) override;
     OGRErr DeleteField(int field) override;
     OGRErr AlterFieldDefn(int field, OGRFieldDefn *newFieldDefn,

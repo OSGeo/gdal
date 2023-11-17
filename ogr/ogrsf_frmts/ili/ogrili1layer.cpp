@@ -441,7 +441,8 @@ int OGRILI1Layer::TestCapability(CPL_UNUSED const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRILI1Layer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRILI1Layer::CreateField(const OGRFieldDefn *poField,
+                                 int /* bApproxOK */)
 {
     poFeatureDefn->AddFieldDefn(poField);
 

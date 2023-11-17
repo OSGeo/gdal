@@ -184,7 +184,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetNextRawFeature() override;

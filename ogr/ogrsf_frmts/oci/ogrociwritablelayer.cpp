@@ -242,7 +242,8 @@ void OGROCIWritableLayer::SetOptions(char **papszOptionsIn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGROCIWritableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
+OGRErr OGROCIWritableLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                        int bApproxOK)
 
 {
     OGROCISession *poSession = poDS->GetSession();

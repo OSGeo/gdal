@@ -1911,7 +1911,7 @@ char *FGdbLayer::CreateFieldDefn(OGRFieldDefn &oField, int bApproxOK,
 /*                                                                      */
 /************************************************************************/
 
-OGRErr FGdbLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr FGdbLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     OGRFieldDefn oField(poField);
     std::string fieldname_clean;

@@ -96,9 +96,9 @@ class OGRGMLLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;

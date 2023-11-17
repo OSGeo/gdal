@@ -722,7 +722,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRErr ReadTableDefinition();
     void InitView();
 
-    bool DoSpecialProcessingForColumnCreation(OGRFieldDefn *poField);
+    bool DoSpecialProcessingForColumnCreation(const OGRFieldDefn *poField);
 
     bool StartDeferredSpatialIndexUpdate();
     bool FlushPendingSpatialIndexUpdate();
@@ -793,8 +793,9 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     const char *GetGeometryColumn() override;
     OGRFeatureDefn *GetLayerDefn() override;
     int TestCapability(const char *) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                            int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,

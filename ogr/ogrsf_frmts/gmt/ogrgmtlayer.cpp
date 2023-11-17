@@ -1025,7 +1025,7 @@ int OGRGmtLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGmtLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRGmtLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
     if (!bUpdate)

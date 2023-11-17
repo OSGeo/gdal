@@ -618,8 +618,9 @@ OGRErr OGRCARTOTableLayer::FlushDeferredCopy(bool bReset)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                           CPL_UNUSED int bApproxOK)
+OGRErr
+OGRCARTOTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                    CPL_UNUSED int bApproxOK)
 {
     if (!poDS->IsReadWrite())
     {
@@ -713,7 +714,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRCARTOTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                        CPL_UNUSED int bApproxOK)
 {
     GetLayerDefn();

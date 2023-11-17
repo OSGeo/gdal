@@ -1677,7 +1677,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature(OGRFeature *poFeatureIn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGeoRSSLayer::CreateField(OGRFieldDefn *poFieldDefn,
+OGRErr OGRGeoRSSLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                                    CPL_UNUSED int bApproxOK)
 {
     const char *pszName = poFieldDefn->GetNameRef();

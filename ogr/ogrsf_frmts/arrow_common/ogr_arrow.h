@@ -404,8 +404,9 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return nullptr;
     }
     int TestCapability(const char *pszCap) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
     GIntBig GetFeatureCount(int bForce) override;
 

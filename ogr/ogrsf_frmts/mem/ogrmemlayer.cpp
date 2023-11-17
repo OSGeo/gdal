@@ -613,7 +613,8 @@ int OGRMemLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRMemLayer::CreateField(const OGRFieldDefn *poField,
+                                int /* bApproxOK */)
 {
     if (!m_bUpdatable)
         return OGRERR_FAILURE;
@@ -931,7 +932,7 @@ OGRErr OGRMemLayer::AlterGeomFieldDefn(
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRMemLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                     int /* bApproxOK */)
 {
     if (!m_bUpdatable)

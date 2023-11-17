@@ -97,7 +97,8 @@ int OGRDXFWriterLayer::TestCapability(const char *pszCap)
 /*      This is really a dummy as our fields are precreated.            */
 /************************************************************************/
 
-OGRErr OGRDXFWriterLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRDXFWriterLayer::CreateField(const OGRFieldDefn *poField,
+                                      int bApproxOK)
 
 {
     if (poFeatureDefn->GetFieldIndex(poField->GetNameRef()) >= 0 && bApproxOK)

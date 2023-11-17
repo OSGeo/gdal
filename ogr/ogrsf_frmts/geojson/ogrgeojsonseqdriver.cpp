@@ -132,7 +132,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     GIntBig GetFeatureCount(int) override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *, int) override;
+    OGRErr CreateField(const OGRFieldDefn *, int) override;
 };
 
 /************************************************************************/
@@ -683,7 +683,7 @@ OGRErr OGRGeoJSONSeqLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONSeqLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGeoJSONSeqLayer::CreateField(const OGRFieldDefn *poField,
                                        int /* bApproxOK */)
 {
     if (m_poDS->GetAccess() != GA_Update)

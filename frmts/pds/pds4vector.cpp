@@ -1462,7 +1462,7 @@ void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr PDS4FixedWidthTable::CreateField(OGRFieldDefn *poFieldIn, int)
+OGRErr PDS4FixedWidthTable::CreateField(const OGRFieldDefn *poFieldIn, int)
 
 {
     if (m_poDS->GetAccess() != GA_Update)
@@ -2104,7 +2104,7 @@ OGRErr PDS4DelimitedTable::ICreateFeature(OGRFeature *poFeature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr PDS4DelimitedTable::CreateField(OGRFieldDefn *poFieldIn, int)
+OGRErr PDS4DelimitedTable::CreateField(const OGRFieldDefn *poFieldIn, int)
 
 {
     if (m_poDS->GetAccess() != GA_Update)

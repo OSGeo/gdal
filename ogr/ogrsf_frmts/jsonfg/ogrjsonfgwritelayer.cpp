@@ -410,7 +410,7 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRJSONFGWriteLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRJSONFGWriteLayer::CreateField(const OGRFieldDefn *poField,
                                         int /* bApproxOK */)
 {
     if (poFeatureDefn_->GetFieldIndexCaseSensitive(poField->GetNameRef()) >= 0)

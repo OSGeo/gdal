@@ -698,7 +698,7 @@ OGRErr OGRWAsPLayer::ICreateFeature(OGRFeature *poFeature)
 /*                            CreateField()                            */
 /************************************************************************/
 
-OGRErr OGRWAsPLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRWAsPLayer::CreateField(const OGRFieldDefn *poField,
                                  CPL_UNUSED int bApproxOK)
 {
     poLayerDefn->AddFieldDefn(poField);
@@ -716,7 +716,7 @@ OGRErr OGRWAsPLayer::CreateField(OGRFieldDefn *poField,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRWAsPLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+OGRErr OGRWAsPLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                      CPL_UNUSED int bApproxOK)
 {
     OGRGeomFieldDefn oFieldDefn(poGeomFieldIn);

@@ -219,7 +219,7 @@ class FITSLayer final : public OGRLayer,
     int TestCapability(const char *) override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -1261,7 +1261,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr FITSLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr FITSLayer::CreateField(const OGRFieldDefn *poField, int /* bApproxOK */)
 {
     if (!TestCapability(OLCCreateField))
         return OGRERR_FAILURE;

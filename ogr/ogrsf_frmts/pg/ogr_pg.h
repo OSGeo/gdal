@@ -392,9 +392,9 @@ class OGRPGTableLayer final : public OGRPGLayer
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,

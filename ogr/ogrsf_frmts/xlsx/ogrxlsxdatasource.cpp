@@ -107,7 +107,7 @@ OGRFeature *OGRXLSXLayer::GetNextFeature()
     return poFeature;
 }
 
-OGRErr OGRXLSXLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRXLSXLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     Init();
     if (GetLayerDefn()->GetFieldCount() >= 2000)

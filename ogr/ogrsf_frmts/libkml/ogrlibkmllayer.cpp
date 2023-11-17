@@ -729,7 +729,8 @@ OGRErr OGRLIBKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRLIBKMLLayer::CreateField(const OGRFieldDefn *poField,
+                                   int /* bApproxOK */)
 {
     if (!bUpdate)
         return OGRERR_UNSUPPORTED_OPERATION;

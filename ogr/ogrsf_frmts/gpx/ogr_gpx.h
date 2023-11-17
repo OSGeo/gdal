@@ -140,7 +140,7 @@ class OGRGPXLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {

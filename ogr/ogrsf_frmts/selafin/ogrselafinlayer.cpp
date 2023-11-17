@@ -679,7 +679,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
 /************************************************************************/
 /*                           CreateField()                              */
 /************************************************************************/
-OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
                                     CPL_UNUSED int bApproxOK)
 {
     CPLDebug("Selafin", "CreateField(%s,%s)", poField->GetNameRef(),

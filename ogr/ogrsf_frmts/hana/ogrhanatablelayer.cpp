@@ -1406,7 +1406,8 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature *feature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn *srsField, int approxOK)
+OGRErr OGRHanaTableLayer::CreateField(const OGRFieldDefn *srsField,
+                                      int approxOK)
 {
     if (!updateMode_)
     {
@@ -1543,7 +1544,8 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn *srsField, int approxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn *geomField, int)
+OGRErr OGRHanaTableLayer::CreateGeomField(const OGRGeomFieldDefn *geomField,
+                                          int)
 {
     if (!updateMode_)
     {

@@ -1174,7 +1174,7 @@ class netCDFLayer final : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr CreateField(OGRFieldDefn *poFieldDefn,
+    virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK) override;
 };
 

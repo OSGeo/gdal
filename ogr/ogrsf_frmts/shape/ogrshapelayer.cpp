@@ -1814,7 +1814,8 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRShapeLayer::CreateField(OGRFieldDefn *poFieldDefn, int bApproxOK)
+OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
+                                  int bApproxOK)
 
 {
     if (!StartUpdate("CreateField"))

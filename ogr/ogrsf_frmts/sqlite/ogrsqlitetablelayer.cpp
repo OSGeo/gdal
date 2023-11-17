@@ -1517,7 +1517,7 @@ OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn(OGRFieldDefn *poFieldDefn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                         CPL_UNUSED int bApproxOK)
 {
     OGRFieldDefn oField(poFieldIn);
@@ -1632,8 +1632,9 @@ OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                            CPL_UNUSED int bApproxOK)
+OGRErr
+OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                     CPL_UNUSED int bApproxOK)
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if (eType == wkbNone)

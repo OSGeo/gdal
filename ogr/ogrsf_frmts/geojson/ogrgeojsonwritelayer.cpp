@@ -436,7 +436,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONWriteLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGeoJSONWriteLayer::CreateField(const OGRFieldDefn *poField,
                                          int /* bApproxOK */)
 {
     if (poFeatureDefn_->GetFieldIndexCaseSensitive(poField->GetNameRef()) >= 0)

@@ -1666,7 +1666,7 @@ bool OGRGeoPackageTableLayer::CheckUpdatableTable(const char *pszOperation)
 /*                      CreateField()                                   */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
                                             int /* bApproxOK */)
 {
     if (!m_bFeatureDefnCompleted)
@@ -1786,7 +1786,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(OGRFieldDefn *poField,
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
-    OGRFieldDefn *poField)
+    const OGRFieldDefn *poField)
 {
     const std::string &osConstraintName(poField->GetDomainName());
     const std::string osName(poField->GetAlternativeNameRef());
@@ -1875,8 +1875,9 @@ bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                                int /* bApproxOK */)
+OGRErr
+OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                         int /* bApproxOK */)
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();

@@ -124,7 +124,7 @@ class GDALNullLayer final : public OGRLayer
         return OGRERR_NONE;
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 };
 
@@ -371,7 +371,7 @@ int GDALNullLayer::TestCapability(const char *pszCap)
 /*                             CreateField()                            */
 /************************************************************************/
 
-OGRErr GDALNullLayer::CreateField(OGRFieldDefn *poField, int)
+OGRErr GDALNullLayer::CreateField(const OGRFieldDefn *poField, int)
 {
     poFeatureDefn->AddFieldDefn(poField);
     return OGRERR_NONE;

@@ -528,14 +528,14 @@ class GNMGenericLayer : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                                   int nFlagsIn) override;
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRErr SyncToDisk() override;
@@ -721,9 +721,9 @@ class OGRGNMWrappedResultLayer : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() override;
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual int TestCapability(const char *pszCap) override;
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE) override;
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;

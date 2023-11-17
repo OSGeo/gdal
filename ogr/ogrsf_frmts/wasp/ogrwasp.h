@@ -157,9 +157,9 @@ class OGRWAsPLayer final : public OGRLayer,
     virtual void ResetReading() override;
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;

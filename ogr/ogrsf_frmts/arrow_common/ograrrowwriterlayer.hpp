@@ -523,7 +523,7 @@ OGRArrowWriterLayer::GetFieldDomain(const std::string &name) const
 /*                          CreateField()                               */
 /************************************************************************/
 
-inline OGRErr OGRArrowWriterLayer::CreateField(OGRFieldDefn *poField,
+inline OGRErr OGRArrowWriterLayer::CreateField(const OGRFieldDefn *poField,
                                                int /* bApproxOK */)
 {
     if (m_poSchema)
@@ -689,8 +689,9 @@ OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-inline OGRErr OGRArrowWriterLayer::CreateGeomField(OGRGeomFieldDefn *poField,
-                                                   int /* bApproxOK */)
+inline OGRErr
+OGRArrowWriterLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
+                                     int /* bApproxOK */)
 {
     if (m_poSchema)
     {

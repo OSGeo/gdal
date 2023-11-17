@@ -225,14 +225,14 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     int TestCapability(const char *) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     static OGRCSVCreateFieldAction
     PreCreateField(OGRFeatureDefn *poFeatureDefn,
                    const std::set<CPLString> &oSetFields,
-                   OGRFieldDefn *poNewField, int bApproxOK);
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
+                   const OGRFieldDefn *poNewField, int bApproxOK);
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
