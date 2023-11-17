@@ -946,6 +946,7 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_from_feature_table)(
     if (!hStmt) {
         if (p_error_msg)
             *p_error_msg = my_sqlite3_strdup(sqlite3_errmsg(hDB));
+        SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_free)(t);
         return false;
     }
 
