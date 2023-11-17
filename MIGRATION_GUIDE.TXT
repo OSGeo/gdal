@@ -1,3 +1,13 @@
+MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
+-----------------------------------------
+
+- Out-of-tree vector drivers:
+  * OGRLayer::CreateField() now takes a const OGRFieldDefn* instead of a
+    OGRFieldDefn*.
+  * OGRLayer::CreateGeomField() now takes a const OGRGeomFieldDefn* instead of
+    a OGRGeomFieldDefn*.
+
+
 MIGRATION GUIDE FROM GDAL 3.7 to GDAL 3.8
 -----------------------------------------
 
