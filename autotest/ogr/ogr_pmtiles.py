@@ -583,3 +583,39 @@ def test_ogr_pmtiles_write():
     finally:
         if gdal.VSIStatL(filename):
             gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_max_zoom():
+
+    tmpfilename = "/vsimem/tmp.pmtiles"
+    with gdaltest.tempfile(tmpfilename, open("data/pmtiles/poly.pmtiles", "rb").read()):
+        f = gdal.VSIFOpenL(tmpfilename, "rb+")
+        assert f
+        gdal.VSIFSeekL(f, 0x64, 0)
+        gdal.VSIFWriteL(b"\x01\x00", 1, 2, f)
+        gdal.VSIFCloseL(f)
+        with pytest.raises(Exception, match=r"min_zoom\(=1\) > max_zoom\(=0\)"):
+            ogr.Open(tmpfilename)
+
+
+###############################################################################
+
+
+def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_30():
+
+    tmpfilename = "/vsimem/tmp.pmtiles"
+    with gdaltest.tempfile(tmpfilename, open("data/pmtiles/poly.pmtiles", "rb").read()):
+        f = gdal.VSIFOpenL(tmpfilename, "rb+")
+        assert f
+        gdal.VSIFSeekL(f, 0x64, 0)
+        gdal.VSIFWriteL(b"\xfe\xff", 1, 2, f)
+        gdal.VSIFCloseL(f)
+        with gdal.quiet_errors():
+            ds = ogr.Open(tmpfilename)
+        assert (
+            gdal.GetLastErrorMsg() == "Clamping min_zoom (and max_zoom) from 254 to 30"
+        )
+        assert ds.GetMetadataItem("ZOOM_LEVEL") == "30"
