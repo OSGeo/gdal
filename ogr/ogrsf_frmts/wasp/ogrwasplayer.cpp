@@ -698,7 +698,7 @@ OGRErr OGRWAsPLayer::ICreateFeature(OGRFeature *poFeature)
 /*                            CreateField()                            */
 /************************************************************************/
 
-OGRErr OGRWAsPLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRWAsPLayer::CreateField(const OGRFieldDefn *poField,
                                  CPL_UNUSED int bApproxOK)
 {
     poLayerDefn->AddFieldDefn(poField);

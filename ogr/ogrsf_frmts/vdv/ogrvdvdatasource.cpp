@@ -1527,7 +1527,7 @@ GIntBig OGRVDVWriterLayer::GetFeatureCount(int)
 /*                          CreateField()                               */
 /************************************************************************/
 
-OGRErr OGRVDVWriterLayer::CreateField(OGRFieldDefn *poFieldDefn,
+OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                                       int /* bApprox */)
 {
     if (m_nFeatureCount >= 0)

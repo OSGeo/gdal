@@ -2898,7 +2898,7 @@ bool OGRElasticLayer::PushIndex()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
+OGRErr OGRElasticLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                                     int /*bApproxOK*/)
 {
     if (m_poDS->GetAccess() != GA_Update)

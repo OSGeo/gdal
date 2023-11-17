@@ -205,7 +205,7 @@ int OGRMutexedLayer::TestCapability(const char *pszCapability)
     return OGRLayerDecorator::TestCapability(pszCapability);
 }
 
-OGRErr OGRMutexedLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRMutexedLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::CreateField(poField, bApproxOK);

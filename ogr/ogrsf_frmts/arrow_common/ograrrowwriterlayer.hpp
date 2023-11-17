@@ -523,7 +523,7 @@ OGRArrowWriterLayer::GetFieldDomain(const std::string &name) const
 /*                          CreateField()                               */
 /************************************************************************/
 
-inline OGRErr OGRArrowWriterLayer::CreateField(OGRFieldDefn *poField,
+inline OGRErr OGRArrowWriterLayer::CreateField(const OGRFieldDefn *poField,
                                                int /* bApproxOK */)
 {
     if (m_poSchema)

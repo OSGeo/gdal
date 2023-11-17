@@ -280,7 +280,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     virtual OGRErr Rename(const char *pszNewName) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
+                               int bApproxOK) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,
                                   OGRFieldDefn *poNewFieldDefn,

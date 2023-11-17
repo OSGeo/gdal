@@ -106,7 +106,7 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     GIntBig GetFeatureCount(int) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;

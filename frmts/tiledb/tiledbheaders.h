@@ -487,7 +487,7 @@ class OGRTileDBLayer final : public OGRLayer,
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRTileDBLayer);
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;

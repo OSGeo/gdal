@@ -260,7 +260,8 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     OGRErr DeleteField(int iField) override;
     OGRErr ReorderFields(int *panMap) override;
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,

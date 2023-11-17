@@ -837,7 +837,8 @@ class OGRDXFWriterLayer final : public OGRLayer
 
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
 
     void ResetFP(VSILFILE *);
 
@@ -878,7 +879,8 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
 
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
 
     std::vector<OGRFeature *> apoBlocks;
     OGRFeature *FindBlock(const char *);

@@ -810,7 +810,7 @@ OGRErr OGR_L_UpdateFeature(OGRLayerH hLayer, OGRFeatureH hFeat,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
     (void)poField;

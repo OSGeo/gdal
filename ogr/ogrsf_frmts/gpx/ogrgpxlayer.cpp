@@ -1867,7 +1867,8 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeatureIn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGPXLayer::CreateField(OGRFieldDefn *poField, CPL_UNUSED int bApproxOK)
+OGRErr OGRGPXLayer::CreateField(const OGRFieldDefn *poField,
+                                CPL_UNUSED int bApproxOK)
 {
     for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
     {

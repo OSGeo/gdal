@@ -1955,7 +1955,7 @@ error:
     return errorErrno;
 }
 
-OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRFlatGeobufLayer::CreateField(const OGRFieldDefn *poField,
                                        int /* bApproxOK */)
 {
     // CPLDebugOnly("FlatGeobuf", "CreateField %s %s", poField->GetNameRef(),

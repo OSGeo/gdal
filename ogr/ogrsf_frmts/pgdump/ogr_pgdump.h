@@ -169,7 +169,7 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
     virtual OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;

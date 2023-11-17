@@ -196,7 +196,8 @@ class FGdbLayer final : public FGdbBaseLayer
         return m_wstrType;
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
+                               int bApproxOK) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
 #ifdef AlterFieldDefn_implemented_but_not_working
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,

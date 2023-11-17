@@ -187,7 +187,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
     {
         return nullptr;
     }
-    OGRErr CreateField(OGRFieldDefn *poFieldDefn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldDefn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int TestCapability(const char *) override;
 };
@@ -1076,7 +1076,7 @@ int OGRMapMLWriterLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMapMLWriterLayer::CreateField(OGRFieldDefn *poFieldDefn, int)
+OGRErr OGRMapMLWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 {
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;

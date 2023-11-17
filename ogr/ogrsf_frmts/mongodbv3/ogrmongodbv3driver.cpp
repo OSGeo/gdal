@@ -201,7 +201,7 @@ class OGRMongoDBv3Layer final : public OGRLayer
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     int TestCapability(const char *pszCap) override;
     OGRFeatureDefn *GetLayerDefn() override;
-    OGRErr CreateField(OGRFieldDefn *poFieldIn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
     OGRErr CreateGeomField(OGRGeomFieldDefn *poFieldIn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
@@ -1428,7 +1428,7 @@ OGRErr OGRMongoDBv3Layer::DeleteFeature(GIntBig nFID)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMongoDBv3Layer::CreateField(OGRFieldDefn *poFieldIn, int)
+OGRErr OGRMongoDBv3Layer::CreateField(const OGRFieldDefn *poFieldIn, int)
 
 {
     if (m_poDS->GetAccess() != GA_Update)

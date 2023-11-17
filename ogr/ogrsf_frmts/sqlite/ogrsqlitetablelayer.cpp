@@ -1517,7 +1517,7 @@ OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn(OGRFieldDefn *poFieldDefn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                         CPL_UNUSED int bApproxOK)
 {
     OGRFieldDefn oField(poFieldIn);

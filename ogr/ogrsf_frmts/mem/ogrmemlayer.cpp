@@ -613,7 +613,8 @@ int OGRMemLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRMemLayer::CreateField(const OGRFieldDefn *poField,
+                                int /* bApproxOK */)
 {
     if (!m_bUpdatable)
         return OGRERR_FAILURE;

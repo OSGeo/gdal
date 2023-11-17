@@ -3425,7 +3425,7 @@ class OGRMVTWriterLayer final : public OGRLayer
     }
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *) override;
-    OGRErr CreateField(OGRFieldDefn *, int) override;
+    OGRErr CreateField(const OGRFieldDefn *, int) override;
 };
 
 /************************************************************************/
@@ -3483,7 +3483,7 @@ int OGRMVTWriterLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMVTWriterLayer::CreateField(OGRFieldDefn *poFieldDefn, int)
+OGRErr OGRMVTWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 {
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;

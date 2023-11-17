@@ -378,7 +378,7 @@ OGRErr OGRGeoJSONLayer::DeleteFeature(GIntBig nFID)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRGeoJSONLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (!IsUpdatable() || !IngestAll())
         return OGRERR_FAILURE;

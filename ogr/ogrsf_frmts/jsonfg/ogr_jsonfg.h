@@ -205,7 +205,7 @@ class OGRJSONFGWriteLayer final : public OGRLayer
         return nullptr;
     }
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *pszCap) override;
 
     OGRErr SyncToDisk() override;

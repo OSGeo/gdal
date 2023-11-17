@@ -85,7 +85,8 @@ class OGRILI1Layer final : public OGRLayer
         return oGeomFieldInfos;
     }
 
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
 

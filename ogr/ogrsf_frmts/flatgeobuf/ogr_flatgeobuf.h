@@ -169,7 +169,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = true) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual int TestCapability(const char *) override;

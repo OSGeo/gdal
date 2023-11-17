@@ -713,7 +713,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRCARTOTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                        CPL_UNUSED int bApproxOK)
 {
     GetLayerDefn();

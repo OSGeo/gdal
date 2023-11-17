@@ -369,7 +369,7 @@ void OGRAmigoCloudTableLayer::FlushDeferredInsert()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRAmigoCloudTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRAmigoCloudTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                             CPL_UNUSED int bApproxOK)
 {
     GetLayerDefn();

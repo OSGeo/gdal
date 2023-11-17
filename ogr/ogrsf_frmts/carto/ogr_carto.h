@@ -167,7 +167,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     virtual OGRErr DeleteField(int iField) override;

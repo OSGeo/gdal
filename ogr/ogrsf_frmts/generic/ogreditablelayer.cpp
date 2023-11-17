@@ -707,7 +707,7 @@ int OGREditableLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGREditableLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGREditableLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;

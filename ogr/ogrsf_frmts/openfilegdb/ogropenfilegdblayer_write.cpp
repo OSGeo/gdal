@@ -1088,7 +1088,8 @@ OGROpenFileGDBLayer::GetLaunderedFieldName(const std::string &osNameOri) const
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                        int bApproxOK)
 {
     if (!m_bEditable)
         return OGRERR_FAILURE;
@@ -1104,8 +1105,8 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
     }
 
     /* Clean field names */
-    OGRFieldDefn oField(poField);
-    poField = &oField;
+    OGRFieldDefn oField(poFieldIn);
+    OGRFieldDefn *poField = &oField;
 
     const std::string osFidColumn = GetFIDColumn();
     if (!osFidColumn.empty() &&

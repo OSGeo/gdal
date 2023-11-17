@@ -93,7 +93,7 @@ int OGRGNMWrappedResultLayer::TestCapability(const char *pszCap)
     return poLayer->TestCapability(pszCap);
 }
 
-OGRErr OGRGNMWrappedResultLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGNMWrappedResultLayer::CreateField(const OGRFieldDefn *poField,
                                              int bApproxOK)
 {
     return poLayer->CreateField(poField, bApproxOK);

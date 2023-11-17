@@ -933,7 +933,7 @@ OGRErr OGRMSSQLSpatialTableLayer::EndCopy()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRMSSQLSpatialTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                               int bApproxOK)
 
 {

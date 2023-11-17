@@ -2433,7 +2433,8 @@ bool netCDFLayer::AddField(int nVarID)
 /*                             CreateField()                            */
 /************************************************************************/
 
-OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
+OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
+                                int /* bApproxOK */)
 {
     int nSecDimId = -1;
     int nVarID = -1;

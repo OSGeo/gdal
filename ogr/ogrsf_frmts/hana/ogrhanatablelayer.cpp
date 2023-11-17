@@ -1406,7 +1406,8 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature *feature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn *srsField, int approxOK)
+OGRErr OGRHanaTableLayer::CreateField(const OGRFieldDefn *srsField,
+                                      int approxOK)
 {
     if (!updateMode_)
     {

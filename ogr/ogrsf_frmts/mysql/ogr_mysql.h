@@ -196,7 +196,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     void SetLaunderFlag(int bFlag)

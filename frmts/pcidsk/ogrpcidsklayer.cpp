@@ -765,7 +765,8 @@ OGRErr OGRPCIDSKLayer::ISetFeature(OGRFeature *poFeature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRPCIDSKLayer::CreateField(OGRFieldDefn *poFieldDefn, int bApproxOK)
+OGRErr OGRPCIDSKLayer::CreateField(const OGRFieldDefn *poFieldDefn,
+                                   int bApproxOK)
 
 {
     try

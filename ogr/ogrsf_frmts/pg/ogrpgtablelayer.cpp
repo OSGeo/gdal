@@ -2161,7 +2161,8 @@ int OGRPGTableLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRPGTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
+OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                    int bApproxOK)
 
 {
     PGconn *hPGConn = poDS->GetPGConn();

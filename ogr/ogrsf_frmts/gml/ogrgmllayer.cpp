@@ -1149,7 +1149,7 @@ int OGRGMLLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRGMLLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
     if (!bWriter || iNextGMLId != 0)

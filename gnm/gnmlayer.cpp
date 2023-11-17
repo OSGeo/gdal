@@ -294,7 +294,7 @@ int GNMGenericLayer::TestCapability(const char *pszCapability)
     return m_poLayer->TestCapability(pszCapability);
 }
 
-OGRErr GNMGenericLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr GNMGenericLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     return m_poLayer->CreateField(poField, bApproxOK);
 }
