@@ -42,6 +42,7 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "gmlutils.h"
 #include "ogr_geometry.h"
 
@@ -1257,15 +1258,16 @@ bool GMLReader::SaveClasses(const char *pszFile)
 
     CPLDestroyXMLNode(psRoot);
 
-    VSILFILE *fp = VSIFOpenL(pszFile, "wb");
+    auto fp = VSIVirtualHandleUniquePtr(VSIFOpenL(pszFile, "wb"));
 
     bool bSuccess = true;
     if (fp == nullptr)
         bSuccess = false;
-    else if (VSIFWriteL(pszWholeText, strlen(pszWholeText), 1, fp) != 1)
-        bSuccess = false;
     else
-        VSIFCloseL(fp);
+    {
+        if (fp->Write(pszWholeText, strlen(pszWholeText), 1) != 1)
+            bSuccess = false;
+    }
 
     CPLFree(pszWholeText);
 
