@@ -50,6 +50,28 @@ def script_path():
     return test_py_scripts.get_py_script("rgb2pct")
 
 
+###############################################################################
+#
+
+
+def test_rgb2pct_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "rgb2pct", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_rgb2pct_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "rgb2pct", "--version"
+    )
+
+
 @pytest.fixture(scope="module")
 def rgb2pct1_tif(script_path, tmp_path_factory):
 
@@ -86,6 +108,38 @@ def test_rgb2pct_1(rgb2pct1_tif):
 
     with gdal.Open(rgb2pct1_tif) as ds:
         assert ds.GetRasterBand(1).Checksum() == 31231
+
+
+###############################################################################
+#
+
+
+def test_pct2rgb_help(script_path):
+    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    try:
+        gdal_array.BandRasterIONumPy
+    except AttributeError:
+        pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "pct2rgb", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_pct2rgb_version(script_path):
+    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    try:
+        gdal_array.BandRasterIONumPy
+    except AttributeError:
+        pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "pct2rgb", "--version"
+    )
 
 
 ###############################################################################

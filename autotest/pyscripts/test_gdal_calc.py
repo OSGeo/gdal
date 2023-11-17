@@ -63,6 +63,28 @@ def script_path():
     return test_py_scripts.get_py_script("gdal_calc")
 
 
+###############################################################################
+#
+
+
+def test_gdal_calc_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_calc", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_calc_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_calc", "--version"
+    )
+
+
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
 

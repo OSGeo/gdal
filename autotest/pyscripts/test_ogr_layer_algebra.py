@@ -49,6 +49,28 @@ def script_path():
 
 
 ###############################################################################
+#
+
+
+def test_ogr_layer_algebra_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "ogr_layer_algebra", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_ogr_layer_algebra_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "ogr_layer_algebra", "--version"
+    )
+
+
+###############################################################################
 
 # Test Intersection
 
