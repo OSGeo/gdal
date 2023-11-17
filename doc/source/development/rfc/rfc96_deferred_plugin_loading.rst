@@ -8,7 +8,7 @@ RFC 96: Deferred C++ plugin loading
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2023-Nov-01
-Status:        In development
+Status:        Adopted
 Target:        GDAL 3.9
 ============== =============================================
 
@@ -496,4 +496,4 @@ Related issues and PRs
 Voting history
 --------------
 
-TBD
++1 from PSC members KurtS, HowardB, JukkaR, JavierJS and EvenR
