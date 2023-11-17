@@ -32,7 +32,6 @@ function (build_fuzzer)
   endif ()
   target_link_libraries(${_FUZZ_NAME} PRIVATE $<TARGET_NAME:fuzzingengine> $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
   gdal_standard_includes(${_FUZZ_NAME})
-  set_target_properties(${_FUZZ_NAME} PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES)
   target_include_directories(${_FUZZ_NAME} PRIVATE $<TARGET_PROPERTY:ogr_SQLite,SOURCE_DIR>)
   # Windows(Mingw/MSVC) link libraries
   if (CMAKE_SYSTEM_NAME MATCHES "Windows")
