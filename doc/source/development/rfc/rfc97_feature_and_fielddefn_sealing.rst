@@ -247,6 +247,16 @@ Simple CreateField() implementation:
         return OGRERR_NONE
     }
 
+Discussion
+----------
+
+- Why not just having a ``const OGRFeatureDefn* OGRLayer::GetLayerDefn() const``
+  method ?
+
+  That would only work when using the C++ API (and would require changes in all
+  drivers to modify the signature, as well as doing changes at places where
+  drivers require a non-const OGRFeatureDefn*), because const correctness is not
+  available in the C API and the SWIG bindings.
 
 SWIG bindings
 -------------
