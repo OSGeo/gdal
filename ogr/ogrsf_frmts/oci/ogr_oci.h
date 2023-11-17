@@ -339,7 +339,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
     {
         return poSRS;
     }
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual int FindFieldIndex(const char *pszFieldName,
                                int bExactMatch) override;
