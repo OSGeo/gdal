@@ -176,11 +176,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(GDALDataset *poSrcDSIn,
 
     /* + 1 since we can add an implicit geometry field */
     panGeomFieldToSrcGeomField = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (1 + psSelectInfo->result_columns)));
+        CPLMalloc(sizeof(int) * (1 + psSelectInfo->column_defs.size())));
 
-    for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+    for (std::size_t iField = 0; iField < psSelectInfo->column_defs.size();
+         iField++)
     {
-        swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+        swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
         OGRFieldDefn oFDefn("", OFTInteger);
         OGRGeomFieldDefn oGFDefn("", wkbUnknown);
         OGRFieldDefn *poSrcFDefn = nullptr;
@@ -431,16 +432,12 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(GDALDataset *poSrcDSIn,
     /*      Add implicit geometry field.                                    */
     /* -------------------------------------------------------------------- */
     if (psSelectInfo->query_mode == SWQM_RECORDSET &&
-        poDefn->GetGeomFieldCount() == 0 && poSrcDefn->GetGeomFieldCount() == 1)
+        poDefn->GetGeomFieldCount() == 0 &&
+        poSrcDefn->GetGeomFieldCount() == 1 && !psSelectInfo->bExcludedGeometry)
     {
-        psSelectInfo->result_columns++;
+        psSelectInfo->column_defs.emplace_back();
 
-        psSelectInfo->column_defs = static_cast<swq_col_def *>(
-            CPLRealloc(psSelectInfo->column_defs,
-                       sizeof(swq_col_def) * psSelectInfo->result_columns));
-
-        swq_col_def *col_def =
-            psSelectInfo->column_defs + psSelectInfo->result_columns - 1;
+        swq_col_def *col_def = &psSelectInfo->column_defs.back();
 
         memset(col_def, 0, sizeof(swq_col_def));
         const char *pszName = poSrcDefn->GetGeomFieldDefn(0)->GetNameRef();
@@ -860,9 +857,9 @@ int OGRGenSQLResultsLayer::PrepareSummary()
          !ContainGeomSpecialField(psSelectInfo->where_expr)))
     {
         int bFoundGeomExpr = FALSE;
-        for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+        for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (psColDef->table_index == 0 && psColDef->field_index != -1)
             {
                 OGRLayer *poLayer = papoTableLayers[psColDef->table_index];
@@ -899,7 +896,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
     /*      GetFeatureCount().                                            */
     /* -------------------------------------------------------------------- */
 
-    if (psSelectInfo->result_columns == 1 &&
+    if (psSelectInfo->result_columns() == 1 &&
         psSelectInfo->column_defs[0].col_func == SWQCF_COUNT &&
         psSelectInfo->column_defs[0].field_index < 0)
     {
@@ -928,9 +925,9 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
     while ((poSrcFeature = poSrcLayer->GetNextFeature()) != nullptr)
     {
-        for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+        for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
 
             if (psColDef->col_func == SWQCF_COUNT)
             {
@@ -998,9 +995,9 @@ int OGRGenSQLResultsLayer::PrepareSummary()
     /* -------------------------------------------------------------------- */
     if (psSelectInfo->query_mode == SWQM_SUMMARY_RECORD)
     {
-        for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+        for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
                 swq_summary &oSummary = psSelectInfo->column_summary[iField];
@@ -1022,9 +1019,9 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             poSummaryFeature->SetFID(0);
         }
 
-        for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+        for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
                 swq_summary &oSummary = psSelectInfo->column_summary[iField];
@@ -1370,9 +1367,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
     /* -------------------------------------------------------------------- */
     int iRegularField = 0;
     int iGeomField = 0;
-    for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+    for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
-        swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+        swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
         if (psColDef->field_index != -1)
         {
             if (psColDef->field_type == SWQ_GEOMETRY ||
@@ -1473,9 +1470,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
     /* -------------------------------------------------------------------- */
     iRegularField = 0;
     iGeomField = 0;
-    for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+    for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
-        swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+        swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
 
         if (psColDef->table_index != 0)
         {
@@ -1577,9 +1574,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
 
         // Copy over selected field values.
         iRegularField = 0;
-        for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+        for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
 
             if (psColDef->field_type == SWQ_GEOMETRY ||
                 psColDef->target_type == SWQ_GEOMETRY)
@@ -1806,9 +1803,9 @@ OGRFeatureDefn *OGRGenSQLResultsLayer::GetLayerDefn()
     {
         // Run PrepareSummary() is we have a COUNT column so as to be
         // able to downcast it from OFTInteger64 to OFTInteger
-        for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+        for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (psColDef->col_func == SWQCF_COUNT)
             {
                 PrepareSummary();
@@ -2386,9 +2383,9 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
     /*      1st phase : explore the whole select infos to determine which   */
     /*      source fields are used                                          */
     /* -------------------------------------------------------------------- */
-    for (int iField = 0; iField < psSelectInfo->result_columns; iField++)
+    for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
-        swq_col_def *psColDef = psSelectInfo->column_defs + iField;
+        swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
         AddFieldDefnToSet(psColDef->table_index, psColDef->field_index, hSet);
         if (psColDef->expr)
             ExploreExprForIgnoredFields(psColDef->expr, hSet);

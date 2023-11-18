@@ -1792,7 +1792,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                 OGRMemLayer *poMemLayer = nullptr;
 
                 int i = 0;  // Used after for.
-                for (; i < oSelect.result_columns; i++)
+                for (; i < oSelect.result_columns(); i++)
                 {
                     swq_col_func col_func = oSelect.column_defs[i].col_func;
                     if (!(col_func == SWQCF_MIN || col_func == SWQCF_MAX ||
@@ -1905,7 +1905,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                         delete poFeature;
                     }
                 }
-                if (i != oSelect.result_columns)
+                if (i != oSelect.result_columns())
                 {
                     delete poMemLayer;
                 }
@@ -1964,7 +1964,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                 if (eErr == OGRERR_NONE)
                 {
                     int i = 0;  // Used after for.
-                    for (; i < oSelect.result_columns; i++)
+                    for (; i < oSelect.result_columns(); i++)
                     {
                         if (oSelect.column_defs[i].col_func != SWQCF_NONE)
                             break;
@@ -1980,7 +1980,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                 oSelect.column_defs[i].field_name) < 0)
                             break;
                     }
-                    if (i != oSelect.result_columns)
+                    if (i != oSelect.result_columns())
                         eErr = OGRERR_FAILURE;
                 }
                 if (eErr == OGRERR_NONE)
@@ -2012,8 +2012,9 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                  "Using OGROpenFileGDBSimpleSQLLayer");
                         bLastSQLUsedOptimizedImplementation = true;
                         return new OGROpenFileGDBSimpleSQLLayer(
-                            poLayer, poIter, oSelect.result_columns,
-                            oSelect.column_defs, oSelect.offset, oSelect.limit);
+                            poLayer, poIter, oSelect.result_columns(),
+                            oSelect.column_defs.data(), oSelect.offset,
+                            oSelect.limit);
                     }
                 }
             }

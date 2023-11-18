@@ -1527,7 +1527,7 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
 # Test min/max on string fields
 
 
-def test_ogr_sql_min_max_string_field(data_ds):
+def test_ogr_sql_min_max_string_field():
 
     mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     mem_lyr = mem_ds.CreateLayer("test")
@@ -1551,3 +1551,172 @@ def test_ogr_sql_min_max_string_field(data_ds):
         feat = sql_lyr.GetNextFeature()
         assert feat["MIN_str_field"] == "ab"
         assert feat["MAX_str_field"] == "z"
+
+
+##############################################################################
+# Test SELECT * EXCEPT
+
+# Test some error cases. Some of these could potentially be tolerated
+# in the future.
+@pytest.mark.parametrize(
+    "body",
+    [
+        "(",
+        ")",
+        "()",
+        "(*)",
+        "(EASID, ",
+        "(EASID, DOES_NOT_EXIST)",
+        "(EAS_ID, EAS_ID)",
+        "(EAS_ID,, AREA)",
+    ],
+)
+def test_ogr_sql_select_except_errors(data_ds, body):
+    with gdal.quiet_errors():
+        lyr = data_ds.ExecuteSQL(f"SELECT * EXCEPT {body} FROM poly")
+    assert lyr is None
+
+
+def test_ogr_sql_select_except_attrs(data_ds):
+
+    with data_ds.ExecuteSQL("SELECT * EXCEPT (EAS_ID, PRFEDEA) FROM poly") as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 1
+        assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 1
+
+
+def test_ogr_sql_select_except_geom(data_ds):
+
+    with data_ds.ExecuteSQL(
+        'SELECT * EXCEPT (EAS_ID, "_ogr_geometry_") FROM poly'
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 2
+        assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 0
+
+
+def test_ogr_sql_select_except_multiple_asterisk_1(data_ds):
+    with data_ds.ExecuteSQL("SELECT * EXCEPT (EAS_ID), * FROM poly") as sql_lyr:
+
+        defn = sql_lyr.GetLayerDefn()
+
+        assert defn.GetFieldCount() == 5
+
+        assert defn.GetFieldDefn(0).GetName() == "AREA"
+        assert defn.GetFieldDefn(1).GetName() == "PRFEDEA"
+        assert defn.GetFieldDefn(2).GetName() == "AREA"
+        assert defn.GetFieldDefn(3).GetName() == "EAS_ID"
+        assert defn.GetFieldDefn(4).GetName() == "PRFEDEA"
+
+        assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 2
+
+
+def test_ogr_sql_select_except_multiple_asterisk_2(data_ds):
+    with data_ds.ExecuteSQL("SELECT *, * EXCEPT (EAS_ID) FROM poly") as sql_lyr:
+
+        defn = sql_lyr.GetLayerDefn()
+
+        assert defn.GetFieldCount() == 5
+
+        assert defn.GetFieldDefn(0).GetName() == "AREA"
+        assert defn.GetFieldDefn(1).GetName() == "EAS_ID"
+        assert defn.GetFieldDefn(2).GetName() == "PRFEDEA"
+        assert defn.GetFieldDefn(3).GetName() == "AREA"
+        assert defn.GetFieldDefn(4).GetName() == "PRFEDEA"
+
+        assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 2
+
+
+def test_ogr_sql_select_except_named_geometry():
+
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+    mem_lyr = mem_ds.CreateLayer("my_layer", geom_type=ogr.wkbNone)
+    mem_lyr.CreateGeomField(ogr.GeomFieldDefn("named_geom", ogr.wkbUnknown))
+    mem_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    mem_lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+
+    feat = ogr.Feature(mem_lyr.GetLayerDefn())
+    feat["id"] = 3
+    feat["name"] = "test"
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+
+    mem_lyr.CreateFeature(feat)
+
+    with mem_ds.ExecuteSQL("SELECT * EXCEPT (named_geom, id) FROM my_layer") as sql_lyr:
+
+        defn = sql_lyr.GetLayerDefn()
+
+        assert defn.GetGeomFieldCount() == 0
+        assert defn.GetFieldCount() == 1
+        assert defn.GetFieldDefn(0).GetName() == "name"
+
+
+@pytest.fixture()
+def select_except_join_ds():
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
+
+    pt_lyr = mem_ds.CreateLayer("point")
+    pt_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    pt_lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+
+    pt_feat = ogr.Feature(pt_lyr.GetLayerDefn())
+    pt_feat["id"] = 1
+    pt_feat["name"] = "test"
+    pt_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    pt_lyr.CreateFeature(pt_feat)
+
+    line_lyr = mem_ds.CreateLayer("line")
+    line_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+
+    line_feat = ogr.Feature(line_lyr.GetLayerDefn())
+    line_feat["id"] = 1
+    line_feat.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 1, 2 2)"))
+    line_lyr.CreateFeature(line_feat)
+
+    return mem_ds
+
+
+def test_ogr_sql_select_except_join_1(select_except_join_ds):
+
+    with select_except_join_ds.ExecuteSQL(
+        "SELECT * FROM point JOIN line ON point.id = line.id"
+    ) as sql_lyr:
+
+        defn = sql_lyr.GetLayerDefn()
+
+        assert defn.GetGeomFieldCount() == 1
+        f = sql_lyr.GetNextFeature()
+        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint
+
+        assert defn.GetFieldCount() == 3
+        assert defn.GetFieldDefn(0).GetName() == "id"
+        assert defn.GetFieldDefn(1).GetName() == "name"
+        assert defn.GetFieldDefn(2).GetName() == "line.id"
+
+
+def test_ogr_sql_select_except_join_2(select_except_join_ds):
+
+    # excluding "id" without a table name excludes only point.id
+
+    with select_except_join_ds.ExecuteSQL(
+        "SELECT * EXCEPT (id) FROM point JOIN line ON point.id = line.id"
+    ) as sql_lyr:
+
+        defn = sql_lyr.GetLayerDefn()
+
+        assert defn.GetGeomFieldCount() == 1
+        assert defn.GetFieldCount() == 2
+        assert defn.GetFieldDefn(0).GetName() == "name"
+        assert defn.GetFieldDefn(1).GetName() == "line.id"
+
+
+def test_ogr_sql_select_except_join_3(select_except_join_ds):
+
+    with select_except_join_ds.ExecuteSQL(
+        "SELECT * EXCLUDE (line.id) FROM point JOIN line ON point.id = line.id"
+    ) as sql_lyr:
+
+        defn = sql_lyr.GetLayerDefn()
+
+        assert defn.GetGeomFieldCount() == 1
+        assert defn.GetFieldCount() == 2
+        assert defn.GetFieldDefn(0).GetName() == "id"
+        assert defn.GetFieldDefn(1).GetName() == "name"
