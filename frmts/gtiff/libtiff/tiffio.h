@@ -508,6 +508,9 @@ extern int TIFFReadRGBAImageOriented(TIFF *, uint32_t, uint32_t, uint32_t *,
     TIFFOpenOptionsSetMaxSingleMemAlloc(TIFFOpenOptions *opts,
                                         tmsize_t max_single_mem_alloc);
     extern void
+    TIFFOpenOptionsSetMaxCumulatedMemAlloc(TIFFOpenOptions *opts,
+                                           tmsize_t max_cumulated_mem_alloc);
+    extern void
     TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions *opts,
                                        TIFFErrorHandlerExtR handler,
                                        void *errorhandler_user_data);
