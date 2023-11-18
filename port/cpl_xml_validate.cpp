@@ -914,7 +914,7 @@ static void CPLLibXMLWarningErrorCallback(void *ctx, const char *msg, ...)
 
     if (strstr(pszStr, "since this namespace was already imported") == nullptr)
     {
-        xmlErrorPtr pErrorPtr = xmlGetLastError();
+        const xmlError *pErrorPtr = xmlGetLastError();
         const char *pszFilename = static_cast<char *>(ctx);
         char *pszStrDup = CPLStrdup(pszStr);
         int nLen = static_cast<int>(strlen(pszStrDup));
