@@ -223,6 +223,7 @@ char *swq_select::Unparse()
                 osSelect += ".";
             }
             osSelect += swq_expr_node::QuoteIfNecessary(def->field_name, '"');
+            osSelect += ")";
         }
 
         if (def->field_alias != nullptr &&
@@ -231,9 +232,6 @@ char *swq_select::Unparse()
             osSelect += " AS ";
             osSelect += swq_expr_node::QuoteIfNecessary(def->field_alias, '"');
         }
-
-        if (def->col_func != SWQCF_NONE)
-            osSelect += ")";
     }
 
     osSelect += " FROM ";
@@ -286,13 +284,30 @@ char *swq_select::Unparse()
         CPLFree(pszTmp);
     }
 
-    for (int i = 0; i < order_specs; i++)
+    if (order_specs > 0)
     {
         osSelect += " ORDER BY ";
-        osSelect +=
-            swq_expr_node::QuoteIfNecessary(order_defs[i].field_name, '"');
-        if (!order_defs[i].ascending_flag)
-            osSelect += " DESC";
+        for (int i = 0; i < order_specs; i++)
+        {
+            if (i > 0)
+                osSelect += ", ";
+            osSelect +=
+                swq_expr_node::QuoteIfNecessary(order_defs[i].field_name, '"');
+            if (!order_defs[i].ascending_flag)
+                osSelect += " DESC";
+        }
+    }
+
+    if (limit >= 0)
+    {
+        osSelect += " LIMIT ";
+        osSelect += CPLSPrintf(CPL_FRMT_GIB, limit);
+    }
+
+    if (offset > 0)
+    {
+        osSelect += " OFFSET ";
+        osSelect += CPLSPrintf(CPL_FRMT_GIB, offset);
     }
 
     return CPLStrdup(osSelect);
@@ -725,7 +740,7 @@ void swq_select::SetOffset(GIntBig nOffset)
 /*                          expand_wildcard()                           */
 /*                                                                      */
 /*      This function replaces the '*' in a "SELECT *" with the list    */
-/*      provided list of fields.  Itis used by swq_select_parse(),      */
+/*      provided list of fields.  It is used by swq_select::parse(),    */
 /*      but may be called in advance by applications wanting the        */
 /*      "default" field list to be different than the full list of      */
 /*      fields.                                                         */
