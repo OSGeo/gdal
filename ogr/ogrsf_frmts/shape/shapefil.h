@@ -2,7 +2,6 @@
 #define SHAPEFILE_H_INCLUDED
 
 /******************************************************************************
- * $Id$
  *
  * Project:  Shapelib
  * Purpose:  Primary include file for Shapelib.
@@ -12,29 +11,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2012-2016, Even Rouault <even dot rouault at spatialys.com>
  *
- * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see COPYING).  This
- * option is discussed in more detail in shapelib.html.
- *
- * --
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************
  *
  */
@@ -74,7 +51,7 @@ extern "C"
     /*      various calling conventions on the Shapelib API.                */
     /*                                                                      */
     /*      To force __stdcall conventions (needed to call Shapelib         */
-    /*      from Visual Basic and/or Dephi I believe) the makefile could    */
+    /*      from Visual Basic and/or Delphi I believe) the makefile could   */
     /*      be modified to define:                                          */
     /*                                                                      */
     /*        /DSHPAPI_CALL=__stdcall                                       */
@@ -115,26 +92,6 @@ extern "C"
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Macros for controlling CVSID and ensuring they don't appear     */
-/*      as unreferenced variables resulting in lots of warnings.        */
-/* -------------------------------------------------------------------- */
-#ifndef DISABLE_CVSID
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define SHP_CVSID(string)                                                      \
-    static const char cpl_cvsid[] __attribute__((used)) = string;
-#else
-#define SHP_CVSID(string)                                                      \
-    static const char cpl_cvsid[] = string;                                    \
-    static const char *cvsid_aw()                                              \
-    {                                                                          \
-        return (cvsid_aw() ? NULL : cpl_cvsid);                                \
-    }
-#endif
-#else
-#define SHP_CVSID(string)
-#endif
-
-/* -------------------------------------------------------------------- */
 /*      On some platforms, additional file IO hooks are defined that    */
 /*      UTF-8 encoded filenames Unicode filenames                       */
 /* -------------------------------------------------------------------- */
@@ -149,14 +106,19 @@ extern "C"
     typedef int *SAFile;
 
 #ifndef SAOffset
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+    typedef unsigned __int64 SAOffset;
+#else
     typedef unsigned long SAOffset;
+#endif
 #endif
 
     typedef struct
     {
         SAFile (*FOpen)(const char *filename, const char *access);
         SAOffset (*FRead)(void *p, SAOffset size, SAOffset nmemb, SAFile file);
-        SAOffset (*FWrite)(void *p, SAOffset size, SAOffset nmemb, SAFile file);
+        SAOffset (*FWrite)(const void *p, SAOffset size, SAOffset nmemb,
+                           SAFile file);
         SAOffset (*FSeek)(SAFile file, SAOffset offset, int whence);
         SAOffset (*FTell)(SAFile file);
         int (*FFlush)(SAFile file);
@@ -282,13 +244,15 @@ extern "C"
     SHPHandle SHPAPI_CALL SHPOpen(const char *pszShapeFile,
                                   const char *pszAccess);
     SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszShapeFile,
-                                    const char *pszAccess, SAHooks *psHooks);
+                                    const char *pszAccess,
+                                    const SAHooks *psHooks);
     SHPHandle SHPAPI_CALL SHPOpenLLEx(const char *pszShapeFile,
-                                      const char *pszAccess, SAHooks *psHooks,
-                                      int bRestoreSHX);
+                                      const char *pszAccess,
+                                      const SAHooks *psHooks, int bRestoreSHX);
 
     int SHPAPI_CALL SHPRestoreSHX(const char *pszShapeFile,
-                                  const char *pszAccess, SAHooks *psHooks);
+                                  const char *pszAccess,
+                                  const SAHooks *psHooks);
 
     /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
     /* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
@@ -298,7 +262,7 @@ extern "C"
 
     SHPHandle SHPAPI_CALL SHPCreate(const char *pszShapeFile, int nShapeType);
     SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszShapeFile, int nShapeType,
-                                      SAHooks *psHooks);
+                                      const SAHooks *psHooks);
     void SHPAPI_CALL SHPGetInfo(SHPHandle hSHP, int *pnEntities,
                                 int *pnShapeType, double *padfMinBound,
                                 double *padfMaxBound);
@@ -366,7 +330,7 @@ extern "C"
 
     SHPTree SHPAPI_CALL1(*)
         SHPCreateTree(SHPHandle hSHP, int nDimension, int nMaxDepth,
-                      double *padfBoundsMin, double *padfBoundsMax);
+                      const double *padfBoundsMin, const double *padfBoundsMax);
     void SHPAPI_CALL SHPDestroyTree(SHPTree *hTree);
 
     int SHPAPI_CALL SHPWriteTree(SHPTree *hTree, const char *pszFilename);
@@ -379,8 +343,8 @@ extern "C"
     int SHPAPI_CALL1(*)
         SHPTreeFindLikelyShapes(SHPTree *hTree, double *padfBoundsMin,
                                 double *padfBoundsMax, int *);
-    int SHPAPI_CALL SHPCheckBoundsOverlap(double *, double *, double *,
-                                          double *, int);
+    int SHPAPI_CALL SHPCheckBoundsOverlap(const double *, const double *,
+                                          const double *, const double *, int);
 
     int SHPAPI_CALL1(*)
         SHPSearchDiskTree(FILE *fp, double *padfBoundsMin,
@@ -389,7 +353,7 @@ extern "C"
     typedef struct SHPDiskTreeInfo *SHPTreeDiskHandle;
 
     SHPTreeDiskHandle SHPAPI_CALL SHPOpenDiskTree(const char *pszQIXFilename,
-                                                  SAHooks *psHooks);
+                                                  const SAHooks *psHooks);
 
     void SHPAPI_CALL SHPCloseDiskTree(SHPTreeDiskHandle hDiskTree);
 
@@ -398,7 +362,7 @@ extern "C"
                             double *padfBoundsMax, int *pnShapeCount);
 
     int SHPAPI_CALL SHPWriteTreeLL(SHPTree *hTree, const char *pszFilename,
-                                   SAHooks *psHooks);
+                                   const SAHooks *psHooks);
 
     /* -------------------------------------------------------------------- */
     /*      SBN Search API                                                  */
@@ -407,13 +371,13 @@ extern "C"
     typedef struct SBNSearchInfo *SBNSearchHandle;
 
     SBNSearchHandle SHPAPI_CALL SBNOpenDiskTree(const char *pszSBNFilename,
-                                                SAHooks *psHooks);
+                                                const SAHooks *psHooks);
 
     void SHPAPI_CALL SBNCloseDiskTree(SBNSearchHandle hSBN);
 
     int SHPAPI_CALL1(*)
-        SBNSearchDiskTree(SBNSearchHandle hSBN, double *padfBoundsMin,
-                          double *padfBoundsMax, int *pnShapeCount);
+        SBNSearchDiskTree(SBNSearchHandle hSBN, const double *padfBoundsMin,
+                          const double *padfBoundsMax, int *pnShapeCount);
 
     int SHPAPI_CALL1(*)
         SBNSearchDiskTreeInteger(SBNSearchHandle hSBN, int bMinX, int bMinY,
@@ -496,13 +460,14 @@ extern "C"
     DBFHandle SHPAPI_CALL DBFOpen(const char *pszDBFFile,
                                   const char *pszAccess);
     DBFHandle SHPAPI_CALL DBFOpenLL(const char *pszDBFFile,
-                                    const char *pszAccess, SAHooks *psHooks);
+                                    const char *pszAccess,
+                                    const SAHooks *psHooks);
     DBFHandle SHPAPI_CALL DBFCreate(const char *pszDBFFile);
     DBFHandle SHPAPI_CALL DBFCreateEx(const char *pszDBFFile,
                                       const char *pszCodePage);
     DBFHandle SHPAPI_CALL DBFCreateLL(const char *pszDBFFile,
                                       const char *pszCodePage,
-                                      SAHooks *psHooks);
+                                      const SAHooks *psHooks);
 
     int SHPAPI_CALL DBFGetFieldCount(DBFHandle psDBF);
     int SHPAPI_CALL DBFGetRecordCount(DBFHandle psDBF);
@@ -515,7 +480,7 @@ extern "C"
 
     int SHPAPI_CALL DBFDeleteField(DBFHandle hDBF, int iField);
 
-    int SHPAPI_CALL DBFReorderFields(DBFHandle psDBF, int *panMap);
+    int SHPAPI_CALL DBFReorderFields(DBFHandle psDBF, const int *panMap);
 
     int SHPAPI_CALL DBFAlterFieldDefn(DBFHandle psDBF, int iField,
                                       const char *pszFieldName, char chType,
@@ -551,10 +516,10 @@ extern "C"
                                              int iField,
                                              const char lFieldValue);
     int SHPAPI_CALL DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity,
-                                              int iField, void *pValue);
+                                              int iField, const void *pValue);
     const char SHPAPI_CALL1(*) DBFReadTuple(DBFHandle psDBF, int hEntity);
     int SHPAPI_CALL DBFWriteTuple(DBFHandle psDBF, int hEntity,
-                                  void *pRawTuple);
+                                  const void *pRawTuple);
 
     int SHPAPI_CALL DBFIsRecordDeleted(DBFHandle psDBF, int iShape);
     int SHPAPI_CALL DBFMarkRecordDeleted(DBFHandle psDBF, int iShape,

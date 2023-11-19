@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  Shapelib
  * Purpose:  Implementation of quadtree building and searching functions.
@@ -9,29 +8,7 @@
  * Copyright (c) 1999, Frank Warmerdam
  * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
- * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see COPYING).  This
- * option is discussed in more detail in shapelib.html.
- *
- * --
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************
  *
  */
@@ -48,8 +25,6 @@
 #ifdef USE_CPL
 #include "cpl_error.h"
 #endif
-
-SHP_CVSID("$Id$")
 
 #ifndef TRUE
 #define TRUE 1
@@ -81,29 +56,13 @@ static bool bBigEndian = false;
 #endif
 
 /************************************************************************/
-/*                             SfRealloc()                              */
-/*                                                                      */
-/*      A realloc cover function that will access a NULL pointer as     */
-/*      a valid input.                                                  */
-/************************************************************************/
-
-static void *SfRealloc(void *pMem, int nNewSize)
-
-{
-    if (pMem == SHPLIB_NULLPTR)
-        return malloc(nNewSize);
-    else
-        return realloc(pMem, nNewSize);
-}
-
-/************************************************************************/
 /*                          SHPTreeNodeInit()                           */
 /*                                                                      */
 /*      Initialize a tree node.                                         */
 /************************************************************************/
 
-static SHPTreeNode *SHPTreeNodeCreate(double *padfBoundsMin,
-                                      double *padfBoundsMax)
+static SHPTreeNode *SHPTreeNodeCreate(const double *padfBoundsMin,
+                                      const double *padfBoundsMax)
 
 {
     SHPTreeNode *psTreeNode;
@@ -133,7 +92,7 @@ static SHPTreeNode *SHPTreeNodeCreate(double *padfBoundsMin,
 
 SHPTree SHPAPI_CALL1(*)
     SHPCreateTree(SHPHandle hSHP, int nDimension, int nMaxDepth,
-                  double *padfBoundsMin, double *padfBoundsMax)
+                  const double *padfBoundsMin, const double *padfBoundsMax)
 
 {
     SHPTree *psTree;
@@ -292,9 +251,10 @@ void SHPAPI_CALL SHPDestroyTree(SHPTree *psTree)
 /*      Do the given boxes overlap at all?                              */
 /************************************************************************/
 
-int SHPAPI_CALL SHPCheckBoundsOverlap(double *padfBox1Min, double *padfBox1Max,
-                                      double *padfBox2Min, double *padfBox2Max,
-                                      int nDimension)
+int SHPAPI_CALL SHPCheckBoundsOverlap(const double *padfBox1Min,
+                                      const double *padfBox1Max,
+                                      const double *padfBox2Min,
+                                      const double *padfBox2Max, int nDimension)
 {
     for (int iDim = 0; iDim < nDimension; iDim++)
     {
@@ -314,9 +274,9 @@ int SHPAPI_CALL SHPCheckBoundsOverlap(double *padfBox1Min, double *padfBox1Max,
 /*      Does the given shape fit within the indicated extents?          */
 /************************************************************************/
 
-static bool SHPCheckObjectContained(SHPObject *psObject, int nDimension,
-                                    double *padfBoundsMin,
-                                    double *padfBoundsMax)
+static bool SHPCheckObjectContained(const SHPObject *psObject, int nDimension,
+                                    const double *padfBoundsMin,
+                                    const double *padfBoundsMax)
 
 {
     if (psObject->dfXMin < padfBoundsMin[0] ||
@@ -351,7 +311,8 @@ static bool SHPCheckObjectContained(SHPObject *psObject, int nDimension,
 /*      longest dimension.                                              */
 /************************************************************************/
 
-static void SHPTreeSplitBounds(double *padfBoundsMinIn, double *padfBoundsMaxIn,
+static void SHPTreeSplitBounds(const double *padfBoundsMinIn,
+                               const double *padfBoundsMaxIn,
                                double *padfBoundsMin1, double *padfBoundsMax1,
                                double *padfBoundsMin2, double *padfBoundsMax2)
 
@@ -516,15 +477,15 @@ static bool SHPTreeNodeAddShapeId(SHPTreeNode *psTreeNode, SHPObject *psObject,
     psTreeNode->nShapeCount++;
 
     psTreeNode->panShapeIds =
-        STATIC_CAST(int *, SfRealloc(psTreeNode->panShapeIds,
-                                     sizeof(int) * psTreeNode->nShapeCount));
+        STATIC_CAST(int *, realloc(psTreeNode->panShapeIds,
+                                   sizeof(int) * psTreeNode->nShapeCount));
     psTreeNode->panShapeIds[psTreeNode->nShapeCount - 1] = psObject->nShapeId;
 
     if (psTreeNode->papsShapeObj != SHPLIB_NULLPTR)
     {
         psTreeNode->papsShapeObj = STATIC_CAST(
-            SHPObject **, SfRealloc(psTreeNode->papsShapeObj,
-                                    sizeof(void *) * psTreeNode->nShapeCount));
+            SHPObject **, realloc(psTreeNode->papsShapeObj,
+                                  sizeof(void *) * psTreeNode->nShapeCount));
         psTreeNode->papsShapeObj[psTreeNode->nShapeCount - 1] = SHPLIB_NULLPTR;
     }
 
@@ -578,7 +539,7 @@ static void SHPTreeCollectShapeIds(SHPTree *hTree, SHPTreeNode *psTreeNode,
     {
         *pnMaxShapes = (*pnShapeCount + psTreeNode->nShapeCount) * 2 + 20;
         *ppanShapeList = STATIC_CAST(
-            int *, SfRealloc(*ppanShapeList, sizeof(int) * *pnMaxShapes));
+            int *, realloc(*ppanShapeList, sizeof(int) * *pnMaxShapes));
     }
 
     /* -------------------------------------------------------------------- */
@@ -725,11 +686,10 @@ static void SwapWord(int length, void *wordP)
 
 {
     int i;
-    unsigned char temp;
 
     for (i = 0; i < length / 2; i++)
     {
-        temp = STATIC_CAST(unsigned char *, wordP)[i];
+        unsigned char temp = STATIC_CAST(unsigned char *, wordP)[i];
         STATIC_CAST(unsigned char *, wordP)
         [i] = STATIC_CAST(unsigned char *, wordP)[length - i - 1];
         STATIC_CAST(unsigned char *, wordP)[length - i - 1] = temp;
@@ -746,7 +706,8 @@ struct SHPDiskTreeInfo
 /*                         SHPOpenDiskTree()                            */
 /************************************************************************/
 
-SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename, SAHooks *psHooks)
+SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename,
+                                  const SAHooks *psHooks)
 {
     SHPTreeDiskHandle hDiskTree;
 
@@ -873,9 +834,8 @@ static bool SHPSearchDiskTreeNode(SHPTreeDiskHandle hDiskTree,
             if (STATIC_CAST(size_t, *pnBufferMax) > INT_MAX / sizeof(int))
                 *pnBufferMax = *pnResultCount + numshapes;
 
-            pNewBuffer =
-                STATIC_CAST(int *, SfRealloc(*ppanResultBuffer,
-                                             *pnBufferMax * sizeof(int)));
+            pNewBuffer = STATIC_CAST(
+                int *, realloc(*ppanResultBuffer, *pnBufferMax * sizeof(int)));
 
             if (pNewBuffer == SHPLIB_NULLPTR)
             {
@@ -1069,7 +1029,8 @@ static int SHPGetSubNodeOffset(SHPTreeNode *node)
 /*                          SHPWriteTreeNode()                          */
 /************************************************************************/
 
-static void SHPWriteTreeNode(SAFile fp, SHPTreeNode *node, SAHooks *psHooks)
+static void SHPWriteTreeNode(SAFile fp, SHPTreeNode *node,
+                             const SAHooks *psHooks)
 {
     int i, j;
     int offset;
@@ -1131,9 +1092,9 @@ int SHPAPI_CALL SHPWriteTree(SHPTree *tree, const char *filename)
 /*                           SHPWriteTreeLL()                           */
 /************************************************************************/
 
-int SHPWriteTreeLL(SHPTree *tree, const char *filename, SAHooks *psHooks)
+int SHPWriteTreeLL(SHPTree *tree, const char *filename, const SAHooks *psHooks)
 {
-    char signature[4] = "SQT";
+    const char signature[4] = "SQT";
     int i;
     char abyBuf[32];
     SAFile fp;

@@ -152,7 +152,7 @@ int VSI_SHP_WriteMoreDataOK(SAFile file, SAOffset nExtraBytes)
 /*                           VSI_SHP_Write()                            */
 /************************************************************************/
 
-static SAOffset VSI_SHP_Write(void *p, SAOffset size, SAOffset nmemb,
+static SAOffset VSI_SHP_Write(const void *p, SAOffset size, SAOffset nmemb,
                               SAFile file)
 
 {
