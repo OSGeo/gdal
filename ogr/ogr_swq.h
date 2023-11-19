@@ -447,7 +447,6 @@ class CPL_UNSTABLE_API swq_select
                  swq_select_parse_options *poParseOptions);
 
     char *Unparse();
-    void Dump(FILE *);
 
     bool bExcludedGeometry = false;
 
