@@ -26,6 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+
 #include "sqlite_rtree_bulk_load.h"
 
 #include <assert.h>
