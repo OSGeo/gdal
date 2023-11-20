@@ -114,6 +114,7 @@ struct OGRGPKGTableLayerFillArrowArray
     std::mutex oMutex{};
     std::condition_variable oCV{};
     bool bIsFinished = false;
+    GIntBig nCurFID = 0;
     uint32_t nMemLimit = 0;
     // For spatial filtering
     const OGRLayer *poLayerForFilterGeom = nullptr;
@@ -767,7 +768,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int GetNextArrowArrayInternal(struct ArrowArray *out_array,
                                   std::string &osErrorMsg,
                                   bool &bMemoryLimitReached);
-    int GetNextArrowArrayAsynchronous(struct ArrowArray *out_array);
+    int GetNextArrowArrayAsynchronous(struct ArrowArrayStream *stream,
+                                      struct ArrowArray *out_array);
     void GetNextArrowArrayAsynchronousWorker();
     void CancelAsyncNextArrowArray();
 
