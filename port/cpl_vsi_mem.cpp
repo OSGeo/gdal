@@ -50,7 +50,7 @@
 
 #include <mutex>
 // c++17 or VS2017
-#if __cplusplus >= 201703L || _MSC_VER >= 1910
+#if defined(HAVE_SHARED_MUTEX) || _MSC_VER >= 1910
 #include <shared_mutex>
 #define CPL_SHARED_MUTEX_TYPE std::shared_mutex
 #define CPL_SHARED_LOCK std::shared_lock<std::shared_mutex>

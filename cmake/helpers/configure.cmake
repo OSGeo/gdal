@@ -359,6 +359,46 @@ else ()
     add_definitions(-DDONT_DEPRECATE_SPRINTF)
   endif ()
 
+  check_cxx_source_compiles(
+    "
+    #include <mutex>
+    #include <shared_mutex>
+    int main(int argc, const char * argv[]) {
+        std::shared_mutex smtx;
+        int product = 0;
+        auto writer = [&smtx, &product](int start, int end)
+        {
+            for (int i = start; i < end; ++i)
+            {
+                auto data = i;
+                {
+                    std::unique_lock<std::shared_mutex> lock(smtx);
+                    product = data;
+                }
+            }
+            smtx.lock();
+            smtx.unlock();
+        };
+        auto reader = [&smtx, &product]()
+        {
+            int data = 0;
+            std::vector<int> seen;
+            do
+            {
+                {
+                    smtx.lock_shared();
+                    data = product;
+                    smtx.unlock_shared();
+                }
+            }
+            while (1);
+        };
+        return 0;
+    }
+    "
+    HAVE_SHARED_MUTEX
+  )
+
   check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)
 endif ()
 
