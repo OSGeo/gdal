@@ -1952,3 +1952,249 @@ def test_ogr_oapif_collection_items_page_size():
         feature = lyr.GetNextFeature()
         assert feature is not None
         assert handler.last_path == "/oapif/collections/castles/items?limit=100"
+
+def test_ogr_oapif_collection_items_page_size():
+    """Test getting limit from api description. Issue GH #8522"""
+
+    schema = b"""
+    { "components":{
+        "parameters":{
+          "limit":{
+            "schema": {
+              "default": 10,
+              "maximum": 10000,
+              "minimum": 1
+            }
+          }
+        }
+      },
+      "paths":{
+        "/collections/castles/items":{
+          "get":{
+            "description":"",
+            "operationId":"getcastlesFeatures",
+            "parameters":[ ]
+          }
+        }
+      }
+    }
+    """ % {
+        b"port": gdaltest.webserver_port
+    }
+
+    itemsdata = b"""
+    { "type":"FeatureCollection",
+      "features":[
+        {
+          "type":"Feature",
+          "geometry":{
+            "type":"Point",
+            "coordinates":[
+              5.890354724945141,
+              50.922380110626314
+            ]
+          },
+          "properties":{
+            "gid":1
+          },
+          "id":"kastelen.1"
+        },
+        {
+          "type":"Feature",
+          "geometry":{
+            "type":"Point",
+            "coordinates":[
+              5.90354724945141,
+              50.22380110626314
+            ]
+          },
+          "properties":{
+            "gid":2
+          },
+          "id":"kastelen.2"
+        }
+      ]
+    }
+    """ % {
+        b"port": gdaltest.webserver_port
+    }
+
+    filedata = {
+        "/oapif": b"""
+    { "links":[
+        {
+          "rel":"service-desc",
+          "type":"application/vnd.oai.openapi+json;version=3.0",
+          "href":"http://localhost:%(port)d/oapif/openapi"
+        },
+        {
+          "rel":"data",
+          "type":"application/json",
+          "href":"http://localhost:%(port)d/oapif/collections"
+        }
+      ]
+    }
+    """
+        % {b"port": gdaltest.webserver_port},
+        "/oapif/collections": b"""
+        { "collections":[
+            {
+            "id":"castles",
+            "itemType":"feature",
+            "crs":[
+                "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+                "http://www.opengis.net/def/crs/EPSG/0/4326"
+            ]
+        }
+         ]}"""
+        % {b"port": gdaltest.webserver_port},
+        "/oapif/openapi": schema,
+        "/oapif/collections/castles/items": itemsdata,
+        "/oapif/collections/castles/items?limit=100": itemsdata,
+        "/oapif/collections/castles/items?limit=1000": itemsdata,
+        "/oapif/collections/castles/items?limit=5000": itemsdata,
+        "/oapif/openapi/ogcapi-features-1.json": b"""
+        { "components": {
+            "parameters": {
+              "limit": {
+                "name": "limit",
+                "schema": {
+                  "default": 10,
+                  "maximum": 5000,
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+        """,
+    }
+
+    # Check for json syntax
+    for i in filedata.values():
+        try:
+            json.loads(i)
+        except Exception:
+            print(i.decode("utf8"))
+
+    external_json_limit = {
+        "$ref": "http://localhost:%(port)d/oapif/openapi/ogcapi-features-1.json#/components/parameters/limit"
+        % {"port": gdaltest.webserver_port}
+    }
+    internal_json_component_limit = {"$ref": "#/components/parameters/limit"}
+
+    class LoggingHandler(webserver.FileHandler):
+        def do_GET(self, request):
+            self.last_path = request.path
+            return super().do_GET(request)
+
+    handler = LoggingHandler(filedata, content_type="application/json")
+
+    # Test default page size 1000
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        feature = lyr.GetNextFeature()
+        assert feature is not None
+        assert handler.last_path == "/oapif/collections/castles/items?limit=1000"
+
+    # Test numberMatched it does not affect limit
+    j_data = json.loads(itemsdata)
+    j_data.update({"numberMatched": 2})
+    j_data = json.dumps(j_data).encode("utf8")
+    for k in filedata:
+        if k.startswith("/oapif/collections/castles/items"):
+            filedata[k] = j_data
+    handler = LoggingHandler(filedata, content_type="application/json")
+
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        feature = lyr.GetNextFeature()
+        assert feature is not None
+        assert handler.last_path == "/oapif/collections/castles/items?limit=1000"
+
+    # Internal component limit, check that the GDAL default is used
+    j_data = json.loads(schema)
+    j_data["paths"]["/collections/castles/items"]["get"]["parameters"] = [
+        {"$ref": "#/components/parameters/limit"}
+    ]
+    j_data = json.dumps(j_data).encode("utf8")
+    filedata["/oapif/openapi"] = j_data
+    handler = LoggingHandler(filedata, content_type="application/json")
+
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        feature = lyr.GetNextFeature()
+        assert feature is not None
+        assert handler.last_path == "/oapif/collections/castles/items?limit=1000"
+
+    # External JSON component limit, check that the GDAL default is used
+    j_data = json.loads(schema)
+    j_data["paths"]["/collections/castles/items"]["get"]["parameters"] = [
+        external_json_limit
+    ]
+    j_data = json.dumps(j_data).encode("utf8")
+    filedata["/oapif/openapi"] = j_data
+    handler = LoggingHandler(filedata, content_type="application/json")
+
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        feature = lyr.GetNextFeature()
+        assert feature is not None
+        assert handler.last_path == "/oapif/collections/castles/items?limit=1000"
+
+    # Internal component limit, check that the schema default (5000) is used
+    j_data = json.loads(schema)
+    j_data["paths"]["/collections/castles/items"]["get"]["parameters"] = [
+        internal_json_component_limit
+    ]
+    j_data["components"]["parameters"]["limit"]["schema"]["default"] = 5000
+    j_data = json.dumps(j_data).encode("utf8")
+    filedata["/oapif/openapi"] = j_data
+    handler = LoggingHandler(filedata, content_type="application/json")
+
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        feature = lyr.GetNextFeature()
+        assert feature is not None
+        assert handler.last_path == "/oapif/collections/castles/items?limit=5000"
+
+    # Internal component limit, check that the schema maximum (100) is used
+    j_data = json.loads(schema)
+    j_data["paths"]["/collections/castles/items"]["get"]["parameters"] = [
+        internal_json_component_limit
+    ]
+    j_data["components"]["parameters"]["limit"]["schema"]["default"] = 50
+    j_data["components"]["parameters"]["limit"]["schema"]["maximum"] = 100
+    j_data = json.dumps(j_data).encode("utf8")
+    filedata["/oapif/openapi"] = j_data
+    handler = LoggingHandler(filedata, content_type="application/json")
+
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%(port)d/oapif" % {"port": gdaltest.webserver_port}
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 2
+        feature = lyr.GetNextFeature()
+        assert feature is not None
+        assert handler.last_path == "/oapif/collections/castles/items?limit=100"
