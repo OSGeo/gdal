@@ -220,7 +220,7 @@ bool OGRGeoPackageLayer::ParseDateField(const char *pszTxt, OGRField *psField,
             bError = true;
         }
     }
-    else if (OGRParseDate(pszTxt, psField, 0))
+    else if (OGRParseDate(pszTxt, psField, OGRPARSEDATE_OPTION_LAX))
     {
         constexpr int line = __LINE__;
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
@@ -308,7 +308,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(const char *pszTxt,
         // nominal format is YYYYMMDDTHHMMSSsssZ before GeoPackage 1.4
         // GeoPackage 1.4 also accepts omission of seconds and milliseconds
     }
-    else if (OGRParseDate(pszTxt, psField, 0))
+    else if (OGRParseDate(pszTxt, psField, OGRPARSEDATE_OPTION_LAX))
     {
         constexpr int line = __LINE__;
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
