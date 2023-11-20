@@ -175,6 +175,9 @@
 /* Define to 1 if you have the `sched_getaffinity' function. */
 #cmakedefine HAVE_SCHED_GETAFFINITY 1
 
+/* Define to 1 if you have the `std::shared_mutex' function. */
+#cmakedefine HAVE_SHARED_MUTEX 1
+
 /* Define to 1 if you have the `uselocale' function. */
 #cmakedefine HAVE_USELOCALE 1
 
