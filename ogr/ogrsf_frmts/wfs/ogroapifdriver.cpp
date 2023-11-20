@@ -1089,12 +1089,12 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
         m_bPageSizeSetFromOpenOptions = true;
     }
 
-    const int initialRequestPageSize = atoi(
-        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
+    const int initialRequestPageSize = atoi(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
 
-    if ( initialRequestPageSize >= 1 )
+    if (initialRequestPageSize >= 1)
     {
-      m_nInitialRequestPageSize = initialRequestPageSize;
+        m_nInitialRequestPageSize = initialRequestPageSize;
     }
 
     m_osUserPwd =
@@ -1806,7 +1806,10 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     CPLJSONDocument oDoc;
     CPLString osURL(m_osURL);
 
-    osURL = CPLURLAddKVP(osURL, "limit", CPLSPrintf("%d", std::min(m_poDS->m_nInitialRequestPageSize, m_poDS->m_nPageSize )));
+    osURL = CPLURLAddKVP(
+        osURL, "limit",
+        CPLSPrintf("%d", std::min(m_poDS->m_nInitialRequestPageSize,
+                                  m_poDS->m_nPageSize)));
     if (!m_poDS->DownloadJSon(osURL, oDoc))
         return;
 
