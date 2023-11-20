@@ -2365,3 +2365,44 @@ def test_ogr2ogr_lib_accumulerated_errors(tmp_vsimem, enable_exceptions, enable_
                         )
                         is None
                     )
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_gpkg_to_shp_preserved_fid(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "test_ogr2ogr_lib_gpkg_to_shp_preserved_fid.gpkg")
+    src_ds = gdal.GetDriverByName("GPKG").Create(
+        src_filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("foo", "bar")
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("foo", "baz")
+    src_lyr.CreateFeature(f)
+    src_ds.Close()
+
+    out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_accumulerated_errors.shp")
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler):
+        out_ds = gdal.VectorTranslate(out_filename, src_filename, preserveFID=True)
+    assert got_msg == ["Feature id 1 not preserved", "Feature id 2 not preserved"]
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    assert f.GetFID() == 0
+    assert f["foo"] == "bar"
+    f = out_lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f["foo"] == "baz"
