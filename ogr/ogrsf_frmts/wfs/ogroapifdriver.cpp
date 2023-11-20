@@ -1092,7 +1092,7 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
     const int initialRequestPageSize = atoi(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
 
-    if ( initialRequestPageSize > 1 )
+    if ( initialRequestPageSize >= 1 )
     {
       m_nInitialRequestPageSize = initialRequestPageSize;
     }
