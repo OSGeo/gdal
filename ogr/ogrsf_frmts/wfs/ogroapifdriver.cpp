@@ -1806,7 +1806,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     CPLJSONDocument oDoc;
     CPLString osURL(m_osURL);
 
-    osURL = CPLURLAddKVP(osURL, "limit", CPLSPrintf("%d", m_poDS->m_nInitialRequestPageSize));
+    osURL = CPLURLAddKVP(osURL, "limit", CPLSPrintf("%d", std::min(m_poDS->m_nInitialRequestPageSize, m_poDS->m_nPageSize )));
     if (!m_poDS->DownloadJSon(osURL, oDoc))
         return;
 

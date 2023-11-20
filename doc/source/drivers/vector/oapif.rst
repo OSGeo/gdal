@@ -84,8 +84,18 @@ The following options are available:
       :default: 1000
 
       Number of features to retrieve per request.
-      Minimum is 1. If not set, an attempt to determine the maximum 
+      Minimum is 1. If not set, an attempt to determine the maximum
       allowed size will be done by examining the API schema.
+
+-  .. oo:: INITIAL_REQUEST_PAGE_SIZE
+      :choices: <integer>
+      :default: 20
+
+      Number of features to retrieve during the initial request done
+      in order to retrieve information about the features.
+      Minimum is 1.
+      Maximum is the value of the :oo:`PAGE_SIZE` option.
+      If not set the default (20) will be used.
 
 -  .. oo:: USERPWD
 
