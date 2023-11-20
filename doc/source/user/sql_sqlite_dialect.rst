@@ -231,7 +231,7 @@ function can be used to automatically load all the layers of a datasource as
 
     sqlite> SELECT load_extension('libgdal.so');
 
-    sqlite> SELECT load_extension('libspatialite.so');
+    sqlite> SELECT load_extension('mod_spatialite');
 
     sqlite> SELECT ogr_datasource_load_layers('poly.shp');
     1
