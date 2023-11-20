@@ -1954,6 +1954,7 @@ def test_ogr_oapif_collection_items_page_size():
         assert feature is not None
         assert handler.last_path == "/oapif/collections/castles/items?limit=100"
 
+
 def test_ogr_oapif_initial_request_page_size():
     """Test initial request page size. Issue GH #4556"""
 
@@ -1966,7 +1967,9 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, gdal.OF_VECTOR)
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, gdal.OF_VECTOR
+        )
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -1987,7 +1990,6 @@ def test_ogr_oapif_initial_request_page_size():
     with webserver.install_http_handler(handler):
         assert lyr.GetLayerDefn().GetFieldCount() == 1
 
-
     # Use custom INITIAL_REQUEST_PAGE_SIZE
     # Case 1: invalid (< 1)
     handler = webserver.SequentialHandler()
@@ -1999,7 +2001,11 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, gdal.OF_VECTOR, open_options=["INITIAL_REQUEST_PAGE_SIZE=0"])
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["INITIAL_REQUEST_PAGE_SIZE=0"],
+        )
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -2030,7 +2036,11 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, gdal.OF_VECTOR, open_options=["INITIAL_REQUEST_PAGE_SIZE=2000"])
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["INITIAL_REQUEST_PAGE_SIZE=2000"],
+        )
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -2061,7 +2071,10 @@ def test_ogr_oapif_initial_request_page_size():
         '{ "collections" : [ { "name": "foo" }] }',
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.OpenEx("OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, open_options=["INITIAL_REQUEST_PAGE_SIZE=30"])
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["INITIAL_REQUEST_PAGE_SIZE=30"],
+        )
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
