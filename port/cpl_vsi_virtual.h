@@ -327,7 +327,7 @@ class CPL_DLL VSIFileManager
     static VSIFilesystemHandler *GetHandler(const char *);
     static void InstallHandler(const std::string &osPrefix,
                                VSIFilesystemHandler *);
-    static void RemoveHandler(const std::string& osPrefix);
+    static void RemoveHandler(const std::string &osPrefix);
 
     static char **GetPrefixes();
 };

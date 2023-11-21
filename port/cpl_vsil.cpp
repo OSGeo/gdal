@@ -3257,7 +3257,7 @@ void VSIFileManager::InstallHandler(const std::string &osPrefix,
 /*                          RemoveHandler()                             */
 /************************************************************************/
 
-void VSIFileManager::RemoveHandler(const std::string& osPrefix)
+void VSIFileManager::RemoveHandler(const std::string &osPrefix)
 {
     if (osPrefix == "")
         Get()->poDefaultHandler = nullptr;
