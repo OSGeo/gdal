@@ -973,6 +973,9 @@ inline int OGR_GET_MS(float fSec)
 }
 #endif  // __cplusplus
 
+/** Option for OGRParseDate() to ask for lax checks on the input format */
+#define OGRPARSEDATE_OPTION_LAX 1
+
 int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
                          int nOptions);
 
