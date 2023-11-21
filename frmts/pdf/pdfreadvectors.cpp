@@ -946,8 +946,7 @@ OGRGeometry *PDFDataset::ParseContent(
 
                 if (EQUAL3(pszOC, "/OC") && pszOCGName[0] == '/')
                 {
-                    std::map<CPLString, OGRPDFLayer *>::iterator oIter =
-                        oMapPropertyToLayer.find(pszOCGName + 1);
+                    const auto oIter = oMapPropertyToLayer.find(pszOCGName + 1);
                     if (oIter != oMapPropertyToLayer.end())
                     {
                         poCurLayer = oIter->second;
@@ -1942,9 +1941,8 @@ static void ExploreResourceProperty(
 
     if (osType == "OCG" && poObj->GetRefNum().toBool())
     {
-        const auto oIterNumGenToLayer =
-            oMapNumGenToLayer.find(std::pair<int, int>(
-                poObj->GetRefNum().toInt(), poObj->GetRefGen()));
+        const auto oIterNumGenToLayer = oMapNumGenToLayer.find(
+            std::pair(poObj->GetRefNum().toInt(), poObj->GetRefGen()));
         if (oIterNumGenToLayer != oMapNumGenToLayer.end())
         {
             auto poLayer = oIterNumGenToLayer->second;
@@ -2023,9 +2021,9 @@ static void ExploreResourceProperty(
                         if (osOCGType == "OCG" && poOCG->GetRefNum().toBool())
                         {
                             const auto oIterNumGenToLayer =
-                                oMapNumGenToLayer.find(std::pair<int, int>(
-                                    poOCG->GetRefNum().toInt(),
-                                    poOCG->GetRefGen()));
+                                oMapNumGenToLayer.find(
+                                    std::pair(poOCG->GetRefNum().toInt(),
+                                              poOCG->GetRefGen()));
                             if (oIterNumGenToLayer != oMapNumGenToLayer.end())
                             {
                                 auto poLayer = oIterNumGenToLayer->second;
@@ -2183,15 +2181,14 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                     m_nLayers++;
                 }
 
-                oMapNumGenToLayer[std::pair<int, int>(
-                    oLayerWithref.nOCGNum.toInt(), oLayerWithref.nOCGGen)] =
-                    poLayer;
+                oMapNumGenToLayer[std::pair(oLayerWithref.nOCGNum.toInt(),
+                                            oLayerWithref.nOCGGen)] = poLayer;
             }
 
-            for (const auto &oIter : poProperties->GetDictionary()->GetValues())
+            for (const auto &[osKey, poObj] :
+                 poProperties->GetDictionary()->GetValues())
             {
-                const char *pszKey = oIter.first.c_str();
-                GDALPDFObject *poObj = oIter.second;
+                const char *pszKey = osKey.c_str();
                 if (poObj->GetType() == PDFObjectType_Dictionary)
                 {
                     auto poType = poObj->GetDictionary()->Get("Type");

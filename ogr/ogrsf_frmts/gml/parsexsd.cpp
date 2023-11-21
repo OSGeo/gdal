@@ -1000,8 +1000,8 @@ GetUniqueConstraints(const CPLXMLNode *psNode)
                 const char *pszSlash = strchr(pszSelector, '/');
                 if (pszSlash)
                 {
-                    oSet.insert(std::pair<std::string, std::string>(
-                        StripNS(pszSlash + 1), StripNS(pszField)));
+                    oSet.insert(
+                        std::pair(StripNS(pszSlash + 1), StripNS(pszField)));
                 }
             }
         }

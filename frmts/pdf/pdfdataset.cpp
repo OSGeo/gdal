@@ -484,19 +484,16 @@ void GDALPDFDumper::Dump(GDALPDFDictionary *poDict, int nDepth)
     if (nDepthLimit >= 0 && nDepth > nDepthLimit)
         return;
 
-    std::map<CPLString, GDALPDFObject *> &oMap = poDict->GetValues();
-    std::map<CPLString, GDALPDFObject *>::iterator oIter = oMap.begin();
-    std::map<CPLString, GDALPDFObject *>::iterator oEnd = oMap.end();
-    int i;
     CPLString osIndent;
-    for (i = 0; i < nDepth; i++)
+    for (int i = 0; i < nDepth; i++)
         osIndent += " ";
-    for (i = 0; oIter != oEnd; ++oIter, i++)
+    int i = 0;
+    const auto &oMap = poDict->GetValues();
+    for (const auto &[osKey, poObj] : oMap)
     {
-        const char *pszKey = oIter->first.c_str();
-        fprintf(f, "%sItem[%d] : %s", osIndent.c_str(), i, pszKey);
-        GDALPDFObject *poObj = oIter->second;
-        if (strcmp(pszKey, "Parent") == 0 && !bDumpParent)
+        fprintf(f, "%sItem[%d] : %s", osIndent.c_str(), i, osKey.c_str());
+        ++i;
+        if (osKey == "Parent" && !bDumpParent)
         {
             if (poObj->GetRefNum().toBool())
                 fprintf(f, ", Num = %d, Gen = %d", poObj->GetRefNum().toInt(),
@@ -3659,9 +3656,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
             else
                 osTopLayer = osName;
             AddLayer(osTopLayer.c_str());
-            m_oLayerOCGListPoppler.push_back(
-                std::pair<CPLString, OptionalContentGroup *>(osTopLayer,
-                                                             nullptr));
+            m_oLayerOCGListPoppler.push_back(std::pair(osTopLayer, nullptr));
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
@@ -3963,8 +3958,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
             else
                 osTopLayer = osName;
             AddLayer(osTopLayer.c_str());
-            m_oMapLayerNameToOCGNumGenPdfium[osTopLayer] =
-                std::pair<int, int>(-1, -1);
+            m_oMapLayerNameToOCGNumGenPdfium[osTopLayer] = std::pair(-1, -1);
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
@@ -3990,8 +3984,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
                 m_aoLayerWithRef.emplace_back(osCurLayer, poObj->GetRefNum(),
                                               poObj->GetRefGen());
                 m_oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
-                    std::pair<int, int>(poObj->GetRefNum().toInt(),
-                                        poObj->GetRefGen());
+                    std::pair(poObj->GetRefNum().toInt(), poObj->GetRefGen());
             }
         }
     }
@@ -4061,7 +4054,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         for (i = 0; i < nLength; i++)
         {
             GDALPDFObject *poOCG = poOCGsArray->Get(i);
-            m_oMapOCGNumGenToVisibilityStatePdfium[std::pair<int, int>(
+            m_oMapOCGNumGenToVisibilityStatePdfium[std::pair(
                 poOCG->GetRefNum().toInt(), poOCG->GetRefGen())] =
                 (bAll) ? VISIBILITY_ON : VISIBILITY_OFF;
         }
@@ -4069,8 +4062,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         char **papszLayers = CSLTokenizeString2(pszLayers, ",", 0);
         for (i = 0; !bAll && papszLayers[i] != nullptr; i++)
         {
-            std::map<CPLString, std::pair<int, int>>::iterator oIter =
-                m_oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
+            auto oIter = m_oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
             if (oIter != m_oMapLayerNameToOCGNumGenPdfium.end())
             {
                 if (oIter->second.first >= 0)
@@ -4164,7 +4156,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         char **papszLayersOFF = CSLTokenizeString2(pszLayersOFF, ",", 0);
         for (int i = 0; papszLayersOFF[i] != nullptr; i++)
         {
-            std::map<CPLString, std::pair<int, int>>::iterator oIter =
+            auto oIter =
                 m_oMapLayerNameToOCGNumGenPdfium.find(papszLayersOFF[i]);
             if (oIter != m_oMapLayerNameToOCGNumGenPdfium.end())
             {
@@ -4216,9 +4208,8 @@ void PDFDataset::TurnLayersOnOffPdfium()
 PDFDataset::VisibilityState PDFDataset::GetVisibilityStateForOGCPdfium(int nNum,
                                                                        int nGen)
 {
-    std::map<std::pair<int, int>, VisibilityState>::iterator oIter =
-        m_oMapOCGNumGenToVisibilityStatePdfium.find(
-            std::pair<int, int>(nNum, nGen));
+    auto oIter =
+        m_oMapOCGNumGenToVisibilityStatePdfium.find(std::pair(nNum, nGen));
     if (oIter == m_oMapOCGNumGenToVisibilityStatePdfium.end())
         return VISIBILITY_DEFAULT;
     return oIter->second;
@@ -4238,14 +4229,9 @@ CPLString PDFDataset::FindLayerOCG(GDALPDFDictionary *poPageDict,
     if (poProperties != nullptr &&
         poProperties->GetType() == PDFObjectType_Dictionary)
     {
-        std::map<CPLString, GDALPDFObject *> &oMap =
-            poProperties->GetDictionary()->GetValues();
-        std::map<CPLString, GDALPDFObject *>::iterator oIter = oMap.begin();
-        std::map<CPLString, GDALPDFObject *>::iterator oEnd = oMap.end();
-
-        for (; oIter != oEnd; ++oIter)
+        const auto &oMap = poProperties->GetDictionary()->GetValues();
+        for (const auto &[osKey, poObj] : oMap)
         {
-            GDALPDFObject *poObj = oIter->second;
             if (poObj->GetRefNum().toBool() &&
                 poObj->GetType() == PDFObjectType_Dictionary)
             {
@@ -4256,8 +4242,8 @@ CPLString PDFDataset::FindLayerOCG(GDALPDFDictionary *poPageDict,
                     poType->GetName() == "OCG" && poName != nullptr &&
                     poName->GetType() == PDFObjectType_String)
                 {
-                    if (strcmp(poName->GetString().c_str(), pszLayerName) == 0)
-                        return oIter->first;
+                    if (poName->GetString() == pszLayerName)
+                        return osKey;
                 }
             }
         }
@@ -4276,14 +4262,9 @@ void PDFDataset::FindLayersGeneric(GDALPDFDictionary *poPageDict)
     if (poProperties != nullptr &&
         poProperties->GetType() == PDFObjectType_Dictionary)
     {
-        std::map<CPLString, GDALPDFObject *> &oMap =
-            poProperties->GetDictionary()->GetValues();
-        std::map<CPLString, GDALPDFObject *>::iterator oIter = oMap.begin();
-        std::map<CPLString, GDALPDFObject *>::iterator oEnd = oMap.end();
-
-        for (; oIter != oEnd; ++oIter)
+        const auto &oMap = poProperties->GetDictionary()->GetValues();
+        for (const auto &[osKey, poObj] : oMap)
         {
-            GDALPDFObject *poObj = oIter->second;
             if (poObj->GetRefNum().toBool() &&
                 poObj->GetType() == PDFObjectType_Dictionary)
             {
@@ -5160,14 +5141,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             poXObject->GetType() == PDFObjectType_Dictionary)
         {
             GDALPDFDictionary *poXObjectDict = poXObject->GetDictionary();
-            std::map<CPLString, GDALPDFObject *> &oMap =
-                poXObjectDict->GetValues();
-            std::map<CPLString, GDALPDFObject *>::iterator oMapIter =
-                oMap.begin();
+            const auto &oMap = poXObjectDict->GetValues();
             int nSubDataset = 0;
-            while (oMapIter != oMap.end())
+            for (const auto &[osKey, poObj] : oMap)
             {
-                GDALPDFObject *poObj = oMapIter->second;
                 if (poObj->GetType() == PDFObjectType_Dictionary)
                 {
                     GDALPDFDictionary *poDict = poObj->GetDictionary();
@@ -5240,7 +5217,6 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                         }
                     }
                 }
-                ++oMapIter;
             }
         }
 

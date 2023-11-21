@@ -455,15 +455,13 @@ OGRSQLiteSelectLayerCommonBehaviour::GetBaseLayer(size_t &i)
           nCountWhere <= 1))
     {
         CPLDebug("SQLITE", "SQL expression too complex to analyse");
-        return std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>(
-            (OGRLayer *)nullptr, (IOGRSQLiteGetSpatialWhere *)nullptr);
+        return std::pair(nullptr, nullptr);
     }
 
     size_t nFromPos = m_osSQLBase.ifind(" from ");
     if (nFromPos == std::string::npos)
     {
-        return std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>(
-            (OGRLayer *)nullptr, (IOGRSQLiteGetSpatialWhere *)nullptr);
+        return std::pair(nullptr, nullptr);
     }
 
     /* Remove potential quotes around layer name */
@@ -512,8 +510,7 @@ OGRSQLiteSelectLayerCommonBehaviour::GetBaseLayer(size_t &i)
     {
         CPLDebug("SQLITE",
                  "Result layer and base layer don't have the same SRS.");
-        return std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>(
-            (OGRLayer *)nullptr, (IOGRSQLiteGetSpatialWhere *)nullptr);
+        return std::pair(nullptr, nullptr);
     }
 
     return oPair;
@@ -655,8 +652,7 @@ int OGRSQLiteSelectLayerCommonBehaviour::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastSpatialFilter))
     {
         size_t i = 0;
-        std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *> oPair =
-            GetBaseLayer(i);
+        const auto oPair = GetBaseLayer(i);
         if (oPair.first == nullptr)
         {
             CPLDebug("SQLITE", "Cannot find base layer");

@@ -1040,7 +1040,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
                 nTmpXSize = 1;
             if (nTmpYSize == 0)
                 nTmpYSize = 1;
-            asOverviewDims.push_back(std::pair<int, int>(nTmpXSize, nTmpYSize));
+            asOverviewDims.emplace_back(std::pair(nTmpXSize, nTmpYSize));
             nCurLevel--;
         }
     }
@@ -1056,8 +1056,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
             for (int i = 0; i < nIters; i++)
             {
                 auto poOvrBand = poFirstBand->GetOverview(i);
-                asOverviewDims.push_back(std::pair<int, int>(
-                    poOvrBand->GetXSize(), poOvrBand->GetYSize()));
+                asOverviewDims.emplace_back(
+                    std::pair(poOvrBand->GetXSize(), poOvrBand->GetYSize()));
             }
         }
         else
@@ -1082,8 +1082,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
                     nTmpXSize = 1;
                 if (nTmpYSize == 0)
                     nTmpYSize = 1;
-                asOverviewDims.push_back(
-                    std::pair<int, int>(nTmpXSize, nTmpYSize));
+                asOverviewDims.emplace_back(std::pair(nTmpXSize, nTmpYSize));
             }
         }
     }

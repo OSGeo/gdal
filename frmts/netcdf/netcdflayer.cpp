@@ -235,8 +235,8 @@ bool netCDFLayer::Create(char **papszOptions,
                 if (status != NC_NOERR)
                     return false;
 
-                aoAutoVariables.push_back(std::pair<CPLString, int>(
-                    m_osProfileDimName, m_nProfileVarID));
+                aoAutoVariables.push_back(
+                    std::pair(m_osProfileDimName, m_nProfileVarID));
 
                 status =
                     nc_put_att_text(m_nLayerCDFId, m_nProfileVarID, "cf_role",
@@ -282,7 +282,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 return false;
 
             aoAutoVariables.push_back(
-                std::pair<CPLString, int>("parentIndex", m_nParentIndexVarID));
+                std::pair("parentIndex", m_nParentIndexVarID));
 
             status =
                 nc_put_att_text(m_nLayerCDFId, m_nParentIndexVarID, CF_LNG_NAME,
@@ -325,10 +325,8 @@ bool netCDFLayer::Create(char **papszOptions,
                 return false;
             }
 
-            aoAutoVariables.push_back(
-                std::pair<CPLString, int>(pszXVarName, m_nXVarID));
-            aoAutoVariables.push_back(
-                std::pair<CPLString, int>(pszYVarName, m_nYVarID));
+            aoAutoVariables.push_back(std::pair(pszXVarName, m_nXVarID));
+            aoAutoVariables.push_back(std::pair(pszYVarName, m_nYVarID));
 
             m_nXVarNCDFType = NC_DOUBLE;
             m_nYVarNCDFType = NC_DOUBLE;
@@ -364,8 +362,7 @@ bool netCDFLayer::Create(char **papszOptions,
                     return false;
                 }
 
-                aoAutoVariables.push_back(
-                    std::pair<CPLString, int>(pszZVarName, m_nZVarID));
+                aoAutoVariables.push_back(std::pair(pszZVarName, m_nZVarID));
 
                 m_nZVarNCDFType = NC_DOUBLE;
                 m_uZVarNoData.dfVal = NC_FILL_DOUBLE;
@@ -437,8 +434,7 @@ bool netCDFLayer::Create(char **papszOptions,
                 return false;
             }
 
-            aoAutoVariables.push_back(
-                std::pair<CPLString, int>(m_osWKTVarName, m_nWKTVarID));
+            aoAutoVariables.push_back(std::pair(m_osWKTVarName, m_nWKTVarID));
 
             status = nc_put_att_text(m_nLayerCDFId, m_nWKTVarID, CF_LNG_NAME,
                                      strlen("Geometry as ISO WKT"),
@@ -481,8 +477,7 @@ bool netCDFLayer::Create(char **papszOptions,
             return false;
         if (pszCFProjection != nullptr)
         {
-            aoAutoVariables.push_back(
-                std::pair<CPLString, int>(pszCFProjection, nSRSVarId));
+            aoAutoVariables.push_back(std::pair(pszCFProjection, nSRSVarId));
 
             m_osGridMapping = pszCFProjection;
             CPLFree(pszCFProjection);

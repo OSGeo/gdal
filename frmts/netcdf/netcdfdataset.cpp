@@ -13344,7 +13344,7 @@ CPLErr netCDFDataset::FilterVars(
                             std::array<int, 3> oKey{anDimIds[0], anDimIds[1],
                                                     vartype};
                             oMap2DDimsToGroupAndVar[oKey].emplace_back(
-                                std::pair<int, int>(nCdfId, v));
+                                std::pair(nCdfId, v));
                         }
                     }
                     else
@@ -13352,7 +13352,7 @@ CPLErr netCDFDataset::FilterVars(
                         std::array<int, 3> oKey{anDimIds[0], anDimIds[1],
                                                 vartype};
                         oMap2DDimsToGroupAndVar[oKey].emplace_back(
-                            std::pair<int, int>(nCdfId, v));
+                            std::pair(nCdfId, v));
                         bIsVectorOnly = false;
                     }
                 }
