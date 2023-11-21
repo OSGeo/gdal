@@ -6662,6 +6662,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
  *     On output, the values of the FID column may be set with the FID of the
  *     created feature (if the array is not released).
  * </li>
+ * <li>IF_FID_NOT_PRESERVED=NOTHING/ERROR/WARNING. Action to perform when the
+ *     input FID is not preserved in the output layer. The default is NOTHING.
+ *     Setting it to ERROR will cause the function to error out. Setting it
+ *     to WARNING will cause the function to emit a warning but continue its
+ *     processing.
+ * </li>
  * <li>GEOMETRY_NAME=name. Name of the geometry column. If not provided,
  *     GetGeometryColumn() is used. The special name
  *     OGRLayer::DEFAULT_ARROW_GEOMETRY_NAME is also recognized if neither
@@ -6791,6 +6797,12 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         CSLFetchNameValueDef(papszOptions, "FID", GetFIDColumn());
     if (!pszFIDName || pszFIDName[0] == 0)
         pszFIDName = DEFAULT_ARROW_FID_NAME;
+    const bool bErrorIfFIDNotPreserved =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "IF_FID_NOT_PRESERVED", ""),
+              "ERROR");
+    const bool bWarningIfFIDNotPreserved =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "IF_FID_NOT_PRESERVED", ""),
+              "WARNING");
     const char *pszGeomFieldName = CSLFetchNameValueDef(
         papszOptions, "GEOMETRY_NAME", GetGeometryColumn());
     if (!pszGeomFieldName || pszGeomFieldName[0] == 0)
@@ -6961,12 +6973,34 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             oFeatureTarget.SetFID(oFeature.GetFID());
         }
 
+        const auto nInputFID = poFeatureTarget->GetFID();
         if (CreateFeature(poFeatureTarget) != OGRERR_NONE)
         {
             if (bTransactionOK)
                 RollbackTransaction();
             return false;
         }
+        if (nInputFID != OGRNullFID)
+        {
+            if (bWarningIfFIDNotPreserved &&
+                poFeatureTarget->GetFID() != nInputFID)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Feature id " CPL_FRMT_GIB " not preserved",
+                         nInputFID);
+            }
+            else if (bErrorIfFIDNotPreserved &&
+                     poFeatureTarget->GetFID() != nInputFID)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Feature id " CPL_FRMT_GIB " not preserved",
+                         nInputFID);
+                if (bTransactionOK)
+                    RollbackTransaction();
+                return false;
+            }
+        }
+
         if (arrayFIDColumn)
         {
             uint8_t *pabyValidity = static_cast<uint8_t *>(
@@ -7072,6 +7106,12 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
  *     On input, values of the FID column are used to create the feature.
  *     On output, the values of the FID column may be set with the FID of the
  *     created feature (if the array is not released).
+ * </li>
+ * <li>IF_FID_NOT_PRESERVED=NOTHING/ERROR/WARNING. Action to perform when the
+ *     input FID is not preserved in the output layer. The default is NOTHING.
+ *     Setting it to ERROR will cause the function to error out. Setting it
+ *     to WARNING will cause the function to emit a warning but continue its
+ *     processing.
  * </li>
  * <li>GEOMETRY_NAME=name. Name of the geometry column. If not provided,
  *     GetGeometryColumn() is used. The special name
