@@ -5366,14 +5366,16 @@ def test_ogr_gpkg_test_ogrsf(gpkg_ds):
         + f" {dbname} --config OGR_SQLITE_SYNCHRONOUS OFF"
     )
 
-    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
         + f' {dbname} -sql "select * from tbl_linestring" --config OGR_SQLITE_SYNCHRONOUS OFF'
     )
 
-    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################
@@ -8076,6 +8078,43 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
     ds = None
 
     ogr.GetDriverByName("GPKG").DeleteDataSource(filename)
+
+
+###############################################################################
+# Test ArrowArray interface with more than 125 columns
+
+
+@pytest.mark.parametrize("with_filter", [False, True])
+def test_ogr_gpkg_arrow_stream_numpy_more_than_125_columns(tmp_vsimem, with_filter):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    NFIELDS = 125 + 2 * 126
+    for i in range(NFIELDS):
+        lyr.CreateField(ogr.FieldDefn(f"field{i}", ogr.OFTInteger))
+    for j in range(2):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        for i in range(NFIELDS):
+            f.SetField(i, j * 1000 + i)
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr.CreateFeature(f)
+
+    if with_filter:
+        lyr.SetAttributeFilter("1 = 1")
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    lyr.SetSpatialFilter(None)
+    assert len(batches) == 1
+    assert len(batches[0]["fid"]) == 2
+    assert list(batches[0]["fid"]) == [1, 2]
+    assert len(bytes(batches[0]["geom"][0])) == 21
+    assert len(bytes(batches[0]["geom"][1])) == 21
+    for i in range(NFIELDS):
+        assert list(batches[0][f"field{i}"]) == [i, i + 1000]
 
 
 ###############################################################################
