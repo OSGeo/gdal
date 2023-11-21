@@ -49,7 +49,10 @@ bool GDALGenericInverse2D(double xIn, double yIn, double guessedXOut,
                           double guessedYOut,
                           GDALForwardCoordTransformer pfnForwardTranformer,
                           void *pfnForwardTranformerUserData, double &xOut,
-                          double &yOut, double toleranceOnInputCoordinates)
+                          double &yOut,
+                          bool computeJacobianMatrixOnlyAtFirstIter,
+                          double toleranceOnInputCoordinates,
+                          double toleranceOnOutputCoordinates)
 {
     const double dfAbsValOut = std::max(fabs(guessedXOut), fabs(guessedYOut));
     const double dfEps = dfAbsValOut > 0 ? dfAbsValOut * 1e-6 : 1e-6;
@@ -80,38 +83,53 @@ bool GDALGenericInverse2D(double xIn, double yIn, double guessedXOut,
             return true;
         }
 
-        // Compute Jacobian matrix
-        double xTmp = xOut + dfEps;
-        double yTmp = yOut;
-        double xTmpOut;
-        double yTmpOut;
-        if (!pfnForwardTranformer(xTmp, yTmp, xTmpOut, yTmpOut,
-                                  pfnForwardTranformerUserData))
-            return false;
-        const double deriv_X_lam = (xTmpOut - xApprox) / dfEps;
-        const double deriv_Y_lam = (yTmpOut - yApprox) / dfEps;
-
-        xTmp = xOut;
-        yTmp = yOut + dfEps;
-        if (!pfnForwardTranformer(xTmp, yTmp, xTmpOut, yTmpOut,
-                                  pfnForwardTranformerUserData))
-            return false;
-        const double deriv_X_phi = (xTmpOut - xApprox) / dfEps;
-        const double deriv_Y_phi = (yTmpOut - yApprox) / dfEps;
-
-        // Inverse of Jacobian matrix
-        const double det =
-            deriv_X_lam * deriv_Y_phi - deriv_X_phi * deriv_Y_lam;
-        if (det != 0)
+        if (i == 0 || !computeJacobianMatrixOnlyAtFirstIter)
         {
-            deriv_lam_X = deriv_Y_phi / det;
-            deriv_lam_Y = -deriv_X_phi / det;
-            deriv_phi_X = -deriv_Y_lam / det;
-            deriv_phi_Y = deriv_X_lam / det;
+            // Compute Jacobian matrix
+            double xTmp = xOut + dfEps;
+            double yTmp = yOut;
+            double xTmpOut;
+            double yTmpOut;
+            if (!pfnForwardTranformer(xTmp, yTmp, xTmpOut, yTmpOut,
+                                      pfnForwardTranformerUserData))
+                return false;
+            const double deriv_X_lam = (xTmpOut - xApprox) / dfEps;
+            const double deriv_Y_lam = (yTmpOut - yApprox) / dfEps;
+
+            xTmp = xOut;
+            yTmp = yOut + dfEps;
+            if (!pfnForwardTranformer(xTmp, yTmp, xTmpOut, yTmpOut,
+                                      pfnForwardTranformerUserData))
+                return false;
+            const double deriv_X_phi = (xTmpOut - xApprox) / dfEps;
+            const double deriv_Y_phi = (yTmpOut - yApprox) / dfEps;
+
+            // Inverse of Jacobian matrix
+            const double det =
+                deriv_X_lam * deriv_Y_phi - deriv_X_phi * deriv_Y_lam;
+            if (det != 0)
+            {
+                deriv_lam_X = deriv_Y_phi / det;
+                deriv_lam_Y = -deriv_X_phi / det;
+                deriv_phi_X = -deriv_Y_lam / det;
+                deriv_phi_Y = deriv_X_lam / det;
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        xOut -= deltaX * deriv_lam_X + deltaY * deriv_lam_Y;
-        yOut -= deltaX * deriv_phi_X + deltaY * deriv_phi_Y;
+        const double xOutDelta = deltaX * deriv_lam_X + deltaY * deriv_lam_Y;
+        const double yOutDelta = deltaX * deriv_phi_X + deltaY * deriv_phi_Y;
+        xOut -= xOutDelta;
+        yOut -= yOutDelta;
+        if (toleranceOnOutputCoordinates > 0 &&
+            fabs(xOutDelta) < toleranceOnOutputCoordinates &&
+            fabs(yOutDelta) < toleranceOnOutputCoordinates)
+        {
+            return true;
+        }
     }
     return false;
 }

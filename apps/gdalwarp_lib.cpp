@@ -2477,6 +2477,18 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
          !(psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 &&
            psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0));
 
+    const char *pszMethod =
+        psOptions->aosTransformerOptions.FetchNameValue("METHOD");
+    if (pszMethod && EQUAL(pszMethod, "GCP_TPS") &&
+        psOptions->dfErrorThreshold > 0 &&
+        !psOptions->aosTransformerOptions.FetchNameValue(
+            "SRC_APPROX_ERROR_IN_PIXEL"))
+    {
+        psOptions->aosTransformerOptions.SetNameValue(
+            "SRC_APPROX_ERROR_IN_PIXEL",
+            CPLSPrintf("%g", psOptions->dfErrorThreshold));
+    }
+
     if (hDstDS == nullptr)
     {
         hDstDS = CreateOutput(pszDest, nSrcCount, pahSrcDS, psOptions,
@@ -2645,8 +2657,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         /* --------------------------------------------------------------------
          */
 
-        const char *pszMethod =
-            psOptions->aosTransformerOptions.FetchNameValue("METHOD");
         if (iSrc == 0 && (GDALGetMetadata(hSrcDS, "RPC") != nullptr &&
                           (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))))
         {
