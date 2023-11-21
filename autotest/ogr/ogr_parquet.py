@@ -3224,3 +3224,62 @@ def test_ogr_parquet_write_from_wkb_large_binary(tmp_vsimem):
     lyr = ds.GetLayer(0)
     src_lyr.ResetReading()
     ogrtest.compare_layers(src_lyr, lyr)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("where", [None, "boolean = 0"])
+def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
+
+    src_ds = gdal.OpenEx("data/parquet/test.parquet")
+    ds = gdal.VectorTranslate("", src_ds, format="Memory", where=where)
+    lyr = ds.GetLayer(0)
+    if where is None:
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 1
+        assert f["struct_field.c.d"] == "e"
+        assert f["list_struct"] == '[{"a":1,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 2
+        assert f["struct_field.c.d"] == "e1"
+        assert f["list_struct"] == '[{"a":2,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 3
+        assert f["struct_field.c.d"] == "e23"
+        assert f["list_struct"] == '[{"a":3,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 4
+        assert f["struct_field.c.d"] == "e345"
+        assert f["list_struct"] == '[{"a":4,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 5
+        assert f["struct_field.c.d"] == "e4567"
+        assert f["list_struct"] == '[{"a":5,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+    else:
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 2
+        assert f["struct_field.c.d"] == "e1"
+        assert f["list_struct"] == '[{"a":2,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 4
+        assert f["struct_field.c.d"] == "e345"
+        assert f["list_struct"] == '[{"a":4,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+
+    src_lyr = src_ds.GetLayer(0)
+    if where:
+        src_lyr.SetAttributeFilter(where)
+    lyr.ResetReading()
+    assert src_lyr.GetFeatureCount() == lyr.GetFeatureCount()
+    for i in range(lyr.GetFeatureCount()):
+        src_f = src_lyr.GetNextFeature()
+        f = lyr.GetNextFeature()
+        for j in range(src_lyr.GetLayerDefn().GetFieldCount()):
+            field_name = src_lyr.GetLayerDefn().GetFieldDefn(j).GetName()
+            if field_name not in (
+                "time64_us",
+                "time64_ns",
+                "dict",
+            ) and "nan" not in str(src_f.GetField(j)):
+                assert src_f.GetField(j) == f.GetField(j), field_name

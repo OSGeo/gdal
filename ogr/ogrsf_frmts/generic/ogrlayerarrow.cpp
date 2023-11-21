@@ -6621,9 +6621,10 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         size_t nRet = 0;
         for (int64_t i = 0; i < array->n_children; ++i)
         {
-            nRet +=
-                GetWorkingBufferSize(schema->children[i], array->children[i],
-                                     iFeature, iArrowIdxInOut, asFieldInfo);
+            nRet += GetWorkingBufferSize(
+                schema->children[i], array->children[i],
+                iFeature + static_cast<size_t>(array->offset), iArrowIdxInOut,
+                asFieldInfo);
         }
         return nRet;
     }
@@ -6795,9 +6796,10 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
         const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
         for (int64_t i = 0; i < array->n_children; ++i)
         {
-            if (!FillFeature(poLayer, schema->children[i], array->children[i],
-                             osNewPrefix, iFeature, iArrowIdxInOut, asFieldInfo,
-                             oFeature, osWorkingBuffer))
+            if (!FillFeature(
+                    poLayer, schema->children[i], array->children[i],
+                    osNewPrefix, iFeature + static_cast<size_t>(array->offset),
+                    iArrowIdxInOut, asFieldInfo, oFeature, osWorkingBuffer))
                 return false;
         }
         return true;
