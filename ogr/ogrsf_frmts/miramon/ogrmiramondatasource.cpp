@@ -103,7 +103,7 @@ int OGRMiraMonDataSource::Create(const char *pszDSName, char ** /* papszOptions 
 OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
                                          OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eType,
-                                         CPL_UNUSED char **papszOptions)
+                                         char **papszOptions)
 {
     CPLAssert(nullptr != pszLayerName);
 
@@ -269,3 +269,5 @@ OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer)
 
     return papoLayers[iLayer];
 }
+
+

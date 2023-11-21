@@ -150,6 +150,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
                                    OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) ;
+
     int TestCapability(const char *) override;
 };
 
