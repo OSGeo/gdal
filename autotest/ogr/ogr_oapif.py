@@ -186,7 +186,7 @@ def test_ogr_oapif_empty_layer_and_user_query_parameters():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000&FOO=BAR",
+        "/oapif/collections/foo/items?limit=20&FOO=BAR",
         200,
         {"Content-Type": "application/geo+json"},
         '{ "type": "FeatureCollection", "features": [] }',
@@ -220,7 +220,7 @@ def test_ogr_oapif_open_by_collection_and_legacy_wfs3_prefix():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         '{ "type": "FeatureCollection", "features": [] }',
@@ -249,7 +249,7 @@ def test_ogr_oapif_fc_links_next_geojson():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -333,7 +333,7 @@ def test_ogr_oapif_id_is_integer():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -408,7 +408,7 @@ def NO_LONGER_USED_test_ogr_oapif_fc_links_next_headers():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -523,7 +523,7 @@ def test_ogr_oapif_spatial_filter():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -723,7 +723,7 @@ def test_ogr_oapif_limit():
     )
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/json"},
         "{}",
@@ -772,7 +772,7 @@ def test_ogr_oapif_limit_from_numberMatched():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         '{ "type": "FeatureCollection", "features": [], "numberMatched": 1234 }',
@@ -845,7 +845,7 @@ def test_ogr_oapif_attribute_filter():
 
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -1114,7 +1114,7 @@ def test_ogr_oapif_schema_from_xml_schema():
     )
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         '{ "type": "FeatureCollection", "features": [], "numberMatched": 1234 }',
@@ -1163,7 +1163,7 @@ def test_ogr_oapif_schema_from_json_schema():
     )
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -1221,7 +1221,7 @@ def test_ogr_oapif_stac_catalog():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -1296,7 +1296,7 @@ def test_ogr_oapif_storage_crs_easting_northing():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -1394,7 +1394,7 @@ def test_ogr_oapif_storage_crs_latitude_longitude():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -1502,7 +1502,7 @@ def test_ogr_oapif_storage_crs_latitude_longitude_non_compliant_server():
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
-        "/oapif/collections/foo/items?limit=1000",
+        "/oapif/collections/foo/items?limit=20",
         200,
         {"Content-Type": "application/geo+json"},
         """{ "type": "FeatureCollection", "features": [
@@ -1601,7 +1601,7 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
         handler = webserver.SequentialHandler()
         handler.add(
             "GET",
-            "/oapif/collections/foo/items?limit=1000",
+            "/oapif/collections/foo/items?limit=20",
             200,
             {"Content-Type": "application/geo+json"},
             """{ "type": "FeatureCollection", "features": [
@@ -1805,6 +1805,7 @@ def test_ogr_oapif_collection_items_page_size():
         "/oapif/openapi": schema,
         "/oapif/collections/castles/items": itemsdata,
         "/oapif/collections/castles/items?limit=100": itemsdata,
+        "/oapif/collections/castles/items?limit=20": itemsdata,
         "/oapif/collections/castles/items?limit=1000": itemsdata,
         "/oapif/collections/castles/items?limit=5000": itemsdata,
         "/oapif/openapi/ogcapi-features-1.json": b"""
@@ -1952,3 +1953,144 @@ def test_ogr_oapif_collection_items_page_size():
         feature = lyr.GetNextFeature()
         assert feature is not None
         assert handler.last_path == "/oapif/collections/castles/items?limit=100"
+
+
+def test_ogr_oapif_initial_request_page_size():
+    """Test initial request page size. Issue GH #4556"""
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        '{ "collections" : [ { "name": "foo" }] }',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port, gdal.OF_VECTOR
+        )
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=20",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    # Use custom INITIAL_REQUEST_PAGE_SIZE
+    # Case 1: invalid (< 1)
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        '{ "collections" : [ { "name": "foo" }] }',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["INITIAL_REQUEST_PAGE_SIZE=0"],
+        )
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=20",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    # Case 2: invalid (> max page size)
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        '{ "collections" : [ { "name": "foo" }] }',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["INITIAL_REQUEST_PAGE_SIZE=2000"],
+        )
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=1000",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+
+    # Case 3: valid
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections",
+        200,
+        {"Content-Type": "application/json"},
+        '{ "collections" : [ { "name": "foo" }] }',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.OpenEx(
+            "OAPIF:http://localhost:%d/oapif" % gdaltest.webserver_port,
+            open_options=["INITIAL_REQUEST_PAGE_SIZE=30"],
+        )
+    lyr = ds.GetLayer(0)
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/oapif/collections/foo/items?limit=30",
+        200,
+        {"Content-Type": "application/geo+json"},
+        """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "foo": "bar"
+                        }
+                    }
+                ] }""",
+    )
+    with webserver.install_http_handler(handler):
+        assert lyr.GetLayerDefn().GetFieldCount() == 1

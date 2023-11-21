@@ -84,6 +84,7 @@ class OGROAPIFDataset final : public GDALDataset
     CPLString m_osUserQueryParams;
     CPLString m_osUserPwd;
     int m_nPageSize = 1000;
+    int m_nInitialRequestPageSize = 20;
     bool m_bPageSizeSetFromOpenOptions = false;
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
     std::string m_osAskedCRS{};
@@ -1088,6 +1089,14 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
         m_bPageSizeSetFromOpenOptions = true;
     }
 
+    const int initialRequestPageSize = atoi(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
+
+    if (initialRequestPageSize >= 1)
+    {
+        m_nInitialRequestPageSize = initialRequestPageSize;
+    }
+
     m_osUserPwd =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "USERPWD", "");
     std::string osCRS =
@@ -1796,7 +1805,11 @@ void OGROAPIFLayer::EstablishFeatureDefn()
 
     CPLJSONDocument oDoc;
     CPLString osURL(m_osURL);
-    osURL = CPLURLAddKVP(osURL, "limit", CPLSPrintf("%d", m_poDS->m_nPageSize));
+
+    osURL = CPLURLAddKVP(
+        osURL, "limit",
+        CPLSPrintf("%d", std::min(m_poDS->m_nInitialRequestPageSize,
+                                  m_poDS->m_nPageSize)));
     if (!m_poDS->DownloadJSon(osURL, oDoc))
         return;
 
@@ -3155,6 +3168,9 @@ void RegisterOGROAPIF()
         "  <Option name='PAGE_SIZE' type='int' "
         "description='Maximum number of features to retrieve in a single "
         "request'/>"
+        "  <Option name='INITIAL_REQUEST_PAGE_SIZE' type='int' "
+        "description='Maximum number of features to retrieve in the initial "
+        "request issued to determine the schema from a feature sample'/>"
         "  <Option name='USERPWD' type='string' "
         "description='Basic authentication as username:password'/>"
         "  <Option name='IGNORE_SCHEMA' type='boolean' "
