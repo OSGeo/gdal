@@ -42,4 +42,8 @@ constexpr const char *EXTENSION_NAME_GEOARROW_WKB = "geoarrow.wkb";
 std::map<std::string, std::string>
     CPL_DLL OGRParseArrowMetadata(const char *pabyMetadata);
 
+bool CPL_DLL OGRCloneArrowArray(const struct ArrowSchema *schema,
+                                const struct ArrowArray *array,
+                                struct ArrowArray *out_array);
+
 #endif  // OGRLAYERARROW_H_DEFINED
