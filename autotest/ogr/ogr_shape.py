@@ -1048,6 +1048,16 @@ def test_ogr_shape_read_multipolygon_as_invalid_polygon():
     )
 
 
+def test_ogr_shape_read_multipolygon_as_invalid_polygon_no_warning():
+
+    ds = ogr.Open("data/shp/cb_2022_us_county_20m_extract.shp")
+    lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        lyr.GetNextFeature()
+        assert gdal.GetLastErrorMsg() == ""
+
+
 ###############################################################################
 # Test alternate date formatting (#2746)
 

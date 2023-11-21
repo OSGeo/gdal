@@ -348,6 +348,7 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                     // Only inner rings
                     OGREnvelope sFirstEnvelope;
                     OGREnvelope sCurEnvelope;
+                    auto poExteriorRing = tabPolygons[0]->getExteriorRing();
                     tabPolygons[0]->getEnvelope(&sFirstEnvelope);
                     for (int iRing = 1; iRing < psShape->nParts; iRing++)
                     {
@@ -406,10 +407,10 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                                     topPoint = p;
                                 }
                             }
-                            if (!poRing->isPointInRing(&leftPoint) &&
-                                !poRing->isPointInRing(&rightPoint) &&
-                                !poRing->isPointInRing(&bottomPoint) &&
-                                !poRing->isPointInRing(&topPoint))
+                            if (!poExteriorRing->isPointInRing(&leftPoint) &&
+                                !poExteriorRing->isPointInRing(&rightPoint) &&
+                                !poExteriorRing->isPointInRing(&bottomPoint) &&
+                                !poExteriorRing->isPointInRing(&topPoint))
                             {
                                 bUseSlowMethod = true;
                                 break;
