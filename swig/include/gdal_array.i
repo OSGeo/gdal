@@ -1727,7 +1727,7 @@ static bool AddNumpyArrayToDict(PyObject *dict,
                      schemaField->name);
             return false;
         }
-        const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
+        const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + arrayField->offset * nStrings + static_cast<size_t>(arrayField->children[0]->offset);
         const char* bytes = (const char*)arrayField->children[0]->buffers[2];
         numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
         for( npy_intp j = 0; j < dims; j++ )
