@@ -371,6 +371,10 @@ available:
       to Postgresql. COPY is significantly faster than INSERT. COPY is used by
       default when inserting from a table that has just been created.
 
+      .. warning:: At time of writing, PgPoolII is not compatible with COPY
+                   mode as used by the OGR PostgreSQL driver. Thus you should
+                   force PG_USE_COPY=NO when using PgPoolII.
+
 -  .. config:: PGSQL_OGR_FID
 
       Set name of primary key instead of 'ogc_fid'. Only
