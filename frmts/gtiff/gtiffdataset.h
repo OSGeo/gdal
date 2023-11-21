@@ -198,6 +198,7 @@ class GTiffDataset final : public GDALPamDataset
     int m_nLastWrittenBlockId = -1;  // used for m_bStreamingOut
     int m_nRefBaseMapping = 0;
     int m_nGCPCount = 0;
+    int m_nDisableMultiThreadedRead = 0;
 
     GTIFFKeysFlavorEnum m_eGeoTIFFKeysFlavor = GEOTIFF_KEYS_STANDARD;
     GeoTIFFVersionEnum m_eGeoTIFFVersion = GEOTIFF_VERSION_AUTO;

@@ -273,9 +273,9 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     bool bCanUseMultiThreadedRead = false;
-    if (eRWFlag == GF_Read && m_poGDS->m_poThreadPool != nullptr &&
-        nXSize == nBufXSize && nYSize == nBufYSize &&
-        m_poGDS->IsMultiThreadedReadCompatible())
+    if (m_poGDS->m_nDisableMultiThreadedRead == 0 && eRWFlag == GF_Read &&
+        m_poGDS->m_poThreadPool != nullptr && nXSize == nBufXSize &&
+        nYSize == nBufYSize && m_poGDS->IsMultiThreadedReadCompatible())
     {
         const int nBlockX1 = nXOff / nBlockXSize;
         const int nBlockY1 = nYOff / nBlockYSize;
