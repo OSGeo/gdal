@@ -1665,8 +1665,8 @@ void GDALDriverManager::DeclareDeferredPluginDriver(
     }
     else
     {
-        CPLDebugOnly("GDAL", "Registering proxy driver %s",
-                     poProxyDriver->GetDescription());
+        //CPLDebugOnly("GDAL", "Registering proxy driver %s",
+        //             poProxyDriver->GetDescription());
         RegisterDriver(poProxyDriver);
         m_oSetPluginFileNames.insert(pszPluginFileName);
     }
