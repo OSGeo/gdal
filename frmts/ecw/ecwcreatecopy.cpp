@@ -34,7 +34,7 @@
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
 
-#if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
+#if defined(HAVE_COMPRESS)
 
 #define OPTIMIZED_FOR_GDALWARP
 
@@ -1857,7 +1857,7 @@ ECWWriteDataset::ECWWriteDataset(const char *pszFilenameIn, int nXSize,
 ECWWriteDataset::~ECWWriteDataset()
 
 {
-    FlushCache(true);
+    ECWWriteDataset::FlushCache(true);
 
     if (bCrystalized)
     {
@@ -2274,4 +2274,4 @@ GDALDataset *ECWCreateECW(const char *pszFilename, int nXSize, int nYSize,
                                papszOptions, FALSE);
 }
 
-#endif /* def FRMT_ecw && def HAVE_COMPRESS */
+#endif /* def HAVE_COMPRESS */

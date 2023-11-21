@@ -230,4 +230,6 @@ class JP2OPJLikeRasterBand final : public GDALPamRasterBand
     virtual int HasArbitraryOverviews() override;
 };
 
+#ifdef unused
 void GDALRegisterJP2();
+#endif

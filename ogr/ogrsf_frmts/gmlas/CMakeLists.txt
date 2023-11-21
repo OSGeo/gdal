@@ -15,8 +15,14 @@ add_gdal_driver(
           ogrgmlasschemaanalyzer.cpp
           ogrgmlasxlinkresolver.cpp
           xercesc_headers.h
-          PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_JSONC_INTERNAL")
+  CORE_SOURCES
+          ogrgmlasdrivercore.cpp
+  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL")
+
+if(NOT TARGET ogr_GMLAS)
+    return()
+endif()
+
 gdal_standard_includes(ogr_GMLAS)
 target_include_directories(
   ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem

@@ -162,19 +162,4 @@ class OGROGDIDataSource final : public OGRDataSource
     }
 };
 
-/************************************************************************/
-/*                            OGROGDIDriver                             */
-/************************************************************************/
-
-class OGROGDIDriver final : public OGRSFDriver
-{
-  public:
-    ~OGROGDIDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-
-    int TestCapability(const char *) override;
-};
-
 #endif /* OGDOGDI_H_INCLUDED */

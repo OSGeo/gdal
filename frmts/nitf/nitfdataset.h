@@ -172,7 +172,6 @@ class NITFDataset final : public GDALPamDataset
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;
 
-    static int Identify(GDALOpenInfo *);
     static NITFDataset *OpenInternal(GDALOpenInfo *,
                                      GDALDataset *poWritableJ2KDataset,
                                      bool bOpenForCreate, int nIMIndex);

@@ -2172,6 +2172,99 @@ This can be done with:
     Set to OFF to disable loading of GDAL plugins. Default is ON.
 
 
+Deferred loaded plugins
++++++++++++++++++++++++
+
+Starting with GDAL 3.9, a number of in-tree drivers, that can be built as
+plugins, are loaded in a deferred way. This involves that some part of their
+code, which does not depend on external libraries, is included in core libgdal,
+whereas most of the driver code is in a separated dynamically loaded library.
+For builds where libgdal and its plugins are built in a single operation, this
+is fully transparent to the user.
+
+When a plugin driver is known of core libgdal, but not available as a plugin at
+runtime, GDAL will inform the user that the plugin is not available, but could
+be installed. It is possible to give more hints on how to install a plugin
+by setting the following option:
+
+.. option:: GDAL_DRIVER_<driver_name>_PLUGIN_INSTALLATION_MESSAGE:STRING
+
+.. option:: OGR_DRIVER_<driver_name>_PLUGIN_INSTALLATION_MESSAGE:STRING
+
+    Custom message to give a hint to the user how to install a missing plugin
+
+
+For example, if doing a build with::
+
+    cmake .. -DOGR_DRIVER_PARQUET_PLUGIN_INSTALLATION_MESSAGE="You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'"
+
+and opening a Parquet file while the plugin is not installed will display the
+following error::
+
+    $ ogrinfo poly.parquet
+    ERROR 4: `poly.parquet' not recognized as a supported file format. It could have been recognized by driver Parquet, but plugin ogr_Parquet.so is not available in your installation. You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'
+
+
+For more specific builds where libgdal would be first built, and then plugin
+drivers built in later incremental builds, this approach would not work, given
+that the core libgdal built initially would lack code needed to declare the
+plugin(s).
+
+In that situation, the user building GDAL will need to explicitly declare at
+initial libgdal build time that one or several plugin(s) will be later built.
+Note that it is safe to distribute such a libgdal library, even if the plugins
+are not always available at runtime.
+
+This can be done with the following option:
+
+.. option:: GDAL_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN:BOOL=ON
+
+.. option:: OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN:BOOL=ON
+
+    Declares that a driver will be later built as a plugin.
+
+Setting this option to drivers not ready for it will lead to an explicit
+CMake error.
+
+
+For some drivers (ECW, HEIF, JP2KAK, JPEG, JPEGXL, KEA, LERC, MrSID,
+MSSQLSpatial, netCDF, OpenJPEG, PDF, TileDB, WEBP), the metadata and/or dataset
+identification code embedded on libgdal, will depend on optional capabilities
+of the dependent library (e.g. libnetcdf for netCDF)
+In that situation, it is desirable that the dependent library is available at
+CMake configuration time for the core libgdal built, but disabled with
+GDAL_USE_<driver_name>=OFF. It must of course be re-enabled later when the plugin is
+built.
+
+For example for netCDF::
+
+    cmake .. -DGDAL_REGISTER_DRIVER_NETCDF_FOR_LATER_PLUGIN=ON -DGDAL_USE_NETCDF=OFF
+    cmake --build .
+
+    cmake .. -DGDAL_USE_NETCDF=ON -DGDAL_ENABLE_DRIVER_NETCDF=ON -DGDAL_ENABLE_DRIVER_NETCDF_PLUGIN=ON
+    cmake --build . --target gdal_netCDF
+
+
+For other drivers, GDAL_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN /
+OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN can be declared at
+libgdal build time without requiring the dependent libraries needed to build
+the pluging later to be available.
+
+Out-of-tree deferred loaded plugins
++++++++++++++++++++++++++++++++++++
+
+Out-of-tree drivers can also benefit from the deferred loading capability, provided
+libgdal is built with CMake variable(s) pointing to external code containing the
+code for registering a proxy driver.
+
+This can be done with the following option:
+
+.. option:: ADD_EXTERNAL_DEFERRED_PLUGIN_<driver_name>:FILEPATH=/path/to/some/file.cpp
+
+The pointed file must declare a ``void DeclareDeferred<driver_name>(void)``
+method with C linkage that takes care of creating a GDALPluginDriverProxy
+instance and calling :cpp:func:`GDALDriverManager::DeclareDeferredPluginDriver` on it.
+
 .. _building-python-bindings:
 
 Python bindings options

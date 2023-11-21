@@ -6,7 +6,13 @@ add_gdal_driver(
           jp2luracallbacks.cpp
           jp2luradataset.cpp
           jp2lurarasterband.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          jp2luradrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET gdal_JP2Lura)
+    return()
+endif()
 
 gdal_standard_includes(gdal_JP2Lura)
 gdal_target_link_libraries(gdal_JP2Lura PRIVATE LURATECH::LURATECH)

@@ -28,6 +28,7 @@
 
 #include "cpl_port.h"
 #include "hdf5dataset.h"
+#include "hdf5drivercore.h"
 #include "gh5_convenience.h"
 #include "s100.h"
 
@@ -58,7 +59,6 @@ class S102Dataset final : public GDALPamDataset
     char **GetFileList() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -146,59 +146,6 @@ char **S102Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int S102Dataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
-        return TRUE;
-
-    // Is it an HDF5 file?
-    static const char achSignature[] = "\211HDF\r\n\032\n";
-
-    if (poOpenInfo->pabyHeader == nullptr ||
-        memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
-        return FALSE;
-
-    // GDAL_S102_IDENTIFY can be set to NO only for tests, to test that
-    // HDF5Dataset::Open() can redirect to S102 if the below logic fails
-    if (CPLTestBool(CPLGetConfigOption("GDAL_S102_IDENTIFY", "YES")))
-    {
-        // The below identification logic may be a bit fragile...
-        // Works at least on:
-        // - /vsis3/noaa-s102-pds/ed2.1.0/national_bathymetric_source/boston/dcf2/tiles/102US00_US4MA1GC.h5
-        // - https://datahub.admiralty.co.uk/portal/sharing/rest/content/items/6fd07bde26124d48820b6dee60695389/data (S-102_Liverpool_Trial_Cells.zip)
-        const int nLenBC = static_cast<int>(strlen("BathymetryCoverage\0") + 1);
-        const int nLenGroupF = static_cast<int>(strlen("Group_F\0") + 1);
-        bool bFoundBathymetryCoverage = false;
-        bool bFoundGroupF = false;
-        for (int i = 0; i < poOpenInfo->nHeaderBytes - nLenBC; ++i)
-        {
-            if (poOpenInfo->pabyHeader[i] == 'B' &&
-                memcmp(poOpenInfo->pabyHeader + i, "BathymetryCoverage\0",
-                       nLenBC) == 0)
-            {
-                bFoundBathymetryCoverage = true;
-                if (bFoundGroupF)
-                    return true;
-            }
-            if (poOpenInfo->pabyHeader[i] == 'G' &&
-                memcmp(poOpenInfo->pabyHeader + i, "Group_F\0", nLenGroupF) ==
-                    0)
-            {
-                bFoundGroupF = true;
-                if (bFoundBathymetryCoverage)
-                    return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -206,7 +153,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
     // Confirm that this appears to be a S102 file.
-    if (!Identify(poOpenInfo))
+    if (!S102DatasetIdentify(poOpenInfo))
         return nullptr;
 
     HDF5_GLOBAL_LOCK();
@@ -550,34 +497,13 @@ void GDALRegister_S102()
     if (!GDAL_CHECK_VERSION("S102"))
         return;
 
-    if (GDALGetDriverByName("S102") != nullptr)
+    if (GDALGetDriverByName(S102_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("S102");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "S-102 Bathymetric Surface Product");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s102.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "   <Option name='DEPTH_OR_ELEVATION' type='string-select' "
-        "default='DEPTH'>"
-        "       <Value>DEPTH</Value>"
-        "       <Value>ELEVATION</Value>"
-        "   </Option>"
-        "   <Option name='NORTH_UP' type='boolean' default='YES' "
-        "description='Whether the top line of the dataset should be the "
-        "northern-most one'/>"
-        "</OpenOptionList>");
+    S102DriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = S102Dataset::Open;
-    poDriver->pfnIdentify = S102Dataset::Identify;
     poDriver->pfnUnloadDriver = S102DatasetDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

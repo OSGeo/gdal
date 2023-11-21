@@ -35,5 +35,3 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                                  bool bIsKTX2, CSLConstList papszOptions,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressData);
-
-std::string GDAL_KTX2_BASISU_GetCreationOptions(bool bIsKTX2);

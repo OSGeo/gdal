@@ -31,6 +31,8 @@
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
 
+#include "jpipkakdrivercore.h"
+
 /*
 ** The following are for testing premature stream termination support.
 ** This is a mechanism to test handling of failed or incomplete reads
@@ -1449,18 +1451,11 @@ void GDALRegister_JPIPKAK()
     if (!GDAL_CHECK_VERSION("JPIPKAK driver"))
         return;
 
-    if (GDALGetDriverByName("JPIPKAK") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("JPIPKAK");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "JPIP (based on Kakadu)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/jpipkak.html");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jpp-stream");
-
+    JPIPKAKDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = JPIPKAKDataset::Open;
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

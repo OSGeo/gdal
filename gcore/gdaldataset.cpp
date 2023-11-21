@@ -3554,16 +3554,45 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             : INT_MIN;
 #endif
 
-    const int nDriverCount = poDM->GetDriverCount();
-    for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
+    const int nDriverCount = poDM->GetDriverCount(/*bIncludeHidden=*/true);
+    GDALDriver *poMissingPluginDriver = nullptr;
+    std::vector<GDALDriver *> apoSecondPassDrivers;
+
+    // Lookup of matching driver for dataset can involve up to 2 passes:
+    // - in the first pass, all drivers that are compabile of the request mode
+    //   (raster/vector/etc.) are probed using their Identify() method if it
+    //   exists. If the Identify() method returns FALSE, the driver is skipped.
+    //   If the Identify() methods returns GDAL_IDENTIFY_UNKNOWN and that the
+    //   driver is a deferred-loading plugin, it is added to the
+    //   apoSecondPassDrivers list for potential later probing, and execution
+    //   continues to the next driver in the list.
+    //   Otherwise if Identify() returns non-FALSE, the Open() method is used.
+    //   If Open() returns a non-NULL dataset, the loop stops and it is
+    //   returned. Otherwise looping over remaining drivers continues.
+    // - the second pass is optional, only if at least one driver was added
+    //   into apoSecondPassDrivers during the first pass. It is similar
+    //   to the first pass except it runs only on apoSecondPassDrivers drivers.
+    //   And the Open() method of such drivers is used, causing them to be
+    //   loaded for real.
+    int iPass = 1;
+retry:
+    for (int iDriver = 0;
+         iDriver < (iPass == 1 ? nDriverCount
+                               : static_cast<int>(apoSecondPassDrivers.size()));
+         ++iDriver)
     {
-        GDALDriver *poDriver = poDM->GetDriver(iDriver);
+        GDALDriver *poDriver =
+            iPass == 1 ? poDM->GetDriver(iDriver, /*bIncludeHidden=*/true)
+                       : apoSecondPassDrivers[iDriver];
         if (papszAllowedDrivers != nullptr &&
             CSLFindString(papszAllowedDrivers,
                           GDALGetDriverShortName(poDriver)) == -1)
         {
             continue;
         }
+
+        if (poDriver->GetMetadataItem(GDAL_DCAP_OPEN) == nullptr)
+            continue;
 
         if ((nOpenFlags & GDAL_OF_RASTER) != 0 &&
             (nOpenFlags & GDAL_OF_VECTOR) == 0 &&
@@ -3577,11 +3606,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             (nOpenFlags & GDAL_OF_RASTER) == 0 &&
             poDriver->GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER) == nullptr)
             continue;
-        if (poDriver->pfnOpen == nullptr &&
-            poDriver->pfnOpenWithDriverArg == nullptr)
-        {
-            continue;
-        }
 
         // Remove general OVERVIEW_LEVEL open options from list before passing
         // it to the driver, if it isn't a driver specific option already.
@@ -3605,11 +3629,25 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             papszTmpOpenOptionsToValidate = papszOptionsToValidate;
         }
 
-        const bool bIdentifyRes =
+        const int nIdentifyRes =
             poDriver->pfnIdentifyEx
-                ? poDriver->pfnIdentifyEx(poDriver, &oOpenInfo) > 0
-                : poDriver->pfnIdentify &&
-                      poDriver->pfnIdentify(&oOpenInfo) > 0;
+                ? poDriver->pfnIdentifyEx(poDriver, &oOpenInfo)
+            : poDriver->pfnIdentify ? poDriver->pfnIdentify(&oOpenInfo)
+                                    : GDAL_IDENTIFY_UNKNOWN;
+        if (nIdentifyRes == FALSE)
+        {
+            continue;
+        }
+        else if (iPass == 1 && nIdentifyRes < 0 &&
+                 poDriver->pfnOpen == nullptr &&
+                 poDriver->GetMetadataItem("IS_NON_LOADED_PLUGIN"))
+        {
+            // Not loaded plugin
+            apoSecondPassDrivers.push_back(poDriver);
+            continue;
+        }
+
+        const bool bIdentifyRes = nIdentifyRes == GDAL_IDENTIFY_TRUE;
         if (bIdentifyRes)
         {
             GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
@@ -3624,6 +3662,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         sAntiRecursion.aosDatasetNamesWithFlags.insert(dsCtxt);
 
         GDALDataset *poDS = poDriver->Open(&oOpenInfo, false);
+
+        sAntiRecursion.nRecLevel--;
+        sAntiRecursion.aosDatasetNamesWithFlags.erase(dsCtxt);
+
         if (poDriver->pfnOpen != nullptr)
         {
             // If we couldn't determine for sure with Identify() (it returned
@@ -3635,9 +3677,26 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                 GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
             }
         }
-
-        sAntiRecursion.nRecLevel--;
-        sAntiRecursion.aosDatasetNamesWithFlags.erase(dsCtxt);
+        else if (poDriver->pfnOpenWithDriverArg != nullptr)
+        {
+            // do nothing
+        }
+        else if (bIdentifyRes &&
+                 poDriver->GetMetadataItem("MISSING_PLUGIN_FILENAME"))
+        {
+            if (!poMissingPluginDriver)
+            {
+                poMissingPluginDriver = poDriver;
+            }
+        }
+        else
+        {
+            // should not happen given the GDAL_DCAP_OPEN check
+            CSLDestroy(papszTmpOpenOptions);
+            CSLDestroy(papszTmpOpenOptionsToValidate);
+            oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
+            continue;
+        }
 
         CSLDestroy(papszTmpOpenOptions);
         CSLDestroy(papszTmpOpenOptionsToValidate);
@@ -3769,6 +3828,14 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 #endif
     }
 
+    // cppcheck-suppress knownConditionTrueFalse
+    if (iPass == 1 && !apoSecondPassDrivers.empty())
+    {
+        CPLDebugOnly("GDAL", "GDALOpen(): Second pass");
+        iPass = 2;
+        goto retry;
+    }
+
     CSLDestroy(papszOpenOptionsCleaned);
 
 #ifdef OGRAPISPY_ENABLED
@@ -3791,9 +3858,29 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             }
             else if (oOpenInfo.bStatOK)
             {
-                CPLError(CE_Failure, CPLE_OpenFailed,
-                         "`%s' not recognized as a supported file format.",
-                         pszFilename);
+                if (!poMissingPluginDriver)
+                {
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "`%s' not recognized as a supported file format.",
+                             pszFilename);
+                }
+                else
+                {
+                    const char *pszInstallationMsg =
+                        poMissingPluginDriver->GetMetadataItem(
+                            GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE);
+                    CPLError(CE_Failure, CPLE_OpenFailed,
+                             "`%s' not recognized as a supported file format. "
+                             "It could have been recognized by driver %s, "
+                             "but plugin %s is not available in your "
+                             "installation.%s%s",
+                             pszFilename,
+                             poMissingPluginDriver->GetDescription(),
+                             poMissingPluginDriver->GetMetadataItem(
+                                 "MISSING_PLUGIN_FILENAME"),
+                             pszInstallationMsg ? " " : "",
+                             pszInstallationMsg ? pszInstallationMsg : "");
+                }
             }
             else
             {

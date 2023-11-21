@@ -59,7 +59,6 @@ class JP2LuraDataset final : public GDALJP2AbstractDataset
     JP2LuraDataset();
     ~JP2LuraDataset();
 
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,

@@ -30,6 +30,7 @@
 #include "keadataset.h"
 #include "keaband.h"
 #include "keacopy.h"
+#include "keadrivercore.h"
 #include "../frmts/hdf5/hdf5vfl.h"
 
 /************************************************************************/
@@ -130,7 +131,7 @@ kealib::KEADataType GDAL_to_KEA_Type(GDALDataType egdalType)
 // static function - pointer set in driver
 GDALDataset *KEADataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (Identify(poOpenInfo))
+    if (KEADriverIdentify(poOpenInfo))
     {
         try
         {
@@ -185,34 +186,6 @@ GDALDataset *KEADataset::Open(GDALOpenInfo *poOpenInfo)
         // not a KEA file
         return nullptr;
     }
-}
-
-// static function- pointer set in driver
-// this function is called in preference to Open
-//
-int KEADataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-
-    /* -------------------------------------------------------------------- */
-    /*      Is it an HDF5 file?                                             */
-    /* -------------------------------------------------------------------- */
-    static const char achSignature[] = "\211HDF\r\n\032\n";
-
-    if (poOpenInfo->pabyHeader == nullptr ||
-        memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
-    {
-        return 0;
-    }
-
-    // avoid using kealib::KEAImageIO::isKEAImage as this is likely
-    // to be too slow over curl etc (and doesn't take a HDF5 file handle
-    // anyway).
-    // Just test the extension
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
-    if (EQUAL(osExt, "KEA"))
-        return 1;
-    else
-        return 0;
 }
 
 // static function

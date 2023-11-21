@@ -30,6 +30,9 @@
 
 
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("LAN")
 
 ###############################################################################
 # Test reading a - fake - LAN 8 bit dataset

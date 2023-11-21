@@ -30,6 +30,7 @@
 
 #include "gdal_frmts.h"
 #include "pcidskdataset2.h"
+#include "pcidskdrivercore.h"
 
 #include <algorithm>
 
@@ -1692,25 +1693,12 @@ GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int PCIDSK2Dataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->nHeaderBytes < 512 ||
-        !STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "PCIDSK  "))
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *PCIDSK2Dataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!PCIDSKDriverIdentify(poOpenInfo))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -2229,51 +2217,12 @@ OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,
 void GDALRegister_PCIDSK()
 
 {
-    if (GDALGetDriverByName("PCIDSK") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    PCIDSKDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("PCIDSK");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "PCIDSK Database File");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/pcidsk.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "pix");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 Float32 CInt16 CFloat32");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='INTERLEAVING' type='string-select' default='BAND' "
-        "description='raster data organization'>"
-        "       <Value>PIXEL</Value>"
-        "       <Value>BAND</Value>"
-        "       <Value>FILE</Value>"
-        "       <Value>TILED</Value>"
-        "   </Option>"
-        "   <Option name='COMPRESSION' type='string-select' default='NONE' "
-        "description='compression - (INTERLEAVING=TILED only)'>"
-        "       <Value>NONE</Value>"
-        "       <Value>RLE</Value>"
-        "       <Value>JPEG</Value>"
-        "   </Option>"
-        "   <Option name='TILESIZE' type='int' default='127' description='Tile "
-        "Size (INTERLEAVING=TILED only)'/>"
-        "   <Option name='TILEVERSION' type='int' default='2' "
-        "description='Tile Version (INTERLEAVING=TILED only)'/>"
-        "</CreationOptionList>");
-    poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
-                              "<LayerCreationOptionList/>");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
-                              "Integer Real String IntegerList");
-    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-
-    poDriver->pfnIdentify = PCIDSK2Dataset::Identify;
     poDriver->pfnOpen = PCIDSK2Dataset::Open;
     poDriver->pfnCreate = PCIDSK2Dataset::Create;
 

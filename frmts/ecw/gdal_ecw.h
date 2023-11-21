@@ -40,8 +40,6 @@
 
 #undef NOISY_DEBUG
 
-#ifdef FRMT_ecw
-
 #include "ecwsdk_headers.h"
 
 #if ECWSDK_VERSION >= 55
@@ -140,38 +138,29 @@ class VSIIOStream final : public CNCSJPCIOStream
     VSIIOStream(VSIIOStream &&) = delete;
     VSIIOStream &operator=(VSIIOStream &&) = delete;
 
-    char *m_Filename;
+    char *m_Filename = nullptr;
 
   public:
-    INT64 startOfJPData;
-    INT64 lengthOfJPData;
-    VSILFILE *fpVSIL;
-    BOOLEAN bWritable;
-    BOOLEAN bSeekable;
-    int nFileViewCount;
+    INT64 startOfJPData = 0;
+    INT64 lengthOfJPData = -1;
+    VSILFILE *fpVSIL = nullptr;
+    BOOLEAN bWritable = false;
+    BOOLEAN bSeekable = false;
+    int nFileViewCount = 0;
 
-    int nCOMState;
-    int nCOMLength;
+    int nCOMState = 0;
+    int nCOMLength = 0;
     GByte abyCOMType[2]{};
 
     /* To fix ‘virtual bool NCS::CIOStream::Read(INT64, void*, UINT32)’ was
      * hidden' with SDK 5 */
     using CNCSJPCIOStream::Read;
 
-    VSIIOStream() : m_Filename(nullptr)
+    VSIIOStream()
     {
-        nFileViewCount = 0;
-        startOfJPData = 0;
-        lengthOfJPData = -1;
-        fpVSIL = nullptr;
-        bWritable = false;
-        bSeekable = false;
         if (CSLTestBoolean(CPLGetConfigOption(
                 "GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", "YES")))
             nCOMState = -1;
-        else
-            nCOMState = 0;
-        nCOMLength = 0;
         abyCOMType[0] = 0;
         abyCOMType[1] = 0;
     }
@@ -596,13 +585,11 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
                              GDALRasterIOExtraArg *psExtraArg);
 
   public:
-    ECWDataset(int bIsJPEG2000);
+    explicit ECWDataset(int bIsJPEG2000);
     ~ECWDataset();
 
     static GDALDataset *Open(GDALOpenInfo *, int bIsJPEG2000);
-    static int IdentifyJPEG2000(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenJPEG2000(GDALOpenInfo *);
-    static int IdentifyECW(GDALOpenInfo *poOpenInfo);
     static GDALDataset *OpenECW(GDALOpenInfo *);
 
     void SetPreventCopyingSomeMetadata(int b)
@@ -740,7 +727,5 @@ int ECWTranslateFromWKT(const OGRSpatialReference *poSRS, char *pszProjection,
 
 CellSizeUnits ECWTranslateToCellSizeUnits(const char *pszUnits);
 const char *ECWTranslateFromCellSizeUnits(CellSizeUnits eUnits);
-
-#endif /* def FRMT_ecw */
 
 #endif /* ndef GDAL_ECW_H_INCLUDED */

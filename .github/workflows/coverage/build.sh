@@ -15,6 +15,7 @@ cmake ${GDAL_SOURCE_DIR:=..} \
     -DECW_ROOT=/opt/libecwj2-3.3 \
     -DMRSID_ROOT=/usr/local \
     -DFileGDB_ROOT=/usr/local/FileGDB_API \
+    -DGDAL_ENABLE_PLUGINS:BOOL=ON \
     -DSQLite3_INCLUDE_DIR=/usr/local/install-sqlite-trusted-schema-off/include \
     -DSQLite3_LIBRARY=/usr/local/install-sqlite-trusted-schema-off/lib/libsqlite3.so
 

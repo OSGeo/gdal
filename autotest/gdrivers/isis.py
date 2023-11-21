@@ -1914,13 +1914,17 @@ End""",
     gdal.GetDriverByName("PDS4").Delete("/vsimem/out.xml")
 
     # Copy ISIS3 to PNG
-    gdal.GetDriverByName("PNG").CreateCopy("/vsimem/out.png", src_ds)
-    ds = gdal.Open("/vsimem/out.png")
-    lbl = ds.GetMetadata_List("json:ISIS3")[0]
-    assert lbl
-    ds = None
-    assert gdal.VSIStatL("/vsimem/out.png.aux.xml")
-    gdal.GetDriverByName("PNG").Delete("/vsimem/out.png")
+    png_drv = gdal.GetDriverByName("PNG")
+    if png_drv:
+        png_drv.CreateCopy("/vsimem/out.png", src_ds)
+        ds = gdal.Open("/vsimem/out.png")
+        lbl = ds.GetMetadata_List("json:ISIS3")[0]
+        assert lbl
+        ds = None
+        assert gdal.VSIStatL("/vsimem/out.png.aux.xml")
+        png_drv.Delete("/vsimem/out.png")
+    else:
+        print("PNG driver missing")
 
     # Check GeoTIFF with non pure copy mode (test gdal_translate_lib)
     gdal.Translate("/vsimem/out.tif", src_ds, options="-mo FOO=BAR")

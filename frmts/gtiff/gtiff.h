@@ -40,7 +40,7 @@
 #include "tiffvers.h"
 
 CPL_C_START
-void GTiffOneTimeInit();
+void CPL_DLL GTiffOneTimeInit();
 void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 

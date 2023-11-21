@@ -839,6 +839,10 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DMD_SUPPORTED_SQL_DIALECTS "DMD_SUPPORTED_SQL_DIALECTS"
 
+/*! @cond Doxygen_Suppress */
+#define GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE "DMD_PLUGIN_INSTALLATION_MESSAGE"
+/*! @endcond */
+
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal
  * CRS.
  * @since GDAL 3.1

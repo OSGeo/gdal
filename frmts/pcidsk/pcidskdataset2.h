@@ -72,7 +72,6 @@ class PCIDSK2Dataset final : public GDALPamDataset
     PCIDSK2Dataset();
     virtual ~PCIDSK2Dataset();
 
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *LLOpen(const char *pszFilename, PCIDSK::PCIDSKFile *,
                                GDALAccess eAccess,

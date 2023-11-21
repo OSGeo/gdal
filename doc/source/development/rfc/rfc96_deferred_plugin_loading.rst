@@ -190,6 +190,7 @@ modified to call a driver-specific function that calls
 GDALDriverManager::DeclareDeferredPluginDriver() (see example in below
 paragraph). This code path is enabled only when the driver is built as plugin.
 
+.. _rfc96_example_driver:
 
 Example of changes to do on a simplified driver
 -----------------------------------------------

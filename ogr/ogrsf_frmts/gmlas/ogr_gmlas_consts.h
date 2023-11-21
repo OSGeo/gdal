@@ -28,18 +28,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef OGR_GMLAS_CONSTS_INCLUDED_REDEFINABLE
-#define OGR_GMLAS_CONSTS_INCLUDED_REDEFINABLE
+#ifndef OGR_GMLAS_CONSTS_INCLUDED
+#define OGR_GMLAS_CONSTS_INCLUDED
 
-#ifdef CONSTANT_DEFINITION
-#define STRING_CONST(x, y) const char *const x = y
-#define BOOL_CONST(x, y) const bool x = y
-#define INT_CONST(x, y) const int x = y
-#else
-#define STRING_CONST(x, y) extern const char *const x
-#define BOOL_CONST(x, y) extern const bool x
-#define INT_CONST(x, y) extern const int x
-#endif
+#define STRING_CONST(x, y) static constexpr const char *const x = y
+#define BOOL_CONST(x, y) static constexpr bool x = y
+#define INT_CONST(x, y) static constexpr int x = y
 
 namespace GMLASConstants
 {
@@ -311,4 +305,4 @@ STRING_CONST(szEXTRA_SUFFIX, ";extra=");
 
 using namespace GMLASConstants;
 
-#endif  // OGR_GMLAS_CONSTS_INCLUDED_REDEFINABLE
+#endif  // OGR_GMLAS_CONSTS_INCLUDED

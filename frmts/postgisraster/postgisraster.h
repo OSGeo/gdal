@@ -162,8 +162,6 @@ typedef struct
 
 // Some tools definitions
 char *ReplaceQuotes(const char *, int);
-char *ReplaceSingleQuotes(const char *, int);
-char **ParseConnectionString(const char *);
 GBool TranslateDataType(const char *, GDALDataType *, int *);
 
 class PostGISRasterRasterBand;
@@ -177,7 +175,7 @@ class PostGISRasterDriver final : public GDALDriver
 {
 
   private:
-    CPLMutex *hMutex;
+    CPLMutex *hMutex = nullptr;
     std::map<CPLString, PGconn *> oMapConnection{};
 
     CPL_DISALLOW_COPY_ASSIGN(PostGISRasterDriver)
@@ -188,6 +186,8 @@ class PostGISRasterDriver final : public GDALDriver
                           const char *pszServiceIn, const char *pszDbnameIn,
                           const char *pszHostIn, const char *pszPortIn,
                           const char *pszUserIn);
+
+    static PostGISRasterDriver *gpoPostGISRasterDriver;
 };
 
 /***********************************************************************
@@ -314,7 +314,6 @@ class PostGISRasterDataset final : public VRTDataset
     PostGISRasterDataset();
     virtual ~PostGISRasterDataset();
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
                                    GDALProgressFunc, void *);
     static GBool InsertRaster(PGconn *, PostGISRasterDataset *, const char *,

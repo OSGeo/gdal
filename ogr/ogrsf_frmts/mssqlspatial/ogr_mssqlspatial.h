@@ -687,22 +687,4 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
     OGRErr EndCopy();
 };
 
-/************************************************************************/
-/*                        OGRMSSQLSpatialDriver                         */
-/************************************************************************/
-
-class OGRMSSQLSpatialDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRMSSQLSpatialDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-
-    virtual OGRDataSource *CreateDataSource(const char *pszName,
-                                            char ** = nullptr) override;
-
-    int TestCapability(const char *) override;
-};
-
 #endif /* ndef OGR_MSSQLSPATIAL_H_INCLUDED */

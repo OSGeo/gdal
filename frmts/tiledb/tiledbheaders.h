@@ -39,46 +39,7 @@
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 
-#ifdef HAVE_GCC_SYSTEM_HEADER
-#pragma GCC system_header
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996) /* XXXX was deprecated */
-#endif
-
-#include "tiledb/tiledb"
-#include "tiledb/tiledb_experimental"
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 9)
-#define HAS_TILEDB_GROUP
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 10)
-#define HAS_TILEDB_BOOL
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 11)
-#define HAS_TILEDB_WORKING_OR_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 14)
-#define HAS_TILEDB_WORKING_UTF8_STRING_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
-#define HAS_TILEDB_DIMENSION_LABEL
-#endif
+#include "include_tiledb.h"
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 17)
@@ -164,10 +125,6 @@ struct gdal_tiledb_vector_of_bool
 #define VECTOR_OF_BOOL_IS_NOT_UINT8_T
 #else
 #define VECTOR_OF_BOOL std::vector<uint8_t>
-#endif
-
-#ifdef HAS_TILEDB_DIMENSION_LABEL
-#define HAS_TILEDB_MULTIDIM
 #endif
 
 typedef enum
@@ -484,7 +441,7 @@ class OGRTileDBLayer final : public OGRLayer,
                    const OGRSpatialReference *poSRS);
     ~OGRTileDBLayer();
     void ResetReading() override;
-    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRTileDBLayer);
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRTileDBLayer)
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;

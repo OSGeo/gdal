@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 #include "nitfdataset.h"
+#include "nitfdrivercore.h"
 
 #include "gdal_mdreader.h"
 
@@ -407,55 +408,6 @@ static void SetBandMetadata(NITFImage *psImage, GDALRasterBand *poBand,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int NITFDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    const char *pszFilename = poOpenInfo->pszFilename;
-
-    /* -------------------------------------------------------------------- */
-    /*      Is this a dataset selector? If so, it is obviously NITF.        */
-    /* -------------------------------------------------------------------- */
-    if (STARTS_WITH_CI(pszFilename, "NITF_IM:"))
-        return TRUE;
-
-    /* -------------------------------------------------------------------- */
-    /*      Avoid that on Windows, JPEG_SUBFILE:x,y,z,data/../tmp/foo.ntf   */
-    /*      to be recognized by the NITF driver, because                    */
-    /*      'JPEG_SUBFILE:x,y,z,data' is considered as a (valid) directory  */
-    /*      and thus the whole filename is evaluated as tmp/foo.ntf         */
-    /* -------------------------------------------------------------------- */
-    if (STARTS_WITH_CI(pszFilename, "JPEG_SUBFILE:"))
-        return FALSE;
-
-    /* -------------------------------------------------------------------- */
-    /*      First we check to see if the file has the expected header       */
-    /*      bytes.                                                          */
-    /* -------------------------------------------------------------------- */
-    if (poOpenInfo->nHeaderBytes < 4)
-        return FALSE;
-
-    if (!STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NITF") &&
-        !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NSIF") &&
-        !STARTS_WITH_CI((char *)poOpenInfo->pabyHeader, "NITF"))
-        return FALSE;
-
-    /* Check that it is not in fact a NITF A.TOC file, which is handled by the
-     * RPFTOC driver */
-    for (int i = 0; i < static_cast<int>(poOpenInfo->nHeaderBytes) -
-                            static_cast<int>(strlen("A.TOC"));
-         i++)
-    {
-        if (STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + i, "A.TOC"))
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -469,7 +421,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                                        bool bOpenForCreate, int nIMIndex)
 
 {
-    if (!Identify(poOpenInfo))
+    if (!NITFDriverIdentify(poOpenInfo))
         return nullptr;
 
     const char *pszFilename = poOpenInfo->pszFilename;
@@ -7207,35 +7159,12 @@ void NITFDriver::InitCreationOptionList()
 void GDALRegister_NITF()
 
 {
-    if (GDALGetDriverByName("NITF") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new NITFDriver();
+    NITFDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("NITF");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "National Imagery Transmission Format");
-
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/nitf.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "ntf");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "  <Option name='VALIDATE' type='boolean' description='Whether "
-        "validation of metadata should be done' default='NO' />"
-        "  <Option name='FAIL_IF_VALIDATION_ERROR' type='boolean' "
-        "description='Whether a validation error should cause dataset opening "
-        "to fail' default='NO' />"
-        "</OpenOptionList>");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->pfnIdentify = NITFDataset::Identify;
     poDriver->pfnOpen = NITFDataset::Open;
     poDriver->pfnCreate = NITFDataset::NITFDatasetCreate;
     poDriver->pfnCreateCopy = NITFDataset::NITFCreateCopy;

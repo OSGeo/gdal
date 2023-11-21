@@ -15,7 +15,25 @@ add_gdal_driver(
           ogrpdflayer.cpp
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES pdfdrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(TARGET gdal_PDF_core)
+    if (GDAL_USE_POPPLER)
+        target_compile_definitions(gdal_PDF_core PRIVATE -DHAVE_POPPLER)
+    endif ()
+    if (GDAL_USE_PODOFO)
+        target_compile_definitions(gdal_PDF_core PRIVATE -DHAVE_PODOFO)
+    endif ()
+    if (GDAL_USE_PDFIUM)
+        target_compile_definitions(gdal_PDF_core PRIVATE -DHAVE_PDFIUM)
+    endif ()
+endif()
+
+if(NOT TARGET gdal_PDF)
+    return()
+endif()
+
 gdal_standard_includes(gdal_PDF)
 target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
                                             ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem)

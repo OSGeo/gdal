@@ -283,7 +283,6 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
                               size_t *pnBufferSize,
                               char **ppszDetailedFormat) override;
 
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
 };
 

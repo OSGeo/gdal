@@ -7,7 +7,14 @@ add_gdal_driver(
           FGdbLayer.cpp
           FGdbResultLayer.cpp
           FGdbUtils.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          FGdbDriverCore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_FileGDB)
+    return()
+endif()
+
 gdal_standard_includes(ogr_FileGDB)
 target_include_directories(ogr_FileGDB PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                                                $<TARGET_PROPERTY:ogr_OpenFileGDB,SOURCE_DIR>)

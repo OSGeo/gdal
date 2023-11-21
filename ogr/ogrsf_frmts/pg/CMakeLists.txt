@@ -6,7 +6,14 @@ add_gdal_driver(
           ogrpgresultlayer.cpp
           ogrpgtablelayer.cpp
           ogrpgutility.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          ogrpgdrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_PG)
+    return()
+endif()
+
 gdal_standard_includes(ogr_PG)
 target_include_directories(ogr_PG PRIVATE ${PostgreSQL_INCLUDE_DIRS} $<TARGET_PROPERTY:ogr_PGDump,SOURCE_DIR>)
 gdal_target_link_libraries(ogr_PG PRIVATE PostgreSQL::PostgreSQL)

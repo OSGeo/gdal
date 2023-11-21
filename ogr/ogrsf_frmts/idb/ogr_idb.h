@@ -210,23 +210,6 @@ class OGRIDBDataSource final : public OGRDataSource
     }
 };
 
-/************************************************************************/
-/*                             OGRIDBDriver                            */
-/************************************************************************/
-
-class OGRIDBDriver final : public OGRSFDriver
-{
-  public:
-    ~OGRIDBDriver();
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-
-    OGRDataSource *CreateDataSource(const char *pszName,
-                                    char ** = NULL) override;
-
-    int TestCapability(const char *) override;
-};
-
 ITCallbackResult IDBErrorHandler(const ITErrorManager &err, void *userdata,
                                  long errorlevel);
 

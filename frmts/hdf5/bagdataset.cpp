@@ -29,6 +29,7 @@
 
 #include "cpl_port.h"
 #include "hdf5dataset.h"
+#include "hdf5drivercore.h"
 #include "gh5_convenience.h"
 
 #include "cpl_mem_cache.h"
@@ -216,7 +217,6 @@ class BAGDataset final : public GDALPamDataset
     static GDALDataset *OpenForCreate(GDALOpenInfo *, int nXSizeIn,
                                       int nYSizeIn, int nBandsIn,
                                       CSLConstList papszCreationOptions);
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    char **papszOptions,
@@ -2654,30 +2654,6 @@ BAGDataset::~BAGDataset()
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int BAGDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "BAG:"))
-        return TRUE;
-
-    // Is it an HDF5 file?
-    static const char achSignature[] = "\211HDF\r\n\032\n";
-
-    if (poOpenInfo->pabyHeader == nullptr ||
-        memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
-        return FALSE;
-
-    // Does it have the extension .bag?
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "bag"))
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                          GH5DopenNoWarning()                         */
 /************************************************************************/
 
@@ -2708,7 +2684,7 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
     // Confirm that this appears to be a BAG file.
-    if (!Identify(poOpenInfo))
+    if (!BAGDatasetIdentify(poOpenInfo))
         return nullptr;
 
     HDF5_GLOBAL_LOCK();
@@ -6020,105 +5996,14 @@ void GDALRegister_BAG()
     if (!GDAL_CHECK_VERSION("BAG"))
         return;
 
-    if (GDALGetDriverByName("BAG") != nullptr)
+    if (GDALGetDriverByName(BAG_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("BAG");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Bathymetry Attributed Grid");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/bag.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bag");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Float32");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "   <Option name='MODE' type='string-select' default='AUTO'>"
-        "       <Value>AUTO</Value>"
-        "       <Value>LOW_RES_GRID</Value>"
-        "       <Value>LIST_SUPERGRIDS</Value>"
-        "       <Value>RESAMPLED_GRID</Value>"
-        "       <Value>INTERPOLATED</Value>"
-        "   </Option>"
-        "   <Option name='SUPERGRIDS_INDICES' type='string' description="
-        "'Tuple(s) (y1,x1),(y2,x2),...  of supergrids, by indices, to expose "
-        "as subdatasets'/>"
-        "   <Option name='MINX' type='float' description='Minimum X value of "
-        "area of interest'/>"
-        "   <Option name='MINY' type='float' description='Minimum Y value of "
-        "area of interest'/>"
-        "   <Option name='MAXX' type='float' description='Maximum X value of "
-        "area of interest'/>"
-        "   <Option name='MAXY' type='float' description='Maximum Y value of "
-        "area of interest'/>"
-        "   <Option name='RESX' type='float' description="
-        "'Horizontal resolution. Only used for "
-        "MODE=RESAMPLED_GRID/INTERPOLATED'/>"
-        "   <Option name='RESY' type='float' description="
-        "'Vertical resolution (positive value). Only used for "
-        "MODE=RESAMPLED_GRID/INTERPOLATED'/>"
-        "   <Option name='RES_STRATEGY' type='string-select' description="
-        "'Which strategy to apply to select the resampled grid resolution. "
-        "Only used for MODE=RESAMPLED_GRID/INTERPOLATED' default='AUTO'>"
-        "       <Value>AUTO</Value>"
-        "       <Value>MIN</Value>"
-        "       <Value>MAX</Value>"
-        "       <Value>MEAN</Value>"
-        "   </Option>"
-        "   <Option name='RES_FILTER_MIN' type='float' description="
-        "'Minimum resolution of supergrids to take into account (excluded "
-        "bound). "
-        "Only used for MODE=RESAMPLED_GRID, INTERPOLATED or LIST_SUPERGRIDS' "
-        "default='0'/>"
-        "   <Option name='RES_FILTER_MAX' type='float' description="
-        "'Maximum resolution of supergrids to take into account (included "
-        "bound). "
-        "Only used for MODE=RESAMPLED_GRID, INTERPOLATED or LIST_SUPERGRIDS' "
-        "default='inf'/>"
-        "   <Option name='VALUE_POPULATION' type='string-select' description="
-        "'Which value population strategy to apply to compute the resampled "
-        "cell "
-        "values. Only used for MODE=RESAMPLED_GRID' default='MAX'>"
-        "       <Value>MIN</Value>"
-        "       <Value>MAX</Value>"
-        "       <Value>MEAN</Value>"
-        "       <Value>COUNT</Value>"
-        "   </Option>"
-        "   <Option name='SUPERGRIDS_MASK' type='boolean' description="
-        "'Whether the dataset should consist of a mask band indicating if a "
-        "supergrid node matches each target pixel. Only used for "
-        "MODE=RESAMPLED_GRID' default='NO'/>"
-        "   <Option name='NODATA_VALUE' type='float' default='1000000'/>"
-        "   <Option name='REPORT_VERTCRS' type='boolean' default='YES'/>"
-        "</OpenOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='VAR_*' type='string' description="
-        "'Value to substitute to a variable in the template'/>"
-        "  <Option name='TEMPLATE' type='string' description="
-        "'.xml template to use'/>"
-        "  <Option name='BAG_VERSION' type='string' description="
-        "'Version to write in the Bag Version attribute' default='1.6.2'/>"
-        "  <Option name='COMPRESS' type='string-select' default='DEFLATE'>"
-        "    <Value>NONE</Value>"
-        "    <Value>DEFLATE</Value>"
-        "  </Option>"
-        "  <Option name='ZLEVEL' type='int' "
-        "description='DEFLATE compression level 1-9' default='6' />"
-        "  <Option name='BLOCK_SIZE' type='int' description='Chunk size' />"
-        "</CreationOptionList>");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    BAGDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = BAGDataset::Open;
-    poDriver->pfnIdentify = BAGDataset::Identify;
     poDriver->pfnUnloadDriver = BAGDatasetDriverUnload;
     poDriver->pfnCreateCopy = BAGDataset::CreateCopy;
     poDriver->pfnCreate = BAGDataset::Create;

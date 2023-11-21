@@ -30,6 +30,9 @@
 
 
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("NDF")
 
 ###############################################################################
 # Simple image test of an NLAPS/NDF2 dataset.

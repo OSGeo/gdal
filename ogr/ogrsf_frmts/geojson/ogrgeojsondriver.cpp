@@ -436,7 +436,14 @@ static int OGRGeoJSONDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
 
     nSrcType = GeoJSONGetSourceType(poOpenInfo);
     if (nSrcType == eGeoJSONSourceUnknown)
+    {
+        const char *pszHeader =
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        if (pszHeader && STARTS_WITH(pszHeader, "{\"properties\":{"))
+            return GDAL_IDENTIFY_UNKNOWN;
+
         return FALSE;
+    }
     if (nSrcType == eGeoJSONSourceService &&
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSON:"))
     {

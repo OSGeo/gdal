@@ -43,6 +43,8 @@
 #include "hdf4dataset.h"
 #include <cctype>
 
+#include "hdf4drivercore.h"
+
 extern const char *const pszGDALSignature;
 
 CPLMutex *hHDF4Mutex = nullptr;
@@ -679,22 +681,6 @@ CPLErr HDF4Dataset::ReadGlobalAttributes(int32 iHandler)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int HDF4Dataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->nHeaderBytes < 4)
-        return FALSE;
-
-    if (memcmp(poOpenInfo->pabyHeader, "\016\003\023\001", 4) != 0)
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                            QuoteIfNeeded()                           */
 /************************************************************************/
 
@@ -729,7 +715,7 @@ GDALDataset *HDF4Dataset::Open(GDALOpenInfo *poOpenInfo)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
-    if (!Identify(poOpenInfo))
+    if (!HDF4DatasetIdentify(poOpenInfo))
         return nullptr;
 #endif
 
@@ -1326,83 +1312,6 @@ static void HDF4UnloadDriver(GDALDriver * /* poDriver */)
 }
 
 /************************************************************************/
-/*                    HDF4DriverGetSubdatasetInfo()                     */
-/************************************************************************/
-
-struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
-{
-  public:
-    explicit HDF4DriverSubdatasetInfo(const std::string &fileName)
-        : GDALSubdatasetInfo(fileName)
-    {
-    }
-
-    // GDALSubdatasetInfo interface
-  private:
-    void parseFileName() override
-    {
-
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF4_SDS:") &&
-            !STARTS_WITH_CI(m_fileName.c_str(), "HDF4_EOS:"))
-        {
-            return;
-        }
-
-        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(aosParts)};
-
-        if (iPartsCount >= 3)
-        {
-
-            // prefix + mode
-            m_driverPrefixComponent = aosParts[0];
-            m_driverPrefixComponent.append(":");
-            m_driverPrefixComponent.append(aosParts[1]);
-
-            int subdatasetIndex{3};
-            const bool hasDriveLetter{
-                (strlen(aosParts[2]) == 2 && std::isalpha(aosParts[2][1])) ||
-                (strlen(aosParts[2]) == 1 && std::isalpha(aosParts[2][0]))};
-
-            if (iPartsCount >= 4)
-            {
-                m_pathComponent = aosParts[2];
-                if (hasDriveLetter)
-                {
-                    m_pathComponent.append(":");
-                    m_pathComponent.append(aosParts[3]);
-                    subdatasetIndex++;
-                }
-            }
-            m_subdatasetComponent = aosParts[subdatasetIndex];
-
-            // Append any remaining part
-            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
-            {
-                m_subdatasetComponent.append(":");
-                m_subdatasetComponent.append(aosParts[i]);
-            }
-        }
-    }
-};
-
-static GDALSubdatasetInfo *HDF4DriverGetSubdatasetInfo(const char *pszFileName)
-{
-    if (STARTS_WITH_CI(pszFileName, "HDF4_SDS:") ||
-        STARTS_WITH_CI(pszFileName, "HDF4_EOS:"))
-    {
-        std::unique_ptr<GDALSubdatasetInfo> info =
-            std::make_unique<HDF4DriverSubdatasetInfo>(pszFileName);
-        if (!info->GetSubdatasetComponent().empty() &&
-            !info->GetPathComponent().empty())
-        {
-            return info.release();
-        }
-    }
-    return nullptr;
-}
-
-/************************************************************************/
 /*                        GDALRegister_HDF4()                           */
 /************************************************************************/
 
@@ -1412,36 +1321,13 @@ void GDALRegister_HDF4()
     if (!GDAL_CHECK_VERSION("HDF4 driver"))
         return;
 
-    if (GDALGetDriverByName("HDF4") != nullptr)
+    if (GDALGetDriverByName(HDF4_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("HDF4");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Hierarchical Data Format Release 4");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf4.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "  <Option name='LIST_SDS' type='string-select' "
-        "description='Whether to report Scientific Data Sets' default='AUTO'>"
-        "       <Value>AUTO</Value>"
-        "       <Value>YES</Value>"
-        "       <Value>NO</Value>"
-        "  </Option>"
-        "</OpenOptionList>");
-
+    HDF4DriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = HDF4Dataset::Open;
-    poDriver->pfnIdentify = HDF4Dataset::Identify;
     poDriver->pfnUnloadDriver = HDF4UnloadDriver;
-    poDriver->pfnGetSubdatasetInfoFunc = HDF4DriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 

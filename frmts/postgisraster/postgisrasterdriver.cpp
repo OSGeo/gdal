@@ -31,11 +31,14 @@
 #include "postgisraster.h"
 #include "cpl_multiproc.h"
 
+PostGISRasterDriver *PostGISRasterDriver::gpoPostGISRasterDriver = nullptr;
+
 /************************
  * \brief Constructor
  ************************/
-PostGISRasterDriver::PostGISRasterDriver() : hMutex(nullptr)
+PostGISRasterDriver::PostGISRasterDriver()
 {
+    gpoPostGISRasterDriver = this;
 }
 
 /************************
@@ -43,7 +46,7 @@ PostGISRasterDriver::PostGISRasterDriver() : hMutex(nullptr)
  ************************/
 PostGISRasterDriver::~PostGISRasterDriver()
 {
-
+    gpoPostGISRasterDriver = nullptr;
     if (hMutex != nullptr)
         CPLDestroyMutex(hMutex);
     std::map<CPLString, PGconn *>::iterator oIter = oMapConnection.begin();

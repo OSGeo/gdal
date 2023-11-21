@@ -4,8 +4,15 @@ add_gdal_driver(TARGET ogr_Arrow
                         ogrfeatherlayer.cpp
                         ogrfeatherwriterdataset.cpp
                         ogrfeatherwriterlayer.cpp
+                CORE_SOURCES
+                        ogrfeatherdrivercore.cpp
                 PLUGIN_CAPABLE
                 STRONG_CXX_WFLAGS)
+
+if(NOT TARGET ogr_Arrow)
+    return()
+endif()
+
 gdal_standard_includes(ogr_Arrow)
 target_include_directories(ogr_Arrow PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if(${Arrow_VERSION} VERSION_GREATER_EQUAL 10.0)

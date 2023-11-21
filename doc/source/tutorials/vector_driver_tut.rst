@@ -63,6 +63,8 @@ SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" ) is specified to indicate that the
 driver can deal with files opened with the VSI*L GDAL API.
 Otherwise this metadata item should not be defined.
 
+For a driver that can be built as a plugin (that is to say a standalone shared object, loaded at runtime by GDAL), since GDAL 3.9 and :ref:`rfc-96`, there is a way to implement the driver in a way where the plugin will be loaded only when necessary, and not immediately at :cpp:func:`GDALAllRegister` time. Consult :ref:`rfc96_example_driver` for the changes needed to make the driver compatible of deferred plugin loading.
+
 The driver declaration generally looks something like this for a
 format with read or read and update access (the Open() method) and creation
 support (the Create() method).

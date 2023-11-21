@@ -462,7 +462,6 @@ class GDALWMSDataset final : public GDALPamDataset
     }
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    char **papszOptions,

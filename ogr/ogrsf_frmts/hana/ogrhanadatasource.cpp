@@ -28,6 +28,7 @@
 
 #include "ogr_hana.h"
 #include "ogrhanautils.h"
+#include "ogrhanadrivercore.h"
 
 #include "odbc/Connection.h"
 #include "odbc/Environment.h"
@@ -49,108 +50,6 @@ using namespace OGRHANA;
 
 namespace
 {
-
-class LayerCreationOptionsConstants
-{
-  public:
-    LayerCreationOptionsConstants() = delete;
-
-  public:
-    static constexpr const char *OVERWRITE = "OVERWRITE";
-    static constexpr const char *LAUNDER = "LAUNDER";
-    static constexpr const char *PRECISION = "PRECISION";
-    static constexpr const char *DEFAULT_STRING_SIZE = "DEFAULT_STRING_SIZE";
-    static constexpr const char *GEOMETRY_NAME = "GEOMETRY_NAME";
-    static constexpr const char *GEOMETRY_NULLABLE = "GEOMETRY_NULLABLE";
-    static constexpr const char *GEOMETRY_INDEX = "GEOMETRY_INDEX";
-    static constexpr const char *SRID = "SRID";
-    static constexpr const char *FID = "FID";
-    static constexpr const char *FID64 = "FID64";
-    static constexpr const char *COLUMN_TYPES = "COLUMN_TYPES";
-    static constexpr const char *BATCH_SIZE = "BATCH_SIZE";
-
-    // clang-format off
-    static const char* GetList()
-    {
-        return
-               "<LayerCreationOptionList>"
-               "  <Option name='OVERWRITE' type='boolean' description='Specifies whether to overwrite an existing table with the layer name to be created' default='NO'/>"
-               "  <Option name='LAUNDER' type='boolean' description='Specifies whether layer and field names will be laundered' default='YES'/>"
-               "  <Option name='PRECISION' type='boolean' description='Specifies whether fields created should keep the width and precision' default='YES'/>"
-               "  <Option name='DEFAULT_STRING_SIZE' type='int' description='Specifies default string column size' default='256'/>"
-               "  <Option name='GEOMETRY_NAME' type='string' description='Specifies name of geometry column.' default='OGR_GEOMETRY'/>"
-               "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Specifies whether the values of the geometry column can be NULL' default='YES'/>"
-               "  <Option name='GEOMETRY_INDEX' type='string' description='Specifies which spatial index to use for the geometry column' default='DEFAULT'/>"
-               "  <Option name='SRID' type='int' description='Forced SRID of the layer'/>"
-               "  <Option name='FID' type='string' description='Specifies the name of the FID column to create' default='OGR_FID'/>"
-               "  <Option name='FID64' type='boolean' description='Specifies whether to create the FID column with BIGINT type to handle 64bit wide ids' default='NO'/>"
-               "  <Option name='COLUMN_TYPES' type='string' description='Specifies a comma-separated list of strings in the format field_name=hana_field_type that define column types.'/>"
-               "  <Option name='BATCH_SIZE' type='int' description='Specifies the number of bytes to be written per one batch' default='4194304'/>"
-               "</LayerCreationOptionList>";
-    }
-    // clang-format on
-};
-
-class OpenOptionsConstants
-{
-  public:
-    OpenOptionsConstants() = delete;
-
-  public:
-    static constexpr const char *DSN = "DSN";
-    static constexpr const char *DRIVER = "DRIVER";
-    static constexpr const char *HOST = "HOST";
-    static constexpr const char *PORT = "PORT";
-    static constexpr const char *DATABASE = "DATABASE";
-    static constexpr const char *USER = "USER";
-    static constexpr const char *PASSWORD = "PASSWORD";
-    static constexpr const char *USER_STORE_KEY = "USER_STORE_KEY";
-    static constexpr const char *SCHEMA = "SCHEMA";
-    static constexpr const char *TABLES = "TABLES";
-
-    static constexpr const char *ENCRYPT = "ENCRYPT";
-    static constexpr const char *SSL_CRYPTO_PROVIDER = "SSL_CRYPTO_PROVIDER";
-    static constexpr const char *SSL_KEY_STORE = "SSL_KEY_STORE";
-    static constexpr const char *SSL_TRUST_STORE = "SSL_TRUST_STORE";
-    static constexpr const char *SSL_VALIDATE_CERTIFICATE =
-        "SSL_VALIDATE_CERTIFICATE";
-    static constexpr const char *SSL_HOST_NAME_CERTIFICATE =
-        "SSL_HOST_NAME_CERTIFICATE";
-
-    static constexpr const char *CONNECTION_TIMEOUT = "CONNECTION_TIMEOUT";
-    static constexpr const char *PACKET_SIZE = "PACKET_SIZE";
-    static constexpr const char *SPLIT_BATCH_COMMANDS = "SPLIT_BATCH_COMMANDS";
-
-    static constexpr const char *DETECT_GEOMETRY_TYPE = "DETECT_GEOMETRY_TYPE";
-
-    // clang-format off
-    static const char* GetList()
-    {
-        return
-               "<OpenOptionList>"
-               "  <Option name='DRIVER' type='string' description='Name or a path to a driver.For example, DRIVER={HDBODBC} or DRIVER=/usr/sap/hdbclient/libodbcHDB.so' required='true'/>"
-               "  <Option name='HOST' type='string' description='Server hostname' required='true'/>"
-               "  <Option name='PORT' type='int' description='Port number' required='true'/>"
-               "  <Option name='DATABASE' type='string' description='Specifies the name of the database to connect to' required='true'/>"
-               "  <Option name='USER' type='string' description='Specifies the user name' required='true'/>"
-               "  <Option name='PASSWORD' type='string' description='Specifies the user password' required='true'/>"
-               "  <Option name='USER_STORE_KEY' type='string' description='Specifies whether a connection is made using a key defined in the SAP HANA user store (hdbuserstore)' required='false'/>"
-               "  <Option name='SCHEMA' type='string' description='Specifies the schema used for tables listed in TABLES option' required='true'/>"
-               "  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
-               "  <Option name='ENCRYPT' type='boolean' description='Enables or disables TLS/SSL encryption' default='NO'/>"
-               "  <Option name='SSL_CRYPTO_PROVIDER' type='string' description='Cryptographic library provider used for SSL communication (commoncrypto| sapcrypto | openssl)'/>"
-               "  <Option name='SSL_KEY_STORE' type='string' description='Path to the keystore file that contains the server&apos;s private key'/>"
-               "  <Option name='SSL_TRUST_STORE' type='string' description='Path to trust store file that contains the server&apos;s public certificate(s) (OpenSSL only)'/>"
-               "  <Option name='SSL_VALIDATE_CERTIFICATE' type='boolean' description='If set to true, the server&apos;s certificate is validated' default='YES'/>"
-               "  <Option name='SSL_HOST_NAME_IN_CERTIFICATE' type='string' description='Host name used to verify server&apos;s identity'/>"
-               "  <Option name='CONNECTION_TIMEOUT' type='int' description='Connection timeout measured in milliseconds. Setting this option to 0 disables the timeout'/>"
-               "  <Option name='PACKET_SIZE' type='int' description='Sets the maximum size of a request packet sent from the client to the server, in bytes. The minimum is 1 MB.'/>"
-               "  <Option name='SPLIT_BATCH_COMMANDS' type='boolean' description='Allows split and parallel execution of batch commands on partitioned tables' default='YES'/>"
-               "  <Option name='DETECT_GEOMETRY_TYPE' type='boolean' description='Specifies whether to detect the type of geometry columns. Note, the detection may take a significant amount of time for large tables' default='YES'/>"
-               "</OpenOptionList>";
-    }
-    // clang-format on
-};
 
 CPLString BuildConnectionString(char **openOptions)
 {
@@ -209,67 +108,72 @@ CPLString BuildConnectionString(char **openOptions)
     };
 
     if (const char *paramUserStoreKey =
-            getOptValue(OpenOptionsConstants::USER_STORE_KEY))
+            getOptValue(OGRHanaOpenOptionsConstants::USER_STORE_KEY))
     {
-        addOptParameter(OpenOptionsConstants::DRIVER, "DRIVER", true);
+        addOptParameter(OGRHanaOpenOptionsConstants::DRIVER, "DRIVER", true);
         CPLString node = CPLString().Printf("@%s", paramUserStoreKey);
         addParameter("SERVERNODE", node.c_str());
 
-        checkIgnoredOptParameter(OpenOptionsConstants::DSN);
-        checkIgnoredOptParameter(OpenOptionsConstants::HOST);
-        checkIgnoredOptParameter(OpenOptionsConstants::PORT);
-        checkIgnoredOptParameter(OpenOptionsConstants::DATABASE);
-        checkIgnoredOptParameter(OpenOptionsConstants::USER);
-        checkIgnoredOptParameter(OpenOptionsConstants::PASSWORD);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::DSN);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::HOST);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::PORT);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::DATABASE);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::USER);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::PASSWORD);
     }
-    else if (const char *paramDSN = getOptValue(OpenOptionsConstants::DSN))
+    else if (const char *paramDSN =
+                 getOptValue(OGRHanaOpenOptionsConstants::DSN))
     {
-        addParameter(OpenOptionsConstants::DSN, paramDSN);
-        addOptParameter(OpenOptionsConstants::USER, "UID", true);
-        addOptParameter(OpenOptionsConstants::PASSWORD, "PWD", true);
+        addParameter(OGRHanaOpenOptionsConstants::DSN, paramDSN);
+        addOptParameter(OGRHanaOpenOptionsConstants::USER, "UID", true);
+        addOptParameter(OGRHanaOpenOptionsConstants::PASSWORD, "PWD", true);
 
-        checkIgnoredOptParameter(OpenOptionsConstants::DRIVER);
-        checkIgnoredOptParameter(OpenOptionsConstants::HOST);
-        checkIgnoredOptParameter(OpenOptionsConstants::PORT);
-        checkIgnoredOptParameter(OpenOptionsConstants::DATABASE);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::DRIVER);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::HOST);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::PORT);
+        checkIgnoredOptParameter(OGRHanaOpenOptionsConstants::DATABASE);
     }
     else
     {
-        addOptParameter(OpenOptionsConstants::DRIVER, "DRIVER", true);
-        const char *paramHost = getOptValue(OpenOptionsConstants::HOST, true);
-        const char *paramPort = getOptValue(OpenOptionsConstants::PORT, true);
+        addOptParameter(OGRHanaOpenOptionsConstants::DRIVER, "DRIVER", true);
+        const char *paramHost =
+            getOptValue(OGRHanaOpenOptionsConstants::HOST, true);
+        const char *paramPort =
+            getOptValue(OGRHanaOpenOptionsConstants::PORT, true);
         if (paramHost != nullptr && paramPort != nullptr)
         {
             CPLString node = CPLString().Printf("%s:%s", paramHost, paramPort);
             addParameter("SERVERNODE", node.c_str());
         }
-        addOptParameter(OpenOptionsConstants::USER, "UID", true);
-        addOptParameter(OpenOptionsConstants::PASSWORD, "PWD", true);
-        addOptParameter(OpenOptionsConstants::DATABASE, "DATABASENAME");
+        addOptParameter(OGRHanaOpenOptionsConstants::USER, "UID", true);
+        addOptParameter(OGRHanaOpenOptionsConstants::PASSWORD, "PWD", true);
+        addOptParameter(OGRHanaOpenOptionsConstants::DATABASE, "DATABASENAME");
     }
 
     if (const char *paramSchema =
-            getOptValue(OpenOptionsConstants::SCHEMA, true))
+            getOptValue(OGRHanaOpenOptionsConstants::SCHEMA, true))
     {
         CPLString schema = CPLString().Printf("\"%s\"", paramSchema);
         addParameter("CURRENTSCHEMA", schema.c_str());
     }
 
-    if (CPLFetchBool(openOptions, OpenOptionsConstants::ENCRYPT, false))
+    if (CPLFetchBool(openOptions, OGRHanaOpenOptionsConstants::ENCRYPT, false))
     {
-        addOptParameter(OpenOptionsConstants::ENCRYPT, "ENCRYPT");
-        addOptParameter(OpenOptionsConstants::SSL_CRYPTO_PROVIDER,
+        addOptParameter(OGRHanaOpenOptionsConstants::ENCRYPT, "ENCRYPT");
+        addOptParameter(OGRHanaOpenOptionsConstants::SSL_CRYPTO_PROVIDER,
                         "sslCryptoProvider");
-        addOptParameter(OpenOptionsConstants::SSL_KEY_STORE, "sslKeyStore");
-        addOptParameter(OpenOptionsConstants::SSL_TRUST_STORE, "sslTrustStore");
-        addOptParameter(OpenOptionsConstants::SSL_VALIDATE_CERTIFICATE,
+        addOptParameter(OGRHanaOpenOptionsConstants::SSL_KEY_STORE,
+                        "sslKeyStore");
+        addOptParameter(OGRHanaOpenOptionsConstants::SSL_TRUST_STORE,
+                        "sslTrustStore");
+        addOptParameter(OGRHanaOpenOptionsConstants::SSL_VALIDATE_CERTIFICATE,
                         "sslValidateCertificate");
-        addOptParameter(OpenOptionsConstants::SSL_HOST_NAME_CERTIFICATE,
+        addOptParameter(OGRHanaOpenOptionsConstants::SSL_HOST_NAME_CERTIFICATE,
                         "sslHostNameInCertificate");
     }
 
-    addOptParameter(OpenOptionsConstants::PACKET_SIZE, "PACKETSIZE");
-    addOptParameter(OpenOptionsConstants::SPLIT_BATCH_COMMANDS,
+    addOptParameter(OGRHanaOpenOptionsConstants::PACKET_SIZE, "PACKETSIZE");
+    addOptParameter(OGRHanaOpenOptionsConstants::SPLIT_BATCH_COMMANDS,
                     "SPLITBATCHCOMMANDS");
     addParameter("CHAR_AS_UTF8", "1");
 
@@ -627,35 +531,7 @@ bool IsKnownDataType(short dataType)
 
 const char *OGRHanaDataSource::GetPrefix()
 {
-    return "HANA:";
-}
-
-/************************************************************************/
-/*                         GetLayerCreationOptions()                    */
-/************************************************************************/
-
-const char *OGRHanaDataSource::GetLayerCreationOptions()
-{
-    return LayerCreationOptionsConstants::GetList();
-}
-
-/************************************************************************/
-/*                           GetOpenOptions()                           */
-/************************************************************************/
-
-const char *OGRHanaDataSource::GetOpenOptions()
-{
-    return OpenOptionsConstants::GetList();
-}
-
-/************************************************************************/
-/*                         GetSupportedDataTypes()                      */
-/************************************************************************/
-
-const char *OGRHanaDataSource::GetSupportedDataTypes()
-{
-    return "Integer Integer64 Real String Date DateTime Time IntegerList "
-           "Integer64List RealList StringList Binary";
+    return HANA_PREFIX;
 }
 
 /************************************************************************/
@@ -702,14 +578,14 @@ int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
 
     updateMode_ = update;
     detectGeometryType_ = CPLFetchBool(
-        openOptions, OpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
+        openOptions, OGRHanaOpenOptionsConstants::DETECT_GEOMETRY_TYPE, true);
 
     std::size_t prefixLength = strlen(GetPrefix());
     char **connOptions =
         CSLTokenizeStringComplex(newName + prefixLength, ";", TRUE, FALSE);
 
     const char *paramSchema = CSLFetchNameValueDef(
-        connOptions, OpenOptionsConstants::SCHEMA, nullptr);
+        connOptions, OGRHanaOpenOptionsConstants::SCHEMA, nullptr);
     if (paramSchema != nullptr)
         schemaName_ = paramSchema;
 
@@ -724,7 +600,8 @@ int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
         conn_->setAutoCommit(false);
 
         const char *paramConnTimeout = CSLFetchNameValueDef(
-            connOptions, OpenOptionsConstants::CONNECTION_TIMEOUT, nullptr);
+            connOptions, OGRHanaOpenOptionsConstants::CONNECTION_TIMEOUT,
+            nullptr);
         if (paramConnTimeout != nullptr)
             conn_->setConnectionTimeout(
                 static_cast<unsigned long>(atoi(paramConnTimeout)));
@@ -747,7 +624,7 @@ int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
                 atoi(dbVersion.substr(0u, dbVersion.find('.')).c_str());
 
             const char *paramTables = CSLFetchNameValueDef(
-                connOptions, OpenOptionsConstants::TABLES, "");
+                connOptions, OGRHanaOpenOptionsConstants::TABLES, "");
             InitializeLayers(paramSchema, paramTables);
             ret = TRUE;
         }
@@ -1680,8 +1557,8 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
         return nullptr;
     }
 
-    bool launderNames =
-        CPLFetchBool(options, LayerCreationOptionsConstants::LAUNDER, true);
+    bool launderNames = CPLFetchBool(
+        options, OGRHanaLayerCreationOptionsConstants::LAUNDER, true);
     CPLString layerName(layerNameIn);
     if (launderNames)
     {
@@ -1697,7 +1574,7 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
     if (layerIndex >= 0)
     {
         bool overwriteLayer = CPLFetchBool(
-            options, LayerCreationOptionsConstants::OVERWRITE, false);
+            options, OGRHanaLayerCreationOptionsConstants::OVERWRITE, false);
         if (!overwriteLayer)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1711,32 +1588,35 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
         DeleteLayer(layerIndex);
     }
 
-    int batchSize = CPLFetchInt(
-        options, LayerCreationOptionsConstants::BATCH_SIZE, DEFAULT_BATCH_SIZE);
+    int batchSize =
+        CPLFetchInt(options, OGRHanaLayerCreationOptionsConstants::BATCH_SIZE,
+                    DEFAULT_BATCH_SIZE);
     if (batchSize <= 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to create layer %s. The value of %s parameter must be "
                  "greater than 0.",
-                 layerName.c_str(), LayerCreationOptionsConstants::BATCH_SIZE);
+                 layerName.c_str(),
+                 OGRHanaLayerCreationOptionsConstants::BATCH_SIZE);
         return nullptr;
     }
 
-    int defaultStringSize =
-        CPLFetchInt(options, LayerCreationOptionsConstants::DEFAULT_STRING_SIZE,
-                    DEFAULT_STRING_SIZE);
+    int defaultStringSize = CPLFetchInt(
+        options, OGRHanaLayerCreationOptionsConstants::DEFAULT_STRING_SIZE,
+        DEFAULT_STRING_SIZE);
     if (defaultStringSize <= 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to create layer %s. The value of %s parameter must be "
                  "greater than 0.",
                  layerName.c_str(),
-                 LayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
+                 OGRHanaLayerCreationOptionsConstants::DEFAULT_STRING_SIZE);
         return nullptr;
     }
 
     CPLString geomColumnName(CSLFetchNameValueDef(
-        options, LayerCreationOptionsConstants::GEOMETRY_NAME, "OGR_GEOMETRY"));
+        options, OGRHanaLayerCreationOptionsConstants::GEOMETRY_NAME,
+        "OGR_GEOMETRY"));
     if (launderNames)
     {
         auto nameRes = LaunderName(geomColumnName.c_str());
@@ -1746,12 +1626,13 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
     }
 
     const bool geomColumnNullable = CPLFetchBool(
-        options, LayerCreationOptionsConstants::GEOMETRY_NULLABLE, true);
+        options, OGRHanaLayerCreationOptionsConstants::GEOMETRY_NULLABLE, true);
     CPLString geomColumnIndexType(CSLFetchNameValueDef(
-        options, LayerCreationOptionsConstants::GEOMETRY_INDEX, "DEFAULT"));
+        options, OGRHanaLayerCreationOptionsConstants::GEOMETRY_INDEX,
+        "DEFAULT"));
 
     const char *paramFidName = CSLFetchNameValueDef(
-        options, LayerCreationOptionsConstants::FID, "OGR_FID");
+        options, OGRHanaLayerCreationOptionsConstants::FID, "OGR_FID");
     CPLString fidName(paramFidName);
     if (launderNames)
     {
@@ -1762,7 +1643,8 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
     }
 
     CPLString fidType =
-        CPLFetchBool(options, LayerCreationOptionsConstants::FID64, false)
+        CPLFetchBool(options, OGRHanaLayerCreationOptionsConstants::FID64,
+                     false)
             ? "BIGINT"
             : "INTEGER";
 
@@ -1770,7 +1652,7 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
     CPLDebug("HANA", "FID Column Name %s, Type %s.", fidName.c_str(),
              fidType.c_str());
 
-    int srid = CPLFetchInt(options, LayerCreationOptionsConstants::SRID,
+    int srid = CPLFetchInt(options, OGRHanaLayerCreationOptionsConstants::SRID,
                            UNDETERMINED_SRID);
     if (srid < 0 && srs != nullptr)
         srid = GetSrsId(srs);
@@ -1799,10 +1681,10 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
         layer->SetDefaultStringSize(
             static_cast<std::size_t>(defaultStringSize));
     layer->SetLaunderFlag(launderNames);
-    layer->SetPrecisionFlag(
-        CPLFetchBool(options, LayerCreationOptionsConstants::PRECISION, true));
+    layer->SetPrecisionFlag(CPLFetchBool(
+        options, OGRHanaLayerCreationOptionsConstants::PRECISION, true));
     layer->SetCustomColumnTypes(CSLFetchNameValue(
-        options, LayerCreationOptionsConstants::COLUMN_TYPES));
+        options, OGRHanaLayerCreationOptionsConstants::COLUMN_TYPES));
 
     layers_.push_back(std::move(layer));
 

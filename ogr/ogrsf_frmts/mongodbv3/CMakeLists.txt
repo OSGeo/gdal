@@ -1,4 +1,12 @@
-add_gdal_driver(TARGET ogr_MongoDBv3 SOURCES ogrmongodbv3driver.cpp NO_CXX_WFLAGS PLUGIN_CAPABLE)
+add_gdal_driver(TARGET ogr_MongoDBv3
+                SOURCES ogrmongodbv3driver.cpp
+                CORE_SOURCES ogrmongodbv3drivercore.cpp
+                NO_CXX_WFLAGS PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_MongoDBv3)
+    return()
+endif()
+
 gdal_standard_includes(ogr_MongoDBv3)
 set(GDAL_CXX_WARNING_FLAGS_WITHOUT_NO_OPERATOR_NAMES "${GDAL_CXX_WARNING_FLAGS}")
 list(REMOVE_ITEM GDAL_CXX_WARNING_FLAGS_WITHOUT_NO_OPERATOR_NAMES "-fno-operator-names")

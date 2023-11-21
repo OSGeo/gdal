@@ -30,10 +30,6 @@
 
 #include "ogr_gmlas.h"
 
-#define CONSTANT_DEFINITION
-#undef OGR_GMLAS_CONSTS_INCLUDED_REDEFINABLE
-#include "ogr_gmlas_consts.h"
-
 #include "cpl_minixml.h"
 
 #include <algorithm>

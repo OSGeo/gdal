@@ -39,6 +39,8 @@
 
 #include "jxl_headers.h"
 
+#include "jpegxldrivercore.h"
+
 namespace
 {
 struct VSILFileReleaser
@@ -209,20 +211,6 @@ CPLErr JPEGXLRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                      IsJPEGXLContainer()                             */
-/************************************************************************/
-
-static bool IsJPEGXLContainer(GDALOpenInfo *poOpenInfo)
-{
-    constexpr const GByte abyJXLContainerSignature[] = {
-        0x00, 0x00, 0x00, 0x0C, 'J', 'X', 'L', ' ', 0x0D, 0x0A, 0x87, 0x0A};
-    return (poOpenInfo->nHeaderBytes >=
-                static_cast<int>(sizeof(abyJXLContainerSignature)) &&
-            memcmp(poOpenInfo->pabyHeader, abyJXLContainerSignature,
-                   sizeof(abyJXLContainerSignature)) == 0);
-}
-
-/************************************************************************/
 /*                         Identify()                                   */
 /************************************************************************/
 
@@ -230,6 +218,9 @@ int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->fpL == nullptr)
         return false;
+
+    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "jxl"))
+        return true;
 
     // See
     // https://github.com/libjxl/libjxl/blob/c98f133f3f5e456caaa2ba00bc920e923b713abc/lib/jxl/decode.cc#L107-L138
@@ -3003,82 +2994,9 @@ void GDALRegister_JPEGXL()
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("JPEGXL");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "JPEG-XL");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jpegxl.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jxl");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jxl");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Float32");
-
-#ifdef HAVE_JXL_BOX_API
-    const char *pszOpenOptions =
-        "<OpenOptionList>\n"
-        "   <Option name='APPLY_ORIENTATION' type='boolean' "
-        "description='whether to take into account EXIF Orientation to "
-        "rotate/flip the image' default='NO'/>\n"
-        "</OpenOptionList>\n";
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, pszOpenOptions);
-#endif
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>\n"
-        "   <Option name='LOSSLESS' type='boolean' description='Whether JPEGXL "
-        "compression should be lossless' default='YES'/>"
-        "   <Option name='LOSSLESS_COPY' type='string-select' "
-        "description='Whether conversion should be lossless' default='AUTO'>"
-        "     <Value>AUTO</Value>"
-        "     <Value>YES</Value>"
-        "     <Value>NO</Value>"
-        "   </Option>"
-        "   <Option name='EFFORT' type='int' description='Level of effort "
-        "1(fast)-9(slow)' default='5'/>"
-        "   <Option name='DISTANCE' type='float' description='Distance level "
-        "for lossy compression (0=mathematically lossless, 1.0=visually "
-        "lossless, usual range [0.5,3])' default='1.0' min='0.1' max='15.0'/>"
-#ifdef HAVE_JxlEncoderSetExtraChannelDistance
-        "  <Option name='ALPHA_DISTANCE' type='float' "
-        "description='Distance level for alpha channel "
-        "(-1=same as non-alpha channels, "
-        "0=mathematically lossless, 1.0=visually lossless, "
-        "usual range [0.5,3])' default='-1' min='-1' max='15.0'/>"
-#endif
-        "   <Option name='QUALITY' type='float' description='Alternative "
-        "setting to DISTANCE to specify lossy compression, roughly matching "
-        "libjpeg quality setting in the [0,100] range' default='90' max='100'/>"
-        "   <Option name='NBITS' type='int' description='BITS for sub-byte "
-        "files (1-7), sub-uint16_t (9-15)'/>"
-        "   <Option name='SOURCE_ICC_PROFILE' description='ICC profile encoded "
-        "in Base64' type='string'/>\n"
-#ifdef HAVE_JXL_THREADS
-        "   <Option name='NUM_THREADS' type='string' description='Number of "
-        "worker threads for compression. Can be set to ALL_CPUS' "
-        "default='ALL_CPUS'/>"
-#endif
-#ifdef HAVE_JXL_BOX_API
-        "   <Option name='WRITE_EXIF_METADATA' type='boolean' "
-        "description='Whether to write EXIF_ metadata in a Exif box' "
-        "default='YES'/>"
-        "   <Option name='WRITE_XMP' type='boolean' description='Whether to "
-        "write xml:XMP metadata in a xml box' default='YES'/>"
-        "   <Option name='WRITE_GEOJP2' type='boolean' description='Whether to "
-        "write georeferencing in a jumb.uuid box' default='YES'/>"
-        "   <Option name='COMPRESS_BOXES' type='boolean' description='Whether "
-        "to decompress Exif/XMP/GeoJP2 boxes' default='NO'/>"
-#endif
-        "</CreationOptionList>\n");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-#ifdef HAVE_JxlEncoderInitExtraChannelInfo
-    poDriver->SetMetadataItem("JXL_ENCODER_SUPPORT_EXTRA_CHANNELS", "YES");
-#endif
-
-    poDriver->pfnIdentify = JPEGXLDataset::Identify;
+    JPEGXLDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = JPEGXLDataset::OpenStatic;
+    poDriver->pfnIdentify = JPEGXLDataset::Identify;
     poDriver->pfnCreateCopy = JPEGXLDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

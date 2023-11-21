@@ -27,47 +27,29 @@
  ****************************************************************************/
 
 #include "ogr_xls.h"
+#include "ogrxlsdrivercore.h"
 #include "cpl_conv.h"
-
-/************************************************************************/
-/*                           ~OGRXLSDriver()                            */
-/************************************************************************/
-
-OGRXLSDriver::~OGRXLSDriver()
-
-{
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRXLSDriver::GetName()
-
-{
-    return "XLS";
-}
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRXLSDriver::Open(const char *pszFilename, int bUpdate)
+static GDALDataset *OGRXLSDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (bUpdate)
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0)
     {
         return nullptr;
     }
 
-    if (!EQUAL(CPLGetExtension(pszFilename), "XLS"))
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "XLS"))
     {
         return nullptr;
     }
 
     OGRXLSDataSource *poDS = new OGRXLSDataSource();
 
-    if (!poDS->Open(pszFilename, bUpdate))
+    if (!poDS->Open(poOpenInfo->pszFilename, false))
     {
         delete poDS;
         poDS = nullptr;
@@ -77,30 +59,19 @@ OGRDataSource *OGRXLSDriver::Open(const char *pszFilename, int bUpdate)
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRXLSDriver::TestCapability(CPL_UNUSED const char *pszCap)
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRXLS()                           */
 /************************************************************************/
 
 void RegisterOGRXLS()
 
 {
-    OGRSFDriver *poDriver = new OGRXLSDriver;
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+        return;
 
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MS Excel format");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xls");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/xls.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_NONSPATIAL, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    GDALDriver *poDriver = new GDALDriver();
+    OGRXLSDriverSetCommonMetadata(poDriver);
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    poDriver->pfnOpen = OGRXLSDriverOpen;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

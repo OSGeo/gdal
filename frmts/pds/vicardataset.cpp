@@ -41,6 +41,7 @@ constexpr double NULL3 = -32768.0;
 #include "vicardataset.h"
 #include "nasakeywordhandler.h"
 #include "vicarkeywordhandler.h"
+#include "pdsdrivercore.h"
 
 #include "gtiff.h"
 #include "geotiff.h"
@@ -1248,65 +1249,6 @@ CPLErr VICARDataset::SetGeoTransform(double *padfTransform)
     memcpy(&m_adfGeoTransform[0], padfTransform, sizeof(double) * 6);
     InvalidateLabel();
     return CE_None;
-}
-
-/************************************************************************/
-/*                         GetLabelOffset()                             */
-/************************************************************************/
-
-int VICARDataset::GetLabelOffset(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->pabyHeader == nullptr || poOpenInfo->fpL == nullptr)
-        return -1;
-
-    std::string osHeader;
-    const char *pszHeader =
-        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-    // Some PDS3 images include a VICAR header pointed by ^IMAGE_HEADER.
-    // If the user sets GDAL_TRY_PDS3_WITH_VICAR=YES, then we will gracefully
-    // hand over the file to the VICAR dataset.
-    vsi_l_offset nOffset = 0;
-    if (CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/") &&
-        (nOffset = VICARDataset::GetVICARLabelOffsetFromPDS3(
-             pszHeader, poOpenInfo->fpL, osHeader)) > 0)
-    {
-        pszHeader = osHeader.c_str();
-    }
-
-    if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
-        (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
-    {
-        // If opening in vector-only mode, then check when have NBB != 0
-        const char *pszNBB = strstr(pszHeader, "NBB");
-        if (pszNBB == nullptr)
-            return -1;
-        const char *pszEqualSign = strchr(pszNBB, '=');
-        if (pszEqualSign == nullptr)
-            return -1;
-        if (atoi(pszEqualSign + 1) == 0)
-            return -1;
-    }
-    if (strstr(pszHeader, "LBLSIZE") != nullptr &&
-        strstr(pszHeader, "FORMAT") != nullptr &&
-        strstr(pszHeader, "NL") != nullptr &&
-        strstr(pszHeader, "NS") != nullptr &&
-        strstr(pszHeader, "NB") != nullptr)
-    {
-        return static_cast<int>(nOffset);
-    }
-    return -1;
-}
-
-/************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int VICARDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    return GetLabelOffset(poOpenInfo) >= 0;
 }
 
 /************************************************************************/
@@ -2546,7 +2488,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Does this look like a VICAR dataset?                            */
     /* -------------------------------------------------------------------- */
-    const int nLabelOffset = GetLabelOffset(poOpenInfo);
+    const int nLabelOffset = VICARGetLabelOffset(poOpenInfo);
     if (nLabelOffset < 0)
         return nullptr;
     if (nLabelOffset > 0)
@@ -3445,108 +3387,19 @@ GDALDataset *VICARDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                     GetVICARLabelOffsetFromPDS3()                    */
-/************************************************************************/
-
-vsi_l_offset
-VICARDataset::GetVICARLabelOffsetFromPDS3(const char *pszHdr, VSILFILE *fp,
-                                          std::string &osVICARHeader)
-{
-    const char *pszPDSVersionID = strstr(pszHdr, "PDS_VERSION_ID");
-    int nOffset = 0;
-    if (pszPDSVersionID)
-        nOffset = static_cast<int>(pszPDSVersionID - pszHdr);
-
-    NASAKeywordHandler oKeywords;
-    if (oKeywords.Ingest(fp, nOffset))
-    {
-        const int nRecordBytes =
-            atoi(oKeywords.GetKeyword("RECORD_BYTES", "0"));
-        const int nImageHeader =
-            atoi(oKeywords.GetKeyword("^IMAGE_HEADER", "0"));
-        if (nRecordBytes > 0 && nImageHeader > 0)
-        {
-            const auto nImgHeaderOffset =
-                static_cast<vsi_l_offset>(nImageHeader - 1) * nRecordBytes;
-            osVICARHeader.resize(1024);
-            size_t nMemb;
-            if (VSIFSeekL(fp, nImgHeaderOffset, SEEK_SET) == 0 &&
-                (nMemb = VSIFReadL(&osVICARHeader[0], 1, osVICARHeader.size(),
-                                   fp)) != 0 &&
-                osVICARHeader.find("LBLSIZE") != std::string::npos)
-            {
-                osVICARHeader.resize(nMemb);
-                return nImgHeaderOffset;
-            }
-        }
-    }
-    return 0;
-}
-
-/************************************************************************/
 /*                         GDALRegister_VICAR()                         */
 /************************************************************************/
 
 void GDALRegister_VICAR()
 
 {
-    if (GDALGetDriverByName("VICAR") != nullptr)
+    if (GDALGetDriverByName(VICAR_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("VICAR");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MIPL VICAR file");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/vicar.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 Int32 Float32 Float64 CFloat32");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='GEOREF_FORMAT' type='string-select' "
-        "description='How to encode georeferencing information' "
-        "default='MIPL'>"
-        "     <Value>MIPL</Value>"
-        "     <Value>GEOTIFF</Value>"
-        "  </Option>"
-        "  <Option name='COORDINATE_SYSTEM_NAME' type='string-select' "
-        "description='Value of MAP.COORDINATE_SYSTEM_NAME' "
-        "default='PLANETOCENTRIC'>"
-        "     <Value>PLANETOCENTRIC</Value>"
-        "     <Value>PLANETOGRAPHIC</Value>"
-        "  </Option>"
-        "  <Option name='POSITIVE_LONGITUDE_DIRECTION' type='string-select' "
-        "description='Value of MAP.POSITIVE_LONGITUDE_DIRECTION' "
-        "default='EAST'>"
-        "     <Value>EAST</Value>"
-        "     <Value>WEST</Value>"
-        "  </Option>"
-        "  <Option name='TARGET_NAME' type='string' description='Value of "
-        "MAP.TARGET_NAME'/>"
-        "  <Option name='USE_SRC_LABEL' type='boolean' "
-        "description='Whether to use source label in VICAR to VICAR "
-        "conversions' "
-        "default='YES'/>"
-        "  <Option name='USE_SRC_MAP' type='boolean' "
-        "description='Whether to use MAP property from source label in "
-        "VICAR to VICAR conversions' "
-        "default='NO'/>"
-        "  <Option name='LABEL' type='string' "
-        "description='Label to use, either as a JSON string or a filename "
-        "containing one'/>"
-        "  <Option name='COMPRESS' type='string-select' "
-        "description='Compression method' default='NONE'>"
-        "     <Value>NONE</Value>"
-        "     <Value>BASIC</Value>"
-        "     <Value>BASIC2</Value>"
-        "  </Option>"
-        "</CreationOptionList>");
+    VICARDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = VICARDataset::Open;
-    poDriver->pfnIdentify = VICARDataset::Identify;
     poDriver->pfnCreate = VICARDataset::Create;
     poDriver->pfnCreateCopy = VICARDataset::CreateCopy;
 

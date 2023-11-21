@@ -124,18 +124,4 @@ class OGRXLSDataSource final : public OGRDataSource
     const void *GetXLSHandle();
 };
 
-/************************************************************************/
-/*                             OGRXLSDriver                             */
-/************************************************************************/
-
-class OGRXLSDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRXLSDriver();
-
-    virtual const char *GetName() override;
-    virtual OGRDataSource *Open(const char *, int) override;
-    virtual int TestCapability(const char *) override;
-};
-
 #endif /* ndef OGR_XLS_H_INCLUDED */

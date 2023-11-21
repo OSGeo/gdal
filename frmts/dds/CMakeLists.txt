@@ -1,4 +1,12 @@
-add_gdal_driver(TARGET gdal_DDS SOURCES ddsdataset.cpp PLUGIN_CAPABLE)
+add_gdal_driver(TARGET gdal_DDS
+                SOURCES ddsdataset.cpp
+                CORE_SOURCES ddsdrivercore.cpp
+                PLUGIN_CAPABLE)
+
+if(NOT TARGET gdal_DDS)
+    return()
+endif()
+
 gdal_standard_includes(gdal_DDS)
 gdal_target_link_libraries(gdal_DDS PRIVATE CRNLIB::Crnlib)
 target_include_directories(gdal_DDS PRIVATE "${Crnlib_INCLUDE_DIR}/crunch")
