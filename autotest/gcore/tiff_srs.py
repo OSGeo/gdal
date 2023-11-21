@@ -1418,3 +1418,9 @@ def test_tiff_srs_projection_method_unknown_of_geotiff_without_crs_code():
     assert got_srs.IsSame(srs), got_srs.ExportToWkt()
     ds = None
     gdal.Unlink(filename)
+
+
+def test_tiff_srs_build_compd_crs_name_without_citation():
+
+    ds = gdal.Open("data/gtiff/compdcrs_no_citation.tif")
+    assert ds.GetSpatialRef().GetName() == "WGS 84 / UTM zone 17N + EGM2008 height"
