@@ -503,8 +503,9 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     bool bCanUseMultiThreadedRead = false;
-    if (m_poThreadPool && eRWFlag == GF_Read && nBufXSize == nXSize &&
-        nBufYSize == nYSize && IsMultiThreadedReadCompatible())
+    if (m_nDisableMultiThreadedRead == 0 && m_poThreadPool &&
+        eRWFlag == GF_Read && nBufXSize == nXSize && nBufYSize == nYSize &&
+        IsMultiThreadedReadCompatible())
     {
         const int nBlockX1 = nXOff / m_nBlockXSize;
         const int nBlockY1 = nYOff / m_nBlockYSize;
