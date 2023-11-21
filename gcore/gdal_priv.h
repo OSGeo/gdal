@@ -3854,6 +3854,11 @@ std::string CPL_DLL GDALGetCompressionFormatForJPEG(VSILFILE *fp);
 std::string CPL_DLL GDALGetCompressionFormatForJPEG(const void *pBuffer,
                                                     size_t nBufferSize);
 
+GDALRasterAttributeTable CPL_DLL *GDALCreateRasterAttributeTableFromMDArrays(
+    GDALRATTableType eTableType,
+    const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays,
+    const std::vector<GDALRATFieldUsage> &aeUsages);
+
 //! @endcond
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
