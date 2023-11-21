@@ -1801,7 +1801,7 @@ def test_ogr_parquet_arrow_stream_numpy():
     )
 
     assert batches[0]["struct_field.a"][0] == 1
-    assert batches[0]["struct_field.a"][1] == 1
+    assert batches[0]["struct_field.a"][1] == 2
     assert batches[0]["struct_field.b"][0] == 2.5
 
     ignored_fields = ["geometry"]
@@ -1964,8 +1964,8 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     assert batch["date64"][0] == numpy.datetime64("1970-01-01")
     assert bytes(batch["binary"][0]) == b"\00\01"
     assert bytes(batch["large_binary"][0]) == b"\00\01"
-    assert batch["struct_field.a"][0] == 1
-    assert batch["struct_field.c.d"][0] == b"e"
+    assert batch["struct_field.a"][0] == 4
+    assert batch["struct_field.c.d"][0] == b"e345"
     assert numpy.array_equal(
         batch["fixed_size_list_boolean"][0], numpy.array([False, True])
     )
