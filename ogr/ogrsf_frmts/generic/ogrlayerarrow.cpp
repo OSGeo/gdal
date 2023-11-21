@@ -752,18 +752,24 @@ int OGRLayer::StaticGetArrowSchema(struct ArrowArrayStream *stream,
 
 static void OGRLayerDefaultReleaseArray(struct ArrowArray *array)
 {
-    for (int i = 0; i < static_cast<int>(array->n_buffers); ++i)
-        VSIFreeAligned(const_cast<void *>(array->buffers[i]));
-    CPLFree(array->buffers);
-    for (int i = 0; i < static_cast<int>(array->n_children); ++i)
+    if (array->buffers)
     {
-        if (array->children[i] && array->children[i]->release)
-        {
-            array->children[i]->release(array->children[i]);
-            CPLFree(array->children[i]);
-        }
+        for (int i = 0; i < static_cast<int>(array->n_buffers); ++i)
+            VSIFreeAligned(const_cast<void *>(array->buffers[i]));
+        CPLFree(array->buffers);
     }
-    CPLFree(array->children);
+    if (array->children)
+    {
+        for (int i = 0; i < static_cast<int>(array->n_children); ++i)
+        {
+            if (array->children[i] && array->children[i]->release)
+            {
+                array->children[i]->release(array->children[i]);
+                CPLFree(array->children[i]);
+            }
+        }
+        CPLFree(array->children);
+    }
     if (array->dictionary)
     {
         if (array->dictionary->release)
@@ -5114,6 +5120,303 @@ void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
         array->release(array);
         memset(array, 0, sizeof(*array));
     }
+}
+
+/************************************************************************/
+/*                          OGRCloneArrowArray                          */
+/************************************************************************/
+
+static bool OGRCloneArrowArray(const struct ArrowSchema *schema,
+                               const struct ArrowArray *src_array,
+                               struct ArrowArray *out_array,
+                               size_t nParentOffset)
+{
+    memset(out_array, 0, sizeof(*out_array));
+    const size_t nLength =
+        static_cast<size_t>(src_array->length) - nParentOffset;
+    out_array->length = nLength;
+    out_array->null_count = src_array->null_count;
+    out_array->release = OGRLayerDefaultReleaseArray;
+
+    bool bRet = true;
+
+    out_array->n_buffers = src_array->n_buffers;
+    out_array->buffers = static_cast<const void **>(CPLCalloc(
+        static_cast<size_t>(src_array->n_buffers), sizeof(const void *)));
+    CPLAssert(static_cast<size_t>(src_array->length) >= nParentOffset);
+    const char *format = schema->format;
+    const auto nOffset = static_cast<size_t>(src_array->offset) + nParentOffset;
+    for (int64_t i = 0; i < src_array->n_buffers; ++i)
+    {
+        if (i == 0 || IsBoolean(format))
+        {
+            if (i == 1)
+            {
+                CPLAssert(src_array->buffers[i]);
+            }
+            if (src_array->buffers[i])
+            {
+                const size_t nBytes = nLength ? (nLength + 7) / 8 : 1;
+                uint8_t *p = static_cast<uint8_t *>(
+                    VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nBytes));
+                if (!p)
+                {
+                    bRet = false;
+                    break;
+                }
+                const uint8_t *pSrcArray =
+                    static_cast<const uint8_t *>(src_array->buffers[i]);
+                if ((nOffset % 8) != 0)
+                {
+                    // Make sure last byte is fully initialized
+                    p[nBytes - 1] = 0;
+                    for (size_t iRow = 0; iRow < nLength; ++iRow)
+                    {
+                        if (TestBit(pSrcArray, nOffset + iRow))
+                            SetBit(p, iRow);
+                        else
+                            UnsetBit(p, iRow);
+                    }
+                }
+                else
+                {
+                    memcpy(p, pSrcArray + nOffset / 8, nBytes);
+                }
+                out_array->buffers[i] = p;
+            }
+        }
+        else if (i == 1)
+        {
+            CPLAssert(src_array->buffers[i]);
+            size_t nEltSize = 0;
+            size_t nExtraElt = 0;
+            if (IsUInt8(format) || IsInt8(format))
+                nEltSize = sizeof(uint8_t);
+            else if (IsUInt16(format) || IsInt16(format) || IsFloat16(format))
+                nEltSize = sizeof(uint16_t);
+            else if (IsUInt32(format) || IsInt32(format) || IsFloat32(format) ||
+                     strcmp(format, "tdD") == 0 || strcmp(format, "tts") == 0 ||
+                     strcmp(format, "ttm") == 0)
+            {
+                nEltSize = sizeof(uint32_t);
+            }
+            else if (IsString(format) || IsBinary(format) || IsList(format) ||
+                     IsMap(format))
+            {
+                nEltSize = sizeof(uint32_t);
+                nExtraElt = 1;
+            }
+            else if (IsUInt64(format) || IsInt64(format) || IsFloat64(format) ||
+                     strcmp(format, "tdm") == 0 || strcmp(format, "ttu") == 0 ||
+                     strcmp(format, "ttn") == 0 || strcmp(format, "tss") == 0 ||
+                     STARTS_WITH(format, "tsm:") ||
+                     STARTS_WITH(format, "tsu:") || STARTS_WITH(format, "tsn:"))
+            {
+                nEltSize = sizeof(uint64_t);
+            }
+            else if (IsLargeString(format) || IsLargeBinary(format) ||
+                     IsLargeList(format))
+            {
+                nEltSize = sizeof(uint64_t);
+                nExtraElt = 1;
+            }
+            else if (IsFixedWidthBinary(format))
+            {
+                nEltSize = GetFixedWithBinary(format);
+            }
+            else if (IsDecimal(format))
+            {
+                int nPrecision = 0;
+                int nScale = 0;
+                int nWidthInBytes = 0;
+                if (!ParseDecimalFormat(format, nPrecision, nScale,
+                                        nWidthInBytes))
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Unexpected error in OGRCloneArrowArray(): unhandled "
+                        "field format: %s",
+                        format);
+
+                    return false;
+                }
+                nEltSize = nWidthInBytes;
+            }
+            if (nEltSize)
+            {
+                void *p = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                    nLength ? nEltSize * (nLength + nExtraElt) : 1);
+                if (!p)
+                {
+                    bRet = false;
+                    break;
+                }
+                if (nLength)
+                {
+                    if ((IsString(format) || IsBinary(format)) &&
+                        static_cast<const uint32_t *>(
+                            src_array->buffers[1])[nOffset] != 0)
+                    {
+                        const auto *pSrcOffsets = static_cast<const uint32_t *>(
+                                                      src_array->buffers[1]) +
+                                                  nOffset;
+                        const auto nShiftOffset = pSrcOffsets[0];
+                        auto *pDstOffsets = static_cast<uint32_t *>(p);
+                        for (size_t iRow = 0; iRow <= nLength; ++iRow)
+                        {
+                            pDstOffsets[iRow] =
+                                pSrcOffsets[iRow] - nShiftOffset;
+                        }
+                    }
+                    else if ((IsLargeString(format) || IsLargeBinary(format)) &&
+                             static_cast<const uint64_t *>(
+                                 src_array->buffers[1])[nOffset] != 0)
+                    {
+                        const auto *pSrcOffsets = static_cast<const uint64_t *>(
+                                                      src_array->buffers[1]) +
+                                                  nOffset;
+                        const auto nShiftOffset = pSrcOffsets[0];
+                        auto *pDstOffsets = static_cast<uint64_t *>(p);
+                        for (size_t iRow = 0; iRow <= nLength; ++iRow)
+                        {
+                            pDstOffsets[iRow] =
+                                pSrcOffsets[iRow] - nShiftOffset;
+                        }
+                    }
+                    else
+                    {
+                        memcpy(
+                            p,
+                            static_cast<const GByte *>(src_array->buffers[i]) +
+                                nEltSize * nOffset,
+                            nEltSize * (nLength + nExtraElt));
+                    }
+                }
+                out_array->buffers[i] = p;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "OGRCloneArrowArray(): unhandled case, array = %s, "
+                         "format = '%s', i = 1",
+                         schema->name, format);
+                bRet = false;
+                break;
+            }
+        }
+        else if (i == 2)
+        {
+            CPLAssert(src_array->buffers[i]);
+            size_t nSrcCharOffset = 0;
+            size_t nCharCount = 0;
+            if (IsString(format) || IsBinary(format))
+            {
+                const auto *pSrcOffsets =
+                    static_cast<const uint32_t *>(src_array->buffers[1]) +
+                    nOffset;
+                nSrcCharOffset = pSrcOffsets[0];
+                nCharCount = pSrcOffsets[nLength] - pSrcOffsets[0];
+            }
+            else if (IsLargeString(format) || IsLargeBinary(format))
+            {
+                const auto *pSrcOffsets =
+                    static_cast<const uint64_t *>(src_array->buffers[1]) +
+                    nOffset;
+                nSrcCharOffset = static_cast<size_t>(pSrcOffsets[0]);
+                nCharCount =
+                    static_cast<size_t>(pSrcOffsets[nLength] - pSrcOffsets[0]);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "OGRCloneArrowArray(): unhandled case, array = %s, "
+                         "format = '%s', i = 2",
+                         schema->name, format);
+                bRet = false;
+                break;
+            }
+            void *p =
+                VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCharCount ? nCharCount : 1);
+            if (!p)
+            {
+                bRet = false;
+                break;
+            }
+            if (nCharCount)
+            {
+                memcpy(p,
+                       static_cast<const GByte *>(src_array->buffers[i]) +
+                           nSrcCharOffset,
+                       nCharCount);
+            }
+            out_array->buffers[i] = p;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "OGRCloneArrowArray(): unhandled case, array = %s, format "
+                     "= '%s', i = 3",
+                     schema->name, format);
+            bRet = false;
+            break;
+        }
+    }
+
+    if (bRet)
+    {
+        out_array->n_children = src_array->n_children;
+        out_array->children = static_cast<struct ArrowArray **>(
+            CPLCalloc(static_cast<size_t>(src_array->n_children),
+                      sizeof(struct ArrowArray *)));
+        for (int64_t i = 0; i < src_array->n_children; ++i)
+        {
+            out_array->children[i] = static_cast<struct ArrowArray *>(
+                CPLCalloc(1, sizeof(struct ArrowArray)));
+            if (!OGRCloneArrowArray(schema->children[i], src_array->children[i],
+                                    out_array->children[i],
+                                    IsFixedSizeList(format)
+                                        ? nOffset * GetFixedSizeList(format)
+                                    : IsStructure(format) ? nOffset
+                                                          : 0))
+            {
+                bRet = false;
+                break;
+            }
+        }
+    }
+
+    if (bRet && src_array->dictionary)
+    {
+        out_array->dictionary = static_cast<struct ArrowArray *>(
+            CPLCalloc(1, sizeof(struct ArrowArray)));
+        bRet = OGRCloneArrowArray(schema->dictionary, src_array->dictionary,
+                                  out_array->dictionary, 0);
+    }
+
+    if (!bRet)
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+    }
+    return bRet;
+}
+
+/** Full/deep copy of an array.
+ *
+ * Renormalize the offset of the array (and its children) to 0.
+ *
+ * In case of failure, out_array will be let in a released state.
+ *
+ * @param schema Schema of the array. Must *NOT* be NULL.
+ * @param src_array Source array. Must *NOT* be NULL.
+ * @param out_array Output array.  Must *NOT* be NULL (but its content may be random)
+ * @return true if success.
+ */
+bool OGRCloneArrowArray(const struct ArrowSchema *schema,
+                        const struct ArrowArray *src_array,
+                        struct ArrowArray *out_array)
+{
+    return OGRCloneArrowArray(schema, src_array, out_array, 0);
 }
 
 /************************************************************************/
