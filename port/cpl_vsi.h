@@ -719,6 +719,13 @@ void CPL_DLL VSIFreeFilesystemPluginCallbacksStruct(
 int CPL_DLL VSIInstallPluginHandler(
     const char *pszPrefix, const VSIFilesystemPluginCallbacksStruct *poCb);
 
+/**
+ * Unregister a handler previously installed with VSIInstallPluginHandler() on
+ * the given prefix.
+ * @since GDAL 3.9
+ */
+int CPL_DLL VSIRemovePluginHandler(const char *pszPrefix);
+
 /* ==================================================================== */
 /*      Time querying.                                                  */
 /* ==================================================================== */
