@@ -2656,6 +2656,41 @@ def test_gdalwarp_lib_bug_4326_to_3857():
 
 
 ###############################################################################
+# Test warping full world from EPSG:4326 to EPSG:3857
+
+
+def test_gdalwarp_lib_full_world_4326_to_3857():
+    class MyHandler:
+        def __init__(self):
+            self.warning_raised = False
+
+        def callback(self, err_type, err_no, err_msg):
+            if err_type == gdal.CE_Warning and "Clamping output bounds to" in err_msg:
+                self.warning_raised = True
+
+    my_error_handler = MyHandler()
+    with gdaltest.error_handler(my_error_handler.callback):
+        ds = gdal.Warp(
+            "",
+            "../gdrivers/data/small_world.tif",
+            options="-f MEM -t_srs EPSG:3857",
+        )
+    assert my_error_handler.warning_raised
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -20037508.342789244,
+            103286.12547829507,
+            0.0,
+            20037508.342789248,
+            0.0,
+            -103286.12547829509,
+        )
+    )
+    assert ds.RasterXSize == 388
+    assert ds.RasterYSize == 388
+
+
+###############################################################################
 # Test warping of single source to COG
 
 

@@ -241,7 +241,8 @@ static bool COGGetWarpingCharacteristics(
         adfSrcGeoTransform[5] < 0)
     {
         const auto poSrcSRS = poSrcDS->GetSpatialRef();
-        if (poSrcSRS && poSrcSRS->IsGeographic())
+        if (poSrcSRS && poSrcSRS->IsGeographic() &&
+            !poSrcSRS->IsDerivedGeographic())
         {
             double maxLat = adfSrcGeoTransform[3];
             double minLat = adfSrcGeoTransform[3] +
@@ -306,7 +307,8 @@ static bool COGGetWarpingCharacteristics(
     double adfGeoTransform[6];
     double adfExtent[4];
 
-    if (GDALSuggestedWarpOutput2(poSrcDS, psInfo->pfnTransform, hTransformArg,
+    if (GDALSuggestedWarpOutput2(poTmpDS ? poTmpDS.get() : poSrcDS,
+                                 psInfo->pfnTransform, hTransformArg,
                                  adfGeoTransform, &nXSize, &nYSize, adfExtent,
                                  0) != CE_None)
     {
