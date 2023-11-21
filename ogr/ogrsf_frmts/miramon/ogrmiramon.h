@@ -110,7 +110,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(OGRFieldDefn *poField,
-                               int bApproxOK = TRUE) override;
+                               int bApproxOK = TRUE) ;
 
     int TestCapability(const char *) override;
 };
@@ -149,7 +149,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
     virtual OGRLayer *ICreateLayer(const char *,
                                    OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) override;
+                                   char ** = nullptr) ;
     int TestCapability(const char *) override;
 };
 
