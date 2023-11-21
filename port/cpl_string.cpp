@@ -338,7 +338,6 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols,
     int nLines = 0;
     int nAllocatedLines = 0;
 
-    CPLErrorReset();
     while (!VSIFEofL(fp) && (nMaxLines == -1 || nLines < nMaxLines))
     {
         const char *pszLine = CPLReadLine2L(fp, nMaxCols, papszOptions);
