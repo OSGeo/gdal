@@ -186,3 +186,12 @@ def test_bsb_cutline():
         ds.GetMetadataItem("BSB_CUTLINE")
         == "POLYGON ((112.72859333333334 -8.25404666666667,156.57827333333333 -7.66159166666667,164.28394166666666 -40.89653000000000,106.53042166666667 -41.14970000000000))"
     )
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/8765
+
+
+def test_bsb_with_errant_0x1A_character_in_header():
+
+    assert gdal.Open("data/bsb/NZ52201_truncated.KAP")
