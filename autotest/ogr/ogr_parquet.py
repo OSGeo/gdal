@@ -2272,25 +2272,24 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
     ds = ogr.Open(test_file)
     lyr = ds.GetLayer(0)
 
-    if False:
-        stream = lyr.GetArrowStreamAsPyArrow()
-        schema = stream.schema
-        batches = []
-        new_schema = pa.schema([f for f in schema])
-        for batch in stream:
-            batches.append(
-                pa.RecordBatch.from_arrays(
-                    [batch.field(f.name) for f in schema], schema=new_schema
-                )
+    stream = lyr.GetArrowStreamAsPyArrow()
+    schema = stream.schema
+    batches = []
+    new_schema = pa.schema([f for f in schema])
+    for batch in stream:
+        batches.append(
+            pa.RecordBatch.from_arrays(
+                [batch.field(f.name) for f in schema], schema=new_schema
             )
-        table = pa.Table.from_batches(batches)
-        table.validate(full=True)
-        full_table = []
-        for col in table:
-            new_col = []
-            for row in col:
-                new_col.append(str(row))
-            full_table.append(new_col)
+        )
+    table = pa.Table.from_batches(batches)
+    table.validate(full=True)
+    full_table = []
+    for col in table:
+        new_col = []
+        for row in col:
+            new_col.append(row)
+        full_table.append(new_col)
 
     lyr.SetAttributeFilter("boolean = 0")
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
@@ -2324,10 +2323,9 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
         )
     table = pa.Table.from_batches(batches)
     table.validate(full=True)
-    if False:
-        for (col, full_col) in zip(table, full_table):
-            assert str(col[0]) == full_col[1]
-            assert str(col[1]) == full_col[3]
+    for (col, full_col) in zip(table, full_table):
+        assert col[0] == full_col[1]
+        assert col[1] == full_col[3]
 
     lyr.SetAttributeFilter("boolean = 1")
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1

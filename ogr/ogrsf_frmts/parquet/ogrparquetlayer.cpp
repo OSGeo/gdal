@@ -394,9 +394,6 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 
 int OGRParquetLayerBase::TestCapability(const char *pszCap)
 {
-    if (EQUAL(pszCap, OLCFastFeatureCount))
-        return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
-
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
 
@@ -1679,6 +1676,9 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
 
 int OGRParquetLayer::TestCapability(const char *pszCap)
 {
+    if (EQUAL(pszCap, OLCFastFeatureCount))
+        return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
+
     if (EQUAL(pszCap, OLCIgnoreFields))
         return !m_bHasMissingMappingToParquet;
 
