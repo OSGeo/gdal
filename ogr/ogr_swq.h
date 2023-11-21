@@ -447,7 +447,6 @@ class CPL_UNSTABLE_API swq_select
                  swq_select_parse_options *poParseOptions);
 
     char *Unparse();
-    void Dump(FILE *);
 
     bool bExcludedGeometry = false;
 
@@ -460,10 +459,6 @@ class CPL_UNSTABLE_API swq_select
     // an asterisk.
     std::map<int, std::list<swq_col_def>> m_exclude_fields{};
 };
-
-CPLErr CPL_UNSTABLE_API swq_select_parse(swq_select *select_info,
-                                         swq_field_list *field_list,
-                                         int parse_flags);
 
 const char CPL_UNSTABLE_API *swq_select_summarize(swq_select *select_info,
                                                   int dest_column,
