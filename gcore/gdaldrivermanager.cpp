@@ -1234,62 +1234,23 @@ GDALPluginDriverProxy::GDALPluginDriverProxy(
 }
 
 //! @cond Doxygen_Suppress
-GDALDriver::OpenCallback GDALPluginDriverProxy::GetOpenCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetOpenCallback();
-}
+#define DEFINE_DRIVER_METHOD_GET_CALLBACK(method_name, output_type)            \
+    GDALDriver::output_type GDALPluginDriverProxy::method_name()               \
+    {                                                                          \
+        auto poRealDriver = GetRealDriver();                                   \
+        if (!poRealDriver)                                                     \
+            return nullptr;                                                    \
+        return poRealDriver->method_name();                                    \
+    }
 
-GDALDriver::CreateCallback GDALPluginDriverProxy::GetCreateCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetCreateCallback();
-}
-
-GDALDriver::CreateMultiDimensionalCallback
-GDALPluginDriverProxy::GetCreateMultiDimensionalCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetCreateMultiDimensionalCallback();
-}
-
-GDALDriver::CreateCopyCallback GDALPluginDriverProxy::GetCreateCopyCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetCreateCopyCallback();
-}
-
-GDALDriver::DeleteCallback GDALPluginDriverProxy::GetDeleteCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetDeleteCallback();
-}
-
-GDALDriver::RenameCallback GDALPluginDriverProxy::GetRenameCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetRenameCallback();
-}
-
-GDALDriver::CopyFilesCallback GDALPluginDriverProxy::GetCopyFilesCallback()
-{
-    auto poRealDriver = GetRealDriver();
-    if (!poRealDriver)
-        return nullptr;
-    return poRealDriver->GetCopyFilesCallback();
-}
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetOpenCallback, OpenCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCreateCallback, CreateCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCreateMultiDimensionalCallback,
+                                  CreateMultiDimensionalCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCreateCopyCallback, CreateCopyCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetDeleteCallback, DeleteCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetRenameCallback, RenameCallback)
+DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCopyFilesCallback, CopyFilesCallback)
 //! @endcond
 
 char **GDALPluginDriverProxy::GetMetadata(const char *pszDomain)
