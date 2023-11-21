@@ -3557,6 +3557,23 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
     const int nDriverCount = poDM->GetDriverCount(/*bIncludeHidden=*/true);
     GDALDriver *poMissingPluginDriver = nullptr;
     std::vector<GDALDriver *> apoSecondPassDrivers;
+
+    // Lookup of matching driver for dataset can involve up to 2 passes:
+    // - in the first pass, all drivers that are compabile of the request mode
+    //   (raster/vector/etc.) are probed using their Identify() method if it
+    //   exists. If the Identify() method returns FALSE, the driver is skipped.
+    //   If the Identify() methods returns GDAL_IDENTIFY_UNKNOWN and that the
+    //   driver is a deferred-loading plugin, it is added to the
+    //   apoSecondPassDrivers list for potential later probing, and execution
+    //   continues to the next driver in the list.
+    //   Otherwise if Identify() returns non-FALSE, the Open() method is used.
+    //   If Open() returns a non-NULL dataset, the loop stops and it is
+    //   returned. Otherwise looping over remaining drivers continues.
+    // - the second pass is optional, only if at least one driver was added
+    //   into apoSecondPassDrivers during the first pass. It is similar
+    //   to the first pass except it runs only on apoSecondPassDrivers drivers.
+    //   And the Open() method of such drivers is used, causing them to be
+    //   loaded for real.
     int iPass = 1;
 retry:
     for (int iDriver = 0;
