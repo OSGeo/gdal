@@ -76,56 +76,66 @@ def test_ogr2ogr_lib_2():
     )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
 
+
+def test_ogr2ogr_lib_2a(tmp_vsimem):
+
+    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+
     # Test @filename syntax
     gdal.FileFromMemBuffer(
-        "/vsimem/sql.txt", "-- initial comment\nselect * from poly\n-- trailing comment"
+        tmp_vsimem / "sql.txt",
+        "-- initial comment\nselect * from poly\n-- trailing comment",
     )
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", SQLStatement="@/vsimem/sql.txt"
+        "", srcDS, format="Memory", SQLStatement=f"@{tmp_vsimem}/sql.txt"
     )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
-    gdal.Unlink("/vsimem/sql.txt")
+
+
+def test_ogr2ogr_lib_2b(tmp_vsimem):
+
+    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
 
     # Test @filename syntax with a UTF-8 BOM
     gdal.FileFromMemBuffer(
-        "/vsimem/sql.txt", "\xEF\xBB\xBFselect * from poly".encode("LATIN1")
+        tmp_vsimem / "sql.txt", "\xEF\xBB\xBFselect * from poly".encode("LATIN1")
     )
     ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", SQLStatement="@/vsimem/sql.txt"
+        "", srcDS, format="Memory", SQLStatement=f"@{tmp_vsimem}/sql.txt"
     )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
-    gdal.Unlink("/vsimem/sql.txt")
 
 
 ###############################################################################
 # Test WHERE
 
 
-def test_ogr2ogr_lib_3():
+def test_ogr2ogr_lib_3(tmp_vsimem):
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate("", srcDS, format="Memory", where="EAS_ID=171")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
 
     # Test @filename syntax
-    gdal.FileFromMemBuffer("/vsimem/filter.txt", "EAS_ID=171")
-    ds = gdal.VectorTranslate("", srcDS, format="Memory", where="@/vsimem/filter.txt")
+    gdal.FileFromMemBuffer(tmp_vsimem / "filter.txt", "EAS_ID=171")
+    ds = gdal.VectorTranslate(
+        "", srcDS, format="Memory", where=f"@{tmp_vsimem}/filter.txt"
+    )
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 1
-    gdal.Unlink("/vsimem/filter.txt")
 
 
 ###############################################################################
 # Test accessMode
 
 
-def test_ogr2ogr_lib_4():
+def test_ogr2ogr_lib_4(tmp_vsimem):
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("/vsimem/poly.shp", srcDS)
+    ds = gdal.VectorTranslate(tmp_vsimem / "poly.shp", srcDS)
     assert ds.GetLayer(0).GetFeatureCount() == 10, "wrong feature count"
     ds = None
 
-    ds = gdal.VectorTranslate("/vsimem/poly.shp", srcDS, accessMode="append")
+    ds = gdal.VectorTranslate(tmp_vsimem / "poly.shp", srcDS, accessMode="append")
     assert ds is not None, "ds is None"
     assert ds.GetLayer(0).GetFeatureCount() == 20, "wrong feature count"
 
@@ -142,7 +152,6 @@ def test_ogr2ogr_lib_4():
     ), "Did not get expected value for field PRFEDEA"
 
     ds = None
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/poly.shp")
 
 
 ###############################################################################
@@ -175,19 +184,30 @@ def test_ogr2ogr_lib_6():
 
 
 ###############################################################################
+# Test selFields to []
+
+
+def test_ogr2ogr_lib_sel_fields_empty():
+
+    srcDS = gdal.OpenEx("../ogr/data/poly.shp")
+    ds = gdal.VectorTranslate("", srcDS, format="Memory", selectFields=[])
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+
+###############################################################################
 # Test LCO
 
 
-def test_ogr2ogr_lib_7():
+def test_ogr2ogr_lib_7(tmp_vsimem):
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
     ds = gdal.VectorTranslate(
-        "/vsimem/poly.shp", srcDS, layerCreationOptions=["SHPT=POLYGONZ"]
+        tmp_vsimem / "poly.shp", srcDS, layerCreationOptions=["SHPT=POLYGONZ"]
     )
     assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
 
     ds = None
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/poly.shp")
 
 
 ###############################################################################
@@ -222,19 +242,17 @@ def test_ogr2ogr_lib_9():
 # Test overwrite with a shapefile
 
 
-def test_ogr2ogr_lib_10():
+def test_ogr2ogr_lib_10(tmp_vsimem):
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    ds = gdal.VectorTranslate("/vsimem/tmp/poly.shp", srcDS)
+    ds = gdal.VectorTranslate(tmp_vsimem / "tmp/poly.shp", srcDS)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds = None
 
     # Overwrite
-    ds = gdal.VectorTranslate("/vsimem/tmp", srcDS, accessMode="overwrite")
+    ds = gdal.VectorTranslate(tmp_vsimem / "tmp", srcDS, accessMode="overwrite")
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     ds = None
-
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("/vsimem/tmp")
 
 
 ###############################################################################
@@ -424,30 +442,31 @@ def test_ogr2ogr_lib_19():
 
 
 @pytest.mark.require_driver("GPKG")
-def test_ogr2ogr_lib_20():
+def test_ogr2ogr_lib_20(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("foo"))
 
-    ds = gdal.VectorTranslate("/vsimem/out.gpkg", src_ds, format="GPKG")
+    ds = gdal.VectorTranslate(tmp_vsimem / "out.gpkg", src_ds, format="GPKG")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "foo"
     ds = None
-    gdal.Unlink("/vsimem/out.gpkg")
 
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_20a(tmp_vsimem):
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
     lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("foo"))
     lyr.CreateGeomField(ogr.GeomFieldDefn("bar"))
 
     ds = gdal.VectorTranslate(
-        "/vsimem/out.gpkg", src_ds, format="GPKG", selectFields=["bar"]
+        tmp_vsimem / "out.gpkg", src_ds, format="GPKG", selectFields=["bar"]
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "bar"
     ds = None
-    gdal.Unlink("/vsimem/out.gpkg")
 
 
 ###############################################################################
@@ -493,10 +512,10 @@ def test_ogr2ogr_clipsrc_wkt_no_dst_geom():
 # of the output driver not following the mapping of the input dataset.
 
 
-def test_ogr2ogr_axis_mapping_swap():
+def test_ogr2ogr_axis_mapping_swap(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/test_ogr2ogr_axis_mapping_swap.gml",
+        tmp_vsimem / "test_ogr2ogr_axis_mapping_swap.gml",
         """<ogr:FeatureCollection
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://ogr.maptools.org/ out.xsd"
@@ -511,7 +530,7 @@ def test_ogr2ogr_axis_mapping_swap():
 </ogr:FeatureCollection>""",
     )
     gdal.FileFromMemBuffer(
-        "/vsimem/test_ogr2ogr_axis_mapping_swap.gfs",
+        tmp_vsimem / "test_ogr2ogr_axis_mapping_swap.gfs",
         """"<GMLFeatureClassList>
   <GMLFeatureClass>
     <Name>test</Name>
@@ -523,33 +542,23 @@ def test_ogr2ogr_axis_mapping_swap():
 
     with gdaltest.disable_exceptions():
         ds = gdal.OpenEx(
-            "/vsimem/test_ogr2ogr_axis_mapping_swap.gml",
+            tmp_vsimem / "test_ogr2ogr_axis_mapping_swap.gml",
             open_options=["INVERT_AXIS_ORDER_IF_LAT_LONG=NO"],
         )
     if ds is None:
-        gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gml")
-        gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gfs")
         pytest.skip("GML reader not available")
     lyr = ds.GetLayer(0)
     assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [1, 2]
     ds = None
     ds = gdal.VectorTranslate(
-        "/vsimem/test_ogr2ogr_axis_mapping_swap.shp",
-        "/vsimem/test_ogr2ogr_axis_mapping_swap.gml",
+        tmp_vsimem / "test_ogr2ogr_axis_mapping_swap.shp",
+        tmp_vsimem / "test_ogr2ogr_axis_mapping_swap.gml",
     )
-    gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gml")
-    gdal.Unlink("/vsimem/test_ogr2ogr_axis_mapping_swap.gfs")
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    try:
-        ogrtest.check_feature_geometry(feat, "POINT (2 49)")
-    finally:
-        ds = None
 
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-            "/vsimem/test_ogr2ogr_axis_mapping_swap.shp"
-        )
+    ogrtest.check_feature_geometry(feat, "POINT (2 49)")
 
 
 ###############################################################################
@@ -628,14 +637,14 @@ def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr2ogr_lib_makevalid():
+def test_ogr2ogr_lib_makevalid(tmp_vsimem):
 
     # Check if MakeValid() is available
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
     with gdaltest.error_handler(), gdaltest.disable_exceptions():
         make_valid_available = g.MakeValid() is not None
 
-    tmpfilename = "/vsimem/tmp.csv"
+    tmpfilename = tmp_vsimem / "tmp.csv"
     with gdaltest.tempfile(
         tmpfilename,
         """id,WKT
@@ -668,14 +677,14 @@ def test_ogr2ogr_lib_makevalid():
 # Test SQLStatement with -sql @filename syntax
 
 
-def test_ogr2ogr_lib_sql_filename():
+def test_ogr2ogr_lib_sql_filename(tmp_vsimem):
 
     with gdaltest.tempfile(
-        "/vsimem/my.sql",
+        tmp_vsimem / "my.sql",
         """-- initial comment\nselect\n'--''--' as literalfield,* from --comment\npoly\n-- trailing comment""",
     ):
         ds = gdal.VectorTranslate(
-            "", "../ogr/data/poly.shp", options="-f Memory -sql @/vsimem/my.sql"
+            "", "../ogr/data/poly.shp", options=f"-f Memory -sql @{tmp_vsimem}/my.sql"
         )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
@@ -863,12 +872,12 @@ def test_ogr2ogr_t_coord_epoch():
 
 
 @pytest.mark.require_driver("PGDump")
-def test_ogr2ogr_launder_geometry_column_name():
+def test_ogr2ogr_launder_geometry_column_name(tmp_vsimem):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = srcDS.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn("SHAPE", ogr.wkbPoint))
-    out_filename = "/vsimem/test_ogr2ogr_launder_geometry_column_name.sql"
+    out_filename = tmp_vsimem / "test_ogr2ogr_launder_geometry_column_name.sql"
     assert gdal.VectorTranslate(out_filename, srcDS, format="PGDump") is not None
     f = gdal.VSIFOpenL(out_filename, "rb")
     assert f
@@ -902,9 +911,9 @@ def get_sqlite_version():
     get_sqlite_version() < (3, 24, 0),
     reason="sqlite >= 3.24 needed",
 )
-def test_ogr2ogr_upsert():
+def test_ogr2ogr_upsert(tmp_vsimem):
 
-    filename = "/vsimem/test_ogr_gpkg_upsert_without_fid.gpkg"
+    filename = tmp_vsimem / "test_ogr_gpkg_upsert_without_fid.gpkg"
 
     def create_gpkg_file():
         ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
@@ -960,7 +969,7 @@ def test_ogr2ogr_upsert():
 
 
 @pytest.mark.require_driver("GeoJSONSeq")
-def test_ogr2ogr_lib_t_srs_ignored():
+def test_ogr2ogr_lib_t_srs_ignored(tmp_vsimem):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
@@ -973,22 +982,22 @@ def test_ogr2ogr_lib_t_srs_ignored():
     got_msg = []
 
     def my_handler(errorClass, errno, msg):
-        got_msg.append(msg)
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
         return
 
-    gdal.PushErrorHandler(my_handler)
-    assert (
-        gdal.VectorTranslate(
-            "/vsimem/out.txt",
-            srcDS,
-            format="GeoJSONSeq",
-            dstSRS="EPSG:32631",
-            reproject=True,
+    with gdaltest.error_handler(my_handler):
+        assert (
+            gdal.VectorTranslate(
+                tmp_vsimem / "out.txt",
+                srcDS,
+                format="GeoJSONSeq",
+                dstSRS="EPSG:32631",
+                reproject=True,
+            )
+            is not None
         )
-        is not None
-    )
-    gdal.PopErrorHandler()
-    gdal.Unlink("/vsimem/out.txt")
+
     assert got_msg == [
         "Target SRS WGS 84 / UTM zone 31N not taken into account as target driver "
         "likely implements on-the-fly reprojection to WGS 84"
@@ -1064,7 +1073,7 @@ def test_ogr2ogr_lib_spat_srs_geographic():
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.require_geos
-def test_ogr2ogr_lib_clipsrc_datasource():
+def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
 
     # Prepare the data layer to clip
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1074,7 +1083,7 @@ def test_ogr2ogr_lib_clipsrc_datasource():
     srcLayer.CreateFeature(f)
 
     # Prepare the data layers to clip with
-    clip_path = "/vsimem/clip_test.gpkg"
+    clip_path = tmp_vsimem / "clip_test.gpkg"
     clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
     clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
     clip_layer.CreateField(ogr.FieldDefn("filter_field", ogr.OFTString))
@@ -1165,7 +1174,7 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.require_geos(3, 8)
-def test_ogr2ogr_lib_clipsrc_invalid_polygon():
+def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
@@ -1179,7 +1188,7 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon():
     srcLayer.CreateFeature(f)
 
     # Prepare the data layers to clip with
-    clip_path = "/vsimem/clip_test.gpkg"
+    clip_path = tmp_vsimem / "clip_test.gpkg"
     clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
     clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
     f = ogr.Feature(clip_layer.GetLayerDefn())
@@ -1195,9 +1204,6 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon():
     assert lyr.GetFeatureCount() == 1
     ds = None
 
-    # Cleanup
-    gdal.Unlink(clip_path)
-
 
 ###############################################################################
 # Test -clipsrc with 3d clip layer
@@ -1205,7 +1211,7 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon():
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.require_geos(3, 8)
-def test_ogr2ogr_lib_clipsrc_3d_polygon():
+def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
@@ -1219,7 +1225,7 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon():
     srcLayer.CreateFeature(f)
 
     # Prepare the data layers to clip with
-    clip_path = "/vsimem/clip_test.gpkg"
+    clip_path = tmp_vsimem / "clip_test.gpkg"
     clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
     clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
     f = ogr.Feature(clip_layer.GetLayerDefn())
@@ -1250,7 +1256,7 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon():
 
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.require_geos
-def test_ogr2ogr_lib_clipdst_datasource():
+def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
 
     # Prepare the data layer to clip
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1260,7 +1266,7 @@ def test_ogr2ogr_lib_clipdst_datasource():
     srcLayer.CreateFeature(f)
 
     # Prepare the data layers to clip with
-    clip_path = "/vsimem/clip_test.gpkg"
+    clip_path = tmp_vsimem / "clip_test.gpkg"
     clip_ds = gdal.GetDriverByName("GPKG").Create(clip_path, 0, 0, 0, gdal.GDT_Unknown)
     clip_layer = clip_ds.CreateLayer("cliptest", geom_type=ogr.wkbPolygon)
     clip_layer.CreateField(ogr.FieldDefn("filter_field", ogr.OFTString))
@@ -1350,7 +1356,7 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 
 @pytest.mark.require_geos
 @pytest.mark.parametrize("clipSrc", [True, False])
-def test_ogr2ogr_lib_clip_datasource_reprojection(clipSrc):
+def test_ogr2ogr_lib_clip_datasource_reprojection(tmp_vsimem, clipSrc):
 
     # Prepare the data layer to clip
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1363,7 +1369,7 @@ def test_ogr2ogr_lib_clip_datasource_reprojection(clipSrc):
     srcLayer.CreateFeature(f)
 
     # Prepare the data layers to clip with
-    clip_path = "/vsimem/clip_test.shp"
+    clip_path = tmp_vsimem / "clip_test.shp"
     clip_ds = gdal.GetDriverByName("ESRI Shapefile").Create(
         clip_path, 0, 0, 0, gdal.GDT_Unknown
     )
@@ -1511,27 +1517,18 @@ def test_ogr2ogr_lib_simplify():
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.parametrize("transaction_size", [0, 10, "unlimited"])
 @gdaltest.disable_exceptions()
-def test_ogr2ogr_lib_transaction_size(transaction_size):
+def test_ogr2ogr_lib_transaction_size(tmp_vsimem, transaction_size):
 
     ds = gdal.VectorTranslate(
-        "/vsimem/out.gpkg",
+        tmp_vsimem / "out.gpkg",
         "../ogr/data/poly.shp",
         format="GPKG",
         transactionSize=transaction_size,
     )
 
-    try:
-        # A transaction size of 0 is invalid
-        if transaction_size == 0:
-            assert ds is None
-            return
-
-        assert ds is not None
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 10, "wrong feature count"
-    finally:
-        ds = None
-        gdal.Unlink("/vsimem/out.gpkg")
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10, "wrong feature count"
 
 
 ###############################################################################
@@ -1615,7 +1612,7 @@ def test_ogr2ogr_lib_dateTimeTo():
 
 
 @pytest.mark.require_driver("GPKG")
-def test_ogr2ogr_lib_convert_list_type_to_JSON():
+def test_ogr2ogr_lib_convert_list_type_to_JSON(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
@@ -1630,7 +1627,7 @@ def test_ogr2ogr_lib_convert_list_type_to_JSON():
     f["reallist"] = [1.5, 2.5]
     src_lyr.CreateFeature(f)
 
-    out_filename = "/vsimem/test_ogr2ogr_lib_convert_list_type_to_JSON.gpkg"
+    out_filename = tmp_vsimem / "test_ogr2ogr_lib_convert_list_type_to_JSON.gpkg"
     dst_ds = gdal.VectorTranslate(out_filename, src_ds)
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
@@ -2065,3 +2062,306 @@ def test_ogr2ogr_lib_reprojection_curve_geometries_output_does_not_support_curve
         "POLYGON ((4.50229717432855 0.0,4.50231899745463 0.000629152087677,4.50238436052069 0.001255239123029,4.50249294510796 0.001875210984143,4.50264422224195 0.002486047337241,4.50283745496877 0.003084772349354,4.50307170194448 0.003668469184327,4.50334582201992 0.00423429421156,4.50365847979874 0.004779490858295,4.50400815214157 0.005301403038001,4.50439313558467 0.005797488089458,4.50481155463705 0.006265329163519,4.50526137091544 0.006702646997227,4.50574039307301 0.007107311017932,4.50624628747307 0.007477349723307,4.50677658955623 0.007810960286703,4.50732871584539 0.008106517341033,4.50789997653015 0.008362580898371,4.50848758856955 0.008577903366675,4.50908868924909 0.008751435629417,4.5097003501262 0.008882332158473,4.51031959129618 0.00896995513533,4.51094339590908 0.009013877560499,4.51156872486693 0.009013885335939,4.51219253162961 0.00896997831031,4.51281177705729 0.008882370281917,4.51342344421717 0.008751487959297,4.51402455308226 0.008577968884449,4.51461217505065 0.00836265832881,4.51518344721461 0.008106605177041,4.51573558630972 0.007811056818652,4.51626590227636 0.007477453072313,4.51677181136717 0.007107419172424,4.51725084873684 0.006702757852101,4.5177006804526 0.00626544056111,4.51811911486713 0.005797597861539,4.51850411329818 0.005301509047984,4.518853799963 0.004779591042816,4.51916647111912 0.004234386620641,4.51944060336679 0.003668552019331,4.51967486107274 0.00308484399799,4.51986810287894 0.002486106404952,4.52001938726475 0.001875256321243,4.52012797713514 0.001255269847082,4.52019334341276 0.000629167600675,4.52021516761635 0.0,4.52019334341276 -0.000629167600675,4.52012797713514 -0.001255269847082,4.52001938726475 -0.001875256321243,4.51986810287894 -0.002486106404952,4.51967486107274 -0.00308484399799,4.51944060336679 -0.003668552019331,4.51916647111912 -0.004234386620641,4.518853799963 -0.004779591042816,4.51850411329818 -0.005301509047984,4.51811911486713 -0.005797597861539,4.5177006804526 -0.00626544056111,4.51725084873684 -0.006702757852101,4.51677181136717 -0.007107419172424,4.51626590227636 -0.007477453072313,4.51573558630972 -0.007811056818652,4.51518344721461 -0.008106605177041,4.51461217505065 -0.00836265832881,4.51402455308226 -0.008577968884449,4.51342344421717 -0.008751487959297,4.51281177705729 -0.008882370281917,4.51219253162961 -0.00896997831031,4.51156872486693 -0.009013885335939,4.51094339590908 -0.009013877560499,4.51031959129618 -0.00896995513533,4.5097003501262 -0.008882332158473,4.50908868924909 -0.008751435629417,4.50848758856955 -0.008577903366675,4.50789997653015 -0.008362580898371,4.50732871584539 -0.008106517341033,4.50677658955623 -0.007810960286703,4.50624628747307 -0.007477349723307,4.50574039307301 -0.007107311017932,4.50526137091544 -0.006702646997227,4.50481155463705 -0.006265329163519,4.50439313558467 -0.005797488089458,4.50400815214157 -0.005301403038001,4.50365847979874 -0.004779490858295,4.50334582201992 -0.00423429421156,4.50307170194448 -0.003668469184327,4.50283745496877 -0.003084772349354,4.50264422224195 -0.002486047337241,4.50249294510796 -0.001875210984143,4.50238436052069 -0.001255239123029,4.50231899745463 -0.000629152087677,4.50229717432855 0.0))",
         1e-10,
     )
+
+
+###############################################################################
+# Test issue (#8523) when -preserve_fid was set even if -explodecollections was
+# set with a GPKG MULTI layer
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("preserveFID", (True, False))
+def test_translate_explodecollections_preserve_fid(tmp_vsimem, preserveFID):
+    """Test issue #8523 when -preserve_fid was set even if -explodecollections was set"""
+
+    with gdal.ExceptionMgr(useExceptions=True):
+
+        src = tmp_vsimem / "test_collection.gpkg"
+        dst = tmp_vsimem / "test_collection_exploded.gpkg"
+
+        ds = ogr.GetDriverByName("GPKG").CreateDataSource(src)
+        lyr = ds.CreateLayer("test_collection", None, ogr.wkbMultiPoint)
+
+        wkt_geom = "MULTIPOINT((0 0), (1 1))"
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt_geom))
+
+        lyr.CreateFeature(feat)
+
+        del lyr
+        del ds
+
+        options = gdal.VectorTranslateOptions(
+            explodeCollections=True, preserveFID=preserveFID
+        )
+
+        if preserveFID:
+            with pytest.raises(
+                RuntimeError,
+                match="cannot use -preserve_fid and -explodecollections at the same time",
+            ):
+                gdal.VectorTranslate(srcDS=src, destNameOrDestDS=dst, options=options)
+
+        else:
+            ds_output = gdal.VectorTranslate(
+                srcDS=src, destNameOrDestDS=dst, options=options
+            )
+            lyr = ds_output.GetLayerByName("test_collection")
+            assert lyr.GetFeatureCount() == 2
+            del lyr
+            del ds_output
+
+
+###############################################################################
+# Test forced use of the Arrow interface
+
+
+@pytest.mark.parametrize("limit", [None, 1])
+def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("str_field"))
+    fld_defn = ogr.FieldDefn("json_field")
+    fld_defn.SetSubType(ogr.OFSTJSON)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_alternative_name")
+    fld_defn.SetAlternativeName("alias")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_comment")
+    fld_defn.SetComment("my_comment")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_default")
+    fld_defn.SetDefault("'default_val'")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_width")
+    fld_defn.SetWidth(10)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_unique")
+    fld_defn.SetUnique(True)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_domain", ogr.OFTInteger)
+    fld_defn.SetDomainName("my_domain")
+    src_lyr.CreateField(fld_defn)
+    for i in range(2):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["str_field"] = "foo%d" % i
+        f["json_field"] = '{"foo":"bar"}'
+        f["field_with_domain"] = 1 + i
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 2)" % i))
+        src_lyr.CreateFeature(f)
+
+    assert src_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            "my_domain",
+            "desc",
+            ogr.OFTString,
+            ogr.OFSTNone,
+            {1: "one", 2: "two", 3: None},
+        )
+    )
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        out_ds = gdal.VectorTranslate(
+            "",
+            src_ds,
+            format="Memory",
+            limit=limit,
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "str_field"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+    assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTNone
+    assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "json_field"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+    assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTJSON
+    assert (
+        out_lyr.GetLayerDefn().GetFieldDefn(2).GetName()
+        == "field_with_alternative_name"
+    )
+    assert out_lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "alias"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "field_with_comment"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(3).GetComment() == "my_comment"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(4).GetName() == "field_with_default"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(4).GetDefault() == "'default_val'"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetName() == "field_with_width"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetWidth() == 10
+    assert out_lyr.GetLayerDefn().GetFieldDefn(6).GetName() == "field_unique"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(6).IsUnique()
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetName() == "field_with_domain"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetType() == ogr.OFTInteger
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetDomainName() == "my_domain"
+    assert out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount())
+
+    f = out_lyr.GetNextFeature()
+    assert f["str_field"] == "foo0"
+    assert f["json_field"] == '{"foo":"bar"}'
+    assert f["field_with_domain"] == 1
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 2)"
+
+    if not limit:
+        f = out_lyr.GetNextFeature()
+        assert f["str_field"] == "foo1"
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+    # Test append
+    got_msg = []
+    with gdaltest.error_handler(my_handler), gdaltest.config_options(
+        {"CPL_DEBUG": "ON", "OGR2OGR_USE_ARROW_API": "YES"}
+    ):
+        gdal.VectorTranslate(
+            out_ds,
+            src_ds,
+            accessMode="append",
+        )
+
+    assert "OGR2OGR: Using WriteArrowBatch()" in got_msg
+
+    out_lyr = out_ds.GetLayer(0)
+    assert (
+        out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount()) + 2
+    )
+
+
+###############################################################################
+# Test JSON types roundtrip
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.require_driver("GPKG")
+def test_json_types(tmp_vsimem):
+    """Test JSON types"""
+
+    def test_extended_types(lyr):
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+
+        fd = f.GetFieldDefnRef(0)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTNone
+
+        fd = f.GetFieldDefnRef(1)
+        assert fd.GetType() == ogr.OFTIntegerList
+        assert fd.GetSubType() == ogr.OFSTNone
+
+        fd = f.GetFieldDefnRef(2)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTJSON
+
+        fd = f.GetFieldDefnRef(3)
+        assert fd.GetType() == ogr.OFTInteger
+        assert fd.GetSubType() == ogr.OFSTNone
+
+    def test_types(lyr):
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+
+        fd = f.GetFieldDefnRef(0)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTNone
+
+        fd = f.GetFieldDefnRef(1)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTJSON
+
+        fd = f.GetFieldDefnRef(2)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTJSON
+
+        fd = f.GetFieldDefnRef(3)
+        assert fd.GetType() == ogr.OFTInteger
+        assert fd.GetSubType() == ogr.OFSTNone
+
+    with gdal.ExceptionMgr(useExceptions=True):
+
+        src = str(tmp_vsimem / "test_json.geojson")
+        dst = str(tmp_vsimem / "test_json.gpkg")
+
+        data = """{
+                "type": "FeatureCollection",
+                "features": [
+                    { "type": "Feature", "properties": { "str": "[5]", "int_list": [5], "map": {"foo": "bar", "baz": 5}, "int_lit": 5 }, "geometry": {"type": "Point", "coordinates": [ 1, 2 ]} }
+                ]
+            }"""
+        f = gdal.VSIFOpenL(src, "wb")
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        with gdal.OpenEx(src, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+            lyr = ds.GetLayer(0)
+            test_extended_types(lyr)
+
+        options = gdal.VectorTranslateOptions(layerName="test")
+
+        ds_output = gdal.VectorTranslate(
+            srcDS=src, destNameOrDestDS=dst, options=options
+        )
+        lyr = ds_output.GetLayerByName("test")
+
+        test_types(lyr)
+
+        # Write it back to json
+        round_trip_dst = str(tmp_vsimem / "test_json_back.geojson")
+
+        options = gdal.VectorTranslateOptions(
+            layerCreationOptions={"AUTODETECT_JSON_STRINGS": "FALSE"}
+        )
+        gdal.VectorTranslate(
+            srcDS=dst, destNameOrDestDS=round_trip_dst, options=options
+        )
+
+        with gdal.OpenEx(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+            lyr = ds.GetLayer(0)
+            test_extended_types(lyr)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("enable_exceptions", [True, False])
+@pytest.mark.parametrize("enable_debug", [True, False])
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_accumulerated_errors(tmp_vsimem, enable_exceptions, enable_debug):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFID(1)
+    src_lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_accumulerated_errors.gpkg")
+    gdal.VectorTranslate(out_filename, src_ds)
+
+    def my_handler(errorClass, errno, msg):
+        pass
+
+    with gdaltest.error_handler(my_handler if enable_debug else None):
+        with gdaltest.config_option("CPL_DEBUG", "ON" if enable_debug else "OFF"):
+            with gdal.ExceptionMgr(useExceptions=enable_exceptions):
+                if enable_exceptions:
+                    with pytest.raises(
+                        Exception,
+                        match=r"Unable to write feature 1 from layer test\.\nMay be caused by: failed to execute insert : UNIQUE constraint failed: test\.fid",
+                    ):
+                        gdal.VectorTranslate(
+                            out_filename, src_ds, options="-preserve_fid -append"
+                        )
+                else:
+                    assert (
+                        gdal.VectorTranslate(
+                            out_filename, src_ds, options="-preserve_fid -append"
+                        )
+                        is None
+                    )

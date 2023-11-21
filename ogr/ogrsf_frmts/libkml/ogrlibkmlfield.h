@@ -64,7 +64,7 @@ void kml2field(OGRFeature *poOgrFeat, kmldom::FeaturePtr poKmlFeature);
  Function create a simplefield from a FieldDefn.
 ******************************************************************************/
 
-kmldom::SimpleFieldPtr FieldDef2kml(OGRFieldDefn *poOgrFieldDef,
+kmldom::SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
                                     kmldom::KmlFactory *poKmlFactory);
 
 /******************************************************************************

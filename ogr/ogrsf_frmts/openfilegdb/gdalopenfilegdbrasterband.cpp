@@ -694,13 +694,13 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            poMaskBand = cpl::make_unique<GDALOpenFileGDBRasterBand>(
+            poMaskBand = std::make_unique<GDALOpenFileGDBRasterBand>(
                 this, 1, GDT_Byte, 8, nBlockWidth, nBlockHeight, 0, true);
         }
     }
     else if (EQUAL(pszNoDataOrMask, "MASK"))
     {
-        poMaskBand = cpl::make_unique<GDALOpenFileGDBRasterBand>(
+        poMaskBand = std::make_unique<GDALOpenFileGDBRasterBand>(
             this, 1, GDT_Byte, 8, nBlockWidth, nBlockHeight, 0, true);
     }
     else if (!EQUAL(pszNoDataOrMask, "NONE"))
@@ -792,7 +792,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
         // Create overview bands
         for (int iOvr = 0; iOvr < nOverviewCount; ++iOvr)
         {
-            auto poOvrBand = cpl::make_unique<GDALOpenFileGDBRasterBand>(
+            auto poOvrBand = std::make_unique<GDALOpenFileGDBRasterBand>(
                 this, iBand, eDT, nBitWidth, nBlockWidth, nBlockHeight,
                 iOvr + 1, false);
             if (poBand->m_bHasNoData)
@@ -821,7 +821,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                 {
                     // Make the mask band owned by the first raster band
                     poOvrBand->m_poMaskBandOwned =
-                        cpl::make_unique<GDALOpenFileGDBRasterBand>(
+                        std::make_unique<GDALOpenFileGDBRasterBand>(
                             this, 1, GDT_Byte, 8, nBlockWidth, nBlockHeight,
                             iOvr + 1, true);
                     poMaskBandRef = poOvrBand->m_poMaskBandOwned.get();
@@ -1944,14 +1944,14 @@ GDALRasterAttributeTable *GDALOpenFileGDBRasterBand::GetDefaultRAT()
     const std::string osVATTableName(
         std::string("VAT_").append(poGDS->m_osRasterLayerName));
     // Instantiate a new dataset, os that the RAT is standalone
-    auto poDSNew = cpl::make_unique<OGROpenFileGDBDataSource>();
+    auto poDSNew = std::make_unique<OGROpenFileGDBDataSource>();
     GDALOpenInfo oOpenInfo(poGDS->m_osDirName.c_str(), GA_ReadOnly);
     if (!poDSNew->Open(&oOpenInfo))
         return nullptr;
     auto poVatLayer = poDSNew->BuildLayerFromName(osVATTableName.c_str());
     if (!poVatLayer)
         return nullptr;
-    m_poRAT = cpl::make_unique<GDALOpenFileGDBRasterAttributeTable>(
+    m_poRAT = std::make_unique<GDALOpenFileGDBRasterAttributeTable>(
         std::move(poDSNew), osVATTableName, std::move(poVatLayer));
     return m_poRAT.get();
 }

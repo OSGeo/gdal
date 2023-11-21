@@ -48,8 +48,8 @@ class OGRKMLDataSource;
 class OGRKMLLayer final : public OGRLayer
 {
   public:
-    OGRKMLLayer(const char *pszName_, OGRSpatialReference *poSRS, bool bWriter,
-                OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
+    OGRKMLLayer(const char *pszName_, const OGRSpatialReference *poSRS,
+                bool bWriter, OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
     ~OGRKMLLayer();
 
     //
@@ -57,7 +57,8 @@ class OGRKMLLayer final : public OGRLayer
     //
     OGRFeatureDefn *GetLayerDefn() override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
@@ -121,7 +122,7 @@ class OGRKMLDataSource final : public OGRDataSource
     }
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSRS = nullptr,
+                           const OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;

@@ -77,8 +77,8 @@ class OGRSOSILayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     OGRFeatureDefn *GetLayerDefn() override;
 #ifdef WRITE_SUPPORT
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE);
-    OGRErr ICreateFeature(OGRFeature *poFeature);
+    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 #endif
     int TestCapability(const char *) override;
 };
@@ -138,9 +138,9 @@ class OGRSOSIDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
 #ifdef WRITE_SUPPORT
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef = NULL,
+                           const OGRSpatialReference *poSpatialRef = NULL,
                            OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = NULL);
+                           char **papszOptions = NULL) override;
 #endif
     int TestCapability(const char *) override;
 };

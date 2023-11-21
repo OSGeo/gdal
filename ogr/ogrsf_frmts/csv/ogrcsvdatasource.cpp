@@ -329,7 +329,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
             ->GetFileList();
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -356,7 +356,8 @@ OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCSVEditableLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
+OGRErr OGRCSVEditableLayer::CreateField(const OGRFieldDefn *poNewField,
+                                        int bApproxOK)
 
 {
     if (m_poEditableFeatureDefn->GetFieldCount() >= 10000)
@@ -894,14 +895,14 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         osLayerName = "layer";
 
     auto poCSVLayer =
-        cpl::make_unique<OGRCSVLayer>(osLayerName, fp, nMaxLineSize,
+        std::make_unique<OGRCSVLayer>(osLayerName, fp, nMaxLineSize,
                                       pszFilename, FALSE, bUpdate, chDelimiter);
     poCSVLayer->BuildFeatureDefn(pszNfdcRunwaysGeomField,
                                  pszGeonamesGeomFieldPrefix,
                                  papszOpenOptionsIn);
     if (bUpdate)
     {
-        m_apoLayers.emplace_back(cpl::make_unique<OGRCSVEditableLayer>(
+        m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(
             poCSVLayer.release(), papszOpenOptionsIn));
     }
     else
@@ -916,10 +917,10 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSpatialRef,
-                                         OGRwkbGeometryType eGType,
-                                         char **papszOptions)
+OGRLayer *
+OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRSpatialReference *poSpatialRef,
+                               OGRwkbGeometryType eGType, char **papszOptions)
 {
     // Verify we are in update mode.
     if (!bUpdate)
@@ -1009,7 +1010,7 @@ OGRLayer *OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
 
     // Create a layer.
 
-    auto poCSVLayer = cpl::make_unique<OGRCSVLayer>(
+    auto poCSVLayer = std::make_unique<OGRCSVLayer>(
         pszLayerName, nullptr, -1, osFilename, true, true, chDelimiter);
 
     poCSVLayer->BuildFeatureDefn();
@@ -1121,7 +1122,7 @@ OGRLayer *OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
         poCSVLayer->SetWriteBOM(CPLTestBool(pszWriteBOM));
 
     if (osFilename != "/vsistdout/")
-        m_apoLayers.emplace_back(cpl::make_unique<OGRCSVEditableLayer>(
+        m_apoLayers.emplace_back(std::make_unique<OGRCSVEditableLayer>(
             poCSVLayer.release(), nullptr));
     else
         m_apoLayers.emplace_back(std::move(poCSVLayer));

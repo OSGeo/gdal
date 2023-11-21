@@ -469,7 +469,7 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     // If the request is still small enough, try to read from libhdf5 with
     // the natural interleaving into a temporary MEMDataset, and then read
-    // frmo it with the requested interleaving and data type.
+    // from it with the requested interleaving and data type.
     if (eRWFlag == GF_Read && bIsExpectedLayout && nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         static_cast<GIntBig>(nXSize) * nYSize < CPLGetUsablePhysicalRAM() / 10)
@@ -625,7 +625,7 @@ CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     // If the request is still small enough, try to read from libhdf5 with
     // the natural interleaving into a temporary MEMDataset, and then read
-    // frmo it with the requested interleaving and data type.
+    // from it with the requested interleaving and data type.
     if (eRWFlag == GF_Read &&
         (bIsBandInterleavedData || bIsPixelInterleaveData) &&
         nXSize == nBufXSize && nYSize == nBufYSize &&

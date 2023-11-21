@@ -679,7 +679,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<PAuxDataset>();
+    auto poDS = std::make_unique<PAuxDataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Load the .aux file into a string list suitable to be            */
@@ -801,7 +801,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
             continue;
         }
 
-        auto poBand = cpl::make_unique<PAuxRasterBand>(
+        auto poBand = std::make_unique<PAuxRasterBand>(
             poDS.get(), poDS->nBands + 1, poDS->fpImage, nBandOffset,
             nPixelOffset, nLineOffset, eType, bNative);
         if (!poBand->IsValid())

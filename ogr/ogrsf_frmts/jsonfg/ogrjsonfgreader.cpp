@@ -129,7 +129,7 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
             osURL += "/0/";
             osURL.append(pszColon + 1,
                          (pszStr + strlen(pszStr) - 1) - (pszColon + 1));
-            auto poSRS = cpl::make_unique<OGRSpatialReference>();
+            auto poSRS = std::make_unique<OGRSpatialReference>();
             if (poSRS->importFromCRSURL(osURL.c_str()) != OGRERR_NONE)
             {
                 return nullptr;
@@ -139,7 +139,7 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
         else if (STARTS_WITH(pszStr, "http://www.opengis.net/def/crs/"))
         {
             // OGC URI, e.g. "http://www.opengis.net/def/crs/EPSG/0/4326"
-            auto poSRS = cpl::make_unique<OGRSpatialReference>();
+            auto poSRS = std::make_unique<OGRSpatialReference>();
             if (poSRS->importFromCRSURL(pszStr) != OGRERR_NONE)
             {
                 return nullptr;
@@ -232,7 +232,7 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
             /* bCanRecurse = */ false);
         if (!poSRS2)
             return nullptr;
-        auto poSRS = cpl::make_unique<OGRSpatialReference>();
+        auto poSRS = std::make_unique<OGRSpatialReference>();
 
         std::string osName;
         const char *pszName1 = poSRS1->GetName();
@@ -476,13 +476,13 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
     OGRLayer *poLayer;
     if (bStreamedLayer)
     {
-        poStreamedLayer = cpl::make_unique<OGRJSONFGStreamedLayer>(
+        poStreamedLayer = std::make_unique<OGRJSONFGStreamedLayer>(
             pszLayerName, poSRSLayer, oBuildContext.eLayerGeomType);
         poLayer = poStreamedLayer.get();
     }
     else
     {
-        poMemLayer = cpl::make_unique<OGRJSONFGMemLayer>(
+        poMemLayer = std::make_unique<OGRJSONFGMemLayer>(
             pszLayerName, poSRSLayer, oBuildContext.eLayerGeomType);
         poLayer = poMemLayer.get();
     }
@@ -664,7 +664,7 @@ OGRJSONFGCreateNonGeoJSONGeometry(json_object *poObj, bool bWarn)
             return nullptr;
         }
         auto poJOuterShell = json_object_array_get_idx(poCoordinates, 0);
-        auto poGeom = cpl::make_unique<OGRPolyhedralSurface>();
+        auto poGeom = std::make_unique<OGRPolyhedralSurface>();
         const auto nPolys = json_object_array_length(poJOuterShell);
         for (auto i = decltype(nPolys){0}; i < nPolys; ++i)
         {
@@ -702,7 +702,7 @@ OGRJSONFGCreateNonGeoJSONGeometry(json_object *poObj, bool bWarn)
         if (poBaseGeom->getGeometryType() == wkbPoint)
         {
             const auto poPoint = poBaseGeom.get()->toPoint();
-            auto poGeom = cpl::make_unique<OGRLineString>();
+            auto poGeom = std::make_unique<OGRLineString>();
             poGeom->addPoint(poPoint->getX(), poPoint->getY(), dfLower);
             poGeom->addPoint(poPoint->getX(), poPoint->getY(), dfUpper);
             return poGeom;
@@ -710,7 +710,7 @@ OGRJSONFGCreateNonGeoJSONGeometry(json_object *poObj, bool bWarn)
         else if (poBaseGeom->getGeometryType() == wkbLineString)
         {
             const auto poLS = poBaseGeom.get()->toLineString();
-            auto poGeom = cpl::make_unique<OGRMultiPolygon>();
+            auto poGeom = std::make_unique<OGRMultiPolygon>();
             for (int i = 0; i < poLS->getNumPoints() - 1; ++i)
             {
                 auto poPoly = new OGRPolygon();
@@ -743,7 +743,7 @@ OGRJSONFGCreateNonGeoJSONGeometry(json_object *poObj, bool bWarn)
             {
                 return nullptr;
             }
-            auto poGeom = cpl::make_unique<OGRPolyhedralSurface>();
+            auto poGeom = std::make_unique<OGRPolyhedralSurface>();
             // Build lower face
             {
                 auto poPoly = new OGRPolygon();
@@ -1029,7 +1029,7 @@ OGRJSONFGReader::ReadFeature(json_object *poObj, const char *pszRequestedLayer,
         *pOutStreamedLayer = oBuildContext.poStreamedLayer;
 
     OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
-    auto poFeature = cpl::make_unique<OGRFeature>(poFDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFDefn);
 
     /* -------------------------------------------------------------------- */
     /*      Translate GeoJSON "properties" object to feature attributes.    */

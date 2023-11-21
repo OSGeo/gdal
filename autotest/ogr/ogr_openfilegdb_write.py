@@ -4326,3 +4326,25 @@ def test_ogr_openfilegdb_write_empty_geoms(geom_type):
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test creating layer with alias name
+
+
+def test_ogr_openfilegdb_layer_alias_name():
+
+    dirname = "/vsimem/out.gdb"
+
+    try:
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["LAYER_ALIAS=my_alias"])
+        ds = None
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetMetadataItem("ALIAS_NAME") == "my_alias"
+        ds = None
+
+    finally:
+        gdal.RmdirRecursive(dirname)

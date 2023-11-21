@@ -58,12 +58,15 @@ static const char *const ILI2_BOUNDARY = "BOUNDARY";
 static const char *const ILI2_AREA = "AREA";
 static const char *const ILI2_SURFACE = "SURFACE";
 
+namespace gdal
+{
+namespace ili2
+{
 //
 // helper functions
 //
-int cmpStr(string s1, string s2)
+int cmpStr(const string &s1, const string &s2)
 {
-
     string::const_iterator p1 = s1.begin();
     string::const_iterator p2 = s2.begin();
 
@@ -78,32 +81,36 @@ int cmpStr(string s1, string s2)
     return (s2.size() == s1.size()) ? 0 : (s1.size() < s2.size()) ? -1 : 1;
 }
 
-string ltrim(string tmpstr)
+string ltrim(const string &tmpstr)
 {
-    unsigned int i = 0;
+    size_t i = 0;
     while (i < tmpstr.length() && (tmpstr[i] == ' ' || tmpstr[i] == '\t' ||
                                    tmpstr[i] == '\r' || tmpstr[i] == '\n'))
         ++i;
     return i > 0 ? tmpstr.substr(i, tmpstr.length() - i) : tmpstr;
 }
 
-string rtrim(string tmpstr)
+string rtrim(const string &tmpstr)
 {
-    if (tmpstr.length() == 0)
+    if (tmpstr.empty())
         return tmpstr;
-    unsigned int i = static_cast<unsigned int>(tmpstr.length()) - 1;
+    size_t i = tmpstr.length() - 1U;
     while (tmpstr[i] == ' ' || tmpstr[i] == '\t' || tmpstr[i] == '\r' ||
            tmpstr[i] == '\n')
         --i;
     return i < tmpstr.length() - 1 ? tmpstr.substr(0, i + 1) : tmpstr;
 }
 
-string trim(string tmpstr)
+string trim(const string &tmpstr)
 {
-    tmpstr = ltrim(tmpstr);
-    tmpstr = rtrim(tmpstr);
-    return tmpstr;
+    auto ret = ltrim(tmpstr);
+    ret = rtrim(ret);
+    return ret;
 }
+}  // namespace ili2
+}  // namespace gdal
+
+using namespace gdal::ili2;
 
 static int getGeometryTypeOfElem(DOMElement *elem)
 {

@@ -268,8 +268,8 @@ class OGRHanaTableLayer final : public OGRHanaLayer
     OGRErr DeleteFeature(GIntBig nFID) override;
     OGRErr ISetFeature(OGRFeature *feature) override;
 
-    OGRErr CreateField(OGRFieldDefn *field, int approxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *geomField,
+    OGRErr CreateField(const OGRFieldDefn *field, int approxOK = TRUE) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *geomField,
                            int approxOK = TRUE) override;
     OGRErr DeleteField(int field) override;
     OGRErr AlterFieldDefn(int field, OGRFieldDefn *newFieldDefn,
@@ -406,7 +406,7 @@ class OGRHanaDataSource final : public GDALDataset
     OGRLayer *GetLayer(int index) override;
     OGRLayer *GetLayerByName(const char *) override;
     OGRLayer *ICreateLayer(const char *layerName,
-                           OGRSpatialReference *srs = nullptr,
+                           const OGRSpatialReference *srs = nullptr,
                            OGRwkbGeometryType geomType = wkbUnknown,
                            char **options = nullptr) override;
     int TestCapability(const char *capabilities) override;

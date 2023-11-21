@@ -64,6 +64,13 @@ TEST_F(test_gdal, register_plugins)
     GDALRegisterPlugins();
 }
 
+// Test that GDALRegisterPlugin can be called and returns an error for a non
+// existing plugin name
+TEST_F(test_gdal, register_plugin)
+{
+    ASSERT_EQ(GDALRegisterPlugin("rtbreg_non_existing_plugin"), CE_Failure);
+}
+
 // Test number of registered GDAL drivers
 TEST_F(test_gdal, number_of_registered_drivers)
 {
@@ -3413,6 +3420,7 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
 // Test GDAL_OF_SHARED flag and open options
 TEST_F(test_gdal, open_shared_open_options)
 {
+    CPLErrorReset();
     const char *const apszOpenOptions[] = {"OVERVIEW_LEVEL=NONE", nullptr};
     {
         GDALDataset *poDS1 =
@@ -3421,6 +3429,7 @@ TEST_F(test_gdal, open_shared_open_options)
         GDALDataset *poDS2 =
             GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
                               nullptr, apszOpenOptions);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
         EXPECT_NE(poDS1, nullptr);
         EXPECT_NE(poDS2, nullptr);
         EXPECT_EQ(poDS1, poDS2);
@@ -3436,6 +3445,7 @@ TEST_F(test_gdal, open_shared_open_options)
         GDALDataset *poDS3 =
             GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
                               nullptr, apszOpenOptions);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
         EXPECT_NE(poDS1, nullptr);
         EXPECT_NE(poDS2, nullptr);
         EXPECT_NE(poDS3, nullptr);
@@ -3453,11 +3463,31 @@ TEST_F(test_gdal, open_shared_open_options)
         GDALDataset *poDS2 =
             GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
                               nullptr, apszOpenOptions);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
         EXPECT_NE(poDS1, nullptr);
         EXPECT_NE(poDS2, nullptr);
         EXPECT_EQ(poDS1, poDS2);
         GDALClose(poDS1);
         GDALClose(poDS2);
+    }
+    {
+        GDALDataset *poDS1 = GDALDataset::Open(
+            GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED, nullptr, nullptr);
+        GDALDataset *poDS2 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        GDALDataset *poDS3 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+        EXPECT_NE(poDS1, nullptr);
+        EXPECT_NE(poDS2, nullptr);
+        EXPECT_NE(poDS3, nullptr);
+        EXPECT_NE(poDS1, poDS2);
+        EXPECT_EQ(poDS2, poDS3);
+        GDALClose(poDS1);
+        GDALClose(poDS2);
+        GDALClose(poDS3);
     }
 }
 

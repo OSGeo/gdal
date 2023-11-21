@@ -289,7 +289,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
         if (nInterestTable > 0 && FileExists(poOpenInfo->pszFilename))
         {
             const char *pszLyrName = CPLSPrintf("a%08x", nInterestTable);
-            auto poLayer = cpl::make_unique<OGROpenFileGDBLayer>(
+            auto poLayer = std::make_unique<OGROpenFileGDBLayer>(
                 this, poOpenInfo->pszFilename, pszLyrName, "", "",
                 eAccess == GA_Update);
             const char *pszTablX =
@@ -430,7 +430,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
                 pszLyrName = aosTableNames[nInterestTable - 1].c_str();
             else
                 pszLyrName = CPLSPrintf("a%08x", nInterestTable);
-            m_apoLayers.push_back(cpl::make_unique<OGROpenFileGDBLayer>(
+            m_apoLayers.push_back(std::make_unique<OGROpenFileGDBLayer>(
                 this, poOpenInfo->pszFilename, pszLyrName, "", "",
                 eAccess == GA_Update));
         }
@@ -463,7 +463,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
                     FileExists(osFilename))
                 {
                     m_apoLayers.emplace_back(
-                        cpl::make_unique<OGROpenFileGDBLayer>(
+                        std::make_unique<OGROpenFileGDBLayer>(
                             this, osFilename, oIter.first.c_str(), "", "",
                             eAccess == GA_Update));
                     if (m_poRootGroup)
@@ -566,7 +566,7 @@ OGRLayer *OGROpenFileGDBDataSource::AddLayer(
                 }
             }
 
-            m_apoLayers.emplace_back(cpl::make_unique<OGROpenFileGDBLayer>(
+            m_apoLayers.emplace_back(std::make_unique<OGROpenFileGDBLayer>(
                 this, osFilename, osName, osDefinition, osDocumentation,
                 eAccess == GA_Update, eGeomType, osParentDefinition));
             return m_apoLayers.back().get();
@@ -937,7 +937,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
     const GDALOpenInfo *poOpenInfo, const std::string &osRasterLayerName,
     std::set<int> &oSetIgnoredRasterLayerTableNum)
 {
-    auto poTable = cpl::make_unique<FileGDBTable>();
+    auto poTable = std::make_unique<FileGDBTable>();
 
     CPLDebug("OpenFileGDB", "FileGDB v9");
 
@@ -995,7 +995,7 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
     }
     poTable->Close();
 
-    poTable = cpl::make_unique<FileGDBTable>();
+    poTable = std::make_unique<FileGDBTable>();
 
     /* Find tables that are spatial layers */
     osFilename = CPLFormFilename(
@@ -1177,7 +1177,7 @@ OGROpenFileGDBDataSource::BuildLayerFromName(const char *pszName)
             CPLFormFilename(m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
         if (FileExists(osFilename))
         {
-            return cpl::make_unique<OGROpenFileGDBLayer>(
+            return std::make_unique<OGROpenFileGDBLayer>(
                 this, osFilename, pszName, "", "", eAccess == GA_Update);
         }
     }
@@ -1792,7 +1792,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                 OGRMemLayer *poMemLayer = nullptr;
 
                 int i = 0;  // Used after for.
-                for (; i < oSelect.result_columns; i++)
+                for (; i < oSelect.result_columns(); i++)
                 {
                     swq_col_func col_func = oSelect.column_defs[i].col_func;
                     if (!(col_func == SWQCF_MIN || col_func == SWQCF_MAX ||
@@ -1905,7 +1905,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                         delete poFeature;
                     }
                 }
-                if (i != oSelect.result_columns)
+                if (i != oSelect.result_columns())
                 {
                     delete poMemLayer;
                 }
@@ -1964,7 +1964,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                 if (eErr == OGRERR_NONE)
                 {
                     int i = 0;  // Used after for.
-                    for (; i < oSelect.result_columns; i++)
+                    for (; i < oSelect.result_columns(); i++)
                     {
                         if (oSelect.column_defs[i].col_func != SWQCF_NONE)
                             break;
@@ -1980,7 +1980,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                 oSelect.column_defs[i].field_name) < 0)
                             break;
                     }
-                    if (i != oSelect.result_columns)
+                    if (i != oSelect.result_columns())
                         eErr = OGRERR_FAILURE;
                 }
                 if (eErr == OGRERR_NONE)
@@ -2012,8 +2012,9 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                  "Using OGROpenFileGDBSimpleSQLLayer");
                         bLastSQLUsedOptimizedImplementation = true;
                         return new OGROpenFileGDBSimpleSQLLayer(
-                            poLayer, poIter, oSelect.result_columns,
-                            oSelect.column_defs, oSelect.offset, oSelect.limit);
+                            poLayer, poIter, oSelect.result_columns(),
+                            oSelect.column_defs.data(), oSelect.offset,
+                            oSelect.limit);
                     }
                 }
             }

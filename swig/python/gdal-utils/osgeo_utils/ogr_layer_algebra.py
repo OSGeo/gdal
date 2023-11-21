@@ -193,7 +193,7 @@ def main(argv=sys.argv):
 
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return 1
+        return 0
 
     # Parse command line arguments.
     i = 1

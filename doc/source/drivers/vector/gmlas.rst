@@ -202,7 +202,7 @@ Open options
 
       whether the metadata layers
       "_ogr_fields_metadata", "_ogr_layers_metadata",
-      "_ogr_layer_relationships" and "ogr_other_metadata" should be
+      "_ogr_layer_relationships" and "_ogr_other_metadata" should be
       reported by default.
 
 -  .. oo:: VALIDATE

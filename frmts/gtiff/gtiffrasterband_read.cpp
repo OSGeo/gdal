@@ -191,7 +191,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         // We need a temporary buffer for over-sampling/sub-sampling
         // and/or data type conversion.
-        pTmpBuffer = VSI_MALLOC_VERBOSE(nReqXSize * nReqYSize * nSrcPixelSize);
+        pTmpBuffer = VSI_MALLOC3_VERBOSE(nReqXSize, nReqYSize, nSrcPixelSize);
         if (pTmpBuffer == nullptr)
             eErr = CE_Failure;
     }
@@ -204,8 +204,9 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (pTmpBuffer == nullptr)
             ppData[iLine] = static_cast<GByte *>(pData) + iLine * nLineSpace;
         else
-            ppData[iLine] = static_cast<GByte *>(pTmpBuffer) +
-                            iLine * nReqXSize * nSrcPixelSize;
+            ppData[iLine] =
+                static_cast<GByte *>(pTmpBuffer) +
+                static_cast<size_t>(iLine) * nReqXSize * nSrcPixelSize;
         int nSrcLine = 0;
         if (nBufYSize < nYSize)  // Sub-sampling in y.
             nSrcLine = nYOff + static_cast<int>((iLine + 0.5) * dfSrcYInc);
@@ -1603,7 +1604,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nByteCount));
         }
     }
-    else if (pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_"))
+    else if (pszName && pszDomain && EQUAL(pszDomain, "_DEBUG_"))
     {
         if (EQUAL(pszName, "HAS_BLOCK_CACHE"))
             return HasBlockCache() ? "1" : "0";
@@ -1611,7 +1612,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
     const char *pszRet = m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
 
-    if (pszRet == nullptr && eDataType == GDT_Byte && pszDomain != nullptr &&
+    if (pszRet == nullptr && eDataType == GDT_Byte && pszName && pszDomain &&
         EQUAL(pszDomain, "IMAGE_STRUCTURE") && EQUAL(pszName, "PIXELTYPE"))
     {
         // to get a chance of emitting the warning about this legacy usage

@@ -207,7 +207,7 @@ bool FileGDBTable::CreateIndex(const std::string &osIndexName,
 
     m_bDirtyGdbIndexesFile = true;
 
-    auto poIndex = cpl::make_unique<FileGDBIndex>();
+    auto poIndex = std::make_unique<FileGDBIndex>();
     poIndex->m_osIndexName = osIndexName;
     poIndex->m_osExpression = osExpression;
 

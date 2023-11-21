@@ -93,8 +93,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ExploreExprNode(const swq_expr_node *poNode);
     bool UseRecordBatchBaseImplementation() const;
 
+    template <typename SourceOffset>
     static struct ArrowArray *
-    CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+    CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray);
 
     int GetArrowSchemaInternal(struct ArrowSchema *out) const;
 
@@ -116,6 +117,7 @@ class OGRArrowLayer CPL_NON_FINAL
     int m_iBBOXMaxYField = -1;
 
     const arrow::BinaryArray *m_poArrayWKB = nullptr;
+    const arrow::LargeBinaryArray *m_poArrayWKBLarge = nullptr;
     const arrow::Array *m_poArrayBBOX = nullptr;
     const arrow::DoubleArray *m_poArrayMinX = nullptr;
     const arrow::DoubleArray *m_poArrayMinY = nullptr;
@@ -248,7 +250,7 @@ class OGRArrowLayer CPL_NON_FINAL
 
     static void TimestampToOGR(int64_t timestamp,
                                const arrow::TimestampType *timestampType,
-                               OGRField *psField);
+                               int nTZFlag, OGRField *psField);
 };
 
 /************************************************************************/
@@ -318,6 +320,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     int64_t m_nRowGroupSize = 64 * 1024;
     arrow::Compression::type m_eCompression = arrow::Compression::UNCOMPRESSED;
 
+    std::vector<std::shared_ptr<arrow::Field>> m_apoFieldsFromArrowSchema{};
     std::vector<std::shared_ptr<arrow::ArrayBuilder>> m_apoBuilders{};
 
     std::vector<uint8_t> m_abyBuffer{};
@@ -355,10 +358,22 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
                                         const std::shared_ptr<arrow::Array> &)>
                          postProcessArray);
 
+    virtual void FixupWKBGeometryBeforeWriting(GByte * /*pabyWKB*/,
+                                               size_t /*nLen*/)
+    {
+    }
     virtual void FixupGeometryBeforeWriting(OGRGeometry * /* poGeom */)
     {
     }
     virtual bool IsSRSRequired() const = 0;
+    bool WriteArrowBatchInternal(
+        const struct ArrowSchema *schema, struct ArrowArray *array,
+        CSLConstList papszOptions,
+        std::function<bool(const std::shared_ptr<arrow::RecordBatch> &)>
+            writeBatch);
+
+    OGRErr BuildGeometry(OGRGeometry *poGeom, int iGeomField,
+                         arrow::ArrayBuilder *poBuilder);
 
   public:
     OGRArrowWriterLayer(
@@ -373,6 +388,10 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<std::string> GetFieldDomainNames() const;
     const OGRFieldDomain *GetFieldDomain(const std::string &name) const;
 
+    const char *GetFIDColumn() override
+    {
+        return m_osFIDColumn.c_str();
+    }
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
@@ -385,10 +404,24 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return nullptr;
     }
     int TestCapability(const char *pszCap) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
     GIntBig GetFeatureCount(int bForce) override;
+
+    bool IsArrowSchemaSupported(const struct ArrowSchema * /*schema*/,
+                                CSLConstList /* papszOptions */,
+                                std::string & /*osErrorMsg */) const override
+    {
+        return true;
+    }
+    bool
+    CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
+                               CSLConstList papszOptions = nullptr) override;
+    bool WriteArrowBatch(const struct ArrowSchema *schema,
+                         struct ArrowArray *array,
+                         CSLConstList papszOptions = nullptr) override = 0;
 
   protected:
     OGRErr ICreateFeature(OGRFeature *poFeature) override;

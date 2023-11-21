@@ -72,8 +72,6 @@ GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
 
 std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char *pszSQL);
 
-int SQLiteFieldFromOGR(OGRFieldType eType);
-
 /* To escape literals. The returned string doesn't contain the surrounding
  * single quotes */
 CPLString SQLEscapeLiteral(const char *pszLiteral);
@@ -99,5 +97,9 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
     sqlite3 *poDb, const char *pszTableName,
     const std::vector<SQLSqliteMasterContent> &sqliteMasterContent =
         std::vector<SQLSqliteMasterContent>());
+
+bool OGRSQLiteRTreeRequiresTrustedSchemaOn();
+
+bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName);
 
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

@@ -524,7 +524,7 @@ VSIVirtualHandleUniquePtr
 VSIWebHDFSFSHandler::CreateWriteHandle(const char *pszFilename,
                                        CSLConstList /*papszOptions*/)
 {
-    auto poHandle = cpl::make_unique<VSIWebHDFSWriteHandle>(this, pszFilename);
+    auto poHandle = std::make_unique<VSIWebHDFSWriteHandle>(this, pszFilename);
     if (!poHandle->IsOK())
     {
         return nullptr;

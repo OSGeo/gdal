@@ -691,7 +691,7 @@ OGRLayer *FGdbDataSource::GetLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *FGdbDataSource::ICreateLayer(const char *pszLayerName,
-                                       OGRSpatialReference *poSRS,
+                                       const OGRSpatialReference *poSRS,
                                        OGRwkbGeometryType eType,
                                        char **papszOptions)
 {

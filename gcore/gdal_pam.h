@@ -103,6 +103,7 @@ class GDALDatasetPamInfo
 
     CPLString osPhysicalFilename{};
     CPLString osSubdatasetName{};
+    CPLString osDerivedDatasetName{};
     CPLString osAuxFilename{};
 
     int bHasMetadata = false;
@@ -145,6 +146,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     const char *GetPhysicalFilename();
     void SetSubdatasetName(const char *);
     const char *GetSubdatasetName();
+    void SetDerivedDatasetName(const char *);
     //! @endcond
 
   public:
@@ -378,22 +380,30 @@ class CPL_DLL GDALPamMultiDim
     virtual ~GDALPamMultiDim();
 
     std::shared_ptr<OGRSpatialReference>
-    GetSpatialRef(const std::string &osArrayFullName);
+    GetSpatialRef(const std::string &osArrayFullName,
+                  const std::string &osContext);
 
     void SetSpatialRef(const std::string &osArrayFullName,
+                       const std::string &osContext,
                        const OGRSpatialReference *poSRS);
 
-    CPLErr GetStatistics(const std::string &osArrayFullName, bool bApproxOK,
+    CPLErr GetStatistics(const std::string &osArrayFullName,
+                         const std::string &osContext, bool bApproxOK,
                          double *pdfMin, double *pdfMax, double *pdfMean,
                          double *pdfStdDev, GUInt64 *pnValidCount);
 
-    void SetStatistics(const std::string &osArrayFullName, bool bApproxStats,
+    void SetStatistics(const std::string &osArrayFullName,
+                       const std::string &osContext, bool bApproxStats,
                        double dfMin, double dfMax, double dfMean,
                        double dfStdDev, GUInt64 nValidCount);
 
     void ClearStatistics();
 
-    void ClearStatistics(const std::string &osArrayFullName);
+    void ClearStatistics(const std::string &osArrayFullName,
+                         const std::string &osContext);
+
+    static std::shared_ptr<GDALPamMultiDim>
+    GetPAM(const std::shared_ptr<GDALMDArray> &poParent);
 };
 
 /* ******************************************************************** */
@@ -407,7 +417,8 @@ class CPL_DLL GDALPamMDArray : public GDALMDArray
 
   protected:
     GDALPamMDArray(const std::string &osParentName, const std::string &osName,
-                   const std::shared_ptr<GDALPamMultiDim> &poPam);
+                   const std::shared_ptr<GDALPamMultiDim> &poPam,
+                   const std::string &osContext = std::string());
 
     bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
                        double dfMean, double dfStdDev, GUInt64 nValidCount,

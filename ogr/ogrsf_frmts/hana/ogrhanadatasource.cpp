@@ -1322,7 +1322,7 @@ void OGRHanaDataSource::InitializeLayers(const char *schemaName,
             if (pos != tablesToFind.end())
                 tablesToFind.erase(pos);
 
-            auto layer = cpl::make_unique<OGRHanaTableLayer>(
+            auto layer = std::make_unique<OGRHanaTableLayer>(
                 this, schemaName_.c_str(), tableName->c_str(), updatable);
             layers_.push_back(std::move(layer));
         }
@@ -1662,7 +1662,7 @@ OGRLayer *OGRHanaDataSource::GetLayerByName(const char *name)
 /************************************************************************/
 
 OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
-                                          OGRSpatialReference *srs,
+                                          const OGRSpatialReference *srs,
                                           OGRwkbGeometryType geomType,
                                           char **options)
 {
@@ -1789,7 +1789,7 @@ OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
     }
 
     // Create new layer object
-    auto layer = cpl::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(),
+    auto layer = std::make_unique<OGRHanaTableLayer>(this, schemaName_.c_str(),
                                                      layerName.c_str(), true);
     if (geomType != wkbNone && layer->GetLayerDefn()->GetGeomFieldCount() > 0)
         layer->GetLayerDefn()->GetGeomFieldDefn(0)->SetNullable(FALSE);
@@ -1858,7 +1858,7 @@ OGRLayer *OGRHanaDataSource::ExecuteSQL(const char *sqlCommand,
         if (stmt.isNull())
             return nullptr;
 
-        auto layer = cpl::make_unique<OGRHanaResultLayer>(this, sqlCommand);
+        auto layer = std::make_unique<OGRHanaResultLayer>(this, sqlCommand);
         if (spatialFilter != nullptr)
             layer->SetSpatialFilter(spatialFilter);
         return layer.release();

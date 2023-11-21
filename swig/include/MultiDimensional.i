@@ -250,6 +250,12 @@ public:
     return GDALGroupRename( self, newName ) ? CE_None : CE_Failure;
   }
 
+%newobject SubsetDimensionFromSelection;
+  GDALGroupHS *SubsetDimensionFromSelection( const char *selection,
+                                             char **options = 0 ) {
+    return GDALGroupSubsetDimensionFromSelection(self, selection, options);
+  }
+
 } /* extend */
 }; /* GDALGroupH */
 
@@ -1080,9 +1086,11 @@ public:
   }
 
 %newobject AsClassicDataset;
-  GDALDatasetShadow* AsClassicDataset(size_t iXDim, size_t iYDim)
+  GDALDatasetShadow* AsClassicDataset(size_t iXDim, size_t iYDim,
+                                      GDALGroupHS* hRootGroup = NULL,
+                                      char** options = 0)
   {
-    return (GDALDatasetShadow*)GDALMDArrayAsClassicDataset(self, iXDim, iYDim);
+    return (GDALDatasetShadow*)GDALMDArrayAsClassicDatasetEx(self, iXDim, iYDim, hRootGroup, options);
   }
 
 #ifndef SWIGCSHARP

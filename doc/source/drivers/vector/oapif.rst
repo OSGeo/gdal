@@ -35,8 +35,12 @@ Layer schema
 ------------
 
 OGR needs a fixed schema per layer, but OGC API - Features Core doesn't impose
-fixed schema. So the driver will retrieve the first page of features (10
-features) and establish a schema from this.
+fixed schema.
+The driver will use the XML schema or JSON schema pointed by the "describedby"
+relationship of a collection, if it exists.
+The driver will also retrieve the first page of features (using the
+selected page) and establish a schema from this.
+
 
 Filtering
 ---------
@@ -77,10 +81,21 @@ The following options are available:
 
 -  .. oo:: PAGE_SIZE
       :choices: <integer>
-      :default: 10
+      :default: 1000
 
       Number of features to retrieve per request.
-      Minimum is 1, maximum 10000.
+      Minimum is 1. If not set, an attempt to determine the maximum
+      allowed size will be done by examining the API schema.
+
+-  .. oo:: INITIAL_REQUEST_PAGE_SIZE
+      :choices: <integer>
+      :default: 20
+
+      Number of features to retrieve during the initial request done
+      in order to retrieve information about the features.
+      Minimum is 1.
+      Maximum is the value of the :oo:`PAGE_SIZE` option.
+      If not set the default (20) will be used.
 
 -  .. oo:: USERPWD
 

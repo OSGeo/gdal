@@ -54,7 +54,7 @@ class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
                            bool bSetError, CSLConstList papszOptions) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
-    char **ReadDir(const char *pszDirname) override;
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
 };
 
 /************************************************************************/
@@ -194,11 +194,11 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
     } while (false);
 
     GDALOpenInfo oOpenInfo(osPmtilesFilename.c_str(), GA_ReadOnly);
-    oOpenInfo.papszOpenOptions =
-        CSLSetNameValue(oOpenInfo.papszOpenOptions, "DECOMPRESS_TILES", "NO");
-    oOpenInfo.papszOpenOptions = CSLSetNameValue(oOpenInfo.papszOpenOptions,
-                                                 "ACCEPT_ANY_TILE_TYPE", "YES");
-    auto poDS = cpl::make_unique<OGRPMTilesDataset>();
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue("DECOMPRESS_TILES", "NO");
+    aosOptions.SetNameValue("ACCEPT_ANY_TILE_TYPE", "YES");
+    oOpenInfo.papszOpenOptions = aosOptions.List();
+    auto poDS = std::make_unique<OGRPMTilesDataset>();
     {
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         if (!poDS->Open(&oOpenInfo))
@@ -340,10 +340,11 @@ int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                             ReadDir()                                */
+/*                            ReadDirEx()                               */
 /************************************************************************/
 
-char **VSIPMTilesFilesystemHandler::ReadDir(const char *pszFilename)
+char **VSIPMTilesFilesystemHandler::ReadDirEx(const char *pszFilename,
+                                              int nMaxFiles)
 {
     std::string osSubfilename;
     int nComponents;
@@ -365,7 +366,11 @@ char **VSIPMTilesFilesystemHandler::ReadDir(const char *pszFilename)
             OGRPMTilesTileIterator oIter(poDS.get(), i);
             auto sTile = oIter.GetNextTile();
             if (sTile.offset != 0)
+            {
+                if (nMaxFiles > 0 && aosFiles.size() >= nMaxFiles)
+                    break;
                 aosFiles.AddString(CPLSPrintf("%d", i));
+            }
         }
         return aosFiles.StealList();
     }
@@ -380,6 +385,8 @@ char **VSIPMTilesFilesystemHandler::ReadDir(const char *pszFilename)
             if (sTile.offset == 0)
                 break;
             oSetX.insert(sTile.x);
+            if (nMaxFiles > 0 && static_cast<int>(oSetX.size()) >= nMaxFiles)
+                break;
             if (oSetX.size() == 1024 * 1024)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many tiles");
@@ -404,6 +411,8 @@ char **VSIPMTilesFilesystemHandler::ReadDir(const char *pszFilename)
             if (sTile.offset == 0)
                 break;
             oSetY.insert(sTile.y);
+            if (nMaxFiles > 0 && static_cast<int>(oSetY.size()) >= nMaxFiles)
+                break;
             if (oSetY.size() == 1024 * 1024)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many tiles");

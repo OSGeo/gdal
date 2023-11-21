@@ -247,6 +247,82 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
+/************************************************************************/
+
+struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit OGRGeoPackageDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "GPKG:"))
+        {
+            return;
+        }
+
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
+
+        if (iPartsCount == 3 || iPartsCount == 4)
+        {
+
+            m_driverPrefixComponent = aosParts[0];
+
+            int subdatasetIndex{2};
+            const bool hasDriveLetter{strlen(aosParts[1]) == 1 &&
+                                      std::isalpha(aosParts[1][0])};
+
+            // Check for drive letter
+            if (iPartsCount == 4)
+            {
+                // Invalid
+                if (!hasDriveLetter)
+                {
+                    return;
+                }
+                m_pathComponent = aosParts[1];
+                m_pathComponent.append(":");
+                m_pathComponent.append(aosParts[2]);
+                subdatasetIndex++;
+            }
+            else  // count is 3
+            {
+                if (hasDriveLetter)
+                {
+                    return;
+                }
+                m_pathComponent = aosParts[1];
+            }
+
+            m_subdatasetComponent = aosParts[subdatasetIndex];
+        }
+    }
+};
+
+static GDALSubdatasetInfo *
+OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
+{
+    if (STARTS_WITH_CI(pszFileName, "GPKG:"))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            std::make_unique<OGRGeoPackageDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -662,6 +738,7 @@ void RegisterOGRGeoPackage()
     poDriver->pfnCreate = OGRGeoPackageDriverCreate;
     poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
     poDriver->pfnDelete = OGRGeoPackageDriverDelete;
+    poDriver->pfnGetSubdatasetInfoFunc = OGRGeoPackageDriverGetSubdatasetInfo;
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

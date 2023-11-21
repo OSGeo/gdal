@@ -238,7 +238,7 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<GTXDataset>();
+    auto poDS = std::make_unique<GTXDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     std::swap(poDS->fpImage, poOpenInfo->fpL);
@@ -314,7 +314,7 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create band information object.                                 */
     /* -------------------------------------------------------------------- */
-    auto poBand = cpl::make_unique<GTXRasterBand>(
+    auto poBand = std::make_unique<GTXRasterBand>(
         poDS.get(), 1, poDS->fpImage,
         static_cast<vsi_l_offset>(poDS->nRasterYSize - 1) * poDS->nRasterXSize *
                 nDTSize +

@@ -112,6 +112,12 @@ int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
 
 /* Internal use by OGR drivers only, CPL_DLL is just there in case */
 /* they are compiled as plugins  */
+
+int CPL_DLL OGRTimezoneToTZFlag(const char *pszTZ,
+                                bool bEmitErrorIfUnhandledFormat);
+std::string CPL_DLL OGRTZFlagToTimezone(int nTZFlag,
+                                        const char *pszUTCRepresentation);
+
 int CPL_DLL OGRGetDayOfWeek(int day, int month, int year);
 int CPL_DLL OGRParseXMLDateTime(const char *pszXMLDateTime, OGRField *psField);
 int CPL_DLL OGRParseRFC822DateTime(const char *pszRFC822DateTime,

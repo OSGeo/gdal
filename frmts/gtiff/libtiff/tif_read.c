@@ -105,8 +105,8 @@ static int TIFFReadAndRealloc(TIFF *tif, tmsize_t size, tmsize_t rawdata_offset,
                 TIFFErrorExtR(tif, module, "Invalid buffer size");
                 return 0;
             }
-            new_rawdata =
-                (uint8_t *)_TIFFrealloc(tif->tif_rawdata, tif->tif_rawdatasize);
+            new_rawdata = (uint8_t *)_TIFFreallocExt(tif, tif->tif_rawdata,
+                                                     tif->tif_rawdatasize);
             if (new_rawdata == 0)
             {
                 TIFFErrorExtR(tif, module,

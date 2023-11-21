@@ -477,6 +477,7 @@ size_t OGRGeometryCollection::WkbSize() const
 /*                       importFromWkbInternal()                        */
 /************************************************************************/
 
+//! @cond Doxygen_Suppress
 OGRErr OGRGeometryCollection::importFromWkbInternal(
     const unsigned char *pabyData, size_t nSize, int nRecLevel,
     OGRwkbVariant eWkbVariant, size_t &nBytesConsumedOut)
@@ -492,14 +493,18 @@ OGRErr OGRGeometryCollection::importFromWkbInternal(
         return OGRERR_CORRUPT_DATA;
     }
 
-    nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
     size_t nDataOffset = 0;
-    OGRErr eErr = importPreambleOfCollectionFromWkb(
-        pabyData, nSize, nDataOffset, eByteOrder, 9, nGeomCount, eWkbVariant);
+    int nGeomCountNew = 0;
+    OGRErr eErr = importPreambleOfCollectionFromWkb(pabyData, nSize,
+                                                    nDataOffset, eByteOrder, 9,
+                                                    nGeomCountNew, eWkbVariant);
 
     if (eErr != OGRERR_NONE)
         return eErr;
+
+    CPLAssert(nGeomCount == 0);
+    nGeomCount = nGeomCountNew;
 
     // coverity[tainted_data]
     papoGeoms = static_cast<OGRGeometry **>(
@@ -581,6 +586,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal(
 
     return OGRERR_NONE;
 }
+//! @endcond
 
 /************************************************************************/
 /*                           importFromWkb()                            */

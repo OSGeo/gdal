@@ -206,8 +206,8 @@ A raster band has the following properties:
 
   UInt64 and Int64 data types have been added in GDAL 3.5. Beyond reading and write pixel values, their support is limited.  Some algorithms might use 64-bit floating-point internally (warping), as well as some methods returning only double values (GetMinimum(), GetMaximum(), etc.), or even 32-bit floating point (overview, RasterIO resampling). Hence the range where exact values are preserved can be [0, 2^53] (or less if 32-bit floating-point is used).
 
- Int8 data type has been added in GDAL 3.7. 
- 
+ Int8 data type has been added in GDAL 3.7.
+
 - A block size. This is a preferred (efficient) access chunk size. For tiled images this will be one tile. For scanline oriented images this will normally be one scanline.
 - A list of name/value pair metadata in the same format as the dataset, but of information that is potentially specific to this band.
 - An optional description string.
@@ -285,3 +285,5 @@ A band may have zero or more overviews. Each overview is represented as a "free 
 The overviews are used to display reduced resolution overviews more quickly than could be done by reading all the full resolution data and downsampling.
 
 Bands also have a HasArbitraryOverviews property which is TRUE if the raster can be read at any resolution efficiently but with no distinct overview levels. This applies to some FFT encoded images, or images pulled through gateways where downsampling can be done efficiently at the remote point.
+
+How overviews are selected depends on the software logic. The :cpp:func:`GDALRasterBand::RasterIO` or :cpp:func:`GDALDataset::RasterIO` methods document their logic.

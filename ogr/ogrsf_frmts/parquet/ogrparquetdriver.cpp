@@ -306,8 +306,8 @@ static GDALDataset *OpenFromDatasetFactory(
     std::shared_ptr<arrow::dataset::Scanner> scanner;
     PARQUET_ASSIGN_OR_THROW(scanner, scannerBuilder->Finish());
 
-    auto poDS = cpl::make_unique<OGRParquetDataset>(poMemoryPool);
-    auto poLayer = cpl::make_unique<OGRParquetDatasetLayer>(
+    auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
+    auto poLayer = std::make_unique<OGRParquetDatasetLayer>(
         poDS.get(), CPLGetBasename(osBasePath.c_str()), scanner,
         scannerBuilder->schema(), papszOpenOptions);
     poDS->SetLayer(std::move(poLayer));
@@ -574,8 +574,8 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        auto poDS = cpl::make_unique<OGRParquetDataset>(poMemoryPool);
-        auto poLayer = cpl::make_unique<OGRParquetLayer>(
+        auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
+        auto poLayer = std::make_unique<OGRParquetLayer>(
             poDS.get(), CPLGetBasename(osFilename.c_str()),
             std::move(arrow_reader), poOpenInfo->papszOpenOptions);
         poDS->SetLayer(std::move(poLayer));
@@ -797,7 +797,7 @@ void RegisterOGRParquet()
     if (GDALGetDriverByName("Parquet") != nullptr)
         return;
 
-    auto poDriver = cpl::make_unique<OGRParquetDriver>();
+    auto poDriver = std::make_unique<OGRParquetDriver>();
 
     poDriver->SetDescription("Parquet");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");

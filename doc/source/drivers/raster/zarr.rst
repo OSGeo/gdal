@@ -502,7 +502,7 @@ The following options are creation options of the classic raster API only:
       :default: BAND
       :since: 3.8
 
-      Whe writing a multi-band dataset as a 3D Zarr array, whether the band
+      When writing a multi-band dataset as a 3D Zarr array, whether the band
       dimension should be the first one/slowest varying one (BAND), or the
       last one/fastest varying one (INTERLEAVE)
 

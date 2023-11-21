@@ -374,7 +374,7 @@ GDALDataset *DOQ2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<DOQ2Dataset>();
+    auto poDS = std::make_unique<DOQ2Dataset>();
 
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;

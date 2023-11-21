@@ -965,7 +965,7 @@ def test_gdal_translate_34(gdal_translate_path, tmp_path):
 # Test various errors (missing source or dest...)
 
 
-def test_gdal_translate_35(gdal_translate_path):
+def test_gdal_translate_35(gdal_translate_path, tmp_vsimem):
 
     (_, err) = gdaltest.runexternal_out_and_err(gdal_translate_path)
     assert "No source dataset specified" in err
@@ -976,7 +976,7 @@ def test_gdal_translate_35(gdal_translate_path):
     assert "No target dataset specified" in err
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_translate_path + " /non_existing_path/non_existing.tif /vsimem/out.tif"
+        f"{gdal_translate_path} /non_existing_path/non_existing.tif {tmp_vsimem}/out.tif"
     )
     assert (
         "does not exist in the file system" in err or "No such file or directory" in err
@@ -1083,22 +1083,21 @@ def test_gdal_translate_39(gdal_translate_path, tmp_path):
 # Test -if option
 
 
-def test_gdal_translate_if_option(gdal_translate_path):
+def test_gdal_translate_if_option(gdal_translate_path, tmp_vsimem):
 
     ret, err = gdaltest.runexternal_out_and_err(
-        gdal_translate_path + " -if GTiff ../gcore/data/byte.tif /vsimem/out.tif"
+        f"{gdal_translate_path} -if GTiff ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is None or err == ""
 
     _, err = gdaltest.runexternal_out_and_err(
-        gdal_translate_path
-        + " -if invalid_driver_name ../gcore/data/byte.tif /vsimem/out.tif"
+        f"{gdal_translate_path}  -if invalid_driver_name ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is not None
     assert "invalid_driver_name" in err
 
     _, err = gdaltest.runexternal_out_and_err(
-        gdal_translate_path + " -if HFA ../gcore/data/byte.tif /vsimem/out.tif"
+        f"{gdal_translate_path} -if HFA ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert err is not None
 
@@ -1108,10 +1107,10 @@ def test_gdal_translate_if_option(gdal_translate_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="not working on Windows")
-def test_gdal_translate_scale_and_unscale_incompatible(gdal_translate_path):
+def test_gdal_translate_scale_and_unscale_incompatible(gdal_translate_path, tmp_vsimem):
 
     _, err = gdaltest.runexternal_out_and_err(
         gdal_translate_path
-        + " -a_scale 0.0001 -a_offset 0.1 -unscale ../gcore/data/byte.tif /vsimem/out.tif"
+        + f" -a_scale 0.0001 -a_offset 0.1 -unscale ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
     )
     assert "-a_scale/-a_offset are not applied by -unscale" in err

@@ -2771,6 +2771,30 @@ def test_ogr_sqlite_38(sqlite_test_db):
 
 
 ###############################################################################
+# Test querying a point column in a non-Spatialite DB
+# (https://github.com/OSGeo/gdal/issues/8677)
+# Also test with a Spatialite DB while we are it...
+
+
+@pytest.mark.parametrize("spatialite", [True, False])
+def test_ogr_spatialite_point_sql_check_srs(sqlite_test_db):
+
+    with sqlite_test_db.ExecuteSQL("SQLITE_HAS_COLUMN_METADATA()") as sql_lyr:
+        if sql_lyr.GetNextFeature().GetField(0) != 1:
+            pytest.skip("sqlite built without SQLITE_HAS_COLUMN_METADATA")
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = sqlite_test_db.CreateLayer("point", srs=srs, geom_type=ogr.wkbPoint)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(feat)
+    with sqlite_test_db.ExecuteSQL("SELECT * FROM point") as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert sql_lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+
+###############################################################################
 # Test spatial filters with point extent
 
 
@@ -3954,3 +3978,16 @@ def test_ogr_sqlite_delete(sqlite_test_db):
 
     lyr = sqlite_test_db.GetLayer("tpoly")
     assert lyr is None
+
+
+###############################################################################
+# Test a SQL request with the geometry in the first row being null
+
+
+def test_ogr_sql_sql_first_geom_null(require_spatialite):
+
+    ds = ogr.Open("data/sqlite/first_geometry_null.db")
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1) FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"
+    with ds.ExecuteSQL("SELECT ST_Buffer(geom,0.1), * FROM test") as sql_lyr:
+        assert sql_lyr.GetGeometryColumn() == "ST_Buffer(geom,0.1)"

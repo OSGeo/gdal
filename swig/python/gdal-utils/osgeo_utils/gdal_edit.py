@@ -89,7 +89,7 @@ def gdal_edit(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return 2
+        return 0
 
     datasetname = None
     srs = None

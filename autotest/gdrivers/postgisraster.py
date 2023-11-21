@@ -606,7 +606,7 @@ def test_postgisraster_test_outdb():
     # For some reason fails with
     # ERROR 1: PostGISRasterRasterBand::IRasterIO(): ERROR:  rt_band_load_offline_data: Cannot open offline raster: /home/travis/build/rouault/gdal/autotest/gdrivers/data/small_world.tif
     # See https://api.travis-ci.org/v3/job/428972866/log.txt
-    if gdaltest.is_travis_branch("ubuntu_1804"):
+    if gdaltest.is_travis_branch("ubuntu_2204"):
         pytest.skip()
 
     ds = ogr.Open(gdaltest.postgisraster_connection_string_without_schema)
@@ -650,7 +650,7 @@ def test_postgisraster_test_outdb_client_side_if_possible():
     # For some reason fails with
     # ERROR 1: PostGISRasterRasterBand::IRasterIO(): ERROR:  rt_band_load_offline_data: Cannot open offline raster: /home/travis/build/rouault/gdal/autotest/gdrivers/data/small_world.tif
     # See https://api.travis-ci.org/v3/job/484385907/log.txt
-    if gdaltest.is_travis_branch("ubuntu_1804"):
+    if gdaltest.is_travis_branch("ubuntu_2204"):
         pytest.skip()
 
     ds = gdal.Open(
@@ -659,3 +659,44 @@ def test_postgisraster_test_outdb_client_side_if_possible():
     )
     cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
     assert cs == [30111, 32302, 40026]
+
+
+###############################################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "subdataset_component",
+    (
+        ("table='small_world'"),
+        (""),
+    ),
+)
+def test_gdal_subdataset_get_filename(subdataset_component):
+
+    filename = gdaltest.postgisraster_connection_string + subdataset_component
+    info = gdal.GetSubdatasetInfo(filename)
+    if subdataset_component == "":
+        assert info is None
+    else:
+        assert info.GetPathComponent() == gdaltest.postgisraster_connection_string[3:-1]
+        assert info.GetSubdatasetComponent() == subdataset_component
+
+
+@pytest.mark.parametrize(
+    "subdataset_component,new_path",
+    (
+        ("table='small_world'", "PG:dbname='xxxx' table='small_world'"),
+        ("", ""),
+    ),
+)
+def test_gdal_subdataset_modify_filename(subdataset_component, new_path):
+
+    subdataset_component = (
+        gdaltest.postgisraster_connection_string + subdataset_component
+    )
+    info = gdal.GetSubdatasetInfo(subdataset_component)
+    if new_path == "":
+        assert info is None
+    else:
+        assert info.ModifyPathComponent("dbname='xxxx'") == new_path

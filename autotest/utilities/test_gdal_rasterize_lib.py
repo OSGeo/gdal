@@ -564,6 +564,136 @@ def test_gdal_rasterize_lib_inverse():
 
 
 ###############################################################################
+
+
+@pytest.mark.require_geos
+def test_gdal_rasterize_lib_inverse_nested_polygons():
+
+    # Create a memory raster to rasterize into.
+    target_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_Byte)
+    target_ds.SetGeoTransform((0, 1, 0, 10, 0, -1))
+
+    # Create a memory layer to rasterize from.
+    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    rast_mem_lyr = vector_ds.CreateLayer("poly")
+
+    # Add a multi polygon with nested polygons
+    feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
+    wkt = "MULTIPOLYGON(((0 0,0 10,10 10,10 0,0 0),(2 2,2 8,8 8,8 2,2 2)),((4 4,4 6,6 6,6 4,4 4)))"
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt))
+
+    rast_mem_lyr.CreateFeature(feat)
+
+    gdal.Rasterize(target_ds, vector_ds, burnValues=[1], inverse=True)
+
+    expected = (
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,  ################################
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,  ################################
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,  ################################
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,  ################################
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,  ################################
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,  ################################
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,  ################################
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,  ################################
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,  ################################
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    )
+
+    got = struct.unpack("B" * (10 * 10), target_ds.ReadRaster())
+    assert got == expected
+
+
+###############################################################################
 # Test rasterization of a 64 bit integer attribute
 
 

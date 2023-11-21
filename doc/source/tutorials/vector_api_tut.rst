@@ -793,7 +793,7 @@ once.
 
 The ArrowArrayStream, ArrowSchema, ArrowArray structures are defined in a
 ogr_recordbatch.h public header file, directly derived from
-https://github.com/apache/arrow/blob/master/cpp/src/arrow/c/abi.h
+https://github.com/apache/arrow/blob/main/cpp/src/arrow/c/abi.h
 to get API/ABI compatibility with Apache Arrow C++. This header file must be
 explicitly included when the related array batch API is used.
 
@@ -1024,6 +1024,8 @@ of a integer field and a geometry field:
         return 0;
     }
 
+
+To write features by batches using an ArrowArray, consult :ref:`vector_api_tut_arrow_write`.
 
 Writing To OGR
 --------------
@@ -1662,3 +1664,174 @@ In Python :
         if lyr.CreateFeature( feat ) != 0:
             print( "Failed to create feature.\n" );
             sys.exit( 1 );
+
+.. _vector_api_tut_arrow_write:
+
+Writing to OGR using the Arrow C Data interface
+-----------------------------------------------
+
+.. versionadded:: 3.8
+
+Instead of writing features one at a time, it is also possible to write
+them by batches, with a column-oriented memory layout, using the
+:cpp:func:`OGRLayer::WriteArrowBatch` method. Note that this method is more
+difficult to use than the traditional :cpp:func:`OGRLayer::CreateFeature` approach,
+and is only advised when compatibility with the
+`Apache Arrow C Data interface <https://arrow.apache.org/docs/format/CDataInterface.html>`_
+is needed, or when column-oriented writing of layers is required.
+
+Pending using an helper library, generation of the Arrow C Data interface
+requires reading of the following documents:
+
+- `Arrow C data interface <https://arrow.apache.org/docs/format/CDataInterface.html>`_
+- `Arrow Columnar Format <https://arrow.apache.org/docs/format/Columnar.html>`_.
+
+Consult :ref:`vector_api_tut_arrow_stream` for introduction to the ArrowSchema and ArrowArray
+basic types involved for batch writing.
+
+The WriteArrowBatch() method has the following signature:
+
+  .. code-block:: cpp
+
+        /** Writes a batch of rows from an ArrowArray.
+         *
+         * @param schema Schema of array
+         * @param array Array of type struct. It may be released (array->release==NULL)
+         *              after calling this method.
+         * @param papszOptions Options. Null terminated list, or nullptr.
+         * @return true in case of success
+         */
+        virtual bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
+                                               struct ArrowArray *array,
+                                               CSLConstList papszOptions = nullptr);
+
+It is also available in the C API as :cpp:func:`OGR_L_WriteArrowBatch`.
+
+This is semantically close to calling :cpp:func:`OGRLayer::CreateFeature()`
+with multiple features at once.
+
+The ArrowArray must be of type struct (format=+s), and its children generally
+map to a OGR attribute or geometry field (unless they are struct themselves).
+
+Method :cpp:func:`OGRLayer::IsArrowSchemaSupported` can be called to determine
+if the schema will be supported by WriteArrowBatch().
+
+OGR fields for the corresponding children arrays must exist and be of a
+compatible type. For attribute fields, they should be created with
+:cpp:func:`OGRLayer::CreateFieldFromArrowSchema`.
+
+Arrays for geometry columns should be of binary or large binary type and
+contain WKB geometry.
+
+Note that the passed array may be set to a released state
+(array->release==NULL) after this call (not by the base implementation,
+but in specialized ones such as Parquet or Arrow for example)
+
+Supported options of the base implementation are:
+
+- FID=name. Name of the FID column in the array. If not provided,
+  GetFIDColumn() is used to determine it. The special name
+  OGRLayer::DEFAULT_ARROW_FID_NAME is also recognized if neither FID nor
+  GetFIDColumn() are set.
+  The corresponding ArrowArray must be of type int32 (i) or int64 (l).
+  On input, values of the FID column are used to create the feature.
+  On output, the values of the FID column may be set with the FID of the
+  created feature (if the array is not released).
+
+- GEOMETRY_NAME=name. Name of the geometry column. If not provided,
+  GetGeometryColumn() is used. The special name
+  OGRLayer::DEFAULT_ARROW_GEOMETRY_NAME is also recognized if neither
+  GEOMETRY_NAME nor GetGeometryColumn() are set.
+  Geometry columns are also identified if they have
+  ARROW:extension:name=ogc.wkb as a field metadata.
+  The corresponding ArrowArray must be of type binary (w) or large
+  binary (W).
+
+Drivers that have a specialized implementation (such as :ref:`vector.parquet`
+and :ref:`vector.arrow`) advertise the OLCFastWriteArrowBatch layer capability.
+
+The following example in Python demonstrates how to copy a layer from one format to
+another one (assuming it has at most a single geometry column):
+
+.. code-block:: python
+
+    def copy_layer(src_lyr, out_filename, out_format, lcos = {}):
+        stream = src_lyr.GetArrowStream()
+        schema = stream.GetSchema()
+
+        # If the source layer has a FID column and the output driver supports
+        # a FID layer creation option, set it to the source FID column name.
+        if src_lyr.GetFIDColumn():
+            creationOptions = gdal.GetDriverByName(out_format).GetMetadataItem(
+                "DS_LAYER_CREATIONOPTIONLIST"
+            )
+            if creationOptions and '"FID"' in creationOptions:
+                lcos["FID"] = src_lyr.GetFIDColumn()
+
+        with ogr.GetDriverByName(out_format).CreateDataSource(out_filename) as out_ds:
+            if src_lyr.GetLayerDefn().GetGeomFieldCount() > 1:
+                out_lyr = out_ds.CreateLayer(
+                    src_lyr.GetName(), geom_type=ogr.wkbNone, options=lcos
+                )
+                for i in range(src_lyr.GetLayerDefn().GetGeomFieldCount()):
+                    out_lyr.CreateGeomField(src_lyr.GetLayerDefn().GetGeomFieldDefn(i))
+            else:
+                out_lyr = out_ds.CreateLayer(
+                    src_lyr.GetName(),
+                    geom_type=src_lyr.GetGeomType(),
+                    srs=src_lyr.GetSpatialRef(),
+                    options=lcos,
+                )
+
+            success, error_msg = out_lyr.IsArrowSchemaSupported(schema)
+            assert success, error_msg
+
+            src_geom_field_names = [
+                src_lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName()
+                for i in range(src_lyr.GetLayerDefn().GetGeomFieldCount())
+            ]
+            for i in range(schema.GetChildrenCount()):
+                # GetArrowStream() may return "OGC_FID" for a unnamed source FID
+                # column and "wkb_geometry" for a unnamed source geometry column.
+                # Also test GetFIDColumn() and src_geom_field_names if they are
+                # named.
+                if (
+                    schema.GetChild(i).GetName()
+                    not in ("OGC_FID", "wkb_geometry", src_lyr.GetFIDColumn())
+                    and schema.GetChild(i).GetName() not in src_geom_field_names
+                ):
+                    out_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+            write_options = []
+            if src_lyr.GetFIDColumn():
+                write_options.append("FID=" + src_lyr.GetFIDColumn())
+            if (
+                src_lyr.GetLayerDefn().GetGeomFieldCount() == 1
+                and src_lyr.GetGeometryColumn()
+            ):
+                write_options.append("GEOMETRY_NAME=" + src_lyr.GetGeometryColumn())
+
+            while True:
+                array = stream.GetNextRecordBatch()
+                if array is None:
+                    break
+                out_lyr.WriteArrowBatch(schema, array, write_options)
+
+
+For the Python bindings, in addition to the above ogr.Layer.IsArrowSchemaSupported(),
+ogr.Layer.CreateFieldFromArrowSchema() and ogr.Layer.WriteArrowBatch() methods,
+3 similar methods exist using the `PyArrow <https://arrow.apache.org/docs/python/index.html>`__
+data types:
+
+.. code-block:: python
+
+    class Layer:
+
+        def IsPyArrowSchemaSupported(self, pa_schema, options=[]):
+            """Returns whether the passed pyarrow Schema is supported by the layer, as a tuple (success: bool, errorMsg: str).
+
+        def CreateFieldFromPyArrowSchema(self, pa_schema, options=[]):
+            """Create a field from the passed pyarrow Schema."""
+
+        def WritePyArrow(self, pa_batch, options=[]):
+            """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer."""

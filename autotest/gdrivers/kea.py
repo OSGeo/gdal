@@ -39,8 +39,13 @@ pytestmark = pytest.mark.require_driver("KEA")
 ###############################################################################
 
 
-def test_kea_init():
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
     gdaltest.kea_driver = gdal.GetDriverByName("KEA")
+
+    yield
+
+    del gdaltest.kea_driver
 
 
 ###############################################################################
@@ -48,8 +53,6 @@ def test_kea_init():
 
 
 def test_kea_1():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "KEA", "byte.tif", 1, 4672, options=["IMAGEBLOCKSIZE=15", "THEMATIC=YES"]
@@ -77,8 +80,6 @@ def test_kea_1():
     ],
 )
 def test_kea_2(src_file):
-    if gdaltest.kea_driver is None:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
@@ -105,14 +106,12 @@ def test_kea_2(src_file):
         "../../gcore/data/float64.tif",
     ],
 )
-def test_kea_3(src_file):
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_3(tmp_path, src_file):
 
     tst = gdaltest.GDALTest(
         "KEA", src_file, 1, 4672 if src_file != "gtiff/int8.tif" else 1046
     )
-    tst.testCreate(out_bands=1, check_minmax=1, new_filename="tmp/test.kea")
+    tst.testCreate(out_bands=1, check_minmax=1, new_filename=str(tmp_path / "test.kea"))
 
 
 ###############################################################################
@@ -120,27 +119,25 @@ def test_kea_3(src_file):
 
 
 @gdaltest.disable_exceptions()
-def test_kea_4():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_4(tmp_path):
 
     with gdal.quiet_errors():
         ds = gdaltest.kea_driver.Create("/non_existing_path/non_existing_path", 1, 1)
     assert ds is None
 
-    src_ds = gdaltest.kea_driver.Create("tmp/src.kea", 1, 1, 0)
+    src_ds = gdaltest.kea_driver.Create(tmp_path / "src.kea", 1, 1, 0)
     assert src_ds is not None
-    ds = gdaltest.kea_driver.CreateCopy("tmp/out.kea", src_ds)
+    ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out.kea", src_ds)
     assert ds is not None
     assert ds.RasterCount == 0
     src_ds = None
     ds = None
 
     # Test updating a read-only file
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1)
     ds.GetRasterBand(1).Fill(255)
     ds = None
-    ds = gdal.Open("tmp/out.kea")
+    ds = gdal.Open(tmp_path / "out.kea")
 
     with gdal.quiet_errors():
         ret = ds.SetProjection("a")
@@ -184,17 +181,16 @@ def test_kea_4():
 
     ds = None
 
-    gdaltest.kea_driver.Delete("tmp/src.kea")
-    gdaltest.kea_driver.Delete("tmp/out.kea")
+    # test Delete
+    gdaltest.kea_driver.Delete(tmp_path / "src.kea")
+    gdaltest.kea_driver.Delete(tmp_path / "out.kea")
 
 
 ###############################################################################
 # Test Create() creation options
 
 
-def test_kea_5():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_5(tmp_path):
 
     options = [
         "IMAGEBLOCKSIZE=15",
@@ -208,9 +204,9 @@ def test_kea_5():
         "DEFLATE=9",
         "THEMATIC=YES",
     ]
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 100, 100, 3, options=options)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 100, 100, 3, options=options)
     ds = None
-    ds = gdal.Open("tmp/out.kea")
+    ds = gdal.Open(tmp_path / "out.kea")
     assert ds.GetRasterBand(1).GetBlockSize() == [15, 15]
     assert (
         ds.GetRasterBand(1).GetMetadataItem("LAYER_TYPE") == "thematic"
@@ -219,18 +215,15 @@ def test_kea_5():
     assert ds.GetGeoTransform() == (0, 1, 0, 0, 0, -1)
     assert ds.GetProjectionRef() == ""
     ds = None
-    gdaltest.kea_driver.Delete("tmp/out.kea")
 
 
 ###############################################################################
 # Test metadata
 
 
-def test_kea_6():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_6(tmp_path):
 
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 5)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 5)
     ds.SetMetadata({"foo": "bar"})
     ds.SetMetadataItem("bar", "baw")
     ds.GetRasterBand(1).SetMetadata({"bar": "baz"})
@@ -247,7 +240,7 @@ def test_kea_6():
     assert ds.GetRasterBand(1).SetMetadataItem("foo", "bar", "other_domain") != 0
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
+    ds = gdal.Open(tmp_path / "out.kea")
     assert ds.GetMetadata("other_domain") == {}
     assert ds.GetMetadataItem("item", "other_domain") is None
     assert ds.GetRasterBand(1).GetMetadata("other_domain") == {}
@@ -264,7 +257,7 @@ def test_kea_6():
     assert ds.GetRasterBand(3).GetMetadataItem("LAYER_TYPE") == "athematic"
     assert ds.GetRasterBand(4).GetMetadataItem("LAYER_TYPE") == "thematic"
     assert ds.GetRasterBand(5).GetMetadataItem("LAYER_TYPE") == "athematic"
-    out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
+    out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
     ds = None
 
     assert out2_ds.GetMetadataItem("foo") == "bar"
@@ -272,41 +265,39 @@ def test_kea_6():
 
     out2_ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
-
 
 ###############################################################################
 # Test georef
 
 
-def test_kea_7():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_7(tmp_path):
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
     # Geotransform
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1)
     assert ds.GetGCPCount() == 0
     assert ds.SetGeoTransform([1, 2, 3, 4, 5, 6]) == 0
     assert ds.SetProjection(sr.ExportToWkt()) == 0
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
-    out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
+    ds = gdal.Open(tmp_path / "out.kea")
+    out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
     ds = None
     assert out2_ds.GetGCPCount() == 0
     assert out2_ds.GetGeoTransform() == (1, 2, 3, 4, 5, 6)
     assert out2_ds.GetProjectionRef() != ""
     out2_ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
+
+def test_kea_7_bis(tmp_path):
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
 
     # GCP
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1)
     gcp1 = gdal.GCP(0, 1, 2, 3, 4)
     gcp1.Id = "id"
     gcp1.Info = "info"
@@ -315,8 +306,8 @@ def test_kea_7():
     ds.SetGCPs(gcps, sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
-    out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
+    ds = gdal.Open(tmp_path / "out.kea")
+    out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
     ds = None
 
     assert out2_ds.GetGCPCount() == 2
@@ -334,20 +325,15 @@ def test_kea_7():
         )
     out2_ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
-
 
 ###############################################################################
 # Test colortable
 
 
-def test_kea_8():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_8(tmp_path):
 
     for i in range(2):
-        ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1)
+        ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1)
         assert ds.GetRasterBand(1).GetColorTable() is None
         assert ds.GetRasterBand(1).SetColorTable(None) != 0
         ct = gdal.ColorTable()
@@ -360,8 +346,8 @@ def test_kea_8():
             assert ds.GetRasterBand(1).SetColorTable(ct) == 0
         ds = None
 
-        ds = gdal.Open("tmp/out.kea")
-        out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
+        ds = gdal.Open(tmp_path / "out.kea")
+        out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
         ds = None
         got_ct = out2_ds.GetRasterBand(1).GetColorTable()
         assert got_ct.GetCount() == 3, "Got wrong color table entry count."
@@ -374,28 +360,26 @@ def test_kea_8():
 
         out2_ds = None
 
-        gdaltest.kea_driver.Delete("tmp/out.kea")
-        gdaltest.kea_driver.Delete("tmp/out2.kea")
+        gdaltest.kea_driver.Delete(tmp_path / "out.kea")
+        gdaltest.kea_driver.Delete(tmp_path / "out2.kea")
 
 
 ###############################################################################
 # Test color interpretation
 
 
-def test_kea_9():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_9(tmp_path):
 
     ds = gdaltest.kea_driver.Create(
-        "tmp/out.kea", 1, 1, gdal.GCI_YCbCr_CrBand - gdal.GCI_GrayIndex + 1
+        tmp_path / "out.kea", 1, 1, gdal.GCI_YCbCr_CrBand - gdal.GCI_GrayIndex + 1
     )
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
         ds.GetRasterBand(i).SetColorInterpretation(i)
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
-    out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
+    ds = gdal.Open(tmp_path / "out.kea")
+    out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
     ds = None
     for i in range(gdal.GCI_GrayIndex, gdal.GCI_YCbCr_CrBand + 1):
         assert (
@@ -404,19 +388,14 @@ def test_kea_9():
 
     out2_ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
-
 
 ###############################################################################
 # Test nodata
 
 
-def test_kea_10():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
-
-    for (dt, nd, expected_nd) in [
+@pytest.mark.parametrize(
+    "dt,nd,expected_nd",
+    [
         (gdal.GDT_Byte, 0, 0),
         (gdal.GDT_Byte, 1.1, 1.0),
         (gdal.GDT_Byte, 255, 255),
@@ -444,66 +423,60 @@ def test_kea_10():
         (gdal.GDT_UInt64, 0, 0),
         (gdal.GDT_UInt64, 0xFFFFFFFF + 1, 0xFFFFFFFF + 1),
         (gdal.GDT_Float32, 0.5, 0.5),
-    ]:
-        ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, dt)
-        assert ds.GetRasterBand(1).GetNoDataValue() is None
-        ds.GetRasterBand(1).SetNoDataValue(nd)
-        if ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
-            print(dt)
-            pytest.fail("Got wrong nodata.")
-        ds = None
+    ],
+)
+def test_kea_10(tmp_path, dt, nd, expected_nd):
 
-        ds = gdal.Open("tmp/out.kea")
-        out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
-        ds = None
-        if out2_ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
-            print(dt)
-            pytest.fail("Got wrong nodata.")
-        out2_ds.GetRasterBand(1).DeleteNoDataValue()
-        out2_ds = None
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, dt)
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds.GetRasterBand(1).SetNoDataValue(nd)
+    if ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
+        print(dt)
+        pytest.fail("Got wrong nodata.")
+    ds = None
 
-        ds = gdal.Open("tmp/out2.kea")
-        assert ds.GetRasterBand(1).GetNoDataValue() is None
-        ds = None
+    ds = gdal.Open(tmp_path / "out.kea")
+    out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
+    ds = None
+    if out2_ds.GetRasterBand(1).GetNoDataValue() != expected_nd:
+        print(dt)
+        pytest.fail("Got wrong nodata.")
+    out2_ds.GetRasterBand(1).DeleteNoDataValue()
+    out2_ds = None
 
-        gdaltest.kea_driver.Delete("tmp/out.kea")
-        gdaltest.kea_driver.Delete("tmp/out2.kea")
+    ds = gdal.Open(tmp_path / "out2.kea")
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
+    ds = None
 
 
 ###############################################################################
 # Test AddBand
 
 
-def test_kea_11():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_11(tmp_path):
 
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
     ds = None
 
-    ds = gdal.Open("tmp/out.kea", gdal.GA_Update)
+    ds = gdal.Open(tmp_path / "out.kea", gdal.GA_Update)
     assert ds.AddBand(gdal.GDT_Byte) == 0
     assert ds.AddBand(gdal.GDT_Int16, options=["DEFLATE=9"]) == 0
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
+    ds = gdal.Open(tmp_path / "out.kea")
     assert ds.RasterCount == 3
     assert ds.GetRasterBand(2).DataType == gdal.GDT_Byte
     assert ds.GetRasterBand(3).DataType == gdal.GDT_Int16
     ds = None
-
-    gdaltest.kea_driver.Delete("tmp/out.kea")
 
 
 ###############################################################################
 # Test RAT
 
 
-def test_kea_12():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_12(tmp_path):
 
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
     assert ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount() == 0
     assert ds.GetRasterBand(1).SetDefaultRAT(None) != 0
     rat = ds.GetRasterBand(1).GetDefaultRAT()
@@ -534,8 +507,8 @@ def test_kea_12():
     assert ds.GetRasterBand(1).SetDefaultRAT(rat) == 0
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
-    out2_ds = gdaltest.kea_driver.CreateCopy("tmp/out2.kea", ds)
+    ds = gdal.Open(tmp_path / "out.kea")
+    out2_ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out2.kea", ds)
     rat = out2_ds.GetRasterBand(1).GetDefaultRAT()
 
     for i in range(7):
@@ -605,26 +578,21 @@ def test_kea_12():
     ds = None
     out2_ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
-
 
 ###############################################################################
 # Test overviews
 
 
-def test_kea_13():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_13(tmp_path):
 
     src_ds = gdal.Open("data/byte.tif")
-    ds = gdaltest.kea_driver.CreateCopy("tmp/out.kea", src_ds)
+    ds = gdaltest.kea_driver.CreateCopy(tmp_path / "out.kea", src_ds)
     src_ds = None
     ds.BuildOverviews("NEAR", [2])
     ds = None
-    ds = gdal.Open("tmp/out.kea")
+    ds = gdal.Open(tmp_path / "out.kea")
     out2_ds = gdaltest.kea_driver.CreateCopy(
-        "tmp/out2.kea", ds
+        tmp_path / "out2.kea", ds
     )  # yes CreateCopy() of KEA copies overviews
     assert out2_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert out2_ds.GetRasterBand(1).GetOverview(0).Checksum() == 1087
@@ -635,19 +603,14 @@ def test_kea_13():
     out2_ds = None
     ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
-
 
 ###############################################################################
 # Test mask bands
 
 
-def test_kea_14():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_14(tmp_path):
 
-    ds = gdaltest.kea_driver.Create("tmp/out.kea", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.kea_driver.Create(tmp_path / "out.kea", 1, 1, 1, gdal.GDT_Byte)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 3
     ds.GetRasterBand(1).CreateMaskBand(0)
@@ -658,43 +621,31 @@ def test_kea_14():
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 0
     ds = None
 
-    ds = gdal.Open("tmp/out.kea")
+    ds = gdal.Open(tmp_path / "out.kea")
     out2_ds = gdaltest.kea_driver.CreateCopy(
-        "tmp/out2.kea", ds
+        tmp_path / "out2.kea", ds
     )  # yes CreateCopy() of KEA copies overviews
     assert out2_ds.GetRasterBand(1).GetMaskFlags() == 0
     assert out2_ds.GetRasterBand(1).GetMaskBand().Checksum() == 0
     out2_ds = None
     ds = None
 
-    gdaltest.kea_driver.Delete("tmp/out.kea")
-    gdaltest.kea_driver.Delete("tmp/out2.kea")
-
 
 ###############################################################################
 # Test /vsi functionality
 
 
-def test_kea_15():
-    if gdaltest.kea_driver is None:
-        pytest.skip()
+def test_kea_15(tmp_path, tmp_vsimem):
 
     # create an temp image
-    ds = gdaltest.kea_driver.Create("tmp/vsitest.kea", 1, 1)
+    ds = gdaltest.kea_driver.Create(tmp_path / "vsitest.kea", 1, 1)
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
     # load it into /vsimem and try and open it
-    gdal.FileFromMemBuffer("/vsimem/foo.kea", open("tmp/vsitest.kea", "rb").read())
-    ds = gdal.Open("/vsimem/foo.kea")
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "foo.kea", open(tmp_path / "vsitest.kea", "rb").read()
+    )
+    ds = gdal.Open(tmp_vsimem / "foo.kea")
     assert ds.GetDriver().ShortName == "KEA"
     ds = None
-
-    gdal.Unlink("/vsimem/foo.kea")
-    gdaltest.kea_driver.Delete("tmp/vsitest.kea")
-
-
-def test_kea_destroy():
-    # there is always a 'tmp/out.kea.aux.xml' left behind by
-    # a few of the tests
-    gdal.Unlink("tmp/out.kea.aux.xml")

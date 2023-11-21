@@ -1441,7 +1441,7 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
             Object o2(m_poArray->get(nIndex));
             if (!o2.isNull())
             {
-                auto poObj = cpl::make_unique<GDALPDFObjectPoppler>(
+                auto poObj = std::make_unique<GDALPDFObjectPoppler>(
                     new Object(std::move(o2)), TRUE);
                 poObj->SetRefNumAndGen(nRefNum, nRefGen);
                 m_v[nIndex] = std::move(poObj);
@@ -1450,7 +1450,7 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
         }
         else
         {
-            auto poObj = cpl::make_unique<GDALPDFObjectPoppler>(
+            auto poObj = std::make_unique<GDALPDFObjectPoppler>(
                 new Object(o.copy()), TRUE);
             poObj->SetRefNumAndGen(nRefNum, nRefGen);
             m_v[nIndex] = std::move(poObj);
@@ -1471,7 +1471,7 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
         }
         if (!po->isRef() || (m_poArray->get(nIndex, po)))
         {
-            auto poObj = cpl::make_unique<GDALPDFObjectPoppler>(po, TRUE);
+            auto poObj = std::make_unique<GDALPDFObjectPoppler>(po, TRUE);
             poObj->SetRefNumAndGen(nRefNum, nRefGen);
             m_v[nIndex] = std::move(poObj);
             return m_v[nIndex].get();
@@ -2111,7 +2111,7 @@ GDALPDFObject *GDALPDFArrayPodofo::Get(int nIndex)
         return m_v[nIndex].get();
 
     const PoDoFo::PdfObject &oVal = (*m_poArray)[nIndex];
-    m_v[nIndex] = cpl::make_unique<GDALPDFObjectPodofo>(&oVal, m_poObjects);
+    m_v[nIndex] = std::make_unique<GDALPDFObjectPodofo>(&oVal, m_poObjects);
     return m_v[nIndex].get();
 }
 

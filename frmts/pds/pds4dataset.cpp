@@ -1630,7 +1630,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
         "");
     const bool bBottomToTop = EQUAL(pszVertDir, "Bottom to Top");
 
-    auto poDS = cpl::make_unique<PDS4Dataset>();
+    auto poDS = std::make_unique<PDS4Dataset>();
     poDS->m_osXMLFilename = osXMLFilename;
     poDS->eAccess = eAccess;
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
@@ -2045,7 +2045,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
             for (int i = 0; i < l_nBands; i++)
             {
-                auto poBand = cpl::make_unique<PDS4RawRasterBand>(
+                auto poBand = std::make_unique<PDS4RawRasterBand>(
                     poDS.get(), i + 1, poDS->m_fpImage,
                     (bBottomToTop) ? nOffset + nBandOffset * i +
                                          static_cast<vsi_l_offset>(nLines - 1) *
@@ -4160,7 +4160,7 @@ void PDS4Dataset::WriteHeader()
 /************************************************************************/
 
 OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
-                                    OGRSpatialReference *poSpatialRef,
+                                    const OGRSpatialReference *poSpatialRef,
                                     OGRwkbGeometryType eGType,
                                     char **papszOptions)
 {
@@ -4598,7 +4598,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         }
     }
 
-    auto poDS = cpl::make_unique<PDS4Dataset>();
+    auto poDS = std::make_unique<PDS4Dataset>();
     poDS->SetDescription(pszFilename);
     poDS->m_bMustInitImageFile = true;
     poDS->m_fpImage = fpImage;
@@ -4632,13 +4632,13 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     {
         if (poDS->m_poExternalDS != nullptr)
         {
-            auto poBand = cpl::make_unique<PDS4WrapperRasterBand>(
+            auto poBand = std::make_unique<PDS4WrapperRasterBand>(
                 poDS->m_poExternalDS->GetRasterBand(i + 1));
             poDS->SetBand(i + 1, std::move(poBand));
         }
         else
         {
-            auto poBand = cpl::make_unique<PDS4RawRasterBand>(
+            auto poBand = std::make_unique<PDS4RawRasterBand>(
                 poDS.get(), i + 1, poDS->m_fpImage,
                 poDS->m_nBaseOffset + nBandOffset * i, nPixelOffset,
                 nLineOffset, eType,

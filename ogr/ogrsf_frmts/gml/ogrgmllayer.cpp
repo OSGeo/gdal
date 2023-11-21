@@ -1149,7 +1149,7 @@ int OGRGMLLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRGMLLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
     if (!bWriter || iNextGMLId != 0)
@@ -1192,7 +1192,8 @@ OGRErr OGRGMLLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRGMLLayer::CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK)
+OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
+                                    int bApproxOK)
 
 {
     if (!bWriter || iNextGMLId != 0)

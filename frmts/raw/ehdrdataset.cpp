@@ -1186,7 +1186,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         chPixelType = 'S';
     }
 
-    auto poDS = cpl::make_unique<EHdrDataset>();
+    auto poDS = std::make_unique<EHdrDataset>();
 
     poDS->osHeaderExt = pszHeaderExt;
 
@@ -1299,7 +1299,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // Create band information objects.
     for (int i = 0; i < l_nBands; i++)
     {
-        auto poBand = cpl::make_unique<EHdrRasterBand>(
+        auto poBand = std::make_unique<EHdrRasterBand>(
             poDS.get(), i + 1, poDS->fpImage, nSkipBytes + nBandOffset * i,
             nPixelOffset, nLineOffset, eDataType,
             chByteOrder == 'I' || chByteOrder == 'L'

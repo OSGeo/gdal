@@ -9,11 +9,10 @@
 
 .. build_dependencies:: Parquet component of the Apache Arrow C++ library
 
-From https://databricks.com/glossary/what-is-parquet:
-"Apache Parquet is an open source, column-oriented data file format designed
-for efficient data storage and retrieval. It provides efficient data compression
-and encoding schemes with enhanced performance to handle complex data in bulk.
-Apache Parquet is designed to be a common interchange format for both batch and interactive workloads."
+From https://parquet.apache.org/:
+"Apache Parquet is an open source, column-oriented data file format designed for efficient data storage and retrieval.
+It provides efficient data compression and encoding schemes with enhanced performance to handle complex data in bulk.
+Parquet is available in multiple languages including Java, C++, Python, etc..."
 
 This driver also supports geometry columns using the GeoParquet specification.
 

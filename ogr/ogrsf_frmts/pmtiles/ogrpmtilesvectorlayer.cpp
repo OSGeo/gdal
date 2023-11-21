@@ -365,7 +365,7 @@ std::unique_ptr<OGRFeature> OGRPMTilesVectorLayer::GetNextSrcFeature()
             return nullptr;
         }
 
-        m_poTileIterator = cpl::make_unique<OGRPMTilesTileIterator>(
+        m_poTileIterator = std::make_unique<OGRPMTilesTileIterator>(
             m_poDS, m_nZoomLevel, m_nFilterMinX, m_nFilterMinY, m_nFilterMaxX,
             m_nFilterMaxY);
     }

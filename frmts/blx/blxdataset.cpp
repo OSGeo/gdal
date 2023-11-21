@@ -124,7 +124,7 @@ GDALDataset *BLXDataset::Open(GDALOpenInfo *poOpenInfo)
     // Create overview bands
     for (int i = 0; i < BLX_OVERVIEWLEVELS; i++)
     {
-        poDS->apoOverviewDS.emplace_back(cpl::make_unique<BLXDataset>());
+        poDS->apoOverviewDS.emplace_back(std::make_unique<BLXDataset>());
         poDS->apoOverviewDS[i]->blxcontext = poDS->blxcontext;
         poDS->apoOverviewDS[i]->bIsOverview = true;
         poDS->apoOverviewDS[i]->nRasterXSize = poDS->nRasterXSize >> (i + 1);

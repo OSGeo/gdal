@@ -210,7 +210,7 @@ void OGRSQLiteBaseDataSource::FinishSpatialite()
 /*                          IsSpatialiteLoaded()                        */
 /************************************************************************/
 
-bool OGRSQLiteDataSource::IsSpatialiteLoaded()
+bool OGRSQLiteBaseDataSource::IsSpatialiteLoaded()
 {
     return hSpatialiteCtxt != nullptr;
 }
@@ -226,7 +226,7 @@ void OGRSQLiteBaseDataSource::FinishSpatialite()
 {
 }
 
-bool OGRSQLiteDataSource::IsSpatialiteLoaded()
+bool OGRSQLiteBaseDataSource::IsSpatialiteLoaded()
 {
     return false;
 }
@@ -256,13 +256,20 @@ void OGRSQLiteDriverUnload(GDALDriver *)
 /*                     GetSpatialiteVersionNumber()                     */
 /************************************************************************/
 
-int OGRSQLiteDataSource::GetSpatialiteVersionNumber()
+int OGRSQLiteBaseDataSource::GetSpatialiteVersionNumber()
 {
     int v = 0;
 #ifdef HAVE_SPATIALITE
     if (IsSpatialiteLoaded())
     {
-        v = (int)((CPLAtof(pfn_spatialite_version()) + 0.001) * 10.0);
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pfn_spatialite_version(), ".", 0));
+        if (aosTokens.size() >= 2)
+        {
+            v = MakeSpatialiteVersionNumber(
+                atoi(aosTokens[0]), atoi(aosTokens[1]),
+                aosTokens.size() == 3 ? atoi(aosTokens[2]) : 0);
+        }
     }
 #endif
     return v;
@@ -587,8 +594,12 @@ bool OGRSQLiteBaseDataSource::CloseDB()
               STARTS_WITH(m_pszFilename, "/vsizip/")) &&
             VSIStatL(CPLSPrintf("%s-wal", m_pszFilename), &sStat) == 0)
         {
-            CPL_IGNORE_RET_VAL(sqlite3_open(m_pszFilename, &hDB));
-            if (hDB != nullptr)
+            if (sqlite3_open(m_pszFilename, &hDB) != SQLITE_OK)
+            {
+                sqlite3_close(hDB);
+                hDB = nullptr;
+            }
+            else if (hDB != nullptr)
             {
 #ifdef SQLITE_FCNTL_PERSIST_WAL
                 int nPersistentWAL = -1;
@@ -1369,12 +1380,16 @@ bool OGRSQLiteBaseDataSource::OpenOrCreateDB(int flagsIn,
 
     for (int iterOpen = 0; iterOpen < 2; iterOpen++)
     {
+        CPLAssert(hDB == nullptr);
         int rc = sqlite3_open_v2(m_osFilenameForSQLiteOpen.c_str(), &hDB, flags,
                                  pMyVFS ? pMyVFS->zName : nullptr);
-        if (rc != SQLITE_OK)
+        if (rc != SQLITE_OK || !hDB)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "sqlite3_open(%s) failed: %s",
-                     m_pszFilename, sqlite3_errmsg(hDB));
+                     m_pszFilename,
+                     hDB ? sqlite3_errmsg(hDB) : "(unknown error)");
+            sqlite3_close(hDB);
+            hDB = nullptr;
             return false;
         }
 
@@ -1671,6 +1686,64 @@ bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
 }
 
 /************************************************************************/
+/*                       PostInitSpatialite()                           */
+/************************************************************************/
+
+void OGRSQLiteDataSource::PostInitSpatialite()
+{
+#ifdef HAVE_SPATIALITE
+    const char *pszSqlitePragma =
+        CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
+    OGRErr eErr = OGRERR_NONE;
+    if ((!pszSqlitePragma || !strstr(pszSqlitePragma, "trusted_schema")) &&
+        // Older sqlite versions don't have this pragma
+        SQLGetInteger(hDB, "PRAGMA trusted_schema", &eErr) == 0 &&
+        eErr == OGRERR_NONE)
+    {
+        // Spatialite <= 5.1.0 doesn't declare its functions as SQLITE_INNOCUOUS
+        if (IsSpatialiteLoaded() && SpatialiteRequiresTrustedSchemaOn() &&
+            AreSpatialiteTriggersSafe())
+        {
+            CPLDebug("SQLITE", "Setting PRAGMA trusted_schema = 1");
+            SQLCommand(hDB, "PRAGMA trusted_schema = 1");
+        }
+    }
+#endif
+}
+
+/************************************************************************/
+/*                 SpatialiteRequiresTrustedSchemaOn()                  */
+/************************************************************************/
+
+bool OGRSQLiteBaseDataSource::SpatialiteRequiresTrustedSchemaOn()
+{
+#ifdef HAVE_SPATIALITE
+    // Spatialite <= 5.1.0 doesn't declare its functions as SQLITE_INNOCUOUS
+    if (GetSpatialiteVersionNumber() <= MakeSpatialiteVersionNumber(5, 1, 0))
+    {
+        return true;
+    }
+#endif
+    return false;
+}
+
+/************************************************************************/
+/*                    AreSpatialiteTriggersSafe()                       */
+/************************************************************************/
+
+bool OGRSQLiteBaseDataSource::AreSpatialiteTriggersSafe()
+{
+#ifdef HAVE_SPATIALITE
+    // Not totally sure about the minimum spatialite version, but 4.3a is fine
+    return GetSpatialiteVersionNumber() >=
+               MakeSpatialiteVersionNumber(4, 3, 0) &&
+           SQLGetInteger(hDB, "SELECT CountUnsafeTriggers()", nullptr) == 0;
+#else
+    return true;
+#endif
+}
+
+/************************************************************************/
 /*                          GetInternalHandle()                         */
 /************************************************************************/
 
@@ -1749,6 +1822,9 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
                      "extensions are not loaded.");
             return false;
         }
+
+        PostInitSpatialite();
+
 #ifdef HAVE_RASTERLITE2
         InitRasterLite2();
 #endif
@@ -1765,9 +1841,10 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
         const char *pszVal = CSLFetchNameValue(papszOptions, "INIT_WITH_EPSG");
         const int nSpatialiteVersionNumber = GetSpatialiteVersionNumber();
         if (pszVal != nullptr && !CPLTestBool(pszVal) &&
-            nSpatialiteVersionNumber >= 40)
+            nSpatialiteVersionNumber >= MakeSpatialiteVersionNumber(4, 0, 0))
         {
-            if (nSpatialiteVersionNumber >= 41)
+            if (nSpatialiteVersionNumber >=
+                MakeSpatialiteVersionNumber(4, 1, 0))
                 osCommand = "SELECT InitSpatialMetadata(1, 'NONE')";
             else
                 osCommand = "SELECT InitSpatialMetadata('NONE')";
@@ -1842,7 +1919,7 @@ bool OGRSQLiteDataSource::InitWithEPSG()
         / because the EPSG dataset is already self-initialized at DB creation
         */
         int iSpatialiteVersion = GetSpatialiteVersionNumber();
-        if (iSpatialiteVersion >= 24)
+        if (iSpatialiteVersion >= MakeSpatialiteVersionNumber(2, 4, 0))
             return true;
     }
 
@@ -2168,6 +2245,8 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
                 // We need it here for ST_MinX() and the like
                 InitSpatialite();
 
+                PostInitSpatialite();
+
                 // Ingest the lines of the dump
                 VSIFSeekL(oOpenInfo.fpL, 0, SEEK_SET);
                 const char *pszLine;
@@ -2293,6 +2372,8 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
         }
 
         InitSpatialite();
+
+        PostInitSpatialite();
 
 #ifdef HAVE_RASTERLITE2
         InitRasterLite2();
@@ -2478,13 +2559,15 @@ bool OGRSQLiteDataSource::Open(GDALOpenInfo *poOpenInfo)
         }
 
         if (m_bSpatialite4Layout && GetUpdate() && iSpatialiteVersion > 0 &&
-            iSpatialiteVersion < 40)
+            iSpatialiteVersion < MakeSpatialiteVersionNumber(4, 0, 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "SpatiaLite v4 DB found, "
                      "but updating tables disabled because runtime spatialite "
-                     "library is v%.1f !",
-                     iSpatialiteVersion / 10.0);
+                     "library is v%d.%d.%d !",
+                     iSpatialiteVersion / 10000,
+                     (iSpatialiteVersion % 10000) / 100,
+                     (iSpatialiteVersion % 100));
             sqlite3_free_table(papszResult);
             CPLHashSetDestroy(hSet);
             return false;
@@ -3352,7 +3435,7 @@ void OGRSQLiteDataSource::ReleaseResultSet(OGRLayer *poLayer)
 /************************************************************************/
 
 OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType eType,
                                             char **papszOptions)
 
@@ -3571,10 +3654,10 @@ OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
 
     poLayer->Initialize(pszLayerName, true, false, true,
                         /* bMayEmitError = */ false);
-    OGRSpatialReference *poSRSClone = poSRS;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSRS)
     {
-        poSRSClone = poSRSClone->Clone();
+        poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     poLayer->SetCreationParameters(osFIDColumnName, eType, pszGeomFormat,

@@ -101,6 +101,63 @@ void CPL_STDCALL GDALDestroyDriver(GDALDriverH hDriver)
 }
 
 /************************************************************************/
+/*                               Open()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+
+GDALDataset *GDALDriver::Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions)
+{
+
+    GDALDataset *poDS = nullptr;
+    if (pfnOpen != nullptr)
+    {
+        poDS = pfnOpen(poOpenInfo);
+    }
+    else if (pfnOpenWithDriverArg != nullptr)
+    {
+        poDS = pfnOpenWithDriverArg(this, poOpenInfo);
+    }
+
+    if (poDS)
+    {
+        poDS->nOpenFlags = poOpenInfo->nOpenFlags;
+
+        if (strlen(poDS->GetDescription()) == 0)
+            poDS->SetDescription(poOpenInfo->pszFilename);
+
+        if (poDS->poDriver == nullptr)
+            poDS->poDriver = this;
+
+        if (poDS->papszOpenOptions == nullptr && bSetOpenOptions)
+        {
+            poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
+        }
+
+        if (!(poOpenInfo->nOpenFlags & GDAL_OF_INTERNAL))
+        {
+            if (CPLGetPID() != GDALGetResponsiblePIDForCurrentThread())
+                CPLDebug(
+                    "GDAL",
+                    "GDALOpen(%s, this=%p) succeeds as "
+                    "%s (pid=%d, responsiblePID=%d).",
+                    poOpenInfo->pszFilename, poDS, GetDescription(),
+                    static_cast<int>(CPLGetPID()),
+                    static_cast<int>(GDALGetResponsiblePIDForCurrentThread()));
+            else
+                CPLDebug("GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
+                         poOpenInfo->pszFilename, poDS, GetDescription());
+
+            poDS->AddToDatasetOpenList();
+        }
+    }
+
+    return poDS;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                               Create()                               */
 /************************************************************************/
 
@@ -659,7 +716,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     double adfGeoTransform[6] = {};
 
     if (nDstBands == 0 && !bStrict)
-        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLTurnFailureIntoWarning(true);
 
     if (eErr == CE_None &&
         poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None
@@ -696,7 +753,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     }
 
     if (nDstBands == 0 && !bStrict)
-        CPLPopErrorHandler();
+        CPLTurnFailureIntoWarning(false);
 
     /* -------------------------------------------------------------------- */
     /*      Copy metadata.                                                  */
@@ -728,7 +785,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
         /* --------------------------------------------------------------------
          */
         if (!bStrict)
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLTurnFailureIntoWarning(true);
 
         if (strlen(poSrcBand->GetDescription()) > 0)
             poDstBand->SetDescription(poSrcBand->GetDescription());
@@ -768,8 +825,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
 
         if (!bStrict)
         {
-            CPLPopErrorHandler();
-            CPLErrorReset();
+            CPLTurnFailureIntoWarning(false);
         }
         else
         {

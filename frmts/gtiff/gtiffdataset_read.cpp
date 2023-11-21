@@ -36,6 +36,7 @@
 #include "gtiffsplitbitmapband.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -560,8 +561,16 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
                 psJob->nXBlock, psJob->nYBlock);
             if (apoBlocks[i] == nullptr)
             {
+                // Temporary disabling of dirty block flushing, otherwise
+                // we can be in a deadlock situation, where the
+                // GTiffDataset::SubmitCompressionJob() method waits for jobs
+                // to be finished, that can't finish (actually be started)
+                // because this task and its siblings are taking all the
+                // available workers allowed by the global thread pool.
+                GDALRasterBlock::EnterDisableDirtyBlockFlush();
                 apoBlocks[i] = poDS->GetRasterBand(iBand)->GetLockedBlockRef(
                     psJob->nXBlock, psJob->nYBlock, TRUE);
+                GDALRasterBlock::LeaveDisableDirtyBlockFlush();
                 if (apoBlocks[i] == nullptr)
                     return false;
             }
@@ -929,6 +938,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             psContext->bCacheAllBands ? psContext->panBandMap[i] - 1
             : poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i
                                                            : 0;
+        assert(iSrcBandIdx >= 0);
         const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
                                     ? i
                                     : psJob->iDstBandIdxSeparate;
@@ -2946,7 +2956,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     {
         // We need a temporary buffer for over-sampling/sub-sampling
         // and/or data type conversion.
-        pTmpBuffer = VSI_MALLOC_VERBOSE(nReqXSize * nReqYSize * nSrcPixelSize);
+        pTmpBuffer = VSI_MALLOC3_VERBOSE(nReqXSize, nReqYSize, nSrcPixelSize);
         if (pTmpBuffer == nullptr)
             eErr = CE_Failure;
     }
@@ -2957,7 +2967,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     for (int iLine = 0; eErr == CE_None && iLine < nReqYSize; ++iLine)
     {
         ppData[iLine] = static_cast<GByte *>(pTmpBuffer) +
-                        iLine * nReqXSize * nSrcPixelSize;
+                        static_cast<size_t>(iLine) * nReqXSize * nSrcPixelSize;
         int nSrcLine = 0;
         if (nBufYSize < nYSize)  // Sub-sampling in y.
             nSrcLine = nYOff + static_cast<int>((iLine + 0.5) * dfSrcYInc);

@@ -141,7 +141,7 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
     }
     OGRLayer *GetLayer(int idx) override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 
@@ -187,7 +187,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
     {
         return nullptr;
     }
-    OGRErr CreateField(OGRFieldDefn *poFieldDefn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldDefn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int TestCapability(const char *) override;
 };
@@ -977,12 +977,12 @@ int OGRMapMLWriterDataset::TestCapability(const char *pszCap)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMapMLWriterDataset::ICreateLayer(const char *pszLayerName,
-                                              OGRSpatialReference *poSRS,
-                                              OGRwkbGeometryType,
-                                              char ** /* papszOptions */)
+OGRLayer *OGRMapMLWriterDataset::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSRSIn,
+    OGRwkbGeometryType, char ** /* papszOptions */)
 {
     OGRSpatialReference oSRS_WGS84;
+    const OGRSpatialReference *poSRS = poSRSIn;
     if (poSRS == nullptr)
     {
         oSRS_WGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
@@ -1076,7 +1076,7 @@ int OGRMapMLWriterLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMapMLWriterLayer::CreateField(OGRFieldDefn *poFieldDefn, int)
+OGRErr OGRMapMLWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 {
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;

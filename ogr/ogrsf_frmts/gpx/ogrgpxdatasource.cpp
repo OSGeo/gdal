@@ -149,10 +149,10 @@ OGRLayer *OGRGPXDataSource::GetLayer(int iLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference * /* poSRS */,
-                                         OGRwkbGeometryType eType,
-                                         char **papszOptions)
+OGRLayer *
+OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRSpatialReference * /* poSRS */,
+                               OGRwkbGeometryType eType, char **papszOptions)
 {
     GPXGeometryType gpxGeomType;
     if (eType == wkbPoint || eType == wkbPoint25D)
@@ -741,10 +741,20 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
     /*     Output header of GPX file.                                       */
     /* -------------------------------------------------------------------- */
     PrintLine("<?xml version=\"1.0\"?>");
-    VSIFPrintfL(fpOutput, "<gpx version=\"1.1\" creator=\"GDAL %s\" ",
-                GDALVersionInfo("RELEASE_NAME"));
+    VSIFPrintfL(fpOutput, "<gpx version=\"1.1\" creator=\"");
+    const char *pszCreator = CSLFetchNameValue(papszOptions, "CREATOR");
+    if (pszCreator)
+    {
+        char *pszXML = OGRGetXML_UTF8_EscapedString(pszCreator);
+        VSIFPrintfL(fpOutput, "%s", pszXML);
+        CPLFree(pszXML);
+    }
+    else
+    {
+        VSIFPrintfL(fpOutput, "GDAL %s", GDALVersionInfo("RELEASE_NAME"));
+    }
     VSIFPrintfL(fpOutput,
-                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+                "\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
     if (bUseExtensions)
         VSIFPrintfL(fpOutput, "xmlns:%s=\"%s\" ", pszExtensionsNS,
                     pszExtensionsNSURL);

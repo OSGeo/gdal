@@ -211,6 +211,15 @@ returns:
     EAS_ID (Real) = 170
     area (Real) = 5268.8125
 
+Note that due to the loose typing mechanism of SQLite, if a geometry expression
+returns a NULL value for the first row, this will generally cause OGR not to
+recognize the column as a geometry column. It might be then useful to sort
+the results by making sure that non-null geometries are returned first:
+
+::
+
+   ogrinfo test.shp -sql "SELECT * FROM (SELECT ST_Buffer(geometry,5) AS geometry FROM test) ORDER BY geometry IS NULL ASC" -dialect sqlite
+
 OGR datasource SQL functions
 ++++++++++++++++++++++++++++
 
@@ -222,7 +231,7 @@ function can be used to automatically load all the layers of a datasource as
 
     sqlite> SELECT load_extension('libgdal.so');
 
-    sqlite> SELECT load_extension('libspatialite.so');
+    sqlite> SELECT load_extension('mod_spatialite');
 
     sqlite> SELECT ogr_datasource_load_layers('poly.shp');
     1

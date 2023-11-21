@@ -82,7 +82,7 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                 const auto poLayerDefn = poLayer->GetLayerDefn();
 
                 int i = 0;  // Used after for.
-                for (; i < oSelect.result_columns; i++)
+                for (; i < oSelect.result_columns(); i++)
                 {
                     swq_col_func col_func = oSelect.column_defs[i].col_func;
                     if (!(col_func == SWQCF_MIN || col_func == SWQCF_MAX ||
@@ -137,19 +137,19 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
 
                             if (col_func == SWQCF_MIN)
                             {
-                                poLayer->GetMinMaxForField(
+                                CPL_IGNORE_RET_VAL(poLayer->GetMinMaxForField(
                                     /* iRowGroup=*/-1,  // -1 for all
                                     iOGRField, true, sField, bFound, false,
                                     sFieldDummy, bFoundDummy, eType, eSubType,
-                                    sVal, sValDummy);
+                                    sVal, sValDummy));
                             }
                             else if (col_func == SWQCF_MAX)
                             {
-                                poLayer->GetMinMaxForField(
+                                CPL_IGNORE_RET_VAL(poLayer->GetMinMaxForField(
                                     /* iRowGroup=*/-1,  // -1 for all
                                     iOGRField, false, sFieldDummy, bFoundDummy,
                                     true, sField, bFound, eType, eSubType,
-                                    sValDummy, sVal);
+                                    sValDummy, sVal));
                             }
                             else if (col_func == SWQCF_COUNT)
                             {
@@ -258,7 +258,7 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     CPL_IGNORE_RET_VAL(poMemLayer->SetFeature(poFeature));
                     delete poFeature;
                 }
-                if (i != oSelect.result_columns)
+                if (i != oSelect.result_columns())
                 {
                     delete poMemLayer;
                 }

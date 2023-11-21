@@ -402,7 +402,7 @@ The definition in the driver file is:
     }
 
 
-Note the use of GDAL_CHECK_VERSION macro. This is an optional macro for drivers inside GDAL tree that don't depend on external libraries, but that can be very useful if you compile your driver as a plugin (that is to say, an out-of-tree driver). As the GDAL C++ ABI may, and will, change between GDAL releases (for example from GDAL 1.x to 1.y), it may be necessary to recompile your driver against the header files of the GDAL version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible.
+Note the use of GDAL_CHECK_VERSION macro. This is a macro that should be used by drivers that can be built as a plugin. As the GDAL C++ ABI may, and will, change between GDAL feature releases (for example from GDAL 3.x.0 to 3.y.0), it is necessary to recompile your driver against the header files of the GDAL feature version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible (checking that the major and minor version numbers are equal). The C++ ABI will however remain stable for releases of the same release branch (that is for bug fixes releases x.y.z of a given feature release x.y.0).
 
 The registration function will create an instance of a GDALDriver object when first called, and register it with the GDALDriverManager. The following fields can be set in the driver before registering it with the GDALDriverManager.
 

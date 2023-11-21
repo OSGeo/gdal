@@ -214,12 +214,8 @@ void OGRSimpleCurve::Make3D()
 {
     if (padfZ == nullptr)
     {
-        if (nPointCount == 0)
-            padfZ =
-                static_cast<double *>(VSI_CALLOC_VERBOSE(sizeof(double), 1));
-        else
-            padfZ = static_cast<double *>(
-                VSI_CALLOC_VERBOSE(sizeof(double), nPointCount));
+        padfZ = static_cast<double *>(
+            VSI_CALLOC_VERBOSE(sizeof(double), std::max(1, m_nPointCapacity)));
         if (padfZ == nullptr)
         {
             flags &= ~OGR_G_3D;
@@ -255,12 +251,8 @@ void OGRSimpleCurve::AddM()
 {
     if (padfM == nullptr)
     {
-        if (nPointCount == 0)
-            padfM =
-                static_cast<double *>(VSI_CALLOC_VERBOSE(sizeof(double), 1));
-        else
-            padfM = static_cast<double *>(
-                VSI_CALLOC_VERBOSE(sizeof(double), nPointCount));
+        padfM = static_cast<double *>(
+            VSI_CALLOC_VERBOSE(sizeof(double), std::max(1, m_nPointCapacity)));
         if (padfM == nullptr)
         {
             flags &= ~OGR_G_MEASURED;
@@ -413,22 +405,7 @@ void OGRSimpleCurve::setNumPoints(int nNewPointCount, int bZeroizeNewContent)
 {
     CPLAssert(nNewPointCount >= 0);
 
-    if (nNewPointCount == 0)
-    {
-        CPLFree(paoPoints);
-        paoPoints = nullptr;
-
-        CPLFree(padfZ);
-        padfZ = nullptr;
-
-        CPLFree(padfM);
-        padfM = nullptr;
-
-        nPointCount = 0;
-        return;
-    }
-
-    if (nNewPointCount > nPointCount)
+    if (nNewPointCount > m_nPointCapacity)
     {
         // Overflow of sizeof(OGRRawPoint) * nNewPointCount can only occur on
         // 32 bit, but we don't really want to allocate 2 billion points even on
@@ -439,54 +416,82 @@ void OGRSimpleCurve::setNumPoints(int nNewPointCount, int bZeroizeNewContent)
             CPLError(CE_Failure, CPLE_IllegalArg, "Too big point count.");
             return;
         }
-        OGRRawPoint *paoNewPoints =
-            static_cast<OGRRawPoint *>(VSI_REALLOC_VERBOSE(
-                paoPoints, sizeof(OGRRawPoint) * nNewPointCount));
+
+        // If first allocation, just aim for nNewPointCount
+        // Otherwise aim for nNewPointCount + nNewPointCount / 3 to have
+        // exponential growth.
+        const int nNewCapacity =
+            (nPointCount == 0 ||
+             nNewPointCount > std::numeric_limits<int>::max() /
+                                      static_cast<int>(sizeof(OGRRawPoint)) -
+                                  nNewPointCount / 3)
+                ? nNewPointCount
+                : nNewPointCount + nNewPointCount / 3;
+
+        if (nPointCount == 0 && paoPoints)
+        {
+            // If there was an allocated array, but the old number of points is
+            // 0, then free the arrays before allocating them, to avoid
+            // potential costly recopy of useless data.
+            VSIFree(paoPoints);
+            paoPoints = nullptr;
+            VSIFree(padfZ);
+            padfZ = nullptr;
+            VSIFree(padfM);
+            padfM = nullptr;
+            m_nPointCapacity = 0;
+        }
+
+        OGRRawPoint *paoNewPoints = static_cast<OGRRawPoint *>(
+            VSI_REALLOC_VERBOSE(paoPoints, sizeof(OGRRawPoint) * nNewCapacity));
         if (paoNewPoints == nullptr)
         {
             return;
         }
         paoPoints = paoNewPoints;
 
-        if (bZeroizeNewContent)
-        {
-            // gcc 8.0 (dev) complains about -Wclass-memaccess since
-            // OGRRawPoint() has a constructor. So use a void* pointer.  Doing
-            // the memset() here is correct since the constructor sets to 0.  We
-            // could instead use a std::fill(), but at every other place, we
-            // treat this class as a regular POD (see above use of realloc())
-            void *dest = static_cast<void *>(paoPoints + nPointCount);
-            memset(dest, 0,
-                   sizeof(OGRRawPoint) * (nNewPointCount - nPointCount));
-        }
-
         if (flags & OGR_G_3D)
         {
             double *padfNewZ = static_cast<double *>(
-                VSI_REALLOC_VERBOSE(padfZ, sizeof(double) * nNewPointCount));
+                VSI_REALLOC_VERBOSE(padfZ, sizeof(double) * nNewCapacity));
             if (padfNewZ == nullptr)
             {
                 return;
             }
             padfZ = padfNewZ;
-            if (bZeroizeNewContent)
-                memset(padfZ + nPointCount, 0,
-                       sizeof(double) * (nNewPointCount - nPointCount));
         }
 
         if (flags & OGR_G_MEASURED)
         {
             double *padfNewM = static_cast<double *>(
-                VSI_REALLOC_VERBOSE(padfM, sizeof(double) * nNewPointCount));
+                VSI_REALLOC_VERBOSE(padfM, sizeof(double) * nNewCapacity));
             if (padfNewM == nullptr)
             {
                 return;
             }
             padfM = padfNewM;
-            if (bZeroizeNewContent)
-                memset(padfM + nPointCount, 0,
-                       sizeof(double) * (nNewPointCount - nPointCount));
         }
+
+        m_nPointCapacity = nNewCapacity;
+    }
+
+    if (nNewPointCount > nPointCount && bZeroizeNewContent)
+    {
+        // gcc 8.0 (dev) complains about -Wclass-memaccess since
+        // OGRRawPoint() has a constructor. So use a void* pointer.  Doing
+        // the memset() here is correct since the constructor sets to 0.  We
+        // could instead use a std::fill(), but at every other place, we
+        // treat this class as a regular POD (see above use of realloc())
+        void *dest = static_cast<void *>(paoPoints + nPointCount);
+        memset(dest, 0, sizeof(OGRRawPoint) * (nNewPointCount - nPointCount));
+
+        if ((flags & OGR_G_3D) && padfZ)
+            memset(padfZ + nPointCount, 0,
+                   sizeof(double) * (nNewPointCount - nPointCount));
+
+        if ((flags & OGR_G_MEASURED) && padfM)
+            memset(padfM + nPointCount, 0,
+                   sizeof(double) * (nNewPointCount - nPointCount));
     }
 
     nPointCount = nNewPointCount;
@@ -1757,9 +1762,9 @@ OGRErr OGRSimpleCurve::importFromWkt(const char **ppszInput)
     int flagsFromInput = flags;
     nPointCount = 0;
 
-    int nMaxPoints = 0;
-    pszInput = OGRWktReadPointsM(pszInput, &paoPoints, &padfZ, &padfM,
-                                 &flagsFromInput, &nMaxPoints, &nPointCount);
+    pszInput =
+        OGRWktReadPointsM(pszInput, &paoPoints, &padfZ, &padfM, &flagsFromInput,
+                          &m_nPointCapacity, &nPointCount);
     if (pszInput == nullptr)
         return OGRERR_CORRUPT_DATA;
 
@@ -2629,6 +2634,7 @@ void OGRSimpleCurve::segmentize(double dfMaxLength)
     CPLFree(paoPoints);
     paoPoints = paoNewPoints;
     nPointCount = nNewPointCount;
+    m_nPointCapacity = nNewPointCount;
 
     if (padfZ != nullptr)
     {
@@ -2850,10 +2856,12 @@ OGRLineString *OGRLineString::TransferMembersAndDestroy(OGRLineString *poSrc,
         poDst->flags |= OGR_G_MEASURED;
     poDst->assignSpatialReference(poSrc->getSpatialReference());
     poDst->nPointCount = poSrc->nPointCount;
+    poDst->m_nPointCapacity = poSrc->m_nPointCapacity;
     poDst->paoPoints = poSrc->paoPoints;
     poDst->padfZ = poSrc->padfZ;
     poDst->padfM = poSrc->padfM;
     poSrc->nPointCount = 0;
+    poSrc->m_nPointCapacity = 0;
     poSrc->paoPoints = nullptr;
     poSrc->padfZ = nullptr;
     poSrc->padfM = nullptr;
@@ -2972,6 +2980,9 @@ static inline bool epsilonEqual(double a, double b, double eps)
 int OGRLineString::isClockwise() const
 
 {
+    // WARNING: keep in sync OGRLineString::isClockwise(),
+    // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
+
     if (nPointCount < 2)
         return TRUE;
 

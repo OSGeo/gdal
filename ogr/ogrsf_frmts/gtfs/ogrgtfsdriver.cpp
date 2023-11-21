@@ -282,7 +282,7 @@ OGRFeature *OGRGTFSLayer::GetNextFeature()
         if (poSrcFeature == nullptr)
             return nullptr;
 
-        auto poFeature = cpl::make_unique<OGRFeature>(m_poFeatureDefn);
+        auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
         const int nFieldCount = poSrcFeature->GetFieldCount();
         poFeature->SetFID(poSrcFeature->GetFID());
         auto poSrcLayerDefn = m_poUnderlyingLayer->GetLayerDefn();
@@ -482,7 +482,7 @@ void OGRGTFSShapesGeomLayer::Prepare()
         {
             const auto &osShapeId = kv.first;
             const auto &oMapPoints = kv.second;
-            auto poFeature = cpl::make_unique<OGRFeature>(m_poFeatureDefn);
+            auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
             poFeature->SetField(0, osShapeId.c_str());
             OGRLineString *poLS = new OGRLineString();
             for (const auto &kv2 : oMapPoints)
@@ -629,7 +629,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     const std::string osCSVBaseDirPrefix(std::string("CSV:") + osBaseDir);
 
-    auto poDS = cpl::make_unique<OGRGTFSDataset>();
+    auto poDS = std::make_unique<OGRGTFSDataset>();
 
     char **papszFilenames = VSIReadDir(osBaseDir.c_str());
     size_t nCountFound = 0;
@@ -662,7 +662,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (poSrcLayerDefn->GetFieldIndex("field_1") < 0)
                 {
                     poDS->m_apoLayers.emplace_back(
-                        cpl::make_unique<OGRGTFSLayer>(
+                        std::make_unique<OGRGTFSLayer>(
                             osCSVBaseDirPrefix, CPLGetBasename(*papszIter),
                             std::move(poCSVDataset)));
                 }
@@ -689,7 +689,7 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
             if (poUnderlyingLayer)
             {
                 poDS->m_apoLayers.emplace_back(
-                    cpl::make_unique<OGRGTFSShapesGeomLayer>(
+                    std::make_unique<OGRGTFSShapesGeomLayer>(
                         std::move(poCSVDataset)));
             }
         }

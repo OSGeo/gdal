@@ -739,11 +739,11 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D(NTFRecord *poRecord,
 
     else if (nGType == 2)
     {
-        if (14 +
-                static_cast<GIntBig>(nNumCoord - 1) *
-                    (GetXYLen() * 2 + nZWidth + 2) +
-                1 + 2 * GetXYLen() + nZWidth - 1 >
-            INT_MAX)
+        if (nNumCoord < 0 || 14 +
+                                     static_cast<GIntBig>(nNumCoord - 1) *
+                                         (GetXYLen() * 2 + nZWidth + 2) +
+                                     1 + 2 * GetXYLen() + nZWidth - 1 >
+                                 INT_MAX)
         {
             return nullptr;
         }

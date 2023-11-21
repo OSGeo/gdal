@@ -89,6 +89,8 @@
 %token SWQT_ALL                 "ALL"
 %token SWQT_LIMIT               "LIMIT"
 %token SWQT_OFFSET              "OFFSET"
+%token SWQT_EXCEPT              "EXCEPT"
+%token SWQT_EXCLUDE             "EXCLUDE"
 
 %token SWQT_VALUE_START
 %token SWQT_SELECT_START
@@ -640,6 +642,24 @@ select_field_list:
     column_spec
     | column_spec ',' select_field_list
 
+exclude_field:
+    field_value
+        {
+            if ( !context->poCurSelect->PushExcludeField( $1 ) )
+            {
+                delete $1;
+                YYERROR;
+            }
+        }
+
+exclude_field_list:
+    exclude_field
+    | exclude_field ',' exclude_field_list
+
+except_or_exclude:
+    SWQT_EXCEPT
+    | SWQT_EXCLUDE
+
 column_spec:
     value_expr
         {
@@ -659,6 +679,21 @@ column_spec:
                 YYERROR;
             }
             delete $2;
+        }
+
+    | '*' except_or_exclude '(' exclude_field_list ')'
+        {
+            swq_expr_node *poNode = new swq_expr_node();
+            poNode->eNodeType = SNT_COLUMN;
+            poNode->string_value = CPLStrdup( "*" );
+            poNode->table_index = -1;
+            poNode->field_index = -1;
+
+            if( !context->poCurSelect->PushField( poNode ) )
+            {
+                delete poNode;
+                YYERROR;
+            }
         }
 
     | '*'

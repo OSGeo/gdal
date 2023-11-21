@@ -711,6 +711,23 @@ class GPKGChecker(object):
                     pass
                 if not spatialite_loaded:
                     raise e
+
+                # Check if we must set PRAGMA trusted_schema = ON
+                c.execute("SELECT CountUnsafeTriggers()")
+                if c.fetchone()[0] == 0:
+                    temp_conn = sqlite3.connect(":memory:")
+                    temp_conn.enable_load_extension(True)
+                    temp_conn.execute('SELECT load_extension("mod_spatialite")')
+                    temp_c = temp_conn.cursor()
+                    temp_c.execute("CREATE VIEW v AS SELECT ST_Multi(NULL)")
+                    try:
+                        temp_c.execute("SELECT * FROM v")
+                    except sqlite3.OperationalError:
+                        temp_c.execute("PRAGMA trusted_schema = ON")
+                        temp_c.execute("SELECT * FROM v")
+
+                        c.execute("PRAGMA trusted_schema = ON")
+
                 c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
 
         cols = c.fetchall()

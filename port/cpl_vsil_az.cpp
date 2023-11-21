@@ -509,8 +509,14 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
     CPLString GetURLFromFilename(const CPLString &osFilename) override;
 
+    VSIAzureBlobHandleHelper *CreateAzHandleHelper(const char *pszURI,
+                                                   bool bAllowNoObject);
+
     IVSIS3LikeHandleHelper *CreateHandleHelper(const char *pszURI,
-                                               bool bAllowNoObject) override;
+                                               bool bAllowNoObject) override
+    {
+        return CreateAzHandleHelper(pszURI, bAllowNoObject);
+    }
 
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
@@ -718,7 +724,7 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
             pszFilename + GetFSPrefix().size(), GetFSPrefix());
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = cpl::make_unique<VSIAzureWriteHandle>(
+    auto poHandle = std::make_unique<VSIAzureWriteHandle>(
         this, pszFilename, poHandleHelper, papszOptions);
     if (!poHandle->IsOK())
     {
@@ -1399,11 +1405,11 @@ CPLString VSIAzureFSHandler::GetURLFromFilename(const CPLString &osFilename)
 }
 
 /************************************************************************/
-/*                          CreateHandleHelper()                        */
+/*                        CreateAzHandleHelper()                       */
 /************************************************************************/
 
-IVSIS3LikeHandleHelper *
-VSIAzureFSHandler::CreateHandleHelper(const char *pszURI, bool)
+VSIAzureBlobHandleHelper *
+VSIAzureFSHandler::CreateAzHandleHelper(const char *pszURI, bool)
 {
     return VSIAzureBlobHandleHelper::BuildFromURI(pszURI,
                                                   GetFSPrefix().c_str());
@@ -2031,27 +2037,36 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
     NetworkStatisticsAction oContextAction("CopyObject");
 
     CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
-    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-        CreateHandleHelper(osTargetNameWithoutPrefix, false));
-    if (poS3HandleHelper == nullptr)
+    auto poHandleHelper = std::unique_ptr<VSIAzureBlobHandleHelper>(
+        CreateAzHandleHelper(osTargetNameWithoutPrefix, false));
+    if (poHandleHelper == nullptr)
     {
         return -1;
     }
 
     CPLString osSourceHeader("x-ms-copy-source: ");
+    bool bUseSourceSignedURL = true;
     if (STARTS_WITH(oldpath, GetFSPrefix().c_str()))
     {
         CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
-        auto poS3HandleHelperSource = std::unique_ptr<IVSIS3LikeHandleHelper>(
-            CreateHandleHelper(osSourceNameWithoutPrefix, false));
-        if (poS3HandleHelperSource == nullptr)
+        auto poHandleHelperSource = std::unique_ptr<VSIAzureBlobHandleHelper>(
+            CreateAzHandleHelper(osSourceNameWithoutPrefix, false));
+        if (poHandleHelperSource == nullptr)
         {
             return -1;
         }
-
-        osSourceHeader += poS3HandleHelperSource->GetURLNoKVP();
+        // We can use a unsigned source URL only if
+        // the source and target are in the same bucket
+        if (poHandleHelper->GetStorageAccount() ==
+                poHandleHelperSource->GetStorageAccount() &&
+            poHandleHelper->GetBucket() == poHandleHelperSource->GetBucket())
+        {
+            bUseSourceSignedURL = false;
+            osSourceHeader += poHandleHelperSource->GetURLNoKVP();
+        }
     }
-    else
+
+    if (bUseSourceSignedURL)
     {
         VSIStatBufL sStat;
         // This has the effect of making sure that the S3 region is correct
@@ -2094,18 +2109,18 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "PUT");
 
         struct curl_slist *headers = static_cast<struct curl_slist *>(
-            CPLHTTPSetOptions(hCurlHandle, poS3HandleHelper->GetURL().c_str(),
+            CPLHTTPSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, osSourceHeader.c_str());
         headers = VSICurlSetContentTypeFromExt(headers, newpath);
         headers = curl_slist_append(headers, "Content-Length: 0");
         headers = VSICurlMergeHeaders(
-            headers, poS3HandleHelper->GetCurlHeaders("PUT", headers));
+            headers, poHandleHelper->GetCurlHeaders("PUT", headers));
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         CurlRequestHelper requestHelper;
         const long response_code = requestHelper.perform(
-            hCurlHandle, headers, this, poS3HandleHelper.get());
+            hCurlHandle, headers, this, poHandleHelper.get());
 
         NetworkStatisticsLogger::LogPUT(0);
 
@@ -2122,7 +2137,7 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poS3HandleHelper->GetURL().c_str(), dfRetryDelay);
+                         poHandleHelper->GetURL().c_str(), dfRetryDelay);
                 CPLSleep(dfRetryDelay);
                 dfRetryDelay = dfNewRetryDelay;
                 nRetryCount++;
@@ -2141,7 +2156,7 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
         }
         else
         {
-            InvalidateCachedData(poS3HandleHelper->GetURLNoKVP().c_str());
+            InvalidateCachedData(poHandleHelper->GetURLNoKVP().c_str());
 
             CPLString osFilenameWithoutSlash(newpath);
             if (!osFilenameWithoutSlash.empty() &&

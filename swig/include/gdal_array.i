@@ -681,7 +681,6 @@ int GDALTermProgress( double, const char *, void * );
     }
 %#endif
     if( result != NULL && bLocalUseExceptions ) {
-        StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
 %#endif
@@ -714,7 +713,6 @@ GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray, bool binterleave)
     }
 %#endif
     if( result != NULL && bLocalUseExceptions ) {
-        StoreLastException();
 %#ifdef SED_HACKS
         bLocalUseExceptionsCode = FALSE;
 %#endif
@@ -1378,6 +1376,7 @@ static bool AddNumpyArrayToDict(PyObject *dict,
         // numpy can't deal with zero length strings
         int64_t maxLength = 1;
         int64_t minLength = ((int64_t)0x7FFFFFFF << 32) | 0xFFFFFFFF;
+        int64_t averageLength = 0;
         for( npy_intp j = 0; j < dims; j++ )
         {
             const int64_t nLength = offsets[j+1] - offsets[j];
@@ -1385,7 +1384,10 @@ static bool AddNumpyArrayToDict(PyObject *dict,
                 minLength = nLength;
             if( nLength > maxLength )
                 maxLength = nLength;
+            averageLength += nLength;
         }
+        if( dims )
+            averageLength /= dims;
 
         if( arrowType[0] == 'Z' && (minLength == 0 || minLength != maxLength || maxLength > 0x7FFFFFFF) )
         {
@@ -1408,6 +1410,39 @@ static bool AddNumpyArrayToDict(PyObject *dict,
                     subObj = PyBytes_FromStringAndSize(
                         ((const char*)arrayField->buffers[2]) + offsets[j],
                         static_cast<size_t>(nLength));
+                }
+                memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                       &subObj,
+                       sizeof(PyObject*));
+            }
+        }
+        else if( arrowType[0] == 'U' && dims > 0 && maxLength > 32 &&
+                 maxLength <= 0x7FFFFFFF &&
+                 maxLength > 100 * 1000 / dims &&
+                 maxLength > averageLength * 2 )
+        {
+            // If the maximum string size is significantly large, and
+            // larger than the average one, then do not use fixed size
+            // strings, but create an array of string objects to save memory
+            const uint8_t* panNotNulls =
+                 arrayField->null_count == 0 ? NULL :
+                (const uint8_t*)arrayField->buffers[0];
+            numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+            for( npy_intp j = 0; j < dims; j++ )
+            {
+                PyObject* subObj;
+                size_t srcOffset = static_cast<size_t>(arrayField->offset + j);
+                if( panNotNulls && (panNotNulls[srcOffset / 8] & (1 << (srcOffset%8))) == 0 )
+                {
+                    subObj = Py_None;
+                    Py_INCREF(subObj);
+                }
+                else
+                {
+                    const int32_t nLength = int(offsets[j+1] - offsets[j]);
+                    subObj = PyUnicode_FromStringAndSize(
+                        ((const char*)arrayField->buffers[2]) + offsets[j],
+                        nLength);
                 }
                 memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
                        &subObj,
@@ -1565,6 +1600,91 @@ static bool AddNumpyArrayToDict(PyObject *dict,
                     memset(((char*)PyArray_GETPTR1((PyArrayObject *) subArray, k)) + nLength,
                            0,
                            maxLength - nLength);
+                }
+            }
+
+            memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                   &subArray,
+                   sizeof(PyObject*));
+        }
+    }
+    else if( bIsLargeList &&
+             schemaField->children[0]->format[0] == 'U' &&
+             schemaField->children[0]->format[1] == '\0' )
+    {
+        // List of strings
+        if( arrayField->n_buffers != 2 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field %s: arrayField->n_buffers != 2",
+                     schemaField->name);
+            return false;
+        }
+        if( arrayField->n_children != 1 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field %s: arrayField->n_children != 1",
+                     schemaField->name);
+            return false;
+        }
+        if( arrayField->children[0]->n_buffers != 3 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field %s: arrayField->children[0]->n_buffers != 3",
+                     schemaField->name);
+            return false;
+        }
+        const int64_t* offsets = (const int64_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset);
+        if( arrayField->children[0]->length < offsets[arrayField->length] )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Field %s: arrayField->children[0]->length = (%d) < offsets[arrayField->length] (=%d)",
+                     schemaField->name,
+                     int(arrayField->children[0]->length),
+                     int(offsets[arrayField->length]));
+            return false;
+        }
+        const int64_t* offsetsToBytes = (const int64_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
+        const char* bytes = (const char*)arrayField->children[0]->buffers[2];
+        numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+        for( npy_intp j = 0; j < dims; j++ )
+        {
+            npy_intp nStrings = offsets[j+1] - offsets[j];
+            int64_t maxLength = 1;
+            for( npy_intp k = 0; k < nStrings; k++ )
+            {
+                const int64_t nLength = offsetsToBytes[offsets[j] + k + 1] - offsetsToBytes[offsets[j] + k];
+                if( nLength > maxLength )
+                    maxLength = nLength;
+            }
+            if( maxLength >= INT_MAX )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too large string");
+                return false;
+            }
+
+            // create the dtype string
+            PyObject *pDTypeString = PyUnicode_FromFormat("S%d", int(maxLength));
+            // out type description object
+            PyArray_Descr *pDescr = NULL;
+            PyArray_DescrConverter(pDTypeString, &pDescr);
+            Py_DECREF(pDTypeString);
+
+            PyObject* subArray = PyArray_SimpleNewFromDescr(1, &nStrings, pDescr);
+            for( npy_intp k = 0; k < nStrings; k++ )
+            {
+                const int64_t nLength = offsetsToBytes[offsets[j] + k + 1] - offsetsToBytes[offsets[j] + k];
+                if( nLength > 0 )
+                {
+                    memcpy(PyArray_GETPTR1((PyArrayObject *) subArray, k),
+                           bytes + offsetsToBytes[offsets[j] + k],
+                           int(nLength));
+                }
+                if( nLength < maxLength )
+                {
+                    memset(((char*)PyArray_GETPTR1((PyArrayObject *) subArray, k)) + nLength,
+                           0,
+                           int(maxLength - nLength));
                 }
             }
 
@@ -1803,10 +1923,20 @@ static bool AddNumpyArrayToDict(PyObject *dict,
     }
     else
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Field %s: Unhandled arrow type: %s",
-                 (osPrefix + schemaField->name).c_str(),
-                 arrowType);
+        if( strcmp(arrowType, "+l") == 0 || strcmp(arrowType, "+L") == 0 )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Field %s: Unhandled arrow type: %s %s",
+                     (osPrefix + schemaField->name).c_str(),
+                     arrowType, schemaField->children[0]->format);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Field %s: Unhandled arrow type: %s",
+                     (osPrefix + schemaField->name).c_str(),
+                     arrowType);
+        }
     }
 
     if( numpyArray )

@@ -33,6 +33,8 @@
 
 #include "../arrow_common/ograrrowwriterlayer.hpp"
 
+#include "ogr_wkb.h"
+
 /************************************************************************/
 /*                      OGRParquetWriterLayer()                         */
 /************************************************************************/
@@ -89,7 +91,7 @@ bool OGRParquetWriterLayer::IsSupportedGeometryType(
 /************************************************************************/
 
 bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
-                                       OGRSpatialReference *poSpatialRef,
+                                       const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
     const char *pszGeomEncoding =
@@ -418,7 +420,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                         char *pszPROJJSON = nullptr;
                         oSRSIdentified.exportToPROJJSON(&pszPROJJSON, nullptr);
                         CPLJSONDocument oCRSDoc;
-                        oCRSDoc.LoadMemory(pszPROJJSON);
+                        CPL_IGNORE_RET_VAL(oCRSDoc.LoadMemory(pszPROJJSON));
                         CPLFree(pszPROJJSON);
                         CPLJSONObject oCRSRoot = oCRSDoc.GetRoot();
                         RemoveIDFromMemberOfEnsembles(oCRSRoot);
@@ -618,7 +620,7 @@ void OGRParquetWriterLayer::CreateSchema()
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRParquetWriterLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGRParquetWriterLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                               int bApproxOK)
 {
     OGRErr eErr = OGRArrowWriterLayer::CreateGeomField(poField, bApproxOK);
@@ -694,6 +696,19 @@ bool OGRParquetWriterLayer::FlushGroup()
 }
 
 /************************************************************************/
+/*                    FixupWKBGeometryBeforeWriting()                   */
+/************************************************************************/
+
+void OGRParquetWriterLayer::FixupWKBGeometryBeforeWriting(GByte *pabyWkb,
+                                                          size_t nLen)
+{
+    if (!m_bForceCounterClockwiseOrientation)
+        return;
+
+    OGRWKBFixupCounterClockWiseExternalRing(pabyWkb, nLen);
+}
+
+/************************************************************************/
 /*                     FixupGeometryBeforeWriting()                     */
 /************************************************************************/
 
@@ -727,3 +742,79 @@ void OGRParquetWriterLayer::FixupGeometryBeforeWriting(OGRGeometry *poGeom)
         }
     }
 }
+
+/************************************************************************/
+/*                          WriteArrowBatch()                           */
+/************************************************************************/
+
+#if PARQUET_VERSION_MAJOR > 10
+inline bool
+OGRParquetWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
+                                       struct ArrowArray *array,
+                                       CSLConstList papszOptions)
+{
+    return WriteArrowBatchInternal(
+        schema, array, papszOptions,
+        [this](const std::shared_ptr<arrow::RecordBatch> &poBatch)
+        {
+            auto status = m_poFileWriter->NewBufferedRowGroup();
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "NewBufferedRowGroup() failed with %s",
+                         status.message().c_str());
+                return false;
+            }
+
+            status = m_poFileWriter->WriteRecordBatch(*poBatch);
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "WriteRecordBatch() failed: %s",
+                         status.message().c_str());
+                return false;
+            }
+
+            return true;
+        });
+}
+#endif
+
+/************************************************************************/
+/*                         TestCapability()                             */
+/************************************************************************/
+
+inline int OGRParquetWriterLayer::TestCapability(const char *pszCap)
+{
+#if PARQUET_VERSION_MAJOR <= 10
+    if (EQUAL(pszCap, OLCFastWriteArrowBatch))
+        return false;
+#endif
+    return OGRArrowWriterLayer::TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                        IsArrowSchemaSupported()                      */
+/************************************************************************/
+
+#if PARQUET_VERSION_MAJOR > 10
+bool OGRParquetWriterLayer::IsArrowSchemaSupported(
+    const struct ArrowSchema *schema, CSLConstList papszOptions,
+    std::string &osErrorMsg) const
+{
+    if (schema->format[0] == 'e' && schema->format[1] == 0)
+    {
+        osErrorMsg = "float16 not supported";
+        return false;
+    }
+    for (int64_t i = 0; i < schema->n_children; ++i)
+    {
+        if (!IsArrowSchemaSupported(schema->children[i], papszOptions,
+                                    osErrorMsg))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+#endif

@@ -204,7 +204,7 @@ void IniFile::Load()
                 break;
             case ReadFindKey:
                 s = GetLine(filIni);  // fall through (no break)
-                CPL_FALLTHROUGH
+                [[fallthrough]];
             case FindKey:
             {
                 size_t iEqu = s.find_first_of('=');

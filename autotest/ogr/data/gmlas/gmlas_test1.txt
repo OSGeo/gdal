@@ -59,9 +59,9 @@ decimal: Real (0.0) NOT NULL
 byte: Integer (0.0) NOT NULL
 short: Integer(Int16) (0.0) NOT NULL
 positiveinteger: Integer (0.0) NOT NULL
-dt: DateTime (0.0) NOT NULL
-date: Date (0.0) NOT NULL
-time: Time (0.0) NOT NULL
+dt: DateTime NOT NULL
+date: Date NOT NULL
+time: Time NOT NULL
 boolean: Integer(Boolean) (0.0) NOT NULL
 boolean_array: IntegerList(Boolean) (0.0) NOT NULL
 base64binary: Binary (0.0) NOT NULL
@@ -179,7 +179,7 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_otherns_id: String (0.0) NOT NULL
-value: DateTime (0.0)
+value: DateTime
 OGRFeature(main_elt_dt_array):1
   ogr_pkid (String) = otherns_id_dt_array_1
   parent_otherns_id (String) = otherns_id
@@ -219,7 +219,7 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_otherns_id: String (0.0) NOT NULL
-subelement: DateTime (0.0) NOT NULL
+subelement: DateTime NOT NULL
 OGRFeature(main_elt_unbounded_sequence_1_dt):1
   ogr_pkid (String) = otherns_id_unbounded_sequence_1_dt_1
   parent_otherns_id (String) = otherns_id
@@ -238,7 +238,7 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_otherns_id: String (0.0) NOT NULL
-value: DateTime (0.0)
+value: DateTime
 OGRFeature(main_elt_sequence_1_dt_unbounded_subelement):1
   ogr_pkid (String) = otherns_id_subelement_1
   parent_otherns_id (String) = otherns_id
@@ -257,7 +257,7 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_otherns_id: String (0.0) NOT NULL
-subelement: DateTime (0.0) NOT NULL
+subelement: DateTime NOT NULL
 OGRFeature(main_elt_sequence_unbounded_dt_1):1
   ogr_pkid (String) = otherns_id_sequence_unbounded_dt_1_1
   parent_otherns_id (String) = otherns_id
@@ -292,7 +292,7 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_ogr_pkid: String (0.0) NOT NULL
-value: DateTime (0.0)
+value: DateTime
 OGRFeature(main_elt_sequence_sequence_subsequence_subelement):1
   ogr_pkid (String) = otherns_id_subsequence_1_subelement_1
   parent_ogr_pkid (String) = otherns_id_subsequence_1
@@ -515,7 +515,7 @@ Layer SRS WKT:
 (unknown)
 ogr_pkid: String (0.0) NOT NULL
 parent_ogr_pkid: String (0.0) NOT NULL
-value: DateTime (0.0)
+value: DateTime
 OGRFeature(main_elt_group3_group3_elt3_b2):1
   ogr_pkid (String) = otherns_id_group3_elt1_1_b2_1
   parent_ogr_pkid (String) = otherns_id_group3_elt1_1

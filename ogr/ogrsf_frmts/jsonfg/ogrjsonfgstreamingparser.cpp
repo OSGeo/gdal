@@ -64,7 +64,7 @@ OGRJSONFGStreamingParser::~OGRJSONFGStreamingParser() = default;
 std::unique_ptr<OGRJSONFGStreamingParser> OGRJSONFGStreamingParser::Clone()
 {
     auto poRet =
-        cpl::make_unique<OGRJSONFGStreamingParser>(m_oReader, IsFirstPass());
+        std::make_unique<OGRJSONFGStreamingParser>(m_oReader, IsFirstPass());
     poRet->m_osRequestedLayer = m_osRequestedLayer;
     return poRet;
 }

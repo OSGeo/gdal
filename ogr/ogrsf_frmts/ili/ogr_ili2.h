@@ -79,7 +79,8 @@ class OGRILI2Layer final : public OGRLayer
         return oGeomFieldInfos[cFieldName].iliGeomType;
     }
 
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
 };
@@ -121,7 +122,7 @@ class OGRILI2DataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 

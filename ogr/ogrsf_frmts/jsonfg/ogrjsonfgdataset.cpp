@@ -188,7 +188,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
 
     if (nSrcType == eGeoJSONSourceFile)
     {
-        auto poReader = cpl::make_unique<OGRJSONFGReader>();
+        auto poReader = std::make_unique<OGRJSONFGReader>();
         SetReaderOptions(*(poReader.get()));
 
         // Try to use a streaming parser if the content of the file seems
@@ -223,7 +223,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
                     auto poLayer = cpl::down_cast<OGRJSONFGStreamedLayer *>(
                         apoLayers_[0].get());
                     poLayer->SetFile(std::move(fp));
-                    auto poParser = cpl::make_unique<OGRJSONFGStreamingParser>(
+                    auto poParser = std::make_unique<OGRJSONFGStreamingParser>(
                         *(poReader.get()), false);
                     poLayer->SetStreamingParser(std::move(poParser));
                 }
@@ -243,7 +243,7 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
                     }
                     poLayer->SetFile(std::move(fpNew));
 
-                    auto poParser = cpl::make_unique<OGRJSONFGStreamingParser>(
+                    auto poParser = std::make_unique<OGRJSONFGStreamingParser>(
                         *(poReader.get()), false);
                     poLayer->SetStreamingParser(std::move(poParser));
                 }
@@ -509,7 +509,7 @@ bool OGRJSONFGDataset::EmitStartFeaturesIfNeededAndReturnIfFirstFeature()
 /************************************************************************/
 
 OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eGType,
                                          char **papszOptions)
 {
@@ -633,7 +633,7 @@ OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                  "ellipsoid");
     }
 
-    auto poLayer = cpl::make_unique<OGRJSONFGWriteLayer>(
+    auto poLayer = std::make_unique<OGRJSONFGWriteLayer>(
         pszNameIn, poSRS, std::move(poCTToWGS84), osCoordRefSys, eGType,
         papszOptions, this);
     apoLayers_.emplace_back(std::move(poLayer));

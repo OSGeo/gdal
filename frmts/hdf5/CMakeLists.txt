@@ -10,6 +10,9 @@ set(SOURCE
     bagdataset.cpp
     hdf5multidim.cpp
     hdf5eosparser.cpp
+    s100.cpp
+    s100.h
+    s102dataset.cpp
 )
 
 add_gdal_driver(TARGET gdal_HDF5 SOURCES ${SOURCE} PLUGIN_CAPABLE)

@@ -692,10 +692,14 @@ DumpDimensions(const std::shared_ptr<GDALGroup> &rootGroup,
             }
             else
             {
+                std::set<std::string> alreadyDumpedDimensionsLocal(
+                    alreadyDumpedDimensions);
+                alreadyDumpedDimensionsLocal.insert(osFullname);
+
                 auto indexingVariableContext(serializer.MakeObjectContext());
                 serializer.AddObjKey(poIndexingVariable->GetName());
                 DumpArray(rootGroup, poIndexingVariable, serializer, psOptions,
-                          alreadyDumpedDimensions,
+                          alreadyDumpedDimensionsLocal,
                           /* bOutputObjType = */ false,
                           /* bOutputName = */ false);
             }

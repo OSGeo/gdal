@@ -1703,7 +1703,7 @@ static OGRFeature *OGR2SQLITE_FeatureFromArgs(OGR2SQLITE_vtab *pMyVTab,
         return nullptr;
     }
 
-    auto poFeature = cpl::make_unique<OGRFeature>(poLayerDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
 
     if (pMyVTab->bHasFIDColumn)
     {
@@ -1911,6 +1911,10 @@ static const struct sqlite3_module sOGR2SQLITEModule = {
 #if SQLITE_VERSION_NUMBER >=                                                   \
     3025003L /* should be the first version with the below symbols */
     nullptr,  // xShadowName
+#if SQLITE_VERSION_NUMBER >=                                                   \
+    3044000L /* should be the first version with the below symbols */
+    nullptr,  // xIntegrity
+#endif
 #endif
 #endif
 };

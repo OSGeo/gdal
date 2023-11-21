@@ -325,10 +325,9 @@ OGRErr OGRMSSQLSpatialDataSource::DeleteLayer(int iLayer)
 /*                            CreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMSSQLSpatialDataSource::ICreateLayer(const char *pszLayerName,
-                                                  OGRSpatialReference *poSRS,
-                                                  OGRwkbGeometryType eType,
-                                                  char **papszOptions)
+OGRLayer *OGRMSSQLSpatialDataSource::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eType, char **papszOptions)
 
 {
     char *pszTableName = nullptr;

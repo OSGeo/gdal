@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <cctype>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -91,6 +92,77 @@ static void HDF5DatasetDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
+/*                    HDF5DriverGetSubdatasetInfo()                     */
+/************************************************************************/
+
+struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit HDF5DriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF5:"))
+        {
+            return;
+        }
+
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
+
+        if (iPartsCount >= 3)
+        {
+
+            m_driverPrefixComponent = aosParts[0];
+
+            int subdatasetIndex{2};
+            const bool hasDriveLetter{
+                (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
+                (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
+
+            m_pathComponent = aosParts[1];
+
+            if (hasDriveLetter)
+            {
+                m_pathComponent.append(":");
+                m_pathComponent.append(aosParts[2]);
+                subdatasetIndex++;
+            }
+
+            m_subdatasetComponent = aosParts[subdatasetIndex];
+
+            // Append any remaining part
+            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
+            {
+                m_subdatasetComponent.append(":");
+                m_subdatasetComponent.append(aosParts[i]);
+            }
+        }
+    }
+};
+
+static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
+{
+    if (STARTS_WITH_CI(pszFileName, "HDF5:"))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            std::make_unique<HDF5DriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                              HDF5Dataset                             */
 /* ==================================================================== */
@@ -121,11 +193,13 @@ void GDALRegister_HDF5()
     poDriver->pfnOpen = HDF5Dataset::Open;
     poDriver->pfnIdentify = HDF5Dataset::Identify;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
+    poDriver->pfnGetSubdatasetInfoFunc = HDF5DriverGetSubdatasetInfo;
     GetGDALDriverManager()->RegisterDriver(poDriver);
 
 #ifdef HDF5_PLUGIN
     GDALRegister_HDF5Image();
     GDALRegister_BAG();
+    GDALRegister_S102();
 #endif
 }
 
@@ -572,8 +646,6 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->ReadGlobalAttributes(true);
 
-    poDS->SetMetadata(poDS->m_aosMetadata.List());
-
     if (STARTS_WITH(poDS->m_aosMetadata.FetchNameValueDef("mission_name", ""),
                     "Sentinel 3") &&
         EQUAL(
@@ -587,6 +659,22 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
         delete poDS;
         return nullptr;
     }
+
+    // Safety belt if S102Dataset::Identify() failed
+    if (STARTS_WITH(
+            poDS->m_aosMetadata.FetchNameValueDef("productSpecification", ""),
+            "INT.IHO.S-102.") &&
+        GDALGetDriverByName("S102") != nullptr)
+    {
+        delete poDS;
+        std::string osS102Filename("S102:\"");
+        osS102Filename +=
+            CPLString(poOpenInfo->pszFilename).replaceAll("\"", "\\\"");
+        osS102Filename += '"';
+        return GDALDataset::Open(osS102Filename.c_str(), GDAL_OF_RASTER);
+    }
+
+    poDS->SetMetadata(poDS->m_aosMetadata.List());
 
     if (CSLCount(poDS->papszSubDatasets) / 2 >= 1)
         poDS->SetMetadata(poDS->papszSubDatasets, "SUBDATASETS");

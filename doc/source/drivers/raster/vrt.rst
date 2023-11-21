@@ -182,7 +182,7 @@ The attributes for VRTRasterBand are:
 - **blockYSize** (optional, GDAL >= 3.3): block height.
   If not specified, defaults to the minimum of the raster height and 128.
 
-This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, etc.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
+This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, AveragedSource, KernelFilteredSource and ArraySource.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
 
 The allowed subelements for VRTRasterBand are :
 
@@ -304,6 +304,8 @@ The allowed subelements for VRTRasterBand are :
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
 - **KernelFilteredSource**: The KernelFilteredSource_ is a pixel source derived from the Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements, but it also passes the data through a simple filtering kernel specified with the Kernel element.
+
+- **ArraySource**: The ArraySource_ indicates that raster data should be read from a 2D array using the multidimensional API.
 
 - **MaskBand**: This element represents a mask band that is specific to the VRTRasterBand it contains. It must contain a single VRTRasterBand child element, that is the description of the mask band itself.
 
@@ -492,6 +494,212 @@ For example, a Gaussian blur:
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
     </KernelFilteredSource>
+
+ArraySource
+~~~~~~~~~~~
+
+.. versionadded:: 3.8
+
+The ArraySource_ indicates that raster data should be read from a 2D array using
+the multidimensional API. If the original array is not a 3D array, a DerivedArray
+with a View step must be typically used to create a 2D slice.
+
+ArraySource can have the following child elements:
+
+* ``SingleSourceArray``, ``DerivedArray`` or ``Array``: required as first child element
+* ``SrcRect`` (same syntax and semantics as in SimpleSource): optional
+* ``DstRect`` (same syntax and semantics as in SimpleSource): optional
+
+SingleSourceArray
+^^^^^^^^^^^^^^^^^
+
+SingleSourceArray references a multidimensional raster through a SourceFilename
+element and an array through its full path within it with SourceArray. When
+SingleSourceArray is used as a direct child of ArraySource, it must be a 2-dimensional
+array.
+
+Example:
+
+.. code-block:: xml
+
+    <ArraySource>
+      <SingleSourceArray>
+        <SourceFilename relativeToVRT="1">byte.nc</SourceFilename>
+        <SourceArray>/my_array</SourceArray>
+      </SingleSourceArray>
+    </ArraySource>
+
+Be careful that quite often arrays in the multidimensional API use a "bottom-up"
+approach, and it might thus be needed to reverse the Y axis, with a View expression
+with a DerivedArray (cf below example)
+
+DerivedArray
+^^^^^^^^^^^^
+
+A DerivedArray starts with an array coming from a SingleSourceArray
+(but it could also be a DerivedArray or a Array), which must be the first
+child element, and applies different processing steps wrapped in zero or more
+Step elements.
+
+* View step: applies the :cpp:func:`GDALMDArray::GetView` method
+
+The ``View`` element must have an ``expr`` attribute, which is the argument of
+:cpp:func:`GDALMDArray::GetView` method
+
+The following example slices the 3D dimension at index 0 and flips the vertical
+axis (assuming 1st dimension is a non-spatial one, 2nd dimension is the Y
+dimension and 3rd dimension is the X dimension)
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">3d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <View expr="[0,::-1,...]"/>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* ``Transpose`` step: applies the :cpp:func:`GDALMDArray::Transpose` method
+
+The ``Transpose`` element must have a ``newOrder`` attribute, which is the argument of
+:cpp:func:`GDALMDArray::Transpose` method
+
+The following example transposes the 2 axis of a 2D array
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">2d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <Transpose newOrder="[1,0]"/>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* Resample step: applies the :cpp:func:`GDALMDArray::GetResampled` method
+
+The ``Resample`` element may have the following child elements, which correspond
+to the arguments of the :cpp:func:`GDALMDArray::GetResampled` method:
+
+- ``Dimension``: with a ``name`` and ``size`` attribute. This element may be repeated.
+- ``ResampleAlg``: whose value is ``NearestNeighbour`` (default), ``Cubic``, ``CubicSpline``, ``Bilinear``, ``Lanczos``, ``Average``, ``RMS`` or ``Mode``
+- ``SRS``: target SRS (string recognized by :cpp:func:`OGRSpatialReference::SetFromUserInput`)
+- ``Option`` with a ``name`` attribute and the value as the content of the element. This element may be repeated.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+            <SourceArray>/Band1</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <Resample>
+                <Dimension name="Y" size="40"/>
+                <Dimension name="X" size="40"/>
+                <ResampleAlg>Bilinear</ResampleAlg>
+                <SRS>EPSG:4267</SRS>
+                <Option name="IGNORED">YES</Option>
+              </Resample>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* Grid step: applies the :cpp:func:`GDALMDArray::GetGridded` method
+
+The ``Grid`` element may have the following child elements, which correspond
+to the arguments of the :cpp:func:`GDALMDArray::GetGridded` method:
+
+- ``GridOptions`` (required): name and options of the gridding algorithm
+- ``XArray`` (optional): its child value should be a SingleSourceArray, DerivedArray or Array pointing to the array to use for the X dimension. This is needed if the source array does not have a ``coordinates`` attribute.
+- ``YArray`` (optional): its child value should be a SingleSourceArray, DerivedArray or Array pointing to the array to use for the Y dimension. This is needed if the source array does not have a ``coordinates`` attribute.
+- ``Option`` with a ``name`` attribute and the value as the content of the element. This element may be repeated.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+            <SourceArray>/Band1</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <Grid>
+                  <GridOptions>invdist</GridOptions>
+                  <XArray>
+                      <SingleSourceArray>
+                        <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+                        <SourceArray>/varX</SourceArray>
+                      </SingleSourceArray>
+                  </XArray>
+                  <YArray>
+                      <SingleSourceArray>
+                        <SourceFilename relativeToVRT="1">test.nc</SourceFilename>
+                        <SourceArray>/varY</SourceArray>
+                      </SingleSourceArray>
+                  </YArray>
+                  <Option name="IGNORED">YES</Option>
+              </Grid>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* ``GetUnscaled`` step: applies the :cpp:func:`GDALMDArray::GetUnscaled` method
+
+It does not have any child elements.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">2d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <GetUnscaled/>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+* ``GetMask`` step: applies the :cpp:func:`GDALMDArray::GetMask` method
+
+The ``GetMask`` element may have the following child elements, which correspond
+to the arguments of the :cpp:func:`GDALMDArray::GetMask` method:
+
+- ``Option`` with a ``name`` attribute and the value as the content of the element. This element may be repeated.
+
+.. code-block:: xml
+
+    <ArraySource>
+      <DerivedArray>
+          <SingleSourceArray>
+            <SourceFilename relativeToVRT="1">2d_array.nc</SourceFilename>
+            <SourceArray>/my_array</SourceArray>
+          </SingleSourceArray>
+          <Step>
+              <GetMask>
+                  <Option name="UNMASK_FLAGS">microwave,land</Option>
+              </GetMask>
+          </Step>
+       </DerivedArray>
+    </ArraySource>
+
+Array
+^^^^^
+
+:ref:`Array <vrt_multidimensional>` can be used to mosaic several multidimensional arrays.
+
 
 Overviews
 ---------
@@ -1697,7 +1905,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, and ``nogcp``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, and ``eco``.
 
 Other options may be added in the future.
 
@@ -1741,7 +1949,7 @@ This can also be seen as an equivalent of running `gdal_translate -of VRT -if DR
 
 The effect of the ``scale`` option (added in GDAL 3.7) is to rescale the input pixel values from the
 range **src_min** to **src_max** to the range **dst_min** to **dst_max**  ``src_min,src_max[,dst_min,dst_max]``
-either 2 or 4 comma separated values. The same rules apply for the source and destination ranges, and ``scale_bn`` syntax may be used as it is with (:ref:`gdal_translate`).  The option ``scale=true`` (default if unspecified is ``scale=false``) may also be used without value arguments (added in GDAL 3.8), where it results in the output range 0,255 from whatever the source range is. Do consider the need for also using ``ot`` option in order to accomodate the intended output range.
+either 2 or 4 comma separated values. The same rules apply for the source and destination ranges, and ``scale_bn`` syntax may be used as it is with (:ref:`gdal_translate`).  The option ``scale=true`` (default if unspecified is ``scale=false``) may also be used without value arguments (added in GDAL 3.8), where it results in the output range 0,255 from whatever the source range is. Do consider the need for also using ``ot`` option in order to accommodate the intended output range.
 
 The effect of the ``exponent`` option (added in GDAL 3.7) is to apply non-linear scaling with a power function,
 a single value to be used with the ``scale`` option. The same ``exponent_bn`` syntax may be used in combination with ``scale_bn`` to
@@ -1769,12 +1977,17 @@ the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific dataset open options, multiple values are allowed. The value
 consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
-The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. Do apply this use syntax ``unscale=true``, or ``unscale=false`` which is the default behaviour if not specified. Do consider the need for also using ``ot`` option in order to accomodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
+The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. To apply this use syntax ``unscale=true``, or ``unscale=false`` (which is the default if not specified). Do consider the need for also using ``ot`` option in order to accommodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
 
 The effect of the ``a_coord_epoch`` option (added in GDAL 3.8) is to assign a coordinate epoch, linked with the output SRS as
 with (:ref:`gdal_translate`).
 
-The effect of the ``nogcp`` option (added in GDAL 3.8) is to not copy the GCPs in the source dataset to the output dataset (:ref:`gdal_translate`).
+The effect of the ``nogcp`` option (added in GDAL 3.8) is to not copy the GCPs in the source dataset to the output dataset (:ref:`gdal_translate`). To apply this
+use syntax ``nogcp=true``, or ``nogcp=false`` (which is the default if not specified).
+
+The effect of the ``epo`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall partially outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``epo=true``, or ``epo=false`` (which is the default if not specified).
+
+The effect of the ``eco`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall completely outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``eco=true``, or ``eco=false`` (which is the default if not specified).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

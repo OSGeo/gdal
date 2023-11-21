@@ -384,9 +384,9 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;
@@ -697,6 +697,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     CPLErr Close() override;
 
+    void PostInitSpatialite();
+
   public:
     OGRSQLiteDataSource();
     virtual ~OGRSQLiteDataSource();
@@ -722,7 +724,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     GetLayerWithGetSpatialWhereByName(const char *pszName) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int) override;
@@ -764,9 +766,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     {
         return m_nFileTimestamp;
     }
-
-    bool IsSpatialiteLoaded();
-    int GetSpatialiteVersionNumber();
 
     bool IsSpatialiteDB() const
     {

@@ -62,7 +62,7 @@ the health of the project:
 
         .. image:: ../../images/sponsors/logo-safe.png
            :class: img-logos
-           :width: 200 px
+           :width: 240 px
            :target: https://www.safe.com
 
 
@@ -73,13 +73,6 @@ the health of the project:
   .. container:: horizontal-logos
 
     .. Note: they will appear in randomized order in HTML
-
-    .. container:: horizontal-logo
-
-        .. image:: ../../images/sponsors/logo-frontiersi.png
-           :class: img-logos
-           :width: 150 px
-           :target: https://frontiersi.com.au
 
     .. container:: horizontal-logo
 

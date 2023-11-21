@@ -41,6 +41,14 @@
 #include "t4.h"
 #include <stdio.h>
 
+#ifndef EOF_REACHED_COUNT_THRESHOLD
+/* Arbitrary threshold to avoid corrupted single-strip files with extremely
+ * large imageheight to cause apparently endless looping, such as in
+ * https://gitlab.com/libtiff/libtiff/-/issues/583
+ */
+#define EOF_REACHED_COUNT_THRESHOLD 8192
+#endif
+
 /*
  * Compression+decompression state blocks are
  * derived from this ``base state'' block.
@@ -77,6 +85,8 @@ typedef struct
     uint32_t data;               /* current i/o byte/word */
     int bit;                     /* current i/o bit in byte */
     int EOLcnt;                  /* count of EOL codes recognized */
+    int eofReachedCount;         /* number of times decode has been called with
+                                    EOF already reached */
     TIFFFaxFillFunc fill;        /* fill routine */
     uint32_t *runs;              /* b&w runs for current/previous row */
     uint32_t nruns;              /* size of the refruns / curruns arrays */
@@ -120,6 +130,7 @@ typedef struct
     int EOLcnt;                               /* # EOL codes recognized */     \
     const unsigned char *bitmap = sp->bitmap; /* input data bit reverser */    \
     const TIFFFaxTabEnt *TabEnt
+
 #define DECLARE_STATE_2D(tif, sp, mod)                                         \
     DECLARE_STATE(tif, sp, mod);                                               \
     int b1; /* next change on prev line */                                     \
@@ -162,6 +173,7 @@ static int Fax3PreDecode(TIFF *tif, uint16_t s)
     sp->bit = 0; /* force initial read */
     sp->data = 0;
     sp->EOLcnt = 0; /* force initial scan for EOL */
+    sp->eofReachedCount = 0;
     /*
      * Decoder assumes lsb-to-msb bit order.  Note that we select
      * this here rather than in Fax3SetupState so that viewers can
@@ -232,7 +244,12 @@ static void Fax3PrematureEOF(const char *module, TIFF *tif, uint32_t line,
                     line, isTiled(tif) ? "tile" : "strip",
                     (isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip), a0);
 }
-#define prematureEOF(a0) Fax3PrematureEOF(module, tif, sp->line, a0)
+#define prematureEOF(a0)                                                       \
+    do                                                                         \
+    {                                                                          \
+        Fax3PrematureEOF(module, tif, sp->line, a0);                           \
+        ++sp->eofReachedCount;                                                 \
+    } while (0)
 
 #define Nop
 
@@ -250,6 +267,14 @@ static int Fax3Decode1D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
     if (occ % sp->b.rowbytes)
     {
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
+        return (-1);
+    }
+    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
+    {
+        TIFFErrorExtR(
+            tif, module,
+            "End of file has already been reached %d times within that strip",
+            sp->eofReachedCount);
         return (-1);
     }
     CACHE_STATE(tif, sp);
@@ -300,6 +325,14 @@ static int Fax3Decode2D(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
     if (occ % sp->b.rowbytes)
     {
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
+        return (-1);
+    }
+    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
+    {
+        TIFFErrorExtR(
+            tif, module,
+            "End of file has already been reached %d times within that strip",
+            sp->eofReachedCount);
         return (-1);
     }
     CACHE_STATE(tif, sp);
@@ -1512,6 +1545,14 @@ static int Fax4Decode(TIFF *tif, uint8_t *buf, tmsize_t occ, uint16_t s)
     if (occ % sp->b.rowbytes)
     {
         TIFFErrorExtR(tif, module, "Fractional scanlines cannot be read");
+        return (-1);
+    }
+    if (sp->eofReachedCount >= EOF_REACHED_COUNT_THRESHOLD)
+    {
+        TIFFErrorExtR(
+            tif, module,
+            "End of file has already been reached %d times within that strip",
+            sp->eofReachedCount);
         return (-1);
     }
     CACHE_STATE(tif, sp);

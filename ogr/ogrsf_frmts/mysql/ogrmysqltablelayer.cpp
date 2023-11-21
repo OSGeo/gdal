@@ -374,7 +374,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
         char *pszType = nullptr;
 
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRMySQLGeomFieldDefn>(poDS, pszGeomColumn);
+            std::make_unique<OGRMySQLGeomFieldDefn>(poDS, pszGeomColumn);
 
         if (poDS->GetMajorVersion() < 8 || poDS->IsMariaDB())
             osCommand.Printf("SELECT type, coord_dimension FROM "
@@ -970,7 +970,8 @@ OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
+OGRErr OGRMySQLTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                       int bApproxOK)
 
 {
 

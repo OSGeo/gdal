@@ -53,6 +53,12 @@ raster data is only supported since GDAL 2.1.0.
     with the first feature into all parts of the image *not* inside the
     provided polygon.
 
+    .. note::
+
+        When the vector features contain a polygon nested within another polygon
+        (like an island in a lake), GDAL must be built against GEOS to get
+        correct results.
+
 .. option:: -at
 
     Enables the ALL_TOUCHED rasterization option so that all pixels touched

@@ -359,6 +359,19 @@ else ()
     add_definitions(-DDONT_DEPRECATE_SPRINTF)
   endif ()
 
+  check_cxx_source_compiles(
+    "
+    #include <shared_mutex>
+    int main(int argc, const char * argv[]) {
+        std::shared_mutex smtx;
+        smtx.lock_shared();
+        smtx.unlock_shared();
+        return 0;
+    }
+    "
+    HAVE_SHARED_MUTEX
+  )
+
   check_include_file("linux/userfaultfd.h" HAVE_USERFAULTFD_H)
 endif ()
 

@@ -40,7 +40,7 @@
 class ReflectanceCalculator
 {
   public:
-    ReflectanceCalculator(std::string sTimeStamp, double rRTOA);
+    ReflectanceCalculator(const std::string &sTimeStamp, double rRTOA);
     virtual ~ReflectanceCalculator();
     double rGetReflectance(double rRadiance, double rLat, double rLon) const;
 

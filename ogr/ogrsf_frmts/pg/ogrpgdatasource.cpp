@@ -698,34 +698,60 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Set active schema and/or postgis schema if different from       */
-    /*      'public'                                                        */
+    /*      Get search_path                                                 */
+    /* -------------------------------------------------------------------- */
+    std::string osSearchPath = "public";
+    {
+        PGresult *hResult = OGRPG_PQexec(hPGConn, "SHOW search_path");
+        if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK &&
+            PQntuples(hResult) > 0)
+        {
+            const char *pszVal = PQgetvalue(hResult, 0, 0);
+            if (pszVal)
+            {
+                osSearchPath = pszVal;
+            }
+        }
+        OGRPGClearResult(hResult);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Set active schema if different from 'public'. Also add          */
+    /*      postgis schema if needed.                                       */
     /* -------------------------------------------------------------------- */
     if (osActiveSchema != "public" ||
-        (!osPostgisSchema.empty() && osPostgisSchema != "public"))
+        (!osPostgisSchema.empty() &&
+         osSearchPath.find(osPostgisSchema) == std::string::npos))
     {
-        CPLString osCommand = "SET search_path=";
+        std::string osNewSearchPath;
         if (osActiveSchema != "public")
         {
-            osCommand += OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
-            osCommand += ',';
+            osNewSearchPath +=
+                OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
+            osNewSearchPath += ',';
         }
-        osCommand += "public";
-        if (!osPostgisSchema.empty() && osPostgisSchema != "public")
+        osNewSearchPath += osSearchPath;
+        if (!osPostgisSchema.empty() &&
+            osSearchPath.find(osPostgisSchema) == std::string::npos)
         {
-            osCommand += ',';
-            osCommand += OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
+            osNewSearchPath += ',';
+            osNewSearchPath +=
+                OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
         }
+        CPLDebug("PG", "Modifying search_path from %s to %s",
+                 osSearchPath.c_str(), osNewSearchPath.c_str());
 
-        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
+        std::string osCommand = "SET search_path=" + osNewSearchPath;
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
         if (!hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK)
         {
             OGRPGClearResult(hResult);
             CPLDebug("PG", "Command \"%s\" failed. Trying without 'public'.",
                      osCommand.c_str());
-            osCommand.Printf("SET search_path='%s'", osActiveSchema.c_str());
-            PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand);
+            osCommand =
+                CPLSPrintf("SET search_path='%s'", osActiveSchema.c_str());
+            PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
             if (!hResult2 || PQresultStatus(hResult2) != PGRES_COMMAND_OK)
             {
@@ -1676,7 +1702,7 @@ OGRErr OGRPGDataSource::DeleteLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
-                                        OGRSpatialReference *poSRS,
+                                        const OGRSpatialReference *poSRS,
                                         OGRwkbGeometryType eType,
                                         char **papszOptions)
 

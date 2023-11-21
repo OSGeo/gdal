@@ -759,7 +759,7 @@ def test_netcdf_16():
 
 
 ###############################################################################
-# check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
+# check support for netcdf-4 - make sure HDF5 is not read by netcdf driver
 
 
 @pytest.mark.require_driver("HDF5")
@@ -773,16 +773,16 @@ def test_netcdf_17():
         # test with Open()
         ds = gdal.Open(ifile)
         if ds is None:
-            pytest.fail("GDAL did not open hdf5 file")
+            pytest.fail("GDAL did not open HDF5 file")
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
             # return fail if opened with the netCDF driver
-            assert name != "netCDF", "netcdf driver opened hdf5 file"
+            assert name != "netCDF", "netcdf driver opened HDF5 file"
 
         # test with Identify()
         name = gdal.IdentifyDriver(ifile).GetDescription()
-        assert name != "netCDF", "netcdf driver was identified for hdf5 file"
+        assert name != "netCDF", "netcdf driver was identified for HDF5 file"
 
     else:
         pytest.skip()
@@ -6421,17 +6421,17 @@ def test_netcdf_proj4string_geospatial_bounds_crs():
 
 
 ###############################################################################
-# test opening a NASA EMIT dataset and check we get correct dimension mapping
+# test opening a NASA EMIT L2A dataset and check we get correct dimension mapping
 # and a geolocation array
 
 
-def test_netcdf_NASA_EMIT():
+def test_netcdf_NASA_EMIT_L2A():
 
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip("Requires NC4 support")
 
     # Original dataset is https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/EMITL2ARFL.001/EMIT_L2A_RFL_001_20220903T163129_2224611_012/EMIT_L2A_RFL_001_20220903T163129_2224611_012.nc
-    ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT.nc":reflectance')
+    ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT_L2A.nc":reflectance')
     assert ds.RasterXSize == 2
     assert ds.RasterYSize == 2
     assert ds.RasterCount == 2
@@ -6447,7 +6447,110 @@ def test_netcdf_NASA_EMIT():
         "PIXEL_STEP": "1",
         "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         "X_BAND": "1",
-        "X_DATASET": 'NETCDF:"data/netcdf/fake_EMIT.nc":/location/lon',
+        "X_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2A.nc":/location/lon',
         "Y_BAND": "1",
-        "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT.nc":/location/lat',
+        "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2A.nc":/location/lat',
     }
+
+
+###############################################################################
+# test opening a NASA EMIT L2B_MIN dataset and check we get correct dimension mapping
+# and a geolocation array
+
+
+def test_netcdf_NASA_EMIT_L2B_MIN():
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        pytest.skip("Requires NC4 support")
+
+    # Genuine dataset can be found at  https://search.earthdata.nasa.gov/search?q=C2408034484-LPCLOUD
+    ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":some_var')
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 2
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).ReadRaster() == struct.pack("f" * 4, 30, 40, 10, 20)
+
+    md = ds.GetMetadata("GEOLOCATION")
+    assert md == {
+        "GEOREFERENCING_CONVENTION": "PIXEL_CENTER",
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+        "X_BAND": "1",
+        "X_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":/location/lon',
+        "Y_BAND": "1",
+        "Y_DATASET": 'NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":/location/lat',
+    }
+
+
+###########################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "filename,path_component",
+    (
+        (
+            'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+            "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+            "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            r'NETCDF:"C:\data\netcdf\quoted \"SNPP_VIIRS.20230406T024200\".L2.OC.NRT.nc":/navigation_data/longitude',
+            r'C:\data\netcdf\quoted "SNPP_VIIRS.20230406T024200".L2.OC.NRT.nc',
+        ),
+        (
+            r"NETCDF:C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+            r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+            r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        ("", ""),
+    ),
+)
+def test_gdal_subdataset_get_filename(filename, path_component):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if filename == "":
+        assert info is None
+    else:
+        assert info.GetPathComponent() == path_component
+        assert info.GetSubdatasetComponent() == "/navigation_data/longitude"
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+        "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+        r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
+        "",
+    ),
+)
+def test_gdal_subdataset_modify_filename(filename):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if filename == "":
+        assert info is None
+    else:
+        assert (
+            info.ModifyPathComponent('"/path/to.nc"')
+            == 'NETCDF:"/path/to.nc":/navigation_data/longitude'
+        )
+        if 'NETCDF:"' in filename:
+            assert (
+                info.ModifyPathComponent("/path/to.nc")
+                == 'NETCDF:"/path/to.nc":/navigation_data/longitude'
+            )
+        else:
+            assert (
+                info.ModifyPathComponent("/path/to.nc")
+                == "NETCDF:/path/to.nc:/navigation_data/longitude"
+            )

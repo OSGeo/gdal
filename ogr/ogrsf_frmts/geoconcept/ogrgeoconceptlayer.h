@@ -77,7 +77,8 @@ class OGRGeoconceptLayer final : public OGRLayer
     }
     int TestCapability(const char *pszCap) override;
     //    const char*          GetInfo( const char* pszTag );
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     OGRErr SyncToDisk() override;
     //    OGRStyleTable*       GetStyleTable( );
     //    void                 SetStyleTableDirectly( OGRStyleTable*

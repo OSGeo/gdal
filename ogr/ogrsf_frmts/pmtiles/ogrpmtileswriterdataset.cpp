@@ -111,10 +111,9 @@ bool OGRPMTilesWriterDataset::Create(const char *pszFilename,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRPMTilesWriterDataset::ICreateLayer(const char *pszLayerName,
-                                                OGRSpatialReference *poSRS,
-                                                OGRwkbGeometryType eGeomType,
-                                                char **papszOptions)
+OGRLayer *OGRPMTilesWriterDataset::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eGeomType, char **papszOptions)
 {
     return m_poMBTilesWriterDataset->CreateLayer(pszLayerName, poSRS, eGeomType,
                                                  papszOptions);

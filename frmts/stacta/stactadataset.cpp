@@ -935,7 +935,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         {
             continue;
         }
-        auto poRawDS = cpl::make_unique<STACTARawDataset>();
+        auto poRawDS = std::make_unique<STACTARawDataset>();
         if (!poRawDS->InitRaster(poProtoDS.get(), poTMS.get(), tmsList[i].mId,
                                  oTM, oMapLimits))
         {
@@ -1155,7 +1155,7 @@ GDALDataset *STACTADataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 {
     if (!Identify(poOpenInfo))
         return nullptr;
-    auto poDS = cpl::make_unique<STACTADataset>();
+    auto poDS = std::make_unique<STACTADataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();

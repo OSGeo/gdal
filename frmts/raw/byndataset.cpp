@@ -276,7 +276,7 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
 
-    auto poDS = cpl::make_unique<BYNDataset>();
+    auto poDS = std::make_unique<BYNDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     std::swap(poDS->fpImage, poOpenInfo->fpL);
@@ -370,7 +370,7 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int bIsLSB = poDS->hHeader.nByteOrder == 1 ? 1 : 0;
 
-    auto poBand = cpl::make_unique<BYNRasterBand>(
+    auto poBand = std::make_unique<BYNRasterBand>(
         poDS.get(), 1, poDS->fpImage, BYN_HDR_SZ, nDTSize,
         poDS->nRasterXSize * nDTSize, eDT, CPL_IS_LSB == bIsLSB);
     if (!poBand->IsValid())

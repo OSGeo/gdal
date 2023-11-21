@@ -553,6 +553,16 @@ OGRErr OGREditableLayer::SetAttributeFilter(const char *poAttrFilter)
 }
 
 /************************************************************************/
+/*                           GetArrowStream()                           */
+/************************************************************************/
+
+bool OGREditableLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
+                                      CSLConstList papszOptions)
+{
+    return OGRLayer::GetArrowStream(out_stream, papszOptions);
+}
+
+/************************************************************************/
 /*                           SetSpatialFilter()                         */
 /************************************************************************/
 
@@ -697,7 +707,7 @@ int OGREditableLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGREditableLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGREditableLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
@@ -842,7 +852,7 @@ OGRErr OGREditableLayer::AlterGeomFieldDefn(
 /*                          CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGREditableLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGREditableLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                          int bApproxOK)
 {
     if (!m_poDecoratedLayer || !m_bSupportsCreateGeomField)

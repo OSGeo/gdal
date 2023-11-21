@@ -65,7 +65,9 @@ static const char UNSUPPORTED_OP_READ_ONLY[] =
 
 OGRSQLiteTableLayer::OGRSQLiteTableLayer(OGRSQLiteDataSource *poDSIn)
     : OGRSQLiteLayer(poDSIn),
-      m_bSpatialite2D(poDSIn->GetSpatialiteVersionNumber() < 24),
+      m_bSpatialite2D(
+          poDSIn->GetSpatialiteVersionNumber() <
+          OGRSQLiteDataSource::MakeSpatialiteVersionNumber(2, 4, 0)),
       m_bHasCheckedTriggers(!CPLTestBool(
           CPLGetConfigOption("OGR_SQLITE_DISABLE_INSERT_TRIGGERS", "YES")))
 {
@@ -232,7 +234,7 @@ void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
             nSRSId = m_poDS->GetUndefinedSRID();
         OGRSQLiteGeomFormat eGeomFormat = GetGeomFormat(pszGeomFormat);
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
+            std::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
         poGeomFieldDefn->SetType(eGeomType);
         poGeomFieldDefn->m_nSRSId = nSRSId;
         poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
@@ -525,7 +527,9 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
     }
 
     if (bHasSpatialiteCol && m_poDS->IsSpatialiteLoaded() &&
-        m_poDS->GetSpatialiteVersionNumber() < 24 && m_poDS->GetUpdate())
+        m_poDS->GetSpatialiteVersionNumber() <
+            OGRSQLiteDataSource::MakeSpatialiteVersionNumber(2, 4, 0) &&
+        m_poDS->GetUpdate())
     {
         // we need to test version required by Spatialite TRIGGERs
         // hColStmt = NULL;
@@ -1513,7 +1517,7 @@ OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn(OGRFieldDefn *poFieldDefn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                         CPL_UNUSED int bApproxOK)
 {
     OGRFieldDefn oField(poFieldIn);
@@ -1628,8 +1632,9 @@ OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                            CPL_UNUSED int bApproxOK)
+OGRErr
+OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                     CPL_UNUSED int bApproxOK)
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if (eType == wkbNone)
@@ -1652,7 +1657,7 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
-    auto poGeomField = cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+    auto poGeomField = std::make_unique<OGRSQLiteGeomFieldDefn>(
         poGeomFieldIn->GetNameRef(), -1);
     if (EQUAL(poGeomField->GetNameRef(), ""))
     {
@@ -1781,7 +1786,9 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn(
         */
         int iSpatialiteVersion = m_poDS->GetSpatialiteVersionNumber();
         const char *pszCoordDim = "2";
-        if (iSpatialiteVersion < 24 && nCoordDim == 3)
+        if (iSpatialiteVersion <
+                OGRSQLiteDataSource::MakeSpatialiteVersionNumber(2, 4, 0) &&
+            nCoordDim == 3)
         {
             CPLDebug("SQLITE", "Spatialite < 2.4.0 --> 2.5D geometry not "
                                "supported. Casting to 2D");
@@ -1799,7 +1806,9 @@ OGRErr OGRSQLiteTableLayer::RunAddGeometryColumn(
                          m_pszEscapedTableName,
                          SQLEscapeLiteral(pszGeomCol).c_str(), nSRSId, pszType,
                          pszCoordDim);
-        if (iSpatialiteVersion >= 30 && !poGeomFieldDefn->IsNullable())
+        if (iSpatialiteVersion >=
+                OGRSQLiteDataSource::MakeSpatialiteVersionNumber(3, 0, 0) &&
+            !poGeomFieldDefn->IsNullable())
             osCommand += ", 1";
         osCommand += ")";
     }

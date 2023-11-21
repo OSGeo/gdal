@@ -1972,7 +1972,7 @@ void OGRGMLDataSource::WriteTopElements()
 /************************************************************************/
 
 OGRLayer *OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eType,
                                          CPL_UNUSED char **papszOptions)
 {
@@ -2040,12 +2040,11 @@ OGRLayer *OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
             "geometryProperty");
         if (poSRS != nullptr)
         {
-            // Clone it since mapogroutput assumes that it can destroys
-            // the SRS it has passed to use, instead of dereferencing it.
-            poSRS = poSRS->Clone();
-            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-            poSRS->Dereference();
+            auto poSRSClone = poSRS->Clone();
+            poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(
+                poSRSClone);
+            poSRSClone->Dereference();
         }
     }
 

@@ -102,7 +102,7 @@ std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char *pszSQL)
         return nullptr;
     }
 
-    return cpl::make_unique<SQLResult>(papszResult, nRowCount, nColCount);
+    return std::make_unique<SQLResult>(papszResult, nRowCount, nColCount);
 }
 
 const char *SQLResult::GetValue(int iColNum, int iRowNum) const
@@ -171,27 +171,6 @@ GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
 int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
 {
     return static_cast<int>(SQLGetInteger64(poDb, pszSQL, err));
-}
-
-int SQLiteFieldFromOGR(OGRFieldType eType)
-{
-    switch (eType)
-    {
-        case OFTInteger:
-            return SQLITE_INTEGER;
-        case OFTReal:
-            return SQLITE_FLOAT;
-        case OFTString:
-            return SQLITE_TEXT;
-        case OFTBinary:
-            return SQLITE_BLOB;
-        case OFTDate:
-            return SQLITE_TEXT;
-        case OFTDateTime:
-            return SQLITE_TEXT;
-        default:
-            return 0;
-    }
 }
 
 /************************************************************************/
@@ -559,4 +538,205 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
     }
 
     return uniqueFieldsUC;
+}
+
+/************************************************************************/
+/*               OGRSQLiteRTreeRequiresTrustedSchemaOn()                */
+/************************************************************************/
+
+/** Whether the use of a RTree in triggers or views requires trusted_schema
+ * PRAGMA to be set to ON */
+bool OGRSQLiteRTreeRequiresTrustedSchemaOn()
+{
+    static bool b = []()
+    {
+        sqlite3 *hDB = nullptr;
+        int rc =
+            sqlite3_open_v2(":memory:", &hDB, SQLITE_OPEN_READWRITE, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "sqlite3_open_v2(:memory:) failed");
+            sqlite3_close(hDB);
+            return false;
+        }
+        rc = sqlite3_exec(hDB,
+                          "CREATE VIRTUAL TABLE foo_rtree USING rtree(id, "
+                          "minx, miny, maxx, maxy);",
+                          nullptr, nullptr, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE VIRTUAL TABLE foo_rtree failed");
+            sqlite3_close(hDB);
+            return false;
+        }
+        rc = sqlite3_exec(hDB, "CREATE VIEW v AS SELECT * FROM foo_rtree;",
+                          nullptr, nullptr, nullptr);
+        if (rc != SQLITE_OK)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE VIEW v AS SELECT * FROM foo_rtree failed");
+            sqlite3_close(hDB);
+            return false;
+        }
+        // Try to read the virtual table from a view. As of today (sqlite 3.43.1)
+        // this require trusted_schema = ON
+        rc = sqlite3_exec(hDB, "SELECT * FROM v", nullptr, nullptr, nullptr);
+        bool bRequiresTrustedSchemaOn = false;
+        if (rc != SQLITE_OK)
+        {
+            CPL_IGNORE_RET_VAL(sqlite3_exec(hDB, "PRAGMA trusted_schema = ON",
+                                            nullptr, nullptr, nullptr));
+            rc =
+                sqlite3_exec(hDB, "SELECT * FROM v", nullptr, nullptr, nullptr);
+            if (rc == SQLITE_OK)
+                bRequiresTrustedSchemaOn = true;
+        }
+        sqlite3_close(hDB);
+        return bRequiresTrustedSchemaOn;
+    }();
+    return b;
+}
+
+/************************************************************************/
+/*               OGRSQLiteIsSpatialFunctionReturningGeometry()          */
+/************************************************************************/
+
+bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName)
+{
+    const char *const apszFunctions[] = {
+        "SetSRID(",
+        "IsValidDetail(",
+        "Boundary(",
+        "Envelope(",
+        "ST_Expand(",
+        "ST_Reverse(",
+        "ST_ForceLHR(",
+        "ST_ForcePolygonCW(",
+        "ST_ForcePolygonCCW(",
+        "SanitizeGeometry(",
+        "EnsureClosedRings(",
+        "RemoveRepeatedPoints(",
+        "CastToPoint(",
+        "CastToLinestring(",
+        "CastToPolygon(",
+        "CastToMultiPoint(",
+        "CastToMultiLinestring(",
+        "CastToMultiPolygon(",
+        "CastToGeometryCollection(",
+        "CastToMulti(",
+        "ST_Multi(",
+        "CastToSingle(",
+        "CastToXY(",
+        "CastToXYZ(",
+        "CastToXYM(",
+        "CastToXYZM(",
+        "StartPoint(",
+        "ST_EndPoint(",
+        "PointOnSurface(",
+        "Simplify(",
+        "ST_Generalize(",
+        "SimplifyPreserveTopology(",
+        "PointN(",
+        "AddPoint(",
+        "SetPoint(",
+        "SetStartPoint(",
+        "SetEndPoint(",
+        "RemovePoint(",
+        "Centroid(",
+        "ExteriorRing(",
+        "InteriorRingN(",
+        "GeometryN(",
+        "ST_AddMeasure(",
+        "ST_Locate_Along_Measure(",
+        "ST_LocateAlong(",
+        "ST_Locate_Between_Measures(",
+        "ST_LocateBetween(",
+        "ST_TrajectoryInterpolarePoint(",
+        "Intersection(",
+        "Difference(",
+        "GUnion(",
+        "ST_Union(",  // UNION is not a valid function name
+        "SymDifference(",
+        "Buffer(",
+        "ConvexHull(",
+        "OffsetCurve(",
+        "SingleSidedBuffer(",
+        "SharedPaths(",
+        "Line_Interpolate_Point(",
+        "Line_Interpolate_Equidistant_Points(",
+        "Line_Substring(",
+        "ClosestPoint(",
+        "ShortestLine(",
+        "Snap(",
+        "Collect(",
+        "LineMerge(",
+        "BuildArea(",
+        "Polygonize(",
+        "MakePolygon(",
+        "UnaryUnion(",
+        "UnaryUnion(",
+        "DrapeLine(",
+        "DrapeLineExceptions(",
+        "DissolveSegments(",
+        "DissolvePoints(",
+        "LinesFromRings(",
+        "LinesCutAtNodes(",
+        "RingsCutAtNodes(",
+        "CollectionExtract(",
+        "ExtractMultiPoint(",
+        "ExtractMultiLinestring(",
+        "ExtractMultiPolygon(",
+        "DelaunayTriangulation(",
+        "VoronojDiagram(",
+        "ConcaveHull(",
+        "MakeValid(",
+        "MakeValidDiscarded(",
+        "Segmentize(",
+        "Split(",
+        "SplitLeft(",
+        "SplitRight(",
+        "SnapAndSplit(",
+        "Project(",
+        "SnapToGrid(",
+        "ST_Node(",
+        "SelfIntersections(",
+        "ST_Subdivide(",
+        "Transform(",
+        "TransformXY(",
+        "TransformXYZ(",
+        "ShiftCoords(",
+        "ShiftCoordinates(",
+        "ST_Translate(",
+        "ST_Shift_Longitude(",
+        "NormalizeLonLat(",
+        "ScaleCoords(",
+        "ScaleCoordinates(",
+        "RotateCoords(",
+        "RotateCoordinates(",
+        "ReflectCoords(",
+        "ReflectCoordinates(",
+        "SwapCoords(",
+        "SwapCoordinates(",
+        "ATM_Transform(",
+        "gpkgMakePoint(",
+        "gpkgMakePointZ(",
+        "gpkgMakePointZM(",
+        "gpkgMakePointM(",
+        "AsGPB(",
+        "GeomFromGPB(",
+        "CastAutomagic(",
+    };
+    for (const char *pszFunction : apszFunctions)
+    {
+        if (STARTS_WITH_CI(pszName, pszFunction) ||
+            (!STARTS_WITH_CI(pszFunction, "ST_") &&
+             STARTS_WITH_CI(pszName, "ST_") &&
+             STARTS_WITH_CI(pszName + strlen("ST_"), pszFunction)))
+        {
+            return true;
+        }
+    }
+    return false;
 }

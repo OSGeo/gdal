@@ -38,6 +38,8 @@ from threading import Thread
 
 import gdaltest
 
+from osgeo import gdal
+
 do_log = False
 custom_handler = None
 
@@ -48,8 +50,8 @@ def install_http_handler(handler_instance):
     custom_handler = handler_instance
     try:
         yield
-    finally:
         handler_instance.final_check()
+    finally:
         custom_handler = None
 
 
@@ -91,27 +93,70 @@ class RequestResponse(object):
 
 
 class FileHandler(object):
-    def __init__(self, _dict):
-        self.dict = _dict
+    """
+    Handler that serves files from a dictionary and/or a fallback VSI location.
+    """
+
+    def __init__(self, _dict, content_type=None):
+        self.dict = {"GET": _dict, "PUT": {}, "POST": {}, "DELETE": {}}
+        self.content_type = content_type
+        self.fallback = None
 
     def final_check(self):
         pass
 
-    def do_HEAD(self, request):
-        if request.path not in self.dict:
-            request.send_response(404)
-            request.end_headers()
-        else:
-            request.send_response(200)
-            request.send_header("Content-Length", len(self.dict[request.path]))
-            request.end_headers()
+    def handle_get(self, path, contents):
+        self.add_file(path, contents, verb="GET")
 
-    def do_GET(self, request):
-        if request.path not in self.dict:
+    def handle_put(self, path, contents):
+        self.add_file(path, contents, verb="PUT")
+
+    def handle_delete(self, path, contents):
+        self.add_file(path, contents, verb="DELETE")
+
+    def handle_post(self, path, contents, post_body=None):
+        self.add_file(path, contents, verb="POST", post_body=post_body)
+
+    def add_file(self, path, contents, verb="GET", post_body=None):
+        if type(contents) is str:
+            contents = contents.encode()
+
+        if type(post_body) is str:
+            post_body = post_body.encode()
+
+        if verb == "POST":
+            if path in self.dict["POST"]:
+                self.dict["POST"][path][post_body] = contents
+            else:
+                self.dict["POST"][path] = {post_body: contents}
+        else:
+            self.dict[verb][path] = contents
+
+    def set_fallback(self, path):
+        self.fallback = path
+
+    def lookup(self, path, verb, post_body=None):
+
+        if path in self.dict[verb]:
+            if verb == "POST":
+                return self.dict["POST"][path].get(post_body, None)
+            else:
+                return self.dict[verb][path]
+
+        if verb == "GET" and self.fallback:
+            stat = gdal.VSIStatL(f"{self.fallback}/{path}")
+            if stat is not None:
+                f = gdal.VSIFOpenL(f"{self.fallback}/{path}", "rb")
+                content = gdal.VSIFReadL(1, stat.size, f)
+                gdal.VSIFCloseL(f)
+
+                return content
+
+    def send_response(self, request, filedata):
+        if filedata is None:
             request.send_response(404)
             request.end_headers()
         else:
-            filedata = self.dict[request.path]
             start = 0
             end = len(filedata)
             if "Range" in request.headers:
@@ -124,12 +169,48 @@ class FileHandler(object):
                     end = int(res[1]) + 1
                     if end > len(filedata):
                         end = len(filedata)
+            try:
+                data_slice = filedata[start:end]
+                request.send_response(200)
+                if "Range" in request.headers:
+                    request.send_header("Content-Range", "%d-%d" % (start, end - 1))
+                request.send_header("Content-Length", len(filedata))
+                if self.content_type:
+                    request.send_header("Content-Type", self.content_type)
+                request.end_headers()
+                request.wfile.write(data_slice)
+            except Exception as ex:
+                request.send_response(500)
+                request.end_headers()
+                request.wfile.write(str(ex).encode("utf8"))
+
+    def do_HEAD(self, request):
+        filedata = self.lookup(request.path, "GET")
+
+        if filedata is None:
+            request.send_response(404)
+            request.end_headers()
+        else:
             request.send_response(200)
-            if "Range" in request.headers:
-                request.send_header("Content-Range", "%d-%d" % (start, end - 1))
             request.send_header("Content-Length", len(filedata))
             request.end_headers()
-            request.wfile.write(filedata[start:end])
+
+    def do_GET(self, request):
+        filedata = self.lookup(request.path, "GET")
+        self.send_response(request, filedata)
+
+    def do_PUT(self, request):
+        filedata = self.lookup(request.path, "PUT")
+        self.send_response(request, filedata)
+
+    def do_POST(self, request):
+        content = request.rfile.read(int(request.headers["Content-Length"]))
+        filedata = self.lookup(request.path, "POST", post_body=content)
+        self.send_response(request, filedata)
+
+    def do_DELETE(self, request):
+        filedata = self.lookup(request.path, "DELETE")
+        self.send_response(request, filedata)
 
 
 class SequentialHandler(object):

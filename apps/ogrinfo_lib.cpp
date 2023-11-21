@@ -1195,13 +1195,51 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
             const char *pszAlias = poField->GetAlternativeNameRef();
             const std::string &osDomain = poField->GetDomainName();
             const std::string &osComment = poField->GetComment();
+            const auto eType = poField->GetType();
+            std::string osTimeZone;
+            if (eType == OFTTime || eType == OFTDate || eType == OFTDateTime)
+            {
+                const int nTZFlag = poField->GetTZFlag();
+                if (nTZFlag == OGR_TZFLAG_LOCALTIME)
+                {
+                    osTimeZone = "localtime";
+                }
+                else if (nTZFlag == OGR_TZFLAG_MIXED_TZ)
+                {
+                    osTimeZone = "mixed timezones";
+                }
+                else if (nTZFlag == OGR_TZFLAG_UTC)
+                {
+                    osTimeZone = "UTC";
+                }
+                else if (nTZFlag > 0)
+                {
+                    char chSign;
+                    const int nOffset = (nTZFlag - OGR_TZFLAG_UTC) * 15;
+                    int nHours =
+                        static_cast<int>(nOffset / 60);  // Round towards zero.
+                    const int nMinutes = std::abs(nOffset - nHours * 60);
+
+                    if (nOffset < 0)
+                    {
+                        chSign = '-';
+                        nHours = std::abs(nHours);
+                    }
+                    else
+                    {
+                        chSign = '+';
+                    }
+                    osTimeZone =
+                        CPLSPrintf("%c%02d:%02d", chSign, nHours, nMinutes);
+                }
+            }
+
             if (bJson)
             {
                 CPLJSONObject oField;
                 oFields.Add(oField);
                 oField.Set("name", poField->GetNameRef());
-                oField.Set("type",
-                           OGRFieldDefn::GetFieldTypeName(poField->GetType()));
+                oField.Set("type", OGRFieldDefn::GetFieldTypeName(eType));
                 if (poField->GetSubType() != OFSTNone)
                     oField.Set("subType", OGRFieldDefn::GetFieldSubTypeName(
                                               poField->GetSubType()));
@@ -1220,6 +1258,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                     oField.Set("domainName", osDomain);
                 if (!osComment.empty())
                     oField.Set("comment", osComment);
+                if (!osTimeZone.empty())
+                    oField.Set("timezone", osTimeZone);
             }
             else
             {
@@ -1231,9 +1271,20 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                                      OGRFieldDefn::GetFieldSubTypeName(
                                          poField->GetSubType()))
                         : OGRFieldDefn::GetFieldTypeName(poField->GetType());
-                Concat(osRet, psOptions->bStdoutOutput, "%s: %s (%d.%d)",
-                       poField->GetNameRef(), pszType, poField->GetWidth(),
-                       poField->GetPrecision());
+                Concat(osRet, psOptions->bStdoutOutput, "%s: %s",
+                       poField->GetNameRef(), pszType);
+                if (eType == OFTTime || eType == OFTDate ||
+                    eType == OFTDateTime)
+                {
+                    if (!osTimeZone.empty())
+                        Concat(osRet, psOptions->bStdoutOutput, " (%s)",
+                               osTimeZone.c_str());
+                }
+                else
+                {
+                    Concat(osRet, psOptions->bStdoutOutput, " (%d.%d)",
+                           poField->GetWidth(), poField->GetPrecision());
+                }
                 if (poField->IsUnique())
                     Concat(osRet, psOptions->bStdoutOutput, " UNIQUE");
                 if (!poField->IsNullable())
@@ -1979,7 +2030,7 @@ GDALVectorInfoOptions *
 GDALVectorInfoOptionsNew(char **papszArgv,
                          GDALVectorInfoOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALVectorInfoOptions>();
+    auto psOptions = std::make_unique<GDALVectorInfoOptions>();
     bool bGotFilename = false;
     bool bFeatures = false;
     bool bSummary = false;
@@ -2044,7 +2095,7 @@ GDALVectorInfoOptionsNew(char **papszArgv,
             oRing.addPoint(CPLAtof(papszArgv[iArg + 1]),
                            CPLAtof(papszArgv[iArg + 2]));
 
-            auto poPolygon = cpl::make_unique<OGRPolygon>();
+            auto poPolygon = std::make_unique<OGRPolygon>();
             poPolygon->addRing(&oRing);
             psOptions->poSpatialFilter.reset(poPolygon.release());
             iArg += 4;

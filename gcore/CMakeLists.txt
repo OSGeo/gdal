@@ -38,12 +38,15 @@ add_library(
   gdalarraybandblockcache.cpp
   gdalhashsetbandblockcache.cpp
   gdalrelationship.cpp
+  gdalsubdatasetinfo.cpp
   gdalorienteddataset.cpp
   overview.cpp
   rasterio.cpp
   rawdataset.cpp
   gdalmultidim.cpp
   gdalmultidim_gridded.cpp
+  gdalmultidim_gltorthorectification.cpp
+  gdalmultidim_subsetdimension.cpp
   gdalpython.cpp
   gdalpythondriverloader.cpp
   tilematrixset.cpp
@@ -165,4 +168,6 @@ target_public_header(
   gdalcachedpixelaccessor.h
   rawdataset.h
   gdalgeorefpamdataset.h
-  gdal_mdreader.h)
+  gdal_mdreader.h
+  gdalsubdatasetinfo.h
+)

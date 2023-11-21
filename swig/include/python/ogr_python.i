@@ -77,15 +77,20 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 %extend OGRDataSourceShadow {
   %pythoncode {
+
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
       self.thisown = 0
+      self.this = None
+      self._invalidate_layers()
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_DataSource(self)
       self.thisown = 0
+      self.this = None
+      self._invalidate_layers()
 
     def Reference(self):
       "For backwards compatibility only."
@@ -103,9 +108,7 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         return self
 
     def __exit__(self, *args):
-        self._invalidate_layers()
-        self.Destroy()
-        self.this = None
+        self.Close()
 
     def __del__(self):
         self._invalidate_layers()
@@ -177,6 +180,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 %feature("pythonappend") CopyLayer %{
     self._add_layer_ref(val)
+%}
+
+%feature("pythonappend") Close %{
+    self.thisown = 0
+    self.this = None
+    self._invalidate_layers()
+    return val
 %}
 
 %feature("shadow") DeleteLayer %{
@@ -527,6 +537,51 @@ def ReleaseResultSet(self, sql_lyr):
 
         return Stream(stream, use_masked_arrays)
 
+
+    def IsPyArrowSchemaSupported(self, pa_schema, options=[]):
+        """Returns whether the passed pyarrow Schema is supported by the layer, as a tuple (success: bool, errorMsg: str).
+
+           This may be used as a preliminary check before calling WritePyArrowBatch()
+        """
+
+        import pyarrow as pa
+        schema = ArrowSchema()
+        pa_schema._export_to_c(schema._getPtr())
+        return self.IsArrowSchemaSupported(schema, options)
+
+
+    def CreateFieldFromPyArrowSchema(self, pa_schema, options=[]):
+        """Create a field from the passed pyarrow Schema."""
+
+        import pyarrow as pa
+        schema = ArrowSchema()
+        pa_schema._export_to_c(schema._getPtr())
+        return self.CreateFieldFromArrowSchema(schema, options)
+
+
+    def WritePyArrow(self, pa_batch, options=[]):
+        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer."""
+
+        import pyarrow as pa
+
+        # Is it a pyarrow.Table ?
+        if hasattr(pa_batch, "to_batches"):
+            for batch in pa_batch.to_batches():
+                if self.WritePyArrow(batch, options=options) != OGRERR_NONE:
+                    return OGRERR_FAILURE
+            return OGRERR_NONE
+
+        # Is it a pyarrow.RecordBatch ?
+        if hasattr(pa_batch, "columns") and hasattr(pa_batch, "schema"):
+            array = pa.StructArray.from_arrays(pa_batch.columns, names=pa_batch.schema.names)
+            return self.WritePyArrow(array, options=options)
+
+        # Assume it is a pyarrow.StructArray
+        schema = ArrowSchema()
+        array = ArrowArray()
+        pa_batch._export_to_c(array._getPtr(), schema._getPtr())
+        return self.WriteArrowBatch(schema, array, options)
+
   %}
 
 }
@@ -549,7 +604,9 @@ def ReleaseResultSet(self, sql_lyr):
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
       _ogr.delete_Feature(self)
+      self._invalidate_geom_refs()
       self.thisown = 0
+      self.this = None
 
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
@@ -573,8 +630,8 @@ def ReleaseResultSet(self, sql_lyr):
     # This has some risk of name collisions.
     def __getattr__(self, key):
         """Returns the values of fields by the given name"""
-        if key == 'this':
-            return self.__dict__[key]
+        if key in ('this', 'thisown', '_geom_references'):
+            return self.__getattribute__(key)
 
         idx = self._getfieldindex(key)
         if idx < 0:
@@ -590,8 +647,8 @@ def ReleaseResultSet(self, sql_lyr):
     # This has some risk of name collisions.
     def __setattr__(self, key, value):
         """Set the values of fields by the given name"""
-        if key == 'this' or key == 'thisown':
-            self.__dict__[key] = value
+        if key in ('this', 'thisown', '_geom_references'):
+            super().__setattr__(key, value)
         else:
             idx = self._getfieldindex(key)
             if idx != -1:
@@ -769,6 +826,8 @@ def ReleaseResultSet(self, sql_lyr):
 
         return self.GetGeometryRef()
 
+    def __del__(self):
+        self._invalidate_geom_refs()
 
     def __repr__(self):
         return self.DumpReadableAsString()
@@ -819,6 +878,47 @@ def ReleaseResultSet(self, sql_lyr):
         return output
 
 
+    def _add_geom_ref(self, geom):
+        if geom is None:
+            return
+
+        if not hasattr(self, '_geom_references'):
+            import weakref
+
+            self._geom_references = weakref.WeakSet()
+
+        self._geom_references.add(geom)
+
+
+    def _invalidate_geom_refs(self):
+        if hasattr(self, '_geom_references'):
+            for geom in self._geom_references:
+                geom.this = None
+
+%}
+
+%feature("shadow") SetGeometryDirectly %{
+    def SetGeometryDirectly(self, geom):
+        ret = $action(self, geom)
+        if ret == OGRERR_NONE:
+            self._add_geom_ref(geom)
+        return ret
+%}
+
+%feature("shadow") SetGeomFieldDirectly %{
+    def SetGeomFieldDirectly(self, field, geom):
+        ret = $action(self, field, geom)
+        if ret == OGRERR_NONE:
+            self._add_geom_ref(geom)
+        return ret
+%}
+
+%feature("pythonappend") GetGeometryRef %{
+    self._add_geom_ref(val)
+%}
+
+%feature("pythonappend") GetGeomFieldRef %{
+    self._add_geom_ref(val)
 %}
 
 %feature("shadow") SetField %{

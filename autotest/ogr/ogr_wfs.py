@@ -1419,7 +1419,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
 
         ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
         lyr = ds.GetLayer(0)
-        lyr.GetLayerDefn()
+        assert lyr.GetLayerDefn().GetFieldCount() == 8
         ds = None
 
         f = gdal.VSIFOpenL("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rb")
@@ -1438,30 +1438,35 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
     </FeatureTypeList>
   </WFS_Capabilities>
   <OGRWFSLayer name="my_layer">
-    <schema foo="http://foo" gml="http://www.opengis.net/gml" xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
-      <import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd" />
-      <complexType name="my_layerType">
-        <complexContent>
-          <extension base="gml:AbstractFeatureType">
-            <sequence>
-              <element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string" />
-              <element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean" />
-              <element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short" />
-              <element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int" />
-              <element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float" />
-              <element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double" />
-              <element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime" />
-              <element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType" />
-            </sequence>
-          </extension>
-        </complexContent>
-      </complexType>
-      <element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType" />
-    </schema>
+    <xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+      <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.1.1/base/gml.xsd" />
+      <xsd:complexType name="my_layerType">
+        <xsd:complexContent>
+          <xsd:extension base="gml:AbstractFeatureType">
+            <xsd:sequence>
+              <xsd:element maxOccurs="1" minOccurs="0" name="str" nillable="true" type="xsd:string" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType" />
+            </xsd:sequence>
+          </xsd:extension>
+        </xsd:complexContent>
+      </xsd:complexType>
+      <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType" />
+    </xsd:schema>
   </OGRWFSLayer>
 </OGRWFSDataSource>
 """
         )
+
+        ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldCount() == 8
+        ds = None
 
         with gdaltest.tempfile(
             "/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml",
@@ -3724,7 +3729,8 @@ xsi:schemaLocation="http://ns1 /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 ###############################################################################
 
 
-def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
+@pytest.mark.parametrize("numberMatched", ["unknown", "4"])
+def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming, numberMatched):
 
     with gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&REQUEST=GetCapabilities",
@@ -3836,7 +3842,7 @@ def test_ogr_wfs_vsimem_wfs200_paging(with_and_without_streaming):
 """,
     ), gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=0&COUNT=2",
-        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        f"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3844,7 +3850,7 @@ xmlns:ows="http://www.opengis.net/ows"
 xmlns:xlink="http://www.w3.org/1999/xlink"
 xmlns:gml="http://www.opengis.net/gml"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-numberMatched="unknown" numberReturned="2"
+numberMatched="{numberMatched}" numberReturned="2"
 timeStamp="2015-04-17T14:14:24.859Z"
 xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
                     http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
@@ -3872,7 +3878,7 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.
 """,
     ), gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=2&COUNT=2",
-        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        f"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
 xmlns:ogc="http://www.opengis.net/ogc"
 xmlns:foo="http://foo"
 xmlns:wfs="http://www.opengis.net/wfs"
@@ -3880,12 +3886,32 @@ xmlns:ows="http://www.opengis.net/ows"
 xmlns:xlink="http://www.w3.org/1999/xlink"
 xmlns:gml="http://www.opengis.net/gml"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-numberMatched="unknown" numberReturned="1"
+numberMatched="{numberMatched}" numberReturned="1"
 timeStamp="2015-04-17T14:14:24.859Z"
 xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
                     http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
     <gml:featureMembers>
         <foo:my_layer gml:id="my_layer.3">
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""",
+    ), gdaltest.tempfile(
+        "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=3&COUNT=2",
+        f"""<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberMatched="{numberMatched}" numberReturned="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.4">
         </foo:my_layer>
     </gml:featureMembers>
 </wfs:FeatureCollection>
@@ -3896,6 +3922,9 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         if f.gml_id != "my_layer.1":
             f.DumpReadable()
             pytest.fail()
+
+        if numberMatched != "unknown":
+            assert lyr.GetFeatureCount() == 4
 
         f = lyr.GetNextFeature()
         assert f is not None
@@ -3910,14 +3939,38 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
             pytest.fail()
 
         f = lyr.GetNextFeature()
-        if f is not None:
+        assert f is not None
+        if f.gml_id != "my_layer.4":
             f.DumpReadable()
             pytest.fail()
 
-        # if lyr.GetFeatureCount() != 3:
-        #    gdaltest.post_reason('fail')
-        #    print(lyr.GetFeatureCount())
-        #    return 'fail'
+        if numberMatched == "unknown":
+            with gdaltest.tempfile(
+                "/vsimem/wfs200_endpoint_paging?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=4&COUNT=2",
+                """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberMatched="unknown" numberReturned="0"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+</wfs:FeatureCollection>
+""",
+            ):
+                f = lyr.GetNextFeature()
+                if f is not None:
+                    f.DumpReadable()
+                    pytest.fail()
+        else:
+            f = lyr.GetNextFeature()
+            if f is not None:
+                f.DumpReadable()
+                pytest.fail()
 
 
 def test_ogr_wfs_vsimem_wfs200_with_no_primary_key(with_and_without_streaming):
@@ -4136,6 +4189,12 @@ def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
 "features":[{"type":"Feature","id":"my_layer.1",
 "geometry":{"type":"Point","coordinates":[2, 49]},
 "properties":{"str":"str"}}]}
+""",
+    ), gdaltest.tempfile(
+        "/vsimem/wfs200_endpoint_json?OUTPUTFORMAT=application/json&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&STARTINDEX=1&COUNT=2",
+        """{"type":"FeatureCollection",
+"totalFeatures":"unknown",
+"features":[]}
 """,
     ):
         f = lyr.GetNextFeature()

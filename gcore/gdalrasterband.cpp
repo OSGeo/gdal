@@ -135,7 +135,23 @@ GDALRasterBand::~GDALRasterBand()
  * format.
  *
  * Some formats may efficiently implement decimation into a buffer by
- * reading from lower resolution overview images.
+ * reading from lower resolution overview images. The logic of the default
+ * implementation in the base class GDALRasterBand is the following one. It
+ * computes a target_downscaling_factor from the window of interest and buffer
+ * size which is min(nXSize/nBufXSize, nYSize/nBufYSize).
+ * It then walks through overviews and will select the first one whose
+ * downscaling factor is greater than target_downscaling_factor / 1.2.
+ *
+ * Let's assume we have overviews at downscaling factors 2, 4 and 8.
+ * The relationship between target_downscaling_factor and the select overview
+ * level is the following one:
+ *
+ * target_downscaling_factor  | selected_overview
+ * -------------------------  | -----------------
+ * ]0,       2 / 1.2]         | full resolution band
+ * ]2 / 1.2, 4 / 1.2]         | 2x downsampled band
+ * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
+ * ]8 / 1.2, infinity[        | 8x downsampled band
  *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
@@ -207,7 +223,23 @@ GDALRasterBand::~GDALRasterBand()
  * format.
  *
  * Some formats may efficiently implement decimation into a buffer by
- * reading from lower resolution overview images.
+ * reading from lower resolution overview images. The logic of the default
+ * implementation in the base class GDALRasterBand is the following one. It
+ * computes a target_downscaling_factor from the window of interest and buffer
+ * size which is min(nXSize/nBufXSize, nYSize/nBufYSize).
+ * It then walks through overviews and will select the first one whose
+ * downscaling factor is greater than target_downscaling_factor / 1.2.
+ *
+ * Let's assume we have overviews at downscaling factors 2, 4 and 8.
+ * The relationship between target_downscaling_factor and the select overview
+ * level is the following one:
+ *
+ * target_downscaling_factor  | selected_overview
+ * -------------------------  | -----------------
+ * ]0,       2 / 1.2]         | full resolution band
+ * ]2 / 1.2, 4 / 1.2]         | 2x downsampled band
+ * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
+ * ]8 / 1.2, infinity[        | 8x downsampled band
  *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
@@ -4489,7 +4521,7 @@ struct ComputeStatisticsInternalGeneric
                         nMin = nValue;
                     if (nValue > nMax)
                         nMax = nValue;
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         nValidCount++;
                         nSum += nValue;
@@ -4499,7 +4531,7 @@ struct ComputeStatisticsInternalGeneric
                     }
                 }
             }
-            if (COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
                 nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
             }
@@ -4507,43 +4539,42 @@ struct ComputeStatisticsInternalGeneric
         else if (nMin == std::numeric_limits<T>::min() &&
                  nMax == std::numeric_limits<T>::max())
         {
-            if (!COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
-                return;
-            }
-            // Optimization when there is no nodata and we know we have already
-            // reached the min and max
-            for (int iY = 0; iY < nYCheck; iY++)
-            {
-                int iX;
-                for (iX = 0; iX + 3 < nXCheck; iX += 4)
+                // Optimization when there is no nodata and we know we have already
+                // reached the min and max
+                for (int iY = 0; iY < nYCheck; iY++)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                    const GUIntBig nValue = pData[iOffset];
-                    const GUIntBig nValue2 = pData[iOffset + 1];
-                    const GUIntBig nValue3 = pData[iOffset + 2];
-                    const GUIntBig nValue4 = pData[iOffset + 3];
-                    nSum += nValue;
-                    nSumSquare += nValue * nValue;
-                    nSum += nValue2;
-                    nSumSquare += nValue2 * nValue2;
-                    nSum += nValue3;
-                    nSumSquare += nValue3 * nValue3;
-                    nSum += nValue4;
-                    nSumSquare += nValue4 * nValue4;
+                    int iX;
+                    for (iX = 0; iX + 3 < nXCheck; iX += 4)
+                    {
+                        const GPtrDiff_t iOffset =
+                            iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                        const GUIntBig nValue = pData[iOffset];
+                        const GUIntBig nValue2 = pData[iOffset + 1];
+                        const GUIntBig nValue3 = pData[iOffset + 2];
+                        const GUIntBig nValue4 = pData[iOffset + 3];
+                        nSum += nValue;
+                        nSumSquare += nValue * nValue;
+                        nSum += nValue2;
+                        nSumSquare += nValue2 * nValue2;
+                        nSum += nValue3;
+                        nSumSquare += nValue3 * nValue3;
+                        nSum += nValue4;
+                        nSumSquare += nValue4 * nValue4;
+                    }
+                    for (; iX < nXCheck; ++iX)
+                    {
+                        const GPtrDiff_t iOffset =
+                            iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                        const GUIntBig nValue = pData[iOffset];
+                        nSum += nValue;
+                        nSumSquare += nValue * nValue;
+                    }
                 }
-                for (; iX < nXCheck; ++iX)
-                {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                    const GUIntBig nValue = pData[iOffset];
-                    nSum += nValue;
-                    nSumSquare += nValue * nValue;
-                }
+                nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+                nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
             }
-            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-            nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
         }
         else
         {
@@ -4570,7 +4601,7 @@ struct ComputeStatisticsInternalGeneric
                         if (nValue > nMax)
                             nMax = nValue;
                     }
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         nSum += nValue;
                         nSumSquare +=
@@ -4600,7 +4631,7 @@ struct ComputeStatisticsInternalGeneric
                     }
                 }
             }
-            if (COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
                 nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
                 nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
@@ -4652,14 +4683,14 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                             nMin = nValue;
                         if (nValue > nMax)
                             nMax = nValue;
-                        if (COMPUTE_OTHER_STATS)
+                        if constexpr (COMPUTE_OTHER_STATS)
                         {
                             nValidCount32bit++;
                             nSum32bit += nValue;
                             nSumSquare32bit += nValue * nValue;
                         }
                     }
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         nSampleCount += nSampleCount32bit;
                         nValidCount += nValidCount32bit;
@@ -4671,52 +4702,52 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
         }
         else if (nMin == 0 && nMax == 255)
         {
-            if (!COMPUTE_OTHER_STATS)
-                return;
-
-            // Optimization when there is no nodata and we know we have already
-            // reached the min and max
-            for (int iY = 0; iY < nYCheck; iY++)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
-                int iX = 0;
-                for (int k = 0; k < nOuterLoops; k++)
+                // Optimization when there is no nodata and we know we have already
+                // reached the min and max
+                for (int iY = 0; iY < nYCheck; iY++)
                 {
-                    int iMax = iX + 65536;
-                    if (iMax > nXCheck)
-                        iMax = nXCheck;
-                    GUInt32 nSum32bit = 0;
-                    GUInt32 nSumSquare32bit = 0;
-                    for (; iX + 3 < iMax; iX += 4)
+                    int iX = 0;
+                    for (int k = 0; k < nOuterLoops; k++)
+                    {
+                        int iMax = iX + 65536;
+                        if (iMax > nXCheck)
+                            iMax = nXCheck;
+                        GUInt32 nSum32bit = 0;
+                        GUInt32 nSumSquare32bit = 0;
+                        for (; iX + 3 < iMax; iX += 4)
+                        {
+                            const GPtrDiff_t iOffset =
+                                iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                            const GUInt32 nValue = pData[iOffset];
+                            const GUInt32 nValue2 = pData[iOffset + 1];
+                            const GUInt32 nValue3 = pData[iOffset + 2];
+                            const GUInt32 nValue4 = pData[iOffset + 3];
+                            nSum32bit += nValue;
+                            nSumSquare32bit += nValue * nValue;
+                            nSum32bit += nValue2;
+                            nSumSquare32bit += nValue2 * nValue2;
+                            nSum32bit += nValue3;
+                            nSumSquare32bit += nValue3 * nValue3;
+                            nSum32bit += nValue4;
+                            nSumSquare32bit += nValue4 * nValue4;
+                        }
+                        nSum += nSum32bit;
+                        nSumSquare += nSumSquare32bit;
+                    }
+                    for (; iX < nXCheck; ++iX)
                     {
                         const GPtrDiff_t iOffset =
                             iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                        const GUInt32 nValue = pData[iOffset];
-                        const GUInt32 nValue2 = pData[iOffset + 1];
-                        const GUInt32 nValue3 = pData[iOffset + 2];
-                        const GUInt32 nValue4 = pData[iOffset + 3];
-                        nSum32bit += nValue;
-                        nSumSquare32bit += nValue * nValue;
-                        nSum32bit += nValue2;
-                        nSumSquare32bit += nValue2 * nValue2;
-                        nSum32bit += nValue3;
-                        nSumSquare32bit += nValue3 * nValue3;
-                        nSum32bit += nValue4;
-                        nSumSquare32bit += nValue4 * nValue4;
+                        const GUIntBig nValue = pData[iOffset];
+                        nSum += nValue;
+                        nSumSquare += nValue * nValue;
                     }
-                    nSum += nSum32bit;
-                    nSumSquare += nSumSquare32bit;
                 }
-                for (; iX < nXCheck; ++iX)
-                {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
-                    const GUIntBig nValue = pData[iOffset];
-                    nSum += nValue;
-                    nSumSquare += nValue * nValue;
-                }
+                nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
+                nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
             }
-            nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
-            nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
         }
         else
         {
@@ -4750,7 +4781,7 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                             if (nValue > nMax)
                                 nMax = nValue;
                         }
-                        if (COMPUTE_OTHER_STATS)
+                        if constexpr (COMPUTE_OTHER_STATS)
                         {
                             nSum32bit += nValue;
                             nSumSquare32bit += nValue * nValue;
@@ -4758,7 +4789,7 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                             nSumSquare32bit += nValue2 * nValue2;
                         }
                     }
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         nSum += nSum32bit;
                         nSumSquare += nSumSquare32bit;
@@ -4773,7 +4804,7 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                         nMin = nValue;
                     if (nValue > nMax)
                         nMax = nValue;
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         nSum += nValue;
                         nSumSquare +=
@@ -4782,7 +4813,7 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                     }
                 }
             }
-            if (COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
                 nSampleCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
                 nValidCount += static_cast<GUIntBig>(nXCheck) * nYCheck;
@@ -4850,7 +4881,7 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
     GDALm256i ymm_min =
         GDALmm256_load_si256(reinterpret_cast<const GDALm256i *>(pData + i));
     GDALm256i ymm_max = ymm_min;
-    const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
+    [[maybe_unused]] const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
 
     for (GPtrDiff_t k = 0; k < nOuterLoops; k++)
     {
@@ -4858,8 +4889,9 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
             std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
 
         // holds 4 uint32 sums in [0], [2], [4] and [6]
-        GDALm256i ymm_sum = ZERO256;
-        GDALm256i ymm_sumsquare = ZERO256;  // holds 8 uint32 sums
+        [[maybe_unused]] GDALm256i ymm_sum = ZERO256;
+        [[maybe_unused]] GDALm256i ymm_sumsquare =
+            ZERO256;  // holds 8 uint32 sums
         for (; i + 31 < iMax; i += 32)
         {
             const GDALm256i ymm = GDALmm256_load_si256(
@@ -4873,7 +4905,7 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
                 ymm_max = GDALmm256_max_epu8(ymm_max, ymm);
             }
 
-            if (COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
                 // Extract even-8bit values
                 const GDALm256i ymm_even =
@@ -4899,7 +4931,7 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
             }
         }
 
-        if (COMPUTE_OTHER_STATS)
+        if constexpr (COMPUTE_OTHER_STATS)
         {
             GDALmm256_store_si256(reinterpret_cast<GDALm256i *>(panSum),
                                   ymm_sum);
@@ -4914,24 +4946,24 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
         }
     }
 
-    if (COMPUTE_MIN)
+    if constexpr (COMPUTE_MIN)
     {
         GDALmm256_store_si256(reinterpret_cast<GDALm256i *>(pabyMin), ymm_min);
     }
-    if (COMPUTE_MAX)
+    if constexpr (COMPUTE_MAX)
     {
         GDALmm256_store_si256(reinterpret_cast<GDALm256i *>(pabyMax), ymm_max);
     }
-    if (COMPUTE_MIN || COMPUTE_MAX)
+    if constexpr (COMPUTE_MIN || COMPUTE_MAX)
     {
         for (int j = 0; j < 32; j++)
         {
-            if (COMPUTE_MIN)
+            if constexpr (COMPUTE_MIN)
             {
                 if (pabyMin[j] < nMin)
                     nMin = pabyMin[j];
             }
-            if (COMPUTE_MAX)
+            if constexpr (COMPUTE_MAX)
             {
                 if (pabyMax[j] > nMax)
                     nMax = pabyMax[j];
@@ -4942,17 +4974,17 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
     for (; i < nBlockPixels; i++)
     {
         const GUInt32 nValue = pData[i];
-        if (COMPUTE_MIN)
+        if constexpr (COMPUTE_MIN)
         {
             if (nValue < nMin)
                 nMin = nValue;
         }
-        if (COMPUTE_MAX)
+        if constexpr (COMPUTE_MAX)
         {
             if (nValue > nMax)
                 nMax = nValue;
         }
-        if (COMPUTE_OTHER_STATS)
+        if constexpr (COMPUTE_OTHER_STATS)
         {
             nSum += nValue;
             nSumSquare +=
@@ -4960,7 +4992,7 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
         }
     }
 
-    if (COMPUTE_OTHER_STATS)
+    if constexpr (COMPUTE_OTHER_STATS)
     {
         nSampleCount += static_cast<GUIntBig>(nBlockPixels);
         nValidCount += static_cast<GUIntBig>(nBlockPixels);
@@ -5015,7 +5047,8 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                 GDALmm256_set1_epi8(static_cast<GByte>(nMin));
             GDALm256i ymm_min = ymm_neutral;
             GDALm256i ymm_max = ymm_neutral;
-            const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
+            [[maybe_unused]] const auto ymm_mask_8bits =
+                GDALmm256_set1_epi16(0xFF);
 
             const GUInt32 nMinThreshold = (nNoDataValue == 0) ? 1 : 0;
             const GUInt32 nMaxThreshold = (nNoDataValue == 255) ? 254 : 255;
@@ -5028,11 +5061,11 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                     std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
 
                 // holds 4 uint32 sums in [0], [2], [4] and [6]
-                GDALm256i ymm_sum = ZERO256;
+                [[maybe_unused]] GDALm256i ymm_sum = ZERO256;
                 // holds 8 uint32 sums
-                GDALm256i ymm_sumsquare = ZERO256;
+                [[maybe_unused]] GDALm256i ymm_sumsquare = ZERO256;
                 // holds 4 uint32 sums in [0], [2], [4] and [6]
-                GDALm256i ymm_count_nodata_mul_255 = ZERO256;
+                [[maybe_unused]] GDALm256i ymm_count_nodata_mul_255 = ZERO256;
                 const auto iInit = i;
                 for (; i + 31 < iMax; i += 32)
                 {
@@ -5042,7 +5075,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                     // Check which values are nodata
                     const GDALm256i ymm_eq_nodata =
                         GDALmm256_cmpeq_epi8(ymm, ymm_nodata);
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         // Count how many values are nodata (due to cmpeq
                         // putting 255 when condition is met, this will actually
@@ -5072,7 +5105,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                             GDALmm256_max_epu8(ymm_max, ymm_nodata_by_neutral);
                     }
 
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         // Extract even-8bit values
                         const GDALm256i ymm_even = GDALmm256_and_si256(
@@ -5100,7 +5133,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                     }
                 }
 
-                if (COMPUTE_OTHER_STATS)
+                if constexpr (COMPUTE_OTHER_STATS)
                 {
                     GUInt32 *panCoutNoDataMul255 = panSum;
                     GDALmm256_store_si256(
@@ -5144,7 +5177,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                 }
             }
 
-            if (COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
                 nSampleCount += nBlockPixels - i;
             }
@@ -5157,7 +5190,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                     nMin = nValue;
                 if (nValue > nMax)
                     nMax = nValue;
-                if (COMPUTE_OTHER_STATS)
+                if constexpr (COMPUTE_OTHER_STATS)
                 {
                     nValidCount++;
                     nSum += nValue;
@@ -5255,7 +5288,8 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
                 reinterpret_cast<const GDALm256i *>(pData + i));
             ymm_min = GDALmm256_add_epi16(ymm_min, ymm_m32768);
             GDALm256i ymm_max = ymm_min;
-            GDALm256i ymm_sumsquare = ZERO256;  // holds 4 uint64 sums
+            [[maybe_unused]] GDALm256i ymm_sumsquare =
+                ZERO256;  // holds 4 uint64 sums
 
             // Make sure that sum can fit on uint32
             // * 8 since we can hold 8 sums per vector register
@@ -5266,8 +5300,10 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
                 nOuterLoops++;
 
             const bool bComputeMinMax = nMin > 0 || nMax < 65535;
-            const auto ymm_mask_16bits = GDALmm256_set1_epi32(0xFFFF);
-            const auto ymm_mask_32bits = GDALmm256_set1_epi64x(0xFFFFFFFF);
+            [[maybe_unused]] const auto ymm_mask_16bits =
+                GDALmm256_set1_epi32(0xFFFF);
+            [[maybe_unused]] const auto ymm_mask_32bits =
+                GDALmm256_set1_epi64x(0xFFFFFFFF);
 
             GUIntBig nSumThis = 0;
             for (int k = 0; k < nOuterLoops; k++)
@@ -5275,7 +5311,8 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
                 const auto iMax =
                     std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
 
-                GDALm256i ymm_sum = ZERO256;  // holds 8 uint32 sums
+                [[maybe_unused]] GDALm256i ymm_sum =
+                    ZERO256;  // holds 8 uint32 sums
                 for (; i + 15 < iMax; i += 16)
                 {
                     const GDALm256i ymm = GDALmm256_load_si256(
@@ -5288,7 +5325,7 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
                         ymm_max = GDALmm256_max_epi16(ymm_max, ymm_shifted);
                     }
 
-                    if (COMPUTE_OTHER_STATS)
+                    if constexpr (COMPUTE_OTHER_STATS)
                     {
                         // Note: the int32 range can overflow for (0-32768)^2 +
                         // (0-32768)^2 = 0x80000000, but as we know the result
@@ -5310,7 +5347,7 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
                     }
                 }
 
-                if (COMPUTE_OTHER_STATS)
+                if constexpr (COMPUTE_OTHER_STATS)
                 {
                     GUInt32 anSum[8];
                     GDALmm256_storeu_si256(reinterpret_cast<GDALm256i *>(anSum),
@@ -5342,7 +5379,7 @@ struct ComputeStatisticsInternal<GUInt16, COMPUTE_OTHER_STATS>
                 }
             }
 
-            if (COMPUTE_OTHER_STATS)
+            if constexpr (COMPUTE_OTHER_STATS)
             {
                 GUIntBig anSumSquare[4];
                 GDALmm256_storeu_si256(

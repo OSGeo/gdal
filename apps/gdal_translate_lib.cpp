@@ -1246,13 +1246,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      virtual input source to copy from.                              */
     /* -------------------------------------------------------------------- */
 
-    const bool bSpatialArrangementPreserved =
-        psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
-        psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
-        psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() &&
+    const bool bKeepResolution =
         psOptions->nOXSizePixel == 0 && psOptions->dfOXSizePct == 0.0 &&
         psOptions->nOYSizePixel == 0 && psOptions->dfOYSizePct == 0.0 &&
         psOptions->dfXRes == 0.0;
+    const bool bSpatialArrangementPreserved =
+        psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
+        psOptions->adfSrcWin[2] == poSrcDS->GetRasterXSize() &&
+        psOptions->adfSrcWin[3] == poSrcDS->GetRasterYSize() && bKeepResolution;
 
     if (psOptions->eOutputType == GDT_Unknown &&
         psOptions->asScaleParams.empty() && psOptions->adfExponent.empty() &&
@@ -2120,10 +2121,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         /* --------------------------------------------------------------------
          */
         CPLStringList aosAddBandOptions;
-        if (bSpatialArrangementPreserved)
+        int nSrcBlockXSize, nSrcBlockYSize;
+        poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
+        if (bKeepResolution &&
+            (fmod(psOptions->adfSrcWin[0], nSrcBlockXSize)) == 0 &&
+            (fmod(psOptions->adfSrcWin[1], nSrcBlockYSize)) == 0)
         {
-            int nSrcBlockXSize, nSrcBlockYSize;
-            poSrcBand->GetBlockSize(&nSrcBlockXSize, &nSrcBlockYSize);
             aosAddBandOptions.SetNameValue("BLOCKXSIZE",
                                            CPLSPrintf("%d", nSrcBlockXSize));
             aosAddBandOptions.SetNameValue("BLOCKYSIZE",

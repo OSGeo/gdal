@@ -7,7 +7,6 @@ add_gdal_driver(
           ogrnasdatasource.cpp
           ogrnasdriver.cpp
           ogrnaslayer.cpp
-          ogrnasrelationlayer.cpp
   BUILTIN) # BUILTIN because of GML dependency
 gdal_standard_includes(ogr_NAS)
 target_include_directories(ogr_NAS PRIVATE $<TARGET_PROPERTY:ogr_GML,SOURCE_DIR>)

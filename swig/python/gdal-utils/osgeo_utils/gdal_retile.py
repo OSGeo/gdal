@@ -948,7 +948,7 @@ def main(args=None, g=None):
         args = sys.argv
     argv = gdal.GeneralCmdLineProcessor(args)
     if argv is None:
-        return 1
+        return 0
 
     # Parse command line arguments.
     i = 1

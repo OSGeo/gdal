@@ -582,7 +582,7 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*  Create a corresponding GDALDataset.                                 */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<FASTDataset>();
+    auto poDS = std::make_unique<FASTDataset>();
 
     std::swap(poDS->fpHeader, poOpenInfo->fpL);
 

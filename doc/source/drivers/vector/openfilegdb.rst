@@ -121,6 +121,9 @@ Layer Creation Options
 
       Set layer name alias.
 
+      On reading, this information is exposed in the ALIAS_NAME layer metadata
+      item (GDAL >= 3.8).
+
 -  .. lco:: GEOMETRY_NAME
       :default: SHAPE
 

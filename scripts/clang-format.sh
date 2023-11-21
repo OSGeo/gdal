@@ -42,6 +42,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/gtiff/libgeotiff/*)
+	  continue
+	  ;;
+
 	*frmts/gtiff/libtiff/*)
 	  continue
 	  ;;
@@ -63,6 +67,10 @@ for f in $FILES; do
 	  ;;
 
 	*ogr/ogrsf_frmts/pmtiles/pmtiles/*)
+	  continue
+	  ;;
+
+	*ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load/*)
 	  continue
 	  ;;
 

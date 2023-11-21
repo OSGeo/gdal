@@ -65,15 +65,15 @@ OGRMemDataSource::~OGRMemDataSource()
 /************************************************************************/
 
 OGRLayer *OGRMemDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRSIn,
+                                         const OGRSpatialReference *poSRSIn,
                                          OGRwkbGeometryType eType,
                                          char **papszOptions)
 {
     // Create the layer object.
-    OGRSpatialReference *poSRS = poSRSIn;
-    if (poSRS)
+    OGRSpatialReference *poSRS = nullptr;
+    if (poSRSIn)
     {
-        poSRS = poSRS->Clone();
+        poSRS = poSRSIn->Clone();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     OGRMemLayer *poLayer = new OGRMemLayer(pszLayerName, poSRS, eType);
@@ -85,6 +85,7 @@ OGRLayer *OGRMemDataSource::ICreateLayer(const char *pszLayerName,
     if (CPLFetchBool(papszOptions, "ADVERTIZE_UTF8", false))
         poLayer->SetAdvertizeUTF8(true);
 
+    poLayer->SetDataset(this);
     poLayer->SetFIDColumn(CSLFetchNameValueDef(papszOptions, "FID", ""));
 
     // Add layer to data source layer list.

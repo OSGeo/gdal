@@ -27,6 +27,7 @@
 
 #include "hdf5dataset.h"
 #include "hdf5eosparser.h"
+#include "s100.h"
 
 #include <algorithm>
 #include <set>
@@ -64,7 +65,7 @@ class HDF5Group final : public GDALGroup
     static herr_t GetAttributesCallback(hid_t hGroup, const char *pszObjName,
                                         void *);
 
-  public:
+  protected:
     HDF5Group(
         const std::string &osParentName, const std::string &osName,
         const std::shared_ptr<HDF5SharedResources> &poShared,
@@ -83,6 +84,19 @@ class HDF5Group final : public GDALGroup
         {
             HDF5Group::GetDimensions();
         }
+    }
+
+  public:
+    static std::shared_ptr<HDF5Group> Create(
+        const std::string &osParentName, const std::string &osName,
+        const std::shared_ptr<HDF5SharedResources> &poShared,
+        const std::set<std::pair<unsigned long, unsigned long>> &oSetParentIds,
+        hid_t hGroup, unsigned long objIds[2])
+    {
+        auto poGroup = std::shared_ptr<HDF5Group>(new HDF5Group(
+            osParentName, osName, poShared, oSetParentIds, hGroup, objIds));
+        poGroup->SetSelf(poGroup);
+        return poGroup;
     }
 
     ~HDF5Group()
@@ -374,6 +388,11 @@ class HDF5Array final : public GDALMDArray
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poShared->GetRootGroup();
+    }
 };
 
 /************************************************************************/
@@ -537,7 +556,7 @@ std::shared_ptr<HDF5Group> HDF5SharedResources::GetRootGroup()
 
     auto poSharedResources = m_poSelf.lock();
     CPLAssert(poSharedResources != nullptr);
-    return std::make_shared<HDF5Group>(
+    return HDF5Group::Create(
         std::string(), "/", poSharedResources,
         std::set<std::pair<unsigned long, unsigned long>>(), hGroup,
         oStatbuf.objno);
@@ -778,9 +797,8 @@ std::shared_ptr<GDALGroup> HDF5Group::OpenGroup(const std::string &osName,
     {
         return nullptr;
     }
-    return std::make_shared<HDF5Group>(GetFullName(), osName, m_poShared,
-                                       m_oSetParentIds, hSubGroup,
-                                       oStatbuf.objno);
+    return HDF5Group::Create(GetFullName(), osName, m_poShared, m_oSetParentIds,
+                             hSubGroup, oStatbuf.objno);
 }
 
 /************************************************************************/
@@ -971,6 +989,21 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
     }
 
     HDF5Array::GetAttributes();
+
+    // Special case for S102 nodata value that is at 1e6
+    if (GetFullName() ==
+            "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values" &&
+        m_dt.GetClass() == GEDTC_COMPOUND &&
+        m_dt.GetSize() == 2 * sizeof(float) &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Float32)
+    {
+        m_abyNoData.resize(m_dt.GetSize());
+        float afNoData[2] = {1e6f, 1e6f};
+        memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
+    }
 
     if (bSkipFullDimensionInstantiation)
     {
@@ -1217,6 +1250,52 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                 m_dims.emplace_back(poDim);
             }
             return;
+        }
+
+        // Special case for S102
+        if (nDims == 2 &&
+            GetFullName() ==
+                "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values")
+        {
+            auto poRootGroup = m_poShared->GetRootGroup();
+            if (poRootGroup)
+            {
+                m_poSRS = std::make_shared<OGRSpatialReference>();
+                if (S100ReadSRS(poRootGroup.get(), *(m_poSRS.get())))
+                {
+                    if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
+                        std::vector<int>{2, 1})
+                        m_poSRS->SetDataAxisToSRSAxisMapping({1, 2});
+                    else
+                        m_poSRS->SetDataAxisToSRSAxisMapping({2, 1});
+                }
+                else
+                {
+                    m_poSRS.reset();
+                }
+
+                auto poBathymetryCoverage01 =
+                    poRootGroup->OpenGroupFromFullname(
+                        "/BathymetryCoverage/BathymetryCoverage.01");
+                if (poBathymetryCoverage01)
+                {
+                    std::vector<std::shared_ptr<GDALMDArray>> apoIndexingVars;
+                    if (S100GetDimensions(poBathymetryCoverage01.get(), m_dims,
+                                          apoIndexingVars) &&
+                        m_dims.size() == 2 &&
+                        m_dims[0]->GetSize() == anDimSizes[0] &&
+                        m_dims[1]->GetSize() == anDimSizes[1])
+                    {
+                        for (const auto &poIndexingVar : apoIndexingVars)
+                            m_poShared->KeepRef(poIndexingVar);
+                        return;
+                    }
+                    else
+                    {
+                        m_dims.clear();
+                    }
+                }
+            }
         }
     }
 
@@ -1549,10 +1628,10 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
 
     // Only for testing
     const char *pszThreshold =
-        CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "10000000");
+        CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "16777216");
     const GUIntBig nThreshold =
         CPLScanUIntBig(pszThreshold, static_cast<int>(strlen(pszThreshold)));
-    if (nEltCount < nThreshold / nBufferDataTypeSize)
+    if (nEltCount == 1 || nEltCount <= nThreshold / nBufferDataTypeSize)
     {
         CPLDebug("HDF5", "Using slow path");
         std::vector<GByte> abyTemp;
@@ -1602,48 +1681,42 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    CPLDebug("HDF5", "Using very slow path");
-    std::vector<GUInt64> anStart(nDims);
-    const std::vector<size_t> anCount(nDims, 1);
-    const std::vector<GInt64> anStep(nDims, 1);
-    const std::vector<GPtrDiff_t> anStride(nDims, 1);
+    std::vector<GUInt64> arrayStartIdxHalf;
+    std::vector<size_t> countHalf;
+    size_t iDimToSplit = nDims;
+    // Find the first dimension that has at least 2 elements, to split along
+    // it
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        arrayStartIdxHalf.push_back(arrayStartIdx[i]);
+        countHalf.push_back(count[i]);
+        if (count[i] >= 2 && iDimToSplit == nDims)
+        {
+            iDimToSplit = i;
+        }
+    }
 
-    std::vector<size_t> anStackCount(nDims);
-    std::vector<GByte *> pabyDstBufferStack(nDims + 1);
-    pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
-    size_t iDim = 0;
-lbl_next_depth:
-    if (iDim == nDims)
+    CPLAssert(iDimToSplit != nDims);
+
+    countHalf[iDimToSplit] /= 2;
+    if (!ReadSlow(arrayStartIdxHalf.data(), countHalf.data(), arrayStep,
+                  bufferStride, bufferDataType, pDstBuffer))
     {
-        if (!IRead(anStart.data(), anCount.data(), anStep.data(),
-                   anStride.data(), bufferDataType, pabyDstBufferStack[nDims]))
-        {
-            return false;
-        }
+        return false;
     }
-    else
-    {
-        anStart[iDim] = arrayStartIdx[iDim];
-        anStackCount[iDim] = count[iDim];
-        while (true)
-        {
-            ++iDim;
-            pabyDstBufferStack[iDim] = pabyDstBufferStack[iDim - 1];
-            goto lbl_next_depth;
-        lbl_return_to_caller_in_loop:
-            --iDim;
-            --anStackCount[iDim];
-            if (anStackCount[iDim] == 0)
-                break;
-            pabyDstBufferStack[iDim] +=
-                bufferStride[iDim] * nBufferDataTypeSize;
-            anStart[iDim] =
-                CPLUnsanitizedAdd<GUInt64>(anStart[iDim], arrayStep[iDim]);
-        }
-    }
-    if (iDim > 0)
-        goto lbl_return_to_caller_in_loop;
-    return true;
+    arrayStartIdxHalf[iDimToSplit] = static_cast<GUInt64>(
+        arrayStep[iDimToSplit] > 0
+            ? arrayStartIdx[iDimToSplit] +
+                  arrayStep[iDimToSplit] * countHalf[iDimToSplit]
+            : arrayStartIdx[iDimToSplit] -
+                  (-arrayStep[iDimToSplit]) * countHalf[iDimToSplit]);
+    GByte *pOtherHalfDstBuffer =
+        static_cast<GByte *>(pDstBuffer) + bufferStride[iDimToSplit] *
+                                               countHalf[iDimToSplit] *
+                                               nBufferDataTypeSize;
+    countHalf[iDimToSplit] = count[iDimToSplit] - countHalf[iDimToSplit];
+    return ReadSlow(arrayStartIdxHalf.data(), countHalf.data(), arrayStep,
+                    bufferStride, bufferDataType, pOtherHalfDstBuffer);
 }
 
 /************************************************************************/
@@ -1980,11 +2053,45 @@ static void CopyToFinalBuffer(void *pDstBuffer, const void *pTemp, size_t nDims,
             ? CreateMapTargetComponentsToSrc(hSrcDataType, bufferDataType)
             : std::vector<unsigned>();
 
+    bool bFastCopyOfCompoundToSingleComponentCompound = false;
+    GDALDataType eSrcTypeComp = GDT_Unknown;
+    size_t nSrcOffset = 0;
+    GDALDataType eDstTypeComp = GDT_Unknown;
+    int bufferStrideLastDim = 0;
+    if (nDims > 0 && mapDstCompsToSrcComps.size() == 1 &&
+        bufferDataType.GetComponents()[0]->GetType().GetClass() ==
+            GEDTC_NUMERIC)
+    {
+        auto hMemberType =
+            H5Tget_member_type(hSrcDataType, mapDstCompsToSrcComps[0]);
+        eSrcTypeComp = HDF5Dataset::GetDataType(hMemberType);
+        if (eSrcTypeComp != GDT_Unknown)
+        {
+            nSrcOffset =
+                H5Tget_member_offset(hSrcDataType, mapDstCompsToSrcComps[0]);
+            eDstTypeComp = bufferDataType.GetComponents()[0]
+                               ->GetType()
+                               .GetNumericDataType();
+            bufferStrideLastDim = static_cast<int>(bufferStride[nDims - 1] *
+                                                   bufferDataType.GetSize());
+            bFastCopyOfCompoundToSingleComponentCompound = true;
+        }
+    }
+
 lbl_next_depth:
-    if (iDim == nDims)
+    if (bFastCopyOfCompoundToSingleComponentCompound && iDim == nDims - 1)
+    {
+        GDALCopyWords64(pabySrcBuffer + nSrcOffset, eSrcTypeComp,
+                        static_cast<int>(nSrcDataTypeSize),
+                        pabyDstBufferStack[iDim], eDstTypeComp,
+                        static_cast<int>(bufferStrideLastDim), count[iDim]);
+        pabySrcBuffer += count[iDim] * nSrcDataTypeSize;
+    }
+    else if (iDim == nDims)
     {
         CopyValue(pabySrcBuffer, hSrcDataType, pabyDstBufferStack[nDims],
                   bufferDataType, mapDstCompsToSrcComps);
+        pabySrcBuffer += nSrcDataTypeSize;
     }
     else
     {
@@ -2001,7 +2108,6 @@ lbl_next_depth:
                 break;
             pabyDstBufferStack[iDim] +=
                 bufferStride[iDim] * bufferDataType.GetSize();
-            pabySrcBuffer += nSrcDataTypeSize;
         }
     }
     if (iDim > 0)
@@ -2484,7 +2590,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
-    std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources)
+    const std::shared_ptr<GDAL::HDF5SharedResources> &poSharedResources)
 {
     HDF5_GLOBAL_LOCK();
 
@@ -2495,7 +2601,7 @@ std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
     if (HDF5EOSParser::HasHDFEOS(poGroup->GetID()))
     {
         poSharedResources->m_poHDF5EOSParser =
-            cpl::make_unique<HDF5EOSParser>();
+            std::make_unique<HDF5EOSParser>();
         if (poSharedResources->m_poHDF5EOSParser->Parse(poGroup->GetID()))
         {
             CPLDebug("HDF5", "Successfully parsed HDFEOS metadata");

@@ -1462,7 +1462,7 @@ void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr PDS4FixedWidthTable::CreateField(OGRFieldDefn *poFieldIn, int)
+OGRErr PDS4FixedWidthTable::CreateField(const OGRFieldDefn *poFieldIn, int)
 
 {
     if (m_poDS->GetAccess() != GA_Update)
@@ -1502,7 +1502,7 @@ OGRErr PDS4FixedWidthTable::CreateField(OGRFieldDefn *poFieldIn, int)
 /*                          InitializeNewLayer()                        */
 /************************************************************************/
 
-bool PDS4FixedWidthTable::InitializeNewLayer(OGRSpatialReference *poSRS,
+bool PDS4FixedWidthTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
                                              bool bForceGeographic,
                                              OGRwkbGeometryType eGType,
                                              const char *const *papszOptions)
@@ -2104,7 +2104,7 @@ OGRErr PDS4DelimitedTable::ICreateFeature(OGRFeature *poFeature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr PDS4DelimitedTable::CreateField(OGRFieldDefn *poFieldIn, int)
+OGRErr PDS4DelimitedTable::CreateField(const OGRFieldDefn *poFieldIn, int)
 
 {
     if (m_poDS->GetAccess() != GA_Update)
@@ -2485,7 +2485,7 @@ char **PDS4DelimitedTable::GetFileList() const
 /*                          InitializeNewLayer()                        */
 /************************************************************************/
 
-bool PDS4DelimitedTable::InitializeNewLayer(OGRSpatialReference *poSRS,
+bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
                                             bool bForceGeographic,
                                             OGRwkbGeometryType eGType,
                                             const char *const *papszOptions)

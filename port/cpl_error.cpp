@@ -159,19 +159,6 @@ static CPLErrorContext *CPLGetErrorContext()
 
 void *CPL_STDCALL CPLGetErrorHandlerUserData(void)
 {
-    int bError = FALSE;
-
-    // check if there is an active error being propagated through the handlers
-    void **pActiveUserData = reinterpret_cast<void **>(
-        CPLGetTLSEx(CTLS_ERRORHANDLERACTIVEDATA, &bError));
-    if (bError)
-        return nullptr;
-
-    if (pActiveUserData != nullptr)
-    {
-        return *pActiveUserData;
-    }
-
     // get the current threadlocal or global error context user data
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if (psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx))
@@ -230,10 +217,7 @@ CPLErrorHandler CPLGetErrorHandler(void **ppUserData)
 static void ApplyErrorHandler(CPLErrorContext *psCtx, CPLErr eErrClass,
                               CPLErrorNum err_no, const char *pszMessage)
 {
-    void **pActiveUserData;
     bool bProcessed = false;
-
-    // CTLS_ERRORHANDLERACTIVEDATA holds the active error handler userData
 
     if (psCtx->psHandlerStack != nullptr)
     {
@@ -241,9 +225,14 @@ static void ApplyErrorHandler(CPLErrorContext *psCtx, CPLErr eErrClass,
         if ((eErrClass != CE_Debug) || psCtx->psHandlerStack->bCatchDebug)
         {
             // call the error handler
-            pActiveUserData = &(psCtx->psHandlerStack->pUserData);
-            CPLSetTLS(CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false);
+            CPLErrorHandlerNode *psNewCurNode = psCtx->psHandlerStack;
             psCtx->psHandlerStack->pfnHandler(eErrClass, err_no, pszMessage);
+            if (psNewCurNode != psCtx->psHandlerStack)
+            {
+                fprintf(stderr, "ApplyErrorHandler() has detected that a "
+                                "previous error handler messed up with the "
+                                "error stack. Chaos guaranteed!\n");
+            }
             bProcessed = true;
         }
         else
@@ -254,10 +243,20 @@ static void ApplyErrorHandler(CPLErrorContext *psCtx, CPLErr eErrClass,
             {
                 if (psNode->bCatchDebug)
                 {
-                    pActiveUserData = &(psNode->pUserData);
-                    CPLSetTLS(CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData,
-                              false);
+                    CPLErrorHandlerNode *psBackupCurNode =
+                        psCtx->psHandlerStack;
+                    psCtx->psHandlerStack = psNode;
+                    CPLErrorHandlerNode *psNewCurNode = psCtx->psHandlerStack;
                     psNode->pfnHandler(eErrClass, err_no, pszMessage);
+                    // cppcheck-suppress knownConditionTrueFalse
+                    if (psNewCurNode != psCtx->psHandlerStack)
+                    {
+                        fprintf(stderr,
+                                "ApplyErrorHandler() has detected that a "
+                                "previous error handler messed up with the "
+                                "error stack. Chaos guaranteed!\n");
+                    }
+                    psCtx->psHandlerStack = psBackupCurNode;
                     bProcessed = true;
                     break;
                 }
@@ -274,20 +273,15 @@ static void ApplyErrorHandler(CPLErrorContext *psCtx, CPLErr eErrClass,
         {
             if (pfnErrorHandler != nullptr)
             {
-                pActiveUserData = &pErrorHandlerUserData;
-                CPLSetTLS(CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false);
                 pfnErrorHandler(eErrClass, err_no, pszMessage);
             }
         }
         else /* if( eErrClass == CE_Debug ) */
         {
             // for CPLDebug messages we propagate to the default error handler
-            pActiveUserData = nullptr;
-            CPLSetTLS(CTLS_ERRORHANDLERACTIVEDATA, pActiveUserData, false);
             CPLDefaultErrorHandler(eErrClass, err_no, pszMessage);
         }
     }
-    CPLSetTLS(CTLS_ERRORHANDLERACTIVEDATA, nullptr, false);
 }
 
 /**********************************************************************
@@ -1300,6 +1294,55 @@ void CPL_STDCALL CPLPopErrorHandler()
 
         psCtx->psHandlerStack = psNode->psNext;
         VSIFree(psNode);
+    }
+}
+
+/************************************************************************/
+/*                         CPLCallPreviousHandler()                     */
+/************************************************************************/
+
+/**
+ * Call the previously installed error handler in the error handler stack.
+ *
+ * Only to be used by a custom error handler that wants to forward events to
+ * the previous error handler.
+ *
+ * @since GDAL 3.8
+ */
+
+void CPLCallPreviousHandler(CPLErr eErrClass, CPLErrorNum err_no,
+                            const char *pszMsg)
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    if (psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx))
+    {
+        fprintf(stderr, "CPLCallPreviousHandler() failed.\n");
+        return;
+    }
+
+    if (psCtx->psHandlerStack != nullptr)
+    {
+        CPLErrorHandlerNode *psCurNode = psCtx->psHandlerStack;
+        psCtx->psHandlerStack = psCurNode->psNext;
+        if (psCtx->psHandlerStack)
+        {
+            CPLErrorHandlerNode *psNewCurNode = psCtx->psHandlerStack;
+            psCtx->psHandlerStack->pfnHandler(eErrClass, err_no, pszMsg);
+            if (psNewCurNode != psCtx->psHandlerStack)
+            {
+                fprintf(stderr, "CPLCallPreviousHandler() has detected that a "
+                                "previous error handler messed up with the "
+                                "error stack. Chaos guaranteed!\n");
+            }
+        }
+        else
+            CPLDefaultErrorHandler(eErrClass, err_no, pszMsg);
+        psCtx->psHandlerStack = psCurNode;
+    }
+    else
+    {
+        CPLDefaultErrorHandler(eErrClass, err_no, pszMsg);
     }
 }
 

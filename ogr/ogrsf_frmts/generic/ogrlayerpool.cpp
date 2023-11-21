@@ -508,7 +508,7 @@ int OGRProxiedLayer::TestCapability(const char *pszCapability)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRProxiedLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;

@@ -27,15 +27,39 @@
  ****************************************************************************/
 
 #include "ograrrowarrayhelper.h"
+#include "ogr_p.h"
 
 #include <limits>
 
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GetMaxFeaturesInBatch()                          */
+/*                           GetMemLimit()                              */
 /************************************************************************/
 
+/*static*/ uint32_t OGRArrowArrayHelper::GetMemLimit()
+{
+    uint32_t nMemLimit =
+        static_cast<uint32_t>(std::numeric_limits<int32_t>::max());
+    // Just for tests
+    const char *pszOGR_ARROW_MEM_LIMIT =
+        CPLGetConfigOption("OGR_ARROW_MEM_LIMIT", nullptr);
+    if (pszOGR_ARROW_MEM_LIMIT)
+        nMemLimit = atoi(pszOGR_ARROW_MEM_LIMIT);
+    else
+    {
+        const uint64_t nUsableRAM = CPLGetUsablePhysicalRAM();
+        if (nUsableRAM > 0 && nUsableRAM / 4 < nMemLimit)
+            nMemLimit = static_cast<uint32_t>(nUsableRAM / 4);
+    }
+    return nMemLimit;
+}
+
+/************************************************************************/
+/*                       GetMaxFeaturesInBatch()                        */
+/************************************************************************/
+
+/* static */
 int OGRArrowArrayHelper::GetMaxFeaturesInBatch(
     const CPLStringList &aosArrowArrayStreamOptions)
 {
@@ -57,52 +81,71 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
     GDALDataset *poDS, OGRFeatureDefn *poFeatureDefn,
     const CPLStringList &aosArrowArrayStreamOptions,
     struct ArrowArray *out_array)
-    : bIncludeFID(CPLTestBool(
+    : m_bIncludeFID(CPLTestBool(
           aosArrowArrayStreamOptions.FetchNameValueDef("INCLUDE_FID", "YES"))),
-      nMaxBatchSize(GetMaxFeaturesInBatch(aosArrowArrayStreamOptions)),
+      m_nMaxBatchSize(GetMaxFeaturesInBatch(aosArrowArrayStreamOptions)),
+      m_nFieldCount(poFeatureDefn->GetFieldCount()),
+      m_nGeomFieldCount(poFeatureDefn->GetGeomFieldCount()),
       m_out_array(out_array)
 {
     memset(out_array, 0, sizeof(*out_array));
 
-    nFieldCount = poFeatureDefn->GetFieldCount();
-    nGeomFieldCount = poFeatureDefn->GetGeomFieldCount();
-    mapOGRFieldToArrowField.resize(nFieldCount, -1);
-    mapOGRGeomFieldToArrowField.resize(nGeomFieldCount, -1);
-    abNullableFields.resize(nFieldCount);
-
-    if (bIncludeFID)
+    m_mapOGRFieldToArrowField.resize(m_nFieldCount, -1);
+    m_mapOGRGeomFieldToArrowField.resize(m_nGeomFieldCount, -1);
+    m_abNullableFields.resize(m_nFieldCount);
+    m_anTZFlags.resize(m_nFieldCount);
+    int nTZFlagOverride = -1;
+    const char *pszTZOverride =
+        aosArrowArrayStreamOptions.FetchNameValue("TIMEZONE");
+    if (pszTZOverride)
     {
-        nChildren++;
-    }
-    for (int i = 0; i < nFieldCount; i++)
-    {
-        const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
-        abNullableFields[i] = CPL_TO_BOOL(poFieldDefn->IsNullable());
-        if (!poFieldDefn->IsIgnored())
+        if (EQUAL(pszTZOverride, "unknown") || EQUAL(pszTZOverride, ""))
         {
-            mapOGRFieldToArrowField[i] = nChildren;
-            nChildren++;
+            nTZFlagOverride = OGR_TZFLAG_UNKNOWN;
+        }
+        else
+        {
+            // we don't really care about the actual timezone, since we
+            // will convert OGRField::Date to UTC in all cases
+            nTZFlagOverride = OGR_TZFLAG_UTC;
         }
     }
-    for (int i = 0; i < nGeomFieldCount; i++)
+
+    if (m_bIncludeFID)
+    {
+        m_nChildren++;
+    }
+    for (int i = 0; i < m_nFieldCount; i++)
+    {
+        const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+        m_abNullableFields[i] = CPL_TO_BOOL(poFieldDefn->IsNullable());
+        m_anTZFlags[i] =
+            nTZFlagOverride >= 0 ? nTZFlagOverride : poFieldDefn->GetTZFlag();
+        if (!poFieldDefn->IsIgnored())
+        {
+            m_mapOGRFieldToArrowField[i] = m_nChildren;
+            m_nChildren++;
+        }
+    }
+    for (int i = 0; i < m_nGeomFieldCount; i++)
     {
         if (!poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored())
         {
-            mapOGRGeomFieldToArrowField[i] = nChildren;
-            nChildren++;
+            m_mapOGRGeomFieldToArrowField[i] = m_nChildren;
+            m_nChildren++;
         }
     }
 
-    anArrowFieldMaxAlloc.resize(nChildren);
+    m_anArrowFieldMaxAlloc.resize(m_nChildren);
 
     out_array->release = OGRLayer::ReleaseArray;
 
-    out_array->length = nMaxBatchSize;
+    out_array->length = m_nMaxBatchSize;
     out_array->null_count = 0;
 
-    out_array->n_children = nChildren;
+    out_array->n_children = m_nChildren;
     out_array->children = static_cast<struct ArrowArray **>(
-        CPLCalloc(nChildren, sizeof(struct ArrowArray *)));
+        CPLCalloc(m_nChildren, sizeof(struct ArrowArray *)));
     out_array->release = OGRLayer::ReleaseArray;
     out_array->n_buffers = 1;
     out_array->buffers =
@@ -110,26 +153,26 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
 
     // Allocate buffers
 
-    if (bIncludeFID)
+    if (m_bIncludeFID)
     {
         out_array->children[0] = static_cast<struct ArrowArray *>(
             CPLCalloc(1, sizeof(struct ArrowArray)));
         auto psChild = out_array->children[0];
         psChild->release = OGRLayer::ReleaseArray;
-        psChild->length = nMaxBatchSize;
+        psChild->length = m_nMaxBatchSize;
         psChild->n_buffers = 2;
         psChild->buffers =
             static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-        panFIDValues = static_cast<int64_t *>(
-            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * nMaxBatchSize));
-        if (panFIDValues == nullptr)
+        m_panFIDValues = static_cast<int64_t *>(
+            VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * m_nMaxBatchSize));
+        if (m_panFIDValues == nullptr)
             goto error;
-        psChild->buffers[1] = panFIDValues;
+        psChild->buffers[1] = m_panFIDValues;
     }
 
-    for (int i = 0; i < nFieldCount; i++)
+    for (int i = 0; i < m_nFieldCount; i++)
     {
-        const int iArrowField = mapOGRFieldToArrowField[i];
+        const int iArrowField = m_mapOGRFieldToArrowField[i];
         if (iArrowField >= 0)
         {
             const auto poFieldDefn = poFeatureDefn->GetFieldDefn(i);
@@ -138,7 +181,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
             auto psChild = out_array->children[iArrowField];
 
             psChild->release = OGRLayer::ReleaseArray;
-            psChild->length = nMaxBatchSize;
+            psChild->length = m_nMaxBatchSize;
             const auto eSubType = poFieldDefn->GetSubType();
             size_t nEltSize = 0;
             switch (poFieldDefn->GetType())
@@ -199,16 +242,16 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                     psChild->buffers = static_cast<const void **>(
                         CPLCalloc(3, sizeof(void *)));
                     psChild->buffers[1] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-                        sizeof(uint32_t) * (1 + nMaxBatchSize));
+                        sizeof(uint32_t) * (1 + m_nMaxBatchSize));
                     if (psChild->buffers[1] == nullptr)
                         goto error;
                     memset(const_cast<void *>(psChild->buffers[1]), 0,
-                           sizeof(uint32_t) * (1 + nMaxBatchSize));
+                           sizeof(uint32_t) * (1 + m_nMaxBatchSize));
                     constexpr size_t DEFAULT_STRING_SIZE = 10;
-                    anArrowFieldMaxAlloc[iArrowField] =
-                        DEFAULT_STRING_SIZE * nMaxBatchSize;
+                    m_anArrowFieldMaxAlloc[iArrowField] =
+                        DEFAULT_STRING_SIZE * m_nMaxBatchSize;
                     psChild->buffers[2] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-                        anArrowFieldMaxAlloc[iArrowField]);
+                        m_anArrowFieldMaxAlloc[iArrowField]);
                     if (psChild->buffers[2] == nullptr)
                         goto error;
                     break;
@@ -242,18 +285,18 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
                 psChild->buffers =
                     static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
                 psChild->buffers[1] =
-                    VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nEltSize * nMaxBatchSize);
+                    VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nEltSize * m_nMaxBatchSize);
                 if (psChild->buffers[1] == nullptr)
                     goto error;
                 memset(const_cast<void *>(psChild->buffers[1]), 0,
-                       nEltSize * nMaxBatchSize);
+                       nEltSize * m_nMaxBatchSize);
             }
         }
     }
 
-    for (int i = 0; i < nGeomFieldCount; i++)
+    for (int i = 0; i < m_nGeomFieldCount; i++)
     {
-        const int iArrowField = mapOGRGeomFieldToArrowField[i];
+        const int iArrowField = m_mapOGRGeomFieldToArrowField[i];
         if (iArrowField >= 0)
         {
             out_array->children[iArrowField] = static_cast<struct ArrowArray *>(
@@ -261,22 +304,22 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(
             auto psChild = out_array->children[iArrowField];
 
             psChild->release = OGRLayer::ReleaseArray;
-            psChild->length = nMaxBatchSize;
+            psChild->length = m_nMaxBatchSize;
 
             psChild->n_buffers = 3;
             psChild->buffers =
                 static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
             psChild->buffers[1] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-                sizeof(uint32_t) * (1 + nMaxBatchSize));
+                sizeof(uint32_t) * (1 + m_nMaxBatchSize));
             if (psChild->buffers[1] == nullptr)
                 goto error;
             memset(const_cast<void *>(psChild->buffers[1]), 0,
-                   sizeof(uint32_t) * (1 + nMaxBatchSize));
+                   sizeof(uint32_t) * (1 + m_nMaxBatchSize));
             constexpr size_t DEFAULT_WKB_SIZE = 100;
-            anArrowFieldMaxAlloc[iArrowField] =
-                DEFAULT_WKB_SIZE * nMaxBatchSize;
+            m_anArrowFieldMaxAlloc[iArrowField] =
+                DEFAULT_WKB_SIZE * m_nMaxBatchSize;
             psChild->buffers[2] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-                anArrowFieldMaxAlloc[iArrowField]);
+                m_anArrowFieldMaxAlloc[iArrowField]);
             if (psChild->buffers[2] == nullptr)
                 goto error;
         }

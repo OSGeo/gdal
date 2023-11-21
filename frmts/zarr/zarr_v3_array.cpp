@@ -1243,8 +1243,10 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             return nullptr;
         }
         aoDims.emplace_back(std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, std::string(), CPLSPrintf("dim%d", i),
-            std::string(), std::string(), nSize));
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
+            nSize));
     }
 
     // Deal with dimension_names
@@ -1331,8 +1333,9 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
 
         auto poDimLocal = std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, GetFullName(), osDimName, osType,
-            osDirection, poDim->GetSize());
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
         poDimLocal->SetXArrayDimension();
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
@@ -1593,7 +1596,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             oInputArrayMetadata.anBlockSizes.push_back(
                 static_cast<size_t>(nSize));
         oInputArrayMetadata.oElt = aoDtypeElts.back();
-        poCodecs = cpl::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
+        poCodecs = std::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
         if (!poCodecs->InitFromJson(oCodecs))
             return nullptr;
     }

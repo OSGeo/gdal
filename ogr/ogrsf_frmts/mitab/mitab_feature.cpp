@@ -6390,7 +6390,7 @@ const char *TABText::GetStyleString() const
 void TABText::SetLabelFromStyleString(const char *pszStyleString)
 {
     // Use the Style Manager to retrieve all the information we need.
-    auto poStyleMgr = cpl::make_unique<OGRStyleMgr>(nullptr);
+    auto poStyleMgr = std::make_unique<OGRStyleMgr>(nullptr);
     std::unique_ptr<OGRStyleTool> poStylePart;
 
     // Init the StyleMgr with the StyleString.

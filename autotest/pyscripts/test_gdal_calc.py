@@ -63,6 +63,28 @@ def script_path():
     return test_py_scripts.get_py_script("gdal_calc")
 
 
+###############################################################################
+#
+
+
+def test_gdal_calc_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_calc", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdal_calc_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdal_calc", "--version"
+    )
+
+
 # Usage: gdal_calc.py [-A <filename>] [--A_band] [-B...-Z filename] [other_options]
 
 
@@ -141,7 +163,7 @@ def test_gdal_calc_py_1(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_calc",
-        f"-Z {infile} --Z_band=2 --calc=Z --overwrite --outfile {out[2]}",
+        f"-Z {infile} --Z_band=2 --calc=Z --overwrite --format GTiff --outfile {out[2]}",
     )
 
     for i, checksum in zip(

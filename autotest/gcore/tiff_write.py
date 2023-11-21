@@ -10375,6 +10375,7 @@ def test_tiff_write_jpegxl_band_combinations():
     types = [
         gdal.GDT_Byte,
         gdal.GDT_UInt16,
+        gdal.GDT_Float32,
     ]
 
     creationOptions = [

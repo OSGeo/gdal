@@ -121,7 +121,7 @@ OGRFeature *FGdbBaseLayer::GetNextFeature()
 
         OGRFeature *pOGRFeature = nullptr;
 
-        if (!OGRFeatureFromGdbRow(&row, &pOGRFeature))
+        if (!OGRFeatureFromGdbRow(&row, &pOGRFeature) || !pOGRFeature)
         {
             int32 oid = -1;
             CPL_IGNORE_RET_VAL(row.GetOID(oid));
@@ -1911,7 +1911,7 @@ char *FGdbLayer::CreateFieldDefn(OGRFieldDefn &oField, int bApproxOK,
 /*                                                                      */
 /************************************************************************/
 
-OGRErr FGdbLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr FGdbLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     OGRFieldDefn oField(poField);
     std::string fieldname_clean;
@@ -2073,7 +2073,7 @@ OGRErr FGdbLayer::AlterFieldDefn(int iFieldToAlter,
 /*                                                                      */
 /************************************************************************/
 
-static CPLXMLNode *XMLSpatialReference(OGRSpatialReference *poSRS,
+static CPLXMLNode *XMLSpatialReference(const OGRSpatialReference *poSRS,
                                        char **papszOptions)
 {
     /* We always need a SpatialReference */
@@ -2343,7 +2343,7 @@ static CPLXMLNode *XMLSpatialReference(OGRSpatialReference *poSRS,
 
 bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
                                      const std::string &feature_dataset_name,
-                                     OGRSpatialReference *poSRS,
+                                     const OGRSpatialReference *poSRS,
                                      char **papszOptions)
 {
     /* XML node */
@@ -2430,7 +2430,8 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
 /************************************************************************/
 
 bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
-                       const char *pszLayerNameIn, OGRSpatialReference *poSRS,
+                       const char *pszLayerNameIn,
+                       const OGRSpatialReference *poSRS,
                        OGRwkbGeometryType eType, char **papszOptions)
 {
     std::string parent_path = "";
@@ -3827,7 +3828,7 @@ OGRFeature *FGdbLayer::GetNextFeature()
             OGRFeature *pOGRFeature = nullptr;
             Row rowFull;
             if (GetRow(enumRows, rowFull, oid) != OGRERR_NONE ||
-                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature))
+                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature) || !pOGRFeature)
             {
                 GDBErr(hr,
                        CPLSPrintf(

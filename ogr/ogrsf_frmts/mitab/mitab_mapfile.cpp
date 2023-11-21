@@ -2007,7 +2007,7 @@ TABMAPObjectBlock *TABMAPFile::SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
     /*-----------------------------------------------------------------
      * Create new obj and coord block
      *----------------------------------------------------------------*/
-    auto poNewObjBlock = cpl::make_unique<TABMAPObjectBlock>(m_eAccessMode);
+    auto poNewObjBlock = std::make_unique<TABMAPObjectBlock>(m_eAccessMode);
     poNewObjBlock->InitNewBlock(m_fp, m_poHeader->m_nRegularBlockSize,
                                 m_oBlockManager.AllocNewBlock("OBJECT"));
 

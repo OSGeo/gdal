@@ -54,8 +54,10 @@
 /* ==================================================================== */
 OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                               OGRFeatureDefn *poDefn, int iShape,
-                              SHPObject *psShape, const char *pszSHPEncoding);
-OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape);
+                              SHPObject *psShape, const char *pszSHPEncoding,
+                              bool &bHasWarnedWrongWindingOrder);
+OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
+                              bool &bHasWarnedWrongWindingOrder);
 OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
                                       DBFHandle hDBF,
                                       const char *pszSHPEncoding,
@@ -182,6 +184,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     bool bCreateSpatialIndexAtClose;
     bool bRewindOnWrite;
+    bool m_bHasWarnedWrongWindingOrder = false;
 
     bool m_bAutoRepack;
     typedef enum
@@ -233,6 +236,8 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
                   char **papszCreateOptions = nullptr);
     virtual ~OGRShapeLayer();
 
+    GDALDataset *GetDataset() override;
+
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
@@ -255,7 +260,8 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     OGRErr DeleteField(int iField) override;
     OGRErr ReorderFields(int *panMap) override;
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -345,7 +351,7 @@ class OGRShapeDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *) override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 

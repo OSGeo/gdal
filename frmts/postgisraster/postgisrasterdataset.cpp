@@ -4092,6 +4092,85 @@ GBool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff,
     return true;
 }
 
+/************************************************************************/
+/*                    PostGISRasterDriverGetSubdatasetInfo()            */
+/************************************************************************/
+
+struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit PostGISRasterDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "PG:"))
+        {
+            return;
+        }
+
+        char **papszParams = ParseConnectionString(m_fileName.c_str());
+
+        const int nTableIdx = CSLFindName(papszParams, "table");
+        if (nTableIdx != -1)
+        {
+            size_t nTableStart = m_fileName.find("table=");
+            bool bHasQuotes{false};
+            try
+            {
+                bHasQuotes = m_fileName.at(nTableStart + 6) == '\'';
+            }
+            catch (const std::out_of_range &)
+            {
+                // ignore error
+            }
+
+            m_subdatasetComponent = papszParams[nTableIdx];
+
+            if (bHasQuotes)
+            {
+                m_subdatasetComponent.insert(6, "'");
+                m_subdatasetComponent.push_back('\'');
+            }
+
+            m_driverPrefixComponent = "PG";
+
+            size_t nPathLength = m_subdatasetComponent.length();
+            if (nTableStart != 0)
+            {
+                nPathLength++;
+                nTableStart--;
+            }
+
+            m_pathComponent = m_fileName;
+            m_pathComponent.erase(nTableStart, nPathLength);
+            m_pathComponent.erase(0, 3);
+        }
+
+        CSLDestroy(papszParams);
+    }
+};
+
+static GDALSubdatasetInfo *
+PostGISRasterDriverGetSubdatasetInfo(const char *pszFileName)
+{
+    if (STARTS_WITH_CI(pszFileName, "PG:"))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            std::make_unique<PostGISRasterDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
 /***********************************************************************
  * GDALRegister_PostGISRaster()
  **********************************************************************/
@@ -4115,6 +4194,7 @@ void GDALRegister_PostGISRaster()
     poDriver->pfnIdentify = PostGISRasterDataset::Identify;
     poDriver->pfnCreateCopy = PostGISRasterDataset::CreateCopy;
     poDriver->pfnDelete = PostGISRasterDataset::Delete;
+    poDriver->pfnGetSubdatasetInfoFunc = PostGISRasterDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

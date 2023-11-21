@@ -1621,7 +1621,7 @@ void GDALDataset::MarkAsShared()
 }
 
 /************************************************************************/
-/*                            MarkAsShared()                            */
+/*                        MarkSuppressOnClose()                         */
 /************************************************************************/
 
 /** Set that the dataset must be deleted on close. */
@@ -2048,7 +2048,7 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
         if (pszKey && pszValue)
         {
             apoConfigOptionSetter.emplace_back(
-                cpl::make_unique<CPLConfigOptionSetter>(pszKey, pszValue,
+                std::make_unique<CPLConfigOptionSetter>(pszKey, pszValue,
                                                         false));
         }
         CPLFree(pszKey);
@@ -2489,6 +2489,25 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  *
  * The nPixelSpace, nLineSpace and nBandSpace parameters allow reading into or
  * writing from various organization of buffers.
+ *
+ * Some formats may efficiently implement decimation into a buffer by
+ * reading from lower resolution overview images. The logic of the default
+ * implementation in the base class GDALRasterBand is the following one. It
+ * computes a target_downscaling_factor from the window of interest and buffer
+ * size which is min(nXSize/nBufXSize, nYSize/nBufYSize).
+ * It then walks through overviews and will select the first one whose
+ * downscaling factor is greater than target_downscaling_factor / 1.2.
+ *
+ * Let's assume we have overviews at downscaling factors 2, 4 and 8.
+ * The relationship between target_downscaling_factor and the select overview
+ * level is the following one:
+ *
+ * target_downscaling_factor  | selected_overview
+ * -------------------------  | -----------------
+ * ]0,       2 / 1.2]         | full resolution band
+ * ]2 / 1.2, 4 / 1.2]         | 2x downsampled band
+ * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
+ * ]8 / 1.2, infinity[        | 8x downsampled band
  *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
@@ -3314,6 +3333,44 @@ GDALDatasetH CPL_STDCALL GDALOpen(const char *pszFilename, GDALAccess eAccess)
 }
 
 /************************************************************************/
+/*                             GetSharedDS()                            */
+/************************************************************************/
+
+static GDALDataset *GetSharedDS(const char *pszFilename,
+                                unsigned int nOpenFlags,
+                                const char *const *papszOpenOptions)
+{
+    CPLMutexHolderD(&hDLMutex);
+
+    if (phSharedDatasetSet != nullptr)
+    {
+        const GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
+        SharedDatasetCtxt sStruct;
+
+        sStruct.nPID = nThisPID;
+        sStruct.pszDescription = const_cast<char *>(pszFilename);
+        sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
+        std::string osConcatenatedOpenOptions =
+            GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+        sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
+        sStruct.poDS = nullptr;
+        SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
+            CPLHashSetLookup(phSharedDatasetSet, &sStruct));
+        if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)
+        {
+            sStruct.nOpenFlags |= GDAL_OF_UPDATE;
+            psStruct = static_cast<SharedDatasetCtxt *>(
+                CPLHashSetLookup(phSharedDatasetSet, &sStruct));
+        }
+        if (psStruct)
+        {
+            return psStruct->poDS;
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                             GDALOpenEx()                             */
 /************************************************************************/
 
@@ -3432,33 +3489,12 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             return nullptr;
         }
 
-        CPLMutexHolderD(&hDLMutex);
-
-        if (phSharedDatasetSet != nullptr)
+        auto poSharedDS =
+            GetSharedDS(pszFilename, nOpenFlags, papszOpenOptions);
+        if (poSharedDS)
         {
-            const GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
-            SharedDatasetCtxt sStruct;
-
-            sStruct.nPID = nThisPID;
-            sStruct.pszDescription = const_cast<char *>(pszFilename);
-            sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
-            std::string osConcatenatedOpenOptions =
-                GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
-            sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
-            sStruct.poDS = nullptr;
-            SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
-                CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-            if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)
-            {
-                sStruct.nOpenFlags |= GDAL_OF_UPDATE;
-                psStruct = static_cast<SharedDatasetCtxt *>(
-                    CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-            }
-            if (psStruct)
-            {
-                psStruct->poDS->Reference();
-                return psStruct->poDS;
-            }
+            poSharedDS->Reference();
+            return poSharedDS;
         }
     }
 
@@ -3587,10 +3623,9 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
         sAntiRecursion.nRecLevel++;
         sAntiRecursion.aosDatasetNamesWithFlags.insert(dsCtxt);
 
-        GDALDataset *poDS = nullptr;
+        GDALDataset *poDS = poDriver->Open(&oOpenInfo, false);
         if (poDriver->pfnOpen != nullptr)
         {
-            poDS = poDriver->pfnOpen(&oOpenInfo);
             // If we couldn't determine for sure with Identify() (it returned
             // -1), but Open() managed to open the file, post validate options.
             if (poDS != nullptr &&
@@ -3599,10 +3634,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             {
                 GDALValidateOpenOptions(poDriver, papszOptionsToValidate);
             }
-        }
-        else if (poDriver->pfnOpenWithDriverArg != nullptr)
-        {
-            poDS = poDriver->pfnOpenWithDriverArg(poDriver, &oOpenInfo);
         }
 
         sAntiRecursion.nRecLevel--;
@@ -3614,35 +3645,10 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 
         if (poDS != nullptr)
         {
-            poDS->nOpenFlags = nOpenFlags;
-
-            if (strlen(poDS->GetDescription()) == 0)
-                poDS->SetDescription(pszFilename);
-
-            if (poDS->poDriver == nullptr)
-                poDS->poDriver = poDriver;
-
             if (poDS->papszOpenOptions == nullptr)
             {
                 poDS->papszOpenOptions = papszOpenOptionsCleaned;
                 papszOpenOptionsCleaned = nullptr;
-            }
-
-            if (!(nOpenFlags & GDAL_OF_INTERNAL))
-            {
-                if (CPLGetPID() != GDALGetResponsiblePIDForCurrentThread())
-                    CPLDebug("GDAL",
-                             "GDALOpen(%s, this=%p) succeeds as "
-                             "%s (pid=%d, responsiblePID=%d).",
-                             pszFilename, poDS, poDriver->GetDescription(),
-                             static_cast<int>(CPLGetPID()),
-                             static_cast<int>(
-                                 GDALGetResponsiblePIDForCurrentThread()));
-                else
-                    CPLDebug("GDAL", "GDALOpen(%s, this=%p) succeeds as %s.",
-                             pszFilename, poDS, poDriver->GetDescription());
-
-                poDS->AddToDatasetOpenList();
             }
 
             // Deal with generic OVERVIEW_LEVEL open option, unless it is
@@ -3678,7 +3684,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                         poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
                         poDS->papszOpenOptions = CSLSetNameValue(
                             poDS->papszOpenOptions, "OVERVIEW_LEVEL", nullptr);
-                        poDS->MarkAsShared();
                     }
                 }
                 poDS->ReleaseRef();
@@ -4726,10 +4731,7 @@ Example:
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param poSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
+no coordinate system is available.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -4740,7 +4742,7 @@ specific.
 */
 
 OGRLayer *GDALDataset::CreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef,
+                                   const OGRSpatialReference *poSpatialRef,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions)
 
@@ -4818,10 +4820,7 @@ Example:
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param hSpatialRef the coordinate system to use for the new layer, or NULL if
-no coordinate system is available.  The driver might only increase
-the reference counter of the object to take ownership, and not make a full copy,
-so do not use OSRDestroySpatialReference(), but OSRRelease() instead when you
-are done with the object.
+no coordinate system is available.
 @param eGType the geometry type for the layer.  Use wkbUnknown if there
 are no constraints on the types geometry to be written.
 @param papszOptions a StringList of name=value options.  Options are driver
@@ -5198,7 +5197,7 @@ int GDALDataset::GetSummaryRefCount() const
 
 OGRLayer *
 GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
-                          CPL_UNUSED OGRSpatialReference *poSpatialRef,
+                          CPL_UNUSED const OGRSpatialReference *poSpatialRef,
                           CPL_UNUSED OGRwkbGeometryType eGType,
                           CPL_UNUSED char **papszOptions)
 
@@ -5402,7 +5401,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
             CPLErrorReset();
             auto poDstFeature =
-                cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
+                std::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
             if (poDstFeature->SetFrom(poFeature.get(), anMap.data(), TRUE) !=
                 OGRERR_NONE)
@@ -5478,7 +5477,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
 
                 CPLErrorReset();
                 apoDstFeatures[nFeatCount] =
-                    cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
+                    std::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
                 if (apoDstFeatures[nFeatCount]->SetFrom(
                         poFeature.get(), anMap.data(), TRUE) != OGRERR_NONE)

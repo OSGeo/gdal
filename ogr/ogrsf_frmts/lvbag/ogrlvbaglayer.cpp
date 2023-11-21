@@ -683,7 +683,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
                         case wkbPolygon:
                         case wkbMultiPolygon:
                         {
-                            auto poPoint = cpl::make_unique<OGRPoint>();
+                            auto poPoint = std::make_unique<OGRPoint>();
 #ifdef HAVE_GEOS
                             if (poGeom->Centroid(poPoint.get()) == OGRERR_NONE)
                                 poGeom.reset(poPoint.release());
@@ -703,7 +703,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
                 else if (poGeomField->GetType() == wkbMultiPolygon &&
                          poGeom->getGeometryType() == wkbPolygon)
                 {
-                    auto poMultiPolygon = cpl::make_unique<OGRMultiPolygon>();
+                    auto poMultiPolygon = std::make_unique<OGRMultiPolygon>();
                     poMultiPolygon->addGeometry(poGeom.get());
                     poGeom.reset(poMultiPolygon.release());
                 }
@@ -715,7 +715,7 @@ void OGRLVBAGLayer::EndElementCbk(const char *pszName)
                                  ->getGeometryRef(0)
                                  ->getGeometryType() == wkbPolygon)
                 {
-                    auto poMultiPolygon = cpl::make_unique<OGRMultiPolygon>();
+                    auto poMultiPolygon = std::make_unique<OGRMultiPolygon>();
                     for (const auto &poChildGeom :
                          poGeom->toGeometryCollection())
                         poMultiPolygon->addGeometry(poChildGeom);

@@ -938,8 +938,8 @@ class netCDFDataset final : public GDALPamDataset
                std::map<std::array<int, 3>, std::vector<std::pair<int, int>>>
                    &oMap2DDimsToGroupAndVar);
     CPLErr CreateGrpVectorLayers(int nCdfId, CPLString osFeatureType,
-                                 std::vector<int> anPotentialVectorVarID,
-                                 std::map<int, int> oMapDimIdToCount,
+                                 const std::vector<int> &anPotentialVectorVarID,
+                                 const std::map<int, int> &oMapDimIdToCount,
                                  int nVarXId, int nVarYId, int nVarZId,
                                  int nProfileDimId, int nParentIndexVarID,
                                  bool bKeepRasters);
@@ -959,7 +959,7 @@ class netCDFDataset final : public GDALPamDataset
     CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRef,
+                                   const OGRSpatialReference *poSpatialRef,
                                    OGRwkbGeometryType eGType,
                                    char **papszOptions) override;
 
@@ -1174,7 +1174,7 @@ class netCDFLayer final : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr CreateField(OGRFieldDefn *poFieldDefn,
+    virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK) override;
 };
 

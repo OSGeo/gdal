@@ -483,7 +483,7 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
     {
         if (m_osPrefix == "/vsi7z")
         {
-            return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx"};
+            return {".7z", ".lpk", ".lpkx", ".mpk", ".mpkx", ".ppkx"};
         }
         else
         {

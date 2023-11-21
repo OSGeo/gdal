@@ -106,6 +106,16 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
     static void ClearCache();
 
     std::string GetSASQueryString() const;
+
+    const CPLString &GetStorageAccount() const
+    {
+        return m_osStorageAccount;
+    }
+
+    const CPLString &GetBucket() const
+    {
+        return m_osBucket;
+    }
 };
 
 namespace cpl

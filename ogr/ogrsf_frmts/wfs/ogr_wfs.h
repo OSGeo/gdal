@@ -99,6 +99,8 @@ class OGRWFSLayer final : public OGRLayer
     CPLString osGeometryColumnName;
     OGRwkbGeometryType eGeomType;
     GIntBig nFeatures;
+    GIntBig m_nNumberMatched = -1;
+    bool m_bHasReadAtLeastOneFeatureInThisPage = false;
     bool bCountFeaturesInGetNextFeature;
 
     int CanRunGetFeatureCountAndGetExtentTogether();
@@ -133,7 +135,6 @@ class OGRWFSLayer final : public OGRLayer
     bool bPagingActive;
     int nPagingStartIndex;
     int nFeatureRead;
-    int nFeatureCountRequested;
 
     OGRFeatureDefn *BuildLayerDefnFromFeatureClass(GMLFeatureClass *poClass);
 

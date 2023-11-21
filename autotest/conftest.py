@@ -136,7 +136,9 @@ def pytest_collection_modifyitems(config, items):
         for mark in item.iter_markers("require_driver"):
             driver_name = mark.args[0]
             if driver_name not in drivers_checked:
-                driver = gdal.GetDriverByName(driver_name)
+                driver = gdal.GetDriverByName(driver_name) or ogr.GetDriverByName(
+                    driver_name
+                )
                 drivers_checked[driver_name] = bool(driver)
                 if driver:
                     # Store the driver on gdaltest module so test functions can assume it's there.
@@ -291,3 +293,17 @@ def tmp_vsimem(request):
     yield path
 
     gdal.RmdirRecursive(str(path))
+
+
+# Fixture to run a test function with pytest_benchmark
+@pytest.fixture(scope="function")
+def decorate_with_benchmark(request, benchmark):
+    def run_under_benchmark(f, benchmark):
+        def test_with_benchmark_fixture(*args, **kwargs):
+            @benchmark
+            def do():
+                f(*args, **kwargs)
+
+        return test_with_benchmark_fixture
+
+    request.node.obj = run_under_benchmark(request.node.obj, benchmark)

@@ -869,14 +869,16 @@ def test_wms_19():
 # Test reading data via MRF/LERC
 
 
+@pytest.mark.require_creation_option("MRF", "LERC")
 def test_wms_data_via_mrf():
 
-    mrfdrv = gdal.GetDriverByName("MRF")
+    srv = "http://astro.arcgis.com"
+    if gdaltest.gdalurlopen(srv, timeout=5) is None:
+        pytest.skip(reason=f"{srv} is down")
 
-    if mrfdrv is None or "LERC" not in mrfdrv.GetMetadataItem("DMD_CREATIONOPTIONLIST"):
-        pytest.skip()
-
-    url = "http://astro.arcgis.com/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    url = (
+        srv + "/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    )
     dstemplate = """<GDAL_WMS>
 <Service name="TMS" ServerUrl="{url}"/>
 <DataWindow SizeX="513" SizeY="513"/>
@@ -964,3 +966,69 @@ def test_twms_inline_configuration():
     assert metadata["Change"] == "${time}=2021-02-10", "Change parameter not captured"
     assert metadata["TiledGroupName"] == tiled_group_name, "TIledGroupName not captured"
     ds = None
+
+
+###############################################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "filename,subdataset_component",
+    (
+        (
+            "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES&SRS=EPSG:4326&BBOX=-180,-90,180,90",
+            "LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES",
+        ),
+        (
+            "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-180,-90,180,90&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES",
+            "LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES",
+        ),
+        (
+            "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-180,-90,180,90",
+            "LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES",
+        ),
+        ("WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?", ""),
+        ("", ""),
+    ),
+)
+def test_gdal_subdataset_get_filename(filename, subdataset_component):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if "LAYERS=" not in filename:
+        assert info is None
+    else:
+        assert (
+            info.GetPathComponent()
+            == filename.replace(subdataset_component, "").replace("&&", "&")[4:]
+        )
+        assert info.GetSubdatasetComponent() == subdataset_component
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        (
+            "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES&SRS=EPSG:4326&BBOX=-180,-90,180,90"
+        ),
+        (
+            "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-180,-90,180,90&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES"
+        ),
+        (
+            "WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-180,-90,180,90"
+        ),
+        ("WMS:https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"),
+        (""),
+    ),
+)
+def test_gdal_subdataset_modify_filename(filename):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if "LAYERS=" not in filename:
+        assert info is None
+    else:
+        assert (
+            info.ModifyPathComponent(
+                "https://xxxx/?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap"
+            )
+            == "WMS:https://xxxx/?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES"
+        )

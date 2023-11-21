@@ -170,7 +170,7 @@ class OGRVDVWriterLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
     virtual int TestCapability(const char *pszCap) override;
-    virtual OGRErr CreateField(OGRFieldDefn *poFieldDefn,
+    virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK = TRUE) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
@@ -207,7 +207,7 @@ class OGRVDVDataSource final : public GDALDataset
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference * /*poSpatialRef*/,
+                                   const OGRSpatialReference * /*poSpatialRef*/,
                                    OGRwkbGeometryType /*eGType*/,
                                    char **papszOptions) override;
     virtual int TestCapability(const char *pszCap) override;

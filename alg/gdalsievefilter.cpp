@@ -33,6 +33,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <cassert>
 #include <set>
 #include <vector>
 #include <utility>
@@ -321,9 +322,9 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     /*      Push the sizes of merged polygon fragments into the             */
     /*      merged polygon id's count.                                      */
     /* -------------------------------------------------------------------- */
-    for (int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
-                        iPoly < oFirstEnum.nNextPolygonId;
-         iPoly++)
+    assert(oFirstEnum.panPolyIdMap != nullptr);  // for Coverity
+    assert(oFirstEnum.panPolyValue != nullptr);  // for Coverity
+    for (int iPoly = 0; iPoly < oFirstEnum.nNextPolygonId; iPoly++)
     {
         if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
         {
@@ -462,10 +463,7 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     int nIsolatedSmall = 0;
     int nSieveTargets = 0;
 
-    for (int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
-                        oFirstEnum.panPolyValue != nullptr &&  // for Coverity
-                        iPoly < static_cast<int>(anPolySizes.size());
-         iPoly++)
+    for (int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++)
     {
         if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
             continue;

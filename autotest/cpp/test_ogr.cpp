@@ -2388,7 +2388,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     ASSERT_TRUE(insertEntry != queryLog.end());
     ASSERT_EQ(
         insertEntry->sql.find(
-            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, '123', NULL))sql",
+            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, 123, NULL))sql",
             0),
         0);
 #endif
@@ -2586,6 +2586,363 @@ TEST_F(test_ogr, OGRGetISO8601DateTime)
         sFormat.ePrecision = OGRISO8601Precision::AUTO;
         OGRGetISO8601DateTime(&sField, sFormat, szResult);
         EXPECT_STREQ(szResult, "2023-07-11T17:27:34Z");
+    }
+}
+
+// Test calling importFromWkb() multiple times on the same geometry object
+TEST_F(test_ogr, importFromWkbReuse)
+{
+    {
+        OGRPoint oPoint;
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoint.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x01\x00\x00\x00"                // Point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          21, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 21);
+            EXPECT_EQ(oPoint.getX(), 1.0);
+            EXPECT_EQ(oPoint.getY(), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoint.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x01\x00\x00\x00"              // Point
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"  // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"  // 1.0
+                              ),
+                          21, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 21);
+            EXPECT_EQ(oPoint.getX(), 2.0);
+            EXPECT_EQ(oPoint.getY(), 1.0);
+        }
+    }
+
+    {
+        OGRLineString oLS;
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x02\x00\x00\x00"              // LineString
+                              "\x01\x00\x00\x00"                  // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"  // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          25, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 25);
+            ASSERT_EQ(oLS.getNumPoints(), 1);
+            EXPECT_EQ(oLS.getX(0), 1.0);
+            EXPECT_EQ(oLS.getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x02\x00\x00\x00"              // LineString
+                              "\x02\x00\x00\x00"                  // 2 points
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"  // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"  // 2.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"  // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"),  // 1.0
+                          41, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 41);
+            ASSERT_EQ(oLS.getNumPoints(), 2);
+            EXPECT_EQ(oLS.getX(0), 1.0);
+            EXPECT_EQ(oLS.getY(0), 2.0);
+            EXPECT_EQ(oLS.getX(1), 2.0);
+            EXPECT_EQ(oLS.getY(1), 1.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x02\x00\x00\x00"              // LineString
+                              "\x01\x00\x00\x00"                  // 1 point
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"  // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"),  // 1.0
+                          25, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 25);
+            ASSERT_EQ(oLS.getNumPoints(), 1);
+            EXPECT_EQ(oLS.getX(0), 2.0);
+            EXPECT_EQ(oLS.getY(0), 1.0);
+        }
+    }
+
+    {
+        OGRPolygon oPoly;
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoly.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x03\x00\x00\x00"                // Polygon
+                              "\x01\x00\x00\x00"                    // 1 ring
+                              "\x01\x00\x00\x00"                    // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          29, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 29);
+            ASSERT_TRUE(oPoly.getExteriorRing() != nullptr);
+            ASSERT_EQ(oPoly.getNumInteriorRings(), 0);
+            auto poLS = oPoly.getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 1.0);
+            EXPECT_EQ(poLS->getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoly.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x03\x00\x00\x00"                // Polygon
+                              "\x01\x00\x00\x00"                    // 1 ring
+                              "\x01\x00\x00\x00"                    // 1 point
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"    // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"),  // 1.0
+                          29, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 29);
+            ASSERT_TRUE(oPoly.getExteriorRing() != nullptr);
+            ASSERT_EQ(oPoly.getNumInteriorRings(), 0);
+            auto poLS = oPoly.getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 2.0);
+            EXPECT_EQ(poLS->getY(0), 1.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoly.importFromWkb(reinterpret_cast<const GByte *>(
+                                              "\x01\x03\x00\x00\x00"  // Polygon
+                                              "\x00\x00\x00\x00"),    // 0 ring
+                                          9, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 9);
+            ASSERT_TRUE(oPoly.getExteriorRing() == nullptr);
+            ASSERT_EQ(oPoly.getNumInteriorRings(), 0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoly.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x03\x00\x00\x00"                // Polygon
+                              "\x01\x00\x00\x00"                    // 1 ring
+                              "\x01\x00\x00\x00"                    // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          29, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 29);
+            ASSERT_TRUE(oPoly.getExteriorRing() != nullptr);
+            ASSERT_EQ(oPoly.getNumInteriorRings(), 0);
+            auto poLS = oPoly.getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 1.0);
+            EXPECT_EQ(poLS->getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oPoly.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x03\x00\x00\x00"                // Polygon
+                              "\x01\x00\x00\x00"                    // 1 ring
+                              "\x01\x00\x00\x00"                    // 1 point
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"    // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"),  // 1.0
+                          static_cast<size_t>(-1), wkbVariantIso,
+                          nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 29);
+            ASSERT_TRUE(oPoly.getExteriorRing() != nullptr);
+            ASSERT_EQ(oPoly.getNumInteriorRings(), 0);
+            auto poLS = oPoly.getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 2.0);
+            EXPECT_EQ(poLS->getY(0), 1.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            // Truncated WKB
+            EXPECT_NE(oPoly.importFromWkb(reinterpret_cast<const GByte *>(
+                                              "\x01\x03\x00\x00\x00"  // Polygon
+                                              "\x01\x00\x00\x00"      // 1 ring
+                                              "\x01\x00\x00\x00"),    // 1 point
+                                          13, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            ASSERT_TRUE(oPoly.getExteriorRing() == nullptr);
+            ASSERT_EQ(oPoly.getNumInteriorRings(), 0);
+        }
+    }
+
+    {
+        OGRMultiLineString oMLS;
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oMLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x05\x00\x00\x00"  // MultiLineString
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x02\x00\x00\x00"  // LineString
+                              "\x01\x00\x00\x00"      // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          34, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 34);
+            ASSERT_EQ(oMLS.getNumGeometries(), 1);
+            auto poLS = oMLS.getGeometryRef(0);
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 1.0);
+            EXPECT_EQ(poLS->getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oMLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x05\x00\x00\x00"  // MultiLineString
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x02\x00\x00\x00"  // LineString
+                              "\x01\x00\x00\x00"      // 1 point
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"    // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"),  // 1.0
+                          34, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 34);
+            ASSERT_EQ(oMLS.getNumGeometries(), 1);
+            auto poLS = oMLS.getGeometryRef(0);
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 2.0);
+            EXPECT_EQ(poLS->getY(0), 1.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oMLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x05\x00\x00\x00"  // MultiLineString
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x02\x00\x00\x00"  // LineString
+                              "\x01\x00\x00\x00"      // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          static_cast<size_t>(-1), wkbVariantIso,
+                          nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 34);
+            ASSERT_EQ(oMLS.getNumGeometries(), 1);
+            auto poLS = oMLS.getGeometryRef(0);
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 1.0);
+            EXPECT_EQ(poLS->getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            // Truncated WKB
+            EXPECT_NE(oMLS.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x05\x00\x00\x00"  // MultiLineString
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x02\x00\x00\x00"  // LineString
+                              "\x01\x00\x00\x00"      // 1 point
+                              ),
+                          18, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            ASSERT_EQ(oMLS.getNumGeometries(), 0);
+        }
+    }
+
+    {
+        OGRMultiPolygon oMP;
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oMP.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x06\x00\x00\x00"  // MultiPolygon
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x03\x00\x00\x00"  // Polygon
+                              "\x01\x00\x00\x00"      // 1 ring
+                              "\x01\x00\x00\x00"      // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          38, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 38);
+            ASSERT_EQ(oMP.getNumGeometries(), 1);
+            auto poPoly = oMP.getGeometryRef(0);
+            ASSERT_TRUE(poPoly->getExteriorRing() != nullptr);
+            ASSERT_EQ(poPoly->getNumInteriorRings(), 0);
+            auto poLS = poPoly->getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 1.0);
+            EXPECT_EQ(poLS->getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oMP.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x06\x00\x00\x00"  // MultiPolygon
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x03\x00\x00\x00"  // Polygon
+                              "\x01\x00\x00\x00"      // 1 ring
+                              "\x01\x00\x00\x00"      // 1 point
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"    // 2.0
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"),  // 1.0
+                          38, wkbVariantIso, nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 38);
+            ASSERT_EQ(oMP.getNumGeometries(), 1);
+            auto poPoly = oMP.getGeometryRef(0);
+            ASSERT_TRUE(poPoly->getExteriorRing() != nullptr);
+            ASSERT_EQ(poPoly->getNumInteriorRings(), 0);
+            auto poLS = poPoly->getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 2.0);
+            EXPECT_EQ(poLS->getY(0), 1.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            EXPECT_EQ(oMP.importFromWkb(
+                          reinterpret_cast<const GByte *>(
+                              "\x01\x06\x00\x00\x00"  // MultiPolygon
+                              "\x01\x00\x00\x00"      // 1-part
+                              "\x01\x03\x00\x00\x00"  // Polygon
+                              "\x01\x00\x00\x00"      // 1 ring
+                              "\x01\x00\x00\x00"      // 1 point
+                              "\x00\x00\x00\x00\x00\x00\xf0\x3f"    // 1.0
+                              "\x00\x00\x00\x00\x00\x00\x00\x40"),  // 2.0
+                          static_cast<size_t>(-1), wkbVariantIso,
+                          nBytesConsumed),
+                      OGRERR_NONE);
+            EXPECT_EQ(nBytesConsumed, 38);
+            ASSERT_EQ(oMP.getNumGeometries(), 1);
+            auto poPoly = oMP.getGeometryRef(0);
+            ASSERT_TRUE(poPoly->getExteriorRing() != nullptr);
+            ASSERT_EQ(poPoly->getNumInteriorRings(), 0);
+            auto poLS = poPoly->getExteriorRing();
+            ASSERT_EQ(poLS->getNumPoints(), 1);
+            EXPECT_EQ(poLS->getX(0), 1.0);
+            EXPECT_EQ(poLS->getY(0), 2.0);
+        }
+        {
+            size_t nBytesConsumed = 0;
+            // Truncated WKB
+            EXPECT_NE(
+                oMP.importFromWkb(reinterpret_cast<const GByte *>(
+                                      "\x01\x06\x00\x00\x00"  // MultiPolygon
+                                      "\x01\x00\x00\x00"      // 1-part
+                                      "\x01\x03\x00\x00\x00"  // Polygon
+                                      "\x01\x00\x00\x00"      // 1 ring
+                                      "\x01\x00\x00\x00"      // 1 point
+                                      ),
+                                  22, wkbVariantIso, nBytesConsumed),
+                OGRERR_NONE);
+            ASSERT_EQ(oMP.getNumGeometries(), 0);
+        }
     }
 }
 

@@ -321,7 +321,7 @@ OGRLayer *OGRElasticDataSource::GetLayerByName(const char *pszName)
         return nullptr;
 
     m_apoLayers.push_back(
-        cpl::make_unique<OGRElasticLayer>(pszName, poReferenceLayer));
+        std::make_unique<OGRElasticLayer>(pszName, poReferenceLayer));
     return m_apoLayers.back().get();
 }
 
@@ -413,7 +413,7 @@ OGRErr OGRElasticDataSource::DeleteLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRElasticDataSource::ICreateLayer(const char *pszLayerName,
-                                             OGRSpatialReference *poSRS,
+                                             const OGRSpatialReference *poSRS,
                                              OGRwkbGeometryType eGType,
                                              char **papszOptions)
 {
@@ -675,6 +675,7 @@ CPLHTTPResult *OGRElasticDataSource::HTTPFetch(const char *pszURL,
         }
         aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
     }
+
     return CPLHTTPFetch(pszURL, aosOptions);
 }
 

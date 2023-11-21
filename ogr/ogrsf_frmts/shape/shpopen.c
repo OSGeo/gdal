@@ -8,29 +8,7 @@
  * Copyright (c) 1999, 2001, Frank Warmerdam
  * Copyright (c) 2011-2019, Even Rouault <even dot rouault at spatialys.com>
  *
- * This software is available under the following "MIT Style" license,
- * or at the option of the licensee under the LGPL (see COPYING).  This
- * option is discussed in more detail in shapelib.html.
- *
- * --
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************/
 
 #include "shapefil.h"
@@ -43,8 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-SHP_CVSID("$Id$")
 
 typedef unsigned char uchar;
 
@@ -119,25 +95,10 @@ static void SwapWord(int length, void *wordP)
 }
 
 /************************************************************************/
-/*                             SfRealloc()                              */
-/*                                                                      */
-/*      A realloc cover function that will access a NULL pointer as     */
-/*      a valid input.                                                  */
-/************************************************************************/
-
-static void *SfRealloc(void *pMem, int nNewSize)
-{
-    if (pMem == SHPLIB_NULLPTR)
-        return malloc(nNewSize);
-    else
-        return realloc(pMem, nNewSize);
-}
-
-/************************************************************************/
 /*                          SHPWriteHeader()                            */
 /*                                                                      */
-/*      Write out a header for the .shp and .shx files as well as the	*/
-/*	contents of the index (.shx) file.				*/
+/*      Write out a header for the .shp and .shx files as well as the   */
+/*      contents of the index (.shx) file.                              */
 /************************************************************************/
 
 void SHPAPI_CALL SHPWriteHeader(SHPHandle psSHP)
@@ -328,7 +289,7 @@ static int SHPGetLenWithoutExtension(const char *pszBasename)
 /************************************************************************/
 
 SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
-                                SAHooks *psHooks)
+                                const SAHooks *psHooks)
 {
     /* -------------------------------------------------------------------- */
     /*      Ensure the access string is one of the legal ones.  We          */
@@ -684,7 +645,7 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
 /************************************************************************/
 
 SHPHandle SHPAPI_CALL SHPOpenLLEx(const char *pszLayer, const char *pszAccess,
-                                  SAHooks *psHooks, int bRestoreSHX)
+                                  const SAHooks *psHooks, int bRestoreSHX)
 {
     if (!bRestoreSHX)
         return SHPOpenLL(pszLayer, pszAccess, psHooks);
@@ -707,7 +668,7 @@ SHPHandle SHPAPI_CALL SHPOpenLLEx(const char *pszLayer, const char *pszAccess,
 /************************************************************************/
 
 int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
-                              SAHooks *psHooks)
+                              const SAHooks *psHooks)
 {
     /* -------------------------------------------------------------------- */
     /*      Ensure the access string is one of the legal ones.  We          */
@@ -936,8 +897,8 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
 
 /************************************************************************/
 /*                              SHPClose()                              */
-/*								       	*/
-/*	Close the .shp and .shx files.					*/
+/*                                                                      */
+/*      Close the .shp and .shx files.                                  */
 /************************************************************************/
 
 void SHPAPI_CALL SHPClose(SHPHandle psSHP)
@@ -946,7 +907,7 @@ void SHPAPI_CALL SHPClose(SHPHandle psSHP)
         return;
 
     /* -------------------------------------------------------------------- */
-    /*	Update the header if we have modified anything.			*/
+    /*      Update the header if we have modified anything.                 */
     /* -------------------------------------------------------------------- */
     if (psSHP->bUpdated)
         SHPWriteHeader(psSHP);
@@ -1052,7 +1013,7 @@ SHPHandle SHPAPI_CALL SHPCreate(const char *pszLayer, int nShapeType)
 /************************************************************************/
 
 SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
-                                  SAHooks *psHooks)
+                                  const SAHooks *psHooks)
 {
 /* -------------------------------------------------------------------- */
 /*      Establish the byte order on this system.                        */
@@ -1212,7 +1173,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
 /*      indicated location in the record.                               */
 /************************************************************************/
 
-static void _SHPSetBounds(uchar *pabyRec, SHPObject *psShape)
+static void _SHPSetBounds(uchar *pabyRec, const SHPObject *psShape)
 {
     ByteCopy(&(psShape->dfXMin), pabyRec + 0, 8);
     ByteCopy(&(psShape->dfYMin), pabyRec + 8, 8);
@@ -1282,7 +1243,7 @@ SHPObject SHPAPI_CALL1(*)
     psObject->bMeasureIsUsed = FALSE;
 
     /* -------------------------------------------------------------------- */
-    /*	Establish whether this shape type has M, and Z values.		*/
+    /*      Establish whether this shape type has M, and Z values.          */
     /* -------------------------------------------------------------------- */
     bool bHasM;
     bool bHasZ;
@@ -1438,8 +1399,8 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
         unsigned int *panRecSizeNew;
 
         panRecOffsetNew = STATIC_CAST(
-            unsigned int *, SfRealloc(psSHP->panRecOffset,
-                                      sizeof(unsigned int) * nNewMaxRecords));
+            unsigned int *, realloc(psSHP->panRecOffset,
+                                    sizeof(unsigned int) * nNewMaxRecords));
         if (panRecOffsetNew == SHPLIB_NULLPTR)
         {
             psSHP->sHooks.Error("Failed to write shape object. "
@@ -1449,8 +1410,8 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
         psSHP->panRecOffset = panRecOffsetNew;
 
         panRecSizeNew = STATIC_CAST(
-            unsigned int *, SfRealloc(psSHP->panRecSize,
-                                      sizeof(unsigned int) * nNewMaxRecords));
+            unsigned int *,
+            realloc(psSHP->panRecSize, sizeof(unsigned int) * nNewMaxRecords));
         if (panRecSizeNew == SHPLIB_NULLPTR)
         {
             psSHP->sHooks.Error("Failed to write shape object. "
@@ -1488,7 +1449,7 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
     }
 
     /* -------------------------------------------------------------------- */
-    /*  Extract vertices for a Polygon or Arc.				*/
+    /*      Extract vertices for a Polygon or Arc.                          */
     /* -------------------------------------------------------------------- */
     unsigned int nRecordSize = 0;
     const bool bFirstFeature = psSHP->nRecords == 0;
@@ -1617,7 +1578,7 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
     }
 
     /* -------------------------------------------------------------------- */
-    /*  Extract vertices for a MultiPoint.					*/
+    /*      Extract vertices for a MultiPoint.                              */
     /* -------------------------------------------------------------------- */
     else if (psObject->nSHPType == SHPT_MULTIPOINT ||
              psObject->nSHPType == SHPT_MULTIPOINTZ ||
@@ -1690,7 +1651,7 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Write point.							*/
+    /*      Write point.                                                    */
     /* -------------------------------------------------------------------- */
     else if (psObject->nSHPType == SHPT_POINT ||
              psObject->nSHPType == SHPT_POINTZ ||
@@ -1854,7 +1815,7 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
     psSHP->panRecSize[nShapeId] = nRecordSize - 8;
 
     /* -------------------------------------------------------------------- */
-    /*	Expand file wide bounds based on this shape.			*/
+    /*      Expand file wide bounds based on this shape.                    */
     /* -------------------------------------------------------------------- */
     if (bFirstFeature)
     {
@@ -1952,8 +1913,8 @@ static unsigned char *SHPReallocObjectBufIfNecessary(SHPHandle psSHP,
 /************************************************************************/
 /*                          SHPReadObject()                             */
 /*                                                                      */
-/*      Read the vertices, parts, and other non-attribute information	*/
-/*	for one shape.							*/
+/*      Read the vertices, parts, and other non-attribute information   */
+/*      for one shape.                                                  */
 /************************************************************************/
 
 SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
@@ -2063,7 +2024,7 @@ SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
         }
 
         uchar *pabyRecNew =
-            STATIC_CAST(uchar *, SfRealloc(psSHP->pabyRec, nNewBufSize));
+            STATIC_CAST(uchar *, realloc(psSHP->pabyRec, nNewBufSize));
         if (pabyRecNew == SHPLIB_NULLPTR)
         {
             char szErrorMsg[160];
@@ -2171,7 +2132,7 @@ SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
         SwapWord(4, &(nSHPType));
 
     /* -------------------------------------------------------------------- */
-    /*	Allocate and minimally initialize the object.			*/
+    /*      Allocate and minimally initialize the object.                   */
     /* -------------------------------------------------------------------- */
     SHPObject *psShape;
     if (psSHP->bFastModeReadObject)
@@ -2196,7 +2157,7 @@ SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
     psShape->bFastModeReadObject = psSHP->bFastModeReadObject;
 
     /* ==================================================================== */
-    /*  Extract vertices for a Polygon or Arc.				*/
+    /*  Extract vertices for a Polygon or Arc.                              */
     /* ==================================================================== */
     if (psShape->nSHPType == SHPT_POLYGON || psShape->nSHPType == SHPT_ARC ||
         psShape->nSHPType == SHPT_POLYGONZ ||
@@ -2215,7 +2176,7 @@ SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
             return SHPLIB_NULLPTR;
         }
         /* -------------------------------------------------------------------- */
-        /*	Get the X/Y bounds.						*/
+        /*      Get the X/Y bounds.                                             */
         /* -------------------------------------------------------------------- */
         memcpy(&(psShape->dfXMin), psSHP->pabyRec + 8 + 4, 8);
         memcpy(&(psShape->dfYMin), psSHP->pabyRec + 8 + 12, 8);
@@ -2474,7 +2435,7 @@ SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
     }
 
     /* ==================================================================== */
-    /*  Extract vertices for a MultiPoint.					*/
+    /*  Extract vertices for a MultiPoint.                                  */
     /* ==================================================================== */
     else if (psShape->nSHPType == SHPT_MULTIPOINT ||
              psShape->nSHPType == SHPT_MULTIPOINTM ||
@@ -2580,7 +2541,7 @@ SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
         int nOffset = 48 + 16 * nPoints;
 
         /* -------------------------------------------------------------------- */
-        /*	Get the X/Y bounds.						*/
+        /*      Get the X/Y bounds.                                             */
         /* -------------------------------------------------------------------- */
         memcpy(&(psShape->dfXMin), psSHP->pabyRec + 8 + 4, 8);
         memcpy(&(psShape->dfYMin), psSHP->pabyRec + 8 + 12, 8);

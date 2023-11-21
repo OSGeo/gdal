@@ -214,12 +214,15 @@ RUN mkdir odbc-cpp-wrapper \
   && rm -rf odbc-cpp-wrapper
 
 # Arrow
+# We should perhaps pin the pyarrow version to the one of libarrow...
+# Actually not: the libarrow embedded in pyarrow 13 doesn't work with libarrow 13 linked from GDAL...
 RUN wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
  && dpkg --install apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
  && apt-get update \
  && apt-get install -y -V libarrow-dev libparquet-dev libarrow-dataset-dev \
  && rm ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m pip install pyarrow==11.0.0
 
 # Build libQB3
 # Used by the MRF driver
@@ -243,6 +246,16 @@ RUN git clone -b cmake https://github.com/rouault/basis_universal.git \
     && cd ../..\
     && rm -rf basis_universal
 
+# Build a SQLite version with -DSQLITE_TRUSTED_SCHEMA=0
+RUN mkdir sqlite \
+    && wget -q https://sqlite.org/2023/sqlite-autoconf-3430100.tar.gz -O - \
+        | tar xz -C sqlite --strip-components=1 \
+    && cd sqlite \
+    && CFLAGS="-O2 -DSQLITE_TRUSTED_SCHEMA=0 -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --prefix=/usr/local/install-sqlite-trusted-schema-off \
+    && make -j$(nproc) \
+    && make -j$(nproc) install \
+    && cd .. \
+    && rm -rf sqlite
 
 RUN ldconfig
 

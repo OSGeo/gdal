@@ -143,10 +143,10 @@ def test_gdal_footprint_overwrite(gdal_footprint_path, tmp_path):
 ###############################################################################
 
 
-def test_gdal_footprint_wrong_input_dataset(gdal_footprint_path):
+def test_gdal_footprint_wrong_input_dataset(gdal_footprint_path, tmp_vsimem):
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " /vsimem/in.tif /vsimem/out.json"
+        f"{gdal_footprint_path} {tmp_vsimem}/in.tif {tmp_vsimem}/out.json"
     )
     assert "ret code = 1" in err
 

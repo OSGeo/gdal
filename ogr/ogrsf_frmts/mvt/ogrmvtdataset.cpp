@@ -3372,7 +3372,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     CPLErr Close() override;
 
-    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
 
@@ -3425,7 +3425,7 @@ class OGRMVTWriterLayer final : public OGRLayer
     }
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *) override;
-    OGRErr CreateField(OGRFieldDefn *, int) override;
+    OGRErr CreateField(const OGRFieldDefn *, int) override;
 };
 
 /************************************************************************/
@@ -3483,7 +3483,7 @@ int OGRMVTWriterLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMVTWriterLayer::CreateField(OGRFieldDefn *poFieldDefn, int)
+OGRErr OGRMVTWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 {
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;
@@ -3739,7 +3739,7 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     const int nLastYOri = nLastY;
     GUInt32 nLineToCount = 0;
     const int nPoints = poRing->getNumPoints() - 1;
-    auto poOutLinearRing = cpl::make_unique<OGRLinearRing>();
+    auto poOutLinearRing = std::make_unique<OGRLinearRing>();
     poOutLinearRing->setNumPoints(nPoints);
     for (int i = 0; i < nPoints; i++)
     {
@@ -3824,7 +3824,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 #endif
 
     dfArea = 0;
-    auto poOutOuterRing = cpl::make_unique<OGRLinearRing>();
+    auto poOutOuterRing = std::make_unique<OGRLinearRing>();
     for (int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++)
     {
         const OGRLinearRing *poRing = (i == 0) ? poPoly->getExteriorRing()
@@ -3850,7 +3850,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         const GUInt32 nMinLineTo = 2;
         std::unique_ptr<OGRLinearRing> poOutInnerRing;
         if (i > 0)
-            poOutInnerRing = cpl::make_unique<OGRLinearRing>();
+            poOutInnerRing = std::make_unique<OGRLinearRing>();
         OGRLinearRing *poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
@@ -4301,7 +4301,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                 {
                     const OGRPolygon *poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
-                    auto poOutPoly = cpl::make_unique<OGRPolygon>();
+                    auto poOutPoly = std::make_unique<OGRPolygon>();
                     bGeomOK |= EncodePolygon(poGPBFeature.get(), poPoly,
                                              poOutPoly.get(), dfTopX, dfTopY,
                                              dfTileDim, bCanRecurse, nLastX,
@@ -5966,12 +5966,12 @@ static bool ValidateMinMaxZoom(int nMinZoom, int nMaxZoom)
 /************************************************************************/
 
 OGRLayer *OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
-                                            OGRSpatialReference *poSRS,
+                                            const OGRSpatialReference *poSRS,
                                             OGRwkbGeometryType,
                                             char **papszOptions)
 {
-    OGRSpatialReference *poSRSClone = poSRS;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSRS)
     {
         poSRSClone = poSRS->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -6103,15 +6103,16 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         VSIUnlink(osTempDB);
 
     sqlite3 *hDB = nullptr;
-    CPL_IGNORE_RET_VAL(sqlite3_open_v2(
-        osTempDB, &hDB,
-        SQLITE_OPEN_READWRITE | (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
-            SQLITE_OPEN_NOMUTEX,
-        poDS->m_pMyVFS->zName));
-    if (hDB == nullptr)
+    if (sqlite3_open_v2(osTempDB, &hDB,
+                        SQLITE_OPEN_READWRITE |
+                            (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
+                            SQLITE_OPEN_NOMUTEX,
+                        poDS->m_pMyVFS->zName) != SQLITE_OK ||
+        hDB == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", osTempDB.c_str());
         delete poDS;
+        sqlite3_close(hDB);
         return nullptr;
     }
     poDS->m_osTempDB = osTempDB;
@@ -6251,11 +6252,11 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
 
     if (bMBTILES)
     {
-        CPL_IGNORE_RET_VAL(sqlite3_open_v2(
-            pszFilename, &poDS->m_hDBMBTILES,
-            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX,
-            poDS->m_pMyVFS->zName));
-        if (poDS->m_hDBMBTILES == nullptr)
+        if (sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
+                            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                                SQLITE_OPEN_NOMUTEX,
+                            poDS->m_pMyVFS->zName) != SQLITE_OK ||
+            poDS->m_hDBMBTILES == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
             delete poDS;

@@ -185,10 +185,10 @@ OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer)
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
-                                          OGRSpatialReference *poSpatialRef,
-                                          OGRwkbGeometryType eGType,
-                                          char **papszOptions)
+OGRLayer *
+OGRWAsPDataSource::ICreateLayer(const char *pszName,
+                                const OGRSpatialReference *poSpatialRef,
+                                OGRwkbGeometryType eGType, char **papszOptions)
 
 {
 
@@ -305,10 +305,10 @@ OGRLayer *OGRWAsPDataSource::ICreateLayer(const char *pszName,
         }
     }
 
-    auto poSRSClone = poSpatialRef;
-    if (poSRSClone)
+    OGRSpatialReference *poSRSClone = nullptr;
+    if (poSpatialRef)
     {
-        poSRSClone = poSRSClone->Clone();
+        poSRSClone = poSpatialRef->Clone();
         poSRSClone->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     oLayer.reset(new OGRWAsPLayer(

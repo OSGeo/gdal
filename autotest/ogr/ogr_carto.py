@@ -43,11 +43,26 @@ pytestmark = pytest.mark.require_driver("Carto")
 #
 
 
-def test_ogr_carto_vsimem():
+@pytest.fixture()
+def vsimem_setup_and_cleanup():
 
     ogrtest.carto_api_key_ori = gdal.GetConfigOption("CARTO_API_KEY")
     gdal.SetConfigOption("CARTO_API_URL", "/vsimem/carto")
     gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
+
+    yield
+
+    gdal.SetConfigOption("CARTO_API_URL", None)
+    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
+    gdal.SetConfigOption("CARTO_PAGE_SIZE", None)
+    gdal.SetConfigOption("CARTO_MAX_CHUNK_SIZE", None)
+    gdal.SetConfigOption("CARTO_API_KEY", ogrtest.carto_api_key_ori)
+
+    for f in gdal.ReadDir("/vsimem/"):
+        gdal.Unlink("/vsimem/" + f)
+
+
+def test_ogr_carto_vsimem(vsimem_setup_and_cleanup):
 
     gdal.FileFromMemBuffer(
         "/vsimem/carto&POSTFIELDS=q=SELECT postgis_version() LIMIT 500 OFFSET 0&api_key=foo",
@@ -921,22 +936,6 @@ Error""",
             ):
                 ds = ogr.Open("CARTO:foo")
     assert ds.GetLayerByName("a_layer") is not None
-
-
-###############################################################################
-#
-
-
-def test_ogr_carto_vsimem_cleanup():
-
-    gdal.SetConfigOption("CARTO_API_URL", None)
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
-    gdal.SetConfigOption("CARTO_PAGE_SIZE", None)
-    gdal.SetConfigOption("CARTO_MAX_CHUNK_SIZE", None)
-    gdal.SetConfigOption("CARTO_API_KEY", ogrtest.carto_api_key_ori)
-
-    for f in gdal.ReadDir("/vsimem/"):
-        gdal.Unlink("/vsimem/" + f)
 
 
 ###############################################################################

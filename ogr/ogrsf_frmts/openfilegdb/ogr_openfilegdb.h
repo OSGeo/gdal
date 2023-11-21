@@ -280,7 +280,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     virtual OGRErr Rename(const char *pszNewName) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
+                               int bApproxOK) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,
                                   OGRFieldDefn *poNewFieldDefn,
@@ -536,7 +537,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     virtual int TestCapability(const char *) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
     virtual OGRErr DeleteLayer(int) override;
@@ -715,7 +716,7 @@ class GDALOpenFileGDBRasterAttributeTable final
 
     GDALRasterAttributeTable *Clone() const override
     {
-        auto poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+        auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
         GDALOpenInfo oOpenInfo(m_poDS->m_osDirName.c_str(), GA_ReadOnly);
         if (!poDS->Open(&oOpenInfo))
             return nullptr;

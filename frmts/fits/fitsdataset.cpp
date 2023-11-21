@@ -117,7 +117,8 @@ class FITSDataset final : public GDALPamDataset
     }
     OGRLayer *GetLayer(int) override;
 
-    OGRLayer *ICreateLayer(const char *pszName, OGRSpatialReference *poSRS,
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRSpatialReference *poSRS,
                            OGRwkbGeometryType eGType,
                            char **papszOptions) override;
     int TestCapability(const char *pszCap) override;
@@ -218,7 +219,7 @@ class FITSLayer final : public OGRLayer,
     int TestCapability(const char *) override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -1260,7 +1261,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr FITSLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr FITSLayer::CreateField(const OGRFieldDefn *poField, int /* bApproxOK */)
 {
     if (!TestCapability(OLCCreateField))
         return OGRERR_FAILURE;
@@ -2315,7 +2316,7 @@ OGRLayer *FITSDataset::GetLayer(int idx)
 /************************************************************************/
 
 OGRLayer *FITSDataset::ICreateLayer(const char *pszName,
-                                    OGRSpatialReference * /* poSRS */,
+                                    const OGRSpatialReference * /* poSRS */,
                                     OGRwkbGeometryType eGType,
                                     char **papszOptions)
 {
@@ -2424,7 +2425,7 @@ GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
     // Create a FITSDataset object
-    auto dataset = cpl::make_unique<FITSDataset>();
+    auto dataset = std::make_unique<FITSDataset>();
     dataset->m_isExistingFile = true;
     dataset->m_hFITS = hFITS;
     dataset->eAccess = poOpenInfo->eAccess;

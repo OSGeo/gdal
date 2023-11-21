@@ -159,6 +159,12 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
         return FALSE;
     }
 
+    const char *pszAliasName = CPLGetXMLValue(psInfo, "AliasName", nullptr);
+    if (pszAliasName && strcmp(pszAliasName, GetDescription()) != 0)
+    {
+        SetMetadataItem("ALIAS_NAME", pszAliasName);
+    }
+
     m_bTimeInUTC = CPLTestBool(CPLGetXMLValue(psInfo, "IsTimeInUTC", "false"));
 
     /* We cannot trust the XML definition to build the field definitions. */
@@ -206,7 +212,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
         if (bHasM)
             m_eGeomType = wkbSetM(m_eGeomType);
 
-        auto poGeomFieldDefn = cpl::make_unique<OGROpenFileGDBGeomFieldDefn>(
+        auto poGeomFieldDefn = std::make_unique<OGROpenFileGDBGeomFieldDefn>(
             nullptr, pszShapeFieldName, m_eGeomType);
 
         CPLXMLNode *psGPFieldInfoExs = CPLGetXMLNode(psInfo, "GPFieldInfoExs");
@@ -501,7 +507,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 
         {
             auto poGeomFieldDefn =
-                cpl::make_unique<OGROpenFileGDBGeomFieldDefn>(nullptr, pszName,
+                std::make_unique<OGROpenFileGDBGeomFieldDefn>(nullptr, pszName,
                                                               m_eGeomType);
             poGeomFieldDefn->SetNullable(poGDBGeomField->IsNullable());
 

@@ -512,7 +512,7 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
     m_poFeatureDefn->Reference();
     if (m_eGeomType != wkbNone)
     {
-        auto poGeomFieldDefn = cpl::make_unique<OGROpenFileGDBGeomFieldDefn>(
+        auto poGeomFieldDefn = std::make_unique<OGROpenFileGDBGeomFieldDefn>(
             this,
             m_aosCreationOptions.FetchNameValueDef("GEOMETRY_NAME", "SHAPE"),
             m_eGeomType);
@@ -616,7 +616,7 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
             "OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", "NO")))
     {
         OGRFieldDefn oField("field_before_geom", OFTString);
-        m_poLyrTable->CreateField(cpl::make_unique<FileGDBField>(
+        m_poLyrTable->CreateField(std::make_unique<FileGDBField>(
             oField.GetNameRef(), std::string(), FGFT_STRING, true, 0,
             FileGDBField::UNSET_FIELD));
         m_poFeatureDefn->AddFieldDefn(&oField);
@@ -1088,7 +1088,8 @@ OGROpenFileGDBLayer::GetLaunderedFieldName(const std::string &osNameOri) const
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
+                                        int bApproxOK)
 {
     if (!m_bEditable)
         return OGRERR_FAILURE;
@@ -1104,8 +1105,8 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
     }
 
     /* Clean field names */
-    OGRFieldDefn oField(poField);
-    poField = &oField;
+    OGRFieldDefn oField(poFieldIn);
+    OGRFieldDefn *poField = &oField;
 
     const std::string osFidColumn = GetFIDColumn();
     if (!osFidColumn.empty() &&
@@ -1248,7 +1249,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
     }
 
     const char *pszAlias = poField->GetAlternativeNameRef();
-    if (!m_poLyrTable->CreateField(cpl::make_unique<FileGDBField>(
+    if (!m_poLyrTable->CreateField(std::make_unique<FileGDBField>(
             poField->GetNameRef(),
             pszAlias ? std::string(pszAlias) : std::string(), eType,
             CPL_TO_BOOL(poField->IsNullable()), nWidth, sDefault)))

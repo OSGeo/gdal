@@ -209,10 +209,9 @@ int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGPSBabelWriteDataSource::ICreateLayer(const char *pszLayerName,
-                                                   OGRSpatialReference *poSRS,
-                                                   OGRwkbGeometryType eType,
-                                                   char **papszOptions)
+OGRLayer *OGRGPSBabelWriteDataSource::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType eType, char **papszOptions)
 {
     if (poGPXDS)
         return poGPXDS->CreateLayer(pszLayerName, poSRS, eType, papszOptions);

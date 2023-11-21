@@ -866,6 +866,29 @@ typedef enum
  */
 #define OGRNullMarker -21122
 
+/** Time zone flag indicating unknown timezone. For the
+ *  OGRFieldDefn::GetTZFlag() property, this may also indicate a mix of
+ *  unknown, localtime or known time zones in the same field.
+ */
+#define OGR_TZFLAG_UNKNOWN 0
+
+/** Time zone flag indicating local time */
+#define OGR_TZFLAG_LOCALTIME 1
+
+/** Time zone flag only returned by OGRFieldDefn::GetTZFlag() to indicate
+ * that all values in the field have a known time zone (ie different from
+ * OGR_TZFLAG_UNKNOWN and OGR_TZFLAG_LOCALTIME), but it may be different among
+ * features. */
+#define OGR_TZFLAG_MIXED_TZ 2
+
+/** Time zone flag indicating UTC.
+ * Used to derived other time zone flags with the following logic:
+ * - values above 100 indicate a 15 minute increment per unit.
+ * - values under 100 indicate a 15 minute decrement per unit.
+ * For example: a value of 101 indicates UTC+00:15, a value of 102 UTC+00:30,
+ * a value of 99 UTC-00:15 ,etc. */
+#define OGR_TZFLAG_UTC 100
+
 /************************************************************************/
 /*                               OGRField                               */
 /************************************************************************/
@@ -1012,6 +1035,9 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
     "Rename" /**< Layer capability for a layer that supports Rename() */
 #define OLCFastGetArrowStream                                                  \
     "FastGetArrowStream" /**< Layer capability for fast GetArrowStream()       \
+                            implementation */
+#define OLCFastWriteArrowBatch                                                 \
+    "FastWriteArrowBatch" /**< Layer capability for fast WriteArrowBatch()     \
                             implementation */
 
 #define ODsCCreateLayer                                                        \

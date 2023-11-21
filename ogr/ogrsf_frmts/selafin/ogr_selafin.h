@@ -92,7 +92,7 @@ class OGRSelafinLayer final : public OGRLayer
 
   public:
     OGRSelafinLayer(const char *pszLayerNameP, int bUpdateP,
-                    OGRSpatialReference *poSpatialRefP,
+                    const OGRSpatialReference *poSpatialRefP,
                     Selafin::Header *poHeaderP, int nStepNumberP,
                     SelafinTypeDef eTypeP);
     ~OGRSelafinLayer();
@@ -122,7 +122,8 @@ class OGRSelafinLayer final : public OGRLayer
     }
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     OGRErr DeleteField(int iField) override;
     OGRErr ReorderFields(int *panMap) override;
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -160,10 +161,11 @@ class OGRSelafinDataSource final : public OGRDataSource
         return nLayers;
     }
     OGRLayer *GetLayer(int) override;
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   OGRSpatialReference *poSpatialRefP = nullptr,
-                                   OGRwkbGeometryType eGType = wkbUnknown,
-                                   char **papszOptions = nullptr) override;
+    virtual OGRLayer *
+    ICreateLayer(const char *pszName,
+                 const OGRSpatialReference *poSpatialRefP = nullptr,
+                 OGRwkbGeometryType eGType = wkbUnknown,
+                 char **papszOptions = nullptr) override;
     virtual OGRErr DeleteLayer(int) override;
     int TestCapability(const char *) override;
     void SetDefaultSelafinName(const char *pszNameIn)

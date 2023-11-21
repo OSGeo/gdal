@@ -499,7 +499,7 @@ int OGRGeoconceptLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRGeoconceptLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGeoconceptLayer::CreateField(const OGRFieldDefn *poField,
                                        CPL_UNUSED int bApproxOK)
 {
     if (GetGCMode_GCIO(GetSubTypeGCHandle_GCIO(_gcFeature)) == vReadAccess_GCIO)

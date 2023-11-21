@@ -2,7 +2,7 @@
 
 set -eu
 
-export CXXFLAGS="-std=c++17 -march=native -O2 -Wodr -flto-odr-type-merging -Werror"
+export CXXFLAGS="-march=native -O2 -Wodr -flto-odr-type-merging -Werror"
 export CFLAGS="-O2 -march=native -Werror"
 
 cmake ${GDAL_SOURCE_DIR:=..} \
@@ -13,7 +13,9 @@ cmake ${GDAL_SOURCE_DIR:=..} \
     -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     -DECW_ROOT=/opt/libecwj2-3.3 \
     -DMRSID_ROOT=/usr/local \
-    -DFileGDB_ROOT=/usr/local/FileGDB_API
+    -DFileGDB_ROOT=/usr/local/FileGDB_API \
+    -DSQLite3_INCLUDE_DIR=/usr/local/install-sqlite-trusted-schema-off/include \
+    -DSQLite3_LIBRARY=/usr/local/install-sqlite-trusted-schema-off/lib/libsqlite3.so
 
 unset CXXFLAGS
 unset CFLAGS

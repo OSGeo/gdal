@@ -86,7 +86,7 @@ struct DatasetProperty
     double adfGeoTransform[6];
     int nBlockXSize = 0;
     int nBlockYSize = 0;
-    GDALDataType firstBandType = GDT_Unknown;
+    std::vector<GDALDataType> aeBandType{};
     std::vector<bool> abHasNoData{};
     std::vector<double> adfNoDataValues{};
     std::vector<bool> abHasOffset{};
@@ -570,24 +570,10 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     double ds_minY =
         ds_maxY + GDALGetRasterYSize(hDS) * padfGeoTransform[GEOTRSFRM_NS_RES];
 
-    int _nBands = GDALGetRasterCount(hDS);
+    const int _nBands = GDALGetRasterCount(hDS);
     if (_nBands == 0)
     {
         return "Dataset has no bands";
-    }
-    else if (_nBands > 1 && bSeparate)
-    {
-        if (bStrict)
-            return CPLSPrintf("%s has %d bands. Only one expected.", dsFileName,
-                              _nBands);
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "%s has %d bands. Only the first one will "
-                     "be taken into account in the -separate case",
-                     dsFileName, _nBands);
-            _nBands = 1;
-        }
     }
 
     GDALRasterBand *poFirstBand = poDS->GetRasterBand(1);
@@ -595,7 +581,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                               &psDatasetProperties->nBlockYSize);
 
     /* For the -separate case */
-    psDatasetProperties->firstBandType = poFirstBand->GetRasterDataType();
+    psDatasetProperties->aeBandType.resize(_nBands);
 
     psDatasetProperties->adfNoDataValues.resize(_nBands);
     psDatasetProperties->abHasNoData.resize(_nBands);
@@ -647,6 +633,9 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
     for (int j = 0; j < _nBands; j++)
     {
         GDALRasterBand *poBand = poDS->GetRasterBand(j + 1);
+
+        psDatasetProperties->aeBandType[j] = poBand->GetRasterDataType();
+
         if (!bSeparate && nSrcNoDataCount > 0)
         {
             psDatasetProperties->abHasNoData[j] = true;
@@ -680,6 +669,18 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
             poBand->GetColorInterpretation() == GCI_AlphaBand;
     }
 
+    if (bSeparate)
+    {
+        for (int j = 0; j < nSelectedBands; j++)
+        {
+            if (panSelectedBandList[j] > _nBands)
+            {
+                return CPLSPrintf("%s has %d bands, but %d is requested",
+                                  dsFileName, _nBands, panSelectedBandList[j]);
+            }
+        }
+    }
+
     if (bFirst)
     {
         nTotalBands = _nBands;
@@ -699,27 +700,27 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
             maxY = ds_maxY;
         }
 
-        // if not provided an explicit band list, take the one of the first
-        // dataset
-        if (nSelectedBands == 0)
-        {
-            nSelectedBands = nTotalBands;
-            CPLFree(panSelectedBandList);
-            panSelectedBandList =
-                static_cast<int *>(CPLMalloc(nSelectedBands * sizeof(int)));
-            for (int j = 0; j < nSelectedBands; j++)
-            {
-                panSelectedBandList[j] = j + 1;
-            }
-        }
-        for (int j = 0; j < nSelectedBands; j++)
-        {
-            nMaxSelectedBandNo =
-                std::max(nMaxSelectedBandNo, panSelectedBandList[j]);
-        }
-
         if (!bSeparate)
         {
+            // if not provided an explicit band list, take the one of the first
+            // dataset
+            if (nSelectedBands == 0)
+            {
+                nSelectedBands = nTotalBands;
+                CPLFree(panSelectedBandList);
+                panSelectedBandList =
+                    static_cast<int *>(CPLMalloc(nSelectedBands * sizeof(int)));
+                for (int j = 0; j < nSelectedBands; j++)
+                {
+                    panSelectedBandList[j] = j + 1;
+                }
+            }
+            for (int j = 0; j < nSelectedBands; j++)
+            {
+                nMaxSelectedBandNo =
+                    std::max(nMaxSelectedBandNo, panSelectedBandList[j]);
+            }
+
             asBandProperties.resize(nSelectedBands);
             for (int j = 0; j < nSelectedBands; j++)
             {
@@ -1011,8 +1012,6 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             dfSrcYSize = dfDstYSize = nRasterYSize;
         }
 
-        GDALAddBand(hVRTDS, psDatasetProperties->firstBandType, nullptr);
-
         GDALDatasetH hSourceDS;
         bool bDropRef = false;
         if (nSrcDSCount == nInputFiles &&
@@ -1034,89 +1033,115 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             reinterpret_cast<GDALProxyPoolDataset *>(hProxyDS)->SetOpenOptions(
                 papszOpenOptions);
 
-            GDALProxyPoolDatasetAddSrcBandDescription(
-                hProxyDS, psDatasetProperties->firstBandType,
-                psDatasetProperties->nBlockXSize,
-                psDatasetProperties->nBlockYSize);
+            for (int jBand = 0;
+                 jBand <
+                 static_cast<int>(psDatasetProperties->aeBandType.size());
+                 ++jBand)
+            {
+                GDALProxyPoolDatasetAddSrcBandDescription(
+                    hProxyDS, psDatasetProperties->aeBandType[jBand],
+                    psDatasetProperties->nBlockXSize,
+                    psDatasetProperties->nBlockYSize);
+            }
         }
 
-        VRTSourcedRasterBandH hVRTBand = static_cast<VRTSourcedRasterBandH>(
-            GDALGetRasterBand(hVRTDS, iBand));
-
-        if (bHideNoData)
-            GDALSetMetadataItem(hVRTBand, "HideNoDataValue", "1", nullptr);
-
-        VRTSourcedRasterBand *poVRTBand =
-            static_cast<VRTSourcedRasterBand *>(hVRTBand);
-
-        if (bAllowVRTNoData)
+        const int nBandsToIter =
+            nSelectedBands > 0
+                ? nSelectedBands
+                : static_cast<int>(psDatasetProperties->aeBandType.size());
+        for (int iBandToIter = 0; iBandToIter < nBandsToIter; ++iBandToIter)
         {
-            if (nVRTNoDataCount > 0)
+            // 0-based
+            const int nSrcBandIdx = nSelectedBands > 0
+                                        ? panSelectedBandList[iBandToIter] - 1
+                                        : iBandToIter;
+            assert(nSrcBandIdx >= 0);
+            GDALAddBand(hVRTDS, psDatasetProperties->aeBandType[nSrcBandIdx],
+                        nullptr);
+
+            VRTSourcedRasterBandH hVRTBand = static_cast<VRTSourcedRasterBandH>(
+                GDALGetRasterBand(hVRTDS, iBand));
+
+            if (bHideNoData)
+                GDALSetMetadataItem(hVRTBand, "HideNoDataValue", "1", nullptr);
+
+            VRTSourcedRasterBand *poVRTBand =
+                static_cast<VRTSourcedRasterBand *>(hVRTBand);
+
+            if (bAllowVRTNoData)
             {
-                if (iBand - 1 < nVRTNoDataCount)
-                    GDALSetRasterNoDataValue(hVRTBand,
-                                             padfVRTNoData[iBand - 1]);
-                else
+                if (nVRTNoDataCount > 0)
+                {
+                    if (iBand - 1 < nVRTNoDataCount)
+                        GDALSetRasterNoDataValue(hVRTBand,
+                                                 padfVRTNoData[iBand - 1]);
+                    else
+                        GDALSetRasterNoDataValue(
+                            hVRTBand, padfVRTNoData[nVRTNoDataCount - 1]);
+                }
+                else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
+                {
                     GDALSetRasterNoDataValue(
-                        hVRTBand, padfVRTNoData[nVRTNoDataCount - 1]);
+                        hVRTBand,
+                        psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
+                }
             }
-            else if (psDatasetProperties->abHasNoData[0])
-            {
-                GDALSetRasterNoDataValue(
-                    hVRTBand, psDatasetProperties->adfNoDataValues[0]);
-            }
-        }
 
-        VRTSimpleSource *poSimpleSource;
-        if (bAllowSrcNoData)
-        {
-            auto poComplexSource = new VRTComplexSource();
-            poSimpleSource = poComplexSource;
-            if (nSrcNoDataCount > 0)
+            VRTSimpleSource *poSimpleSource;
+            if (bAllowSrcNoData)
             {
-                if (iBand - 1 < nSrcNoDataCount)
-                    poComplexSource->SetNoDataValue(padfSrcNoData[iBand - 1]);
-                else
+                auto poComplexSource = new VRTComplexSource();
+                poSimpleSource = poComplexSource;
+                if (nSrcNoDataCount > 0)
+                {
+                    if (iBand - 1 < nSrcNoDataCount)
+                        poComplexSource->SetNoDataValue(
+                            padfSrcNoData[iBand - 1]);
+                    else
+                        poComplexSource->SetNoDataValue(
+                            padfSrcNoData[nSrcNoDataCount - 1]);
+                }
+                else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
+                {
                     poComplexSource->SetNoDataValue(
-                        padfSrcNoData[nSrcNoDataCount - 1]);
+                        psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
+                }
             }
-            else if (psDatasetProperties->abHasNoData[0])
+            else if (bUseSrcMaskBand &&
+                     psDatasetProperties->abHasMaskBand[nSrcBandIdx])
             {
-                poComplexSource->SetNoDataValue(
-                    psDatasetProperties->adfNoDataValues[0]);
+                auto poSource = new VRTComplexSource();
+                poSource->SetUseMaskBand(true);
+                poSimpleSource = poSource;
             }
+            else
+                poSimpleSource = new VRTSimpleSource();
+
+            if (pszResampling)
+                poSimpleSource->SetResampling(pszResampling);
+            poVRTBand->ConfigureSource(
+                poSimpleSource,
+                static_cast<GDALRasterBand *>(
+                    GDALGetRasterBand(hSourceDS, nSrcBandIdx + 1)),
+                FALSE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
+                dfDstYOff, dfDstXSize, dfDstYSize);
+
+            if (psDatasetProperties->abHasOffset[nSrcBandIdx])
+                poVRTBand->SetOffset(
+                    psDatasetProperties->adfOffset[nSrcBandIdx]);
+
+            if (psDatasetProperties->abHasScale[nSrcBandIdx])
+                poVRTBand->SetScale(psDatasetProperties->adfScale[nSrcBandIdx]);
+
+            poVRTBand->AddSource(poSimpleSource);
+
+            iBand++;
         }
-        else if (bUseSrcMaskBand && psDatasetProperties->abHasMaskBand[0])
-        {
-            auto poSource = new VRTComplexSource();
-            poSource->SetUseMaskBand(true);
-            poSimpleSource = poSource;
-        }
-        else
-            poSimpleSource = new VRTSimpleSource();
-
-        if (pszResampling)
-            poSimpleSource->SetResampling(pszResampling);
-        poVRTBand->ConfigureSource(
-            poSimpleSource,
-            static_cast<GDALRasterBand *>(GDALGetRasterBand(hSourceDS, 1)),
-            FALSE, dfSrcXOff, dfSrcYOff, dfSrcXSize, dfSrcYSize, dfDstXOff,
-            dfDstYOff, dfDstXSize, dfDstYSize);
-
-        if (psDatasetProperties->abHasOffset[0])
-            poVRTBand->SetOffset(psDatasetProperties->adfOffset[0]);
-
-        if (psDatasetProperties->abHasScale[0])
-            poVRTBand->SetScale(psDatasetProperties->adfScale[0]);
-
-        poVRTBand->AddSource(poSimpleSource);
 
         if (bDropRef)
         {
             GDALDereferenceDataset(hSourceDS);
         }
-
-        iBand++;
     }
 }
 

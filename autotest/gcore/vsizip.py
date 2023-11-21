@@ -269,6 +269,9 @@ def test_vsizip_4():
         "uint16.tif",
     ], "bad content"
 
+    # Test with trailing slash too
+    assert gdal.ReadDirRecursive("/vsizip/data/testzip.zip/") == res
+
 
 ###############################################################################
 # Test ReadRecursive on deep zip

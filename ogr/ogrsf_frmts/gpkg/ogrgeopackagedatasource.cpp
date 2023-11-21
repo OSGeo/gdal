@@ -138,7 +138,7 @@ GetTilingScheme(const char *pszName)
                  "width");
         return nullptr;
     }
-    auto poTilingScheme = cpl::make_unique<TilingSchemeDefinition>();
+    auto poTilingScheme = std::make_unique<TilingSchemeDefinition>();
     poTilingScheme->pszName = pszName;
 
     OGRSpatialReference oSRS;
@@ -4214,7 +4214,7 @@ char **GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                                 {
                                     const int nColors = aosTokens.size() / 4;
                                     m_poCTFromMetadata =
-                                        cpl::make_unique<GDALColorTable>();
+                                        std::make_unique<GDALColorTable>();
                                     for (int iColor = 0; iColor < nColors;
                                          ++iColor)
                                     {
@@ -6497,10 +6497,9 @@ OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
-                                              OGRSpatialReference *poSpatialRef,
-                                              OGRwkbGeometryType eGType,
-                                              char **papszOptions)
+OGRLayer *GDALGeoPackageDataset::ICreateLayer(
+    const char *pszLayerName, const OGRSpatialReference *poSpatialRef,
+    OGRwkbGeometryType eGType, char **papszOptions)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify we are in update mode.                                   */
@@ -7707,6 +7706,7 @@ static bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
                 &(psHeader->MaxY)) == OGRERR_NONE)
         {
             psHeader->bEmpty = bEmpty;
+            psHeader->bExtentHasXY = !bEmpty;
             if (!(bEmpty && bNeedExtent))
                 return true;
         }
@@ -7738,6 +7738,75 @@ static bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
         delete poGeom;
     }
     return true;
+}
+
+/************************************************************************/
+/*                    OGR_GPKG_Intersects_Spatial_Filter()              */
+/************************************************************************/
+
+void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext, int argc,
+                                        sqlite3_value **argv)
+{
+    if (sqlite3_value_type(argv[0]) != SQLITE_BLOB)
+    {
+        sqlite3_result_int(pContext, 0);
+        return;
+    }
+
+    auto poLayer =
+        static_cast<OGRGeoPackageTableLayer *>(sqlite3_user_data(pContext));
+
+    const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+
+    GPkgHeader sHeader;
+    if (poLayer->m_bFilterIsEnvelope &&
+        OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, 0))
+    {
+        if (sHeader.bExtentHasXY)
+        {
+            OGREnvelope sEnvelope;
+            sEnvelope.MinX = sHeader.MinX;
+            sEnvelope.MinY = sHeader.MinY;
+            sEnvelope.MaxX = sHeader.MaxX;
+            sEnvelope.MaxY = sHeader.MaxY;
+            if (poLayer->m_sFilterEnvelope.Contains(sEnvelope))
+            {
+                sqlite3_result_int(pContext, 1);
+                return;
+            }
+        }
+
+        // Check if at least one point falls into the layer filter envelope
+        // nHeaderLen is > 0 for GeoPackage geometries
+        if (sHeader.nHeaderLen > 0 &&
+            OGRWKBIntersectsPessimistic(pabyBLOB + sHeader.nHeaderLen,
+                                        nBLOBLen - sHeader.nHeaderLen,
+                                        poLayer->m_sFilterEnvelope))
+        {
+            sqlite3_result_int(pContext, 1);
+            return;
+        }
+    }
+
+    auto poGeom = std::unique_ptr<OGRGeometry>(
+        GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
+    if (poGeom == nullptr)
+    {
+        // Try also spatialite geometry blobs
+        OGRGeometry *poGeomSpatialite = nullptr;
+        if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
+                                              &poGeomSpatialite) != OGRERR_NONE)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+            sqlite3_result_int(pContext, 0);
+            return;
+        }
+        poGeom.reset(poGeomSpatialite);
+    }
+
+    sqlite3_result_int(pContext, poLayer->FilterGeometry(poGeom.get()));
 }
 
 /************************************************************************/
@@ -7923,131 +7992,6 @@ OGRGeoPackageSTEnvelopesIntersectsTwoParams(sqlite3_context *pContext, int argc,
         return;
     }
     sqlite3_result_int(pContext, sHeader.MinY <= sHeader2.MaxY);
-}
-
-/************************************************************************/
-/*                   OGR_GPKG_GeometryTypeAggregate()                   */
-/************************************************************************/
-
-namespace
-{
-struct GeometryTypeAggregateStruct
-{
-    int nFlags = 0;
-    // must be a pointer as the struct is allocated by
-    // sqlite3_aggregate_context() as just calloc(1,
-    // sizeof(GeometryTypeAggregateStruct))
-    std::map<OGRwkbGeometryType, int64_t> *apoMapCount = nullptr;
-    std::set<OGRwkbGeometryType> *apoSetNotNull = nullptr;
-};
-}  // namespace
-
-static void OGR_GPKG_GeometryTypeAggregate_Step(sqlite3_context *pContext,
-                                                int /*argc*/,
-                                                sqlite3_value **argv)
-{
-    const GByte *pabyBLOB =
-        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
-
-    auto p =
-        static_cast<GeometryTypeAggregateStruct *>(sqlite3_aggregate_context(
-            pContext, sizeof(GeometryTypeAggregateStruct)));
-    if (p == nullptr)
-        return;
-    if (p->apoMapCount == nullptr)
-    {
-        auto poDS =
-            static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
-        poDS->SetGeometryTypeAggregateInterrupted(false);
-        poDS->SetGeometryTypeAggregateResult(std::string());
-        p->nFlags = sqlite3_value_int(argv[1]);
-        p->apoMapCount = new std::map<OGRwkbGeometryType, int64_t>();
-        if ((p->nFlags & OGR_GGT_STOP_IF_MIXED) != 0)
-            p->apoSetNotNull = new std::set<OGRwkbGeometryType>();
-    }
-
-    OGRwkbGeometryType eGeometryType = wkbNone;
-    OGRErr err = OGRERR_FAILURE;
-    if (pabyBLOB != nullptr)
-    {
-        GPkgHeader sHeader;
-        const int nBLOBLen = sqlite3_value_bytes(argv[0]);
-        if (GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) == OGRERR_NONE &&
-            static_cast<size_t>(nBLOBLen) >= sHeader.nHeaderLen + 5)
-        {
-            err = OGRReadWKBGeometryType(pabyBLOB + sHeader.nHeaderLen,
-                                         wkbVariantIso, &eGeometryType);
-            if (eGeometryType == wkbGeometryCollection25D &&
-                (p->nFlags & OGR_GGT_GEOMCOLLECTIONZ_TINZ) != 0)
-            {
-                auto poGeom = std::unique_ptr<OGRGeometry>(
-                    GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
-                if (poGeom)
-                {
-                    const auto poGC = poGeom->toGeometryCollection();
-                    if (poGC->getNumGeometries() > 0)
-                    {
-                        auto eSubGeomType =
-                            poGC->getGeometryRef(0)->getGeometryType();
-                        if (eSubGeomType == wkbTINZ)
-                            eGeometryType = wkbTINZ;
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        // NULL geometry
-        err = OGRERR_NONE;
-    }
-    if (err == OGRERR_NONE)
-    {
-        ++(*p->apoMapCount)[eGeometryType];
-        if (eGeometryType != wkbNone && p->apoSetNotNull != nullptr)
-        {
-            p->apoSetNotNull->insert(eGeometryType);
-            if (p->apoSetNotNull->size() == 2)
-            {
-                auto poDS = static_cast<GDALGeoPackageDataset *>(
-                    sqlite3_user_data(pContext));
-                poDS->SetGeometryTypeAggregateInterrupted(true);
-            }
-        }
-    }
-}
-
-static void OGR_GPKG_GeometryTypeAggregate_Finalize(sqlite3_context *pContext)
-{
-    auto p = static_cast<GeometryTypeAggregateStruct *>(
-        sqlite3_aggregate_context(pContext, 0));
-    auto poDS =
-        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
-    if (p == nullptr)
-    {
-        poDS->SetGeometryTypeAggregateInterrupted(false);
-        poDS->SetGeometryTypeAggregateResult(std::string());
-        sqlite3_result_null(pContext);
-        return;
-    }
-    std::string s;
-    for (const auto &iter : *(p->apoMapCount))
-    {
-        if (!s.empty())
-            s += ',';
-        s += std::to_string(static_cast<int>(iter.first));
-        s += ':';
-        s += std::to_string(iter.second);
-    }
-    delete p->apoMapCount;
-    p->apoMapCount = nullptr;
-    delete p->apoSetNotNull;
-    p->apoSetNotNull = nullptr;
-    if (poDS->IsGeometryTypeAggregateInterrupted())
-    {
-        poDS->SetGeometryTypeAggregateResult(s);
-    }
-    sqlite3_result_text(pContext, s.c_str(), -1, SQLITE_TRANSIENT);
 }
 
 /************************************************************************/
@@ -8962,6 +8906,12 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
 #define SQLITE_DETERMINISTIC 0
 #endif
 
+#ifndef SQLITE_INNOCUOUS
+#define SQLITE_INNOCUOUS 0
+#endif
+
+#define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+
 void GDALGeoPackageDataset::InstallSQLFunctions()
 {
     InitSpatialite();
@@ -8975,33 +8925,26 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                  nullptr);
 
     /* Used by RTree Spatial Index Extension */
-    sqlite3_create_function(hDB, "ST_MinX", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MinX", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMinX, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_MinY", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MinY", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMinY, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_MaxX", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MaxX", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMaxX, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_MaxY", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_MaxY", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTMaxY, nullptr, nullptr);
-    sqlite3_create_function(hDB, "ST_IsEmpty", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_IsEmpty", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTIsEmpty, nullptr, nullptr);
 
     /* Used by Geometry Type Triggers Extension */
-    sqlite3_create_function(hDB, "ST_GeometryType", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_GeometryType", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTGeometryType, nullptr, nullptr);
-    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
-                            OGRGeoPackageGPKGIsAssignable, nullptr, nullptr);
+    sqlite3_create_function(hDB, "GPKG_IsAssignable", 2, UTF8_INNOCUOUS,
+                            nullptr, OGRGeoPackageGPKGIsAssignable, nullptr,
+                            nullptr);
 
     /* Used by Geometry SRS ID Triggers Extension */
-    sqlite3_create_function(hDB, "ST_SRID", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_SRID", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTSRID, nullptr, nullptr);
 
     /* Spatialite-like functions */
@@ -9013,48 +8956,38 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             OGRGeoPackageHasSpatialIndex, nullptr, nullptr);
 
     // HSTORE functions
-    sqlite3_create_function(hDB, "hstore_get_value", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "hstore_get_value", 2, UTF8_INNOCUOUS, nullptr,
                             GPKG_hstore_get_value, nullptr, nullptr);
 
     // Override a few Spatialite functions to work with gpkg_spatial_ref_sys
-    sqlite3_create_function(hDB, "ST_Transform", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
+    sqlite3_create_function(hDB, "ST_Transform", 2, UTF8_INNOCUOUS, this,
                             OGRGeoPackageTransform, nullptr, nullptr);
-    sqlite3_create_function(hDB, "Transform", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this,
+    sqlite3_create_function(hDB, "Transform", 2, UTF8_INNOCUOUS, this,
                             OGRGeoPackageTransform, nullptr, nullptr);
     sqlite3_create_function(hDB, "SridFromAuthCRS", 2, SQLITE_UTF8, this,
                             OGRGeoPackageSridFromAuthCRS, nullptr, nullptr);
 
+    sqlite3_create_function(hDB, "ST_EnvIntersects", 2, UTF8_INNOCUOUS, nullptr,
+                            OGRGeoPackageSTEnvelopesIntersectsTwoParams,
+                            nullptr, nullptr);
     sqlite3_create_function(
-        hDB, "ST_EnvIntersects", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+        hDB, "ST_EnvelopesIntersects", 2, UTF8_INNOCUOUS, nullptr,
         OGRGeoPackageSTEnvelopesIntersectsTwoParams, nullptr, nullptr);
-    sqlite3_create_function(
-        hDB, "ST_EnvelopesIntersects", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC,
-        nullptr, OGRGeoPackageSTEnvelopesIntersectsTwoParams, nullptr, nullptr);
 
-    sqlite3_create_function(
-        hDB, "ST_EnvIntersects", 5, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
-        OGRGeoPackageSTEnvelopesIntersects, nullptr, nullptr);
-    sqlite3_create_function(
-        hDB, "ST_EnvelopesIntersects", 5, SQLITE_UTF8 | SQLITE_DETERMINISTIC,
-        nullptr, OGRGeoPackageSTEnvelopesIntersects, nullptr, nullptr);
+    sqlite3_create_function(hDB, "ST_EnvIntersects", 5, UTF8_INNOCUOUS, nullptr,
+                            OGRGeoPackageSTEnvelopesIntersects, nullptr,
+                            nullptr);
+    sqlite3_create_function(hDB, "ST_EnvelopesIntersects", 5, UTF8_INNOCUOUS,
+                            nullptr, OGRGeoPackageSTEnvelopesIntersects,
+                            nullptr, nullptr);
 
     // Implementation that directly hacks the GeoPackage geometry blob header
-    sqlite3_create_function(hDB, "SetSRID", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "SetSRID", 2, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSetSRID, nullptr, nullptr);
 
     // GDAL specific function
     sqlite3_create_function(hDB, "ImportFromEPSG", 1, SQLITE_UTF8, this,
                             OGRGeoPackageImportFromEPSG, nullptr, nullptr);
-
-    // For internal use only (by OGRGeoPackageTableLayer::GetGeometryTypes())
-    sqlite3_create_function(hDB, "OGR_GPKG_GeometryTypeAggregate_INTERNAL", 2,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, this, nullptr,
-                            OGR_GPKG_GeometryTypeAggregate_Step,
-                            OGR_GPKG_GeometryTypeAggregate_Finalize);
 
     // May be used by ogrmerge.py
     sqlite3_create_function(hDB, "RegisterGeometryExtension", 3, SQLITE_UTF8,
@@ -9073,13 +9006,11 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
     }();
     if (gbRegisterMakeValid)
     {
-        sqlite3_create_function(hDB, "ST_MakeValid", 1,
-                                SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+        sqlite3_create_function(hDB, "ST_MakeValid", 1, UTF8_INNOCUOUS, nullptr,
                                 OGRGeoPackageSTMakeValid, nullptr, nullptr);
     }
 
-    sqlite3_create_function(hDB, "ST_Area", 1,
-                            SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+    sqlite3_create_function(hDB, "ST_Area", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTArea, nullptr, nullptr);
 
     // Debug functions
@@ -9125,6 +9056,47 @@ bool GDALGeoPackageDataset::OpenOrCreateDB(int flags)
     SQLCommand(hDB, "PRAGMA recursive_triggers = 1");
 
     InstallSQLFunctions();
+
+    const char *pszSqlitePragma =
+        CPLGetConfigOption("OGR_SQLITE_PRAGMA", nullptr);
+    OGRErr eErr = OGRERR_NONE;
+    if ((!pszSqlitePragma || !strstr(pszSqlitePragma, "trusted_schema")) &&
+        // Older sqlite versions don't have this pragma
+        SQLGetInteger(hDB, "PRAGMA trusted_schema", &eErr) == 0 &&
+        eErr == OGRERR_NONE)
+    {
+        bool bNeedsTrustedSchema = false;
+
+        // Current SQLite versions require PRAGMA trusted_schema = 1 to be
+        // able to use the RTree from triggers, which is only needed when
+        // modifying the RTree.
+        if (((flags & SQLITE_OPEN_READWRITE) != 0 ||
+             (flags & SQLITE_OPEN_CREATE) != 0) &&
+            OGRSQLiteRTreeRequiresTrustedSchemaOn())
+        {
+            bNeedsTrustedSchema = true;
+        }
+
+#ifdef HAVE_SPATIALITE
+        // Spatialite <= 5.1.0 doesn't declare its functions as SQLITE_INNOCUOUS
+        if (!bNeedsTrustedSchema && HasExtensionsTable() &&
+            SQLGetInteger(
+                hDB,
+                "SELECT 1 FROM gpkg_extensions WHERE "
+                "extension_name ='gdal_spatialite_computed_geom_column'",
+                nullptr) == 1 &&
+            SpatialiteRequiresTrustedSchemaOn() && AreSpatialiteTriggersSafe())
+        {
+            bNeedsTrustedSchema = true;
+        }
+#endif
+
+        if (bNeedsTrustedSchema)
+        {
+            CPLDebug("GPKG", "Setting PRAGMA trusted_schema = 1");
+            SQLCommand(hDB, "PRAGMA trusted_schema = 1");
+        }
+    }
 
     return true;
 }

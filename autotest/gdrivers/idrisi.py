@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
+import shutil
 
 import gdaltest
 
@@ -37,9 +37,14 @@ import gdaltest
 # Read test of byte file.
 
 
-def test_idrisi_1():
+def test_idrisi_1(tmp_path):
 
-    tst = gdaltest.GDALTest("RST", "rst/byte.rst", 1, 5044)
+    shutil.copy("data/rst/byte.rst", tmp_path)
+    shutil.copy("data/rst/byte.rdc", tmp_path)
+
+    tst = gdaltest.GDALTest(
+        "RST", tmp_path / "byte.rst", 1, 5044, filename_absolute=True
+    )
     tst.testOpen()
 
 
@@ -47,9 +52,14 @@ def test_idrisi_1():
 # Read test of byte file.
 
 
-def test_idrisi_2():
+def test_idrisi_2(tmp_path):
 
-    tst = gdaltest.GDALTest("RST", "rst/real.rst", 1, 5275)
+    shutil.copy("data/rst/real.rst", tmp_path)
+    shutil.copy("data/rst/real.rdc", tmp_path)
+
+    tst = gdaltest.GDALTest(
+        "RST", tmp_path / "real.rst", 1, 5275, filename_absolute=True
+    )
     tst.testOpen()
 
 
@@ -57,37 +67,31 @@ def test_idrisi_2():
 #
 
 
-def test_idrisi_3():
+def test_idrisi_3(tmp_path):
 
-    tst = gdaltest.GDALTest("RST", "ehdr/float32.bil", 1, 27)
+    shutil.copy("data/ehdr/float32.bil", tmp_path)
+    shutil.copy("data/ehdr/float32.hdr", tmp_path)
+    shutil.copy("data/ehdr/float32.prj", tmp_path)
 
-    tst.testCreate(new_filename="tmp/float32.rst", out_bands=1, vsimem=1)
+    tst = gdaltest.GDALTest(
+        "RST", tmp_path / "float32.bil", 1, 27, filename_absolute=True
+    )
+
+    tst.testCreate(new_filename=tmp_path / "float32.rst", out_bands=1, vsimem=1)
 
 
 ###############################################################################
 #
 
 
-def test_idrisi_4():
+def test_idrisi_4(tmp_path):
 
-    tst = gdaltest.GDALTest("RST", "rgbsmall.tif", 2, 21053)
+    shutil.copy("data/rgbsmall.tif", tmp_path)
 
-    tst.testCreateCopy(
-        check_gt=1, check_srs=1, new_filename="tmp/rgbsmall_cc.rst", vsimem=1
+    tst = gdaltest.GDALTest(
+        "RST", tmp_path / "rgbsmall.tif", 2, 21053, filename_absolute=True
     )
 
-
-###############################################################################
-# Cleanup.
-
-
-def test_idrisi_cleanup():
-    gdaltest.clean_tmp()
-    try:
-        os.unlink("data/rgbsmall.tif.aux.xml")
-        os.unlink("data/rst/real.rst.aux.xml")
-        os.unlink("data/frmt09.cot.aux.xml")
-        os.unlink("data/rst/byte.rst.aux.xml")
-        print("FIXME?: data/rgbsmall.tif.aux.xml is produced by those tests")
-    except OSError:
-        pass
+    tst.testCreateCopy(
+        check_gt=1, check_srs=1, new_filename=tmp_path / "rgbsmall_cc.rst", vsimem=1
+    )

@@ -173,7 +173,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
                                int nWidth = 0, int nPrecision = 0,
                                GBool bIndexed = FALSE, GBool bUnique = FALSE,
                                int bApproxOK = TRUE) = 0;
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     virtual int SetSpatialRef(OGRSpatialReference *poSpatialRef) = 0;
@@ -199,7 +199,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     virtual int SetProjInfo(TABProjInfo *poPI) = 0;
     virtual int SetMIFCoordSys(const char *pszMIFCoordSys) = 0;
 
-    static int GetTABType(OGRFieldDefn *poField, TABFieldType *peTABType,
+    static int GetTABType(const OGRFieldDefn *poField, TABFieldType *peTABType,
                           int *pnWidth, int *pnPrecision);
 
 #ifdef DEBUG

@@ -83,7 +83,7 @@ import pytest
 
 from osgeo import ogr
 
-pytestmark = pytest.mark.require_driver("NTF")
+pytestmark = pytest.mark.require_driver("UK .NTF")
 
 ###############################################################################
 

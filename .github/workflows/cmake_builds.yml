@@ -52,7 +52,10 @@ jobs:
         cmake --version
     - name: Install dependency
       run: |
-        sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+        # This currently fails as of https://lists.osgeo.org/pipermail/ubuntu/2023-October/002046.html
+        # sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B827C12C2D425E227EDCA75089EBE08314DF160
+        sudo add-apt-repository -y http://ppa.launchpad.net/ubuntugis/ubuntugis-unstable/ubuntu/
         sudo apt-get update
         sudo apt-get install -y -q bison libaec-dev libjpeg-dev libgif-dev liblzma-dev libzstd-dev libgeos-dev git \
            libcurl4-gnutls-dev libproj-dev libxml2-dev  libxerces-c-dev libnetcdf-dev netcdf-bin \
@@ -430,7 +433,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet curl libiconv icu python=3.10 swig numpy pytest pytest-env filelock zlib lxml jsonschema
+        conda install --yes --quiet curl libiconv icu python=3.10 swig numpy pytest pytest-env pytest-benchmark filelock zlib lxml jsonschema
         # FIXME: remove libnetcdf=4.9.2=nompi_h5902ca5_107 pinning as soon as https://github.com/conda-forge/libnetcdf-feedstock/issues/182 is resolved
         conda install --yes --quiet proj geos hdf4 hdf5 kealib \
             libnetcdf=4.9.2=nompi_h5902ca5_107 openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
@@ -517,7 +520,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet proj pytest pytest-env filelock lxml
+        conda install --yes --quiet proj pytest pytest-env pytest-benchmark filelock lxml
     - name: Configure
       shell: bash -l {0}
       run: |
@@ -655,7 +658,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env filelock zlib clcache lxml
+        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env pytest-benchmark filelock zlib clcache lxml
         conda install --yes --quiet --name gdalenv -c conda-forge libgdal
     - name: Configure
       shell: bash -l {0}

@@ -482,7 +482,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
         return pszSchemaName;
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
@@ -652,7 +652,7 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     virtual OGRErr DeleteLayer(int iLayer) override;
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 

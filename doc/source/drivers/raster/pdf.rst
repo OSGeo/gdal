@@ -757,25 +757,6 @@ With GDAL 3.1.x
 The scripts in the `<https://github.com/rouault/pdfium_build_gdal_3_1>`__
 repository must be used to build a patched version of PDFium.
 
-With GDAL >= 2.2.0 and < 3.1
-++++++++++++++++++++++++++++
-
-A `PDFium forked version for simpler
-builds <https://github.com/rouault/pdfium>`__ is available (for Windows,
-a dedicated
-`win_gdal_build <https://github.com/rouault/pdfium/tree/win_gdal_build>`__
-branch is recommended). A `build
-repository <https://github.com/rouault/pdfium/tree/build>`__ is
-available with a few scripts that can be used as a template to build
-PDFium for Linux/MacOSX/Windows. Those forked versions remove the
-dependency to the V8 JavaScript engine, and have also a few changes to
-avoid symbol clashes, on Linux, with libjpeg and libopenjpeg. Building
-the PDF driver as a GDAL plugin is also a way of avoiding such issues.
-PDFium build requires a C++11 compatible compiler, as well as for
-building GDAL itself against PDFium. Successfully tested versions are
-GCC 4.7.0 (previous versions aren't compatible) and Visual Studio 12 /
-VS2013.
-
 Examples
 --------
 

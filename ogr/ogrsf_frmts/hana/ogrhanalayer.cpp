@@ -183,7 +183,7 @@ CreateFieldDefn(const AttributeColumnDescription &columnDesc)
                  columnDesc.typeName.c_str(), columnDesc.name.c_str());
 
     auto field =
-        cpl::make_unique<OGRFieldDefn>(columnDesc.name.c_str(), ogrFieldType);
+        std::make_unique<OGRFieldDefn>(columnDesc.name.c_str(), ogrFieldType);
     field->SetSubType(ogrFieldSubType);
     field->SetNullable(columnDesc.isNullable);
     if (!columnDesc.isArray)
@@ -417,7 +417,7 @@ OGRFeature *OGRHanaLayer::ReadFeature()
     if (!resultSet_->next())
         return nullptr;
 
-    auto feature = cpl::make_unique<OGRFeature>(featureDefn_);
+    auto feature = std::make_unique<OGRFeature>(featureDefn_);
     feature->SetFID(nextFeatureId_++);
 
     unsigned short paramIndex = 0;
@@ -717,7 +717,7 @@ OGRErr OGRHanaLayer::InitFeatureDefinition(const CPLString &schemaName,
             const GeometryColumnDescription &geometryColumnDesc =
                 clmDesc.geometryDescription;
 
-            auto geomFieldDefn = cpl::make_unique<OGRGeomFieldDefn>(
+            auto geomFieldDefn = std::make_unique<OGRGeomFieldDefn>(
                 geometryColumnDesc.name.c_str(), geometryColumnDesc.type);
             geomFieldDefn->SetNullable(geometryColumnDesc.isNullable);
 

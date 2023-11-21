@@ -1100,7 +1100,7 @@ OGRSXFLayer *OGRSXFDataSource::GetLayerById(GByte nID)
 void OGRSXFDataSource::CreateLayers()
 {
     // default layers set
-    m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+    m_apoLayers.emplace_back(std::make_unique<OGRSXFLayer>(
         fpSXF, &hIOMutex, static_cast<GByte>(0), CPLString("SYSTEM"),
         oSXFPassport.version, oSXFPassport.stMapDescription));
     auto pLayer = m_apoLayers.back().get();
@@ -1112,7 +1112,7 @@ void OGRSXFDataSource::CreateLayers()
     }
     pLayer->AddClassifyCode(91000000);
 
-    m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+    m_apoLayers.emplace_back(std::make_unique<OGRSXFLayer>(
         fpSXF, &hIOMutex, static_cast<GByte>(255), CPLString("Not_Classified"),
         oSXFPassport.version, oSXFPassport.stMapDescription));
 }
@@ -1201,7 +1201,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
             else
                 pszRecoded = CPLStrdup(LAYER.szName);
 
-            m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+            m_apoLayers.emplace_back(std::make_unique<OGRSXFLayer>(
                 fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded),
                 oSXFPassport.version, oSXFPassport.stMapDescription));
         }
@@ -1218,7 +1218,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
             else
                 pszRecoded = CPLStrdup(LAYER.szShortName);
 
-            m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+            m_apoLayers.emplace_back(std::make_unique<OGRSXFLayer>(
                 fpSXF, &hIOMutex, LAYER.nNo, CPLString(pszRecoded),
                 oSXFPassport.version, oSXFPassport.stMapDescription));
         }
@@ -1228,7 +1228,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
         VSIFSeekL(fpRSC, nOffset, SEEK_SET);
     }
 
-    m_apoLayers.emplace_back(cpl::make_unique<OGRSXFLayer>(
+    m_apoLayers.emplace_back(std::make_unique<OGRSXFLayer>(
         fpSXF, &hIOMutex, static_cast<GByte>(255), CPLString("Not_Classified"),
         oSXFPassport.version, oSXFPassport.stMapDescription));
 

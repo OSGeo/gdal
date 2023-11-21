@@ -32,8 +32,8 @@
 #include "cpl_port.h"
 #include "ogr_core.h"
 
-bool OGRWKBGetGeomType(const GByte *pabyWkb, size_t nWKBSize, bool &bNeedSwap,
-                       uint32_t &nType);
+bool CPL_DLL OGRWKBGetGeomType(const GByte *pabyWkb, size_t nWKBSize,
+                               bool &bNeedSwap, uint32_t &nType);
 bool OGRWKBPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
                           double &dfArea);
 bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
@@ -42,8 +42,11 @@ bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
 bool CPL_DLL OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
                                   OGREnvelope &sEnvelope);
 
-bool CPL_DLL OGRWKBIsWithinPessimistic(const GByte *pabyWkb, size_t nWKBSize,
-                                       const OGREnvelope &sEnvelope);
+bool CPL_DLL OGRWKBIntersectsPessimistic(const GByte *pabyWkb, size_t nWKBSize,
+                                         const OGREnvelope &sEnvelope);
+
+void CPL_DLL OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb,
+                                                     size_t nWKBSize);
 
 /** Modifies a PostGIS-style Extended WKB geometry to a regular WKB one.
  * pabyEWKB will be modified in place.

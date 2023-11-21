@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: Please cite this software using these metadata or in the CITATION file.
 type: software
 title: GDAL
-version: 3.7.0
-date-released: 2023-05-02
+version: 3.8.0
+date-released: 2023-11-06
 doi: 10.5281/zenodo.5884351
 abstract: GDAL is a translator library for raster and vector geospatial data
   formats that is released under an MIT style Open Source License by the Open

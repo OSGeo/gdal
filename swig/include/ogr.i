@@ -468,6 +468,11 @@ typedef void retGetPoints;
 %constant F_VAL_ALLOW_NULL_WHEN_DEFAULT = 0x00000008; /***<Allow fields that are null when there's an associated default value. */
 %constant F_VAL_ALL = 0xFFFFFFFF; /**< Enable all validation tests */
 
+%constant TZFLAG_UNKNOWN = 0;
+%constant TZFLAG_LOCALTIME = 1;
+%constant TZFLAG_MIXED_TZ = 2;
+%constant TZFLAG_UTC = 100;
+
 /** Flag for OGR_L_GetGeometryTypes() indicating that
  * OGRGeometryTypeCounter::nCount value is not needed */
 %constant GGT_COUNT_NOT_NEEDED = 0x1;
@@ -871,8 +876,13 @@ public:
   char const *name;
 %mutable;
 
+
   ~OGRDataSourceShadow() {
     OGRReleaseDataSource(self);
+  }
+
+  CPLErr Close() {
+    return GDALClose(self);
   }
 
   int GetRefCount() {
@@ -1019,6 +1029,10 @@ class ArrowArray {
 public:
 %extend {
 
+  ArrowArray() {
+    return (struct ArrowArray* )calloc(1, sizeof(struct ArrowArray));
+  }
+
   ~ArrowArray() {
     if( self->release )
       self->release(self);
@@ -1046,6 +1060,10 @@ class ArrowSchema {
 public:
 %extend {
 
+  ArrowSchema() {
+    return (struct ArrowSchema* )calloc(1, sizeof(struct ArrowSchema));
+  }
+
   ~ArrowSchema() {
     if( self->release )
       self->release(self);
@@ -1056,8 +1074,21 @@ public:
     return self;
   }
 
+  const char* GetName() {
+    return self->name;
+  }
+
   GIntBig GetChildrenCount() {
     return self->n_children;
+  }
+
+  const ArrowSchema* GetChild(int iChild) {
+    if( iChild < 0 || iChild >= self->n_children )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Wrong index");
+        return NULL;
+    }
+    return self->children[iChild];
   }
 
 } /* %extend */
@@ -1476,6 +1507,27 @@ public:
           return NULL;
       }
   }
+#endif
+
+#ifdef SWIGPYTHON
+    void IsArrowSchemaSupported(const struct ArrowSchema *schema, bool* pbRet, char **errorMsg, char** options = NULL)
+    {
+        *pbRet = OGR_L_IsArrowSchemaSupported(self, schema, options, errorMsg);
+    }
+#endif
+
+#ifdef SWIGPYTHON
+    OGRErr CreateFieldFromArrowSchema(const struct ArrowSchema *schema, char** options = NULL)
+    {
+        return OGR_L_CreateFieldFromArrowSchema(self, schema, options) ? OGRERR_NONE : OGRERR_FAILURE;
+    }
+#endif
+
+#ifdef SWIGPYTHON
+    OGRErr WriteArrowBatch(const struct ArrowSchema *schema, struct ArrowArray *array, char** options = NULL)
+    {
+        return OGR_L_WriteArrowBatch(self, schema, array, options) ? OGRERR_NONE : OGRERR_FAILURE;
+    }
 #endif
 
 #ifdef SWIGPYTHON
@@ -2549,6 +2601,14 @@ public:
 
   void SetPrecision(int precision) {
     OGR_Fld_SetPrecision(self, precision);
+  }
+
+  int GetTZFlag() {
+    return OGR_Fld_GetTZFlag(self);
+  }
+
+  void SetTZFlag(int tzflag) {
+    OGR_Fld_SetTZFlag(self, tzflag);
   }
 
   /* Interface method added for GDAL 1.7.0 */

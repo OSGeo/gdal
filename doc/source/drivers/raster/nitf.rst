@@ -14,29 +14,33 @@ NITF -- National Imagery Transmission Format
 
    nitf_advanced
 
-GDAL supports reading of several subtypes of NITF image files, and
-writing simple NITF 2.1 files. NITF 1.1, NITF 2.0, NITF 2.1 and NSIF 1.0
-files with uncompressed, ARIDPCM, JPEG compressed, JPEG2000 (with
-Kakadu, ECW SDKs or other JPEG2000 capable driver) or VQ compressed
-images should be readable.
+GDAL supports reading of several subtypes of NITF (National Imagery Transmission Format)
+image files, and writing simple NITF 2.1 files. NITF 1.1, NITF 2.0, NITF 2.1 and NSIF 1.0
+files with uncompressed, ARIDPCM (Adaptive Recursive Interpolated Differential Pulse Code Modulation),
+JPEG compressed, JPEG2000 (with Kakadu, ECW SDKs or other JPEG2000 capable driver)
+or VQ (Vector Quantized) compressed images should be readable.
 
-The read support test has been tested on various products, including CIB
-and CADRG frames from RPF products, ECRG frames, HRE products.
+The read support test has been tested on various products, including
+CIB (Controlled Image Base) and CADRG (Compressed ARC Digitized Raster Graphics)
+frames from RPF (Raster Product Format) products, ECRG (Enhanced Compressed
+Raster Graphics) frames, HRE (High Resolution Elevation) products.
 
 Color tables for pseudocolored images are read. In some cases nodata
 values may be identified.
 
-Lat/Long extents are read from the IGEOLO information in the image
+Lat/Long extents are read from the IGEOLO (Image GeoLocation) information in the image
 header if available. If high precision lat/long georeferencing
 information is available in RPF auxiliary data it will be used in
-preference to the low precision IGEOLO information. In case a BLOCKA
+preference to the low precision IGEOLO information.
+In case a BLOCKA (Image Block Information)
 instance is found, the higher precision coordinates of BLOCKA are used
 if the block data covers the complete image - that is the L_LINES field
 with the row count for that block is equal to the row count of the
 image. Additionally, all BLOCKA instances are returned as metadata. If
-GeoSDE TRE are available, they will be used to provide higher precision
+GeoSDE TRE (Tagged Record Extension) are available, they will be used to provide higher precision
 coordinates. If the RPC00B (or RPC00A) TRE is available, it is used to
-report RPC metadata. Starting with GDAL 2.2, RPC information can be
+report RPC (Rapid Positioning Capability / Rational Polynomial Coefficients) metadata.
+Starting with GDAL 2.2, RPC information can be
 retrieved from \_rpc.txt files, and they will be used in priority over
 internal RPC00B values, since the latter have less precision than the
 ones stored in external \_rpc.txt.
@@ -64,7 +68,7 @@ Open options
      :choices: YES, NO
      :default: NO
 
-     Whether TRE and DES content should be validated upon
+     Whether TRE and DES (Data Extension Segment) content should be validated upon
      dataset opening. If errors are found, CE_Failure errors are emitted, but
      dataset opening does not fail, unless the FAIL_IF_VALIDATION_ERROR=YES
      open option is set.
@@ -94,8 +98,8 @@ tables may be written for 8bit images.
 In addition to the export oriented CreateCopy() API, it is also possible
 to create a blank NITF file using Create() and write imagery on demand.
 However, using this methodology writing of pseudocolor tables and
-georeferencing is not supported unless appropriate IREP and ICORDS
-creation options are supplied.
+georeferencing is not supported unless appropriate IREP (Image Representation) and
+ICORDS (Image Coordinate) creation options are supplied.
 
 Creation Options:
 
@@ -180,7 +184,7 @@ reported when asking the metadata list.
 
 -  .. co:: IREP
 
-      Set to "RGB/LUT" to reserve space for a color table for
+      Set to "RGB/LUT" (Look Up Table) to reserve space for a color table for
       each output band. (Only needed for Create() method, not
       CreateCopy()).
 
@@ -217,7 +221,7 @@ reported when asking the metadata list.
 -  .. co:: TRE
       :choices: <tre-name=tre-contents>
 
-      One or more TRE creation options may
+      One or more TRE (Tagged Record Extension) creation options may
       be used provided to write arbitrary user defined TREs to the image
       header. The tre-name should be at most six characters, and the
       tre-contents should be "backslash escaped" if it contains backslashes
@@ -240,7 +244,7 @@ reported when asking the metadata list.
 -  .. co:: DES
       :choices: <des-name=des-contents>
 
-      One or more DES creation options may
+      One or more DES (Data Extension Segment) creation options may
       be provided to write arbitrary user defined DESs to the NITF file.
       The des-name should be at most 25 characters, and the des-contents
       should be "backslash escaped" if it contains backslashes or zero
@@ -258,7 +262,8 @@ reported when asking the metadata list.
 -  .. co:: SDE_TRE
       :choices: YES, NO
 
-      Write GEOLOB and GEOPSB TREs to
+      Write GEOLOB (Local Geographic (lat/long) Coordinate System) and
+      GEOPSB (Geo positioning Information) TREs to
       get more precise georeferencing. This is limited to geographic SRS,
       and to CreateCopy() for now.
 

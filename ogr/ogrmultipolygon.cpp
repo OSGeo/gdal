@@ -135,6 +135,45 @@ OGRMultiPolygon::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 }
 
 /************************************************************************/
+/*                           importFromWkb()                            */
+/************************************************************************/
+
+OGRErr OGRMultiPolygon::importFromWkb(const unsigned char *pabyData,
+                                      size_t nSize, OGRwkbVariant eWkbVariant,
+                                      size_t &nBytesConsumedOut)
+
+{
+    if (nGeomCount == 1 && nSize >= 9 && flags == 0 && pabyData[0] == wkbNDR &&
+        memcmp(pabyData + 1, "\x06\x00\x00\x00\x01\x00\x00\x00", 8) == 0)
+    {
+        // Optimization to import a Intel-ordered 1-part multipolyon on
+        // top of an existing 1-part multipolygon, to save dynamic memory
+        // allocations.
+        const size_t nDataOffset = 9;
+        size_t nBytesConsumedPolygon = 0;
+        // cppcheck-suppress knownConditionTrueFalse
+        if (nSize != static_cast<size_t>(-1))
+            nSize -= nDataOffset;
+        OGRErr eErr =
+            cpl::down_cast<OGRPolygon *>(papoGeoms[0])
+                ->OGRPolygon::importFromWkb(pabyData + nDataOffset, nSize,
+                                            eWkbVariant, nBytesConsumedPolygon);
+        if (eErr == OGRERR_NONE)
+        {
+            nBytesConsumedOut = nDataOffset + nBytesConsumedPolygon;
+        }
+        else
+        {
+            empty();
+        }
+        return eErr;
+    }
+
+    return OGRGeometryCollection::importFromWkbInternal(
+        pabyData, nSize, /*nRecLevel=*/0, eWkbVariant, nBytesConsumedOut);
+}
+
+/************************************************************************/
 /*                            exportToWkt()                             */
 /************************************************************************/
 

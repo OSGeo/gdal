@@ -99,15 +99,38 @@ class GDALArgumentParser(argparse.ArgumentParser):
             # extend was introduced to the stdlib in Python 3.8
             self.register("action", "extend", ExtendAction)
 
+        self.custom_format_arg = False
+
+    def add_argument(self, *args, **kwargs):
+        if "--format" in args:
+            self.custom_format_arg = True
+        return super().add_argument(*args, **kwargs)
+
     def parse_args(self, args=None, optfile_arg=None, **kwargs):
 
         if self.add_gdal_generic_options:
             from osgeo import gdal
 
-            args = gdal.GeneralCmdLineProcessor(["dummy"] + args)
+            args_for_gdal_general = []
+            post_args = []
+            # gdal_calc has a --format switch whose semantics is not the
+            # one of the generic --format
+            if self.custom_format_arg and args:
+                i = 0
+                while i < len(args):
+                    if args[i] == "--format":
+                        post_args.append(args[i])
+                        post_args.append(args[i + 1])
+                        i += 1
+                    else:
+                        args_for_gdal_general.append(args[i])
+                    i += 1
+            else:
+                args_for_gdal_general = args
+            args = gdal.GeneralCmdLineProcessor(["dummy"] + args_for_gdal_general)
             if args is None:
                 sys.exit(0)
-            args = args[1:]
+            args = args[1:] + post_args
 
         if (
             args is not None

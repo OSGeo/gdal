@@ -105,6 +105,7 @@ hid_t GDAL_HDF5Open(const std::string &osFilename);
 class HDF5Dataset;
 class HDF5EOSParser;
 class BAGDataset;
+class S102Dataset;
 
 namespace GDAL
 {
@@ -118,6 +119,7 @@ class HDF5SharedResources
 {
     friend class ::HDF5Dataset;
     friend class ::BAGDataset;
+    friend class ::S102Dataset;
 
     std::weak_ptr<HDF5SharedResources> m_poSelf{};
     bool m_bReadOnly = true;
@@ -129,8 +131,7 @@ class HDF5SharedResources
         m_oMapEOSGridNameToDimensions{};
     std::map<std::string, std::vector<std::shared_ptr<GDALDimension>>>
         m_oMapEOSSwathNameToDimensions{};
-    std::map<std::string, std::shared_ptr<GDALMDArrayRegularlySpaced>>
-        m_oRefKeeper;
+    std::map<std::string, std::shared_ptr<GDALMDArray>> m_oRefKeeper;
 
     explicit HDF5SharedResources(const std::string &osFilename);
 
@@ -197,7 +198,7 @@ class HDF5SharedResources
         return oIter->second;
     }
 
-    void KeepRef(const std::shared_ptr<GDALMDArrayRegularlySpaced> &poArray)
+    void KeepRef(const std::shared_ptr<GDALMDArray> &poArray)
     {
         m_oRefKeeper[poArray->GetFullName()] = poArray;
     }
@@ -270,8 +271,8 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
-    static std::shared_ptr<GDALGroup>
-    OpenGroup(std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources);
+    static std::shared_ptr<GDALGroup> OpenGroup(
+        const std::shared_ptr<GDAL::HDF5SharedResources> &poSharedResources);
     static int Identify(GDALOpenInfo *);
 
     static GDALDataType GetDataType(hid_t);

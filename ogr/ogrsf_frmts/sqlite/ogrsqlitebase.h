@@ -218,6 +218,16 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
 
     void LoadRelationshipsFromForeignKeys() const;
 
+    bool IsSpatialiteLoaded();
+    static int MakeSpatialiteVersionNumber(int x, int y, int z)
+    {
+        return x * 10000 + y * 100 + z;
+    }
+    int GetSpatialiteVersionNumber();
+
+    bool SpatialiteRequiresTrustedSchemaOn();
+    bool AreSpatialiteTriggersSafe();
+
     // sqlite3_prepare_v2 error logging wrapper
     int
     prepareSql(sqlite3 *db,           /* Database handle */

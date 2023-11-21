@@ -387,29 +387,34 @@ def test_gdal_translate_lib_outputGeotransform(tmp_vsimem):
 # Test metadataOptions
 
 
-def test_gdal_translate_lib_13(tmp_path):
+def test_gdal_translate_lib_13(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
     ds = gdal.Translate(
-        "/vsimem/test13.tif", src_ds, metadataOptions=["TIFFTAG_DOCUMENTNAME=test13"]
+        tmp_vsimem / "test13.tif",
+        src_ds,
+        metadataOptions=["TIFFTAG_DOCUMENTNAME=test13"],
     )
     assert ds is not None
 
     md = ds.GetMetadata()
     assert "TIFFTAG_DOCUMENTNAME" in md, "Did not get TIFFTAG_DOCUMENTNAME"
     ds = None
-    gdal.Unlink("/vsimem/test13.tif")
+
+
+def test_gdal_translate_lib_13a(tmp_vsimem):
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
 
     ds = gdal.Translate(
-        "/vsimem/test13.tif", src_ds, metadataOptions="TIFFTAG_DOCUMENTNAME=test13"
+        tmp_vsimem / "test13.tif", src_ds, metadataOptions="TIFFTAG_DOCUMENTNAME=test13"
     )
     assert ds is not None
 
     md = ds.GetMetadata()
     assert "TIFFTAG_DOCUMENTNAME" in md, "Did not get TIFFTAG_DOCUMENTNAME"
     ds = None
-    gdal.Unlink("/vsimem/test13.tif")
 
 
 ###############################################################################
@@ -457,10 +462,10 @@ def test_gdal_translate_lib_100():
 # Test behaviour with SIGNEDBYTE
 
 
-def test_gdal_translate_lib_101():
+def test_gdal_translate_lib_101(tmp_vsimem):
 
     ds = gdal.Translate(
-        "/vsimem/test_gdal_translate_lib_101.tif",
+        tmp_vsimem / "test_gdal_translate_lib_101.tif",
         gdal.Open("../gcore/data/byte.tif"),
         creationOptions=["PIXELTYPE=SIGNEDBYTE"],
         noData="-128",
@@ -470,12 +475,12 @@ def test_gdal_translate_lib_101():
         == "SIGNEDBYTE"
     ), "Did not get SIGNEDBYTE"
     assert ds.GetRasterBand(1).GetNoDataValue() == -128, "Did not get -128"
-    ds2 = gdal.Translate("/vsimem/test_gdal_translate_lib_101_2.tif", ds, noData=-127)
+    ds2 = gdal.Translate(
+        tmp_vsimem / "test_gdal_translate_lib_101_2.tif", ds, noData=-127
+    )
     assert ds2.GetRasterBand(1).GetNoDataValue() == -127, "Did not get -127"
     ds = None
     ds2 = None
-    gdal.Unlink("/vsimem/test_gdal_translate_lib_101.tif")
-    gdal.Unlink("/vsimem/test_gdal_translate_lib_101_2.tif")
 
 
 ###############################################################################
@@ -593,14 +598,13 @@ def test_gdal_translate_lib_rcp_vrt_path():
 # Test GeoLocation propagation in "VRT path"
 
 
-def test_gdal_translate_lib_geolocation_vrt_path():
+def test_gdal_translate_lib_geolocation_vrt_path(tmp_vsimem):
 
     src_ds = gdal.Open("../gcore/data/sstgeo.vrt")
     ds = gdal.Translate(
-        "/vsimem/temp.vrt", src_ds, format="VRT", metadataOptions=["FOO=BAR"]
+        tmp_vsimem / "temp.vrt", src_ds, format="VRT", metadataOptions=["FOO=BAR"]
     )
     assert ds.GetMetadata("GEOLOCATION") == src_ds.GetMetadata("GEOLOCATION")
-    gdal.Unlink("/vsimem/temp.vrt")
 
 
 ###############################################################################
@@ -735,15 +739,15 @@ def test_gdal_translate_lib_112(tmp_path):
 # Test gdal_translate foo.tif foo.tif.ovr
 
 
-def test_gdal_translate_lib_generate_ovr():
+def test_gdal_translate_lib_generate_ovr(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/foo.tif", open("../gcore/data/byte.tif", "rb").read()
+        tmp_vsimem / "foo.tif", open("../gcore/data/byte.tif", "rb").read()
     )
-    gdal.GetDriverByName("GTiff").Create("/vsimem/foo.tif.ovr", 10, 10)
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "foo.tif.ovr", 10, 10)
     ds = gdal.Translate(
-        "/vsimem/foo.tif.ovr",
-        "/vsimem/foo.tif",
+        tmp_vsimem / "foo.tif.ovr",
+        tmp_vsimem / "foo.tif",
         resampleAlg=gdal.GRIORA_Average,
         format="GTiff",
         width=10,
@@ -752,8 +756,6 @@ def test_gdal_translate_lib_generate_ovr():
     assert ds
     assert ds.GetRasterBand(1).Checksum() == 1152, "Bad checksum"
     ds = None
-
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/foo.tif")
 
 
 ###############################################################################
@@ -853,10 +855,10 @@ def test_gdal_translate_lib_tr_non_nearest_oversampling():
     assert 0 not in struct.unpack("B" * 13 * 3, ds.ReadRaster())
 
 
-def test_gdal_translate_lib_preserve_block_size():
+def test_gdal_translate_lib_preserve_block_size(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/tmp.tif",
+        tmp_vsimem / "tmp.tif",
         256,
         256,
         1,
@@ -871,7 +873,6 @@ def test_gdal_translate_lib_preserve_block_size():
     ds = gdal.Translate("", src_ds, format="VRT", metadataOptions=["FOO=BAR"])
     assert ds.GetRasterBand(1).GetBlockSize() == [32, 64]
     src_ds = None
-    gdal.Unlink("/vsimem/tmp.tif")
 
 
 ###############################################################################
@@ -966,146 +967,132 @@ def test_gdal_translate_lib_coord_epoch_is_dynamic():
 # Test overviewLevel option
 
 
-def test_gdal_translate_lib_overview_level():
+def test_gdal_translate_lib_overview_level(tmp_vsimem):
 
-    src_filename = "/vsimem/test_gdal_translate_lib_overview_level.tif"
-    try:
-        src_ds = gdal.Translate(src_filename, "../gcore/data/byte.tif")
-        src_ds.BuildOverviews("AVERAGE", [2])
-        src_ds.BuildOverviews("NONE", [4])
+    src_filename = tmp_vsimem / "test_gdal_translate_lib_overview_level.tif"
 
-        with gdal.quiet_errors():
-            with pytest.raises(Exception):
-                assert gdal.Translate("", src_ds, format="MEM", overviewLevel="invalid")
+    src_ds = gdal.Translate(src_filename, "../gcore/data/byte.tif")
+    src_ds.BuildOverviews("AVERAGE", [2])
+    src_ds.BuildOverviews("NONE", [4])
 
-        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel="NONE")
-        assert out_ds.RasterXSize == 20
-        assert out_ds.RasterYSize == 20
-        assert out_ds.ReadRaster() == src_ds.ReadRaster()
+    with gdal.quiet_errors():
+        with pytest.raises(Exception):
+            assert gdal.Translate("", src_ds, format="MEM", overviewLevel="invalid")
 
-        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0)
-        assert out_ds.RasterXSize == 10
-        assert out_ds.RasterYSize == 10
-        assert (
-            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
-        )
+    out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel="NONE")
+    assert out_ds.RasterXSize == 20
+    assert out_ds.RasterYSize == 20
+    assert out_ds.ReadRaster() == src_ds.ReadRaster()
 
-        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=1)
-        assert out_ds.RasterXSize == 5
-        assert out_ds.RasterYSize == 5
-        assert (
-            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
-        )
+    out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0)
+    assert out_ds.RasterXSize == 10
+    assert out_ds.RasterYSize == 10
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
 
-        out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=2)
-        assert out_ds.RasterXSize == 5
-        assert out_ds.RasterYSize == 5
-        assert (
-            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
-        )
+    out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=1)
+    assert out_ds.RasterXSize == 5
+    assert out_ds.RasterYSize == 5
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel="AUTO", widthPct=50, heightPct=50
-        )
-        assert out_ds.RasterXSize == 10
-        assert out_ds.RasterYSize == 10
-        assert (
-            out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
-        )
+    out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=2)
+    assert out_ds.RasterXSize == 5
+    assert out_ds.RasterYSize == 5
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(1).ReadRaster()
 
-        out_ds = gdal.Translate("", src_ds, format="MEM", widthPct=40, heightPct=40)
-        assert out_ds.RasterXSize == 8
-        assert out_ds.RasterYSize == 8
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            0, 0, 10, 10, 8, 8
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel="AUTO", widthPct=50, heightPct=50
+    )
+    assert out_ds.RasterXSize == 10
+    assert out_ds.RasterYSize == 10
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster()
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel=0, widthPct=25, heightPct=25
-        )
-        assert out_ds.RasterXSize == 5
-        assert out_ds.RasterYSize == 5
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            0, 0, 10, 10, 5, 5
-        )
+    out_ds = gdal.Translate("", src_ds, format="MEM", widthPct=40, heightPct=40)
+    assert out_ds.RasterXSize == 8
+    assert out_ds.RasterYSize == 8
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        0, 0, 10, 10, 8, 8
+    )
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel=0, xRes=240, yRes=240
-        )
-        assert out_ds.RasterXSize == 5
-        assert out_ds.RasterYSize == 5
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            0, 0, 10, 10, 5, 5
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel=0, widthPct=25, heightPct=25
+    )
+    assert out_ds.RasterXSize == 5
+    assert out_ds.RasterYSize == 5
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        0, 0, 10, 10, 5, 5
+    )
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel=0, srcWin=[2, 2, 16, 16]
-        )
-        assert out_ds.RasterXSize == 8
-        assert out_ds.RasterYSize == 8
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            1, 1, 8, 8
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel=0, xRes=240, yRes=240
+    )
+    assert out_ds.RasterXSize == 5
+    assert out_ds.RasterYSize == 5
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        0, 0, 10, 10, 5, 5
+    )
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=60, heightPct=60
-        )
-        assert out_ds.RasterXSize == 12
-        assert out_ds.RasterYSize == 12
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).ReadRaster(
-            0, 0, 20, 20, 12, 12
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel=0, srcWin=[2, 2, 16, 16]
+    )
+    assert out_ds.RasterXSize == 8
+    assert out_ds.RasterYSize == 8
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        1, 1, 8, 8
+    )
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=40, heightPct=40
-        )
-        assert out_ds.RasterXSize == 8
-        assert out_ds.RasterYSize == 8
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            0, 0, 10, 10, 8, 8
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=60, heightPct=60
+    )
+    assert out_ds.RasterXSize == 12
+    assert out_ds.RasterYSize == 12
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).ReadRaster(
+        0, 0, 20, 20, 12, 12
+    )
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=25, heightPct=25
-        )
-        assert out_ds.RasterXSize == 5
-        assert out_ds.RasterYSize == 5
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            0, 0, 10, 10, 5, 5
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=40, heightPct=40
+    )
+    assert out_ds.RasterXSize == 8
+    assert out_ds.RasterYSize == 8
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        0, 0, 10, 10, 8, 8
+    )
 
-        out_ds = gdal.Translate(
-            "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=10, heightPct=10
-        )
-        assert out_ds.RasterXSize == 2
-        assert out_ds.RasterYSize == 2
-        assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
-            0, 0, 10, 10, 2, 2
-        )
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=25, heightPct=25
+    )
+    assert out_ds.RasterXSize == 5
+    assert out_ds.RasterYSize == 5
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        0, 0, 10, 10, 5, 5
+    )
 
-        # Test requesting an overview level that doesn't exist when there is overview
-        out_ds = gdal.Translate(
-            "",
-            src_ds,
-            format="MEM",
-            overviewLevel=src_ds.GetRasterBand(1).GetOverviewCount(),
-        )
-        ovr_band = src_ds.GetRasterBand(1).GetOverview(
-            src_ds.GetRasterBand(1).GetOverviewCount() - 1
-        )
-        assert out_ds.RasterXSize == ovr_band.XSize
-        assert out_ds.RasterYSize == ovr_band.YSize
+    out_ds = gdal.Translate(
+        "", src_ds, format="MEM", overviewLevel="AUTO-1", widthPct=10, heightPct=10
+    )
+    assert out_ds.RasterXSize == 2
+    assert out_ds.RasterYSize == 2
+    assert out_ds.ReadRaster() == src_ds.GetRasterBand(1).GetOverview(0).ReadRaster(
+        0, 0, 10, 10, 2, 2
+    )
 
-        # Test requesting an overview level that doesn't exist when there is no overview
-        out_ds = gdal.Translate(
-            "", "../gcore/data/byte.tif", format="MEM", overviewLevel=0
-        )
-        assert out_ds.RasterXSize == 20
-        assert out_ds.RasterYSize == 20
+    # Test requesting an overview level that doesn't exist when there is overview
+    out_ds = gdal.Translate(
+        "",
+        src_ds,
+        format="MEM",
+        overviewLevel=src_ds.GetRasterBand(1).GetOverviewCount(),
+    )
+    ovr_band = src_ds.GetRasterBand(1).GetOverview(
+        src_ds.GetRasterBand(1).GetOverviewCount() - 1
+    )
+    assert out_ds.RasterXSize == ovr_band.XSize
+    assert out_ds.RasterYSize == ovr_band.YSize
 
-    finally:
-        src_ds = None
-        gdal.Unlink(src_filename)
+    # Test requesting an overview level that doesn't exist when there is no overview
+    out_ds = gdal.Translate("", "../gcore/data/byte.tif", format="MEM", overviewLevel=0)
+    assert out_ds.RasterXSize == 20
+    assert out_ds.RasterYSize == 20
 
 
 ###############################################################################

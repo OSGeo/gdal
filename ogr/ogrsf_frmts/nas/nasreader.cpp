@@ -181,7 +181,7 @@ bool NASReader::SetupParser()
         XMLString::release(&xmlUriNS);
 
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Exception initializing Xerces based GML reader.\n");
+                 "NAS: Exception initializing Xerces based GML reader.\n");
         return false;
     }
 
@@ -351,8 +351,8 @@ void NASReader::PushFeature(const char *pszElement, const Attributes &attrs)
     /*      Check for gml:id, and if found push it as an attribute named    */
     /*      gml_id.                                                         */
     /* -------------------------------------------------------------------- */
-    const XMLCh achFID[] = {'g', 'm', 'l', ':', 'i', 'd', '\0'};
-    int nFIDIndex = attrs.getIndex(achFID);
+    const XMLCh achGmlId[] = {'g', 'm', 'l', ':', 'i', 'd', 0};
+    int nFIDIndex = attrs.getIndex(achGmlId);
     if (nFIDIndex != -1)
     {
         char *pszFID = CPLStrdup(transcode(attrs.getValue(nFIDIndex)));
@@ -386,8 +386,14 @@ bool NASReader::IsFeatureElement(const char *pszElement)
 
     // If the class list isn't locked, any element that is a featureMember
     // will do.
+    if (EQUAL(pszElement, "Filter"))
+        return false;
+
     if (!IsClassListLocked())
         return true;
+
+    if (EQUAL(pszElement, "Delete"))
+        return false;
 
     // otherwise, find a class with the desired element name.
     for (int i = 0; i < GetClassCount(); i++)
@@ -403,7 +409,8 @@ bool NASReader::IsFeatureElement(const char *pszElement)
 /*                         IsAttributeElement()                         */
 /************************************************************************/
 
-bool NASReader::IsAttributeElement(const char *pszElement)
+bool NASReader::IsAttributeElement(const char *pszElement,
+                                   const Attributes &attrs)
 
 {
     if (m_poState->m_poFeature == nullptr)
@@ -429,8 +436,32 @@ bool NASReader::IsAttributeElement(const char *pszElement)
         osElemPath += pszElement;
     }
 
-    return poClass->GetPropertyIndexBySrcElement(
-               osElemPath.c_str(), static_cast<int>(osElemPath.size())) >= 0;
+    if (poClass->GetPropertyIndexBySrcElement(
+            osElemPath.c_str(), static_cast<int>(osElemPath.size())) >= 0)
+        return true;
+
+    for (unsigned int idx = 0; idx < attrs.getLength(); ++idx)
+    {
+        CPLString osAttrName = transcode(attrs.getQName(idx));
+        CPLString osAttrPath;
+
+        const char *pszName = strchr(osAttrName.c_str(), ':');
+        if (pszName)
+        {
+            osAttrPath = osElemPath + "@" + (pszName + 1);
+            if (poClass->GetPropertyIndexBySrcElement(
+                    osAttrPath.c_str(), static_cast<int>(osAttrPath.size())) >=
+                0)
+                return true;
+        }
+
+        osAttrPath = osElemPath + "@" + osAttrName;
+        if (poClass->GetPropertyIndexBySrcElement(
+                osAttrPath.c_str(), static_cast<int>(osAttrPath.size())) >= 0)
+            return true;
+    }
+
+    return false;
 }
 
 /************************************************************************/
@@ -574,7 +605,7 @@ void NASReader::SetFeaturePropertyDirectly(const char *pszElement,
     {
         if (poClass->IsSchemaLocked())
         {
-            CPLDebug("NAS", "Encountered property missing from class schema.");
+            // CPLDebug("NAS", "Encountered property %s missing from class %s schema [%s].", pszElement, poClass->GetName(), pszValue);
             CPLFree(pszValue);
             return;
         }
@@ -616,7 +647,7 @@ void NASReader::SetFeaturePropertyDirectly(const char *pszElement,
             const GMLProperty *poIdProp = poFeature->GetProperty(iId);
 
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Overwriting existing property %s.%s of value '%s' "
+                     "NAS: Overwriting existing property %s.%s of value '%s' "
                      "with '%s' (gml_id: %s; type:%d).",
                      poClass->GetName(), pszElement,
                      poProp->papszSubProperties[0], pszValue,
@@ -673,7 +704,7 @@ bool NASReader::LoadClasses(const char *pszFile)
 
     if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open file %s.",
+        CPLError(CE_Failure, CPLE_OpenFailed, "NAS: Failed to open file %s.",
                  pszFile);
         return false;
     }
@@ -686,7 +717,7 @@ bool NASReader::LoadClasses(const char *pszFile)
     if (pszWholeText == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to allocate %d byte buffer for %s,\n"
+                 "NAS: Failed to allocate %d byte buffer for %s,\n"
                  "is this really a GMLFeatureClassList file?",
                  nLength, pszFile);
         VSIFCloseL(fp);
@@ -697,7 +728,8 @@ bool NASReader::LoadClasses(const char *pszFile)
     {
         VSIFree(pszWholeText);
         VSIFCloseL(fp);
-        CPLError(CE_Failure, CPLE_AppDefined, "Read failed on %s.", pszFile);
+        CPLError(CE_Failure, CPLE_AppDefined, "NAS: Read failed on %s.",
+                 pszFile);
         return false;
     }
     pszWholeText[nLength] = '\0';
@@ -708,7 +740,7 @@ bool NASReader::LoadClasses(const char *pszFile)
     {
         VSIFree(pszWholeText);
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "File %s does not contain a GMLFeatureClassList tree.",
+                 "NAS: File %s does not contain a GMLFeatureClassList tree.",
                  pszFile);
         return false;
     }
@@ -727,7 +759,8 @@ bool NASReader::LoadClasses(const char *pszFile)
         !EQUAL(psRoot->pszValue, "GMLFeatureClassList"))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "File %s is not a GMLFeatureClassList document.", pszFile);
+                 "NAS: File %s is not a GMLFeatureClassList document.",
+                 pszFile);
         return false;
     }
 
@@ -944,11 +977,11 @@ bool NASReader::PrescanForSchema(bool bGetExtents, bool /*bOnlyDetectSRS*/)
 
     m_nClassCount = j;
 
-    CPLDebug("NAS", "%d remaining classes after prescan.\n", m_nClassCount);
+    CPLDebug("NAS", "%d remaining classes after prescan.", m_nClassCount);
 
     for (int i = 0; i < m_nClassCount; i++)
     {
-        CPLDebug("NAS", "%s: " CPL_FRMT_GIB " features.\n",
+        CPLDebug("NAS", "%s: " CPL_FRMT_GIB " features.",
                  m_papoClass[i]->GetName(), m_papoClass[i]->GetFeatureCount());
     }
 
@@ -967,76 +1000,97 @@ void NASReader::ResetReading()
 }
 
 /************************************************************************/
-/*                            CheckForFID()                             */
-/*                                                                      */
-/*      Merge the fid attribute into the current field text.            */
+/*                       GetAttributeElementIndex()                     */
 /************************************************************************/
 
-void NASReader::CheckForFID(const Attributes &attrs, char **ppszCurField)
+int NASReader::GetAttributeElementIndex(const char *pszElement, int nLen,
+                                        const char *pszAttrKey)
 
 {
-    const XMLCh Name[] = {'f', 'i', 'd', '\0'};
-    int nIndex = attrs.getIndex(Name);
+    GMLFeatureClass *poClass = m_poState->m_poFeature->GetClass();
 
-    if (nIndex != -1)
+    // Otherwise build the path to this element into a single string
+    // and compare against known attributes.
+    if (m_poState->m_nPathLength == 0)
     {
-        CPLString osCurField = *ppszCurField;
-
-        osCurField += transcode(attrs.getValue(nIndex));
-
-        CPLFree(*ppszCurField);
-        *ppszCurField = CPLStrdup(osCurField);
+        if (pszAttrKey == nullptr)
+            return poClass->GetPropertyIndexBySrcElement(pszElement, nLen);
+        else
+        {
+            CPLString osElemPath;
+            int nFullLen = nLen + 1 + static_cast<int>(strlen(pszAttrKey));
+            osElemPath.reserve(nFullLen);
+            osElemPath.assign(pszElement, nLen);
+            osElemPath.append(1, '@');
+            osElemPath.append(pszAttrKey);
+            return poClass->GetPropertyIndexBySrcElement(osElemPath.c_str(),
+                                                         nFullLen);
+        }
     }
+    else
+    {
+        int nFullLen = nLen + static_cast<int>(m_poState->osPath.size()) + 1;
+        if (pszAttrKey != nullptr)
+            nFullLen += 1 + static_cast<int>(strlen(pszAttrKey));
+
+        CPLString osElemPath;
+        osElemPath.reserve(nFullLen);
+        osElemPath.assign(m_poState->osPath);
+        osElemPath.append(1, '|');
+        osElemPath.append(pszElement, nLen);
+        if (pszAttrKey != nullptr)
+        {
+            osElemPath.append(1, '@');
+            osElemPath.append(pszAttrKey);
+        }
+        return poClass->GetPropertyIndexBySrcElement(osElemPath.c_str(),
+                                                     nFullLen);
+    }
+
+    return -1;
 }
 
 /************************************************************************/
-/*                            CheckForRID()                             */
-/*                                                                      */
-/*      Merge the rid attribute into the current field text.            */
+/*                         DealWithAttributes()                         */
 /************************************************************************/
 
-void NASReader::CheckForRID(const Attributes &attrs, char **ppszCurField)
-
-{
-    const XMLCh Name[] = {'r', 'i', 'd', '\0'};
-    int nIndex = attrs.getIndex(Name);
-
-    if (nIndex != -1)
-    {
-        CPLString osCurField = *ppszCurField;
-
-        osCurField += transcode(attrs.getValue(nIndex));
-
-        CPLFree(*ppszCurField);
-        *ppszCurField = CPLStrdup(osCurField);
-    }
-}
-
-/************************************************************************/
-/*                         CheckForRelations()                          */
-/************************************************************************/
-
-void NASReader::CheckForRelations(const char *pszElement,
-                                  const Attributes &attrs, char **ppszCurField)
+void NASReader::DealWithAttributes(const char *pszName, int nLenName,
+                                   const Attributes &attrs)
 
 {
     GMLFeature *poFeature = GetState()->m_poFeature;
-
     CPLAssert(poFeature != nullptr);
 
-    const XMLCh Name[] = {'x', 'l', 'i', 'n', 'k', ':',
-                          'h', 'r', 'e', 'f', '\0'};
-    const int nIndex = attrs.getIndex(Name);
-
-    if (nIndex != -1)
+    for (unsigned int idx = 0; idx < attrs.getLength(); ++idx)
     {
-        CPLString osVal(transcode(attrs.getValue(nIndex)));
+        CPLString osAttrKey = transcode(attrs.getQName(idx));
+        CPLString osAttrVal = transcode(attrs.getValue(idx));
 
-        if (STARTS_WITH_CI(osVal, "urn:adv:oid:"))
+        int nAttrIndex = 0;
+        const char *pszAttrKeyNoNS = strchr(osAttrKey, ':');
+        if (pszAttrKeyNoNS)
+            pszAttrKeyNoNS++;
+
+        if ((pszAttrKeyNoNS &&
+             (nAttrIndex = GetAttributeElementIndex(pszName, nLenName,
+                                                    pszAttrKeyNoNS)) != -1) ||
+            ((nAttrIndex = GetAttributeElementIndex(pszName, nLenName,
+                                                    osAttrKey)) != -1))
         {
-            poFeature->AddOBProperty(pszElement, osVal);
-            CPLFree(*ppszCurField);
-            *ppszCurField = CPLStrdup(osVal.c_str() + 12);
+            const char *pszAttrVal = osAttrVal;
+            if (osAttrKey == "xlink:href" ||
+                (pszAttrKeyNoNS && EQUAL(pszAttrKeyNoNS, "href")))
+            {
+                if (STARTS_WITH_CI(pszAttrVal, "urn:adv:oid:"))
+                    pszAttrVal += 12;
+                else if (STARTS_WITH_CI(
+                             pszAttrVal,
+                             "https://registry.gdi-de.org/codelist/"))
+                    pszAttrVal = strrchr(pszAttrVal, '/') + 1;
+            }
+
+            poFeature->SetPropertyDirectly(nAttrIndex, CPLStrdup(pszAttrVal));
+            pszAttrVal = nullptr;
         }
     }
 }

@@ -36,12 +36,13 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.require_driver("OGDI")
+
 ###############################################################################
 
 
-def test_ogr_ogdi_1():
-
-    ogrtest.ogdi_ds = None
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
 
     # Skip tests when -fsanitize is used because of memleaks in libogdi
     if gdaltest.is_travis_branch("sanitize"):
@@ -49,34 +50,35 @@ def test_ogr_ogdi_1():
         pytest.skip("Skipping because of memory leaks in OGDI")
 
     ogrtest.ogdi_drv = ogr.GetDriverByName("OGDI")
-    if ogrtest.ogdi_drv is None:
-        pytest.skip()
+
+
+@pytest.fixture()
+def ogdi_ds():
 
     gdaltest.download_or_skip(
         "http://freefr.dl.sourceforge.net/project/ogdi/OGDI_Test_Suite/3.1/ogdits-3.1.0.zip",
         "ogdits-3.1.0.zip",
     )
 
-    try:
-        os.stat("tmp/cache/ogdits-3.1")
-    except OSError:
-        try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/ogdits-3.1.0.zip")
-            try:
-                os.stat("tmp/cache/ogdits-3.1")
-            except OSError:
-                pytest.skip()
-        except OSError:
-            pytest.skip()
+    if not os.path.exists("tmp/cache/ogdits-3.1"):
+        gdaltest.unzip("tmp/cache", "tmp/cache/ogdits-3.1.0.zip")
+
+        if not os.path.exists("tmp/cache/ogdits-3.1"):
+            pytest.skip("Could not extract test data")
 
     url_name = (
         "gltp:/vrf/" + os.getcwd() + "/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash"
     )
 
     ds = ogr.Open(url_name)
-    ogrtest.ogdi_ds = ds
     assert ds is not None, "cannot open " + url_name
-    assert ds.GetLayerCount() == 57, "did not get expected layer count"
+
+    return ds
+
+
+def test_ogr_ogdi_1(ogdi_ds):
+
+    assert ogdi_ds.GetLayerCount() == 57, "did not get expected layer count"
 
     layers = [
         ("libref@libref(*)_line", ogr.wkbLineString, 15),
@@ -86,14 +88,14 @@ def test_ogr_ogdi_1():
     ]
 
     for l in layers:
-        lyr = ds.GetLayerByName(l[0])
+        lyr = ogdi_ds.GetLayerByName(l[0])
         assert lyr.GetLayerDefn().GetGeomType() == l[1]
         assert lyr.GetFeatureCount() == l[2]
         # if l[1] != ogr.wkbNone:
         #    if lyr.GetSpatialRef().ExportToWkt().find('WGS 84') == -1:
         #        return 'fail'
 
-    lyr = ds.GetLayerByName("libref@libref(*)_line")
+    lyr = ogdi_ds.GetLayerByName("libref@libref(*)_line")
     feat = lyr.GetNextFeature()
 
     wkt = "LINESTRING (-97.570159912109375 31.242000579833984,-97.569938659667969 31.242116928100586,-97.562828063964844 31.245765686035156,-97.558868408203125 31.247797012329102,-97.555778503417969 31.249361038208008,-97.55413818359375 31.250171661376953)"
@@ -106,24 +108,17 @@ def test_ogr_ogdi_1():
 # Run test_ogrsf
 
 
-def test_ogr_ogdi_2():
-
-    if ogrtest.ogdi_ds is None:
-        pytest.skip()
+def test_ogr_ogdi_2(ogdi_ds):
 
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    url_name = (
-        "gltp:/vrf/" + os.getcwd() + "/tmp/cache/ogdits-3.1/data/vpf/vm2alv2/texash"
-    )
-
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
         + ' --config OGR_OGDI_LAUNDER_LAYER_NAMES YES -ro "'
-        + url_name
+        + ogdi_ds.GetDescription()
         + '" markersp_bnd contourl_elev polbnda_bnd extractp_ind'
     )
 
@@ -134,18 +129,15 @@ def test_ogr_ogdi_2():
 # Test GetFeature()
 
 
-def test_ogr_ogdi_3():
+def test_ogr_ogdi_3(ogdi_ds):
 
-    if ogrtest.ogdi_ds is None:
-        pytest.skip()
-
-    lyr0 = ogrtest.ogdi_ds.GetLayer(0)
+    lyr0 = ogdi_ds.GetLayer(0)
     lyr0.ResetReading()
     feat00_ref = lyr0.GetNextFeature()
     feat01_ref = lyr0.GetNextFeature()
     feat02_ref = lyr0.GetNextFeature()
 
-    lyr1 = ogrtest.ogdi_ds.GetLayer(1)
+    lyr1 = ogdi_ds.GetLayer(1)
     lyr1.ResetReading()
     feat10_ref = lyr1.GetNextFeature()
     feat11_ref = lyr1.GetNextFeature()
@@ -172,9 +164,6 @@ def test_ogr_ogdi_3():
 
 
 def test_ogr_ogdi_4():
-
-    if ogrtest.ogdi_drv is None:
-        pytest.skip()
 
     url_name = "gltp:/vrf/" + os.getcwd() + "/data/vm2alv2_texash/texash"
     ds = ogr.Open(url_name)
@@ -215,9 +204,6 @@ def test_ogr_ogdi_4():
 
 def test_ogr_ogdi_5():
 
-    if ogrtest.ogdi_drv is None:
-        pytest.skip()
-
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -233,14 +219,3 @@ def test_ogr_ogdi_5():
     )
 
     assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
-
-
-###############################################################################
-
-
-def test_ogr_ogdi_cleanup():
-
-    if ogrtest.ogdi_ds is None:
-        pytest.skip()
-
-    ogrtest.ogdi_ds = None

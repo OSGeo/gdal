@@ -1088,10 +1088,14 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return self
 
     def __exit__(self, *args):
-        self._invalidate_bands()
+        self.Close()
+%}
 
-        _gdal.delete_Dataset(self)
-        self.this = None
+%feature("pythonappend") Close %{
+    self.thisown = 0
+    self.this = None
+    self._invalidate_bands()
+    return val
 %}
 
 %feature("shadow") ExecuteSQL %{
@@ -2098,7 +2102,10 @@ def Translate(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = Open(srcDS)
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
@@ -2427,6 +2434,7 @@ def VectorTranslateOptions(options=None, format=None,
          clipDstSQL=None,
          clipDstLayer=None,
          clipDstWhere=None,
+         preserveFID=False,
          simplifyTolerance=None,
          segmentizeMaxDist=None,
          makeValid=False,
@@ -2537,7 +2545,16 @@ def VectorTranslateOptions(options=None, format=None,
         and is only an afterwards conversion.
     explodeCollections:
         produce one feature for each geometry in any kind of geometry collection in the
-        source file, applied after any -sql option.
+        source file, applied after any -sql option. This option is not compatible with
+        preserveFID but a SQLStatement (e.g. SELECT fid AS original_fid, * FROM ...)
+        can be used to store the original FID if needed.
+    preserveFID:
+        Use the FID of the source features instead of letting the output driver automatically
+        assign a new one (for formats that require a FID). If not in append mode, this behavior
+        is the default if the output driver has a FID  layer  creation  option,  in which case
+        the name of the source FID column will be used and source feature IDs will be attempted
+        to be preserved. This behavior can be disabled by setting -unsetFid.
+        This option is not compatible with explodeCollections
     zField:
         name of field to use to set the Z component of geometries
     resolveDomains:
@@ -2633,9 +2650,13 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-gt', str(transactionSize)]
 
         if clipSrc is not None:
+            import os
+
             new_options += ['-clipsrc']
             if isinstance(clipSrc, str):
                 new_options += [clipSrc]
+            elif isinstance(clipSrc, os.PathLike):
+                new_options += [str(clipSrc)]
             else:
                 try:
                     new_options += [
@@ -2654,9 +2675,13 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-clipsrcwhere', str(clipSrcWhere)]
 
         if clipDst is not None:
+            import os
+
             new_options += ['-clipdst']
             if isinstance(clipDst, str):
                 new_options += [clipDst]
+            elif isinstance(clipDst, os.PathLike):
+                new_options += [str(clipDst)]
             else:
                 try:
                     new_options += [
@@ -2688,6 +2713,8 @@ def VectorTranslateOptions(options=None, format=None,
                 new_options += [",".join(mapFieldType)]
         if explodeCollections:
             new_options += ['-explodecollections']
+        if preserveFID:
+            new_options += ['-preserve_fid']
         if spatFilter is not None:
             new_options += [
                 '-spat',
@@ -2898,8 +2925,14 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
         (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
     else:
         (opts, colorFilename, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = Open(srcDS)
+
+    if isinstance(colorFilename, os.PathLike):
+        colorFilename = str(colorFilename)
 
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
@@ -3158,7 +3191,10 @@ def Grid(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
-    if isinstance(srcDS, str):
+
+    import os
+
+    if isinstance(srcDS, (str, os.PathLike)):
         srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)

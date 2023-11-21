@@ -41,6 +41,7 @@
 
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
+#include <cctype>
 
 extern const char *const pszGDALSignature;
 
@@ -1325,6 +1326,83 @@ static void HDF4UnloadDriver(GDALDriver * /* poDriver */)
 }
 
 /************************************************************************/
+/*                    HDF4DriverGetSubdatasetInfo()                     */
+/************************************************************************/
+
+struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit HDF4DriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF4_SDS:") &&
+            !STARTS_WITH_CI(m_fileName.c_str(), "HDF4_EOS:"))
+        {
+            return;
+        }
+
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
+
+        if (iPartsCount >= 3)
+        {
+
+            // prefix + mode
+            m_driverPrefixComponent = aosParts[0];
+            m_driverPrefixComponent.append(":");
+            m_driverPrefixComponent.append(aosParts[1]);
+
+            int subdatasetIndex{3};
+            const bool hasDriveLetter{
+                (strlen(aosParts[2]) == 2 && std::isalpha(aosParts[2][1])) ||
+                (strlen(aosParts[2]) == 1 && std::isalpha(aosParts[2][0]))};
+
+            if (iPartsCount >= 4)
+            {
+                m_pathComponent = aosParts[2];
+                if (hasDriveLetter)
+                {
+                    m_pathComponent.append(":");
+                    m_pathComponent.append(aosParts[3]);
+                    subdatasetIndex++;
+                }
+            }
+            m_subdatasetComponent = aosParts[subdatasetIndex];
+
+            // Append any remaining part
+            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
+            {
+                m_subdatasetComponent.append(":");
+                m_subdatasetComponent.append(aosParts[i]);
+            }
+        }
+    }
+};
+
+static GDALSubdatasetInfo *HDF4DriverGetSubdatasetInfo(const char *pszFileName)
+{
+    if (STARTS_WITH_CI(pszFileName, "HDF4_SDS:") ||
+        STARTS_WITH_CI(pszFileName, "HDF4_EOS:"))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            std::make_unique<HDF4DriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                        GDALRegister_HDF4()                           */
 /************************************************************************/
 
@@ -1363,6 +1441,7 @@ void GDALRegister_HDF4()
     poDriver->pfnOpen = HDF4Dataset::Open;
     poDriver->pfnIdentify = HDF4Dataset::Identify;
     poDriver->pfnUnloadDriver = HDF4UnloadDriver;
+    poDriver->pfnGetSubdatasetInfoFunc = HDF4DriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 

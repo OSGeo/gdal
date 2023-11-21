@@ -63,7 +63,7 @@ OGRFeatureDefn::OGRFeatureDefn(const char *pszName)
 {
     pszFeatureClassName = CPLStrdup(pszName);
     apoGeomFieldDefn.emplace_back(
-        cpl::make_unique<OGRGeomFieldDefn>("", wkbUnknown));
+        std::make_unique<OGRGeomFieldDefn>("", wkbUnknown));
 }
 
 /************************************************************************/
@@ -412,7 +412,7 @@ void OGRFeatureDefn::ReserveSpaceForFields(int nFieldCountIn)
 void OGRFeatureDefn::AddFieldDefn(const OGRFieldDefn *poNewDefn)
 
 {
-    apoFieldDefn.emplace_back(cpl::make_unique<OGRFieldDefn>(poNewDefn));
+    apoFieldDefn.emplace_back(std::make_unique<OGRFieldDefn>(poNewDefn));
 }
 
 /************************************************************************/
@@ -737,7 +737,7 @@ OGRGeomFieldDefnH OGR_FD_GetGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField)
 void OGRFeatureDefn::AddGeomFieldDefn(const OGRGeomFieldDefn *poNewDefn)
 {
     apoGeomFieldDefn.emplace_back(
-        cpl::make_unique<OGRGeomFieldDefn>(poNewDefn));
+        std::make_unique<OGRGeomFieldDefn>(poNewDefn));
 }
 
 /**

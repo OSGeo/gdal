@@ -164,12 +164,12 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
     int TestCapability(const char *) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poFieldIn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
 
     bool ReadTableDef(const CPLXMLNode *psTable);
 
-    bool InitializeNewLayer(OGRSpatialReference *poSRS, bool bForceGeographic,
-                            OGRwkbGeometryType eGType,
+    bool InitializeNewLayer(const OGRSpatialReference *poSRS,
+                            bool bForceGeographic, OGRwkbGeometryType eGType,
                             const char *const *papszOptions);
 
     virtual PDS4FixedWidthTable *NewLayer(PDS4Dataset *poDS,
@@ -272,12 +272,12 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poFieldIn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
 
     bool ReadTableDef(const CPLXMLNode *psTable);
 
-    bool InitializeNewLayer(OGRSpatialReference *poSRS, bool bForceGeographic,
-                            OGRwkbGeometryType eGType,
+    bool InitializeNewLayer(const OGRSpatialReference *poSRS,
+                            bool bForceGeographic, OGRwkbGeometryType eGType,
                             const char *const *papszOptions);
 
     void RefreshFileAreaObservational(CPLXMLNode *psFAO) override;
@@ -409,7 +409,7 @@ class PDS4Dataset final : public RawDataset
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef,
+                           const OGRSpatialReference *poSpatialRef,
                            OGRwkbGeometryType eGType,
                            char **papszOptions) override;
     int TestCapability(const char *pszCap) override;

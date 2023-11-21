@@ -260,7 +260,7 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<NSIDCbinDataset>();
+    auto poDS = std::make_unique<NSIDCbinDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     std::swap(poDS->fp, poOpenInfo->fpL);
@@ -329,7 +329,7 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     int nBytesPerSample = 1;
 
-    auto poBand = cpl::make_unique<NSIDCbinRasterBand>(
+    auto poBand = std::make_unique<NSIDCbinRasterBand>(
         poDS.get(), 1, poDS->fp, 300, nBytesPerSample, poDS->nRasterXSize,
         GDT_Byte);
     if (!poBand->IsValid())

@@ -169,9 +169,9 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
     virtual OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetNextFeature() override;
@@ -264,7 +264,7 @@ class OGRPGDumpDataSource final : public GDALDataset
     virtual OGRLayer *GetLayer(int) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
                                    char ** = nullptr) override;
 

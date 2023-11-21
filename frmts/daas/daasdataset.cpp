@@ -1323,7 +1323,7 @@ bool GDALDAASDataset::Open(GDALOpenInfo *poOpenInfo)
             break;
         }
         m_apoOverviewDS.push_back(
-            cpl::make_unique<GDALDAASDataset>(this, iOvr));
+            std::make_unique<GDALDAASDataset>(this, iOvr));
     }
 
     return true;
@@ -1334,7 +1334,7 @@ GDALDataset *GDALDAASDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
-    auto poDS = cpl::make_unique<GDALDAASDataset>();
+    auto poDS = std::make_unique<GDALDAASDataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();

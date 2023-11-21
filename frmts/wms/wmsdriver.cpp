@@ -1133,6 +1133,65 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d)
     WMSRegisterMiniDriverFactory(new WMSMiniDriverFactory_##name());
 
 /************************************************************************/
+/*                    OGRWMSDriverGetSubdatasetInfo()                   */
+/************************************************************************/
+
+struct WMSDriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit WMSDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "WMS:"))
+        {
+            return;
+        }
+
+        const CPLString osLayers = CPLURLGetValue(m_fileName.c_str(), "LAYERS");
+
+        if (!osLayers.empty())
+        {
+            m_subdatasetComponent = "LAYERS=" + osLayers;
+            m_driverPrefixComponent = "WMS";
+
+            m_pathComponent = m_fileName;
+            m_pathComponent.erase(m_pathComponent.find(m_subdatasetComponent),
+                                  m_subdatasetComponent.length());
+            m_pathComponent.erase(0, 4);
+            const std::size_t nDoubleAndPos = m_pathComponent.find("&&");
+            if (nDoubleAndPos != std::string::npos)
+            {
+                m_pathComponent.erase(nDoubleAndPos, 1);
+            }
+            // Reconstruct URL with LAYERS at the end or ModifyPathComponent will fail
+            m_fileName = m_driverPrefixComponent + ":" + m_pathComponent + "&" +
+                         m_subdatasetComponent;
+        }
+    }
+};
+
+static GDALSubdatasetInfo *WMSDriverGetSubdatasetInfo(const char *pszFileName)
+{
+    if (STARTS_WITH(pszFileName, "WMS:"))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            std::make_unique<WMSDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                          GDALRegister_WMS()                          */
 /************************************************************************/
 
@@ -1174,6 +1233,7 @@ void GDALRegister_WMS()
     poDriver->pfnIdentify = GDALWMSDataset::Identify;
     poDriver->pfnUnloadDriver = WMSDeregister;
     poDriver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
+    poDriver->pfnGetSubdatasetInfoFunc = WMSDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

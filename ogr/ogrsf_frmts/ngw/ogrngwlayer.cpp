@@ -1153,7 +1153,8 @@ void OGRNGWLayer::FetchPermissions()
 /*
  * CreateField()
  */
-OGRErr OGRNGWLayer::CreateField(OGRFieldDefn *poField, CPL_UNUSED int bApproxOK)
+OGRErr OGRNGWLayer::CreateField(const OGRFieldDefn *poField,
+                                CPL_UNUSED int bApproxOK)
 {
     CPLAssert(nullptr != poField);
 

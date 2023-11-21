@@ -82,7 +82,7 @@ bool OGRFeatherWriterLayer::IsSupportedGeometryType(
 
 bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
                                        CSLConstList papszOptions,
-                                       OGRSpatialReference *poSpatialRef,
+                                       const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
     const char *pszDefaultFormat =
@@ -459,4 +459,30 @@ bool OGRFeatherWriterLayer::FlushGroup()
 
     m_apoBuilders.clear();
     return ret;
+}
+
+/************************************************************************/
+/*                          WriteArrowBatch()                           */
+/************************************************************************/
+
+inline bool
+OGRFeatherWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
+                                       struct ArrowArray *array,
+                                       CSLConstList papszOptions)
+{
+    return WriteArrowBatchInternal(
+        schema, array, papszOptions,
+        [this](const std::shared_ptr<arrow::RecordBatch> &poBatch)
+        {
+            auto status = m_poFileWriter->WriteRecordBatch(*poBatch);
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "WriteRecordBatch() failed: %s",
+                         status.message().c_str());
+                return false;
+            }
+
+            return true;
+        });
 }

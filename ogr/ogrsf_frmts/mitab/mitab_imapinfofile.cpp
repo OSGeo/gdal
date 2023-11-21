@@ -434,8 +434,9 @@ OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
 /*      Create a native field based on a generic OGR definition.        */
 /************************************************************************/
 
-int IMapInfoFile::GetTABType(OGRFieldDefn *poField, TABFieldType *peTABType,
-                             int *pnWidth, int *pnPrecision)
+int IMapInfoFile::GetTABType(const OGRFieldDefn *poField,
+                             TABFieldType *peTABType, int *pnWidth,
+                             int *pnPrecision)
 {
     TABFieldType eTABType;
     int nWidth = poField->GetWidth();
@@ -530,7 +531,7 @@ int IMapInfoFile::GetTABType(OGRFieldDefn *poField, TABFieldType *peTABType,
 /*      Create a native field based on a generic OGR definition.        */
 /************************************************************************/
 
-OGRErr IMapInfoFile::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr IMapInfoFile::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
     TABFieldType eTABType;

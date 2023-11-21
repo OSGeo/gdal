@@ -80,6 +80,7 @@ typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
 typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
+typedef void GDALSubdatasetInfoShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 typedef void GDALRelationshipShadow;
@@ -374,6 +375,7 @@ $1;
 %rename (ParseXMLString) CPLParseXMLString;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 %rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
+%rename (GetFilenameFromSubdatasetName) GDALGetFilenameFromSubdatasetName;
 
 //************************************************************************
 //
@@ -602,6 +604,13 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //
 //************************************************************************
 %include "RasterAttributeTable.i"
+
+//************************************************************************
+//
+// Define the SubdatasetInfo object.
+//
+//************************************************************************
+%include "SubdatasetInfo.i"
 
 //************************************************************************
 //
@@ -1072,6 +1081,7 @@ static void CPL_STDCALL StackingErrorHandler( CPLErr eErr, CPLErrorNum no,
 static void PushStackingErrorHandler(std::vector<ErrorStruct>* paoErrors)
 {
     CPLPushErrorHandlerEx(StackingErrorHandler, paoErrors);
+    CPLSetCurrentErrorHandlerCatchDebug(false);
 }
 
 static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bSuccess)
@@ -1088,7 +1098,7 @@ static void PopStackingErrorHandler(std::vector<ErrorStruct>* paoErrors, bool bS
         CPLErr eErrClass = (*paoErrors)[iError].type;
         if( bSuccess && eErrClass == CE_Failure )
         {
-            pfnPreviousHandler( eErrClass,
+            CPLCallPreviousHandler( eErrClass,
                                 (*paoErrors)[iError].no,
                                 (*paoErrors)[iError].msg );
         }
@@ -2083,3 +2093,4 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 
 
 %clear (const char* dest);
+

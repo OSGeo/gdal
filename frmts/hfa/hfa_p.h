@@ -214,7 +214,8 @@ class HFABand
     CPLErr SetNoDataValue(double dfValue);
 
     CPLErr GetPCT(int *, double **, double **, double **, double **, double **);
-    CPLErr SetPCT(int, double *, double *, double *, double *);
+    CPLErr SetPCT(int, const double *, const double *, const double *,
+                  const double *);
 
     int CreateOverview(int nOverviewLevel, const char *pszResampling);
     CPLErr CleanOverviews();

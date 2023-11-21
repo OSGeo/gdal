@@ -113,7 +113,7 @@ class OGRODSLayer final : public OGRMemLayer
         return OGRMemLayer::ICreateFeature(poFeature);
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override
     {
         SetUpdated();
@@ -248,7 +248,7 @@ class OGRODSDataSource final : public GDALDataset
     virtual int TestCapability(const char *) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   OGRSpatialReference *poSRS,
+                                   const OGRSpatialReference *poSRS,
                                    OGRwkbGeometryType eType,
                                    char **papszOptions) override;
     virtual OGRErr DeleteLayer(int iLayer) override;

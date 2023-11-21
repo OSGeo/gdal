@@ -188,6 +188,7 @@
                 <xs:element name="ComplexSource" type="ComplexSourceType"/>
                 <xs:element name="AveragedSource" type="SimpleSourceType"/>
                 <xs:element name="KernelFilteredSource" type="KernelFilteredSourceType"/>
+                <xs:element name="ArraySource" type="ArraySourceType"/>
 
                 <!-- for a VRTDerivedRasterBand -->
                 <xs:element name="PixelFunctionType" type="xs:string"/>
@@ -435,6 +436,31 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:complexType name="ArraySourceType">
+        <xs:sequence>
+            <xs:element ref="AbstractArray"/>
+            <xs:element name="SrcRect" type="RectType" minOccurs="0"/>
+            <xs:element name="DstRect" type="RectType" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="AbstractArray" type="AbstractArrayType" abstract="true"/>
+
+    <xs:complexType name="AbstractArrayType"/>
+
+    <xs:element name="SingleSourceArray" substitutionGroup="AbstractArray" type="SingleSourceArrayType"/>
+
+    <xs:complexType name="SingleSourceArrayType">
+        <xs:complexContent>
+            <xs:extension base="AbstractArrayType">
+                <xs:sequence>
+                    <xs:element name="SourceFilename" type="SourceFilenameType"/>
+                    <xs:element name="SourceArray" type="xs:string"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
     <xs:complexType name="SourceFilenameType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
@@ -604,6 +630,141 @@
     <xs:complexType name="DimensionRefType">
         <xs:sequence/>
         <xs:attribute name="ref" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:element name="DerivedArray" substitutionGroup="AbstractArray" type="DerivedArrayType"/>
+
+    <xs:complexType name="DerivedArrayType">
+        <xs:complexContent>
+            <xs:extension base="AbstractArrayType">
+                <xs:sequence>
+                    <xs:element ref="AbstractArray"/>
+                    <xs:element name="Step" type="StepType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="StepType">
+        <xs:sequence minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="AbstractStep"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="AbstractStep" type="AbstractStepType" abstract="true"/>
+
+    <xs:complexType name="AbstractStepType"/>
+
+    <xs:element name="View" substitutionGroup="AbstractStep" type="ViewType"/>
+
+    <xs:complexType name="ViewType">
+        <xs:complexContent>
+            <xs:extension base="AbstractStepType">
+                <xs:attribute name="expr" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="Transpose" substitutionGroup="AbstractStep" type="TransposeType"/>
+
+    <xs:complexType name="TransposeType">
+        <xs:complexContent>
+            <xs:extension base="AbstractStepType">
+                <xs:attribute name="newOrder" type="CommaSeparatedListOfIntegerType" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:simpleType name="CommaSeparatedListOfIntegerType">
+      <xs:restriction base="xs:string">
+        <xs:pattern value="(\d)+(,(\d)+).*"/>
+      </xs:restriction>
+    </xs:simpleType>
+
+    <xs:element name="Resample" substitutionGroup="AbstractStep" type="ResampleType"/>
+
+    <xs:complexType name="ResampleType">
+        <xs:complexContent>
+            <xs:extension base="AbstractStepType">
+                <xs:sequence>
+                    <xs:element name="Dimension" type="DimensionType" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element name="ResampleAlg" type="ResampleAlgType" minOccurs="0"/>
+                    <xs:element name="SRS" type="SRSType" minOccurs="0"/>
+                    <xs:element name="Option" type="OptionType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:simpleType name="ResampleAlgType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NearestNeighbour"/>
+            <xs:enumeration value="Bilinear"/>
+            <xs:enumeration value="Cubic"/>
+            <xs:enumeration value="CubicSpline"/>
+            <xs:enumeration value="Lanczos"/>
+            <xs:enumeration value="Average"/>
+            <xs:enumeration value="RMS"/>
+            <xs:enumeration value="Mode"/>
+            <xs:enumeration value="Gauss"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="OptionType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:element name="Grid" substitutionGroup="AbstractStep" type="GridType"/>
+
+    <xs:complexType name="GridType">
+        <xs:complexContent>
+            <xs:extension base="AbstractStepType">
+                <xs:sequence>
+                    <xs:element name="GridOptions" type="xs:string" minOccurs="1"/>
+                    <xs:element name="XArray" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element ref="AbstractArray"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="YArray" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element ref="AbstractArray"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="Option" type="OptionType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="GetMask" substitutionGroup="AbstractStep" type="GetMaskType"/>
+
+    <xs:complexType name="GetMaskType">
+        <xs:complexContent>
+            <xs:extension base="AbstractStepType">
+                <xs:sequence>
+                    <xs:element name="Option" type="OptionType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="GetUnscaled" substitutionGroup="AbstractStep" type="GetUnscaledType"/>
+
+    <xs:complexType name="GetUnscaledType">
+        <xs:complexContent>
+            <xs:extension base="AbstractStepType">
+                <xs:sequence/>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
 </xs:schema>

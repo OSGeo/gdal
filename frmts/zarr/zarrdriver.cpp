@@ -107,10 +107,9 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
-    auto poRG = poSharedResource->OpenRootGroup();
+    auto poRG = poSharedResource->GetRootGroup();
     if (!poRG)
         return nullptr;
-    poSharedResource->SetRootGroup(poRG);
     return new ZarrDataset(poRG);
 }
 
@@ -346,7 +345,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 
     auto poRG = poDSMultiDim->GetRootGroup();
 
-    auto poDS = cpl::make_unique<ZarrDataset>(nullptr);
+    auto poDS = std::make_unique<ZarrDataset>(nullptr);
     std::shared_ptr<GDALMDArray> poMainArray;
     std::vector<std::string> aosArrays;
     std::string osMainArray;
@@ -558,7 +557,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         // Pass papszOpenOptions for LOAD_EXTRA_DIM_METADATA_DELAY
         auto poNewDS =
             std::unique_ptr<GDALDataset>(poMainArray->AsClassicDataset(
-                iXDim, iYDim, poOpenInfo->papszOpenOptions));
+                iXDim, iYDim, poRG, poOpenInfo->papszOpenOptions));
         if (!poNewDS)
             return nullptr;
 
@@ -1043,7 +1042,6 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
     }
     if (!poRG)
         return nullptr;
-    poSharedResource->SetRootGroup(poRG);
 
     auto poDS = new ZarrDataset(poRG);
     poDS->SetDescription(pszFilename);
@@ -1115,7 +1113,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     if (!poRG)
         return nullptr;
 
-    auto poDS = cpl::make_unique<ZarrDataset>(poRG);
+    auto poDS = std::make_unique<ZarrDataset>(poRG);
     poDS->SetDescription(pszName);
     poDS->nRasterYSize = nYSize;
     poDS->nRasterXSize = nXSize;

@@ -426,6 +426,13 @@ MAIN_START(argc, argv)
             exit(1);
         }
     }
+    else if (poInputDS && poInputDS->GetGCPCount() > 0)
+    {
+        GDALDataset::FromHandle(hDS)->SetGCPs(poInputDS->GetGCPCount(),
+                                              poInputDS->GetGCPs(),
+                                              poInputDS->GetGCPSpatialRef());
+    }
+
     if (!aosMetadata.empty())
     {
         GDALSetMetadata(hDS, aosMetadata.List(), nullptr);

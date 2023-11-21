@@ -92,7 +92,7 @@ class OGRGeoJSONWriteOptions
 };
 /*! @endcond */
 
-OGREnvelope3D OGRGeoJSONGetBBox(OGRGeometry *poGeometry,
+OGREnvelope3D OGRGeoJSONGetBBox(const OGRGeometry *poGeometry,
                                 const OGRGeoJSONWriteOptions &oOptions);
 json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
                                     const OGRGeoJSONWriteOptions &oOptions);

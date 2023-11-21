@@ -65,7 +65,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     }
     OGRLayer *GetLayer(int) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSRS = nullptr,
+                           const OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;
@@ -132,7 +132,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     GIntBig GetFeatureCount(int) override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *, int) override;
+    OGRErr CreateField(const OGRFieldDefn *, int) override;
 };
 
 /************************************************************************/
@@ -174,10 +174,9 @@ OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(const char *pszNameIn,
-                                                OGRSpatialReference *poSRS,
-                                                OGRwkbGeometryType /*eGType*/,
-                                                char **papszOptions)
+OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
+    const char *pszNameIn, const OGRSpatialReference *poSRS,
+    OGRwkbGeometryType /*eGType*/, char **papszOptions)
 {
     if (!TestCapability(ODsCCreateLayer))
         return nullptr;
@@ -217,7 +216,7 @@ OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(const char *pszNameIn,
         m_bIsRSSeparated = CPLTestBool(pszRS);
     }
 
-    m_apoLayers.emplace_back(cpl::make_unique<OGRGeoJSONSeqLayer>(
+    m_apoLayers.emplace_back(std::make_unique<OGRGeoJSONSeqLayer>(
         this, pszNameIn, papszOptions, std::move(poCT)));
     return m_apoLayers.back().get();
 }
@@ -662,22 +661,29 @@ OGRErr OGRGeoJSONSeqLayer::ICreateFeature(OGRFeature *poFeature)
         m_oWriteOptions);
     CPLAssert(nullptr != poObj);
 
-    if (m_poDS->m_bIsRSSeparated)
+    const char *pszJson = json_object_to_json_string(poObj);
+
+    char chEOL = '\n';
+    OGRErr eErr = OGRERR_NONE;
+    if ((m_poDS->m_bIsRSSeparated &&
+         VSIFWriteL(&RS, 1, 1, m_poDS->m_fp) != 1) ||
+        VSIFWriteL(pszJson, strlen(pszJson), 1, m_poDS->m_fp) != 1 ||
+        VSIFWriteL(&chEOL, 1, 1, m_poDS->m_fp) != 1)
     {
-        VSIFPrintfL(m_poDS->m_fp, "%c", RS);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot write feature");
+        eErr = OGRERR_FAILURE;
     }
-    VSIFPrintfL(m_poDS->m_fp, "%s\n", json_object_to_json_string(poObj));
 
     json_object_put(poObj);
 
-    return OGRERR_NONE;
+    return eErr;
 }
 
 /************************************************************************/
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONSeqLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGeoJSONSeqLayer::CreateField(const OGRFieldDefn *poField,
                                        int /* bApproxOK */)
 {
     if (m_poDS->GetAccess() != GA_Update)

@@ -300,7 +300,7 @@ OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object *poObjIn)
                         if (nDim == 3)
                             eType = wkbSetZ(eType);
                         auto poFieldDefn =
-                            cpl::make_unique<OGRCartoGeomFieldDefn>(pszAttname,
+                            std::make_unique<OGRCartoGeomFieldDefn>(pszAttname,
                                                                     eType);
                         if (bNotNull)
                             poFieldDefn->SetNullable(FALSE);
@@ -618,8 +618,9 @@ OGRErr OGRCARTOTableLayer::FlushDeferredCopy(bool bReset)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                           CPL_UNUSED int bApproxOK)
+OGRErr
+OGRCARTOTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                    CPL_UNUSED int bApproxOK)
 {
     if (!poDS->IsReadWrite())
     {
@@ -652,7 +653,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     auto poGeomField =
-        cpl::make_unique<OGRCartoGeomFieldDefn>(pszNameIn, eType);
+        std::make_unique<OGRCartoGeomFieldDefn>(pszNameIn, eType);
     if (EQUAL(poGeomField->GetNameRef(), ""))
     {
         if (poFeatureDefn->GetGeomFieldCount() == 0)
@@ -713,7 +714,7 @@ OGRErr OGRCARTOTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRCARTOTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                        CPL_UNUSED int bApproxOK)
 {
     GetLayerDefn();
@@ -1905,7 +1906,7 @@ void OGRCARTOTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
     if (eGType != wkbNone)
     {
         auto poFieldDefn =
-            cpl::make_unique<OGRCartoGeomFieldDefn>("the_geom", eGType);
+            std::make_unique<OGRCartoGeomFieldDefn>("the_geom", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
         if (poSRSIn != nullptr)
         {

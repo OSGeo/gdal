@@ -2587,7 +2587,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Process metadata, annotations and features collections.         */
     /* -------------------------------------------------------------------- */
-    std::vector<CPLString> aosTmpFiles;
     if (!aoMetadata.empty() || !aoAnnotations.empty() || !aoGMLFiles.empty() ||
         !aoStyles.empty() || !aoExtensions.empty())
     {
@@ -2748,7 +2747,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     if (hSrcDS)
                     {
                         CPLString osTmpFile =
-                            CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml", this, i,
+                            CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
                                        CPLGetBasename(aoGMLFiles[i].osFile));
                         char **papszOptions = nullptr;
                         papszOptions =
@@ -2783,8 +2782,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                                 CPLXMLTreeCloser(CPLParseXMLFile(osTmpFile));
                             aoGMLFiles[i].osFile = osTmpFile;
                             VSIUnlink(osTmpFile);
-                            aosTmpFiles.emplace_back(
-                                CPLResetExtension(osTmpFile, "xsd"));
                         }
                         else
                         {
@@ -2858,9 +2855,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     !aoGMLFiles[i].osRemoteResource.empty())
                 {
                     osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml", this, i,
+                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
                                    CPLGetBasename(aoGMLFiles[i].osFile));
-                    aosTmpFiles.push_back(osTmpFile);
 
                     GMLJP2V2BoxDesc oDesc;
                     oDesc.osFile = osTmpFile;
@@ -3039,7 +3035,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                 if (hSrcDS)
                 {
                     CPLString osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.kml", this, i,
+                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.kml", this, i,
                                    CPLGetBasename(aoAnnotations[i].osFile));
                     char **papszOptions = nullptr;
                     if (aoAnnotations.size() > 1)
@@ -3255,10 +3251,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     for (auto &poGMLBox : apoGMLBoxes)
         delete poGMLBox;
 
-    for (const auto &osTmpFile : aosTmpFiles)
-    {
-        VSIUnlink(osTmpFile);
-    }
+    VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
 
     return poGMLData;
 }

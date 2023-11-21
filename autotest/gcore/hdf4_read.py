@@ -481,3 +481,61 @@ def test_hdf4_read_online_11():
         open_options=["LIST_SDS=YES"],
     )
     assert len(ds.GetSubDatasets()) == 16
+
+
+###############################################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "filename,path_component",
+    (
+        (
+            'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
+            "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+        ),
+        (
+            r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
+            r"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+        ),
+        (
+            "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
+            "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+        ),
+        (
+            r"HDF4_EOS:EOS_SWATH:C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
+            r"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+        ),
+        ("", ""),
+    ),
+)
+def test_gdal_subdataset_get_filename(filename, path_component):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if filename == "":
+        assert info is None
+    else:
+        assert info.GetPathComponent() == path_component
+        assert info.GetSubdatasetComponent() == "Swath1:Low_res_sst"
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
+        r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
+        "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
+        r"HDF4_EOS:EOS_SWATH:C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
+        "",
+    ),
+)
+def test_gdal_subdataset_modify_filename(filename):
+
+    info = gdal.GetSubdatasetInfo(filename)
+    if filename == "":
+        assert info is None
+    else:
+        assert (
+            info.ModifyPathComponent('"/path/to.hdf"')
+            == 'HDF4_EOS:EOS_SWATH:"/path/to.hdf":Swath1:Low_res_sst'
+        )

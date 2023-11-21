@@ -189,7 +189,8 @@ ZarrV2Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
 
             auto poSubGroup =
                 ZarrV2Group::Create(m_poSharedResource, GetFullName(), osName);
-            poSubGroup->m_poParent = m_pSelf;
+            poSubGroup->m_poParent =
+                std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
             poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
@@ -251,7 +252,8 @@ ZarrV2Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
     poSubGroup =
         ZarrV2Group::Create(m_poSharedResource, poBelongingGroup->GetFullName(),
                             osSubGroupFullname.substr(nLastSlashPos + 1));
-    poSubGroup->m_poParent = poBelongingGroup->m_pSelf;
+    poSubGroup->m_poParent = std::dynamic_pointer_cast<ZarrGroupBase>(
+        poBelongingGroup->m_pSelf.lock());
     poSubGroup->SetDirectoryName(
         CPLFormFilename(poBelongingGroup->m_osDirectoryName.c_str(),
                         poSubGroup->GetName().c_str(), nullptr));
@@ -629,7 +631,8 @@ ZarrV2Group::CreateGroup(const std::string &osName,
                                 osDirectoryName);
     if (!poGroup)
         return nullptr;
-    poGroup->m_poParent = m_pSelf;
+    poGroup->m_poParent =
+        std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;

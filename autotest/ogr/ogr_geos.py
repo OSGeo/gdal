@@ -309,6 +309,34 @@ def test_ogr_geos_centroid_point_empty():
 ###############################################################################
 
 
+@pytest.mark.require_geos(3, 12)
+def test_ogr_geos_pointzm_empty():
+
+    g1 = ogr.CreateGeometryFromWkt("POINT ZM EMPTY")
+
+    g2 = g1.Union(g1)
+
+    # GEOS 3.12 returns MULTIPOINT ZM EMPTY, but also accept POINT ZM EMPTY
+    # to be future proof...
+    assert g2.ExportToIsoWkt() in ("MULTIPOINT ZM EMPTY", "POINT ZM EMPTY")
+
+
+###############################################################################
+
+
+@pytest.mark.require_geos(3, 12)
+def test_ogr_geos_pointzm():
+
+    g1 = ogr.CreateGeometryFromWkt("POINT ZM (1 2 3 4)")
+
+    g2 = g1.Union(g1)
+
+    assert g2.ExportToIsoWkt() == "POINT ZM (1 2 3 4)"
+
+
+###############################################################################
+
+
 def test_ogr_geos_simplify_linestring():
 
     g1 = ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 0,10 0)")

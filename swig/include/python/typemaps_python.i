@@ -3220,3 +3220,31 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
     /* %typemap(freearg)  (OGRSpatialReferenceH** ppRet, int* pnEntryCount) */
     OSRFreeSRSArray(*$1);
 }
+
+
+/***************************************************
+ * Typemap for Layer.IsArrowSchemaSupported()
+ ***************************************************/
+%typemap(in,numinputs=0) (bool* pbRet, char **errorMsg) (bool ret, char* errorMsg)
+{
+  /* %typemap(in,numinputs=0) (bool* pbRet, char **errorMsg) */
+  $1 = &ret;
+  $2 = &errorMsg;
+}
+%typemap(argout) (bool* pbRet, char **errorMsg)
+{
+  /* %typemap(argout) (bool* pbRet, char **errorMsg)*/
+  Py_DECREF($result);
+  $result = PyTuple_New(2);
+  PyTuple_SetItem($result, 0, PyBool_FromLong(*$1));
+  if( *$2 )
+  {
+      PyTuple_SetItem($result, 1, PyUnicode_FromString(*$2));
+      VSIFree(*$2);
+  }
+  else
+  {
+      PyTuple_SetItem($result, 1, Py_None);
+      Py_INCREF(Py_None);
+  }
+}

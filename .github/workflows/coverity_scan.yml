@@ -31,7 +31,8 @@ jobs:
     env:
       CONTAINER_REGISTRY: ${{ vars.gdal_container_registry || 'ghcr.io' }}
       CONTAINER_REGISTRY_USER: ${{ vars.gdal_container_registry_user || github.repository_owner }}
-      CONTAINER_NAME: gdal-deps:${{ matrix.container}}-${{ github.base_ref || github.ref_name }}
+      CONTAINER_NAME: gdal-deps
+      CONTAINER_TAG: ${{ matrix.container }}-${{ github.base_ref || github.ref_name }}
       GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
 
     defaults:
@@ -48,13 +49,17 @@ jobs:
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
 
-      - name: Pull build environment
+      - name: Set variables
         shell: bash
+        # This logic needs to be kept in sync between linux_build.yml and converity_scan.yml
         run: |
-          export CONTAINER_NAME_FULL="${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}"
-          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} || true
-          docker pull ${CONTAINER_NAME_FULL} || true
-          echo "CONTAINER_NAME_FULL=${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+          CONTAINER_TAG_CLEAN=$(echo ${CONTAINER_TAG} | tr -d -c "[:alnum:].-")
+          echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}"
+          echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
+          CACHE_CONTAINER_TAG_CLEAN=$(echo ${CACHE_CONTAINER_TAG} | tr -d -c "[:alnum:].-")
+          echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}"
+          echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
+          echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN}"  >>${GITHUB_ENV}
 
       - name: Build
         run: |

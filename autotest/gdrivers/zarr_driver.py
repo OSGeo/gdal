@@ -2437,6 +2437,10 @@ def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
 )
 def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata):
 
+    import copy
+
+    fill_value = copy.copy(fill_value)
+    nodata = copy.copy(nodata)
     if fill_value and isinstance(fill_value, list):
         # float32 precision not sufficient to hold 1234567890123
         if data_type == "complex64" and fill_value[0] == 1234567890123:
@@ -2502,27 +2506,24 @@ def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata)
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_array_bad_compressor(format):
+def test_zarr_create_array_bad_compressor(tmp_vsimem, format):
 
-    try:
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            "/vsimem/test.zarr", options=["FORMAT=" + format]
-        )
-        assert ds is not None
-        rg = ds.GetRootGroup()
-        assert rg
-        with gdal.quiet_errors():
-            assert (
-                rg.CreateMDArray(
-                    "test",
-                    [],
-                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                    ["COMPRESS=invalid"],
-                )
-                is None
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+    )
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg
+    with gdal.quiet_errors():
+        assert (
+            rg.CreateMDArray(
+                "test",
+                [],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["COMPRESS=invalid"],
             )
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+            is None
+        )
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])

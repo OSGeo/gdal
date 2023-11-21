@@ -11,7 +11,7 @@ The GDALDataset supports executing commands against a datasource via the
 any sort of command could be handled this way, in practice the mechanism is
 used to provide a subset of SQL SELECT capability to applications.  This
 page discusses the generic SQL implementation implemented within OGR, and
-issue with driver specific SQL support.
+issues with driver specific SQL support.
 
 An alternate "dialect", the SQLite dialect, can be used
 instead of the OGRSQL dialect. Refer to the :ref:`sql_sqlite_dialect` page for more details.
@@ -79,10 +79,12 @@ The general syntax of a SELECT statement is:
 List Operators
 ++++++++++++++
 
-The field list is a comma separate list of the fields to be carried into
+The field list is a comma-separated list of the fields to be carried into
 the output features from the source layer.  They will appear on output features
 in the order they appear on in the field list, so the field list may be used
-to re-order the fields.
+to re-order the fields. The special character ``*`` is taken to mean "all fields".
+The syntax ``* EXCLUDE ([fields])`` can be used to select all fields except those
+listed in parentheses.
 
 A special form of the field list uses the DISTINCT keyword.  This returns a
 list of all the distinct values of the named attribute.  When the DISTINCT
@@ -132,7 +134,7 @@ really meaningful when performing joins.  It is further demonstrated in
 the JOIN section.
 
 Field definitions can also be complex expressions using arithmetic, and
-functional operators.   However, the DISTINCT keyword, and summarization
+functional operators. However, the DISTINCT keyword, and summarization
 operators like MIN, MAX, AVG and SUM may not be applied to expression fields.
 Boolean resulting expressions (comparisons, logical operators) can also be used.
 

@@ -1229,7 +1229,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    auto poDS = cpl::make_unique<RRASTERDataset>();
+    auto poDS = std::make_unique<RRASTERDataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
@@ -1370,7 +1370,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLStringList aosLayerNames(CSLTokenizeString2(osLayerName, ":", 0));
     for (int i = 1; i <= l_nBands; i++)
     {
-        auto poBand = cpl::make_unique<RRASTERRasterBand>(
+        auto poBand = std::make_unique<RRASTERRasterBand>(
             poDS.get(), i, fpImage, nBandOffset * (i - 1), nPixelOffset,
             nLineOffset, eDT, bNativeOrder);
         if (!poBand->IsValid())

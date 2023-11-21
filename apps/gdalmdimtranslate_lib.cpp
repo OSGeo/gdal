@@ -773,19 +773,21 @@ static bool TranslateArray(
 
     if (bResampled)
     {
-        tmpArray =
+        auto newTmpArray =
             tmpArray->GetResampled(std::vector<std::shared_ptr<GDALDimension>>(
                                        tmpArray->GetDimensionCount()),
                                    GRIORA_NearestNeighbour, nullptr, nullptr);
-        if (!tmpArray)
+        if (!newTmpArray)
             return false;
+        tmpArray = std::move(newTmpArray);
     }
 
     if (!anTransposedAxis.empty())
     {
-        tmpArray = tmpArray->Transpose(anTransposedAxis);
-        if (!tmpArray)
+        auto newTmpArray = tmpArray->Transpose(anTransposedAxis);
+        if (!newTmpArray)
             return false;
+        tmpArray = std::move(newTmpArray);
     }
     const auto &srcArrayDims(tmpArray->GetDimensions());
     std::map<std::shared_ptr<GDALDimension>, std::shared_ptr<GDALDimension>>
@@ -801,9 +803,10 @@ static bool TranslateArray(
                      "with subset and/or scalefactor options");
             return false;
         }
-        tmpArray = tmpArray->GetView(viewExpr, true, viewSpecs);
-        if (!tmpArray)
+        auto newTmpArray = tmpArray->GetView(viewExpr, true, viewSpecs);
+        if (!newTmpArray)
             return false;
+        tmpArray = std::move(newTmpArray);
     }
     else if (!psOptions->aosSubset.empty() ||
              !psOptions->aosScaleFactor.empty())
@@ -1173,7 +1176,7 @@ static bool TranslateArray(
     if (!bSrcArrayAccessibleThroughSrcGroup &&
         tmpArray->IsRegularlySpaced(dfStart, dfIncrement))
     {
-        auto poSource = cpl::make_unique<VRTMDArraySourceRegularlySpaced>(
+        auto poSource = std::make_unique<VRTMDArraySourceRegularlySpaced>(
             dfStart, dfIncrement);
         dstArrayVRT->AddSource(std::move(poSource));
     }

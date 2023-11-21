@@ -105,33 +105,29 @@ static void Identify(int nArgc, char **papszArgv)
     bool bForceRecurse = false;
     bool bReportFailures = false;
 
-    while (nArgc > 0 && papszArgv[0][0] == '-')
+    int i = 0;
+    for (; i < nArgc && papszArgv[i][0] == '-'; ++i)
     {
-        if (EQUAL(papszArgv[0], "-r"))
+        if (EQUAL(papszArgv[i], "-r"))
             bRecursive = true;
-        else if (EQUAL(papszArgv[0], "-fr"))
+        else if (EQUAL(papszArgv[i], "-fr"))
         {
             bForceRecurse = true;
             bRecursive = true;
         }
-        else if (EQUAL(papszArgv[0], "-u"))
+        else if (EQUAL(papszArgv[i], "-u"))
             bReportFailures = true;
         else
             Usage(true);
-
-        papszArgv++;
-        nArgc--;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Process given files.                                            */
     /* -------------------------------------------------------------------- */
-    while (nArgc > 0)
+    for (; i < nArgc; ++i)
     {
-        ProcessIdentifyTarget(papszArgv[0], nullptr, bRecursive,
+        ProcessIdentifyTarget(papszArgv[i], nullptr, bRecursive,
                               bReportFailures, bForceRecurse);
-        nArgc--;
-        papszArgv++;
     }
 }
 
@@ -193,7 +189,7 @@ MAIN_START(argc, argv)
     if (argc < 1)
         exit(-argc);
 
-    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
+    for (int i = 0; i < argc; i++)
     {
         if (EQUAL(argv[i], "--help"))
         {

@@ -1452,8 +1452,11 @@ std::shared_ptr<GDALGroup> MEMGroup::OpenGroup(const std::string &osName,
 std::shared_ptr<MEMGroup> MEMGroup::Create(const std::string &osParentName,
                                            const char *pszName)
 {
-    auto newGroup(std::make_shared<MEMGroup>(osParentName, pszName));
-    newGroup->m_pSelf = newGroup;
+    auto newGroup(
+        std::shared_ptr<MEMGroup>(new MEMGroup(osParentName, pszName)));
+    newGroup->SetSelf(newGroup);
+    if (osParentName.empty())
+        newGroup->m_poRootGroupWeak = newGroup;
     return newGroup;
 }
 
@@ -1479,7 +1482,8 @@ std::shared_ptr<GDALGroup> MEMGroup::CreateGroup(const std::string &osName,
         return nullptr;
     }
     auto newGroup = MEMGroup::Create(GetFullName(), osName.c_str());
-    newGroup->m_pParent = m_pSelf;
+    newGroup->m_pParent = std::dynamic_pointer_cast<MEMGroup>(m_pSelf.lock());
+    newGroup->m_poRootGroupWeak = m_poRootGroupWeak;
     m_oMapGroups[osName] = newGroup;
     return newGroup;
 }
@@ -1717,8 +1721,9 @@ MEMGroup::CreateAttribute(const std::string &osName,
                  "An attribute with same name already exists");
         return nullptr;
     }
-    auto newAttr(
-        MEMAttribute::Create(m_pSelf.lock(), osName, anDimensions, oDataType));
+    auto newAttr(MEMAttribute::Create(
+        std::dynamic_pointer_cast<MEMGroup>(m_pSelf.lock()), osName,
+        anDimensions, oDataType));
     if (!newAttr)
         return nullptr;
     m_oMapAttributes[osName] = newAttr;
@@ -3049,8 +3054,9 @@ MEMGroup::CreateDimension(const std::string &osName, const std::string &osType,
                  "A dimension with same name already exists");
         return nullptr;
     }
-    auto newDim(MEMDimension::Create(m_pSelf.lock(), osName, osType,
-                                     osDirection, nSize));
+    auto newDim(MEMDimension::Create(
+        std::dynamic_pointer_cast<MEMGroup>(m_pSelf.lock()), osName, osType,
+        osDirection, nSize));
     m_oMapDimensions[osName] = newDim;
     return newDim;
 }

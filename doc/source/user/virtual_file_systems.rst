@@ -223,7 +223,8 @@ To point to a file inside a 7z file, the filename must be of the form
 is the relative path to the file inside the archive.`
 
 Default extensions recognized by this virtual file system are:
-``7z``, ``lpk`` (Esri ArcGIS Layer Package), ``lpkx``, ``mpk`` (Esri ArcGIS Map Package) and ``mpkx``.
+``7z``, ``lpk`` (Esri ArcGIS Layer Package), ``lpkx``, ``mpk`` (Esri ArcGIS Map Package),
+``mpkx`` and ``ppkx`` (Esri ArcGIS Pro Project Package).
 
 An alternate syntax is available so as to enable chaining and not being
 dependent on those extensions, e.g.: :file:`/vsi7z/{/path/to/the/archive}/path/inside/the/archive`.
@@ -336,7 +337,7 @@ JPEG2000 is generally not suitable for network access, unless using a layout
 carefully designed for that purpose, and when using a JPEG200 library that is
 heavily optimized.
 
-JPEG2000 files can come in many flavours : single-tiled vs tiled, with different
+JPEG2000 files can come in many flavors : single-tiled vs tiled, with different
 progression order (this is of particular importance for single-tiled access),
 and with optional markers
 
@@ -392,7 +393,13 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - pc_url_signing=yes/no: whether to use the URL signing mechanism of Microsoft Planetary Computer (https://planetarycomputer.microsoft.com/docs/concepts/sas/). (GDAL >= 3.5.2)
 - pc_collection=name: name of the collection of the dataset for Planetary Computer URL signing. Only used when pc_url_signing=yes. (GDAL >= 3.5.2)
 
-Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :config:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading it will progressively increase the chunk size up to 2 MB to improve download performance. Starting with GDAL 2.3, the :config:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
+Partial downloads (requires the HTTP server to support random reading) are done with a 16 KB granularity by default. Starting with GDAL 2.3, the chunk size can be configured with the :config:`CPL_VSIL_CURL_CHUNK_SIZE` configuration option, with a value in bytes. If the driver detects sequential reading, it will progressively increase the chunk size up to 128 times :config:`CPL_VSIL_CURL_CHUNK_SIZE` (so 2 MB by default) to improve download performance.
+
+In addition, a global least-recently-used cache of 16 MB shared among all downloaded content is used, and content in it may be reused after a file handle has been closed and reopen, during the life-time of the process or until :cpp:func:`VSICurlClearCache` is called. Starting with GDAL 2.3, the size of this global LRU cache can be modified by setting the configuration option :config:`CPL_VSIL_CURL_CACHE_SIZE` (in bytes).
+
+When increasing the value of :config:`CPL_VSIL_CURL_CHUNK_SIZE` to optimize sequential reading, it is recommended to increase :config:`CPL_VSIL_CURL_CACHE_SIZE` as well to 128 times the value of :config:`CPL_VSIL_CURL_CHUNK_SIZE`.
+
+Starting with GDAL 2.3, the :config:`GDAL_INGESTED_BYTES_AT_OPEN` configuration option can be set to impose the number of bytes read in one GET call at file opening (can help performance to read Cloud optimized geotiff with a large header).
 
 The :config:`GDAL_HTTP_PROXY` (for both HTTP and HTTPS protocols), :config:`GDAL_HTTPS_PROXY` (for HTTPS protocol only), :config:`GDAL_HTTP_PROXYUSERPWD` and :config:`GDAL_PROXY_AUTH` configuration options can be used to define a proxy server. The syntax to use is the one of Curl ``CURLOPT_PROXY``, ``CURLOPT_PROXYUSERPWD`` and ``CURLOPT_PROXYAUTH`` options.
 
@@ -424,8 +431,6 @@ Starting with GDAL 3.7, the above configuration options can also be specified
 as path-specific options with :cpp:func:`VSISetPathSpecificOption`.
 
 The file can be cached in RAM by setting the configuration option :config:`VSI_CACHE` to ``TRUE``. The cache size defaults to 25 MB, but can be modified by setting the configuration option :config:`VSI_CACHE_SIZE` (in bytes). Content in that cache is discarded when the file handle is closed.
-
-In addition, a global least-recently-used cache of 16 MB shared among all downloaded content is enabled by default, and content in it may be reused after a file handle has been closed and reopen, during the life-time of the process or until :cpp:func:`VSICurlClearCache` is called. Starting with GDAL 2.3, the size of this global LRU cache can be modified by setting the configuration option :config:`CPL_VSIL_CURL_CACHE_SIZE` (in bytes).
 
 Starting with GDAL 2.3, the :config:`CPL_VSIL_CURL_NON_CACHED` configuration option can be set to values like :file:`/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory`, so that at file handle closing, all cached content related to the mentioned file(s) is no longer cached. This can help when dealing with resources that can be modified during execution of GDAL related code. Alternatively, :cpp:func:`VSICurlClearCache` can be used.
 
@@ -830,7 +835,7 @@ Several authentication methods are possible, and are attempted in the following 
     d) The :config:`AZURE_STORAGE_SAS_TOKEN` configuration option (``AZURE_SAS`` if GDAL < 3.5) is set to specify a Shared Access Signature. This SAS is appended to URLs built by the /vsiaz/ file system handler. Its value should already be URL-encoded and should not contain any leading '?' or '&' character (e.g. a valid one may look like "st=2019-07-18T03%3A53%3A22Z&se=2035-07-19T03%3A53%3A00Z&sp=rl&sv=2018-03-28&sr=c&sig=2RIXmLbLbiagYnUd49rgx2kOXKyILrJOgafmkODhRAQ%3D"). Available since GDAL 3.2
     e) The current machine is a Azure Virtual Machine with Azure Active Directory permissions assigned to it (see https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm). Available since GDAL 3.3.
 
-    Authentication using Azure Active Directoy Workload Identity (using AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE and AZURE_AUTHORITY_HOST environment variables), typically for Azure Kubernetes, is available since GDAL 3.7.2
+    Authentication using Azure Active Directory Workload Identity (using AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE and AZURE_AUTHORITY_HOST environment variables), typically for Azure Kubernetes, is available since GDAL 3.7.2
 
 3. Starting with GDAL 3.5, the `configuration file <https://github.com/MicrosoftDocs/azure-docs-cli/blob/main/docs-ref-conceptual/azure-cli-configuration.md>` of the "az" command line utility can be used. The following keys of the ``[storage]`` section will be used in the following priority: ``connection_string``, ``account`` + ``key`` or ``account`` + ``sas_token``
 
@@ -1229,18 +1234,41 @@ The file referenced by /vsisparse/ should be an XML control file formatted somet
 
 Hopefully the values and semantics are fairly obvious.
 
-.. _target_user_virtual_file_systems_file_caching:
 
-File caching
-------------
+.. _vsicached:
 
-This is not a proper virtual file system handler, but a C function that takes a virtual file handle and returns a new handle that caches read-operations on the input file handle. The cache is RAM based and the content of the cache is discarded when the file handle is closed. The cache is a least-recently used lists of blocks of 32KB each.
+/vsicached/ (File caching)
+--------------------------
+
+The :cpp:func:`VSICreateCachedFile` function takes a virtual file handle and returns a new handle that caches read-operations on the input file handle. The cache is RAM based and the content of the cache is discarded when the file handle is closed. The cache is a least-recently used lists of blocks of 32KB each (default size).
+
+This is mostly useful for files accessible through slow local/operating-system-mounted filesystems.
+
+That is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
+
+The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
 
 The :cpp:class:`VSICachedFile` class only handles read operations at that time, and will error out on write operations.
 
-This is done with the :cpp:func:`VSICreateCachedFile` function, that is implicitly used by a number of the above mentioned file systems (namely the default one for standard file system operations, and the /vsicurl/ and other related network file systems) if the ``VSI_CACHE`` configuration option is set to ``YES``.
+Starting with GDAL 3.8, a ``/vsicached?`` virtual file system also exists to cache a particular file.
 
-The default size of caching for each file is 25 MB (25 MB for each file that is cached), and can be controlled with the ``VSI_CACHE_SIZE`` configuration option (value in bytes).
+The syntax is the following one: ``/vsicached?[option_i=val_i&]*file=<filename>``
+where each option name and value (including the value of ``file``) is URL-encoded
+(actually, only required for the ampersand character. It might be desirable to
+have forward slash character uncoded).
+It is important that the ``file`` option appears at the end, so that code that
+tries to look for side-car files, list directory content, can work properly.
+
+Currently supported options are:
+
+- ``chunk_size=<value>`` where value is the` size of the chunk size in bytes. ``KB`` or ``MB`` suffixes can be also appended (without space after the numeric value). The maximum supported value is 1 GB.
+- ``cache_size=<value>`` where value is the size of the cache size in bytes, for each file. ``KB`` or ``MB`` suffixes can be also appended.
+
+Examples:
+
+- ``/vsicached?chunk_size=1MB&file=/home/even/byte.tif``
+- ``/vsicached?file=./byte.tif``
+
 
 .. _vsicrypt:
 

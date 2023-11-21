@@ -246,7 +246,7 @@ class VSIHdfsFilesystemHandler final : public VSIFilesystemHandler
     int Unlink(const char *pszFilename) override;
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
-    char **ReadDir(const char *pszDirname) override;
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
     int Rename(const char *oldpath, const char *newpath) override;
 };
 
@@ -388,7 +388,8 @@ int VSIHdfsFilesystemHandler::Rmdir(const char *)
     return -1;
 }
 
-char **VSIHdfsFilesystemHandler::ReadDir(const char *pszDirname)
+char **VSIHdfsFilesystemHandler::ReadDirEx(const char *pszDirname,
+                                           int /* nMaxFiles */)
 {
     if (strncmp(pszDirname, VSIHdfsHandle::VSIHDFS,
                 strlen(VSIHdfsHandle::VSIHDFS)) != 0)

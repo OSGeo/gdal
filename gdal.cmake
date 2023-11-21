@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 33 for GDAL 3.7
-set(GDAL_SOVERSION 33)
+# Previous value: 34 for GDAL 3.8
+set(GDAL_SOVERSION 34)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -545,6 +545,14 @@ endif ()
 # Raster/Vector drivers (built-in and plugins)
 set(GDAL_RASTER_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/frmts")
 set(GDAL_VECTOR_FORMAT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/ogr/ogrsf_frmts")
+
+if(OGR_ENABLE_DRIVER_GPKG AND
+   NOT DEFINED OGR_ENABLE_DRIVER_SQLITE AND
+   DEFINED OGR_BUILD_OPTIONAL_DRIVERS AND
+   NOT OGR_BUILD_OPTIONAL_DRIVERS)
+   message(STATUS "Automatically enabling SQLite driver")
+   set(OGR_ENABLE_DRIVER_SQLITE ON CACHE BOOL "Set ON to build OGR SQLite driver")
+endif()
 
 # We need to forward declare a few OGR drivers because raster formats need them
 option(OGR_ENABLE_DRIVER_AVC "Set ON to build OGR AVC driver" ${OGR_BUILD_OPTIONAL_DRIVERS})

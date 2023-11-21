@@ -332,7 +332,7 @@ GDALDataset *JDEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Create a corresponding GDALDataset.
-    auto poDS = cpl::make_unique<JDEMDataset>();
+    auto poDS = std::make_unique<JDEMDataset>();
 
     // Borrow the file pointer from GDALOpenInfo*.
     std::swap(poDS->m_fp, poOpenInfo->fpL);

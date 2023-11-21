@@ -8,6 +8,16 @@ features will be written to disk.
 
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
+
+%feature("docstring")  Close "
+Closes opened dataset and releases allocated resources.
+
+This method can be used to force the dataset to close
+when one more references to the dataset are still
+reachable. If Close is never called, the dataset will
+be closed automatically during garbage collection.
+"
+
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
 hDS)
 
