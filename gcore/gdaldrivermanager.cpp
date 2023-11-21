@@ -470,7 +470,7 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     /*      If it is already registered, just return the existing           */
     /*      index.                                                          */
     /* -------------------------------------------------------------------- */
-    if (!m_bInDeferedDriverLoading &&
+    if (!m_bInDeferredDriverLoading &&
         GetDriverByName_unlocked(poDriver->GetDescription()) != nullptr)
     {
         for (int i = 0; i < nDrivers; ++i)
@@ -524,14 +524,14 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver, bool bHidden)
     if (poDriver->pfnVectorTranslateFrom != nullptr)
         poDriver->SetMetadataItem(GDAL_DCAP_VECTOR_TRANSLATE_FROM, "YES");
 
-    if (m_bInDeferedDriverLoading)
+    if (m_bInDeferredDriverLoading)
     {
         if (m_oMapRealDrivers.find(poDriver->GetDescription()) !=
             m_oMapRealDrivers.end())
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "RegisterDriver() in m_bInDeferedDriverLoading: %s already "
+                "RegisterDriver() in m_bInDeferredDriverLoading: %s already "
                 "registered!",
                 poDriver->GetDescription());
             delete poDriver;
@@ -665,7 +665,7 @@ GDALDriver *GDALDriverManager::GetDriverByName(const char *pszName)
 {
     CPLMutexHolderD(&hDMMutex);
 
-    if (m_bInDeferedDriverLoading)
+    if (m_bInDeferredDriverLoading)
     {
         return nullptr;
     }
@@ -1407,7 +1407,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
             CPLDebug("GDAL", "On-demand registering %s using %s.",
                      m_osPluginFullPath.c_str(), osFuncName.c_str());
 
-            poDriverManager->m_bInDeferedDriverLoading = true;
+            poDriverManager->m_bInDeferredDriverLoading = true;
             try
             {
                 reinterpret_cast<void (*)()>(pRegister)();
@@ -1417,7 +1417,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
                 CPLError(CE_Failure, CPLE_AppDefined, "%s threw an exception",
                          osFuncName.c_str());
             }
-            poDriverManager->m_bInDeferedDriverLoading = false;
+            poDriverManager->m_bInDeferredDriverLoading = false;
 
             oIter = poDriverManager->m_oMapRealDrivers.find(GetDescription());
             if (oIter == poDriverManager->m_oMapRealDrivers.end())

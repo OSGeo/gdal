@@ -2038,7 +2038,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     std::string m_osDriversIniPath{};
     mutable std::string m_osLastTriedDirectory{};
     std::set<std::string> m_oSetPluginFileNames{};
-    bool m_bInDeferedDriverLoading = false;
+    bool m_bInDeferredDriverLoading = false;
     std::map<std::string, std::unique_ptr<GDALDriver>> m_oMapRealDrivers{};
     std::vector<std::unique_ptr<GDALDriver>> m_aoHiddenDrivers{};
 

@@ -2248,7 +2248,7 @@ For example for netCDF::
 For other drivers, GDAL_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN /
 OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN can be declared at
 libgdal build time without requiring the dependent libraries needed to build
-the pluging later to be available.
+the plugin later to be available.
 
 Out-of-tree deferred loaded plugins
 +++++++++++++++++++++++++++++++++++

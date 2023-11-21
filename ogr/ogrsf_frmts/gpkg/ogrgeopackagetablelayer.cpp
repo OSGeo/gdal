@@ -8630,7 +8630,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
             if (nCountArgs == SQLITE_MAX_FUNCTION_ARG)
             {
                 // We cannot pass more than SQLITE_MAX_FUNCTION_ARG args
-                // to a funtion... So we have to split in several calls...
+                // to a function... So we have to split in several calls...
                 osSQL += "), OGR_GPKG_FillArrowArray_INTERNAL(";
                 osSQL += CPLSPrintf("%d", iField);
                 nCountArgs = 1;
