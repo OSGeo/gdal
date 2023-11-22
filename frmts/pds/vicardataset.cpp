@@ -29,9 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-constexpr int NULL1 = 0;
-constexpr int NULL2 = -32768;
-constexpr double NULL3 = -32768.0;
+constexpr int VICAR_NULL1 = 0;
+constexpr int VICAR_NULL2 = -32768;
+constexpr double VICAR_NULL3 = -32768.0;
 
 #include "cpl_port.h"
 
@@ -42,6 +42,7 @@ constexpr double NULL3 = -32768.0;
 #include "nasakeywordhandler.h"
 #include "vicarkeywordhandler.h"
 #include "pdsdrivercore.h"
+#include "json_utils.h"
 
 #include "gtiff.h"
 #include "geotiff.h"
@@ -1625,30 +1626,6 @@ void VICARDataset::PatchLabel()
     VSIFWriteL(&osBuffer[0], 1, nRead, fpImage);
 }
 
-/**
- * Get or create CPLJSONObject.
- * @param  oParent Parent CPLJSONObject.
- * @param  osKey  Key name.
- * @return         CPLJSONObject class instance.
- */
-static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
-                                           const std::string &osKey)
-{
-    CPLJSONObject oChild = oParent[osKey];
-    if (oChild.IsValid() && oChild.GetType() != CPLJSONObject::Type::Object)
-    {
-        oParent.Delete(osKey);
-        oChild.Deinit();
-    }
-
-    if (!oChild.IsValid())
-    {
-        oChild = CPLJSONObject();
-        oParent.Add(osKey, oChild);
-    }
-    return oChild;
-}
-
 /************************************************************************/
 /*                           BuildLabel()                               */
 /************************************************************************/
@@ -2552,15 +2529,15 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     double dfNoData = 0.0;
     if (eDataType == GDT_Byte)
     {
-        dfNoData = NULL1;
+        dfNoData = VICAR_NULL1;
     }
     else if (eDataType == GDT_Int16)
     {
-        dfNoData = NULL2;
+        dfNoData = VICAR_NULL2;
     }
     else if (eDataType == GDT_Float32)
     {
-        dfNoData = NULL3;
+        dfNoData = VICAR_NULL3;
     }
 
     /***** CHECK ENDIANNESS **************/

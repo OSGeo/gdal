@@ -49,6 +49,7 @@
 #include "vrtdataset.h"
 #include "cpl_safemaths.hpp"
 #include "pdsdrivercore.h"
+#include "json_utils.h"
 
 // For gethostname()
 #ifdef _WIN32
@@ -73,28 +74,28 @@
 //    *   Isis::Hrs Pixel was saturated during a computation
 
 // 1-byte special pixel values
-const unsigned char NULL1 = 0;
+const unsigned char ISIS3_NULL1 = 0;
 const unsigned char LOW_REPR_SAT1 = 0;
 const unsigned char LOW_INSTR_SAT1 = 0;
 const unsigned char HIGH_INSTR_SAT1 = 255;
 const unsigned char HIGH_REPR_SAT1 = 255;
 
 // 2-byte unsigned special pixel values
-const unsigned short NULLU2 = 0;
+const unsigned short ISIS3_NULLU2 = 0;
 const unsigned short LOW_REPR_SATU2 = 1;
 const unsigned short LOW_INSTR_SATU2 = 2;
 const unsigned short HIGH_INSTR_SATU2 = 65534;
 const unsigned short HIGH_REPR_SATU2 = 65535;
 
 // 2-byte signed special pixel values
-const short NULL2 = -32768;
+const short ISIS3_NULL2 = -32768;
 const short LOW_REPR_SAT2 = -32767;
 const short LOW_INSTR_SAT2 = -32766;
 const short HIGH_INSTR_SAT2 = -32765;
 const short HIGH_REPR_SAT2 = -32764;
 
 // Define 4-byte special pixel values for IEEE floating point
-const float NULL4 = -3.4028226550889045e+38f;            // 0xFF7FFFFB;
+const float ISIS3_NULL4 = -3.4028226550889045e+38f;      // 0xFF7FFFFB;
 const float LOW_REPR_SAT4 = -3.4028228579130005e+38f;    // 0xFF7FFFFC;
 const float LOW_INSTR_SAT4 = -3.4028230607370965e+38f;   // 0xFF7FFFFD;
 const float HIGH_INSTR_SAT4 = -3.4028232635611926e+38f;  // 0xFF7FFFFE;
@@ -540,30 +541,6 @@ static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
                      static_cast<float>(dfSrcNoData),
                      static_cast<float>(dfDstNoData));
     }
-}
-
-/**
- * Get or create CPLJSONObject.
- * @param  oParent Parent CPLJSONObject.
- * @param  osKey  Key name.
- * @return         CPLJSONObject class instance.
- */
-static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
-                                           const std::string &osKey)
-{
-    CPLJSONObject oChild = oParent[osKey];
-    if (oChild.IsValid() && oChild.GetType() != CPLJSONObject::Type::Object)
-    {
-        oParent.Delete(osKey);
-        oChild.Deinit();
-    }
-
-    if (!oChild.IsValid())
-    {
-        oChild = CPLJSONObject();
-        oParent.Add(osKey, oChild);
-    }
-    return oChild;
 }
 
 /************************************************************************/
@@ -1260,27 +1237,27 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     if (eSrcDT == GDT_Byte)
     {
         FillMask<GByte>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        NULL1, LOW_REPR_SAT1, LOW_INSTR_SAT1, HIGH_INSTR_SAT1,
-                        HIGH_REPR_SAT1);
+                        ISIS3_NULL1, LOW_REPR_SAT1, LOW_INSTR_SAT1,
+                        HIGH_INSTR_SAT1, HIGH_REPR_SAT1);
     }
     else if (eSrcDT == GDT_UInt16)
     {
         FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
+                          ISIS3_NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
                           HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
     }
     else if (eSrcDT == GDT_Int16)
     {
         FillMask<GInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2, HIGH_INSTR_SAT2,
-                         HIGH_REPR_SAT2);
+                         ISIS3_NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2,
+                         HIGH_INSTR_SAT2, HIGH_REPR_SAT2);
     }
     else
     {
         CPLAssert(eSrcDT == GDT_Float32);
         FillMask<float>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        NULL4, LOW_REPR_SAT4, LOW_INSTR_SAT4, HIGH_INSTR_SAT4,
-                        HIGH_REPR_SAT4);
+                        ISIS3_NULL4, LOW_REPR_SAT4, LOW_INSTR_SAT4,
+                        HIGH_INSTR_SAT4, HIGH_REPR_SAT4);
     }
 
     return CE_None;
@@ -1776,22 +1753,22 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (EQUAL(itype, "UnsignedByte"))
     {
         eDataType = GDT_Byte;
-        dfNoData = NULL1;
+        dfNoData = ISIS3_NULL1;
     }
     else if (EQUAL(itype, "UnsignedWord"))
     {
         eDataType = GDT_UInt16;
-        dfNoData = NULLU2;
+        dfNoData = ISIS3_NULLU2;
     }
     else if (EQUAL(itype, "SignedWord"))
     {
         eDataType = GDT_Int16;
-        dfNoData = NULL2;
+        dfNoData = ISIS3_NULL2;
     }
     else if (EQUAL(itype, "Real") || EQUAL(itype, ""))
     {
         eDataType = GDT_Float32;
-        dfNoData = NULL4;
+        dfNoData = ISIS3_NULL4;
     }
     else
     {
@@ -4147,12 +4124,12 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         poDS->m_osGDALHistory =
             CSLFetchNameValueDef(papszOptions, "GDAL_HISTORY", "");
     }
-    const double dfNoData = (eType == GDT_Byte)     ? NULL1
-                            : (eType == GDT_UInt16) ? NULLU2
+    const double dfNoData = (eType == GDT_Byte)     ? ISIS3_NULL1
+                            : (eType == GDT_UInt16) ? ISIS3_NULLU2
                             : (eType == GDT_Int16)
-                                ? NULL2
+                                ? ISIS3_NULL2
                                 :
-                                /*(eType == GDT_Float32) ?*/ NULL4;
+                                /*(eType == GDT_Float32) ?*/ ISIS3_NULL4;
 
     for (int i = 0; i < nBandsIn; i++)
     {
