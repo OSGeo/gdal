@@ -33,9 +33,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 /************************************************************************/
 /*                          NITFDESAccess()                             */
@@ -673,3 +676,5 @@ CPLXMLNode *NITFDESGetXml(NITFFile *psFile, int iSegment, bool bValidate,
 
     return psDesNode;
 }
+
+#undef GetMD

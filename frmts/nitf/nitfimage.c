@@ -36,9 +36,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 static int NITFReadIMRFCA(NITFImage *psImage, NITFRPC00BInfo *psRPC);
 static char *NITFTrimWhite(char *);
@@ -346,6 +349,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
 
         nOffset += 60;
     }
+#undef GetMD
 
     /* -------------------------------------------------------------------- */
     /*      Should we reorient the IGEOLO points in an attempt to handle    */

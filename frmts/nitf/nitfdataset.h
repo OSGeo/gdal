@@ -31,6 +31,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef NITF_DATASET_H_INCLUDED
+#define NITF_DATASET_H_INCLUDED
+
 #include "gdal_pam.h"
 #include "nitflib.h"
 #include "ogr_spatialref.h"
@@ -369,3 +372,5 @@ class NITFWrapperRasterBand final : public NITFProxyPamRasterBand
     /* Specific method */
     void SetColorTableFromNITFBandInfo();
 };
+
+#endif /* NITF_DATASET_H_INCLUDED */
