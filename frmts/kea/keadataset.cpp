@@ -279,7 +279,8 @@ H5::H5File *KEADataset::CreateLL(const char *pszFilename, int nXSize,
     catch (...)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file `%s' failed. Error: Unknown\n", pszFilename);
+                 "Attempt to create file `%s' failed. Error: Unknown\n",
+                 pszFilename);
         return nullptr;
     }
 }
