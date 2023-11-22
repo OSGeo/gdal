@@ -2955,17 +2955,6 @@ double OGRLineString::get_AreaOfCurveSegments() const
 }
 
 /************************************************************************/
-/*                            epsilonEqual()                            */
-/************************************************************************/
-
-constexpr double EPSILON = 1.0E-5;
-
-static inline bool epsilonEqual(double a, double b, double eps)
-{
-    return ::fabs(a - b) < eps;
-}
-
-/************************************************************************/
 /*                            isClockwise()                             */
 /************************************************************************/
 
@@ -3015,6 +3004,10 @@ int OGRLineString::isClockwise() const
     {
         next = nPointCount - 1 - 1;
     }
+
+    constexpr double EPSILON = 1.0E-5;
+    const auto epsilonEqual = [](double a, double b, double eps)
+    { return ::fabs(a - b) < eps; };
 
     if (epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
         epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON))

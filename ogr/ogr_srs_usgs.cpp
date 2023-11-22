@@ -114,7 +114,7 @@ constexpr long WGS84 = 12L;
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
 /************************************************************************/
 
-constexpr int aoEllips[] = {
+constexpr int aoEllipsUSGS[] = {
     7008,  // Clarke, 1866 (NAD1927)
     7034,  // Clarke, 1880
     7004,  // Bessel, 1841
@@ -148,7 +148,7 @@ constexpr int aoEllips[] = {
     0      // FIXME: WGS 60 --- skipped
 };
 
-#define NUMBER_OF_ELLIPSOIDS static_cast<int>(CPL_ARRAYSIZE(aoEllips))
+#define NUMBER_OF_USGS_ELLIPSOIDS static_cast<int>(CPL_ARRAYSIZE(aoEllipsUSGS))
 
 /************************************************************************/
 /*                         OSRImportFromUSGS()                          */
@@ -730,9 +730,10 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
                 }
             }
         }
-        else if (iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum])
+        else if (iDatum < NUMBER_OF_USGS_ELLIPSOIDS && aoEllipsUSGS[iDatum])
         {
-            if (OSRGetEllipsoidInfo(aoEllips[iDatum], &pszName, &dfSemiMajor,
+            if (OSRGetEllipsoidInfo(aoEllipsUSGS[iDatum], &pszName,
+                                    &dfSemiMajor,
                                     &dfInvFlattening) == OGRERR_NONE)
             {
                 SetGeogCS(
@@ -742,7 +743,7 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
                                        pszName),
                     pszName, dfSemiMajor, dfInvFlattening, nullptr, 0.0,
                     nullptr, 0.0);
-                SetAuthority("SPHEROID", "EPSG", aoEllips[iDatum]);
+                SetAuthority("SPHEROID", "EPSG", aoEllipsUSGS[iDatum]);
             }
             else
             {
@@ -758,7 +759,7 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Wrong datum code %d. Supported datums 0--%d only.  "
                      "Setting WGS84 as a fallback.",
-                     static_cast<int>(iDatum), NUMBER_OF_ELLIPSOIDS);
+                     static_cast<int>(iDatum), NUMBER_OF_USGS_ELLIPSOIDS);
             SetWellKnownGeogCS("WGS84");
         }
 
@@ -1159,13 +1160,13 @@ OGRErr OGRSpatialReference::exportToUSGS(long *piProjSys, long *piZone,
 #endif
 
             int i = 0;  // Used after for.
-            for (; i < NUMBER_OF_ELLIPSOIDS; i++)
+            for (; i < NUMBER_OF_USGS_ELLIPSOIDS; i++)
             {
                 double dfSM = 0.0;
                 double dfIF = 0.0;
 
-                if (OSRGetEllipsoidInfo(aoEllips[i], nullptr, &dfSM, &dfIF) ==
-                        OGRERR_NONE &&
+                if (OSRGetEllipsoidInfo(aoEllipsUSGS[i], nullptr, &dfSM,
+                                        &dfIF) == OGRERR_NONE &&
                     CPLIsEqual(dfSemiMajor, dfSM) &&
                     CPLIsEqual(dfInvFlattening, dfIF))
                 {
@@ -1174,8 +1175,8 @@ OGRErr OGRSpatialReference::exportToUSGS(long *piProjSys, long *piZone,
                 }
             }
 
-            if (i == NUMBER_OF_ELLIPSOIDS)  // Didn't found matches; set
-            {                               // custom ellipsoid parameters.
+            if (i == NUMBER_OF_USGS_ELLIPSOIDS)  // Didn't found matches; set
+            {                                    // custom ellipsoid parameters.
 #ifdef DEBUG
                 CPLDebug("OSR_USGS",
                          "Ellipsoid \"%s\" unsupported by USGS GCTP. "
