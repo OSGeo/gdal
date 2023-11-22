@@ -50,9 +50,12 @@
 /*                            Identify()                                */
 /************************************************************************/
 
+#ifndef jpc_header_defined
+#define jpc_header_defined
 static const unsigned char jpc_header[] = {0xff, 0x4f, 0xff,
                                            0x51};  // SOC + RSIZ markers
 static const unsigned char jp2_box_jp[] = {0x6a, 0x50, 0x20, 0x20}; /* 'jP  ' */
+#endif
 
 static int Identify(GDALOpenInfo *poOpenInfo)
 
