@@ -707,7 +707,12 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
     if (strcmp(pszName, "circle") == 0 &&
         strcmp(OGRSVGGetClass(ppszAttr), "point") == 0)
     {
-        poCurLayer = (OGRSVGLayer *)poDS->GetLayer(0);
+        poCurLayer = cpl::down_cast<OGRSVGLayer *>(poDS->GetLayer(0));
+        if (!poCurLayer)
+        {
+            CPLAssert(false);
+            return;
+        }
         poCurLayer->nTotalFeatures++;
         inInterestingElement = true;
         interestingDepthLevel = depthLevel;
@@ -715,7 +720,12 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
     else if (strcmp(pszName, "path") == 0 &&
              strcmp(OGRSVGGetClass(ppszAttr), "line") == 0)
     {
-        poCurLayer = (OGRSVGLayer *)poDS->GetLayer(1);
+        poCurLayer = cpl::down_cast<OGRSVGLayer *>(poDS->GetLayer(1));
+        if (!poCurLayer)
+        {
+            CPLAssert(false);
+            return;
+        }
         poCurLayer->nTotalFeatures++;
         inInterestingElement = true;
         interestingDepthLevel = depthLevel;
@@ -723,7 +733,12 @@ void OGRSVGLayer::startElementLoadSchemaCbk(const char *pszName,
     else if (strcmp(pszName, "path") == 0 &&
              strcmp(OGRSVGGetClass(ppszAttr), "polygon") == 0)
     {
-        poCurLayer = (OGRSVGLayer *)poDS->GetLayer(2);
+        poCurLayer = cpl::down_cast<OGRSVGLayer *>(poDS->GetLayer(2));
+        if (!poCurLayer)
+        {
+            CPLAssert(false);
+            return;
+        }
         poCurLayer->nTotalFeatures++;
         inInterestingElement = true;
         interestingDepthLevel = depthLevel;
