@@ -177,8 +177,8 @@ std::string WCSDataset110::GetCoverageRequest(bool scaled, int /* nBufXSize */,
         bbox_2 = extent[3];  // max Y
         bbox_3 = extent[2];  // max X
     }
-    CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
-    request = CPLURLAddKVP(request, "SERVICE", "WCS");
+    std::string request = CPLGetXMLValue(psService, "ServiceURL", "");
+    request = CPLURLAddKVP(request.c_str(), "SERVICE", "WCS");
     request += CPLString().Printf(
         "&VERSION=%s&REQUEST=GetCoverage&IDENTIFIER=%s"
         "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s",
@@ -238,7 +238,8 @@ std::string WCSDataset110::GetCoverageRequest(bool scaled, int /* nBufXSize */,
         for (unsigned int i = 0; i < pairs.size(); ++i)
         {
             std::vector<std::string> pair = Split(pairs[i].c_str(), "=");
-            request = CPLURLAddKVP(request, pair[0].c_str(), pair[1].c_str());
+            request =
+                CPLURLAddKVP(request.c_str(), pair[0].c_str(), pair[1].c_str());
         }
     }
     extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
@@ -248,7 +249,8 @@ std::string WCSDataset110::GetCoverageRequest(bool scaled, int /* nBufXSize */,
         for (unsigned int i = 0; i < pairs.size(); ++i)
         {
             std::vector<std::string> pair = Split(pairs[i].c_str(), "=");
-            request = CPLURLAddKVP(request, pair[0].c_str(), pair[1].c_str());
+            request =
+                CPLURLAddKVP(request.c_str(), pair[0].c_str(), pair[1].c_str());
         }
     }
     CPLDebug("WCS", "Requesting %s", request.c_str());
@@ -262,12 +264,12 @@ std::string WCSDataset110::GetCoverageRequest(bool scaled, int /* nBufXSize */,
 
 std::string WCSDataset110::DescribeCoverageRequest()
 {
-    CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
-    request = CPLURLAddKVP(request, "SERVICE", "WCS");
-    request = CPLURLAddKVP(request, "REQUEST", "DescribeCoverage");
-    request = CPLURLAddKVP(request, "VERSION",
+    std::string request = CPLGetXMLValue(psService, "ServiceURL", "");
+    request = CPLURLAddKVP(request.c_str(), "SERVICE", "WCS");
+    request = CPLURLAddKVP(request.c_str(), "REQUEST", "DescribeCoverage");
+    request = CPLURLAddKVP(request.c_str(), "VERSION",
                            CPLGetXMLValue(psService, "Version", "1.1.0"));
-    request = CPLURLAddKVP(request, "IDENTIFIERS",
+    request = CPLURLAddKVP(request.c_str(), "IDENTIFIERS",
                            CPLGetXMLValue(psService, "CoverageName", ""));
     CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
     if (extra != "")

@@ -1098,8 +1098,8 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
 /************************************************************************/
 
 template <class ArrowType>
-static CPLJSONObject GetListAsJSON(const ArrowType *array,
-                                   const size_t nIdxInArray)
+static CPLJSONArray GetListAsJSON(const ArrowType *array,
+                                  const size_t nIdxInArray)
 {
     const auto values = std::static_pointer_cast<ArrowType>(array->values());
     const auto nIdxStart = array->value_offset(nIdxInArray);
