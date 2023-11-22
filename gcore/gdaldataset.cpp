@@ -72,6 +72,8 @@
 #include "../sqlite/ogrsqliteexecutesql.h"
 #endif
 
+extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
+
 CPL_C_START
 GDALAsyncReader *GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff,
                                            int nYOff, int nXSize, int nYSize,
@@ -3025,12 +3027,12 @@ struct GDALAntiRecursionStruct
 
 #ifdef WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
-static void FreeAntiRecursion(void *pData)
+static void FreeAntiRecursionOpen(void *pData)
 {
     delete static_cast<GDALAntiRecursionStruct *>(pData);
 }
 
-static GDALAntiRecursionStruct &GetAntiRecursion()
+static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 {
     static GDALAntiRecursionStruct dummy;
     int bMemoryErrorOccurred = false;
@@ -3044,7 +3046,7 @@ static GDALAntiRecursionStruct &GetAntiRecursion()
     {
         auto pAntiRecursion = new GDALAntiRecursionStruct();
         CPLSetTLSWithFreeFuncEx(CTLS_GDALOPEN_ANTIRECURSION, pAntiRecursion,
-                                FreeAntiRecursion, &bMemoryErrorOccurred);
+                                FreeAntiRecursionOpen, &bMemoryErrorOccurred);
         if (bMemoryErrorOccurred)
         {
             delete pAntiRecursion;
@@ -3056,7 +3058,7 @@ static GDALAntiRecursionStruct &GetAntiRecursion()
 }
 #else
 static thread_local GDALAntiRecursionStruct g_tls_antiRecursion;
-static GDALAntiRecursionStruct &GetAntiRecursion()
+static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 {
     return g_tls_antiRecursion;
 }
@@ -3064,7 +3066,7 @@ static GDALAntiRecursionStruct &GetAntiRecursion()
 
 //! @cond Doxygen_Suppress
 GDALAntiRecursionGuard::GDALAntiRecursionGuard(const std::string &osIdentifier)
-    : m_psAntiRecursionStruct(&GetAntiRecursion()),
+    : m_psAntiRecursionStruct(&GetAntiRecursionOpen()),
       m_osIdentifier(osIdentifier),
       m_nDepth(++m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier])
 {
@@ -3120,7 +3122,7 @@ char **GDALDataset::GetFileList()
     CPLString osMainFilename = GetDescription();
     VSIStatBufL sStat;
 
-    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursion();
+    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursionOpen();
     const GDALAntiRecursionStruct::DatasetContext datasetCtxt(osMainFilename, 0,
                                                               std::string());
     auto &aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
@@ -3511,7 +3513,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                            const_cast<char **>(papszSiblingFiles));
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
-    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursion();
+    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursionOpen();
     if (sAntiRecursion.nRecLevel == 100)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

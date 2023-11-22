@@ -50,7 +50,7 @@ static void (*PyEval_InitThreads)(void) = nullptr;
 static PyObject *(*Py_CompileStringExFlags)(const char *, const char *, int,
                                             void *, int) = nullptr;
 
-static std::mutex gMutex;
+static std::mutex gMutexGDALPython;
 static bool gbHasInitializedPython = false;
 static PyThreadState *gphThreadState = nullptr;
 
@@ -825,7 +825,7 @@ static bool LoadPythonAPI()
  */
 bool GDALPythonInitialize()
 {
-    std::lock_guard<std::mutex> guard(gMutex);
+    std::lock_guard<std::mutex> guard(gMutexGDALPython);
 
     if (!LoadPythonAPI())
         return false;
@@ -872,7 +872,7 @@ GIL_Holder::GIL_Holder(bool bExclusiveLock) : m_bExclusiveLock(bExclusiveLock)
 {
     if (bExclusiveLock)
     {
-        gMutex.lock();
+        gMutexGDALPython.lock();
     }
     m_eState = PyGILState_Ensure();
 }
@@ -886,7 +886,7 @@ GIL_Holder::~GIL_Holder()
     PyGILState_Release(m_eState);
     if (m_bExclusiveLock)
     {
-        gMutex.unlock();
+        gMutexGDALPython.unlock();
     }
     else
     {

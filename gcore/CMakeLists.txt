@@ -53,6 +53,9 @@ add_library(
   tilematrixset.cpp
   gdal_thread_pool.cpp
   nasakeywordhandler.cpp)
+
+set_property(SOURCE gdal_misc.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+
 gdal_standard_includes(gcore)
 add_dependencies(gcore generate_gdal_version_h)
 target_compile_options(gcore PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})

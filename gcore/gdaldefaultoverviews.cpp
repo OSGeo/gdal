@@ -174,21 +174,21 @@ void GDALDefaultOverviews::TransferSiblingFiles(char **papszSiblingFiles)
 namespace
 {
 // Prevent infinite recursion.
-struct AntiRecursionStruct
+struct AntiRecursionStructDefaultOvr
 {
     int nRecLevel = 0;
     std::set<CPLString> oSetFiles{};
 };
 }  // namespace
 
-static void FreeAntiRecursion(void *pData)
+static void FreeAntiRecursionDefaultOvr(void *pData)
 {
-    delete static_cast<AntiRecursionStruct *>(pData);
+    delete static_cast<AntiRecursionStructDefaultOvr *>(pData);
 }
 
-static AntiRecursionStruct &GetAntiRecursion()
+static AntiRecursionStructDefaultOvr &GetAntiRecursionDefaultOvr()
 {
-    static AntiRecursionStruct dummy;
+    static AntiRecursionStructDefaultOvr dummy;
     int bMemoryErrorOccurred = false;
     void *pData =
         CPLGetTLSEx(CTLS_GDALDEFAULTOVR_ANTIREC, &bMemoryErrorOccurred);
@@ -198,9 +198,10 @@ static AntiRecursionStruct &GetAntiRecursion()
     }
     if (pData == nullptr)
     {
-        auto pAntiRecursion = new AntiRecursionStruct();
+        auto pAntiRecursion = new AntiRecursionStructDefaultOvr();
         CPLSetTLSWithFreeFuncEx(CTLS_GDALDEFAULTOVR_ANTIREC, pAntiRecursion,
-                                FreeAntiRecursion, &bMemoryErrorOccurred);
+                                FreeAntiRecursionDefaultOvr,
+                                &bMemoryErrorOccurred);
         if (bMemoryErrorOccurred)
         {
             delete pAntiRecursion;
@@ -208,7 +209,7 @@ static AntiRecursionStruct &GetAntiRecursion()
         }
         return *pAntiRecursion;
     }
-    return *static_cast<AntiRecursionStruct *>(pData);
+    return *static_cast<AntiRecursionStructDefaultOvr *>(pData);
 }
 
 /************************************************************************/
@@ -230,7 +231,7 @@ void GDALDefaultOverviews::OverviewScan()
     if (pszInitName == nullptr)
         pszInitName = CPLStrdup(poDS->GetDescription());
 
-    AntiRecursionStruct &antiRec = GetAntiRecursion();
+    AntiRecursionStructDefaultOvr &antiRec = GetAntiRecursionDefaultOvr();
     // 32 should be enough to handle a .ovr.ovr.ovr...
     if (antiRec.nRecLevel == 32)
         return;
