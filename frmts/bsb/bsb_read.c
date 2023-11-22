@@ -37,6 +37,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <stdbool.h>
+
 static int BSBReadHeaderLine(BSBInfo *psInfo, char *pszLine, int nLineMaxLen,
                              int bNO1);
 static int BSBSeekAndCheckScanlineNumber(BSBInfo *psInfo, unsigned nScanline,
@@ -115,7 +117,8 @@ file format and I want to break it open! Chart data for the People!
 static void BSBUngetc(BSBInfo *psInfo, int nCharacter)
 
 {
-    CPLAssert(psInfo->nSavedCharacter == -1000);
+    CPLAssert(psInfo->nSavedCharacter2 == -1000);
+    psInfo->nSavedCharacter2 = psInfo->nSavedCharacter;
     psInfo->nSavedCharacter = nCharacter;
 }
 
@@ -131,7 +134,8 @@ static int BSBGetc(BSBInfo *psInfo, int bNO1, int *pbErrorFlag)
     if (psInfo->nSavedCharacter != -1000)
     {
         nByte = psInfo->nSavedCharacter;
-        psInfo->nSavedCharacter = -1000;
+        psInfo->nSavedCharacter = psInfo->nSavedCharacter2;
+        psInfo->nSavedCharacter2 = -1000;
         return nByte;
     }
 
@@ -250,6 +254,7 @@ BSBInfo *BSBOpen(const char *pszFilename)
     psInfo->nBufferSize = 0;
     psInfo->nBufferOffset = 0;
     psInfo->nSavedCharacter = -1000;
+    psInfo->nSavedCharacter2 = -1000;
 
     /* -------------------------------------------------------------------- */
     /*      Rewind, and read line by line.                                  */
@@ -592,8 +597,8 @@ BSBInfo *BSBOpen(const char *pszFilename)
 /*                         BSBReadHeaderLine()                          */
 /*                                                                      */
 /*      Read one virtual line of text from the BSB header.  This        */
-/*      will end if a 0x1A (EOF) is encountered, indicating the data    */
-/*      is about to start.  It will also merge multiple physical        */
+/*      will end if a 0x1A 0x00 (EOF) is encountered, indicating the    */
+/*      data is about to start.  It will also merge multiple physical   */
 /*      lines where appropriate.                                        */
 /************************************************************************/
 
@@ -603,16 +608,25 @@ static int BSBReadHeaderLine(BSBInfo *psInfo, char *pszLine, int nLineMaxLen,
 {
     char chNext;
     int nLineLen = 0;
-
+    bool bGot1A = false;
     while (!VSIFEofL(psInfo->fp) && nLineLen < nLineMaxLen - 1)
     {
         chNext = (char)BSBGetc(psInfo, bNO1, NULL);
         /* '\0' is not really expected at this point in correct products */
         /* but we must escape if found. */
-        if (chNext == '\0' || chNext == 0x1A)
+        if (chNext == '\0')
         {
             BSBUngetc(psInfo, chNext);
+            if (bGot1A)
+                BSBUngetc(psInfo, 0x1A);
             return FALSE;
+        }
+        bGot1A = false;
+
+        if (chNext == 0x1A)
+        {
+            bGot1A = true;
+            continue;
         }
 
         /* each CR/LF (or LF/CR) as if just "CR" */
