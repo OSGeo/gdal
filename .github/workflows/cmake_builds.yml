@@ -41,15 +41,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
             ${{ runner.os }}-${{ env.cache-name }}
-    - name: Install CMake 3.9.1
-      run: |
-        cd ${GITHUB_WORKSPACE}
-        wget https://github.com/Kitware/CMake/releases/download/v3.9.1/cmake-3.9.1-Linux-x86_64.tar.gz
-        tar xzf cmake-3.9.1-Linux-x86_64.tar.gz
-        echo "CMAKE_DIR=$GITHUB_WORKSPACE/cmake-3.9.1-Linux-x86_64/bin" >> $GITHUB_ENV
-        echo "$GITHUB_WORKSPACE/cmake-3.9.1-Linux-x86_64/bin" >> $GITHUB_PATH
-    - run: |
-        cmake --version
     - name: Install dependency
       run: |
         # This currently fails as of https://lists.osgeo.org/pipermail/ubuntu/2023-October/002046.html
@@ -173,7 +164,7 @@ jobs:
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         mkdir -p $GITHUB_WORKSPACE/superbuild
         cd $GITHUB_WORKSPACE/superbuild
-        printf "cmake_minimum_required(VERSION 3.9)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
+        printf "cmake_minimum_required(VERSION 3.16)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
         ln -s .. gdal
         mkdir build
         cd build
