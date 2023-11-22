@@ -146,6 +146,29 @@ function(add_gdal_driver)
         if( NOT DEFINED ${_enable_plugin_var} )
             message(FATAL_ERROR "Option ${_enable_plugin_var} does not exist")
         endif()
+
+        if (DEFINED ${_enable_plugin_var}_PLUGIN AND DEFINED _DRIVER_PLUGIN_CAPABLE_IF)
+          if (${${_enable_plugin_var}_PLUGIN})
+            set(_COND_WITH_AND "")
+            foreach(_c IN LISTS _COND)
+                if(_COND_WITH_AND)
+                    set(_COND_WITH_AND "${_COND_WITH_AND}) AND (${_c}")
+                else()
+                    set(_COND_WITH_AND "(${_c}")
+                endif()
+            endforeach()
+            set(_COND_WITH_AND "${_COND_WITH_AND})")
+
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/eval_${_plugin_var_prefix}.cmake "
+              if (NOT (${_COND_WITH_AND}))
+                message(FATAL_ERROR \"${_enable_plugin_var}_PLUGIN required, but condition ${_COND} not met\")
+              endif()"
+            )
+
+            include(${CMAKE_CURRENT_BINARY_DIR}/eval_${_plugin_var_prefix}.cmake)
+          endif()
+        endif()
+
         cmake_dependent_option(${_enable_plugin_var}_PLUGIN "Set ON to build ${_plugin_var_prefix} ${_KEY} driver as plugin"
                                ${_INITIAL_VALUE}
                                "${_enable_plugin_var};${_COND}" OFF)
