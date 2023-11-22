@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GNMFILE_H_INCLUDED
+#define GNMFILE_H_INCLUDED
+
 #include "gnm.h"
 
 #define GNM_MD_DEFAULT_FILE_FORMAT "ESRI Shapefile"
@@ -81,3 +84,5 @@ class GNMFileNetwork : public GNMGenericNetwork
     GDALDataset *m_pFeaturesDS;
     std::map<OGRLayer *, GDALDataset *> m_mpLayerDatasetMap;
 };
+
+#endif
