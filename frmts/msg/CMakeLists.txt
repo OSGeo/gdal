@@ -55,8 +55,3 @@ target_include_directories(
           "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/PublicDecompWT/COMP/WT/Inc>"
           "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/PublicDecompWT/COMP/Inc>"
           "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>")
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD
-  set_property(SOURCE reflectancecalculator.cpp msgcommand.cpp msgdataset.cpp xritheaderparser.cpp prologue.cpp
-               PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-endif ()
