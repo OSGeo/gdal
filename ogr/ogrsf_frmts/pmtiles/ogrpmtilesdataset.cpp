@@ -295,10 +295,14 @@ bool OGRPMTilesDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     if (m_nMinZoomLevel > 30)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Clamping min_zoom (and max_zoom) from %d to %d",
+        CPLError(CE_Warning, CPLE_AppDefined, "Clamping min_zoom from %d to %d",
                  m_nMinZoomLevel, 30);
         m_nMinZoomLevel = 30;
+    }
+    if (m_nMaxZoomLevel > 30)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Clamping max_zoom from %d to %d",
+                 m_nMaxZoomLevel, 30);
         m_nMaxZoomLevel = 30;
     }
 

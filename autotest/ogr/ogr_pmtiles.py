@@ -615,7 +615,5 @@ def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_30():
         gdal.VSIFCloseL(f)
         with gdal.quiet_errors():
             ds = ogr.Open(tmpfilename)
-        assert (
-            gdal.GetLastErrorMsg() == "Clamping min_zoom (and max_zoom) from 254 to 30"
-        )
+        assert gdal.GetLastErrorMsg() == "Clamping max_zoom from 255 to 30"
         assert ds.GetMetadataItem("ZOOM_LEVEL") == "30"
