@@ -90,10 +90,10 @@ OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
                                     bool bJsonField,
                                     OGRSpatialReference *poSRS);
 
-#ifdef HAVE_MVT_WRITE_SUPPORT
+// #ifdef HAVE_MVT_WRITE_SUPPORT
 GDALDataset *OGRMVTWriterDatasetCreate(const char *pszFilename, int nXSize,
                                        int nYSize, int nBandsIn,
                                        GDALDataType eDT, char **papszOptions);
-#endif
+// #endif
 
 #endif  // MVTUTILS_H
