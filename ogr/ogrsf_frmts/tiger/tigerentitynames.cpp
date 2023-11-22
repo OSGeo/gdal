@@ -30,7 +30,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "C";
+static const char C_FILE_CODE[] = "C";
 
 static const TigerFieldInfo rtC_2002_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -104,7 +104,7 @@ static const TigerRecordInfo rtC_info = {
 
 TigerEntityNames::TigerEntityNames(OGRTigerDataSource *poDSIn,
                                    CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(nullptr, FILE_CODE)
+    : TigerFileBase(nullptr, C_FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("EntityNames");

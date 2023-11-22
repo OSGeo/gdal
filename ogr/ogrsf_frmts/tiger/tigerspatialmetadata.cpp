@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "M";
+static const char M_FILE_CODE[] = "M";
 
 static const TigerFieldInfo rtM_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -51,7 +51,7 @@ static const TigerRecordInfo rtM_info = {
 
 TigerSpatialMetadata::TigerSpatialMetadata(
     OGRTigerDataSource *poDSIn, CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(&rtM_info, FILE_CODE)
+    : TigerFileBase(&rtM_info, M_FILE_CODE)
 
 {
     poDS = poDSIn;
