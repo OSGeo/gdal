@@ -6238,3 +6238,5 @@ char *VSINetworkStatsGetAsSerializedJSON(CPL_UNUSED char **papszOptions)
 }
 
 #endif /* HAVE_CURL */
+
+#undef ENABLE_DEBUG

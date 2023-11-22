@@ -41,11 +41,11 @@
 #ifdef HAVE_CURL
 
 /************************************************************************/
-/*                            GetSignature()                            */
+/*                     CPLAzureGetSignature()                           */
 /************************************************************************/
 
-static CPLString GetSignature(const CPLString &osStringToSign,
-                              const CPLString &osStorageKeyB64)
+static CPLString CPLAzureGetSignature(const CPLString &osStringToSign,
+                                      const CPLString &osStorageKeyB64)
 {
 
     /* -------------------------------------------------------------------- */
@@ -158,8 +158,9 @@ GetAzureBlobHeaders(const CPLString &osVerb,
     /*      Compute signature.                                              */
     /* -------------------------------------------------------------------- */
 
-    CPLString osAuthorization("SharedKey " + osStorageAccount + ":" +
-                              GetSignature(osStringToSign, osStorageKeyB64));
+    CPLString osAuthorization(
+        "SharedKey " + osStorageAccount + ":" +
+        CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
     struct curl_slist *headers = nullptr;
     headers =
@@ -1021,7 +1022,7 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     /* -------------------------------------------------------------------- */
     /*      Compute signature.                                              */
     /* -------------------------------------------------------------------- */
-    CPLString osSignature(GetSignature(osStringToSign, m_osStorageKey));
+    CPLString osSignature(CPLAzureGetSignature(osStringToSign, m_osStorageKey));
 
     ResetQueryParameters();
     AddQueryParameter("sv", osSignedVersion);
