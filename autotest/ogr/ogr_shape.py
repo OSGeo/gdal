@@ -5787,3 +5787,35 @@ def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
     assert f["intlist"] == "[ 1, 2 ]"
     assert f["int64list"] == "[ 12345678901234, 2 ]"
     assert f["reallist"] == "[ 1.5, 2.5 ]"
+
+
+###############################################################################
+# Test WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR(tmp_vsimem):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFID(1)
+    src_lyr.CreateFeature(f)
+
+    filename = tmp_vsimem / "test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        with pytest.raises(Exception, match="Feature id 1 not preserved"):
+            lyr.WriteArrowBatch(
+                schema, array, ["FID=OGC_FID", "IF_FID_NOT_PRESERVED=ERROR"]
+            )

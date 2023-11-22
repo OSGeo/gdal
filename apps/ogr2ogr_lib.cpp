@@ -5450,17 +5450,26 @@ bool LayerTranslator::TranslateArrow(
 {
     struct ArrowArrayStream stream;
     struct ArrowSchema schema;
-    CPLStringList aosOptions;
-    aosOptions.SetNameValue("GEOMETRY_ENCODING", "WKB");
+    CPLStringList aosOptionsGetArrowStream;
+    CPLStringList aosOptionsWriteArrowBatch;
+    aosOptionsGetArrowStream.SetNameValue("GEOMETRY_ENCODING", "WKB");
     if (!psInfo->m_bPreserveFID)
-        aosOptions.SetNameValue("INCLUDE_FID", "NO");
+        aosOptionsGetArrowStream.SetNameValue("INCLUDE_FID", "NO");
+    else
+    {
+        aosOptionsWriteArrowBatch.SetNameValue(
+            "FID", psInfo->m_poSrcLayer->GetFIDColumn());
+        aosOptionsWriteArrowBatch.SetNameValue("IF_FID_NOT_PRESERVED",
+                                               "WARNING");
+    }
     if (psOptions->nGroupTransactions > 0)
     {
-        aosOptions.SetNameValue(
+        aosOptionsGetArrowStream.SetNameValue(
             "MAX_FEATURES_IN_BATCH",
             CPLSPrintf("%d", psOptions->nGroupTransactions));
     }
-    if (psInfo->m_poSrcLayer->GetArrowStream(&stream, aosOptions.List()))
+    if (psInfo->m_poSrcLayer->GetArrowStream(&stream,
+                                             aosOptionsGetArrowStream.List()))
     {
         if (stream.get_schema(&stream, &schema) != 0)
         {
@@ -5515,7 +5524,8 @@ bool LayerTranslator::TranslateArrow(
         }
 
         // Write batch to target layer
-        if (!psInfo->m_poDstLayer->WriteArrowBatch(&schema, &array, nullptr))
+        if (!psInfo->m_poDstLayer->WriteArrowBatch(
+                &schema, &array, aosOptionsWriteArrowBatch.List()))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "WriteArrowBatch() failed");
             if (array.release)
