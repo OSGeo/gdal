@@ -91,7 +91,14 @@ void OGRGeoJSONLayer::TerminateAppendSession()
 {
     if (bHasAppendedFeatures_)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         VSILFILE *fp = poReader_->GetFP();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         VSIFPrintfL(fp, "\n]\n}\n");
         VSIFFlushL(fp);
         bHasAppendedFeatures_ = false;
