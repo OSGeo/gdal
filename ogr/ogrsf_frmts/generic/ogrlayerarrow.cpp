@@ -5154,14 +5154,14 @@ static bool OGRCloneArrowArray(const struct ArrowSchema *schema,
             if (src_array->buffers[i])
             {
                 const size_t nBytes = nLength ? (nLength + 7) / 8 : 1;
-                uint8_t *p = static_cast<uint8_t *>(
+                uint8_t *CPL_RESTRICT p = static_cast<uint8_t *>(
                     VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nBytes));
                 if (!p)
                 {
                     bRet = false;
                     break;
                 }
-                const uint8_t *pSrcArray =
+                const auto *CPL_RESTRICT pSrcArray =
                     static_cast<const uint8_t *>(src_array->buffers[i]);
                 if ((nOffset % 8) != 0)
                 {
@@ -5254,11 +5254,13 @@ static bool OGRCloneArrowArray(const struct ArrowSchema *schema,
                         static_cast<const uint32_t *>(
                             src_array->buffers[1])[nOffset] != 0)
                     {
-                        const auto *pSrcOffsets = static_cast<const uint32_t *>(
-                                                      src_array->buffers[1]) +
-                                                  nOffset;
+                        const auto *CPL_RESTRICT pSrcOffsets =
+                            static_cast<const uint32_t *>(
+                                src_array->buffers[1]) +
+                            nOffset;
                         const auto nShiftOffset = pSrcOffsets[0];
-                        auto *pDstOffsets = static_cast<uint32_t *>(p);
+                        auto *CPL_RESTRICT pDstOffsets =
+                            static_cast<uint32_t *>(p);
                         for (size_t iRow = 0; iRow <= nLength; ++iRow)
                         {
                             pDstOffsets[iRow] =
@@ -5269,11 +5271,13 @@ static bool OGRCloneArrowArray(const struct ArrowSchema *schema,
                              static_cast<const uint64_t *>(
                                  src_array->buffers[1])[nOffset] != 0)
                     {
-                        const auto *pSrcOffsets = static_cast<const uint64_t *>(
-                                                      src_array->buffers[1]) +
-                                                  nOffset;
+                        const auto *CPL_RESTRICT pSrcOffsets =
+                            static_cast<const uint64_t *>(
+                                src_array->buffers[1]) +
+                            nOffset;
                         const auto nShiftOffset = pSrcOffsets[0];
-                        auto *pDstOffsets = static_cast<uint64_t *>(p);
+                        auto *CPL_RESTRICT pDstOffsets =
+                            static_cast<uint64_t *>(p);
                         for (size_t iRow = 0; iRow <= nLength; ++iRow)
                         {
                             pDstOffsets[iRow] =
