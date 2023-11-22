@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef OGARROWLAYER_HPP_INCLUDED
+#define OGARROWLAYER_HPP_INCLUDED
+
 #include "ogr_arrow.h"
 
 #include "cpl_float.h"
@@ -4604,3 +4607,5 @@ inline int OGRArrowLayer::TestCapability(const char *pszCap)
 
     return false;
 }
+
+#endif /* OGARROWLAYER_HPP_INCLUDED */
