@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_WMS_H_INCLUDED
+#define MINIDRIVER_WMS_H_INCLUDED
+
 /*
  * Base class for a WMS minidriver.
  * At least Initialize() and one of the ImageRequest() or TiledImageRequest()
@@ -73,3 +76,5 @@ class WMSMiniDriver_WMS : public WMSMiniDriver
     CPLString m_bbox_order;
     CPLString m_transparent;
 };
+
+#endif /* MINIDRIVER_WMS_H_INCLUDED */

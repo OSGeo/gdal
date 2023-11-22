@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_AGS_H_INCLUDED
+#define MINIDRIVER_AGS_H_INCLUDED
+
 class WMSMiniDriver_AGS : public WMSMiniDriver
 {
   public:
@@ -67,3 +70,5 @@ class WMSMiniDriver_AGS : public WMSMiniDriver
 
     CPLString m_identification_tolerance;
 };
+
+#endif /* MINIDRIVER_AGS_H_INCLUDED */

@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_TILED_WMS_H_INCLUDED
+#define MINIDRIVER_TILED_WMS_H_INCLUDED
+
 class WMSMiniDriver_TiledWMS : public WMSMiniDriver
 {
 
@@ -50,3 +53,5 @@ class WMSMiniDriver_TiledWMS : public WMSMiniDriver
     int m_bsx;
     int m_bsy;
 };
+
+#endif /* MINIDRIVER_TILED_WMS_H_INCLUDED */

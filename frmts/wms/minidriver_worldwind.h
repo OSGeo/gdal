@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_WORLDWIND_H_INCLUDED
+#define MINIDRIVER_WORLDWIND_H_INCLUDED
+
 class WMSMiniDriver_WorldWind : public WMSMiniDriver
 {
   public:
@@ -42,3 +45,5 @@ class WMSMiniDriver_WorldWind : public WMSMiniDriver
                       const GDALWMSImageRequestInfo &iri,
                       const GDALWMSTiledImageRequestInfo &tiri) override;
 };
+
+#endif /* MINIDRIVER_WORLDWIND_H_INCLUDED */
