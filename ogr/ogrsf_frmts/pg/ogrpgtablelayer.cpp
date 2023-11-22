@@ -3924,3 +3924,5 @@ OGRGeometryTypeCounter *OGRPGTableLayer::GetGeometryTypes(
 
     return pasRet;
 }
+
+#undef PQexec
