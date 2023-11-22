@@ -117,6 +117,8 @@ GIntBig OGRILI2Layer::GetFeatureCount(int bForce)
     }
 }
 
+#ifndef d2str_defined
+#define d2str_defined
 static const char *d2str(double val)
 {
     if (val == (int)val)
@@ -128,6 +130,7 @@ static const char *d2str(double val)
 
     return CPLSPrintf("%.3f", val);
 }
+#endif
 
 static void AppendCoordinateList(const OGRLineString *poLine, VSILFILE *fp)
 {
