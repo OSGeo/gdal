@@ -52,6 +52,12 @@ namespace PCIDSK
     const int hsec_record = 2;
     const int hsec_shape = 3;
 
+/* -------------------------------------------------------------------- */
+/*      Size of a block in the record/vertex block tables.  This is    */
+/*      determined by the PCIDSK format and may not be changed.         */
+/* -------------------------------------------------------------------- */
+constexpr int block_page_size = 8192;
+
     class VecSegHeader
     {
     public:

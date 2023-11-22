@@ -72,10 +72,6 @@ target_include_directories(pcidsk_sdk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARG
                                               $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 set_property(TARGET pcidsk_sdk PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
 
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(TARGET pcidsk_sdk PROPERTY UNITY_BUILD OFF)
-endif ()
-
 if (GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
     target_compile_definitions(pcidsk_sdk PRIVATE -DHAVE_LIBJPEG)
     if (GDAL_USE_JPEG_INTERNAL)
