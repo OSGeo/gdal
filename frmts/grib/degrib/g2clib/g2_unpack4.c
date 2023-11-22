@@ -58,8 +58,8 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
 //$$$//
 {
 
-      g2int ierr,needext,i,j,nbits,isecnum;
-      g2int lensec,isign,newlen;
+      g2int ierr,needext,i,j,nbits,isecnum = 0;
+      g2int lensec,isign = 0,newlen;
       g2int *coordieee;
       g2int *lipdstmpl=0;
       g2float *lcoordlist;
