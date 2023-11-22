@@ -13,6 +13,9 @@ limitations under the License.
 Contributors:  Lucian Plesea
 */
 
+#ifndef PACKER_RLE_H_INCLUDED
+#define PACKER_RLE_H_INCLUDED
+
 #include "Packer.h"
 
 NAMESPACE_MRF_START
@@ -24,3 +27,5 @@ class RLEC3Packer : public Packer
     virtual int store(storage_manager *src, storage_manager *dst) override;
 };
 NAMESPACE_MRF_END
+
+#endif /* PACKER_RLE_H_INCLUDED */
