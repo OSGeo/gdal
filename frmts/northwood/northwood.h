@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef NORTHWOOD_H_INCLUDED
+#define NORTHWOOD_H_INCLUDED
+
 #ifdef NOT_GDAL
 #include <stdio.h>
 #define VSILFILE FILE
@@ -163,3 +166,5 @@ void linearColor(NWT_RGB *pRGB, NWT_INFLECTION *pIPLow, NWT_INFLECTION *pIPHigh,
 
 HLS RGBtoHLS(NWT_RGB rgb);
 NWT_RGB HLStoRGB(HLS hls);
+
+#endif /* NORTHWOOD_H_INCLUDED */
