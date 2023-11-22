@@ -438,7 +438,7 @@ GDALDataset *KTX2Dataset::CreateCopy(const char *pszFilename,
 
 void GDALRegister_KTX2()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(KTX2_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();

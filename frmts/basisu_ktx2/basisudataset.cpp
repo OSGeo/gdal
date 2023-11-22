@@ -395,7 +395,7 @@ GDALDataset *BASISUDataset::CreateCopy(const char *pszFilename,
 
 void GDALRegister_BASISU()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(BASISU_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
