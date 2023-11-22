@@ -36,6 +36,9 @@ CPL_C_START
 #include "gif_lib.h"
 CPL_C_END
 
+constexpr int InterlacedOffset[] = {0, 4, 2, 1};
+constexpr int InterlacedJumps[] = {8, 8, 4, 2};
+
 /************************************************************************/
 /* ==================================================================== */
 /*                        GIFAbstractDataset                            */
