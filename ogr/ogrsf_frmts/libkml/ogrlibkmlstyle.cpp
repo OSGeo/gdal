@@ -730,7 +730,7 @@ void kml2stylestring(StylePtr poKmlStyle, OGRStyleMgr *poOgrSM)
 
 ******************************************************************************/
 
-static ContainerPtr MyGetContainerFromRoot(KmlFactory *m_poKmlFactory,
+static ContainerPtr MyGetContainerFromRoot(KmlFactory *poKmlFactory,
                                            ElementPtr poKmlRoot)
 {
     ContainerPtr poKmlContainer = nullptr;
@@ -752,7 +752,7 @@ static ContainerPtr MyGetContainerFromRoot(KmlFactory *m_poKmlFactory,
                 }
                 else if (poKmlFeat->IsA(kmldom::Type_Placemark))
                 {
-                    poKmlContainer = m_poKmlFactory->CreateDocument();
+                    poKmlContainer = poKmlFactory->CreateDocument();
                     poKmlContainer->add_feature(
                         kmldom::AsFeature(kmlengine::Clone(poKmlFeat)));
                 }
