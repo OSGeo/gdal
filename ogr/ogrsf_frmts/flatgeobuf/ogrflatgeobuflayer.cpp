@@ -1939,7 +1939,8 @@ after_loop:
 
     if (out_array->length == 0)
     {
-        out_array->release(out_array);
+        if (out_array->release)
+            out_array->release(out_array);
         memset(out_array, 0, sizeof(*out_array));
 
         if (m_poAttrQuery || m_poFilterGeom)
