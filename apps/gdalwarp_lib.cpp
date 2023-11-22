@@ -2582,7 +2582,6 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
          */
         hSrcDS = pahSrcDS[iSrc];
         oProgress.iSrc = iSrc;
-        oProgress.Do(0);
 
         /* --------------------------------------------------------------------
          */
@@ -3027,6 +3026,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
          */
         SetupNoData(pszDest, iSrc, hSrcDS, hWrkSrcDS, hDstDS, psWO, psOptions,
                     bEnableDstAlpha, bInitDestSetByUser);
+
+        oProgress.Do(0);
 
         /* --------------------------------------------------------------------
          */
