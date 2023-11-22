@@ -1000,7 +1000,7 @@ def test_multidim_CreateRasterAttributeTableFromMDArrays():
         gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [None])
     with pytest.raises(Exception, match="not a sequence"):
         gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, 1)
-    with pytest.raises(Exception, match="bject of wrong GDALMDArrayHS"):
+    with pytest.raises(Exception, match="object of wrong GDALMDArrayHS"):
         gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [dim])
     with pytest.raises(Exception, match=r"apoArrays\[0\] has a dimension count != 1"):
         gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [ar_2D])
