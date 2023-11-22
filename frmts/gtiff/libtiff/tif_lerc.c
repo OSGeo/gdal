@@ -86,9 +86,9 @@ typedef struct
     TIFFVSetMethod vsetparent; /* super-class method */
 } LERCState;
 
-#define LState(tif) ((LERCState *)(tif)->tif_data)
-#define DecoderState(tif) LState(tif)
-#define EncoderState(tif) LState(tif)
+#define GetLERCState(tif) ((LERCState *)(tif)->tif_data)
+#define LERCDecoderState(tif) GetLERCState(tif)
+#define LERCEncoderState(tif) GetLERCState(tif)
 
 static int LERCEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s);
 static int LERCDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s);
@@ -101,7 +101,7 @@ static int LERCFixupTags(TIFF *tif)
 
 static int LERCSetupDecode(TIFF *tif)
 {
-    LERCState *sp = DecoderState(tif);
+    LERCState *sp = LERCDecoderState(tif);
 
     assert(sp != NULL);
 
@@ -277,7 +277,7 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
     static const char module[] = "LERCPreDecode";
     lerc_status lerc_ret;
     TIFFDirectory *td = &tif->tif_dir;
-    LERCState *sp = DecoderState(tif);
+    LERCState *sp = LERCDecoderState(tif);
     int lerc_data_type;
     unsigned int infoArray[8];
     unsigned nomask_bands = td->td_samplesperpixel;
@@ -553,7 +553,7 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
 static int LERCDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 {
     static const char module[] = "LERCDecode";
-    LERCState *sp = DecoderState(tif);
+    LERCState *sp = LERCDecoderState(tif);
 
     (void)s;
     assert(sp != NULL);
@@ -580,7 +580,7 @@ static int LERCDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 
 static int LERCSetupEncode(TIFF *tif)
 {
-    LERCState *sp = EncoderState(tif);
+    LERCState *sp = LERCEncoderState(tif);
 
     assert(sp != NULL);
     if (sp->state & LSTATE_INIT_DECODE)
@@ -599,7 +599,7 @@ static int LERCSetupEncode(TIFF *tif)
 static int LERCPreEncode(TIFF *tif, uint16_t s)
 {
     static const char module[] = "LERCPreEncode";
-    LERCState *sp = EncoderState(tif);
+    LERCState *sp = LERCEncoderState(tif);
     int lerc_data_type;
 
     (void)s;
@@ -623,7 +623,7 @@ static int LERCPreEncode(TIFF *tif, uint16_t s)
 static int LERCEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 {
     static const char module[] = "LERCEncode";
-    LERCState *sp = EncoderState(tif);
+    LERCState *sp = LERCEncoderState(tif);
 
     (void)s;
     assert(sp != NULL);
@@ -649,7 +649,7 @@ static int LERCPostEncode(TIFF *tif)
 {
     lerc_status lerc_ret;
     static const char module[] = "LERCPostEncode";
-    LERCState *sp = EncoderState(tif);
+    LERCState *sp = LERCEncoderState(tif);
     unsigned int numBytes = 0;
     unsigned int numBytesWritten = 0;
     TIFFDirectory *td = &tif->tif_dir;
@@ -950,7 +950,7 @@ static int LERCPostEncode(TIFF *tif)
 
 static void LERCCleanup(TIFF *tif)
 {
-    LERCState *sp = LState(tif);
+    LERCState *sp = GetLERCState(tif);
 
     assert(sp != 0);
 
@@ -995,7 +995,7 @@ static const TIFFField LERCFields[] = {
 
 static int LERCVSetFieldBase(TIFF *tif, uint32_t tag, ...)
 {
-    LERCState *sp = LState(tif);
+    LERCState *sp = GetLERCState(tif);
     int ret;
     va_list ap;
     va_start(ap, tag);
@@ -1007,7 +1007,7 @@ static int LERCVSetFieldBase(TIFF *tif, uint32_t tag, ...)
 static int LERCVSetField(TIFF *tif, uint32_t tag, va_list ap)
 {
     static const char module[] = "LERCVSetField";
-    LERCState *sp = LState(tif);
+    LERCState *sp = GetLERCState(tif);
 
     switch (tag)
     {
@@ -1115,7 +1115,7 @@ static int LERCVSetField(TIFF *tif, uint32_t tag, va_list ap)
 
 static int LERCVGetField(TIFF *tif, uint32_t tag, va_list ap)
 {
-    LERCState *sp = LState(tif);
+    LERCState *sp = GetLERCState(tif);
 
     switch (tag)
     {
@@ -1163,7 +1163,7 @@ int TIFFInitLERC(TIFF *tif, int scheme)
     tif->tif_data = (uint8_t *)_TIFFcallocExt(tif, 1, sizeof(LERCState));
     if (tif->tif_data == NULL)
         goto bad;
-    sp = LState(tif);
+    sp = GetLERCState(tif);
 
     /*
      * Override parent get/set field methods.

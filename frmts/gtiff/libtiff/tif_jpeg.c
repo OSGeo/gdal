@@ -182,9 +182,20 @@ typedef unsigned char boolean;
 #define LONGJMP(jbuf, code) longjmp(jbuf, code)
 #define JMP_BUF jmp_buf
 
+#ifndef TIFF_jpeg_destination_mgr_defined
+#define TIFF_jpeg_destination_mgr_defined
 typedef struct jpeg_destination_mgr jpeg_destination_mgr;
+#endif
+
+#ifndef TIFF_jpeg_source_mgr_defined
+#define TIFF_jpeg_source_mgr_defined
 typedef struct jpeg_source_mgr jpeg_source_mgr;
+#endif
+
+#ifndef TIFF_jpeg_error_mgr_defined
+#define TIFF_jpeg_error_mgr_defined
 typedef struct jpeg_error_mgr jpeg_error_mgr;
+#endif
 
 /*
  * State block for each open TIFF file using

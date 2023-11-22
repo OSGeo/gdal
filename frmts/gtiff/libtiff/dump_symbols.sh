@@ -19,6 +19,8 @@ OUT_FILE=$PWD/../frmts/gtiff/libtiff/gdal_libtiff_symbol_rename.h
 rm $OUT_FILE 2>/dev/null
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" >> $OUT_FILE
+echo "#ifndef GDAL_LIBTIFF_SYMBOL_RENAME_H_INCLUDED" >> $OUT_FILE
+echo "#define GDAL_LIBTIFF_SYMBOL_RENAME_H_INCLUDED" >> $OUT_FILE
 
 symbol_list=$(objdump -t libtiff.so  | grep .text | awk '{print $6}' | grep -v -e .text -e TIFFInit -e __do_global -e __bss_start -e _edata -e _end -e _fini -e _init -e call_gmon_start -e CPL_IGNORE_RET_VAL_INT -e register_tm_clones | grep -v WebPInitDecBuffer| grep -v WebPGetFeatures | grep -v WebPInitDecoderConfig | grep -v WebPPictureInit | sort)
 for symbol in $symbol_list
@@ -108,3 +110,5 @@ EOF
     echo "#define TIFFInitLERC gdal_TIFFInitLERC"
     echo "#endif"
 } >> $OUT_FILE
+
+echo "#endif /* GDAL_LIBTIFF_SYMBOL_RENAME_H_INCLUDED */" >> $OUT_FILE
