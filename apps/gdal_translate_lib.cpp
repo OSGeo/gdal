@@ -57,7 +57,6 @@
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
-static int ArgIsNumeric(const char *);
 static void AttachMetadata(GDALDatasetH, const CPLStringList &);
 static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                          int bCanCopyStatsMetadata, int bCopyScale,
@@ -70,12 +69,6 @@ typedef enum
     MASK_AUTO,
     MASK_USER
 } MaskMode;
-
-// those values shouldn't be changed, because overview levels >= 0 are meant
-// to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
-// automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
-constexpr int OVR_LEVEL_AUTO = -2;
-constexpr int OVR_LEVEL_NONE = -1;
 
 /************************************************************************/
 /*                         GDALTranslateScaleParams                     */
@@ -2653,16 +2646,6 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
     if (bCanCopyStatsMetadata && bCopyScale &&
         !EQUAL(poSrcBand->GetUnitType(), ""))
         poDstBand->SetUnitType(poSrcBand->GetUnitType());
-}
-
-/************************************************************************/
-/*                            ArgIsNumeric()                            */
-/************************************************************************/
-
-int ArgIsNumeric(const char *pszArg)
-
-{
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
 
 /************************************************************************/

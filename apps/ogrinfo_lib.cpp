@@ -98,6 +98,8 @@ void GDALVectorInfoOptionsFree(GDALVectorInfoOptions *psOptions)
 /*                            Concat()                                  */
 /************************************************************************/
 
+#ifndef Concat_defined
+#define Concat_defined
 static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
                    ...) CPL_PRINT_FUNC_FORMAT(3, 4);
 
@@ -128,6 +130,7 @@ static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
 
     va_end(args);
 }
+#endif
 
 static void ConcatStr(CPLString &osRet, bool bStdoutOutput, const char *pszStr)
 {

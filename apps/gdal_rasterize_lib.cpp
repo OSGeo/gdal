@@ -52,10 +52,10 @@
 #include "ogr_srs_api.h"
 
 /************************************************************************/
-/*                            ArgIsNumeric()                            */
+/*                       ArgIsNumericRasterize()                        */
 /************************************************************************/
 
-static bool ArgIsNumeric(const char *pszArg)
+static bool ArgIsNumericRasterize(const char *pszArg)
 
 {
     char *pszEnd = nullptr;
@@ -1079,7 +1079,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
             }
             else
             {
-                while (i < argc - 1 && ArgIsNumeric(papszArgv[i + 1]))
+                while (i < argc - 1 && ArgIsNumericRasterize(papszArgv[i + 1]))
                 {
                     psOptions->anBandList.push_back(atoi(papszArgv[i + 1]));
                     i += 1;
@@ -1132,7 +1132,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
             }
             else
             {
-                while (i < argc - 1 && ArgIsNumeric(papszArgv[i + 1]))
+                while (i < argc - 1 && ArgIsNumericRasterize(papszArgv[i + 1]))
                 {
                     psOptions->adfBurnValues.push_back(
                         CPLAtof(papszArgv[i + 1]));
@@ -1191,7 +1191,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
             }
             else
             {
-                while (i < argc - 1 && ArgIsNumeric(papszArgv[i + 1]))
+                while (i < argc - 1 && ArgIsNumericRasterize(papszArgv[i + 1]))
                 {
                     psOptions->adfInitVals.push_back(CPLAtof(papszArgv[i + 1]));
                     i += 1;

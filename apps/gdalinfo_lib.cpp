@@ -149,6 +149,8 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
                                    bool bJson, json_object *poMetadata,
                                    CPLString &osStr);
 
+#ifndef Concat_defined
+#define Concat_defined
 static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
                    ...) CPL_PRINT_FUNC_FORMAT(3, 4);
 
@@ -179,6 +181,7 @@ static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
 
     va_end(args);
 }
+#endif
 
 /************************************************************************/
 /*           gdal_json_object_new_double_or_str_for_non_finite()        */

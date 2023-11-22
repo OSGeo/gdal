@@ -134,7 +134,7 @@ typedef enum
     COLOR_SELECTION_EXACT_ENTRY
 } ColorSelectionMode;
 
-namespace
+namespace gdal::GDALDEM
 {
 enum class GradientAlg
 {
@@ -147,7 +147,9 @@ enum class TRIAlg
     WILSON,
     RILEY,
 };
-}  // namespace
+}  // namespace gdal::GDALDEM
+
+using namespace gdal::GDALDEM;
 
 struct GDALDEMProcessingOptions
 {
@@ -3113,16 +3115,6 @@ double GDALGeneric3x3RasterBand<T>::GetNoDataValue(int *pbHasNoData)
     if (pbHasNoData)
         *pbHasNoData = poGDS->bDstHasNoData;
     return poGDS->dfDstNoDataValue;
-}
-
-/************************************************************************/
-/*                            ArgIsNumeric()                            */
-/************************************************************************/
-
-static int ArgIsNumeric(const char *pszArg)
-
-{
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
 
 /************************************************************************/

@@ -45,6 +45,7 @@
 #include <vector>
 #include <set>
 
+#include "commonutils.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_progress.h"
@@ -68,7 +69,7 @@
 #define GEOTRSFRM_ROTATION_PARAM2 4
 #define GEOTRSFRM_NS_RES 5
 
-namespace
+namespace gdal::GDALBuildVRT
 {
 typedef enum
 {
@@ -123,17 +124,9 @@ struct BandProperty
     bool bHasScale = false;
     double dfScale = 0;
 };
-}  // namespace
+}  // namespace gdal::GDALBuildVRT
 
-/************************************************************************/
-/*                            ArgIsNumeric()                            */
-/************************************************************************/
-
-static int ArgIsNumeric(const char *pszArg)
-
-{
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
-}
+using namespace gdal::GDALBuildVRT;
 
 /************************************************************************/
 /*                         GetSrcDstWin()                               */
