@@ -649,3 +649,14 @@ def test_kea_15(tmp_path, tmp_vsimem):
     ds = gdal.Open(tmp_vsimem / "foo.kea")
     assert ds.GetDriver().ShortName == "KEA"
     ds = None
+
+
+###############################################################################
+# Test /vsi functionality on writing (does not work)
+
+
+@gdaltest.enable_exceptions()
+def test_kea_create_vsimem(tmp_vsimem):
+
+    with pytest.raises(Exception):
+        gdaltest.kea_driver.Create(tmp_vsimem / "vsitest.kea", 1, 1)
