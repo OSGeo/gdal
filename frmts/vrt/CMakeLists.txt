@@ -26,3 +26,6 @@ endif ()
 
 include(TargetPublicHeader)
 target_public_header(TARGET gdal HEADERS vrtdataset.h gdal_vrt.h)
+
+# because of use of GDALOpenVerticalShiftGrid
+set_property(SOURCE vrtwarped.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
