@@ -886,11 +886,11 @@ ZarrV3Array::GetTileIndicesFromFilename(const char *pszFilename) const
 }
 
 /************************************************************************/
-/*                             ParseDtype()                             */
+/*                           ParseDtypeV3()                             */
 /************************************************************************/
 
-static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
-                                       std::vector<DtypeElt> &elts)
+static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
+                                         std::vector<DtypeElt> &elts)
 {
     do
     {
@@ -1380,7 +1380,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     if (oDtype["fallback"].IsValid())
         oDtype = oDtype["fallback"];
     std::vector<DtypeElt> aoDtypeElts;
-    const auto oType = ParseDtype(oDtype, aoDtypeElts);
+    const auto oType = ParseDtypeV3(oDtype, aoDtypeElts);
     if (oType.GetClass() == GEDTC_NUMERIC &&
         oType.GetNumericDataType() == GDT_Unknown)
         return nullptr;
