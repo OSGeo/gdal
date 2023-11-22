@@ -1418,6 +1418,84 @@ def test_ogr_mem_write_arrow():
 
 
 ###############################################################################
+# Test various data types for FID column in WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("fid_type", [ogr.OFTInteger, ogr.OFTInteger64, ogr.OFTString])
+def test_ogr_mem_write_arrow_types_of_fid(fid_type):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("id", fid_type))
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature["id"] = 2
+    src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        if fid_type == ogr.OFTString:
+            with pytest.raises(
+                Exception,
+                match=r"FID column 'id' should be of Arrow format 'i' \(int32\) or 'l' \(int64\)",
+            ):
+                dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+        else:
+            dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+
+    if fid_type != ogr.OFTString:
+        assert dst_lyr.GetFeature(2)
+
+
+###############################################################################
+# Test failure of CreateFeature() in WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_write_arrow_error_negative_fid():
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature["id"] = -2
+    src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        with pytest.raises(Exception, match="negative FID are not supported"):
+            dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+
+
+###############################################################################
 
 
 @gdaltest.enable_exceptions()
