@@ -3434,7 +3434,7 @@ int TABRegion::WriteGeometryToMAPFile(
          * to write the coordinates themselves...
          *------------------------------------------------------------*/
 
-        GInt32 nX, nY;
+        GInt32 nX = 0, nY = 0;
         for (int iRing = 0; iRing < numRingsTotal; iRing++)
         {
             OGRLinearRing *poRing = GetRingRef(iRing);
@@ -8403,9 +8403,10 @@ void TABDebugFeature::DumpMIF(FILE *fpOut /*=NULL*/)
  **********************************************************************/
 
 // MI default is PEN(1, 2, 0)
-static const TABPenDef csDefaultPen = MITAB_PEN_DEFAULT;
+static const TABPenDef MITABcsDefaultPen = MITAB_PEN_DEFAULT;
 
-ITABFeaturePen::ITABFeaturePen() : m_nPenDefIndex(-1), m_sPenDef(csDefaultPen)
+ITABFeaturePen::ITABFeaturePen()
+    : m_nPenDefIndex(-1), m_sPenDef(MITABcsDefaultPen)
 {
 }
 
@@ -8843,10 +8844,10 @@ void ITABFeaturePen::DumpPenDef(FILE *fpOut /*=NULL*/)
  **********************************************************************/
 
 // MI default is BRUSH(2, 16777215, 16777215)
-static const TABBrushDef csDefaultBrush = MITAB_BRUSH_DEFAULT;
+static const TABBrushDef MITABcsDefaultBrush = MITAB_BRUSH_DEFAULT;
 
 ITABFeatureBrush::ITABFeatureBrush()
-    : m_nBrushDefIndex(-1), m_sBrushDef(csDefaultBrush)
+    : m_nBrushDefIndex(-1), m_sBrushDef(MITABcsDefaultBrush)
 {
 }
 
@@ -9062,10 +9063,10 @@ void ITABFeatureBrush::DumpBrushDef(FILE *fpOut /*=NULL*/)
  **********************************************************************/
 
 // MI default is Font("Arial", 0, 0, 0)
-static const TABFontDef csDefaultFont = MITAB_FONT_DEFAULT;
+static const TABFontDef MITABcsDefaultFont = MITAB_FONT_DEFAULT;
 
 ITABFeatureFont::ITABFeatureFont()
-    : m_nFontDefIndex(-1), m_sFontDef(csDefaultFont)
+    : m_nFontDefIndex(-1), m_sFontDef(MITABcsDefaultFont)
 {
 }
 
@@ -9104,10 +9105,10 @@ void ITABFeatureFont::DumpFontDef(FILE *fpOut /*=NULL*/)
  **********************************************************************/
 
 // MI default is Symbol(35, 0, 12)
-static const TABSymbolDef csDefaultSymbol = MITAB_SYMBOL_DEFAULT;
+static const TABSymbolDef MITABcsDefaultSymbol = MITAB_SYMBOL_DEFAULT;
 
 ITABFeatureSymbol::ITABFeatureSymbol()
-    : m_nSymbolDefIndex(-1), m_sSymbolDef(csDefaultSymbol)
+    : m_nSymbolDefIndex(-1), m_sSymbolDef(MITABcsDefaultSymbol)
 {
 }
 
