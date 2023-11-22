@@ -31,7 +31,7 @@
 
 #include "gdal_priv.h"
 
-constexpr const char *DRIVER_NAME = "DWG";
+constexpr const char *DWG_DRIVER_NAME = "DWG";
 
 int CPL_DLL OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo);
 
