@@ -159,13 +159,13 @@ function(add_gdal_driver)
             endforeach()
             set(_COND_WITH_AND "${_COND_WITH_AND})")
 
-            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/eval_${_plugin_var_prefix}.cmake "
+            file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/check_plugin_conditions.cmake "
               if (NOT (${_COND_WITH_AND}))
                 message(FATAL_ERROR \"${_enable_plugin_var}_PLUGIN required, but condition ${_COND} not met\")
               endif()"
             )
 
-            include(${CMAKE_CURRENT_BINARY_DIR}/eval_${_plugin_var_prefix}.cmake)
+            include(${CMAKE_CURRENT_BINARY_DIR}/check_plugin_conditions.cmake)
           endif()
         endif()
 
