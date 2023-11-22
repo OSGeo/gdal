@@ -3951,9 +3951,9 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
 /************************************************************************/
 
 template <class OffsetType>
-static CPLJSONObject GetListAsJSON(const struct ArrowSchema *schema,
-                                   const struct ArrowArray *array,
-                                   const size_t nIdx)
+static CPLJSONArray GetListAsJSON(const struct ArrowSchema *schema,
+                                  const struct ArrowArray *array,
+                                  const size_t nIdx)
 {
     CPLJSONArray oArray;
     const auto panOffsets = static_cast<const OffsetType *>(array->buffers[1]) +
@@ -3984,9 +3984,9 @@ static CPLJSONObject GetListAsJSON(const struct ArrowSchema *schema,
 /*                     GetFixedSizeListAsJSON()                         */
 /************************************************************************/
 
-static CPLJSONObject GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
-                                            const struct ArrowArray *array,
-                                            const size_t nIdx)
+static CPLJSONArray GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
+                                           const struct ArrowArray *array,
+                                           const size_t nIdx)
 {
     CPLJSONArray oArray;
     const int nVals = GetFixedSizeList(schema->format);

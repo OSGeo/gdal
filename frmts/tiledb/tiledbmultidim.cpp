@@ -41,7 +41,8 @@ std::string TileDBSharedResource::SanitizeNameForPath(const std::string &osName)
     // Reserved characters on Windows
     for (char ch : {'<', '>', ':', '"', '/', '\\', '|', '?', '*'})
         osSanitized.replaceAll(ch, '_');
-    return osSanitized;
+    std::string osRet = std::move(osSanitized);
+    return osRet;
 }
 
 /************************************************************************/

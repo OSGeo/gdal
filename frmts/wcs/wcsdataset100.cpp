@@ -102,13 +102,13 @@ std::string WCSDataset100::GetCoverageRequest(bool /* scaled */, int nBufXSize,
     /* -------------------------------------------------------------------- */
     /*      Construct a "simple" GetCoverage request (WCS 1.0).             */
     /* -------------------------------------------------------------------- */
-    CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
-    request = CPLURLAddKVP(request, "SERVICE", "WCS");
-    request = CPLURLAddKVP(request, "REQUEST", "GetCoverage");
-    request = CPLURLAddKVP(request, "VERSION",
+    std::string request = CPLGetXMLValue(psService, "ServiceURL", "");
+    request = CPLURLAddKVP(request.c_str(), "SERVICE", "WCS");
+    request = CPLURLAddKVP(request.c_str(), "REQUEST", "GetCoverage");
+    request = CPLURLAddKVP(request.c_str(), "VERSION",
                            CPLGetXMLValue(psService, "Version", "1.0.0"));
-    request = CPLURLAddKVP(request, "COVERAGE", osCoverage.c_str());
-    request = CPLURLAddKVP(request, "FORMAT", osFormat.c_str());
+    request = CPLURLAddKVP(request.c_str(), "COVERAGE", osCoverage.c_str());
+    request = CPLURLAddKVP(request.c_str(), "FORMAT", osFormat.c_str());
     request += CPLString().Printf(
         "&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s", extent[0],
         extent[1], extent[2], extent[3], nBufXSize, nBufYSize, osCRS.c_str());
@@ -167,12 +167,12 @@ std::string WCSDataset100::GetCoverageRequest(bool /* scaled */, int nBufXSize,
 
 std::string WCSDataset100::DescribeCoverageRequest()
 {
-    CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
-    request = CPLURLAddKVP(request, "SERVICE", "WCS");
-    request = CPLURLAddKVP(request, "REQUEST", "DescribeCoverage");
-    request = CPLURLAddKVP(request, "VERSION",
+    std::string request = CPLGetXMLValue(psService, "ServiceURL", "");
+    request = CPLURLAddKVP(request.c_str(), "SERVICE", "WCS");
+    request = CPLURLAddKVP(request.c_str(), "REQUEST", "DescribeCoverage");
+    request = CPLURLAddKVP(request.c_str(), "VERSION",
                            CPLGetXMLValue(psService, "Version", "1.0.0"));
-    request = CPLURLAddKVP(request, "COVERAGE",
+    request = CPLURLAddKVP(request.c_str(), "COVERAGE",
                            CPLGetXMLValue(psService, "CoverageName", ""));
     CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
     if (extra != "")
@@ -181,7 +181,8 @@ std::string WCSDataset100::DescribeCoverageRequest()
         for (unsigned int i = 0; i < pairs.size(); ++i)
         {
             std::vector<std::string> pair = Split(pairs[i].c_str(), "=");
-            request = CPLURLAddKVP(request, pair[0].c_str(), pair[1].c_str());
+            request =
+                CPLURLAddKVP(request.c_str(), pair[0].c_str(), pair[1].c_str());
         }
     }
     extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
@@ -191,7 +192,8 @@ std::string WCSDataset100::DescribeCoverageRequest()
         for (unsigned int i = 0; i < pairs.size(); ++i)
         {
             std::vector<std::string> pair = Split(pairs[i].c_str(), "=");
-            request = CPLURLAddKVP(request, pair[0].c_str(), pair[1].c_str());
+            request =
+                CPLURLAddKVP(request.c_str(), pair[0].c_str(), pair[1].c_str());
         }
     }
     return request;
