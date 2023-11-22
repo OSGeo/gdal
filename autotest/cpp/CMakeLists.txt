@@ -96,9 +96,7 @@ add_executable(
   test_marching_squares_polygon.cpp
   test_marching_squares_square.cpp
   test_marching_squares_tile.cpp)
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(TARGET gdal_unit_test PROPERTY UNITY_BUILD OFF)
-endif ()
+
 target_link_libraries(gdal_unit_test PRIVATE gtest_for_gdal)
 target_link_libraries(gdal_unit_test PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
 if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)

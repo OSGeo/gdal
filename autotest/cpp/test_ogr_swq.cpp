@@ -41,8 +41,6 @@ struct test_ogr_swq : public ::testing::Test
 {
 };
 
-}  // namespace
-
 TEST_F(test_ogr_swq, basic)
 {
     std::vector<swq_expr_node> nodes = {
@@ -229,3 +227,5 @@ TEST_F(test_ogr_swq, select_unparse)
         CPLFree(ret);
     }
 }
+
+}  // namespace
