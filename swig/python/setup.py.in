@@ -10,6 +10,7 @@
 import os
 import sys
 from glob import glob
+from pathlib import Path
 
 from setuptools.command.build_ext import build_ext
 from setuptools import setup
@@ -357,6 +358,25 @@ classifiers = [
 
 exclude_package_data = {'': ['CMakeLists.txt']}
 
+scripts = sorted(glob("./gdal-utils/osgeo_utils/*.py"), reverse=True)  # command line scripts
+
+def define_entry_points(scripts, entry_points=None):
+    """
+    Return a dict defining scripts that get installed to PYTHONHOME/Scripts.
+
+        console_scripts : [
+            # CLI_command = dirname.filename
+            'gdal_edit = osgeo_utils.gdal_edit',
+            'gdal_merge = osgeo_utils.gdal_merge',
+            ... ]
+    """
+    console_scripts = []
+    for f in scripts:
+        name = Path(f).stem  # 'gdal_edit' from 'gdal_edit.py'
+        console_scripts.append([f"{name} = osgeo_utils.{name}:main"])
+    entry_points = {"console_scripts": console_scripts}
+    return entry_points
+
 setup(
     name=name,
     version=version,
@@ -380,4 +400,5 @@ setup(
     zip_safe=False,
     cmdclass=dict(build_ext=gdal_ext),
     exclude_package_data = exclude_package_data,
+    entry_points=define_entry_points(scripts),
 )
