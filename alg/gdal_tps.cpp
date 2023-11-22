@@ -47,8 +47,6 @@
 #include "gdal_priv.h"
 #include "gdalgenericinverse.h"
 
-CPL_CVSID("$Id$")
-
 CPL_C_START
 CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg);
 void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);

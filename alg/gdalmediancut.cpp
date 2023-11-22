@@ -53,18 +53,19 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
-
 template <typename T> static T *HISTOGRAM(T *h, int n, int r, int g, int b)
 {
     const int index = (r * n + g) * n + b;
     return &h[index];
 }
 
+#ifndef MAKE_COLOR_CODE_defined
+#define MAKE_COLOR_CODE_defined
 static int MAKE_COLOR_CODE(int r, int g, int b)
 {
-    return r + g * 256 + b * 256 * 256;
+    return r | (g << 8) | (b << 16);
 }
+#endif
 
 // NOTE: If changing the size of this structure, edit
 // MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536 in gdal_alg_priv.h and take into
@@ -169,10 +170,13 @@ extern "C" int CPL_STDCALL GDALComputeMedianCutPCT(
     }
 }
 
+#ifndef IsColorCodeSet_defined
+#define IsColorCodeSet_defined
 static inline bool IsColorCodeSet(GUInt32 nColorCode)
 {
     return (nColorCode >> 31) == 0;
 }
+#endif
 
 static inline int FindColorCount(const HashHistogram *psHashHistogram,
                                  GUInt32 nColorCode)

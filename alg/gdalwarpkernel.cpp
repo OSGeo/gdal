@@ -82,8 +82,6 @@
 
 #endif
 
-CPL_CVSID("$Id$")
-
 constexpr double BAND_DENSITY_THRESHOLD = 0.0000000001;
 constexpr float SRC_DENSITY_THRESHOLD = 0.000000001f;
 

@@ -50,8 +50,6 @@
 #include <ctype.h>
 #include <math.h>
 
-CPL_CVSID("$Id$")
-
 #if defined(INTERNAL_QHULL) || defined(EXTERNAL_QHULL)
 #define HAVE_INTERNAL_OR_EXTERNAL_QHULL 1
 #endif
