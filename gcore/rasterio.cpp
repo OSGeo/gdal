@@ -3775,6 +3775,18 @@ CPLErr GDALDataset::TryOverviewRasterIO(
     GDALRasterIOExtraArg sExtraArg;
     GDALCopyRasterIOExtraArg(&sExtraArg, psExtraArg);
 
+    // As we are going to use an overview, the window may/will become
+    // unaligned inside the overview, so we need to force the use of
+    // of a floating point window.
+    if (!sExtraArg.bFloatingPointWindowValidity)
+    {
+        sExtraArg.bFloatingPointWindowValidity = TRUE;
+        sExtraArg.dfXOff = nXOff;
+        sExtraArg.dfYOff = nYOff;
+        sExtraArg.dfXSize = nXSize;
+        sExtraArg.dfYSize = nYSize;
+    }
+
     int iOvrLevel = GDALBandGetBestOverviewLevel2(
         papoBands[0], nXOffMod, nYOffMod, nXSizeMod, nYSizeMod, nBufXSize,
         nBufYSize, &sExtraArg);
