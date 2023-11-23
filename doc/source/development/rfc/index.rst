@@ -103,3 +103,4 @@ RFC list
     rfc94_field_precision_width_metadata
     rfc95_standard_int_types
     rfc96_deferred_plugin_loading
+    rfc98_build_requirements_gdal_3_9
