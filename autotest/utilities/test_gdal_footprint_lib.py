@@ -427,3 +427,28 @@ def test_gdaldem_footprint_dict_arguments():
         "-lco",
         "STRING_DEFAULT_WIDTH=10",
     ]
+
+
+###############################################################################
+# Test footprint, RGBA and overviews
+
+
+def test_gdaldem_footprint_rgba_overviews():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 6, 6, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_RedBand + i)
+    src_ds.BuildOverviews("NONE", [2])
+    for i in range(4):
+        src_ds.GetRasterBand(i + 1).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        ovr=0,
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((2 2,2 4,4 4,4 2,2 2)))")
