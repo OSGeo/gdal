@@ -1,3 +1,117 @@
+# GDAL/OGR 3.8.1 Release Notes
+
+GDAL 3.8.1 is a bugfix release.
+
+## Build
+
+* CMake: add gdalinfo bash-completion file to list of installed files
+* Fix build error with libxml2 2.12
+
+## GDAL 3.8.1
+
+### Port
+
+* CSLLoad2(): remove CPLErrorReset()
+
+### Core
+
+* RasterIO: fix subpixel shift when reading from overviews with non-nearest
+  resampling
+
+### Algorithms
+
+* Inverse TPS transformer: speed improvement in gdalwarp use case (#8672)
+
+### Utilities
+
+* gdalwarp -of COG: use target SRS from -co TILING_SCHEME when specified (#8684)
+* gdalwarp: add a heuristic to clamp northings when projecting from geographic
+  to Mercator (typically EPSG:3857) (#8730)
+* gdal_rasterize: fix inverse rasterization of polygon nested inside another
+  one. Requires GEOS enabled build (#8689)
+* gdal_footprint: fix -ovr on RGBA datasets (#8792)
+* gdal_sieve.py/gdalattachpct.py/gdalcompare.py/gdalmove.py:
+  make sure --version and --help return 0 error code (#8717)
+* Python bindings: define entry_points.console_scripts. Affects Windows where
+  .exe launcher scripts are .exe launchers are now installed in the Scripts
+  subdirectory.
+
+### Raster drivers
+
+BSB driver:
+ * fix opening datasets with errant 0x1A character in header (#8765)
+
+COG driver:
+ * avoid warnings when converting from world coverage to EPSG:3857
+
+KEA driver:
+ * Create(): error out if passing a /vsi file. avoids crashes (#8743)
+
+MSGN driver:
+ * fix memleak in error code path
+
+GeoTIFF driver:
+* multithreaded reader/writer: in update scenarios, do not force serialization
+  to disk of dirty blocks that intersect the area of interest to read (#8729)
+
+VRT driver:
+ * VRTSourcedRasterBand: serialize approximate statistics inside .vrt when
+   there are overviews
+
+## OGR 3.8.1
+
+### Core
+
+* PostFilterArrowArray(): various fixes to pass libarrow full validation checks
+ (#8755)
+* Add OGRCloneArrowArray()
+* WriteArrowArray(): fix wrong taking into account of struct offset
+
+### Utilities
+
+* ogr2ogr: fix GPKG to shapefile with the -preserve_fid flag (#8761)
+
+### Vector drivers
+
+Arrow/Parquet driver:
+ * use OGRCloneArrowArray() for safer filtering
+
+GML driver:
+ * SaveClasses(): fix memleak in error code path (ossfuzz#63871)
+
+GPKG driver:
+ * fix SetFeature()/UpdateFeature()/DeleteFeature() on views with INSTEAD OF
+   triggers (#8707)
+ * sqlite_rtree_bulk_load.c: fix memleak in error code path
+ * fix adding field comments after alternative name
+ * Add a OGRPARSEDATE_OPTION_LAX option to OGRParseDate() and use it when
+   reading GPKG files (#8759)
+ * fix GetNextArrowArray() when there are more than 125 columns (affects
+   ogr2ogr from such GPKG) (#8757)
+
+OAPIF driver:
+ * add INITIAL_REQUEST_PAGE_SIZE open option (#4556)
+
+PMTiles driver:
+ * avoid undefined-shift when zoom level is too big (ossfuzz#64234,
+   ossfuzz#64404)
+
+S57 driver:
+ * stricter dataset identification to avoid recognize S-101 datasets we don't
+   handle
+
+Shapefile driver:
+ * fix spurious warning when reading polygons (#8767)
+
+SQLite driver:
+ * fix SRS retrieval of a SELECT layer from a non-Spatialite DB with a point
+   geometry column (#8677)
+
+## Python bindings
+
+* GetArrowStreamAsNumPy(): fix missing offset when reading fixed size list of
+  string
+
 # GDAL/OGR 3.8.0 Releases Notes
 
 GDAL/OGR 3.8.0 is a feature release.
