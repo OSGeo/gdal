@@ -26,7 +26,8 @@ CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DGDAL_USE_WEBP=OFF \
          -DGDAL_USE_ARROW=OFF \
          -DGDAL_USE_PARQUET=OFF \
-         -DBUILD_CSHARP_BINDINGS=OFF
+         -DBUILD_CSHARP_BINDINGS=OFF \
+         -DCMAKE_UNITY_BUILD=ON
 make -j3
 echo "Show which shared libs got used:"
 otool -L apps/ogrinfo
