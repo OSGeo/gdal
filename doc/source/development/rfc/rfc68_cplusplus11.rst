@@ -256,6 +256,11 @@ Related RFCs:
 -  `Move OTB to
    C++14 <https://wiki.orfeo-toolbox.org/index.php/Request_for_Comments-36:_Move_OTB_to_C%2B%2B14>`__
 
+Amendments
+----------
+
+This RFC is superseded per :ref:`rfc-98`.
+
 Voting history
 --------------
 
