@@ -32,8 +32,8 @@ GDAL 3.8.1 is a bugfix release.
 * gdal_footprint: fix -ovr on RGBA datasets (#8792)
 * gdal_sieve.py/gdalattachpct.py/gdalcompare.py/gdalmove.py:
   make sure --version and --help return 0 error code (#8717)
-* Python bindings: define entry_points.console_scripts. Affects Windows where
-  .exe launcher scripts are .exe launchers are now installed in the Scripts
+* Python bindings: define entry_points.console_scripts. Affects in particular
+  Windows where .exe launcher scripts are now installed in the Scripts
   subdirectory.
 
 ### Raster drivers
