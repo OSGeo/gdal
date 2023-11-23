@@ -726,6 +726,49 @@ def test_rasterio_9():
         assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
 
+##############################################################################
+# Test resampled reading from an overview level (#8794)
+
+
+def test_rasterio_overview_subpixel_resampling():
+
+    numpy = pytest.importorskip("numpy")
+
+    temp_path = "/vsimem/rasterio_ovr.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(temp_path, 8, 8, 1, gdal.GDT_Byte)
+    ds.GetRasterBand(1).WriteArray(
+        numpy.array(
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ]
+        )
+    )
+    ds.BuildOverviews("NEAREST", overviewlist=[2])
+
+    pix = ds.GetRasterBand(1).ReadAsArray(
+        xoff=1,
+        yoff=1,
+        buf_xsize=3,
+        buf_ysize=3,
+        win_xsize=6,
+        win_ysize=6,
+        resample_alg=gdal.GRIORA_Bilinear,
+    )
+    assert numpy.all(
+        pix == numpy.array([[64, 128, 64], [128, 255, 128], [64, 128, 64]])
+    )
+
+    ds = None
+    gdal.Unlink("/vsimem/rasterio_ovr.tif")
+
+
 ###############################################################################
 # Test error when getting a block
 
