@@ -703,7 +703,8 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         {
             GDALRasterBand *poMaskBand;
             const int nMaskFlags = poBand->GetMaskFlags();
-            if ((nMaskFlags & GMF_ALPHA) != 0)
+            if ((nMaskFlags & GMF_ALPHA) != 0 ||
+                poBand->GetColorInterpretation() == GCI_AlphaBand)
             {
                 poMaskBand = poBand;
             }
