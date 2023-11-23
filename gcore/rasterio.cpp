@@ -3667,18 +3667,29 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
     if (nOYOff + nOYSize > poBestOverview->GetYSize())
         nOYSize = poBestOverview->GetYSize() - nOYOff;
 
+    if (psExtraArg)
+    {
+        if (psExtraArg->bFloatingPointWindowValidity)
+        {
+            psExtraArg->dfXOff /= dfXRes;
+            psExtraArg->dfXSize /= dfXRes;
+            psExtraArg->dfYOff /= dfYRes;
+            psExtraArg->dfYSize /= dfYRes;
+        }
+        else if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
+        {
+            psExtraArg->bFloatingPointWindowValidity = true;
+            psExtraArg->dfXOff = nXOff / dfXRes;
+            psExtraArg->dfXSize = nXSize / dfXRes;
+            psExtraArg->dfYOff = nYOff / dfYRes;
+            psExtraArg->dfYSize = nYSize / dfYRes;
+        }
+    }
+
     nXOff = nOXOff;
     nYOff = nOYOff;
     nXSize = nOXSize;
     nYSize = nOYSize;
-
-    if (psExtraArg && psExtraArg->bFloatingPointWindowValidity)
-    {
-        psExtraArg->dfXOff /= dfXRes;
-        psExtraArg->dfXSize /= dfXRes;
-        psExtraArg->dfYOff /= dfYRes;
-        psExtraArg->dfYSize /= dfYRes;
-    }
 
     return nBestOverviewLevel;
 }
