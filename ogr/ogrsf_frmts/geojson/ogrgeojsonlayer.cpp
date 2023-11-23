@@ -66,8 +66,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer(const char *pszName,
                                  OGRGeoJSONDataSource *poDS,
                                  OGRGeoJSONReader *poReader)
     : OGRMemLayer(pszName, poSRSIn, eGType), poDS_(poDS), poReader_(poReader),
-      bHasAppendedFeatures_(false), bUpdated_(false),
-      bOriginalIdModified_(false), nTotalFeatureCount_(0)
+      bHasAppendedFeatures_(false), bOriginalIdModified_(false),
+      nTotalFeatureCount_(0)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable(poDS->IsUpdatable());
