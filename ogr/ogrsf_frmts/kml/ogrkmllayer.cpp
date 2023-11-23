@@ -61,8 +61,8 @@ OGRKMLLayer::OGRKMLLayer(const char *pszName,
     : poDS_(poDSIn),
       poSRS_(poSRSIn ? new OGRSpatialReference(nullptr) : nullptr),
       poCT_(nullptr), poFeatureDefn_(new OGRFeatureDefn(pszName)),
-      iNextKMLId_(0), nTotalKMLCount_(-1), bWriter_(bWriterIn),
-      nLayerNumber_(0), nWroteFeatureCount_(0), bSchemaWritten_(false),
+      iNextKMLId_(0), bWriter_(bWriterIn), nLayerNumber_(0),
+      nWroteFeatureCount_(0), bSchemaWritten_(false),
       pszName_(CPLStrdup(pszName)), nLastAsked(-1), nLastCount(-1)
 {
     // KML should be created as WGS84.
