@@ -362,7 +362,6 @@ class RMFRasterBand final : public GDALRasterBand
     friend class RMFDataset;
 
   private:
-    GUInt32 nBytesPerPixel;
     GUInt32 nBlockSize;
     GUInt32 nBlockBytes;
     GUInt32 nLastTileWidth;
