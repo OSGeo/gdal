@@ -54,7 +54,13 @@ add_library(
   gdal_thread_pool.cpp
   nasakeywordhandler.cpp)
 
-set_property(SOURCE gdal_misc.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+get_property(IS_UNITY_BUILD TARGET gcore PROPERTY UNITY_BUILD)
+if(IS_UNITY_BUILD)
+  set_property(
+    SOURCE gdal_misc.cpp
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS CMAKE_UNITY_BUILD)
+endif()
 
 gdal_standard_includes(gcore)
 add_dependencies(gcore generate_gdal_version_h)
