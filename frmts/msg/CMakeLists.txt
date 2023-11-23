@@ -20,6 +20,14 @@ if(NOT TARGET gdal_MSG)
     return()
 endif()
 
+if (WIN32)
+    set_property(TARGET gdal_MSG PROPERTY UNITY_BUILD OFF)
+    # Otherwise we get errors like the following, likely related to the PublicDecompWT SDK
+    # C:\Program Files (x86)\Windows Kits\10\include\10.0.22621.0\shared\rpcndr.h(203): error C2872: 'byte': ambiguous symbol
+    # C:\Program Files (x86)\Windows Kits\10\include\10.0.22621.0\shared\rpcndr.h(202): note: could be 'unsigned char byte'
+    # C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.37.32822\include\cstddef(29): note: or       'std::byte'
+endif()
+
 gdal_standard_includes(gdal_MSG)
 
 set(PUBLICDECOMPWT_URL
