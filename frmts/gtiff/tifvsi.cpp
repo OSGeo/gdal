@@ -52,6 +52,8 @@
 #include "gdal_libgeotiff_symbol_rename.h"
 #endif
 
+#include "xtiffio.h"
+
 #if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0
 #define SUPPORTS_LIBTIFF_OPEN_OPTIONS
 
@@ -62,16 +64,6 @@ extern int GTiffErrorHandlerExt(TIFF *tif, void *user_data, const char *module,
                                 const char *fmt, va_list ap);
 
 #endif
-
-CPL_C_START
-extern void CPL_DLL XTIFFInitialize(void);
-extern TIFF CPL_DLL *XTIFFClientOpen(const char *name, const char *mode,
-                                     thandle_t thehandle, TIFFReadWriteProc,
-                                     TIFFReadWriteProc, TIFFSeekProc,
-                                     TIFFCloseProc, TIFFSizeProc,
-                                     TIFFMapFileProc, TIFFUnmapFileProc);
-extern void CPL_DLL XTIFFClose(TIFF *tif);
-CPL_C_END
 
 constexpr int BUFFER_SIZE = 65536;
 
