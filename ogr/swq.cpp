@@ -321,8 +321,6 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                                  const char *value)
 
 {
-    swq_col_def *def = &select_info->column_defs[dest_column];
-
     /* -------------------------------------------------------------------- */
     /*      Do various checking.                                            */
     /* -------------------------------------------------------------------- */
@@ -333,6 +331,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
         dest_column >= static_cast<int>(select_info->column_defs.size()))
         return "dest_column out of range in swq_select_summarize().";
 
+    swq_col_def *def = &select_info->column_defs[dest_column];
     if (def->col_func == SWQCF_NONE && !def->distinct_flag)
         return nullptr;
 
