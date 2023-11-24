@@ -2309,7 +2309,9 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
         {
             const OGRFieldType eType(
                 poFeatureDefn->GetFieldDefn(iField)->GetType());
-            if (eType == OFTReal)
+            if ((eType == OFTReal || eType == OFTInteger ||
+                 eType == OFTInteger64) &&
+                m_eStringQuoting != StringQuoting::ALWAYS)
             {
                 if (poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
                         OFSTFloat32 &&

@@ -2633,7 +2633,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"')
+    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n"215229.266","168","35043411"')
 
     ds = gdal.OpenEx(
         tmp_vsimem / "ogr_csv_string_quoting_always.csv",
@@ -2653,7 +2653,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert data.startswith(
-        '"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"\n247328.172,"179","35043423"'
+        '"AREA","EAS_ID","PRFEDEA"\n"215229.266","168","35043411"\n"247328.172","179","35043423"'
     )
 
 
@@ -2667,10 +2667,16 @@ def test_ogr_csv_string_quoting_if_ambiguous(tmp_vsimem):
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
     lyr.CreateField(ogr.FieldDefn("baz"))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "00123"
     f["bar"] = "x"
     f["baz"] = "1.25"
+    f["intfield"] = 1
+    f["int64field"] = 1234567890123
+    f["realfield"] = 1.25
     lyr.CreateFeature(f)
 
     gdal.VectorTranslate(
@@ -2681,7 +2687,7 @@ def test_ogr_csv_string_quoting_if_ambiguous(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert '"00123",x,"1.25"' in data
+    assert '"00123",x,"1.25",1,1234567890123,1.25' in data
 
     gdal.Unlink(tmp_vsimem / "ogr_csv_string_quoting_if_ambiguous.csv")
 
@@ -2696,10 +2702,16 @@ def test_ogr_csv_string_quoting_if_needed(tmp_vsimem):
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
     lyr.CreateField(ogr.FieldDefn("baz"))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "00123"
     f["bar"] = "x"
     f["baz"] = "1.25"
+    f["intfield"] = 1
+    f["int64field"] = 1234567890123
+    f["realfield"] = 1.25
     lyr.CreateFeature(f)
 
     gdal.VectorTranslate(
@@ -2713,7 +2725,7 @@ def test_ogr_csv_string_quoting_if_needed(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert "00123,x,1.25" in data
+    assert "00123,x,1.25,1,1234567890123,1.25" in data
 
 
 ###############################################################################
