@@ -1088,6 +1088,12 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 }
             }
 
+            else if (EQUAL(pszKey, "a_nodata"))
+            {
+                argv.AddString("-a_nodata");
+                argv.AddString(pszValue);
+            }
+
             else if (EQUAL(pszKey, "a_srs"))
             {
                 argv.AddString("-a_srs");

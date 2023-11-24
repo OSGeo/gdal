@@ -1903,7 +1903,7 @@ For example:
     vrt://my.tif?bands=2&ovr=4
 
 
-The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
+The supported options currently are ``bands``, ``a_nodata``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
 ``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, and ``eco``.
 
@@ -1913,6 +1913,9 @@ The effect of the ``bands`` option is to change the band composition. The values
 are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
+
+The effect of the ``a_nodata`` option (added in GDAL 3.9) is to assign (override) the nodata
+value of the source in the same way as (:ref:`gdal_translate`).
 
 The effect of the ``a_srs`` option (added in GDAL 3.7) is to assign (override) the coordinate
 reference system of the source in the same way as (:ref:`gdal_translate`), it may be missing,
