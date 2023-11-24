@@ -1304,6 +1304,15 @@ public:
         *isvalid = TRUE;
     return;
   }
+  %feature( "kwargs" ) GetExtent3D;
+  void GetExtent3D(double argout[6], int* isvalid = NULL, int force = 1, int can_return_null = 0, int geom_field = 0 ) {
+    OGRErr eErr = OGR_L_GetExtent3D(self, geom_field, (OGREnvelope3D*)argout, force);
+    if (can_return_null)
+        *isvalid = (eErr == OGRERR_NONE);
+    else
+        *isvalid = TRUE;
+    return;
+  }
 #else
 #ifndef SWIGJAVA
   %feature( "kwargs" ) GetExtent;
