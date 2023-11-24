@@ -403,7 +403,12 @@ if (Python_Interpreter_FOUND)
     set(SETUPTOOLS_USE_DISTUTILS stdlib)
   elseif ("${SITE_PACKAGE_DIR}" MATCHES "dist-packages")
     set(INSTALL_ARGS "${INSTALL_ARGS} --install-layout=deb")
-    set(SETUPTOOLS_USE_DISTUTILS stdlib)
+    if(Python_VERSION VERSION_LESS 3.12)
+        # It no longer seems needed to mess with SETUPTOOLS_USE_DISTUTILS
+        # with Debian Python 3.12 (or maybe its setuptools 68.1.2 version...),
+        # so only do that with older versions
+        set(SETUPTOOLS_USE_DISTUTILS stdlib)
+    endif()
   endif ()
 
   if (ONLY_GENERATE_FOR_NON_DEBUG)
