@@ -327,6 +327,11 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                 // Initialize the empty overlays, all of them for a given scale
                 // They could already exist, in which case they are not erased
                 idxSize = AddOverviews(int(scale));
+
+                // If we don't have overviews, don't try to generate them
+                if (GetRasterBand(1)->GetOverviewCount() == 0)
+                    throw CE_None;
+
                 if (!CheckFileSize(current.idxfname, idxSize, GA_Update))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
