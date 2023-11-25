@@ -496,6 +496,11 @@ jobs:
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
+    - name: Test python setup.py install
+      shell: bash -l {0}
+      run: |
+        cd $GITHUB_WORKSPACE/build/swig/python
+        python setup.py install
 
   build-windows-minimum:
     runs-on: windows-2022
