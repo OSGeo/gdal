@@ -174,9 +174,12 @@ register_test(test-unit gdal_unit_test)
 
 include(GdalTestTarget)
 
+add_library(main_gtest STATIC main_gtest.cpp)
+target_link_libraries(main_gtest PRIVATE gtest_for_gdal $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
+gdal_standard_includes(main_gtest)
+
 gdal_test_target(testblockcache testblockcache.cpp)
-target_sources(testblockcache PRIVATE main_gtest.cpp)
-target_link_libraries(testblockcache PRIVATE gtest_for_gdal)
+target_link_libraries(testblockcache PRIVATE gtest_for_gdal main_gtest)
 
 register_test(
   test-block-cache-1
@@ -273,8 +276,7 @@ endmacro ()
 
 function (gdal_gtest_target _target testlabel _source)
   gdal_autotest_target(${_target} ${testlabel} ${_source} ${ARGN})
-  target_sources(${_target} PRIVATE main_gtest.cpp)
-  target_link_libraries(${_target} PRIVATE gtest_for_gdal)
+  target_link_libraries(${_target} PRIVATE gtest_for_gdal main_gtest)
 endfunction ()
 
 set(QUICKTEST_LIST
