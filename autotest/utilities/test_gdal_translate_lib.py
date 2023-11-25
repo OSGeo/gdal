@@ -1096,6 +1096,28 @@ def test_gdal_translate_lib_overview_level(tmp_vsimem):
 
 
 ###############################################################################
+# Test overviewLevel option in a situation where overview bands have not a
+# dedicated owner dataset.
+# Test last part of GDALOverviewDataset::IRasterIO() implementation
+
+
+@pytest.mark.require_driver("JP2KAK")
+def test_gdal_translate_lib_overview_level_freestanding(tmp_vsimem):
+
+    tmp_filename = tmp_vsimem / "tmp.jp2"
+
+    src_ds = gdal.Translate(
+        tmp_filename,
+        "../gcore/data/byte.tif",
+        width=20 * 32,
+        creationOptions=["QUALITY=100"],
+        format="JP2KAK",
+    )
+    out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0, width=20)
+    assert out_ds.GetRasterBand(1).Checksum() == 4667
+
+
+###############################################################################
 # Test copying a raster with no input band
 
 
