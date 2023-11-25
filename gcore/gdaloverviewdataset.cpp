@@ -200,6 +200,14 @@ GDALOverviewDataset::GDALOverviewDataset(GDALDataset *poMainDSIn,
     nBands = poMainDS->GetRasterCount();
     for (int i = 0; i < nBands; ++i)
     {
+        if (poOvrDS)
+        {
+            // Check that all overview bands belong to the same dataset
+            auto poOvrBand =
+                GetOverviewEx(poMainDS->GetRasterBand(i + 1), nOvrLevel);
+            if (poOvrBand->GetDataset() != poOvrDS)
+                poOvrDS = nullptr;
+        }
         SetBand(i + 1, new GDALOverviewBand(this, i + 1));
     }
 
@@ -328,7 +336,7 @@ CPLErr GDALOverviewDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     // In case the overview bands are really linked to a dataset, then issue
     // the request to that dataset.
-    if (nOvrLevel != -1 && poOvrDS != nullptr)
+    if (poOvrDS != nullptr)
     {
         return poOvrDS->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                                  nBufXSize, nBufYSize, eBufType, nBandCount,
