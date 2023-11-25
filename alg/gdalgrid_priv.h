@@ -33,6 +33,8 @@
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
 
+#include "gdal_alg.h"
+
 //! @cond Doxygen_Suppress
 
 typedef struct
