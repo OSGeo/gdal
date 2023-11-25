@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdalpansharpen.h"
 
 #include <algorithm>
