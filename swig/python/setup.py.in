@@ -147,6 +147,39 @@ def has_flag(compiler, flagname):
     return True
 
 # ---------------------------------------------------------------------------
+# BEGIN monkey patching of setuptools.command.easy_install.easy_install class
+# ---------------------------------------------------------------------------
+
+# "python setup.py install" uses setuptools.command.easy_install internally
+# When installing the .exe wrapper executable for our command line utilities,
+# that class removes the installed .py scripts themselves. Which we do not want,
+# since they may be directly used by users. So we do a monkey patching of
+# easy_install.install_wrapper_scripts to install a modified
+# easy_install.delete_blockers method that does NOT remove .py files
+if sys.platform == 'win32':
+    from setuptools.command.easy_install import easy_install
+
+    original_install_wrapper_scripts = easy_install.install_wrapper_scripts
+
+    def monkey_patched_install_wrapper_scripts(self, dist):
+        original_delete_blockers = easy_install.delete_blockers
+        def monkey_patched_delete_blockers(self, blockers):
+            blockers = filter(lambda x: not x.endswith('.py'), blockers)
+            return original_delete_blockers(self, blockers)
+
+        easy_install.delete_blockers = monkey_patched_delete_blockers
+        try:
+            return original_install_wrapper_scripts(self, dist)
+        finally:
+             easy_install.delete_blockers = original_delete_blockers
+
+    easy_install.install_wrapper_scripts = monkey_patched_install_wrapper_scripts
+
+# ---------------------------------------------------------------------------
+# END monkey patching of setuptools.command.easy_install.easy_install class
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # Imports
 # ---------------------------------------------------------------------------
 
