@@ -22,6 +22,7 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DADD_EXTERNAL_DEFERRED_PLUGIN_FOO=/tmp/foo.cpp \
   -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS="-std=c++23 -Werror" -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
+make -j$(nproc) install DESTDIR=/tmp/install-gdal
 
 # To check if DeclareDeferredFOO() is called by GDALAllRegister()
 apps/gdalinfo --version
