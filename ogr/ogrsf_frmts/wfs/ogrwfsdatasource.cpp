@@ -1715,12 +1715,12 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
         aoSetAlreadyTriedLayers.end())
         return;
 
-    char *pszPrefix = CPLStrdup(pszLayerName);
-    char *pszColumn = strchr(pszPrefix, ':');
-    if (pszColumn)
-        *pszColumn = 0;
+    std::string osPrefix(pszLayerName);
+    const auto nColumnPos = osPrefix.find(':');
+    if (nColumnPos == std::string::npos)
+        osPrefix.clear();
     else
-        *pszPrefix = 0;
+        osPrefix.resize(nColumnPos);
 
     OGRWFSLayer *poRefLayer =
         dynamic_cast<OGRWFSLayer *>(GetLayerByName(pszLayerName));
@@ -1748,10 +1748,10 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
             /* We must be careful to requests only layers with the same
              * prefix/namespace */
             const char *l_pszName = papoLayers[i]->GetName();
-            if (((pszPrefix[0] == 0 && strchr(l_pszName, ':') == nullptr) ||
-                 (pszPrefix[0] != 0 &&
-                  strncmp(l_pszName, pszPrefix, strlen(pszPrefix)) == 0 &&
-                  l_pszName[strlen(pszPrefix)] == ':')) &&
+            if (((osPrefix.empty() && strchr(l_pszName, ':') == nullptr) ||
+                 (!osPrefix.empty() &&
+                  strncmp(l_pszName, osPrefix.c_str(), osPrefix.size()) == 0 &&
+                  l_pszName[osPrefix.size()] == ':')) &&
                 ((pszRequiredOutputFormat == nullptr &&
                   papoLayers[i]->GetRequiredOutputFormat() == nullptr) ||
                  (pszRequiredOutputFormat != nullptr &&
@@ -1781,9 +1781,6 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
             }
         }
     }
-
-    CPLFree(pszPrefix);
-    pszPrefix = nullptr;
 
 #if USE_GET_FOR_DESCRIBE_FEATURE_TYPE == 1
     CPLString osURL(osBaseURL);
