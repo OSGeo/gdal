@@ -198,7 +198,6 @@ class OGRGPXDataSource final : public OGRDataSource
 
 #ifdef HAVE_EXPAT
     OGRGPXValidity validity;
-    int nElementsRead;
     char *pszVersion;
     XML_Parser oCurrentParser;
     int nDataHandlerCounter;
