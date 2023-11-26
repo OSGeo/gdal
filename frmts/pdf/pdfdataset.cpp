@@ -5410,12 +5410,12 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_PDFIUM
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
+        // coverity is confused by WrapRetain(), believing that multiple
+        // smart pointers manage the same raw pointer. Which is actually
+        // true, but a RetainPtr holds a reference counted object. It is
+        // thus safe to have several RetainPtr holding it.
+        // coverity[multiple_init_smart_ptr]
         GDALPDFObjectPdfium *poRoot = GDALPDFObjectPdfium::Build(
-            // coverity is confused by WrapRetain(), believing that multiple
-            // smart pointers manage the same raw pointer. Which is actually
-            // true, but a RetainPtr holds a reference counted object. It is
-            // thus safe to have several RetainPtr holding it.
-            // coverity[multiple_init_smart_ptr]
             pdfium::WrapRetain(poDocPdfium->doc->GetRoot()));
         if (poRoot->GetType() == PDFObjectType_Dictionary)
         {
