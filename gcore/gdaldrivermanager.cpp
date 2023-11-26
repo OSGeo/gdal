@@ -1599,18 +1599,18 @@ std::string GDALDriverManager::GetPluginFullPath(const char *pszFilename) const
     const int nSearchPaths = aosSearchPaths.size();
     for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
-        CPLString osABISpecificDir =
+        std::string osABISpecificDir =
             CPLFormFilename(aosSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+        if (VSIStatL(osABISpecificDir.c_str(), &sStatBuf) != 0)
             osABISpecificDir = aosSearchPaths[iDir];
 
         const char *pszFullFilename =
-            CPLFormFilename(osABISpecificDir, pszFilename, nullptr);
+            CPLFormFilename(osABISpecificDir.c_str(), pszFilename, nullptr);
         if (VSIStatL(pszFullFilename, &sStatBuf) == 0)
         {
-            m_osLastTriedDirectory = osABISpecificDir;
+            m_osLastTriedDirectory = std::move(osABISpecificDir);
             return pszFullFilename;
         }
     }
