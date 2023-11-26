@@ -60,7 +60,7 @@ OGRGPXDataSource::OGRGPXDataSource()
       lastGPXGeomTypeWritten(GPX_NONE), bUseExtensions(false),
       pszExtensionsNS(nullptr),
 #ifdef HAVE_EXPAT
-      validity(GPX_VALIDITY_UNKNOWN), nElementsRead(0), pszVersion(nullptr),
+      validity(GPX_VALIDITY_UNKNOWN), pszVersion(nullptr),
       oCurrentParser(nullptr), nDataHandlerCounter(0),
 #endif
       nLastRteId(-1), nLastTrkId(-1), nLastTrkSegId(-1)
@@ -224,7 +224,10 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
                 if (strcmp(ppszAttr[i], "version") == 0)
                 {
                     pszVersion = CPLStrdup(ppszAttr[i + 1]);
-                    break;
+                }
+                else if (strcmp(ppszAttr[i], "xmlns:ogr") == 0)
+                {
+                    bUseExtensions = true;
                 }
             }
         }
@@ -380,7 +383,6 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
         {
             bUseExtensions = true;
         }
-        nElementsRead++;
     }
     m_nDepth++;
 }
@@ -499,7 +501,6 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
     CPLFree(pszVersion);
     pszVersion = nullptr;
     bUseExtensions = false;
-    nElementsRead = 0;
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
     oCurrentParser = oParser;
@@ -517,10 +518,12 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
     /* It *MUST* be the first element of an XML file */
     /* So once we have read the first element, we know if we can */
     /* handle the file or not with that driver */
+    uint64_t nTotalBytesRead = 0;
     do
     {
         nDataHandlerCounter = 0;
         nLen = static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
+        nTotalBytesRead += nLen;
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
@@ -548,10 +551,10 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
         {
             /* If we have recognized the <gpx> element, now we try */
             /* to recognize if they are <extensions> tags */
-            /* But we stop to look for after an arbitrary number of tags */
+            /* But we stop to look for after an arbitrary amount of bytes */
             if (bUseExtensions)
                 break;
-            else if (nElementsRead > 200)
+            else if (nTotalBytesRead > 1024 * 1024)
                 break;
         }
         else
