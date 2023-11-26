@@ -154,7 +154,9 @@ class Dataset(BaseDataset):
 class Driver(BaseDriver):
     def identify(self, filename, first_bytes, open_flags, open_options={}):
         return (
-            b'"type":"CityJSON"' in first_bytes or b'"type": "CityJSON"' in first_bytes
+            b'"type":"CityJSON"' in first_bytes
+            or b'"type": "CityJSON"' in first_bytes
+            or first_bytes.startswith(b'{"CityObjects":{')
         )
 
     def open(self, filename, first_bytes, open_flags, open_options={}):
