@@ -8004,9 +8004,13 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
 
     m_bGetNextArrowArrayCalledSinceResetReading = true;
 
-    if (m_poFillArrowArray && m_poFillArrowArray->bIsFinished)
+    if (m_poFillArrowArray)
     {
-        return 0;
+        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        if (m_poFillArrowArray->bIsFinished)
+        {
+            return 0;
+        }
     }
 
     auto psHelper = std::make_unique<OGRArrowArrayHelper>(
@@ -8101,6 +8105,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     // Wait for GetNextArrowArrayAsynchronousWorker() /
     // OGR_GPKG_FillArrowArray_Step() to have generated a result set (or an
     // error)
+    bool bIsFinished;
     {
         std::unique_lock<std::mutex> oLock(m_poFillArrowArray->oMutex);
         while (m_poFillArrowArray->nCountRows == 0 &&
@@ -8108,6 +8113,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         {
             m_poFillArrowArray->oCV.wait(oLock);
         }
+        bIsFinished = m_poFillArrowArray->bIsFinished;
     }
 
     if (m_poFillArrowArray->bErrorOccurred)
@@ -8118,7 +8124,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         m_poFillArrowArray->psHelper->ClearArray();
         return EIO;
     }
-    else if (m_poFillArrowArray->bIsFinished)
+    else if (bIsFinished)
     {
         m_oThreadNextArrowArray.join();
     }
