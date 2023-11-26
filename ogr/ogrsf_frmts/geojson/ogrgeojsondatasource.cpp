@@ -274,7 +274,67 @@ OGRLayer *OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
         return nullptr;
     }
 
+    const char *pszForeignMembersCollection =
+        CSLFetchNameValue(papszOptions, "FOREIGN_MEMBERS_COLLECTION");
+    if (pszForeignMembersCollection)
+    {
+        if (pszForeignMembersCollection[0] != '{' ||
+            pszForeignMembersCollection[strlen(pszForeignMembersCollection) -
+                                        1] != '}')
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value of FOREIGN_MEMBERS_COLLECTION should start with { "
+                     "and end with }");
+            return nullptr;
+        }
+        json_object *poTmp = nullptr;
+        if (!OGRJSonParse(pszForeignMembersCollection, &poTmp, false))
+        {
+            pszForeignMembersCollection = nullptr;
+        }
+        json_object_put(poTmp);
+        if (!pszForeignMembersCollection)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value of FOREIGN_MEMBERS_COLLECTION is invalid JSON");
+            return nullptr;
+        }
+    }
+
+    std::string osForeignMembersFeature =
+        CSLFetchNameValueDef(papszOptions, "FOREIGN_MEMBERS_FEATURE", "");
+    if (!osForeignMembersFeature.empty())
+    {
+        if (osForeignMembersFeature.front() != '{' ||
+            osForeignMembersFeature.back() != '}')
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value of FOREIGN_MEMBERS_FEATURE should start with { and "
+                     "end with }");
+            return nullptr;
+        }
+        json_object *poTmp = nullptr;
+        if (!OGRJSonParse(osForeignMembersFeature.c_str(), &poTmp, false))
+        {
+            osForeignMembersFeature.clear();
+        }
+        json_object_put(poTmp);
+        if (osForeignMembersFeature.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Value of FOREIGN_MEMBERS_FEATURE is invalid JSON");
+            return nullptr;
+        }
+    }
+
     VSIFPrintfL(fpOut_, "{\n\"type\": \"FeatureCollection\",\n");
+
+    if (pszForeignMembersCollection)
+    {
+        VSIFWriteL(pszForeignMembersCollection + 1, 1,
+                   strlen(pszForeignMembersCollection) - 2, fpOut_);
+        VSIFWriteL(",\n", 2, 1, fpOut_);
+    }
 
     bool bWriteFC_BBOX =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"));
