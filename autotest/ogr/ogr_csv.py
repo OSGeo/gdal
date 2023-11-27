@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import pathlib
 import sys
 
@@ -2946,6 +2947,44 @@ def test_ogr_csv_getextent3d(tmp_vsimem):
     assert ext2d == (1.0, 2.0, 1.0, 2.0)
     ext3d = lyr.GetExtent3D()
     assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 2.0)
+
+    # Test 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        "id,WKT\n1,POINT(1 1)\n2,POINT(2 2)",
+    )
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=COMMA"]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d[:4] == (1.0, 2.0, 1.0, 2.0)
+    assert math.isnan(ext3d[4])
+    assert math.isnan(ext3d[5])
+
+    # Test mixed 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        "id,WKT\n1,POINT Z(1 1 1)\n2,POINT(2 2)",
+    )
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=COMMA"]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 1.0)
 
 
 ###############################################################################

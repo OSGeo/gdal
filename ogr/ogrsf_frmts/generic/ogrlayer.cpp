@@ -231,8 +231,8 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
     psExtent3D->MaxX = 0.0;
     psExtent3D->MinY = 0.0;
     psExtent3D->MaxY = 0.0;
-    psExtent3D->MinZ = 0.0;
-    psExtent3D->MaxZ = 0.0;
+    psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
+    psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
 
     /* -------------------------------------------------------------------- */
     /*      If this layer has a none geometry type, then we can             */
@@ -273,28 +273,25 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
         else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent3D);
-            if (!(CPLIsNan(psExtent3D->MinX) || CPLIsNan(psExtent3D->MinY) ||
-                  CPLIsNan(psExtent3D->MaxX) || CPLIsNan(psExtent3D->MaxY)) ||
-                CPLIsNan(psExtent3D->MinZ) || CPLIsNan(psExtent3D->MaxZ))
+            // This is required because getEnvelope intializes Z to 0 for 2D geometries
+            if (!poGeom->Is3D())
             {
-                bExtentSet = true;
+                psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
+                psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
             }
+            bExtentSet = true;
         }
         else
         {
             poGeom->getEnvelope(&oEnv);
-            if (oEnv.MinX < psExtent3D->MinX)
-                psExtent3D->MinX = oEnv.MinX;
-            if (oEnv.MinY < psExtent3D->MinY)
-                psExtent3D->MinY = oEnv.MinY;
-            if (oEnv.MinZ < psExtent3D->MinZ)
-                psExtent3D->MinZ = oEnv.MinZ;
-            if (oEnv.MaxX > psExtent3D->MaxX)
-                psExtent3D->MaxX = oEnv.MaxX;
-            if (oEnv.MaxY > psExtent3D->MaxY)
-                psExtent3D->MaxY = oEnv.MaxY;
-            if (oEnv.MaxZ > psExtent3D->MaxZ)
-                psExtent3D->MaxZ = oEnv.MaxZ;
+            // This is required because getEnvelope intializes Z to 0 for 2D geometries
+            if (!poGeom->Is3D())
+            {
+                oEnv.MinZ = std::numeric_limits<double>::quiet_NaN();
+                oEnv.MaxZ = std::numeric_limits<double>::quiet_NaN();
+            }
+            // Merge handles NaN correctly
+            psExtent3D->Merge(oEnv);
         }
     }
     ResetReading();
