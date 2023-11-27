@@ -296,6 +296,27 @@ def test_cog_creation_of_overviews():
 
 
 ###############################################################################
+# Test creation from a single band + alpha dataset
+
+
+@pytest.mark.require_creation_option("COG", "JPEG")
+def test_cog_single_band_plus_alpha_jpeg_compression(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "cog.tif")
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+
+    ds = gdal.GetDriverByName("COG").CreateCopy(
+        filename,
+        src_ds,
+        options=["COMPRESS=JPEG"],
+    )
+
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+
+
+###############################################################################
 # Test creation of overviews with a different compression method
 
 

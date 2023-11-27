@@ -889,20 +889,31 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
 
     CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS",
                                                 gbHasLZW ? "LZW" : "NONE");
-    if (EQUAL(osCompress, "JPEG") && poCurDS->GetRasterCount() == 4 &&
-        poCurDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand)
+    if (EQUAL(osCompress, "JPEG") &&
+        (poCurDS->GetRasterCount() == 2 || poCurDS->GetRasterCount() == 4) &&
+        poCurDS->GetRasterBand(poCurDS->GetRasterCount())
+                ->GetColorInterpretation() == GCI_AlphaBand)
     {
         char **papszArg = nullptr;
         papszArg = CSLAddString(papszArg, "-of");
         papszArg = CSLAddString(papszArg, "VRT");
         papszArg = CSLAddString(papszArg, "-b");
         papszArg = CSLAddString(papszArg, "1");
-        papszArg = CSLAddString(papszArg, "-b");
-        papszArg = CSLAddString(papszArg, "2");
-        papszArg = CSLAddString(papszArg, "-b");
-        papszArg = CSLAddString(papszArg, "3");
-        papszArg = CSLAddString(papszArg, "-mask");
-        papszArg = CSLAddString(papszArg, "4");
+        if (poCurDS->GetRasterCount() == 2)
+        {
+            papszArg = CSLAddString(papszArg, "-mask");
+            papszArg = CSLAddString(papszArg, "2");
+        }
+        else
+        {
+            CPLAssert(poCurDS->GetRasterCount() == 4);
+            papszArg = CSLAddString(papszArg, "-b");
+            papszArg = CSLAddString(papszArg, "2");
+            papszArg = CSLAddString(papszArg, "-b");
+            papszArg = CSLAddString(papszArg, "3");
+            papszArg = CSLAddString(papszArg, "-mask");
+            papszArg = CSLAddString(papszArg, "4");
+        }
         GDALTranslateOptions *psOptions =
             GDALTranslateOptionsNew(papszArg, nullptr);
         CSLDestroy(papszArg);
