@@ -145,7 +145,8 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
                                 char **papszOpenOptionsIn)
 
 {
-    if (!STARTS_WITH_CI(pszDatasourceName, "GPSBABEL:"))
+    constexpr const char *GPSBABEL_PREFIX = "GPSBABEL:";
+    if (!STARTS_WITH_CI(pszDatasourceName, GPSBABEL_PREFIX))
     {
         CPLAssert(pszGPSBabelDriverNameIn);
         pszGPSBabelDriverName = CPLStrdup(pszGPSBabelDriverNameIn);
@@ -183,7 +184,9 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
 
     if (pszGPSBabelDriverName == nullptr)
     {
-        const char *pszSep = strchr(pszDatasourceName + 9, ':');
+        const char *pszDatasourceNameAfterPrefix =
+            pszDatasourceName + strlen(GPSBABEL_PREFIX);
+        const char *pszSep = strchr(pszDatasourceNameAfterPrefix, ':');
         if (pszSep == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -191,17 +194,21 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
             return FALSE;
         }
 
-        pszGPSBabelDriverName = CPLStrdup(pszDatasourceName + 9);
-        *(strchr(pszGPSBabelDriverName, ':')) = '\0';
+        pszGPSBabelDriverName = CPLStrdup(pszDatasourceNameAfterPrefix);
+        pszGPSBabelDriverName[pszSep - pszDatasourceNameAfterPrefix] = '\0';
 
         /* A bit of validation to avoid command line injection */
         if (!IsValidDriverName(pszGPSBabelDriverName))
             return FALSE;
 
         /* Parse optional features= option */
-        if (STARTS_WITH_CI(pszSep + 1, "features="))
+        const char *pszAfterSep = pszSep + 1;
+        constexpr const char *FEATURES_EQUAL = "features=";
+        if (STARTS_WITH_CI(pszAfterSep, FEATURES_EQUAL))
         {
-            const char *pszNextSep = strchr(pszSep + 1, ':');
+            const char *pszAfterFeaturesEqual =
+                pszAfterSep + strlen(FEATURES_EQUAL);
+            const char *pszNextSep = strchr(pszAfterFeaturesEqual, ':');
             if (pszNextSep == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -211,8 +218,8 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
                 return FALSE;
             }
 
-            char *pszFeatures = CPLStrdup(pszSep + 1 + 9);
-            *strchr(pszFeatures, ':') = 0;
+            char *pszFeatures = CPLStrdup(pszAfterFeaturesEqual);
+            pszFeatures[pszNextSep - pszAfterFeaturesEqual] = 0;
             char **papszTokens = CSLTokenizeString(pszFeatures);
             char **papszIter = papszTokens;
             bool bErr = false;
@@ -242,11 +249,11 @@ int OGRGPSBabelDataSource::Open(const char *pszDatasourceName,
             if (bErr)
                 return FALSE;
 
-            pszSep = pszNextSep;
+            pszAfterSep = pszNextSep + 1;
         }
 
         if (pszFilename == nullptr)
-            pszFilename = CPLStrdup(pszSep + 1);
+            pszFilename = CPLStrdup(pszAfterSep);
     }
 
     const char *pszOptionUseTempFile =
