@@ -1367,6 +1367,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
     /* -------------------------------------------------------------------- */
     int iRegularField = 0;
     int iGeomField = 0;
+    swq_evaluation_context sContext;
     for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
         swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
@@ -1380,8 +1381,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
             continue;
         }
 
-        swq_expr_node *poResult =
-            psColDef->expr->Evaluate(OGRMultiFeatureFetcher, &apoFeatures);
+        swq_expr_node *poResult = psColDef->expr->Evaluate(
+            OGRMultiFeatureFetcher, &apoFeatures, sContext);
 
         if (poResult == nullptr)
         {

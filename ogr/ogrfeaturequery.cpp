@@ -59,7 +59,9 @@ const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] = {
 /*                          OGRFeatureQuery()                           */
 /************************************************************************/
 
-OGRFeatureQuery::OGRFeatureQuery() : poTargetDefn(nullptr), pSWQExpr(nullptr)
+OGRFeatureQuery::OGRFeatureQuery()
+    : poTargetDefn(nullptr), pSWQExpr(nullptr),
+      m_psContext(new swq_evaluation_context())
 {
 }
 
@@ -70,6 +72,7 @@ OGRFeatureQuery::OGRFeatureQuery() : poTargetDefn(nullptr), pSWQExpr(nullptr)
 OGRFeatureQuery::~OGRFeatureQuery()
 
 {
+    delete m_psContext;
     delete static_cast<swq_expr_node *>(pSWQExpr);
 }
 
@@ -83,6 +86,8 @@ OGRFeatureQuery::Compile(OGRLayer *poLayer, const char *pszExpression,
                          swq_custom_func_registrar *poCustomFuncRegistrar)
 
 {
+    if (poLayer->TestCapability(OLCStringsAsUTF8))
+        m_psContext->bUTF8Strings = true;
     return Compile(poLayer, poLayer->GetLayerDefn(), pszExpression, bCheck,
                    poCustomFuncRegistrar);
 }
@@ -318,7 +323,7 @@ int OGRFeatureQuery::Evaluate(OGRFeature *poFeature)
         return FALSE;
 
     swq_expr_node *poResult = static_cast<swq_expr_node *>(pSWQExpr)->Evaluate(
-        OGRFeatureFetcher, poFeature);
+        OGRFeatureFetcher, poFeature, *m_psContext);
 
     if (poResult == nullptr)
         return FALSE;
