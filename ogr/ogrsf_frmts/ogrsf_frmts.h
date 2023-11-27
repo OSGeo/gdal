@@ -115,8 +115,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     int InstallFilter(OGRGeometry *);
 
     OGRErr GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce);
-    OGRErr GetExtent3DInternal(int iGeomField, OGREnvelope3D *psExtent3D,
-                               int bForce);
     //! @endcond
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) CPL_WARN_UNUSED_RESULT;
