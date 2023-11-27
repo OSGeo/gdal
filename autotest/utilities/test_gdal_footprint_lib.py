@@ -439,8 +439,7 @@ def test_gdaldem_footprint_rgba_overviews():
     for i in range(4):
         src_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_RedBand + i)
     src_ds.BuildOverviews("NONE", [2])
-    for i in range(4):
-        src_ds.GetRasterBand(i + 1).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(4).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
     out_ds = gdal.Footprint(
         "",
         src_ds,
