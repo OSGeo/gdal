@@ -81,6 +81,9 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(
     {
         BuildGeometryColumnGDBv10(osParentDefinition);
     }
+
+    // bSealFields = false because we do lazy resolution of fields
+    m_poFeatureDefn->Seal(/* bSealFields = */ false);
 }
 
 /************************************************************************/
@@ -398,6 +401,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     }
 
     m_bValidLayerDefn = TRUE;
+    auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
 
     m_iGeomFieldIdx = m_poLyrTable->GetGeomFieldIdx();
     if (m_iGeomFieldIdx >= 0)

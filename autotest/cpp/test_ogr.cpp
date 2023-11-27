@@ -3012,4 +3012,321 @@ TEST_F(test_ogr, importFromWkbReuse)
     }
 }
 
+// Test sealing functionality on OGRFieldDefn
+TEST_F(test_ogr, OGRFieldDefn_sealing)
+{
+    OGRFieldDefn oFieldDefn("test", OFTString);
+    oFieldDefn.Seal();
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetType(OFTInteger);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetSubType(OFSTJSON);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetWidth(1);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetPrecision(1);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetDefault("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetUnique(true);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetNullable(false);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetComment("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetAlternativeName("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetDomainName("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetTZFlag(0);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFieldDefn.GetTemporaryUnsealer());
+        CPLErrorReset();
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") == nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        whileUnsealing(&oFieldDefn)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+}
+
+// Test sealing functionality on OGRGeomFieldDefn
+TEST_F(test_ogr, OGRGeomFieldDefn_sealing)
+{
+    OGRGeomFieldDefn oFieldDefn("test", wkbUnknown);
+
+    oFieldDefn.Seal();
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetType(wkbPoint);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetSpatialRef(nullptr);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetNullable(false);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFieldDefn.GetTemporaryUnsealer());
+        CPLErrorReset();
+        oFieldDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        whileUnsealing(&oFieldDefn)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+}
+
+// Test sealing functionality on OGRFeatureDefn
+TEST_F(test_ogr, OGRFeatureDefn_sealing)
+{
+    OGRFeatureDefn oFDefn;
+    CPLErrorReset();
+    {
+        oFDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+    {
+        OGRFieldDefn oFieldDefn("test", OFTString);
+        oFDefn.AddFieldDefn(&oFieldDefn);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+    {
+        OGRGeomFieldDefn oFieldDefn("test", wkbUnknown);
+        oFDefn.AddGeomFieldDefn(&oFieldDefn);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.Unseal(true);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "unsealed") != nullptr);
+
+        CPLErrorReset();
+        auto oTemporaryUnsealer1(oFDefn.GetTemporaryUnsealer(false));
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "unsealed") != nullptr);
+        CPLErrorReset();
+        auto oTemporaryUnsealer2(oFDefn.GetTemporaryUnsealer(false));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    oFDefn.Seal(true);
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.Seal(true);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        OGRFieldDefn oFieldDefn("test2", OFTString);
+        oFDefn.AddFieldDefn(&oFieldDefn);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.DeleteFieldDefn(0);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        int map[] = {0};
+        oFDefn.ReorderFieldDefns(map);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        OGRGeomFieldDefn oFieldDefn("test2", wkbUnknown);
+        oFDefn.AddGeomFieldDefn(&oFieldDefn);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.DeleteGeomFieldDefn(0);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFDefn.GetTemporaryUnsealer(false));
+        CPLErrorReset();
+        oFDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+
+        CPLErrorReset();
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+
+        CPLErrorReset();
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFDefn.GetTemporaryUnsealer(true));
+        CPLErrorReset();
+        oFDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+
+        auto oTemporaryUnsealer2(oFDefn.GetTemporaryUnsealer(true));
+
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+
+        CPLErrorReset();
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        whileUnsealing(&oFDefn)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+}
+
 }  // namespace

@@ -492,6 +492,7 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
     // See https://github.com/OSGeo/gdal/pull/4552 for a number of potential
     // resolutions if that has to be solved in the future.
     OGRFeatureDefn *poLayerDefn = poLayer->GetLayerDefn();
+    auto oTemporaryUnsealer(poLayerDefn->GetTemporaryUnsealer());
 
     std::set<std::string> oSetFieldNames;
     for (auto &poFieldDefn : oBuildContext.apoFieldDefn)

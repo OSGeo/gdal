@@ -1514,6 +1514,7 @@ static OGRErr GrowField(DBFHandle hDBF, int iField, OGRFieldDefn *poFieldDefn,
         return OGRERR_FAILURE;
     }
 
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
     poFieldDefn->SetWidth(nNewSize);
     return OGRERR_NONE;
 }

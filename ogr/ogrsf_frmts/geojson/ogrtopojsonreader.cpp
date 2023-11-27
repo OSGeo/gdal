@@ -547,9 +547,12 @@ ParseObjectMain(const char *pszId, json_object *poObj,
 
                     const auto sortedFields = dagLocal.getTopologicalOrdering();
                     CPLAssert(sortedFields.size() == apoFieldDefnLocal.size());
-                    for (int idx : sortedFields)
                     {
-                        poDefn->AddFieldDefn(apoFieldDefnLocal[idx].get());
+                        auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
+                        for (int idx : sortedFields)
+                        {
+                            poDefn->AddFieldDefn(apoFieldDefnLocal[idx].get());
+                        }
                     }
 
                     // Second pass to build objects.
@@ -733,6 +736,7 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
             OGRFeatureDefn *poDefn = poMainLayer->GetLayerDefn();
             const auto sortedFields = dag.getTopologicalOrdering();
             CPLAssert(sortedFields.size() == apoFieldDefn.size());
+            auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
             for (int idx : sortedFields)
             {
                 poDefn->AddFieldDefn(apoFieldDefn[idx].get());
@@ -766,6 +770,7 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
             OGRFeatureDefn *poDefn = poMainLayer->GetLayerDefn();
             const auto sortedFields = dag.getTopologicalOrdering();
             CPLAssert(sortedFields.size() == apoFieldDefn.size());
+            auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
             for (int idx : sortedFields)
             {
                 poDefn->AddFieldDefn(apoFieldDefn[idx].get());

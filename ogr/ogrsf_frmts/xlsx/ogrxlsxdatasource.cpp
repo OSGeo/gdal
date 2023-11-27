@@ -1055,6 +1055,8 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                         {
                             poCurLayer->oSetFieldsOfUnknownType.erase(oIter);
 
+                            auto oTemporaryUnsealer(
+                                poFieldDefn->GetTemporaryUnsealer());
                             poFieldDefn->SetType(eValType);
                             poFieldDefn->SetSubType(eValSubType);
                         }

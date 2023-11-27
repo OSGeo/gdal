@@ -1980,7 +1980,7 @@ def test_ogr_pg_38(pg_ds):
     if lyr.GetLayerDefn().GetGeomFieldCount() != 3:
         for i in range(lyr.GetLayerDefn().GetGeomFieldCount()):
             print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName())
-        pytest.fail(lyr.GetLayerDefn().GetGeomFieldCount())
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 3
 
     # Explicit query to 'table37_inherited(wkb_geometry)' should also work
     lyr = ds.GetLayerByName("table37_inherited(wkb_geometry)")

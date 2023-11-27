@@ -7,6 +7,13 @@ MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
   * OGRLayer::CreateGeomField() now takes a const OGRGeomFieldDefn* instead of
     a OGRGeomFieldDefn*.
 
+- Sealed feature and field definition (RFC 97). A number of drivers now "seal"
+  their layer definition, which might cause issue to user code currently
+  mis-using setters of OGRFeatureDefn, OGRFieldDefn or OGRGeomFieldDefn on such
+  instances.
+  The drivers that have been updated to seal their layer definition are:
+  GeoPackage, PostgreSQL, Shapefile, OpenFileGDB, MITAB, Memory, GeoJSON, JSONFG,
+  TopoJSON, ESRIJSON, ODS, XLSX.
 
 MIGRATION GUIDE FROM GDAL 3.7 to GDAL 3.8
 -----------------------------------------

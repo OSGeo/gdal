@@ -752,6 +752,8 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
     const char *pszAreaFieldName =
         m_aosCreationOptions.FetchNameValueDef("AREA_FIELD_NAME", "Shape_Area");
 
+    m_poFeatureDefn->Seal(/* bSealFields = */ true);
+
     if (bCreateShapeArea)
     {
         OGRFieldDefn oField(pszAreaFieldName, OFTReal);
@@ -1126,7 +1128,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
         }
 
         m_iFIDAsRegularColumnIndex = m_poFeatureDefn->GetFieldCount();
-        m_poFeatureDefn->AddFieldDefn(poField);
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
         return OGRERR_NONE;
     }
 
@@ -1267,7 +1269,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
             m_iLengthField = m_poFeatureDefn->GetFieldCount();
     }
 
-    m_poFeatureDefn->AddFieldDefn(poField);
+    whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
 
     if (m_bRegisteredTable)
     {
@@ -1342,6 +1344,7 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
         return OGRERR_FAILURE;
 
     OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iFieldToAlter);
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
     OGRFieldDefn oField(poFieldDefn);
     const std::string osOldFieldName(poFieldDefn->GetNameRef());
     const std::string osOldDomainName(
@@ -1585,6 +1588,7 @@ OGRErr OGROpenFileGDBLayer::AlterGeomFieldDefn(
 
     const auto poGeomFieldDefn =
         m_poFeatureDefn->GetGeomFieldDefn(iGeomFieldToAlter);
+    auto oTemporaryUnsealer(poGeomFieldDefn->GetTemporaryUnsealer());
     OGRGeomFieldDefn oField(poGeomFieldDefn);
 
     if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_TYPE_FLAG) != 0)
@@ -1818,7 +1822,7 @@ OGRErr OGROpenFileGDBLayer::DeleteField(int iFieldToDelete)
     const std::string osOldDomainName =
         std::string(poFieldDefn->GetDomainName());
 
-    m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+    whileUnsealing(m_poFeatureDefn)->DeleteFieldDefn(iFieldToDelete);
 
     if (m_iFIDAsRegularColumnIndex > iFieldToDelete)
         m_iFIDAsRegularColumnIndex--;
@@ -2860,6 +2864,7 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
     if (m_poFeatureDefnBackup != nullptr &&
         !m_poFeatureDefn->IsSame(m_poFeatureDefnBackup.get()))
     {
+        auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
         {
             const int nFieldCount = m_poFeatureDefn->GetFieldCount();
             for (int i = nFieldCount - 1; i >= 0; i--)
@@ -3029,7 +3034,7 @@ OGRErr OGROpenFileGDBLayer::Rename(const char *pszDstTableName)
 
     m_osName = pszDstTableName;
     SetDescription(pszDstTableName);
-    m_poFeatureDefn->SetName(pszDstTableName);
+    whileUnsealing(m_poFeatureDefn)->SetName(pszDstTableName);
 
     auto nLastSlashPos = m_osPath.rfind('\\');
     if (nLastSlashPos != std::string::npos)

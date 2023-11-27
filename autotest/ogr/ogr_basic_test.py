@@ -909,7 +909,11 @@ def test_feature_defn_use_after_layer_del():
         defn1 = lyr.GetLayerDefn()
         defn2 = lyr.GetLayerDefn()
 
-        lyr.GetLayerDefn().AddFieldDefn(ogr.FieldDefn("cookie", ogr.OFTInteger))
+        with pytest.raises(
+            Exception,
+            match=r"OGRFeatureDefn::AddFieldDefn\(\) not allowed on a sealed object",
+        ):
+            lyr.GetLayerDefn().AddFieldDefn(ogr.FieldDefn("cookie", ogr.OFTInteger))
 
         assert defn1.GetReferenceCount() == 3
         del defn2
@@ -918,7 +922,7 @@ def test_feature_defn_use_after_layer_del():
     del lyr
 
     assert defn1.GetReferenceCount() == 1
-    assert defn1.GetFieldDefn(3).GetName() == "cookie"
+    assert defn1.GetFieldCount() == 3
 
 
 ###############################################################################
