@@ -8,7 +8,7 @@ RFC 97: OGRFeatureDefn, OGRFieldDefn and OGRGeomFieldDefn "sealing"
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2023-Nov-16
-Status:        In development, not implemented
+Status:        Adopted, implemented
 Target:        GDAL 3.9
 ============== =============================================
 
@@ -317,4 +317,4 @@ Candidate implementation in https://github.com/OSGeo/gdal/pull/8733
 Voting history
 --------------
 
-TBD
++1 from PSC members JukkaR, JavierJS and EvenR
