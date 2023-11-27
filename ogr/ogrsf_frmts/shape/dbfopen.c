@@ -1127,7 +1127,12 @@ static bool DBFIsValueNULL(char chType, const char *pszValue)
 
         case 'D':
             /* NULL date fields have value "00000000" */
-            return strncmp(pszValue, "00000000", 8) == 0;
+            /* Some DBF files have fields filled with spaces */
+            /* (trimmed by DBFReadStringAttribute) to indicate null */
+            /* values for dates (#4265). */
+            /* And others have '       0': https://lists.osgeo.org/pipermail/gdal-dev/2023-November/058010.html */
+            return strncmp(pszValue, "00000000", 8) == 0 ||
+                   strcmp(pszValue, " ") == 0 || strcmp(pszValue, "0") == 0;
 
         case 'L':
             /* NULL boolean fields have value "?" */
