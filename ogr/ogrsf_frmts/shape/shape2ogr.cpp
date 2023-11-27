@@ -1757,6 +1757,12 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                         CE_Warning, CPLE_NotSupported,
                         "Year < 0 or > 9999 is not a valid date for shapefile");
                 }
+                else if (psField->Date.Year == 0 && psField->Date.Month == 0 &&
+                         psField->Date.Day == 0)
+                {
+                    DBFWriteNULLAttribute(
+                        hDBF, static_cast<int>(poFeature->GetFID()), iField);
+                }
                 else
                 {
                     DBFWriteIntegerAttribute(
