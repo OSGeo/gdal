@@ -816,14 +816,17 @@ swq_expr_node *swq_expr_node::Clone()
 /************************************************************************/
 
 swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
-                                       void *pRecord)
+                                       void *pRecord,
+                                       const swq_evaluation_context &sContext)
 
 {
-    return Evaluate(pfnFetcher, pRecord, 0);
+    return Evaluate(pfnFetcher, pRecord, sContext, 0);
 }
 
 swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
-                                       void *pRecord, int nRecLevel)
+                                       void *pRecord,
+                                       const swq_evaluation_context &sContext,
+                                       int nRecLevel)
 
 {
     swq_expr_node *poRetNode = nullptr;
@@ -868,8 +871,8 @@ swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
         }
         else
         {
-            swq_expr_node *poSubExprVal =
-                papoSubExpr[i]->Evaluate(pfnFetcher, pRecord, nRecLevel + 1);
+            swq_expr_node *poSubExprVal = papoSubExpr[i]->Evaluate(
+                pfnFetcher, pRecord, sContext, nRecLevel + 1);
             if (poSubExprVal == nullptr)
                 bError = true;
             else
@@ -901,7 +904,7 @@ swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
             poRetNode = nullptr;
         }
         else
-            poRetNode = poOp->pfnEvaluator(this, &(apoValues[0]));
+            poRetNode = poOp->pfnEvaluator(this, &(apoValues[0]), sContext);
     }
 
     /* -------------------------------------------------------------------- */
