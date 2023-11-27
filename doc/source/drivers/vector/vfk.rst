@@ -8,8 +8,8 @@ VFK - Czech Cadastral Exchange Data Format
 .. build_dependencies:: libsqlite3
 
 This driver reads VFK files, i.e. data in the *Czech cadastral exchange
-data format*. The VFK file is recognized as an datasource with zero or
-more layers.
+data format*. The VFK file is recognized as an datasource with multiple
+layers.
 
 The driver is compiled only if GDAL is *built with SQLite support*.
 
@@ -49,7 +49,7 @@ Starting with GDAL 2.3, the following open options can be specified
       all layers.
 
 Configuration options
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 Several :ref:`configuration options <configoptions>` are
 available:
@@ -108,6 +108,27 @@ file when building backend SQLite database. When configuration option
 reads only data blocks which are requested by the user. This can be
 useful when the user want to process only part of VFK data.
 
+Examples
+~~~~~~~~
+
+Data related to a single cadastral area is typically distributed in
+multiple VFK files. Example below is based on `sample VFK files
+<https://services.cuzk.cz/vfk/anonym/>`__ provided by the Czech State
+Administration of Land Surveying and Cadastre. In order to process all
+VFK files related to a single cadastral area (in example below with ID
+602515), the configuration option :config:`OGR_VFK_DB_NAME` has to be
+defined.
+
+   ::
+
+      # load first file mapa/602515.vfk
+      ogrinfo --config OGR_VFK_DB_NAME 602515.db mapa/602515.vfk
+      # load second file spi_s_jpv/602515.vfk
+      ogrinfo --config OGR_VFK_DB_NAME 602515.db spi_s_jpv/602515.vfk
+      # now we can access eg. geometry of parcels
+      ogrinfo 602515.db PAR -fid 1
+      ...
+
 Datasource name
 ---------------
 
@@ -147,9 +168,7 @@ References
 ----------
 
 -  `OGR VFK Driver Implementation
-   Issues <http://geo.fsv.cvut.cz/~landa/publications/2010/gis-ostrava-2010/paper/landa-ogr-vfk.pdf>`__
--  `Open Source Tools for VFK
-   format <http://freegis.fsv.cvut.cz/gwiki/VFK>`__ (in Czech)
+   Issues <https://www.researchgate.net/publication/238067945_OGR_VFK_Driver_Implementation_Issues>`__
 -  `Czech cadastral exchange data format
    documentation <http://www.cuzk.cz/Dokument.aspx?PRARESKOD=998&MENUID=0&AKCE=DOC:10-VF_ISKNTEXT>`__
    (in Czech)
