@@ -6,15 +6,15 @@ SQL SQLite dialect
 
 .. highlight:: sql
 
-The SQLite "dialect" can be used as an alternate SQL dialect to the
+The ``SQLite`` dialect can be used as an alternate SQL dialect to the
 :ref:`ogr_sql_dialect`.
 This assumes that GDAL/OGR is built with support for SQLite, and preferably
 with `Spatialite <https://www.gaia-gis.it/fossil/libspatialite/index>`_ support too to benefit from spatial functions.
 
-The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect. It
-is available through the GDALDataset::ExecuteSQL() method by specifying the pszDialect to
-"SQLITE". For the :ref:`ogrinfo` or :ref:`ogr2ogr`
-utility, you must specify the "-dialect SQLITE" option.
+The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect.
+The ``SQLite`` dialect can be requested with the ``SQLite`` string passed
+as the dialect parameter of :cpp:func:`GDALDataset::ExecuteSQL`, or with the
+`-dialect` option of the :ref:`ogrinfo` or :ref:`ogr2ogr` utilities.
 
 This is mainly aimed to execute SELECT statements, but, for datasources that support
 update, INSERT/UPDATE/DELETE statements can also be run. GDAL is internally using
