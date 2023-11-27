@@ -9739,3 +9739,54 @@ def test_ogr_gpkg_arrow_stream_huge_array(tmp_vsimem, too_big_field):
             assert got_fids == [i + 1 for i in range(50)]
             assert batch_count == (25 if too_big_field == "geometry" else 21), lyr_name
             del stream
+
+
+###############################################################################
+# Test our overloaded LIKE operator
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_like_utf8(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_gpkg_like_utf8.gpkg")
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test")
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'e' LIKE 'E'") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'e' LIKE 'i'") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'é' LIKE 'É'") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'éx' LIKE 'Éxx' ESCAPE 'x'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE NULL LIKE 'É'") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'é' LIKE NULL") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'é' LIKE 'É' ESCAPE NULL") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É' ESCAPE 'should be single char'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    ds.ExecuteSQL("PRAGMA case_sensitive_like = 1")
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'e' LIKE 'E'") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    ds.ExecuteSQL("PRAGMA case_sensitive_like = 0")
+
+    with ds.ExecuteSQL("SELECT * FROM test WHERE 'e' LIKE 'E'") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1

@@ -483,6 +483,8 @@ char CPL_UNSTABLE_API *OGRHStoreGetValue(const char *pszHStore,
 void swq_fixup(swq_parse_context *psParseContext);
 swq_expr_node *swq_create_and_or_or(swq_op op, swq_expr_node *left,
                                     swq_expr_node *right);
+int swq_test_like(const char *input, const char *pattern, char chEscape,
+                  bool insensitive, bool bUTF8Strings);
 #endif
 
 #endif /* #ifndef DOXYGEN_SKIP */

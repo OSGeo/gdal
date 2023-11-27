@@ -52,8 +52,8 @@
 /*      Does input match pattern?                                       */
 /************************************************************************/
 
-static int swq_test_like(const char *input, const char *pattern, char chEscape,
-                         bool insensitive, bool bUTF8Strings)
+int swq_test_like(const char *input, const char *pattern, char chEscape,
+                  bool insensitive, bool bUTF8Strings)
 
 {
     if (input == nullptr || pattern == nullptr)

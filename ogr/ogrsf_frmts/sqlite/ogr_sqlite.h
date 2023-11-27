@@ -632,6 +632,8 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 
+class OGR2SQLITEModule;
+
 class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer **m_papoLayers = nullptr;
@@ -687,6 +689,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     bool OpenRasterSubDataset(const char *pszConnectionId);
     OGRSQLiteDataSource *m_poParentDS = nullptr;
     std::vector<OGRSQLiteDataSource *> m_apoOverviewDS{};
+
+    OGR2SQLITEModule *m_poSQLiteModule = nullptr;
 
 #ifdef HAVE_RASTERLITE2
     void ListOverviews();
