@@ -48,7 +48,7 @@ proper mask bands.
 
 .. option:: -b <band>
 
-    Band(s) of interested. Between 1 and the number of bands of the raster.
+    Band(s) of interest. Between 1 and the number of bands of the raster.
     May be specified multiple times. If not specified, all bands are taken
     into account. The way multiple bands are combined is controlled by
     :option:`-combine_bands`
