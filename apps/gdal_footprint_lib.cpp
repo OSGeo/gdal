@@ -709,7 +709,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
             }
             else
             {
-                if ((nMaskFlags & GMF_PER_DATASET) != 0)
+                if ((nMaskFlags & GMF_PER_DATASET) == 0)
                 {
                     bGlobalMask = false;
                 }
