@@ -7310,11 +7310,13 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         return nullptr;
     }
 
-    if (pszDialect != nullptr && EQUAL(pszDialect, "OGRSQL"))
-        return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter,
-                                       pszDialect);
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter, "SQLITE");
+    else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
+             !EQUAL(pszDialect, "NATIVE") && !EQUAL(pszDialect, "SQLITE") &&
+             !EQUAL(pszDialect, "DEBUG"))
+        return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
 #if SQLITE_VERSION_NUMBER < 3007017
     // Emulate PRAGMA application_id
