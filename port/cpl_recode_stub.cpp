@@ -37,8 +37,6 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-#ifdef CPL_RECODE_STUB
-
 static unsigned utf8decode(const char *p, const char *end, int *len);
 static unsigned utf8towc(const char *src, unsigned srclen, wchar_t *dst,
                          unsigned dstlen);
@@ -66,7 +64,6 @@ extern char *CPLRecodeStub(const char *, const char *,
 extern char *CPLRecodeFromWCharStub(const wchar_t *, const char *,
                                     const char *);
 extern wchar_t *CPLRecodeToWCharStub(const char *, const char *, const char *);
-extern int CPLIsUTF8Stub(const char *, int);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -446,7 +443,7 @@ wchar_t *CPLRecodeToWCharStub(const char *pszSource, const char *pszSrcEncoding,
  *
  * @since GDAL 1.7.0
  */
-int CPLIsUTF8Stub(const char *pabyData, int nLen)
+int CPLIsUTF8(const char *pabyData, int nLen)
 {
     if (nLen < 0)
         nLen = static_cast<int>(strlen(pabyData));
@@ -1440,5 +1437,3 @@ static int utf8test(const char *src, unsigned srclen)
     }
     return ret;
 }
-
-#endif /* defined(CPL_RECODE_STUB) */
