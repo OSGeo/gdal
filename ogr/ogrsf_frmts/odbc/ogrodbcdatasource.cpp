@@ -212,7 +212,8 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
 
     const char *pszNewName = poOpenInfo->pszFilename;
 
-    if (!STARTS_WITH_CI(pszNewName, "ODBC:") &&
+    constexpr const char *ODBC_PREFIX = "ODBC:";
+    if (!STARTS_WITH_CI(pszNewName, ODBC_PREFIX) &&
         OGRODBCDriverIsSupportedMsAccessFileExtension(
             CPLGetExtension(pszNewName)))
         return OpenMDB(poOpenInfo);
@@ -222,7 +223,7 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
     /*      the name of spatial reference table and names for SRID and      */
     /*      SRTEXT columns first.                                           */
     /* -------------------------------------------------------------------- */
-    char *pszWrkName = CPLStrdup(pszNewName + 5);  // Skip the 'ODBC:' part
+    char *pszWrkName = CPLStrdup(pszNewName + strlen(ODBC_PREFIX));
     char **papszTables = nullptr;
     char **papszGeomCol = nullptr;
     char *pszSRSTableName = nullptr;
@@ -300,36 +301,24 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
     /*      user/password@dsn.  But if there are no @ characters the        */
     /*      whole thing is assumed to be a DSN.                             */
     /* -------------------------------------------------------------------- */
-    char *pszUserid = nullptr;
-    char *pszPassword = nullptr;
-    char *pszDSN = nullptr;
+    std::string osUserId;
+    std::string osPassword;
+    std::string osDSN;
 
-    if (strstr(pszWrkName, "@") == nullptr)
+    const char *pszAt = strchr(pszWrkName, '@');
+    if (pszAt == nullptr)
     {
-        pszDSN = CPLStrdup(pszWrkName);
+        osDSN = pszWrkName;
     }
     else
     {
-
-        pszDSN = CPLStrdup(strstr(pszWrkName, "@") + 1);
-        if (*pszWrkName == '/')
+        osDSN = pszAt + 1;
+        osUserId.assign(pszWrkName, pszAt - pszWrkName);
+        const auto nSlashPos = osUserId.find('/');
+        if (nSlashPos != std::string::npos)
         {
-            pszPassword = CPLStrdup(pszWrkName + 1);
-            char *pszTarget = strstr(pszPassword, "@");
-            *pszTarget = '\0';
-        }
-        else
-        {
-            pszUserid = CPLStrdup(pszWrkName);
-            char *pszTarget = strstr(pszUserid, "@");
-            *pszTarget = '\0';
-
-            pszTarget = strstr(pszUserid, "/");
-            if (pszTarget != nullptr)
-            {
-                *pszTarget = '\0';
-                pszPassword = CPLStrdup(pszTarget + 1);
-            }
+            osPassword = osUserId.substr(nSlashPos + 1);
+            osUserId.resize(nSlashPos);
         }
     }
 
@@ -340,29 +329,23 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     CPLDebug("OGR_ODBC",
              "EstablishSession(DSN:\"%s\", userid:\"%s\", password:\"%s\")",
-             pszDSN, pszUserid ? pszUserid : "",
-             pszPassword ? pszPassword : "");
+             osDSN.c_str(), osUserId.c_str(), osPassword.c_str());
 
-    if (!oSession.EstablishSession(pszDSN, pszUserid, pszPassword))
+    if (!oSession.EstablishSession(
+            osDSN.c_str(), osUserId.empty() ? nullptr : osUserId.c_str(),
+            osPassword.empty() ? nullptr : osPassword.c_str()))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to initialize ODBC connection to DSN for %s,\n"
                  "%s",
-                 pszNewName + 5, oSession.GetLastError());
+                 pszNewName + strlen(ODBC_PREFIX), oSession.GetLastError());
         CSLDestroy(papszTables);
         CSLDestroy(papszGeomCol);
-        CPLFree(pszDSN);
-        CPLFree(pszUserid);
-        CPLFree(pszPassword);
         CPLFree(pszSRIDCol);
         CPLFree(pszSRTextCol);
         CPLFree(pszSRSTableName);
         return FALSE;
     }
-
-    CPLFree(pszDSN);
-    CPLFree(pszUserid);
-    CPLFree(pszPassword);
 
     pszName = CPLStrdup(pszNewName);
 
