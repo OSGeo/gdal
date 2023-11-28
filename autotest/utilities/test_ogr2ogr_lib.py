@@ -2406,3 +2406,46 @@ def test_ogr2ogr_lib_gpkg_to_shp_preserved_fid(tmp_vsimem):
     f = out_lyr.GetNextFeature()
     assert f.GetFID() == 1
     assert f["foo"] == "baz"
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names(tmp_vsimem):
+
+    src_filename = str(
+        tmp_vsimem / "test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names.gpkg"
+    )
+    src_ds = gdal.GetDriverByName("GPKG").Create(
+        src_filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("shortname"))
+    src_lyr.CreateField(ogr.FieldDefn("too_long_for_shapefile"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("shortname", "foo")
+    f.SetField("too_long_for_shapefile", "bar")
+    src_lyr.CreateFeature(f)
+    src_ds.Close()
+
+    out_filename = str(
+        tmp_vsimem / "test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names.shp"
+    )
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler):
+        out_ds = gdal.VectorTranslate(out_filename, src_filename)
+    assert got_msg == [
+        "Normalized/laundered field name: 'too_long_for_shapefile' to 'too_long_f'"
+    ]
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    assert f["shortname"] == "foo"
+    assert f["too_long_f"] == "bar"

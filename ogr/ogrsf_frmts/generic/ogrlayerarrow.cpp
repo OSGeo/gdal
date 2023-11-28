@@ -35,6 +35,7 @@
 #include "ogr_swq.h"
 #include "ogr_wkb.h"
 #include "ogr_p.h"
+#include "ogrlayer_private.h"
 
 #include "cpl_float.h"
 #include "cpl_json.h"
@@ -5874,7 +5875,8 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                     : OFSTNone;
         }
 
-        OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(), eTypeOut);
+        const std::string osWantedOGRFieldName = osFieldPrefix + fieldName;
+        OGRFieldDefn oFieldDefn(osWantedOGRFieldName.c_str(), eTypeOut);
         oFieldDefn.SetSubType(eSubTypeOut);
         if (eTypeOut == eTypeIn && eSubTypeOut == eSubTypeIn)
         {
@@ -5928,7 +5930,22 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                 }
             }
         }
-        return CreateField(&oFieldDefn) == OGRERR_NONE;
+        auto poLayerDefn = GetLayerDefn();
+        const int nFieldCountBefore = poLayerDefn->GetFieldCount();
+        if (CreateField(&oFieldDefn) != OGRERR_NONE ||
+            nFieldCountBefore + 1 != poLayerDefn->GetFieldCount())
+        {
+            return false;
+        }
+        const char *pszActualFieldName =
+            poLayerDefn->GetFieldDefn(nFieldCountBefore)->GetNameRef();
+        if (pszActualFieldName != osWantedOGRFieldName)
+        {
+            m_poPrivate
+                ->m_oMapArrowFieldNameToOGRFieldName[osWantedOGRFieldName] =
+                pszActualFieldName;
+        }
+        return true;
     };
 
     for (const auto &sType : gasArrowTypesToOGR)
@@ -6159,15 +6176,15 @@ struct FieldInfo
     int nScale = 0;         // only used for decimal fields
 };
 
-static bool
-BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
-                  const OGRFeatureDefn *poFeatureDefn,
-                  const std::string &osFieldPrefix,
-                  const CPLStringList &aosNativeTypes, bool &bFallbackTypesUsed,
-                  std::vector<FieldInfo> &asFieldInfo, const char *pszFIDName,
-                  const char *pszGeomFieldName, OGRLayer *poLayer,
-                  const struct ArrowSchema *&schemaFIDColumn,
-                  struct ArrowArray *&arrayFIDColumn)
+static bool BuildOGRFieldInfo(
+    const struct ArrowSchema *schema, struct ArrowArray *array,
+    const OGRFeatureDefn *poFeatureDefn, const std::string &osFieldPrefix,
+    const CPLStringList &aosNativeTypes, bool &bFallbackTypesUsed,
+    std::vector<FieldInfo> &asFieldInfo, const char *pszFIDName,
+    const char *pszGeomFieldName, OGRLayer *poLayer,
+    const std::map<std::string, std::string> &oMapArrowFieldNameToOGRFieldName,
+    const struct ArrowSchema *&schemaFIDColumn,
+    struct ArrowArray *&arrayFIDColumn)
 {
     const char *fieldName = schema->name;
     const char *format = schema->format;
@@ -6179,8 +6196,9 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
             if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
                                    poFeatureDefn, osNewPrefix, aosNativeTypes,
                                    bFallbackTypesUsed, asFieldInfo, pszFIDName,
-                                   pszGeomFieldName, poLayer, schemaFIDColumn,
-                                   arrayFIDColumn))
+                                   pszGeomFieldName, poLayer,
+                                   oMapArrowFieldNameToOGRFieldName,
+                                   schemaFIDColumn, arrayFIDColumn))
             {
                 return false;
             }
@@ -6228,7 +6246,17 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
     }
     else
     {
-        sInfo.iOGRFieldIdx = poFeatureDefn->GetFieldIndex(sInfo.osName.c_str());
+        const auto osExpectedOGRFieldName =
+            [&oMapArrowFieldNameToOGRFieldName, &sInfo]()
+        {
+            const auto oIter =
+                oMapArrowFieldNameToOGRFieldName.find(sInfo.osName);
+            if (oIter != oMapArrowFieldNameToOGRFieldName.end())
+                return oIter->second;
+            return sInfo.osName;
+        }();
+        sInfo.iOGRFieldIdx =
+            poFeatureDefn->GetFieldIndex(osExpectedOGRFieldName.c_str());
         if (sInfo.iOGRFieldIdx >= 0)
         {
             bool bTypeOK = false;
@@ -6495,8 +6523,8 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
         }
         else
         {
-            sInfo.iOGRFieldIdx =
-                poFeatureDefn->GetGeomFieldIndex(sInfo.osName.c_str());
+            sInfo.iOGRFieldIdx = poFeatureDefn->GetGeomFieldIndex(
+                osExpectedOGRFieldName.c_str());
             if (sInfo.iOGRFieldIdx < 0)
             {
                 if (pszGeomFieldName && pszGeomFieldName == sInfo.osName)
@@ -7267,8 +7295,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
                                poLayerDefn, std::string(), aosNativeTypes,
                                bFallbackTypesUsed, asFieldInfo, pszFIDName,
-                               pszGeomFieldName, this, schemaFIDColumn,
-                               arrayFIDColumn))
+                               pszGeomFieldName, this,
+                               m_poPrivate->m_oMapArrowFieldNameToOGRFieldName,
+                               schemaFIDColumn, arrayFIDColumn))
         {
             return false;
         }
