@@ -5560,6 +5560,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         m_osDescriptionLCO = pszDescription;
         OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
     }
+
+    m_poFeatureDefn->Seal(/* bSealFields = */ true);
 }
 
 /************************************************************************/
