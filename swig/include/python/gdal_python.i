@@ -3406,6 +3406,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 def FootprintOptions(options=None,
                      format=None,
                      bands=None,
+                     combineBands=None,
                      srcNodata=None,
                      ovr=None,
                      targetCoordinateSystem=None,
@@ -3429,6 +3430,8 @@ def FootprintOptions(options=None,
         output format ("GeoJSON", etc...)
     bands:
         list of output bands to burn values into
+    combineBands:
+        how to combine bands: "union" (default) or "intersection"
     srcNodata:
         source nodata value(s).
     ovr:
@@ -3476,6 +3479,8 @@ def FootprintOptions(options=None,
         if bands is not None:
             for b in bands:
                 new_options += ['-b', str(b)]
+        if combineBands:
+            new_options += ["-combine_bands", combineBands]
         if targetCoordinateSystem:
             new_options += ["-t_cs", targetCoordinateSystem]
         if dstSRS:
