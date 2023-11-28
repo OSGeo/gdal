@@ -1447,12 +1447,6 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                 const char *const pszDateValue =
                     DBFReadStringAttribute(hDBF, iShape, iField);
 
-                // Some DBF files have fields filled with spaces
-                // (trimmed by DBFReadStringAttribute) to indicate null
-                // values for dates (#4265).
-                if (pszDateValue[0] == '\0')
-                    continue;
-
                 OGRField sFld;
                 memset(&sFld, 0, sizeof(sFld));
 
@@ -1763,6 +1757,12 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                     CPLError(
                         CE_Warning, CPLE_NotSupported,
                         "Year < 0 or > 9999 is not a valid date for shapefile");
+                }
+                else if (psField->Date.Year == 0 && psField->Date.Month == 0 &&
+                         psField->Date.Day == 0)
+                {
+                    DBFWriteNULLAttribute(
+                        hDBF, static_cast<int>(poFeature->GetFID()), iField);
                 }
                 else
                 {
