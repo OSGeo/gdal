@@ -155,6 +155,9 @@ void RegisterOGRFlatGeobuf()
         "create a spatial index' default='YES'/>"
         "  <Option name='TEMPORARY_DIR' type='string' description='Directory "
         "where temporary file should be created'/>"
+        "  <Option name='TITLE' type='string' description='Layer title'/>"
+        "  <Option name='DESCRIPTION' type='string' "
+        "description='Layer description'/>"
         "</LayerCreationOptionList>");
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -445,7 +448,7 @@ OGRLayer *OGRFlatGeobufDataset::ICreateLayer(
 
     auto poLayer =
         std::unique_ptr<OGRFlatGeobufLayer>(OGRFlatGeobufLayer::Create(
-            pszLayerName, osFilename, poSpatialRef, eGType,
+            this, pszLayerName, osFilename, poSpatialRef, eGType,
             bCreateSpatialIndexAtClose, papszOptions));
     if (poLayer == nullptr)
         return nullptr;
