@@ -40,9 +40,9 @@ struct OGRLayer::Private
     // to store the mapping between the input Arrow field name and the
     // output OGR field name, that can be different sometimes (for example
     // Shapefile truncating at 10 characters)
-    // This is admitedly not super clean to store that mapping at that level.
+    // This is admittedly not super clean to store that mapping at that level.
     // We should probably have CreateFieldFromArrowSchema() and
-    // WriteArrowBatch() explictly returning and accepting that mapping.
+    // WriteArrowBatch() explicitly returning and accepting that mapping.
     std::map<std::string, std::string> m_oMapArrowFieldNameToOGRFieldName{};
 };
 //! @endcond
