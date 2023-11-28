@@ -34,16 +34,12 @@
 #include "ogr_swq.h"
 #include "ograpispy.h"
 #include "ogr_wkb.h"
+#include "ogrlayer_private.h"
 
 #include "cpl_time.h"
 #include <cassert>
 #include <limits>
 #include <set>
-
-struct OGRLayer::Private
-{
-    bool m_bInFeatureIterator = false;
-};
 
 /************************************************************************/
 /*                              OGRLayer()                              */
