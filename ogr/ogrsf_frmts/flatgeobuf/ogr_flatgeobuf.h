@@ -103,13 +103,15 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     bool m_ignoreAttributeFilter = false;
 
     // creation
+    GDALDataset *m_poDS = nullptr;  // parent dataset to get metadata from it
     bool m_create = false;
     std::deque<FeatureItem> m_featureItems;  // feature item description used to
                                              // create spatial index
     bool m_bCreateSpatialIndexAtClose = true;
     bool m_bVerifyBuffers = true;
     VSILFILE *m_poFpWrite = nullptr;
-    uint64_t m_writeOffset = 0;  // current write offset
+    CPLStringList m_aosCreationOption{};  // layer creation options
+    uint64_t m_writeOffset = 0;           // current write offset
     uint64_t m_offsetAfterHeader =
         0;  // offset after dummy header writing (when creating a file without
             // spatial index)
@@ -142,11 +144,12 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf,
                        const char *pszFilename, VSILFILE *poFp,
                        uint64_t offset);
-    OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename,
+    OGRFlatGeobufLayer(GDALDataset *poDS, const char *pszLayerName,
+                       const char *pszFilename,
                        const OGRSpatialReference *poSpatialRef,
                        OGRwkbGeometryType eGType,
                        bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite,
-                       std::string &osTempFile);
+                       std::string &osTempFile, CSLConstList papszOptions);
 
   protected:
     virtual int GetNextArrowArray(struct ArrowArrayStream *,
@@ -163,7 +166,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     static OGRFlatGeobufLayer *Open(const char *pszFilename, VSILFILE *fp,
                                     bool bVerifyBuffers);
     static OGRFlatGeobufLayer *
-    Create(const char *pszLayerName, const char *pszFilename,
+    Create(GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
            const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
            bool bCreateSpatialIndexAtClose, char **papszOptions);
 
@@ -190,6 +193,11 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     void VerifyBuffers(int bFlag)
     {
         m_bVerifyBuffers = CPL_TO_BOOL(bFlag);
+    }
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
     }
 
     const std::string &GetFilename() const override

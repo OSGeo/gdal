@@ -1217,3 +1217,43 @@ def test_ogr_flatgeobuf_issue_7401():
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
     assert not gdal.VSIStatL("/vsimem/test.fgb")
+
+
+###############################################################################
+# Test reading and writing layer title, description and metadata
+
+
+def test_ogr_flatgeobuf_title_description_metadata(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.fgb")
+    ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource(filename)
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        options=["SPATIAL_INDEX=NO", "TITLE=title", "DESCRIPTION=description"],
+    )
+    lyr.SetMetadata({"foo": "bar", "bar": "baz"})
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadata_Dict() == {
+        "TITLE": "title",
+        "DESCRIPTION": "description",
+        "foo": "bar",
+        "bar": "baz",
+    }
+
+    # Test that on FlatGeoBuf -> FlatGeoBuf TITLE and DESCRIPTION get properly propagated.
+    filename2 = str(tmp_vsimem / "test2.fgb")
+    ds = gdal.VectorTranslate(filename2, filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadata_Dict() == {
+        "TITLE": "title",
+        "DESCRIPTION": "description",
+        "foo": "bar",
+        "bar": "baz",
+    }
