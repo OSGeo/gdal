@@ -2336,6 +2336,8 @@ the ``install`` CMake target.
     which link each against libgdal. Consequently, a static build of libgdal is
     not compatible with the bindings.
 
+.. _building_from_source_java:
+
 Java bindings options
 +++++++++++++++++++++
 
@@ -2350,8 +2352,8 @@ Java bindings options
 
 .. option:: GDAL_JAVA_INSTALL_DIR
 
-    Subdirectory into which to install the .jar
-    files. It defaults to "${CMAKE_INSTALL_DATADIR}/java"
+    Subdirectory into which to install the :file:`gdal.jar` file.
+    It defaults to "${CMAKE_INSTALL_DATADIR}/java"
 
     .. note::
         Prior to GDAL 3.8, the gdalalljni library was also installed in that
@@ -2362,8 +2364,20 @@ Java bindings options
 
     .. versionadded:: 3.8
 
-    Subdirectory into which to install the gdalalljni library.
-    It defaults to "${CMAKE_INSTALL_LIBDIR}/jni"
+    Subdirectory into which to install the :file:`libgdalalljni.so` /
+    :file:`libgdalalljni.dylib` / :file:`gdalalljni.dll` library.
+    It defaults to "${CMAKE_INSTALL_LIBDIR}/jni".
+
+    .. note::
+        Prior to GDAL 3.8, the gdalalljni library was installed in the
+        directory controlled by the ``GDAL_JAVA_INSTALL_DIR`` variable.
+
+
+.. note::
+
+    The Java bindings are made of several modules (org.osgeo.gdal, org.osgeo.ogr, etc.)
+    which link each against libgdal. Consequently, a static build of libgdal is
+    not compatible with the bindings.
 
 Option only to be used by maintainers:
 
@@ -2374,12 +2388,6 @@ Option only to be used by maintainers:
 .. option:: GPG_PASS
 
     GPG pass phrase to sign build artifacts.
-
-.. note::
-
-    The Java bindings are made of several modules (org.osgeo.gdal, org.osgeo.ogr, etc.)
-    which link each against libgdal. Consequently, a static build of libgdal is
-    not compatible with the bindings.
 
 C# bindings options
 +++++++++++++++++++
