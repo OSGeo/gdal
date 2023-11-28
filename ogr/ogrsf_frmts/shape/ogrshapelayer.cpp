@@ -1698,6 +1698,7 @@ OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
 
     psExtent3D->MinX = adMin[0];
     psExtent3D->MinY = adMin[1];
+<<<<<<< HEAD
     psExtent3D->MaxX = adMax[0];
     psExtent3D->MaxY = adMax[1];
 
@@ -1711,6 +1712,12 @@ OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
         psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
         psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
     }
+=======
+    psExtent3D->MinZ = adMin[2];
+    psExtent3D->MaxX = adMax[0];
+    psExtent3D->MaxY = adMax[1];
+    psExtent3D->MaxZ = adMax[2];
+>>>>>>> 47c1f0fa98 (SHP GetExtent3D())
 
     if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
         CPLIsNan(adMax[1]))
