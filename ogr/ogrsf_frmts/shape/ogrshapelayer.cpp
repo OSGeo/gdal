@@ -1701,10 +1701,19 @@ OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
 
     psExtent3D->MinX = adMin[0];
     psExtent3D->MinY = adMin[1];
-    psExtent3D->MinZ = adMin[2];
     psExtent3D->MaxX = adMax[0];
     psExtent3D->MaxY = adMax[1];
-    psExtent3D->MaxZ = adMax[2];
+
+    if (OGR_GT_HasZ(poFeatureDefn->GetGeomType()))
+    {
+        psExtent3D->MinZ = adMin[2];
+        psExtent3D->MaxZ = adMax[2];
+    }
+    else
+    {
+        psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
+        psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
+    }
 
     if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
         CPLIsNan(adMax[1]))

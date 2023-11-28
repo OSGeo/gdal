@@ -229,7 +229,7 @@ extern "C++"
         OGREnvelope3D &operator=(const OGREnvelope3D &) = default;
 
         /** Returns TRUE if MinZ and MaxZ are both valid numbers. */
-        int Is3D() const
+        bool Is3D() const
         {
             return !std::isnan(MinZ) && !std::isnan(MaxZ);
         }

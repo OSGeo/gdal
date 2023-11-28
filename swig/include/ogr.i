@@ -491,6 +491,7 @@ typedef void retGetPoints;
 %constant char *OLCFastSpatialFilter   = "FastSpatialFilter";
 %constant char *OLCFastFeatureCount    = "FastFeatureCount";
 %constant char *OLCFastGetExtent       = "FastGetExtent";
+%constant char *OLCFastGetExtent3D     = "FastGetExtent3D";
 %constant char *OLCCreateField         = "CreateField";
 %constant char *OLCDeleteField         = "DeleteField";
 %constant char *OLCReorderFields       = "ReorderFields";
