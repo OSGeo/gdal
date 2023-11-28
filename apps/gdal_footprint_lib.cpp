@@ -452,6 +452,12 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
     if (!psOptions->osDestLayerName.empty())
     {
         poLayer = poDstDS->GetLayerByName(psOptions->osDestLayerName.c_str());
+        if (!poLayer)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer %s",
+                     psOptions->osDestLayerName.c_str());
+            return nullptr;
+        }
     }
     else if (poDstDS->GetLayerCount() == 1 && poDstDS->GetDriver() &&
              EQUAL(poDstDS->GetDriver()->GetDescription(), "ESRI Shapefile"))
