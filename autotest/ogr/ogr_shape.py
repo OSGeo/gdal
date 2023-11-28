@@ -5819,3 +5819,28 @@ def test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR(tmp_vsimem):
             lyr.WriteArrowBatch(
                 schema, array, ["FID=OGC_FID", "IF_FID_NOT_PRESERVED=ERROR"]
             )
+
+
+###############################################################################
+# Test writing an invalid "0000/00/00" date
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_date_0000_00_00(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_ogr_shape_write_date_0000_00_00.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["date"] = "0000/00/00"
+    lyr.CreateFeature(f)
+    f = None
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.IsFieldNull("date")
