@@ -13,5 +13,5 @@
     :ref:`--formats <raster_common_options_formats>`
     command line option but the documentation for the format is the
     definitive source of information on driver creation options.
-    See :ref:`raster_drivers` format
-    specific documentation for legal creation options for each format.
+    See :ref:`raster_drivers` or :ref:`vector_drivers` 
+    format-specific documentation for legal creation options for each format.
