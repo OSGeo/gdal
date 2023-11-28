@@ -6,6 +6,8 @@ GDAL 3.8.1 is a bugfix release.
 
 * CMake: add gdalinfo bash-completion file to list of installed files
 * Fix build error with libxml2 2.12
+* CMake: make GDAL_USE_LIBKML and GDAL_USE_OPENJPEG honor GDAL_USE_EXTERNAL_LIBS
+* Detect failure in installation of the Python bindings
 
 ## GDAL 3.8.1
 
@@ -17,6 +19,8 @@ GDAL 3.8.1 is a bugfix release.
 
 * RasterIO: fix subpixel shift when reading from overviews with non-nearest
   resampling
+* GDALOverviewDataset::IRasterIO(): use parent dataset when possible for more
+  efficiency
 
 ### Algorithms
 
@@ -30,6 +34,8 @@ GDAL 3.8.1 is a bugfix release.
 * gdal_rasterize: fix inverse rasterization of polygon nested inside another
   one. Requires GEOS enabled build (#8689)
 * gdal_footprint: fix -ovr on RGBA datasets (#8792)
+* gdal_footprint: fix wrong taking into account of alpha band (#8834)
+* gdal_footprint: fix taking into account of individual bands that have nodata
 * gdal_sieve.py/gdalattachpct.py/gdalcompare.py/gdalmove.py:
   make sure --version and --help return 0 error code (#8717)
 
@@ -40,6 +46,8 @@ BSB driver:
 
 COG driver:
  * avoid warnings when converting from world coverage to EPSG:3857
+ * for JPEG compression, convert single band+alpha as single band JPEG +
+   1-bit mask band
 
 KEA driver:
  * Create(): error out if passing a /vsi file. avoids crashes (#8743)
@@ -53,6 +61,8 @@ MSGN driver:
 GeoTIFF driver:
 * multithreaded reader/writer: in update scenarios, do not force serialization
   to disk of dirty blocks that intersect the area of interest to read (#8729)
+* SRS reader: include VertCRS name from EPSG in CompoundCRS name if there's no
+  citation geokey
 
 VRT driver:
  * VRTSourcedRasterBand: serialize approximate statistics inside .vrt when
@@ -69,12 +79,19 @@ VRT driver:
 
 ### Utilities
 
-* ogr2ogr: fix GPKG to shapefile with the -preserve_fid flag (#8761)
+* ogr2ogr: fix GPKG to shapefile with the -preserve_fid flag (#8761,
+  3.8.0 regression)
+* ogr2ogr: fix GPKG -> Shapefile when field names are truncated (#8849,
+  3.8.0 regression)
 
 ### Vector drivers
 
 Arrow/Parquet driver:
  * use OGRCloneArrowArray() for safer filtering
+
+CSV driver:
+ * CSV writer: do not quote integer fields by default (only if
+   STRING_QUOTING=ALWAYS is specified)
 
 GML driver:
  * SaveClasses(): fix memleak in error code path (ossfuzz#63871)
@@ -89,6 +106,9 @@ GPKG driver:
  * fix GetNextArrowArray() when there are more than 125 columns (affects
    ogr2ogr from such GPKG) (#8757)
 
+GPX driver:
+ * make detection of extensions element more robust (#8827)
+
 OAPIF driver:
  * add INITIAL_REQUEST_PAGE_SIZE open option (#4556)
 
@@ -102,6 +122,8 @@ S57 driver:
 
 Shapefile driver:
  * fix spurious warning when reading polygons (#8767)
+ * recognize '      0' as a null date
+ * fix writing an invalid "0000/00/00" date
 
 SQLite driver:
  * fix SRS retrieval of a SELECT layer from a non-Spatialite DB with a point
@@ -111,6 +133,8 @@ SQLite driver:
 
 * GetArrowStreamAsNumPy(): fix missing offset when reading fixed size list of
   string
+* Fix installation issue with Python 3.12 on Debian
+* Python bindings: add a combineBands option to gdal.Footprint()
 
 # GDAL/OGR 3.8.0 Releases Notes
 
