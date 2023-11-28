@@ -439,8 +439,7 @@ def test_gdaldem_footprint_rgba_overviews():
     for i in range(4):
         src_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_RedBand + i)
     src_ds.BuildOverviews("NONE", [2])
-    for i in range(4):
-        src_ds.GetRasterBand(i + 1).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(4).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -452,3 +451,86 @@ def test_gdaldem_footprint_rgba_overviews():
     lyr = out_ds.GetLayer(0)
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((2 2,2 4,4 4,4 2,2 2)))")
+
+
+###############################################################################
+def test_gdal_footprint_lib_union():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,0 1,2 1,2 0,0 0)))")
+
+
+###############################################################################
+def test_gdal_footprint_lib_intersection_none():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        combineBands="intersection",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f is None
+
+
+###############################################################################
+def test_gdal_footprint_lib_intersection_partial():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\xFF\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        combineBands="intersection",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((1 0,1 1,2 1,2 0,1 0)))")
+
+
+###############################################################################
+def test_gdal_footprint_lib_intersection_full():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\xFF\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xFF\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        combineBands="intersection",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,0 1,2 1,2 0,0 0)))")
