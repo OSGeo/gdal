@@ -48,6 +48,7 @@
 extern "C++"
 {
 #if !defined(DOXYGEN_SKIP)
+#include <cmath>
 #include <limits>
 #endif
 
