@@ -51,6 +51,8 @@ extern "C++"
 #include <limits>
 #endif
 
+    class OGREnvelope3D;
+
     /**
      * Simple container for a bounding region (rectangle)
      */

@@ -1679,10 +1679,7 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 {
     OGREnvelope3D envelope3D;
     const OGRErr retVal{GetExtent3D(0, &envelope3D, bForce)};
-    psExtent->MinX = envelope3D.MinX;
-    psExtent->MinY = envelope3D.MinY;
-    psExtent->MaxX = envelope3D.MaxX;
-    psExtent->MaxY = envelope3D.MaxY;
+    *psExtent = envelope3D;
     return retVal;
 }
 
