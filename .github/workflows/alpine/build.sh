@@ -10,3 +10,4 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DIconv_LIBRARY=/usr/lib/libiconv.so \
   -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
+make -j$(nproc) install DESTDIR=/tmp/install-gdal
