@@ -1677,6 +1677,17 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
 OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
+    OGREnvelope3D envelope3D;
+    const OGRErr retVal{GetExtent3D(0, &envelope3D, bForce)};
+    psExtent->MinX = envelope3D.MinX;
+    psExtent->MinY = envelope3D.MinY;
+    psExtent->MaxX = envelope3D.MaxX;
+    psExtent->MaxY = envelope3D.MaxY;
+    return retVal;
+}
+
+OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
+{
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
@@ -1688,10 +1699,12 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
     SHPGetInfo(hSHP, nullptr, nullptr, adMin, adMax);
 
-    psExtent->MinX = adMin[0];
-    psExtent->MinY = adMin[1];
-    psExtent->MaxX = adMax[0];
-    psExtent->MaxY = adMax[1];
+    psExtent3D->MinX = adMin[0];
+    psExtent3D->MinY = adMin[1];
+    psExtent3D->MinZ = adMin[2];
+    psExtent3D->MaxX = adMax[0];
+    psExtent3D->MaxY = adMax[1];
+    psExtent3D->MaxZ = adMax[2];
 
     if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
         CPLIsNan(adMax[1]))
@@ -1705,7 +1718,7 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         OGRGeometry *poFilterGeom = m_poFilterGeom;
         m_poFilterGeom = nullptr;
 
-        const OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+        const OGRErr eErr = OGRLayer::GetExtent3D(0, psExtent3D, bForce);
 
         m_poAttrQuery = poAttrQuery;
         m_poFilterGeom = poFilterGeom;
