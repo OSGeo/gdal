@@ -2455,6 +2455,35 @@ int VSIFPrintfL(VSILFILE *fp, CPL_FORMAT_STRING(const char *pszFormat), ...)
 }
 
 /************************************************************************/
+/*                 VSIVirtualHandle::Printf()                           */
+/************************************************************************/
+
+/**
+ * \brief Formatted write to file.
+ *
+ * Provides fprintf() style formatted output to a VSI*L file.  This formats
+ * an internal buffer which is written using VSIFWriteL().
+ *
+ * Analog of the POSIX fprintf() call.
+ *
+ * @param pszFormat the printf() style format string.
+ *
+ * @return the number of bytes written or -1 on an error.
+ */
+
+int VSIVirtualHandle::Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
+{
+    va_list args;
+
+    va_start(args, pszFormat);
+    CPLString osResult;
+    osResult.vPrintf(pszFormat, args);
+    va_end(args);
+
+    return static_cast<int>(Write(osResult.c_str(), 1, osResult.length()));
+}
+
+/************************************************************************/
 /*                              VSIFPutcL()                              */
 /************************************************************************/
 
