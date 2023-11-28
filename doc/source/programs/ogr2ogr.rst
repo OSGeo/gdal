@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    ogr2ogr [--help] [--help-general]
+    ogr2ogr [--help] [--help-general] [--long-usage]
             [-skipfailures] [-append | -upsert] [-update]
             [-select <field_list>] [-where <restricted_where>|@<filename>]
             [-progress] [-sql <sql statement>|@<filename>] [-dialect <dialect>]
@@ -64,6 +64,8 @@ spatial or attribute selection, reducing the set of attributes, setting the
 output coordinate system or even reprojecting the features during translation.
 
 .. program:: ogr2ogr
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -f <format_name>
 

@@ -67,7 +67,7 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
 {
     fprintf(
         bIsError ? stderr : stdout,
-        "Usage: ogr2ogr [--help] [--help-general]\n"
+        "Usage: ogr2ogr [--help] [--help-general] [--long-usage]\n"
         "               [-skipfailures] [-append | -upsert] [-update]\n"
         "               [-select <field_list>] [-where "
         "<restricted_where>|@<filename>]\n"
