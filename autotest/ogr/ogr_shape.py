@@ -1905,6 +1905,7 @@ def test_ogr_shape_48(tmp_vsimem):
     extent = lyr.GetExtent()
     assert extent == (0, 1, 0, 1), "did not get expected extent (4)"
     extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
     assert extent3D == (0, 1, 0, 1, 1, 3), "did not get expected extent 3D"
     ds = None
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(

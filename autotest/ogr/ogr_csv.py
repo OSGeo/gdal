@@ -2979,6 +2979,7 @@ def test_ogr_csv_getextent3d(tmp_vsimem):
     )
     assert gdal.GetLastErrorMsg() == ""
     lyr = ds.GetLayer(0)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent)
     dfn = lyr.GetLayerDefn()
     assert dfn.GetGeomFieldCount() == 1
     ext2d = lyr.GetExtent()

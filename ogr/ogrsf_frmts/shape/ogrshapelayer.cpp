@@ -1766,6 +1766,9 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastGetExtent))
         return TRUE;
 
+    if (EQUAL(pszCap, OLCFastGetExtent3D))
+        return TRUE;
+
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 

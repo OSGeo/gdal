@@ -1010,6 +1010,8 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
                         */
 #define OLCFastGetExtent                                                       \
     "FastGetExtent" /**< Layer capability for fast extent retrieval */
+#define OLCFastGetExtent3D                                                     \
+    "FastGetExtent3D" /**< Layer capability for fast 3D extent retrieval */
 #define OLCCreateField                                                         \
     "CreateField" /**< Layer capability for field creation                     \
                    */
