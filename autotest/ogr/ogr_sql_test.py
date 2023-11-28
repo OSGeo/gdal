@@ -152,6 +152,31 @@ def data_ds():
 
 
 ###############################################################################
+# Test an unrecognized dialect name
+
+
+def test_ogr_sql_unrecognized_dialect(data_ds):
+    class MyHandler:
+        def __init__(self):
+            self.warning_raised = False
+
+        def callback(self, err_type, err_no, err_msg):
+            if (
+                err_type == gdal.CE_Warning
+                and "Dialect 'unknown' is unsupported" in err_msg
+            ):
+                self.warning_raised = True
+
+    my_error_handler = MyHandler()
+    with gdaltest.error_handler(my_error_handler.callback):
+        with data_ds.ExecuteSQL(
+            "SELECT * FROM poly WHERE eas_id < 167", dialect="unknown"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount(force=1) == 3
+    assert my_error_handler.warning_raised
+
+
+###############################################################################
 # Test a simple query with a where clause.
 
 

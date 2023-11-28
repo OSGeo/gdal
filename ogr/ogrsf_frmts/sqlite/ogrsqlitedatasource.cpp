@@ -3206,12 +3206,14 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    if (pszDialect != nullptr && EQUAL(pszDialect, "OGRSQL"))
-        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                       pszDialect);
-    else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
+    if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
                                        "SQLITE");
+    else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
+             !EQUAL(pszDialect, "NATIVE") && !EQUAL(pszDialect, "SQLITE"))
+
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */
