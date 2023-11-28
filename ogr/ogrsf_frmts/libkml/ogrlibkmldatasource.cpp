@@ -1630,7 +1630,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
                 else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Invalid IRI for AUTHOR_URI");
+                             "Invalid URI for AUTHOR_URI");
                 }
             }
             if (pszAuthorEmail != nullptr)
