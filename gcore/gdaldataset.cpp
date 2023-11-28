@@ -3636,6 +3636,9 @@ retry:
                                     : GDAL_IDENTIFY_UNKNOWN;
         if (nIdentifyRes == FALSE)
         {
+            CSLDestroy(papszTmpOpenOptions);
+            CSLDestroy(papszTmpOpenOptionsToValidate);
+            oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
             continue;
         }
         else if (iPass == 1 && nIdentifyRes < 0 &&
@@ -3644,6 +3647,9 @@ retry:
         {
             // Not loaded plugin
             apoSecondPassDrivers.push_back(poDriver);
+            CSLDestroy(papszTmpOpenOptions);
+            CSLDestroy(papszTmpOpenOptionsToValidate);
+            oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
             continue;
         }
 
