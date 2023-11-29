@@ -34,7 +34,7 @@
 class FullBox : public Box
 {
   protected:
-    FullBox(const char *fourCC) : Box(fourCC), version(0)
+    explicit FullBox(const char *fourCC) : Box(fourCC), version(0)
     {
         memset(flags, 0, 3);
     }

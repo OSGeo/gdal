@@ -26,19 +26,18 @@
  ****************************************************************************/
 
 #include "fullbox.h"
+#include <cstdint>
 
 class PrimaryItemBox : public FullBox
 {
   public:
-    PrimaryItemBox() : FullBox("pitm")
+    explicit PrimaryItemBox(uint32_t id) : FullBox("pitm"), item_ID(id)
     {
     }
 
     ~PrimaryItemBox()
     {
     }
-
-    void setItemID(uint32_t id);
 
   protected:
     uint64_t getBodySize() override;

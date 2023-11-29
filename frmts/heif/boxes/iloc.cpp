@@ -103,7 +103,7 @@ void ItemLocationBox::writeBodyTo(VSILFILE *fp)
     }
 }
 
-uint64_t ItemLocationBox::Item::getBaseOffset() const
+uint64_t ItemLocationBox::Item::getBaseOffset()
 {
     // This is not optimal, but common.
     return 0;
@@ -167,12 +167,13 @@ uint8_t ItemLocationBox::getLengthSize() const
     }
 }
 
-uint8_t ItemLocationBox::getBaseOffsetSize() const
+uint8_t ItemLocationBox::getBaseOffsetSize()
 {
+    // TODO: real calculation
     return 4;
 }
 
-uint8_t ItemLocationBox::getIndexSizeOrReserved() const
+uint8_t ItemLocationBox::getIndexSizeOrReserved()
 {
     // TODO: calculate based on version when needed
     return 0;

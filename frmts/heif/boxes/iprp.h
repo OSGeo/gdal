@@ -71,7 +71,7 @@ class ItemPropertyAssociationBox : public FullBox
     class Entry
     {
       public:
-        Entry(uint32_t id) : item_ID(id)
+        explicit Entry(uint32_t id) : item_ID(id)
         {
         }
 

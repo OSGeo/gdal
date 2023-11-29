@@ -42,7 +42,7 @@ uint64_t Box::getFullSize()
 void Box::writeHeader(VSILFILE *fp)
 {
     // TODO: rework this to handle uuid as well
-    uint32_t size = getSize();
+    uint32_t size = (uint32_t)getSize();
     writeUint32Value(fp, size);
     writeBoxType(fp);
     if (size == 1)
@@ -65,7 +65,7 @@ uint64_t Box::getSize()
     }
     else
     {
-        uint32_t size = getHeaderSize() + getBodySize();
+        uint32_t size = (uint32_t)(getHeaderSize() + getBodySize());
         return size;
     }
 }
@@ -73,7 +73,6 @@ uint64_t Box::getSize()
 int Box::ReadBoxHeader(VSILFILE *fp, size_t *bytesRead, uint64_t *size)
 {
     uint32_t sizeBigEndian = 0;
-    uint32_t fourCC = 0;
 
     if (VSIFReadL(&sizeBigEndian, sizeof(uint32_t), 1, fp) != 1)
     {
@@ -82,7 +81,7 @@ int Box::ReadBoxHeader(VSILFILE *fp, size_t *bytesRead, uint64_t *size)
     *size = CPL_MSBWORD32(sizeBigEndian);
     *bytesRead += sizeof(uint32_t);
 
-    if (VSIFReadL(&fourCC, sizeof(uint32_t), 1, fp) != 1)
+    if (VSIFReadL(&boxtype, sizeof(uint32_t), 1, fp) != 1)
     {
         return FALSE;
     }
@@ -107,7 +106,7 @@ uint32_t AbstractContainerBox::addChildBox(std::shared_ptr<Box> box)
 {
     boxes.push_back(box);
     // Return 1 based index.
-    return boxes.size();
+    return (uint32_t)boxes.size();
 }
 
 uint64_t AbstractContainerBox::getBodySize()

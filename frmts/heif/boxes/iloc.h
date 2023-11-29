@@ -50,7 +50,7 @@ class ItemLocationBox : public FullBox
     class Item
     {
       public:
-        Item(uint32_t id)
+        explicit Item(uint32_t id)
             : item_ID(id), construction_method(0), data_reference_index(0)
         {
         }
@@ -99,7 +99,7 @@ class ItemLocationBox : public FullBox
             writeUint16Value(fp, data_reference_index);
             if (base_offset_size == 4)
             {
-                writeUint32Value(fp, getBaseOffset());
+                writeUint32Value(fp, (uint32_t)getBaseOffset());
             }
             else if (base_offset_size == 8)
             {
@@ -123,7 +123,8 @@ class ItemLocationBox : public FullBox
                 }
                 if (offset_size == 4)
                 {
-                    writeUint32Value(fp, extent->offset - getBaseOffset());
+                    writeUint32Value(
+                        fp, (uint32_t)(extent->offset - getBaseOffset()));
                 }
                 else if (offset_size == 8)
                 {
@@ -131,7 +132,7 @@ class ItemLocationBox : public FullBox
                 }
                 if (length_size == 4)
                 {
-                    writeUint32Value(fp, extent->length);
+                    writeUint32Value(fp, (uint32_t)extent->length);
                 }
                 else if (length_size == 8)
                 {
@@ -141,7 +142,7 @@ class ItemLocationBox : public FullBox
         }
 
       private:
-        uint64_t getBaseOffset() const;
+        static uint64_t getBaseOffset();
         uint32_t item_ID;
         uint8_t construction_method;
         uint16_t data_reference_index;
@@ -160,8 +161,8 @@ class ItemLocationBox : public FullBox
   private:
     uint8_t getOffsetSize() const;
     uint8_t getLengthSize() const;
-    uint8_t getBaseOffsetSize() const;
-    uint8_t getIndexSizeOrReserved() const;
+    static uint8_t getBaseOffsetSize();
+    static uint8_t getIndexSizeOrReserved();
 
     std::vector<std::shared_ptr<Item>> items;
 };

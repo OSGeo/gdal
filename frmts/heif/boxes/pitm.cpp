@@ -27,11 +27,6 @@
 
 #include "pitm.h"
 
-void PrimaryItemBox::setItemID(uint32_t id)
-{
-    item_ID = id;
-}
-
 uint64_t PrimaryItemBox::getBodySize()
 {
     if (item_ID > UINT16_MAX)

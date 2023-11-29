@@ -149,8 +149,7 @@ GDALDataset *GDALHEIFDataset::CreateCopy(const char *pszFilename,
     hdlr.setName("Picture handler");
     meta.addBox(&hdlr);
 
-    PrimaryItemBox pitm;
-    pitm.setItemID(primaryItemId);
+    PrimaryItemBox pitm(primaryItemId);
     meta.addBox(&pitm);
 
     ItemInfoBox iinf;

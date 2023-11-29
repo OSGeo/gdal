@@ -35,7 +35,7 @@ class HandlerBox : public FullBox
     {
     }
 
-    HandlerBox(uint32_t fourCC)
+    explicit HandlerBox(uint32_t fourCC)
         : FullBox("hdlr"), handler_type(fourCC), name("")
     {
     }

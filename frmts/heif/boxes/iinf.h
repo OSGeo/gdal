@@ -26,6 +26,7 @@
  ****************************************************************************/
 
 #include "fullbox.h"
+#include <cstdint>
 
 class ItemInfoEntry : public FullBox
 {
@@ -38,7 +39,7 @@ class ItemInfoEntry : public FullBox
         version = 2;
     }
 
-    ItemInfoEntry(uint32_t id, const char *type, std::string name)
+    ItemInfoEntry(uint32_t id, const char *type, const std::string &name)
         : FullBox("infe"), item_ID(id), item_protection_index(0),
           item_type(fourcc(type)), item_name(name)
     {
@@ -105,7 +106,7 @@ class ItemInfoBox : public FullBox
     uint64_t getBodySize() override
     {
         uint64_t size = 0;
-        uint32_t entry_count = item_infos.size();
+        uint32_t entry_count = (uint32_t)item_infos.size();
         if (entry_count > UINT16_MAX)
         {
             version = 1;
@@ -126,7 +127,7 @@ class ItemInfoBox : public FullBox
 
     void writeBodyTo(VSILFILE *fp) override
     {
-        uint32_t entry_count = item_infos.size();
+        uint32_t entry_count = (uint32_t)item_infos.size();
         if (entry_count > UINT16_MAX)
         {
             writeUint32Value(fp, entry_count);

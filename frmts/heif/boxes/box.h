@@ -129,7 +129,7 @@ class AbstractContainerBox : public Box
     uint32_t addChildBox(std::shared_ptr<Box> box);
 
   protected:
-    AbstractContainerBox(const char *fourCC) : Box(fourCC)
+    explicit AbstractContainerBox(const char *fourCC) : Box(fourCC)
     {
     }
 
