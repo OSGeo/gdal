@@ -30,7 +30,7 @@
 #include "ogrshape.h"
 
 #include <cerrno>
-#include <climits>
+#include <limits>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
