@@ -91,6 +91,7 @@ add_executable(
   test_osr_ct.cpp
   test_osr_proj4.cpp
   test_triangulation.cpp
+  test_utilities.cpp
   test_marching_squares_contour.cpp
   test_marching_squares_polygon.cpp
   test_marching_squares_square.cpp
