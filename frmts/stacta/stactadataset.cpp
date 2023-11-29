@@ -390,15 +390,6 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
              nDTSize <
          128 * 1024);
 
-    // Avoid probing side car files
-    std::unique_ptr<CPLConfigOptionSetter> poSetter;
-    const CPLString osExt(CPLGetExtension(m_osURLTemplate));
-    if (osExt.size() > 0 && osExt.size() <= 3)
-    {
-        poSetter.reset(new CPLConfigOptionSetter(
-            "CPL_VSIL_CURL_ALLOWED_EXTENSIONS", osExt, false));
-    }
-
     // Split the request on each metatile that it intersects
     for (int iY = nMinBlockY; iY <= nMaxBlockY; iY++)
     {
@@ -433,6 +424,12 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     m_poMasterDS->m_oCacheTileDS.getPtr(osURL);
                 if (ppoTileDS == nullptr)
                 {
+
+                    // Avoid probing side car files
+                    CPLConfigOptionSetter oSetter(
+                        "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR",
+                        /* bSetOnlyIfUndefined = */ true);
+
                     CPLStringList aosAllowedDrivers;
                     aosAllowedDrivers.AddString("GTiff");
                     aosAllowedDrivers.AddString("PNG");
@@ -893,6 +890,9 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
             (STARTS_WITH(osURL, "http://") || STARTS_WITH(osURL, "https://"))
                 ? CPLString("/vsicurl/" + osURL)
                 : osURL;
+        CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
+                                      "EMPTY_DIR",
+                                      /* bSetOnlyIfUndefined = */ true);
         if (m_bSkipMissingMetaTile)
             CPLPushErrorHandler(CPLQuietErrorHandler);
         poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str()));
