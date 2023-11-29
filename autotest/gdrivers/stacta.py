@@ -28,10 +28,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import struct
+from http.server import BaseHTTPRequestHandler
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -202,3 +205,88 @@ def test_stacta_missing_metatile():
     gdal.Unlink("/vsimem/stacta/test.json")
     assert gdal.VSIStatL("/vsimem/stacta/WorldCRS84Quad/1/0/0.tif") is None
     gdal.Unlink("/vsimem/stacta/WorldCRS84Quad/2/0/1.tif")
+
+
+###############################################################################
+do_log = False
+
+
+class STACTAHandler(BaseHTTPRequestHandler):
+    def log_request(self, code="-", size="-"):
+        pass
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open("/tmp/log.txt", "a")
+                f.write("GET %s\n" % self.path)
+                f.close()
+
+            assert self.path.startswith("/WorldCRS84Quad/")
+
+            if self.path.endswith(".tif"):
+                f = open("data/stacta" + self.path, "rb")
+                content = f.read()
+                f.close()
+                self.send_response(200)
+                self.send_header("Content-type", "image/tiff")
+                self.send_header("Content-Length", len(content))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+            assert False
+
+        except IOError:
+            pass
+
+        self.send_error(404, "File Not Found: %s" % self.path)
+
+
+@pytest.mark.require_curl
+def test_stacta_network():
+
+    (process, port) = webserver.launch(handler=STACTAHandler)
+    if port == 0:
+        pytest.skip()
+
+    try:
+        stacta_def = json.loads(open("data/stacta/test.json", "rb").read())
+        stacta_def["asset_templates"]["bands"]["href"] = (
+            "http://localhost:%d/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.tif"
+            % port
+        )
+        with gdaltest.tempfile("/vsimem/test.json", json.dumps(stacta_def)):
+            ds = gdal.Open("/vsimem/test.json")
+            assert ds.RasterCount == 3
+            assert ds.RasterXSize == 2048
+            assert ds.RasterYSize == 1024
+            assert ds.GetSpatialRef().GetName() == "WGS 84"
+            assert ds.GetGeoTransform() == pytest.approx(
+                [-180.0, 0.17578125, 0.0, 90.0, 0.0, -0.17578125], rel=1e-8
+            )
+            assert ds.GetRasterBand(1).GetNoDataValue() == 0.0
+            assert ds.GetRasterBand(1).GetOverviewCount() == 2
+            assert len(ds.GetSubDatasets()) == 0
+
+            # Create a reference dataset, that is externally the same as the STACTA one
+            vrt_ds = gdal.BuildVRT(
+                "",
+                [
+                    "data/stacta/WorldCRS84Quad/2/0/0.tif",
+                    "data/stacta/WorldCRS84Quad/2/0/1.tif",
+                ],
+            )
+            ref_ds = gdal.Translate("", vrt_ds, format="MEM")
+            ref_ds.BuildOverviews("NEAR", [2, 4])
+
+            # Whole dataset reading
+            assert ds.ReadRaster() == ref_ds.ReadRaster()
+
+    finally:
+        webserver.server_stop(process, port)
