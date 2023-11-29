@@ -104,10 +104,16 @@ class swq_expr_node;
 class swq_select;
 class OGRGeometry;
 
+struct CPL_UNSTABLE_API swq_evaluation_context
+{
+    bool bUTF8Strings = false;
+};
+
 typedef swq_expr_node *(*swq_field_fetcher)(swq_expr_node *op,
                                             void *record_handle);
-typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
-                                           swq_expr_node **sub_field_values);
+typedef swq_expr_node *(*swq_op_evaluator)(
+    swq_expr_node *op, swq_expr_node **sub_field_values,
+    const swq_evaluation_context &sContext);
 typedef swq_field_type (*swq_op_checker)(
     swq_expr_node *op, int bAllowMismatchTypeOnFieldComparison);
 
@@ -116,6 +122,7 @@ class swq_custom_func_registrar;
 class CPL_UNSTABLE_API swq_expr_node
 {
     swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
+                            const swq_evaluation_context &sContext,
                             int nRecLevel);
     void reset();
 
@@ -146,7 +153,8 @@ class CPL_UNSTABLE_API swq_expr_node
                          int bAllowMismatchTypeOnFieldComparison,
                          swq_custom_func_registrar *poCustomFuncRegistrar,
                          int depth = 0);
-    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record);
+    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
+                            const swq_evaluation_context &sContext);
     swq_expr_node *Clone();
 
     void ReplaceBetweenByGEAndLERecurse();
@@ -277,12 +285,14 @@ swq_expr_compile2(const char *where_clause, swq_field_list *field_list,
 */
 int CPL_UNSTABLE_API swq_test_like(const char *input, const char *pattern);
 
-swq_expr_node CPL_UNSTABLE_API *SWQGeneralEvaluator(swq_expr_node *,
-                                                    swq_expr_node **);
+swq_expr_node CPL_UNSTABLE_API *
+SWQGeneralEvaluator(swq_expr_node *, swq_expr_node **,
+                    const swq_evaluation_context &sContext);
 swq_field_type CPL_UNSTABLE_API
 SWQGeneralChecker(swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison);
-swq_expr_node CPL_UNSTABLE_API *SWQCastEvaluator(swq_expr_node *,
-                                                 swq_expr_node **);
+swq_expr_node CPL_UNSTABLE_API *
+SWQCastEvaluator(swq_expr_node *, swq_expr_node **,
+                 const swq_evaluation_context &sContext);
 swq_field_type CPL_UNSTABLE_API
 SWQCastChecker(swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison);
 const char CPL_UNSTABLE_API *SWQFieldTypeToString(swq_field_type field_type);
@@ -473,6 +483,8 @@ char CPL_UNSTABLE_API *OGRHStoreGetValue(const char *pszHStore,
 void swq_fixup(swq_parse_context *psParseContext);
 swq_expr_node *swq_create_and_or_or(swq_op op, swq_expr_node *left,
                                     swq_expr_node *right);
+int swq_test_like(const char *input, const char *pattern, char chEscape,
+                  bool insensitive, bool bUTF8Strings);
 #endif
 
 #endif /* #ifndef DOXYGEN_SKIP */

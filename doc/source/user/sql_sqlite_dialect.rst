@@ -80,6 +80,22 @@ translated, as far as possible, as attribute filters that are applied on the
 underlying OGR layers. Joins can be very expensive operations if the secondary table is not
 indexed on the key field being used.
 
+LIKE operator
++++++++++++++
+
+In SQLite, the LIKE operator is case insensitive, unless ``PRAGMA case_sensitive_like = 1``
+has been issued.
+
+Starting with GDAL 3.9, GDAL installs a custom LIKE comparison, such that UTF-8
+characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
+For ILIKE case insensitive comparisons, this is restricted to the
+`ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
+`Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
+`Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
+`Latin Extended-B <https://en.wikipedia.org/wiki/Latin_Extended-B>`__,
+`Greek and Coptic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__
+and `Cyrillic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__ Unicode categories.
+
 Delimited identifiers
 +++++++++++++++++++++
 

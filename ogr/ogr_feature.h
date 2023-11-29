@@ -1833,12 +1833,14 @@ class CPL_DLL OGRGlobFieldDomain final : public OGRFieldDomain
 class OGRLayer;
 class swq_expr_node;
 class swq_custom_func_registrar;
+struct swq_evaluation_context;
 
 class CPL_DLL OGRFeatureQuery
 {
   private:
     OGRFeatureDefn *poTargetDefn;
     void *pSWQExpr;
+    swq_evaluation_context *m_psContext = nullptr;
 
     char **FieldCollector(void *, char **);
 

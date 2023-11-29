@@ -2426,3 +2426,56 @@ def test_ogr_sql_sqlite_unsupported(sql):
     lyr.CreateField(ogr.FieldDefn("foo"))
     with pytest.raises(Exception):
         ds.ExecuteSQL(sql, dialect="SQLite")
+
+
+###############################################################################
+# Test our overloaded LIKE operator
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_sql_sqlite_like_utf8():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'e' LIKE 'E'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'e' LIKE 'i'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'éx' LIKE 'Éxx' ESCAPE 'x'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE NULL LIKE 'É'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE NULL", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É' ESCAPE NULL", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É' ESCAPE 'should be single char'",
+        dialect="SQLite",
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0

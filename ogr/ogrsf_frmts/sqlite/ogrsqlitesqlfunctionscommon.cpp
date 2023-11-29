@@ -39,6 +39,8 @@
 
 #include <map>
 
+#include "ogr_swq.h"
+
 namespace
 {
 class OGRSQLiteExtensionData
@@ -53,6 +55,8 @@ class OGRSQLiteExtensionData
     void *hRegExpCache = nullptr;
 
     OGRGeocodingSessionH hGeocodingSession = nullptr;
+
+    bool bCaseSensitiveLike = false;
 
     OGRSQLiteExtensionData(const OGRSQLiteExtensionData &) = delete;
     OGRSQLiteExtensionData &operator=(const OGRSQLiteExtensionData &) = delete;
@@ -79,6 +83,16 @@ class OGRSQLiteExtensionData
     void SetRegExpCache(void *hRegExpCacheIn)
     {
         hRegExpCache = hRegExpCacheIn;
+    }
+
+    void SetCaseSensitiveLike(bool b)
+    {
+        bCaseSensitiveLike = b;
+    }
+
+    bool GetCaseSensitiveLike() const
+    {
+        return bCaseSensitiveLike;
     }
 };
 
@@ -280,6 +294,46 @@ static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext,
 }
 
 /************************************************************************/
+/*                             OGRSQLITE_LIKE()                         */
+/************************************************************************/
+
+static void OGRSQLITE_LIKE(sqlite3_context *pContext, int argc,
+                           sqlite3_value **argv)
+{
+    OGRSQLiteExtensionData *poModule =
+        static_cast<OGRSQLiteExtensionData *>(sqlite3_user_data(pContext));
+
+    // A LIKE B is implemented as like(B, A)
+    // A LIKE B ESCAPE C is implemented as like(B, A, C)
+    const char *pattern =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+    const char *input =
+        reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
+    if (!input || !pattern)
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    char chEscape = '\\';
+    if (argc == 3)
+    {
+        const char *escape =
+            reinterpret_cast<const char *>(sqlite3_value_text(argv[2]));
+        if (!escape || escape[1] != 0)
+        {
+            sqlite3_result_null(pContext);
+            return;
+        }
+        chEscape = escape[0];
+    }
+
+    const bool insensitive = !poModule->GetCaseSensitiveLike();
+    constexpr bool bUTF8Strings = true;
+    sqlite3_result_int(pContext, swq_test_like(input, pattern, chEscape,
+                                               insensitive, bUTF8Strings));
+}
+
+/************************************************************************/
 /*                 OGRSQLiteRegisterSQLFunctionsCommon()                */
 /************************************************************************/
 
@@ -287,12 +341,26 @@ static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext,
 #define SQLITE_DETERMINISTIC 0
 #endif
 
+#ifndef SQLITE_INNOCUOUS
+#define SQLITE_INNOCUOUS 0
+#endif
+
+#define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+
 static OGRSQLiteExtensionData *OGRSQLiteRegisterSQLFunctionsCommon(sqlite3 *hDB)
 {
     OGRSQLiteExtensionData *pData = new OGRSQLiteExtensionData(hDB);
 
     sqlite3_create_function(hDB, "gdal_get_pixel_value", 5, SQLITE_UTF8, pData,
                             OGRSQLITE_gdal_get_pixel_value, nullptr, nullptr);
+
+    if (CPLTestBool(CPLGetConfigOption("OGR_SQLITE_USE_CUSTOM_LIKE", "YES")))
+    {
+        sqlite3_create_function(hDB, "LIKE", 2, UTF8_INNOCUOUS, pData,
+                                OGRSQLITE_LIKE, nullptr, nullptr);
+        sqlite3_create_function(hDB, "LIKE", 3, UTF8_INNOCUOUS, pData,
+                                OGRSQLITE_LIKE, nullptr, nullptr);
+    }
 
     pData->SetRegExpCache(OGRSQLiteRegisterRegExpFunction(hDB));
 
@@ -309,3 +377,16 @@ static void OGRSQLiteUnregisterSQLFunctions(void *hHandle)
         static_cast<OGRSQLiteExtensionData *>(hHandle);
     delete pData;
 }
+
+#ifdef DEFINE_OGRSQLiteSQLFunctionsSetCaseSensitiveLike
+/************************************************************************/
+/*                OGRSQLiteSQLFunctionsSetCaseSensitiveLike()           */
+/************************************************************************/
+
+static void OGRSQLiteSQLFunctionsSetCaseSensitiveLike(void *hHandle, bool b)
+{
+    OGRSQLiteExtensionData *pData =
+        static_cast<OGRSQLiteExtensionData *>(hHandle);
+    pData->SetCaseSensitiveLike(b);
+}
+#endif

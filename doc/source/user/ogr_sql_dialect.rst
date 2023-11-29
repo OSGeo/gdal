@@ -284,6 +284,17 @@ Starting with GDAL 3.1, LIKE is case sensitive, and ILIKE is case insensitive.
 In previous versions, LIKE was also case insensitive. If the old behavior is
 wished in GDAL 3.1, the :config:`OGR_SQL_LIKE_AS_ILIKE` can be set to ``YES``.
 
+Starting with GDAL 3.9, for layers declaring the OLCStringsAsUTF8 capability
+(that is the content of their fields of String type is UTF-8 encoded),
+UTF-8 characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
+For ILIKE case insensitive comparisons, this is restricted to the
+`ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
+`Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
+`Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
+`Latin Extended-B <https://en.wikipedia.org/wiki/Latin_Extended-B>`__,
+`Greek and Coptic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__
+and `Cyrillic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__ Unicode categories.
+
 The value argument to the ``LIKE`` and ``ILIKE`` operators is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
 characters, and underscore ( _ ) matches any one character. An optional ESCAPE escape_char
