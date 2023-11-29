@@ -2734,13 +2734,14 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
             JxlColorEncodingSetToSRGB(&color_encoding,
                                       basic_info.num_color_channels ==
                                           1 /*is_gray*/);
-            if (JXL_ENC_SUCCESS !=
-                JxlEncoderSetColorEncoding(encoder.get(), &color_encoding))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "JxlEncoderSetColorEncoding() failed");
-                return nullptr;
-            }
+            // libjxl until commit
+            // https://github.com/libjxl/libjxl/commits/c70c9d0bdc03f77d6bd8d9c3c56d4dac1b9b1652
+            // needs JxlEncoderSetColorEncoding()
+            // But post it (308b5f1eed81becac506569080e4490cc486660c,
+            // "Use chunked frame adapter instead of image bundle in
+            // EncodeFrame. (#2983)"), this errors out.
+            CPL_IGNORE_RET_VAL(
+                JxlEncoderSetColorEncoding(encoder.get(), &color_encoding));
 
             const auto nDataSize = GDALGetDataTypeSizeBytes(eDT);
             if (nDataSize <= 0 ||
