@@ -734,6 +734,12 @@ void RegisterOGRGeoJSON()
         "  <Option name='AUTODETECT_JSON_STRINGS' type='boolean' "
         "description='Whether to try to interpret string fields as JSON "
         "arrays or objects' default='YES'/>"
+        "  <Option name='FOREIGN_MEMBERS_FEATURE' type='string' "
+        "description='Extra JSON content to add in each feature as a foreign "
+        "members'/>"
+        "  <Option name='FOREIGN_MEMBERS_COLLECTION' type='string' "
+        "description='Extra JSON content to add to the feature collection as "
+        "a foreign members'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

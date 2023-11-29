@@ -56,8 +56,18 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
           CPLTestBool(CSLFetchNameValueDef(papszOptions, "RFC7946", "FALSE"))),
       bWrapDateLine_(CPLTestBool(
           CSLFetchNameValueDef(papszOptions, "WRAPDATELINE", "YES"))),
+      osForeignMembers_(
+          CSLFetchNameValueDef(papszOptions, "FOREIGN_MEMBERS_FEATURE", "")),
       poCT_(poCT)
 {
+    if (!osForeignMembers_.empty())
+    {
+        // Already checked in OGRGeoJSONDataSource::ICreateLayer()
+        CPLAssert(osForeignMembers_.front() == '{');
+        CPLAssert(osForeignMembers_.back() == '}');
+        osForeignMembers_ =
+            osForeignMembers_.substr(1, osForeignMembers_.size() - 2);
+    }
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType(eGType);
     SetDescription(poFeatureDefn_->GetName());
@@ -335,7 +345,32 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     );
 
     OGRErr eErr = OGRERR_NONE;
-    if (VSIFWriteL(pszJson, strlen(pszJson), 1, fp) != 1)
+    size_t nLen = strlen(pszJson);
+    if (!osForeignMembers_.empty())
+    {
+        if (nLen > 2 && pszJson[nLen - 2] == ' ' && pszJson[nLen - 1] == '}')
+        {
+            nLen -= 2;
+        }
+        else
+        {
+            // should not happen
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unexpected JSON output for feature. Cannot write foreign "
+                     "member");
+            osForeignMembers_.clear();
+        }
+    }
+    if (VSIFWriteL(pszJson, nLen, 1, fp) != 1)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot write feature");
+        eErr = OGRERR_FAILURE;
+    }
+    else if (!osForeignMembers_.empty() &&
+             (VSIFWriteL(", ", 2, 1, fp) != 1 ||
+              VSIFWriteL(osForeignMembers_.c_str(), osForeignMembers_.size(), 1,
+                         fp) != 1 ||
+              VSIFWriteL("}", 1, 1, fp) != 1))
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot write feature");
         eErr = OGRERR_FAILURE;
