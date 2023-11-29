@@ -51,7 +51,7 @@
 /************************************************************************/
 
 GDALDataset *GDALHEIFDataset::CreateCopy(const char *pszFilename,
-                                         GDALDataset *poSrcDS, int bStrict,
+                                         GDALDataset *poSrcDS, int,
                                          CPL_UNUSED char **papszOptions,
                                          GDALProgressFunc pfnProgress,
                                          void *pProgressData)

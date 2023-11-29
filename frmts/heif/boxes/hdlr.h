@@ -26,20 +26,27 @@
  ****************************************************************************/
 
 #include "fullbox.h"
+#include <cstdint>
 
 class HandlerBox : public FullBox
 {
   public:
-    HandlerBox() : FullBox("hdlr"), name("")
+    HandlerBox() : FullBox("hdlr"), handler_type(fourcc("pict")), name("")
     {
     }
+
+    HandlerBox(uint32_t fourCC)
+        : FullBox("hdlr"), handler_type(fourCC), name("")
+    {
+    }
+
     ~HandlerBox()
     {
     }
 
     void setHandlerType(uint32_t fourCC);
 
-    void setName(std::string s);
+    void setName(const std::string &s);
 
   protected:
     uint64_t getBodySize() override;

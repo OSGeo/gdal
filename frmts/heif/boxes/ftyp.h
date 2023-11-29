@@ -32,7 +32,7 @@
 class FileTypeBox : public Box
 {
   public:
-    FileTypeBox() : Box("ftyp"), minorVersion(0)
+    FileTypeBox() : Box("ftyp"), majorBrand(0), minorVersion(0)
     {
     }
 

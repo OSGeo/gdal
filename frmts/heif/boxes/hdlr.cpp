@@ -32,7 +32,7 @@ void HandlerBox::setHandlerType(uint32_t fourCC)
     handler_type = fourCC;
 }
 
-void HandlerBox::setName(std::string s)
+void HandlerBox::setName(const std::string &s)
 {
     name = s;
 }
