@@ -52,6 +52,7 @@
 #include "ogr_srs_api.h"
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
+#include "filegdbtable_priv.h"
 
 /*************************************************************************/
 /*                            StringToWString()                          */
@@ -807,7 +808,8 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
 /************************************************************************/
 
 static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
-                                            const FileGDBField *poGDBFieldDefn)
+                                            const FileGDBField *poGDBFieldDefn,
+                                            bool bArcGISPro32OrLater)
 {
     auto GPFieldInfoEx =
         CPLCreateXMLNode(nullptr, CXT_Element, "GPFieldInfoEx");
@@ -827,9 +829,12 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         {
             auto psDefaultValue = CPLCreateXMLElementAndValue(
                 GPFieldInfoEx, "DefaultValueString", psDefault->String);
-            CPLAddXMLAttributeAndValue(
-                psDefaultValue, "xmlns:typens",
-                "http://www.esri.com/schemas/ArcGIS/10.3");
+            if (!bArcGISPro32OrLater)
+            {
+                CPLAddXMLAttributeAndValue(
+                    psDefaultValue, "xmlns:typens",
+                    "http://www.esri.com/schemas/ArcGIS/10.3");
+            }
         }
         else if (poGDBFieldDefn->GetType() == FGFT_INT32)
         {
@@ -843,9 +848,64 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
             auto psDefaultValue = CPLCreateXMLElementAndValue(
                 GPFieldInfoEx, "DefaultValueNumeric",
                 CPLSPrintf("%.18g", psDefault->Real));
-            CPLAddXMLAttributeAndValue(
-                psDefaultValue, "xmlns:typens",
-                "http://www.esri.com/schemas/ArcGIS/10.3");
+            if (!bArcGISPro32OrLater)
+            {
+                CPLAddXMLAttributeAndValue(
+                    psDefaultValue, "xmlns:typens",
+                    "http://www.esri.com/schemas/ArcGIS/10.3");
+            }
+        }
+        else if (poGDBFieldDefn->GetType() == FGFT_INT64)
+        {
+            CPLCreateXMLElementAndValue(
+                GPFieldInfoEx, "DefaultValueInteger",
+                CPLSPrintf(CPL_FRMT_GIB, psDefault->Integer64));
+        }
+        else if (poGDBFieldDefn->GetType() == FGFT_DATETIME ||
+                 poGDBFieldDefn->GetType() == FGFT_DATE)
+        {
+            CPLCreateXMLElementAndValue(
+                GPFieldInfoEx, "DefaultValueNumeric",
+                CPLSPrintf("%.18g", FileGDBOGRDateToDoubleDate(
+                                        psDefault, /* bConvertToUTC = */ true,
+                                        poGDBFieldDefn->IsHighPrecision())));
+        }
+        else if (poGDBFieldDefn->GetType() == FGFT_TIME)
+        {
+            CPLCreateXMLElementAndValue(
+                GPFieldInfoEx, "DefaultValueNumeric",
+                CPLSPrintf("%.0f", FileGDBOGRTimeToDoubleTime(psDefault)));
+        }
+        else if (poGDBFieldDefn->GetType() == FGFT_DATETIME_WITH_OFFSET)
+        {
+            /*
+             <DefaultValueTimestampOffset xsi:type="typens:TimestampOffset">
+                <Timestamp>2023-02-01T04:05:06</Timestamp>
+                <HoursOffset>6</HoursOffset>
+                <MinutesOffset>0</MinutesOffset>
+              </DefaultValueTimestampOffset>
+            */
+            auto psDefaultValue = CPLCreateXMLNode(
+                GPFieldInfoEx, CXT_Element, "DefaultValueTimestampOffset");
+            CPLAddXMLAttributeAndValue(psDefaultValue, "xsi:type",
+                                       "typens:TimestampOffset");
+            CPLCreateXMLElementAndValue(
+                psDefaultValue, "Timestamp",
+                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                           psDefault->Date.Year, psDefault->Date.Month,
+                           psDefault->Date.Day, psDefault->Date.Hour,
+                           psDefault->Date.Minute,
+                           static_cast<int>(psDefault->Date.Second)));
+            if (psDefault->Date.TZFlag > 1)
+            {
+                const int nOffsetInMin = (psDefault->Date.TZFlag - 100) * 15;
+                CPLCreateXMLElementAndValue(
+                    psDefaultValue, "HoursOffset",
+                    CPLSPrintf("%d", nOffsetInMin / 60));
+                CPLCreateXMLElementAndValue(
+                    psDefaultValue, "MinutesOffset",
+                    CPLSPrintf("%d", std::abs(nOffsetInMin) % 60));
+            }
         }
     }
     const char *pszFieldType = "";
@@ -900,14 +960,37 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         case FGFT_XML:
             pszFieldType = "esriFieldTypeXML";
             break;
+        case FGFT_INT64:
+            nLength = 8;
+            pszFieldType = "esriFieldTypeBigInteger";
+            break;
+        case FGFT_DATE:
+            nLength = 8;
+            pszFieldType = "esriFieldTypeDateOnly";
+            break;
+        case FGFT_TIME:
+            nLength = 8;
+            pszFieldType = "esriFieldTypeTimeOnly";
+            break;
+        case FGFT_DATETIME_WITH_OFFSET:
+            nLength = 8 + 2;
+            pszFieldType = "esriFieldTypeTimestampOffset";
+            break;
     }
     auto psFieldType =
         CPLCreateXMLElementAndValue(GPFieldInfoEx, "FieldType", pszFieldType);
-    CPLAddXMLAttributeAndValue(psFieldType, "xmlns:typens",
-                               "http://www.esri.com/schemas/ArcGIS/10.3");
+    if (!bArcGISPro32OrLater)
+    {
+        CPLAddXMLAttributeAndValue(psFieldType, "xmlns:typens",
+                                   "http://www.esri.com/schemas/ArcGIS/10.3");
+    }
     CPLCreateXMLElementAndValue(GPFieldInfoEx, "IsNullable",
                                 poGDBFieldDefn->IsNullable() ? "true"
                                                              : "false");
+    if (poGDBFieldDefn->IsHighPrecision())
+    {
+        CPLCreateXMLElementAndValue(GPFieldInfoEx, "HighPrecision", "true");
+    }
     CPLCreateXMLElementAndValue(GPFieldInfoEx, "Length",
                                 CPLSPrintf("%d", nLength));
     CPLCreateXMLElementAndValue(GPFieldInfoEx, "Precision", "0");
@@ -950,7 +1033,8 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
             sDefault.Integer = atoi(pszDefault);
         else if (eType == FGFT_FLOAT32 || eType == FGFT_FLOAT64)
             sDefault.Real = CPLAtof(pszDefault);
-        else if (eType == FGFT_DATETIME)
+        else if (eType == FGFT_DATETIME || eType == FGFT_DATE ||
+                 eType == FGFT_TIME || eType == FGFT_DATETIME_WITH_OFFSET)
         {
             osDefaultVal = pszDefault;
             if (osDefaultVal == "CURRENT_TIMESTAMP" ||
@@ -980,6 +1064,8 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
                 return bApproxOK;
             }
         }
+        else if (eType == FGFT_INT64)
+            sDefault.Integer64 = CPLAtoGIntBig(pszDefault);
     }
     return true;
 }
@@ -988,7 +1074,8 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
 /*                         GetGDBFieldType()                            */
 /************************************************************************/
 
-static FileGDBFieldType GetGDBFieldType(const OGRFieldDefn *poField)
+static FileGDBFieldType GetGDBFieldType(const OGRFieldDefn *poField,
+                                        bool bArcGISPro32OrLater)
 {
     FileGDBFieldType eType = FGFT_UNDEFINED;
     switch (poField->GetType())
@@ -1002,7 +1089,7 @@ static FileGDBFieldType GetGDBFieldType(const OGRFieldDefn *poField)
                                                          : FGFT_FLOAT64;
             break;
         case OFTInteger64:
-            eType = FGFT_FLOAT64;
+            eType = bArcGISPro32OrLater ? FGFT_INT64 : FGFT_FLOAT64;
             break;
         case OFTString:
         case OFTWideString:
@@ -1017,9 +1104,14 @@ static FileGDBFieldType GetGDBFieldType(const OGRFieldDefn *poField)
             eType = FGFT_BINARY;
             break;
         case OFTDate:
+            eType = bArcGISPro32OrLater ? FGFT_DATE : FGFT_DATETIME;
+            break;
         case OFTTime:
+            eType = bArcGISPro32OrLater ? FGFT_TIME : FGFT_DATETIME;
+            break;
         case OFTDateTime:
-            eType = FGFT_DATETIME;
+            eType =
+                bArcGISPro32OrLater ? FGFT_DATETIME_WITH_OFFSET : FGFT_DATETIME;
             break;
     }
     return eType;
@@ -1110,6 +1202,31 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
     OGRFieldDefn oField(poFieldIn);
     OGRFieldDefn *poField = &oField;
 
+    if (poField->GetType() == OFTInteger64 && !m_bArcGISPro32OrLater)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Field %s of type Integer64 will be written as a Float64. "
+                 "To get Integer64, use layer creation option "
+                 "TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER",
+                 poField->GetNameRef());
+    }
+    else if (poField->GetType() == OFTDate && !m_bArcGISPro32OrLater)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Field %s of type Date will be written as a DateTime. "
+                 "To get DateTime, use layer creation option "
+                 "TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER",
+                 poField->GetNameRef());
+    }
+    else if (poField->GetType() == OFTTime && !m_bArcGISPro32OrLater)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Field %s of type Time will be written as a DateTime. "
+                 "To get DateTime, use layer creation option "
+                 "TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER",
+                 poField->GetNameRef());
+    }
+
     const std::string osFidColumn = GetFIDColumn();
     if (!osFidColumn.empty() &&
         EQUAL(poField->GetNameRef(), osFidColumn.c_str()))
@@ -1189,6 +1306,8 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
             eType = FGFT_INT16;
         else if (gdbFieldType == "esriFieldTypeInteger")
             eType = FGFT_INT32;
+        else if (gdbFieldType == "esriFieldTypeBigInteger")
+            eType = FGFT_INT64;
         else if (gdbFieldType == "esriFieldTypeSingle")
             eType = FGFT_FLOAT32;
         else if (gdbFieldType == "esriFieldTypeDouble")
@@ -1205,6 +1324,12 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
             eType = FGFT_GLOBALID;
         else if (gdbFieldType == "esriFieldTypeXML")
             eType = FGFT_XML;
+        else if (gdbFieldType == "esriFieldTypeDateOnly")
+            eType = FGFT_DATE;
+        else if (gdbFieldType == "esriFieldTypeTimeOnly")
+            eType = FGFT_TIME;
+        else if (gdbFieldType == "esriFieldTypeTimestampOffset")
+            eType = FGFT_DATETIME_WITH_OFFSET;
         else
         {
             CPLAssert(false);
@@ -1212,7 +1337,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
     }
     else
     {
-        eType = GetGDBFieldType(poField);
+        eType = GetGDBFieldType(poField, m_bArcGISPro32OrLater);
     }
 
     int nWidth = 0;
@@ -1281,11 +1406,12 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
             CPLXMLNode *psGPFieldInfoExs = GetGPFieldInfoExsNode(oTree.get());
             if (psGPFieldInfoExs)
             {
-                CPLAddXMLChild(
-                    psGPFieldInfoExs,
-                    CreateXMLFieldDefinition(
-                        poField, m_poLyrTable->GetField(
-                                     m_poLyrTable->GetFieldCount() - 1)));
+                CPLAddXMLChild(psGPFieldInfoExs,
+                               CreateXMLFieldDefinition(
+                                   poField,
+                                   m_poLyrTable->GetField(
+                                       m_poLyrTable->GetFieldCount() - 1),
+                                   m_bArcGISPro32OrLater));
 
                 char *pszDefinition = CPLSerializeXMLTree(oTree.get());
                 m_osDefinition = pszDefinition;
@@ -1410,7 +1536,7 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
         oField.SetAlternativeName(poNewFieldDefn->GetAlternativeNameRef());
     }
 
-    const auto eType = GetGDBFieldType(&oField);
+    const auto eType = GetGDBFieldType(&oField, m_bArcGISPro32OrLater);
 
     int nWidth = 0;
     if (eType == FGFT_GLOBALID || eType == FGFT_GUID)
@@ -1475,7 +1601,8 @@ OGRErr OGROpenFileGDBLayer::AlterFieldDefn(int iFieldToAlter,
                         psIter->psNext = nullptr;
                         CPLDestroyXMLNode(psIter);
                         psIter = CreateXMLFieldDefinition(
-                            poFieldDefn, m_poLyrTable->GetField(nGDBIdx));
+                            poFieldDefn, m_poLyrTable->GetField(nGDBIdx),
+                            m_bArcGISPro32OrLater);
                         psIter->psNext = psNext;
                         if (psLastChild == nullptr)
                             psGPFieldInfoExs->psChild = psIter;
@@ -2174,6 +2301,7 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                 break;
             }
             case FGFT_DATETIME:
+            case FGFT_DATE:
             {
                 fields[idxFileGDB].Date = poFeature->GetRawFieldRef(i)->Date;
                 if (m_bTimeInUTC && fields[idxFileGDB].Date.TZFlag <= 1)
@@ -2247,6 +2375,18 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                     m_aosTempStrings.emplace_back(OFGDBGenerateUUID());
                     fields[idxFileGDB].String = &m_aosTempStrings.back()[0];
                 }
+                break;
+            }
+            case FGFT_INT64:
+            {
+                fields[idxFileGDB].Integer64 =
+                    poFeature->GetRawFieldRef(i)->Integer64;
+                break;
+            }
+            case FGFT_TIME:
+            case FGFT_DATETIME_WITH_OFFSET:
+            {
+                fields[idxFileGDB].Date = poFeature->GetRawFieldRef(i)->Date;
                 break;
             }
         }
@@ -2490,7 +2630,9 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
     CPLAddXMLSibling(oTree.get(), psRoot);
 
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:typens",
-                               "http://www.esri.com/schemas/ArcGIS/10.3");
+                               m_bArcGISPro32OrLater
+                                   ? "http://www.esri.com/schemas/ArcGIS/10.8"
+                                   : "http://www.esri.com/schemas/ArcGIS/10.3");
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:xsi",
                                "http://www.w3.org/2001/XMLSchema-instance");
     CPLAddXMLAttributeAndValue(psRoot, "xmlns:xs",
@@ -2520,6 +2662,11 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
     {
         CPLCreateXMLElementAndValue(psRoot, "ConfigurationKeyword",
                                     m_osConfigurationKeyword.c_str());
+    }
+    if (m_bArcGISPro32OrLater)
+    {
+        CPLCreateXMLElementAndValue(psRoot, "RequiredGeodatabaseClientVersion",
+                                    "13.2");
     }
     CPLCreateXMLElementAndValue(psRoot, "HasOID", "true");
     CPLCreateXMLElementAndValue(psRoot, "OIDFieldName", GetFIDColumn());
@@ -2572,9 +2719,9 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
             if (nOGRIdx >= 0)
             {
                 const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(nOGRIdx);
-                CPLAddXMLChild(
-                    GPFieldInfoExs,
-                    CreateXMLFieldDefinition(poFieldDefn, poGDBFieldDefn));
+                CPLAddXMLChild(GPFieldInfoExs, CreateXMLFieldDefinition(
+                                                   poFieldDefn, poGDBFieldDefn,
+                                                   m_bArcGISPro32OrLater));
             }
         }
     }

@@ -1853,7 +1853,7 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                 {
                                     eOutOGRType = OFTDateTime;
                                     FileGDBDoubleDateToOGRDate(dfSum / nCount,
-                                                               &sField);
+                                                               false, &sField);
                                 }
                                 else
                                 {
