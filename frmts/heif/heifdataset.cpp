@@ -25,14 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-
-#include "include_libheif.h"
-
-#include "heifdrivercore.h"
-
-#include <vector>
+#include "heifdataset.h"
 
 extern "C" void CPL_DLL GDALRegister_HEIF();
 
@@ -40,44 +33,6 @@ extern "C" void CPL_DLL GDALRegister_HEIF();
 // -Iogr/ogrsf_frmts -I$HOME/heif/install-ubuntu-18.04/include
 // -L$HOME/heif/install-ubuntu-18.04/lib -lheif -shared -o gdal_HEIF.so -L.
 // -lgdal
-
-/************************************************************************/
-/*                        GDALHEIFDataset                               */
-/************************************************************************/
-
-class GDALHEIFDataset final : public GDALPamDataset
-{
-    friend class GDALHEIFRasterBand;
-
-    heif_context *m_hCtxt = nullptr;
-    heif_image_handle *m_hImageHandle = nullptr;
-    heif_image *m_hImage = nullptr;
-    bool m_bFailureDecoding = false;
-    std::vector<std::unique_ptr<GDALHEIFDataset>> m_apoOvrDS{};
-    bool m_bIsThumbnail = false;
-
-#ifdef HAS_CUSTOM_FILE_READER
-    heif_reader m_oReader{};
-    VSILFILE *m_fpL = nullptr;
-    vsi_l_offset m_nSize = 0;
-
-    static int64_t GetPositionCbk(void *userdata);
-    static int ReadCbk(void *data, size_t size, void *userdata);
-    static int SeekCbk(int64_t position, void *userdata);
-    static enum heif_reader_grow_status WaitForFileSizeCbk(int64_t target_size,
-                                                           void *userdata);
-#endif
-
-    bool Init(GDALOpenInfo *poOpenInfo);
-    void ReadMetadata();
-    void OpenThumbnails();
-
-  public:
-    GDALHEIFDataset();
-    ~GDALHEIFDataset();
-
-    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
-};
 
 /************************************************************************/
 /*                       GDALHEIFRasterBand                             */
@@ -699,6 +654,7 @@ void GDALRegister_HEIF()
     HEIFDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = GDALHEIFDataset::Open;
+    poDriver->pfnCreateCopy = GDALHEIFDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

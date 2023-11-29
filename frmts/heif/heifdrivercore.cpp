@@ -25,9 +25,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "boxes/box.h"
 #include "include_libheif.h"
 
 #include "heifdrivercore.h"
+
+#include "boxes/ftyp.h"
 
 /************************************************************************/
 /*                    HEIFDriverIdentifySimplified()                    */
@@ -42,33 +45,19 @@ int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
         return false;
 
-    // Simplistic test...
-    const unsigned char abySig1[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x20"
-                                    "ftypheic";
-    const unsigned char abySig2[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypheic";
-    const unsigned char abySig3[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypmif1"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "mif1heic";
-    return (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig1)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig1, sizeof(abySig1)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig2)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig2, sizeof(abySig2)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig3)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig3, sizeof(abySig3)) == 0);
+    FileTypeBox ftyp;
+    VSILFILE *headerData = VSIFileFromMemBuffer(
+        nullptr, poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes, false);
+    int errorCode = ftyp.ReadBox(headerData);
+    VSIFCloseL(headerData);
+    if (errorCode != TRUE)
+    {
+        return false;
+    }
+
+    return ((ftyp.getMajorBrand() == fourcc("heic")) ||
+            ((ftyp.getMajorBrand() == fourcc("mif1")) &&
+             (ftyp.hasCompatibleBrand(fourcc("heic")))));
 }
 
 /************************************************************************/
