@@ -171,6 +171,29 @@ def test_pct2rgb_1(script_path, tmp_path, rgb2pct1_tif):
 
 
 ###############################################################################
+# Test pct2rgb when invoked on a dataset without color table
+
+
+def test_pct2rgb_no_color_table(script_path, tmp_path, rgb2pct1_tif):
+    gdal_array = pytest.importorskip("osgeo.gdal_array")
+    try:
+        gdal_array.BandRasterIONumPy
+    except AttributeError:
+        pytest.skip("osgeo.gdal_array.BandRasterIONumPy is unavailable")
+
+    output_tif = str(tmp_path / "test_pct2rgb_no_color_table.tif")
+
+    from osgeo_utils import pct2rgb
+
+    with pytest.raises(Exception, match="has no color table"):
+        pct2rgb.pct2rgb(
+            src_filename="../gcore/data/byte.tif",
+            pct_filename=None,
+            dst_filename=output_tif,
+        )
+
+
+###############################################################################
 # Test rgb2pct -n option
 
 
