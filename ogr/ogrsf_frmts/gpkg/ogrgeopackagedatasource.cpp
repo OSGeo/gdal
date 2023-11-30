@@ -7697,68 +7697,6 @@ OGRErr GDALGeoPackageDataset::CreateExtensionsTableIfNecessary()
 }
 
 /************************************************************************/
-/*                     OGRGeoPackageGetHeader()                         */
-/************************************************************************/
-
-static bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
-                                   sqlite3_value **argv, GPkgHeader *psHeader,
-                                   bool bNeedExtent, int iGeomIdx = 0)
-{
-    if (sqlite3_value_type(argv[iGeomIdx]) != SQLITE_BLOB)
-    {
-        sqlite3_result_null(pContext);
-        return false;
-    }
-    int nBLOBLen = sqlite3_value_bytes(argv[iGeomIdx]);
-    const GByte *pabyBLOB =
-        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[iGeomIdx]));
-
-    if (nBLOBLen < 8 ||
-        GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, psHeader) != OGRERR_NONE)
-    {
-        bool bEmpty = false;
-        memset(psHeader, 0, sizeof(*psHeader));
-        if (OGRSQLiteGetSpatialiteGeometryHeader(
-                pabyBLOB, nBLOBLen, &(psHeader->iSrsId), nullptr, &bEmpty,
-                &(psHeader->MinX), &(psHeader->MinY), &(psHeader->MaxX),
-                &(psHeader->MaxY)) == OGRERR_NONE)
-        {
-            psHeader->bEmpty = bEmpty;
-            psHeader->bExtentHasXY = !bEmpty;
-            if (!(bEmpty && bNeedExtent))
-                return true;
-        }
-
-        sqlite3_result_null(pContext);
-        return false;
-    }
-
-    if (psHeader->bEmpty && bNeedExtent)
-    {
-        sqlite3_result_null(pContext);
-        return false;
-    }
-    else if (!(psHeader->bExtentHasXY) && bNeedExtent)
-    {
-        OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
-        if (poGeom == nullptr || poGeom->IsEmpty())
-        {
-            sqlite3_result_null(pContext);
-            delete poGeom;
-            return false;
-        }
-        OGREnvelope sEnvelope;
-        poGeom->getEnvelope(&sEnvelope);
-        psHeader->MinX = sEnvelope.MinX;
-        psHeader->MaxX = sEnvelope.MaxX;
-        psHeader->MinY = sEnvelope.MinY;
-        psHeader->MaxY = sEnvelope.MaxY;
-        delete poGeom;
-    }
-    return true;
-}
-
-/************************************************************************/
 /*                    OGR_GPKG_Intersects_Spatial_Filter()              */
 /************************************************************************/
 

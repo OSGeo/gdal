@@ -839,7 +839,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     {
         return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
     }
-
+    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                               int bForce) override;
     OGRGeometryTypeCounter *GetGeometryTypes(int iGeomField, int nFlagsGGT,
                                              int &nEntryCountOut,
                                              GDALProgressFunc pfnProgress,

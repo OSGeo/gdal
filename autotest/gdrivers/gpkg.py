@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import os
 import sys
 
@@ -4266,3 +4267,55 @@ def test_gpkg_sql_gdal_get_layer_pixel_value():
         assert f[0] is None
 
     gdal.Unlink(filename)
+
+
+@pytest.mark.parametrize(
+    "geom1,geom2,extent2d,extent3d",
+    (
+        (
+            "POINT(0 1 2)",
+            "POINT(1 2 3)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, 2.0, 3.0),
+        ),
+        (
+            "POINT(0 1)",
+            "POINT(1 2 3)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, 3.0, 3.0),
+        ),
+        (
+            "POINT(0 1)",
+            "POINT(1 2)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, math.nan, math.nan),
+        ),
+    ),
+)
+def test_gpkg_extent3d(tmp_vsimem, geom1, geom2, extent2d, extent3d):
+    """Test 3D extent of a gpkg"""
+
+    ds = gdaltest.gpkg_dr.Create(tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint25D)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(geom1))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(geom2))
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    # Patch for NaN
+    if math.isnan(ext3d[4]):
+        assert ext3d[:4] == extent2d
+        assert math.isnan(ext3d[4])
+        assert math.isnan(ext3d[5])
+    else:
+        assert ext3d == extent3d
+    ext2d = lyr.GetExtent()
+    assert ext2d == extent2d
+    ds = None
