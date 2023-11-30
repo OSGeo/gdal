@@ -1110,104 +1110,16 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (!psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false))
     {
-        // Someone issuing Create("foo.tif") on a
-        // memory driver doesn't expect files with those names to be deleted
-        // on a file system...
-        // This is somewhat messy. Ideally there should be a way for the
-        // driver to overload the default behavior
-        if (!EQUAL(psOptions->osFormat.c_str(), "MEM") &&
-            !EQUAL(psOptions->osFormat.c_str(), "Memory") &&
-            // Also exclude database formats for which there's no file list
-            // and whose opening might be slow (GeoRaster in particular)
-            !EQUAL(psOptions->osFormat.c_str(), "GeoRaster") &&
-            !EQUAL(psOptions->osFormat.c_str(), "PostGISRaster"))
+        if (!EQUAL(psOptions->osFormat.c_str(), "VRT"))
         {
-            /* --------------------------------------------------------------------
-             */
-            /*      Establish list of files of output dataset if it already
-             * exists. */
-            /* --------------------------------------------------------------------
-             */
-            std::set<std::string> oSetExistingDestFiles;
-            {
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                const char *const apszAllowedDrivers[] = {
-                    psOptions->osFormat.c_str(), nullptr};
-                auto poExistingOutputDS =
-                    std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        pszDest, GDAL_OF_RASTER, apszAllowedDrivers));
-                if (poExistingOutputDS)
-                {
-                    char **papszFileList = poExistingOutputDS->GetFileList();
-                    for (char **papszIter = papszFileList;
-                         papszIter && *papszIter; ++papszIter)
-                    {
-                        oSetExistingDestFiles.insert(
-                            CPLString(*papszIter).replaceAll('\\', '/'));
-                    }
-                    CSLDestroy(papszFileList);
-                }
-                CPLPopErrorHandler();
-            }
-
-            /* --------------------------------------------------------------------
-             */
-            /*      Check if the source dataset shares some files with the dest
-             * one.*/
-            /* --------------------------------------------------------------------
-             */
-            std::set<std::string> oSetExistingDestFilesFoundInSource;
-            if (!oSetExistingDestFiles.empty())
-            {
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                // We need to reopen in a temporary dataset for the particular
-                // case of overwritten a .tif.ovr file from a .tif
-                // If we probe the file list of the .tif, it will then open the
-                // .tif.ovr !
-                const char *const apszAllowedDrivers[] = {
-                    poSrcDS->GetDriver()
-                        ? poSrcDS->GetDriver()->GetDescription()
-                        : nullptr,
-                    nullptr};
-                auto poSrcDSTmp = std::unique_ptr<GDALDataset>(
-                    GDALDataset::Open(poSrcDS->GetDescription(), GDAL_OF_RASTER,
-                                      apszAllowedDrivers));
-                if (poSrcDSTmp)
-                {
-                    char **papszFileList = poSrcDSTmp->GetFileList();
-                    for (char **papszIter = papszFileList;
-                         papszIter && *papszIter; ++papszIter)
-                    {
-                        CPLString osFilename(*papszIter);
-                        osFilename.replaceAll('\\', '/');
-                        if (oSetExistingDestFiles.find(osFilename) !=
-                            oSetExistingDestFiles.end())
-                        {
-                            oSetExistingDestFilesFoundInSource.insert(
-                                osFilename);
-                        }
-                    }
-                    CSLDestroy(papszFileList);
-                }
-                CPLPopErrorHandler();
-            }
-
-            // If the source file(s) and the dest one share some files in
-            // common, only remove the files that are *not* in common
-            if (!oSetExistingDestFilesFoundInSource.empty())
-            {
-                for (const std::string &osFilename : oSetExistingDestFiles)
-                {
-                    if (oSetExistingDestFilesFoundInSource.find(osFilename) ==
-                        oSetExistingDestFilesFoundInSource.end())
-                    {
-                        VSIUnlink(osFilename.c_str());
-                    }
-                }
-            }
-
-            GDALDriver::FromHandle(hDriver)->QuietDelete(pszDest);
+            // Prevent GDALDriver::CreateCopy() from doing that again.
+            psOptions->aosCreateOptions.SetNameValue(
+                "@QUIET_DELETE_ON_CREATE_COPY", "NO");
         }
+
+        GDALDriver::FromHandle(hDriver)->QuietDeleteForCreateCopy(pszDest,
+                                                                  poSrcDS);
+
         // Make sure to load early overviews, so that on the GTiff driver
         // external .ovr is looked for before it might be created as the
         // output dataset !
