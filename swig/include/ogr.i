@@ -546,6 +546,7 @@ typedef int OGRErr;
 #define OLCFastSpatialFilter   "FastSpatialFilter"
 #define OLCFastFeatureCount    "FastFeatureCount"
 #define OLCFastGetExtent       "FastGetExtent"
+#define OLCFastGetExtent3D     "FastGetExtent3D"
 #define OLCCreateField         "CreateField"
 #define OLCDeleteField         "DeleteField"
 #define OLCReorderFields       "ReorderFields"
