@@ -1887,6 +1887,10 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                    int bStrict, CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+
+    CPLErr QuietDeleteForCreateCopy(const char *pszFilename,
+                                    GDALDataset *poSrcDS);
+
     //! @endcond
     static CPLErr QuietDelete(const char *pszName,
                               CSLConstList papszAllowedDrivers = nullptr);
