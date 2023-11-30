@@ -4743,3 +4743,93 @@ def test_ogr_geojson_foreign_members_feature(tmp_vsimem):
         """{\n"type": "FeatureCollection",\n"name": "test",\n"features": [\n{ "type": "Feature", "properties": { }, "geometry": null, "foo":"bar"}\n]\n}"""
         in data
     )
+
+
+###############################################################################
+
+
+def test_ogr_json_getextent3d(tmp_vsimem):
+
+    jdata = r"""{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "%s",
+                        "coordinates": %s
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "%s",
+                        "coordinates": %s
+                    }
+                }
+            ]
+        }"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "Point", "[2, 2, 2]"),
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 2.0)
+
+    # Test 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1]", "Point", "[2, 2]"),
+    )
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d[:4] == (1.0, 2.0, 1.0, 2.0)
+    assert math.isnan(ext3d[4])
+    assert math.isnan(ext3d[5])
+
+    # Test mixed 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "Point", "[2, 2]"),
+    )
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 1.0)

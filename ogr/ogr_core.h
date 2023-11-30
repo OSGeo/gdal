@@ -48,8 +48,11 @@
 extern "C++"
 {
 #if !defined(DOXYGEN_SKIP)
+#include <cmath>
 #include <limits>
 #endif
+
+    class OGREnvelope3D;
 
     /**
      * Simple container for a bounding region (rectangle)
@@ -228,6 +231,12 @@ extern "C++"
         /** Assignment operator */
         OGREnvelope3D &operator=(const OGREnvelope3D &) = default;
 
+        /** Returns TRUE if MinZ and MaxZ are both valid numbers. */
+        bool Is3D() const
+        {
+            return !std::isnan(MinZ) && !std::isnan(MaxZ);
+        }
+
         /** Minimum Z value */
         double MinZ;
 
@@ -256,8 +265,19 @@ extern "C++"
             MaxX = MAX(MaxX, sOther.MaxX);
             MinY = MIN(MinY, sOther.MinY);
             MaxY = MAX(MaxY, sOther.MaxY);
-            MinZ = MIN(MinZ, sOther.MinZ);
-            MaxZ = MAX(MaxZ, sOther.MaxZ);
+            if (!std::isnan(sOther.MinZ) && !std::isnan(sOther.MaxZ))
+            {
+                if (std::isnan(MinZ) || std::isnan(MaxZ))
+                {
+                    MinZ = sOther.MinZ;
+                    MaxZ = sOther.MaxZ;
+                }
+                else
+                {
+                    MinZ = MIN(MinZ, sOther.MinZ);
+                    MaxZ = MAX(MaxZ, sOther.MaxZ);
+                }
+            }
         }
 
         /** Update the current object by computing its union with the other
@@ -993,6 +1013,8 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
                         */
 #define OLCFastGetExtent                                                       \
     "FastGetExtent" /**< Layer capability for fast extent retrieval */
+#define OLCFastGetExtent3D                                                     \
+    "FastGetExtent3D" /**< Layer capability for fast 3D extent retrieval */
 #define OLCCreateField                                                         \
     "CreateField" /**< Layer capability for field creation                     \
                    */

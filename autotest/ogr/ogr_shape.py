@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import os
 import shutil
 import struct
@@ -1853,6 +1854,11 @@ def test_ogr_shape_48(tmp_vsimem):
     lyr.SetFeature(feat)
     extent = lyr.GetExtent()
     assert extent == (1, 3, 2, 4), "did not get expected extent (1)"
+    extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert extent3D[:4] == (1, 3, 2, 4), "did not get expected extent 3D"
+    assert math.isnan(extent3D[4])
+    assert math.isnan(extent3D[5])
 
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
     extent = lyr.GetExtent()
@@ -1898,13 +1904,15 @@ def test_ogr_shape_48(tmp_vsimem):
     )
     lyr.CreateFeature(feat)
     feat.SetGeometry(
-        ogr.CreateGeometryFromWkt("POLYGON((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))")
+        ogr.CreateGeometryFromWkt("POLYGON((0 0 2,0 1 1,1 1 2,1 0 2,0 0 3))")
     )
     lyr.SetFeature(feat)
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
-    # FIXME: when we have a GetExtent3D
     extent = lyr.GetExtent()
     assert extent == (0, 1, 0, 1), "did not get expected extent (4)"
+    extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert extent3D == (0, 1, 0, 1, 1, 3), "did not get expected extent 3D"
     ds = None
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
         tmp_vsimem / "ogr_shape_48.shp"

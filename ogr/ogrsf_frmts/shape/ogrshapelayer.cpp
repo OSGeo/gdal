@@ -30,7 +30,7 @@
 #include "ogrshape.h"
 
 #include <cerrno>
-#include <climits>
+#include <limits>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -1677,6 +1677,14 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
 OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
+    OGREnvelope3D envelope3D;
+    const OGRErr retVal{GetExtent3D(0, &envelope3D, bForce)};
+    *psExtent = envelope3D;
+    return retVal;
+}
+
+OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
+{
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
@@ -1688,10 +1696,21 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
     SHPGetInfo(hSHP, nullptr, nullptr, adMin, adMax);
 
-    psExtent->MinX = adMin[0];
-    psExtent->MinY = adMin[1];
-    psExtent->MaxX = adMax[0];
-    psExtent->MaxY = adMax[1];
+    psExtent3D->MinX = adMin[0];
+    psExtent3D->MinY = adMin[1];
+    psExtent3D->MaxX = adMax[0];
+    psExtent3D->MaxY = adMax[1];
+
+    if (OGR_GT_HasZ(poFeatureDefn->GetGeomType()))
+    {
+        psExtent3D->MinZ = adMin[2];
+        psExtent3D->MaxZ = adMax[2];
+    }
+    else
+    {
+        psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
+        psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
+    }
 
     if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
         CPLIsNan(adMax[1]))
@@ -1705,7 +1724,7 @@ OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         OGRGeometry *poFilterGeom = m_poFilterGeom;
         m_poFilterGeom = nullptr;
 
-        const OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+        const OGRErr eErr = OGRLayer::GetExtent3D(0, psExtent3D, bForce);
 
         m_poAttrQuery = poAttrQuery;
         m_poFilterGeom = poFilterGeom;
@@ -1751,6 +1770,9 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
         return CheckForQIX() || CheckForSBN();
 
     if (EQUAL(pszCap, OLCFastGetExtent))
+        return TRUE;
+
+    if (EQUAL(pszCap, OLCFastGetExtent3D))
         return TRUE;
 
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
