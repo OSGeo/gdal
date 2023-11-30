@@ -1116,7 +1116,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         // This is somewhat messy. Ideally there should be a way for the
         // driver to overload the default behavior
         if (!EQUAL(psOptions->osFormat.c_str(), "MEM") &&
-            !EQUAL(psOptions->osFormat.c_str(), "Memory"))
+            !EQUAL(psOptions->osFormat.c_str(), "Memory") &&
+            // Also exclude database formats for which there's no file list
+            // and whose opening might be slow (GeoRaster in particular)
+            !EQUAL(psOptions->osFormat.c_str(), "GeoRaster") &&
+            !EQUAL(psOptions->osFormat.c_str(), "PostGISRaster"))
         {
             /* --------------------------------------------------------------------
              */
