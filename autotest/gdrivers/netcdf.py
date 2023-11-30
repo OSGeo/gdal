@@ -6512,6 +6512,10 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
             r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
             r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
         ),
+        (
+            r'NETCDF:"/vsicurl/https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202202/oisst-avhrr-v02r01.20220218.nc":/navigation_data/longitude',
+            r"/vsicurl/https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202202/oisst-avhrr-v02r01.20220218.nc",
+        ),
         ("", ""),
     ),
 )
@@ -6554,3 +6558,17 @@ def test_gdal_subdataset_modify_filename(filename):
                 info.ModifyPathComponent("/path/to.nc")
                 == "NETCDF:/path/to.nc:/navigation_data/longitude"
             )
+
+
+@pytest.mark.parametrize(
+    "bogus",
+    (
+        "NetCDF:a:c",
+        "NetCDF:a",
+        "NetCDF:",
+    ),
+)
+def test_gdal_subdataset_bogus(bogus):
+    """Test it doesn't crash"""
+
+    gdal.GetSubdatasetInfo(bogus)
