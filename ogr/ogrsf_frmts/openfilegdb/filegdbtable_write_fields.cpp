@@ -204,6 +204,10 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
         {
             WriteInt32(abyDefaultVal, psLastField->GetDefault()->Integer);
         }
+        else if (psLastField->GetType() == FGFT_INT64)
+        {
+            WriteInt64(abyDefaultVal, psLastField->GetDefault()->Integer64);
+        }
         else if (psLastField->GetType() == FGFT_FLOAT32)
         {
             WriteFloat32(abyDefaultVal,
@@ -213,10 +217,36 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
         {
             WriteFloat64(abyDefaultVal, psLastField->GetDefault()->Real);
         }
-        else if (psLastField->GetType() == FGFT_DATETIME)
+        else if (psLastField->GetType() == FGFT_DATETIME ||
+                 psLastField->GetType() == FGFT_DATE)
+        {
+            WriteFloat64(abyDefaultVal, FileGDBOGRDateToDoubleDate(
+                                            psLastField->GetDefault(),
+                                            /* bConvertToUTC = */ true,
+                                            psLastField->IsHighPrecision()));
+        }
+        else if (psLastField->GetType() == FGFT_TIME)
         {
             WriteFloat64(abyDefaultVal,
-                         FileGDBOGRDateToDoubleDate(psLastField->GetDefault()));
+                         FileGDBOGRTimeToDoubleTime(psLastField->GetDefault()));
+        }
+        else if (psLastField->GetType() == FGFT_DATETIME_WITH_OFFSET)
+        {
+            const auto psDefault = psLastField->GetDefault();
+            WriteFloat64(abyDefaultVal,
+                         FileGDBOGRDateToDoubleDate(
+                             psDefault, /* bConvertToUTC = */ false,
+                             /* bIsHighPrecision= */ true));
+            if (psDefault->Date.TZFlag > 1)
+            {
+                WriteInt16(
+                    abyDefaultVal,
+                    static_cast<int16_t>((psDefault->Date.TZFlag - 100) * 15));
+            }
+            else
+            {
+                WriteInt16(abyDefaultVal, 0);
+            }
         }
         nExtraBytes += static_cast<int>(abyDefaultVal.size());
     }
@@ -472,6 +502,7 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
         }
 
         case FGFT_DATETIME:
+        case FGFT_DATE:
         {
             WriteUInt8(abyBuffer, 8);  // sizeof(float64)
             WriteUInt8(abyBuffer, static_cast<uint8_t>(
@@ -481,7 +512,10 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
                 !OGR_RawField_IsUnset(&sDefault))
             {
                 WriteUInt8(abyBuffer, 8);  // sizeof(float64)
-                WriteFloat64(abyBuffer, FileGDBOGRDateToDoubleDate(&sDefault));
+                WriteFloat64(abyBuffer,
+                             FileGDBOGRDateToDoubleDate(
+                                 &sDefault, /* bConvertToUTC = */ true,
+                                 psField->IsHighPrecision()));
             }
             else
             {
@@ -595,6 +629,77 @@ WriteFieldDescriptor(std::vector<GByte> &abyBuffer, const FileGDBField *psField,
             WriteUInt8(abyBuffer, static_cast<uint8_t>(
                                       UNKNOWN_FIELD_FLAG |
                                       static_cast<int>(psField->IsNullable())));
+            break;
+        }
+
+        case FGFT_INT64:
+        {
+            WriteUInt8(abyBuffer, 8);  // sizeof(int64)
+            WriteUInt8(abyBuffer, static_cast<uint8_t>(
+                                      UNKNOWN_FIELD_FLAG |
+                                      static_cast<int>(psField->IsNullable())));
+            if (!OGR_RawField_IsNull(&sDefault) &&
+                !OGR_RawField_IsUnset(&sDefault))
+            {
+                WriteUInt8(abyBuffer, 8);  // sizeof(int64)
+                WriteInt64(abyBuffer, sDefault.Integer64);
+            }
+            else
+            {
+                WriteUInt8(abyBuffer, 0);  // size of default value
+            }
+            break;
+        }
+
+        case FGFT_TIME:
+        {
+            WriteUInt8(abyBuffer, 8);  // sizeof(float64)
+            WriteUInt8(abyBuffer, static_cast<uint8_t>(
+                                      UNKNOWN_FIELD_FLAG |
+                                      static_cast<int>(psField->IsNullable())));
+            if (!OGR_RawField_IsNull(&sDefault) &&
+                !OGR_RawField_IsUnset(&sDefault))
+            {
+                WriteUInt8(abyBuffer, 8);  // sizeof(float64)
+                WriteFloat64(abyBuffer, FileGDBOGRTimeToDoubleTime(&sDefault));
+            }
+            else
+            {
+                WriteUInt8(abyBuffer, 0);  // size of default value
+            }
+            break;
+        }
+
+        case FGFT_DATETIME_WITH_OFFSET:
+        {
+            WriteUInt8(abyBuffer, 8 + 2);  // sizeof(float64) + sizeof(int16)
+            WriteUInt8(abyBuffer, static_cast<uint8_t>(
+                                      UNKNOWN_FIELD_FLAG |
+                                      static_cast<int>(psField->IsNullable())));
+            if (!OGR_RawField_IsNull(&sDefault) &&
+                !OGR_RawField_IsUnset(&sDefault))
+            {
+                WriteUInt8(abyBuffer,
+                           8 + 2);  // sizeof(float64) + sizeof(int16)
+                WriteFloat64(abyBuffer,
+                             FileGDBOGRDateToDoubleDate(
+                                 &sDefault, /* bConvertToUTC = */ false,
+                                 /* bIsHighPrecision = */ true));
+                if (sDefault.Date.TZFlag > 1)
+                {
+                    WriteInt16(abyBuffer,
+                               static_cast<int16_t>(
+                                   (sDefault.Date.TZFlag - 100) * 15));
+                }
+                else
+                {
+                    WriteInt16(abyBuffer, 0);
+                }
+            }
+            else
+            {
+                WriteUInt8(abyBuffer, 0);  // size of default value
+            }
             break;
         }
     }

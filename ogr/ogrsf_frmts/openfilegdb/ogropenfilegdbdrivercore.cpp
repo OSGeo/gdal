@@ -167,7 +167,8 @@ void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
                               "EquatesMultiAndSingleLineStringDuringWrite "
                               "EquatesMultiAndSinglePolygonDuringWrite");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
-                              "Integer Real String Date DateTime Binary");
+                              "Integer Real String Date DateTime Binary "
+                              "Integer64 Date Time");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Int16 Float32");
     poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
@@ -222,6 +223,11 @@ void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"
+        "  <Option name='TARGET_ARCGIS_VERSION' type='string-select' "
+        "default='ALL'>"
+        "       <Value>ALL</Value>"
+        "       <Value>ARCGIS_PRO_3_2_OR_LATER</Value>"
+        "  </Option>"
         "  <Option name='FEATURE_DATASET' type='string' "
         "description='FeatureDataset folder into which to put the new layer'/>"
         "  <Option name='LAYER_ALIAS' type='string' description='Alias of "

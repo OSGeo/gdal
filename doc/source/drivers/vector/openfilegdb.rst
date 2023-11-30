@@ -110,6 +110,19 @@ None.
 Layer Creation Options
 ----------------------
 
+
+-  .. lco:: TARGET_ARCGIS_VERSION
+      :choices: ALL, ARCGIS_PRO_3_2_OR_LATER
+      :default: ALL
+      :since: 3.9
+
+      ArcGIS version that the dataset must be compatible with.
+      If creation of Integer64, Date, Time field types is needed, the
+      ``ARCGIS_PRO_3_2_OR_LATER`` must be selected.
+      If set or let to the default value ``ALL``, those types will be
+      respectively be encoded to fallback types (Float64 instead of Integer64,
+      DateTime instead of Date or Time).
+
 -  .. lco:: FEATURE_DATASET
       :choices: <string>
 
@@ -209,6 +222,18 @@ Layer Creation Options
       special fields, and this option is not explicitly specified, it will be
       automatically set, so that the resulting FileGeodatabase has those fields
       properly tagged.
+
+64-bit integer field support
+----------------------------
+
+.. versionadded:: 3.9
+
+On creation, 64-bit integer field support requires setting the :lco:`TARGET_ARCGIS_VERSION`
+layer creation option to ``ARCGIS_PRO_3_2_OR_LATER``.
+Note that Esri `recommends <https://pro.arcgis.com/en/pro-app/latest/help/data/geodatabases/overview/arcgis-field-data-types.htm#ESRI_SECTION2_8BF2454C879941258DC44AF6BB31F386>`__ to restrict the
+range of 64-bit integer values to [-9007199254740991, 9007199254740991] for the
+larger compatibility. GDAL will allow writing values outside of that range without
+warning, and can also read them fine.
 
 Field domains
 -------------

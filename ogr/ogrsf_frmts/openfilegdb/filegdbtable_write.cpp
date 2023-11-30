@@ -1478,9 +1478,12 @@ bool FileGDBTable::EncodeFeature(const std::vector<OGRField> &asRawFields,
             }
 
             case FGFT_DATETIME:
+            case FGFT_DATE:
             {
                 WriteFloat64(m_abyBuffer,
-                             FileGDBOGRDateToDoubleDate(&asRawFields[i]));
+                             FileGDBOGRDateToDoubleDate(
+                                 &asRawFields[i], /* bConvertToUTC = */ true,
+                                 poField->IsHighPrecision()));
                 break;
             }
 
@@ -1545,6 +1548,38 @@ bool FileGDBTable::EncodeFeature(const std::vector<OGRField> &asRawFields,
                 for (auto v : anVals)
                 {
                     m_abyBuffer.push_back(static_cast<uint8_t>(v));
+                }
+                break;
+            }
+
+            case FGFT_INT64:
+            {
+                WriteInt64(m_abyBuffer, asRawFields[i].Integer64);
+                break;
+            }
+
+            case FGFT_TIME:
+            {
+                WriteFloat64(m_abyBuffer,
+                             FileGDBOGRTimeToDoubleTime(&asRawFields[i]));
+                break;
+            }
+
+            case FGFT_DATETIME_WITH_OFFSET:
+            {
+                WriteFloat64(m_abyBuffer, FileGDBOGRDateToDoubleDate(
+                                              &asRawFields[i],
+                                              /* bConvertToUTC = */ false,
+                                              /* bIsHighPrecision = */ true));
+                if (asRawFields[i].Date.TZFlag > 1)
+                {
+                    WriteInt16(m_abyBuffer,
+                               static_cast<int16_t>(
+                                   (asRawFields[i].Date.TZFlag - 100) * 15));
+                }
+                else
+                {
+                    WriteInt16(m_abyBuffer, 0);
                 }
                 break;
             }

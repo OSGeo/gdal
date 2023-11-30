@@ -195,7 +195,9 @@ bool FileGDBTable::CreateIndex(const std::string &osIndexName,
     if (eFieldType != FGFT_OBJECTID && eFieldType != FGFT_GEOMETRY &&
         eFieldType != FGFT_INT16 && eFieldType != FGFT_INT32 &&
         eFieldType != FGFT_FLOAT32 && eFieldType != FGFT_FLOAT64 &&
-        eFieldType != FGFT_STRING && eFieldType != FGFT_DATETIME)
+        eFieldType != FGFT_STRING && eFieldType != FGFT_DATETIME &&
+        eFieldType != FGFT_INT64 && eFieldType != FGFT_DATE &&
+        eFieldType != FGFT_TIME && eFieldType != FGFT_DATETIME_WITH_OFFSET)
     {
         // FGFT_GUID could potentially be added (cf a00000007.gdbindexes /
         // GDBItemRelationshipTypes ) Not sure about FGFT_GLOBALID, FGFT_XML or
@@ -1389,6 +1391,31 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
 
             bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
         }
+        else if (eFieldType == FGFT_INT64)
+        {
+            typedef std::pair<int64_t, int> ValueOIDPair;
+            std::vector<ValueOIDPair> asValues;
+            for (int iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
+            {
+                iCurFeat = GetAndSelectNextNonEmptyRow(iCurFeat);
+                if (iCurFeat < 0)
+                    break;
+                const OGRField *psField = GetFieldValue(iField);
+                if (psField != nullptr)
+                {
+                    asValues.push_back(
+                        ValueOIDPair(psField->Integer64, iCurFeat + 1));
+                }
+            }
+
+            const auto writeValueFunc =
+                +[](std::vector<GByte> &abyPage,
+                    const typename ValueOIDPair::first_type &val,
+                    int /* maxStrSize */)
+            { WriteUInt64(abyPage, static_cast<uint64_t>(val)); };
+
+            bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
+        }
         else if (eFieldType == FGFT_FLOAT32)
         {
             typedef std::pair<float, int> ValueOIDPair;
@@ -1413,12 +1440,14 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
 
             bRet = WriteIndex(fp, asValues, writeValueFunc, nDepth);
         }
-        else if (eFieldType == FGFT_FLOAT64 || eFieldType == FGFT_DATETIME)
+        else if (eFieldType == FGFT_FLOAT64 || eFieldType == FGFT_DATETIME ||
+                 eFieldType == FGFT_DATE || eFieldType == FGFT_TIME ||
+                 eFieldType == FGFT_DATETIME_WITH_OFFSET)
         {
             typedef std::pair<double, int> ValueOIDPair;
             std::vector<ValueOIDPair> asValues;
-            m_apoFields[iField]->m_eType =
-                FGFT_FLOAT64;  // Hack to force reading DateTime as double
+            // Hack to force reading DateTime as double
+            m_apoFields[iField]->m_bReadAsDouble = true;
             for (int iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
             {
                 iCurFeat = GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -1431,7 +1460,7 @@ bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)
                         ValueOIDPair(psField->Real, iCurFeat + 1));
                 }
             }
-            m_apoFields[iField]->m_eType = eFieldType;
+            m_apoFields[iField]->m_bReadAsDouble = false;
 
             const auto writeValueFunc =
                 +[](std::vector<GByte> &abyPage,

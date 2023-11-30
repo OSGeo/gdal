@@ -375,11 +375,19 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset, GUInt32 *pnSize,
                 nRequiredLength += sizeof(double);
                 break;
             case FGFT_DATETIME:
+            case FGFT_DATE:
+            case FGFT_TIME:
                 nRequiredLength += sizeof(double);
                 break;
             case FGFT_GUID:
             case FGFT_GLOBALID:
                 nRequiredLength += UUID_SIZE_IN_BYTES;
+                break;
+            case FGFT_INT64:
+                nRequiredLength += sizeof(int64_t);
+                break;
+            case FGFT_DATETIME_WITH_OFFSET:
+                nRequiredLength += sizeof(double) + sizeof(int16_t);
                 break;
         }
         if (m_nRowBlobLength < nRequiredLength)
@@ -497,11 +505,19 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset, GUInt32 *pnSize,
                     nRequiredLength += sizeof(double);
                     break;
                 case FGFT_DATETIME:
+                case FGFT_DATE:
+                case FGFT_TIME:
                     nRequiredLength += sizeof(double);
                     break;
                 case FGFT_GUID:
                 case FGFT_GLOBALID:
                     nRequiredLength += UUID_SIZE_IN_BYTES;
+                    break;
+                case FGFT_INT64:
+                    nRequiredLength += sizeof(int64_t);
+                    break;
+                case FGFT_DATETIME_WITH_OFFSET:
+                    nRequiredLength += sizeof(double) + sizeof(int16_t);
                     break;
             }
             if (nRequiredLength > m_nRowBlobLength)
@@ -821,7 +837,9 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
     m_nFieldDescLength = GetUInt32(abyHeader, 0);
 
     const auto nVersion = GetUInt32(abyHeader + 4, 0);
-    if (m_bUpdate && nVersion != 4)  // FileGDB v10
+    // nVersion == 6 is used in table arcgis_pro_32_types.gdb/a0000000b.gdbtable (big_int)
+    // Not sure why...
+    if (m_bUpdate && nVersion != 4 && nVersion != 6)  // FileGDB v10
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Version %u of the FileGeodatabase format is not supported "
@@ -894,7 +912,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
 
-        if (byFieldType > FGFT_XML)
+        if (byFieldType > FGFT_DATETIME_WITH_OFFSET)
         {
             CPLDebug("OpenFileGDB", "Unhandled field type : %d", byFieldType);
             returnError();
@@ -991,10 +1009,31 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                     {
                         sDefault.Real = GetFloat64(pabyIter, 0);
                     }
-                    else if (eType == FGFT_DATETIME && defaultValueLength == 8)
+                    else if ((eType == FGFT_DATETIME || eType == FGFT_DATE) &&
+                             defaultValueLength == 8)
                     {
                         const double dfVal = GetFloat64(pabyIter, 0);
-                        FileGDBDoubleDateToOGRDate(dfVal, &sDefault);
+                        FileGDBDoubleDateToOGRDate(dfVal, true, &sDefault);
+                    }
+                    else if (eType == FGFT_TIME && defaultValueLength == 8)
+                    {
+                        const double dfVal = GetFloat64(pabyIter, 0);
+                        FileGDBDoubleTimeToOGRTime(dfVal, &sDefault);
+                    }
+                    else if (eType == FGFT_INT64 && defaultValueLength == 8)
+                    {
+                        sDefault.Integer64 = GetInt64(pabyIter, 0);
+                        sDefault.Set.nMarker3 = 0;
+                    }
+                    else if (eType == FGFT_DATETIME_WITH_OFFSET &&
+                             defaultValueLength ==
+                                 sizeof(double) + sizeof(int16_t))
+                    {
+                        const double dfVal = GetFloat64(pabyIter, 0);
+                        const int16_t nUTCOffset =
+                            GetInt16(pabyIter + sizeof(double), 0);
+                        FileGDBDateTimeWithOffsetToOGRDate(dfVal, nUTCOffset,
+                                                           &sDefault);
                     }
                 }
 
@@ -1559,7 +1598,8 @@ int FileGDBTable::SelectRow(int iRow)
 /*                      FileGDBDoubleDateToOGRDate()                    */
 /************************************************************************/
 
-int FileGDBDoubleDateToOGRDate(double dfVal, OGRField *psField)
+int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
+                               OGRField *psField)
 {
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
     double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
@@ -1573,20 +1613,76 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField *psField)
                  "FileGDBDoubleDateToOGRDate: Invalid days: %lf", dfVal);
         dfSeconds = 0.0;
     }
+    if (!bHighPrecision)
+        dfSeconds = std::floor(dfSeconds + 0.5);
+    else if (fmod(dfSeconds, 1.0) > 1 - 1e-4)
+        dfSeconds = std::floor(dfSeconds + 0.5);
 
     struct tm brokendowntime;
-    CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfSeconds + 0.5), &brokendowntime);
+    CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfSeconds), &brokendowntime);
 
     psField->Date.Year = static_cast<GInt16>(brokendowntime.tm_year + 1900);
     psField->Date.Month = static_cast<GByte>(brokendowntime.tm_mon + 1);
     psField->Date.Day = static_cast<GByte>(brokendowntime.tm_mday);
     psField->Date.Hour = static_cast<GByte>(brokendowntime.tm_hour);
     psField->Date.Minute = static_cast<GByte>(brokendowntime.tm_min);
-    psField->Date.Second = static_cast<float>(brokendowntime.tm_sec);
+    double dfSec = brokendowntime.tm_sec;
+    if (bHighPrecision)
+    {
+        dfSec += fmod(dfSeconds, 1.0);
+    }
+    psField->Date.Second = static_cast<float>(dfSec);
     psField->Date.TZFlag = 0;
     psField->Date.Reserved = 0;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                      FileGDBDoubleTimeToOGRTime()                    */
+/************************************************************************/
+
+int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField)
+{
+    double dfSeconds = dfVal * 3600.0 * 24.0;
+    if (CPLIsNan(dfSeconds) || dfSeconds < 0 || dfSeconds > 86400)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "FileGDBDoubleTimeToOGRTime: Invalid time: %lf", dfVal);
+        dfSeconds = 0.0;
+    }
+
+    psField->Date.Year = 0;
+    psField->Date.Month = 0;
+    psField->Date.Day = 0;
+    psField->Date.Hour = static_cast<GByte>(dfSeconds / 3600);
+    psField->Date.Minute =
+        static_cast<GByte>((static_cast<int>(dfSeconds) % 3600) / 60);
+    psField->Date.Second = static_cast<float>(fmod(dfSeconds, 60));
+    psField->Date.TZFlag = 0;
+    psField->Date.Reserved = 0;
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                  FileGDBDateTimeWithOffsetToOGRDate()                */
+/************************************************************************/
+
+int FileGDBDateTimeWithOffsetToOGRDate(double dfVal, int16_t nUTCOffset,
+                                       OGRField *psField)
+{
+    int ret = FileGDBDoubleDateToOGRDate(dfVal, true, psField);
+    if (ret)
+    {
+        if (nUTCOffset >= -14 * 60 && nUTCOffset <= 14 * 60)
+        {
+            psField->Date.TZFlag = static_cast<GByte>(100 + nUTCOffset / 15);
+        }
+        else
+            ret = FALSE;
+    }
+    return ret;
 }
 
 /************************************************************************/
@@ -1752,11 +1848,19 @@ const OGRField *FileGDBTable::GetFieldValue(int iCol)
                 nLength = sizeof(double);
                 break;
             case FGFT_DATETIME:
+            case FGFT_DATE:
+            case FGFT_TIME:
                 nLength = sizeof(double);
                 break;
             case FGFT_GUID:
             case FGFT_GLOBALID:
                 nLength = UUID_SIZE_IN_BYTES;
+                break;
+            case FGFT_INT64:
+                nLength = sizeof(int64_t);
+                break;
+            case FGFT_DATETIME_WITH_OFFSET:
+                nLength += sizeof(double) + sizeof(int16_t);
                 break;
         }
 
@@ -1903,6 +2007,7 @@ const OGRField *FileGDBTable::GetFieldValue(int iCol)
         }
 
         case FGFT_DATETIME:
+        case FGFT_DATE:
         {
             if (m_pabyIterVals + sizeof(double) > pabyEnd)
             {
@@ -1913,8 +2018,16 @@ const OGRField *FileGDBTable::GetFieldValue(int iCol)
             /* Number of days since 1899/12/30 00:00:00 */
             const double dfVal = GetFloat64(m_pabyIterVals, 0);
 
-            FileGDBDoubleDateToOGRDate(dfVal, &m_sCurField);
-            /* eCurFieldType = OFTDateTime; */
+            if (m_apoFields[iCol]->m_bReadAsDouble)
+            {
+                m_sCurField.Real = dfVal;
+            }
+            else
+            {
+                FileGDBDoubleDateToOGRDate(
+                    dfVal, m_apoFields[iCol]->IsHighPrecision(), &m_sCurField);
+                /* eCurFieldType = OFTDateTime; */
+            }
 
             m_pabyIterVals += sizeof(double);
 
@@ -2039,6 +2152,78 @@ const OGRField *FileGDBTable::GetFieldValue(int iCol)
             m_pabyIterVals += UUID_SIZE_IN_BYTES;
             /* CPLDebug("OpenFileGDB", "Field %d, row %d: %s", iCol, nCurRow,
              * sCurField.String); */
+
+            break;
+        }
+
+        case FGFT_INT64:
+        {
+            if (m_pabyIterVals + sizeof(int64_t) > pabyEnd)
+            {
+                m_bError = TRUE;
+                returnError();
+            }
+
+            /* eCurFieldType = OFTInteger; */
+            m_sCurField.Integer64 = GetInt64(m_pabyIterVals, 0);
+
+            m_pabyIterVals += sizeof(int64_t);
+            /* CPLDebug("OpenFileGDB", "Field %d, row %d: " CPL_FRMT_GIB, iCol, nCurRow,
+             * sCurField.Integer64); */
+
+            break;
+        }
+
+        case FGFT_TIME:
+        {
+            if (m_pabyIterVals + sizeof(double) > pabyEnd)
+            {
+                m_bError = TRUE;
+                returnError();
+            }
+
+            /* Fraction of day */
+            const double dfVal = GetFloat64(m_pabyIterVals, 0);
+
+            if (m_apoFields[iCol]->m_bReadAsDouble)
+            {
+                m_sCurField.Real = dfVal;
+            }
+            else
+            {
+                FileGDBDoubleTimeToOGRTime(dfVal, &m_sCurField);
+                /* eCurFieldType = OFTTime; */
+            }
+
+            m_pabyIterVals += sizeof(double);
+
+            break;
+        }
+
+        case FGFT_DATETIME_WITH_OFFSET:
+        {
+            if (m_pabyIterVals + sizeof(double) + sizeof(int16_t) > pabyEnd)
+            {
+                m_bError = TRUE;
+                returnError();
+            }
+
+            /* Number of days since 1899/12/30 00:00:00 */
+            const double dfVal = GetFloat64(m_pabyIterVals, 0);
+            m_pabyIterVals += sizeof(double);
+            const int16_t nUTCOffset = GetInt16(m_pabyIterVals, 0);
+            m_pabyIterVals += sizeof(int16_t);
+
+            if (m_apoFields[iCol]->m_bReadAsDouble)
+            {
+                m_sCurField.Real = dfVal - nUTCOffset * 60.0 / 86400.0;
+            }
+            else
+            {
+                FileGDBDateTimeWithOffsetToOGRDate(dfVal, nUTCOffset,
+                                                   &m_sCurField);
+                /* eCurFieldType = OFTDateTime; */
+            }
 
             break;
         }
