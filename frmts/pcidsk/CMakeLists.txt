@@ -5,8 +5,14 @@ add_gdal_driver(
           gdal_edb.cpp
           vsi_pcidsk_io.cpp
           ogrpcidsklayer.cpp
-          PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_JPEG_INTERNAL")
+  CORE_SOURCES
+          pcidskdrivercore.cpp
+  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JPEG_INTERNAL")
+
+if(NOT TARGET gdal_PCIDSK)
+    return()
+endif()
+
 gdal_standard_includes(gdal_PCIDSK)
 
 target_include_directories(gdal_PCIDSK PRIVATE $<TARGET_PROPERTY:pcidsk_sdk,SOURCE_DIR>)

@@ -21,3 +21,4 @@ unset CXXFLAGS
 unset CFLAGS
 
 make -j$(nproc)
+make -j$(nproc) install DESTDIR=/tmp/install-gdal

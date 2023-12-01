@@ -274,7 +274,6 @@ def test_ogr_rfc41_4():
     assert lyr.TestCapability(ogr.OLCCreateGeomField) != 0
     assert lyr.GetSpatialRef().IsSame(sr) != 0
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef().IsSame(sr) != 0
-    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName("a_name")
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
     lyr.CreateFeature(feat)
@@ -332,7 +331,7 @@ def test_ogr_rfc41_4():
     lyr.SetSpatialFilter(None)
     another_lyr = ds.CopyLayer(lyr, "dup_test")
     dup_feat = another_lyr.GetNextFeature()
-    geom = dup_feat.GetGeomFieldRef("a_name")
+    geom = dup_feat.GetGeomFieldRef("")
     assert geom.ExportToWkt() == "POINT (1 2)"
     geom = dup_feat.GetGeomFieldRef("another_geom_field")
     assert geom.ExportToWkt() == "POLYGON ((10 10,10 11,11 11,11 10,10 10))"
@@ -397,7 +396,10 @@ def test_ogr_rfc41_6():
 
     ds = ogr.GetDriverByName("memory").CreateDataSource("")
     sr = osr.SpatialReference()
-    lyr = ds.CreateLayer("poly", geom_type=ogr.wkbPolygon, srs=sr)
+    lyr = ds.CreateLayer("poly", geom_type=ogr.wkbNone)
+    geomfield = ogr.GeomFieldDefn("geomfield", ogr.wkbPolygon)
+    geomfield.SetSpatialRef(sr)
+    lyr.CreateGeomField(geomfield)
     lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName("geomfield")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("wkt", ogr.OFTString))
@@ -785,8 +787,9 @@ def test_ogr_rfc41_7():
 
 def test_ogr_rfc41_8(require_ogr_sql_sqlite):  # noqa
     ds = ogr.GetDriverByName("memory").CreateDataSource("")
-    lyr = ds.CreateLayer("mytable", geom_type=ogr.wkbPolygon)
-    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName("geomfield")
+    lyr = ds.CreateLayer("mytable", geom_type=ogr.wkbNone)
+    gfld_defn = ogr.GeomFieldDefn("geomfield", ogr.wkbPolygon)
+    lyr.CreateGeomField(gfld_defn)
     gfld_defn = ogr.GeomFieldDefn("geomfield2", ogr.wkbPoint25D)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)

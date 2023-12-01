@@ -3702,6 +3702,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     return poDS;
 }
 
+#ifdef unused
 template <typename CODEC, typename BASE>
 void GDALRegisterJP2(const std::string &libraryName,
                      const std::string &driverName)
@@ -3740,3 +3741,4 @@ void GDALRegisterJP2(const std::string &libraryName,
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
+#endif

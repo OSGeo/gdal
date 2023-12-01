@@ -205,11 +205,20 @@ OGRFeatureDefn *OGRFeatureDefn::Clone() const
 /**
  * \brief Change name of this OGRFeatureDefn.
  *
+ * To rename a layer, do not use this function directly, but use
+ * OGRLayer::Rename() instead.
+ *
  * @param pszName feature definition name
  * @since GDAL 2.3
  */
 void OGRFeatureDefn::SetName(const char *pszName)
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::SetName() not allowed on a sealed object");
+        return;
+    }
     CPLFree(pszFeatureClassName);
     pszFeatureClassName = CPLStrdup(pszName);
 }
@@ -412,6 +421,13 @@ void OGRFeatureDefn::ReserveSpaceForFields(int nFieldCountIn)
 void OGRFeatureDefn::AddFieldDefn(const OGRFieldDefn *poNewDefn)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFeatureDefn::AddFieldDefn() not allowed on a sealed object");
+        return;
+    }
     apoFieldDefn.emplace_back(std::make_unique<OGRFieldDefn>(poNewDefn));
 }
 
@@ -466,6 +482,13 @@ void OGR_FD_AddFieldDefn(OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField)
 OGRErr OGRFeatureDefn::DeleteFieldDefn(int iField)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFeatureDefn::DeleteFieldDefn() not allowed on a sealed object");
+        return OGRERR_FAILURE;
+    }
     if (iField < 0 || iField >= GetFieldCount())
         return OGRERR_FAILURE;
 
@@ -526,6 +549,13 @@ OGRErr OGR_FD_DeleteFieldDefn(OGRFeatureDefnH hDefn, int iField)
 OGRErr OGRFeatureDefn::ReorderFieldDefns(const int *panMap)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::ReorderFieldDefns() not allowed on a sealed "
+                 "object");
+        return OGRERR_FAILURE;
+    }
     const int nFieldCount = GetFieldCount();
     if (nFieldCount == 0)
         return OGRERR_NONE;
@@ -736,6 +766,13 @@ OGRGeomFieldDefnH OGR_FD_GetGeomFieldDefn(OGRFeatureDefnH hDefn, int iGeomField)
 
 void OGRFeatureDefn::AddGeomFieldDefn(const OGRGeomFieldDefn *poNewDefn)
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::AddGeomFieldDefn() not allowed on a sealed "
+                 "object");
+        return;
+    }
     apoGeomFieldDefn.emplace_back(
         std::make_unique<OGRGeomFieldDefn>(poNewDefn));
 }
@@ -818,6 +855,13 @@ void OGR_FD_AddGeomFieldDefn(OGRFeatureDefnH hDefn,
 OGRErr OGRFeatureDefn::DeleteGeomFieldDefn(int iGeomField)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::DeleteGeomFieldDefn() not allowed on a "
+                 "sealed object");
+        return OGRERR_FAILURE;
+    }
     if (iGeomField < 0 || iGeomField >= GetGeomFieldCount())
         return OGRERR_FAILURE;
 
@@ -1006,6 +1050,13 @@ OGRwkbGeometryType OGR_FD_GetGeomType(OGRFeatureDefnH hDefn)
 void OGRFeatureDefn::SetGeomType(OGRwkbGeometryType eNewType)
 
 {
+    if (m_bSealed)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRFeatureDefn::SetGeomType() not allowed on a sealed object");
+        return;
+    }
     const int nGeomFieldCount = GetGeomFieldCount();
     if (nGeomFieldCount > 0)
     {
@@ -1599,3 +1650,190 @@ OGRFeatureDefn::ComputeMapForSetFrom(const OGRFeatureDefn *poSrcFDefn,
     }
     return aoMapSrcToTargetIdx;
 }
+
+/************************************************************************/
+/*                       OGRFeatureDefn::Seal()                         */
+/************************************************************************/
+
+/** Seal a OGRFeatureDefn.
+ *
+ * A sealed OGRFeatureDefn can not be modified while it is sealed.
+ *
+ * This method also call OGRFieldDefn::Seal() and OGRGeomFieldDefn::Seal()
+ * on its fields and geometry fields.
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @param bSealFields Whether fields and geometry fields should be sealed.
+ *                    This is generally desirabled, but in case of deferred
+ *                    resolution of them, this parameter should be set to false.
+ * @since GDAL 3.9
+ */
+void OGRFeatureDefn::Seal(bool bSealFields)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::Seal(): the object is already sealed");
+        return;
+    }
+    if (bSealFields)
+    {
+        const int nFieldCount = GetFieldCount();
+        for (int i = 0; i < nFieldCount; ++i)
+            GetFieldDefn(i)->Seal();
+        const int nGeomFieldCount = GetGeomFieldCount();
+        for (int i = 0; i < nGeomFieldCount; ++i)
+            GetGeomFieldDefn(i)->Seal();
+    }
+    m_bSealed = true;
+}
+
+/************************************************************************/
+/*                       OGRFeatureDefn::Unseal()                       */
+/************************************************************************/
+
+/** Unseal a OGRFeatureDefn.
+ *
+ * Undo OGRFeatureDefn::Seal()
+ *
+ * This method also call OGRFieldDefn::Unseal() and OGRGeomFieldDefn::Unseal()
+ * on its fields and geometry fields.
+ *
+ * Using GetTemporaryUnsealer() is recommended for most use cases.
+ *
+ * This method should only be called by driver implementations.
+ *
+ * @param bUnsealFields Whether fields and geometry fields should be unsealed.
+ *                      This is generally desirabled, but in case of deferred
+ *                      resolution of them, this parameter should be set to
+ * false.
+ * @since GDAL 3.9
+ */
+void OGRFeatureDefn::Unseal(bool bUnsealFields)
+{
+    if (!m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRFeatureDefn::Unseal(): the object is already unsealed");
+        return;
+    }
+    m_bSealed = false;
+    if (bUnsealFields)
+    {
+        const int nFieldCount = GetFieldCount();
+        for (int i = 0; i < nFieldCount; ++i)
+            GetFieldDefn(i)->Unseal();
+        const int nGeomFieldCount = GetGeomFieldCount();
+        for (int i = 0; i < nGeomFieldCount; ++i)
+            GetGeomFieldDefn(i)->Unseal();
+    }
+}
+
+/************************************************************************/
+/*                  OGRFeatureDefn::GetTemporaryUnsealer()              */
+/************************************************************************/
+
+/** Return an object that temporary unseals the OGRFeatureDefn
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ * This method should be called on a OGRFeatureDefn that has been sealed
+ * previously.
+ * GetTemporaryUnsealer() calls may be nested, in which case only the first
+ * one has an effect (similarly to a recursive mutex locked in a nested way
+ * from the same thread).
+ *
+ * This method should only be called by driver implementations.
+ *
+ * It is also possible to use the helper method whileUnsealing(). Example:
+ * whileUnsealing(poFeatureDefn)->some_method()
+ *
+ * @param bSealFields Whether fields and geometry fields should be unsealed and
+ *                    resealed.
+ *                    This is generally desirabled, but in case of deferred
+ *                    resolution of them, this parameter should be set to false.
+ * @since GDAL 3.9
+ */
+OGRFeatureDefn::TemporaryUnsealer
+OGRFeatureDefn::GetTemporaryUnsealer(bool bSealFields)
+{
+    return TemporaryUnsealer(this, bSealFields);
+}
+
+/*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                TemporaryUnsealer::TemporaryUnsealer()                */
+/************************************************************************/
+
+OGRFeatureDefn::TemporaryUnsealer::TemporaryUnsealer(
+    OGRFeatureDefn *poFeatureDefn, bool bSealFields)
+    : m_poFeatureDefn(poFeatureDefn), m_bSealFields(bSealFields)
+{
+    if (m_poFeatureDefn->m_nTemporaryUnsealCount == 0)
+    {
+        if (m_poFeatureDefn->m_bSealed)
+        {
+            m_poFeatureDefn->Unseal(m_bSealFields);
+            m_poFeatureDefn->m_nTemporaryUnsealCount = 1;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "OGRFeatureDefn::GetTemporaryUnsealer() called on "
+                     "a unsealed object");
+            m_poFeatureDefn->m_nTemporaryUnsealCount = -1;
+        }
+    }
+    else if (m_poFeatureDefn->m_nTemporaryUnsealCount > 0)
+    {
+        // m_poFeatureDefn is already under an active TemporaryUnsealer.
+        // Just increment the counter
+        ++m_poFeatureDefn->m_nTemporaryUnsealCount;
+    }
+    else
+    {
+        // m_poFeatureDefn is already under a misused TemporaryUnsealer.
+        // Decrement again the counter
+        --m_poFeatureDefn->m_nTemporaryUnsealCount;
+    }
+}
+
+/************************************************************************/
+/*                TemporaryUnsealer::~TemporaryUnsealer()               */
+/************************************************************************/
+
+OGRFeatureDefn::TemporaryUnsealer::~TemporaryUnsealer()
+{
+    if (m_poFeatureDefn->m_nTemporaryUnsealCount > 0)
+    {
+        // m_poFeatureDefn is already under an active TemporaryUnsealer.
+        // Decrement increment the counter and unseal when it reaches 0
+        --m_poFeatureDefn->m_nTemporaryUnsealCount;
+        if (m_poFeatureDefn->m_nTemporaryUnsealCount == 0)
+        {
+            if (!m_poFeatureDefn->m_bSealed)
+            {
+                m_poFeatureDefn->Seal(m_bSealFields);
+            }
+            else
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Misuse of sealing functionality. "
+                    "OGRFeatureDefn::TemporaryUnsealer::~TemporaryUnsealer() "
+                    "claled on a sealed object");
+            }
+        }
+    }
+    else
+    {
+        // m_poFeatureDefn is already under a misused TemporaryUnsealer.
+        // Increment the counter
+        CPLAssert(m_poFeatureDefn->m_nTemporaryUnsealCount < 0);
+        ++m_poFeatureDefn->m_nTemporaryUnsealCount;
+    }
+}
+
+/*! @endcond */

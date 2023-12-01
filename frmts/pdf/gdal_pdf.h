@@ -54,6 +54,8 @@
 
 #include "pdfsdk_headers.h"
 
+#include "pdfdrivercore.h"
+
 #include "cpl_vsi_virtual.h"
 
 #include "gdal_pam.h"
@@ -66,10 +68,6 @@
 #define PDFLIB_PODOFO 1
 #define PDFLIB_PDFIUM 2
 #define PDFLIB_COUNT 3
-
-#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
-#define HAVE_PDF_READ_SUPPORT
-#endif
 
 /************************************************************************/
 /*                             OGRPDFLayer                              */
@@ -439,7 +437,6 @@ class PDFDataset final : public GDALPamDataset
     {
         return Open(poOpenInfo);
     }
-    static int Identify(GDALOpenInfo *);
 
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
                                    const int *, GDALProgressFunc, void *,

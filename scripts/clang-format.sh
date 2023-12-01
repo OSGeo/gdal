@@ -58,6 +58,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*ogr/utf8.h*)
+	  continue
+	  ;;
+
 	*ogr/ogrsf_frmts/flatgeobuf/flatbuffers/*)
 	  continue
 	  ;;

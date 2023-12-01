@@ -53,6 +53,8 @@
 
 #include "nasakeywordhandler.h"
 
+#include "hdf4drivercore.h"
+
 #include <algorithm>
 
 constexpr int HDF4_SDS_MAXNAMELEN = 65;
@@ -2666,10 +2668,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
 
 GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_SDS:") &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_GR:") &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_GD:") &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF4_EOS:"))
+    if (!HDF4ImageDatasetIdentify(poOpenInfo))
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -3988,24 +3987,11 @@ GDALDataset *HDF4ImageDataset::Create(const char *pszFilename, int nXSize,
 void GDALRegister_HDF4Image()
 
 {
-    if (GDALGetDriverByName("HDF4Image") != nullptr)
+    if (GDALGetDriverByName(HDF4_IMAGE_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("HDF4Image");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HDF4 Dataset");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf4.html");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int8 Int16 UInt16 Int32 UInt32 "
-                              // "Int64 UInt64 "
-                              "Float32 Float64");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='RANK' type='int' description='Rank of output SDS'/>"
-        "</CreationOptionList>");
+    HDF4ImageDriverSetCommonMetadata(poDriver);
 
 #ifdef HDF4_HAS_MAXOPENFILES
     poDriver->SetMetadataItem("HDF4_HAS_MAXOPENFILES", "YES");

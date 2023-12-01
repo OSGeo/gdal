@@ -152,6 +152,31 @@ def data_ds():
 
 
 ###############################################################################
+# Test an unrecognized dialect name
+
+
+def test_ogr_sql_unrecognized_dialect(data_ds):
+    class MyHandler:
+        def __init__(self):
+            self.warning_raised = False
+
+        def callback(self, err_type, err_no, err_msg):
+            if (
+                err_type == gdal.CE_Warning
+                and "Dialect 'unknown' is unsupported" in err_msg
+            ):
+                self.warning_raised = True
+
+    my_error_handler = MyHandler()
+    with gdaltest.error_handler(my_error_handler.callback):
+        with data_ds.ExecuteSQL(
+            "SELECT * FROM poly WHERE eas_id < 167", dialect="unknown"
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount(force=1) == 3
+    assert my_error_handler.warning_raised
+
+
+###############################################################################
 # Test a simple query with a where clause.
 
 
@@ -1720,3 +1745,116 @@ def test_ogr_sql_select_except_join_3(select_except_join_ds):
         assert defn.GetFieldCount() == 2
         assert defn.GetFieldDefn(0).GetName() == "id"
         assert defn.GetFieldDefn(1).GetName() == "name"
+
+
+def test_ogr_sql_like_utf8():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    lyr.SetAttributeFilter("'é' LIKE 'É'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'É' LIKE 'é'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'É' LIKE 'É'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'é' LIKE 'e'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'é' LIKE 'ê'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'é' LIKE ''")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'é' LIKE '_'")
+    assert lyr.GetFeatureCount() == 1
+
+    # Truncated UTF8 character
+    lyr.SetAttributeFilter("'\xC3' LIKE '_'")
+    lyr.GetFeatureCount()  # we return 1 currently, we could as well return 0...
+
+    # Truncated UTF8 character
+    lyr.SetAttributeFilter("'\xC3' LIKE 'é'")
+    assert lyr.GetFeatureCount() == 0
+
+    # Truncated UTF8 character
+    lyr.SetAttributeFilter("'é' LIKE '\xC3'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'éven' LIKE '_ven'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'éven' LIKE '%ven'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'' LIKE '_'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'éven' LIKE '_xen'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'éven' LIKE '%xen'")
+    assert lyr.GetFeatureCount() == 0
+
+
+def test_ogr_sql_ilike_utf8():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    lyr.SetAttributeFilter("'é' ILIKE 'é'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'é' ILIKE 'É'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'É' ILIKE 'é'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'É' ILIKE 'É'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'é' ILIKE 'e'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'é' ILIKE 'ê'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'é' ILIKE ''")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'é' ILIKE '_'")
+    assert lyr.GetFeatureCount() == 1
+
+    # Truncated UTF8 character
+    lyr.SetAttributeFilter("'\xC3' ILIKE '_'")
+    lyr.GetFeatureCount()  # we return 1 currently, we could as well return 0...
+
+    # Truncated UTF8 character
+    lyr.SetAttributeFilter("'\xC3' ILIKE 'é'")
+    assert lyr.GetFeatureCount() == 0
+
+    # Truncated UTF8 character
+    lyr.SetAttributeFilter("'é' ILIKE '\xC3'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'éven' ILIKE '_ven'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'éven' ILIKE '%ven'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("'' ILIKE '_'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'éven' ILIKE '_xen'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("'éven' ILIKE '%xen'")
+    assert lyr.GetFeatureCount() == 0

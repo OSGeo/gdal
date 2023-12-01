@@ -379,6 +379,11 @@ MAIN_START(nArgc, papszArgv)
     CPLStringList aosFiles;
     CPLStringList aosOptions;
 
+    EarlySetConfigOptions(nArgc, papszArgv);
+    nArgc = GDALGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
+    if (nArgc < 1)
+        exit(-nArgc);
+
     /* -------------------------------------------------------------------- */
     /*      Parse command line.                                             */
     /* -------------------------------------------------------------------- */
@@ -390,6 +395,7 @@ MAIN_START(nArgc, papszArgv)
                    "is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME,
                    GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy(papszArgv);
             return 0;
         }
         else if (strcmp(papszArgv[iArg], "--help") == 0)
@@ -763,6 +769,7 @@ MAIN_START(nArgc, papszArgv)
         }
     }
     CPLCloseZip(hZIP);
+    CSLDestroy(papszArgv);
     return 0;
 }
 MAIN_END

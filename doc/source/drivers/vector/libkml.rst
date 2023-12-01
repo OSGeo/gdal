@@ -79,9 +79,17 @@ element at the top Document level.
 
 - .. dsco:: AUTHOR_NAME
 
+     Specifieds the value of the ``<atom:name>`` element.
+
 - .. dsco:: AUTHOR_URI
 
+     Specifieds the value of the ``<atom:uri>`` element.
+     It should start with ``http://`` or ``https://``
+
 - .. dsco:: AUTHOR_EMAIL
+
+     Specifieds the value of the ``<atom:email>`` element.
+     It should include a ``@`` character.
 
 Additional datasource creation options affecting the top Document level:
 
@@ -910,8 +918,8 @@ LinearRing to
 and Polygon to
 `<Polygon> <https://developers.google.com/kml/documentation/kmlreference#polygon>`__.
 In OGR a polygon contains an array of LinearRings, the first one being
-the outer ring. KML has the tags  
-`<outerBoundaryIs> <https://developers.google.com/kml/documentation/kmlreference#outerboundaryis>`__ and 
+the outer ring. KML has the tags
+`<outerBoundaryIs> <https://developers.google.com/kml/documentation/kmlreference#outerboundaryis>`__ and
 `<innerBoundaryIs> <https://developers.google.com/kml/documentation/kmlreference#innerboundaryis>`__ to
 differentiate between the two. OGR has several Multi types of geometry :
 GeometryCollection, MultiPolygon, MultiPoint, and MultiLineString. When

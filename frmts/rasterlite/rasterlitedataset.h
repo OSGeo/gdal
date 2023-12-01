@@ -78,7 +78,6 @@ class RasterliteDataset final : public GDALPamDataset
                                    CSLConstList papszOptions) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
 
   protected:
     virtual int CloseDependentDatasets() override;

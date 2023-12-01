@@ -13,7 +13,14 @@ set(SOURCE
     ogrocitablelayer.cpp
     ogrociwritablelayer.cpp)
 
-add_gdal_driver(TARGET ogr_OCI SOURCES ${SOURCE} PLUGIN_CAPABLE)
+add_gdal_driver(TARGET ogr_OCI
+                SOURCES ${SOURCE}
+                CORE_SOURCES ogrocidrivercore.cpp
+                PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_OCI)
+    return()
+endif()
 
 gdal_standard_includes(ogr_OCI)
 gdal_target_link_libraries(ogr_OCI PRIVATE Oracle::OCI)

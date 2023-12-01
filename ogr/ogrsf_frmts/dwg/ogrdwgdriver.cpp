@@ -29,50 +29,31 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 #include "ogrteigha.h"
+#include "ogrdwgdrivercore.h"
 
 /************************************************************************/
-/*                            OGRDWGDriver()                            */
+/*                          OGRDWGDriverUnload()                        */
 /************************************************************************/
 
-OGRDWGDriver::OGRDWGDriver() : poServices(nullptr)
-
+static void OGRDWGDriverUnload(GDALDriver *)
 {
-}
-
-/************************************************************************/
-/*                          ~OGRDWGDriver()                             */
-/************************************************************************/
-
-OGRDWGDriver::~OGRDWGDriver()
-
-{
+    CPLDebug("DWG", "Driver cleanup");
     OGRTEIGHADeinitialize();
-}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRDWGDriver::GetName()
-
-{
-    return "DWG";
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRDWGDriver::Open(const char *pszFilename, int /*bUpdate*/)
-
+static GDALDataset *OGRDWGDriverOpen(GDALOpenInfo *poOpenInfo)
 {
-    if (!EQUAL(CPLGetExtension(pszFilename), "dwg"))
+    if (!OGRDWGDriverIdentify(poOpenInfo))
         return nullptr;
 
     // Check that this is a real file since the driver doesn't support
     // VSI*L API
     VSIStatBuf sStat;
-    if (VSIStat(pszFilename, &sStat) != 0)
+    if (VSIStat(poOpenInfo->pszFilename, &sStat) != 0)
         return nullptr;
 
     if (!OGRTEIGHAInitialize())
@@ -80,7 +61,7 @@ OGRDataSource *OGRDWGDriver::Open(const char *pszFilename, int /*bUpdate*/)
 
     OGRDWGDataSource *poDS = new OGRDWGDataSource();
 
-    if (!poDS->Open(OGRDWGGetServices(), pszFilename))
+    if (!poDS->Open(OGRDWGGetServices(), poOpenInfo->pszFilename))
     {
         delete poDS;
         poDS = nullptr;
@@ -90,34 +71,20 @@ OGRDataSource *OGRDWGDriver::Open(const char *pszFilename, int /*bUpdate*/)
 }
 
 /************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRDWGDriver::TestCapability(const char * /*pszCap*/)
-
-{
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRDWG()                           */
 /************************************************************************/
 
 void RegisterOGRDWG()
 
 {
-    OGRSFDriver *poDriver = new OGRDWGDriver;
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "AutoCAD DWG");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dwg");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/dwg.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_READ, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+        return;
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
+    GDALDriver *poDriver = new GDALDriver();
+    OGRDWGDriverSetCommonMetadata(poDriver);
+
+    poDriver->pfnOpen = OGRDWGDriverOpen;
+    poDriver->pfnUnloadDriver = OGRDWGDriverUnload;
+
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

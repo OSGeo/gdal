@@ -35,7 +35,7 @@ import pathlib
 import ogrtest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_geos
 
@@ -398,7 +398,7 @@ def test_gdal_footprint_lib_dsco_lco(tmp_vsimem):
 # Test option argument handling
 
 
-def test_gdaldem_footprint_dict_arguments():
+def test_gdal_footprint_footprint_dict_arguments():
 
     opt = gdal.FootprintOptions(
         "__RETURN_OPTION_LIST__",
@@ -427,3 +427,298 @@ def test_gdaldem_footprint_dict_arguments():
         "-lco",
         "STRING_DEFAULT_WIDTH=10",
     ]
+
+
+###############################################################################
+# Test footprint, RGBA and overviews
+
+
+def test_gdal_footprint_footprint_rgba_overviews():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 6, 6, 4)
+    for i in range(4):
+        src_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_RedBand + i)
+    src_ds.BuildOverviews("NONE", [2])
+    src_ds.GetRasterBand(4).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        ovr=0,
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((2 2,2 4,4 4,4 2,2 2)))")
+
+
+###############################################################################
+def test_gdal_footprint_lib_union():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((0 0,0 1,2 1,2 0,0 0)))")
+
+
+###############################################################################
+def test_gdal_footprint_lib_intersection_none():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        combineBands="intersection",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f is None
+
+
+###############################################################################
+def test_gdal_footprint_lib_intersection_partial():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\xFF\xFF")
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        combineBands="intersection",
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, "MULTIPOLYGON (((1 0,1 1,2 1,2 0,1 0)))")
+
+
+###############################################################################
+def test_gdal_footprint_layerName():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    src_ds.GetRasterBand(1).Fill(255)
+    out_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+
+    with pytest.raises(Exception, match="Cannot find layer non_existing"):
+        gdal.Footprint(out_ds, src_ds, layerName="non_existing")
+
+    out_ds.CreateLayer("a")
+    layer_b = out_ds.CreateLayer("b")
+
+    gdal.Footprint(out_ds, src_ds, layerName="b")
+    assert layer_b.GetFeatureCount() == 1
+
+
+###############################################################################
+def test_gdal_footprint_wrong_output_format():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+
+    # Non existing output driver
+    with pytest.raises(Exception, match="Output driver `non_existing' not recognised"):
+        gdal.Footprint("", src_ds, format="non_existing")
+
+    # Raster-only output driver
+    with pytest.raises(Exception, match="Output driver `GTiff' not recognised"):
+        gdal.Footprint("", src_ds, format="GTiff")
+
+    with pytest.raises(
+        Exception, match="Cannot guess driver for /vsimem/out.unknown_ext"
+    ):
+        gdal.Footprint(
+            "/vsimem/out.unknown_ext",
+            src_ds,
+        )
+
+
+###############################################################################
+def test_gdal_footprint_output_layer_has_crs_but_input_not():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    out_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    out_ds.CreateLayer("out_lyr", srs=srs)
+
+    with pytest.raises(
+        Exception, match="Output layer has CRS, but input is not georeferenced"
+    ):
+        gdal.Footprint(out_ds, src_ds, layerName="out_lyr")
+
+
+###############################################################################
+def test_gdal_footprint_wrong_number_nodata_values():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    with pytest.raises(
+        Exception,
+        match="Number of values in -srcnodata should be 1 or the number of bands",
+    ):
+        gdal.Footprint("", src_ds, format="Memory", srcNodata=[1, 2])
+
+
+###############################################################################
+def test_gdal_footprint_wrong_bands():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    with pytest.raises(Exception, match="Invalid band number: 2"):
+        gdal.Footprint("", src_ds, format="Memory", bands=[2])
+
+
+###############################################################################
+def test_gdal_footprint_wrong_ovr_on_band_with_nodata():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    with pytest.raises(
+        Exception,
+        match="Overview index 0 invalid for this dataset. Bands of this dataset have no precomputed overviews",
+    ):
+        gdal.Footprint(
+            "",
+            src_ds,
+            format="Memory",
+            ovr=0,
+        )
+    src_ds.BuildOverviews("NEAR", [2])
+    with pytest.raises(
+        Exception,
+        match=r"Overview index 1 invalid for this dataset. Value should be in \[0,0\] range",
+    ):
+        gdal.Footprint(
+            "",
+            src_ds,
+            format="Memory",
+            ovr=1,
+        )
+
+
+###############################################################################
+def test_gdal_footprint_wrong_ovr_on_band_with_alpha():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 2)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
+    with pytest.raises(
+        Exception,
+        match="Overview index 0 invalid for this dataset. Mask bands of this dataset have no precomputed overviews",
+    ):
+        gdal.Footprint(
+            "",
+            src_ds,
+            format="Memory",
+            ovr=0,
+        )
+    src_ds.BuildOverviews("NEAR", [2])
+    with pytest.raises(
+        Exception,
+        match=r"Overview index 1 invalid for this dataset. Value should be in \[0,0\] range",
+    ):
+        gdal.Footprint(
+            "",
+            src_ds,
+            format="Memory",
+            ovr=1,
+        )
+
+
+###############################################################################
+#
+
+
+def test_gdal_footprint_lib_targetCoordinateSystem_georef_error():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    with pytest.raises(
+        Exception,
+        match="Georeferenced coordinates requested, but input dataset has no geotransform.",
+    ):
+        gdal.Footprint(
+            "",
+            src_ds,
+            format="Memory",
+            targetCoordinateSystem="georef",
+        )
+
+
+###############################################################################
+#
+
+
+def test_gdal_footprint_lib_minRingArea():
+
+    # footprint area above minRingArea
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        minRingArea="0.5",
+    )
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetFeatureCount() == 1
+
+    # footprint area below minRingArea
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    out_ds = gdal.Footprint(
+        "",
+        src_ds,
+        format="Memory",
+        targetCoordinateSystem="pixel",
+        minRingArea="1.5",
+    )
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+#
+
+
+def test_gdal_footprint_lib_destSRS_and_targetCoordinateSystem_pixel_mutually_exclusive():
+
+    with pytest.raises(
+        Exception, match="-t_cs pixel and -t_srs are mutually exclusive"
+    ):
+        gdal.Footprint(
+            "",
+            "../gcore/data/byte.tif",
+            format="Memory",
+            dstSRS="EPSG:4267",
+            targetCoordinateSystem="pixel",
+        )
+
+
+###############################################################################
+#
+
+
+def test_gdal_footprint_lib_srcNodata_and_ovr_mutually_exclusive():
+
+    with pytest.raises(Exception, match="-srcnodata and -ovr are mutually exclusive"):
+        gdal.Footprint(
+            "", "../gcore/data/byte.tif", format="Memory", srcNodata=0, ovr=0
+        )

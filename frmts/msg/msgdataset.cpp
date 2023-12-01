@@ -30,6 +30,7 @@
 
 #include "gdal_frmts.h"
 #include "msgdataset.h"
+#include "msgdrivercore.h"
 #include "prologue.h"
 #include "xritheaderparser.h"
 #include "reflectancecalculator.h"
@@ -879,14 +880,11 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel,
 void GDALRegister_MSG()
 
 {
-    if (GDALGetDriverByName("MSG") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("MSG");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MSG HRIT Data");
+    MSGDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = MSGDataset::Open;
 

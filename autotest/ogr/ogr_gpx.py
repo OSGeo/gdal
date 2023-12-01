@@ -416,7 +416,9 @@ def test_ogr_gpx_8():
     f.close()
     f_ref.close()
 
-    assert f_content.find(f_ref_content) != -1, "did not get expected result"
+    assert f_ref_content.decode("utf-8") in f_content.decode(
+        "utf-8"
+    ), "did not get expected result"
 
 
 ###############################################################################

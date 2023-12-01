@@ -241,7 +241,8 @@ static bool COGGetWarpingCharacteristics(
         adfSrcGeoTransform[5] < 0)
     {
         const auto poSrcSRS = poSrcDS->GetSpatialRef();
-        if (poSrcSRS && poSrcSRS->IsGeographic())
+        if (poSrcSRS && poSrcSRS->IsGeographic() &&
+            !poSrcSRS->IsDerivedGeographic())
         {
             double maxLat = adfSrcGeoTransform[3];
             double minLat = adfSrcGeoTransform[3] +
@@ -306,7 +307,8 @@ static bool COGGetWarpingCharacteristics(
     double adfGeoTransform[6];
     double adfExtent[4];
 
-    if (GDALSuggestedWarpOutput2(poSrcDS, psInfo->pfnTransform, hTransformArg,
+    if (GDALSuggestedWarpOutput2(poTmpDS ? poTmpDS.get() : poSrcDS,
+                                 psInfo->pfnTransform, hTransformArg,
                                  adfGeoTransform, &nXSize, &nYSize, adfExtent,
                                  0) != CE_None)
     {
@@ -887,20 +889,31 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
 
     CPLString osCompress = CSLFetchNameValueDef(papszOptions, "COMPRESS",
                                                 gbHasLZW ? "LZW" : "NONE");
-    if (EQUAL(osCompress, "JPEG") && poCurDS->GetRasterCount() == 4 &&
-        poCurDS->GetRasterBand(4)->GetColorInterpretation() == GCI_AlphaBand)
+    if (EQUAL(osCompress, "JPEG") &&
+        (poCurDS->GetRasterCount() == 2 || poCurDS->GetRasterCount() == 4) &&
+        poCurDS->GetRasterBand(poCurDS->GetRasterCount())
+                ->GetColorInterpretation() == GCI_AlphaBand)
     {
         char **papszArg = nullptr;
         papszArg = CSLAddString(papszArg, "-of");
         papszArg = CSLAddString(papszArg, "VRT");
         papszArg = CSLAddString(papszArg, "-b");
         papszArg = CSLAddString(papszArg, "1");
-        papszArg = CSLAddString(papszArg, "-b");
-        papszArg = CSLAddString(papszArg, "2");
-        papszArg = CSLAddString(papszArg, "-b");
-        papszArg = CSLAddString(papszArg, "3");
-        papszArg = CSLAddString(papszArg, "-mask");
-        papszArg = CSLAddString(papszArg, "4");
+        if (poCurDS->GetRasterCount() == 2)
+        {
+            papszArg = CSLAddString(papszArg, "-mask");
+            papszArg = CSLAddString(papszArg, "2");
+        }
+        else
+        {
+            CPLAssert(poCurDS->GetRasterCount() == 4);
+            papszArg = CSLAddString(papszArg, "-b");
+            papszArg = CSLAddString(papszArg, "2");
+            papszArg = CSLAddString(papszArg, "-b");
+            papszArg = CSLAddString(papszArg, "3");
+            papszArg = CSLAddString(papszArg, "-mask");
+            papszArg = CSLAddString(papszArg, "4");
+        }
         GDALTranslateOptions *psOptions =
             GDALTranslateOptionsNew(papszArg, nullptr);
         CSLDestroy(papszArg);
@@ -1040,7 +1053,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
                 nTmpXSize = 1;
             if (nTmpYSize == 0)
                 nTmpYSize = 1;
-            asOverviewDims.push_back(std::pair<int, int>(nTmpXSize, nTmpYSize));
+            asOverviewDims.emplace_back(std::pair(nTmpXSize, nTmpYSize));
             nCurLevel--;
         }
     }
@@ -1056,8 +1069,8 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
             for (int i = 0; i < nIters; i++)
             {
                 auto poOvrBand = poFirstBand->GetOverview(i);
-                asOverviewDims.push_back(std::pair<int, int>(
-                    poOvrBand->GetXSize(), poOvrBand->GetYSize()));
+                asOverviewDims.emplace_back(
+                    std::pair(poOvrBand->GetXSize(), poOvrBand->GetYSize()));
             }
         }
         else
@@ -1082,8 +1095,7 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
                     nTmpXSize = 1;
                 if (nTmpYSize == 0)
                     nTmpYSize = 1;
-                asOverviewDims.push_back(
-                    std::pair<int, int>(nTmpXSize, nTmpYSize));
+                asOverviewDims.emplace_back(std::pair(nTmpXSize, nTmpYSize));
             }
         }
     }

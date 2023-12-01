@@ -35,6 +35,7 @@
 #include "gdal_priv.h"
 #include "gh5_convenience.h"
 #include "hdf5dataset.h"
+#include "hdf5drivercore.h"
 #include "ogr_spatialref.h"
 #include "../mem/memdataset.h"
 
@@ -673,19 +674,6 @@ CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int HDF5ImageDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "HDF5:"))
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -997,19 +985,14 @@ void GDALRegister_HDF5Image()
     if (!GDAL_CHECK_VERSION("HDF5Image driver"))
         return;
 
-    if (GDALGetDriverByName("HDF5Image") != nullptr)
+    if (GDALGetDriverByName(HDF5_IMAGE_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("HDF5Image");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "HDF5 Dataset");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    HDF5ImageDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = HDF5ImageDataset::Open;
-    poDriver->pfnIdentify = HDF5ImageDataset::Identify;
     poDriver->pfnUnloadDriver = HDF5ImageDatasetDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

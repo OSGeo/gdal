@@ -203,3 +203,29 @@ INSTANTIATE_TEST_SUITE_P(
             osStr.pop_back();
         return osStr;
     });
+
+TEST_F(test_ogr_swq, select_unparse)
+{
+    {
+        swq_select select;
+        const char *pszSQL = "SELECT a FROM FOO";
+        EXPECT_EQ(select.preparse(pszSQL), CE_None);
+        char *ret = select.Unparse();
+        EXPECT_STREQ(ret, pszSQL);
+        CPLFree(ret);
+    }
+    {
+        swq_select select;
+        const char *pszSQL =
+            "SELECT DISTINCT a, \"a b\" AS renamed, AVG(x.a) AS avg, MIN(a), "
+            "MAX(\"a b\"), SUM(a), AVG(a), COUNT(a), COUNT(DISTINCT a) "
+            "FROM 'foo'.\"FOO BAR\" AS x "
+            "JOIN 'bar'.BAR AS y ON FOO.x = BAR.y "
+            "WHERE 1 ORDER BY a, \"a b\" DESC "
+            "LIMIT 1 OFFSET 2";
+        EXPECT_EQ(select.preparse(pszSQL), CE_None);
+        char *ret = select.Unparse();
+        EXPECT_STREQ(ret, pszSQL);
+        CPLFree(ret);
+    }
+}

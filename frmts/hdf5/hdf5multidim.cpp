@@ -76,8 +76,7 @@ class HDF5Group final : public GDALGroup
           m_bIsEOSGridGroup(osParentName == "/HDFEOS/GRIDS"),
           m_bIsEOSSwathGroup(osParentName == "/HDFEOS/SWATHS")
     {
-        m_oSetParentIds.insert(
-            std::pair<unsigned long, unsigned long>(objIds[0], objIds[1]));
+        m_oSetParentIds.insert(std::pair(objIds[0], objIds[1]));
 
         // Force registration of EOS dimensions
         if (m_bIsEOSGridGroup || m_bIsEOSSwathGroup)
@@ -249,7 +248,7 @@ GetDataTypesInGroup(hid_t hHDF5, const std::string &osGroupFullName,
     {
         static herr_t f(hid_t hGroup, const char *pszObjName, void *user_data)
         {
-            std::vector<std::pair<std::string, hid_t>> *poTypes =
+            auto *poTypes =
                 static_cast<std::vector<std::pair<std::string, hid_t>> *>(
                     user_data);
             H5G_stat_t oStatbuf;
@@ -259,8 +258,8 @@ GetDataTypesInGroup(hid_t hHDF5, const std::string &osGroupFullName,
 
             if (oStatbuf.type == H5G_TYPE)
             {
-                poTypes->push_back(std::pair<std::string, hid_t>(
-                    pszObjName, H5Topen(hGroup, pszObjName)));
+                poTypes->push_back(
+                    std::pair(pszObjName, H5Topen(hGroup, pszObjName)));
             }
 
             return 0;
@@ -556,10 +555,8 @@ std::shared_ptr<HDF5Group> HDF5SharedResources::GetRootGroup()
 
     auto poSharedResources = m_poSelf.lock();
     CPLAssert(poSharedResources != nullptr);
-    return HDF5Group::Create(
-        std::string(), "/", poSharedResources,
-        std::set<std::pair<unsigned long, unsigned long>>(), hGroup,
-        oStatbuf.objno);
+    return HDF5Group::Create(std::string(), "/", poSharedResources, {}, hGroup,
+                             oStatbuf.objno);
 }
 
 /************************************************************************/
@@ -739,8 +736,8 @@ herr_t HDF5Group::GetGroupNamesCallback(hid_t hGroup, const char *pszObjName,
 
     if (oStatbuf.type == H5G_GROUP)
     {
-        if (self->m_oSetParentIds.find(std::pair<unsigned long, unsigned long>(
-                oStatbuf.objno[0], oStatbuf.objno[1])) ==
+        if (self->m_oSetParentIds.find(
+                std::pair(oStatbuf.objno[0], oStatbuf.objno[1])) ==
             self->m_oSetParentIds.end())
         {
             self->m_osListSubGroups.push_back(pszObjName);

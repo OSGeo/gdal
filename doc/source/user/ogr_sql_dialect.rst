@@ -13,8 +13,12 @@ used to provide a subset of SQL SELECT capability to applications.  This
 page discusses the generic SQL implementation implemented within OGR, and
 issues with driver specific SQL support.
 
-An alternate "dialect", the SQLite dialect, can be used
-instead of the OGRSQL dialect. Refer to the :ref:`sql_sqlite_dialect` page for more details.
+The ``OGRSQL`` dialect can be requested with the ``OGRSQL`` string passed
+as the dialect parameter of :cpp:func:`GDALDataset::ExecuteSQL`, or with the
+`-dialect` option switch of the :ref:`ogrinfo` or :ref:`ogr2ogr` utilities.
+
+An alternate dialect, the ``SQLite`` dialect, can be used
+instead of the ``OGRSQL`` dialect. Refer to the :ref:`sql_sqlite_dialect` page for more details.
 
 The OGRLayer class also supports applying an attribute query filter to
 features returned using the :cpp:func:`OGRLayer::SetAttributeFilter()` method.  The
@@ -279,6 +283,17 @@ case insensitive, but the ``<``, ``>``, ``<=`` and ``>=`` operators *are* case s
 Starting with GDAL 3.1, LIKE is case sensitive, and ILIKE is case insensitive.
 In previous versions, LIKE was also case insensitive. If the old behavior is
 wished in GDAL 3.1, the :config:`OGR_SQL_LIKE_AS_ILIKE` can be set to ``YES``.
+
+Starting with GDAL 3.9, for layers declaring the OLCStringsAsUTF8 capability
+(that is the content of their fields of String type is UTF-8 encoded),
+UTF-8 characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
+For ILIKE case insensitive comparisons, this is restricted to the
+`ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
+`Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
+`Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
+`Latin Extended-B <https://en.wikipedia.org/wiki/Latin_Extended-B>`__,
+`Greek and Coptic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__
+and `Cyrillic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__ Unicode categories.
 
 The value argument to the ``LIKE`` and ``ILIKE`` operators is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
@@ -678,43 +693,3 @@ supported on datasources that declare the ODsCDeleteLayer capability.
 .. code-block::
 
     DROP TABLE nation
-
-ExecuteSQL()
-------------
-
-SQL is executed against an GDALDataset, not against a specific layer.  The
-call looks like this:
-
-.. code-block:: cpp
-
-    OGRLayer * GDALDataset::ExecuteSQL( const char *pszSQLCommand,
-                                        OGRGeometry *poSpatialFilter,
-                                        const char *pszDialect );
-
-The ``pszDialect`` argument is in theory intended to allow for support of
-different command languages against a provider, but for now applications
-should always pass an empty (not NULL) string to get the default dialect.
-
-The ``poSpatialFilter`` argument is a geometry used to select a bounding rectangle
-for features to be returned in a manner similar to the
-:cpp:func:`OGRLayer::SetSpatialFilter` method.  It may be NULL for no special spatial
-restriction.
-
-The result of an ExecuteSQL() call is usually a temporary OGRLayer representing
-the results set from the statement.  This is the case for a SELECT statement
-for instance.  The returned temporary layer should be released with
-:cpp:func:`GDALDataset::ReleaseResultsSet` method when no longer needed.  Failure
-to release it before the datasource is destroyed may result in a crash.
-
-Non-OGR SQL
------------
-
-All OGR drivers for database systems: :ref:`vector.mysql`, :ref:`vector.pg`,
-:ref:`vector.oci`, :ref:`vector.sqlite`, :ref:`vector.odbc`, :ref:`vector.pgeo`,
-:ref:`vector.hana` and :ref:`vector.mssqlspatial`,
-override the :cpp:func:`GDALDataset::ExecuteSQL` function with dedicated implementation
-and, by default, pass the SQL statements directly to the underlying RDBMS.
-In these cases the SQL syntax varies in some particulars from OGR SQL.
-Also, anything possible in SQL can then be accomplished for these particular
-databases.  Only the result of SQL WHERE statements will be returned as
-layers.

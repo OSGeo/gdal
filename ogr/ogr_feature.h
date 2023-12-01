@@ -98,6 +98,12 @@ class OGRStyleTable;
  * retrieving features.  See SetIgnored() / IsIgnored()</li> <li>a field domain
  * name (optional). See SetDomainName() / Get DomainName()</li>
  * </ul>
+ *
+ * Note that once a OGRFieldDefn has been added to a layer definition with
+ * OGRLayer::AddFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetFieldDefn(). Instead,
+ * OGRLayer::AlterFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
  */
 
 class CPL_DLL OGRFieldDefn
@@ -122,6 +128,7 @@ class CPL_DLL OGRFieldDefn
     std::string m_osComment{};  // field comment. Might be empty
 
     int m_nTZFlag = OGR_TZFLAG_UNKNOWN;
+    bool m_bSealed = false;
 
   public:
     OGRFieldDefn(const char *, OGRFieldType);
@@ -167,28 +174,19 @@ class CPL_DLL OGRFieldDefn
     {
         return nWidth;
     }
-    void SetWidth(int nWidthIn)
-    {
-        nWidth = MAX(0, nWidthIn);
-    }
+    void SetWidth(int nWidthIn);
 
     int GetPrecision() const
     {
         return nPrecision;
     }
-    void SetPrecision(int nPrecisionIn)
-    {
-        nPrecision = nPrecisionIn;
-    }
+    void SetPrecision(int nPrecisionIn);
 
     int GetTZFlag() const
     {
         return m_nTZFlag;
     }
-    void SetTZFlag(int nTZFlag)
-    {
-        m_nTZFlag = nTZFlag;
-    }
+    void SetTZFlag(int nTZFlag);
 
     void Set(const char *, OGRFieldType, int = 0, int = 0,
              OGRJustification = OJUndefined);
@@ -210,37 +208,25 @@ class CPL_DLL OGRFieldDefn
     {
         return bNullable;
     }
-    void SetNullable(int bNullableIn)
-    {
-        bNullable = bNullableIn;
-    }
+    void SetNullable(int bNullableIn);
 
     int IsUnique() const
     {
         return bUnique;
     }
-    void SetUnique(int bUniqueIn)
-    {
-        bUnique = bUniqueIn;
-    }
+    void SetUnique(int bUniqueIn);
 
     const std::string &GetDomainName() const
     {
         return m_osDomainName;
     }
-    void SetDomainName(const std::string &osDomainName)
-    {
-        m_osDomainName = osDomainName;
-    }
+    void SetDomainName(const std::string &osDomainName);
 
     const std::string &GetComment() const
     {
         return m_osComment;
     }
-    void SetComment(const std::string &osComment)
-    {
-        m_osComment = osComment;
-    }
+    void SetComment(const std::string &osComment);
 
     int IsSame(const OGRFieldDefn *) const;
 
@@ -260,9 +246,58 @@ class CPL_DLL OGRFieldDefn
         return reinterpret_cast<OGRFieldDefn *>(hFieldDefn);
     }
 
+    void Seal();
+
+    void Unseal();
+
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL TemporaryUnsealer
+    {
+      private:
+        OGRFieldDefn *m_poFieldDefn = nullptr;
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryUnsealer)
+      public:
+        explicit TemporaryUnsealer(OGRFieldDefn *poFieldDefn)
+            : m_poFieldDefn(poFieldDefn)
+        {
+            m_poFieldDefn->Unseal();
+        }
+
+        ~TemporaryUnsealer()
+        {
+            m_poFieldDefn->Seal();
+        }
+
+        OGRFieldDefn *operator->()
+        {
+            return m_poFieldDefn;
+        }
+    };
+    /*! @endcond */
+
+    TemporaryUnsealer GetTemporaryUnsealer();
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
+
+#ifdef GDAL_COMPILATION
+/** Return an object that temporary unseals the OGRFieldDefn.
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ *
+ * This method should only be called by driver implementations.
+ *
+ * Usage: whileUnsealing(poFieldDefn)->some_method();
+ *
+ * @since GDAL 3.9
+ */
+inline OGRFieldDefn::TemporaryUnsealer whileUnsealing(OGRFieldDefn *object)
+{
+    return object->GetTemporaryUnsealer();
+}
+#endif
 
 /************************************************************************/
 /*                          OGRGeomFieldDefn                            */
@@ -280,6 +315,12 @@ class CPL_DLL OGRFieldDefn
  * when retrieving features.  See SetIgnored() / IsIgnored()</li>
  * </ul>
  *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
  * @since OGR 1.11
  */
 
@@ -294,6 +335,7 @@ class CPL_DLL OGRGeomFieldDefn
 
     int bIgnore = false;
     mutable int bNullable = true;
+    bool m_bSealed = false;
 
     void Initialize(const char *, OGRwkbGeometryType);
     //! @endcond
@@ -331,10 +373,7 @@ class CPL_DLL OGRGeomFieldDefn
     {
         return bNullable;
     }
-    void SetNullable(int bNullableIn)
-    {
-        bNullable = bNullableIn;
-    }
+    void SetNullable(int bNullableIn);
 
     int IsSame(const OGRGeomFieldDefn *) const;
 
@@ -354,9 +393,59 @@ class CPL_DLL OGRGeomFieldDefn
         return reinterpret_cast<OGRGeomFieldDefn *>(hGeomFieldDefn);
     }
 
+    void Seal();
+
+    void Unseal();
+
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL TemporaryUnsealer
+    {
+      private:
+        OGRGeomFieldDefn *m_poFieldDefn = nullptr;
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryUnsealer)
+      public:
+        explicit TemporaryUnsealer(OGRGeomFieldDefn *poFieldDefn)
+            : m_poFieldDefn(poFieldDefn)
+        {
+            m_poFieldDefn->Unseal();
+        }
+
+        ~TemporaryUnsealer()
+        {
+            m_poFieldDefn->Seal();
+        }
+
+        OGRGeomFieldDefn *operator->()
+        {
+            return m_poFieldDefn;
+        }
+    };
+    /*! @endcond */
+
+    TemporaryUnsealer GetTemporaryUnsealer();
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
+
+#ifdef GDAL_COMPILATION
+/** Return an object that temporary unseals the OGRGeomFieldDefn.
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ *
+ * This method should only be called by driver implementations.
+ *
+ * Usage: whileUnsealing(poGeomFieldDefn)->some_method();
+ *
+ * @since GDAL 3.9
+ */
+inline OGRGeomFieldDefn::TemporaryUnsealer
+whileUnsealing(OGRGeomFieldDefn *object)
+{
+    return object->GetTemporaryUnsealer();
+}
+#endif
 
 /************************************************************************/
 /*                            OGRFeatureDefn                            */
@@ -380,6 +469,14 @@ class CPL_DLL OGRGeomFieldDefn
  *
  * It is reasonable for different translators to derive classes from
  * OGRFeatureDefn with additional translator specific information.
+ *
+ * Note that adding, modifying, removing, reordering a OGRFieldDefn (or a
+ * OGRGeomFieldDefn) from/to a OGRFeatureDefn that belongs to a OGRLayer should
+ * not be done through the OGRFeatureDefn::AddFieldDefn(),
+ * OGRFeatureDefn::DeleteFieldDefn() or OGRFeatureDefn::ReorderFieldDefns()
+ * methods, but rather through OGRLayer::CreateField(),
+ * OGRLayer::AlterFieldDefn() or OGRLayer::ReorderFields(), for drivers that
+ * support those operations.
  */
 
 class CPL_DLL OGRFeatureDefn
@@ -394,6 +491,10 @@ class CPL_DLL OGRFeatureDefn
     char *pszFeatureClassName = nullptr;
 
     bool bIgnoreStyle = false;
+
+    friend class TemporaryUnsealer;
+    bool m_bSealed = false;
+    int m_nTemporaryUnsealCount = 0;
     //! @endcond
 
   public:
@@ -665,9 +766,63 @@ class CPL_DLL OGRFeatureDefn
         return reinterpret_cast<OGRFeatureDefn *>(hFeatureDefn);
     }
 
+    void Seal(bool bSealFields);
+
+    void Unseal(bool bUnsealFields);
+
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL TemporaryUnsealer
+    {
+      private:
+        OGRFeatureDefn *m_poFeatureDefn = nullptr;
+        bool m_bSealFields = false;
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryUnsealer)
+      public:
+        explicit TemporaryUnsealer(OGRFeatureDefn *poFeatureDefn,
+                                   bool bSealFields);
+
+        ~TemporaryUnsealer();
+
+        OGRFeatureDefn *operator->()
+        {
+            return m_poFeatureDefn;
+        }
+    };
+    /*! @endcond */
+
+    TemporaryUnsealer GetTemporaryUnsealer(bool bSealFields = true);
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
 };
+
+#ifdef GDAL_COMPILATION
+/** Return an object that temporary unseals the OGRFeatureDefn
+ *
+ * The returned object calls Unseal() initially, and when it is destroyed
+ * it calls Seal().
+ * This method should be called on a OGRFeatureDefn that has been sealed
+ * previously.
+ * GetTemporaryUnsealer() calls may be nested, in which case only the first
+ * one has an effect (similarly to a recursive mutex locked in a nested way
+ * from the same thread).
+ *
+ * This method should only be called by driver implementations.
+ *
+ * Usage: whileUnsealing(poFeatureDefn)->some_method();
+ *
+ * @param bSealFields Whether fields and geometry fields should be unsealed and
+ *                    resealed.
+ *                    This is generally desirabled, but in case of deferred
+ *                    resolution of them, this parameter should be set to false.
+ * @since GDAL 3.9
+ */
+inline OGRFeatureDefn::TemporaryUnsealer whileUnsealing(OGRFeatureDefn *object,
+                                                        bool bSealFields = true)
+{
+    return object->GetTemporaryUnsealer(bSealFields);
+}
+#endif
 
 /************************************************************************/
 /*                              OGRFeature                              */
@@ -1678,12 +1833,14 @@ class CPL_DLL OGRGlobFieldDomain final : public OGRFieldDomain
 class OGRLayer;
 class swq_expr_node;
 class swq_custom_func_registrar;
+struct swq_evaluation_context;
 
 class CPL_DLL OGRFeatureQuery
 {
   private:
     OGRFeatureDefn *poTargetDefn;
     void *pSWQExpr;
+    swq_evaluation_context *m_psContext = nullptr;
 
     char **FieldCollector(void *, char **);
 

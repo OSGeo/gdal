@@ -809,6 +809,7 @@ OGRFeatureDefn *OGRGeoPackageTableLayer::GetLayerDefn()
     {
         m_bFeatureDefnCompleted = true;
         ReadTableDefinition();
+        m_poFeatureDefn->Seal(/* bSealFields = */ true);
     }
     return m_poFeatureDefn;
 }
@@ -1764,7 +1765,8 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
         }
     }
 
-    m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    whileUnsealing(m_poFeatureDefn)->AddFieldDefn(&oFieldDefn);
+
     m_abGeneratedColumns.resize(m_poFeatureDefn->GetFieldCount());
 
     if (m_pszFidColumn != nullptr &&
@@ -1939,7 +1941,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
             return err;
     }
 
-    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+    whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(&oGeomField);
 
     if (!m_bDeferredCreation)
     {
@@ -5333,7 +5335,7 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
         m_poDS->ClearCachedRelationships();
 
         SetDescription(pszDstTableName);
-        m_poFeatureDefn->SetName(pszDstTableName);
+        whileUnsealing(m_poFeatureDefn)->SetName(pszDstTableName);
     }
 
     return eErr;
@@ -5558,6 +5560,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         m_osDescriptionLCO = pszDescription;
         OGRLayer::SetMetadataItem("DESCRIPTION", pszDescription);
     }
+
+    m_poFeatureDefn->Seal(/* bSealFields = */ true);
 }
 
 /************************************************************************/
@@ -6313,7 +6317,9 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
         eErr = m_poDS->SoftCommitTransaction();
         if (eErr == OGRERR_NONE)
         {
-            eErr = m_poFeatureDefn->DeleteFieldDefn(iFieldToDelete);
+            eErr = whileUnsealing(m_poFeatureDefn)
+                       ->DeleteFieldDefn(iFieldToDelete);
+
             if (eErr == OGRERR_NONE)
             {
 #if SQLITE_VERSION_NUMBER >= 3035005L
@@ -6812,6 +6818,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
 
         if (eErr == OGRERR_NONE)
         {
+            auto oTemporaryUnsealer(poFieldDefnToAlter->GetTemporaryUnsealer());
             bool bNeedsEntryInGpkgDataColumns = false;
 
             // field type
@@ -6953,6 +6960,7 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
     m_poDS->ResetReadingAllLayers();
 
     auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(iGeomFieldToAlter);
+    auto oTemporaryUnsealer(poGeomFieldDefn->GetTemporaryUnsealer());
 
     if (nFlagsIn & ALTER_GEOM_FIELD_DEFN_TYPE_FLAG)
     {
@@ -7279,7 +7287,9 @@ OGRErr OGRGeoPackageTableLayer::ReorderFields(int *panMap)
         eErr = m_poDS->SoftCommitTransaction();
 
         if (eErr == OGRERR_NONE)
-            eErr = m_poFeatureDefn->ReorderFieldDefns(panMap);
+        {
+            eErr = whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
+        }
 
         if (eErr == OGRERR_NONE)
         {
@@ -7576,20 +7586,33 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     if (psFillArrowArray->nMemLimit == 0)
         psFillArrowArray->nMemLimit = OGRArrowArrayHelper::GetMemLimit();
     const auto nMemLimit = psFillArrowArray->nMemLimit;
+    const int SQLITE_MAX_FUNCTION_ARG =
+        sqlite3_limit(psFillArrowArray->hDB, SQLITE_LIMIT_FUNCTION_ARG, -1);
 begin:
     const int iFeat = psFillArrowArray->nCountRows;
     auto psHelper = psFillArrowArray->psHelper.get();
-
     int iCol = 0;
+    const int iFieldStart = sqlite3_value_int(argv[iCol]);
+    ++iCol;
+    int iField = std::max(0, iFieldStart);
 
-    GIntBig nFID = sqlite3_value_int64(argv[iCol]);
-    if (psHelper->m_panFIDValues)
+    GIntBig nFID;
+    if (iFieldStart < 0)
     {
-        psHelper->m_panFIDValues[iFeat] = nFID;
+        nFID = sqlite3_value_int64(argv[iCol]);
+        iCol++;
+        if (psHelper->m_panFIDValues)
+        {
+            psHelper->m_panFIDValues[iFeat] = nFID;
+        }
+        psFillArrowArray->nCurFID = nFID;
     }
-    iCol++;
+    else
+    {
+        nFID = psFillArrowArray->nCurFID;
+    }
 
-    if (!psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
+    if (iFieldStart < 0 && !psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
         psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
     {
         const int iArrowField = psHelper->m_mapOGRGeomFieldToArrowField[0];
@@ -7736,11 +7759,13 @@ begin:
         iCol++;
     }
 
-    for (int iField = 0; iField < psHelper->m_nFieldCount; iField++)
+    for (; iField < psHelper->m_nFieldCount; iField++)
     {
         const int iArrowField = psHelper->m_mapOGRFieldToArrowField[iField];
         if (iArrowField < 0)
             continue;
+        if (iCol == SQLITE_MAX_FUNCTION_ARG)
+            break;
 
         const OGRFieldDefn *poFieldDefn =
             psFillArrowArray->poFeatureDefn->GetFieldDefnUnsafe(iField);
@@ -7961,7 +7986,8 @@ begin:
         iCol++;
     }
 
-    psFillArrowArray->nCountRows++;
+    if (iField == psHelper->m_nFieldCount)
+        psFillArrowArray->nCountRows++;
     return;
 
 error:
@@ -7982,15 +8008,19 @@ static void OGR_GPKG_FillArrowArray_Finalize(sqlite3_context * /*pContext*/)
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
-    struct ArrowArray *out_array)
+    struct ArrowArrayStream *stream, struct ArrowArray *out_array)
 {
     memset(out_array, 0, sizeof(*out_array));
 
     m_bGetNextArrowArrayCalledSinceResetReading = true;
 
-    if (m_poFillArrowArray && m_poFillArrowArray->bIsFinished)
+    if (m_poFillArrowArray)
     {
-        return 0;
+        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        if (m_poFillArrowArray->bIsFinished)
+        {
+            return 0;
+        }
     }
 
     auto psHelper = std::make_unique<OGRArrowArrayHelper>(
@@ -8002,6 +8032,38 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
 
     if (m_poFillArrowArray == nullptr)
     {
+        // Check that the total number of arguments passed to
+        // OGR_GPKG_FillArrowArray_INTERNAL() doesn't exceed SQLITE_MAX_FUNCTION_ARG
+        // If it does, we cannot reliably use GetNextArrowArrayAsynchronous() in
+        // the situation where the ArrowArray would exceed the nMemLimit.
+        // So be on the safe side, and rely on the base OGRGeoPackageLayer
+        // implementation
+        const int SQLITE_MAX_FUNCTION_ARG =
+            sqlite3_limit(m_poDS->GetDB(), SQLITE_LIMIT_FUNCTION_ARG, -1);
+        int nCountArgs = 1     // field index
+                         + 1;  // FID column
+        if (!psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
+            psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
+        {
+            ++nCountArgs;
+        }
+        for (int iField = 0; iField < psHelper->m_nFieldCount; iField++)
+        {
+            const int iArrowField = psHelper->m_mapOGRFieldToArrowField[iField];
+            if (iArrowField >= 0)
+            {
+                if (nCountArgs == SQLITE_MAX_FUNCTION_ARG)
+                {
+                    psHelper.reset();
+                    if (out_array->release)
+                        out_array->release(out_array);
+                    return OGRGeoPackageLayer::GetNextArrowArray(stream,
+                                                                 out_array);
+                }
+                ++nCountArgs;
+            }
+        }
+
         m_poFillArrowArray =
             std::make_unique<OGRGPKGTableLayerFillArrowArray>();
         m_poFillArrowArray->psHelper = std::move(psHelper);
@@ -8053,6 +8115,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     // Wait for GetNextArrowArrayAsynchronousWorker() /
     // OGR_GPKG_FillArrowArray_Step() to have generated a result set (or an
     // error)
+    bool bIsFinished;
     {
         std::unique_lock<std::mutex> oLock(m_poFillArrowArray->oMutex);
         while (m_poFillArrowArray->nCountRows == 0 &&
@@ -8060,6 +8123,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         {
             m_poFillArrowArray->oCV.wait(oLock);
         }
+        bIsFinished = m_poFillArrowArray->bIsFinished;
     }
 
     if (m_poFillArrowArray->bErrorOccurred)
@@ -8070,7 +8134,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
         m_poFillArrowArray->psHelper->ClearArray();
         return EIO;
     }
-    else if (m_poFillArrowArray->bIsFinished)
+    else if (bIsFinished)
     {
         m_oThreadNextArrowArray.join();
     }
@@ -8090,7 +8154,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
         OGR_GPKG_FillArrowArray_Step, OGR_GPKG_FillArrowArray_Finalize);
 
     std::string osSQL;
-    osSQL = "SELECT OGR_GPKG_FillArrowArray_INTERNAL(";
+    osSQL = "SELECT OGR_GPKG_FillArrowArray_INTERNAL(-1,";
 
     const auto AddFields = [this, &osSQL]()
     {
@@ -8255,7 +8319,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         m_poFillArrowArray ||
         (!m_bGetNextArrowArrayCalledSinceResetReading && m_iNextShapeId > 0))
     {
-        return GetNextArrowArrayAsynchronous(out_array);
+        return GetNextArrowArrayAsynchronous(stream, out_array);
     }
 
     // We can use this optimized version only if there is no hole in FID
@@ -8265,7 +8329,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         m_nIsCompatOfOptimizedGetNextArrowArray = FALSE;
         const auto nTotalFeatureCount = GetTotalFeatureCount();
         if (nTotalFeatureCount < 0)
-            return GetNextArrowArrayAsynchronous(out_array);
+            return GetNextArrowArrayAsynchronous(stream, out_array);
         {
             char *pszSQL = sqlite3_mprintf("SELECT MAX(\"%w\") FROM \"%w\"",
                                            m_pszFidColumn, m_pszTableName);
@@ -8273,7 +8337,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             const auto nMaxFID = SQLGetInteger64(m_poDS->GetDB(), pszSQL, &err);
             sqlite3_free(pszSQL);
             if (nMaxFID != nTotalFeatureCount)
-                return GetNextArrowArrayAsynchronous(out_array);
+                return GetNextArrowArrayAsynchronous(stream, out_array);
         }
         {
             char *pszSQL = sqlite3_mprintf("SELECT MIN(\"%w\") FROM \"%w\"",
@@ -8282,7 +8346,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             const auto nMinFID = SQLGetInteger64(m_poDS->GetDB(), pszSQL, &err);
             sqlite3_free(pszSQL);
             if (nMinFID != 1)
-                return GetNextArrowArrayAsynchronous(out_array);
+                return GetNextArrowArrayAsynchronous(stream, out_array);
         }
         m_nIsCompatOfOptimizedGetNextArrowArray = TRUE;
     }
@@ -8553,11 +8617,13 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
         OGR_GPKG_FillArrowArray_Step, OGR_GPKG_FillArrowArray_Finalize);
 
     std::string osSQL;
-    osSQL = "SELECT OGR_GPKG_FillArrowArray_INTERNAL(";
+    osSQL = "SELECT OGR_GPKG_FillArrowArray_INTERNAL(-1,";
+    int nCountArgs = 1;
 
     osSQL += '"';
     osSQL += SQLEscapeName(m_pszFidColumn);
     osSQL += '"';
+    ++nCountArgs;
 
     if (!sFillArrowArray.psHelper->m_mapOGRGeomFieldToArrowField.empty() &&
         sFillArrowArray.psHelper->m_mapOGRGeomFieldToArrowField[0] >= 0)
@@ -8566,7 +8632,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
         osSQL += '"';
         osSQL += SQLEscapeName(GetGeometryColumn());
         osSQL += '"';
+        ++nCountArgs;
     }
+    const int SQLITE_MAX_FUNCTION_ARG =
+        sqlite3_limit(m_poDS->GetDB(), SQLITE_LIMIT_FUNCTION_ARG, -1);
     for (int iField = 0; iField < sFillArrowArray.psHelper->m_nFieldCount;
          iField++)
     {
@@ -8574,12 +8643,21 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
             sFillArrowArray.psHelper->m_mapOGRFieldToArrowField[iField];
         if (iArrowField >= 0)
         {
+            if (nCountArgs == SQLITE_MAX_FUNCTION_ARG)
+            {
+                // We cannot pass more than SQLITE_MAX_FUNCTION_ARG args
+                // to a function... So we have to split in several calls...
+                osSQL += "), OGR_GPKG_FillArrowArray_INTERNAL(";
+                osSQL += CPLSPrintf("%d", iField);
+                nCountArgs = 1;
+            }
             const OGRFieldDefn *poFieldDefn =
                 m_poFeatureDefn->GetFieldDefnUnsafe(iField);
             osSQL += ',';
             osSQL += '"';
             osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
             osSQL += '"';
+            ++nCountArgs;
         }
     }
     osSQL += ") FROM \"";

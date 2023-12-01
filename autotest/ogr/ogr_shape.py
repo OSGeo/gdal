@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import os
 import shutil
 import struct
@@ -1048,6 +1049,16 @@ def test_ogr_shape_read_multipolygon_as_invalid_polygon():
     )
 
 
+def test_ogr_shape_read_multipolygon_as_invalid_polygon_no_warning():
+
+    ds = ogr.Open("data/shp/cb_2022_us_county_20m_extract.shp")
+    lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        lyr.GetNextFeature()
+        assert gdal.GetLastErrorMsg() == ""
+
+
 ###############################################################################
 # Test alternate date formatting (#2746)
 
@@ -1843,6 +1854,11 @@ def test_ogr_shape_48(tmp_vsimem):
     lyr.SetFeature(feat)
     extent = lyr.GetExtent()
     assert extent == (1, 3, 2, 4), "did not get expected extent (1)"
+    extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert extent3D[:4] == (1, 3, 2, 4), "did not get expected extent 3D"
+    assert math.isnan(extent3D[4])
+    assert math.isnan(extent3D[5])
 
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
     extent = lyr.GetExtent()
@@ -1888,13 +1904,15 @@ def test_ogr_shape_48(tmp_vsimem):
     )
     lyr.CreateFeature(feat)
     feat.SetGeometry(
-        ogr.CreateGeometryFromWkt("POLYGON((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))")
+        ogr.CreateGeometryFromWkt("POLYGON((0 0 2,0 1 1,1 1 2,1 0 2,0 0 3))")
     )
     lyr.SetFeature(feat)
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
-    # FIXME: when we have a GetExtent3D
     extent = lyr.GetExtent()
     assert extent == (0, 1, 0, 1), "did not get expected extent (4)"
+    extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert extent3D == (0, 1, 0, 1, 1, 3), "did not get expected extent 3D"
     ds = None
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
         tmp_vsimem / "ogr_shape_48.shp"
@@ -5777,3 +5795,60 @@ def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
     assert f["intlist"] == "[ 1, 2 ]"
     assert f["int64list"] == "[ 12345678901234, 2 ]"
     assert f["reallist"] == "[ 1.5, 2.5 ]"
+
+
+###############################################################################
+# Test WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR(tmp_vsimem):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFID(1)
+    src_lyr.CreateFeature(f)
+
+    filename = tmp_vsimem / "test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        with pytest.raises(Exception, match="Feature id 1 not preserved"):
+            lyr.WriteArrowBatch(
+                schema, array, ["FID=OGC_FID", "IF_FID_NOT_PRESERVED=ERROR"]
+            )
+
+
+###############################################################################
+# Test writing an invalid "0000/00/00" date
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_date_0000_00_00(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_ogr_shape_write_date_0000_00_00.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["date"] = "0000/00/00"
+    lyr.CreateFeature(f)
+    f = None
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.IsFieldNull("date")

@@ -1142,7 +1142,6 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
     if (eAccess == GA_Update)
     {
-        // Make sure to flush all dirty blocks we will access.
         std::vector<int> anBandsToCheck;
         if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1)
         {
@@ -1160,35 +1159,61 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
         }
         if (!anBandsToCheck.empty())
         {
+            // If at least one block in the region of intersest is dirty,
+            // fallback to normal reading code path to be able to retrieve
+            // content partly from the block cache.
+            // An alternative that was implemented in GDAL 3.6 to 3.8.0 was
+            // to flush dirty blocks, but this could cause many write&read&write
+            // cycles in some gdalwarp scenarios.
+            // Cf https://github.com/OSGeo/gdal/issues/8729
+            bool bUseBaseImplementation = false;
             for (int y = 0; y < nYBlocks; ++y)
             {
                 for (int x = 0; x < nXBlocks; ++x)
                 {
                     for (const int iBand : anBandsToCheck)
                     {
+                        if (m_nLoadedBlock >= 0 && m_bLoadedBlockDirty &&
+                            cpl::down_cast<GTiffRasterBand *>(papoBands[iBand])
+                                    ->ComputeBlockId(nBlockXStart + x,
+                                                     nBlockYStart + y) ==
+                                m_nLoadedBlock)
+                        {
+                            bUseBaseImplementation = true;
+                            goto after_loop;
+                        }
                         auto poBlock = papoBands[iBand]->TryGetLockedBlockRef(
                             nBlockXStart + x, nBlockYStart + y);
                         if (poBlock)
                         {
-                            CPLErr eErr = CE_None;
                             if (poBlock->GetDirty())
                             {
-                                eErr = poBlock->Write();
+                                poBlock->DropLock();
+                                bUseBaseImplementation = true;
+                                goto after_loop;
                             }
                             poBlock->DropLock();
-                            if (eErr == CE_Failure)
-                            {
-                                return CE_Failure;
-                            }
                         }
                     }
                 }
             }
+        after_loop:
+            if (bUseBaseImplementation)
+            {
+                ++m_nDisableMultiThreadedRead;
+                GDALRasterIOExtraArg sExtraArg;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+                const CPLErr eErr = GDALDataset::IRasterIO(
+                    GF_Read, nXOff, nYOff, nXSize, nYSize, pData, nXSize,
+                    nYSize, eBufType, nBandCount, const_cast<int *>(panBandMap),
+                    nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+                --m_nDisableMultiThreadedRead;
+                return eErr;
+            }
         }
 
-        // Flush last active multi-band contiguous buffer
-        FlushBlockBuf();
-
+        // Make sure that all blocks that we are going to read and that are
+        // being written by a worker thread are completed.
         auto &oQueue =
             m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
         if (!oQueue.empty())
@@ -6574,4 +6599,20 @@ void GTiffDataset::LoadMetadata()
             CSLDestroy(papszRPCMD);
         }
     }
+}
+
+/************************************************************************/
+/*                     HasOptimizedReadMultiRange()                     */
+/************************************************************************/
+
+bool GTiffDataset::HasOptimizedReadMultiRange()
+{
+    if (m_nHasOptimizedReadMultiRange >= 0)
+        return m_nHasOptimizedReadMultiRange != 0;
+    m_nHasOptimizedReadMultiRange = static_cast<signed char>(
+        VSIHasOptimizedReadMultiRange(m_pszFilename)
+        // Config option for debug and testing purposes only
+        || CPLTestBool(CPLGetConfigOption(
+               "GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "NO")));
+    return m_nHasOptimizedReadMultiRange != 0;
 }

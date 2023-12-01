@@ -32,18 +32,6 @@
 
 %module (package="osgeo") gdal_array
 
-%{
-// Define this unconditionally of whether DEBUG_BOOL is defined or not,
-// since we do not pass -DDEBUG_BOOL when building the bindings
-#define DO_NOT_USE_DEBUG_BOOL
-
-// So that override is properly defined
-#ifndef GDAL_COMPILATION
-#define GDAL_COMPILATION
-#endif
-
-%}
-
 %include constraints.i
 
 %import typemaps_python.i
@@ -1727,7 +1715,7 @@ static bool AddNumpyArrayToDict(PyObject *dict,
                      schemaField->name);
             return false;
         }
-        const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
+        const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + arrayField->offset * nStrings + static_cast<size_t>(arrayField->children[0]->offset);
         const char* bytes = (const char*)arrayField->children[0]->buffers[2];
         numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
         for( npy_intp j = 0; j < dims; j++ )

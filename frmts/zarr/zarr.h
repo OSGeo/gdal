@@ -70,7 +70,6 @@ class ZarrDataset final : public GDALDataset
 
     CPLErr FlushCache(bool bAtClosing = false) override;
 
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,

@@ -109,7 +109,6 @@ class HDF4Dataset CPL_NON_FINAL : public GDALPamDataset
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
 };
 
 char *SPrintArray(GDALDataType eDataType, const void *paDataArray, int nValues,

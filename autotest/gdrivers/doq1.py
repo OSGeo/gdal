@@ -31,6 +31,8 @@
 import gdaltest
 import pytest
 
+pytestmark = pytest.mark.require_driver("DOQ1")
+
 ###############################################################################
 # Test a fake DOQ1 dataset
 

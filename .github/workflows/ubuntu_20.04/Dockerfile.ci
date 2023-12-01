@@ -20,6 +20,7 @@ RUN apt-get update -y \
     curl \
     git \
     gnupg \
+    gpsbabel \
     lcov \
     libaec-dev \
     libarmadillo-dev \

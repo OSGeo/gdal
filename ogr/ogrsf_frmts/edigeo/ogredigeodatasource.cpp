@@ -712,15 +712,15 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
                 {
                     /*CPLDebug("EDIGEO", "FEA[%s] -> PFE[%s]",
                              osLnkStartName.c_str(), osLnkEndName.c_str());*/
-                    listFEA_PFE.push_back(std::pair<CPLString, strListType>(
-                        osLnkStartName, osLnkEndNameList));
+                    listFEA_PFE.push_back(
+                        std::pair(osLnkStartName, osLnkEndNameList));
                 }
                 else if (osLnkStartType == "FEA" && osLnkEndType == "PAR")
                 {
                     /*CPLDebug("EDIGEO", "FEA[%s] -> PAR[%s]",
                              osLnkStartName.c_str(), osLnkEndName.c_str());*/
-                    listFEA_PAR.push_back(std::pair<CPLString, strListType>(
-                        osLnkStartName, osLnkEndNameList));
+                    listFEA_PAR.push_back(
+                        std::pair(osLnkStartName, osLnkEndNameList));
                 }
                 else if (osLnkStartType == "FEA" && osLnkEndType == "PNO")
                 {

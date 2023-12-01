@@ -60,60 +60,6 @@ char *ReplaceQuotes(const char *pszInput, int nLength)
     return pszOutput;
 }
 
-/**************************************************************
- * \brief Replace the single quotes by " in the input string
- *
- * Needed before tokenize function
- *************************************************************/
-char *ReplaceSingleQuotes(const char *pszInput, int nLength)
-{
-    int i;
-    char *pszOutput = nullptr;
-
-    if (nLength == -1)
-        nLength = static_cast<int>(strlen(pszInput));
-
-    pszOutput = static_cast<char *>(CPLCalloc(nLength + 1, sizeof(char)));
-
-    for (i = 0; i < nLength; i++)
-    {
-        if (pszInput[i] == '\'')
-            pszOutput[i] = '"';
-        else
-            pszOutput[i] = pszInput[i];
-    }
-
-    return pszOutput;
-}
-
-/***********************************************************************
- * \brief Split connection string into user, password, host, database...
- *
- * The parameters separated by spaces are return as a list of strings.
- * The function accepts all the PostgreSQL recognized parameter keywords.
- *
- * The returned list must be freed with CSLDestroy when no longer needed
- **********************************************************************/
-char **ParseConnectionString(const char *pszConnectionString)
-{
-
-    /* Escape string following SQL scheme */
-    char *pszEscapedConnectionString =
-        ReplaceSingleQuotes(pszConnectionString, -1);
-
-    /* Avoid PG: part */
-    char *pszStartPos = strstr(pszEscapedConnectionString, ":") + 1;
-
-    /* Tokenize */
-    char **papszParams =
-        CSLTokenizeString2(pszStartPos, " ", CSLT_HONOURSTRINGS);
-
-    /* Free */
-    CPLFree(pszEscapedConnectionString);
-
-    return papszParams;
-}
-
 /***********************************************************************
  * \brief Translate a PostGIS Raster datatype string in a valid
  * GDALDataType object.

@@ -4629,3 +4629,207 @@ def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
         for x in batch.field("datetime"):
             values.append(x.value)
     assert values == [1654000496789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_foreign_members_collection(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_geojson_foreign_members_collection.geojson")
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_COLLECTION should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_COLLECTION=invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_COLLECTION should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_COLLECTION={invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception, match="Value of FOREIGN_MEMBERS_COLLECTION is invalid JSON"
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_COLLECTION={invalid}"],
+            )
+            is None
+        )
+    ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbNone,
+        options=['FOREIGN_MEMBERS_COLLECTION={"foo":"bar"}'],
+    )
+    ds.Close()
+
+    fp = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
+    gdal.VSIFCloseL(fp)
+
+    assert """{\n"type": "FeatureCollection",\n"foo":"bar",\n"name": "test",""" in data
+
+
+###############################################################################
+
+
+def test_ogr_geojson_foreign_members_feature(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_geojson_foreign_members_feature.geojson")
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_FEATURE should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_FEATURE=invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_FEATURE should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_FEATURE={invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception, match="Value of FOREIGN_MEMBERS_FEATURE is invalid JSON"
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_FEATURE={invalid}"],
+            )
+            is None
+        )
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbNone, options=['FOREIGN_MEMBERS_FEATURE={"foo":"bar"}']
+    )
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    ds.Close()
+
+    fp = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
+    gdal.VSIFCloseL(fp)
+
+    assert (
+        """{\n"type": "FeatureCollection",\n"name": "test",\n"features": [\n{ "type": "Feature", "properties": { }, "geometry": null, "foo":"bar"}\n]\n}"""
+        in data
+    )
+
+
+###############################################################################
+
+
+def test_ogr_json_getextent3d(tmp_vsimem):
+
+    jdata = r"""{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "%s",
+                        "coordinates": %s
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "%s",
+                        "coordinates": %s
+                    }
+                }
+            ]
+        }"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "Point", "[2, 2, 2]"),
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 2.0)
+
+    # Test 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1]", "Point", "[2, 2]"),
+    )
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d[:4] == (1.0, 2.0, 1.0, 2.0)
+    assert math.isnan(ext3d[4])
+    assert math.isnan(ext3d[5])
+
+    # Test mixed 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "Point", "[2, 2]"),
+    )
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 1.0)

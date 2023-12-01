@@ -838,10 +838,21 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     const CPLString osEC2RootURL(VSIGetPathSpecificOption(
         osPathForOption.c_str(), "CPL_AWS_EC2_API_ROOT_URL", osEC2DefaultURL));
     // coverity[tainted_data]
-    const CPLString osECSRelativeURI(VSIGetPathSpecificOption(
-        osPathForOption.c_str(), "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", ""));
+    const CPLString osECSFullURI(VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "AWS_CONTAINER_CREDENTIALS_FULL_URI", ""));
+    // coverity[tainted_data]
+    const CPLString osECSRelativeURI(
+        osECSFullURI.empty() ? VSIGetPathSpecificOption(
+                                   osPathForOption.c_str(),
+                                   "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "")
+                             : std::string());
     CPLString osToken;
-    if (osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty())
+    if (!osECSFullURI.empty())
+    {
+        // Cf https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
+        osURLRefreshCredentials = osECSFullURI;
+    }
+    else if (osEC2RootURL == osEC2DefaultURL && !osECSRelativeURI.empty())
     {
         // See
         // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html

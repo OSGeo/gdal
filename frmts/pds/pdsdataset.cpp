@@ -48,6 +48,7 @@ constexpr double NULL3 = -3.4028226550889044521e+38;
 #include "rawdataset.h"
 #include "cpl_safemaths.hpp"
 #include "vicardataset.h"
+#include "pdsdrivercore.h"
 
 enum PDSLayout
 {
@@ -122,7 +123,6 @@ class PDSDataset final : public RawDataset
     char **GetMetadataDomainList() override;
     char **GetMetadata(const char *pszDomain = "") override;
 
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
@@ -1371,46 +1371,12 @@ int PDSDataset::ParseCompressedImage()
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int PDSDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->pabyHeader == nullptr || poOpenInfo->fpL == nullptr)
-        return FALSE;
-
-    const char *pszHdr = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-    if (strstr(pszHdr, "PDS_VERSION_ID") == nullptr &&
-        strstr(pszHdr, "ODL_VERSION_ID") == nullptr)
-    {
-        return FALSE;
-    }
-
-    // Some PDS3 images include a VICAR header pointed by ^IMAGE_HEADER.
-    // If the user sets GDAL_TRY_PDS3_WITH_VICAR=YES, then we will gracefully
-    // hand over the file to the VICAR dataset.
-    std::string unused;
-    if (CPLTestBool(CPLGetConfigOption("GDAL_TRY_PDS3_WITH_VICAR", "NO")) &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "/vsisubfile/") &&
-        VICARDataset::GetVICARLabelOffsetFromPDS3(pszHdr, poOpenInfo->fpL,
-                                                  unused) > 0)
-    {
-        CPLDebug("PDS3", "File is detected to have a VICAR header. "
-                         "Handing it over to the VICAR driver");
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!PDSDriverIdentify(poOpenInfo))
         return nullptr;
 
     const char *pszHdr = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
@@ -1695,19 +1661,20 @@ char **PDSDataset::GetMetadata(const char *pszDomain)
 void GDALRegister_PDS()
 
 {
-    if (GDALGetDriverByName("PDS") != nullptr)
+    if (GDALGetDriverByName(PDS_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("PDS");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "NASA Planetary Data System");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/pds.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    PDSDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = PDSDataset::Open;
-    poDriver->pfnIdentify = PDSDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef PDS_PLUGIN
+    GDALRegister_ISIS3();
+    GDALRegister_ISIS2();
+    GDALRegister_PDS4();
+    GDALRegister_VICAR();
+#endif
 }

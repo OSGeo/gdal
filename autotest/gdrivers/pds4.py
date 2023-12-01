@@ -312,6 +312,7 @@ def test_pds4_7():
 # Test CreateCopy() from BIL to IMAGE_FORMAT=GEOTIFF doesn't result in error
 
 
+@pytest.mark.require_driver("ENVI")
 def test_pds4_from_bil_to_geotiff():
 
     tst = gdaltest.GDALTest(
@@ -1571,6 +1572,7 @@ def _test_createlabelonly(
 # Test CREATE_LABEL_ONLY=YES with ENVI
 
 
+@pytest.mark.require_driver("ENVI")
 def test_pds4_createlabelonly_envi():
 
     gdal.FileFromMemBuffer(

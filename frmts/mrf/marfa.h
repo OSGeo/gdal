@@ -364,7 +364,6 @@ class MRFDataset final : public GDALPamDataset
     virtual ~MRFDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,

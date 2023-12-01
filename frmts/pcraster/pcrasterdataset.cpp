@@ -32,6 +32,7 @@
 #include "pcrasterrasterband.h"
 #include "pcrasterdataset.h"
 #include "pcrasterutil.h"
+#include "pcrasterdrivercore.h"
 
 /*!
   \file
@@ -53,9 +54,7 @@ GDALDataset *PCRasterDataset::open(GDALOpenInfo *info)
 {
     PCRasterDataset *dataset = nullptr;
 
-    if (info->fpL && info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG) &&
-        strncmp(reinterpret_cast<char *>(info->pabyHeader), CSF_SIG,
-                CSF_SIZE_SIG) == 0)
+    if (PCRasterDriverIdentify(info))
     {
         MOPEN_PERM mode = info->eAccess == GA_Update ? M_READ_WRITE : M_READ;
 

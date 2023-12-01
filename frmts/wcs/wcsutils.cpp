@@ -74,7 +74,8 @@ std::string URLRemoveKey(const char *url, const std::string &key)
     {
         retval.erase(retval.size() - 1);
     }
-    return retval;
+    std::string retValAsStdString = std::move(retval);
+    return retValAsStdString;
 }
 
 std::vector<std::string> &SwapFirstTwo(std::vector<std::string> &array)

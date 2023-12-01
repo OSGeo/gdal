@@ -32,7 +32,7 @@
 
 #include "gdal_ecw.h"
 
-#if defined(FRMT_ecw) && (ECWSDK_VERSION >= 40)
+#if ECWSDK_VERSION >= 40
 
 /************************************************************************/
 /*                          BeginAsyncReader()                          */
@@ -426,4 +426,4 @@ GDALAsyncStatusType ECWAsyncReader::GetNextUpdatedRegion(double dfTimeout,
     }
 }
 
-#endif /* def FRMT_ecw */
+#endif /* ECWSDK_VERSION >= 40 */

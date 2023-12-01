@@ -342,6 +342,7 @@ void OGRGeoJSONReaderStreamingParser::GotFeature(json_object *poObj,
 void OGRGeoJSONReaderStreamingParser::FinalizeLayerDefn()
 {
     OGRFeatureDefn *poDefn = m_poLayer->GetLayerDefn();
+    auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
     const auto sortedFields = m_dag.getTopologicalOrdering();
     CPLAssert(sortedFields.size() == m_apoFieldDefn.size());
     for (int idx : sortedFields)
@@ -519,7 +520,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         if (poName && json_object_get_type(poName) == json_type_string)
         {
             const char *pszValue = json_object_get_string(poName);
-            poLayer->GetLayerDefn()->SetName(pszValue);
+            whileUnsealing(poLayer->GetLayerDefn())->SetName(pszValue);
             poLayer->SetDescription(pszValue);
         }
 
@@ -548,7 +549,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
 
         if (eGeomType != wkbNone && poSRS != nullptr)
         {
-            poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+            auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+            whileUnsealing(poGeomFieldDefn)->SetSpatialRef(poSRS);
         }
         if (poSRS)
             poSRS->Release();
@@ -906,7 +908,10 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
         poSRS = new OGRSpatialReference();
         bDefaultSRS = true;
     }
-    poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    {
+        auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        whileUnsealing(poGeomFieldDefn)->SetSpatialRef(poSRS);
+    }
 
     if (!GenerateLayerDefn(poLayer, poObj))
     {
@@ -1193,9 +1198,12 @@ bool OGRGeoJSONReader::GenerateLayerDefn(OGRGeoJSONLayer *poLayer,
     OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
     const auto sortedFields = dag.getTopologicalOrdering();
     CPLAssert(sortedFields.size() == apoFieldDefn.size());
-    for (int idx : sortedFields)
     {
-        poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+        auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
+        for (int idx : sortedFields)
+        {
+            poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+        }
     }
 
     CPLString osFIDColumn;
@@ -1220,7 +1228,7 @@ void OGRGeoJSONBaseReader::FinalizeLayerDefn(OGRLayer *poLayer,
     OGRFeatureDefn *poLayerDefn = poLayer->GetLayerDefn();
     CPLAssert(nullptr != poLayerDefn);
 
-    poLayerDefn->SetGeomType(m_eLayerGeomType);
+    whileUnsealing(poLayerDefn)->SetGeomType(m_eLayerGeomType);
 
     if (m_bNeedFID64)
     {

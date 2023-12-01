@@ -1,0 +1,13 @@
+diff --git a/recipe/bld.bat b/recipe/bld.bat
+index b6616ae..b98a480 100644
+--- a/recipe/bld.bat
++++ b/recipe/bld.bat
+@@ -32,6 +32,8 @@ cmake -G "Ninja" ^
+       -DGDAL_USE_PARQUET=OFF ^
+       -DGDAL_USE_ARROW=OFF ^
+       -DGDAL_USE_ARROWDATASET=OFF ^
++      -DOGR_REGISTER_DRIVER_ARROW_FOR_LATER_PLUGIN=ON ^
++      -DOGR_REGISTER_DRIVER_PARQUET_FOR_LATER_PLUGIN=ON ^
+       "%SRC_DIR%"
+ 
+ if errorlevel 1 exit /b 1

@@ -513,25 +513,23 @@ def test_gdalinfo_31(gdalinfo_path):
 # Test -stats option
 
 
-def test_gdalinfo_32(gdalinfo_path):
+def test_gdalinfo_stats(gdalinfo_path, tmp_path):
 
-    try:
-        os.remove("../gcore/data/byte.tif.aux.xml")
-    except OSError:
-        pass
+    filename = str(tmp_path / "test.tif")
+    shutil.copy("../gcore/data/byte.tif", filename)
 
-    ret = gdaltest.runexternal(gdalinfo_path + " -json ../gcore/data/byte.tif")
+    ret = gdaltest.runexternal(gdalinfo_path + f" -json {filename}")
     ret = json.loads(ret)
     assert "" not in ret["bands"][0]["metadata"], "got wrong minimum."
 
-    ret = gdaltest.runexternal(gdalinfo_path + " -json -stats ../gcore/data/byte.tif")
+    ret = gdaltest.runexternal(gdalinfo_path + f" -json -stats {filename}")
     ret = json.loads(ret)
     assert (
         ret["bands"][0]["metadata"][""]["STATISTICS_MINIMUM"] == "74"
     ), "got wrong minimum (2)."
 
     # We will blow an exception if the file does not exist now!
-    os.remove("../gcore/data/byte.tif.aux.xml")
+    os.remove(f"{filename}.aux.xml")
 
 
 ###############################################################################

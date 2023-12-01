@@ -3406,6 +3406,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 def FootprintOptions(options=None,
                      format=None,
                      bands=None,
+                     combineBands=None,
                      srcNodata=None,
                      ovr=None,
                      targetCoordinateSystem=None,
@@ -3415,6 +3416,7 @@ def FootprintOptions(options=None,
                      densify=None,
                      simplify=None,
                      maxPoints=None,
+                     minRingArea=None,
                      layerName=None,
                      layerCreationOptions=None,
                      datasetCreationOptions=None,
@@ -3429,6 +3431,8 @@ def FootprintOptions(options=None,
         output format ("GeoJSON", etc...)
     bands:
         list of output bands to burn values into
+    combineBands:
+        how to combine bands: "union" (default) or "intersection"
     srcNodata:
         source nodata value(s).
     ovr:
@@ -3451,6 +3455,8 @@ def FootprintOptions(options=None,
         tolerance value for polygon simplification
     maxPoints:
         maximum number of points (100 by default, "unlimited" for unlimited)
+    minRingArea:
+        Minimum value for the area of a ring The unit of the area is in square pixels if targetCoordinateSystem equals "pixel", or otherwise in georeferenced units of the target vector dataset. This option is applied after the reprojection implied by dstSRS
     layerName:
         output layer name
     callback:
@@ -3476,6 +3482,8 @@ def FootprintOptions(options=None,
         if bands is not None:
             for b in bands:
                 new_options += ['-b', str(b)]
+        if combineBands:
+            new_options += ["-combine_bands", combineBands]
         if targetCoordinateSystem:
             new_options += ["-t_cs", targetCoordinateSystem]
         if dstSRS:
@@ -3494,6 +3502,8 @@ def FootprintOptions(options=None,
             new_options += ['-simplify', str(simplify)]
         if maxPoints is not None:
             new_options += ['-max_points', str(maxPoints)]
+        if minRingArea is not None:
+            new_options += ['-min_ring_area', str(minRingArea)]
         if layerName is not None:
             new_options += ['-lyr_name', layerName]
         if datasetCreationOptions is not None:

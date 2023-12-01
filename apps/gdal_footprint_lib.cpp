@@ -452,6 +452,12 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
     if (!psOptions->osDestLayerName.empty())
     {
         poLayer = poDstDS->GetLayerByName(psOptions->osDestLayerName.c_str());
+        if (!poLayer)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find layer %s",
+                     psOptions->osDestLayerName.c_str());
+            return nullptr;
+        }
     }
     else if (poDstDS->GetLayerCount() == 1 && poDstDS->GetDriver() &&
              EQUAL(poDstDS->GetDriver()->GetDescription(), "ESRI Shapefile"))
@@ -703,13 +709,13 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         {
             GDALRasterBand *poMaskBand;
             const int nMaskFlags = poBand->GetMaskFlags();
-            if ((nMaskFlags & GMF_ALPHA) != 0)
+            if (poBand->GetColorInterpretation() == GCI_AlphaBand)
             {
                 poMaskBand = poBand;
             }
             else
             {
-                if ((nMaskFlags & GMF_PER_DATASET) != 0)
+                if ((nMaskFlags & GMF_PER_DATASET) == 0)
                 {
                     bGlobalMask = false;
                 }

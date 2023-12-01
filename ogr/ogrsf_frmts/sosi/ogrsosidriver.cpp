@@ -31,6 +31,7 @@
 #include <mutex>
 
 #include "ogr_sosi.h"
+#include "ogrsosidrivercore.h"
 
 static int bFYBAInit = FALSE;
 static std::mutex oMutex;
@@ -63,20 +64,6 @@ static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver *poDriver)
         SOSICleanupTypes();
         bFYBAInit = FALSE;
     }
-}
-
-/************************************************************************/
-/*                           Identify()                                 */
-/************************************************************************/
-
-static int OGRSOSIDriverIdentify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->fpL == nullptr ||
-        strstr((const char *)poOpenInfo->pabyHeader, ".HODE") == nullptr)
-        return FALSE;
-
-    // TODO: add better identification
-    return -1;
 }
 
 /************************************************************************/
@@ -127,30 +114,12 @@ OGRSOSIDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 
 void RegisterOGRSOSI()
 {
-    if (GDALGetDriverByName("SOSI") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("SOSI");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    // GDAL_DMD_CREATIONFIELDDATATYPES should also be defined if CreateField is
-    // supported poDriver->SetMetadataItem( GDAL_DCAP_CREATE_FIELD, "YES" );
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Norwegian SOSI Standard");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/sosi.html");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "<Option name='appendFieldsMap' type='string' description='Default is "
-        "that all rows for equal field names will be appended in a feature, "
-        "but with this parameter you select what field this should be valid "
-        "for. With appendFieldsMap=f1&amp;f2, Append will be done for field f1 "
-        "and f2 using a comma as delimiter.'/>"
-        "</OpenOptionList>");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
-
+    OGRSOSIDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = OGRSOSIDriverOpen;
-    poDriver->pfnIdentify = OGRSOSIDriverIdentify;
 #ifdef WRITE_SUPPORT
     poDriver->pfnCreate = OGRSOSIDriverCreate;
 #endif

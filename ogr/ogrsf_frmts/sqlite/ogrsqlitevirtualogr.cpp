@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define DEFINE_OGRSQLiteSQLFunctionsSetCaseSensitiveLike
+
 #include "cpl_port.h"
 #include "ogrsqlitevirtualogr.h"
 
@@ -77,6 +79,10 @@ void OGR2SQLITE_Register()
 OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *, OGRSQLiteDataSource *)
 {
     return nullptr;
+}
+
+void OGR2SQLITE_SetCaseSensitiveLike(OGR2SQLITEModule *, bool)
+{
 }
 
 int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule *, OGRDataSource *)
@@ -191,6 +197,11 @@ static SQLITE_EXTENSION_INIT1
     OGRLayer *GetLayerForVTable(const char *pszVTableName);
 
     void SetHandleSQLFunctions(void *hHandleSQLFunctionsIn);
+
+    void SetCaseSensitiveLike(bool b)
+    {
+        OGRSQLiteSQLFunctionsSetCaseSensitiveLike(hHandleSQLFunctions, b);
+    }
 };
 
 /************************************************************************/
@@ -2719,6 +2730,15 @@ OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
     OGR2SQLITEModule *poModule = new OGR2SQLITEModule();
     poModule->Setup(poDS, poSQLiteDS);
     return poModule;
+}
+
+/************************************************************************/
+/*                  OGR2SQLITE_SetCaseSensitiveLike()                   */
+/************************************************************************/
+
+void OGR2SQLITE_SetCaseSensitiveLike(OGR2SQLITEModule *poModule, bool b)
+{
+    poModule->SetCaseSensitiveLike(b);
 }
 
 /************************************************************************/

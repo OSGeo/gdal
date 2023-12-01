@@ -892,22 +892,6 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
 }
 
 /************************************************************************/
-/*                     HasOptimizedReadMultiRange()                     */
-/************************************************************************/
-
-bool GTiffDataset::HasOptimizedReadMultiRange()
-{
-    if (m_nHasOptimizedReadMultiRange >= 0)
-        return m_nHasOptimizedReadMultiRange != 0;
-    m_nHasOptimizedReadMultiRange = static_cast<signed char>(
-        VSIHasOptimizedReadMultiRange(m_pszFilename)
-        // Config option for debug and testing purposes only
-        || CPLTestBool(CPLGetConfigOption(
-               "GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "NO")));
-    return m_nHasOptimizedReadMultiRange != 0;
-}
-
-/************************************************************************/
 /*                      ThreadCompressionFunc()                         */
 /************************************************************************/
 

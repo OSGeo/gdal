@@ -1801,7 +1801,7 @@ def test_ogr_parquet_arrow_stream_numpy():
     )
 
     assert batches[0]["struct_field.a"][0] == 1
-    assert batches[0]["struct_field.a"][1] == 1
+    assert batches[0]["struct_field.a"][1] == 2
     assert batches[0]["struct_field.b"][0] == 2.5
 
     ignored_fields = ["geometry"]
@@ -1964,8 +1964,8 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     assert batch["date64"][0] == numpy.datetime64("1970-01-01")
     assert bytes(batch["binary"][0]) == b"\00\01"
     assert bytes(batch["large_binary"][0]) == b"\00\01"
-    assert batch["struct_field.a"][0] == 1
-    assert batch["struct_field.c.d"][0] == b"e"
+    assert batch["struct_field.a"][0] == 4
+    assert batch["struct_field.c.d"][0] == b"e345"
     assert numpy.array_equal(
         batch["fixed_size_list_boolean"][0], numpy.array([False, True])
     )
@@ -2267,10 +2267,29 @@ def test_ogr_parquet_arrow_stream_numpy_attribute_filter_on_fid_with_fid_column(
 def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
     OGR_ARROW_STREAM_BASE_IMPL, test_file
 ):
-    pytest.importorskip("pyarrow")
+    pa = pytest.importorskip("pyarrow")
 
     ds = ogr.Open(test_file)
     lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    schema = stream.schema
+    batches = []
+    new_schema = pa.schema([f for f in schema])
+    for batch in stream:
+        batches.append(
+            pa.RecordBatch.from_arrays(
+                [batch.field(f.name) for f in schema], schema=new_schema
+            )
+        )
+    table = pa.Table.from_batches(batches)
+    table.validate(full=True)
+    full_table = []
+    for col in table:
+        new_col = []
+        for row in col:
+            new_col.append(row)
+        full_table.append(new_col)
 
     lyr.SetAttributeFilter("boolean = 0")
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
@@ -2291,6 +2310,22 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
     assert uint8_vals == [2, 4]
     assert decimal128_vals == [-1234.567, 1234.567]
     assert fixed_size_binary_vals == [b"\x00\x00", b"\x01\x00"]
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    schema = stream.schema
+    batches = []
+    new_schema = pa.schema([f for f in schema])
+    for batch in stream:
+        batches.append(
+            pa.RecordBatch.from_arrays(
+                [batch.field(f.name) for f in schema], schema=new_schema
+            )
+        )
+    table = pa.Table.from_batches(batches)
+    table.validate(full=True)
+    for (col, full_col) in zip(table, full_table):
+        assert col[0] == full_col[1]
+        assert col[1] == full_col[3]
 
     lyr.SetAttributeFilter("boolean = 1")
     assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
@@ -2318,6 +2353,19 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
         assert map_boolean_vals == [[("x", None), ("y", True)], []]
     else:
         assert map_boolean_vals == ['{"x":null,"y":true}', "{}"]
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    schema = stream.schema
+    batches = []
+    new_schema = pa.schema([f for f in schema])
+    for batch in stream:
+        batches.append(
+            pa.RecordBatch.from_arrays(
+                [batch.field(f.name) for f in schema], schema=new_schema
+            )
+        )
+    table = pa.Table.from_batches(batches)
+    table.validate(full=True)
 
 
 def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
@@ -3176,3 +3224,62 @@ def test_ogr_parquet_write_from_wkb_large_binary(tmp_vsimem):
     lyr = ds.GetLayer(0)
     src_lyr.ResetReading()
     ogrtest.compare_layers(src_lyr, lyr)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("where", [None, "boolean = 0"])
+def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
+
+    src_ds = gdal.OpenEx("data/parquet/test.parquet")
+    ds = gdal.VectorTranslate("", src_ds, format="Memory", where=where)
+    lyr = ds.GetLayer(0)
+    if where is None:
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 1
+        assert f["struct_field.c.d"] == "e"
+        assert f["list_struct"] == '[{"a":1,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 2
+        assert f["struct_field.c.d"] == "e1"
+        assert f["list_struct"] == '[{"a":2,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 3
+        assert f["struct_field.c.d"] == "e23"
+        assert f["list_struct"] == '[{"a":3,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 4
+        assert f["struct_field.c.d"] == "e345"
+        assert f["list_struct"] == '[{"a":4,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 5
+        assert f["struct_field.c.d"] == "e4567"
+        assert f["list_struct"] == '[{"a":5,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+    else:
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 2
+        assert f["struct_field.c.d"] == "e1"
+        assert f["list_struct"] == '[{"a":2,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+        f = lyr.GetNextFeature()
+        assert f["struct_field.a"] == 4
+        assert f["struct_field.c.d"] == "e345"
+        assert f["list_struct"] == '[{"a":4,"b":2.5,"c":null},{"a":3,"b":null,"c":4.5}]'
+
+    src_lyr = src_ds.GetLayer(0)
+    if where:
+        src_lyr.SetAttributeFilter(where)
+    lyr.ResetReading()
+    assert src_lyr.GetFeatureCount() == lyr.GetFeatureCount()
+    for i in range(lyr.GetFeatureCount()):
+        src_f = src_lyr.GetNextFeature()
+        f = lyr.GetNextFeature()
+        for j in range(src_lyr.GetLayerDefn().GetFieldCount()):
+            field_name = src_lyr.GetLayerDefn().GetFieldDefn(j).GetName()
+            if field_name not in (
+                "time64_us",
+                "time64_ns",
+                "dict",
+            ) and "nan" not in str(src_f.GetField(j)):
+                assert src_f.GetField(j) == f.GetField(j), field_name

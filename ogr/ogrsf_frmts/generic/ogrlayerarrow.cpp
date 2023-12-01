@@ -35,6 +35,7 @@
 #include "ogr_swq.h"
 #include "ogr_wkb.h"
 #include "ogr_p.h"
+#include "ogrlayer_private.h"
 
 #include "cpl_float.h"
 #include "cpl_json.h"
@@ -511,41 +512,38 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
         std::vector<std::pair<std::string, std::string>> oMetadata;
         const char *pszAlternativeName = poFieldDefn->GetAlternativeNameRef();
         if (pszAlternativeName && pszAlternativeName[0])
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_ALTERNATIVE_NAME, pszAlternativeName));
+            oMetadata.emplace_back(
+                std::pair(MD_GDAL_OGR_ALTERNATIVE_NAME, pszAlternativeName));
 
         const char *pszDefault = poFieldDefn->GetDefault();
         if (pszDefault && pszDefault[0])
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_DEFAULT, pszDefault));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_DEFAULT, pszDefault));
 
         const std::string &osComment = poFieldDefn->GetComment();
         if (!osComment.empty())
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_COMMENT, osComment));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_COMMENT, osComment));
 
         if (poFieldDefn->GetSubType() != OFSTNone &&
             poFieldDefn->GetSubType() != OFSTBoolean &&
             poFieldDefn->GetSubType() != OFSTFloat32)
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_SUBTYPE,
-                OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
+            oMetadata.emplace_back(
+                std::pair(MD_GDAL_OGR_SUBTYPE,
+                          OGR_GetFieldSubTypeName(poFieldDefn->GetSubType())));
         }
         if (poFieldDefn->GetType() == OFTString && poFieldDefn->GetWidth() > 0)
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
+            oMetadata.emplace_back(std::pair(
                 MD_GDAL_OGR_WIDTH, CPLSPrintf("%d", poFieldDefn->GetWidth())));
         }
         if (poFieldDefn->IsUnique())
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_UNIQUE, "true"));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_UNIQUE, "true"));
         }
         if (!poFieldDefn->GetDomainName().empty())
         {
-            oMetadata.push_back(std::pair<std::string, std::string>(
-                MD_GDAL_OGR_DOMAIN_NAME, poFieldDefn->GetDomainName()));
+            oMetadata.emplace_back(std::pair(MD_GDAL_OGR_DOMAIN_NAME,
+                                             poFieldDefn->GetDomainName()));
         }
 
         if (!oMetadata.empty())
@@ -752,18 +750,24 @@ int OGRLayer::StaticGetArrowSchema(struct ArrowArrayStream *stream,
 
 static void OGRLayerDefaultReleaseArray(struct ArrowArray *array)
 {
-    for (int i = 0; i < static_cast<int>(array->n_buffers); ++i)
-        VSIFreeAligned(const_cast<void *>(array->buffers[i]));
-    CPLFree(array->buffers);
-    for (int i = 0; i < static_cast<int>(array->n_children); ++i)
+    if (array->buffers)
     {
-        if (array->children[i] && array->children[i]->release)
-        {
-            array->children[i]->release(array->children[i]);
-            CPLFree(array->children[i]);
-        }
+        for (int i = 0; i < static_cast<int>(array->n_buffers); ++i)
+            VSIFreeAligned(const_cast<void *>(array->buffers[i]));
+        CPLFree(array->buffers);
     }
-    CPLFree(array->children);
+    if (array->children)
+    {
+        for (int i = 0; i < static_cast<int>(array->n_children); ++i)
+        {
+            if (array->children[i] && array->children[i]->release)
+            {
+                array->children[i]->release(array->children[i]);
+                CPLFree(array->children[i]);
+            }
+        }
+        CPLFree(array->children);
+    }
     if (array->dictionary)
     {
         if (array->dictionary->release)
@@ -2905,23 +2909,59 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
     return true;
 }
 
+#if 0
+/************************************************************************/
+/*                      CheckValidityBuffer()                           */
+/************************************************************************/
+
+static void CheckValidityBuffer(const struct ArrowArray *array)
+{
+    if (array->null_count < 0)
+        return;
+    const uint8_t *pabyValidity =
+        static_cast<const uint8_t *>(const_cast<const void *>(array->buffers[0]));
+    if( !pabyValidity )
+    {
+        CPLAssert(array->null_count == 0);
+        return;
+    }
+    size_t null_count = 0;
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    for(size_t i = 0; i < static_cast<size_t>(array->length); ++i )
+    {
+        if (!TestBit(pabyValidity, i + nOffset))
+            ++ null_count;
+    }
+    CPLAssert(static_cast<size_t>(array->null_count) == null_count);
+}
+#endif
+
 /************************************************************************/
 /*                    CompactValidityBuffer()                           */
 /************************************************************************/
 
-static void
-CompactValidityBuffer(struct ArrowArray *array, size_t iStart,
-                      const std::vector<bool> &abyValidityFromFilters)
+static void CompactValidityBuffer(
+    const struct ArrowSchema *, struct ArrowArray *array, size_t iStart,
+    const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
 {
-    if (array->null_count == 0)
+    // Invalidate null_count as the same validity buffer may be used when
+    // scrolling batches, and this creates confusion if we try to set it
+    // to different values among the batches
+    if (array->null_count <= 0)
+    {
+        array->null_count = -1;
         return;
+    }
+    array->null_count = -1;
+
     CPLAssert(static_cast<size_t>(array->length) >=
               iStart + abyValidityFromFilters.size());
     uint8_t *pabyValidity =
         static_cast<uint8_t *>(const_cast<void *>(array->buffers[0]));
     const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
-    for (size_t i = 0, j = iStart + nOffset; i < nLength; ++i)
+    size_t j = iStart + nOffset;
+    for (size_t i = 0; i < nLength && j < nNewLength + nOffset; ++i)
     {
         if (abyValidityFromFilters[i])
         {
@@ -2929,7 +2969,6 @@ CompactValidityBuffer(struct ArrowArray *array, size_t iStart,
                 SetBit(pabyValidity, j);
             else
                 UnsetBit(pabyValidity, j);
-
             ++j;
         }
     }
@@ -2939,8 +2978,10 @@ CompactValidityBuffer(struct ArrowArray *array, size_t iStart,
 /*                       CompactBoolArray()                             */
 /************************************************************************/
 
-static void CompactBoolArray(struct ArrowArray *array, size_t iStart,
-                             const std::vector<bool> &abyValidityFromFilters)
+static void CompactBoolArray(const struct ArrowSchema *schema,
+                             struct ArrowArray *array, size_t iStart,
+                             const std::vector<bool> &abyValidityFromFilters,
+                             size_t nNewLength)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 2);
@@ -2965,7 +3006,11 @@ static void CompactBoolArray(struct ArrowArray *array, size_t iStart,
         }
     }
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
 }
 
 /************************************************************************/
@@ -2973,9 +3018,9 @@ static void CompactBoolArray(struct ArrowArray *array, size_t iStart,
 /************************************************************************/
 
 template <class T>
-static void
-CompactPrimitiveArray(struct ArrowArray *array, size_t iStart,
-                      const std::vector<bool> &abyValidityFromFilters)
+static void CompactPrimitiveArray(
+    const struct ArrowSchema *schema, struct ArrowArray *array, size_t iStart,
+    const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 2);
@@ -2996,7 +3041,11 @@ CompactPrimitiveArray(struct ArrowArray *array, size_t iStart,
         }
     }
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
 }
 
 /************************************************************************/
@@ -3004,9 +3053,9 @@ CompactPrimitiveArray(struct ArrowArray *array, size_t iStart,
 /************************************************************************/
 
 template <class OffsetType>
-static void
-CompactStringOrBinaryArray(struct ArrowArray *array, size_t iStart,
-                           const std::vector<bool> &abyValidityFromFilters)
+static void CompactStringOrBinaryArray(
+    const struct ArrowSchema *schema, struct ArrowArray *array, size_t iStart,
+    const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 3);
@@ -3021,7 +3070,7 @@ CompactStringOrBinaryArray(struct ArrowArray *array, size_t iStart,
     GByte *pabyData =
         static_cast<GByte *>(const_cast<void *>(array->buffers[2]));
     size_t j = iStart;
-    OffsetType nCurOffset = panOffsets[0];
+    OffsetType nCurOffset = panOffsets[iStart];
     for (size_t i = 0; i < nLength; ++i)
     {
         if (abyValidityFromFilters[i])
@@ -3044,7 +3093,11 @@ CompactStringOrBinaryArray(struct ArrowArray *array, size_t iStart,
     }
     panOffsets[j] = nCurOffset;
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
 }
 
 /************************************************************************/
@@ -3052,8 +3105,10 @@ CompactStringOrBinaryArray(struct ArrowArray *array, size_t iStart,
 /************************************************************************/
 
 static void
-CompactFixedWidthArray(struct ArrowArray *array, int nWidth, size_t iStart,
-                       const std::vector<bool> &abyValidityFromFilters)
+CompactFixedWidthArray(const struct ArrowSchema *schema,
+                       struct ArrowArray *array, int nWidth, size_t iStart,
+                       const std::vector<bool> &abyValidityFromFilters,
+                       size_t nNewLength)
 {
     CPLAssert(array->n_children == 0);
     CPLAssert(array->n_buffers == 2);
@@ -3078,7 +3133,11 @@ CompactFixedWidthArray(struct ArrowArray *array, int nWidth, size_t iStart,
         }
     }
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
 }
 
 /************************************************************************/
@@ -3087,24 +3146,69 @@ CompactFixedWidthArray(struct ArrowArray *array, int nWidth, size_t iStart,
 
 static bool CompactArray(const struct ArrowSchema *schema,
                          struct ArrowArray *array, size_t iStart,
-                         const std::vector<bool> &abyValidityFromFilters);
+                         const std::vector<bool> &abyValidityFromFilters,
+                         size_t nNewLength);
 
 static bool CompactStructArray(const struct ArrowSchema *schema,
                                struct ArrowArray *array, size_t iStart,
-                               const std::vector<bool> &abyValidityFromFilters)
+                               const std::vector<bool> &abyValidityFromFilters,
+                               size_t nNewLength)
 {
+    // The equality might not be strict in the case of when some sub-arrays
+    // are fully void !
+    CPLAssert(array->n_children <= schema->n_children);
     for (int64_t iField = 0; iField < array->n_children; ++iField)
     {
         const auto psChildSchema = schema->children[iField];
         const auto psChildArray = array->children[iField];
-        if (!CompactArray(psChildSchema, psChildArray, iStart,
-                          abyValidityFromFilters))
-            return false;
+        // To please Arrow validation...
+        const size_t nChildNewLength =
+            static_cast<size_t>(array->offset) + nNewLength;
+        if (psChildArray->length > array->length)
+        {
+            std::vector<bool> abyChildValidity(abyValidityFromFilters);
+            abyChildValidity.resize(
+                abyValidityFromFilters.size() +
+                    static_cast<size_t>(psChildArray->length - array->length),
+                false);
+            if (!CompactArray(psChildSchema, psChildArray, iStart,
+                              abyChildValidity, nChildNewLength))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!CompactArray(psChildSchema, psChildArray, iStart,
+                              abyValidityFromFilters, nChildNewLength))
+            {
+                return false;
+            }
+        }
+        CPLAssert(psChildArray->length ==
+                  static_cast<int64_t>(nChildNewLength));
     }
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
 
     return true;
+}
+
+/************************************************************************/
+/*                     InvalidateNullCountRec()                         */
+/************************************************************************/
+
+static void InvalidateNullCountRec(const struct ArrowSchema *schema,
+                                   struct ArrowArray *array)
+{
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        array->null_count = -1;
+    for (int i = 0; i < array->n_children; ++i)
+        InvalidateNullCountRec(schema->children[i], array->children[i]);
 }
 
 /************************************************************************/
@@ -3114,7 +3218,8 @@ static bool CompactStructArray(const struct ArrowSchema *schema,
 template <class OffsetType>
 static bool CompactListArray(const struct ArrowSchema *schema,
                              struct ArrowArray *array, size_t iStart,
-                             const std::vector<bool> &abyValidityFromFilters)
+                             const std::vector<bool> &abyValidityFromFilters,
+                             size_t nNewLength)
 {
     CPLAssert(static_cast<size_t>(array->length) >=
               iStart + abyValidityFromFilters.size());
@@ -3142,15 +3247,16 @@ static bool CompactListArray(const struct ArrowSchema *schema,
         {
             if (abyValidityFromFilters[i])
             {
-                const auto nSize = panOffsets[i + 1] - panOffsets[i];
+                const auto nSize =
+                    panOffsets[i + iStart + 1] - panOffsets[i + iStart];
                 panOffsets[j] = nCurOffset;
                 nCurOffset += nSize;
                 ++j;
             }
             else
             {
-                const auto nStartOffset = panOffsets[i];
-                const auto nEndOffset = panOffsets[i + 1];
+                const auto nStartOffset = panOffsets[i + iStart];
+                const auto nEndOffset = panOffsets[i + iStart + 1];
                 if (nStartOffset != nEndOffset)
                 {
                     if (nStartOffset >=
@@ -3179,14 +3285,29 @@ static bool CompactListArray(const struct ArrowSchema *schema,
             }
         }
         panOffsets[j] = nCurOffset;
+        const size_t nChildNewLength = static_cast<size_t>(panOffsets[j]);
+        // To please Arrow validation
+        for (; j < iStart + nLength; ++j)
+            panOffsets[j] = nCurOffset;
 
         if (!CompactArray(psChildSchema, psChildArray,
                           static_cast<size_t>(panOffsets[iStart]),
-                          abyChildValidity))
+                          abyChildValidity, nChildNewLength))
             return false;
+
+        CPLAssert(psChildArray->length ==
+                  static_cast<int64_t>(nChildNewLength));
+    }
+    else
+    {
+        InvalidateNullCountRec(psChildSchema, psChildArray);
     }
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
 
     return true;
 }
@@ -3198,7 +3319,8 @@ static bool CompactListArray(const struct ArrowSchema *schema,
 static bool
 CompactFixedSizeListArray(const struct ArrowSchema *schema,
                           struct ArrowArray *array, size_t N, size_t iStart,
-                          const std::vector<bool> &abyValidityFromFilters)
+                          const std::vector<bool> &abyValidityFromFilters,
+                          size_t nNewLength)
 {
     CPLAssert(static_cast<size_t>(array->length) >=
               iStart + abyValidityFromFilters.size());
@@ -3210,9 +3332,16 @@ CompactFixedSizeListArray(const struct ArrowSchema *schema,
     const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     std::vector<bool> abyChildValidity(N * nLength, true);
+    size_t nChildNewLength = (iStart + nOffset) * N;
+    size_t nSrcLength = 0;
     for (size_t i = 0; i < nLength; ++i)
     {
-        if (!abyValidityFromFilters[i])
+        if (abyValidityFromFilters[i])
+        {
+            nChildNewLength += N;
+            nSrcLength++;
+        }
+        else
         {
             const size_t nStartOffset = i * N;
             const size_t nEndOffset = (i + 1) * N;
@@ -3220,26 +3349,36 @@ CompactFixedSizeListArray(const struct ArrowSchema *schema,
                 abyChildValidity[k] = false;
         }
     }
+    CPL_IGNORE_RET_VAL(nSrcLength);
+    CPLAssert(iStart + nSrcLength == nNewLength);
 
     if (!CompactArray(psChildSchema, psChildArray, (iStart + nOffset) * N,
-                      abyChildValidity))
+                      abyChildValidity, nChildNewLength))
         return false;
 
-    CompactValidityBuffer(array, iStart, abyValidityFromFilters);
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
+
+    CPLAssert(psChildArray->length >=
+              static_cast<int64_t>(N) * (array->length + array->offset));
 
     return true;
 }
 
 /************************************************************************/
-/*                       CompactListArray()                             */
+/*                       CompactMapArray()                              */
 /************************************************************************/
 
 static bool CompactMapArray(const struct ArrowSchema *schema,
                             struct ArrowArray *array, size_t iStart,
-                            const std::vector<bool> &abyValidityFromFilters)
+                            const std::vector<bool> &abyValidityFromFilters,
+                            size_t nNewLength)
 {
     return CompactListArray<uint32_t>(schema, array, iStart,
-                                      abyValidityFromFilters);
+                                      abyValidityFromFilters, nNewLength);
 }
 
 /************************************************************************/
@@ -3248,29 +3387,33 @@ static bool CompactMapArray(const struct ArrowSchema *schema,
 
 static bool CompactArray(const struct ArrowSchema *schema,
                          struct ArrowArray *array, size_t iStart,
-                         const std::vector<bool> &abyValidityFromFilters)
+                         const std::vector<bool> &abyValidityFromFilters,
+                         size_t nNewLength)
 {
     const char *format = schema->format;
+
     if (IsStructure(format))
     {
-        if (!CompactStructArray(schema, array, iStart, abyValidityFromFilters))
+        if (!CompactStructArray(schema, array, iStart, abyValidityFromFilters,
+                                nNewLength))
             return false;
     }
     else if (IsList(format))
     {
         if (!CompactListArray<uint32_t>(schema, array, iStart,
-                                        abyValidityFromFilters))
+                                        abyValidityFromFilters, nNewLength))
             return false;
     }
     else if (IsLargeList(format))
     {
         if (!CompactListArray<uint64_t>(schema, array, iStart,
-                                        abyValidityFromFilters))
+                                        abyValidityFromFilters, nNewLength))
             return false;
     }
     else if (IsMap(format))
     {
-        if (!CompactMapArray(schema, array, iStart, abyValidityFromFilters))
+        if (!CompactMapArray(schema, array, iStart, abyValidityFromFilters,
+                             nNewLength))
             return false;
     }
     else if (IsFixedSizeList(format))
@@ -3279,47 +3422,54 @@ static bool CompactArray(const struct ArrowSchema *schema,
         if (N <= 0)
             return false;
         if (!CompactFixedSizeListArray(schema, array, static_cast<size_t>(N),
-                                       iStart, abyValidityFromFilters))
+                                       iStart, abyValidityFromFilters,
+                                       nNewLength))
             return false;
     }
     else if (IsBoolean(format))
     {
-        CompactBoolArray(array, iStart, abyValidityFromFilters);
+        CompactBoolArray(schema, array, iStart, abyValidityFromFilters,
+                         nNewLength);
     }
     else if (IsInt8(format) || IsUInt8(format))
     {
-        CompactPrimitiveArray<uint8_t>(array, iStart, abyValidityFromFilters);
+        CompactPrimitiveArray<uint8_t>(schema, array, iStart,
+                                       abyValidityFromFilters, nNewLength);
     }
     else if (IsInt16(format) || IsUInt16(format) || IsFloat16(format))
     {
-        CompactPrimitiveArray<uint16_t>(array, iStart, abyValidityFromFilters);
+        CompactPrimitiveArray<uint16_t>(schema, array, iStart,
+                                        abyValidityFromFilters, nNewLength);
     }
     else if (IsInt32(format) || IsUInt32(format) || IsFloat32(format) ||
              strcmp(format, "tdD") == 0 || strcmp(format, "tts") == 0 ||
              strcmp(format, "ttm") == 0)
     {
-        CompactPrimitiveArray<uint32_t>(array, iStart, abyValidityFromFilters);
+        CompactPrimitiveArray<uint32_t>(schema, array, iStart,
+                                        abyValidityFromFilters, nNewLength);
     }
     else if (IsInt64(format) || IsUInt64(format) || IsFloat64(format) ||
              strcmp(format, "tdm") == 0 || strcmp(format, "ttu") == 0 ||
              strcmp(format, "ttn") == 0 || strncmp(format, "ts", 2) == 0)
     {
-        CompactPrimitiveArray<uint64_t>(array, iStart, abyValidityFromFilters);
+        CompactPrimitiveArray<uint64_t>(schema, array, iStart,
+                                        abyValidityFromFilters, nNewLength);
     }
     else if (IsString(format) || IsBinary(format))
     {
-        CompactStringOrBinaryArray<uint32_t>(array, iStart,
-                                             abyValidityFromFilters);
+        CompactStringOrBinaryArray<uint32_t>(
+            schema, array, iStart, abyValidityFromFilters, nNewLength);
     }
     else if (IsLargeString(format) || IsLargeBinary(format))
     {
-        CompactStringOrBinaryArray<uint64_t>(array, iStart,
-                                             abyValidityFromFilters);
+        CompactStringOrBinaryArray<uint64_t>(
+            schema, array, iStart, abyValidityFromFilters, nNewLength);
     }
     else if (IsFixedWidthBinary(format))
     {
         const int nWidth = GetFixedWithBinary(format);
-        CompactFixedWidthArray(array, nWidth, iStart, abyValidityFromFilters);
+        CompactFixedWidthArray(schema, array, nWidth, iStart,
+                               abyValidityFromFilters, nNewLength);
     }
     else if (IsDecimal(format))
     {
@@ -3335,8 +3485,8 @@ static bool CompactArray(const struct ArrowSchema *schema,
 
             return false;
         }
-        CompactFixedWidthArray(array, nWidthInBytes, iStart,
-                               abyValidityFromFilters);
+        CompactFixedWidthArray(schema, array, nWidthInBytes, iStart,
+                               abyValidityFromFilters, nNewLength);
     }
     else
     {
@@ -3802,9 +3952,9 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
 /************************************************************************/
 
 template <class OffsetType>
-static CPLJSONObject GetListAsJSON(const struct ArrowSchema *schema,
-                                   const struct ArrowArray *array,
-                                   const size_t nIdx)
+static CPLJSONArray GetListAsJSON(const struct ArrowSchema *schema,
+                                  const struct ArrowArray *array,
+                                  const size_t nIdx)
 {
     CPLJSONArray oArray;
     const auto panOffsets = static_cast<const OffsetType *>(array->buffers[1]) +
@@ -3835,9 +3985,9 @@ static CPLJSONObject GetListAsJSON(const struct ArrowSchema *schema,
 /*                     GetFixedSizeListAsJSON()                         */
 /************************************************************************/
 
-static CPLJSONObject GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
-                                            const struct ArrowArray *array,
-                                            const size_t nIdx)
+static CPLJSONArray GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
+                                           const struct ArrowArray *array,
+                                           const size_t nIdx)
 {
     CPLJSONArray oArray;
     const int nVals = GetFixedSizeList(schema->format);
@@ -3997,7 +4147,7 @@ static CPLJSONObject GetStructureAsJSON(const struct ArrowSchema *schema,
                                         const size_t nIdx)
 {
     CPLJSONObject oDict;
-    for (int64_t k = 0; k < schema->n_children; k++)
+    for (int64_t k = 0; k < array->n_children; k++)
     {
         const uint8_t *pabyValidityValues =
             array->children[k]->null_count == 0
@@ -4958,19 +5108,317 @@ void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
         return;
     }
 
-    if (nCountIntersecting > 0 &&
-        !CompactStructArray(schema, array, 0, abyValidityFromFilters))
+    if (nCountIntersecting == 0)
+    {
+        array->length = 0;
+    }
+    else if (!CompactStructArray(schema, array, 0, abyValidityFromFilters,
+                                 nCountIntersecting))
     {
         array->release(array);
         memset(array, 0, sizeof(*array));
     }
+}
 
-    for (int64_t iField = 0; iField < array->n_children; ++iField)
+/************************************************************************/
+/*                          OGRCloneArrowArray                          */
+/************************************************************************/
+
+static bool OGRCloneArrowArray(const struct ArrowSchema *schema,
+                               const struct ArrowArray *src_array,
+                               struct ArrowArray *out_array,
+                               size_t nParentOffset)
+{
+    memset(out_array, 0, sizeof(*out_array));
+    const size_t nLength =
+        static_cast<size_t>(src_array->length) - nParentOffset;
+    out_array->length = nLength;
+    out_array->null_count = src_array->null_count;
+    out_array->release = OGRLayerDefaultReleaseArray;
+
+    bool bRet = true;
+
+    out_array->n_buffers = src_array->n_buffers;
+    out_array->buffers = static_cast<const void **>(CPLCalloc(
+        static_cast<size_t>(src_array->n_buffers), sizeof(const void *)));
+    CPLAssert(static_cast<size_t>(src_array->length) >= nParentOffset);
+    const char *format = schema->format;
+    const auto nOffset = static_cast<size_t>(src_array->offset) + nParentOffset;
+    for (int64_t i = 0; i < src_array->n_buffers; ++i)
     {
-        const auto psChildArray = array->children[iField];
-        psChildArray->length = nCountIntersecting;
+        if (i == 0 || IsBoolean(format))
+        {
+            if (i == 1)
+            {
+                CPLAssert(src_array->buffers[i]);
+            }
+            if (src_array->buffers[i])
+            {
+                const size_t nBytes = nLength ? (nLength + 7) / 8 : 1;
+                uint8_t *CPL_RESTRICT p = static_cast<uint8_t *>(
+                    VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nBytes));
+                if (!p)
+                {
+                    bRet = false;
+                    break;
+                }
+                const auto *CPL_RESTRICT pSrcArray =
+                    static_cast<const uint8_t *>(src_array->buffers[i]);
+                if ((nOffset % 8) != 0)
+                {
+                    // Make sure last byte is fully initialized
+                    p[nBytes - 1] = 0;
+                    for (size_t iRow = 0; iRow < nLength; ++iRow)
+                    {
+                        if (TestBit(pSrcArray, nOffset + iRow))
+                            SetBit(p, iRow);
+                        else
+                            UnsetBit(p, iRow);
+                    }
+                }
+                else
+                {
+                    memcpy(p, pSrcArray + nOffset / 8, nBytes);
+                }
+                out_array->buffers[i] = p;
+            }
+        }
+        else if (i == 1)
+        {
+            CPLAssert(src_array->buffers[i]);
+            size_t nEltSize = 0;
+            size_t nExtraElt = 0;
+            if (IsUInt8(format) || IsInt8(format))
+                nEltSize = sizeof(uint8_t);
+            else if (IsUInt16(format) || IsInt16(format) || IsFloat16(format))
+                nEltSize = sizeof(uint16_t);
+            else if (IsUInt32(format) || IsInt32(format) || IsFloat32(format) ||
+                     strcmp(format, "tdD") == 0 || strcmp(format, "tts") == 0 ||
+                     strcmp(format, "ttm") == 0)
+            {
+                nEltSize = sizeof(uint32_t);
+            }
+            else if (IsString(format) || IsBinary(format) || IsList(format) ||
+                     IsMap(format))
+            {
+                nEltSize = sizeof(uint32_t);
+                nExtraElt = 1;
+            }
+            else if (IsUInt64(format) || IsInt64(format) || IsFloat64(format) ||
+                     strcmp(format, "tdm") == 0 || strcmp(format, "ttu") == 0 ||
+                     strcmp(format, "ttn") == 0 || strcmp(format, "tss") == 0 ||
+                     STARTS_WITH(format, "tsm:") ||
+                     STARTS_WITH(format, "tsu:") || STARTS_WITH(format, "tsn:"))
+            {
+                nEltSize = sizeof(uint64_t);
+            }
+            else if (IsLargeString(format) || IsLargeBinary(format) ||
+                     IsLargeList(format))
+            {
+                nEltSize = sizeof(uint64_t);
+                nExtraElt = 1;
+            }
+            else if (IsFixedWidthBinary(format))
+            {
+                nEltSize = GetFixedWithBinary(format);
+            }
+            else if (IsDecimal(format))
+            {
+                int nPrecision = 0;
+                int nScale = 0;
+                int nWidthInBytes = 0;
+                if (!ParseDecimalFormat(format, nPrecision, nScale,
+                                        nWidthInBytes))
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Unexpected error in OGRCloneArrowArray(): unhandled "
+                        "field format: %s",
+                        format);
+
+                    return false;
+                }
+                nEltSize = nWidthInBytes;
+            }
+            if (nEltSize)
+            {
+                void *p = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+                    nLength ? nEltSize * (nLength + nExtraElt) : 1);
+                if (!p)
+                {
+                    bRet = false;
+                    break;
+                }
+                if (nLength)
+                {
+                    if ((IsString(format) || IsBinary(format)) &&
+                        static_cast<const uint32_t *>(
+                            src_array->buffers[1])[nOffset] != 0)
+                    {
+                        const auto *CPL_RESTRICT pSrcOffsets =
+                            static_cast<const uint32_t *>(
+                                src_array->buffers[1]) +
+                            nOffset;
+                        const auto nShiftOffset = pSrcOffsets[0];
+                        auto *CPL_RESTRICT pDstOffsets =
+                            static_cast<uint32_t *>(p);
+                        for (size_t iRow = 0; iRow <= nLength; ++iRow)
+                        {
+                            pDstOffsets[iRow] =
+                                pSrcOffsets[iRow] - nShiftOffset;
+                        }
+                    }
+                    else if ((IsLargeString(format) || IsLargeBinary(format)) &&
+                             static_cast<const uint64_t *>(
+                                 src_array->buffers[1])[nOffset] != 0)
+                    {
+                        const auto *CPL_RESTRICT pSrcOffsets =
+                            static_cast<const uint64_t *>(
+                                src_array->buffers[1]) +
+                            nOffset;
+                        const auto nShiftOffset = pSrcOffsets[0];
+                        auto *CPL_RESTRICT pDstOffsets =
+                            static_cast<uint64_t *>(p);
+                        for (size_t iRow = 0; iRow <= nLength; ++iRow)
+                        {
+                            pDstOffsets[iRow] =
+                                pSrcOffsets[iRow] - nShiftOffset;
+                        }
+                    }
+                    else
+                    {
+                        memcpy(
+                            p,
+                            static_cast<const GByte *>(src_array->buffers[i]) +
+                                nEltSize * nOffset,
+                            nEltSize * (nLength + nExtraElt));
+                    }
+                }
+                out_array->buffers[i] = p;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "OGRCloneArrowArray(): unhandled case, array = %s, "
+                         "format = '%s', i = 1",
+                         schema->name, format);
+                bRet = false;
+                break;
+            }
+        }
+        else if (i == 2)
+        {
+            CPLAssert(src_array->buffers[i]);
+            size_t nSrcCharOffset = 0;
+            size_t nCharCount = 0;
+            if (IsString(format) || IsBinary(format))
+            {
+                const auto *pSrcOffsets =
+                    static_cast<const uint32_t *>(src_array->buffers[1]) +
+                    nOffset;
+                nSrcCharOffset = pSrcOffsets[0];
+                nCharCount = pSrcOffsets[nLength] - pSrcOffsets[0];
+            }
+            else if (IsLargeString(format) || IsLargeBinary(format))
+            {
+                const auto *pSrcOffsets =
+                    static_cast<const uint64_t *>(src_array->buffers[1]) +
+                    nOffset;
+                nSrcCharOffset = static_cast<size_t>(pSrcOffsets[0]);
+                nCharCount =
+                    static_cast<size_t>(pSrcOffsets[nLength] - pSrcOffsets[0]);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "OGRCloneArrowArray(): unhandled case, array = %s, "
+                         "format = '%s', i = 2",
+                         schema->name, format);
+                bRet = false;
+                break;
+            }
+            void *p =
+                VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCharCount ? nCharCount : 1);
+            if (!p)
+            {
+                bRet = false;
+                break;
+            }
+            if (nCharCount)
+            {
+                memcpy(p,
+                       static_cast<const GByte *>(src_array->buffers[i]) +
+                           nSrcCharOffset,
+                       nCharCount);
+            }
+            out_array->buffers[i] = p;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "OGRCloneArrowArray(): unhandled case, array = %s, format "
+                     "= '%s', i = 3",
+                     schema->name, format);
+            bRet = false;
+            break;
+        }
     }
-    array->length = nCountIntersecting;
+
+    if (bRet)
+    {
+        out_array->n_children = src_array->n_children;
+        out_array->children = static_cast<struct ArrowArray **>(
+            CPLCalloc(static_cast<size_t>(src_array->n_children),
+                      sizeof(struct ArrowArray *)));
+        for (int64_t i = 0; i < src_array->n_children; ++i)
+        {
+            out_array->children[i] = static_cast<struct ArrowArray *>(
+                CPLCalloc(1, sizeof(struct ArrowArray)));
+            if (!OGRCloneArrowArray(schema->children[i], src_array->children[i],
+                                    out_array->children[i],
+                                    IsFixedSizeList(format)
+                                        ? nOffset * GetFixedSizeList(format)
+                                    : IsStructure(format) ? nOffset
+                                                          : 0))
+            {
+                bRet = false;
+                break;
+            }
+        }
+    }
+
+    if (bRet && src_array->dictionary)
+    {
+        out_array->dictionary = static_cast<struct ArrowArray *>(
+            CPLCalloc(1, sizeof(struct ArrowArray)));
+        bRet = OGRCloneArrowArray(schema->dictionary, src_array->dictionary,
+                                  out_array->dictionary, 0);
+    }
+
+    if (!bRet)
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+    }
+    return bRet;
+}
+
+/** Full/deep copy of an array.
+ *
+ * Renormalize the offset of the array (and its children) to 0.
+ *
+ * In case of failure, out_array will be let in a released state.
+ *
+ * @param schema Schema of the array. Must *NOT* be NULL.
+ * @param src_array Source array. Must *NOT* be NULL.
+ * @param out_array Output array.  Must *NOT* be NULL (but its content may be random)
+ * @return true if success.
+ */
+bool OGRCloneArrowArray(const struct ArrowSchema *schema,
+                        const struct ArrowArray *src_array,
+                        struct ArrowArray *out_array)
+{
+    return OGRCloneArrowArray(schema, src_array, out_array, 0);
 }
 
 /************************************************************************/
@@ -5427,7 +5875,8 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                     : OFSTNone;
         }
 
-        OGRFieldDefn oFieldDefn((osFieldPrefix + fieldName).c_str(), eTypeOut);
+        const std::string osWantedOGRFieldName = osFieldPrefix + fieldName;
+        OGRFieldDefn oFieldDefn(osWantedOGRFieldName.c_str(), eTypeOut);
         oFieldDefn.SetSubType(eSubTypeOut);
         if (eTypeOut == eTypeIn && eSubTypeOut == eSubTypeIn)
         {
@@ -5481,7 +5930,22 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                 }
             }
         }
-        return CreateField(&oFieldDefn) == OGRERR_NONE;
+        auto poLayerDefn = GetLayerDefn();
+        const int nFieldCountBefore = poLayerDefn->GetFieldCount();
+        if (CreateField(&oFieldDefn) != OGRERR_NONE ||
+            nFieldCountBefore + 1 != poLayerDefn->GetFieldCount())
+        {
+            return false;
+        }
+        const char *pszActualFieldName =
+            poLayerDefn->GetFieldDefn(nFieldCountBefore)->GetNameRef();
+        if (pszActualFieldName != osWantedOGRFieldName)
+        {
+            m_poPrivate
+                ->m_oMapArrowFieldNameToOGRFieldName[osWantedOGRFieldName] =
+                pszActualFieldName;
+        }
+        return true;
     };
 
     for (const auto &sType : gasArrowTypesToOGR)
@@ -5712,28 +6176,29 @@ struct FieldInfo
     int nScale = 0;         // only used for decimal fields
 };
 
-static bool
-BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
-                  const OGRFeatureDefn *poFeatureDefn,
-                  const std::string &osFieldPrefix,
-                  const CPLStringList &aosNativeTypes, bool &bFallbackTypesUsed,
-                  std::vector<FieldInfo> &asFieldInfo, const char *pszFIDName,
-                  const char *pszGeomFieldName, OGRLayer *poLayer,
-                  const struct ArrowSchema *&schemaFIDColumn,
-                  struct ArrowArray *&arrayFIDColumn)
+static bool BuildOGRFieldInfo(
+    const struct ArrowSchema *schema, struct ArrowArray *array,
+    const OGRFeatureDefn *poFeatureDefn, const std::string &osFieldPrefix,
+    const CPLStringList &aosNativeTypes, bool &bFallbackTypesUsed,
+    std::vector<FieldInfo> &asFieldInfo, const char *pszFIDName,
+    const char *pszGeomFieldName, OGRLayer *poLayer,
+    const std::map<std::string, std::string> &oMapArrowFieldNameToOGRFieldName,
+    const struct ArrowSchema *&schemaFIDColumn,
+    struct ArrowArray *&arrayFIDColumn)
 {
     const char *fieldName = schema->name;
     const char *format = schema->format;
     if (IsStructure(format))
     {
         const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
-        for (int64_t i = 0; i < schema->n_children; ++i)
+        for (int64_t i = 0; i < array->n_children; ++i)
         {
             if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
                                    poFeatureDefn, osNewPrefix, aosNativeTypes,
                                    bFallbackTypesUsed, asFieldInfo, pszFIDName,
-                                   pszGeomFieldName, poLayer, schemaFIDColumn,
-                                   arrayFIDColumn))
+                                   pszGeomFieldName, poLayer,
+                                   oMapArrowFieldNameToOGRFieldName,
+                                   schemaFIDColumn, arrayFIDColumn))
             {
                 return false;
             }
@@ -5781,7 +6246,17 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
     }
     else
     {
-        sInfo.iOGRFieldIdx = poFeatureDefn->GetFieldIndex(sInfo.osName.c_str());
+        const auto osExpectedOGRFieldName =
+            [&oMapArrowFieldNameToOGRFieldName, &sInfo]()
+        {
+            const auto oIter =
+                oMapArrowFieldNameToOGRFieldName.find(sInfo.osName);
+            if (oIter != oMapArrowFieldNameToOGRFieldName.end())
+                return oIter->second;
+            return sInfo.osName;
+        }();
+        sInfo.iOGRFieldIdx =
+            poFeatureDefn->GetFieldIndex(osExpectedOGRFieldName.c_str());
         if (sInfo.iOGRFieldIdx >= 0)
         {
             bool bTypeOK = false;
@@ -6048,8 +6523,8 @@ BuildOGRFieldInfo(const struct ArrowSchema *schema, struct ArrowArray *array,
         }
         else
         {
-            sInfo.iOGRFieldIdx =
-                poFeatureDefn->GetGeomFieldIndex(sInfo.osName.c_str());
+            sInfo.iOGRFieldIdx = poFeatureDefn->GetGeomFieldIndex(
+                osExpectedOGRFieldName.c_str());
             if (sInfo.iOGRFieldIdx < 0)
             {
                 if (pszGeomFieldName && pszGeomFieldName == sInfo.osName)
@@ -6173,11 +6648,12 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
     if (IsStructure(format))
     {
         size_t nRet = 0;
-        for (int64_t i = 0; i < schema->n_children; ++i)
+        for (int64_t i = 0; i < array->n_children; ++i)
         {
-            nRet +=
-                GetWorkingBufferSize(schema->children[i], array->children[i],
-                                     iFeature, iArrowIdxInOut, asFieldInfo);
+            nRet += GetWorkingBufferSize(
+                schema->children[i], array->children[i],
+                iFeature + static_cast<size_t>(array->offset), iArrowIdxInOut,
+                asFieldInfo);
         }
         return nRet;
     }
@@ -6347,11 +6823,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
     if (IsStructure(format))
     {
         const std::string osNewPrefix(osFieldPrefix + fieldName + ".");
-        for (int64_t i = 0; i < schema->n_children; ++i)
+        for (int64_t i = 0; i < array->n_children; ++i)
         {
-            if (!FillFeature(poLayer, schema->children[i], array->children[i],
-                             osNewPrefix, iFeature, iArrowIdxInOut, asFieldInfo,
-                             oFeature, osWorkingBuffer))
+            if (!FillFeature(
+                    poLayer, schema->children[i], array->children[i],
+                    osNewPrefix, iFeature + static_cast<size_t>(array->offset),
+                    iArrowIdxInOut, asFieldInfo, oFeature, osWorkingBuffer))
                 return false;
         }
         return true;
@@ -6665,6 +7142,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
  *     On output, the values of the FID column may be set with the FID of the
  *     created feature (if the array is not released).
  * </li>
+ * <li>IF_FID_NOT_PRESERVED=NOTHING/ERROR/WARNING. Action to perform when the
+ *     input FID is not preserved in the output layer. The default is NOTHING.
+ *     Setting it to ERROR will cause the function to error out. Setting it
+ *     to WARNING will cause the function to emit a warning but continue its
+ *     processing.
+ * </li>
  * <li>GEOMETRY_NAME=name. Name of the geometry column. If not provided,
  *     GetGeometryColumn() is used. The special name
  *     OGRLayer::DEFAULT_ARROW_GEOMETRY_NAME is also recognized if neither
@@ -6794,6 +7277,12 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         CSLFetchNameValueDef(papszOptions, "FID", GetFIDColumn());
     if (!pszFIDName || pszFIDName[0] == 0)
         pszFIDName = DEFAULT_ARROW_FID_NAME;
+    const bool bErrorIfFIDNotPreserved =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "IF_FID_NOT_PRESERVED", ""),
+              "ERROR");
+    const bool bWarningIfFIDNotPreserved =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "IF_FID_NOT_PRESERVED", ""),
+              "WARNING");
     const char *pszGeomFieldName = CSLFetchNameValueDef(
         papszOptions, "GEOMETRY_NAME", GetGeometryColumn());
     if (!pszGeomFieldName || pszGeomFieldName[0] == 0)
@@ -6806,8 +7295,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         if (!BuildOGRFieldInfo(schema->children[i], array->children[i],
                                poLayerDefn, std::string(), aosNativeTypes,
                                bFallbackTypesUsed, asFieldInfo, pszFIDName,
-                               pszGeomFieldName, this, schemaFIDColumn,
-                               arrayFIDColumn))
+                               pszGeomFieldName, this,
+                               m_poPrivate->m_oMapArrowFieldNameToOGRFieldName,
+                               schemaFIDColumn, arrayFIDColumn))
         {
             return false;
         }
@@ -6964,12 +7454,34 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             oFeatureTarget.SetFID(oFeature.GetFID());
         }
 
+        const auto nInputFID = poFeatureTarget->GetFID();
         if (CreateFeature(poFeatureTarget) != OGRERR_NONE)
         {
             if (bTransactionOK)
                 RollbackTransaction();
             return false;
         }
+        if (nInputFID != OGRNullFID)
+        {
+            if (bWarningIfFIDNotPreserved &&
+                poFeatureTarget->GetFID() != nInputFID)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Feature id " CPL_FRMT_GIB " not preserved",
+                         nInputFID);
+            }
+            else if (bErrorIfFIDNotPreserved &&
+                     poFeatureTarget->GetFID() != nInputFID)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Feature id " CPL_FRMT_GIB " not preserved",
+                         nInputFID);
+                if (bTransactionOK)
+                    RollbackTransaction();
+                return false;
+            }
+        }
+
         if (arrayFIDColumn)
         {
             uint8_t *pabyValidity = static_cast<uint8_t *>(
@@ -7075,6 +7587,12 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
  *     On input, values of the FID column are used to create the feature.
  *     On output, the values of the FID column may be set with the FID of the
  *     created feature (if the array is not released).
+ * </li>
+ * <li>IF_FID_NOT_PRESERVED=NOTHING/ERROR/WARNING. Action to perform when the
+ *     input FID is not preserved in the output layer. The default is NOTHING.
+ *     Setting it to ERROR will cause the function to error out. Setting it
+ *     to WARNING will cause the function to emit a warning but continue its
+ *     processing.
  * </li>
  * <li>GEOMETRY_NAME=name. Name of the geometry column. If not provided,
  *     GetGeometryColumn() is used. The special name

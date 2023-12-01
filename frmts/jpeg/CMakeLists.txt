@@ -1,7 +1,23 @@
 add_gdal_driver(
   TARGET gdal_JPEG
   SOURCES vsidataio.h jpgdataset.h vsidataio.cpp jpgdataset.cpp
-  BUILTIN)
+  CORE_SOURCES jpegdrivercore.cpp
+  PLUGIN_CAPABLE_IF
+      "NOT GDAL_USE_JPEG_INTERNAL\\\;NOT GDAL_USE_JPEG12_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
+)
+
+if(TARGET gdal_JPEG_core)
+    target_include_directories(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_INCLUDE_DIRECTORIES>)
+    target_compile_definitions(gdal_JPEG_core PRIVATE $<TARGET_PROPERTY:JPEG::JPEG,INTERFACE_COMPILE_DEFINITIONS>)
+    if (HAVE_JPEGTURBO_DUAL_MODE_8_12)
+        target_compile_definitions(gdal_JPEG_core PRIVATE JPEG_DUAL_MODE_8_12 HAVE_JPEGTURBO_DUAL_MODE_8_12)
+    endif()
+endif()
+
+if(NOT TARGET gdal_JPEG)
+    return()
+endif()
+
 gdal_standard_includes(gdal_JPEG)
 
 target_include_directories(gdal_JPEG PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)

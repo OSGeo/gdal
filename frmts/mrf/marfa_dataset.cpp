@@ -59,6 +59,7 @@
  ****************************************************************************/
 
 #include "marfa.h"
+#include "mrfdrivercore.h"
 #include "cpl_multiproc.h" /* for CPLSleep() */
 #include "gdal_priv.h"
 #include <assert.h>
@@ -326,6 +327,11 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                 // Initialize the empty overlays, all of them for a given scale
                 // They could already exist, in which case they are not erased
                 idxSize = AddOverviews(int(scale));
+
+                // If we don't have overviews, don't try to generate them
+                if (GetRasterBand(1)->GetOverviewCount() == 0)
+                    throw CE_None;
+
                 if (!CheckFileSize(current.idxfname, idxSize, GA_Update))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -520,37 +526,6 @@ void MRFDataset::SetMaxValue(const char *pszVal)
 }
 
 /**
- *\brief Idenfity a MRF file, lightweight
- *
- * Lightweight test, otherwise Open gets called.
- *
- */
-int MRFDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "<MRF_META>"))
-        return TRUE;
-
-    CPLString fn(poOpenInfo->pszFilename);
-    if (fn.find(":MRF:") != string::npos)
-        return TRUE;
-
-    if (poOpenInfo->nHeaderBytes < 10)
-        return FALSE;
-
-    const char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-    fn.assign(pszHeader, pszHeader + poOpenInfo->nHeaderBytes);
-    if (STARTS_WITH(fn, "<MRF_META>"))
-        return TRUE;
-
-#if defined(LERC)  // Could be single LERC tile
-    if (LERC_Band::IsLerc1(fn) || LERC_Band::IsLerc2(fn))
-        return TRUE;
-#endif
-
-    return FALSE;
-}
-
-/**
  *
  *\brief Read the XML config tree, from file
  *  Caller is responsible for freeing the memory
@@ -615,7 +590,7 @@ static int getnum(const vector<string> &theStringVector, const char prefix,
  */
 GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!MRFDriverIdentify(poOpenInfo))
         return nullptr;
 
     CPLXMLNode *config = nullptr;

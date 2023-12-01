@@ -6,7 +6,14 @@ add_gdal_driver(
           ogrmysqllayer.cpp
           ogrmysqlresultlayer.cpp
           ogrmysqltablelayer.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          ogrmysqldrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_MySQL)
+    return()
+endif()
+
 gdal_standard_includes(ogr_MySQL)
 target_include_directories(ogr_MySQL PRIVATE ${MYSQL_INCLUDE_DIRS})
 target_compile_definitions(ogr_MySQL PRIVATE -DHAVE_MYSQL)

@@ -1,4 +1,4 @@
-# depend from hdf4 and ogr_PDS
+# depend from ogr_PDS
 add_gdal_driver(
   TARGET gdal_PDS
   SOURCES isis2dataset.cpp
@@ -8,7 +8,15 @@ add_gdal_driver(
           pds4vector.cpp
           vicardataset.cpp
           vicarkeywordhandler.cpp
-  BUILTIN)
+  CORE_SOURCES
+          pdsdrivercore.cpp
+  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL\\\;NOT GDAL_USE_GEOTIFF_INTERNAL\\\;NOT GDAL_USE_TIFF_INTERNAL"
+)
+
+if(NOT TARGET gdal_PDS)
+    return()
+endif()
+
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
   set_property(SOURCE isis2dataset.cpp isis3dataset.cpp pdsdataset.cpp vicardataset.cpp vicarkeywordhandler.cpp
                       nasakeywordhandler.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
@@ -19,6 +27,11 @@ target_include_directories(
   PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR> ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
           ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson
           ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/vrt ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff)
+
+# When build as plugin, initialize all drivers from GDALRegister_PDS
+if (GDAL_ENABLE_DRIVER_PDS_PLUGIN)
+  target_compile_definitions(gdal_PDS PRIVATE -DPDS_PLUGIN)
+endif ()
 
 # Internal libs first
 if (GDAL_USE_JSONC_INTERNAL)

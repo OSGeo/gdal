@@ -491,6 +491,7 @@ typedef void retGetPoints;
 %constant char *OLCFastSpatialFilter   = "FastSpatialFilter";
 %constant char *OLCFastFeatureCount    = "FastFeatureCount";
 %constant char *OLCFastGetExtent       = "FastGetExtent";
+%constant char *OLCFastGetExtent3D     = "FastGetExtent3D";
 %constant char *OLCCreateField         = "CreateField";
 %constant char *OLCDeleteField         = "DeleteField";
 %constant char *OLCReorderFields       = "ReorderFields";
@@ -545,6 +546,7 @@ typedef int OGRErr;
 #define OLCFastSpatialFilter   "FastSpatialFilter"
 #define OLCFastFeatureCount    "FastFeatureCount"
 #define OLCFastGetExtent       "FastGetExtent"
+#define OLCFastGetExtent3D     "FastGetExtent3D"
 #define OLCCreateField         "CreateField"
 #define OLCDeleteField         "DeleteField"
 #define OLCReorderFields       "ReorderFields"
@@ -1298,6 +1300,15 @@ public:
   %feature( "kwargs" ) GetExtent;
   void GetExtent(double argout[4], int* isvalid = NULL, int force = 1, int can_return_null = 0, int geom_field = 0 ) {
     OGRErr eErr = OGR_L_GetExtentEx(self, geom_field, (OGREnvelope*)argout, force);
+    if (can_return_null)
+        *isvalid = (eErr == OGRERR_NONE);
+    else
+        *isvalid = TRUE;
+    return;
+  }
+  %feature( "kwargs" ) GetExtent3D;
+  void GetExtent3D(double argout[6], int* isvalid = NULL, int force = 1, int can_return_null = 0, int geom_field = 0 ) {
+    OGRErr eErr = OGR_L_GetExtent3D(self, geom_field, (OGREnvelope3D*)argout, force);
     if (can_return_null)
         *isvalid = (eErr == OGRERR_NONE);
     else

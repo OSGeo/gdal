@@ -11,3 +11,4 @@ cmake ${GDAL_SOURCE_DIR:=..} \
     -DGDAL_USE_TIFF_INTERNAL:BOOL=ON
 
 make -j$(nproc)
+make -j$(nproc) install DESTDIR=/tmp/install-gdal

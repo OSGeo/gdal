@@ -81,6 +81,9 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(
     {
         BuildGeometryColumnGDBv10(osParentDefinition);
     }
+
+    // bSealFields = false because we do lazy resolution of fields
+    m_poFeatureDefn->Seal(/* bSealFields = */ false);
 }
 
 /************************************************************************/
@@ -93,7 +96,10 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(OGROpenFileGDBDataSource *poDS,
                                          OGRwkbGeometryType eType,
                                          CSLConstList papszOptions)
     : m_poDS(poDS), m_osGDBFilename(pszGDBFilename), m_osName(pszName),
-      m_aosCreationOptions(papszOptions), m_eGeomType(eType)
+      m_aosCreationOptions(papszOptions), m_eGeomType(eType),
+      m_bArcGISPro32OrLater(
+          EQUAL(CSLFetchNameValueDef(papszOptions, "TARGET_ARCGIS_VERSION", ""),
+                "ARCGIS_PRO_3_2_OR_LATER"))
 {
 }
 
@@ -398,6 +404,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
     }
 
     m_bValidLayerDefn = TRUE;
+    auto oTemporaryUnsealer(m_poFeatureDefn->GetTemporaryUnsealer());
 
     m_iGeomFieldIdx = m_poLyrTable->GetGeomFieldIdx();
     if (m_iGeomFieldIdx >= 0)
@@ -565,7 +572,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         if (i == m_poLyrTable->GetObjectIdFieldIdx())
             continue;
 
-        const FileGDBField *poGDBField = m_poLyrTable->GetField(i);
+        FileGDBField *poGDBField = m_poLyrTable->GetField(i);
         OGRFieldType eType = OFTString;
         OGRFieldSubType eSubType = OFSTNone;
         int nWidth = poGDBField->GetMaxWidth();
@@ -632,6 +639,22 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                     eType = OFTBinary;
                 break;
             }
+            case FGFT_INT64:
+                m_bArcGISPro32OrLater = true;
+                eType = OFTInteger64;
+                break;
+            case FGFT_DATE:
+                m_bArcGISPro32OrLater = true;
+                eType = OFTDate;
+                break;
+            case FGFT_TIME:
+                m_bArcGISPro32OrLater = true;
+                eType = OFTTime;
+                break;
+            case FGFT_DATETIME_WITH_OFFSET:
+                m_bArcGISPro32OrLater = true;
+                eType = OFTDateTime;
+                break;
         }
         OGRFieldDefn oFieldDefn(poGDBField->GetName().c_str(), eType);
         oFieldDefn.SetAlternativeName(poGDBField->GetAlias().c_str());
@@ -666,6 +689,14 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
             }
         }
 
+        if (psFieldDef && poGDBField->GetType() == FGFT_DATETIME)
+        {
+            if (EQUAL(CPLGetXMLValue(psFieldDef, "HighPrecision", ""), "true"))
+            {
+                poGDBField->SetHighPrecision();
+            }
+        }
+
         const OGRField *psDefault = poGDBField->GetDefault();
         if (!OGR_RawField_IsUnset(psDefault) && !OGR_RawField_IsNull(psDefault))
         {
@@ -679,7 +710,8 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 osDefault += "'";
                 oFieldDefn.SetDefault(osDefault);
             }
-            else if (eType == OFTInteger || eType == OFTReal)
+            else if (eType == OFTInteger || eType == OFTReal ||
+                     eType == OFTInteger64)
             {
                 // GDBs and the FileGDB SDK are not always reliable for
                 // numeric values It often occurs that the XML definition in
@@ -700,6 +732,11 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                     if (pszDefaultValue == nullptr)
                         pszDefaultValue =
                             CPLGetXMLValue(psFieldDef, "DefaultValue", nullptr);
+                    // For ArcGIS Pro 3.2 and esriFieldTypeBigInteger, this is
+                    // DefaultValueInteger
+                    if (pszDefaultValue == nullptr)
+                        pszDefaultValue = CPLGetXMLValue(
+                            psFieldDef, "DefaultValueInteger", nullptr);
                 }
                 if (pszDefaultValue != nullptr)
                 {
@@ -732,14 +769,54 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                         }
                         oFieldDefn.SetDefault(pszDefaultValue);
                     }
+                    else if (eType == OFTInteger64)
+                    {
+                        if (CPLAtoGIntBig(pszDefaultValue) !=
+                            psDefault->Integer64)
+                        {
+                            CPLDebug(
+                                "OpenFileGDB",
+                                "For field %s, XML definition mentions %s "
+                                "as default value whereas .gdbtable header "
+                                "mentions " CPL_FRMT_GIB ". Using %s",
+                                poGDBField->GetName().c_str(), pszDefaultValue,
+                                psDefault->Integer64, pszDefaultValue);
+                        }
+                        oFieldDefn.SetDefault(pszDefaultValue);
+                    }
                 }
             }
             else if (eType == OFTDateTime)
-                oFieldDefn.SetDefault(CPLSPrintf(
-                    "'%04d/%02d/%02d %02d:%02d:%02d'", psDefault->Date.Year,
-                    psDefault->Date.Month, psDefault->Date.Day,
-                    psDefault->Date.Hour, psDefault->Date.Minute,
-                    static_cast<int>(psDefault->Date.Second)));
+            {
+                if (poGDBField->GetType() == FGFT_DATETIME_WITH_OFFSET)
+                {
+                    oFieldDefn.SetDefault(CPLSPrintf(
+                        "'%04d/%02d/%02d %02d:%02d:%06.03f%c%02d:%02d'",
+                        psDefault->Date.Year, psDefault->Date.Month,
+                        psDefault->Date.Day, psDefault->Date.Hour,
+                        psDefault->Date.Minute, psDefault->Date.Second,
+                        psDefault->Date.TZFlag >= 100 ? '+' : '-',
+                        std::abs(psDefault->Date.TZFlag - 100) / 4,
+                        (std::abs(psDefault->Date.TZFlag - 100) % 4) * 15));
+                }
+                else
+                {
+                    oFieldDefn.SetDefault(CPLSPrintf(
+                        "'%04d/%02d/%02d %02d:%02d:%02d'", psDefault->Date.Year,
+                        psDefault->Date.Month, psDefault->Date.Day,
+                        psDefault->Date.Hour, psDefault->Date.Minute,
+                        static_cast<int>(psDefault->Date.Second)));
+                }
+            }
+            else if (eType == OFTDate)
+                oFieldDefn.SetDefault(
+                    CPLSPrintf("'%04d/%02d/%02d'", psDefault->Date.Year,
+                               psDefault->Date.Month, psDefault->Date.Day));
+            else if (eType == OFTTime)
+                oFieldDefn.SetDefault(
+                    CPLSPrintf("'%02d:%02d:%02d'", psDefault->Date.Hour,
+                               psDefault->Date.Minute,
+                               static_cast<int>(psDefault->Date.Second)));
         }
 
         if (psFieldDef)
@@ -1087,6 +1164,14 @@ static int FillTargetValueFromSrcExpr(OGRFieldDefn *poFieldDefn,
             else
                 poTargetValue->Integer =
                     static_cast<int>(poSrcValue->int_value);
+            break;
+
+        case OFTInteger64:
+            if (poSrcValue->field_type == SWQ_FLOAT)
+                poTargetValue->Integer64 =
+                    static_cast<GIntBig>(poSrcValue->float_value);
+            else
+                poTargetValue->Integer64 = poSrcValue->int_value;
             break;
 
         case OFTReal:
@@ -1707,7 +1792,11 @@ OGRFeature *OGROpenFileGDBLayer::GetCurrentFeature()
                     else if (poFieldDefn->GetType() == OFTDateTime)
                     {
                         OGRField sField = *psField;
-                        sField.Date.TZFlag = m_bTimeInUTC ? 100 : 0;
+                        if (m_poLyrTable->GetField(iGDBIdx)->GetType() ==
+                            FGFT_DATETIME)
+                        {
+                            sField.Date.TZFlag = m_bTimeInUTC ? 100 : 0;
+                        }
                         poFeature->SetField(iOGRIdx, &sField);
                     }
                     else

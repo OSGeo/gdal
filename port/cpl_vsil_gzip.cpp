@@ -2454,15 +2454,23 @@ size_t VSIGZipWriteHandleMT::Write(const void *const pBuffer,
         {
             while (true)
             {
+                // We store in a local variable instead of pCurBuffer_ directly
+                // to avoid Coverity Scan to be confused by the fact that we
+                // have used above pCurBuffer_ outside of the mutex. But what
+                // is protected by the mutex is aposBuffers_, not pCurBuffer_.
+                std::string *l_pCurBuffer = nullptr;
                 {
                     std::lock_guard<std::mutex> oLock(sMutex_);
                     if (!aposBuffers_.empty())
                     {
-                        pCurBuffer_ = aposBuffers_.back();
+                        l_pCurBuffer = aposBuffers_.back();
                         aposBuffers_.pop_back();
-                        break;
                     }
                 }
+                pCurBuffer_ = l_pCurBuffer;
+                if (pCurBuffer_)
+                    break;
+
                 if (poPool_)
                 {
                     poPool_->WaitEvent();

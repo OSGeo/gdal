@@ -78,7 +78,11 @@ typedef enum
     FGFT_RASTER = 9,
     FGFT_GUID = 10,
     FGFT_GLOBALID = 11,
-    FGFT_XML = 12
+    FGFT_XML = 12,
+    FGFT_INT64 = 13,                 // added in ArcGIS Pro 3.2
+    FGFT_DATE = 14,                  // added in ArcGIS Pro 3.2
+    FGFT_TIME = 15,                  // added in ArcGIS Pro 3.2
+    FGFT_DATETIME_WITH_OFFSET = 16,  // added in ArcGIS Pro 3.2
 } FileGDBFieldType;
 
 /************************************************************************/
@@ -99,6 +103,9 @@ class FileGDBField
     FileGDBFieldType m_eType = FGFT_UNDEFINED;
 
     bool m_bNullable = false;
+    bool m_bHighPrecsion = false;  // for FGFT_DATETIME
+    bool m_bReadAsDouble =
+        false;           // used by FileGDBTable::CreateAttributeIndex()
     int m_nMaxWidth = 0; /* for string */
 
     OGRField m_sDefault{};
@@ -145,6 +152,16 @@ class FileGDBField
     const OGRField *GetDefault() const
     {
         return &m_sDefault;
+    }
+
+    void SetHighPrecision()
+    {
+        m_bHighPrecsion = true;
+    }
+
+    bool IsHighPrecision() const
+    {
+        return m_bHighPrecsion;
     }
 
     int HasIndex();
@@ -763,7 +780,11 @@ class FileGDBOGRGeometryConverter
     GetGeometryTypeFromESRI(const char *pszESRIGeometryType);
 };
 
-int FileGDBDoubleDateToOGRDate(double dfVal, OGRField *psField);
+int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
+                               OGRField *psField);
+int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField);
+int FileGDBDateTimeWithOffsetToOGRDate(double dfVal, int16_t nUTCOffset,
+                                       OGRField *psField);
 
 } /* namespace OpenFileGDB */
 

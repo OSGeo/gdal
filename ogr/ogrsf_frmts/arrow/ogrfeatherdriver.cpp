@@ -36,12 +36,17 @@
 #include "../arrow_common/ograrrowwritablefile.h"
 #include "../arrow_common/ograrrowdataset.hpp"
 
+#include "ogrfeatherdrivercore.h"
+
 /************************************************************************/
 /*                        IsArrowIPCStream()                            */
 /************************************************************************/
 
 static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
 {
+    // WARNING: if making changes in that method, reflect them in
+    // OGRFeatherDriverIsArrowIPCStreamBasic() in ogrfeatherdrivercore.cpp
+
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "ARROW_IPC_STREAM:"))
         return true;
 
@@ -117,56 +122,6 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           IsArrowFileFormat()                        */
-/************************************************************************/
-
-template <size_t N> constexpr int constexpr_length(const char (&)[N])
-{
-    return static_cast<int>(N - 1);
-}
-
-static bool IsArrowFileFormat(GDALOpenInfo *poOpenInfo)
-{
-    // See https://arrow.apache.org/docs/format/Columnar.html#ipc-file-format
-    bool bRet = false;
-    constexpr const char SIGNATURE[] = "ARROW1";
-    constexpr int SIGNATURE_SIZE = constexpr_length(SIGNATURE);
-    static_assert(SIGNATURE_SIZE == 6, "SIGNATURE_SIZE == 6");
-    constexpr int SIGNATURE_PLUS_PADDING = SIGNATURE_SIZE + 2;
-    constexpr int FOOTERSIZE_SIZE = 4;
-    if (poOpenInfo->fpL != nullptr &&
-        poOpenInfo->nHeaderBytes >=
-            SIGNATURE_PLUS_PADDING + FOOTERSIZE_SIZE + SIGNATURE_SIZE &&
-        memcmp(poOpenInfo->pabyHeader, SIGNATURE, SIGNATURE_SIZE) == 0)
-    {
-        VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
-        const auto nFileSize = VSIFTellL(poOpenInfo->fpL);
-        VSIFSeekL(poOpenInfo->fpL,
-                  nFileSize - (FOOTERSIZE_SIZE + SIGNATURE_SIZE), SEEK_SET);
-        uint32_t nFooterSize = 0;
-        static_assert(sizeof(nFooterSize) == FOOTERSIZE_SIZE,
-                      "sizeof(nFooterSize) == FOOTERSIZE_SIZE");
-        VSIFReadL(&nFooterSize, 1, sizeof(nFooterSize), poOpenInfo->fpL);
-        CPL_LSBPTR32(&nFooterSize);
-        unsigned char abyTrailingBytes[SIGNATURE_SIZE] = {0};
-        VSIFReadL(&abyTrailingBytes[0], 1, SIGNATURE_SIZE, poOpenInfo->fpL);
-        bRet = memcmp(abyTrailingBytes, SIGNATURE, SIGNATURE_SIZE) == 0 &&
-               nFooterSize < nFileSize;
-        VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
-    }
-    return bRet;
-}
-
-/************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-static int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo)
-{
-    return IsArrowIPCStream(poOpenInfo) || IsArrowFileFormat(poOpenInfo);
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -178,7 +133,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 
     const bool bIsStreamingFormat = IsArrowIPCStream(poOpenInfo);
-    if (!bIsStreamingFormat && !IsArrowFileFormat(poOpenInfo))
+    if (!bIsStreamingFormat && !OGRFeatherDriverIsArrowFileFormat(poOpenInfo))
     {
         return nullptr;
     }
@@ -459,37 +414,14 @@ void OGRFeatherDriver::InitMetadata()
 
 void RegisterOGRArrow()
 {
-    if (GDALGetDriverByName("Arrow") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     auto poDriver = std::make_unique<OGRFeatherDriver>();
 
-    poDriver->SetDescription("Arrow");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "(Geo)Arrow IPC File Format / Stream");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "arrow feather arrows ipc");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/vector/feather.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONFIELDDATATYPES,
-        "Integer Integer64 Real String Date Time DateTime "
-        "Binary IntegerList Integer64List RealList StringList");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-                              "Boolean Int16 Float32 JSON UUID");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
-                              "WidthPrecision Nullable "
-                              "Comment AlternativeName Domain");
+    OGRFeatherDriverSetCommonMetadata(poDriver.get());
 
     poDriver->pfnOpen = OGRFeatherDriverOpen;
-    poDriver->pfnIdentify = OGRFeatherDriverIdentify;
     poDriver->pfnCreate = OGRFeatherDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver(poDriver.release());

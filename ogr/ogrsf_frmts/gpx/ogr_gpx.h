@@ -30,11 +30,15 @@
 #ifndef OGR_GPX_H_INCLUDED
 #define OGR_GPX_H_INCLUDED
 
+#include "cpl_vsi_virtual.h"
 #include "ogrsf_frmts.h"
 
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
 #endif
+
+#include <limits>
+#include <deque>
 
 class OGRGPXDataSource;
 
@@ -54,75 +58,75 @@ typedef enum
 
 class OGRGPXLayer final : public OGRLayer
 {
-    OGRFeatureDefn *poFeatureDefn;
-    OGRSpatialReference *poSRS;
-    OGRGPXDataSource *poDS;
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    OGRSpatialReference *m_poSRS = nullptr;
+    OGRGPXDataSource *m_poDS = nullptr;
 
-    GPXGeometryType gpxGeomType;
+    GPXGeometryType m_gpxGeomType = GPX_NONE;
 
-    int nGPXFields;
+    int m_nGPXFields = 0;
 
-    bool bWriteMode;
-    int nNextFID;
-    VSILFILE *fpGPX; /* Large file API */
+    bool m_bWriteMode = false;
+    GIntBig m_nNextFID = 0;
+    VSIVirtualHandleUniquePtr m_fpGPX{};
 #ifdef HAVE_EXPAT
-    XML_Parser oParser;
-    XML_Parser oSchemaParser;
+    XML_Parser m_oParser = nullptr;
+    XML_Parser m_oSchemaParser = nullptr;
 #endif
-    bool inInterestingElement;
-    bool hasFoundLat;
-    bool hasFoundLon;
+    bool m_inInterestingElement = false;
+    bool m_hasFoundLat = false;
+    bool m_hasFoundLon = false;
 #ifdef HAVE_EXPAT
-    double latVal;
-    double lonVal;
+    double m_latVal = 0;
+    double m_lonVal = 0;
 #endif
-    char *pszSubElementName;
-    char *pszSubElementValue;
-    int nSubElementValueLen;
+    std::string m_osSubElementName{};
+    std::string m_osSubElementValue{};
 #ifdef HAVE_EXPAT
-    int iCurrentField;
-#endif
-
-    OGRFeature *poFeature;
-    OGRFeature **ppoFeatureTab;
-    int nFeatureTabLength;
-    int nFeatureTabIndex;
-
-    OGRMultiLineString *multiLineString;
-    OGRLineString *lineString;
-
-    int depthLevel;
-    int interestingDepthLevel;
-
-#ifdef HAVE_EXPAT
-    OGRFieldDefn *currentFieldDefn;
-    bool inExtensions;
-    int extensionsDepthLevel;
-
-    bool inLink;
-    int iCountLink;
-#endif
-    int nMaxLinks;
-
-    bool bEleAs25D;
-
-    int trkFID;
-    int trkSegId;
-    int trkSegPtId;
-
-    int rteFID;
-    int rtePtId;
-
-#ifdef HAVE_EXPAT
-    bool bStopParsing;
-    int nWithoutEventCounter;
-    int nDataHandlerCounter;
+    int m_iCurrentField = 0;
 #endif
 
-    int iFirstGPXField;
+    std::unique_ptr<OGRFeature> m_poFeature{};
+    std::deque<std::unique_ptr<OGRFeature>> m_oFeatureQueue{};
+
+    std::unique_ptr<OGRMultiLineString> m_multiLineString{};
+    std::unique_ptr<OGRLineString> m_lineString{};
+
+    int m_depthLevel = 0;
+    int m_interestingDepthLevel = 0;
+
+#ifdef HAVE_EXPAT
+    OGRFieldDefn *m_currentFieldDefn = nullptr;
+    bool m_inExtensions = false;
+    int m_extensionsDepthLevel = 0;
+
+    bool m_inLink = 0;
+    int m_iCountLink = 0;
+#endif
+    int m_nMaxLinks = 0;
+
+    bool m_bEleAs25D = false;
+
+    int m_trkFID = 0;
+    int m_trkSegId = 0;
+    int m_trkSegPtId = 0;
+
+    int m_rteFID = 0;
+    int m_rtePtId = 0;
+
+#ifdef HAVE_EXPAT
+    bool m_bStopParsing = false;
+    int m_nWithoutEventCounter = 0;
+    int m_nDataHandlerCounter = 0;
+#endif
+
+    int m_iFirstGPXField = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGPXLayer)
 
   private:
-    void WriteFeatureAttributes(OGRFeature *poFeature, int nIdentLevel = 1);
+    void WriteFeatureAttributes(const OGRFeature *poFeature,
+                                int nIdentLevel = 1);
     void LoadExtensionsSchema();
 #ifdef HAVE_EXPAT
     void AddStrToSubElementValue(const char *pszStr);
@@ -133,7 +137,7 @@ class OGRGPXLayer final : public OGRLayer
   public:
     OGRGPXLayer(const char *pszFilename, const char *layerName,
                 GPXGeometryType gpxGeomType, OGRGPXDataSource *poDS,
-                int bWriteMode = FALSE);
+                bool bWriteMode);
     ~OGRGPXLayer();
 
     void ResetReading() override;
@@ -144,7 +148,7 @@ class OGRGPXLayer final : public OGRLayer
 
     OGRFeatureDefn *GetLayerDefn() override
     {
-        return poFeatureDefn;
+        return m_poFeatureDefn;
     }
 
     int TestCapability(const char *) override;
@@ -174,34 +178,30 @@ typedef enum
     GPX_VALIDITY_VALID
 } OGRGPXValidity;
 
-class OGRGPXDataSource final : public OGRDataSource
+class OGRGPXDataSource final : public GDALDataset
 {
-    char *pszName;
-
-    OGRGPXLayer **papoLayers;
-    int nLayers;
+    std::vector<std::unique_ptr<OGRGPXLayer>> m_apoLayers{};
 
     /*  Export related */
-    VSILFILE *fpOutput; /* Large file API */
-    bool bIsBackSeekable;
-    const char *pszEOL;
-    int nOffsetBounds;
-    double dfMinLat;
-    double dfMinLon;
-    double dfMaxLat;
-    double dfMaxLon;
+    VSIVirtualHandleUniquePtr m_fpOutput{};
+    bool m_bIsBackSeekable = true;
+    const char *m_pszEOL = "\n";
+    vsi_l_offset m_nOffsetBounds = 0;
+    double m_dfMinLat = std::numeric_limits<double>::infinity();
+    double m_dfMinLon = std::numeric_limits<double>::infinity();
+    double m_dfMaxLat = -std::numeric_limits<double>::infinity();
+    double m_dfMaxLon = -std::numeric_limits<double>::infinity();
 
-    GPXGeometryType lastGPXGeomTypeWritten;
+    GPXGeometryType m_lastGPXGeomTypeWritten = GPX_NONE;
 
-    bool bUseExtensions;
-    char *pszExtensionsNS;
+    bool m_bUseExtensions = false;
+    std::string m_osExtensionsNS{};
 
 #ifdef HAVE_EXPAT
-    OGRGPXValidity validity;
-    int nElementsRead;
-    char *pszVersion;
-    XML_Parser oCurrentParser;
-    int nDataHandlerCounter;
+    OGRGPXValidity m_validity = GPX_VALIDITY_UNKNOWN;
+    std::string m_osVersion{};
+    XML_Parser m_oCurrentParser = nullptr;
+    int m_nDataHandlerCounter = 0;
     bool m_bInMetadata = false;
     bool m_bInMetadataAuthor = false;
     bool m_bInMetadataAuthorLink = false;
@@ -213,26 +213,23 @@ class OGRGPXDataSource final : public OGRDataSource
     std::string m_osMetadataValue{};
 #endif
 
+    CPL_DISALLOW_COPY_ASSIGN(OGRGPXDataSource)
+
   public:
-    OGRGPXDataSource();
+    OGRGPXDataSource() = default;
     ~OGRGPXDataSource();
 
-    int nLastRteId;
-    int nLastTrkId;
-    int nLastTrkSegId;
+    int m_nLastRteId = -1;
+    int m_nLastTrkId = -1;
+    int m_nLastTrkSegId = -1;
 
     int Open(const char *pszFilename, int bUpdate);
 
     int Create(const char *pszFilename, char **papszOptions);
 
-    const char *GetName() override
-    {
-        return pszName;
-    }
-
     int GetLayerCount() override
     {
-        return nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
     OGRLayer *GetLayer(int) override;
 
@@ -245,33 +242,33 @@ class OGRGPXDataSource final : public OGRDataSource
 
     VSILFILE *GetOutputFP()
     {
-        return fpOutput;
+        return m_fpOutput.get();
     }
     void SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)
     {
-        lastGPXGeomTypeWritten = gpxGeomType;
+        m_lastGPXGeomTypeWritten = gpxGeomType;
     }
-    GPXGeometryType GetLastGPXGeomTypeWritten()
+    GPXGeometryType GetLastGPXGeomTypeWritten() const
     {
-        return lastGPXGeomTypeWritten;
+        return m_lastGPXGeomTypeWritten;
     }
 
-    int GetUseExtensions()
+    bool GetUseExtensions() const
     {
-        return bUseExtensions;
+        return m_bUseExtensions;
     }
-    const char *GetExtensionsNS()
+    const std::string &GetExtensionsNS() const
     {
-        return pszExtensionsNS;
+        return m_osExtensionsNS;
     }
 
 #ifdef HAVE_EXPAT
     void startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void endElementValidateCbk(const char *pszName);
     void dataHandlerValidateCbk(const char *data, int nLen);
-    const char *GetVersion()
+    const char *GetVersion() const
     {
-        return pszVersion;
+        return m_osVersion.c_str();
     }
 #endif
 

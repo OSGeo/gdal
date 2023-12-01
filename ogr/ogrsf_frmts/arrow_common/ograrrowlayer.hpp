@@ -1098,8 +1098,8 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
 /************************************************************************/
 
 template <class ArrowType>
-static CPLJSONObject GetListAsJSON(const ArrowType *array,
-                                   const size_t nIdxInArray)
+static CPLJSONArray GetListAsJSON(const ArrowType *array,
+                                  const size_t nIdxInArray)
 {
     const auto values = std::static_pointer_cast<ArrowType>(array->values());
     const auto nIdxStart = array->value_offset(nIdxInArray);
@@ -4378,6 +4378,26 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                     "BASE_SEQUENTIAL_FID",
                     CPLSPrintf(CPL_FRMT_GIB,
                                static_cast<GIntBig>(nFeatureIdxCur)));
+
+            // If there might be more than one record batch, it is more
+            // prudent to clone the array before modifying it.
+            if (nFeatureIdxCur > 0 || !TestCapability(OLCFastFeatureCount) ||
+                out_array->length < GetFeatureCount(false))
+            {
+                struct ArrowArray new_array;
+                if (!OGRCloneArrowArray(&m_sCachedSchema, out_array,
+                                        &new_array))
+                {
+                    if (out_array->release)
+                        out_array->release(out_array);
+                    memset(out_array, 0, sizeof(*out_array));
+                    return ENOMEM;
+                }
+                if (out_array->release)
+                    out_array->release(out_array);
+                memcpy(out_array, &new_array, sizeof(new_array));
+            }
+
             PostFilterArrowArray(&m_sCachedSchema, out_array,
                                  aosOptions.List());
             if (out_array->length == 0)

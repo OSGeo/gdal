@@ -31,6 +31,7 @@
 
 #include "cpl_port.h"
 #include "gribdataset.h"
+#include "gribdrivercore.h"
 
 #include <cerrno>
 #include <cmath>
@@ -1298,30 +1299,6 @@ CPLErr GRIBDataset::GetGeoTransform(double *padfTransform)
 }
 
 /************************************************************************/
-/*                            Identify()                                */
-/************************************************************************/
-
-int GRIBDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->nHeaderBytes < 8)
-        return FALSE;
-
-    const char *pasHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
-    // Does a part of what ReadSECT0(), but in a thread-safe way.
-    for (int i = 0; i < poOpenInfo->nHeaderBytes - 3; i++)
-    {
-        if (STARTS_WITH_CI(pasHeader + i, "GRIB")
-#ifdef ENABLE_TDLP
-            || STARTS_WITH_CI(pasHeader + i, "TDLP")
-#endif
-        )
-            return TRUE;
-    }
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                                Inventory()                           */
 /************************************************************************/
 
@@ -1368,7 +1345,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
-    if (!Identify(poOpenInfo))
+    if (!GRIBDriverIdentify(poOpenInfo))
         return nullptr;
 #endif
     if (poOpenInfo->fpL == nullptr)
@@ -2726,35 +2703,15 @@ static void GDALDeregister_GRIB(GDALDriver *)
 
 class GDALGRIBDriver : public GDALDriver
 {
-    bool bHasFullInitMetadata;
-    CPLStringList aosMetadata;
+    bool m_bHasFullInitMetadata = false;
 
   public:
-    GDALGRIBDriver();
+    GDALGRIBDriver() = default;
 
-    char **GetMetadata(const char *pszDomain) override;
+    char **GetMetadata(const char *pszDomain = "") override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
-    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
-                           const char *pszDomain) override;
 };
-
-/************************************************************************/
-/*                          GDALGRIBDriver()                            */
-/************************************************************************/
-
-GDALGRIBDriver::GDALGRIBDriver() : bHasFullInitMetadata(false)
-{
-    aosMetadata.SetNameValue(GDAL_DCAP_RASTER, "YES");
-    aosMetadata.SetNameValue(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
-    aosMetadata.SetNameValue(GDAL_DMD_HELPTOPIC, "drivers/raster/grib.html");
-    aosMetadata.SetNameValue(GDAL_DMD_EXTENSIONS, "grb grb2 grib2");
-    aosMetadata.SetNameValue(GDAL_DCAP_VIRTUALIO, "YES");
-
-    aosMetadata.SetNameValue(GDAL_DMD_CREATIONDATATYPES,
-                             "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                             "Float64");
-}
 
 /************************************************************************/
 /*                            GetMetadata()                             */
@@ -2766,9 +2723,9 @@ char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
     {
         // Defer until necessary the setting of the CreationOptionList
         // to let a chance to JPEG2000 drivers to have been loaded.
-        if (!bHasFullInitMetadata)
+        if (!m_bHasFullInitMetadata)
         {
-            bHasFullInitMetadata = true;
+            m_bHasFullInitMetadata = true;
 
             std::vector<CPLString> aosJ2KDrivers;
             for (size_t i = 0; i < CPL_ARRAYSIZE(apszJ2KDrivers); i++)
@@ -2850,20 +2807,10 @@ char **GDALGRIBDriver::GetMetadata(const char *pszDomain)
                 "description='Override options at band level'/>"
                 "</CreationOptionList>";
 
-            aosMetadata.SetNameValue(GDAL_DMD_CREATIONOPTIONLIST,
-                                     osCreationOptionList);
-
-            aosMetadata.SetNameValue(
-                GDAL_DMD_OPENOPTIONLIST,
-                "<OpenOptionList>"
-                "    <Option name='USE_IDX' type='boolean' "
-                "description='Load metadata from "
-                "wgrib2 index file if available' default='YES'/>"
-                "</OpenOptionList>");
+            SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osCreationOptionList);
         }
-        return aosMetadata.List();
     }
-    return nullptr;
+    return GDALDriver::GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -2877,26 +2824,10 @@ const char *GDALGRIBDriver::GetMetadataItem(const char *pszName,
     {
         // Defer until necessary the setting of the CreationOptionList
         // to let a chance to JPEG2000 drivers to have been loaded.
-        if (!EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
-            return CSLFetchNameValue(aosMetadata, pszName);
+        if (EQUAL(pszName, GDAL_DMD_CREATIONOPTIONLIST))
+            GetMetadata();
     }
-    return CSLFetchNameValue(GetMetadata(pszDomain), pszName);
-}
-
-/************************************************************************/
-/*                          SetMetadataItem()                           */
-/************************************************************************/
-
-CPLErr GDALGRIBDriver::SetMetadataItem(const char *pszName,
-                                       const char *pszValue,
-                                       const char *pszDomain)
-{
-    if (pszDomain == nullptr || EQUAL(pszDomain, ""))
-    {
-        aosMetadata.SetNameValue(pszName, pszValue);
-        return CE_None;
-    }
-    return GDALDriver::SetMetadataItem(pszName, pszValue, pszDomain);
+    return GDALDriver::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -2906,17 +2837,13 @@ CPLErr GDALGRIBDriver::SetMetadataItem(const char *pszName,
 void GDALRegister_GRIB()
 
 {
-    if (GDALGetDriverByName("GRIB") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALGRIBDriver();
-
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
-
-    poDriver->SetDescription("GRIB");
+    GRIBDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = GRIBDataset::Open;
-    poDriver->pfnIdentify = GRIBDataset::Identify;
     poDriver->pfnCreateCopy = GRIBDataset::CreateCopy;
     poDriver->pfnUnloadDriver = GDALDeregister_GRIB;
 

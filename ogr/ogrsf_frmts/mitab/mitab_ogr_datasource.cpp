@@ -383,8 +383,9 @@ OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
         poFile->SetSpatialRef(poSRSClone);
         poSRSClone->Release();
         // SetSpatialRef() has cloned the passed geometry
-        poFile->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(
-            poFile->GetSpatialRef());
+        auto poGeomFieldDefn = poFile->GetLayerDefn()->GetGeomFieldDefn(0);
+        auto oTemporaryUnsealer(poGeomFieldDefn->GetTemporaryUnsealer());
+        poGeomFieldDefn->SetSpatialRef(poFile->GetSpatialRef());
     }
 
     // Pull out the bounds if supplied

@@ -149,6 +149,8 @@ static int CPL_STDCALL WarpTermProgress(double dfProgress,
     }
     else if (pszMessage != osLastMsg)
     {
+        if (!osLastMsg.empty())
+            GDALTermProgress(1.0, nullptr, nullptr);
         printf("%s : ", pszMessage);
         osLastMsg = pszMessage;
         iSrc++;

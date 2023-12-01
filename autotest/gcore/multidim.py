@@ -968,3 +968,175 @@ def test_multidim_SubsetDimensionFromSelection():
     assert indexed_twice_by_band_subset.Read(
         array_start_idx=[1, 0, 0], array_step=[-1, 1, 1]
     ) == array.array("d", [12.0, 14.0, 15.0, 17.0, 0.0, 2.0, 3.0, 5.0])
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_CreateRasterAttributeTableFromMDArrays():
+
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+    dim = rg.CreateDimension("dim", None, None, 2)
+    other_dim = rg.CreateDimension("other_dim", None, None, 2)
+    ar_double = rg.CreateMDArray(
+        "ar_double", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    ar_int = rg.CreateMDArray(
+        "ar_int", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
+    )
+    ar_string = rg.CreateMDArray(
+        "ar_string", [dim], gdal.ExtendedDataType.CreateString()
+    )
+    ar_other_dim = rg.CreateMDArray(
+        "ar_other_dim", [other_dim], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    ar_2D = rg.CreateMDArray(
+        "ar_2D", [dim, dim], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+
+    with pytest.raises(Exception, match="apoArrays should not be empty"):
+        gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [])
+    with pytest.raises(Exception, match="object of wrong GDALMDArrayHS"):
+        gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [None])
+    with pytest.raises(Exception, match="not a sequence"):
+        gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, 1)
+    with pytest.raises(Exception, match="object of wrong GDALMDArrayHS"):
+        gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [dim])
+    with pytest.raises(Exception, match=r"apoArrays\[0\] has a dimension count != 1"):
+        gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [ar_2D])
+    with pytest.raises(
+        Exception,
+        match=r"apoArrays\[1\] does not have the same dimension has apoArrays\[0\]",
+    ):
+        gdal.CreateRasterAttributeTableFromMDArrays(
+            gdal.GRTT_ATHEMATIC, [ar_double, ar_other_dim]
+        )
+    with pytest.raises(Exception, match="nUsages != nArrays"):
+        gdal.CreateRasterAttributeTableFromMDArrays(
+            gdal.GRTT_ATHEMATIC, [ar_double], [gdal.GFU_Generic, gdal.GFU_Generic]
+        )
+    with pytest.raises(Exception, match="not a sequence"):
+        gdal.CreateRasterAttributeTableFromMDArrays(gdal.GRTT_ATHEMATIC, [ar_double], 1)
+    with pytest.raises(Exception, match="not a valid GDALRATFieldUsage"):
+        gdal.CreateRasterAttributeTableFromMDArrays(
+            gdal.GRTT_ATHEMATIC, [ar_double], [None]
+        )
+    with pytest.raises(Exception, match="not a valid GDALRATFieldUsage"):
+        gdal.CreateRasterAttributeTableFromMDArrays(
+            gdal.GRTT_ATHEMATIC, [ar_double], [-1]
+        )
+    with pytest.raises(Exception, match="not a valid GDALRATFieldUsage"):
+        gdal.CreateRasterAttributeTableFromMDArrays(
+            gdal.GRTT_ATHEMATIC, [ar_double], [gdal.GFU_MaxCount]
+        )
+
+    rat = gdal.CreateRasterAttributeTableFromMDArrays(
+        gdal.GRTT_ATHEMATIC, [ar_double, ar_int, ar_string]
+    )
+    assert rat.GetTableType() == gdal.GRTT_ATHEMATIC
+    assert rat.GetColumnCount() == 3
+    assert rat.GetRowCount() == 2
+    assert rat.Clone().GetColumnCount() == 3
+    assert rat.GetNameOfCol(-1) is None
+    assert rat.GetNameOfCol(rat.GetColumnCount()) is None
+    assert rat.GetNameOfCol(0) == "ar_double"
+    assert rat.GetUsageOfCol(-1) == gdal.GFU_Generic
+    assert rat.GetUsageOfCol(0) == gdal.GFU_Generic
+    assert rat.GetUsageOfCol(rat.GetColumnCount()) == gdal.GFU_Generic
+    assert rat.GetTypeOfCol(-1) == gdal.GFT_Integer
+    assert rat.GetTypeOfCol(rat.GetColumnCount()) == gdal.GFT_Integer
+    assert rat.GetTypeOfCol(0) == gdal.GFT_Real
+    assert rat.GetTypeOfCol(1) == gdal.GFT_Integer
+    assert rat.GetTypeOfCol(2) == gdal.GFT_String
+
+    ar_double.Write([0.5, 1.5])
+
+    icol = 0
+    assert rat.GetValueAsDouble(-1, icol) == 0
+    assert rat.GetValueAsDouble(0, icol) == 0.5
+    assert rat.GetValueAsDouble(1, icol) == 1.5
+    assert rat.GetValueAsDouble(2, icol) == 0
+
+    assert rat.ReadValuesIOAsDouble(icol, 0, 2) == [0.5, 1.5]
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsDouble(icol, -1, 1)
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsDouble(icol, 0, rat.GetRowCount() + 1)
+    with pytest.raises(Exception, match="invalid length"):
+        rat.ReadValuesIOAsDouble(icol, 0, -1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsDouble(-1, 0, 1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsDouble(rat.GetColumnCount(), 0, 1)
+
+    ar_int.Write([1, 2])
+
+    icol = 1
+    assert rat.GetValueAsInt(-1, icol) == 0
+    assert rat.GetValueAsInt(0, icol) == 1
+    assert rat.GetValueAsInt(1, icol) == 2
+    assert rat.GetValueAsInt(2, icol) == 0
+
+    assert rat.ReadValuesIOAsInteger(icol, 0, 2) == [1, 2]
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsInteger(icol, -1, 1)
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsInteger(icol, 0, rat.GetRowCount() + 1)
+    with pytest.raises(Exception, match="invalid length"):
+        rat.ReadValuesIOAsInteger(icol, 0, -1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsInteger(-1, 0, 1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsInteger(rat.GetColumnCount(), 0, 1)
+
+    ar_string.Write(["foo", "bar"])
+
+    icol = 2
+    assert rat.GetValueAsString(-1, icol) is None
+    assert rat.GetValueAsString(0, icol) == "foo"
+    assert rat.GetValueAsString(1, icol) == "bar"
+    assert rat.GetValueAsString(2, icol) is None
+
+    assert rat.ReadValuesIOAsString(icol, 0, 2) == ["foo", "bar"]
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsString(icol, -1, 1)
+    with pytest.raises(Exception, match="Invalid iStartRow/iLength"):
+        rat.ReadValuesIOAsString(icol, 0, rat.GetRowCount() + 1)
+    with pytest.raises(Exception, match="invalid length"):
+        rat.ReadValuesIOAsString(icol, 0, -1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsString(-1, 0, 1)
+    with pytest.raises(Exception, match="Invalid iField"):
+        rat.ReadValuesIOAsString(rat.GetColumnCount(), 0, 1)
+
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
+    ):
+        rat.SetValueAsString(0, 0, "foo")
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
+    ):
+        rat.SetValueAsInt(0, 0, 0)
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetValue\(\): not supported",
+    ):
+        rat.SetValueAsDouble(0, 0, 0.5)
+    assert rat.ChangesAreWrittenToFile() == False
+    with pytest.raises(
+        Exception,
+        match=r"GDALRasterAttributeTableFromMDArrays::SetTableType\(\): not supported",
+    ):
+        rat.SetTableType(gdal.GRTT_ATHEMATIC)
+    rat.RemoveStatistics()
+
+    rat = gdal.CreateRasterAttributeTableFromMDArrays(
+        gdal.GRTT_ATHEMATIC,
+        [ar_double, ar_int, ar_string],
+        [gdal.GFU_Generic, gdal.GFU_PixelCount, gdal.GFU_Generic],
+    )
+    assert rat.GetUsageOfCol(1) == gdal.GFU_PixelCount
+    assert rat.GetColOfUsage(gdal.GFU_PixelCount) == 1
+    assert rat.GetColOfUsage(gdal.GFU_Min) == -1

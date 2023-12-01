@@ -302,11 +302,10 @@ RegisterEdge(const double *padfX, const double *padfY, const double *padfZ,
     oVector.push_back(padfX[1 - idx]);
     oVector.push_back(padfY[1 - idx]);
     oVector.push_back(padfZ[1 - idx]);
-    std::map<std::vector<double>, std::pair<int, int>>::iterator oIter =
-        oMapEdges.find(oVector);
+    const auto oIter = oMapEdges.find(oVector);
     if (oIter == oMapEdges.end())
     {
-        oMapEdges[oVector] = std::pair<int, int>(nPart, -1);
+        oMapEdges[oVector] = std::pair(nPart, -1);
     }
     else
     {
@@ -349,8 +348,7 @@ static const std::pair<int, int> &GetEdgeOwners(
     oVector.push_back(padfX[1 - idx]);
     oVector.push_back(padfY[1 - idx]);
     oVector.push_back(padfZ[1 - idx]);
-    std::map<std::vector<double>, std::pair<int, int>>::const_iterator oIter =
-        oMapEdges.find(oVector);
+    const auto oIter = oMapEdges.find(oVector);
     CPLAssert(oIter != oMapEdges.end());
     return oIter->second;
 }
@@ -453,7 +451,7 @@ OGRGeometry *OGRCreateFromMultiPatch(int nParts, const GInt32 *panPartStart,
             const int nPartStart = panPartStart[iPart];
             for (int j = 0; j < 3; j++)
             {
-                const std::pair<int, int> &oPair = GetEdgeOwners(
+                const auto &oPair = GetEdgeOwners(
                     padfX + nPartStart + j, padfY + nPartStart + j,
                     padfZ + nPartStart + j, oMapEdges);
                 const int iOtherPart =

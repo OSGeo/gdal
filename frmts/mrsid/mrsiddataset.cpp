@@ -36,6 +36,8 @@
 #include "ogr_spatialref.h"
 #include <string>
 
+#include "mrsiddrivercore.h"
+
 #include <geo_normalize.h>
 #include <geovalues.h>
 
@@ -1357,32 +1359,6 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
 }
 
 /************************************************************************/
-/*                         MrSIDIdentify()                              */
-/*                                                                      */
-/*          Identify method that only supports MrSID files.             */
-/************************************************************************/
-
-static int MrSIDIdentify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->nHeaderBytes < 32)
-        return FALSE;
-
-    if (!STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader, "msid"))
-        return FALSE;
-
-#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
-    lt_uint8 gen;
-    bool raster;
-    LT_STATUS eStat = MrSIDImageReaderInterface::getMrSIDGeneration(
-        poOpenInfo->pabyHeader, gen, raster);
-    if (!LT_SUCCESS(eStat) || !raster)
-        return FALSE;
-#endif
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                          MrSIDOpen()                                 */
 /*                                                                      */
 /*          Open method that only supports MrSID files.                 */
@@ -1393,38 +1369,19 @@ static GDALDataset *MrSIDOpen(GDALOpenInfo *poOpenInfo)
     if (!MrSIDIdentify(poOpenInfo))
         return nullptr;
 
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
+    lt_uint8 gen;
+    bool raster;
+    LT_STATUS eStat = MrSIDImageReaderInterface::getMrSIDGeneration(
+        poOpenInfo->pabyHeader, gen, raster);
+    if (!LT_SUCCESS(eStat) || !raster)
+        return nullptr;
+#endif
+
     return MrSIDDataset::Open(poOpenInfo, FALSE);
 }
 
 #ifdef MRSID_J2K
-
-static const unsigned char jpc_header[] = {0xff, 0x4f};
-
-/************************************************************************/
-/*                         JP2Identify()                                */
-/*                                                                      */
-/*        Identify method that only supports JPEG2000 files.            */
-/************************************************************************/
-
-static int JP2Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->nHeaderBytes < 32)
-        return FALSE;
-
-    if (memcmp(poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header)) == 0)
-    {
-        const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
-
-        if (!EQUAL(pszExtension, "jpc") && !EQUAL(pszExtension, "j2k") &&
-            !EQUAL(pszExtension, "jp2") && !EQUAL(pszExtension, "jpx") &&
-            !EQUAL(pszExtension, "j2c") && !EQUAL(pszExtension, "ntf"))
-            return FALSE;
-    }
-    else if (!STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader + 4, "jP  "))
-        return FALSE;
-
-    return TRUE;
-}
 
 /************************************************************************/
 /*                            JP2Open()                                 */
@@ -1434,7 +1391,7 @@ static int JP2Identify(GDALOpenInfo *poOpenInfo)
 
 static GDALDataset *JP2Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!JP2Identify(poOpenInfo))
+    if (!MrSIDJP2Identify(poOpenInfo))
         return nullptr;
 
     return MrSIDDataset::Open(poOpenInfo, TRUE);
@@ -3602,50 +3559,14 @@ void GDALRegister_MrSID()
     /* -------------------------------------------------------------------- */
     /*      MrSID driver.                                                   */
     /* -------------------------------------------------------------------- */
-    if (GDALGetDriverByName("MrSID") != nullptr)
+    if (GDALGetDriverByName(MRSID_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("MrSID");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Multi-resolution Seamless Image Database "
-                              "(MrSID)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/mrsid.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sid");
-
+    MrSIDDriverSetCommonMetadata(poDriver);
 #ifdef MRSID_ESDK
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Int32 UInt32 "
-                              "Float32 Float64");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        // Version 2 Options
-        "   <Option name='COMPRESSION' type='double' description='Set "
-        "compression ratio (0.0 default is meant to be lossless)'/>"
-        // Version 3 Options
-        "   <Option name='TWOPASS' type='int' description='Use twopass "
-        "optimizer algorithm'/>"
-        "   <Option name='FILESIZE' type='int' description='Set target file "
-        "size (0 implies lossless compression)'/>"
-        // Version 2 and 3 Option
-        "   <Option name='WORLDFILE' type='boolean' description='Write out "
-        "world file'/>"
-        // Version Type
-        "   <Option name='VERSION' type='int' description='Valid versions are "
-        "2 and 3, default = 3'/>"
-        "</CreationOptionList>");
-
     poDriver->pfnCreateCopy = MrSIDCreateCopy;
-
-#else
-    // In read-only mode, we support VirtualIO. I don't think this is the case
-    // for MrSIDCreateCopy().
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 #endif
-    poDriver->pfnIdentify = MrSIDIdentify;
     poDriver->pfnOpen = MrSIDOpen;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
@@ -3655,35 +3576,10 @@ void GDALRegister_MrSID()
 /* -------------------------------------------------------------------- */
 #ifdef MRSID_J2K
     poDriver = new GDALDriver();
-
-    poDriver->SetDescription("JP2MrSID");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MrSID JPEG2000");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/jp2mrsid.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2");
-
+    JP2MrSIDDriverSetCommonMetadata(poDriver);
 #ifdef MRSID_ESDK
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='COMPRESSION' type='double' description='Set "
-        "compression ratio (0.0 default is meant to be lossless)'/>"
-        "   <Option name='WORLDFILE' type='boolean' description='Write out "
-        "world file'/>"
-        "   <Option name='XMLPROFILE' type='string' description='Use named xml "
-        "profile file'/>"
-        "</CreationOptionList>");
-
     poDriver->pfnCreateCopy = JP2CreateCopy;
-#else
-    /* In read-only mode, we support VirtualIO. I don't think this is the case
-     */
-    /* for JP2CreateCopy() */
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 #endif
-    poDriver->pfnIdentify = JP2Identify;
     poDriver->pfnOpen = JP2Open;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

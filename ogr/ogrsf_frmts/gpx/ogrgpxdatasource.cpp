@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "ogr_gpx.h"
 
+#include <algorithm>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -50,69 +51,41 @@
 constexpr int SPACE_FOR_METADATA_BOUNDS = 160;
 
 /************************************************************************/
-/*                          OGRGPXDataSource()                          */
-/************************************************************************/
-
-OGRGPXDataSource::OGRGPXDataSource()
-    : pszName(nullptr), papoLayers(nullptr), nLayers(0), fpOutput(nullptr),
-      bIsBackSeekable(true), pszEOL("\n"), nOffsetBounds(-1), dfMinLat(90),
-      dfMinLon(180), dfMaxLat(-90), dfMaxLon(-180),
-      lastGPXGeomTypeWritten(GPX_NONE), bUseExtensions(false),
-      pszExtensionsNS(nullptr),
-#ifdef HAVE_EXPAT
-      validity(GPX_VALIDITY_UNKNOWN), nElementsRead(0), pszVersion(nullptr),
-      oCurrentParser(nullptr), nDataHandlerCounter(0),
-#endif
-      nLastRteId(-1), nLastTrkId(-1), nLastTrkSegId(-1)
-{
-}
-
-/************************************************************************/
 /*                         ~OGRGPXDataSource()                          */
 /************************************************************************/
 
 OGRGPXDataSource::~OGRGPXDataSource()
 
 {
-    if (fpOutput != nullptr)
+    if (m_fpOutput != nullptr)
     {
-        if (nLastRteId != -1)
+        if (m_nLastRteId != -1)
             PrintLine("</rte>");
-        else if (nLastTrkId != -1)
+        else if (m_nLastTrkId != -1)
         {
             PrintLine("  </trkseg>");
             PrintLine("</trk>");
         }
         PrintLine("</gpx>");
-        if (bIsBackSeekable)
+        if (m_bIsBackSeekable)
         {
             /* Write the <bounds> element in the reserved space */
-            if (dfMinLon <= dfMaxLon)
+            if (m_dfMinLon <= m_dfMaxLon)
             {
                 char szBounds[SPACE_FOR_METADATA_BOUNDS + 1];
                 int nRet =
                     CPLsnprintf(szBounds, SPACE_FOR_METADATA_BOUNDS,
                                 "<bounds minlat=\"%.15f\" minlon=\"%.15f\""
                                 " maxlat=\"%.15f\" maxlon=\"%.15f\"/>",
-                                dfMinLat, dfMinLon, dfMaxLat, dfMaxLon);
+                                m_dfMinLat, m_dfMinLon, m_dfMaxLat, m_dfMaxLon);
                 if (nRet < SPACE_FOR_METADATA_BOUNDS)
                 {
-                    VSIFSeekL(fpOutput, nOffsetBounds, SEEK_SET);
-                    VSIFWriteL(szBounds, 1, strlen(szBounds), fpOutput);
+                    m_fpOutput->Seek(m_nOffsetBounds, SEEK_SET);
+                    m_fpOutput->Write(szBounds, 1, strlen(szBounds));
                 }
             }
         }
-        VSIFCloseL(fpOutput);
     }
-
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
-    CPLFree(pszExtensionsNS);
-    CPLFree(pszName);
-#ifdef HAVE_EXPAT
-    CPLFree(pszVersion);
-#endif
 }
 
 /************************************************************************/
@@ -139,10 +112,10 @@ int OGRGPXDataSource::TestCapability(const char *pszCap)
 OGRLayer *OGRGPXDataSource::GetLayer(int iLayer)
 
 {
-    if (iLayer < 0 || iLayer >= nLayers)
+    if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
 
-    return papoLayers[iLayer];
+    return m_apoLayers[iLayer].get();
 }
 
 /************************************************************************/
@@ -196,13 +169,10 @@ OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
                  OGRGeometryTypeToName(eType));
         return nullptr;
     }
-    nLayers++;
-    papoLayers = static_cast<OGRGPXLayer **>(
-        CPLRealloc(papoLayers, nLayers * sizeof(OGRGPXLayer *)));
-    papoLayers[nLayers - 1] =
-        new OGRGPXLayer(pszName, pszLayerName, gpxGeomType, this, TRUE);
+    m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
+        GetDescription(), pszLayerName, gpxGeomType, this, true));
 
-    return papoLayers[nLayers - 1];
+    return m_apoLayers.back().get();
 }
 
 #ifdef HAVE_EXPAT
@@ -214,26 +184,29 @@ OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
 void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
                                                const char **ppszAttr)
 {
-    if (validity == GPX_VALIDITY_UNKNOWN)
+    if (m_validity == GPX_VALIDITY_UNKNOWN)
     {
         if (strcmp(pszNameIn, "gpx") == 0)
         {
-            validity = GPX_VALIDITY_VALID;
+            m_validity = GPX_VALIDITY_VALID;
             for (int i = 0; ppszAttr[i] != nullptr; i += 2)
             {
                 if (strcmp(ppszAttr[i], "version") == 0)
                 {
-                    pszVersion = CPLStrdup(ppszAttr[i + 1]);
-                    break;
+                    m_osVersion = ppszAttr[i + 1];
+                }
+                else if (strcmp(ppszAttr[i], "xmlns:ogr") == 0)
+                {
+                    m_bUseExtensions = true;
                 }
             }
         }
         else
         {
-            validity = GPX_VALIDITY_INVALID;
+            m_validity = GPX_VALIDITY_INVALID;
         }
     }
-    else if (validity == GPX_VALIDITY_VALID)
+    else if (m_validity == GPX_VALIDITY_VALID)
     {
         if (m_nDepth == 1 && strcmp(pszNameIn, "metadata") == 0)
         {
@@ -378,9 +351,8 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
         }
         else if (m_nDepth == 2 && strcmp(pszNameIn, "extensions") == 0)
         {
-            bUseExtensions = true;
+            m_bUseExtensions = true;
         }
-        nElementsRead++;
     }
     m_nDepth++;
 }
@@ -440,12 +412,12 @@ void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
         m_osMetadataValue.append(data, nLen);
     }
 
-    nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    m_nDataHandlerCounter++;
+    if (m_nDataHandlerCounter >= BUFSIZ)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
-        XML_StopParser(oCurrentParser, XML_FALSE);
+        XML_StopParser(m_oCurrentParser, XML_FALSE);
     }
 }
 
@@ -486,7 +458,7 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
         return FALSE;
     }
 #ifdef HAVE_EXPAT
-    pszName = CPLStrdup(pszFilename);
+    SetDescription(pszFilename);
 
     /* -------------------------------------------------------------------- */
     /*      Try to open the file.                                           */
@@ -495,14 +467,10 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
     if (fp == nullptr)
         return FALSE;
 
-    validity = GPX_VALIDITY_UNKNOWN;
-    CPLFree(pszVersion);
-    pszVersion = nullptr;
-    bUseExtensions = false;
-    nElementsRead = 0;
+    m_validity = GPX_VALIDITY_UNKNOWN;
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
-    oCurrentParser = oParser;
+    m_oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
     XML_SetElementHandler(oParser, ::startElementValidateCbk,
                           ::endElementValidateCbk);
@@ -517,10 +485,12 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
     /* It *MUST* be the first element of an XML file */
     /* So once we have read the first element, we know if we can */
     /* handle the file or not with that driver */
+    uint64_t nTotalBytesRead = 0;
     do
     {
-        nDataHandlerCounter = 0;
+        m_nDataHandlerCounter = 0;
         nLen = static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
+        nTotalBytesRead += nLen;
         nDone = VSIFEofL(fp);
         if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
         {
@@ -537,21 +507,21 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
                          static_cast<int>(XML_GetCurrentLineNumber(oParser)),
                          static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
             }
-            validity = GPX_VALIDITY_INVALID;
+            m_validity = GPX_VALIDITY_INVALID;
             break;
         }
-        if (validity == GPX_VALIDITY_INVALID)
+        if (m_validity == GPX_VALIDITY_INVALID)
         {
             break;
         }
-        else if (validity == GPX_VALIDITY_VALID)
+        else if (m_validity == GPX_VALIDITY_VALID)
         {
             /* If we have recognized the <gpx> element, now we try */
             /* to recognize if they are <extensions> tags */
-            /* But we stop to look for after an arbitrary number of tags */
-            if (bUseExtensions)
+            /* But we stop to look for after an arbitrary amount of bytes */
+            if (m_bUseExtensions)
                 break;
-            else if (nElementsRead > 200)
+            else if (nTotalBytesRead > 1024 * 1024)
                 break;
         }
         else
@@ -568,23 +538,22 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
 
     VSIFCloseL(fp);
 
-    if (validity == GPX_VALIDITY_VALID)
+    if (m_validity == GPX_VALIDITY_VALID)
     {
         CPLDebug("GPX", "%s seems to be a GPX file.", pszFilename);
-        if (bUseExtensions)
+        if (m_bUseExtensions)
             CPLDebug("GPX", "It uses <extensions>");
 
-        if (pszVersion == nullptr)
+        if (m_osVersion.empty())
         {
             /* Default to 1.1 */
             CPLError(CE_Warning, CPLE_AppDefined,
                      "GPX schema version is unknown. "
                      "The driver may not be able to handle the file correctly "
                      "and will behave as if it is GPX 1.1.");
-            pszVersion = CPLStrdup("1.1");
+            m_osVersion = "1.1";
         }
-        else if (strcmp(pszVersion, "1.0") == 0 ||
-                 strcmp(pszVersion, "1.1") == 0)
+        else if (m_osVersion == "1.0" || m_osVersion == "1.1")
         {
             /* Fine */
         }
@@ -594,25 +563,22 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
                      "GPX schema version '%s' is not handled by the driver. "
                      "The driver may not be able to handle the file correctly "
                      "and will behave as if it is GPX 1.1.",
-                     pszVersion);
+                     m_osVersion.c_str());
         }
 
-        nLayers = 5;
-        papoLayers = (OGRGPXLayer **)CPLRealloc(
-            papoLayers, nLayers * sizeof(OGRGPXLayer *));
-        papoLayers[0] =
-            new OGRGPXLayer(pszName, "waypoints", GPX_WPT, this, FALSE);
-        papoLayers[1] =
-            new OGRGPXLayer(pszName, "routes", GPX_ROUTE, this, FALSE);
-        papoLayers[2] =
-            new OGRGPXLayer(pszName, "tracks", GPX_TRACK, this, FALSE);
-        papoLayers[3] = new OGRGPXLayer(pszName, "route_points",
-                                        GPX_ROUTE_POINT, this, FALSE);
-        papoLayers[4] = new OGRGPXLayer(pszName, "track_points",
-                                        GPX_TRACK_POINT, this, FALSE);
+        m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
+            GetDescription(), "waypoints", GPX_WPT, this, false));
+        m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
+            GetDescription(), "routes", GPX_ROUTE, this, false));
+        m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
+            GetDescription(), "tracks", GPX_TRACK, this, false));
+        m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
+            GetDescription(), "route_points", GPX_ROUTE_POINT, this, false));
+        m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
+            GetDescription(), "track_points", GPX_TRACK_POINT, this, false));
     }
 
-    return validity == GPX_VALIDITY_VALID;
+    return m_validity == GPX_VALIDITY_VALID;
 #else
     VSILFILE *fp = VSIFOpenL(pszFilename, "r");
     if (fp)
@@ -639,12 +605,6 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
 
 int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
 {
-    if (fpOutput != nullptr)
-    {
-        CPLAssert(false);
-        return FALSE;
-    }
-
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";
 
@@ -666,16 +626,16 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
 
-    pszName = CPLStrdup(pszFilename);
+    SetDescription(pszFilename);
 
-    if (strcmp(pszName, "/vsistdout/") == 0)
+    if (strcmp(pszFilename, "/vsistdout/") == 0)
     {
-        bIsBackSeekable = false;
-        fpOutput = VSIFOpenL(pszFilename, "w");
+        m_bIsBackSeekable = false;
+        m_fpOutput.reset(VSIFOpenL(pszFilename, "w"));
     }
     else
-        fpOutput = VSIFOpenL(pszFilename, "w+");
-    if (fpOutput == nullptr)
+        m_fpOutput.reset(VSIFOpenL(pszFilename, "w+"));
+    if (m_fpOutput == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Failed to create GPX file %s.",
                  pszFilename);
@@ -709,7 +669,7 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
                  pszCRLFFormat);
         // Use default value for OS.
     }
-    pszEOL = (bUseCRLF) ? "\r\n" : "\n";
+    m_pszEOL = (bUseCRLF) ? "\r\n" : "\n";
 
     /* -------------------------------------------------------------------- */
     /*      Look at use extensions options.                                 */
@@ -719,7 +679,7 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
     const char *pszExtensionsNSURL = nullptr;
     if (pszUseExtensions && CPLTestBool(pszUseExtensions))
     {
-        bUseExtensions = true;
+        m_bUseExtensions = true;
 
         const char *pszExtensionsNSOption =
             CSLFetchNameValue(papszOptions, "GPX_EXTENSIONS_NS");
@@ -727,12 +687,12 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
             CSLFetchNameValue(papszOptions, "GPX_EXTENSIONS_NS_URL");
         if (pszExtensionsNSOption && pszExtensionsNSURLOption)
         {
-            pszExtensionsNS = CPLStrdup(pszExtensionsNSOption);
+            m_osExtensionsNS = pszExtensionsNSOption;
             pszExtensionsNSURL = pszExtensionsNSURLOption;
         }
         else
         {
-            pszExtensionsNS = CPLStrdup("ogr");
+            m_osExtensionsNS = "ogr";
             pszExtensionsNSURL = "http://osgeo.org/gdal";
         }
     }
@@ -741,24 +701,24 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
     /*     Output header of GPX file.                                       */
     /* -------------------------------------------------------------------- */
     PrintLine("<?xml version=\"1.0\"?>");
-    VSIFPrintfL(fpOutput, "<gpx version=\"1.1\" creator=\"");
+    m_fpOutput->Printf("<gpx version=\"1.1\" creator=\"");
     const char *pszCreator = CSLFetchNameValue(papszOptions, "CREATOR");
     if (pszCreator)
     {
         char *pszXML = OGRGetXML_UTF8_EscapedString(pszCreator);
-        VSIFPrintfL(fpOutput, "%s", pszXML);
+        m_fpOutput->Printf("%s", pszXML);
         CPLFree(pszXML);
     }
     else
     {
-        VSIFPrintfL(fpOutput, "GDAL %s", GDALVersionInfo("RELEASE_NAME"));
+        m_fpOutput->Printf("GDAL %s", GDALVersionInfo("RELEASE_NAME"));
     }
-    VSIFPrintfL(fpOutput,
-                "\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
-    if (bUseExtensions)
-        VSIFPrintfL(fpOutput, "xmlns:%s=\"%s\" ", pszExtensionsNS,
-                    pszExtensionsNSURL);
-    VSIFPrintfL(fpOutput, "xmlns=\"http://www.topografix.com/GPX/1/1\" ");
+    m_fpOutput->Printf(
+        "\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+    if (m_bUseExtensions)
+        m_fpOutput->Printf("xmlns:%s=\"%s\" ", m_osExtensionsNS.c_str(),
+                           pszExtensionsNSURL);
+    m_fpOutput->Printf("xmlns=\"http://www.topografix.com/GPX/1/1\" ");
     PrintLine("xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 "
               "http://www.topografix.com/GPX/1/1/gpx.xsd\">");
     PrintLine("<metadata>");
@@ -938,13 +898,13 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
         CPLFree(pszXML);
     }
 
-    if (bIsBackSeekable)
+    if (m_bIsBackSeekable)
     {
         /* Reserve space for <bounds .../> within <metadata> */
         char szBounds[SPACE_FOR_METADATA_BOUNDS + 1];
         memset(szBounds, ' ', SPACE_FOR_METADATA_BOUNDS);
         szBounds[SPACE_FOR_METADATA_BOUNDS] = '\0';
-        nOffsetBounds = static_cast<int>(VSIFTellL(fpOutput));
+        m_nOffsetBounds = m_fpOutput->Tell();
         PrintLine("%s", szBounds);
     }
     PrintLine("</metadata>");
@@ -958,14 +918,10 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
 
 void OGRGPXDataSource::AddCoord(double dfLon, double dfLat)
 {
-    if (dfLon < dfMinLon)
-        dfMinLon = dfLon;
-    if (dfLat < dfMinLat)
-        dfMinLat = dfLat;
-    if (dfLon > dfMaxLon)
-        dfMaxLon = dfLon;
-    if (dfLat > dfMaxLat)
-        dfMaxLat = dfLat;
+    m_dfMinLon = std::min(m_dfMinLon, dfLon);
+    m_dfMinLat = std::min(m_dfMinLat, dfLat);
+    m_dfMaxLon = std::max(m_dfMaxLon, dfLon);
+    m_dfMaxLat = std::max(m_dfMaxLat, dfLat);
 }
 
 /************************************************************************/
@@ -981,5 +937,6 @@ void OGRGPXDataSource::PrintLine(const char *fmt, ...)
     osWork.vPrintf(fmt, args);
     va_end(args);
 
-    VSIFPrintfL(fpOutput, "%s%s", osWork.c_str(), pszEOL);
+    m_fpOutput->Write(osWork.c_str(), 1, osWork.size());
+    m_fpOutput->Write(m_pszEOL, 1, strlen(m_pszEOL));
 }

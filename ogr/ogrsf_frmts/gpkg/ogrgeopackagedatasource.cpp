@@ -46,6 +46,7 @@
 #include <sstream>
 
 #define COMPILATION_ALLOWED
+#define DEFINE_OGRSQLiteSQLFunctionsSetCaseSensitiveLike
 #include "ogrsqlitesqlfunctionscommon.cpp"
 
 // Keep in sync prototype of those 2 functions between gdalopeninfo.cpp,
@@ -7146,6 +7147,21 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
+    if (EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like = 0") ||
+        EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like=0") ||
+        EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like =0") ||
+        EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like= 0"))
+    {
+        OGRSQLiteSQLFunctionsSetCaseSensitiveLike(m_pSQLFunctionData, false);
+    }
+    else if (EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like = 1") ||
+             EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like=1") ||
+             EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like =1") ||
+             EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like= 1"))
+    {
+        OGRSQLiteSQLFunctionsSetCaseSensitiveLike(m_pSQLFunctionData, true);
+    }
+
     /* -------------------------------------------------------------------- */
     /*      DEBUG "SELECT nolock" command.                                  */
     /* -------------------------------------------------------------------- */
@@ -7310,11 +7326,13 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         return nullptr;
     }
 
-    if (pszDialect != nullptr && EQUAL(pszDialect, "OGRSQL"))
-        return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter,
-                                       pszDialect);
     else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter, "SQLITE");
+    else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
+             !EQUAL(pszDialect, "NATIVE") && !EQUAL(pszDialect, "SQLITE") &&
+             !EQUAL(pszDialect, "DEBUG"))
+        return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter,
+                                       pszDialect);
 
 #if SQLITE_VERSION_NUMBER < 3007017
     // Emulate PRAGMA application_id
@@ -8910,7 +8928,9 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
 #define SQLITE_INNOCUOUS 0
 #endif
 
+#ifndef UTF8_INNOCUOUS
 #define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+#endif
 
 void GDALGeoPackageDataset::InstallSQLFunctions()
 {
@@ -9110,7 +9130,7 @@ GDALGeoPackageDataset::GetLayerWithGetSpatialWhereByName(const char *pszName)
 {
     OGRGeoPackageLayer *poRet =
         cpl::down_cast<OGRGeoPackageLayer *>(GetLayerByName(pszName));
-    return std::pair<OGRLayer *, IOGRSQLiteGetSpatialWhere *>(poRet, poRet);
+    return std::pair(poRet, poRet);
 }
 
 /************************************************************************/

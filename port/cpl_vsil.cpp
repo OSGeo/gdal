@@ -2296,7 +2296,7 @@ int VSIFReadMultiRangeL(int nRanges, void **ppData,
  *                              size_t nSize, size_t nCount )
  * \brief Write bytes to file.
  *
- * Writess nCount objects of nSize bytes to the indicated file at the
+ * Writes nCount objects of nSize bytes to the indicated file at the
  * current offset into the indicated buffer.
  *
  * This method goes through the VSIFileHandler virtualization and may
@@ -2306,8 +2306,8 @@ int VSIFReadMultiRangeL(int nRanges, void **ppData,
  *
  * @param pBuffer the buffer from which the data should be written (at least
  * nCount * nSize bytes in size.
- * @param nSize size of objects to read in bytes.
- * @param nCount number of objects to read.
+ * @param nSize size of objects to write in bytes.
+ * @param nCount number of objects to write.
  *
  * @return number of objects successfully written.
  */
@@ -2315,7 +2315,7 @@ int VSIFReadMultiRangeL(int nRanges, void **ppData,
 /**
  * \brief Write bytes to file.
  *
- * Writess nCount objects of nSize bytes to the indicated file at the
+ * Writes nCount objects of nSize bytes to the indicated file at the
  * current offset into the indicated buffer.
  *
  * This method goes through the VSIFileHandler virtualization and may
@@ -2325,8 +2325,8 @@ int VSIFReadMultiRangeL(int nRanges, void **ppData,
  *
  * @param pBuffer the buffer from which the data should be written (at least
  * nCount * nSize bytes in size.
- * @param nSize size of objects to read in bytes.
- * @param nCount number of objects to read.
+ * @param nSize size of objects to write in bytes.
+ * @param nCount number of objects to write.
  * @param fp file handle opened with VSIFOpenL().
  *
  * @return number of objects successfully written.
@@ -2452,6 +2452,35 @@ int VSIFPrintfL(VSILFILE *fp, CPL_FORMAT_STRING(const char *pszFormat), ...)
 
     return static_cast<int>(
         VSIFWriteL(osResult.c_str(), 1, osResult.length(), fp));
+}
+
+/************************************************************************/
+/*                 VSIVirtualHandle::Printf()                           */
+/************************************************************************/
+
+/**
+ * \brief Formatted write to file.
+ *
+ * Provides fprintf() style formatted output to a VSI*L file.  This formats
+ * an internal buffer which is written using VSIFWriteL().
+ *
+ * Analog of the POSIX fprintf() call.
+ *
+ * @param pszFormat the printf() style format string.
+ *
+ * @return the number of bytes written or -1 on an error.
+ */
+
+int VSIVirtualHandle::Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
+{
+    va_list args;
+
+    va_start(args, pszFormat);
+    CPLString osResult;
+    osResult.vPrintf(pszFormat, args);
+    va_end(args);
+
+    return static_cast<int>(Write(osResult.c_str(), 1, osResult.length()));
 }
 
 /************************************************************************/

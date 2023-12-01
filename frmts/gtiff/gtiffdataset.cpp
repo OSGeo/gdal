@@ -146,11 +146,9 @@ GTiffDataset::~GTiffDataset()
 
 CPLErr GTiffDataset::Close()
 {
-    CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        bool bDroppedRef;
-        std::tie(eErr, bDroppedRef) = Finalize();
+        auto [eErr, bDroppedRef] = Finalize();
 
         if (m_pszTmpFilename)
         {
@@ -160,8 +158,9 @@ CPLErr GTiffDataset::Close()
 
         if (GDALPamDataset::Close() != CE_None)
             eErr = CE_Failure;
+        return eErr;
     }
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -174,7 +173,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
 {
     bool bDroppedRef = false;
     if (m_bIsFinalized)
-        return std::tuple<CPLErr, bool>(CE_None, bDroppedRef);
+        return std::tuple(CE_None, bDroppedRef);
 
     CPLErr eErr = CE_None;
     Crystalize();
@@ -406,7 +405,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
 
     m_bIsFinalized = true;
 
-    return std::tuple<CPLErr, bool>(eErr, bDroppedRef);
+    return std::tuple(eErr, bDroppedRef);
 }
 
 /************************************************************************/
@@ -420,11 +419,9 @@ int GTiffDataset::CloseDependentDatasets()
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
-    CPLErr eErr;
-    bool bHasDroppedRefInFinalize = false;
     // We ignore eErr as it is not relevant for CloseDependentDatasets(),
     // which is called in a "garbage collection" context.
-    std::tie(eErr, bHasDroppedRefInFinalize) = Finalize();
+    auto [eErr, bHasDroppedRefInFinalize] = Finalize();
     if (bHasDroppedRefInFinalize)
         bHasDroppedRef = true;
 
@@ -503,8 +500,9 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     bool bCanUseMultiThreadedRead = false;
-    if (m_poThreadPool && eRWFlag == GF_Read && nBufXSize == nXSize &&
-        nBufYSize == nYSize && IsMultiThreadedReadCompatible())
+    if (m_nDisableMultiThreadedRead == 0 && m_poThreadPool &&
+        eRWFlag == GF_Read && nBufXSize == nXSize && nBufYSize == nYSize &&
+        IsMultiThreadedReadCompatible())
     {
         const int nBlockX1 = nXOff / m_nBlockXSize;
         const int nBlockY1 = nYOff / m_nBlockYSize;

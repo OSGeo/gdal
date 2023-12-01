@@ -4348,3 +4348,148 @@ def test_ogr_openfilegdb_layer_alias_name():
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test creating layer with a Integer64 field (ArcGIS Pro >= 3.2)
+
+
+def test_ogr_openfilegdb_write_int64(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.gdb")
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(filename)
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbNone,
+        options=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"],
+    )
+    fld_defn = ogr.FieldDefn("int64", ogr.OFTInteger64)
+    fld_defn.SetDefault("1234567890123")
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int64"] = -1234567890123
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int64"] = 1234567890123
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetType() == ogr.OFTInteger64
+    assert fld_defn.GetDefault() == "1234567890123"
+    f = lyr.GetNextFeature()
+    assert f["int64"] == -1234567890123
+
+    ds = ogr.Open(filename, update=1)
+    ds.ExecuteSQL("CREATE INDEX idx_int64 ON test(int64)")
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("int64 > 0")
+    f = lyr.GetNextFeature()
+    assert f["int64"] == 1234567890123
+
+    lyr.SetAttributeFilter("int64 < 0")
+    f = lyr.GetNextFeature()
+    assert f["int64"] == -1234567890123
+
+    with ds.ExecuteSQL("SELECT MIN(int64), MAX(int64) FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_int64"] == -1234567890123
+        assert f["MAX_int64"] == 1234567890123
+
+
+###############################################################################
+# Test creating layer with DateOnly, TimeOnly, TimestampOffset fields (ArcGIS Pro >= 3.2)
+
+
+def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.gdb")
+    with gdal.quiet_errors():
+        ds = gdal.VectorTranslate(
+            filename,
+            "data/filegdb/arcgis_pro_32_types.gdb",
+            format="OpenFileGDB",
+            layers=["date_types", "date_types_high_precision"],
+            layerCreationOptions=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"],
+        )
+
+    lyr = ds.GetLayerByName("date_types")
+    lyr_defn = lyr.GetLayerDefn()
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date_"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetDefault() == "'2023/02/01 04:05:06'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date_only"))
+    assert fld_defn.GetType() == ogr.OFTDate
+    assert fld_defn.GetDefault() == "'2023/02/01'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("time_only"))
+    assert fld_defn.GetType() == ogr.OFTTime
+    assert fld_defn.GetDefault() == "'04:05:06'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("timestamp_offset"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetDefault() == "'2023/02/01 04:05:06.000+06:00'"
+
+    f = lyr.GetNextFeature()
+    assert f["date_"] == "2023/11/29 13:14:15+00"
+    assert f["date_only"] == "2023/11/29"
+    assert f["time_only"] == "13:14:15"
+    assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
+
+    f = lyr.GetNextFeature()
+    assert f["date_"] == "2023/12/31 00:01:01+00"
+    assert f["date_only"] == "2023/12/31"
+    assert f["time_only"] == "00:01:01"
+    assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
+
+    lyr = ds.GetLayerByName("date_types_high_precision")
+    lyr_defn = lyr.GetLayerDefn()
+
+    f = lyr.GetNextFeature()
+    assert f["date_"] == "2023/11/29 13:14:15.678+00"
+    assert f["date_only"] == "2023/11/29"
+    assert f["time_only"] == "13:14:15"
+    assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
+
+    f = lyr.GetNextFeature()
+    assert f["date_"] == "2023/12/31 00:01:01.001+00"
+    assert f["date_only"] == "2023/12/31"
+    assert f["time_only"] == "00:01:01"
+    assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
+
+    ds.ExecuteSQL("CREATE INDEX idx_date_only ON date_types(date_only)")
+    ds.ExecuteSQL("CREATE INDEX idx_time_only ON date_types(time_only)")
+    ds.ExecuteSQL("CREATE INDEX idx_tsoffset ON date_types(timestamp_offset)")
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("date_only"), MAX("date_only") FROM date_types'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_date_only"] == "1901/01/01"
+        assert f["MAX_date_only"] == "2023/12/31"
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("time_only"), MAX("time_only") FROM date_types'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_time_only"] == "00:01:01"
+        assert f["MAX_time_only"] == "13:14:15"
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("timestamp_offset"), MAX("timestamp_offset") FROM date_types'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_timestamp_offset"] == "1900/12/31 14:01:01"
+        assert f["MAX_timestamp_offset"] == "2023/12/30 14:01:01"

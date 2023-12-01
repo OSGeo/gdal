@@ -790,6 +790,15 @@ void OGRAPISpy_L_GetExtentEx(OGRLayerH hLayer, int iGeomField, int bForce)
     OGRAPISpyFileClose();
 }
 
+void OGRAPISpy_L_GetExtent3D(OGRLayerH hLayer, int iGeomField, int bForce)
+{
+    CPLMutexHolderD(&hMutex);
+    OGRAPISpyFlushDefered();
+    fprintf(fpSpyFile, "%s.GetExtent3D(geom_field=%d, force=%d)\n",
+            OGRAPISpyGetLayerVar(hLayer).c_str(), iGeomField, bForce);
+    OGRAPISpyFileClose();
+}
+
 void OGRAPISpy_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszFilter)
 {
     CPLMutexHolderD(&hMutex);

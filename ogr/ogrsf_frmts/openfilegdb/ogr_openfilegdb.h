@@ -132,6 +132,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     std::string m_osDocumentation{};
     std::string m_osConfigurationKeyword{};
     OGRwkbGeometryType m_eGeomType = wkbNone;
+    bool m_bArcGISPro32OrLater = false;
     int m_bValidLayerDefn = -1;
     int m_bEOF = false;
     bool m_bTimeInUTC = false;

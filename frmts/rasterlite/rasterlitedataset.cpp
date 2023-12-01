@@ -32,17 +32,10 @@
 #include "ogr_srs_api.h"
 
 #include "rasterlitedataset.h"
+#include "rasterlitedrivercore.h"
 
 #include <algorithm>
 #include <limits>
-
-#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) ||     \
-    defined(ALLOW_FORMAT_DUMPS)
-// Enable accepting a SQL dump (starting with a "-- SQL SQLITE" or
-// "-- SQL RASTERLITE" line) as a valid
-// file. This makes fuzzer life easier
-#define ENABLE_SQL_SQLITE_FORMAT
-#endif
 
 /************************************************************************/
 /*                        RasterliteOpenSQLiteDB()                      */
@@ -987,47 +980,12 @@ end:
 }
 
 /************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-int RasterliteDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-
-#ifdef ENABLE_SQL_SQLITE_FORMAT
-    if (poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char *)poOpenInfo->pabyHeader, "-- SQL RASTERLITE"))
-    {
-        return TRUE;
-    }
-#endif
-
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
-        poOpenInfo->nHeaderBytes >= 1024 && poOpenInfo->pabyHeader &&
-        STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
-                       "SQLite Format 3") &&
-        // Do not match direct Amazon S3 signed URLs that contains .mbtiles in
-        // the middle of the URL
-        strstr(poOpenInfo->pszFilename, ".mbtiles") == nullptr)
-    {
-        // Could be a SQLite/Spatialite file as well
-        return -1;
-    }
-    else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
-    {
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (Identify(poOpenInfo) == FALSE)
+    if (RasterliteDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
     CPLString osFileName;
@@ -1054,7 +1012,7 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
 #endif
-        if (poOpenInfo->nHeaderBytes >= 1024 &&
+        if (poOpenInfo->nHeaderBytes >= 1024 && poOpenInfo->pabyHeader &&
             STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
                            "SQLite Format 3"))
     {
@@ -1528,59 +1486,13 @@ void GDALRegister_Rasterlite()
     if (!GDAL_CHECK_VERSION("Rasterlite driver"))
         return;
 
-    if (GDALGetDriverByName("Rasterlite") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("Rasterlite");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Rasterlite");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/rasterlite.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sqlite");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                              "Float64 CInt16 CInt32 CFloat32 CFloat64");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='WIPE' type='boolean' default='NO' description='Erase "
-        "all preexisting data in the specified table'/>"
-        "   <Option name='TILED' type='boolean' default='YES' description='Use "
-        "tiling'/>"
-        "   <Option name='BLOCKXSIZE' type='int' default='256' "
-        "description='Tile Width'/>"
-        "   <Option name='BLOCKYSIZE' type='int' default='256' "
-        "description='Tile Height'/>"
-        "   <Option name='DRIVER' type='string' description='GDAL driver to "
-        "use for storing tiles' default='GTiff'/>"
-        "   <Option name='COMPRESS' type='string' description='(GTiff driver) "
-        "Compression method' default='NONE'/>"
-        "   <Option name='QUALITY' type='int' description='(JPEG-compressed "
-        "GTiff, JPEG and WEBP drivers) JPEG/WEBP Quality 1-100' default='75'/>"
-        "   <Option name='PHOTOMETRIC' type='string-select' "
-        "description='(GTiff driver) Photometric interpretation'>"
-        "       <Value>MINISBLACK</Value>"
-        "       <Value>MINISWHITE</Value>"
-        "       <Value>PALETTE</Value>"
-        "       <Value>RGB</Value>"
-        "       <Value>CMYK</Value>"
-        "       <Value>YCBCR</Value>"
-        "       <Value>CIELAB</Value>"
-        "       <Value>ICCLAB</Value>"
-        "       <Value>ITULAB</Value>"
-        "   </Option>"
-        "</CreationOptionList>");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-#ifdef ENABLE_SQL_SQLITE_FORMAT
-    poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
-#endif
+    RasterliteDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = RasterliteDataset::Open;
-    poDriver->pfnIdentify = RasterliteDataset::Identify;
     poDriver->pfnCreateCopy = RasterliteCreateCopy;
     poDriver->pfnDelete = RasterliteDelete;
 

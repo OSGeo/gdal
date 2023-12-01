@@ -358,6 +358,9 @@ Driver management
       subdirectory of the gdal home directory are searched on UNIX and
       $(BINDIR)\gdalplugins on Windows.
 
+      Auto loading can be completely disabled by setting the
+      ``GDAL_DRIVER_PATH`` config option to "disable".
+
       This option must be set before calling :cpp:func:`GDALAllRegister`, or an explicit call
       to :cpp:func:`GDALDriverManager::AutoLoadDrivers` will be required.
 

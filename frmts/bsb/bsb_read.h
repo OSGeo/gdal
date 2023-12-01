@@ -44,6 +44,7 @@ typedef struct
     int nBufferSize;
     int nBufferAllocation;
     int nSavedCharacter;
+    int nSavedCharacter2;
 
     int nXSize;
     int nYSize;

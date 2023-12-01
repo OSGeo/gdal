@@ -1,0 +1,13 @@
+diff --git a/recipe/build.sh b/recipe/build.sh
+index a3474a2..249dc89 100644
+--- a/recipe/build.sh
++++ b/recipe/build.sh
+@@ -23,6 +23,8 @@ cmake -G "Unix Makefiles" \
+       -DGDAL_USE_PARQUET=OFF \
+       -DGDAL_USE_ARROW=OFF \
+       -DGDAL_USE_ARROWDATASET=OFF \
++      -DOGR_REGISTER_DRIVER_ARROW_FOR_LATER_PLUGIN=ON \
++      -DOGR_REGISTER_DRIVER_PARQUET_FOR_LATER_PLUGIN=ON \
+       -DGDAL_ENABLE_HDF5_GLOBAL_LOCK:BOOL=ON \
+       -DBUILD_PYTHON_BINDINGS:BOOL=OFF \
+       -DBUILD_JAVA_BINDINGS:BOOL=OFF \

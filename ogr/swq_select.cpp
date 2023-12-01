@@ -177,125 +177,6 @@ void swq_select::postpreparse()
 }
 
 /************************************************************************/
-/*                                Dump()                                */
-/************************************************************************/
-
-void swq_select::Dump(FILE *fp)
-
-{
-    fprintf(fp, "SELECT Statement:\n");
-
-    /* -------------------------------------------------------------------- */
-    /*      query mode.                                                     */
-    /* -------------------------------------------------------------------- */
-    if (query_mode == SWQM_SUMMARY_RECORD)
-        fprintf(fp, "  QUERY MODE: SUMMARY RECORD\n");
-    else if (query_mode == SWQM_RECORDSET)
-        fprintf(fp, "  QUERY MODE: RECORDSET\n");
-    else if (query_mode == SWQM_DISTINCT_LIST)
-        fprintf(fp, "  QUERY MODE: DISTINCT LIST\n");
-    else
-        fprintf(fp, "  QUERY MODE: %d/unknown\n", query_mode);
-
-    /* -------------------------------------------------------------------- */
-    /*      column_defs                                                     */
-    /* -------------------------------------------------------------------- */
-    fprintf(fp, "  Result Columns:\n");
-    for (int i = 0; i < result_columns(); i++)
-    {
-        swq_col_def *def = &column_defs[i];
-
-        fprintf(fp, "  Table name: %s\n", def->table_name);
-        fprintf(fp, "  Name: %s\n", def->field_name);
-
-        if (def->field_alias)
-            fprintf(fp, "    Alias: %s\n", def->field_alias);
-
-        if (def->col_func == SWQCF_NONE)
-            /* nothing */;
-        else if (def->col_func == SWQCF_AVG)
-            fprintf(fp, "    Function: AVG\n");
-        else if (def->col_func == SWQCF_MIN)
-            fprintf(fp, "    Function: MIN\n");
-        else if (def->col_func == SWQCF_MAX)
-            fprintf(fp, "    Function: MAX\n");
-        else if (def->col_func == SWQCF_COUNT)
-            fprintf(fp, "    Function: COUNT\n");
-        else if (def->col_func == SWQCF_SUM)
-            fprintf(fp, "    Function: SUM\n");
-        else if (def->col_func == SWQCF_CUSTOM)
-            fprintf(fp, "    Function: CUSTOM\n");
-        else
-            fprintf(fp, "    Function: UNKNOWN!\n");
-
-        if (def->distinct_flag)
-            fprintf(fp, "    DISTINCT flag set\n");
-
-        fprintf(fp, "    Field Index: %d, Table Index: %d\n", def->field_index,
-                def->table_index);
-
-        fprintf(fp, "    Field Type: %d\n", def->field_type);
-        fprintf(fp, "    Target Type: %d\n", def->target_type);
-        fprintf(fp, "    Target SubType: %d\n", def->target_subtype);
-        fprintf(fp, "    Length: %d, Precision: %d\n", def->field_length,
-                def->field_precision);
-
-        if (def->expr != nullptr)
-        {
-            fprintf(fp, "    Expression:\n");
-            def->expr->Dump(fp, 3);
-        }
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      table_defs                                                      */
-    /* -------------------------------------------------------------------- */
-    fprintf(fp, "  Table Defs: %d\n", table_count);
-    for (int i = 0; i < table_count; i++)
-    {
-        fprintf(fp, "    datasource=%s, table_name=%s, table_alias=%s\n",
-                table_defs[i].data_source, table_defs[i].table_name,
-                table_defs[i].table_alias);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      join_defs                                                       */
-    /* -------------------------------------------------------------------- */
-    if (join_count > 0)
-        fprintf(fp, "  joins:\n");
-
-    for (int i = 0; i < join_count; i++)
-    {
-        fprintf(fp, "  %d:\n", i);
-        join_defs[i].poExpr->Dump(fp, 4);
-        fprintf(fp, "    Secondary Table: %d\n", join_defs[i].secondary_table);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Where clause.                                                   */
-    /* -------------------------------------------------------------------- */
-    if (where_expr != nullptr)
-    {
-        fprintf(fp, "  WHERE:\n");
-        where_expr->Dump(fp, 2);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Order by                                                        */
-    /* -------------------------------------------------------------------- */
-
-    for (int i = 0; i < order_specs; i++)
-    {
-        fprintf(fp, "  ORDER BY: %s (%d/%d)", order_defs[i].field_name,
-                order_defs[i].table_index, order_defs[i].field_index);
-        if (order_defs[i].ascending_flag)
-            fprintf(fp, " ASC\n");
-        else
-            fprintf(fp, " DESC\n");
-    }
-}
-
-/************************************************************************/
 /*                               Unparse()                              */
 /************************************************************************/
 
@@ -342,6 +223,7 @@ char *swq_select::Unparse()
                 osSelect += ".";
             }
             osSelect += swq_expr_node::QuoteIfNecessary(def->field_name, '"');
+            osSelect += ")";
         }
 
         if (def->field_alias != nullptr &&
@@ -350,9 +232,6 @@ char *swq_select::Unparse()
             osSelect += " AS ";
             osSelect += swq_expr_node::QuoteIfNecessary(def->field_alias, '"');
         }
-
-        if (def->col_func != SWQCF_NONE)
-            osSelect += ")";
     }
 
     osSelect += " FROM ";
@@ -405,13 +284,30 @@ char *swq_select::Unparse()
         CPLFree(pszTmp);
     }
 
-    for (int i = 0; i < order_specs; i++)
+    if (order_specs > 0)
     {
         osSelect += " ORDER BY ";
-        osSelect +=
-            swq_expr_node::QuoteIfNecessary(order_defs[i].field_name, '"');
-        if (!order_defs[i].ascending_flag)
-            osSelect += " DESC";
+        for (int i = 0; i < order_specs; i++)
+        {
+            if (i > 0)
+                osSelect += ", ";
+            osSelect +=
+                swq_expr_node::QuoteIfNecessary(order_defs[i].field_name, '"');
+            if (!order_defs[i].ascending_flag)
+                osSelect += " DESC";
+        }
+    }
+
+    if (limit >= 0)
+    {
+        osSelect += " LIMIT ";
+        osSelect += CPLSPrintf(CPL_FRMT_GIB, limit);
+    }
+
+    if (offset > 0)
+    {
+        osSelect += " OFFSET ";
+        osSelect += CPLSPrintf(CPL_FRMT_GIB, offset);
     }
 
     return CPLStrdup(osSelect);
@@ -844,7 +740,7 @@ void swq_select::SetOffset(GIntBig nOffset)
 /*                          expand_wildcard()                           */
 /*                                                                      */
 /*      This function replaces the '*' in a "SELECT *" with the list    */
-/*      provided list of fields.  Itis used by swq_select_parse(),      */
+/*      provided list of fields.  It is used by swq_select::parse(),    */
 /*      but may be called in advance by applications wanting the        */
 /*      "default" field list to be different than the full list of      */
 /*      fields.                                                         */

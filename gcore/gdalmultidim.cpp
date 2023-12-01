@@ -45,6 +45,7 @@
 #include "cpl_safemaths.hpp"
 #include "memmultidim.h"
 #include "ogrsf_frmts.h"
+#include "gdalmultidim_priv.h"
 
 #if defined(__clang__) || defined(_MSC_VER)
 #define COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT
@@ -10236,65 +10237,6 @@ void GDALDimension::ParentDeleted()
 /************************************************************************/
 /************************************************************************/
 /************************************************************************/
-
-struct GDALExtendedDataTypeHS
-{
-    std::unique_ptr<GDALExtendedDataType> m_poImpl;
-
-    explicit GDALExtendedDataTypeHS(GDALExtendedDataType *dt) : m_poImpl(dt)
-    {
-    }
-};
-
-struct GDALEDTComponentHS
-{
-    std::unique_ptr<GDALEDTComponent> m_poImpl;
-
-    explicit GDALEDTComponentHS(const GDALEDTComponent &component)
-        : m_poImpl(new GDALEDTComponent(component))
-    {
-    }
-};
-
-struct GDALGroupHS
-{
-    std::shared_ptr<GDALGroup> m_poImpl;
-
-    explicit GDALGroupHS(const std::shared_ptr<GDALGroup> &poGroup)
-        : m_poImpl(poGroup)
-    {
-    }
-};
-
-struct GDALMDArrayHS
-{
-    std::shared_ptr<GDALMDArray> m_poImpl;
-
-    explicit GDALMDArrayHS(const std::shared_ptr<GDALMDArray> &poArray)
-        : m_poImpl(poArray)
-    {
-    }
-};
-
-struct GDALAttributeHS
-{
-    std::shared_ptr<GDALAttribute> m_poImpl;
-
-    explicit GDALAttributeHS(const std::shared_ptr<GDALAttribute> &poAttr)
-        : m_poImpl(poAttr)
-    {
-    }
-};
-
-struct GDALDimensionHS
-{
-    std::shared_ptr<GDALDimension> m_poImpl;
-
-    explicit GDALDimensionHS(const std::shared_ptr<GDALDimension> &poDim)
-        : m_poImpl(poDim)
-    {
-    }
-};
 
 /************************************************************************/
 /*                      GDALExtendedDataTypeCreate()                    */

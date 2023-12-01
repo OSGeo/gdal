@@ -45,6 +45,7 @@ constexpr int RECORD_SIZE = 512;
 #include "nasakeywordhandler.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
+#include "pdsdrivercore.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -86,7 +87,6 @@ class ISIS2Dataset final : public RawDataset
 
     virtual char **GetFileList() override;
 
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
@@ -208,21 +208,6 @@ CPLErr ISIS2Dataset::GetGeoTransform(double *padfTransform)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int ISIS2Dataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->pabyHeader == nullptr)
-        return FALSE;
-
-    if (strstr((const char *)poOpenInfo->pabyHeader, "^QUBE") == nullptr)
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -231,7 +216,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Does this look like a CUBE or an IMAGE Primary Data Object?     */
     /* -------------------------------------------------------------------- */
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+    if (!ISIS2DriverIdentify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
     VSILFILE *fpQube = poOpenInfo->fpL;
@@ -1282,32 +1267,12 @@ unsigned int ISIS2Dataset::WriteFormatting(VSILFILE *fpLabel, CPLString data)
 void GDALRegister_ISIS2()
 
 {
-    if (GDALGetDriverByName("ISIS2") != nullptr)
+    if (GDALGetDriverByName(ISIS2_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    ISIS2DriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("ISIS2");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "USGS Astrogeology ISIS cube (Version 2)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/isis2.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Float32 Float64");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>\n"
-        "   <Option name='LABELING_METHOD' type='string-select' "
-        "default='ATTACHED'>\n"
-        "     <Value>ATTACHED</Value>"
-        "     <Value>DETACHED</Value>"
-        "   </Option>"
-        "   <Option name='IMAGE_EXTENSION' type='string' default='cub'/>\n"
-        "</CreationOptionList>\n");
-
-    poDriver->pfnIdentify = ISIS2Dataset::Identify;
     poDriver->pfnOpen = ISIS2Dataset::Open;
     poDriver->pfnCreate = ISIS2Dataset::Create;
 

@@ -1659,6 +1659,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
     if ((verticalCSType != 0 || verticalDatum != 0 || verticalUnits != 0) &&
         (oSRS.IsGeographic() || oSRS.IsProjected() || oSRS.IsLocal()))
     {
+        std::string osVertCRSName;
         if (GDALGTIFKeyGetASCII(hGTIF, VerticalCitationGeoKey, citation,
                                 sizeof(citation)))
         {
@@ -1669,11 +1670,8 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
                 char *pszPipeChar = strchr(citation, '|');
                 if (pszPipeChar)
                     *pszPipeChar = '\0';
+                osVertCRSName = citation;
             }
-        }
-        else
-        {
-            strcpy(citation, "unknown");
         }
 
         OGRSpatialReference oVertSRS;
@@ -1685,7 +1683,13 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
             {
                 bCanBuildCompoundCRS = false;
             }
+            else
+            {
+                osVertCRSName = oVertSRS.GetName();
+            }
         }
+        if (osVertCRSName.empty())
+            osVertCRSName = "unknown";
 
         if (bCanBuildCompoundCRS)
         {
@@ -1718,8 +1722,9 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
             }
             else
             {
-                oSRS.SetNode("COMPD_CS",
-                             (osHorizontalName + " + " + citation).c_str());
+                oSRS.SetNode(
+                    "COMPD_CS",
+                    (osHorizontalName + " + " + osVertCRSName).c_str());
             }
 
             oSRS.GetRoot()->AddChild(poOldRoot);

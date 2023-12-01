@@ -47,6 +47,7 @@ add_library(
   gdalmultidim_gridded.cpp
   gdalmultidim_gltorthorectification.cpp
   gdalmultidim_subsetdimension.cpp
+  gdalmultidim_rat.cpp
   gdalpython.cpp
   gdalpythondriverloader.cpp
   tilematrixset.cpp

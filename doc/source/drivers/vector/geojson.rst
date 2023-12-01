@@ -382,6 +382,25 @@ Layer creation options
       if they start and end with brackets and braces, even if they do
       not have their subtype set to JSON.
 
+-  .. lco:: FOREIGN_MEMBERS_FEATURE
+      :since: 3.9
+
+      JSON serialized object whose content must be merged into each Feature
+      object. The string should start with { and end with }. Those characters
+      will be striped off in the output stream. It is the responsibility of the
+      user to ensure that the added foreign members are different from the other
+      members of the Feature, such as "type", "id", "properties", "geometry".
+
+-  .. lco:: FOREIGN_MEMBERS_COLLECTION
+      :since: 3.9
+
+      JSON serialized object whose content must be merged into the FeatureCollection
+      object. The string should start with { and end with }. Those characters
+      will be striped off in the output stream. It is the responsibility of the
+      user to ensure that the added foreign members are different from the other
+      members of the FeatureCollection, such as "type", "name", "crs", "features".
+
+
 VSI Virtual File System API support
 -----------------------------------
 

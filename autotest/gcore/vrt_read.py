@@ -1604,6 +1604,9 @@ def test_vrt_protocol():
         1e-9,
     )
 
+    ds = gdal.Open("vrt://data/float32.tif?a_nodata=-9999")
+    assert ds.GetRasterBand(1).GetNoDataValue() == -9999.0
+
     ## multiple open options
     ds = gdal.Open(
         "vrt://data/byte_with_ovr.tif?oo=GEOREF_SOURCES=TABFILE,OVERVIEW_LEVEL=0"

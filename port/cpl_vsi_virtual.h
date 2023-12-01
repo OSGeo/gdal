@@ -88,6 +88,10 @@ struct CPL_DLL VSIVirtualHandle
     }
 
     virtual size_t Write(const void *pBuffer, size_t nSize, size_t nCount) = 0;
+
+    int Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
+        CPL_PRINT_FUNC_FORMAT(2, 3);
+
     virtual int Eof() = 0;
     virtual int Flush()
     {

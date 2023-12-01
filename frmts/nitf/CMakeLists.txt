@@ -14,7 +14,16 @@ add_gdal_driver(
           nitf_gcprpc.cpp
           nitfwritejpeg.cpp
           nitfwritejpeg_12.cpp
-  BUILTIN)
+  CORE_SOURCES
+          nitfdrivercore.cpp
+  PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_JPEG_INTERNAL\\\;NOT GDAL_USE_JPEG12_INTERNAL\\\;NOT GDAL_USE_TIFF_INTERNAL"
+)
+
+if(NOT TARGET gdal_NITF)
+    return()
+endif()
+
 gdal_standard_includes(gdal_NITF)
 target_include_directories(gdal_NITF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/gtiff
                                              ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt)

@@ -205,6 +205,7 @@ bool OGRMemDataSource::DeleteFieldDomain(const std::string &name,
                 poLayer->GetLayerDefn()->GetFieldDefn(j);
             if (poFieldDefn->GetDomainName() == name)
             {
+                auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
                 poFieldDefn->SetDomainName(std::string());
             }
         }

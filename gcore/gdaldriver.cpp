@@ -110,6 +110,7 @@ GDALDataset *GDALDriver::Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions)
 {
 
     GDALDataset *poDS = nullptr;
+    pfnOpen = GetOpenCallback();
     if (pfnOpen != nullptr)
     {
         poDS = pfnOpen(poOpenInfo);
@@ -202,6 +203,7 @@ GDALDataset *GDALDriver::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Does this format support creation.                              */
     /* -------------------------------------------------------------------- */
+    pfnCreate = GetCreateCallback();
     if (pfnCreate == nullptr && pfnCreateEx == nullptr &&
         pfnCreateVectorOnly == nullptr)
     {
@@ -357,6 +359,7 @@ GDALDriver::CreateMultiDimensional(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Does this format support creation.                              */
     /* -------------------------------------------------------------------- */
+    pfnCreateMultiDimensional = GetCreateMultiDimensionalCallback();
     if (pfnCreateMultiDimensional == nullptr)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1341,12 +1344,13 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
     /*      Create() method.                                                */
     /* -------------------------------------------------------------------- */
     GDALDataset *poDstDS = nullptr;
-    if (pfnCreateCopy != nullptr &&
+    auto l_pfnCreateCopy = GetCreateCopyCallback();
+    if (l_pfnCreateCopy != nullptr &&
         !CPLTestBool(CPLGetConfigOption("GDAL_DEFAULT_CREATE_COPY", "NO")))
     {
-        poDstDS = pfnCreateCopy(pszFilename, poSrcDS, bStrict,
-                                const_cast<char **>(papszOptions), pfnProgress,
-                                pProgressData);
+        poDstDS = l_pfnCreateCopy(pszFilename, poSrcDS, bStrict,
+                                  const_cast<char **>(papszOptions),
+                                  pfnProgress, pProgressData);
         if (poDstDS != nullptr)
         {
             if (poDstDS->GetDescription() == nullptr ||
@@ -1574,6 +1578,7 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
 
     CPLDebug("GDAL", "QuietDelete(%s) invoking Delete()", pszName);
 
+    poDriver->pfnDelete = poDriver->GetDeleteCallback();
     const bool bQuiet = !bExists && poDriver->pfnDelete == nullptr &&
                         poDriver->pfnDeleteDataSource == nullptr;
     if (bQuiet)
@@ -1614,6 +1619,7 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
 CPLErr GDALDriver::Delete(const char *pszFilename)
 
 {
+    pfnDelete = GetDeleteCallback();
     if (pfnDelete != nullptr)
         return pfnDelete(pszFilename);
     else if (pfnDeleteDataSource != nullptr)
@@ -1791,6 +1797,7 @@ CPLErr GDALDriver::DefaultRename(const char *pszNewName, const char *pszOldName)
 CPLErr GDALDriver::Rename(const char *pszNewName, const char *pszOldName)
 
 {
+    pfnRename = GetRenameCallback();
     if (pfnRename != nullptr)
         return pfnRename(pszNewName, pszOldName);
 
@@ -1916,6 +1923,7 @@ CPLErr GDALDriver::DefaultCopyFiles(const char *pszNewName,
 CPLErr GDALDriver::CopyFiles(const char *pszNewName, const char *pszOldName)
 
 {
+    pfnCopyFiles = GetCopyFilesCallback();
     if (pfnCopyFiles != nullptr)
         return pfnCopyFiles(pszNewName, pszOldName);
 
@@ -2638,6 +2646,7 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
     const int nDriverCount = poDM->GetDriverCount();
 
     // First pass: only use drivers that have a pfnIdentify implementation.
+    std::vector<GDALDriver *> apoSecondPassDrivers;
     for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
     {
         GDALDriver *poDriver = poDM->GetDriver(iDriver);
@@ -2676,12 +2685,28 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
         }
         else
         {
-            if (poDriver->pfnIdentify(&oOpenInfo) > 0)
+            const int nIdentifyRes = poDriver->pfnIdentify(&oOpenInfo);
+            if (nIdentifyRes > 0)
                 return poDriver;
+            if (nIdentifyRes < 0 &&
+                poDriver->GetMetadataItem("IS_NON_LOADED_PLUGIN"))
+            {
+                // Not loaded plugin
+                apoSecondPassDrivers.push_back(poDriver);
+            }
         }
     }
 
-    // Second pass: slow method.
+    // second pass: try loading plugin drivers
+    for (auto poDriver : apoSecondPassDrivers)
+    {
+        // Force plugin driver loading
+        poDriver->GetMetadata();
+        if (poDriver->pfnIdentify(&oOpenInfo) > 0)
+            return poDriver;
+    }
+
+    // third pass: slow method.
     for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
     {
         GDALDriver *poDriver = poDM->GetDriver(iDriver);
@@ -2759,6 +2784,14 @@ CPLErr GDALDriver::SetMetadataItem(const char *pszName, const char *pszValue,
             GDALMajorObject::GetMetadataItem(GDAL_DMD_EXTENSIONS) == nullptr)
         {
             GDALMajorObject::SetMetadataItem(GDAL_DMD_EXTENSIONS, pszValue);
+        }
+        /* and vice-versa if there is a single extension in GDAL_DMD_EXTENSIONS */
+        else if (EQUAL(pszName, GDAL_DMD_EXTENSIONS) &&
+                 strchr(pszValue, ' ') == nullptr &&
+                 GDALMajorObject::GetMetadataItem(GDAL_DMD_EXTENSION) ==
+                     nullptr)
+        {
+            GDALMajorObject::SetMetadataItem(GDAL_DMD_EXTENSION, pszValue);
         }
     }
     return GDALMajorObject::SetMetadataItem(pszName, pszValue, pszDomain);

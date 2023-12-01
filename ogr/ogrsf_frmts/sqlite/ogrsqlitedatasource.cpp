@@ -1673,7 +1673,7 @@ bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
         // that will do it with other datasets.
         CPLTestBool(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")))
     {
-        OGR2SQLITE_Setup(this, this);
+        m_poSQLiteModule = OGR2SQLITE_Setup(this, this);
     }
     // We need to do LoadExtensions() after OGR2SQLITE_Setup(), otherwise
     // tests in ogr_virtualogr.py::test_ogr_sqlite_load_extensions_load_self()
@@ -3206,12 +3206,31 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    if (pszDialect != nullptr && EQUAL(pszDialect, "OGRSQL"))
-        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
-                                       pszDialect);
-    else if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
+    if (pszDialect != nullptr && EQUAL(pszDialect, "INDIRECT_SQLITE"))
         return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
                                        "SQLITE");
+    else if (pszDialect != nullptr && !EQUAL(pszDialect, "") &&
+             !EQUAL(pszDialect, "NATIVE") && !EQUAL(pszDialect, "SQLITE"))
+
+        return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter,
+                                       pszDialect);
+
+    if (EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like = 0") ||
+        EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like=0") ||
+        EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like =0") ||
+        EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like= 0"))
+    {
+        if (m_poSQLiteModule)
+            OGR2SQLITE_SetCaseSensitiveLike(m_poSQLiteModule, false);
+    }
+    else if (EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like = 1") ||
+             EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like=1") ||
+             EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like =1") ||
+             EQUAL(pszSQLCommand, "PRAGMA case_sensitive_like= 1"))
+    {
+        if (m_poSQLiteModule)
+            OGR2SQLITE_SetCaseSensitiveLike(m_poSQLiteModule, true);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Special case DELLAYER: command.                                 */

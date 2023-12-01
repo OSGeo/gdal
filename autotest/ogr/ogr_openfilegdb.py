@@ -2509,6 +2509,151 @@ def test_ogr_openfilegdb_read_readonly_in_update_mode():
 
 
 ###############################################################################
+# Test reading a Integer64 field (ArcGIS Pro >= 3.2)
+
+
+def test_ogr_openfilegdb_read_int64():
+
+    ds = ogr.Open("data/filegdb/arcgis_pro_32_types.gdb")
+    lyr = ds.GetLayerByName("big_int")
+    lyr_defn = lyr.GetLayerDefn()
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("big"))
+    assert fld_defn.GetType() == ogr.OFTInteger64
+    assert fld_defn.GetDefault() == "1234567890123456"
+
+    f = lyr.GetNextFeature()
+    assert f["short"] == 32767
+    assert f["long"] == 2147483647
+    assert f["big"] == 9007199254740991
+    assert f["float"] == pytest.approx(3.4e38)
+    assert f["double"] == pytest.approx(1.7976931348623e308)
+
+    f = lyr.GetNextFeature()
+    assert f["short"] == -32768
+    assert f["long"] == -2147483647
+    assert f["big"] == -9007199254740991
+    assert f["float"] == pytest.approx(-3.4e38)
+    assert f["double"] == pytest.approx(-1.7976931348623e308)
+
+    lyr.SetAttributeFilter("big > 0")
+    f = lyr.GetNextFeature()
+    assert f["big"] == 9007199254740991
+
+    lyr.SetAttributeFilter("big < 0")
+    f = lyr.GetNextFeature()
+    assert f["big"] == -9007199254740991
+
+    with ds.ExecuteSQL("SELECT MIN(big), MAX(big) FROM big_int") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_big"] == -9007199254740991
+        assert f["MAX_big"] == 9007199254740991
+
+
+###############################################################################
+# Test reading DateOnly, TimeOnly, TimestampOffset fields (ArcGIS Pro >= 3.2)
+
+
+def test_ogr_openfilegdb_read_new_datetime_types():
+
+    ds = ogr.Open("data/filegdb/arcgis_pro_32_types.gdb")
+
+    lyr = ds.GetLayerByName("date_types")
+    lyr_defn = lyr.GetLayerDefn()
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetDefault() == "'2023/02/01 04:05:06'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date_only"))
+    assert fld_defn.GetType() == ogr.OFTDate
+    assert fld_defn.GetDefault() == "'2023/02/01'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("time_only"))
+    assert fld_defn.GetType() == ogr.OFTTime
+    assert fld_defn.GetDefault() == "'04:05:06'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("timestamp_offset"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetDefault() == "'2023/02/01 04:05:06.000+06:00'"
+
+    f = lyr.GetNextFeature()
+    assert f["date"] == "2023/11/29 13:14:15+00"
+    assert f["date_only"] == "2023/11/29"
+    assert f["time_only"] == "13:14:15"
+    assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
+
+    f = lyr.GetNextFeature()
+    assert f["date"] == "2023/12/31 00:01:01+00"
+    assert f["date_only"] == "2023/12/31"
+    assert f["time_only"] == "00:01:01"
+    assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
+
+    with ds.ExecuteSQL('SELECT MIN("date"), MAX("date") FROM date_types') as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_date"] == "1901/01/01 00:01:01+00"
+        assert f["MAX_date"] == "2023/12/31 00:01:01+00"
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("date_only"), MAX("date_only") FROM date_types'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_date_only"] == "1901/01/01"
+        assert f["MAX_date_only"] == "2023/12/31"
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("time_only"), MAX("time_only") FROM date_types'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_time_only"] == "00:01:01"
+        assert f["MAX_time_only"] == "13:14:15"
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("timestamp_offset"), MAX("timestamp_offset") FROM date_types'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_timestamp_offset"] == "1901/01/01 00:01:01+10"
+        assert f["MAX_timestamp_offset"] == "2023/12/31 00:01:01+10"
+
+    lyr = ds.GetLayerByName("date_types_high_precision")
+    lyr_defn = lyr.GetLayerDefn()
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetDefault() == "'2023/01/02 04:05:06'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("date_only"))
+    assert fld_defn.GetType() == ogr.OFTDate
+    assert fld_defn.GetDefault() == "'2023/01/02'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("time_only"))
+    assert fld_defn.GetType() == ogr.OFTTime
+    assert fld_defn.GetDefault() == "'04:05:06'"
+
+    fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("timestamp_offset"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetDefault() == "'2023/01/02 04:05:06.000+06:00'"
+
+    f = lyr.GetNextFeature()
+    assert f["date"] == "2023/11/29 13:14:15.678+00"
+    assert f["date_only"] == "2023/11/29"
+    assert f["time_only"] == "13:14:15"
+    assert f["timestamp_offset"] == "2023/11/29 13:14:15-05"
+
+    f = lyr.GetNextFeature()
+    assert f["date"] == "2023/12/31 00:01:01.001+00"
+    assert f["date_only"] == "2023/12/31"
+    assert f["time_only"] == "00:01:01"
+    assert f["timestamp_offset"] == "2023/12/31 00:01:01+10"
+
+    with ds.ExecuteSQL(
+        'SELECT MIN("timestamp_offset"), MAX("timestamp_offset") FROM date_types_high_precision'
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_timestamp_offset"] == "1900/12/31 14:01:01"
+        assert f["MAX_timestamp_offset"] == "2023/12/30 14:01:01"
+
+
+###############################################################################
 # Cleanup
 
 

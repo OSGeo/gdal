@@ -8,7 +8,7 @@ RFC 96: Deferred C++ plugin loading
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2023-Nov-01
-Status:        Adopted
+Status:        Adopted, implemented
 Target:        GDAL 3.9
 ============== =============================================
 
@@ -190,6 +190,7 @@ modified to call a driver-specific function that calls
 GDALDriverManager::DeclareDeferredPluginDriver() (see example in below
 paragraph). This code path is enabled only when the driver is built as plugin.
 
+.. _rfc96_example_driver:
 
 Example of changes to do on a simplified driver
 -----------------------------------------------
@@ -422,7 +423,7 @@ To solve this, the following idea has been implemented. Extract from the updated
         cmake .. -DOGR_DRIVER_PARQUET_PLUGIN_INSTALLATION_MESSAGE="You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'"
 
     and opening a Parquet file while the plugin is not installed will display the
-    follwing error::
+    following error::
 
         $ ogrinfo poly.parquet
         ERROR 4: `poly.parquet' not recognized as a supported file format. It could have been recognized by driver Parquet, but plugin ogr_Parquet.so is not available in your installation. You may install it with with 'conda install -c conda-forge libgdal-arrow-parquet'
@@ -471,7 +472,7 @@ To solve this, the following idea has been implemented. Extract from the updated
     For other drivers, GDAL_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN /
     OGR_REGISTER_DRIVER_<driver_name>_FOR_LATER_PLUGIN can be declared at
     libgdal build time without requiring the dependent libraries needed to build
-    the pluging later to be available.
+    the plugin later to be available.
 
 
 Documentation
@@ -479,7 +480,7 @@ Documentation
 
 :ref:`raster_driver_tut` and :ref:`vector_driver_tut` will be updated to point
 to this RFC.
-:ref:`building_from_source` will receive the new paragraph mentionned above.
+:ref:`building_from_source` will receive the new paragraph mentioned above.
 
 Testing
 -------

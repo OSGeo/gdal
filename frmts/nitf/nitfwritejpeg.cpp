@@ -96,7 +96,15 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                        int nRestartInterval, GDALProgressFunc pfnProgress,
                        void *pProgressData);
 
-void jpeg_vsiio_dest(j_compress_ptr cinfo, VSILFILE *outfile);
+#ifdef NITFWriteJPEGBlock
+#define jpeg_vsiio_src NITF_jpeg_vsiio_src12
+#define jpeg_vsiio_dest NITF_jpeg_vsiio_dest12
+#else
+#define jpeg_vsiio_src NITF_jpeg_vsiio_src
+#define jpeg_vsiio_dest NITF_jpeg_vsiio_dest
+#endif
+#include "../jpeg/vsidataio.h"
+#include "../jpeg/vsidataio.cpp"
 
 /************************************************************************/
 /*                         NITFWriteJPEGBlock()                         */

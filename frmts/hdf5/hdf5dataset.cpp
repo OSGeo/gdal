@@ -33,6 +33,7 @@
 
 #include "hdf5_api.h"
 #include "hdf5dataset.h"
+#include "hdf5drivercore.h"
 #include "hdf5vfl.h"
 
 #include <algorithm>
@@ -92,77 +93,6 @@ static void HDF5DatasetDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                    HDF5DriverGetSubdatasetInfo()                     */
-/************************************************************************/
-
-struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
-{
-  public:
-    explicit HDF5DriverSubdatasetInfo(const std::string &fileName)
-        : GDALSubdatasetInfo(fileName)
-    {
-    }
-
-    // GDALSubdatasetInfo interface
-  private:
-    void parseFileName() override
-    {
-
-        if (!STARTS_WITH_CI(m_fileName.c_str(), "HDF5:"))
-        {
-            return;
-        }
-
-        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(aosParts)};
-
-        if (iPartsCount >= 3)
-        {
-
-            m_driverPrefixComponent = aosParts[0];
-
-            int subdatasetIndex{2};
-            const bool hasDriveLetter{
-                (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
-                (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
-
-            m_pathComponent = aosParts[1];
-
-            if (hasDriveLetter)
-            {
-                m_pathComponent.append(":");
-                m_pathComponent.append(aosParts[2]);
-                subdatasetIndex++;
-            }
-
-            m_subdatasetComponent = aosParts[subdatasetIndex];
-
-            // Append any remaining part
-            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
-            {
-                m_subdatasetComponent.append(":");
-                m_subdatasetComponent.append(aosParts[i]);
-            }
-        }
-    }
-};
-
-static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
-{
-    if (STARTS_WITH_CI(pszFileName, "HDF5:"))
-    {
-        std::unique_ptr<GDALSubdatasetInfo> info =
-            std::make_unique<HDF5DriverSubdatasetInfo>(pszFileName);
-        if (!info->GetSubdatasetComponent().empty() &&
-            !info->GetPathComponent().empty())
-        {
-            return info.release();
-        }
-    }
-    return nullptr;
-}
-
-/************************************************************************/
 /* ==================================================================== */
 /*                              HDF5Dataset                             */
 /* ==================================================================== */
@@ -174,26 +104,15 @@ static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 void GDALRegister_HDF5()
 
 {
-    if (GDALGetDriverByName("HDF5") != nullptr)
+    if (GDALGetDriverByName(HDF5_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("HDF5");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Hierarchical Data Format Release 5");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/hdf5.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    HDF5DriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = HDF5Dataset::Open;
-    poDriver->pfnIdentify = HDF5Dataset::Identify;
     poDriver->pfnUnloadDriver = HDF5DatasetDriverUnload;
-    poDriver->pfnGetSubdatasetInfoFunc = HDF5DriverGetSubdatasetInfo;
     GetGDALDriverManager()->RegisterDriver(poDriver);
 
 #ifdef HDF5_PLUGIN
@@ -443,118 +362,6 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int HDF5Dataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) &&
-        STARTS_WITH(poOpenInfo->pszFilename, "HDF5:"))
-    {
-        return TRUE;
-    }
-
-    // Is it an HDF5 file?
-    constexpr char achSignature[] = "\211HDF\r\n\032\n";
-
-    if (!poOpenInfo->pabyHeader)
-        return FALSE;
-
-    const CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
-
-    const auto IsRecognizedByNetCDFDriver = [&osExt, poOpenInfo]()
-    {
-        if ((EQUAL(osExt, "NC") || EQUAL(osExt, "CDF") || EQUAL(osExt, "NC4") ||
-             EQUAL(osExt, "gmac")) &&
-            GDALGetDriverByName("netCDF") != nullptr)
-        {
-            const char *const apszAllowedDriver[] = {"netCDF", nullptr};
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            GDALDatasetH hDS = GDALOpenEx(
-                poOpenInfo->pszFilename,
-                GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VECTOR,
-                apszAllowedDriver, nullptr, nullptr);
-            CPLPopErrorHandler();
-            if (hDS)
-            {
-                GDALClose(hDS);
-                return true;
-            }
-        }
-        return false;
-    };
-
-    if (memcmp(poOpenInfo->pabyHeader, achSignature, 8) == 0 ||
-        (poOpenInfo->nHeaderBytes > 512 + 8 &&
-         memcmp(poOpenInfo->pabyHeader + 512, achSignature, 8) == 0))
-    {
-        // The tests to avoid opening KEA and BAG drivers are not
-        // necessary when drivers are built in the core lib, as they
-        // are registered after HDF5, but in the case of plugins, we
-        // cannot do assumptions about the registration order.
-
-        // Avoid opening kea files if the kea driver is available.
-        if (EQUAL(osExt, "KEA") && GDALGetDriverByName("KEA") != nullptr)
-        {
-            return FALSE;
-        }
-
-        // Avoid opening BAG files if the bag driver is available.
-        if (EQUAL(osExt, "BAG") && GDALGetDriverByName("BAG") != nullptr)
-        {
-            return FALSE;
-        }
-
-        // Avoid opening NC files if the netCDF driver is available and
-        // they are recognized by it.
-        if (IsRecognizedByNetCDFDriver())
-        {
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if (memcmp(poOpenInfo->pabyHeader, "<HDF_UserBlock>", 15) == 0)
-    {
-        if (H5Fis_hdf5(poOpenInfo->pszFilename))
-            return TRUE;
-    }
-
-    // The HDF5 signature can be at offsets 512, 1024, 2048, etc.
-    if (poOpenInfo->fpL != nullptr &&
-        (EQUAL(osExt, "h5") || EQUAL(osExt, "hdf5") || EQUAL(osExt, "nc") ||
-         EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4")))
-    {
-        vsi_l_offset nOffset = 512;
-        for (int i = 0; i < 64; i++)
-        {
-            GByte abyBuf[8];
-            if (VSIFSeekL(poOpenInfo->fpL, nOffset, SEEK_SET) != 0 ||
-                VSIFReadL(abyBuf, 1, 8, poOpenInfo->fpL) != 8)
-            {
-                break;
-            }
-            if (memcmp(abyBuf, achSignature, 8) == 0)
-            {
-                // Avoid opening NC files if the netCDF driver is available and
-                // they are recognized by it.
-                if (IsRecognizedByNetCDFDriver())
-                {
-                    return FALSE;
-                }
-
-                return TRUE;
-            }
-            nOffset *= 2;
-        }
-    }
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                         GDAL_HDF5Open()                              */
 /************************************************************************/
 hid_t GDAL_HDF5Open(const std::string &osFilename)
@@ -606,7 +413,7 @@ hid_t GDAL_HDF5Open(const std::string &osFilename)
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!HDF5DatasetIdentify(poOpenInfo))
         return nullptr;
 
     HDF5_GLOBAL_LOCK();

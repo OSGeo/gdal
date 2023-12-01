@@ -123,3 +123,36 @@ def test_ogr_gpsbabel_3():
     assert not (
         res.find("$GPRMC") == -1 or res.find("$GPGGA") == -1 or res.find("$GPGSA") == -1
     ), "did not get expected result"
+
+
+###############################################################################
+# Test features=
+
+
+@pytest.mark.parametrize("features", ["waypoints", "tracks", "routes"])
+def test_ogr_gpsbabel_features_in_connection_string(features):
+
+    ds = ogr.Open(f"GPSBABEL:gpx:features={features}:data/gpx/test.gpx")
+    assert ds
+    assert ds.GetLayerCount() == (1 if features == "waypoints" else 2)
+    assert ds.GetLayer(0).GetName() == features
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "connection_string",
+    [
+        "GPSBABEL:",
+        "GPSBABEL:wrong_driver",
+        "GPSBABEL:gpx:wrong_file",
+        "GPSBABEL:gpx:features=wrong_feature:data/gpx/test.gpx",
+        "GPSBABEL:gpx:features=waypoints",
+    ],
+)
+def test_ogr_gpsbabel_bad_connection_string(connection_string):
+
+    with pytest.raises(Exception):
+        ogr.Open(connection_string)

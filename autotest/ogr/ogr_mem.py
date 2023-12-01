@@ -1299,68 +1299,67 @@ def test_ogr_mem_write_arrow():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     src_lyr = ds.CreateLayer("src_lyr")
 
-    feat_def = src_lyr.GetLayerDefn()
-
     field_def = ogr.FieldDefn("field_bool", ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTBoolean)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer", ogr.OFTInteger)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_int16", ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTInt16)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer64", ogr.OFTInteger64)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_float32", ogr.OFTReal)
     field_def.SetSubType(ogr.OFSTFloat32)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_real", ogr.OFTReal)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_string", ogr.OFTString)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_binary", ogr.OFTBinary)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_date", ogr.OFTDate)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_time", ogr.OFTTime)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_datetime", ogr.OFTDateTime)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_boollist", ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTBoolean)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integerlist", ogr.OFTIntegerList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_int16list", ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTInt16)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer64list", ogr.OFTInteger64List)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_float32list", ogr.OFTRealList)
     field_def.SetSubType(ogr.OFSTFloat32)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_reallist", ogr.OFTRealList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
+    feat_def = src_lyr.GetLayerDefn()
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField("field_bool", True)
     src_feature.SetField("field_integer", 17)
@@ -1415,6 +1414,84 @@ def test_ogr_mem_write_arrow():
 
     dst_feature = dst_lyr.GetNextFeature()
     assert str(src_feature2) == str(dst_feature).replace("dst_lyr", "src_lyr")
+
+
+###############################################################################
+# Test various data types for FID column in WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("fid_type", [ogr.OFTInteger, ogr.OFTInteger64, ogr.OFTString])
+def test_ogr_mem_write_arrow_types_of_fid(fid_type):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("id", fid_type))
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature["id"] = 2
+    src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        if fid_type == ogr.OFTString:
+            with pytest.raises(
+                Exception,
+                match=r"FID column 'id' should be of Arrow format 'i' \(int32\) or 'l' \(int64\)",
+            ):
+                dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+        else:
+            dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+
+    if fid_type != ogr.OFTString:
+        assert dst_lyr.GetFeature(2)
+
+
+###############################################################################
+# Test failure of CreateFeature() in WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_write_arrow_error_negative_fid():
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature["id"] = -2
+    src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        with pytest.raises(Exception, match="negative FID are not supported"):
+            dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
 
 
 ###############################################################################

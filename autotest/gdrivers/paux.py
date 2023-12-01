@@ -28,10 +28,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import gdaltest
+import pytest
 
 from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("PAUX")
 
 ###############################################################################
 # Read test of simple byte reference data.

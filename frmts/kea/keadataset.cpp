@@ -30,7 +30,9 @@
 #include "keadataset.h"
 #include "keaband.h"
 #include "keacopy.h"
+#include "keadrivercore.h"
 #include "../frmts/hdf5/hdf5vfl.h"
+#include "cpl_vsi_virtual.h"
 
 /************************************************************************/
 /*                     KEADatasetDriverUnload()                        */
@@ -130,7 +132,7 @@ kealib::KEADataType GDAL_to_KEA_Type(GDALDataType egdalType)
 // static function - pointer set in driver
 GDALDataset *KEADataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (Identify(poOpenInfo))
+    if (KEADriverIdentify(poOpenInfo))
     {
         try
         {
@@ -179,40 +181,20 @@ GDALDataset *KEADataset::Open(GDALOpenInfo *poOpenInfo)
                      poOpenInfo->pszFilename, e.what());
             return nullptr;
         }
+        catch (...)
+        {
+            // was a problem - can't be a valid file
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Attempt to open file `%s' failed. Error: unknown\n",
+                     poOpenInfo->pszFilename);
+            return nullptr;
+        }
     }
     else
     {
         // not a KEA file
         return nullptr;
     }
-}
-
-// static function- pointer set in driver
-// this function is called in preference to Open
-//
-int KEADataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-
-    /* -------------------------------------------------------------------- */
-    /*      Is it an HDF5 file?                                             */
-    /* -------------------------------------------------------------------- */
-    static const char achSignature[] = "\211HDF\r\n\032\n";
-
-    if (poOpenInfo->pabyHeader == nullptr ||
-        memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
-    {
-        return 0;
-    }
-
-    // avoid using kealib::KEAImageIO::isKEAImage as this is likely
-    // to be too slow over curl etc (and doesn't take a HDF5 file handle
-    // anyway).
-    // Just test the extension
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
-    if (EQUAL(osExt, "KEA"))
-        return 1;
-    else
-        return 0;
 }
 
 // static function
@@ -230,6 +212,20 @@ H5::H5File *KEADataset::CreateLL(const char *pszFilename, int nXSize,
             pszFilename);
         return nullptr;
     }
+
+    // This helps avoiding issues with H5File handles in a bad state, that
+    // may cause crashes at process termination
+    // Cf https://github.com/OSGeo/gdal/issues/8743
+    if (VSIFileManager::GetHandler(pszFilename) !=
+        VSIFileManager::GetHandler(""))
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Attempt to create file `%s' failed. /vsi file systems not "
+                 "supported\n",
+                 pszFilename);
+        return nullptr;
+    }
+
     // process any creation options in papszParamList
     // default value
     unsigned int nimageblockSize = kealib::KEA_IMAGE_CHUNK_SIZE;
@@ -301,6 +297,13 @@ H5::H5File *KEADataset::CreateLL(const char *pszFilename, int nXSize,
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Attempt to create file `%s' failed. Error: %s\n", pszFilename,
                  e.what());
+        return nullptr;
+    }
+    catch (...)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Attempt to create file `%s' failed. Error: unknown\n",
+                 pszFilename);
         return nullptr;
     }
 }

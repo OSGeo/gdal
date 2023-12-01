@@ -32,13 +32,16 @@
 #include <stdbool.h>
 
 typedef bool (*GDALForwardCoordTransformer)(double xIn, double yIn,
-                                            double &xOut, double &yOt,
+                                            double &xOut, double &yOut,
                                             void *pUserData);
 
 bool GDALGenericInverse2D(double xIn, double yIn, double guessedXOut,
                           double guessedYOut,
                           GDALForwardCoordTransformer pfnForwardTranformer,
                           void *pfnForwardTranformerUserData, double &xOut,
-                          double &yOut, double toleranceOnInputCoordinates = 0);
+                          double &yOut,
+                          bool computeJacobianMatrixOnlyAtFirstIter = false,
+                          double toleranceOnInputCoordinates = 0,
+                          double toleranceOnOutputCoordinates = 0);
 
 #endif  // GDALGENERICINVERSE_H

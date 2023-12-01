@@ -429,7 +429,6 @@ class PDS4Dataset final : public RawDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-    static int Identify(GDALOpenInfo *);
     static CPLErr Delete(const char *pszName);
 
     const char *const *GetOpenOptions() const

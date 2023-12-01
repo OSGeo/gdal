@@ -276,26 +276,4 @@ class OGRDWGServices : public ExSystemServices, public ExHostAppServices
     ODRX_USING_HEAP_OPERATORS(ExSystemServices);
 };
 
-/************************************************************************/
-/*                             OGRDWGDriver                             */
-/************************************************************************/
-
-class OGRDWGDriver final : public OGRSFDriver
-{
-    OGRDWGServices *poServices;
-
-  public:
-    OGRDWGDriver();
-    ~OGRDWGDriver();
-
-    OGRDWGServices *GetServices()
-    {
-        return poServices;
-    }
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-    int TestCapability(const char *) override;
-};
-
 #endif /* ndef OGR_DWG_H_INCLUDED */

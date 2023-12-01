@@ -30,23 +30,7 @@
  *******************************************************************************/
 #include "ogr_cad.h"
 #include "vsilfileio.h"
-
-/************************************************************************/
-/*                           OGRCADDriverIdentify()                     */
-/************************************************************************/
-
-static int OGRCADDriverIdentify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->nHeaderBytes < 6)
-        return FALSE;
-
-    if (poOpenInfo->pabyHeader[0] != 'A' || poOpenInfo->pabyHeader[1] != 'C')
-        return FALSE;
-
-    return IdentifyCADFile(new VSILFileIO(poOpenInfo->pszFilename), true) == 0
-               ? FALSE
-               : TRUE;
-}
+#include "ogrcaddrivercore.h"
 
 /************************************************************************/
 /*                           OGRCADDriverOpen()                         */
@@ -117,50 +101,18 @@ static GDALDataset *OGRCADDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           RegisterGDALCAD()                          */
+/*                           RegisterOGRCAD()                           */
 /************************************************************************/
 
 void RegisterOGRCAD()
 {
-    GDALDriver *poDriver;
-
-    if (GDALGetDriverByName("CAD") == nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) == nullptr)
     {
-        poDriver = new GDALDriver();
-        poDriver->SetDescription("CAD");
-        poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
-        poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "AutoCAD Driver");
-        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dwg");
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                                  "drivers/vector/cad.html");
-        poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-        poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
-                                  "OGRSQL SQLITE");
-
-        poDriver->SetMetadataItem(
-            GDAL_DMD_OPENOPTIONLIST,
-            "<OpenOptionList>"
-            "  <Option name='MODE' type='string' description='Open mode. "
-            "READ_ALL - read all data (slow), READ_FAST - read main data "
-            "(fast), READ_FASTEST - read less data' default='READ_FAST'/>"
-            "  <Option name='ADD_UNSUPPORTED_GEOMETRIES_DATA' type='string' "
-            "description='Add unsupported geometries data (color, attributes) "
-            "to the layer (YES/NO). They will have no geometrical "
-            "representation.' default='NO'/>"
-            "</OpenOptionList>");
+        auto poDriver = new GDALDriver();
+        OGRCADDriverSetCommonMetadata(poDriver);
 
         poDriver->pfnOpen = OGRCADDriverOpen;
-        poDriver->pfnIdentify = OGRCADDriverIdentify;
-        poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
-        poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES_READ, "YES");
+
         GetGDALDriverManager()->RegisterDriver(poDriver);
     }
 }

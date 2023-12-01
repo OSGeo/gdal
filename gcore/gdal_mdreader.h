@@ -244,13 +244,13 @@ class CPL_DLL GDALMDReaderManager
 CPLString CPLStrip(const CPLString &osString, const char cChar);
 CPLString CPLStripQuotes(const CPLString &osString);
 char **GDALLoadRPBFile(const CPLString &osFilePath);
-char **GDALLoadRPCFile(const CPLString &osFilePath);
+char CPL_DLL **GDALLoadRPCFile(const CPLString &osFilePath);
 char **GDALLoadIMDFile(const CPLString &osFilePath);
 bool GDALCheckFileHeader(const CPLString &soFilePath, const char *pszTestString,
                          int nBufferSize = 256);
 
 CPLErr GDALWriteRPBFile(const char *pszFilename, char **papszMD);
-CPLErr GDALWriteRPCTXTFile(const char *pszFilename, char **papszMD);
+CPLErr CPL_DLL GDALWriteRPCTXTFile(const char *pszFilename, char **papszMD);
 CPLErr GDALWriteIMDFile(const char *pszFilename, char **papszMD);
 
 #endif  // GDAL_MDREADER_H_INCLUDED

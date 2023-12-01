@@ -134,6 +134,20 @@ public:
         return GDALRATGetValueAsDouble( self, iRow, iCol );
     }
 
+#if defined(SWIGPYTHON)
+    CPLErr ReadValuesIOAsString( int iField, int iStartRow, int iLength, char **ppszData ) {
+        return GDALRATValuesIOAsString(self, GF_Read, iField, iStartRow, iLength, ppszData);
+    }
+
+    CPLErr ReadValuesIOAsInteger( int iField, int iStartRow, int iLength, int *pnData ) {
+        return GDALRATValuesIOAsInteger(self, GF_Read, iField, iStartRow, iLength, pnData);
+    }
+
+    CPLErr ReadValuesIOAsDouble( int iField, int iStartRow, int iLength, double *pdfData ) {
+        return GDALRATValuesIOAsDouble(self, GF_Read, iField, iStartRow, iLength, pdfData);
+    }
+#endif
+
     %apply ( tostring argin ) { (const char* pszValue) };
     void SetValueAsString( int iRow, int iCol, const char *pszValue ) {
         GDALRATSetValueAsString( self, iRow, iCol, pszValue );
@@ -191,6 +205,10 @@ public:
 
     GDALRATTableType GetTableType() {
         return GDALRATGetTableType( self );
+    }
+
+    void RemoveStatistics() {
+        GDALRATRemoveStatistics(self);
     }
 }
 

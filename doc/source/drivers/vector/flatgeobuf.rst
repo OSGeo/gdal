@@ -34,6 +34,9 @@ On creation, passing a filename without a .fgb suffix will instruct the driver
 to create a directory of that name, and create layers as .fgb files in that
 directory.
 
+Starting with GDAL 3.9, metadata set at the layer level will be written in the
+FlatGeobuf header, and retrieved on reading as layer metadata.
+
 Open options
 ------------
 
@@ -64,6 +67,18 @@ Layer Creation Options
       other VSI file systems, the temporary directory will be the one decided by
       the :cpp:func:`CPLGenerateTempFilename` function.
       "/vsimem/" can be used for in-memory temporary files.
+
+-  .. lco:: TITLE
+      :choices: <string>
+      :since: 3.9
+
+      Dataset title (should be relatively short)
+
+-  .. lco:: DESCRIPTION
+      :choices: <string>
+      :since: 3.9
+
+      Dataset description (intended for free form long text)
 
 Creation Issues
 ---------------

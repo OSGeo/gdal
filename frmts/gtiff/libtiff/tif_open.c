@@ -26,6 +26,7 @@
  * TIFF Library.
  */
 #include "tiffiop.h"
+#include <assert.h>
 #include <limits.h>
 
 /*
@@ -81,13 +82,26 @@ TIFFOpenOptions *TIFFOpenOptionsAlloc()
 void TIFFOpenOptionsFree(TIFFOpenOptions *opts) { _TIFFfree(opts); }
 
 /** Define a limit in bytes for a single memory allocation done by libtiff.
- *  If max_single_mem_alloc is set to 0, no other limit that the underlying
- *  _TIFFmalloc() will be applied, which is the default.
+ *  If max_single_mem_alloc is set to 0, which is the default, no other limit
+ *  that the underlying _TIFFmalloc() or
+ *  TIFFOpenOptionsSetMaxCumulatedMemAlloc() will be applied.
  */
 void TIFFOpenOptionsSetMaxSingleMemAlloc(TIFFOpenOptions *opts,
                                          tmsize_t max_single_mem_alloc)
 {
     opts->max_single_mem_alloc = max_single_mem_alloc;
+}
+
+/** Define a limit in bytes for the cumulated memory allocations done by libtiff
+ *  on a given TIFF handle.
+ *  If max_cumulated_mem_alloc is set to 0, which is the default, no other limit
+ *  that the underlying _TIFFmalloc() or
+ *  TIFFOpenOptionsSetMaxSingleMemAlloc() will be applied.
+ */
+void TIFFOpenOptionsSetMaxCumulatedMemAlloc(TIFFOpenOptions *opts,
+                                            tmsize_t max_cumulated_mem_alloc)
+{
+    opts->max_cumulated_mem_alloc = max_cumulated_mem_alloc;
 }
 
 void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions *opts,
@@ -117,6 +131,21 @@ static void _TIFFEmitErrorAboveMaxSingleMemAlloc(TIFF *tif,
                   (uint64_t)s, (uint64_t)tif->tif_max_single_mem_alloc);
 }
 
+static void _TIFFEmitErrorAboveMaxCumulatedMemAlloc(TIFF *tif,
+                                                    const char *pszFunction,
+                                                    tmsize_t s)
+{
+    TIFFErrorExtR(tif, pszFunction,
+                  "Cumulated memory allocation of %" PRIu64 " + %" PRIu64
+                  " bytes is beyond the %" PRIu64
+                  " cumulated byte limit defined in open options",
+                  (uint64_t)tif->tif_cur_cumulated_mem_alloc, (uint64_t)s,
+                  (uint64_t)tif->tif_max_cumulated_mem_alloc);
+}
+
+/* On x86_64, allocations of more than 16 bytes are aligned on 16 bytes */
+#define MALLOC_ALIGNEMENT (2 * SIZEOF_SIZE_T)
+
 /** malloc() version that takes into account memory-specific open options */
 void *_TIFFmallocExt(TIFF *tif, tmsize_t s)
 {
@@ -126,22 +155,55 @@ void *_TIFFmallocExt(TIFF *tif, tmsize_t s)
         _TIFFEmitErrorAboveMaxSingleMemAlloc(tif, "_TIFFmallocExt", s);
         return NULL;
     }
+    if (tif != NULL && tif->tif_max_cumulated_mem_alloc > 0)
+    {
+        if (s > tif->tif_max_cumulated_mem_alloc -
+                    tif->tif_cur_cumulated_mem_alloc ||
+            s > TIFF_TMSIZE_T_MAX - MALLOC_ALIGNEMENT)
+        {
+            _TIFFEmitErrorAboveMaxCumulatedMemAlloc(tif, "_TIFFmallocExt", s);
+            return NULL;
+        }
+        void *ptr = _TIFFmalloc(MALLOC_ALIGNEMENT + s);
+        if (!ptr)
+            return NULL;
+        tif->tif_cur_cumulated_mem_alloc += s;
+        memcpy(ptr, &s, sizeof(s));
+        return (char *)ptr + MALLOC_ALIGNEMENT;
+    }
     return _TIFFmalloc(s);
 }
 
 /** calloc() version that takes into account memory-specific open options */
 void *_TIFFcallocExt(TIFF *tif, tmsize_t nmemb, tmsize_t siz)
 {
+    if (nmemb <= 0 || siz <= 0 || nmemb > TIFF_TMSIZE_T_MAX / siz)
+        return NULL;
     if (tif != NULL && tif->tif_max_single_mem_alloc > 0)
     {
-        if (nmemb <= 0 || siz <= 0 || nmemb > TIFF_TMSIZE_T_MAX / siz)
-            return NULL;
         if (nmemb * siz > tif->tif_max_single_mem_alloc)
         {
             _TIFFEmitErrorAboveMaxSingleMemAlloc(tif, "_TIFFcallocExt",
                                                  nmemb * siz);
             return NULL;
         }
+    }
+    if (tif != NULL && tif->tif_max_cumulated_mem_alloc > 0)
+    {
+        const tmsize_t s = nmemb * siz;
+        if (s > tif->tif_max_cumulated_mem_alloc -
+                    tif->tif_cur_cumulated_mem_alloc ||
+            s > TIFF_TMSIZE_T_MAX - MALLOC_ALIGNEMENT)
+        {
+            _TIFFEmitErrorAboveMaxCumulatedMemAlloc(tif, "_TIFFcallocExt", s);
+            return NULL;
+        }
+        void *ptr = _TIFFcalloc(MALLOC_ALIGNEMENT + s, 1);
+        if (!ptr)
+            return NULL;
+        tif->tif_cur_cumulated_mem_alloc += s;
+        memcpy(ptr, &s, sizeof(s));
+        return (char *)ptr + MALLOC_ALIGNEMENT;
     }
     return _TIFFcalloc(nmemb, siz);
 }
@@ -155,13 +217,48 @@ void *_TIFFreallocExt(TIFF *tif, void *p, tmsize_t s)
         _TIFFEmitErrorAboveMaxSingleMemAlloc(tif, "_TIFFreallocExt", s);
         return NULL;
     }
+    if (tif != NULL && tif->tif_max_cumulated_mem_alloc > 0)
+    {
+        void *oldPtr = p;
+        tmsize_t oldSize = 0;
+        if (p)
+        {
+            oldPtr = (char *)p - MALLOC_ALIGNEMENT;
+            memcpy(&oldSize, oldPtr, sizeof(oldSize));
+            assert(oldSize <= tif->tif_cur_cumulated_mem_alloc);
+        }
+        if (s > oldSize &&
+            (s > tif->tif_max_cumulated_mem_alloc -
+                     (tif->tif_cur_cumulated_mem_alloc - oldSize) ||
+             s > TIFF_TMSIZE_T_MAX - MALLOC_ALIGNEMENT))
+        {
+            _TIFFEmitErrorAboveMaxCumulatedMemAlloc(tif, "_TIFFreallocExt",
+                                                    s - oldSize);
+            return NULL;
+        }
+        void *newPtr = _TIFFrealloc(oldPtr, MALLOC_ALIGNEMENT + s);
+        if (newPtr == NULL)
+            return NULL;
+        tif->tif_cur_cumulated_mem_alloc -= oldSize;
+        tif->tif_cur_cumulated_mem_alloc += s;
+        memcpy(newPtr, &s, sizeof(s));
+        return (char *)newPtr + MALLOC_ALIGNEMENT;
+    }
     return _TIFFrealloc(p, s);
 }
 
 /** free() version that takes into account memory-specific open options */
 void _TIFFfreeExt(TIFF *tif, void *p)
 {
-    (void)tif;
+    if (p != NULL && tif != NULL && tif->tif_max_cumulated_mem_alloc > 0)
+    {
+        void *oldPtr = (char *)p - MALLOC_ALIGNEMENT;
+        tmsize_t oldSize;
+        memcpy(&oldSize, oldPtr, sizeof(oldSize));
+        assert(oldSize <= tif->tif_cur_cumulated_mem_alloc);
+        tif->tif_cur_cumulated_mem_alloc -= oldSize;
+        p = oldPtr;
+    }
     _TIFFfree(p);
 }
 
@@ -231,6 +328,17 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
                         (uint64_t)opts->max_single_mem_alloc);
         goto bad2;
     }
+    if (opts && opts->max_cumulated_mem_alloc > 0 &&
+        size_to_alloc > opts->max_cumulated_mem_alloc)
+    {
+        _TIFFErrorEarly(opts, clientdata, module,
+                        "%s: Memory allocation of %" PRIu64
+                        " bytes is beyond the %" PRIu64
+                        " cumulated byte limit defined in open options",
+                        name, (uint64_t)size_to_alloc,
+                        (uint64_t)opts->max_cumulated_mem_alloc);
+        goto bad2;
+    }
     tif = (TIFF *)_TIFFmallocExt(NULL, size_to_alloc);
     if (tif == NULL)
     {
@@ -261,6 +369,7 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_warnhandler = opts->warnhandler;
         tif->tif_warnhandler_user_data = opts->warnhandler_user_data;
         tif->tif_max_single_mem_alloc = opts->max_single_mem_alloc;
+        tif->tif_max_cumulated_mem_alloc = opts->max_cumulated_mem_alloc;
     }
 
     if (!readproc || !writeproc || !seekproc || !closeproc || !sizeproc)
