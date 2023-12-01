@@ -92,11 +92,12 @@ bool OGRPMTilesWriterDataset::Create(const char *pszFilename,
     // a way that corresponds to the "clustered" mode, that is
     // "offsets are either contiguous with the previous offset+length, or
     // refer to a lesser offset, when writing with deduplication."
-    std::string osTmpFile(std::string(pszFilename) + ".tmp.mbtiles");
+    std::string osTmpFile(pszFilename);
     if (!VSIIsLocal(pszFilename))
     {
         osTmpFile = CPLGenerateTempFilename(CPLGetFilename(pszFilename));
     }
+    osTmpFile += ".tmp.mbtiles";
 
     if (!aosOptions.FetchNameValue("NAME"))
         aosOptions.SetNameValue("NAME", CPLGetBasename(pszFilename));
