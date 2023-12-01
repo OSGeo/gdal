@@ -84,6 +84,8 @@ def pct2rgb(
         ct = get_color_table(pal)
     else:
         ct = src_band.GetRasterColorTable()
+        if ct is None:
+            raise Exception(f"{src_filename} has no color table")
 
     ct_size = ct.GetCount()
     lookup = [
