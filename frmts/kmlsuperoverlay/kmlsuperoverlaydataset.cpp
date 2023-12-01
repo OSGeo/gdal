@@ -167,7 +167,7 @@ static void GenerateTiles(const std::string &filename, CPL_UNUSED int zoom,
     CPLSetThreadLocalConfigOption("GDAL_OPEN_AFTER_COPY", "NO");
     /* to prevent CreateCopy() from calling QuietDelete() */
     char **papszOptions =
-        CSLAddNameValue(nullptr, "QUIET_DELETE_ON_CREATE_COPY", "NO");
+        CSLAddNameValue(nullptr, "@QUIET_DELETE_ON_CREATE_COPY", "NO");
     GDALDataset *outDs = poOutputTileDriver->CreateCopy(
         filename.c_str(), poTmpDataset, FALSE, papszOptions, nullptr, nullptr);
     CSLDestroy(papszOptions);
