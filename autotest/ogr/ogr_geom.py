@@ -776,6 +776,38 @@ def test_ogr_geomtransfomer_wrapdateline_no_ct():
 
 
 ###############################################################################
+# Test WRAPDATELINE on multipoint
+
+
+def test_ogr_geomtransfomer_wrapdateline_multipoint():
+
+    transformer = ogr.GeomTransformer(None, ["WRAPDATELINE=YES"])
+
+    geom = ogr.CreateGeometryFromWkt("MULTIPOINT((-179 0),(179 0),(-182 0),(182 0))")
+    geom_dst = geom.Transform(transformer)
+    assert geom_dst.ExportToIsoWkt() == "MULTIPOINT ((-179 0),(179 0),(178 0),(-178 0))"
+
+
+###############################################################################
+# Test WRAPDATELINE on GeometryCollection
+
+
+@pytest.mark.require_geos
+def test_ogr_geomtransfomer_wrapdateline_geometrycollection():
+
+    transformer = ogr.GeomTransformer(None, ["WRAPDATELINE=YES"])
+
+    geom = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION(POINT(-182 0),LINESTRING(-179 0,179 0))"
+    )
+    geom_dst = geom.Transform(transformer)
+    assert (
+        geom_dst.ExportToIsoWkt()
+        == "GEOMETRYCOLLECTION (POINT (178 0),LINESTRING (-179 0,-180 0),LINESTRING (180 0,179 0))"
+    )
+
+
+###############################################################################
 # Test CloseRings()
 
 
