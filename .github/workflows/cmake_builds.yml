@@ -591,6 +591,7 @@ jobs:
         cmake --version
     - name: Install dependency
       run: |
+        rm -rf /usr/local/lib/node_modules # conflicts with node@18 from brew
         brew update
         brew outdated
         brew unlink python
