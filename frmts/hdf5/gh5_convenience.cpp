@@ -171,10 +171,44 @@ bool GH5_FetchAttribute(hid_t loc_id, const char *pszAttrName, double &dfResult,
     H5Aread(hAttr, hAttrNativeType, buf);
 
     // Translate to double.
-    if (H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType))
+    if (H5Tequal(H5T_NATIVE_CHAR, hAttrNativeType))
+        dfResult = *((char *)buf);
+    else if (H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType))
+        dfResult = *((signed char *)buf);
+    else if (H5Tequal(H5T_NATIVE_UCHAR, hAttrNativeType))
+        dfResult = *((unsigned char *)buf);
+    else if (H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType))
         dfResult = *((short *)buf);
+    else if (H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType))
+        dfResult = *((unsigned short *)buf);
     else if (H5Tequal(H5T_NATIVE_INT, hAttrNativeType))
         dfResult = *((int *)buf);
+    else if (H5Tequal(H5T_NATIVE_UINT, hAttrNativeType))
+        dfResult = *((unsigned int *)buf);
+    else if (H5Tequal(H5T_NATIVE_INT64, hAttrNativeType))
+    {
+        const auto nVal = *static_cast<int64_t *>(buf);
+        dfResult = static_cast<double>(nVal);
+        if (nVal != static_cast<int64_t>(dfResult))
+        {
+            CPLDebug("HDF5",
+                     "Loss of accuracy when reading attribute %s. "
+                     "Value " CPL_FRMT_GIB " will be read as %.18g",
+                     pszAttrName, static_cast<GIntBig>(nVal), dfResult);
+        }
+    }
+    else if (H5Tequal(H5T_NATIVE_UINT64, hAttrNativeType))
+    {
+        const auto nVal = *static_cast<uint64_t *>(buf);
+        dfResult = static_cast<double>(nVal);
+        if (nVal != static_cast<uint64_t>(dfResult))
+        {
+            CPLDebug("HDF5",
+                     "Loss of accuracy when reading attribute %s. "
+                     "Value " CPL_FRMT_GUIB " will be read as %.18g",
+                     pszAttrName, static_cast<GUIntBig>(nVal), dfResult);
+        }
+    }
     else if (H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType))
         dfResult = *((float *)buf);
     else if (H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType))
