@@ -1077,4 +1077,5 @@ def test_vrt_read_netcdf():
         ds = None
 
         with open(vrt_copy_path, "r") as xml:
+            print(xml)
             assert 'NETCDF:"alldatatypes.nc":ubyte_var' in xml.read()
