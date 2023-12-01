@@ -1256,6 +1256,10 @@ def test_hdf5_band_specific_attribute():
             r'HDF5:"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
             r"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5",
         ),
+        (
+            r"HDF5:a://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex",
+            r"a",
+        ),
         ("", ""),
     ),
 )

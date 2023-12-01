@@ -510,6 +510,10 @@ def test_hdf4_read_online_11():
             r'HDF4_EOS:EOS_SWATH:"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5":Swath1:Low_res_sst',
             r"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5",
         ),
+        (
+            r"HDF4_EOS:EOS_SWATH:a:Swath1:Low_res_sst",
+            r"a",
+        ),
         ("", ""),
     ),
 )

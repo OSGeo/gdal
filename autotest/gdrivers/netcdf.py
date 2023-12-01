@@ -6516,6 +6516,10 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
             r'NETCDF:"/vsicurl/https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202202/oisst-avhrr-v02r01.20220218.nc":/navigation_data/longitude',
             r"/vsicurl/https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202202/oisst-avhrr-v02r01.20220218.nc",
         ),
+        (
+            r"NETCDF:a:/navigation_data/longitude",
+            r"a",
+        ),
         ("", ""),
     ),
 )

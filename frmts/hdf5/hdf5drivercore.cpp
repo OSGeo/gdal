@@ -186,8 +186,9 @@ struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
 
             int subdatasetIndex{2};
             const bool hasDriveLetter{
-                (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
-                (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
+                (strlen(aosParts[2]) > 1 && aosParts[2][0] == '\\') &&
+                ((strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
+                 (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0])))};
 
             const bool hasProtocol{std::string{aosParts[1]}.find("/vsicurl/") !=
                                    std::string::npos};
