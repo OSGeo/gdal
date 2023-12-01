@@ -251,13 +251,22 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
 
             int subdatasetIndex{2};
 
-            const bool hasDriveLetter{
-                (strlen(aosParts[2]) > 1 && aosParts[2][0] == '\\') &&
-                ((strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
-                 (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0])))};
+            std::string part1{aosParts[1]};
+            if (part1.find('"') == 0)
+            {
+                part1 = part1.substr(1);
+            }
 
-            const bool hasProtocol{std::string{aosParts[1]}.find("/vsicurl/") !=
-                                   std::string::npos};
+            const bool hasDriveLetter{
+                (strlen(aosParts[2]) > 1 &&
+                 (aosParts[2][0] == '\\' || aosParts[2][0] == '/')) &&
+                part1.length() == 1 && std::isalpha(part1.at(0))};
+
+            const bool hasProtocol{part1 == "/vsicurl/http" ||
+                                   part1 == "/vsicurl/https" ||
+                                   part1 == "/vsicurl_streaming/http" ||
+                                   part1 == "/vsicurl_streaming/https" ||
+                                   part1 == "http" || part1 == "https"};
 
             m_pathComponent = aosParts[1];
             if (hasDriveLetter || hasProtocol)
@@ -279,6 +288,79 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
                     m_subdatasetComponent.append(aosParts[i]);
                 }
             }
+
+            // Remove quotes from subdataset component
+            if (m_subdatasetComponent.find('"') == 0)
+            {
+                m_subdatasetComponent = m_subdatasetComponent.substr(1);
+            }
+            if (m_subdatasetComponent.rfind('"') ==
+                m_subdatasetComponent.length() - 1)
+            {
+                m_subdatasetComponent = m_subdatasetComponent.substr(
+                    0, m_subdatasetComponent.length() - 1);
+            }
+        }
+
+        return;
+
+        if (STARTS_WITH_CI(m_fileName.c_str(), "NETCDF:"))
+        {
+
+            char **papszName = CSLTokenizeString2(m_fileName.c_str(), ":", 0);
+
+            if (CSLCount(papszName) >= 3 &&
+                ((strlen(papszName[1]) == 1 && /* D:\\bla */
+                  (papszName[2][0] == '/' || papszName[2][0] == '\\')) ||
+                 EQUAL(papszName[1], "http") || EQUAL(papszName[1], "https") ||
+                 EQUAL(papszName[1], "/vsicurl/http") ||
+                 EQUAL(papszName[1], "/vsicurl/https") ||
+                 EQUAL(papszName[1], "/vsicurl_streaming/http") ||
+                 EQUAL(papszName[1], "/vsicurl_streaming/https")))
+            {
+                const int nCountBefore = CSLCount(papszName);
+                CPLString osTmp = papszName[1];
+                osTmp += ':';
+                osTmp += papszName[2];
+                CPLFree(papszName[1]);
+                CPLFree(papszName[2]);
+                papszName[1] = CPLStrdup(osTmp);
+                memmove(papszName + 2, papszName + 3,
+                        (nCountBefore - 2) * sizeof(char *));
+            }
+
+            if (CSLCount(papszName) == 4)
+            {
+                m_driverPrefixComponent = papszName[0];
+                m_pathComponent = papszName[1];
+                m_pathComponent.append(":");
+                m_pathComponent.append(papszName[2]);
+                m_subdatasetComponent = papszName[3];
+                CSLDestroy(papszName);
+            }
+            else if (CSLCount(papszName) == 3)
+            {
+                m_driverPrefixComponent = papszName[0];
+                m_pathComponent = papszName[1];
+                m_subdatasetComponent = papszName[2];
+                CSLDestroy(papszName);
+            }
+            else if (CSLCount(papszName) == 2)
+            {
+                m_driverPrefixComponent = papszName[0];
+                m_pathComponent = papszName[1];
+                m_subdatasetComponent = "";
+                CSLDestroy(papszName);
+            }
+            else
+            {
+                CSLDestroy(papszName);
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Failed to parse NETCDF: prefix string into expected 2, 3 "
+                    "or 4 fields.");
+                return;
+            }
         }
     }
 };
@@ -289,8 +371,8 @@ static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             std::make_unique<NCDFDriverSubdatasetInfo>(pszFileName);
-        if (!info->GetSubdatasetComponent().empty() &&
-            !info->GetPathComponent().empty())
+        // Subdataset component can be empty, path cannot.
+        if (!info->GetPathComponent().empty())
         {
             return info.release();
         }
