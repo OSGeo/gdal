@@ -1477,11 +1477,15 @@ herr_t HDF5Array::GetAttributesCallback(hid_t hArray, const char *pszObjName,
                                     &pszVal,
                                     GDALExtendedDataType::CreateString());
                                 CPLError(CE_Warning, CPLE_AppDefined,
-                                         "%s attribute value (%s) is not in "
+                                         "Array %s: %s attribute value (%s) is "
+                                         "not in "
                                          "the range of the "
-                                         "array data type",
-                                         pszObjName,
-                                         pszVal ? pszVal : "(null)");
+                                         "array data type (%s)",
+                                         self->GetName().c_str(), pszObjName,
+                                         pszVal ? pszVal : "(null)",
+                                         GDALGetDataTypeName(
+                                             self->GetDataType()
+                                                 .GetNumericDataType()));
                                 CPLFree(pszVal);
                             }
                         }
