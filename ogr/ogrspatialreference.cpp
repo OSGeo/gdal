@@ -4120,12 +4120,34 @@ OGRErr OGRSpatialReference::importFromUrl(const char *pszUrl)
     /* -------------------------------------------------------------------- */
     CPLErrorReset();
 
-    const char *pszHeaders = "HEADERS=Accept: application/x-ogcwkt";
-    const char *pszTimeout = "TIMEOUT=10";
-    char *apszOptions[] = {const_cast<char *>(pszHeaders),
-                           const_cast<char *>(pszTimeout), nullptr};
+    std::string osUrl(pszUrl);
+    // We have historically supported "http://spatialreference.org/ref/AUTHNAME/CODE/"
+    // as a valid URL since we used a "Accept: application/x-ogcwkt" header
+    // to query WKT. To allow a static server to be used, rather append a
+    // "ogcwkt/" suffix.
+    for (const char *pszPrefix : {"https://spatialreference.org/ref/",
+                                  "http://spatialreference.org/ref/"})
+    {
+        if (STARTS_WITH(pszUrl, pszPrefix))
+        {
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(pszUrl + strlen(pszPrefix), "/", 0));
+            if (aosTokens.size() == 2)
+            {
+                osUrl = "https://spatialreference.org/ref/";
+                osUrl += aosTokens[0];  // authority
+                osUrl += '/';
+                osUrl += aosTokens[1];  // code
+                osUrl += "/ogcwkt/";
+            }
+            break;
+        }
+    }
 
-    CPLHTTPResult *psResult = CPLHTTPFetch(pszUrl, apszOptions);
+    const char *pszTimeout = "TIMEOUT=10";
+    char *apszOptions[] = {const_cast<char *>(pszTimeout), nullptr};
+
+    CPLHTTPResult *psResult = CPLHTTPFetch(osUrl.c_str(), apszOptions);
 
     /* -------------------------------------------------------------------- */
     /*      Try to handle errors.                                           */
