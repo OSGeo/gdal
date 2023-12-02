@@ -126,7 +126,7 @@ inline CPLSafeInt<GUInt64> CPLSM(GUInt64 x)
 inline CPLSafeInt<unsigned> CPLSM_TO_UNSIGNED(GUInt64 x);
 #endif
 
-#if defined(_MSC_VER)
+#if !defined(BUILTIN_OVERFLOW_CHECK_AVAILABLE) && defined(_MSC_VER)
 class CPLMSVCSafeIntException : public msl::utilities::SafeIntException
 {
   public:
