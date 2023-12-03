@@ -719,6 +719,17 @@ void CPL_DLL VSIFreeFilesystemPluginCallbacksStruct(
 int CPL_DLL VSIInstallPluginHandler(
     const char *pszPrefix, const VSIFilesystemPluginCallbacksStruct *poCb);
 
+/**
+ * Unregister a handler previously installed with VSIInstallPluginHandler() on
+ * the given prefix.
+ * Note: it is generally unsafe to remove a handler while there are still file
+ * handles opened that are managed by that handler. It is the responsibility of
+ * the caller to ensure that it calls this function in a situation where it is
+ * safe to do so.
+ * @since GDAL 3.9
+ */
+int CPL_DLL VSIRemovePluginHandler(const char *pszPrefix);
+
 /* ==================================================================== */
 /*      Time querying.                                                  */
 /* ==================================================================== */
