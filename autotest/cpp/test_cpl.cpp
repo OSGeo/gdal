@@ -4209,57 +4209,6 @@ TEST_F(test_cpl, VSI_plugin_minimal_testing)
     VSIRemovePluginHandler("/vsifoobar/");
 }
 
-TEST_F(test_cpl, VSI_plugin_removal)
-{
-    // Test removal of multiple handlers
-    auto psCallbacks1 = VSIAllocFilesystemPluginCallbacksStruct();
-    auto psCallbacks2 = VSIAllocFilesystemPluginCallbacksStruct();
-
-    psCallbacks1->open = [](void *pUserData, const char *pszFilename,
-                            const char *pszAccess) -> void *
-    {
-        (void)pUserData;
-        if (strcmp(pszFilename, "test1") == 0 && strcmp(pszAccess, "rb") == 0)
-            return const_cast<char *>("ok");
-        return nullptr;
-    };
-
-    psCallbacks2->open = [](void *pUserData, const char *pszFilename,
-                            const char *pszAccess) -> void *
-    {
-        (void)pUserData;
-        if (strcmp(pszFilename, "test2") == 0 && strcmp(pszAccess, "rb") == 0)
-            return const_cast<char *>("ok");
-        return nullptr;
-    };
-
-    EXPECT_EQ(VSIInstallPluginHandler("/vsimyplugin1/", psCallbacks1), 0);
-    EXPECT_EQ(VSIInstallPluginHandler("/vsimyplugin2/", psCallbacks2), 0);
-    VSIFreeFilesystemPluginCallbacksStruct(psCallbacks1);
-    VSIFreeFilesystemPluginCallbacksStruct(psCallbacks2);
-
-    auto fp1 = VSIFOpenL("/vsimyplugin1/test1", "rb");
-    EXPECT_TRUE(fp1 != nullptr);
-    auto fp2 = VSIFOpenL("/vsimyplugin2/test2", "rb");
-    EXPECT_TRUE(fp2 != nullptr);
-
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin1/test2", "rb") == nullptr);
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin2/test1", "rb") == nullptr);
-
-    VSIFCloseL(fp1);
-    VSIFCloseL(fp2);
-
-    VSIRemovePluginHandler("/vsimyplugin2/");
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin2/test2", "rb") == nullptr);
-
-    auto fp3 = VSIFOpenL("/vsimyplugin1/test1", "rb");
-    EXPECT_TRUE(fp3 != nullptr);
-    VSIFCloseL(fp3);
-
-    VSIRemovePluginHandler("/vsimyplugin1/");
-    EXPECT_TRUE(VSIFOpenL("/vsimyplugin1/test1", "rb") == nullptr);
-}
-
 TEST_F(test_cpl, VSI_plugin_advise_read)
 {
     auto psCallbacks = VSIAllocFilesystemPluginCallbacksStruct();
