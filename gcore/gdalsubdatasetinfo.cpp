@@ -43,9 +43,13 @@ GDALSubdatasetInfoH GDALGetSubdatasetInfo(const char *pszFileName)
     for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
     {
         GDALDriver *poDriver = poDM_->GetDriver(iDriver);
-        char **papszMD = GDALGetMetadata(poDriver, nullptr);
-        if (!CPLFetchBool(papszMD, GDAL_DMD_SUBDATASETS, false) ||
-            !poDriver->pfnGetSubdatasetInfoFunc)
+        if (!poDriver->pfnGetSubdatasetInfoFunc)
+        {
+            continue;
+        }
+        const char *pszDMDSubdatasets =
+            GDALGetMetadataItem(poDriver, GDAL_DMD_SUBDATASETS, nullptr);
+        if (!pszDMDSubdatasets || !CPLTestBool(pszDMDSubdatasets))
         {
             continue;
         }
