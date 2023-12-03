@@ -1,12 +1,13 @@
 GDAL - Geospatial Data Abstraction Library
 ====
 
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Linux%20Builds/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Linux+Builds%22+branch%3Amaster)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/MacOS%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22MacOS+build%22+branch%3Amaster)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Windows%20builds/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Windows+builds%22+branch%3Amaster)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Android%20build/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Android+build%22+branch%3Amaster)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/CLang%20Static%20Analyzer/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22CLang+Static+Analyzer%22+branch%3Amaster)
-[![Build Status](https://github.com/OSGeo/gdal/workflows/Code%20Checks/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Code+Checks%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/linux_build.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Linux+Builds%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/macos.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22MacOS+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/windows_build.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Windows+builds%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/android_cmake.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Android+CMake+build%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/clang_static_analyzer.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22CLang+Static+Analyzer%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/code_checks.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Code+Checks%22+branch%3Amaster)
+[![Build Status](https://github.com/OSGeo/gdal/actions/workflows/conda.yml/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Conda%22+branch%3Amaster)
 [![Build Status](https://travis-ci.com/OSGeo/gdal.svg?branch=master)](https://travis-ci.com/OSGeo/gdal)
 [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal)
 [![Documentation build Status](https://github.com/OSGeo/gdal/workflows/Docs/badge.svg)](https://github.com/osgeo/gdal/actions?query=workflow%3A%22Docs%22+branch%3Amaster)
