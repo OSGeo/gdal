@@ -1902,10 +1902,14 @@ For example:
 
     vrt://my.tif?bands=2&ovr=4
 
+::
+
+    vrt://my.nc?subdataset=sds
+
 
 The supported options currently are ``bands``, ``a_nodata``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, and ``eco``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``subdataset``, and ``subdataset_n``.
 
 Other options may be added in the future.
 
@@ -1991,6 +1995,20 @@ use syntax ``nogcp=true``, or ``nogcp=false`` (which is the default if not speci
 The effect of the ``epo`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall partially outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``epo=true``, or ``epo=false`` (which is the default if not specified).
 
 The effect of the ``eco`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall completely outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``eco=true``, or ``eco=false`` (which is the default if not specified).
+
+The effect of the ``subdataset`` option (added in GDAL 3.9) is to choose an individual subdataset by
+name for sources that have multiple subdatasets. This means that rather than a fully-qualified description
+such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?subdataset=somearray". This option
+is mutually exclusive with ``subdataset_n``.
+
+The effect of the ``subdataset_n`` option (added in GDAL 3.9) is to choose an individual subdataset by
+index for sources that have multiple subdatasets. This means that rather than a fully-qualified
+description such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?subdataset_n=<n>" where "<n>"
+is between 1 and the number of subdatasets. Note that there is no guarantee of the order of the
+subdatasets within a source between GDAL versions (or in some cases between file series in datasets). This
+index mode is for convenience only, please use ``subdataset`` to choose a subdataset by name explicitly.
+This option is mutually exclusive with ``subdataset``.
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

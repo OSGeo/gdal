@@ -1044,6 +1044,121 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         return nullptr;
     }
 
+    // scan for subdataset/subdataset_n in tokens, close the source dataset and reopen with subdataset if found/valid
+    // make subdataset and subdataset_n mutually exclusive
+    bool bFound_subdataset = false;
+    for (int i = 0; i < aosTokens.size(); i++)
+    {
+        char *pszKey = nullptr;
+        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
+
+        if (pszKey && pszValue)
+        {
+            char **papszSubdatasets = GDALGetMetadata(poSrcDS, "SUBDATASETS");
+
+            int nSubdatasets = CSLCount(papszSubdatasets);
+
+            if (EQUAL(pszKey, "subdataset"))
+            {
+                if (bFound_subdataset)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'subdataset' is mutually exclusive with option "
+                             "'subdataset_n'");
+                    poSrcDS->ReleaseRef();
+
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                if (nSubdatasets > 0)
+                {
+                    bool bFound = false;
+                    for (int j = 0; j < nSubdatasets; j += 2)
+                    {
+                        char *pszSubdatasetSource =
+                            CPLStrdup(strstr(papszSubdatasets[j], "=") + 1);
+                        GDALSubdatasetInfoH info =
+                            GDALGetSubdatasetInfo(pszSubdatasetSource);
+                        char *component =
+                            info
+                                ? GDALSubdatasetInfoGetSubdatasetComponent(info)
+                                : nullptr;
+
+                        bFound = component && EQUAL(pszValue, component);
+                        bFound_subdataset = true;
+                        CPLFree(component);
+                        GDALDestroySubdatasetInfo(info);
+                        if (bFound)
+                        {
+                            poSrcDS->ReleaseRef();
+                            poSrcDS = GDALDataset::Open(
+                                pszSubdatasetSource, GDAL_OF_RASTER,
+                                aosAllowedDrivers.List(), aosOpenOptions.List(),
+                                nullptr);
+                            CPLFree(pszSubdatasetSource);
+                            break;
+                        }
+                        else
+                        {
+                            CPLFree(pszSubdatasetSource);
+                        }
+                    }
+
+                    if (!bFound)
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "'subdataset' option should be be a valid "
+                                 "subdataset component name");
+                        poSrcDS->ReleaseRef();
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                }
+            }
+
+            if (EQUAL(pszKey, "subdataset_n"))
+            {
+                if (bFound_subdataset)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'subdataset_n' is mutually exclusive with option "
+                             "'subdataset'");
+                    poSrcDS->ReleaseRef();
+
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                if (nSubdatasets > 0)
+                {
+                    int iSubdataset = atoi(pszValue);
+                    if (iSubdataset < 1 || iSubdataset > (nSubdatasets) / 2)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "'subdataset_n' option should indicate a valid "
+                            "subdataset component index (starting with 1)");
+                        CPLFree(pszKey);
+                        poSrcDS->ReleaseRef();
+                        return nullptr;
+                    }
+                    char *pszSubdatasetSource = CPLStrdup(
+                        strstr(papszSubdatasets[(iSubdataset - 1) * 2], "=") +
+                        1);
+                    poSrcDS->ReleaseRef();
+                    poSrcDS =
+                        GDALDataset::Open(pszSubdatasetSource, GDAL_OF_RASTER,
+                                          aosAllowedDrivers.List(),
+                                          aosOpenOptions.List(), nullptr);
+                    bFound_subdataset = true;
+                    CPLFree(pszSubdatasetSource);
+                }
+            }
+        }
+
+        CPLFree(pszKey);
+    }
+
     std::vector<int> anBands;
 
     CPLStringList argv;
@@ -1336,6 +1451,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 // do nothing, we passed this in earlier
             }
+            else if (EQUAL(pszKey, "subdataset"))
+            {
+                // do nothing, we passed this in earlier
+            }
+            else if (EQUAL(pszKey, "subdataset_n"))
+            {
+                // do nothing, we passed this in earlier
+            }
             else if (EQUAL(pszKey, "unscale"))
             {
                 if (CPLTestBool(pszValue))
@@ -1519,10 +1642,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         const int nWordDataSize = GDALGetDataTypeSizeBytes(eType);
 
         /* --------------------------------------------------------------------
-         */
+     */
         /*      Collect required information. */
         /* --------------------------------------------------------------------
-         */
+     */
         const char *pszImageOffset =
             CSLFetchNameValueDef(papszOptions, "ImageOffset", "0");
         vsi_l_offset nImageOffset = CPLScanUIntBig(
@@ -1566,10 +1689,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
             CPLFetchBool(papszOptions, "relativeToVRT", false);
 
         /* --------------------------------------------------------------------
-         */
+     */
         /*      Create and initialize the band. */
         /* --------------------------------------------------------------------
-         */
+     */
 
         VRTRawRasterBand *poBand =
             new VRTRawRasterBand(this, GetRasterCount() + 1, eType);
