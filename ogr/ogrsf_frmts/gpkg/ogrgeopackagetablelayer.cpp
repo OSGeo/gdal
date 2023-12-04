@@ -8725,9 +8725,6 @@ struct GeometryExtent3DAggregateContext
     explicit GeometryExtent3DAggregateContext(sqlite3 *hDB, int nFlags)
         : m_hDB(hDB), m_nFlags(nFlags)
     {
-        // This is required because the default ctor of Envelope3D set to infinity.
-        m_oExtent3D.MinZ = std::numeric_limits<double>::quiet_NaN();
-        m_oExtent3D.MaxZ = std::numeric_limits<double>::quiet_NaN();
     }
     GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
         delete;
@@ -8802,8 +8799,8 @@ OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
     if (m_nZFlag == 0)
     {
         const OGRErr retVal{GetExtent(iGeomField, psExtent3D, bForce)};
-        psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
-        psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
+        psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+        psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
         return retVal;
     }
     else
