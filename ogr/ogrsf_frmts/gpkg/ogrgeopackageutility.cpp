@@ -570,8 +570,8 @@ bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
         }
         else
         {
-            psHeader->MinZ = std::numeric_limits<double>::quiet_NaN();
-            psHeader->MaxZ = std::numeric_limits<double>::quiet_NaN();
+            psHeader->MinZ = std::numeric_limits<double>::infinity();
+            psHeader->MaxZ = -std::numeric_limits<double>::infinity();
         }
         delete poGeom;
     }
