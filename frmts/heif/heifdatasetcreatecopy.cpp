@@ -74,22 +74,30 @@ static heif_compression_format getCompressionType(char **papszOptions)
     {
         return heif_compression_HEVC;
     }
+#if LIBHEIF_HAVE_VERSION(1, 7, 0)
     if (strcmp(pszValue, "AV1") == 0)
     {
         return heif_compression_AV1;
     }
+#endif
+#if LIBHEIF_HAVE_VERSION(1, 17, 0)
     if (strcmp(pszValue, "JPEG") == 0)
     {
         return heif_compression_JPEG;
     }
+#endif
+#if LIBHEIF_HAVE_VERSION(1, 17, 0)
     if (strcmp(pszValue, "JPEG2000") == 0)
     {
         return heif_compression_JPEG2000;
     }
+#endif
+#if LIBHEIF_HAVE_VERSION(1, 16, 0)
     if (strcmp(pszValue, "UNCOMPRESSED") == 0)
     {
         return heif_compression_uncompressed;
     }
+#endif
     CPLError(CE_Warning, CPLE_IllegalArg,
              "CODEC=%s value not recognised, ignoring.", pszValue);
     return heif_compression_HEVC;
