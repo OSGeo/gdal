@@ -75,6 +75,9 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
     int nResCount = 0;
     bool bPreferNPReads = false;
     kdu_thread_env *poThreadEnv = nullptr;
+    int m_nDiscardLevels = 0;
+
+    std::vector<std::unique_ptr<JP2KAKDataset>> m_apoOverviews{};
 
     bool bCached = false;
     bool bResilient = false;
@@ -83,7 +86,7 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
 
     bool bPromoteTo8Bit = false;
 
-    bool TestUseBlockIO(int, int, int, int, int, int, GDALDataType, int, int *);
+    bool TestUseBlockIO(int, int, int, int, GDALDataType, int, const int *);
     CPLErr DirectRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                           GDALDataType, int, int *, GSpacing nPixelSpace,
                           GSpacing nLineSpace, GSpacing nBandSpace,
@@ -96,6 +99,10 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
 
   public:
     JP2KAKDataset();
+
+    JP2KAKDataset(JP2KAKDataset *poMainDS, int nDiscardLevels,
+                  const kdu_dims &dimsIn);
+
     virtual ~JP2KAKDataset() override;
 
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
@@ -117,18 +124,15 @@ class JP2KAKRasterBand final : public GDALPamRasterBand
 {
     friend class JP2KAKDataset;
 
-    JP2KAKDataset *poBaseDS;
+    JP2KAKDataset *poBaseDS = nullptr;
 
-    int nDiscardLevels;
     kdu_dims band_dims;
-    int nOverviewCount;
-    JP2KAKRasterBand **papoOverviewBand;
 
     kdu_client *jpip_client;
     kdu_codestream oCodeStream;
 
     GDALColorTable oCT;
-    GDALColorInterp eInterp;
+    GDALColorInterp eInterp = GCI_Undefined;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, GSpacing nPixelSpace,
@@ -141,7 +145,7 @@ class JP2KAKRasterBand final : public GDALPamRasterBand
     }
 
   public:
-    JP2KAKRasterBand(int, int, kdu_codestream, int, kdu_client *, jp2_channels,
+    JP2KAKRasterBand(int, kdu_codestream, kdu_client *, jp2_channels,
                      JP2KAKDataset *);
     virtual ~JP2KAKRasterBand() override;
 

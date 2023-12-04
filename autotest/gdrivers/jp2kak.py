@@ -209,16 +209,8 @@ def test_jp2kak_13(use_stripe_compressor):
         ov_band.XSize == 250 and ov_band.YSize == 4
     ), "did not get expected overview size."
     #
-    # Note, due to oddities of rounding related to identifying discard
-    # levels the overview is actually generated with no discard levels
-    # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
-    assert checksum in (
-        11767,
-        11776,
-        11736,
-        11801,
-    ), "did not get expected overview checksum"
+    assert checksum == 12061, "did not get expected overview checksum"
 
 
 ###############################################################################
