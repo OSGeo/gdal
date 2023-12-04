@@ -7718,7 +7718,7 @@ void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext, int argc,
 
     GPkgHeader sHeader;
     if (poLayer->m_bFilterIsEnvelope &&
-        OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, 0))
+        OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false, 0))
     {
         if (sHeader.bExtentHasXY)
         {
@@ -7773,7 +7773,7 @@ static void OGRGeoPackageSTMinX(sqlite3_context *pContext, int argc,
                                 sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
         return;
     sqlite3_result_double(pContext, sHeader.MinX);
 }
@@ -7786,7 +7786,7 @@ static void OGRGeoPackageSTMinY(sqlite3_context *pContext, int argc,
                                 sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
         return;
     sqlite3_result_double(pContext, sHeader.MinY);
 }
@@ -7799,7 +7799,7 @@ static void OGRGeoPackageSTMaxX(sqlite3_context *pContext, int argc,
                                 sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
         return;
     sqlite3_result_double(pContext, sHeader.MaxX);
 }
@@ -7812,7 +7812,7 @@ static void OGRGeoPackageSTMaxY(sqlite3_context *pContext, int argc,
                                 sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
         return;
     sqlite3_result_double(pContext, sHeader.MaxY);
 }
@@ -7825,7 +7825,7 @@ static void OGRGeoPackageSTIsEmpty(sqlite3_context *pContext, int argc,
                                    sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
         return;
     sqlite3_result_int(pContext, sHeader.bEmpty);
 }
@@ -7885,7 +7885,7 @@ static void OGRGeoPackageSTEnvelopesIntersects(sqlite3_context *pContext,
                                                int argc, sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
     {
         sqlite3_result_int(pContext, FALSE);
         return;
@@ -7921,13 +7921,14 @@ OGRGeoPackageSTEnvelopesIntersectsTwoParams(sqlite3_context *pContext, int argc,
                                             sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, 0))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false, 0))
     {
         sqlite3_result_int(pContext, FALSE);
         return;
     }
     GPkgHeader sHeader2;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader2, true, 1))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader2, true, false,
+                                1))
     {
         sqlite3_result_int(pContext, FALSE);
         return;
@@ -7981,7 +7982,7 @@ static void OGRGeoPackageSTSRID(sqlite3_context *pContext, int argc,
                                 sqlite3_value **argv)
 {
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
         return;
     sqlite3_result_int(pContext, sHeader.iSrsId);
 }
@@ -8054,7 +8055,7 @@ static void OGRGeoPackageSTMakeValid(sqlite3_context *pContext, int argc,
         reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
 
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
     {
         sqlite3_result_null(pContext);
         return;
@@ -8203,7 +8204,7 @@ void OGRGeoPackageTransform(sqlite3_context *pContext, int argc,
     const GByte *pabyBLOB =
         reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
     GPkgHeader sHeader;
-    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false))
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
         sqlite3_result_blob(pContext, nullptr, 0, nullptr);

@@ -512,8 +512,12 @@ OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,
 
 bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
                             sqlite3_value **argv, GPkgHeader *psHeader,
-                            bool bNeedExtent, int iGeomIdx)
+                            bool bNeedExtent, bool bNeedExtent3D, int iGeomIdx)
 {
+
+    // Extent3D implies extent
+    const bool bNeedAnyExtent{bNeedExtent || bNeedExtent3D};
+
     if (sqlite3_value_type(argv[iGeomIdx]) != SQLITE_BLOB)
     {
         sqlite3_result_null(pContext);
@@ -535,7 +539,7 @@ bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
         {
             psHeader->bEmpty = bEmpty;
             psHeader->bExtentHasXY = !bEmpty;
-            if (!(bEmpty && bNeedExtent))
+            if (!(bEmpty && bNeedAnyExtent))
                 return true;
         }
 
@@ -543,12 +547,13 @@ bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
         return false;
     }
 
-    if (psHeader->bEmpty && bNeedExtent)
+    if (psHeader->bEmpty && bNeedAnyExtent)
     {
         sqlite3_result_null(pContext);
         return false;
     }
-    else if (!(psHeader->bExtentHasXY) && bNeedExtent)
+    else if ((!psHeader->bExtentHasXY && bNeedAnyExtent) ||
+             (!psHeader->bExtentHasZ && bNeedExtent3D))
     {
         OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
         if (poGeom == nullptr || poGeom->IsEmpty())

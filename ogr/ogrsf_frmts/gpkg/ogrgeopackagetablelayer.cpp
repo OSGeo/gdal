@@ -8719,11 +8719,10 @@ namespace
 struct GeometryExtent3DAggregateContext
 {
     sqlite3 *m_hDB = nullptr;
-    int m_nFlags = 0;
     OGREnvelope3D m_oExtent3D;
 
     explicit GeometryExtent3DAggregateContext(sqlite3 *hDB, int nFlags)
-        : m_hDB(hDB), m_nFlags(nFlags)
+        : m_hDB(hDB)
     {
     }
     GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
@@ -8751,7 +8750,8 @@ static void OGR_GPKG_GeometryExtent3DAggregate_Step(sqlite3_context *pContext,
         if (GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) == OGRERR_NONE &&
             static_cast<size_t>(nBLOBLen) >= sHeader.nHeaderLen + 5)
         {
-            if (!OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true))
+            if (!OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true,
+                                        true))
                 return;
         }
         OGREnvelope3D extent3D;
@@ -8805,12 +8805,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
     }
     else
     {
-        psExtent3D->MaxX = 0;
-        psExtent3D->MaxY = 0;
-        psExtent3D->MaxZ = 0;
-        psExtent3D->MinX = 0;
-        psExtent3D->MinY = 0;
-        psExtent3D->MinZ = 0;
+        *psExtent3D = OGREnvelope3D();
     }
 
     // For internal use only

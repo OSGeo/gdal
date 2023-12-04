@@ -68,6 +68,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
 
 bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
                             sqlite3_value **argv, GPkgHeader *psHeader,
-                            bool bNeedExtent, int iGeomIdx = 0);
+                            bool bNeedExtent, bool bNeedExtent3D,
+                            int iGeomIdx = 0);
 
 #endif
