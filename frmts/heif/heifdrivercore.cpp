@@ -42,33 +42,33 @@ int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
         return false;
 
+#if LIBHEIF_HAVE_VERSION(1, 4, 0)
+    const auto res =
+        heif_check_filetype(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
+    if (res == heif_filetype_yes_supported)
+        return TRUE;
+    if (res == heif_filetype_maybe)
+        return -1;
+    if (res == heif_filetype_yes_unsupported)
+    {
+        CPLDebug("HEIF", "HEIF file, but not supported by libheif");
+    }
+    return FALSE;
+#else
     // Simplistic test...
-    const unsigned char abySig1[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x20"
-                                    "ftypheic";
-    const unsigned char abySig2[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypheic";
-    const unsigned char abySig3[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypmif1"
+    const unsigned char abySig1[] = "ftypheic";
+    const unsigned char abySig2[] = "ftypmif1"
                                     "\x00"
                                     "\x00"
                                     "\x00"
                                     "\x00"
                                     "mif1heic";
     return (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig1)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig1, sizeof(abySig1)) == 0) ||
+            memcmp(poOpenInfo->pabyHeader + 4, abySig1, sizeof(abySig1)) ==
+                0) ||
            (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig2)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig2, sizeof(abySig2)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig3)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig3, sizeof(abySig3)) == 0);
+            memcmp(poOpenInfo->pabyHeader + 4, abySig2, sizeof(abySig2)) == 0);
+#endif
 }
 
 /************************************************************************/
@@ -81,7 +81,7 @@ void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(
         GDAL_DMD_LONGNAME,
-        "ISO/IEC 23008-12:2017 High Efficiency Image File Format");
+        "ISO/IEC 23008-12 High Efficiency Image File Format");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/heic");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/heif.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "heic");
