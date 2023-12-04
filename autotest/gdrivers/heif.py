@@ -29,6 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
+import os
+
 import pytest
 
 from osgeo import gdal
@@ -158,3 +161,51 @@ def test_heif_subdatasets():
         gdal.Open("HEIF:1")
     with pytest.raises(Exception):
         gdal.Open("HEIF:1:")
+
+
+def test_heif_create():
+    drv = gdal.GetDriverByName("HEIF")
+
+    try:
+        os.remove("tmp/test_create.hif")
+    except OSError:
+        pass
+
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 3, gdal.GDT_Byte)
+
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+
+    red_green_blue = (
+        ([0xFF] * 100 + [0x00] * 200)
+        + ([0x00] * 100 + [0xFF] * 100 + [0x00] * 100)
+        + ([0x00] * 200 + [0xFF] * 100)
+    )
+    rgb_bytes = array.array("B", red_green_blue).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0, line, 300, 1, rgb_bytes, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3]
+        )
+    black_white = ([0xFF] * 150 + [0x00] * 150) * 3
+    black_white_bytes = array.array("B", black_white).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0,
+            100 + line,
+            300,
+            1,
+            black_white_bytes,
+            buf_type=gdal.GDT_Byte,
+            band_list=[1, 2, 3],
+        )
+
+    assert ds.FlushCache() == gdal.CE_None
+
+    ds = drv.CreateCopy("tmp/test_create.hif", ds, options=[])
+
+    ds = None
+
+    ds = gdal.Open("tmp/test_create.hif")
+
+    assert ds

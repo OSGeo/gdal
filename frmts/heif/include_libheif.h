@@ -30,11 +30,12 @@
 
 #include "libheif/heif.h"
 
-#define BUILD_LIBHEIF_VERSION(x, y, z)                                         \
-    (((x) << 24) | ((y) << 16) | ((z) << 8) | 0)
-
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 3, 0)
+#if LIBHEIF_HAVE_VERSION(1, 3, 0)
 #define HAS_CUSTOM_FILE_READER
+#endif
+
+#if LIBHEIF_HAVE_VERSION(1, 1, 0)
+#define HAS_CUSTOM_FILE_WRITER
 #endif
 
 #endif

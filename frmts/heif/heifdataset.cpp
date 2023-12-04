@@ -25,14 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_pam.h"
-#include "ogr_spatialref.h"
-
-#include "include_libheif.h"
-
-#include "heifdrivercore.h"
-
-#include <vector>
+#include "heifdataset.h"
 
 extern "C" void CPL_DLL GDALRegister_HEIF();
 
@@ -40,44 +33,6 @@ extern "C" void CPL_DLL GDALRegister_HEIF();
 // -Iogr/ogrsf_frmts -I$HOME/heif/install-ubuntu-18.04/include
 // -L$HOME/heif/install-ubuntu-18.04/lib -lheif -shared -o gdal_HEIF.so -L.
 // -lgdal
-
-/************************************************************************/
-/*                        GDALHEIFDataset                               */
-/************************************************************************/
-
-class GDALHEIFDataset final : public GDALPamDataset
-{
-    friend class GDALHEIFRasterBand;
-
-    heif_context *m_hCtxt = nullptr;
-    heif_image_handle *m_hImageHandle = nullptr;
-    heif_image *m_hImage = nullptr;
-    bool m_bFailureDecoding = false;
-    std::vector<std::unique_ptr<GDALHEIFDataset>> m_apoOvrDS{};
-    bool m_bIsThumbnail = false;
-
-#ifdef HAS_CUSTOM_FILE_READER
-    heif_reader m_oReader{};
-    VSILFILE *m_fpL = nullptr;
-    vsi_l_offset m_nSize = 0;
-
-    static int64_t GetPositionCbk(void *userdata);
-    static int ReadCbk(void *data, size_t size, void *userdata);
-    static int SeekCbk(int64_t position, void *userdata);
-    static enum heif_reader_grow_status WaitForFileSizeCbk(int64_t target_size,
-                                                           void *userdata);
-#endif
-
-    bool Init(GDALOpenInfo *poOpenInfo);
-    void ReadMetadata();
-    void OpenThumbnails();
-
-  public:
-    GDALHEIFDataset();
-    ~GDALHEIFDataset();
-
-    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
-};
 
 /************************************************************************/
 /*                       GDALHEIFRasterBand                             */
@@ -428,7 +383,7 @@ void GDALHEIFDataset::ReadMetadata()
         }
         else if (pszType && EQUAL(pszType, "mime"))
         {
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 2, 0)
+#if LIBHEIF_HAVE_VERSION(1, 2, 0)
             const char *pszContentType =
                 heif_image_handle_get_metadata_content_type(m_hImageHandle, id);
             if (pszContentType &&
@@ -478,7 +433,7 @@ void GDALHEIFDataset::OpenThumbnails()
         heif_image_handle_release(hThumbnailHandle);
         return;
     }
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
+#if LIBHEIF_HAVE_VERSION(1, 4, 0)
     const int nBits =
         heif_image_handle_get_luma_bits_per_pixel(hThumbnailHandle);
     if (nBits != heif_image_handle_get_luma_bits_per_pixel(m_hImageHandle))
@@ -512,7 +467,7 @@ static int HEIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 
     if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
         return false;
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
+#if LIBHEIF_HAVE_VERSION(1, 4, 0)
     const auto res =
         heif_check_filetype(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
     if (res == heif_filetype_yes_supported)
@@ -573,7 +528,6 @@ GDALDataset *GDALHEIFDataset::Open(GDALOpenInfo *poOpenInfo)
     auto poDS = std::make_unique<GDALHEIFDataset>();
     if (!poDS->Init(poOpenInfo))
         return nullptr;
-
     return poDS.release();
 }
 
@@ -587,7 +541,7 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
     nBand = nBandIn;
 
     eDataType = GDT_Byte;
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
+#if LIBHEIF_HAVE_VERSION(1, 4, 0)
     const int nBits =
         heif_image_handle_get_luma_bits_per_pixel(poDSIn->m_hImageHandle);
     if (nBits > 8)
@@ -620,7 +574,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
             poGDS->m_hImageHandle, &(poGDS->m_hImage), heif_colorspace_RGB,
             nBands == 3
                 ? (
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
+#if LIBHEIF_HAVE_VERSION(1, 4, 0)
                       eDataType == GDT_UInt16 ?
 #if CPL_IS_LSB
                                               heif_chroma_interleaved_RRGGBB_LE
@@ -631,7 +585,7 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
 #endif
                                               heif_chroma_interleaved_RGB)
                 : (
-#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
+#if LIBHEIF_HAVE_VERSION(1, 4, 0)
                       eDataType == GDT_UInt16
                           ?
 #if CPL_IS_LSB
@@ -699,6 +653,10 @@ void GDALRegister_HEIF()
     HEIFDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = GDALHEIFDataset::Open;
+
+#ifdef HAS_CUSTOM_FILE_WRITER
+    poDriver->pfnCreateCopy = GDALHEIFDataset::CreateCopy;
+#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
