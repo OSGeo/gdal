@@ -580,12 +580,7 @@ def test_jp2kak_21():
         0, 0, 20, 20, 40, 40, resample_alg=gdal.GRIORA_Cubic
     )
 
-    mem_ds = gdal.GetDriverByName("MEM").Create("", 40, 40, 1, gdal.GDT_Int16)
-    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, ref_upsampled_data)
-    ref_cs = mem_ds.GetRasterBand(1).Checksum()
-    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
-    cs = mem_ds.GetRasterBand(1).Checksum()
-    assert cs == ref_cs
+    assert upsampled_data == ref_upsampled_data
 
 
 ###############################################################################

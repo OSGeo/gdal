@@ -1252,6 +1252,15 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
+    if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
+        nXSize < nBufXSize && nYSize < nBufYSize)
+    {
+        return RasterIOResampled(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
+                                 nBufXSize, nBufYSize, eBufType, nBandCount,
+                                 panBandMap, nPixelSpace, nLineSpace,
+                                 nBandSpace, psExtraArg);
+    }
+
     CPLAssert(eBufType == GDT_Byte || eBufType == GDT_Int16 ||
               eBufType == GDT_UInt16 || eBufType == GDT_Int32 ||
               eBufType == GDT_UInt32);
