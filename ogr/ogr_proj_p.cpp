@@ -121,7 +121,17 @@ struct OSRPJContextHolder
 #endif
     {
 #if HAVE_PTHREAD_ATFORK
-        pthread_atfork(nullptr, nullptr, ForkOccurred);
+        static std::once_flag flag;
+        std::call_once(
+            flag,
+            []()
+            {
+                if (pthread_atfork(nullptr, nullptr, ForkOccurred) != 0)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "pthread_atfork() in ogr_proj_p failed");
+                }
+            });
 #endif
         init();
     }
