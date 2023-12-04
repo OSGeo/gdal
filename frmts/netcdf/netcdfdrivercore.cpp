@@ -290,7 +290,8 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
             }
 
             // Remove quotes from subdataset component
-            if (m_subdatasetComponent.find('"') == 0)
+            if (!m_subdatasetComponent.empty() &&
+                m_subdatasetComponent[0] == '"')
             {
                 m_subdatasetComponent = m_subdatasetComponent.substr(1);
             }
