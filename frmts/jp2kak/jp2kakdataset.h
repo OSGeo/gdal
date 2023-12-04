@@ -33,7 +33,6 @@
 #include <algorithm>
 #include <cmath>
 
-#include "../mem/memdataset.h"
 #include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"

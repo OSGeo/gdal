@@ -37,8 +37,6 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 
-#include "../mem/memdataset.h"
-
 #include "jp2kak_headers.h"
 
 #include "subfile_source.h"
@@ -1245,7 +1243,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
 
 {
     if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour &&
-        nXSize < nBufXSize && nYSize < nBufYSize)
+        (nXSize != nBufXSize || nYSize != nBufYSize))
     {
         return RasterIOResampled(GF_Read, nXOff, nYOff, nXSize, nYSize, pData,
                                  nBufXSize, nBufYSize, eBufType, nBandCount,
@@ -1441,94 +1439,59 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                     &precisions[0], &is_signed[0]);
             decompressor.finish();
 
-            if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            // Then resample (normally downsample) from the intermediate
+            // buffer into the final buffer in the desired output layout.
+            const double dfYRatio =
+                l_dims.size.y / static_cast<double>(nBufYSize);
+            const double dfXRatio =
+                l_dims.size.x / static_cast<double>(nBufXSize);
+
+            for (int iY = 0; iY < nBufYSize; iY++)
             {
-                // Then resample (normally downsample) from the intermediate
-                // buffer into the final buffer in the desired output layout.
-                const double dfYRatio =
-                    l_dims.size.y / static_cast<double>(nBufYSize);
-                const double dfXRatio =
-                    l_dims.size.x / static_cast<double>(nBufXSize);
+                const int iSrcY =
+                    std::min(static_cast<int>(floor((iY + 0.5) * dfYRatio)),
+                             l_dims.size.y - 1);
 
-                for (int iY = 0; iY < nBufYSize; iY++)
+                for (int iX = 0; iX < nBufXSize; iX++)
                 {
-                    const int iSrcY =
-                        std::min(static_cast<int>(floor((iY + 0.5) * dfYRatio)),
-                                 l_dims.size.y - 1);
+                    const int iSrcX =
+                        std::min(static_cast<int>(floor((iX + 0.5) * dfXRatio)),
+                                 l_dims.size.x - 1);
 
-                    for (int iX = 0; iX < nBufXSize; iX++)
+                    for (int i = 0; i < nBandCount; i++)
                     {
-                        const int iSrcX = std::min(
-                            static_cast<int>(floor((iX + 0.5) * dfXRatio)),
-                            l_dims.size.x - 1);
-
-                        for (int i = 0; i < nBandCount; i++)
-                        {
-                            // TODO(schwehr): Cleanup this block.
-                            if (eBufType == GDT_Byte)
-                                ((GByte *)
-                                     pData)[iX * nPixelSpace + iY * nLineSpace +
-                                            i * nBandSpace] = pabyIntermediate
+                        // TODO(schwehr): Cleanup this block.
+                        if (eBufType == GDT_Byte)
+                            ((GByte *)pData)[iX * nPixelSpace +
+                                             iY * nLineSpace + i * nBandSpace] =
+                                pabyIntermediate[iSrcX * nBandCount +
+                                                 static_cast<GPtrDiff_t>(
+                                                     iSrcY) *
+                                                     l_dims.size.x *
+                                                     nBandCount +
+                                                 i];
+                        else if (eBufType == GDT_Int16 ||
+                                 eBufType == GDT_UInt16)
+                            ((GUInt16 *)pData)[iX * nPixelSpace / 2 +
+                                               iY * nLineSpace / 2 +
+                                               i * nBandSpace / 2] =
+                                ((GUInt16 *)pabyIntermediate)
                                     [iSrcX * nBandCount +
                                      static_cast<GPtrDiff_t>(iSrcY) *
                                          l_dims.size.x * nBandCount +
                                      i];
-                            else if (eBufType == GDT_Int16 ||
-                                     eBufType == GDT_UInt16)
-                                ((GUInt16 *)pData)[iX * nPixelSpace / 2 +
-                                                   iY * nLineSpace / 2 +
-                                                   i * nBandSpace / 2] =
-                                    ((GUInt16 *)pabyIntermediate)
-                                        [iSrcX * nBandCount +
-                                         static_cast<GPtrDiff_t>(iSrcY) *
-                                             l_dims.size.x * nBandCount +
-                                         i];
-                            else if (eBufType == GDT_Int32 ||
-                                     eBufType == GDT_UInt32)
-                                ((GUInt32 *)pData)[iX * nPixelSpace / 4 +
-                                                   iY * nLineSpace / 4 +
-                                                   i * nBandSpace / 4] =
-                                    ((GUInt32 *)pabyIntermediate)
-                                        [iSrcX * nBandCount +
-                                         static_cast<GPtrDiff_t>(iSrcY) *
-                                             l_dims.size.x * nBandCount +
-                                         i];
-                        }
+                        else if (eBufType == GDT_Int32 ||
+                                 eBufType == GDT_UInt32)
+                            ((GUInt32 *)pData)[iX * nPixelSpace / 4 +
+                                               iY * nLineSpace / 4 +
+                                               i * nBandSpace / 4] =
+                                ((GUInt32 *)pabyIntermediate)
+                                    [iSrcX * nBandCount +
+                                     static_cast<GPtrDiff_t>(iSrcY) *
+                                         l_dims.size.x * nBandCount +
+                                     i];
                     }
                 }
-            }
-            else
-            {
-                // Create a MEM dataset that wraps the input buffer.
-                auto poMEMDS = std::unique_ptr<MEMDataset>(MEMDataset::Create(
-                    "", l_dims.size.x, l_dims.size.y, 0, eBufType, nullptr));
-                for (int i = 0; i < nBandCount; i++)
-                {
-                    auto hBand = MEMCreateRasterBandEx(
-                        poMEMDS.get(), i + 1,
-                        pabyIntermediate + i * nDataTypeSize, eBufType,
-                        static_cast<GSpacing>(nDataTypeSize) * nBandCount,
-                        static_cast<GSpacing>(nDataTypeSize) * nBandCount *
-                            l_dims.size.x,
-                        false);
-                    poMEMDS->AddMEMBand(hBand);
-
-                    const char *pszNBITS =
-                        GetRasterBand(i + 1)->GetMetadataItem(
-                            "NBITS", "IMAGE_STRUCTURE");
-                    if (pszNBITS)
-                        poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
-                            "NBITS", pszNBITS, "IMAGE_STRUCTURE");
-                }
-
-                GDALRasterIOExtraArg sExtraArgTmp;
-                INIT_RASTERIO_EXTRA_ARG(sExtraArgTmp);
-                sExtraArgTmp.eResampleAlg = psExtraArg->eResampleAlg;
-
-                CPL_IGNORE_RET_VAL(poMEMDS->RasterIO(
-                    GF_Read, 0, 0, l_dims.size.x, l_dims.size.y, pData,
-                    nBufXSize, nBufYSize, eBufType, nBandCount, nullptr,
-                    nPixelSpace, nLineSpace, nBandSpace, &sExtraArgTmp));
             }
 
             CPLFree(pabyIntermediate);
