@@ -81,12 +81,16 @@ struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
             m_driverPrefixComponent.append(aosParts[1]);
 
             int subdatasetIndex{3};
-            const bool hasDriveLetter{
-                (strlen(aosParts[2]) == 2 && std::isalpha(aosParts[2][1])) ||
-                (strlen(aosParts[2]) == 1 && std::isalpha(aosParts[2][0]))};
 
             if (iPartsCount >= 4)
             {
+                const bool hasDriveLetter{
+                    (strlen(aosParts[3]) > 1 &&
+                     (aosParts[3][0] == '\\' || aosParts[3][0] == '/')) &&
+                    ((strlen(aosParts[2]) == 2 &&
+                      std::isalpha(aosParts[2][1])) ||
+                     (strlen(aosParts[2]) == 1 &&
+                      std::isalpha(aosParts[2][0])))};
                 m_pathComponent = aosParts[2];
 
                 const bool hasProtocol{m_pathComponent.find("/vsicurl/") !=

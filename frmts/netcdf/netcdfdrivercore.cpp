@@ -250,12 +250,23 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
             m_driverPrefixComponent = aosParts[0];
 
             int subdatasetIndex{2};
-            const bool hasDriveLetter{
-                (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
-                (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
 
-            const bool hasProtocol{std::string{aosParts[1]}.find("/vsicurl/") !=
-                                   std::string::npos};
+            std::string part1{aosParts[1]};
+            if (!part1.empty() && part1[0] == '"')
+            {
+                part1 = part1.substr(1);
+            }
+
+            const bool hasDriveLetter{
+                (strlen(aosParts[2]) > 1 &&
+                 (aosParts[2][0] == '\\' || aosParts[2][0] == '/')) &&
+                part1.length() == 1 && std::isalpha(part1.at(0))};
+
+            const bool hasProtocol{part1 == "/vsicurl/http" ||
+                                   part1 == "/vsicurl/https" ||
+                                   part1 == "/vsicurl_streaming/http" ||
+                                   part1 == "/vsicurl_streaming/https" ||
+                                   part1 == "http" || part1 == "https"};
 
             m_pathComponent = aosParts[1];
             if (hasDriveLetter || hasProtocol)
@@ -277,6 +288,19 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
                     m_subdatasetComponent.append(aosParts[i]);
                 }
             }
+
+            // Remove quotes from subdataset component
+            if (!m_subdatasetComponent.empty() &&
+                m_subdatasetComponent[0] == '"')
+            {
+                m_subdatasetComponent = m_subdatasetComponent.substr(1);
+            }
+            if (m_subdatasetComponent.rfind('"') ==
+                m_subdatasetComponent.length() - 1)
+            {
+                m_subdatasetComponent = m_subdatasetComponent.substr(
+                    0, m_subdatasetComponent.length() - 1);
+            }
         }
     }
 };
@@ -287,8 +311,8 @@ static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             std::make_unique<NCDFDriverSubdatasetInfo>(pszFileName);
-        if (!info->GetSubdatasetComponent().empty() &&
-            !info->GetPathComponent().empty())
+        // Subdataset component can be empty, path cannot.
+        if (!info->GetPathComponent().empty())
         {
             return info.release();
         }

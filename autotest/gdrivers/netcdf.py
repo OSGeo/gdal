@@ -6490,43 +6490,80 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
 
 
 @pytest.mark.parametrize(
-    "filename,path_component",
+    "filename,path_component,subdataset_component",
     (
         (
             'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
             "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+            "/navigation_data/longitude",
         ),
         (
             "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
             "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+            "/navigation_data/longitude",
         ),
         (
             r'NETCDF:"C:\data\netcdf\quoted \"SNPP_VIIRS.20230406T024200\".L2.OC.NRT.nc":/navigation_data/longitude',
             r'C:\data\netcdf\quoted "SNPP_VIIRS.20230406T024200".L2.OC.NRT.nc',
+            "/navigation_data/longitude",
         ),
         (
             r"NETCDF:C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
             r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+            "/navigation_data/longitude",
         ),
         (
             r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
             r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+            "/navigation_data/longitude",
         ),
         (
             r'NETCDF:"/vsicurl/https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202202/oisst-avhrr-v02r01.20220218.nc":/navigation_data/longitude',
             r"/vsicurl/https://www.ncei.noaa.gov/data/sea-surface-temperature-optimum-interpolation/v2.1/access/avhrr/202202/oisst-avhrr-v02r01.20220218.nc",
+            "/navigation_data/longitude",
         ),
-        ("", ""),
+        (
+            r"NETCDF:a:/navigation_data/longitude",
+            r"a:/navigation_data/longitude",
+            "",
+        ),
+        (
+            r"NETCDF:a:/navigation_data/longitude:ubyte_var",
+            r"a:/navigation_data/longitude",
+            "ubyte_var",
+        ),
+        (
+            r'NETCDF:"D:/a/_temp/msys64/tmp/tmpnygpj99n/alldatatypes.nc":ubyte_var',
+            r"D:/a/_temp/msys64/tmp/tmpnygpj99n/alldatatypes.nc",
+            "ubyte_var",
+        ),
+        (
+            r"NETCDF:https://www.ncei.noaa.gov/data/sample.nc",
+            r"https://www.ncei.noaa.gov/data/sample.nc",
+            "",
+        ),
+        (
+            r'NETCDF:"data/netcdf/var_with_column.nc":"VAR:NAME"',
+            r"data/netcdf/var_with_column.nc",
+            "VAR:NAME",
+        ),
+        (
+            # This is an actual error in the test path (the trailing ") but the driver should handle it correctly
+            r'NETCDF:data/netcdf/resolve_var_name.nc:/data/vis_08/measured/effective_radiance"',
+            r"data/netcdf/resolve_var_name.nc",
+            "/data/vis_08/measured/effective_radiance",
+        ),
+        ("", "", ""),
     ),
 )
-def test_gdal_subdataset_get_filename(filename, path_component):
+def test_gdal_subdataset_get_filename(filename, path_component, subdataset_component):
 
     info = gdal.GetSubdatasetInfo(filename)
     if filename == "":
         assert info is None
     else:
         assert info.GetPathComponent() == path_component
-        assert info.GetSubdatasetComponent() == "/navigation_data/longitude"
+        assert info.GetSubdatasetComponent() == subdataset_component
 
 
 @pytest.mark.parametrize(
