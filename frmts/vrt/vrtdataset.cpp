@@ -1044,8 +1044,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         return nullptr;
     }
 
-    // scan for subdataset/subdataset_n in tokens, close the source dataset and reopen with subdataset if found/valid
-    // make subdataset and subdataset_n mutually exclusive
+    // scan for sd_name/sd in tokens, close the source dataset and reopen if found/valid
     bool bFound_subdataset = false;
     for (int i = 0; i < aosTokens.size(); i++)
     {
@@ -1054,31 +1053,41 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
         if (pszKey && pszValue)
         {
-            char **papszSubdatasets = GDALGetMetadata(poSrcDS, "SUBDATASETS");
 
-            int nSubdatasets = CSLCount(papszSubdatasets);
-
-            if (EQUAL(pszKey, "subdataset"))
+            if (EQUAL(pszKey, "sd_name"))
             {
                 if (bFound_subdataset)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'subdataset' is mutually exclusive with option "
-                             "'subdataset_n'");
+                             "'sd_name' is mutually exclusive with option "
+                             "'sd'");
                     poSrcDS->ReleaseRef();
 
                     CPLFree(pszKey);
                     return nullptr;
                 }
+                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+                int nSubdatasets = CSLCount(papszSubdatasets);
+
                 if (nSubdatasets > 0)
                 {
                     bool bFound = false;
                     for (int j = 0; j < nSubdatasets; j += 2)
                     {
-                        char *pszSubdatasetSource =
-                            CPLStrdup(strstr(papszSubdatasets[j], "=") + 1);
+                        const std::string osSubdatasetSource(
+                            strstr(papszSubdatasets[j], "=") + 1);
+                        if (osSubdatasetSource.empty())
+                        {
+                            CPLError(CE_Failure, CPLE_IllegalArg,
+                                     "'sd_name:' failed to obtain "
+                                     "subdataset string ");
+                            poSrcDS->ReleaseRef();
+
+                            CPLFree(pszKey);
+                            return nullptr;
+                        }
                         GDALSubdatasetInfoH info =
-                            GDALGetSubdatasetInfo(pszSubdatasetSource);
+                            GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
                         char *component =
                             info
                                 ? GDALSubdatasetInfoGetSubdatasetComponent(info)
@@ -1092,22 +1101,27 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                         {
                             poSrcDS->ReleaseRef();
                             poSrcDS = GDALDataset::Open(
-                                pszSubdatasetSource, GDAL_OF_RASTER,
+                                osSubdatasetSource.c_str(), GDAL_OF_RASTER,
                                 aosAllowedDrivers.List(), aosOpenOptions.List(),
                                 nullptr);
-                            CPLFree(pszSubdatasetSource);
+                            if (poSrcDS == nullptr)
+                            {
+
+                                CPLFree(pszKey);
+                                return nullptr;
+                            }
+
                             break;
                         }
                         else
                         {
-                            CPLFree(pszSubdatasetSource);
                         }
                     }
 
                     if (!bFound)
                     {
                         CPLError(CE_Failure, CPLE_IllegalArg,
-                                 "'subdataset' option should be be a valid "
+                                 "'sd_name' option should be be a valid "
                                  "subdataset component name");
                         poSrcDS->ReleaseRef();
 
@@ -1117,18 +1131,21 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 }
             }
 
-            if (EQUAL(pszKey, "subdataset_n"))
+            if (EQUAL(pszKey, "sd"))
             {
                 if (bFound_subdataset)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'subdataset_n' is mutually exclusive with option "
-                             "'subdataset'");
+                             "'sd' is mutually exclusive with option "
+                             "'sd_name'");
                     poSrcDS->ReleaseRef();
 
                     CPLFree(pszKey);
                     return nullptr;
                 }
+                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+                int nSubdatasets = CSLCount(papszSubdatasets);
+
                 if (nSubdatasets > 0)
                 {
                     int iSubdataset = atoi(pszValue);
@@ -1136,22 +1153,37 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     {
                         CPLError(
                             CE_Failure, CPLE_IllegalArg,
-                            "'subdataset_n' option should indicate a valid "
-                            "subdataset component index (starting with 1)");
+                            "'sd' option should indicate a valid "
+                            "subdataset component number (starting with 1)");
                         CPLFree(pszKey);
                         poSrcDS->ReleaseRef();
                         return nullptr;
                     }
-                    char *pszSubdatasetSource = CPLStrdup(
+                    const std::string osSubdatasetSource(
                         strstr(papszSubdatasets[(iSubdataset - 1) * 2], "=") +
                         1);
+                    if (osSubdatasetSource.empty())
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "'sd:' failed to obtain subdataset "
+                                 "string ");
+                        poSrcDS->ReleaseRef();
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
                     poSrcDS->ReleaseRef();
-                    poSrcDS =
-                        GDALDataset::Open(pszSubdatasetSource, GDAL_OF_RASTER,
-                                          aosAllowedDrivers.List(),
-                                          aosOpenOptions.List(), nullptr);
+                    poSrcDS = GDALDataset::Open(osSubdatasetSource.c_str(),
+                                                GDAL_OF_RASTER,
+                                                aosAllowedDrivers.List(),
+                                                aosOpenOptions.List(), nullptr);
+                    if (poSrcDS == nullptr)
+                    {
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
                     bFound_subdataset = true;
-                    CPLFree(pszSubdatasetSource);
                 }
             }
         }
@@ -1451,11 +1483,11 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 // do nothing, we passed this in earlier
             }
-            else if (EQUAL(pszKey, "subdataset"))
+            else if (EQUAL(pszKey, "sd_name"))
             {
                 // do nothing, we passed this in earlier
             }
-            else if (EQUAL(pszKey, "subdataset_n"))
+            else if (EQUAL(pszKey, "sd"))
             {
                 // do nothing, we passed this in earlier
             }
