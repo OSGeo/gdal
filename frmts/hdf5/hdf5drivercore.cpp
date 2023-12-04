@@ -185,7 +185,7 @@ struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
             m_driverPrefixComponent = aosParts[0];
 
             std::string part1{aosParts[1]};
-            if (part1.find('"') == 0)
+            if (!part1.empty() && part1[0] == '"')
             {
                 part1 = part1.substr(1);
             }
