@@ -85,7 +85,8 @@ struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
             if (iPartsCount >= 4)
             {
                 const bool hasDriveLetter{
-                    (strlen(aosParts[3]) > 1 && aosParts[3][0] == '\\') &&
+                    (strlen(aosParts[3]) > 1 &&
+                     (aosParts[3][0] == '\\' || aosParts[3][0] == '/')) &&
                     ((strlen(aosParts[2]) == 2 &&
                       std::isalpha(aosParts[2][1])) ||
                      (strlen(aosParts[2]) == 1 &&
