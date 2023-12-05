@@ -129,7 +129,9 @@ GDALHEIFDataset::VFS_WriterCallback(CPL_UNUSED struct heif_context *ctx,
     size_t bytesWritten = VSIFWriteL(data, 1, size, fp);
     if (bytesWritten == size)
     {
-        return heif_error_success;
+        return heif_error{.code = heif_error_Ok,
+                          .subcode = heif_suberror_Unspecified,
+                          .message = "Success"};
     }
     else
     {
