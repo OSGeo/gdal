@@ -159,9 +159,9 @@ endif ()
 #   4. If nothing specified, use default behavior.
 #
 # for example
-#   $ cmake -DPython_LOOKUP_VERSION=3.6.0 ..
+#   $ cmake -DPython_LOOKUP_VERSION=3.8.0 ..
 #   $ cmake -DPython_FIND_VIRTUALENV=ONLY ..
-#   $ cmake -DPython_ROOT=C:\Python36 ..
+#   $ cmake -DPython_ROOT=C:\Python38 ..
 # ~~~
 #
 include(FeatureSummary)
@@ -179,34 +179,10 @@ if (Python_LOOKUP_VERSION)
     find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
 else ()
     set(Python_FIND_STRATEGY LOCATION)
-    find_package(Python 3.6 COMPONENTS Interpreter Development NumPy)
+    find_package(Python 3.8 COMPONENTS Interpreter Development NumPy)
 endif ()
 set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
 
-if (NOT Python_FOUND AND ${CMAKE_VERSION} VERSION_LESS "3.12.0")
-  # On Ubuntu 18.04 with Python 3.6, the backported FindPython package we have in cmake/modules/3.16 doesn't manage to
-  # find automatically Python (we can make it work by manually setting -DPython_LOOKUP_VERSION=3.6.9
-  # -DPython_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.6m.so
-  # -DPython_NumPy_INCLUDE_DIR=/usr/lib/python3/dist-packages/numpy/core/include/numpy ) but this is a bit painful. So
-  # use the deprecated method (since CMake 3.12), which works out of the box in that situation.
-  find_package(PythonInterp)
-  find_package(PythonLibs)
-  if (PYTHONINTERP_FOUND AND "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" VERSION_LESS "3.6")
-    set(PYTHONINTERP_FOUND FALSE)
-    set(PYTHONLIBS_FOUND FALSE)
-  endif()
-  if (PYTHONINTERP_FOUND)
-    set(Python_Interpreter_FOUND TRUE)
-    set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
-    set(Python_VERSION_MAJOR ${PYTHON_VERSION_MAJOR})
-    set(Python_VERSION_MINOR ${PYTHON_VERSION_MINOR})
-  endif ()
-  if (PYTHONLIBS_FOUND)
-    set(Python_Development_FOUND TRUE)
-    set(Python_LIBRARIES ${PYTHON_LIBRARIES})
-    set(Python_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
-  endif ()
-endif ()
 if (Python_Interpreter_FOUND)
   file(
     GENERATE
