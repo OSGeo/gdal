@@ -3910,7 +3910,7 @@ def test_ogr_geom_create_from_wkt_polyhedrasurface():
 ###############################################################################
 
 
-@pytest.mark.require_geos(3, 8)
+@pytest.mark.require_geos
 def test_ogr_geom_makevalid():
 
     g = ogr.CreateGeometryFromWkt("POINT (0 0)")

@@ -9014,17 +9014,7 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             this, OGRGeoPackageRegisterGeometryExtension,
                             nullptr, nullptr);
 
-    // Check that OGRGeometry::MakeValid() is functional before registering
-    // ST_MakeValid()
-    static bool gbRegisterMakeValid = []()
-    {
-        OGRPoint p(0, 0);
-        CPLErrorStateBackuper oBackuper;
-        CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-        auto validGeom = std::unique_ptr<OGRGeometry>(p.MakeValid());
-        return validGeom != nullptr;
-    }();
-    if (gbRegisterMakeValid)
+    if (OGRGeometryFactory::haveGEOS())
     {
         sqlite3_create_function(hDB, "ST_MakeValid", 1, UTF8_INNOCUOUS, nullptr,
                                 OGRGeoPackageSTMakeValid, nullptr, nullptr);

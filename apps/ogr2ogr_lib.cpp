@@ -6858,21 +6858,12 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         }
         else if (EQUAL(papszArgv[i], "-makevalid"))
         {
-            // Check that OGRGeometry::MakeValid() is available
-            OGRGeometry *poInputGeom = nullptr;
-            OGRGeometryFactory::createFromWkt("POLYGON((0 0,1 1,1 0,0 1,0 0))",
-                                              nullptr, &poInputGeom);
-            CPLAssert(poInputGeom);
-            OGRGeometry *poValidGeom = poInputGeom->MakeValid();
-            delete poInputGeom;
-            if (poValidGeom == nullptr)
+            if (!OGRGeometryFactory::haveGEOS())
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "-makevalid only supported for builds against GEOS "
-                         "3.8 or later");
+                         "-makevalid only supported for builds against GEOS");
                 return nullptr;
             }
-            delete poValidGeom;
             psOptions->bMakeValid = true;
         }
         else if (EQUAL(papszArgv[i], "-fieldTypeToString"))

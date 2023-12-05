@@ -2172,9 +2172,7 @@ def test_ogr_sql_sqlite_geomcollection_in_geomcollection():
 def test_ogr_sql_sqlite_st_makevalid():
 
     # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdal.quiet_errors():
-        make_valid_available = g.MakeValid() is not None
+    make_valid_available = ogrtest.have_geos()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     sql = "SELECT ST_MakeValid(ST_GeomFromText('POLYGON ((0 0,1 1,1 0,0 1,0 0))'))"

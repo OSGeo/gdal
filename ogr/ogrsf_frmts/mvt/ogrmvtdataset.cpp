@@ -49,11 +49,6 @@
 #include <vector>
 #include <set>
 
-#if GEOS_VERSION_MAJOR > 3 ||                                                  \
-    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 8)
-#define HAVE_MAKE_VALID
-#endif
-
 const char *SRS_EPSG_3857 =
     "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS "
     "84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS "
@@ -3332,8 +3327,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     bool EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                        const OGRPolygon *poPoly, OGRPolygon *poOutPoly,
                        double dfTopX, double dfTopY, double dfTileDim,
-                       bool bCanRecurse, int &nLastX, int &nLastY,
-                       double &dfArea) const;
+                       int &nLastX, int &nLastY, double &dfArea) const;
 #ifdef notdef
     bool EncodeRepairedOuterRing(MVTTileLayerFeature *poGPBFeature,
                                  OGRPolygon &oOutPoly, int &nLastX,
@@ -3816,13 +3810,9 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                         const OGRPolygon *poPoly,
                                         OGRPolygon *poOutPoly, double dfTopX,
                                         double dfTopY, double dfTileDim,
-                                        bool bCanRecurse, int &nLastX,
-                                        int &nLastY, double &dfArea) const
+                                        int &nLastX, int &nLastY,
+                                        double &dfArea) const
 {
-#ifdef HAVE_MAKE_VALID
-    CPL_IGNORE_RET_VAL(bCanRecurse);
-#endif
-
     dfArea = 0;
     auto poOutOuterRing = std::make_unique<OGRLinearRing>();
     for (int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++)
@@ -3854,11 +3844,6 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         OGRLinearRing *poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
-#ifndef HAVE_MAKE_VALID
-        const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
-        const int nLastXOri = nLastX;
-        const int nLastYOri = nLastY;
-#endif
         bool bSuccess = EncodeLineString(
             poGPBFeature, poRing, poOutRing, bWriteLastPoint, bReverseOrder,
             nMinLineTo, dfTopX, dfTopY, dfTileDim, nLastX, nLastY);
@@ -3877,125 +3862,11 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 
         poOutRing->closeRings();
 
-#ifdef HAVE_MAKE_VALID
         poOutPoly->addRing(poOutRing);
         if (i > 0)
             dfArea -= poOutRing->get_Area();
         else
             dfArea = poOutRing->get_Area();
-#else
-        OGRPolygon oOutPoly;
-        oOutPoly.addRing(poOutOuterRing.get());
-        if (i > 0)
-        {
-            // If the inner ring turns to be a outer ring once reduced,
-            // discard it
-            if (!poOutInnerRing->isClockwise())
-            {
-                poGPBFeature->resizeGeometryArray(nInitialSize);
-                nLastX = nLastXOri;
-                nLastY = nLastYOri;
-                continue;
-            }
-            dfArea -= poOutInnerRing->get_Area();
-            oOutPoly.addRingDirectly(poOutInnerRing.release());
-        }
-        else
-        {
-            dfArea = poOutOuterRing->get_Area();
-        }
-
-        int bIsValid;
-        {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-            bIsValid = oOutPoly.IsValid();
-        }
-
-        if (bIsValid || (i == 0 && !bCanRecurse))
-            poOutPoly->addRing(poOutRing);
-
-        if (i > 0 && bIsValid)
-        {
-            // Adding the current inner ring to the outer ring might be valid
-            // but it might also conflict with a previously added inner ring
-            if (i > 1)
-            {
-                {
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                    bIsValid = poOutPoly->IsValid();
-                }
-                if (!bIsValid)
-                {
-                    poOutPoly->removeRing(poOutPoly->getNumInteriorRings());
-                    poGPBFeature->resizeGeometryArray(nInitialSize);
-                    nLastX = nLastXOri;
-                    nLastY = nLastYOri;
-                    continue;
-                }
-            }
-        }
-
-        // Do not emit invalid polygons, except if it is an outer ring
-        // and we tried hard to fix it.
-        else if (!bIsValid && !(i == 0 && !bCanRecurse && dfArea > 0 &&
-                                poOutRing->getNumPoints() >= 4))
-        {
-            poGPBFeature->resizeGeometryArray(nInitialSize);
-            nLastX = nLastXOri;
-            nLastY = nLastYOri;
-            if (i == 0)
-            {
-#ifdef nodef
-                if (!EncodeRepairedOuterRing(poGPBFeature, oOutPoly, nLastX,
-                                             nLastY))
-#endif
-                {
-                    if (!bCanRecurse)
-                        return false;
-
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-
-                    // Old logic when MakeValid is not available.
-                    // The Buffer() calls have bad memory requirements on
-                    // densified geometries such as in
-                    // https://github.com/OSGeo/gdal/issues/5109
-
-                    const double dfTol = 2 * dfTileDim / m_nExtent;
-                    std::unique_ptr<OGRGeometry> poBufferedPlus(
-                        poPoly->Buffer(dfTol));
-                    if (!poBufferedPlus.get())
-                        return false;
-
-                    std::unique_ptr<OGRGeometry> poBuffered(
-                        poBufferedPlus->Buffer(-dfTol));
-                    if (!poBuffered.get())
-                        return false;
-
-                    std::unique_ptr<OGRGeometry> poSimplified(
-                        poBuffered->SimplifyPreserveTopology(dfTol));
-                    if (!poSimplified.get() || poSimplified->IsEmpty())
-                        return false;
-
-                    if (wkbFlatten(poSimplified->getGeometryType()) ==
-                        wkbPolygon)
-                    {
-                        OGRPolygon *poSimplifiedPoly =
-                            poSimplified.get()->toPolygon();
-                        poOutPoly->empty();
-                        return EncodePolygon(
-                            poGPBFeature, poSimplifiedPoly, poOutPoly, dfTopX,
-                            dfTopY, dfTileDim, false, nLastX, nLastY, dfArea);
-                    }
-
-                    return false;
-                }
-            }
-            continue;
-        }
-#endif
 
         poGPBFeature->addGeometry(GetCmdCountCombined(knCMD_CLOSEPATH, 1));
     }
@@ -4100,7 +3971,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     bool bGeomOK = false;
     double dfAreaOrLength = 0.0;
 
-#ifdef HAVE_MAKE_VALID
     const auto EmitValidPolygon =
         [this, &bGeomOK, &dfAreaOrLength,
          &poGPBFeature](const OGRGeometry *poValidGeom)
@@ -4115,7 +3985,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             const OGRPolygon *poPoly = poValidGeom->toPolygon();
             double dfPartArea = 0.0;
             bGeomOK = EncodePolygon(poGPBFeature.get(), poPoly, nullptr, 0, 0,
-                                    0, false, nLastX, nLastY, dfPartArea);
+                                    0, nLastX, nLastY, dfPartArea);
             dfAreaOrLength = dfPartArea;
         }
         else if (OGR_GT_IsSubClassOf(poValidGeom->getGeometryType(),
@@ -4129,7 +3999,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     double dfPartArea = 0.0;
                     bGeomOK |=
                         EncodePolygon(poGPBFeature.get(), poPoly, nullptr, 0, 0,
-                                      0, false, nLastX, nLastY, dfPartArea);
+                                      0, nLastX, nLastY, dfPartArea);
                     dfAreaOrLength += dfPartArea;
                 }
                 else if (wkbFlatten(poSubGeom->getGeometryType()) ==
@@ -4140,16 +4010,15 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     for (const auto *poPoly : poMPoly)
                     {
                         double dfPartArea = 0.0;
-                        bGeomOK |= EncodePolygon(poGPBFeature.get(), poPoly,
-                                                 nullptr, 0, 0, 0, false,
-                                                 nLastX, nLastY, dfPartArea);
+                        bGeomOK |=
+                            EncodePolygon(poGPBFeature.get(), poPoly, nullptr,
+                                          0, 0, 0, nLastX, nLastY, dfPartArea);
                         dfAreaOrLength += dfPartArea;
                     }
                 }
             }
         }
     };
-#endif
 
     if (eGeomType == wkbPoint || eGeomType == wkbMultiPoint)
     {
@@ -4249,11 +4118,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     }
     else if (eGeomType == wkbPolygon || eGeomType == wkbMultiPolygon)
     {
-#ifdef HAVE_MAKE_VALID
-        constexpr bool bCanRecurse = false;
-#else
-        constexpr bool bCanRecurse = true;
-#endif
         if (eGeomToEncodeType == wkbPolygon)
         {
             const OGRPolygon *poPoly = poGeomToEncode->toPolygon();
@@ -4263,9 +4127,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
             CPL_IGNORE_RET_VAL(nInitialSize);
             bGeomOK = EncodePolygon(poGPBFeature.get(), poPoly, &oOutPoly,
-                                    dfTopX, dfTopY, dfTileDim, bCanRecurse,
-                                    nLastX, nLastY, dfAreaOrLength);
-#ifdef HAVE_MAKE_VALID
+                                    dfTopX, dfTopY, dfTileDim, nLastX, nLastY,
+                                    dfAreaOrLength);
             int bIsValid;
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
@@ -4283,7 +4146,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     EmitValidPolygon(poPolyValid.get());
                 }
             }
-#endif
         }
         else if (eGeomToEncodeType == wkbMultiPolygon ||
                  eGeomToEncodeType == wkbGeometryCollection)
@@ -4302,15 +4164,13 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     const OGRPolygon *poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
                     auto poOutPoly = std::make_unique<OGRPolygon>();
-                    bGeomOK |= EncodePolygon(poGPBFeature.get(), poPoly,
-                                             poOutPoly.get(), dfTopX, dfTopY,
-                                             dfTileDim, bCanRecurse, nLastX,
-                                             nLastY, dfPartArea);
+                    bGeomOK |= EncodePolygon(
+                        poGPBFeature.get(), poPoly, poOutPoly.get(), dfTopX,
+                        dfTopY, dfTileDim, nLastX, nLastY, dfPartArea);
                     dfAreaOrLength += dfPartArea;
                     oOutMP.addGeometryDirectly(poOutPoly.release());
                 }
             }
-#ifdef HAVE_MAKE_VALID
             int bIsValid;
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
@@ -4328,7 +4188,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     EmitValidPolygon(poMPValid.get());
                 }
             }
-#endif
         }
     }
     if (!bGeomOK)

@@ -31,7 +31,8 @@ mark_as_advanced(GEOS_INCLUDE_DIR GEOS_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GEOS FOUND_VAR GEOS_FOUND
-                                  REQUIRED_VARS GEOS_LIBRARY GEOS_INCLUDE_DIR)
+                                  REQUIRED_VARS GEOS_LIBRARY GEOS_INCLUDE_DIR
+                                  VERSION_VAR GEOS_VERSION)
 
 if(GEOS_FOUND)
     set(GEOS_LIBRARIES ${GEOS_LIBRARY})
