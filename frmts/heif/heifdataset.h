@@ -25,6 +25,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef HEIFDATASET_H_INCLUDED_
+#define HEIFDATASET_H_INCLUDED_
+
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
@@ -85,3 +88,4 @@ class GDALHEIFDataset final : public GDALPamDataset
                                    void *pProgressData);
 #endif
 };
+#endif /* HEIFDATASET_H_INCLUDED_ */
