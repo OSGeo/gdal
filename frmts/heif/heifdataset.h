@@ -65,15 +65,23 @@ class GDALHEIFDataset final : public GDALPamDataset
     void ReadMetadata();
     void OpenThumbnails();
 
+#ifdef HAS_CUSTOM_FILE_WRITER
+    static heif_error VFS_WriterCallback(struct heif_context *ctx,
+                                         const void *data, size_t size,
+                                         void *userdata);
+#endif
+
   public:
     GDALHEIFDataset();
     ~GDALHEIFDataset();
 
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 
+#ifdef HAS_CUSTOM_FILE_WRITER
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+#endif
 };

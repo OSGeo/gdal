@@ -120,6 +120,24 @@ static void setEncoderParameters(heif_encoder *encoder, char **papszOptions)
     heif_encoder_set_lossy_quality(encoder, nQuality);
 }
 
+heif_error GDALHEIFDataset::VFS_WriterCallback(struct heif_context *ctx,
+                                               const void *data, size_t size,
+                                               void *userdata)
+{
+    VSILFILE *fp = static_cast<VSILFILE *>(userdata);
+    size_t bytesWritten = VSIFWriteL(data, 1, size, fp);
+    if (bytesWritten == size)
+    {
+        return heif_error_success;
+    }
+    else
+    {
+        return heif_error{.code = heif_error_Encoding_error,
+                          .subcode = heif_suberror_Cannot_write_output_data,
+                          .message = "Not all data written"};
+    }
+}
+
 /************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
@@ -224,7 +242,18 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
     heif_encoding_options_free(encoding_options);
     heif_encoder_release(encoder);
 
-    heif_context_write_to_file(ctx, pszFilename);
+    VSILFILE *fp = VSIFOpenL(pszFilename, "wb");
+    if (fp == nullptr)
+    {
+        ReportError(pszFilename, CE_Failure, CPLE_OpenFailed,
+                    "Unable to create file.");
+        return nullptr;
+    }
+    heif_writer writer;
+    writer.writer_api_version = 1;
+    writer.write = VFS_WriterCallback;
+    heif_context_write(ctx, &writer, fp);
+    VSIFCloseL(fp);
 
     heif_context_free(ctx);
 
