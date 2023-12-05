@@ -8721,7 +8721,8 @@ struct GeometryExtent3DAggregateContext
     sqlite3 *m_hDB = nullptr;
     OGREnvelope3D m_oExtent3D;
 
-    explicit GeometryExtent3DAggregateContext(sqlite3 *hDB) : m_hDB(hDB)
+    explicit GeometryExtent3DAggregateContext(sqlite3 *hDB)
+        : m_hDB(hDB), m_oExtent3D()
     {
     }
     GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
