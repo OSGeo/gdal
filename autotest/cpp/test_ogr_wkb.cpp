@@ -40,8 +40,6 @@ struct test_ogr_wkb : public ::testing::Test
 {
 };
 
-}  // namespace
-
 class OGRWKBFixupCounterClockWiseExternalRingFixture
     : public test_ogr_wkb,
       public ::testing::WithParamInterface<
@@ -110,3 +108,5 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<
         OGRWKBFixupCounterClockWiseExternalRingFixture::ParamType> &l_info)
     { return std::get<2>(l_info.param); });
+
+}  // namespace

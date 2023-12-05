@@ -9,6 +9,8 @@ OUT_FILE=degrib/g2clib/gdal_g2clib_symbol_rename.h
 rm $OUT_FILE 2>/dev/null
 
 echo "/* This is a generated file by rename_g2clib_symbols.h. *DO NOT EDIT MANUALLY !* */" >> $OUT_FILE
+echo "#ifndef GDAL_G2CLIB_SYMBOL_RENAME_H_INCLUDED" >> $OUT_FILE
+echo "#define GDAL_G2CLIB_SYMBOL_RENAME_H_INCLUDED" >> $OUT_FILE
 
 symbol_list=$(objdump -t $SONAME  | grep .text | awk '{print $6}' | grep -v -e .text -e __do_global -e __bss_start -e _edata -e _end -e _fini -e _init -e call_gmon_start  -e register_tm_clones | sort)
 
@@ -34,6 +36,8 @@ for symbol in $bss_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
+
+echo "#endif /* GDAL_G2CLIB_SYMBOL_RENAME_H_INCLUDED */" >> $OUT_FILE
 
 rm $SONAME
 

@@ -33,6 +33,8 @@
 #include "ogrsf_frmts.h"
 #include "avc.h"
 
+constexpr int SERIAL_ACCESS_FID = INT_MIN;
+
 class OGRAVCDataSource;
 
 /************************************************************************/

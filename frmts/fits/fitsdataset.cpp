@@ -169,7 +169,7 @@ class FITSRasterBand final : public GDALPamRasterBand
 /*                              FITSLayer                               */
 /* ==================================================================== */
 /************************************************************************/
-namespace
+namespace gdal::FITS
 {
 struct ColDesc
 {
@@ -184,7 +184,9 @@ struct ColDesc
     LONGLONG nNullValue = 0;
     int nTypeCode = 0;  // unset
 };
-}  // namespace
+}  // namespace gdal::FITS
+
+using namespace gdal::FITS;
 
 class FITSLayer final : public OGRLayer,
                         public OGRGetNextFeatureThroughRaw<FITSLayer>

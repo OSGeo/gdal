@@ -45,8 +45,6 @@
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 
-CPL_CVSID("$Id$")
-
 #define handleErr(err)                                                         \
     do                                                                         \
     {                                                                          \

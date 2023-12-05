@@ -46,8 +46,6 @@
 #include "ogr_core.h"
 #include "commonutils.h"
 
-CPL_CVSID("$Id$")
-
 inline static void SetVisibility(int iPixel, double dfZ, double dfZTarget,
                                  double *padfZVal, std::vector<GByte> &vResult,
                                  GByte byVisibleVal, GByte byInvisibleVal)

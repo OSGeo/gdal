@@ -265,3 +265,13 @@ std::string GDALRemoveSQLComments(const std::string &osInput)
     CSLDestroy(papszLines);
     return osSQL;
 }
+
+/************************************************************************/
+/*                            ArgIsNumeric()                            */
+/************************************************************************/
+
+int ArgIsNumeric(const char *pszArg)
+
+{
+    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
+}

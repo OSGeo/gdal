@@ -55,8 +55,6 @@
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
-
 template <typename T> static inline T SaturatedAddSigned(T a, T b)
 {
     if (a > 0 && b > 0 && a > std::numeric_limits<T>::max() - b)

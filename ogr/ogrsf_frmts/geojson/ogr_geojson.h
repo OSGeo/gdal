@@ -116,7 +116,6 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     OGRGeoJSONReader *poReader_;
     bool bHasAppendedFeatures_;
     CPLString sFIDColumn_;
-    bool bUpdated_;
     bool bOriginalIdModified_;
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;

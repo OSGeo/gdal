@@ -42,8 +42,6 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$")
-
 static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
                                    int *panNearY, int bForward, int iLine,
                                    int nXSize, double nMaxDist,

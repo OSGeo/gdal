@@ -36,7 +36,7 @@
 
 #define MAX_GCPS 5000  // this should be more than enough ground control points
 
-namespace
+namespace gdal::TSX
 {
 enum ePolarization
 {
@@ -54,7 +54,9 @@ enum eProductType
     eGEC,
     eUnknown
 };
-}  // namespace
+}  // namespace gdal::TSX
+
+using namespace gdal::TSX;
 
 /************************************************************************/
 /* Helper Functions                                                     */

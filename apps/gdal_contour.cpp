@@ -38,10 +38,10 @@
 #include "commonutils.h"
 
 /************************************************************************/
-/*                            ArgIsNumeric()                            */
+/*                     ArgIsNumericContour()                            */
 /************************************************************************/
 
-static bool ArgIsNumeric(const char *pszArg)
+static bool ArgIsNumericContour(const char *pszArg)
 
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
@@ -202,7 +202,7 @@ MAIN_START(argc, argv)
             while (i < argc - 1 &&
                    nFixedLevelCount < static_cast<int>(sizeof(adfFixedLevels) /
                                                        sizeof(double)) &&
-                   ArgIsNumeric(argv[i + 1]))
+                   ArgIsNumericContour(argv[i + 1]))
                 // coverity[tainted_data]
                 adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
         }

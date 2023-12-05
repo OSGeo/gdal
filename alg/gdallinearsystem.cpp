@@ -46,8 +46,6 @@
 #include <cassert>
 #include <cmath>
 
-CPL_CVSID("$Id$")
-
 #ifndef HAVE_ARMADILLO
 namespace
 {

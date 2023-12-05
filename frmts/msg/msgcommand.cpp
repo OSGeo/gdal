@@ -32,6 +32,8 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include <algorithm>
+
 using namespace std;
 
 #ifdef _WIN32
@@ -43,8 +45,6 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
-#define min(a, b) (((a) < (b)) ? (a) : (b))
 
 MSGCommand::MSGCommand()
     : cDataConversion('N'), iNrCycles(1), sRootFolder(""), sTimeStamp(""),
@@ -79,7 +79,7 @@ std::string MSGCommand::sNextTerm(std::string const &str, int &iPos)
     iPos = static_cast<int>(str.find(',', iOldPos));
     // FIXME: the int vs size_t is messy !
     iPos = static_cast<int>(
-        min(static_cast<size_t>(iPos), str.find(')', iOldPos)));
+        std::min(static_cast<size_t>(iPos), str.find(')', iOldPos)));
     if (iPos >= 0 && static_cast<size_t>(iPos) > iOldPos)
     {
         std::string sRet = str.substr(iOldPos, iPos - iOldPos);

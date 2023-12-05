@@ -2413,6 +2413,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
         osBuildInfo +=
             "COMPILER=Intel compiler " STRINGIFY(__INTEL_COMPILER) "\n";
 #endif
+#ifdef CMAKE_UNITY_BUILD
+        osBuildInfo += "CMAKE_UNITY_BUILD=YES\n";
+#endif
 
 #undef STRINGIFY_HELPER
 #undef STRINGIFY

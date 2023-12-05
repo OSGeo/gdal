@@ -63,8 +63,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-CPL_CVSID("$Id$")
-
 #define MAXORDER 3
 
 namespace

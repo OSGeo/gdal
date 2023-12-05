@@ -49,7 +49,6 @@ class KTX2Dataset final : public GDALPamDataset
     void *m_pEncodedData = nullptr;
     void *m_pDecodedData = nullptr;
     uint32_t m_nLineStride = 0;
-    KTX2Dataset *m_poParent = nullptr;
     uint32_t m_iLayer = 0;
     uint32_t m_iFace = 0;
     uint32_t m_iLevel = 0;
@@ -103,8 +102,8 @@ KTX2Dataset::KTX2Dataset(uint32_t iLayer, uint32_t iFace, void *pEncodedData)
 /************************************************************************/
 
 KTX2Dataset::KTX2Dataset(KTX2Dataset *poParent, uint32_t iLevel)
-    : m_transcoderRef(poParent->m_transcoderRef), m_poParent(poParent),
-      m_iLayer(poParent->m_iLayer), m_iFace(poParent->m_iFace), m_iLevel(iLevel)
+    : m_transcoderRef(poParent->m_transcoderRef), m_iLayer(poParent->m_iLayer),
+      m_iFace(poParent->m_iFace), m_iLevel(iLevel)
 {
     basist::ktx2_image_level_info level_info;
     CPL_IGNORE_RET_VAL(m_transcoderRef.get_image_level_info(
@@ -438,7 +437,7 @@ GDALDataset *KTX2Dataset::CreateCopy(const char *pszFilename,
 
 void GDALRegister_KTX2()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(KTX2_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();

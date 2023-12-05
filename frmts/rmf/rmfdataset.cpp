@@ -132,8 +132,7 @@ static GUInt32 RMFStrToUnitType(const char *pszUnit, int *pbSuccess = nullptr)
 
 RMFRasterBand::RMFRasterBand(RMFDataset *poDSIn, int nBandIn,
                              GDALDataType eType)
-    : nBytesPerPixel(poDSIn->sHeader.nBitDepth / 8),
-      nLastTileWidth(poDSIn->GetRasterXSize() % poDSIn->sHeader.nTileWidth),
+    : nLastTileWidth(poDSIn->GetRasterXSize() % poDSIn->sHeader.nTileWidth),
       nLastTileHeight(poDSIn->GetRasterYSize() % poDSIn->sHeader.nTileHeight),
       nDataSize(GDALGetDataTypeSizeBytes(eType))
 {
@@ -152,7 +151,7 @@ RMFRasterBand::RMFRasterBand(RMFDataset *poDSIn, int nBandIn,
              " last tile width %u, last tile height %u, "
              "bytes per pixel is %d, data type size is %d",
              nBand, nBlockXSize, nBlockYSize, nLastTileWidth, nLastTileHeight,
-             nBytesPerPixel, nDataSize);
+             poDSIn->sHeader.nBitDepth / 8, nDataSize);
 #endif
 }
 

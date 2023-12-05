@@ -202,8 +202,14 @@ GIntBig IVFKDataBlock::GetFeatureCount(bool bForce)
             LoadGeometry(); /* get real number of features */
         }
     }
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     return m_nFeatureCount;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 /*!
@@ -449,8 +455,15 @@ IVFKFeature *IVFKDataBlock::GetFeature(GIntBig nFID)
 */
 int IVFKDataBlock::LoadGeometry()
 {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     if (m_bGeometry)
         return 0;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
     m_bGeometry = true;
     int nInvalid = 0;

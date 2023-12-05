@@ -35,9 +35,12 @@
 #include "cpl_string.h"
 #include <stdbool.h>
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 static int NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
                            int *pnOffset, char **papszOptions);
@@ -268,6 +271,7 @@ retry_read_header:
         GetMD(psFile, pachHeader, 324 + nCOff, 18, OPHONE);
         NITFGetField(szTemp, pachHeader, 342 + nCOff, 12);
     }
+#undef GetMD
 
     if (!bTriedStreamingFileHeader && EQUAL(szTemp, "999999999999"))
     {

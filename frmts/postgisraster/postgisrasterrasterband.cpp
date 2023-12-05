@@ -675,6 +675,11 @@ GDALRasterBand *PostGISRasterRasterBand::GetOverview(int i)
 
     PostGISRasterDataset *poRDS = cpl::down_cast<PostGISRasterDataset *>(poDS);
     PostGISRasterDataset *poOverviewDS = poRDS->GetOverviewDS(i);
+    if (!poOverviewDS)
+    {
+        CPLAssert(false);
+        return nullptr;
+    }
     if (poOverviewDS->nBands == 0)
     {
         if (!poOverviewDS->SetRasterProperties(nullptr) ||

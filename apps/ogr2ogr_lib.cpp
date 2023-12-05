@@ -97,7 +97,7 @@ typedef enum
 /*                              CopyableGCPs                            */
 /************************************************************************/
 
-namespace
+namespace gdal::ogr2ogr_lib
 {
 struct CopyableGCPs
 {
@@ -127,7 +127,9 @@ struct CopyableGCPs
         }
     }
 };
-}  // namespace
+}  // namespace gdal::ogr2ogr_lib
+
+using namespace gdal::ogr2ogr_lib;
 
 /************************************************************************/
 /*                        GDALVectorTranslateOptions                    */
@@ -6434,6 +6436,7 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 /*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
 /************************************************************************/
 
+#ifndef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {
@@ -6452,6 +6455,7 @@ static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
     {                                                                          \
         return nullptr;                                                        \
     }
+#endif
 
 /************************************************************************/
 /*                       GDALVectorTranslateOptionsNew()                */

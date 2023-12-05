@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_IIP_H_INCLUDED
+#define MINIDRIVER_IIP_H_INCLUDED
+
 class WMSMiniDriver_IIP : public WMSMiniDriver
 {
   public:
@@ -42,3 +45,5 @@ class WMSMiniDriver_IIP : public WMSMiniDriver
                       const GDALWMSImageRequestInfo &iri,
                       const GDALWMSTiledImageRequestInfo &tiri) override;
 };
+
+#endif /* MINIDRIVER_IIP_H_INCLUDED */

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#ifndef OGRLIBKMLFIELD_H_INCLUDED
+#define OGRLIBKMLFIELD_H_INCLUDED
+
 /******************************************************************************
  Function to output ogr fields in kml.
 
@@ -129,3 +132,5 @@ struct fieldconfig
 void get_fieldconfig(struct fieldconfig *oFC);
 
 int kmlAltitudeModeFromString(const char *pszAltitudeMode, int &isGX);
+
+#endif /* OGRLIBKMLFIELD_H_INCLUDED */

@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "9";
+static const char NINE_FILE_CODE[] = "9";
 
 static const TigerFieldInfo rt9_fields[] = {
     // fieldname    fmt  type  OFTType      beg  end  len  bDefine bSet
@@ -56,7 +56,7 @@ static const TigerRecordInfo rt9_info = {
 
 TigerKeyFeatures::TigerKeyFeatures(OGRTigerDataSource *poDSIn,
                                    CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(&rt9_info, FILE_CODE)
+    : TigerFileBase(&rt9_info, NINE_FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("KeyFeatures");

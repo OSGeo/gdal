@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef RMFDATASET_H_INCLUDED
+#define RMFDATASET_H_INCLUDED
+
 #include <list>
 #include "gdal_priv.h"
 #include "cpl_worker_thread_pool.h"
@@ -359,7 +362,6 @@ class RMFRasterBand final : public GDALRasterBand
     friend class RMFDataset;
 
   private:
-    GUInt32 nBytesPerPixel;
     GUInt32 nBlockSize;
     GUInt32 nBlockBytes;
     GUInt32 nLastTileWidth;
@@ -389,3 +391,5 @@ class RMFRasterBand final : public GDALRasterBand
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
+
+#endif

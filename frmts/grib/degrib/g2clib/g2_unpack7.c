@@ -5,11 +5,14 @@
 #include <string.h>
 #include "grib2.h"
 
+#ifndef DoubleToFloatClamp_defined
+#define DoubleToFloatClamp_defined
 static float DoubleToFloatClamp(double val) {
    if (val >= FLT_MAX) return FLT_MAX;
    if (val <= -FLT_MAX) return -FLT_MAX;
    return (float)val;
 }
+#endif
 
 g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
                g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld)

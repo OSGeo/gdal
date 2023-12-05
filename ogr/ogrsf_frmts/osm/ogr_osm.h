@@ -392,7 +392,6 @@ class OGROSMDataSource final : public OGRDataSource
     sqlite3 *m_hDB = nullptr;
     sqlite3_stmt *m_hInsertNodeStmt = nullptr;
     sqlite3_stmt *m_hInsertWayStmt = nullptr;
-    sqlite3_stmt *m_hSelectNodeBetweenStmt = nullptr;
     sqlite3_stmt **m_pahSelectNodeStmt = nullptr;
     sqlite3_stmt **m_pahSelectWayStmt = nullptr;
     sqlite3_stmt *m_hInsertPolygonsStandaloneStmt = nullptr;
@@ -406,8 +405,6 @@ class OGROSMDataSource final : public OGRDataSource
     bool m_bInMemoryTmpDB = false;
     bool m_bMustUnlink = true;
     CPLString m_osTmpDBName{};
-
-    int m_nNodesInTransaction = 0;
 
     std::unordered_set<std::string> aoSetClosedWaysArePolygons{};
     int m_nMinSizeKeysInSetClosedWaysArePolygons = 0;

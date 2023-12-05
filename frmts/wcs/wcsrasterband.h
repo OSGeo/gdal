@@ -27,6 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef WCSRASTERBAND_H_INCLUDED
+#define WCSRASTERBAND_H_INCLUDED
+
+#include "gdal_pam.h"
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            WCSRasterBand                             */
@@ -61,3 +66,5 @@ class WCSRasterBand final : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 };
+
+#endif /* WCSRASTERBAND_H_INCLUDED */

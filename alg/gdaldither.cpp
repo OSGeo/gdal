@@ -78,12 +78,13 @@
 #define CAST_PCT(x) x
 #endif
 
-CPL_CVSID("$Id$")
-
+#ifndef MAKE_COLOR_CODE_defined
+#define MAKE_COLOR_CODE_defined
 static int MAKE_COLOR_CODE(int r, int g, int b)
 {
     return r | (g << 8) | (b << 16);
 }
+#endif
 
 static void FindNearestColor(int nColors, int *panPCT, GByte *pabyColorMap,
                              int nCLevels);
@@ -111,10 +112,13 @@ typedef struct
 /*                         GDALDitherRGB2PCT()                          */
 /************************************************************************/
 
+#ifndef IsColorCodeSet_defined
+#define IsColorCodeSet_defined
 static inline bool IsColorCodeSet(GUInt32 nColorCode)
 {
     return (nColorCode >> 31) == 0;
 }
+#endif
 
 /**
  * 24bit to 8bit conversion with dithering.

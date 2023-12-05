@@ -103,7 +103,7 @@ struct _OGRGeocodingSessionHS
     OGRDataSource *poDS;
 };
 
-static CPLMutex *hMutex = nullptr;
+static CPLMutex *hOGRGeocodingMutex = nullptr;
 static double dfLastQueryTimeStampOSMNominatim = 0.0;
 static double dfLastQueryTimeStampMapQuestNominatim = 0.0;
 
@@ -547,7 +547,7 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
 static char *OGRGeocodeGetFromCache(OGRGeocodingSessionH hSession,
                                     const char *pszURL)
 {
-    CPLMutexHolderD(&hMutex);
+    CPLMutexHolderD(&hOGRGeocodingMutex);
 
     int nIdxBlob = -1;
     OGRLayer *poLayer = OGRGeocodeGetCacheLayer(hSession, FALSE, &nIdxBlob);
@@ -578,7 +578,7 @@ static char *OGRGeocodeGetFromCache(OGRGeocodingSessionH hSession,
 static bool OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
                                    const char *pszURL, const char *pszContent)
 {
-    CPLMutexHolderD(&hMutex);
+    CPLMutexHolderD(&hOGRGeocodingMutex);
 
     int nIdxBlob = -1;
     OGRLayer *poLayer = OGRGeocodeGetCacheLayer(hSession, TRUE, &nIdxBlob);
@@ -1308,7 +1308,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
         CPLHTTPResult *psResult = nullptr;
         if (pdfLastQueryTime != nullptr)
         {
-            CPLMutexHolderD(&hMutex);
+            CPLMutexHolderD(&hOGRGeocodingMutex);
             struct timeval tv;
 
             gettimeofday(&tv, nullptr);

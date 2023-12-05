@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_TILESERVICE_H_INCLUDED
+#define MINIDRIVER_TILESERVICE_H_INCLUDED
+
 class WMSMiniDriver_TileService : public WMSMiniDriver
 {
   public:
@@ -42,3 +45,5 @@ class WMSMiniDriver_TileService : public WMSMiniDriver
                       const GDALWMSImageRequestInfo &iri,
                       const GDALWMSTiledImageRequestInfo &tiri) override;
 };
+
+#endif /* MINIDRIVER_TILESERVICE_H_INCLUDED */

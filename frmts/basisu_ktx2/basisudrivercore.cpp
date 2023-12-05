@@ -63,7 +63,7 @@ int BASISUDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 void BASISUDriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetDescription(BASISU_DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Basis Universal texture format");
@@ -89,7 +89,7 @@ void BASISUDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef PLUGIN_FILENAME
 void DeclareDeferredBASISUPlugin()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(BASISU_DRIVER_NAME) != nullptr)
     {
         return;
     }

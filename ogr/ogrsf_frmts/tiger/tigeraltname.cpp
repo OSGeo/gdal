@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "4";
+static const char FOUR_FILE_CODE[] = "4";
 
 static const TigerFieldInfo rt4_fields[] = {
     // fieldname    fmt  type  OFTType         beg  end  len  bDefine bSet
@@ -52,7 +52,7 @@ static const TigerRecordInfo rt4_info = {
 
 TigerAltName::TigerAltName(OGRTigerDataSource *poDSIn,
                            CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(&rt4_info, FILE_CODE)
+    : TigerFileBase(&rt4_info, FOUR_FILE_CODE)
 {
     OGRFieldDefn oField("", OFTInteger);
 

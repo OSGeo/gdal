@@ -59,8 +59,6 @@
 
 // #define DEBUG_VERBOSE_EXTRACT_DEM
 
-CPL_CVSID("$Id$")
-
 CPL_C_START
 CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg);
 void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);

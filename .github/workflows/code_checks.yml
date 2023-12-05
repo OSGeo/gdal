@@ -75,7 +75,8 @@ jobs:
           if grep -e "atof(" ogr/ogrsf_frmts/geojson/libjson/*.c; then echo "Unexpected use of atof()."; /bin/false; fi
 
       - name: Shellcheck
-        run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
+        # SC2129: (style): Consider using { cmd1; cmd2; } >> file instead of individual redirects
+        run: shellcheck -e SC2086,SC2046,SC2164,SC2054,SC2129 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
   linting:
     runs-on: ubuntu-latest

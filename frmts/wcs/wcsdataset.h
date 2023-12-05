@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef WCSDATASET_H_INCLUDED
+#define WCSDATASET_H_INCLUDED
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              WCSDataset                              */
@@ -234,3 +237,5 @@ class WCSDataset201 final : public WCSDataset110
     "Format", "Interpolation", "MediaType", "UpdateSequence",                  \
         "GEOTIFF:COMPRESSION", "GEOTIFF:JPEG_QUALITY", "GEOTIFF:PREDICTOR",    \
         "GEOTIFF:INTERLEAVE", "GEOTIFF:TILING", "GEOTIFF:TILEWIDTH"
+
+#endif /* WCSDATASET_H_INCLUDED */

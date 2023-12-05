@@ -69,8 +69,6 @@ constexpr float INVALID_BMXY = -10.0f;
 #warning "Remove me before committing"
 #endif
 
-CPL_CVSID("$Id$")
-
 CPL_C_START
 CPLXMLNode *GDALSerializeGeoLocTransformer(void *pTransformArg);
 void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);

@@ -31,7 +31,7 @@
 
 #include "gdal_priv.h"
 
-constexpr const char *DRIVER_NAME = "BASISU";
+constexpr const char *BASISU_DRIVER_NAME = "BASISU";
 
 int CPL_DLL BASISUDriverIdentify(GDALOpenInfo *poOpenInfo);
 

@@ -31,7 +31,7 @@
 
 #include "gdal_priv.h"
 
-constexpr const char *DRIVER_NAME = "KTX2";
+constexpr const char *KTX2_DRIVER_NAME = "KTX2";
 
 int CPL_DLL KTX2DriverIdentify(GDALOpenInfo *poOpenInfo);
 

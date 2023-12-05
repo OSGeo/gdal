@@ -181,12 +181,26 @@ OGRFeature *OGRESRIFeatureServiceLayer::GetNextFeature()
     while (true)
     {
         const bool bWasInFirstPage = !bOtherPage;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         OGRFeature *poSrcFeat = poDS->GetUnderlyingLayer()->GetNextFeature();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         if (poSrcFeat == nullptr)
         {
             if (!poDS->LoadNextPage())
                 return nullptr;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
             poSrcFeat = poDS->GetUnderlyingLayer()->GetNextFeature();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
             if (poSrcFeat == nullptr)
                 return nullptr;
             bOtherPage = true;
@@ -237,7 +251,15 @@ int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap)
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
     if (EQUAL(pszCap, OLCFastGetExtent))
         return FALSE;
-    return poDS->GetUnderlyingLayer()->TestCapability(pszCap);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+    auto poUnderlyingLayer = poDS->GetUnderlyingLayer();
+    return poUnderlyingLayer->TestCapability(pszCap);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/
@@ -379,7 +401,14 @@ int OGRESRIFeatureServiceDataset::MyResetReading()
         return LoadPage();
     }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     poCurrent->GetLayer(0)->ResetReading();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     return TRUE;
 }
 
@@ -391,7 +420,14 @@ int OGRESRIFeatureServiceDataset::LoadNextPage()
 {
     if (!poCurrent->HasOtherPages())
         return FALSE;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     nLastOffset += poCurrent->GetLayer(0)->GetFeatureCount();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     return LoadPage();
 }
 

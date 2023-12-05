@@ -46,7 +46,7 @@ int OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 void OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetDescription(DWG_DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "AutoCAD DWG");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dwg");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/dwg.html");
@@ -70,7 +70,7 @@ void OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef PLUGIN_FILENAME
 void DeclareDeferredOGRDWGPlugin()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(DWG_DRIVER_NAME) != nullptr)
     {
         return;
     }

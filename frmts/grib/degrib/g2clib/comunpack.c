@@ -4,11 +4,14 @@
 #include <stdlib.h>
 #include "grib2.h"
 
+#ifndef DoubleToFloatClamp_defined
+#define DoubleToFloatClamp_defined
 static float DoubleToFloatClamp(double val) {
    if (val >= FLT_MAX) return FLT_MAX;
    if (val <= -FLT_MAX) return -FLT_MAX;
    return (float)val;
 }
+#endif
 
 int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float *fld)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK

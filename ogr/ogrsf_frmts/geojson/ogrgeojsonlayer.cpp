@@ -66,8 +66,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer(const char *pszName,
                                  OGRGeoJSONDataSource *poDS,
                                  OGRGeoJSONReader *poReader)
     : OGRMemLayer(pszName, poSRSIn, eGType), poDS_(poDS), poReader_(poReader),
-      bHasAppendedFeatures_(false), bUpdated_(false),
-      bOriginalIdModified_(false), nTotalFeatureCount_(0)
+      bHasAppendedFeatures_(false), bOriginalIdModified_(false),
+      nTotalFeatureCount_(0)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable(poDS->IsUpdatable());
@@ -91,7 +91,14 @@ void OGRGeoJSONLayer::TerminateAppendSession()
 {
     if (bHasAppendedFeatures_)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         VSILFILE *fp = poReader_->GetFP();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         VSIFPrintfL(fp, "\n]\n}\n");
         VSIFFlushL(fp);
         bHasAppendedFeatures_ = false;

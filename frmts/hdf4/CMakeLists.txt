@@ -13,6 +13,8 @@ set(_SOURCES
     hdf4imagedataset.cpp
     hdf4multidim.cpp)
 
+set_property(SOURCE hdf-eos/EHapi.c hdf-eos/GDapi.c hdf-eos/SWapi.c PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+
 add_gdal_driver(TARGET gdal_HDF4
                 SOURCES ${_SOURCES}
                 CORE_SOURCES hdf4drivercore.cpp

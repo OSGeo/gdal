@@ -2194,4 +2194,6 @@ void VSICurlStreamingClearCache(void)
 
 //! @endcond
 
+#undef ENABLE_DEBUG
+
 #endif  // !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)
