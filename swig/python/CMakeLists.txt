@@ -115,8 +115,6 @@ add_custom_target(python_generated_files
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 function (symlink_or_copy source destination)
-
-  if (CMAKE_VERSION VERSION_GREATER 3.14)
     file(
       CREATE_LINK ${source} ${destination}
       RESULT res
@@ -125,15 +123,6 @@ function (symlink_or_copy source destination)
       message(STATUS "Copying content of ${source} to ${destination}")
       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
     endif ()
-  else ()
-    if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${source} ${destination})
-    else ()
-      message(STATUS "Copying content of ${source} to ${destination}")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
-    endif ()
-  endif ()
-
 endfunction ()
 
 if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
@@ -227,7 +216,7 @@ if (Python_Interpreter_FOUND)
           execute_process(COMMAND \"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace)\n")
   endif ()
 
-  if((CMAKE_VERSION VERSION_GREATER_EQUAL 3.12) AND CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
+  if(CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
       # Optimization to avoid rebuilding the .o and .so each time libgdal
       # is touched. We only consider the list of exported symbols as the
       # dependency rule

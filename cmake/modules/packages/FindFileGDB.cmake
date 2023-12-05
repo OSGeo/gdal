@@ -17,10 +17,6 @@
 #
 # Select a FGDB API to use, or disable driver.
 
-if(CMAKE_VERSION VERSION_LESS 3.13)
-    set(FileGDB_ROOT CACHE PATH "")
-endif()
-
 find_path(FileGDB_INCLUDE_DIR NAMES FileGDBAPI.h
           PATHS /usr/local/filegdb/include "${FileGDB_ROOT}/include")
 mark_as_advanced(FileGDB_INCLUDE_DIR)

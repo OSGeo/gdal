@@ -9,10 +9,6 @@
 #  LURATECH_INCLUDE_DIR - The Luratech include directory
 #  LURATECH_LIBRARIES - The libraries needed to use Luratech
 
-if(CMAKE_VERSION VERSION_LESS 3.13)
-    set(LURATECH_ROOT CACHE PATH "Root directory of Luratech SDK")
-endif()
-
 find_path(LURATECH_INCLUDE_DIR lwf_jp2.h HINTS ${LURATECH_ROOT}/include)
 
 find_library(LURATECH_LIBRARY NAMES _lwf_jp2 lwf_jp2 PATH_SUFFIXES library HINTS ${LURATECH_ROOT}/library)

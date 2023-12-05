@@ -60,7 +60,6 @@ function (copy_file_or_dir source dest)
 endfunction()
 
 function (symlink_or_copy source destination)
-  if (CMAKE_VERSION VERSION_GREATER 3.14)
     file(
       CREATE_LINK ${source} ${destination}
       RESULT res
@@ -68,14 +67,6 @@ function (symlink_or_copy source destination)
     if (NOT res EQUAL 0)
       copy_file_or_dir(${source} ${destination})
     endif ()
-  else ()
-      if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${source} ${destination})
-      else ()
-        copy_file_or_dir(${source} ${destination})
-      endif ()
-  endif ()
-
 endfunction ()
 
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py)
