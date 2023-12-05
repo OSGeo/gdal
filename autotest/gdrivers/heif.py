@@ -197,21 +197,97 @@ def make_data():
     return ds
 
 
+def make_data_with_alpha():
+    ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 4, gdal.GDT_Byte)
+
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
+
+    red_green_blue_alpha = (
+        ([0xFF] * 100 + [0x00] * 200)
+        + ([0x00] * 100 + [0xFF] * 100 + [0x00] * 100)
+        + ([0x00] * 200 + [0xFF] * 100)
+        + ([0x7F] * 150 + [0xFF] * 150)
+    )
+    rgba_bytes = array.array("B", red_green_blue_alpha).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0, line, 300, 1, rgba_bytes, buf_type=gdal.GDT_Byte, band_list=[1, 2, 3, 4]
+        )
+    black_white = ([0xFF] * 150 + [0x00] * 150) * 4
+    black_white_bytes = array.array("B", black_white).tobytes()
+    for line in range(100):
+        ds.WriteRaster(
+            0,
+            100 + line,
+            300,
+            1,
+            black_white_bytes,
+            buf_type=gdal.GDT_Byte,
+            band_list=[1, 2, 3, 4],
+        )
+
+    assert ds.FlushCache() == gdal.CE_None
+    return ds
+
+
 heif_codecs = ["HEIF", "JPEG", "JPEG2000"]
 
 
 @pytest.mark.parametrize("codec", heif_codecs)
 def test_heif_create_copy(codec):
+    tempfile = "tmp/test_heif_create_copy_" + codec + ".hif"
     try:
-        os.remove("tmp/test_create.hif")
+        os.remove(tempfile)
     except OSError:
         pass
 
     input_ds = make_data()
 
     drv = gdal.GetDriverByName("HEIF")
-    tempfile = "tmp/test_heif_create_copy_" + codec + ".hif"
     result_ds = drv.CreateCopy(tempfile, input_ds, options=["CODEC=" + codec])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
+
+
+@pytest.mark.parametrize("codec", heif_codecs)
+def test_heif_create_copy_with_alpha(codec):
+    tempfile = "tmp/test_heif_create_copy_" + codec + "_alpha.hif"
+    try:
+        os.remove(tempfile)
+    except OSError:
+        pass
+
+    input_ds = make_data_with_alpha()
+
+    drv = gdal.GetDriverByName("HEIF")
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=["CODEC=" + codec])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
+
+
+def test_heif_create_copy_defaults():
+    tempfile = "tmp/test_heif_create_copy.hif"
+    try:
+        os.remove(tempfile)
+    except OSError:
+        pass
+
+    input_ds = make_data()
+
+    drv = gdal.GetDriverByName("HEIF")
+
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=[])
 
     result_ds = None
 
