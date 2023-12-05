@@ -8721,8 +8721,7 @@ struct GeometryExtent3DAggregateContext
     sqlite3 *m_hDB = nullptr;
     OGREnvelope3D m_oExtent3D;
 
-    explicit GeometryExtent3DAggregateContext(sqlite3 *hDB, int nFlags)
-        : m_hDB(hDB)
+    explicit GeometryExtent3DAggregateContext(sqlite3 *hDB) : m_hDB(hDB)
     {
     }
     GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
@@ -8752,7 +8751,19 @@ static void OGR_GPKG_GeometryExtent3DAggregate_Step(sqlite3_context *pContext,
         {
             if (!OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true,
                                         true))
+            {
+                OGRGeometry *poGeom =
+                    GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
+                if (poGeom == nullptr || poGeom->IsEmpty())
+                {
+                    delete poGeom;
+                    return;
+                }
+                OGREnvelope3D extent3D;
+                poGeom->getEnvelope(&extent3D);
+                poContext->m_oExtent3D.Merge(extent3D);
                 return;
+            }
         }
         OGREnvelope3D extent3D;
         extent3D.MinX = sHeader.MinX;
@@ -8810,7 +8821,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
 
     // For internal use only
 
-    GeometryExtent3DAggregateContext sContext(m_poDS->hDB, 0);
+    GeometryExtent3DAggregateContext sContext(m_poDS->hDB);
 
     CPLString osFuncName;
     osFuncName.Printf("OGR_GPKG_GeometryExtent3DAggregate_INTERNAL_%p",

@@ -4312,3 +4312,14 @@ def test_gpkg_extent3d(tmp_vsimem, geom1, geom2, extent2d, extent3d):
     ext2d = lyr.GetExtent()
     assert ext2d == extent2d
     ds = None
+
+
+@pytest.mark.parametrize("file_name", ("no_envelope", "2d_envelope", "3d_envelope"))
+def test_gpkg_extent3d_envelope_variants(file_name):
+    """Test all variants of envelope in gpkg"""
+
+    file_name = os.path.join("data", "gpkg", file_name + ".gpkg")
+    ds = gdal.OpenEx(file_name, gdal.OF_VECTOR | gdal.OF_READONLY)
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
