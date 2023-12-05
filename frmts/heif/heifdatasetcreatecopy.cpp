@@ -120,9 +120,10 @@ static void setEncoderParameters(heif_encoder *encoder, char **papszOptions)
     heif_encoder_set_lossy_quality(encoder, nQuality);
 }
 
-heif_error GDALHEIFDataset::VFS_WriterCallback(struct heif_context *ctx,
-                                               const void *data, size_t size,
-                                               void *userdata)
+heif_error
+GDALHEIFDataset::VFS_WriterCallback(CPL_UNUSED struct heif_context *ctx,
+                                    const void *data, size_t size,
+                                    void *userdata)
 {
     VSILFILE *fp = static_cast<VSILFILE *>(userdata);
     size_t bytesWritten = VSIFWriteL(data, 1, size, fp);
