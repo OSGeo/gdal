@@ -67,7 +67,6 @@ def netcdf_setup():
 
     gdaltest.netcdf_drv_version = "unknown"
     gdaltest.netcdf_drv_has_nc2 = False
-    gdaltest.netcdf_drv_has_nc4 = False
     gdaltest.netcdf_drv_has_hdf4 = False
     gdaltest.netcdf_drv_silent = False
 
@@ -88,9 +87,6 @@ def netcdf_setup():
     if "NETCDF_HAS_NC2" in metadata and metadata["NETCDF_HAS_NC2"] == "YES":
         gdaltest.netcdf_drv_has_nc2 = True
 
-    if "NETCDF_HAS_NC4" in metadata and metadata["NETCDF_HAS_NC4"] == "YES":
-        gdaltest.netcdf_drv_has_nc4 = True
-
     if "NETCDF_HAS_HDF4" in metadata and metadata["NETCDF_HAS_HDF4"] == "YES":
         gdaltest.netcdf_drv_has_hdf4 = True
 
@@ -99,8 +95,6 @@ def netcdf_setup():
         + gdaltest.netcdf_drv_version
         + "  has_nc2: "
         + str(gdaltest.netcdf_drv_has_nc2)
-        + "  has_nc4: "
-        + str(gdaltest.netcdf_drv_has_nc4)
     )
 
     # find out if we have ncdump
@@ -187,9 +181,6 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
         Process.is_alive
     except (ImportError, AttributeError):
         pytest.skip("from multiprocessing import Process failed")
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     ofile1 = "tmp/" + os.path.basename(ifile) + "-1.nc"
     ofile1_opts = ["FORMAT=NC4C", "COMPRESS=NONE"]
@@ -738,24 +729,19 @@ def test_netcdf_16():
 
     ifile = "data/netcdf/trmm-nc4.nc"
 
-    if gdaltest.netcdf_drv_has_nc4:
-
-        # test with Open()
-        ds = gdal.Open(ifile)
-        if ds is None:
-            pytest.fail("GDAL did not open file")
-        else:
-            name = ds.GetDriver().GetDescription()
-            ds = None
-            # return fail if did not open with the netCDF driver (i.e. HDF5Image)
-            assert name == "netCDF", "netcdf driver did not open file"
-
-        # test with Identify()
-        name = gdal.IdentifyDriver(ifile).GetDescription()
-        assert name == "netCDF", "netcdf driver did not identify file"
-
+    # test with Open()
+    ds = gdal.Open(ifile)
+    if ds is None:
+        pytest.fail("GDAL did not open file")
     else:
-        pytest.skip()
+        name = ds.GetDriver().GetDescription()
+        ds = None
+        # return fail if did not open with the netCDF driver (i.e. HDF5Image)
+        assert name == "netCDF", "netcdf driver did not open file"
+
+    # test with Identify()
+    name = gdal.IdentifyDriver(ifile).GetDescription()
+    assert name == "netCDF", "netcdf driver did not identify file"
 
 
 ###############################################################################
@@ -768,24 +754,19 @@ def test_netcdf_17():
 
     ifile = "data/hdf5/groups.h5"
 
-    if gdaltest.netcdf_drv_has_nc4:
-
-        # test with Open()
-        ds = gdal.Open(ifile)
-        if ds is None:
-            pytest.fail("GDAL did not open HDF5 file")
-        else:
-            name = ds.GetDriver().GetDescription()
-            ds = None
-            # return fail if opened with the netCDF driver
-            assert name != "netCDF", "netcdf driver opened HDF5 file"
-
-        # test with Identify()
-        name = gdal.IdentifyDriver(ifile).GetDescription()
-        assert name != "netCDF", "netcdf driver was identified for HDF5 file"
-
+    # test with Open()
+    ds = gdal.Open(ifile)
+    if ds is None:
+        pytest.fail("GDAL did not open HDF5 file")
     else:
-        pytest.skip()
+        name = ds.GetDriver().GetDescription()
+        ds = None
+        # return fail if opened with the netCDF driver
+        assert name != "netCDF", "netcdf driver opened HDF5 file"
+
+    # test with Identify()
+    name = gdal.IdentifyDriver(ifile).GetDescription()
+    assert name != "netCDF", "netcdf driver was identified for HDF5 file"
 
 
 ###############################################################################
@@ -796,34 +777,26 @@ def test_netcdf_18():
 
     ifile = "data/netcdf/trmm-nc4c.nc"
 
-    if gdaltest.netcdf_drv_has_nc4:
-
-        # test with Open()
-        ds = gdal.Open(ifile)
-        if ds is None:
-            pytest.fail()
-        else:
-            name = ds.GetDriver().GetDescription()
-            ds = None
-            # return fail if did not open with the netCDF driver (i.e. HDF5Image)
-            assert name == "netCDF"
-
-        # test with Identify()
-        name = gdal.IdentifyDriver(ifile).GetDescription()
+    # test with Open()
+    ds = gdal.Open(ifile)
+    if ds is None:
+        pytest.fail()
+    else:
+        name = ds.GetDriver().GetDescription()
+        ds = None
+        # return fail if did not open with the netCDF driver (i.e. HDF5Image)
         assert name == "netCDF"
 
-    else:
-        pytest.skip()
+    # test with Identify()
+    name = gdal.IdentifyDriver(ifile).GetDescription()
+    assert name == "netCDF"
 
 
 ###############################################################################
-# check support for reading with DEFLATE compression, requires NC4
+# check support for reading with DEFLATE compression
 
 
 def test_netcdf_19():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     tst = gdaltest.GDALTest(
         "NetCDF", "data/netcdf/trmm-nc4z.nc", 1, 50235, filename_absolute=1
@@ -833,13 +806,10 @@ def test_netcdf_19():
 
 
 ###############################################################################
-# check support for writing with DEFLATE compression, requires NC4
+# check support for writing with DEFLATE compression
 
 
 def test_netcdf_20():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     # simple test with tiny file
     return netcdf_test_deflate("data/utm.tif", 50235)
@@ -850,9 +820,6 @@ def test_netcdf_20():
 # if chunking is not defined properly within the netcdf driver, this test can take 1h
 @pytest.mark.slow()
 def test_netcdf_21():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     bigfile = "tmp/cache/utm-big.tif"
 
@@ -964,9 +931,6 @@ def test_netcdf_24():
 
 def netcdf_24_nc4():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     vals_global = {
         "NC_GLOBAL#test": "testval",
         "NC_GLOBAL#test_string": "testval_string",
@@ -1026,9 +990,6 @@ def test_netcdf_25():
 
 
 def netcdf_25_nc4():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     netcdf_test_copy(
         "data/netcdf/nc4_vars.nc", 1, None, "tmp/netcdf_25_nc4.nc", ["FORMAT=NC4"]
@@ -1294,9 +1255,6 @@ def test_netcdf_31():
 
 def test_netcdf_32():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ifile = "data/byte.tif"
     ofile = "tmp/netcdf_32.nc"
 
@@ -1330,9 +1288,6 @@ def test_netcdf_34():
     filename = "utm-big-chunks.nc"
     # this timeout is more than enough - on my system takes <1s with fix, about 25 seconds without
     timeout = 5
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     try:
         from multiprocessing import Process
@@ -1578,9 +1533,6 @@ def test_netcdf_39_absolute():
 
 def test_netcdf_40():
 
-    if gdaltest.netcdf_drv is None or not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     return netcdf_test_copy("data/netcdf/bug5291.nc", 0, None, "tmp/netcdf_40.nc")
 
 
@@ -1791,9 +1743,6 @@ def test_netcdf_43():
 
 def test_netcdf_44():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     for f, md5 in ("data/netcdf/ushort.nc", 18), ("data/netcdf/uint.nc", 10):
         netcdf_test_copy(f, 1, md5, "tmp/netcdf_44.nc", ["FORMAT=NC4"])
 
@@ -1877,9 +1826,6 @@ def test_netcdf_46():
 
 @pytest.mark.require_driver("CSV")
 def test_netcdf_47():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     # Test that a vector cannot be opened in raster-only mode
     with gdal.quiet_errors():
@@ -2176,10 +2122,7 @@ def test_netcdf_51_no_gdal_tags():
 @pytest.mark.require_driver("CSV")
 def test_netcdf_52():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
-    if gdaltest.netcdf_drv_version in ("4.6.3", "4.7.0"):
+    if gdaltest.netcdf_drv_version == "4.7.0":
         pytest.skip(
             "buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442"
         )
@@ -2261,9 +2204,6 @@ def test_netcdf_52():
 
 def test_netcdf_53():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
     out_ds = gdal.VectorTranslate(
         "tmp/netcdf_53.nc",
@@ -2303,10 +2243,7 @@ def test_netcdf_53():
 
 def test_netcdf_54():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
-    if gdaltest.netcdf_drv_version in ("4.6.3", "4.7.0"):
+    if gdaltest.netcdf_drv_version == "4.7.0":
         pytest.skip(
             "buggy netCDF version: https://github.com/Unidata/netcdf-c/pull/1442"
         )
@@ -2342,9 +2279,6 @@ def test_netcdf_54():
 
 
 def test_netcdf_55():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     shutil.copy("data/netcdf/test_ogr_nc4.nc", "tmp/netcdf_55.nc")
 
@@ -2529,9 +2463,6 @@ def test_netcdf_57():
 
 
 def test_netcdf_58():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     ds = ogr.GetDriverByName("netCDF").CreateDataSource(
         "tmp/netcdf_58.nc",
@@ -2738,9 +2669,6 @@ def test_netcdf_62():
 @pytest.mark.require_driver("CSV")
 def test_netcdf_63():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     shutil.copy("data/netcdf/profile.nc", "tmp/netcdf_63.nc")
     ds = gdal.VectorTranslate(
         "tmp/netcdf_63.nc",
@@ -2781,7 +2709,7 @@ def test_netcdf_63():
 
     del ds
 
-    if gdaltest.netcdf_drv_has_nc4 and gdaltest.netcdf_have_ncdump:
+    if gdaltest.netcdf_have_ncdump:
         hdr = netcdf_ncdump("tmp/netcdf_63.nc")
         assert "profile = UNLIMITED" in hdr
         assert "record = UNLIMITED" in hdr
@@ -2848,9 +2776,6 @@ def test_netcdf_64():
 
 
 def test_netcdf_65():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     ds = ogr.GetDriverByName("netCDF").CreateDataSource(
         "tmp/netcdf_65.nc", options=["FORMAT=NC4", "GEOMETRY_ENCODING=WKT"]
@@ -3020,9 +2945,6 @@ def test_netcdf_66():
 
 def test_netcdf_67():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     try:
         import numpy
     except ImportError:
@@ -3100,9 +3022,6 @@ def test_netcdf_71():
 
 
 def test_netcdf_72():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     ds = gdal.Open("data/netcdf/int64dim.nc")
     mdi = ds.GetRasterBand(1).GetMetadataItem("NETCDF_DIM_TIME")
@@ -5159,9 +5078,6 @@ def test_multipolygon3D_NC4C_write():
 
 def test_netcdf_dimension_labels_with_null():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     # Crashes with 4.1.3 of Ubuntu Precise
     if gdaltest.netcdf_drv_version.startswith(
         "4.0."
@@ -5580,9 +5496,6 @@ def test_states_full_layer_buffer_restrict_correctness_single_datum():
 
 def test_netcdf_uint16_netcdf4_without_fill():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     # This dataset was created with  nc_def_var_fill(cdfid, nZId, NC_NOFILL, NULL)
     # Check that we don't report a nodata value
     ds = gdal.Open("data/netcdf/uint16_netcdf4_without_fill.nc")
@@ -5590,9 +5503,6 @@ def test_netcdf_uint16_netcdf4_without_fill():
 
 
 def test_netcdf_sen3_sral_mwr_fake_standard_measurement():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     ds = gdal.OpenEx(
         "data/netcdf/sen3_sral_mwr_fake_standard_measurement.nc", gdal.OF_RASTER
@@ -5673,18 +5583,12 @@ def test_netcdf_sen3_sral_mwr_fake_standard_measurement():
 
 def test_netcdf_chunked_multiple():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.Open("data/netcdf/byte_chunked_multiple.nc")
     assert ds.GetRasterBand(1).GetBlockSize() == [10, 10]
     assert ds.GetRasterBand(1).Checksum() == 4672
 
 
 def test_netcdf_chunked_not_multiple():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     ds = gdal.Open("data/netcdf/byte_chunked_not_multiple.nc")
     assert ds.GetRasterBand(1).GetBlockSize() == [15, 6]
@@ -5723,9 +5627,6 @@ def test_netcdf_sg1_8_max_variable_with_max_width_string_field_no_warning():
 
 
 def test_netcdf_hdf5_signature_not_at_beginning():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     # Works at least with since netCDF 4.7
     version = gdaltest.netcdf_drv_version.split(".")
@@ -6012,9 +5913,6 @@ def test_netcdf_read_gmt_file():
 
 def test_netcdf_read_int64():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.Open("data/netcdf/int64.nc")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
     assert struct.unpack("q" * 4, ds.ReadRaster()) == (
@@ -6029,9 +5927,6 @@ def test_netcdf_read_int64():
 
 
 def test_netcdf_write_int64():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     src_ds = gdal.Open("data/netcdf/int64.nc")
     gdaltest.netcdf_drv.CreateCopy("tmp/int64.nc", src_ds)
@@ -6052,9 +5947,6 @@ def test_netcdf_write_int64():
 
 def test_netcdf_read_uint64():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
     ds = gdal.Open("data/netcdf/uint64.nc")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt64
     assert struct.unpack("Q" * 4, ds.ReadRaster()) == (10000000001, 1, 0, 10000000000)
@@ -6064,9 +5956,6 @@ def test_netcdf_read_uint64():
 
 
 def test_netcdf_write_uint64():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     src_ds = gdal.Open("data/netcdf/uint64.nc")
     gdaltest.netcdf_drv.CreateCopy("tmp/uint64.nc", src_ds)
@@ -6081,9 +5970,6 @@ def test_netcdf_write_uint64():
 
 
 def test_netcdf_write_uint64_nodata():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     filename = "tmp/test_tiff_write_uint64_nodata.nc"
     ds = gdal.GetDriverByName("netCDF").Create(filename, 1, 1, 1, gdal.GDT_UInt64)
@@ -6109,9 +5995,6 @@ def test_netcdf_write_uint64_nodata():
 
 
 def test_netcdf_write_int64_nodata():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
 
     filename = "tmp/test_tiff_write_int64_nodata.nc"
     ds = gdal.GetDriverByName("netCDF").Create(filename, 1, 1, 1, gdal.GDT_Int64)
@@ -6380,9 +6263,6 @@ def test_netcdf_resolve_var_name():
 
 def test_netcdf_NASA_L2_Ocean():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip("Requires NC4 support")
-
     ds = gdal.Open(
         'NETCDF:"data/netcdf/fake_SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/geophysical_data/aot_862'
     )
@@ -6427,9 +6307,6 @@ def test_netcdf_proj4string_geospatial_bounds_crs():
 
 def test_netcdf_NASA_EMIT_L2A():
 
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip("Requires NC4 support")
-
     # Original dataset is https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/EMITL2ARFL.001/EMIT_L2A_RFL_001_20220903T163129_2224611_012/EMIT_L2A_RFL_001_20220903T163129_2224611_012.nc
     ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT_L2A.nc":reflectance')
     assert ds.RasterXSize == 2
@@ -6459,9 +6336,6 @@ def test_netcdf_NASA_EMIT_L2A():
 
 
 def test_netcdf_NASA_EMIT_L2B_MIN():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip("Requires NC4 support")
 
     # Genuine dataset can be found at  https://search.earthdata.nasa.gov/search?q=C2408034484-LPCLOUD
     ds = gdal.Open('NETCDF:"data/netcdf/fake_EMIT_L2B_MIN.nc":some_var')

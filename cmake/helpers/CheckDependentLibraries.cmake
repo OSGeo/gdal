@@ -694,7 +694,8 @@ gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
   NAMES netCDF
-  TARGETS netCDF::netcdf NETCDF::netCDF)
+  TARGETS netCDF::netcdf NETCDF::netCDF
+  VERSION "4.7")
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" CAN_DISABLE)
 

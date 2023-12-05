@@ -790,9 +790,7 @@ class netCDFDataset final : public GDALPamDataset
     char **papszCreationOptions;
     NetCDFCompressEnum eCompress;
     int nZLevel;
-#ifdef NETCDF_HAS_NC4
     bool bChunking;
-#endif
     int nCreateMode;
     bool bSignedData;
 
@@ -884,11 +882,9 @@ class netCDFDataset final : public GDALPamDataset
                               std::vector<std::string> *paosRemovedMDItems);
     void SetProjectionFromVar(int nGroupId, int nVarId, bool bReadSRSOnly);
 
-#ifdef NETCDF_HAS_NC4
     bool ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId);
 
     bool ProcessNASAEMITGeoLocation(int nGroupId, int nVarId);
-#endif
 
     int ProcessCFGeolocation(int nGroupId, int nVarId,
                              std::string &osGeolocXNameOut,
@@ -904,9 +900,7 @@ class netCDFDataset final : public GDALPamDataset
                          int nLayerId, int nDimIdToGrow, size_t nNewSize);
     bool GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize);
 
-#ifdef NETCDF_HAS_NC4
     void ProcessSentinel3_SRAL_MWR();
-#endif
 
     CPLErr
     FilterVars(int nCdfId, bool bKeepRasters, bool bKeepVectors,
@@ -926,10 +920,8 @@ class netCDFDataset final : public GDALPamDataset
     bool DetectAndFillSGLayers(int ncid);
     CPLErr LoadSGVarIntoLayer(int ncid, int nc_basevarId);
 
-#ifdef NETCDF_HAS_NC4
     static GDALDataset *OpenMultiDim(GDALOpenInfo *);
     std::shared_ptr<GDALGroup> m_poRootGroup{};
-#endif
 
     void SetGeoTransformNoUpdate(double *);
     void SetSpatialRefNoUpdate(const OGRSpatialReference *);
@@ -973,9 +965,7 @@ class netCDFDataset final : public GDALPamDataset
     }
     virtual OGRLayer *GetLayer(int nIdx) override;
 
-#ifdef NETCDF_HAS_NC4
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
-#endif
 
     int GetCDFID() const
     {
@@ -1001,12 +991,10 @@ class netCDFDataset final : public GDALPamDataset
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
-#ifdef NETCDF_HAS_NC4
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papzOptions);
-#endif
 };
 
 class netCDFLayer final : public OGRLayer
@@ -1168,12 +1156,11 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference *poSRS,
 
 double NCDFGetDefaultNoDataValue(int nCdfId, int nVarId, int nVarType,
                                  bool &bGotNoData);
-#ifdef NETCDF_HAS_NC4
+
 int64_t NCDFGetDefaultNoDataValueAsInt64(int nCdfId, int nVarId,
                                          bool &bGotNoData);
 uint64_t NCDFGetDefaultNoDataValueAsUInt64(int nCdfId, int nVarId,
                                            bool &bGotNoData);
-#endif
 
 CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
                    double *pdfValue);
