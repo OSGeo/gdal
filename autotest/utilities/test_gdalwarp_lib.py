@@ -1934,7 +1934,6 @@ def test_gdalwarp_lib_135f(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
     assert data == 100, "Bad value"
 
 
-@pytest.mark.require_proj(6, 3)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135g(
     gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx
@@ -1952,7 +1951,6 @@ def test_gdalwarp_lib_135g(
     assert data == 115, "Bad value"
 
 
-@pytest.mark.require_proj(6, 3)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -1972,7 +1970,6 @@ def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
     assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
 
 
-@pytest.mark.require_proj(6, 3)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135i(
     gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx, tmp_path
@@ -3303,8 +3300,6 @@ def test_gdalwarp_lib_epsg_4326_to_esri_53037():
 @pytest.mark.parametrize(
     "resampleAlg", ["average", "mode", "min", "max", "med", "q1", "q3", "sum", "rms"]
 )
-# 6.3.1 might not be the lowest bound, but 6.0.0 definitely doesn't work for that test
-@pytest.mark.require_proj(6, 3, 1)
 def test_gdalwarp_lib_epsg_4326_to_esri_102020(resampleAlg):
 
     # Scenario of https://github.com/OSGeo/gdal/issues/6155
@@ -3621,7 +3616,6 @@ def test_gdalwarp_lib_preserve_non_square_pixels_if_no_reprojection():
 ###############################################################################
 
 
-@pytest.mark.require_proj(6, 3)
 def test_gdalwarp_lib_preserve_non_square_pixels_same_horizontal_crs():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 20, 10)

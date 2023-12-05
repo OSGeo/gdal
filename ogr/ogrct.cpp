@@ -757,11 +757,7 @@ class OGRProjCT : public OGRCoordinateTransformation
         BEST_ACCURACY,
         FIRST_MATCHING
     };
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     Strategy m_eStrategy = Strategy::PROJ;
-#else
-    Strategy m_eStrategy = Strategy::BEST_ACCURACY;
-#endif
 
     bool
     ListCoordinateOperations(const char *pszSrcSRS, const char *pszTargetSRS,
