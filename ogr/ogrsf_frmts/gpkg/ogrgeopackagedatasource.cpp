@@ -211,51 +211,10 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 {
     CPLAssert(hDB != nullptr);
 
-    // PRAGMA application_id available since SQLite 3.7.17
-#if SQLITE_VERSION_NUMBER >= 3007017
     const auto osPragma = CPLString().Printf("PRAGMA application_id = %u;"
                                              "PRAGMA user_version = %u",
                                              m_nApplicationId, m_nUserVersion);
     return SQLCommand(hDB, osPragma.c_str());
-#else
-    CPLAssert(m_pszFilename != NULL);
-
-    FinishSpatialite();
-
-    /* Have to flush the file before f***ing with the header */
-    CloseDB();
-
-    size_t szWritten = 0;
-
-    /* Open for modification, write to application id area */
-    VSILFILE *pfFile = VSIFOpenL(m_pszFilename, "rb+");
-    if (pfFile == NULL)
-        return OGRERR_FAILURE;
-    VSIFSeekL(pfFile, knApplicationIdPos, SEEK_SET);
-    const GUInt32 nApplicationIdMSB = CPL_MSBWORD32(m_nApplicationId);
-    szWritten = VSIFWriteL(&nApplicationIdMSB, 1, 4, pfFile);
-    if (szWritten == 4)
-    {
-        VSIFSeekL(pfFile, knUserVersionPos, SEEK_SET);
-        const GUInt32 nVersionMSB = CPL_MSBWORD32(m_nUserVersion);
-        szWritten = VSIFWriteL(&nVersionMSB, 1, 4, pfFile);
-    }
-
-    VSIFCloseL(pfFile);
-
-    /* If we didn't write out exactly four bytes, something */
-    /* terrible has happened */
-    if (szWritten != 4)
-    {
-        return OGRERR_FAILURE;
-    }
-
-    /* And re-open the file */
-    if (!OpenOrCreateDB(SQLITE_OPEN_READWRITE))
-        return OGRERR_FAILURE;
-
-    return OGRERR_NONE;
-#endif
 }
 
 bool GDALGeoPackageDataset::CloseDB()
@@ -7333,15 +7292,6 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
              !EQUAL(pszDialect, "DEBUG"))
         return GDALDataset::ExecuteSQL(osSQLCommand, poSpatialFilter,
                                        pszDialect);
-
-#if SQLITE_VERSION_NUMBER < 3007017
-    // Emulate PRAGMA application_id
-    if (EQUAL(osSQLCommand, "PRAGMA application_id"))
-    {
-        return new OGRSQLiteSingleFeatureLayer(osSQLCommand.c_str() + 7,
-                                               m_nApplicationId);
-    }
-#endif
 
     /* -------------------------------------------------------------------- */
     /*      Prepare statement.                                              */

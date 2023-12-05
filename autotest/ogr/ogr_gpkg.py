@@ -7664,32 +7664,31 @@ def test_ogr_gpkg_alter_geom_field_defn(tmp_vsimem, tmp_path):
     lyr.CreateFeature(f)
     ds = None
 
-    # Test renaming column (only supported for SQLite >= 3.26)
-    if get_sqlite_version() >= (3, 26, 0):
-        ds = ogr.Open(filename, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+    # Test renaming column
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
 
-        new_geom_field_defn = ogr.GeomFieldDefn("new_geom_name", ogr.wkbNone)
-        assert (
-            lyr.AlterGeomFieldDefn(
-                0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
-            )
-            == ogr.OGRERR_NONE
+    new_geom_field_defn = ogr.GeomFieldDefn("new_geom_name", ogr.wkbNone)
+    assert (
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
         )
-        assert lyr.GetGeometryColumn() == "new_geom_name"
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetGeometryColumn() == "new_geom_name"
 
-        ds = None
+    ds = None
 
-        assert validate(filename, tmpdir=tmp_path), "validation failed"
+    assert validate(filename, tmpdir=tmp_path), "validation failed"
 
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeometryColumn() == "new_geom_name"
-        srs = lyr.GetSpatialRef()
-        assert srs is not None
-        assert srs.GetAuthorityCode(None) == "4326"
-        ds = None
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "new_geom_name"
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == "4326"
+    ds = None
 
     ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
@@ -8311,10 +8310,6 @@ def test_ogr_gpkg_immutable(tmp_path):
 ###############################################################################
 
 
-@pytest.mark.skipif(
-    get_sqlite_version() < (3, 24, 0),
-    reason="sqlite >= 3.24 needed",
-)
 @pytest.mark.parametrize("with_geom", [True, False])
 @pytest.mark.parametrize("gpkg_version", ["1.2", "1.4"])
 def test_ogr_gpkg_upsert_without_fid(tmp_vsimem, tmp_path, with_geom, gpkg_version):
@@ -8792,10 +8787,6 @@ def test_ogr_gpkg_st_area(tmp_vsimem, wkt_or_binary, area):
 # Test reading a layer with a generated column
 
 
-@pytest.mark.skipif(
-    get_sqlite_version() < (3, 31, 0),
-    reason="sqlite >= 3.31 needed",
-)
 def test_ogr_gpkg_read_generated_column(tmp_vsimem):
 
     filename = tmp_vsimem / "test_ogr_gpkg_read_generated_column.gpkg"

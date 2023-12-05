@@ -2353,9 +2353,6 @@ TEST_F(test_ogr, feature_defn_geomfields_iterator)
 // Test GDALDataset QueryLoggerFunc callback
 TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
 {
-#if SQLITE_VERSION_NUMBER < 3014000
-    GTEST_SKIP() << "SQLite version must be >= 3014000";
-#else
     if (GDALGetDriverByName("GPKG") == nullptr)
     {
         GTEST_SKIP() << "GPKG driver missing";
@@ -2457,7 +2454,6 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
             R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, 123, NULL))sql",
             0),
         0);
-#endif
 }
 
 TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)

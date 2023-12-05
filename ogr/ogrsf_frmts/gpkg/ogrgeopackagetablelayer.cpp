@@ -1091,13 +1091,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
     /*  1|name|varchar|0||0 */
-#if SQLITE_VERSION_NUMBER >= 3026000L
-    // SQLite 3.26 or later has table_xinfo() with an extra column to indicate
-    // hidden layers
     char *pszSQL = sqlite3_mprintf("pragma table_xinfo('%q')", m_pszTableName);
-#else
-    char *pszSQL = sqlite3_mprintf("pragma table_info('%q')", m_pszTableName);
-#endif
     auto oResultTable = SQLQuery(poDb, pszSQL);
     sqlite3_free(pszSQL);
 
@@ -1135,9 +1129,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         int bNotNull = oResultTable->GetValueAsInteger(3, iRecord);
         const char *pszDefault = oResultTable->GetValue(4, iRecord);
         int nPKIDIndex = oResultTable->GetValueAsInteger(5, iRecord);
-#if SQLITE_VERSION_NUMBER >= 3026000L
         int nHiddenValue = oResultTable->GetValueAsInteger(6, iRecord);
-#endif
 
         OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
@@ -1155,7 +1147,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             bIsGenerated = true;
             osType.resize(osType.size() - strlen(GENERATED_ALWAYS_SUFFIX));
         }
-#if SQLITE_VERSION_NUMBER >= 3026000L
         constexpr int GENERATED_VIRTUAL = 2;
         constexpr int GENERATED_STORED = 3;
         if (nHiddenValue == GENERATED_VIRTUAL ||
@@ -1163,7 +1154,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         {
             bIsGenerated = true;
         }
-#endif
 
         if (!osType.empty() || m_bIsTable)
         {
@@ -2210,31 +2200,19 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
     std::string osUpsertUniqueColumnName;
     if (bUpsert && poFeature->GetFID() == OGRNullFID)
     {
-#if SQLITE_VERSION_NUMBER >= 3024000L
         int nUniqueColumns = 0;
-#endif
         const int nFieldCount = m_poFeatureDefn->GetFieldCount();
         for (int i = 0; i < nFieldCount; ++i)
         {
             const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
             if (poFieldDefn->IsUnique())
             {
-#if SQLITE_VERSION_NUMBER < 3024000L
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "UPSERT of a feature without a FID but with a UNIQUE "
-                         "column "
-                         "requires SQLite 3.24 or later");
-                return OGRERR_FAILURE;
-#else
                 if (osUpsertUniqueColumnName.empty())
                     osUpsertUniqueColumnName = poFieldDefn->GetNameRef();
                 nUniqueColumns++;
-#endif
             }
         }
-#if SQLITE_VERSION_NUMBER >= 3024000L
         if (nUniqueColumns == 0)
-#endif
         {
             // This is just a regular INSERT
             bUpsert = false;
@@ -6560,15 +6538,9 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
-    // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
-    // 3.26.0 was required so that foreign key constraints are updated as well
-#if SQLITE_VERSION_NUMBER >= 3026000L
     const bool bUseRenameColumn = (nActualFlags == ALTER_NAME_FLAG);
     if (bUseRenameColumn)
         bUseRewriteSchemaMethod = false;
-#else
-    constexpr bool bUseRenameColumn = false;
-#endif
 
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
         return OGRERR_FAILURE;
@@ -6607,7 +6579,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         }
     }
 
-#if SQLITE_VERSION_NUMBER >= 3026000L
     if (bUseRenameColumn)
     {
         if (eErr == OGRERR_NONE)
@@ -6623,9 +6594,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
                     .c_str());
         }
     }
-    else
-#endif
-        if (!bUseRewriteSchemaMethod)
+    else if (!bUseRewriteSchemaMethod)
     {
         /* --------------------------------------------------------------------
          */
@@ -6993,11 +6962,6 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         strcmp(poGeomFieldDefn->GetNameRef(),
                poNewGeomFieldDefn->GetNameRef()) != 0)
     {
-        // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
-        // 3.26.0 was required so that foreign key constraints are updated as
-        // well
-#if SQLITE_VERSION_NUMBER >= 3026000L
-
         const bool bHasSpatialIndex = HasSpatialIndex();
 
         if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
@@ -7093,12 +7057,6 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         {
             m_osRTreeName = osNewRTreeName;
         }
-
-#else
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Geometry field renaming only supported with SQLite >= 3.26");
-        return OGRERR_FAILURE;
-#endif
     }
 
     if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_FLAG) != 0 ||
