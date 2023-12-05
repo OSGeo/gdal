@@ -2251,21 +2251,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     int bYCC = ((nBands == 3 || nBands == 4) &&
                 CPLTestBool(CSLFetchNameValueDef(papszOptions, "YCC", "TRUE")));
 
-    if (!CODEC::supportsYCC_4Band())
-    {
-        if (bYCC && nBands > 3)
-        {
-            if (pszYCC != nullptr)
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "OpenJPEG r2950 and below can generate invalid output with "
-                    "MCT YCC transform and more than 3 bands. Disabling YCC");
-            }
-            bYCC = FALSE;
-        }
-    }
-
     if (bYCBCR420 && bYCC)
     {
         if (pszYCC != nullptr)

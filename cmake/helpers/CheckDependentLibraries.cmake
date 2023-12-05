@@ -737,6 +737,11 @@ gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
 # OpenJPEG's cmake-CONFIG is broken, so call module explicitly
 find_package(OpenJPEG MODULE)
+if (OPENJPEG_VERSION_STRING AND OPENJPEG_VERSION_STRING VERSION_LESS "2.3.1")
+    message(WARNING "Ignoring OpenJPEG because it is at version ${OPENJPEG_VERSION_STRING}, whereas the minimum version required is 2.3.1")
+    set(HAVE_OPENJPEG OFF)
+    set(OPENJPEG_FOUND OFF)
+endif()
 if (GDAL_USE_OPENJPEG)
   if (NOT OPENJPEG_FOUND)
     message(FATAL_ERROR "Configured to use GDAL_USE_OPENJPEG, but not found")

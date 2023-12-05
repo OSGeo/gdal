@@ -283,18 +283,6 @@ struct OPJCodecWrapper
 #endif
     }
 
-    /* Depending on the way OpenJPEG <= r2950 is built, YCC with 4 bands might
-  * work on Debug mode, but this relies on unreliable stack buffer overflows,
-  * so better err on the safe side */
-    static bool supportsYCC_4Band(void)
-    {
-#if !(IS_OPENJPEG_OR_LATER(2, 2, 0))
-        return false;
-#else
-        return true;
-#endif
-    }
-
     static const char *debugId(void)
     {
         return "OPENJPEG";
@@ -358,12 +346,10 @@ struct OPJCodecWrapper
             return false;
         }
 
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (getenv("OPJ_NUM_THREADS") == nullptr)
         {
             opj_codec_set_threads(pCodec, numThreads);
         }
-#endif
 
         pStream = CreateReadStream(psJP2File, nCodeStreamLength);
         if (pStream == nullptr)
@@ -523,8 +509,6 @@ struct OPJCodecWrapper
             compressParams.cp_comment = &osComment[0];
         }
 
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
-        // Was buggy before for some of the options
         const char *pszCodeBlockStyle =
             CSLFetchNameValue(papszOptions, "CODEBLOCK_STYLE");
         if (pszCodeBlockStyle)
@@ -585,7 +569,6 @@ struct OPJCodecWrapper
                 CSLDestroy(papszTokens);
             }
         }
-#endif
 
         /* Add precincts */
         const char *pszPrecincts = CSLFetchNameValueDef(
@@ -781,9 +764,7 @@ struct OPJCodecWrapper
 struct JP2OPJDatasetBase : public JP2DatasetBase
 {
     int eColorSpace = OPJCodecWrapper::cvtenum(JP2_CLRSPC_UNKNOWN);
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
     OPJCodecWrapper *m_codec = nullptr;
-#endif
     int *m_pnLastLevel = nullptr;
     bool m_bStrict = true;
 
@@ -812,7 +793,6 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
             return CE_Failure;
         }
 
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (m_codec && CPLTestBool(CPLGetConfigOption(
                            "USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")))
         {
@@ -832,7 +812,6 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
         *m_pnLastLevel = iLevel;
 
         if (codec->pCodec == nullptr)
-#endif
         {
             codec->pCodec = opj_create_decompress(
                 (OPJ_CODEC_FORMAT)OPJCodecWrapper::cvtenum(JP2_CODEC_J2K));
@@ -864,14 +843,12 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
                 opj_decoder_set_strict_mode(codec->pCodec, false);
             }
 #endif
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
             if (m_codec && m_codec->psJP2File)
             {
                 codec->pStream = OPJCodecWrapper::CreateReadStream(
                     m_codec->psJP2File, nCodeStreamLength);
             }
             else
-#endif
             {
                 codec->open(fpIn, nCodeStreamStart);
                 codec->pStream = OPJCodecWrapper::CreateReadStream(
@@ -884,7 +861,6 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
                 return CE_Failure;
             }
 
-#if IS_OPENJPEG_OR_LATER(2, 2, 0)
             if (getenv("OPJ_NUM_THREADS") == nullptr)
             {
                 if (m_nBlocksToLoad <= 1)
@@ -893,7 +869,7 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
                     opj_codec_set_threads(codec->pCodec,
                                           GetNumThreads() / m_nBlocksToLoad);
             }
-#endif
+
             if (!opj_read_header(codec->pStream, codec->pCodec,
                                  &codec->psImage))
             {
@@ -975,10 +951,8 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
     {
         // prevent linter from treating this as potential static method
         (void)this;
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (m_codec && rhs)
             m_codec->transfer(rhs->m_codec);
-#endif
     }
 
     void cacheNew(CPL_UNUSED OPJCodecWrapper *codec)
@@ -987,10 +961,8 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
         (void)this;
         if (!codec)
             return;
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (m_codec)
             m_codec = new OPJCodecWrapper(codec);
-#endif
     }
 
     void cache(CPL_UNUSED OPJCodecWrapper *codec)
@@ -1000,14 +972,12 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
         if (!codec)
             return;
 
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (m_codec && CPLTestBool(CPLGetConfigOption(
                            "USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")))
         {
             codec->transfer(m_codec);
         }
         else
-#endif
         {
             codec->cleanUpDecompress();
         }
@@ -1017,13 +987,11 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
     {
         // prevent linter from treating this as potential static method
         (void)this;
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (bSingleTiled && bUseSetDecodeArea)
         {
             // nothing
         }
         else
-#endif
         {
             if (codec)
                 codec->free();
@@ -1034,7 +1002,6 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
     {
         // prevent linter from treating this as potential static method
         (void)this;
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         if (iLevel == 0)
         {
             if (m_codec)
@@ -1042,6 +1009,5 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
             delete m_pnLastLevel;
             m_pnLastLevel = nullptr;
         }
-#endif
     }
 };
