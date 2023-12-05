@@ -50,11 +50,6 @@ void VSIInstallWebHdfsHandler(void)
 
 #else
 
-#if !CURL_AT_LEAST_VERSION(7, 18, 2)
-// Needed for CURLINFO_REDIRECT_URL
-#error Need libcurl version 7.18.2 or newer
-#endif
-
 //! @cond Doxygen_Suppress
 #ifndef DOXYGEN_SKIP
 

@@ -290,7 +290,7 @@ gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABL
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
 # basic libraries
-gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE RECOMMENDED)
+gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE RECOMMENDED VERSION 7.68)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
 if (Iconv_FOUND)

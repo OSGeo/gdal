@@ -125,13 +125,6 @@ struct WriteFuncStruct
     VSICurlReadCbkFunc pfnReadCbk = nullptr;
     void *pReadCbkUserData = nullptr;
     bool bInterrupted = false;
-
-#if !CURL_AT_LEAST_VERSION(7, 54, 0)
-    // Workaround to ignore extra HTTP response headers from
-    // proxies in older versions of curl.
-    // CURLOPT_SUPPRESS_CONNECT_HEADERS fixes this
-    bool bIsProxyConnectHeader = false;
-#endif  //! CURL_AT_LEAST_VERSION(7,54,0)
 };
 
 struct PutData
