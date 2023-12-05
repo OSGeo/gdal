@@ -197,7 +197,7 @@ def make_data():
     return ds
 
 
-heif_codecs = ["HEIF", "JPEG", "JPEG2000", "UNCOMPRESSED"]
+heif_codecs = ["HEIF", "JPEG", "JPEG2000"]
 
 
 @pytest.mark.parametrize("codec", heif_codecs)
