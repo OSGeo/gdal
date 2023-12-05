@@ -386,7 +386,7 @@ else()
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.3)\n")
 endif ()
 
-gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.0 CAN_DISABLE)
+gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.1 CAN_DISABLE)
 set_package_properties(
   TIFF PROPERTIES
   URL "https://libtiff.gitlab.io/libtiff/"

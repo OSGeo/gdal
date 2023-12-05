@@ -112,20 +112,12 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         if (TIFFIsTiled(m_poGDS->m_hTIFF))
         {
-#if TIFFLIB_VERSION > 20161119
             if (TIFFReadRGBATileExt(
                     m_poGDS->m_hTIFF, nBlockXOff * nBlockXSize,
                     nBlockYOff * nBlockYSize,
                     reinterpret_cast<uint32_t *>(m_poGDS->m_pabyBlockBuf),
                     !m_poGDS->m_bIgnoreReadErrors) == 0 &&
                 !m_poGDS->m_bIgnoreReadErrors)
-#else
-            if (TIFFReadRGBATile(m_poGDS->m_hTIFF, nBlockXOff * nBlockXSize,
-                                 nBlockYOff * nBlockYSize,
-                                 reinterpret_cast<uint32_t *>(
-                                     m_poGDS->m_pabyBlockBuf)) == 0 &&
-                !m_poGDS->m_bIgnoreReadErrors)
-#endif
             {
                 // Once TIFFError() is properly hooked, this can go away.
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -138,18 +130,11 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         }
         else
         {
-#if TIFFLIB_VERSION > 20161119
             if (TIFFReadRGBAStripExt(
                     m_poGDS->m_hTIFF, nBlockId * nBlockYSize,
                     reinterpret_cast<uint32_t *>(m_poGDS->m_pabyBlockBuf),
                     !m_poGDS->m_bIgnoreReadErrors) == 0 &&
                 !m_poGDS->m_bIgnoreReadErrors)
-#else
-            if (TIFFReadRGBAStrip(m_poGDS->m_hTIFF, nBlockId * nBlockYSize,
-                                  reinterpret_cast<uint32_t *>(
-                                      m_poGDS->m_pabyBlockBuf)) == 0 &&
-                !m_poGDS->m_bIgnoreReadErrors)
-#endif
             {
                 // Once TIFFError() is properly hooked, this can go away.
                 ReportError(CE_Failure, CPLE_AppDefined,

@@ -159,10 +159,8 @@ class GTiffDataset final : public GDALPamDataset
     std::unique_ptr<CPLJobQueue> m_poCompressQueue{};
     CPLMutex *m_hCompressThreadPoolMutex = nullptr;
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     lru11::Cache<int, std::pair<vsi_l_offset, vsi_l_offset>>
         m_oCacheStrileToOffsetByteCount{1024};
-#endif
 
     MaskOffset *m_panMaskOffsetLsb = nullptr;
     char *m_pszVertUnit = nullptr;
@@ -463,13 +461,13 @@ class GTiffDataset final : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs() override;
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+
     bool IsMultiThreadedReadCompatible() const;
     CPLErr MultiThreadedRead(int nXOff, int nYOff, int nXSize, int nYSize,
                              void *pData, GDALDataType eBufType, int nBandCount,
                              const int *panBandMap, GSpacing nPixelSpace,
                              GSpacing nLineSpace, GSpacing nBandSpace);
-#endif
+
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,

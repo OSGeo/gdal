@@ -615,7 +615,6 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
 /*                         CacheMultiRange()                            */
 /************************************************************************/
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
 static bool CheckTrailer(const GByte *strileData, vsi_l_offset nStrileSize)
 {
     GByte abyTrailer[4];
@@ -632,7 +631,6 @@ static bool CheckTrailer(const GByte *strileData, vsi_l_offset nStrileSize)
     }
     return memcmp(abyTrailer, abyLastBytes, 4) == 0;
 }
-#endif
 
 void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                                        int nYSize, int nBufXSize, int nBufYSize,
@@ -670,7 +668,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             std::min(static_cast<double>(nRasterYSize - 1),
                      (nBufYSize - 1 + 0.5) * dfSrcYInc + dfYOff + EPS)) /
         nBlockYSize;
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+
     const int nBlockCount = nBlocksPerRow * nBlocksPerColumn;
     struct StrileData
     {
@@ -927,7 +925,6 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
         }
         return true;
     };
-#endif
 
     thandle_t th = TIFFClientdata(m_poGDS->m_hTIFF);
     if (!VSI_TIFFHasCachedRanges(th))
@@ -953,7 +950,6 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 vsi_l_offset nOffset = 0;
                 vsi_l_offset nSize = 0;
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
                 if ((m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ||
                      m_poGDS->nBands == 1) &&
                     !m_poGDS->m_bStreamingIn &&
@@ -965,7 +961,6 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                                                    nMaxRawBlockCacheSize);
                 }
                 else
-#endif
                 {
                     CPL_IGNORE_RET_VAL(
                         m_poGDS->IsBlockAvailable(nBlockId, &nOffset, &nSize));
@@ -1059,7 +1054,6 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                                         &apData[0], &anOffsets[0], &anSizes[0],
                                         fp) == 0)
                 {
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
                     if (!oMapStrileToOffsetByteCount.empty() &&
                         !FillCacheStrileToOffsetByteCount(anOffsets, anSizes,
                                                           apData))
@@ -1074,7 +1068,6 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                         return pRet;
                     }
 
-#endif
                     VSI_TIFFSetCachedRanges(
                         th, static_cast<int>(anSizes.size()), &apData[0],
                         &anOffsets[0], &anSizes[0]);
@@ -1346,9 +1339,8 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         }
     }
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     CacheMaskForBlock(nBlockXOff, nBlockYOff);
-#endif
+
     return eErr;
 }
 
@@ -1356,7 +1348,6 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /*                           CacheMaskForBlock()                       */
 /************************************************************************/
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
 void GTiffRasterBand::CacheMaskForBlock(int nBlockXOff, int nBlockYOff)
 
 {
@@ -1376,7 +1367,6 @@ void GTiffRasterBand::CacheMaskForBlock(int nBlockXOff, int nBlockYOff)
         }
     }
 }
-#endif
 
 /************************************************************************/
 /*                       FillCacheForOtherBands()                       */
