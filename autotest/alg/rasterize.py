@@ -965,3 +965,49 @@ def test_rasterize_bugfix_gh8437(wkt, options, nbands):
         _, maxval = target_ds.GetRasterBand(i + 1).ComputeRasterMinMax()
         assert maxval == 80
         assert target_ds.GetRasterBand(i + 1).Checksum() == expected_checksum
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POLYGON((7.5 2.5, 7.5 8.0, 2.5 8.0, 2.5 2.5, 7.5 2.5))",
+        "POLYGON((8.0 2.5, 8.0 7.5, 2.5 7.5, 2.5 2.5, 8.0 2.5))",
+        "POLYGON((7.5 2.0, 7.5 7.5, 2.5 7.5, 2.5 2.0, 7.5 2.0))",
+        "POLYGON((7.5 2.5, 7.5 7.5, 2.0 7.5, 2.0 2.5, 7.5 2.5))",
+    ],
+)
+def test_rasterize_bugfix_gh8918(wkt):
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference(sr_wkt)
+
+    # Create a memory raster to rasterize into.
+    target_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1, gdal.GDT_Byte)
+    target_ds.SetGeoTransform((0, 1, 0, 0, 0, 1))
+
+    target_ds.SetProjection(sr_wkt)
+
+    # Create a memory layer to rasterize from.
+    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
+
+    # Add a polygon.
+    feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt))
+
+    rast_mem_lyr.CreateFeature(feat)
+
+    # Run the algorithm.
+    gdal.RasterizeLayer(
+        target_ds,
+        [1],
+        rast_mem_lyr,
+        burn_values=[1],
+        options=["ALL_TOUCHED=YES"],
+    )
+
+    assert target_ds.GetRasterBand(1).Checksum() == 36
