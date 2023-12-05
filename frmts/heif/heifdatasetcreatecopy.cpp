@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Project:  HEIF Driver
- * Author:   Even Rouault <even.rouault at spatialys.com>
+ * Author:   Brad Hards <bradh@frogmouth.net>
  *
  ******************************************************************************
- * Copyright (c) 2023, Even Rouault <even.rouault at spatialys.com>
+ * Copyright (c) 2023, Brad Hards <bradh@frogmouth.net>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -133,14 +133,13 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
         pfnProgress = GDALDummyProgress;
 
     int nBands = poSrcDS->GetRasterCount();
-    if (nBands == 0)
+    if ((nBands != 3) && (nBands != 4))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Driver does not support source dataset with zero bands.\n");
+                 "Driver only supports source dataset with 3 or 4 bands.\n");
         return nullptr;
     }
-
-    // TODO: sanity checks
+    // TODO: more sanity checks
 
     heif_context *ctx = heif_context_alloc();
     heif_encoder *encoder;
@@ -165,6 +164,14 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
 
     for (auto &&poBand : poSrcDS->GetBands())
     {
+        if (poBand->GetRasterDataType() != GDT_Byte)
+        {
+            heif_image_release(image);
+            heif_encoder_release(encoder);
+            heif_context_free(ctx);
+            CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type.\n");
+            return nullptr;
+        }
         heif_channel channel;
         auto mapError =
             mapColourInterpretation(poBand->GetColorInterpretation(), &channel);

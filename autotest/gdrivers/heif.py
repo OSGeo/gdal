@@ -163,14 +163,7 @@ def test_heif_subdatasets():
         gdal.Open("HEIF:1:")
 
 
-def test_heif_create():
-    drv = gdal.GetDriverByName("HEIF")
-
-    try:
-        os.remove("tmp/test_create.hif")
-    except OSError:
-        pass
-
+def make_data():
     ds = gdal.GetDriverByName("MEM").Create("", 300, 200, 3, gdal.GDT_Byte)
 
     ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
@@ -201,11 +194,27 @@ def test_heif_create():
         )
 
     assert ds.FlushCache() == gdal.CE_None
+    return ds
 
-    ds = drv.CreateCopy("tmp/test_create.hif", ds, options=[])
 
-    ds = None
+heif_codecs = ["HEIF", "JPEG", "JPEG2000", "UNCOMPRESSED"]
 
-    ds = gdal.Open("tmp/test_create.hif")
 
-    assert ds
+@pytest.mark.parametrize("codec", heif_codecs)
+def test_heif_create_copy(codec):
+    try:
+        os.remove("tmp/test_create.hif")
+    except OSError:
+        pass
+
+    input_ds = make_data()
+
+    drv = gdal.GetDriverByName("HEIF")
+    tempfile = "tmp/test_heif_create_copy_" + codec + ".hif"
+    result_ds = drv.CreateCopy(tempfile, input_ds, options=["CODEC=" + codec])
+
+    result_ds = None
+
+    result_ds = gdal.Open(tempfile)
+
+    assert result_ds
