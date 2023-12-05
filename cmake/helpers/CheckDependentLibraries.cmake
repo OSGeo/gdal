@@ -413,7 +413,7 @@ gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE RECOMMEND
 )
 gdal_internal_library(GEOTIFF REQUIRED)
 
-gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED)
+gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED VERSION "1.6")
 gdal_internal_library(PNG)
 
 gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE RECOMMENDED)
