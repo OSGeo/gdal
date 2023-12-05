@@ -113,7 +113,8 @@ macro (gdal_check_package name purpose)
     find_package2(${name} QUIET OUT_DEPENDENCY _find_dependency)
   else()
     set(_find_package_args)
-    if (_GCP_VERSION AND NOT ("${name}" STREQUAL "TileDB"))
+    # For some reason passing the HDF5 version requirement cause a linking error of the libkea driver on Conda Windows builds...
+    if (_GCP_VERSION AND NOT ("${name}" STREQUAL "TileDB") AND NOT ("${name}" STREQUAL "HDF5"))
       list(APPEND _find_package_args ${_GCP_VERSION})
     endif ()
     if (_GCP_CONFIG)
@@ -581,9 +582,9 @@ gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 if(HAVE_KEA)
     # CXX is only needed for KEA driver
-    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
+    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE VERSION 1.10)
 else()
-    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" CAN_DISABLE)
+    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" CAN_DISABLE VERSION 1.10)
 endif()
 
 gdal_check_package(WebP "WebP compression" CAN_DISABLE)
