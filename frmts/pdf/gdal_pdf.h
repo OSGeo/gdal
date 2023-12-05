@@ -263,7 +263,7 @@ class PDFDataset final : public GDALPamDataset
     void ParseInfo(GDALPDFObject *poObj);
 
 #ifdef HAVE_POPPLER
-    ObjectAutoFree *m_poCatalogObjectPoppler = nullptr;
+    std::unique_ptr<Object> m_poCatalogObjectPoppler{};
 #endif
     GDALPDFObject *m_poCatalogObject = nullptr;
     GDALPDFObject *GetCatalog();

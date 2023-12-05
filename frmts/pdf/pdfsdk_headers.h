@@ -54,16 +54,6 @@
 #pragma warning(disable : 4267)
 #endif
 
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 73)
-#include <goo/gtypes.h>
-#else
-typedef unsigned char Guchar;
-#endif
-
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 76)
-#include <goo/GooList.h>
-#endif
-
 /* begin of poppler xpdf includes */
 #include <Object.h>
 #include <Stream.h>

@@ -1051,9 +1051,6 @@ class GDALPDFStreamPoppler : public GDALPDFStream
 
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58)
-    m_po->free();
-#endif
     if (m_bDestroy)
         delete m_po;
     delete m_poDict;
@@ -1145,13 +1142,7 @@ const std::string &GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-        // At least available since poppler 0.41
         const GooString *gooString = m_po->getString();
-#else
-        GooString *gooString = m_po->getString();
-#endif
-#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
         const std::string &osStdStr = gooString->toStr();
         const bool bLEUnicodeMarker =
             osStdStr.size() > 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFE &&
@@ -1177,11 +1168,6 @@ const std::string &GDALPDFObjectPoppler::GetString()
         return (osStr = GDALPDFGetUTF8StringFromBytes(
                     reinterpret_cast<const GByte *>(osStdStr.data()),
                     osStdStr.size()));
-#else
-        return (osStr = GDALPDFGetUTF8StringFromBytes(
-                    reinterpret_cast<const GByte *>(gooString->getCString()),
-                    static_cast<size_t>(gooString->getLength())));
-#endif
     }
     else
         return (osStr = "");
@@ -1310,7 +1296,6 @@ GDALPDFObject *GDALPDFDictionaryPoppler::Get(const char *pszKey)
     if (oIter != m_map.end())
         return oIter->second;
 
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     auto &&o(m_poDict->lookupNF(((char *)pszKey)));
     if (!o.isNull())
     {
@@ -1340,37 +1325,6 @@ GDALPDFObject *GDALPDFDictionaryPoppler::Get(const char *pszKey)
         }
     }
     return nullptr;
-#else
-    Object *po = new Object;
-    if (m_poDict->lookupNF((char *)pszKey, po) && !po->isNull())
-    {
-        GDALPDFObjectNum nRefNum;
-        int nRefGen = 0;
-        if (po->isRef())
-        {
-            nRefNum = po->getRefNum();
-            nRefGen = po->getRefGen();
-        }
-        if (!po->isRef() ||
-            (m_poDict->lookup((char *)pszKey, po) && !po->isNull()))
-        {
-            GDALPDFObjectPoppler *poObj = new GDALPDFObjectPoppler(po, TRUE);
-            poObj->SetRefNumAndGen(nRefNum, nRefGen);
-            m_map[pszKey] = poObj;
-            return poObj;
-        }
-        else
-        {
-            delete po;
-            return nullptr;
-        }
-    }
-    else
-    {
-        delete po;
-        return nullptr;
-    }
-#endif
 }
 
 /************************************************************************/
@@ -1428,7 +1382,6 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
     if (m_v[nIndex] != nullptr)
         return m_v[nIndex].get();
 
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     auto &&o(m_poArray->getNF(nIndex));
     if (!o.isNull())
     {
@@ -1458,36 +1411,6 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
         }
     }
     return nullptr;
-#else
-    Object *po = new Object;
-    if (m_poArray->getNF(nIndex, po))
-    {
-        GDALPDFObjectNum nRefNum;
-        int nRefGen = 0;
-        if (po->isRef())
-        {
-            nRefNum = po->getRefNum();
-            nRefGen = po->getRefGen();
-        }
-        if (!po->isRef() || (m_poArray->get(nIndex, po)))
-        {
-            auto poObj = std::make_unique<GDALPDFObjectPoppler>(po, TRUE);
-            poObj->SetRefNumAndGen(nRefNum, nRefGen);
-            m_v[nIndex] = std::move(poObj);
-            return m_v[nIndex].get();
-        }
-        else
-        {
-            delete po;
-            return nullptr;
-        }
-    }
-    else
-    {
-        delete po;
-        return nullptr;
-    }
-#endif
 }
 
 /************************************************************************/
@@ -1507,8 +1430,6 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
 
     m_poStream->reset();
     m_nLength = 0;
-    // Not sure if 0.86 is the minimum version, but it does has getChars()
-#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 86)
     unsigned char readBuf[4096];
     int readChars;
     while ((readChars = m_poStream->doGetChars(4096, readBuf)) != 0)
@@ -1520,17 +1441,6 @@ int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
             return std::numeric_limits<int64_t>::max();
         }
     }
-#else
-    while (m_poStream->getChar() != EOF)
-    {
-        m_nLength++;
-        if (nMaxSize != 0 && m_nLength > nMaxSize)
-        {
-            m_nLength = -1;
-            return std::numeric_limits<int64_t>::max();
-        }
-    }
-#endif
     return m_nLength;
 }
 
@@ -1546,11 +1456,7 @@ static char *GooStringToCharStart(GooString &gstr)
         char *pszContent = (char *)VSI_MALLOC_VERBOSE(nLength + 1);
         if (pszContent)
         {
-#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
             const char *srcStr = gstr.c_str();
-#else
-            const char *srcStr = gstr.getCString();
-#endif
             memcpy(pszContent, srcStr, nLength);
             pszContent[nLength] = '\0';
         }
@@ -1576,11 +1482,7 @@ char *GDALPDFStreamPoppler::GetBytes()
                  "GDALPDFStreamPoppler::GetBytes(): %s", e.what());
         return nullptr;
     }
-#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
     m_nLength = static_cast<int64_t>(gstr.toStr().size());
-#else
-    m_nLength = gstr.getLength();
-#endif
     return GooStringToCharStart(gstr);
 }
 
