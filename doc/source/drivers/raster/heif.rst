@@ -1,7 +1,7 @@
 .. _raster.heif:
 
 ================================================================================
-HEIF / HEIC -- ISO/IEC 23008-12:2017 High Efficiency Image File Format
+HEIF / HEIC -- ISO/IEC 23008-12 High Efficiency Image File Format
 ================================================================================
 
 .. versionadded:: 3.2
@@ -18,11 +18,14 @@ iOS 11 can generate such files.
 
 libheif 1.4 or later is needed to support images with more than 8-bits per channel.
 
+Later versions of libheif may also support one or more of AVIF (AV1 in HEIF), JPEG, JPEG 2000 and
+uncompressed images depending on compile-time options.
+
 The driver can read EXIF metadata (exposed in the ``EXIF`` metadata domain)
 and XMP metadata (exposed in the ``xml:XMP`` metadata domain)
 
 The driver will expose the thumbnail as an overview (when its number of bands
-matches the one of the full resolution image)
+matches the number of bands in the full resolution image)
 
 If a file contains several top-level images, they will be exposed as GDAL subdatasets.
 
@@ -31,6 +34,26 @@ Driver capabilities
 
 .. supports_virtualio:: if libheif >= 1.4
 
+Creation support
+----------------
+
+Starting with GDAL 3.10, the HEIF driver supports creating new HEIF file through the CreateCopy()
+interface.
+
+The available creation options are:
+
+-  .. co:: CODEC
+      :choices: HEVC, JPEG, JPEG2000, AV1, UNCOMPRESSED
+      :default: HEVC
+
+      The encoding used for the image file format.
+
+-  .. co:: QUALITY
+      :choices: 0...100
+      :default: 50
+
+      To set the quality factor. This is codec dependent. Higher number correspond to better
+      visual quality and typically larger files. It is ignored for UNCOMPRESSED.
 
 Built hints on Windows
 ----------------------
