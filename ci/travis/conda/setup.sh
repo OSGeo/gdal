@@ -21,6 +21,8 @@ cd gdal-feedstock
 patch -p1 < ../ci/travis/conda/build.sh.patch
 patch -p1 --binary < ../ci/travis/conda/bld.bat.patch
 
+patch -p1 < ../ci/travis/conda/0001-Fix-build-of-Python-bindings-due-to-https-github.com.patch
+
 cat > recipe/recipe_clobber.yaml <<EOL
 source:
   path: ../../../gdal
