@@ -4282,6 +4282,8 @@ int OGRGeoPackageTableLayer::TestCapability(const char *pszCap)
         return TRUE;
     else if (EQUAL(pszCap, OLCZGeometries))
         return TRUE;
+    if (EQUAL(pszCap, OLCFastGetExtent3D))
+        return TRUE;
     else
     {
         return OGRGeoPackageLayer::TestCapability(pszCap);
@@ -8706,4 +8708,158 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     m_iNextShapeId += sFillArrowArray.nCountRows;
 
     return 0;
+}
+
+/************************************************************************/
+/*               OGR_GPKG_GeometryExtent3DAggregate()                   */
+/************************************************************************/
+
+namespace
+{
+struct GeometryExtent3DAggregateContext
+{
+    sqlite3 *m_hDB = nullptr;
+    OGREnvelope3D m_oExtent3D;
+
+    explicit GeometryExtent3DAggregateContext(sqlite3 *hDB)
+        : m_hDB(hDB), m_oExtent3D()
+    {
+    }
+    GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
+        delete;
+    GeometryExtent3DAggregateContext &
+    operator=(const GeometryExtent3DAggregateContext &) = delete;
+};
+
+}  // namespace
+
+static void OGR_GPKG_GeometryExtent3DAggregate_Step(sqlite3_context *pContext,
+                                                    int /*argc*/,
+                                                    sqlite3_value **argv)
+{
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+
+    auto poContext = static_cast<GeometryExtent3DAggregateContext *>(
+        sqlite3_user_data(pContext));
+
+    if (pabyBLOB != nullptr)
+    {
+        GPkgHeader sHeader;
+        const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+        if (GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) == OGRERR_NONE &&
+            static_cast<size_t>(nBLOBLen) >= sHeader.nHeaderLen + 5)
+        {
+            if (!OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true,
+                                        true))
+            {
+                OGRGeometry *poGeom =
+                    GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
+                if (poGeom == nullptr || poGeom->IsEmpty())
+                {
+                    delete poGeom;
+                    return;
+                }
+                OGREnvelope3D extent3D;
+                poGeom->getEnvelope(&extent3D);
+                poContext->m_oExtent3D.Merge(extent3D);
+                return;
+            }
+        }
+        OGREnvelope3D extent3D;
+        extent3D.MinX = sHeader.MinX;
+        extent3D.MaxX = sHeader.MaxX;
+        extent3D.MinY = sHeader.MinY;
+        extent3D.MaxY = sHeader.MaxY;
+        extent3D.MinZ = sHeader.MinZ;
+        extent3D.MaxZ = sHeader.MaxZ;
+        poContext->m_oExtent3D.Merge(extent3D);
+    }
+}
+
+static void OGR_GPKG_GeometryExtent3DAggregate_Finalize(sqlite3_context *)
+{
+}
+
+/************************************************************************/
+/*                      GetExtent3D                                     */
+/************************************************************************/
+OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
+                                            OGREnvelope3D *psExtent3D,
+                                            int bForce)
+{
+
+    OGRFeatureDefn *poDefn = GetLayerDefn();
+
+    /* -------------------------------------------------------------------- */
+    /*      Deferred actions, reset state.                                   */
+    /* -------------------------------------------------------------------- */
+    RunDeferredCreationIfNecessary();
+    if (!RunDeferredSpatialIndexUpdate())
+    {
+        return OGRERR_FAILURE;
+    }
+
+    const int nGeomFieldCount = poDefn->GetGeomFieldCount();
+    if (iGeomField < 0 || iGeomField >= nGeomFieldCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for iGeomField");
+        return OGRERR_FAILURE;
+    }
+
+    // Check if layer is 3d
+    if (m_nZFlag == 0)
+    {
+        const OGRErr retVal{GetExtent(iGeomField, psExtent3D, bForce)};
+        psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+        psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
+        return retVal;
+    }
+    else
+    {
+        *psExtent3D = OGREnvelope3D();
+    }
+
+    // For internal use only
+
+    GeometryExtent3DAggregateContext sContext(m_poDS->hDB);
+
+    CPLString osFuncName;
+    osFuncName.Printf("OGR_GPKG_GeometryExtent3DAggregate_INTERNAL_%p",
+                      &sContext);
+
+    sqlite3_create_function(m_poDS->hDB, osFuncName.c_str(), 1, SQLITE_UTF8,
+                            &sContext, nullptr,
+                            OGR_GPKG_GeometryExtent3DAggregate_Step,
+                            OGR_GPKG_GeometryExtent3DAggregate_Finalize);
+
+    char *pszSQL = sqlite3_mprintf(
+        "SELECT %s(\"%w\") FROM \"%w\"%s", osFuncName.c_str(),
+        poDefn->GetGeomFieldDefn(iGeomField)->GetNameRef(), m_pszTableName,
+        m_soFilter.empty() ? "" : (" WHERE " + m_soFilter).c_str());
+    char *pszErrMsg = nullptr;
+    const int rc =
+        sqlite3_exec(m_poDS->hDB, pszSQL, nullptr, nullptr, &(pszErrMsg));
+
+    // Delete function
+    sqlite3_create_function(m_poDS->GetDB(), osFuncName.c_str(), 1, SQLITE_UTF8,
+                            nullptr, nullptr, nullptr, nullptr);
+
+    if (rc != SQLITE_OK)
+    {
+        if (rc != SQLITE_INTERRUPT)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "sqlite3_exec(%s) failed: %s",
+                     pszSQL, pszErrMsg);
+        }
+        sqlite3_free(pszErrMsg);
+        sqlite3_free(pszSQL);
+        return OGRERR_FAILURE;
+    }
+    sqlite3_free(pszErrMsg);
+    sqlite3_free(pszSQL);
+
+    *psExtent3D = sContext.m_oExtent3D;
+
+    return OGRERR_NONE;
 }
