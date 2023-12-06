@@ -12,6 +12,10 @@ find ${CONDA_PREFIX}/lib -name '*.la' -delete
 # build GDAL
 mkdir build
 cd build
+
+# to have an environment where we test this...
+export GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY=YES
+
 # Disable Arrow/Parquet because the VM provides libraries in /usr/local/lib/
 # that cause Illegal instruction error when running tests. I suspect the
 # Arrow/Parquet libraries to be built with AVX2 support but the VM worker
