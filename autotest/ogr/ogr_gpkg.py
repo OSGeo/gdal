@@ -9781,3 +9781,62 @@ def test_ogr_gpkg_like_utf8(tmp_vsimem):
 
     with ds.ExecuteSQL("SELECT * FROM test WHERE 'e' LIKE 'E'") as sql_lyr:
         assert sql_lyr.GetFeatureCount() == 1
+
+
+@pytest.mark.parametrize(
+    "geom1,geom2,extent2d,extent3d",
+    (
+        (
+            "POINT(0 1 2)",
+            "POINT(1 2 3)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, 2.0, 3.0),
+        ),
+        (
+            "POINT(0 1)",
+            "POINT(1 2 3)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, 3.0, 3.0),
+        ),
+        (
+            "POINT(0 1)",
+            "POINT(1 2)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, float("inf"), float("-inf")),
+        ),
+    ),
+)
+def test_ogr_gpkg_extent3d(tmp_vsimem, geom1, geom2, extent2d, extent3d):
+    """Test 3D extent of a gpkg"""
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint25D)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(geom1))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(geom2))
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == extent3d
+    ext2d = lyr.GetExtent()
+    assert ext2d == extent2d
+    ds = None
+
+
+@pytest.mark.parametrize("file_name", ("no_envelope", "2d_envelope", "3d_envelope"))
+def test_ogr_gpkg_extent3d_envelope_variants(file_name):
+    """Test all variants of envelope in gpkg"""
+
+    file_name = os.path.join("data", "gpkg", file_name + ".gpkg")
+    ds = gdal.OpenEx(file_name, gdal.OF_VECTOR | gdal.OF_READONLY)
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
