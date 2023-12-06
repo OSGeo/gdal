@@ -177,6 +177,7 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml @ONLY)
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
        "from importlib.machinery import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
@@ -300,6 +301,7 @@ if (Python_Interpreter_FOUND)
         symlink_or_copy("${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils" "${INSTALL_WORKING_DIRECTORY}/gdal-utils")
         set(BUILD_EXT_WITH_RPATH_CONTENT)
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/README.rst\" \"${INSTALL_WORKING_DIRECTORY}/README.rst\" @ONLY)\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml\" \"${INSTALL_WORKING_DIRECTORY}/pyproject.toml\" @ONLY)\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(COPY \"${CMAKE_CURRENT_BINARY_DIR}/extensions\" DESTINATION \"${INSTALL_WORKING_DIRECTORY}\")\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(GLOB PY_FILES \"${CMAKE_CURRENT_BINARY_DIR}/osgeo/*.py\")\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "foreach(_file IN LISTS PY_FILES)\n")

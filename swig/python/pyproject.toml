@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "oldest-supported-numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GDAL"
+dynamic = ["readme", "version", "scripts", "optional-dependencies"]
+authors = [
+    {name = "Frank Warmerdam"},
+    {name = "Howard Butler"},
+    {name = "Even Rouault"},
+]
+maintainers = [
+    {name = "GDAL contributors"},
+]
+description = "GDAL: Geospatial Data Abstraction Librarys"
+keywords = ["gis", "raster", "vector"]
+license = {text = "MIT"}
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: C',
+    'Programming Language :: C++',
+    'Topic :: Scientific/Engineering :: GIS',
+    'Topic :: Scientific/Engineering :: Information Analysis',
+]
+
+requires-python = ">=3.8"
