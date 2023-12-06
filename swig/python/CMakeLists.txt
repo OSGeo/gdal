@@ -204,8 +204,11 @@ if (Python_Interpreter_FOUND)
       GENERATE
       OUTPUT "${BUILD_EXT_FILENAME}"
       CONTENT
-        "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,\"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
+        "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)
+         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,\"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\"> RESULT_VARIABLE res)
+         if(NOT res EQUAL 0)
+           message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+         endif()"
       )
   else ()
     set(BUILD_EXT_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake")
@@ -214,7 +217,11 @@ if (Python_Interpreter_FOUND)
       OUTPUT "${BUILD_EXT_FILENAME}"
       CONTENT
          "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-          execute_process(COMMAND \"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace)\n")
+          execute_process(COMMAND \"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace RESULT_VARIABLE res)
+          if(NOT res EQUAL 0)
+            message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+          endif()"
+      )
   endif ()
 
   if(CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
@@ -338,11 +345,19 @@ if (Python_Interpreter_FOUND)
       GENERATE
       OUTPUT ${BUILD_BDIST_WHEEL_FILENAME}
       CONTENT
-        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\">)"
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\"> RESULT_VARIABLE res)
+        if(NOT res EQUAL 0)
+           message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+        endif()
+        "
       )
   else ()
     set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel.cmake)
-    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel)\n")
+    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME}
+         "execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel RESULT_VARIABLE res)
+          if(NOT res EQUAL 0)
+            message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+          endif()")
   endif ()
   add_custom_target(
     python_wheel
