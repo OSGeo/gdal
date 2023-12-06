@@ -90,11 +90,7 @@ const struct sqlite3_api_routines OGRSQLITE_static_routines = {
     MEMBER(result_int64),
     MEMBER(result_null),
     MEMBER(result_value),
-#if SQLITE_VERSION_NUMBER >= 3021000L
     .xsnprintf = sqlite3_snprintf,
-#else
-    .snprintf = sqlite3_snprintf,
-#endif
     MEMBER(step),
     MEMBER(total_changes),
     MEMBER(user_data),

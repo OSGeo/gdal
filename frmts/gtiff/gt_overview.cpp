@@ -54,10 +54,6 @@
 // TODO(schwehr): Explain why 128 and not 127.
 constexpr int knMaxOverviews = 128;
 
-#if TIFFLIB_VERSION > 20181110  // > 4.0.10
-#define SUPPORTS_GET_OFFSET_BYTECOUNT
-#endif
-
 /************************************************************************/
 /*                         GTIFFWriteDirectory()                        */
 /*                                                                      */
@@ -178,9 +174,7 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
 
     if (bDeferStrileArrayWriting)
     {
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         TIFFDeferStrileArrayWriting(hTIFF);
-#endif
     }
 
     /* -------------------------------------------------------------------- */

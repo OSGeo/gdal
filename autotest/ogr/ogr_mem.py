@@ -1160,7 +1160,6 @@ def test_ogr_mem_arrow_stream_pyarrow_geoarrow_no_crs_metadata():
 ###############################################################################
 
 
-@pytest.mark.require_proj(6, 2)
 def test_ogr_mem_arrow_stream_pyarrow_geoarrow_metadata():
     pytest.importorskip("pyarrow")
 

@@ -1833,7 +1833,6 @@ OGRErr OSRExportToWktEx(OGRSpatialReferenceH hSRS, char **ppszReturn,
 OGRErr OGRSpatialReference::exportToPROJJSON(
     char **ppszResult, CPL_UNUSED const char *const *papszOptions) const
 {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2
     d->refreshProjObj();
     if (!d->m_pj_crs)
     {
@@ -1852,12 +1851,6 @@ OGRErr OGRSpatialReference::exportToPROJJSON(
 
     *ppszResult = CPLStrdup(pszPROJJSON);
     return OGRERR_NONE;
-#else
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "exportToPROJJSON() requires PROJ 6.2 or later");
-    *ppszResult = nullptr;
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/
@@ -3758,7 +3751,6 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
     {
         OGRErr eStatus = OGRERR_NONE;
 
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 1
         if (strchr(pszDefinition, '+') || strchr(pszDefinition, '@'))
         {
             // Use proj_create() as it allows things like EPSG:3157+4617
@@ -3774,43 +3766,10 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
             return OGRERR_NONE;
         }
         else
-#endif
         {
             eStatus =
                 importFromEPSG(atoi(pszDefinition + (bStartsWithEPSG ? 5 : 6)));
         }
-
-#if !(PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 1)
-        // Do we want to turn this into a compound definition
-        // with a vertical datum?
-        if (eStatus == OGRERR_NONE && strchr(pszDefinition, '+') != nullptr)
-        {
-            OGRSpatialReference oVertSRS;
-
-            eStatus =
-                oVertSRS.importFromEPSG(atoi(strchr(pszDefinition, '+') + 1));
-            if (eStatus == OGRERR_NONE)
-            {
-                OGRSpatialReference oHorizSRS(*this);
-
-                Clear();
-
-                oHorizSRS.d->refreshProjObj();
-                oVertSRS.d->refreshProjObj();
-                if (!oHorizSRS.d->m_pj_crs || !oVertSRS.d->m_pj_crs)
-                    return OGRERR_FAILURE;
-
-                const char *pszHorizName = proj_get_name(oHorizSRS.d->m_pj_crs);
-                const char *pszVertName = proj_get_name(oVertSRS.d->m_pj_crs);
-
-                CPLString osName = pszHorizName ? pszHorizName : "";
-                osName += " + ";
-                osName += pszVertName ? pszVertName : "";
-
-                SetCompoundCS(osName, &oHorizSRS, &oVertSRS);
-            }
-        }
-#endif
 
         return eStatus;
     }
@@ -5734,7 +5693,6 @@ double OGRSpatialReference::GetProjParm(const char *pszName,
     const int iChild = FindProjParm(pszName, poPROJCS);
     if (iChild == -1)
     {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
         if (IsProjected() && GetAxesCount() == 3)
         {
             OGRSpatialReference *poSRSTmp = Clone();
@@ -5744,7 +5702,6 @@ double OGRSpatialReference::GetProjParm(const char *pszName,
             delete poSRSTmp;
             return dfRet;
         }
-#endif
 
         if (pnErr != nullptr)
             *pnErr = OGRERR_FAILURE;
@@ -7645,7 +7602,6 @@ OGRErr OSRSetUTM(OGRSpatialReferenceH hSRS, int nZone, int bNorth)
 int OGRSpatialReference::GetUTMZone(int *pbNorth) const
 
 {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     if (IsProjected() && GetAxesCount() == 3)
     {
         OGRSpatialReference *poSRSTmp = Clone();
@@ -7654,7 +7610,6 @@ int OGRSpatialReference::GetUTMZone(int *pbNorth) const
         delete poSRSTmp;
         return nZone;
     }
-#endif
 
     const char *pszProjection = GetAttrValue("PROJECTION");
 
@@ -7845,25 +7800,11 @@ OGRErr OGRSpatialReference::SetVerticalPerspective(
     double dfTopoOriginLat, double dfTopoOriginLon, double dfTopoOriginHeight,
     double dfViewPointHeight, double dfFalseEasting, double dfFalseNorthing)
 {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     return d->replaceConversionAndUnref(
         proj_create_conversion_vertical_perspective(
             d->getPROJContext(), dfTopoOriginLat, dfTopoOriginLon,
             dfTopoOriginHeight, dfViewPointHeight, dfFalseEasting,
             dfFalseNorthing, nullptr, 0, nullptr, 0));
-#else
-    CPL_IGNORE_RET_VAL(dfTopoOriginHeight);  // ignored by PROJ
-
-    OGRSpatialReference oSRS;
-    CPLString oProj4String;
-    oProj4String.Printf(
-        "+proj=nsper +lat_0=%.18g +lon_0=%.18g +h=%.18g +x_0=%.18g +y_0=%.18g",
-        dfTopoOriginLat, dfTopoOriginLon, dfViewPointHeight, dfFalseEasting,
-        dfFalseNorthing);
-    oSRS.SetFromUserInput(oProj4String);
-    return d->replaceConversionAndUnref(
-        proj_crs_get_coordoperation(d->getPROJContext(), oSRS.d->m_pj_crs));
-#endif
 }
 
 /************************************************************************/
@@ -7892,8 +7833,6 @@ OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationGRIBConvention(
     const char *pszCRSName, double dfSouthPoleLat, double dfSouthPoleLon,
     double dfAxisRotation)
 {
-#if PROJ_VERSION_MAJOR > 6 ||                                                  \
-    (PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR >= 3)
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -7908,20 +7847,6 @@ OGRErr OGRSpatialReference::SetDerivedGeogCRSWithPoleRotationGRIBConvention(
     proj_destroy(conv);
     proj_destroy(cs);
     return OGRERR_NONE;
-#else
-    (void)pszCRSName;
-    SetProjection("Rotated_pole");
-    SetExtension(
-        "PROJCS", "PROJ4",
-        CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=%.18g "
-                   "+o_lat_p=%.18g +a=%.18g +b=%.18g "
-                   "+to_meter=0.0174532925199433 "
-                   "+wktext",
-                   dfSouthPoleLon, dfAxisRotation == 0 ? 0 : -dfAxisRotation,
-                   dfSouthPoleLat == 0 ? 0 : -dfSouthPoleLat,
-                   GetSemiMajor(nullptr), GetSemiMinor(nullptr)));
-    return OGRERR_NONE;
-#endif
 }
 
 /************************************************************************/
@@ -8845,17 +8770,12 @@ int OGRSpatialReference::IsDerivedGeographic() const
 {
     d->refreshProjObj();
     d->demoteFromBoundCRS();
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     const bool isGeog = d->m_pjType == PJ_TYPE_GEOGRAPHIC_2D_CRS ||
                         d->m_pjType == PJ_TYPE_GEOGRAPHIC_3D_CRS;
     const bool isDerivedGeographic =
         isGeog && proj_is_derived_crs(d->getPROJContext(), d->m_pj_crs);
     d->undoDemoteFromBoundCRS();
     return isDerivedGeographic ? TRUE : FALSE;
-#else
-    d->undoDemoteFromBoundCRS();
-    return FALSE;
-#endif
 }
 
 /************************************************************************/
@@ -12410,7 +12330,6 @@ void OGRSpatialReference::UpdateCoordinateSystemFromGeogCRS()
  */
 OGRErr OGRSpatialReference::PromoteTo3D(const char *pszName)
 {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -12420,11 +12339,6 @@ OGRErr OGRSpatialReference::PromoteTo3D(const char *pszName)
         return OGRERR_FAILURE;
     d->setPjCRS(newPj);
     return OGRERR_NONE;
-#else
-    CPL_IGNORE_RET_VAL(pszName);
-    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 6.3 required");
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/
@@ -12457,7 +12371,6 @@ OGRErr OSRPromoteTo3D(OGRSpatialReferenceH hSRS, const char *pszName)
  */
 OGRErr OGRSpatialReference::DemoteTo2D(const char *pszName)
 {
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
     d->refreshProjObj();
     if (!d->m_pj_crs)
         return OGRERR_FAILURE;
@@ -12467,11 +12380,6 @@ OGRErr OGRSpatialReference::DemoteTo2D(const char *pszName)
         return OGRERR_FAILURE;
     d->setPjCRS(newPj);
     return OGRERR_NONE;
-#else
-    CPL_IGNORE_RET_VAL(pszName);
-    CPLError(CE_Failure, CPLE_NotSupported, "PROJ 6.3 required");
-    return OGRERR_UNSUPPORTED_OPERATION;
-#endif
 }
 
 /************************************************************************/

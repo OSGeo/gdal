@@ -82,31 +82,6 @@ static double Get(GDALPDFObject *poObj, int nIndice = -1);
 static CPLMutex *hGlobalParamsMutex = nullptr;
 
 /************************************************************************/
-/*                          ObjectAutoFree                              */
-/************************************************************************/
-
-class ObjectAutoFree : public Object
-{
-    Object obj;
-
-  public:
-    ObjectAutoFree()
-    {
-    }
-    ~ObjectAutoFree()
-    {
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58)
-        obj.free();
-#endif
-    }
-
-    Object *getObj()
-    {
-        return &obj;
-    }
-};
-
-/************************************************************************/
 /*                         GDALPDFOutputDev                             */
 /************************************************************************/
 
@@ -131,7 +106,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
   public:
     GDALPDFOutputDev(SplashColorMode colorModeA, int bitmapRowPadA,
-                     GBool reverseVideoA, SplashColorPtr paperColorA)
+                     bool reverseVideoA, SplashColorPtr paperColorA)
         : SplashOutputDev(colorModeA, bitmapRowPadA, reverseVideoA,
                           paperColorA),
           bEnableVector(TRUE), bEnableText(TRUE), bEnableBitmap(TRUE)
@@ -179,11 +154,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
     virtual void drawChar(GfxState *state, double x, double y, double dx,
                           double dy, double originX, double originY,
-                          CharCode code, int nBytes,
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 82
-                          const
-#endif
-                          Unicode *u,
+                          CharCode code, int nBytes, const Unicode *u,
                           int uLen) override
     {
         if (bEnableText)
@@ -204,8 +175,8 @@ class GDALPDFOutputDev : public SplashOutputDev
     }
 
     virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
-                               int width, int height, GBool invert,
-                               GBool interpolate, GBool inlineImg) override
+                               int width, int height, bool invert,
+                               bool interpolate, bool inlineImg) override
     {
         if (bEnableBitmap)
             SplashOutputDev::drawImageMask(state, ref, str, width, height,
@@ -223,7 +194,7 @@ class GDALPDFOutputDev : public SplashOutputDev
 
     virtual void setSoftMaskFromImageMask(GfxState *state, Object *ref,
                                           Stream *str, int width, int height,
-                                          GBool invert, GBool inlineImg,
+                                          bool invert, bool inlineImg,
                                           double *baseMatrix) override
     {
         if (bEnableBitmap)
@@ -242,12 +213,8 @@ class GDALPDFOutputDev : public SplashOutputDev
 
     virtual void drawImage(GfxState *state, Object *ref, Stream *str, int width,
                            int height, GfxImageColorMap *colorMap,
-                           GBool interpolate,
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 82
-                           const
-#endif
-                           int *maskColors,
-                           GBool inlineImg) override
+                           bool interpolate, const int *maskColors,
+                           bool inlineImg) override
     {
         if (bEnableBitmap)
             SplashOutputDev::drawImage(state, ref, str, width, height, colorMap,
@@ -266,10 +233,9 @@ class GDALPDFOutputDev : public SplashOutputDev
 
     virtual void drawMaskedImage(GfxState *state, Object *ref, Stream *str,
                                  int width, int height,
-                                 GfxImageColorMap *colorMap, GBool interpolate,
+                                 GfxImageColorMap *colorMap, bool interpolate,
                                  Stream *maskStr, int maskWidth, int maskHeight,
-                                 GBool maskInvert,
-                                 GBool maskInterpolate) override
+                                 bool maskInvert, bool maskInterpolate) override
     {
         if (bEnableBitmap)
             SplashOutputDev::drawMaskedImage(
@@ -282,10 +248,10 @@ class GDALPDFOutputDev : public SplashOutputDev
     virtual void drawSoftMaskedImage(GfxState *state, Object *ref, Stream *str,
                                      int width, int height,
                                      GfxImageColorMap *colorMap,
-                                     GBool interpolate, Stream *maskStr,
+                                     bool interpolate, Stream *maskStr,
                                      int maskWidth, int maskHeight,
                                      GfxImageColorMap *maskColorMap,
-                                     GBool maskInterpolate) override
+                                     bool maskInterpolate) override
     {
         if (bEnableBitmap)
         {
@@ -1957,7 +1923,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         sColor[1] = 255;
         sColor[2] = 255;
         GDALPDFOutputDev *poSplashOut = new GDALPDFOutputDev(
-            (nBands < 4) ? splashModeRGB8 : splashModeXBGR8, 4, gFalse,
+            (nBands < 4) ? splashModeRGB8 : splashModeXBGR8, 4, false,
             (nBands < 4) ? sColor : nullptr);
 
         if (pszRenderingOptions != nullptr)
@@ -2008,7 +1974,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         try
         {
             poDoc->displayPageSlice(poSplashOut, m_iPage, m_dfDPI, m_dfDPI, 0,
-                                    TRUE, gFalse, gFalse, nReqXOff, nReqYOff,
+                                    TRUE, false, false, nReqXOff, nReqYOff,
                                     nReqXSize, nReqYSize);
         }
         catch (const std::exception &e)
@@ -2496,17 +2462,11 @@ GDALPDFObject *PDFDataset::GetCatalog()
 #ifdef HAVE_POPPLER
     if (m_bUseLib.test(PDFLIB_POPPLER))
     {
-        m_poCatalogObjectPoppler = new ObjectAutoFree;
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-        *m_poCatalogObjectPoppler->getObj() =
-            m_poDocPoppler->getXRef()->getCatalog();
-#else
-        m_poDocPoppler->getXRef()->getCatalog(
-            m_poCatalogObjectPoppler->getObj());
-#endif
-        if (!m_poCatalogObjectPoppler->getObj()->isNull())
-            m_poCatalogObject = new GDALPDFObjectPoppler(
-                m_poCatalogObjectPoppler->getObj(), FALSE);
+        m_poCatalogObjectPoppler =
+            std::make_unique<Object>(m_poDocPoppler->getXRef()->getCatalog());
+        if (!m_poCatalogObjectPoppler->isNull())
+            m_poCatalogObject =
+                new GDALPDFObjectPoppler(m_poCatalogObjectPoppler.get(), FALSE);
     }
 #endif
 
@@ -2609,7 +2569,7 @@ PDFDataset::~PDFDataset()
 #ifdef HAVE_POPPLER
     if (m_bUseLib.test(PDFLIB_POPPLER))
     {
-        delete m_poCatalogObjectPoppler;
+        m_poCatalogObjectPoppler.reset();
         PDFFreeDoc(m_poDocPoppler);
     }
     m_poDocPoppler = nullptr;
@@ -2802,27 +2762,16 @@ static void PDFDatasetErrorFunctionCommon(const CPLString &osError)
 static int g_nPopplerErrors = 0;
 constexpr int MAX_POPPLER_ERRORS = 1000;
 
-static void PDFDatasetErrorFunction(
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 85)
-    void * /* userData*/,
-#endif
-    ErrorCategory /* eErrCategory */, Goffset nPos,
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 71
-    const char *pszMsg
-#else
-    char *pszMsg
-#endif
-)
+static void PDFDatasetErrorFunction(ErrorCategory /* eErrCategory */,
+                                    Goffset nPos, const char *pszMsg)
 {
     if (g_nPopplerErrors >= MAX_POPPLER_ERRORS)
     {
         // If there are too many errors, then unregister ourselves and turn
         // quiet error mode, as the error() function in poppler can spend
         // significant time formatting an error message we won't emit...
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 85
         setErrorCallback(nullptr);
         globalParams->setErrQuiet(true);
-#endif
         return;
     }
 
@@ -3730,25 +3679,13 @@ void PDFDataset::FindLayersPoppler()
     }
     else
     {
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 69
         for (const auto &refOCGPair : optContentConfig->getOCGs())
         {
             auto ocg = refOCGPair.second.get();
-#else
-        GooList *ocgList = optContentConfig->getOCGs();
-        for (int i = 0; i < ocgList->getLength(); i++)
-        {
-            OptionalContentGroup *ocg = (OptionalContentGroup *)ocgList->get(i);
-#endif
             if (ocg != nullptr && ocg->getName() != nullptr)
             {
-#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
                 const char *pszLayerName =
                     (const char *)ocg->getName()->c_str();
-#else
-                const char *pszLayerName =
-                    (const char *)ocg->getName()->getCString();
-#endif
                 AddLayer(pszLayerName);
                 m_oLayerOCGListPoppler.push_back(
                     std::make_pair(CPLString(pszLayerName), ocg));
@@ -3775,16 +3712,9 @@ void PDFDataset::TurnLayersOnOffPoppler()
     {
         int i;
         int bAll = EQUAL(pszLayers, "ALL");
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 69
         for (const auto &refOCGPair : optContentConfig->getOCGs())
         {
             auto ocg = refOCGPair.second.get();
-#else
-        GooList *ocgList = optContentConfig->getOCGs();
-        for (i = 0; i < ocgList->getLength(); i++)
-        {
-            OptionalContentGroup *ocg = (OptionalContentGroup *)ocgList->get(i);
-#endif
             ocg->setState((bAll) ? OptionalContentGroup::On
                                  : OptionalContentGroup::Off);
         }
@@ -4396,9 +4326,6 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     GDALPDFObject *poPageObj = nullptr;
 #ifdef HAVE_POPPLER
     PDFDoc *poDocPoppler = nullptr;
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58)
-    ObjectAutoFree oObj;
-#endif
     Page *poPagePoppler = nullptr;
     Catalog *poCatalogPoppler = nullptr;
 #endif
@@ -4423,11 +4350,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (globalParams == nullptr)
             {
                 globalParamsCreatedByGDAL = true;
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
                 globalParams.reset(new GlobalParams());
-#else
-                globalParams = new GlobalParams();
-#endif
             }
 
             globalParams->setPrintCommands(CPLTestBool(
@@ -4436,12 +4359,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         const auto registerErrorCallback = []()
         {
-        /* Set custom error handler for poppler errors */
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 85
+            /* Set custom error handler for poppler errors */
             setErrorCallback(PDFDatasetErrorFunction);
-#else
-            setErrorCallback(PDFDatasetErrorFunction, nullptr);
-#endif
             assert(globalParams);  // avoid CSA false positive
             globalParams->setErrQuiet(false);
         };
@@ -4487,15 +4406,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             g_nPopplerErrors = 0;
             if (globalParamsCreatedByGDAL)
                 registerErrorCallback();
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
             Object oObj;
             auto poStream =
                 new VSIPDFFileStream(fp.get(), pszFilename, std::move(oObj));
-#else
-            oObj.getObj()->initNull();
-            auto poStream =
-                new VSIPDFFileStream(fp.get(), pszFilename, oObj.getObj());
-#endif
 #if POPPLER_MAJOR_VERSION > 22 ||                                              \
     (POPPLER_MAJOR_VERSION == 22 && POPPLER_MINOR_VERSION > 2)
             std::optional<GooString> osUserPwd;
@@ -5334,11 +5247,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         auto poMetadata = poCatalogPoppler->readMetadata();
         if (poMetadata)
         {
-#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
             const char *pszContent = poMetadata->c_str();
-#else
-            const char *pszContent = poMetadata->getCString();
-#endif
             if (pszContent != nullptr &&
                 STARTS_WITH(pszContent, "<?xpacket begin="))
             {
@@ -5357,17 +5266,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         /* might abort() */
         if (poDocPoppler->getXRef()->isOk())
         {
-            Object oInfo;
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-            oInfo = poDocPoppler->getDocInfo();
-#else
-            poDocPoppler->getDocInfo(&oInfo);
-#endif
+            Object oInfo = poDocPoppler->getDocInfo();
             GDALPDFObjectPoppler oInfoObjPoppler(&oInfo, FALSE);
             poDS->ParseInfo(&oInfoObjPoppler);
-#if !(POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58)
-            oInfo.free();
-#endif
         }
 
         /* Find layers */

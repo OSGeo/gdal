@@ -691,16 +691,7 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
     if (SubmitCompressionJob(tile, pabyData, cc, m_nBlockYSize))
         return true;
 
-        // libtiff 4.0.6 or older do not always properly report write errors.
-#if TIFFLIB_VERSION <= 20150912
-    const CPLErr eBefore = CPLGetLastErrorType();
-#endif
-    const bool bRet = TIFFWriteEncodedTile(m_hTIFF, tile, pabyData, cc) == cc;
-#if TIFFLIB_VERSION <= 20150912
-    if (eBefore == CE_None && CPLGetLastErrorType() == CE_Failure)
-        return false;
-#endif
-    return bRet;
+    return TIFFWriteEncodedTile(m_hTIFF, tile, pabyData, cc) == cc;
 }
 
 /************************************************************************/
@@ -801,16 +792,7 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
     if (SubmitCompressionJob(strip, pabyData, cc, nStripHeight))
         return true;
 
-        // libtiff 4.0.6 or older do not always properly report write errors.
-#if TIFFLIB_VERSION <= 20150912
-    CPLErr eBefore = CPLGetLastErrorType();
-#endif
-    bool bRet = TIFFWriteEncodedStrip(m_hTIFF, strip, pabyData, cc) == cc;
-#if TIFFLIB_VERSION <= 20150912
-    if (eBefore == CE_None && CPLGetLastErrorType() == CE_Failure)
-        bRet = FALSE;
-#endif
-    return bRet;
+    return TIFFWriteEncodedStrip(m_hTIFF, strip, pabyData, cc) == cc;
 }
 
 /************************************************************************/
@@ -835,11 +817,8 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
             nThreads = 1024;  // to please Coverity
         if (nThreads > 1)
         {
-            if ((bUpdateMode && m_nCompression != COMPRESSION_NONE)
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-                || (nBands >= 1 && IsMultiThreadedReadCompatible())
-#endif
-            )
+            if ((bUpdateMode && m_nCompression != COMPRESSION_NONE) ||
+                (nBands >= 1 && IsMultiThreadedReadCompatible()))
             {
                 CPLDebug("GTiff",
                          "Using up to %d threads for compression/decompression",
@@ -7232,15 +7211,13 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     }
 #endif
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup                                                         */
+    /* -------------------------------------------------------------------- */
     if (bCopySrcOverviews)
     {
         TIFFDeferStrileArrayWriting(l_hTIFF);
     }
-#endif
     TIFFWriteCheck(l_hTIFF, TIFFIsTiled(l_hTIFF), "GTiffCreateCopy()");
     TIFFWriteDirectory(l_hTIFF);
     if (bStreaming)
@@ -7695,7 +7672,6 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             }
         }
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         TIFFForceStrileArrayWriting(poDS->m_hTIFF);
 
         if (poDS->m_poMaskDS)
@@ -7713,7 +7689,6 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                     poDS->m_papoOverviewDS[i]->m_poMaskDS->m_hTIFF);
             }
         }
-#endif
 
         if (eErr == CE_None && nSrcOverviews)
         {

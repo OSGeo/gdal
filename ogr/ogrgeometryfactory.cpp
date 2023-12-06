@@ -2237,18 +2237,13 @@ OGRGeometry *OGRGeometryFactory::createFromGEOS(
         GEOSisEmpty_r(hGEOSCtxt, geosGeom))
         return new OGRPoint();
 
-#if GEOS_VERSION_MAJOR > 3 ||                                                  \
-    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3)
-    // GEOSGeom_getCoordinateDimension only available in GEOS 3.3.0.
     const int nCoordDim =
         GEOSGeom_getCoordinateDimension_r(hGEOSCtxt, geosGeom);
     GEOSWKBWriter *wkbwriter = GEOSWKBWriter_create_r(hGEOSCtxt);
     GEOSWKBWriter_setOutputDimension_r(hGEOSCtxt, wkbwriter, nCoordDim);
     pabyBuf = GEOSWKBWriter_write_r(hGEOSCtxt, wkbwriter, geosGeom, &nSize);
     GEOSWKBWriter_destroy_r(hGEOSCtxt, wkbwriter);
-#else
-    pabyBuf = GEOSGeomToWKB_buf_r(hGEOSCtxt, geosGeom, &nSize);
-#endif
+
     if (pabyBuf == nullptr || nSize == 0)
     {
         return nullptr;
@@ -2260,13 +2255,8 @@ OGRGeometry *OGRGeometryFactory::createFromGEOS(
     {
         poGeometry = nullptr;
     }
-    // Since GEOS 3.1.1, so we test 3.2.0.
-#if GEOS_CAPI_VERSION_MAJOR >= 2 ||                                            \
-    (GEOS_CAPI_VERSION_MAJOR == 1 && GEOS_CAPI_VERSION_MINOR >= 6)
+
     GEOSFree_r(hGEOSCtxt, pabyBuf);
-#else
-    free(pabyBuf);
-#endif
 
     return poGeometry;
 

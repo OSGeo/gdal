@@ -639,10 +639,7 @@ def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 @pytest.mark.require_driver("CSV")
 def test_ogr2ogr_lib_makevalid(tmp_vsimem):
 
-    # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler(), gdaltest.disable_exceptions():
-        make_valid_available = g.MakeValid() is not None
+    make_valid_available = ogrtest.have_geos()
 
     tmpfilename = tmp_vsimem / "tmp.csv"
     with gdaltest.tempfile(

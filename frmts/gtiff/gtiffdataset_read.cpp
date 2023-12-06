@@ -347,8 +347,6 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
     return CE_Failure;
 }
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-
 struct GTiffDecompressContext
 {
     std::mutex oMutex{};
@@ -1417,8 +1415,6 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
     return sContext.bSuccess ? CE_None : CE_Failure;
 }
-
-#endif  // SUPPORTS_GET_OFFSET_BYTECOUNT
 
 /************************************************************************/
 /*                        FetchBufferVirtualMemIO                       */
@@ -3140,7 +3136,6 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
 bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
                               GPtrDiff_t nBlockReqSize)
 {
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     // Optimization by which we can save some libtiff buffer copy
     std::pair<vsi_l_offset, vsi_l_offset> oPair;
     if (
@@ -3170,7 +3165,6 @@ bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
             return true;
         }
     }
-#endif
 
     // For debugging
     if (m_poBaseDS)
@@ -5044,22 +5038,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         m_nBlockYSize == nRasterYSize && nRasterYSize > 2000 && !bTreatAsRGBA &&
         CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
     {
-        // libtiff 4.0.0beta5 (also
-        // 20091104) and older will crash when trying to open a
-        // all-in-one-strip YCbCr JPEG compressed TIFF (see #3259).
-#if (TIFFLIB_VERSION <= 20091104)
-        if (m_nPhotometric == PHOTOMETRIC_YCBCR &&
-            m_nCompression == COMPRESSION_JPEG)
-        {
-            CPLDebug("GTiff",
-                     "Avoid using split band to open all-in-one-strip "
-                     "YCbCr JPEG compressed TIFF because of older libtiff");
-        }
-        else
-#endif
-        {
-            m_bTreatAsSplit = true;
-        }
+        m_bTreatAsSplit = true;
     }
 
     /* -------------------------------------------------------------------- */

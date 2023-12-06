@@ -28,24 +28,22 @@ jobs:
         include:
           - VS_VERSION: Visual Studio 17
             VS_VER: 2022
-            SDK: release-1911 # gisinternals SDK version still to 2017
-            MSVC_VER: 1920
+            SDK: release-1930
             platform: x86
-            PROJ_BRANCH: "7.2"
-            LIBWEBP_URL: "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.0.3-windows-x86.zip"
+            PROJ_BRANCH: "9.3"
             LIBZSTD_URL: "https://github.com/facebook/zstd/releases/download/v1.4.5/zstd-v1.4.5-win32.zip"
             LIBDEFLATE_URL: "https://github.com/ebiggers/libdeflate/releases/download/v1.6/libdeflate-1.6-windows-i686-bin.zip"
+            SWIG_URL: "https://freefr.dl.sourceforge.net/project/swig/swigwin/swigwin-4.1.1/swigwin-4.1.1.zip"
 
     env:
         VS_VERSION: ${{ matrix.VS_VERSION }}
         VS_VER: ${{ matrix.VS_VER }}
         SDK: ${{ matrix.SDK }}
-        MSVC_VER: ${{ matrix.MSVC_VER }}
         platform: ${{ matrix.platform }}
         PROJ_BRANCH: "${{ matrix.PROJ_BRANCH }}"
-        LIBWEBP_URL: "${{ matrix.LIBWEBP_URL }}"
         LIBZSTD_URL: "${{ matrix.LIBZSTD_URL }}"
         LIBDEFLATE_URL: "${{ matrix.LIBDEFLATE_URL }}"
+        SWIG_URL: "${{ matrix.SWIG_URL }}"
         APPVEYOR: true # to skip some tests
         PYTHON_VERSION: "3.10.5"
 
@@ -124,8 +122,6 @@ jobs:
             Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
             Install-Module Pscx -AllowClobber
             Install-Module VSSetup -Scope CurrentUser
-            # Install SWIG by Choco
-            exec { cinst -y --no-progress swig }
             exec { pip install numpy }
             $env:SDK_ZIP="$env:SDK"+"-dev.zip"
             $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
@@ -134,8 +130,8 @@ jobs:
             if(-Not (Test-Path -Path $env:SDK_ZIP )) { Invoke-WebRequest "$env:SDK_URL" -OutFile "$env:SDK_ZIP" }
             $env:LIBZSTD_ZIP="libzstd.zip"
             if(-Not (Test-Path -Path $env:LIBZSTD_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBZSTD_URL" -OutFile "$env:LIBZSTD_ZIP" }
-            $env:LIBWEBP_ZIP="libwebp.zip"
-            if(-Not (Test-Path -Path $env:LIBWEBP_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBWEBP_URL" -OutFile "$env:LIBWEBP_ZIP" }
+            $env:SWIG_ZIP="swigwin-4.1.1.zip"
+            if(-Not (Test-Path -Path $env:SWIG_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:SWIG_URL" -OutFile "$env:SWIG_ZIP" }
             # $env:LIBDEFLATE_ZIP="libdeflate.zip"
             # if(-Not (Test-Path -Path $env:LIBDEFLATE_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBDEFLATE_URL" -OutFile "$env:LIBDEFLATE_ZIP" }
             cd ..
@@ -144,7 +140,7 @@ jobs:
             exec { 7z x ..\downloads\$env:SDK_ZIP }
             cd $env:SDK
             #exec { 7z x ..\..\downloads\$env:LIBZSTD_ZIP }
-            exec { 7z x ..\..\downloads\$env:LIBWEBP_ZIP }
+            exec { 7z x ..\..\downloads\$env:SWIG_ZIP }
             # exec { 7z x -y ..\..\downloads\$env:LIBDEFLATE_ZIP }
             cd ..
             $env:SDK_PREFIX="$env:GITHUB_WORKSPACE\sdk\$env:SDK"
@@ -168,15 +164,18 @@ jobs:
             mkdir build
             cd build
             $env:SDK_BIN="$env:SDK_PREFIX\bin"
-            $env:PATH="$env:GITHUB_WORKSPACE\install-proj\bin;$env:SDK_BIN;$env:PATH"
-            exec { projinfo EPSG:4326 }
+            $env:PATH="$env:SDK_BIN;$env:SDK\swigwin-4.1.1;$env:PATH"
             $env:GDAL_INSTALL_DIR="$env:GITHUB_WORKSPACE"+"\install-gdal"
             $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:GDAL_INSTALL_DIR
             $env:PROJ_ROOT="-DPROJ_ROOT=" + $env:PROJ_INSTALL_DIR
             $env:CMAKE_PREFIX_PATH="-DCMAKE_PREFIX_PATH=" + $env:SDK_PREFIX
             $env:MYSQL_LIBRARY="-DMYSQL_LIBRARY=" + $env:SDK_LIB + "\libmysql.lib"
             $env:POPPLER_EXTRA_LIBRARIES="-DPOPPLER_EXTRA_LIBRARIES=" + $env:SDK_LIB + "\freetype.lib;" + $env:SDK_LIB + "\harfbuzz.lib"
-            cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DCMAKE_BUILD_TYPE=Release $env:CMAKE_PREFIX_PATH -DCMAKE_C_FLAGS=" /WX $env:ARCH_FLAGS" -DCMAKE_CXX_FLAGS=" /WX $env:ARCH_FLAGS" -DGDAL_USE_DEFLATE=OFF $env:PROJ_ROOT $env:MYSQL_LIBRARY $env:POPPLER_EXTRA_LIBRARIES -DGDAL_USE_ZLIB_INTERNAL=ON -DECW_INTERFACE_COMPILE_DEFINITIONS="_MBCS;_UNICODE;UNICODE;_WINDOWS;LIBECWJ2;WIN32;_WINDLL;NO_X86_MMI" -DBUILD_CSHARP_BINDINGS=OFF -DBUILD_JAVA_BINDINGS=OFF -DOGR_ENABLE_DRIVER_LIBKML=OFF
+            # We disable Spatialite and external geotiff as they link to gisinternals proj9 and we have the following linking error
+            # refering to a file from the gisinternals build machine...
+            # LINK : fatal error LNK1181: cannot open input file 'E:\buildsystem\release-1930\lib\proj9.lib' [D:\a\gdal\gdal\build\GDAL.vcxproj]
+            # Disabling HDF4 (and netCDF) for similar reason: LINK : fatal error LNK1181: cannot open input file 'E:\buildsystem\release-1930\lib\mfhdf.lib'
+            cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DCMAKE_BUILD_TYPE=Release $env:CMAKE_PREFIX_PATH -DCMAKE_C_FLAGS=" /WX $env:ARCH_FLAGS" -DCMAKE_CXX_FLAGS=" /WX $env:ARCH_FLAGS" -DGDAL_USE_DEFLATE=OFF $env:PROJ_ROOT $env:MYSQL_LIBRARY $env:POPPLER_EXTRA_LIBRARIES -DGDAL_USE_ZLIB_INTERNAL=ON -DECW_INTERFACE_COMPILE_DEFINITIONS="_MBCS;_UNICODE;UNICODE;_WINDOWS;LIBECWJ2;WIN32;_WINDLL;NO_X86_MMI" -DBUILD_CSHARP_BINDINGS=OFF -DBUILD_JAVA_BINDINGS=OFF -DOGR_ENABLE_DRIVER_LIBKML=OFF -DGDAL_USE_SPATIALITE=OFF -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_HDF4=OFF -DGDAL_USE_NETCDF=OFF -DGDAL_USE_WEBP=OFF
             exec { cmake --build . --config Release --target install }
 
       - name: Run tests

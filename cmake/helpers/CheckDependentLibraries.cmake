@@ -103,7 +103,7 @@ endfunction()
 # the GDAL_IMPORT_DEPENDENCIES string.
 macro (gdal_check_package name purpose)
   set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
-  set(_oneValueArgs VERSION NAMES MINIMUM_VERSION)
+  set(_oneValueArgs VERSION NAMES)
   set(_multiValueArgs COMPONENTS TARGETS PATHS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   string(TOUPPER ${name} key)
@@ -113,7 +113,8 @@ macro (gdal_check_package name purpose)
     find_package2(${name} QUIET OUT_DEPENDENCY _find_dependency)
   else()
     set(_find_package_args)
-    if (_GCP_VERSION)
+    # For some reason passing the HDF5 version requirement cause a linking error of the libkea driver on Conda Windows builds...
+    if (_GCP_VERSION AND NOT ("${name}" STREQUAL "TileDB") AND NOT ("${name}" STREQUAL "HDF5"))
       list(APPEND _find_package_args ${_GCP_VERSION})
     endif ()
     if (_GCP_CONFIG)
@@ -155,7 +156,7 @@ macro (gdal_check_package name purpose)
     endif ()
   endif ()
   if (${key}_FOUND OR ${name}_FOUND)
-    if(_GCP_MINIMUM_VERSION)
+    if(_GCP_VERSION)
 
       if( "${name}" STREQUAL "TileDB" AND NOT DEFINED TileDB_VERSION)
         get_property(_dirs TARGET TileDB::tiledb_shared PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
@@ -170,8 +171,15 @@ macro (gdal_check_package name purpose)
         endforeach()
       endif()
 
-      if( ${name}_VERSION VERSION_LESS ${_GCP_MINIMUM_VERSION})
-          message(WARNING "Ignoring ${name} because it is at version ${${name}_VERSION}, whereas the minimum version required is ${_GCP_MINIMUM_VERSION}")
+      if (DEFINED ${name}_VERSION_STRING AND NOT DEFINED ${name}_VERSION)
+          set(${name}_VERSION "${${name}_VERSION_STRING}")
+      endif()
+
+      if( "${${name}_VERSION}" STREQUAL "")
+        message(WARNING "${name} has unknown version. Assuming it is at least matching the minimum version required of ${_GCP_VERSION}")
+        set(HAVE_${key} ON)
+      elseif( ${name}_VERSION VERSION_LESS ${_GCP_VERSION})
+        message(WARNING "Ignoring ${name} because it is at version ${${name}_VERSION}, whereas the minimum version required is ${_GCP_VERSION}")
         set(HAVE_${key} OFF)
       else()
         set(HAVE_${key} ON)
@@ -283,7 +291,7 @@ gdal_check_package(MSSQL_ODBC "MSSQL ODBC driver to enable bulk copy" CAN_DISABL
 gdal_check_package(MySQL "MySQL" CAN_DISABLE)
 
 # basic libraries
-gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE RECOMMENDED)
+gdal_check_package(CURL "Enable drivers to use web API" CAN_DISABLE RECOMMENDED VERSION 7.68)
 
 gdal_check_package(Iconv "Character set recoding (used in GDAL portability library)" CAN_DISABLE)
 if (Iconv_FOUND)
@@ -375,11 +383,11 @@ endif()
 if (PROJ_FOUND)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG)\n")
 else()
-  find_package(PROJ 6.0 REQUIRED)
-  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.0)\n")
+  find_package(PROJ 6.3 REQUIRED)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.3)\n")
 endif ()
 
-gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.0 CAN_DISABLE)
+gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.1 CAN_DISABLE)
 set_package_properties(
   TIFF PROPERTIES
   URL "https://libtiff.gitlab.io/libtiff/"
@@ -406,7 +414,7 @@ gdal_check_package(GeoTIFF "libgeotiff library (external)" CAN_DISABLE RECOMMEND
 )
 gdal_internal_library(GEOTIFF REQUIRED)
 
-gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED)
+gdal_check_package(PNG "PNG compression library (external)" CAN_DISABLE RECOMMENDED VERSION "1.6")
 gdal_internal_library(PNG)
 
 gdal_check_package(JPEG "JPEG compression library (external)" CAN_DISABLE RECOMMENDED)
@@ -525,7 +533,8 @@ if (NOT GDAL_USE_PCRE2)
 endif ()
 
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)"
-                   CAN_DISABLE RECOMMENDED)
+                   CAN_DISABLE RECOMMENDED
+                   VERSION 3.31)
 if (SQLite3_FOUND)
   if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
     message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
@@ -573,9 +582,9 @@ gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 if(HAVE_KEA)
     # CXX is only needed for KEA driver
-    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
+    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE VERSION 1.10)
 else()
-    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" CAN_DISABLE)
+    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" CAN_DISABLE VERSION 1.10)
 endif()
 
 gdal_check_package(WebP "WebP compression" CAN_DISABLE)
@@ -677,6 +686,7 @@ define_find_package2(CFITSIO fitsio.h cfitsio PKGCONFIG_NAME cfitsio)
 gdal_check_package(CFITSIO "C FITS I/O library" CAN_DISABLE)
 
 gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" RECOMMENDED CAN_DISABLE
+  VERSION 3.8
   NAMES GEOS
   TARGETS GEOS::geos_c GEOS::GEOS
 )
@@ -685,7 +695,8 @@ gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE
   NAMES netCDF
-  TARGETS netCDF::netcdf NETCDF::netCDF)
+  TARGETS netCDF::netcdf NETCDF::netCDF
+  VERSION "4.7")
 gdal_check_package(OGDI "Enable ogr_OGDI driver" CAN_DISABLE)
 gdal_check_package(OpenCL "Enable OpenCL (may be used for warping)" CAN_DISABLE)
 
@@ -718,7 +729,7 @@ gdal_check_package(Crnlib "enable gdal_DDS driver" CAN_DISABLE)
 gdal_check_package(basisu "Enable BASISU driver" CONFIG CAN_DISABLE)
 gdal_check_package(IDB "enable ogr_IDB driver" CAN_DISABLE)
 gdal_check_package(rdb "enable RIEGL RDB library" CONFIG CAN_DISABLE)
-gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE MINIMUM_VERSION "2.7")
+gdal_check_package(TileDB "enable TileDB driver" CONFIG CAN_DISABLE VERSION "2.7")
 
 gdal_check_package(OpenEXR "OpenEXR >=2.2" CAN_DISABLE)
 gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
@@ -728,6 +739,11 @@ gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
 # OpenJPEG's cmake-CONFIG is broken, so call module explicitly
 find_package(OpenJPEG MODULE)
+if (OPENJPEG_VERSION_STRING AND OPENJPEG_VERSION_STRING VERSION_LESS "2.3.1")
+    message(WARNING "Ignoring OpenJPEG because it is at version ${OPENJPEG_VERSION_STRING}, whereas the minimum version required is 2.3.1")
+    set(HAVE_OPENJPEG OFF)
+    set(OPENJPEG_FOUND OFF)
+endif()
 if (GDAL_USE_OPENJPEG)
   if (NOT OPENJPEG_FOUND)
     message(FATAL_ERROR "Configured to use GDAL_USE_OPENJPEG, but not found")
@@ -741,7 +757,7 @@ endif ()
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 
 # PDF library: one of them enables the read side of the PDF driver
-gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE)
+gdal_check_package(Poppler "Enable PDF driver with Poppler (read side)" CAN_DISABLE VERSION 0.86)
 
 define_find_package2(PDFIUM public/fpdfview.h pdfium FIND_PATH_SUFFIX pdfium)
 gdal_check_package(PDFIUM "Enable PDF driver with Pdfium (read side)" CAN_DISABLE)

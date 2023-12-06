@@ -85,19 +85,6 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
         CSLFetchNameValueDef(papszOptions, "WRITE_NON_FINITE_VALUES", "FALSE"));
     oWriteOptions_.bAutodetectJsonStrings = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "AUTODETECT_JSON_STRINGS", "TRUE"));
-
-    {
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        OGRGeometry *poInputGeom = nullptr;
-        OGRGeometryFactory::createFromWkt("POLYGON((0 0,1 1,1 0,0 1,0 0))",
-                                          nullptr, &poInputGeom);
-        CPLAssert(poInputGeom);
-        OGRGeometry *poValidGeom = poInputGeom->MakeValid();
-        delete poInputGeom;
-        bHasMakeValid_ = poValidGeom != nullptr;
-        delete poValidGeom;
-    }
 }
 
 /************************************************************************/
@@ -248,7 +235,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     // Special processing to detect and repair invalid geometries due to
     // coordinate precision.
     OGRGeometry *poOrigGeom = poFeature->GetGeometryRef();
-    if (bHasMakeValid_ && nCoordPrecision_ >= 0 && poOrigGeom &&
+    if (OGRGeometryFactory::haveGEOS() && nCoordPrecision_ >= 0 && poOrigGeom &&
         wkbFlatten(poOrigGeom->getGeometryType()) != wkbPoint &&
         IsValid(poOrigGeom))
     {

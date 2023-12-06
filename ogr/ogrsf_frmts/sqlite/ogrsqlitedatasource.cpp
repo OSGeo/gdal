@@ -712,7 +712,6 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
 {
     m_osMapRelationships.clear();
 
-#if SQLITE_VERSION_NUMBER >= 3016000L
     if (hDB)
     {
         auto oResult = SQLQuery(
@@ -810,12 +809,6 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
 
         m_bHasPopulatedRelationships = true;
     }
-#else
-    CPLError(CE_Warning, CPLE_AppDefined,
-             "SQLite relationship discovery requires sqlite version 3.16.0 or "
-             "later");
-    m_bHasPopulatedRelationships = true;
-#endif
 }
 
 /***********************************************************************/
@@ -4809,13 +4802,6 @@ void OGRSQLiteBaseDataSource::SetEnvelopeForSQL(const CPLString &osSQL,
 bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
     GDALQueryLoggerFunc pfnQueryLoggerFuncIn, void *poQueryLoggerArgIn)
 {
-
-#if SQLITE_VERSION_NUMBER < 3014000
-    (void)pfnQueryLoggerFuncIn;
-    (void)poQueryLoggerArgIn;
-    return false;
-#else
-
     pfnQueryLoggerFunc = pfnQueryLoggerFuncIn;
     poQueryLoggerArg = poQueryLoggerArgIn;
 
@@ -4856,7 +4842,6 @@ bool OGRSQLiteBaseDataSource::SetQueryLoggerFunc(
         return true;
     }
     return false;
-#endif
 }
 
 /************************************************************************/

@@ -388,7 +388,6 @@ void netCDFVID::nc_put_vvara_text(int varid, const size_t *start,
     }
 }
 
-#ifdef NETCDF_HAS_NC4
 void netCDFVID::nc_put_vvar1_string(int varid, const size_t *index,
                                     const char **value)
 {
@@ -402,6 +401,5 @@ void netCDFVID::nc_put_vvar1_string(int varid, const size_t *index,
         throw SG_Exception_VWrite_Failure("variable", "datum");
     }
 }
-#endif
 
 }  // namespace nccfdriver
