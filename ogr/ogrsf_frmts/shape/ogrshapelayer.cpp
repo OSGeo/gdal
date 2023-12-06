@@ -1677,14 +1677,49 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
 OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
-    OGREnvelope3D envelope3D;
-    const OGRErr retVal{GetExtent3D(0, &envelope3D, bForce)};
-    *psExtent = envelope3D;
-    return retVal;
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
+    if (hSHP == nullptr)
+        return OGRERR_FAILURE;
+
+    double adMin[4] = {0.0, 0.0, 0.0, 0.0};
+    double adMax[4] = {0.0, 0.0, 0.0, 0.0};
+
+    SHPGetInfo(hSHP, nullptr, nullptr, adMin, adMax);
+
+    psExtent->MinX = adMin[0];
+    psExtent->MinY = adMin[1];
+    psExtent->MaxX = adMax[0];
+    psExtent->MaxY = adMax[1];
+
+    if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
+        CPLIsNan(adMax[1]))
+    {
+        CPLDebug("SHAPE", "Invalid extent in shape header");
+
+        // Disable filters to avoid infinite recursion in GetNextFeature()
+        // that calls ScanIndices() that call GetExtent.
+        OGRFeatureQuery *poAttrQuery = m_poAttrQuery;
+        m_poAttrQuery = nullptr;
+        OGRGeometry *poFilterGeom = m_poFilterGeom;
+        m_poFilterGeom = nullptr;
+
+        const OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+
+        m_poAttrQuery = poAttrQuery;
+        m_poFilterGeom = poFilterGeom;
+        return eErr;
+    }
+
+    return OGRERR_NONE;
 }
 
 OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
 {
+    if (m_poFilterGeom || m_poAttrQuery)
+        return OGRLayer::GetExtent3D(0, psExtent3D, bForce);
+
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
@@ -1773,7 +1808,7 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
         return TRUE;
 
     if (EQUAL(pszCap, OLCFastGetExtent3D))
-        return TRUE;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
