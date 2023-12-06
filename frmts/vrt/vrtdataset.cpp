@@ -1044,6 +1044,153 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         return nullptr;
     }
 
+    // scan for sd_name/sd in tokens, close the source dataset and reopen if found/valid
+    bool bFound_subdataset = false;
+    for (int i = 0; i < aosTokens.size(); i++)
+    {
+        char *pszKey = nullptr;
+        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
+
+        if (pszKey && pszValue)
+        {
+
+            if (EQUAL(pszKey, "sd_name"))
+            {
+                if (bFound_subdataset)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd_name' is mutually exclusive with option "
+                             "'sd'");
+                    poSrcDS->ReleaseRef();
+
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+                int nSubdatasets = CSLCount(papszSubdatasets);
+
+                if (nSubdatasets > 0)
+                {
+                    bool bFound = false;
+                    for (int j = 0; j < nSubdatasets; j += 2)
+                    {
+                        const std::string osSubdatasetSource(
+                            strstr(papszSubdatasets[j], "=") + 1);
+                        if (osSubdatasetSource.empty())
+                        {
+                            CPLError(CE_Failure, CPLE_IllegalArg,
+                                     "'sd_name:' failed to obtain "
+                                     "subdataset string ");
+                            poSrcDS->ReleaseRef();
+
+                            CPLFree(pszKey);
+                            return nullptr;
+                        }
+                        GDALSubdatasetInfoH info =
+                            GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
+                        char *component =
+                            info
+                                ? GDALSubdatasetInfoGetSubdatasetComponent(info)
+                                : nullptr;
+
+                        bFound = component && EQUAL(pszValue, component);
+                        bFound_subdataset = true;
+                        CPLFree(component);
+                        GDALDestroySubdatasetInfo(info);
+                        if (bFound)
+                        {
+                            poSrcDS->ReleaseRef();
+                            poSrcDS = GDALDataset::Open(
+                                osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                                aosAllowedDrivers.List(), aosOpenOptions.List(),
+                                nullptr);
+                            if (poSrcDS == nullptr)
+                            {
+
+                                CPLFree(pszKey);
+                                return nullptr;
+                            }
+
+                            break;
+                        }
+                        else
+                        {
+                        }
+                    }
+
+                    if (!bFound)
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "'sd_name' option should be be a valid "
+                                 "subdataset component name");
+                        poSrcDS->ReleaseRef();
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                }
+            }
+
+            if (EQUAL(pszKey, "sd"))
+            {
+                if (bFound_subdataset)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd' is mutually exclusive with option "
+                             "'sd_name'");
+                    poSrcDS->ReleaseRef();
+
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+                int nSubdatasets = CSLCount(papszSubdatasets);
+
+                if (nSubdatasets > 0)
+                {
+                    int iSubdataset = atoi(pszValue);
+                    if (iSubdataset < 1 || iSubdataset > (nSubdatasets) / 2)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "'sd' option should indicate a valid "
+                            "subdataset component number (starting with 1)");
+                        CPLFree(pszKey);
+                        poSrcDS->ReleaseRef();
+                        return nullptr;
+                    }
+                    const std::string osSubdatasetSource(
+                        strstr(papszSubdatasets[(iSubdataset - 1) * 2], "=") +
+                        1);
+                    if (osSubdatasetSource.empty())
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "'sd:' failed to obtain subdataset "
+                                 "string ");
+                        poSrcDS->ReleaseRef();
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                    poSrcDS->ReleaseRef();
+                    poSrcDS = GDALDataset::Open(osSubdatasetSource.c_str(),
+                                                GDAL_OF_RASTER,
+                                                aosAllowedDrivers.List(),
+                                                aosOpenOptions.List(), nullptr);
+                    if (poSrcDS == nullptr)
+                    {
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                    bFound_subdataset = true;
+                }
+            }
+        }
+
+        CPLFree(pszKey);
+    }
+
     std::vector<int> anBands;
 
     CPLStringList argv;
@@ -1336,6 +1483,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 // do nothing, we passed this in earlier
             }
+            else if (EQUAL(pszKey, "sd_name"))
+            {
+                // do nothing, we passed this in earlier
+            }
+            else if (EQUAL(pszKey, "sd"))
+            {
+                // do nothing, we passed this in earlier
+            }
             else if (EQUAL(pszKey, "unscale"))
             {
                 if (CPLTestBool(pszValue))
@@ -1519,10 +1674,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         const int nWordDataSize = GDALGetDataTypeSizeBytes(eType);
 
         /* --------------------------------------------------------------------
-         */
+     */
         /*      Collect required information. */
         /* --------------------------------------------------------------------
-         */
+     */
         const char *pszImageOffset =
             CSLFetchNameValueDef(papszOptions, "ImageOffset", "0");
         vsi_l_offset nImageOffset = CPLScanUIntBig(
@@ -1566,10 +1721,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
             CPLFetchBool(papszOptions, "relativeToVRT", false);
 
         /* --------------------------------------------------------------------
-         */
+     */
         /*      Create and initialize the band. */
         /* --------------------------------------------------------------------
-         */
+     */
 
         VRTRawRasterBand *poBand =
             new VRTRawRasterBand(this, GetRasterCount() + 1, eType);
