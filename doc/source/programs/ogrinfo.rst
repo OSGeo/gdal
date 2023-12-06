@@ -23,7 +23,8 @@ Synopsis
             [-so|-features] [-fields={YES|NO}]]
             [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] [-oo <NAME>=<VALUE>]...
             [-nomd] [-listmdd] [-mdd <domain>|all]...
-            [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|<other_values>]
+            [-nocount] [-nogeomtype] [[-noextent] | [-extent3D]]
+            [-wkt_format WKT1|WKT2|<other_values>]
             [-fielddomain <name>]
             <datasource_name> [<layer> [<layer> ...]]
 
@@ -172,6 +173,14 @@ edit data.
 .. option:: -noextent
 
     Suppress spatial extent printing.
+
+.. option:: -extent3D
+
+    .. versionadded:: 3.9
+
+    Request a 3D extent to be reported (the default is 2D only). Note that this
+    operation might be slower than requesting the 2D extent, depending on format
+    and driver capabilities.
 
 .. option:: -nogeomtype
 
