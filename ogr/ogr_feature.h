@@ -787,6 +787,9 @@ class CPL_DLL OGRFeatureDefn
         explicit TemporaryUnsealer(OGRFeatureDefn *poFeatureDefn,
                                    bool bSealFields);
 
+        TemporaryUnsealer(TemporaryUnsealer &&) = default;
+        TemporaryUnsealer &operator=(TemporaryUnsealer &&) = default;
+
         ~TemporaryUnsealer();
 
         OGRFeatureDefn *operator->()
