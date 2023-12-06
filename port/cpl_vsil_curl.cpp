@@ -1487,6 +1487,7 @@ retry:
             }
 
             oFileProp.eExists = EXIST_NO;
+            oFileProp.nHTTPCode = static_cast<int>(response_code);
             oFileProp.fileSize = 0;
         }
         else if (sWriteFuncData.pBuffer != nullptr)
@@ -1541,6 +1542,18 @@ bool VSICurlHandle::Exists(bool bSetError)
     {
         GetFileSize(bSetError);
     }
+    else if (oFileProp.eExists == EXIST_NO)
+    {
+        // If there was no VSI error thrown in the process,
+        // and we know the HTTP error code of the first request where the
+        // file could not be retrieved, fail by reporting the HTTP code.
+        if (bSetError && VSIGetLastErrorNo() == 0 && oFileProp.nHTTPCode)
+        {
+            VSIError(VSIE_HttpError, "HTTP response code: %d",
+                     oFileProp.nHTTPCode);
+        }
+    }
+
     return oFileProp.eExists == EXIST_YES;
 }
 
