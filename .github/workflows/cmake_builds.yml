@@ -498,6 +498,7 @@ jobs:
     env:
         architecture: x64
         generator: Visual Studio 17 2022
+        GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY: YES
     steps:
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
