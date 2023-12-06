@@ -184,15 +184,21 @@ if sys.platform == 'win32':
 # ---------------------------------------------------------------------------
 
 numpy_include_dir = '.'
+numpy_error_msg = ""
 try:
     numpy_include_dir = get_numpy_include()
     HAVE_NUMPY = numpy_include_dir != '.'
     if not HAVE_NUMPY:
-        print("WARNING: numpy found, but numpy headers were not found!  Array support will not be enabled")
+        numpy_error_msg = "numpy found, but numpy headers were not found!"
 except ImportError:
     HAVE_NUMPY = False
-    print('WARNING: numpy not available!  Array support will not be enabled')
+    numpy_error_msg = "numpy not available!"
 
+if not HAVE_NUMPY:
+   if "GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY" in os.environ:
+      print("WARNING: " + numpy_error_msg + " Array support will not be enabled.")
+   else:
+      raise Exception(numpy_error_msg + " This error may happen if you build/install using setup.py directly, but should normally not happen if you install using pip install. If you still want to build the bindings without numpy support, define the GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY environment variable")
 
 class gdal_ext(build_ext):
 
@@ -369,8 +375,8 @@ readme = open('README.rst', encoding="utf-8").read()
 name = 'GDAL'
 author = "Frank Warmerdam"
 author_email = "warmerdam@pobox.com"
-maintainer = "Howard Butler"
-maintainer_email = "hobu.inc@gmail.com"
+maintainer = "GDAL contributors"
+maintainer_email = "gdal-dev@lists.osgeo.org"
 description = "GDAL: Geospatial Data Abstraction Library"
 license_type = "MIT"
 url = "http://www.gdal.org"
@@ -426,7 +432,7 @@ setup(
     packages=packages,
     package_dir=package_dir,
     url=url,
-    python_requires='>=3.6.0',
+    python_requires='>=3.8.0',
     ext_modules=ext_modules,
     scripts=glob(utils_package_root + '/scripts/*.py'),
     # This must *not* be conditionalized by HAVE_NUMPY, since this is for a "pip install gdal[numpy]" type of installation
