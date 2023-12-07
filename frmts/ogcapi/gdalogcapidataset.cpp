@@ -760,6 +760,7 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
     bool bItemsJson = false;
 
     CPLString osSelfURL;
+    bool bSelfJson = false;
 
     for (const auto &oLink : oLinks)
     {
@@ -830,9 +831,17 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
                 osItemsURL = BuildURL(oLink["href"].ToString());
             }
         }
-        else if (osRel == "self" && osType == "application/json")
+        else if (!bSelfJson && osRel == "self")
         {
-            osSelfURL = BuildURL(oLink["href"].ToString());
+            if (osType == "application/json")
+            {
+                bSelfJson = true;
+                osSelfURL = BuildURL(oLink["href"].ToString());
+            }
+            else if (osType.empty())
+            {
+                osSelfURL = BuildURL(oLink["href"].ToString());
+            }
         }
     }
 
