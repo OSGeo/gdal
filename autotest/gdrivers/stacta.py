@@ -297,11 +297,20 @@ def test_stacta_network():
 ###############################################################################
 
 
-def test_stacta_with_raster_extension_nominal():
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/stacta/test_with_raster_extension.json",
+        "data/stacta/test_with_raster_extension_no_eo_bands.json",
+    ],
+)
+def test_stacta_with_raster_extension_nominal(filename):
 
-    ds = gdal.Open("data/stacta/test_with_raster_extension.json")
+    ds = gdal.Open(filename)
     assert ds.RasterCount == 6
     band = ds.GetRasterBand(1)
+    if filename == "data/stacta/test_with_raster_extension.json":
+        assert band.GetMetadataItem("name") == "B1"
     assert band.DataType == gdal.GDT_Byte
     assert band.GetNoDataValue() == 1
     assert band.GetOffset() == 1.2
