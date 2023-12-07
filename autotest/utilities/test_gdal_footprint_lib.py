@@ -30,6 +30,7 @@
 ###############################################################################
 
 import collections
+import os
 import pathlib
 
 import ogrtest
@@ -52,6 +53,7 @@ def test_gdal_footprint_lib_basic():
     assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
     assert lyr.GetFeatureCount() == 1
     f = lyr.GetNextFeature()
+    assert f["location"] == "../gcore/data/byte.tif"
     ogrtest.check_feature_geometry(
         f,
         "MULTIPOLYGON (((440720 3751320,440720 3750120,441920 3750120,441920 3751320,440720 3751320)))",
@@ -722,3 +724,32 @@ def test_gdal_footprint_lib_srcNodata_and_ovr_mutually_exclusive():
         gdal.Footprint(
             "", "../gcore/data/byte.tif", format="Memory", srcNodata=0, ovr=0
         )
+
+
+###############################################################################
+# Test locationFieldName=None
+
+
+def test_gdal_footprint_lib_no_location():
+
+    out_ds = gdal.Footprint(
+        "", "../gcore/data/byte.tif", format="Memory", locationFieldName=None
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+
+###############################################################################
+# Test writeAbsolutePath=True
+
+
+def test_gdal_footprint_lib_writeAbsolutePath():
+
+    out_ds = gdal.Footprint(
+        "", "../gcore/data/byte.tif", format="Memory", writeAbsolutePath=True
+    )
+    assert out_ds is not None
+    lyr = out_ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert os.path.isabs(f["location"])
