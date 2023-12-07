@@ -1282,13 +1282,11 @@ GDALFootprintOptionsNew(char **papszArgv,
 
         else if (EQUAL(papszArgv[i], "-split_polys"))
         {
-            i++;
             psOptions->bSplitPolys = true;
         }
 
         else if (EQUAL(papszArgv[i], "-convex_hull"))
         {
-            i++;
             psOptions->bConvexHull = true;
         }
 
