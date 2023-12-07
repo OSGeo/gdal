@@ -912,7 +912,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            nExpectedBandCount = oEoBands.Size();
+            nExpectedBandCount = oRasterBands.Size();
             const struct
             {
                 const char *pszStacDataType;
