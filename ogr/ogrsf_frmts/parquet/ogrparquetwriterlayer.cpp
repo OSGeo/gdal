@@ -40,10 +40,11 @@
 /************************************************************************/
 
 OGRParquetWriterLayer::OGRParquetWriterLayer(
-    arrow::MemoryPool *poMemoryPool,
+    OGRParquetWriterDataset *poDataset, arrow::MemoryPool *poMemoryPool,
     const std::shared_ptr<arrow::io::OutputStream> &poOutputStream,
     const char *pszLayerName)
-    : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName)
+    : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName),
+      m_poDataset(poDataset)
 {
     m_bWriteFieldArrowExtensionName = CPLTestBool(
         CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_EXTENSION_NAME", "NO"));
@@ -567,6 +568,59 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
                     ->Append(kArrowSchemaKey, schema_base64);
             }
         }
+
+        // Put GDAL metadata into a gdal:metadata domain
+        CPLJSONObject oMultiMetadata;
+        bool bHasMultiMetadata = false;
+        auto &l_oMDMD = oMDMD.GetDomainList() && *(oMDMD.GetDomainList())
+                            ? oMDMD
+                            : m_poDataset->GetMultiDomainMetadata();
+        for (CSLConstList papszDomainIter = l_oMDMD.GetDomainList();
+             papszDomainIter && *papszDomainIter; ++papszDomainIter)
+        {
+            const char *pszDomain = *papszDomainIter;
+            CSLConstList papszMD = l_oMDMD.GetMetadata(pszDomain);
+            if (STARTS_WITH(pszDomain, "json:") && papszMD && papszMD[0])
+            {
+                CPLJSONDocument oDoc;
+                if (oDoc.LoadMemory(papszMD[0]))
+                {
+                    bHasMultiMetadata = true;
+                    oMultiMetadata.Add(pszDomain, oDoc.GetRoot());
+                    continue;
+                }
+            }
+            else if (STARTS_WITH(pszDomain, "xml:") && papszMD && papszMD[0])
+            {
+                bHasMultiMetadata = true;
+                oMultiMetadata.Add(pszDomain, papszMD[0]);
+                continue;
+            }
+            CPLJSONObject oMetadata;
+            bool bHasMetadata = false;
+            for (CSLConstList papszMDIter = papszMD;
+                 papszMDIter && *papszMDIter; ++papszMDIter)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(*papszMDIter, &pszKey);
+                if (pszKey && pszValue)
+                {
+                    bHasMetadata = true;
+                    bHasMultiMetadata = true;
+                    oMetadata.Add(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+            }
+            if (bHasMetadata)
+                oMultiMetadata.Add(pszDomain, oMetadata);
+        }
+        if (bHasMultiMetadata)
+        {
+            const_cast<arrow::KeyValueMetadata *>(m_poKeyValueMetadata.get())
+                ->Append(
+                    "gdal:metadata",
+                    oMultiMetadata.Format(CPLJSONObject::PrettyFormat::Plain));
+        }
     }
 }
 
@@ -818,3 +872,17 @@ bool OGRParquetWriterLayer::IsArrowSchemaSupported(
     return true;
 }
 #endif
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr OGRParquetWriterLayer::SetMetadata(char **papszMetadata,
+                                          const char *pszDomain)
+{
+    if (!pszDomain || !EQUAL(pszDomain, "SHAPEFILE"))
+    {
+        return OGRLayer::SetMetadata(papszMetadata, pszDomain);
+    }
+    return CE_None;
+}

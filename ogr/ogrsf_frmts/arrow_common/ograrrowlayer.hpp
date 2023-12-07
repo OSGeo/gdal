@@ -77,11 +77,11 @@ inline OGRArrowLayer::~OGRArrowLayer()
 }
 
 /************************************************************************/
-/*                         LoadGDALMetadata()                           */
+/*                         LoadGDALSchema()                             */
 /************************************************************************/
 
 inline std::map<std::string, std::unique_ptr<OGRFieldDefn>>
-OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
+OGRArrowLayer::LoadGDALSchema(const arrow::KeyValueMetadata *kv_metadata)
 {
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
         oMapFieldNameToGDALSchemaFieldDefn;
@@ -162,6 +162,62 @@ OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
         }
     }
     return oMapFieldNameToGDALSchemaFieldDefn;
+}
+
+/************************************************************************/
+/*                        LoadGDALMetadata()                            */
+/************************************************************************/
+
+inline void
+OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
+{
+    if (kv_metadata && kv_metadata->Contains("gdal:metadata"))
+    {
+        auto gdalMetadata = kv_metadata->Get("gdal:metadata");
+        if (gdalMetadata.ok())
+        {
+            CPLJSONDocument oDoc;
+            if (oDoc.LoadMemory(*gdalMetadata))
+            {
+                auto oRoot = oDoc.GetRoot();
+                for (auto oDomain : oRoot.GetChildren())
+                {
+                    if (STARTS_WITH(oDomain.GetName().c_str(), "json:") &&
+                        oDomain.GetType() == CPLJSONObject::Type::Object)
+                    {
+                        char **papszMD = nullptr;
+                        papszMD = CSLAddString(
+                            papszMD,
+                            oDomain.Format(CPLJSONObject::PrettyFormat::Plain)
+                                .c_str());
+                        SetMetadata(papszMD, oDomain.GetName().c_str());
+                        CSLDestroy(papszMD);
+                    }
+                    else if (STARTS_WITH(oDomain.GetName().c_str(), "xml:") &&
+                             oDomain.GetType() == CPLJSONObject::Type::String)
+                    {
+                        char **papszMD = nullptr;
+                        papszMD =
+                            CSLAddString(papszMD, oDomain.ToString().c_str());
+                        SetMetadata(papszMD, oDomain.GetName().c_str());
+                        CSLDestroy(papszMD);
+                    }
+                    else
+                    {
+                        for (auto oItem : oDomain.GetChildren())
+                        {
+                            if (oItem.GetType() == CPLJSONObject::Type::String)
+                            {
+                                SetMetadataItem(oItem.GetName().c_str(),
+                                                oItem.ToString().c_str(),
+                                                oDomain.GetName().c_str());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/

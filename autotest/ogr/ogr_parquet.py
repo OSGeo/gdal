@@ -3283,3 +3283,24 @@ def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
                 "dict",
             ) and "nan" not in str(src_f.GetField(j)):
                 assert src_f.GetField(j) == f.GetField(j), field_name
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_metadata(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_metadata.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.SetMetadataItem("foo", "bar")
+    lyr.SetMetadata(['{"foo":["bar","baz"]}'], "json:test")
+    lyr.SetMetadata(["<foo/>"], "xml:test")
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadata_Dict() == {"foo": "bar"}
+    assert lyr.GetMetadata_List("json:test")[0] == '{"foo":["bar","baz"]}'
+    assert lyr.GetMetadata_List("xml:test")[0] == "<foo/>"
