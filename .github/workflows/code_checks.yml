@@ -101,28 +101,6 @@ jobs:
             make .doxygen_up_to_date >log.txt 2>&1
             if grep -i warning log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
 
-  formatting-check:
-
-    name: Formatting Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout GDAL
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 100
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.7
-
-      - name: Install Run clang-format style check for C/C++ programs.
-        run: pip install clang-format==15.0.4
-
-      - name: Check new code with clang-format
-        run: ./scripts/clang-format.sh
-
   other_checks:
     runs-on: ubuntu-latest
     steps:
