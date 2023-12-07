@@ -1895,7 +1895,8 @@ def TranslateOptions(options=None, format=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
               overviewLevel = 'AUTO',
-              callback=None, callback_data=None):
+              callback=None, callback_data=None,
+              domainMetadataOptions = None):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
 
     Parameters
@@ -1968,6 +1969,8 @@ def TranslateOptions(options=None, format=None,
         callback method
     callback_data:
         user data for callback
+    domainMetadataOptions:
+        list or dict of domain-specific metadata options
     """
 
     # Only used for tests
@@ -2036,6 +2039,17 @@ def TranslateOptions(options=None, format=None,
             else:
                 for opt in metadataOptions:
                     new_options += ['-mo', opt]
+        if domainMetadataOptions is not None:
+            if isinstance(domainMetadataOptions, str):
+                new_options += ['-dmo', domainMetadataOptions]
+            elif isinstance(domainMetadataOptions, dict):
+                for d in domainMetadataOptions:
+                  things = domainMetadataOptions[d]
+                  for k, v in things.items():
+                    new_options += ['-dmo', f'{d}:{k}={v}']
+            else:
+                for opt in domainMetadataOptions:
+                    new_options += ['-dmo', opt]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
         if nogcp:
