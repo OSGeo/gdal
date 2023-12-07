@@ -1733,7 +1733,7 @@ def VectorInfoOptions(options=None,
         featureCount:
             whether to compute and display the feature count
         extent:
-            whether to compute and display the layer extent
+            whether to compute and display the layer extent. Can also be set to the string '3D' to request a 3D extent
         dumpFeatures:
             set to True to get the dump of all features
     """
@@ -1764,7 +1764,9 @@ def VectorInfoOptions(options=None,
             new_options += ['-wkt_format', wktFormat]
         if not featureCount:
             new_options += ['-nocount']
-        if not extent:
+        if extent in ('3d', '3D'):
+            new_options += ['-extent3D']
+        elif not extent:
             new_options += ['-noextent']
         if layers:
             new_options += ["dummy_dataset_name"]

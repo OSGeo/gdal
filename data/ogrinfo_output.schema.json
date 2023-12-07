@@ -212,6 +212,17 @@
             "maxItems": 4
           }
         },
+        "extent3D": {
+          "type": "array",
+          "items": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "minItems": 6,
+            "maxItems": 6
+          }
+        },
         "coordinateSystem": {
           "oneOf": [
             {

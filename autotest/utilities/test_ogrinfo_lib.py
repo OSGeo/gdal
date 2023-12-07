@@ -879,3 +879,66 @@ def test_ogrinfo_lib_time_zones():
     assert fields[3]["timezone"] == "UTC"
     assert fields[4]["timezone"] == "+01:00"
     assert fields[5]["timezone"] == "-01:00"
+
+
+###############################################################################
+# Test -extent3D
+
+
+@pytest.mark.require_driver("ESRI Shapefile")
+@pytest.mark.require_driver("GPKG")
+def test_ogrinfo_lib_extent3D():
+
+    ret = gdal.VectorInfo("../ogr/data/poly.shp", extent="3D")
+    assert (
+        "(478315.531250, 4762880.500000, none) - (481645.312500, 4765610.500000, none)"
+        in ret
+    )
+
+    ret = gdal.VectorInfo("../ogr/data/poly.shp", extent="3D", format="json")
+    assert ret["layers"][0]["geometryFields"][0]["extent"] == [
+        478315.53125,
+        4762880.5,
+        481645.3125,
+        4765610.5,
+    ]
+    assert ret["layers"][0]["geometryFields"][0]["extent3D"] == [
+        478315.53125,
+        4762880.5,
+        None,
+        481645.3125,
+        4765610.5,
+        None,
+    ]
+
+    gdaltest.validate_json(ret, "ogrinfo_output.schema.json")
+
+    ret = gdal.VectorInfo("../ogr/data/gpkg/3d_envelope.gpkg", extent="3D")
+    assert "(0.000000, 0.000000, 0.000000) - (3.000000, 3.000000, 3.000000)" in ret
+
+    ret = gdal.VectorInfo(
+        "../ogr/data/gpkg/3d_envelope.gpkg", extent="3D", format="json"
+    )
+    assert ret["layers"][0]["geometryFields"][0]["extent"] == [0.0, 0.0, 3.0, 3.0]
+    assert ret["layers"][0]["geometryFields"][0]["extent3D"] == [
+        0.0,
+        0.0,
+        0.0,
+        3.0,
+        3.0,
+        3.0,
+    ]
+
+    gdaltest.validate_json(ret, "ogrinfo_output.schema.json")
+
+    ret = gdal.VectorInfo(
+        "../ogr/data/gpkg/3d_envelope.gpkg", extent="3D", where="fid = 1", format="json"
+    )
+    assert ret["layers"][0]["geometryFields"][0]["extent3D"] == [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+    ]

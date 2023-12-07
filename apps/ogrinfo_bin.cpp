@@ -56,8 +56,9 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
             "               [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] "
             "[-oo <NAME>=<VALUE>]...\n"
             "               [-nomd] [-listmdd] [-mdd {<domain>|all}]...\n"
-            "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
-            "WKT1|WKT2|<other_values>]\n"
+            "               [-nocount] [-nogeomtype] "
+            "[[-noextent] | [-extent3D]]\n"
+            "               [-wkt_format WKT1|WKT2|<other_values>]\n"
             "               [-fielddomain <name>]\n"
             "               <datasource_name> [<layer> [<layer> ...]]\n");
 
