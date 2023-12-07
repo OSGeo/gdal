@@ -125,6 +125,7 @@ def test_http_3():
 # Verify /vsicurl (ftp)
 
 
+@pytest.mark.skip(reason="remove server does not work")
 def test_http_4():
     # Too unreliable
     gdaltest.skip_on_travis()
