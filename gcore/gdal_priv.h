@@ -1189,7 +1189,7 @@ class GDALAbstractBandBlockCache
 
     int m_nInitialDirtyBlocksInFlushCache = 0;
     int m_nLastTick = -1;
-    size_t m_bWriteDirtyBlocksDisabled = 0;
+    size_t m_nWriteDirtyBlocksDisabled = 0;
 
     void FreeDanglingBlocks();
     void UnreferenceBlockBase();
@@ -1208,11 +1208,11 @@ class GDALAbstractBandBlockCache
     void WaitCompletionPendingTasks();
     void EnableDirtyBlockWriting()
     {
-        --m_bWriteDirtyBlocksDisabled;
+        --m_nWriteDirtyBlocksDisabled;
     }
     void DisableDirtyBlockWriting()
     {
-        ++m_bWriteDirtyBlocksDisabled;
+        ++m_nWriteDirtyBlocksDisabled;
     }
     bool HasDirtyBlocks() const
     {

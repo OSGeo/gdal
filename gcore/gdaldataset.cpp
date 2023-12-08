@@ -623,14 +623,13 @@ CPLErr CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
 * This method is the same as the C function GDALDropCache().
 *
 * @return CE_None in case of success
+* @since 3.9
 */
 
 CPLErr GDALDataset::DropCache()
 
 {
     CPLErr eErr = CE_None;
-    // This sometimes happens if a dataset is destroyed before completely
-    // built.
 
     if (papoBands)
     {
@@ -656,6 +655,7 @@ CPLErr GDALDataset::DropCache()
 *
 * @see GDALDataset::DropCache().
 * @return CE_None in case of success
+* @since 3.9
 */
 
 CPLErr CPL_STDCALL GDALDropCache(GDALDatasetH hDS)

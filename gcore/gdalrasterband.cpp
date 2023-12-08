@@ -1153,6 +1153,7 @@ CPLErr CPL_STDCALL GDALFlushRasterCache(GDALRasterBandH hBand)
 * This method is the same as the C function GDALDropRasterCache().
 *
 * @return CE_None on success.
+* @since 3.9
 */
 
 CPLErr GDALRasterBand::DropCache()
@@ -1192,6 +1193,7 @@ CPLErr GDALRasterBand::DropCache()
 * \brief Drop raster data cache.
 *
 * @see GDALRasterBand::DropCache()
+* @since 3.9
 */
 
 CPLErr CPL_STDCALL GDALDropRasterCache(GDALRasterBandH hBand)
