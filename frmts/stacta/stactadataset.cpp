@@ -892,11 +892,16 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         poOpenInfo->papszOpenOptions, "SKIP_MISSING_METATILE",
         CPLGetConfigOption("GDAL_STACTA_SKIP_MISSING_METATILE", "NO")));
 
+    // STAC 1.1 uses bands instead of eo:bands and raster:bands
+    const auto oBands = oAssetTemplate.GetArray("bands");
+
     // Check if there are both eo:bands and raster:bands extension
     // If so, we don't need to fetch a prototype metatile to derive the
     // information we need (number of bands, data type and nodata value)
-    const auto oEoBands = oAssetTemplate.GetArray("eo:bands");
-    const auto oRasterBands = oAssetTemplate.GetArray("raster:bands");
+    const auto oEoBands =
+        oBands.IsValid() ? oBands : oAssetTemplate.GetArray("eo:bands");
+    const auto oRasterBands =
+        oBands.IsValid() ? oBands : oAssetTemplate.GetArray("raster:bands");
 
     std::vector<GDALDataType> aeDT;
     std::vector<double> adfNoData;
@@ -1180,8 +1185,33 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 for (const auto &oItem : oEoBands[i].GetChildren())
                 {
-                    poBand->GDALRasterBand::SetMetadataItem(
-                        oItem.GetName().c_str(), oItem.ToString().c_str());
+                    if (oBands.IsValid())
+                    {
+                        // STAC 1.1
+                        if (STARTS_WITH(oItem.GetName().c_str(), "eo:"))
+                        {
+                            poBand->GDALRasterBand::SetMetadataItem(
+                                oItem.GetName().c_str() + strlen("eo:"),
+                                oItem.ToString().c_str());
+                        }
+                        else if (oItem.GetName() != "data_type" &&
+                                 oItem.GetName() != "nodata" &&
+                                 oItem.GetName() != "unit" &&
+                                 oItem.GetName() != "raster:scale" &&
+                                 oItem.GetName() != "raster:offset" &&
+                                 oItem.GetName() != "raster:bits_per_sample")
+                        {
+                            poBand->GDALRasterBand::SetMetadataItem(
+                                oItem.GetName().c_str(),
+                                oItem.ToString().c_str());
+                        }
+                    }
+                    else
+                    {
+                        // STAC 1.0
+                        poBand->GDALRasterBand::SetMetadataItem(
+                            oItem.GetName().c_str(), oItem.ToString().c_str());
+                    }
                 }
             }
         }
@@ -1190,12 +1220,15 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
             oRasterBands[i].GetType() == CPLJSONObject::Type::Object)
         {
             poBand->m_osUnit = oRasterBands[i].GetString("unit");
-            const double dfScale = oRasterBands[i].GetDouble("scale");
+            const double dfScale = oRasterBands[i].GetDouble(
+                oBands.IsValid() ? "raster:scale" : "scale");
             if (dfScale != 0)
                 poBand->m_dfScale = dfScale;
-            poBand->m_dfOffset = oRasterBands[i].GetDouble("offset");
-            const int nBitsPerSample =
-                oRasterBands[i].GetInteger("bits_per_sample");
+            poBand->m_dfOffset = oRasterBands[i].GetDouble(
+                oBands.IsValid() ? "raster:offset" : "offset");
+            const int nBitsPerSample = oRasterBands[i].GetInteger(
+                oBands.IsValid() ? "raster:bits_per_sample"
+                                 : "bits_per_sample");
             if (((nBitsPerSample >= 1 && nBitsPerSample <= 7) &&
                  poBand->GetRasterDataType() == GDT_Byte) ||
                 ((nBitsPerSample >= 9 && nBitsPerSample <= 15) &&
