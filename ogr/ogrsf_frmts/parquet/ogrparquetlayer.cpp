@@ -448,7 +448,9 @@ void OGRParquetLayer::EstablishFeatureDefn()
 
     LoadGeoMetadata(kv_metadata);
     const auto oMapFieldNameToGDALSchemaFieldDefn =
-        LoadGDALMetadata(kv_metadata.get());
+        LoadGDALSchema(kv_metadata.get());
+
+    LoadGDALMetadata(kv_metadata.get());
 
     if (!m_poArrowReader->GetSchema(&m_poSchema).ok())
     {

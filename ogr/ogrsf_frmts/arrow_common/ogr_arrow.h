@@ -148,7 +148,9 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<Constraint> m_asAttributeFilterConstraints{};
 
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
-    LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
+    LoadGDALSchema(const arrow::KeyValueMetadata *kv_metadata);
+
+    void LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
 
     OGRArrowLayer(OGRArrowDataset *poDS, const char *pszLayerName);
 

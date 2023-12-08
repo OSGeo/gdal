@@ -87,7 +87,7 @@ OGRLayer *OGRParquetWriterDataset::ICreateLayer(
         return nullptr;
     }
     m_poLayer = std::make_unique<OGRParquetWriterLayer>(
-        m_poMemoryPool.get(), m_poOutputStream, pszName);
+        this, m_poMemoryPool.get(), m_poOutputStream, pszName);
     if (!m_poLayer->SetOptions(papszOptions, poSpatialRef, eGType))
     {
         m_poLayer.reset();
