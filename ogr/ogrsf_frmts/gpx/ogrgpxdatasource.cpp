@@ -170,7 +170,7 @@ OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
         return nullptr;
     }
     m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
-        GetDescription(), pszLayerName, gpxGeomType, this, true));
+        GetDescription(), pszLayerName, gpxGeomType, this, true, nullptr));
 
     return m_apoLayers.back().get();
 }
@@ -447,10 +447,11 @@ static void XMLCALL dataHandlerValidateCbk(void *pUserData, const char *data,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
+int OGRGPXDataSource::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (bUpdateIn)
+    const char *pszFilename = poOpenInfo->pszFilename;
+    if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "OGR/GPX driver does not support opening a file in "
@@ -567,15 +568,20 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
         }
 
         m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
-            GetDescription(), "waypoints", GPX_WPT, this, false));
+            GetDescription(), "waypoints", GPX_WPT, this, false,
+            poOpenInfo->papszOpenOptions));
         m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
-            GetDescription(), "routes", GPX_ROUTE, this, false));
+            GetDescription(), "routes", GPX_ROUTE, this, false,
+            poOpenInfo->papszOpenOptions));
         m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
-            GetDescription(), "tracks", GPX_TRACK, this, false));
+            GetDescription(), "tracks", GPX_TRACK, this, false,
+            poOpenInfo->papszOpenOptions));
         m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
-            GetDescription(), "route_points", GPX_ROUTE_POINT, this, false));
+            GetDescription(), "route_points", GPX_ROUTE_POINT, this, false,
+            poOpenInfo->papszOpenOptions));
         m_apoLayers.emplace_back(std::make_unique<OGRGPXLayer>(
-            GetDescription(), "track_points", GPX_TRACK_POINT, this, false));
+            GetDescription(), "track_points", GPX_TRACK_POINT, this, false,
+            poOpenInfo->papszOpenOptions));
     }
 
     return m_validity == GPX_VALIDITY_VALID;

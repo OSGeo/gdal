@@ -526,3 +526,49 @@ def test_ogr_gpx_creator(tmp_vsimem, options, expected):
     data = gdal.VSIFReadL(1, gdal.VSIStatL(filename).size, f)
     gdal.VSIFCloseL(f)
     assert expected in data
+
+
+###############################################################################
+# Test ELE_AS_25D open option
+
+
+def test_ogr_gpx_ELE_AS_25D():
+
+    ds = gdal.OpenEx(
+        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["ELE_AS_25D=YES"]
+    )
+    lyr = ds.GetLayerByName("waypoints")
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 0 2)"
+
+    lyr = ds.GetLayerByName("routes")
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING Z (6 5 7,9 8 10,12 11 13)"
+
+
+###############################################################################
+# Test SHORT_NAMES open option
+
+
+def test_ogr_gpx_SHORT_NAMES():
+
+    ds = gdal.OpenEx(
+        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["SHORT_NAMES=YES"]
+    )
+    lyr = ds.GetLayerByName("track_points")
+    f = lyr.GetNextFeature()
+    assert f["trksegid"] == 0
+
+
+###############################################################################
+# Test N_MAX_LINKS open option
+
+
+def test_ogr_gpx_N_MAX_LINKS():
+
+    ds = gdal.OpenEx(
+        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["N_MAX_LINKS=3"]
+    )
+    lyr = ds.GetLayerByName("track_points")
+    f = lyr.GetNextFeature()
+    assert f["link3_href"] is None
