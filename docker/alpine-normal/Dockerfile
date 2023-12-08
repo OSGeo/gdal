@@ -305,9 +305,7 @@ RUN apk add --no-cache \
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Install Pillow for -antialias option of gdal2tiles
-RUN apk add --no-cache py3-pip \
-    && pip3 install Pillow \
-    && apk del py3-pip
+RUN apk add --no-cache py3-pillow
 
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
