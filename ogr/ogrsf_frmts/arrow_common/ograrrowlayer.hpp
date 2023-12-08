@@ -3706,15 +3706,17 @@ inline OGRErr OGRArrowLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 inline OGRErr
 OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
-                                     OGREnvelope *psExtent)
+                                     OGREnvelope3D *psExtent)
 {
     const auto oBBox = oJSONDef.GetArray("bbox");
     if (oBBox.IsValid() && oBBox.Size() == 4)
     {
         psExtent->MinX = oBBox[0].ToDouble();
         psExtent->MinY = oBBox[1].ToDouble();
+        psExtent->MinZ = std::numeric_limits<double>::infinity();
         psExtent->MaxX = oBBox[2].ToDouble();
         psExtent->MaxY = oBBox[3].ToDouble();
+        psExtent->MaxZ = -std::numeric_limits<double>::infinity();
         if (psExtent->MinX <= psExtent->MaxX)
             return OGRERR_NONE;
     }
@@ -3722,10 +3724,10 @@ OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
     {
         psExtent->MinX = oBBox[0].ToDouble();
         psExtent->MinY = oBBox[1].ToDouble();
-        // MinZ skipped
+        psExtent->MinZ = oBBox[2].ToDouble();
         psExtent->MaxX = oBBox[3].ToDouble();
         psExtent->MaxY = oBBox[4].ToDouble();
-        // MaxZ skipped
+        psExtent->MaxZ = oBBox[5].ToDouble();
         if (psExtent->MinX <= psExtent->MaxX)
             return OGRERR_NONE;
     }
@@ -3797,8 +3799,10 @@ inline bool OGRArrowLayer::FastGetExtent(int iGeomField,
             ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")))
     {
         const auto &oJSONDef = oIter->second;
-        if (GetExtentFromMetadata(oJSONDef, psExtent) == OGRERR_NONE)
+        OGREnvelope3D sEnvelope3D;
+        if (GetExtentFromMetadata(oJSONDef, &sEnvelope3D) == OGRERR_NONE)
         {
+            *psExtent = sEnvelope3D;
             return true;
         }
     }
@@ -4018,6 +4022,55 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
     }
 
     return GetExtentInternal(iGeomField, psExtent, bForce);
+}
+
+/************************************************************************/
+/*                        FastGetExtent3D()                             */
+/************************************************************************/
+
+inline bool OGRArrowLayer::FastGetExtent3D(int iGeomField,
+                                           OGREnvelope3D *psExtent) const
+{
+    const char *pszGeomFieldName =
+        m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetNameRef();
+    const auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
+    if (oIter != m_oMapGeometryColumns.end() &&
+        CPLTestBool(CPLGetConfigOption(
+            ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")))
+    {
+        const auto &oJSONDef = oIter->second;
+        if (GetExtentFromMetadata(oJSONDef, psExtent) == OGRERR_NONE &&
+            psExtent->Is3D())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                           GetExtent3D()                              */
+/************************************************************************/
+
+inline OGRErr OGRArrowLayer::GetExtent3D(int iGeomField,
+                                         OGREnvelope3D *psExtent, int bForce)
+{
+    if (iGeomField < 0 || iGeomField >= m_poFeatureDefn->GetGeomFieldCount())
+    {
+        if (iGeomField != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    if (FastGetExtent3D(iGeomField, psExtent))
+    {
+        return OGRERR_NONE;
+    }
+
+    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
 }
 
 /************************************************************************/
@@ -4656,6 +4709,17 @@ inline int OGRArrowLayer::TestCapability(const char *pszCap)
         for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
         {
             if (!FastGetExtent(i, &sEnvelope))
+                return false;
+        }
+        return true;
+    }
+
+    if (EQUAL(pszCap, OLCFastGetExtent3D))
+    {
+        OGREnvelope3D sEnvelope;
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
+        {
+            if (!FastGetExtent3D(i, &sEnvelope))
                 return false;
         }
         return true;
