@@ -304,9 +304,11 @@ static uint32_t OGRWKBReadUInt32AtOffset(const uint8_t *data,
 /*                         ReadWKBPointSequence()                       */
 /************************************************************************/
 
+template <bool INCLUDE_Z, typename EnvelopeType>
 static bool ReadWKBPointSequence(const uint8_t *data, size_t size,
                                  OGRwkbByteOrder eByteOrder, int nDim,
-                                 size_t &iOffset, OGREnvelope &sEnvelope)
+                                 bool bHasZ, size_t &iOffset,
+                                 EnvelopeType &sEnvelope)
 {
     const uint32_t nPoints =
         OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -314,20 +316,39 @@ static bool ReadWKBPointSequence(const uint8_t *data, size_t size,
         return false;
     double dfX = 0;
     double dfY = 0;
+    [[maybe_unused]] double dfZ = 0;
     for (uint32_t j = 0; j < nPoints; j++)
     {
         memcpy(&dfX, data + iOffset, sizeof(double));
         memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
+        if constexpr (INCLUDE_Z)
+        {
+            if (bHasZ)
+                memcpy(&dfZ, data + iOffset + 2 * sizeof(double),
+                       sizeof(double));
+        }
         iOffset += nDim * sizeof(double);
         if (OGR_SWAP(eByteOrder))
         {
             CPL_SWAP64PTR(&dfX);
             CPL_SWAP64PTR(&dfY);
+            if constexpr (INCLUDE_Z)
+            {
+                CPL_SWAP64PTR(&dfZ);
+            }
         }
         sEnvelope.MinX = std::min(sEnvelope.MinX, dfX);
         sEnvelope.MinY = std::min(sEnvelope.MinY, dfY);
         sEnvelope.MaxX = std::max(sEnvelope.MaxX, dfX);
         sEnvelope.MaxY = std::max(sEnvelope.MaxY, dfY);
+        if constexpr (INCLUDE_Z)
+        {
+            if (bHasZ)
+            {
+                sEnvelope.MinZ = std::min(sEnvelope.MinZ, dfZ);
+                sEnvelope.MaxZ = std::max(sEnvelope.MaxZ, dfZ);
+            }
+        }
     }
     return true;
 }
@@ -336,9 +357,11 @@ static bool ReadWKBPointSequence(const uint8_t *data, size_t size,
 /*                         ReadWKBRingSequence()                        */
 /************************************************************************/
 
+template <bool INCLUDE_Z, typename EnvelopeType>
 static bool ReadWKBRingSequence(const uint8_t *data, size_t size,
                                 OGRwkbByteOrder eByteOrder, int nDim,
-                                size_t &iOffset, OGREnvelope &sEnvelope)
+                                bool bHasZ, size_t &iOffset,
+                                EnvelopeType &sEnvelope)
 {
     const uint32_t nRings = OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
     if (nRings > (size - iOffset) / sizeof(uint32_t))
@@ -347,8 +370,8 @@ static bool ReadWKBRingSequence(const uint8_t *data, size_t size,
     {
         if (iOffset + sizeof(uint32_t) > size)
             return false;
-        if (!ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                  sEnvelope))
+        if (!ReadWKBPointSequence<INCLUDE_Z>(data, size, eByteOrder, nDim,
+                                             bHasZ, iOffset, sEnvelope))
             return false;
     }
     return true;
@@ -361,8 +384,9 @@ static bool ReadWKBRingSequence(const uint8_t *data, size_t size,
 constexpr uint32_t WKB_PREFIX_SIZE = 1 + sizeof(uint32_t);
 constexpr uint32_t MIN_WKB_SIZE = WKB_PREFIX_SIZE + sizeof(uint32_t);
 
+template <bool INCLUDE_Z, typename EnvelopeType>
 static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
-                                 size_t &iOffset, OGREnvelope &sEnvelope,
+                                 size_t &iOffset, EnvelopeType &sEnvelope,
                                  int nRec)
 {
     if (size - iOffset < MIN_WKB_SIZE)
@@ -376,8 +400,8 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
     OGRReadWKBGeometryType(data + iOffset, wkbVariantIso, &eGeometryType);
     iOffset += 5;
     const auto eFlatType = wkbFlatten(eGeometryType);
-    const int nDim = 2 + (OGR_GT_HasZ(eGeometryType) ? 1 : 0) +
-                     (OGR_GT_HasM(eGeometryType) ? 1 : 0);
+    const bool bHasZ = CPL_TO_BOOL(OGR_GT_HasZ(eGeometryType));
+    const int nDim = 2 + (bHasZ ? 1 : 0) + (OGR_GT_HasM(eGeometryType) ? 1 : 0);
 
     if (eFlatType == wkbPoint)
     {
@@ -385,40 +409,67 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
             return false;
         double dfX = 0;
         double dfY = 0;
+        [[maybe_unused]] double dfZ = 0;
         memcpy(&dfX, data + iOffset, sizeof(double));
         memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
+        if constexpr (INCLUDE_Z)
+        {
+            if (bHasZ)
+                memcpy(&dfZ, data + iOffset + 2 * sizeof(double),
+                       sizeof(double));
+        }
         iOffset += nDim * sizeof(double);
         if (OGR_SWAP(eByteOrder))
         {
             CPL_SWAP64PTR(&dfX);
             CPL_SWAP64PTR(&dfY);
+            if constexpr (INCLUDE_Z)
+            {
+                CPL_SWAP64PTR(&dfZ);
+            }
         }
-        sEnvelope.MinX = dfX;
-        sEnvelope.MinY = dfY;
-        sEnvelope.MaxX = dfX;
-        sEnvelope.MaxY = dfY;
+        if (std::isnan(dfX))
+        {
+            // Point empty
+            sEnvelope = EnvelopeType();
+        }
+        else
+        {
+            sEnvelope.MinX = dfX;
+            sEnvelope.MinY = dfY;
+            sEnvelope.MaxX = dfX;
+            sEnvelope.MaxY = dfY;
+            if constexpr (INCLUDE_Z)
+            {
+                if (bHasZ)
+                {
+                    sEnvelope.MinZ = dfZ;
+                    sEnvelope.MaxZ = dfZ;
+                }
+            }
+        }
         return true;
     }
 
     if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
     {
-        sEnvelope = OGREnvelope();
+        sEnvelope = EnvelopeType();
 
-        return ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                    sEnvelope);
+        return ReadWKBPointSequence<INCLUDE_Z>(data, size, eByteOrder, nDim,
+                                               bHasZ, iOffset, sEnvelope);
     }
 
-    if (eFlatType == wkbPolygon)
+    if (eFlatType == wkbPolygon || eFlatType == wkbTriangle)
     {
-        sEnvelope = OGREnvelope();
+        sEnvelope = EnvelopeType();
 
-        return ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
-                                   sEnvelope);
+        return ReadWKBRingSequence<INCLUDE_Z>(data, size, eByteOrder, nDim,
+                                              bHasZ, iOffset, sEnvelope);
     }
 
     if (eFlatType == wkbMultiPoint)
     {
-        sEnvelope = OGREnvelope();
+        sEnvelope = EnvelopeType();
 
         uint32_t nParts = OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
         if (nParts >
@@ -426,28 +477,47 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
             return false;
         double dfX = 0;
         double dfY = 0;
+        [[maybe_unused]] double dfZ = 0;
         for (uint32_t k = 0; k < nParts; k++)
         {
             iOffset += WKB_PREFIX_SIZE;
             memcpy(&dfX, data + iOffset, sizeof(double));
             memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
+            if constexpr (INCLUDE_Z)
+            {
+                if (bHasZ)
+                    memcpy(&dfZ, data + iOffset + 2 * sizeof(double),
+                           sizeof(double));
+            }
             iOffset += nDim * sizeof(double);
             if (OGR_SWAP(eByteOrder))
             {
                 CPL_SWAP64PTR(&dfX);
                 CPL_SWAP64PTR(&dfY);
+                if constexpr (INCLUDE_Z)
+                {
+                    CPL_SWAP64PTR(&dfZ);
+                }
             }
             sEnvelope.MinX = std::min(sEnvelope.MinX, dfX);
             sEnvelope.MinY = std::min(sEnvelope.MinY, dfY);
             sEnvelope.MaxX = std::max(sEnvelope.MaxX, dfX);
             sEnvelope.MaxY = std::max(sEnvelope.MaxY, dfY);
+            if constexpr (INCLUDE_Z)
+            {
+                if (bHasZ)
+                {
+                    sEnvelope.MinZ = std::min(sEnvelope.MinZ, dfZ);
+                    sEnvelope.MaxZ = std::max(sEnvelope.MaxZ, dfZ);
+                }
+            }
         }
         return true;
     }
 
     if (eFlatType == wkbMultiLineString)
     {
-        sEnvelope = OGREnvelope();
+        sEnvelope = EnvelopeType();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -458,8 +528,8 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
             if (iOffset + MIN_WKB_SIZE > size)
                 return false;
             iOffset += WKB_PREFIX_SIZE;
-            if (!ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                      sEnvelope))
+            if (!ReadWKBPointSequence<INCLUDE_Z>(data, size, eByteOrder, nDim,
+                                                 bHasZ, iOffset, sEnvelope))
                 return false;
         }
         return true;
@@ -467,7 +537,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiPolygon)
     {
-        sEnvelope = OGREnvelope();
+        sEnvelope = EnvelopeType();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -479,8 +549,8 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
                 return false;
             CPLAssert(data[iOffset] == eByteOrder);
             iOffset += WKB_PREFIX_SIZE;
-            if (!ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
-                                     sEnvelope))
+            if (!ReadWKBRingSequence<INCLUDE_Z>(data, size, eByteOrder, nDim,
+                                                bHasZ, iOffset, sEnvelope))
                 return false;
         }
         return true;
@@ -488,21 +558,22 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbGeometryCollection || eFlatType == wkbCompoundCurve ||
         eFlatType == wkbCurvePolygon || eFlatType == wkbMultiCurve ||
-        eFlatType == wkbMultiSurface)
+        eFlatType == wkbMultiSurface || eFlatType == wkbPolyhedralSurface ||
+        eFlatType == wkbTIN)
     {
         if (nRec == 128)
             return false;
-        sEnvelope = OGREnvelope();
+        sEnvelope = EnvelopeType();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
         if (nParts > (size - iOffset) / MIN_WKB_SIZE)
             return false;
-        OGREnvelope sEnvelopeSubGeom;
+        EnvelopeType sEnvelopeSubGeom;
         for (uint32_t k = 0; k < nParts; k++)
         {
-            if (!OGRWKBGetBoundingBox(data, size, iOffset, sEnvelopeSubGeom,
-                                      nRec + 1))
+            if (!OGRWKBGetBoundingBox<INCLUDE_Z>(data, size, iOffset,
+                                                 sEnvelopeSubGeom, nRec + 1))
                 return false;
             sEnvelope.Merge(sEnvelopeSubGeom);
         }
@@ -520,7 +591,19 @@ bool OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
                           OGREnvelope &sEnvelope)
 {
     size_t iOffset = 0;
-    return OGRWKBGetBoundingBox(pabyWkb, nWKBSize, iOffset, sEnvelope, 0);
+    return OGRWKBGetBoundingBox<false>(pabyWkb, nWKBSize, iOffset, sEnvelope,
+                                       0);
+}
+
+/************************************************************************/
+/*                        OGRWKBGetBoundingBox()                        */
+/************************************************************************/
+
+bool OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
+                          OGREnvelope3D &sEnvelope)
+{
+    size_t iOffset = 0;
+    return OGRWKBGetBoundingBox<true>(pabyWkb, nWKBSize, iOffset, sEnvelope, 0);
 }
 
 /************************************************************************/

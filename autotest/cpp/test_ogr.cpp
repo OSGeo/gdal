@@ -1960,6 +1960,36 @@ TEST_F(test_ogr, OGREnvelope)
     }
 }
 
+// Test OGREnvelope3D
+TEST_F(test_ogr, OGREnvelope3D)
+{
+    OGREnvelope3D s1;
+    EXPECT_TRUE(!s1.IsInit());
+    {
+        OGREnvelope3D s2(s1);
+        EXPECT_TRUE(s1 == s2);
+        EXPECT_TRUE(!(s1 != s2));
+    }
+
+    s1.MinX = 0;
+    s1.MinY = 1;
+    s1.MaxX = 2;
+    s1.MaxY = 3;
+    EXPECT_TRUE(s1.IsInit());
+    EXPECT_FALSE(s1.Is3D());
+    s1.MinZ = 4;
+    s1.MaxZ = 5;
+    EXPECT_TRUE(s1.Is3D());
+    {
+        OGREnvelope3D s2(s1);
+        EXPECT_TRUE(s1 == s2);
+        EXPECT_TRUE(!(s1 != s2));
+        s2.MinX += 1;
+        EXPECT_TRUE(s1 != s2);
+        EXPECT_TRUE(!(s1 == s2));
+    }
+}
+
 // Test OGRStyleMgr::InitStyleString() with a style name
 // (https://github.com/OSGeo/gdal/issues/5555)
 TEST_F(test_ogr, InitStyleString_with_style_name)
