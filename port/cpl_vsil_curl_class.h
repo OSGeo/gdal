@@ -87,6 +87,7 @@ class FileProp
   public:
     unsigned int nGenerationAuthParameters = 0;
     ExistStatus eExists = EXIST_UNKNOWN;
+    int nHTTPCode = 0;
     vsi_l_offset fileSize = 0;
     time_t mTime = 0;
     time_t nExpireTimestampLocal = 0;
