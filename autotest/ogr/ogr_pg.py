@@ -5854,8 +5854,6 @@ def test_extent3d(pg_ds):
     lyr.CreateFeature(f)
 
     assert lyr.GetFeatureCount() == 2
-
-    # Test GetExtent3D()
     extent = lyr.GetExtent3D()
     assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
 
@@ -5869,7 +5867,22 @@ def test_extent3d(pg_ds):
     lyr.CreateFeature(f)
 
     assert lyr.GetFeatureCount() == 2
-
-    # Test GetExtent3D()
     extent = lyr.GetExtent3D()
     assert extent == (0.0, 2.0, 1.0, 3.0, float("inf"), float("-inf"))
+
+    # Create a geography layer
+    lyr = pg_ds.CreateLayer(
+        "test_extent3d_geography",
+        geom_type=ogr.wkbPoint25D,
+        options=["GEOM_TYPE=geography"],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
