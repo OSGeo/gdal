@@ -10,6 +10,7 @@ best of our knowledge and not guaranteed. Users should check by themselves.
 # Alpine based
 
 Alpine version:
+* 3.19 for GDAL 3.9
 * 3.18 for GDAL 3.8
 * 3.17 for GDAL 3.7
 * 3.16 for GDAL 3.6
