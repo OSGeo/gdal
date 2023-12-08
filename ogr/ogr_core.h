@@ -234,7 +234,7 @@ extern "C++"
         /** Returns TRUE if MinZ and MaxZ are both valid numbers. */
         bool Is3D() const
         {
-            return !std::isnan(MinZ) && !std::isnan(MaxZ);
+            return std::isfinite(MinZ) && std::isfinite(MaxZ);
         }
 
         /** Minimum Z value */
