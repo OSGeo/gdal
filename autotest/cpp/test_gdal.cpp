@@ -3498,7 +3498,7 @@ TEST_F(test_gdal, drop_cache)
     {
         GDALDriverManager* gdalDriverManager = GetGDALDriverManager();
         GDALDriver* enviDriver = !gdalDriverManager ? nullptr : gdalDriverManager->GetDriverByName("ENVI");
-        char* enviOptions[] = {
+        const char* enviOptions[] = {
             "SUFFIX=ADD",
             "INTERLEAVE=BIL",
             nullptr
