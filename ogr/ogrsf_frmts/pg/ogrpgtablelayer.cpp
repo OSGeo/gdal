@@ -2138,7 +2138,8 @@ int OGRPGTableLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCTransactions))
         return TRUE;
 
-    else if (EQUAL(pszCap, OLCFastGetExtent))
+    else if (EQUAL(pszCap, OLCFastGetExtent) ||
+             EQUAL(pszCap, OLCFastGetExtent3D))
     {
         OGRPGGeomFieldDefn *poGeomFieldDefn = nullptr;
         if (poFeatureDefn->GetGeomFieldCount() > 0)

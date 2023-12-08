@@ -5835,3 +5835,54 @@ def test_ogr_pg_long_identifiers(pg_ds):
     got_lyr = pg_ds.GetLayerByName(long_name)
     assert got_lyr
     assert got_lyr.GetName() == short_name
+
+
+###############################################################################
+# Test extent 3D
+
+
+@only_with_postgis
+def test_extent3d(pg_ds):
+
+    # Create a 3D layer
+    lyr = pg_ds.CreateLayer("test_extent3d", geom_type=ogr.wkbPoint25D)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
+
+    # Create a 2D layer
+    lyr = pg_ds.CreateLayer("test_extent2d", geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, float("inf"), float("-inf"))
+
+    # Create a geography layer
+    lyr = pg_ds.CreateLayer(
+        "test_extent3d_geography",
+        geom_type=ogr.wkbPoint25D,
+        options=["GEOM_TYPE=geography"],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
