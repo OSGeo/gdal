@@ -302,6 +302,7 @@ def test_stacta_network():
     [
         "data/stacta/test_with_raster_extension.json",
         "data/stacta/test_with_raster_extension_no_eo_bands.json",
+        "data/stacta/test_stac_1_1.json",
     ],
 )
 def test_stacta_with_raster_extension_nominal(filename):
@@ -309,8 +310,13 @@ def test_stacta_with_raster_extension_nominal(filename):
     ds = gdal.Open(filename)
     assert ds.RasterCount == 6
     band = ds.GetRasterBand(1)
-    if filename == "data/stacta/test_with_raster_extension.json":
+    if (
+        filename == "data/stacta/test_with_raster_extension.json"
+        or filename == "data/stacta/test_stac_1_1.json"
+    ):
         assert band.GetMetadataItem("name") == "B1"
+    if filename == "data/stacta/test_stac_1_1.json":
+        assert band.GetMetadata_Dict() == {"common_name": "nir", "name": "B1"}
     assert band.DataType == gdal.GDT_Byte
     assert band.GetNoDataValue() == 1
     assert band.GetOffset() == 1.2
