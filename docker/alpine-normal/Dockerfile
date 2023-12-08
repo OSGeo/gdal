@@ -293,7 +293,7 @@ RUN apk add --no-cache \
         qhull \
         unixodbc \
         libpq \
-        apache-arrow \
+        libarrow libparquet libarrow_dataset \
         libaec \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
