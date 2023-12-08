@@ -28,6 +28,7 @@
 
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
+#include "ogr_wkb.h"
 #include "sqlite/ogrsqlitebase.h"
 #include <limits>
 
@@ -552,33 +553,45 @@ bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
         sqlite3_result_null(pContext);
         return false;
     }
-    else if ((!psHeader->bExtentHasXY && bNeedAnyExtent) ||
-             (!psHeader->bExtentHasZ && bNeedExtent3D))
+    else if (!psHeader->bExtentHasXY && bNeedExtent && !bNeedExtent3D)
     {
-        OGRGeometry *poGeom = GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
-        if (poGeom == nullptr || poGeom->IsEmpty())
+        if (static_cast<size_t>(nBLOBLen) >= psHeader->nHeaderLen + 5)
         {
-            sqlite3_result_null(pContext);
-            delete poGeom;
-            return false;
+            OGREnvelope sEnvelope;
+            if (OGRWKBGetBoundingBox(pabyBLOB + psHeader->nHeaderLen,
+                                     static_cast<size_t>(nBLOBLen) -
+                                         psHeader->nHeaderLen,
+                                     sEnvelope))
+            {
+                psHeader->MinX = sEnvelope.MinX;
+                psHeader->MaxX = sEnvelope.MaxX;
+                psHeader->MinY = sEnvelope.MinY;
+                psHeader->MaxY = sEnvelope.MaxY;
+                return true;
+            }
         }
-        OGREnvelope3D sEnvelope3D;
-        poGeom->getEnvelope(&sEnvelope3D);
-        psHeader->MinX = sEnvelope3D.MinX;
-        psHeader->MaxX = sEnvelope3D.MaxX;
-        psHeader->MinY = sEnvelope3D.MinY;
-        psHeader->MaxY = sEnvelope3D.MaxY;
-        if (poGeom->Is3D())
+        return false;
+    }
+    else if (!psHeader->bExtentHasZ && bNeedExtent3D)
+    {
+        if (static_cast<size_t>(nBLOBLen) >= psHeader->nHeaderLen + 5)
         {
-            psHeader->MinZ = sEnvelope3D.MinZ;
-            psHeader->MaxZ = sEnvelope3D.MaxZ;
+            OGREnvelope3D sEnvelope3D;
+            if (OGRWKBGetBoundingBox(pabyBLOB + psHeader->nHeaderLen,
+                                     static_cast<size_t>(nBLOBLen) -
+                                         psHeader->nHeaderLen,
+                                     sEnvelope3D))
+            {
+                psHeader->MinX = sEnvelope3D.MinX;
+                psHeader->MaxX = sEnvelope3D.MaxX;
+                psHeader->MinY = sEnvelope3D.MinY;
+                psHeader->MaxY = sEnvelope3D.MaxY;
+                psHeader->MinZ = sEnvelope3D.MinZ;
+                psHeader->MaxZ = sEnvelope3D.MaxZ;
+                return true;
+            }
         }
-        else
-        {
-            psHeader->MinZ = std::numeric_limits<double>::infinity();
-            psHeader->MaxZ = -std::numeric_limits<double>::infinity();
-        }
-        delete poGeom;
+        return false;
     }
     return true;
 }
