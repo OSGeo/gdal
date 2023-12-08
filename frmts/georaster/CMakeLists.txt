@@ -17,6 +17,9 @@ endif ()
 if (GDAL_ENABLE_DRIVER_JPEG AND GDAL_USE_JPEG_INTERNAL)
   gdal_add_vendored_lib(gdal_GEOR libjpeg)
   target_compile_definitions(gdal_GEOR PRIVATE -DJPEG_SUPPORTED)
+  target_sources(gdal_GEOR PRIVATE georaster_jpeg_vsidataio.cpp)
+  # Need a separate compilation unit given that libjpeg's boolean typedef would conflict with OCI one
+  set_property(SOURCE georaster_jpeg_vsidataio.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 endif ()
 
 # Include libjpeg first so that if we want to use jpeg-turbo on homebrew
