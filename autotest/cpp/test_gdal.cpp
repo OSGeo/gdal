@@ -3497,7 +3497,9 @@ TEST_F(test_gdal, drop_cache)
     CPLErrorReset();
     {
         GDALDriverManager* gdalDriverManager = GetGDALDriverManager();
-        GDALDriver* enviDriver = !gdalDriverManager ? nullptr : gdalDriverManager->GetDriverByName("ENVI");
+        GDALDriver* enviDriver = !gdalDriverManager ?
+            nullptr :
+            gdalDriverManager->GetDriverByName("ENVI");
         const char* enviOptions[] = {
             "SUFFIX=ADD",
             "INTERLEAVE=BIL",
@@ -3506,10 +3508,14 @@ TEST_F(test_gdal, drop_cache)
 
         const char* filename = GCORE_DATA_DIR "test_drop_cache.bil";
 
-        GDALDataset* poDS1 = !enviDriver ? nullptr : enviDriver->Create(filename, 1, 1, 1, GDALDataType::GDT_Float32, enviOptions);
+        GDALDataset* poDS1 = !enviDriver ?
+            nullptr :
+            enviDriver->Create(filename, 1, 1, 1, GDALDataType::GDT_Float32, enviOptions);
         if (poDS1)
         {
-            GDALRasterBand* rasterBand = !poDS1 ? nullptr : poDS1->GetRasterBand(1);
+            GDALRasterBand* rasterBand = !poDS1 ?
+                nullptr :
+                poDS1->GetRasterBand(1);
             if (rasterBand)
                 rasterBand->Fill(1);
             poDS1->DropCache();
@@ -3517,11 +3523,14 @@ TEST_F(test_gdal, drop_cache)
             poDS1 = nullptr;
         }
 
-        GDALDataset* poDS2 = GDALDataset::Open(filename, GDAL_OF_SHARED, nullptr, nullptr);
+        GDALDataset* poDS2 =
+            GDALDataset::Open(filename, GDAL_OF_SHARED, nullptr, nullptr);
 
         if (poDS2)
         {
-            GDALRasterBand* rasterBand = !poDS2 ? nullptr : poDS2->GetRasterBand(1);
+            GDALRasterBand* rasterBand = !poDS2 ?
+                nullptr :
+                poDS2->GetRasterBand(1);
             EXPECT_EQ(GDALChecksumImage(rasterBand, 0, 0, 1, 1), 0);
             poDS2->MarkSuppressOnClose();
             GDALClose(poDS2);
