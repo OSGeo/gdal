@@ -85,6 +85,40 @@ available:
       Determines the number of *<link>* elements can be taken into account by
       feature.
 
+Open options
+------------
+
+.. versionadded:: 3.9
+
+The following open options are available:
+
+-  .. oo:: SHORT_NAMES
+      :choices: YES, NO
+      :default: FALSE
+
+      If ``YES``, the following fields will be renamed:
+
+      - "track_seg_id" to "trksegid"
+      - "track_seg_point_id" to  "trksegptid"
+      - "route_point_id" to "rteptid"
+
+      But note that
+      no particular processing will be done for any extension field names.
+
+-  .. oo:: ELE_AS_25D
+      :choices: YES, NO
+      :default: NO
+
+      If ``YES``, the elevation
+      element will be used to set the Z coordinates of waypoints, route points
+      and track points.
+
+-  .. oo:: N_MAX_LINKS
+      :default: 2
+
+      Determines the number of *<link>* elements can be taken into account by
+      feature.
+
 Encoding issues
 ---------------
 

@@ -70,23 +70,29 @@ constexpr int FLD_ROUTE_NAME = 2;
 
 OGRGPXLayer::OGRGPXLayer(const char *pszFilename, const char *pszLayerName,
                          GPXGeometryType gpxGeomTypeIn,
-                         OGRGPXDataSource *poDSIn, bool bWriteModeIn)
+                         OGRGPXDataSource *poDSIn, bool bWriteModeIn,
+                         CSLConstList papszOpenOptions)
     : m_poDS(poDSIn), m_gpxGeomType(gpxGeomTypeIn), m_bWriteMode(bWriteModeIn)
 {
 #ifdef HAVE_EXPAT
     const char *gpxVersion = m_poDS->GetVersion();
 #endif
 
-    m_nMaxLinks = atoi(CPLGetConfigOption("GPX_N_MAX_LINKS", "2"));
+    m_nMaxLinks =
+        atoi(CSLFetchNameValueDef(papszOpenOptions, "N_MAX_LINKS",
+                                  CPLGetConfigOption("GPX_N_MAX_LINKS", "2")));
     if (m_nMaxLinks < 0)
         m_nMaxLinks = 2;
     if (m_nMaxLinks > 100)
         m_nMaxLinks = 100;
 
-    m_bEleAs25D = CPLTestBool(CPLGetConfigOption("GPX_ELE_AS_25D", "NO"));
+    m_bEleAs25D = CPLTestBool(
+        CSLFetchNameValueDef(papszOpenOptions, "ELE_AS_25D",
+                             CPLGetConfigOption("GPX_ELE_AS_25D", "NO")));
 
-    const bool bShortNames =
-        CPLTestBool(CPLGetConfigOption("GPX_SHORT_NAMES", "NO"));
+    const bool bShortNames = CPLTestBool(
+        CSLFetchNameValueDef(papszOpenOptions, "SHORT_NAMES",
+                             CPLGetConfigOption("GPX_SHORT_NAMES", "NO")));
 
     m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
     SetDescription(m_poFeatureDefn->GetName());
@@ -859,7 +865,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                   (m_gpxGeomType == GPX_TRACK &&
                    m_depthLevel == m_interestingDepthLevel + 3)))
         {
-            m_poFeature->GetGeometryRef()->setCoordinateDimension(3);
+            m_lineString->setCoordinateDimension(3);
 
             if (!m_osSubElementValue.empty())
             {
