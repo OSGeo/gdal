@@ -7724,7 +7724,10 @@ static void OGRGeoPackageSTMinX(sqlite3_context *pContext, int argc,
 {
     GPkgHeader sHeader;
     if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
         return;
+    }
     sqlite3_result_double(pContext, sHeader.MinX);
 }
 
@@ -7737,7 +7740,10 @@ static void OGRGeoPackageSTMinY(sqlite3_context *pContext, int argc,
 {
     GPkgHeader sHeader;
     if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
         return;
+    }
     sqlite3_result_double(pContext, sHeader.MinY);
 }
 
@@ -7750,7 +7756,10 @@ static void OGRGeoPackageSTMaxX(sqlite3_context *pContext, int argc,
 {
     GPkgHeader sHeader;
     if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
         return;
+    }
     sqlite3_result_double(pContext, sHeader.MaxX);
 }
 
@@ -7763,7 +7772,10 @@ static void OGRGeoPackageSTMaxY(sqlite3_context *pContext, int argc,
 {
     GPkgHeader sHeader;
     if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, false))
+    {
+        sqlite3_result_null(pContext);
         return;
+    }
     sqlite3_result_double(pContext, sHeader.MaxY);
 }
 
@@ -7776,7 +7788,10 @@ static void OGRGeoPackageSTIsEmpty(sqlite3_context *pContext, int argc,
 {
     GPkgHeader sHeader;
     if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
+    {
+        sqlite3_result_null(pContext);
         return;
+    }
     sqlite3_result_int(pContext, sHeader.bEmpty);
 }
 
@@ -7933,7 +7948,10 @@ static void OGRGeoPackageSTSRID(sqlite3_context *pContext, int argc,
 {
     GPkgHeader sHeader;
     if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
+    {
+        sqlite3_result_null(pContext);
         return;
+    }
     sqlite3_result_int(pContext, sHeader.iSrsId);
 }
 

@@ -8704,34 +8704,32 @@ static void OGR_GPKG_GeometryExtent3DAggregate_Step(sqlite3_context *pContext,
     if (pabyBLOB != nullptr)
     {
         GPkgHeader sHeader;
-        const int nBLOBLen = sqlite3_value_bytes(argv[0]);
-        if (GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, &sHeader) == OGRERR_NONE &&
-            static_cast<size_t>(nBLOBLen) >= sHeader.nHeaderLen + 5)
+        if (OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true, true))
         {
-            if (!OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true,
-                                        true))
+            OGREnvelope3D extent3D;
+            extent3D.MinX = sHeader.MinX;
+            extent3D.MaxX = sHeader.MaxX;
+            extent3D.MinY = sHeader.MinY;
+            extent3D.MaxY = sHeader.MaxY;
+            extent3D.MinZ = sHeader.MinZ;
+            extent3D.MaxZ = sHeader.MaxZ;
+            poContext->m_oExtent3D.Merge(extent3D);
+        }
+        else if (!sHeader.bEmpty)
+        {
+            // Try also spatialite geometry blobs
+            const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+            OGRGeometry *poGeom = nullptr;
+            if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
+                                                  &poGeom) == OGRERR_NONE &&
+                poGeom && !poGeom->IsEmpty())
             {
-                OGRGeometry *poGeom =
-                    GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr);
-                if (poGeom == nullptr || poGeom->IsEmpty())
-                {
-                    delete poGeom;
-                    return;
-                }
                 OGREnvelope3D extent3D;
                 poGeom->getEnvelope(&extent3D);
                 poContext->m_oExtent3D.Merge(extent3D);
-                return;
             }
+            delete poGeom;
         }
-        OGREnvelope3D extent3D;
-        extent3D.MinX = sHeader.MinX;
-        extent3D.MaxX = sHeader.MaxX;
-        extent3D.MinY = sHeader.MinY;
-        extent3D.MaxY = sHeader.MaxY;
-        extent3D.MinZ = sHeader.MinZ;
-        extent3D.MaxZ = sHeader.MaxZ;
-        poContext->m_oExtent3D.Merge(extent3D);
     }
 }
 
