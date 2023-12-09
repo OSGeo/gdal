@@ -710,6 +710,16 @@ def test_ogr_gpkg_9(gpkg_ds):
     extent = lyr.GetExtent()
     assert extent == (5.0, 10.0, 5.0, 10.0), "got bad extent"
 
+    extent = lyr.GetExtent3D()
+    assert extent == (
+        5.0,
+        10.0,
+        5.0,
+        10.0,
+        float("inf"),
+        float("-inf"),
+    ), "got bad extent"
+
     fcount = lyr.GetFeatureCount()
     assert fcount == 10, "got bad featurecount"
 
@@ -9842,3 +9852,18 @@ def test_ogr_gpkg_extent3d_envelope_variants(file_name):
     lyr = ds.GetLayerByName("foo")
     ext3d = lyr.GetExtent3D()
     assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
+
+    lyr.SetAttributeFilter("1 = 1")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
+
+    lyr.SetAttributeFilter("1 = 0")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (
+        float("inf"),
+        float("-inf"),
+        float("inf"),
+        float("-inf"),
+        float("inf"),
+        float("-inf"),
+    )
