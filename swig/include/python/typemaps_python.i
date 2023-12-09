@@ -2331,6 +2331,7 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
   int nPointCount = *($1);
   if (nPointCount == 0)
   {
+    Py_INCREF(Py_None);
     $result = Py_None;
   }
   else
