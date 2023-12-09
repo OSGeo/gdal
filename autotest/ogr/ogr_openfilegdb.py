@@ -2654,6 +2654,59 @@ def test_ogr_openfilegdb_read_new_datetime_types():
 
 
 ###############################################################################
+# Test GetExtent() and GetExtent3D()
+
+
+def test_ogr_openfilegdb_get_extent_getextent3d():
+
+    ds = ogr.Open("data/filegdb/testopenfilegdb.gdb.zip")
+
+    lyr = ds.GetLayerByName("point")
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    assert lyr.GetExtent() == (1.0, 1.0, 2.0, 2.0)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.GetExtent3D() == (1.0, 1.0, 2.0, 2.0, float("inf"), float("-inf"))
+
+    lyr = ds.GetLayerByName("point25D")
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    assert lyr.GetExtent() == (1.0, 1.0, 2.0, 2.0)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.GetExtent3D() == (1.0, 1.0, 2.0, 2.0, 3.0, 3.0)
+    lyr.SetAttributeFilter("1=1")
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D) == 0
+    assert lyr.GetExtent3D() == pytest.approx((1.0, 1.0, 2.0, 2.0, 3.0, 3.0))
+
+    lyr = ds.GetLayerByName("none")
+    lyr.TestCapability(ogr.OLCFastGetExtent)
+    assert lyr.GetExtent(can_return_null=True) is None
+    lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.GetExtent3D(can_return_null=True) is None
+
+    ds = ogr.Open("data/filegdb/arcgis_pro_32_types.gdb")
+    lyr = ds.GetLayerByName("date_types")
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    assert lyr.GetExtent() == pytest.approx(
+        (
+            -109.26723474299996,
+            -104.69136945899999,
+            40.407842636000055,
+            41.69941751400006,
+        )
+    )
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D) == 0
+    assert lyr.GetExtent3D() == pytest.approx(
+        (
+            -109.26723474299996,
+            -104.69136945899999,
+            40.407842636000055,
+            41.69941751400006,
+            0.0,
+            0.0,
+        )
+    )
+
+
+###############################################################################
 # Cleanup
 
 

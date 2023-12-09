@@ -267,6 +267,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                       int bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
