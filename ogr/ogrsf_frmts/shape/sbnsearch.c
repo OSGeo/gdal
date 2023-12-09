@@ -159,7 +159,8 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     else
         memcpy(&(hSBN->sHooks), psHooks, sizeof(SAHooks));
 
-    hSBN->fpSBN = hSBN->sHooks.FOpen(pszSBNFilename, "rb");
+    hSBN->fpSBN =
+        hSBN->sHooks.FOpen(pszSBNFilename, "rb", hSBN->sHooks.pvUserData);
     if (hSBN->fpSBN == SHPLIB_NULLPTR)
     {
         free(hSBN);
@@ -626,7 +627,7 @@ static bool SBNSearchDiskInternal(SearchStruct *psSearch, int nDepth,
 
                 if (!psNode->bBBoxInit)
                 {
-/* clang-format off */
+                    /* clang-format off */
 #ifdef sanity_checks
                     /* -------------------------------------------------------------------- */
                     /*      Those tests only check that the shape bounding box in the bin   */

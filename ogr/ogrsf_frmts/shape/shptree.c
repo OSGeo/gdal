@@ -733,7 +733,8 @@ SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename,
     else
         memcpy(&(hDiskTree->sHooks), psHooks, sizeof(SAHooks));
 
-    hDiskTree->fpQIX = hDiskTree->sHooks.FOpen(pszQIXFilename, "rb");
+    hDiskTree->fpQIX = hDiskTree->sHooks.FOpen(pszQIXFilename, "rb",
+                                               hDiskTree->sHooks.pvUserData);
     if (hDiskTree->fpQIX == SHPLIB_NULLPTR)
     {
         free(hDiskTree);
@@ -1125,7 +1126,7 @@ int SHPWriteTreeLL(SHPTree *tree, const char *filename, const SAHooks *psHooks)
     /* -------------------------------------------------------------------- */
     /*      Open the output file.                                           */
     /* -------------------------------------------------------------------- */
-    fp = psHooks->FOpen(filename, "wb");
+    fp = psHooks->FOpen(filename, "wb", psHooks->pvUserData);
     if (fp == SHPLIB_NULLPTR)
     {
         return FALSE;

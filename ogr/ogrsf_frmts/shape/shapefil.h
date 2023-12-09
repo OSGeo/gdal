@@ -115,7 +115,8 @@ extern "C"
 
     typedef struct
     {
-        SAFile (*FOpen)(const char *filename, const char *access);
+        SAFile (*FOpen)(const char *filename, const char *access,
+                        void *pvUserData);
         SAOffset (*FRead)(void *p, SAOffset size, SAOffset nmemb, SAFile file);
         SAOffset (*FWrite)(const void *p, SAOffset size, SAOffset nmemb,
                            SAFile file);
@@ -123,10 +124,11 @@ extern "C"
         SAOffset (*FTell)(SAFile file);
         int (*FFlush)(SAFile file);
         int (*FClose)(SAFile file);
-        int (*Remove)(const char *filename);
+        int (*Remove)(const char *filename, void *pvUserData);
 
         void (*Error)(const char *message);
         double (*Atof)(const char *str);
+        void *pvUserData;
     } SAHooks;
 
     void SHPAPI_CALL SASetupDefaultHooks(SAHooks *psHooks);

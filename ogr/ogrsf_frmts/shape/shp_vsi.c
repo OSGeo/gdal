@@ -87,9 +87,11 @@ static SAFile VSI_SHP_OpenInternal(const char *pszFilename,
 /*                            VSI_SHP_Open()                            */
 /************************************************************************/
 
-static SAFile VSI_SHP_Open(const char *pszFilename, const char *pszAccess)
+static SAFile VSI_SHP_Open(const char *pszFilename, const char *pszAccess,
+                           void *userData)
 
 {
+    (void)userData;
     return VSI_SHP_OpenInternal(pszFilename, pszAccess, FALSE);
 }
 
@@ -98,9 +100,10 @@ static SAFile VSI_SHP_Open(const char *pszFilename, const char *pszAccess)
 /************************************************************************/
 
 static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
-                                   const char *pszAccess)
+                                   const char *pszAccess, void *userData)
 
 {
+    (void)userData;
     return VSI_SHP_OpenInternal(pszFilename, pszAccess, TRUE);
 }
 
@@ -231,9 +234,10 @@ static void VSI_SHP_Error(const char *message)
 /*                           VSI_SHP_Remove()                           */
 /************************************************************************/
 
-static int VSI_SHP_Remove(const char *pszFilename)
+static int VSI_SHP_Remove(const char *pszFilename, void *userData)
 
 {
+    (void)userData;
     return VSIUnlink(pszFilename);
 }
 
@@ -255,6 +259,7 @@ void SASetupDefaultHooks(SAHooks *psHooks)
 
     psHooks->Error = VSI_SHP_Error;
     psHooks->Atof = CPLAtof;
+    psHooks->pvUserData = NULL;
 }
 
 /************************************************************************/
@@ -262,13 +267,14 @@ void SASetupDefaultHooks(SAHooks *psHooks)
 /************************************************************************/
 
 static const SAHooks sOGRHook = {
-    VSI_SHP_Open,  VSI_SHP_Read,  VSI_SHP_Write,  VSI_SHP_Seek,  VSI_SHP_Tell,
-    VSI_SHP_Flush, VSI_SHP_Close, VSI_SHP_Remove, VSI_SHP_Error, CPLAtof};
+    VSI_SHP_Open,  VSI_SHP_Read,  VSI_SHP_Write, VSI_SHP_Seek,
+    VSI_SHP_Tell,  VSI_SHP_Flush, VSI_SHP_Close, VSI_SHP_Remove,
+    VSI_SHP_Error, CPLAtof,       NULL};
 
 static const SAHooks sOGRHook2GBLimit = {
     VSI_SHP_Open2GBLimit, VSI_SHP_Read,  VSI_SHP_Write, VSI_SHP_Seek,
     VSI_SHP_Tell,         VSI_SHP_Flush, VSI_SHP_Close, VSI_SHP_Remove,
-    VSI_SHP_Error,        CPLAtof};
+    VSI_SHP_Error,        CPLAtof,       NULL};
 
 const SAHooks *VSI_SHP_GetHook(int b2GBLimit)
 {

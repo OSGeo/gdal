@@ -338,11 +338,13 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
     char *pszFullname = STATIC_CAST(char *, malloc(nLenWithoutExtension + 5));
     memcpy(pszFullname, pszLayer, nLenWithoutExtension);
     memcpy(pszFullname + nLenWithoutExtension, ".shp", 5);
-    psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess);
+    psSHP->fpSHP =
+        psSHP->sHooks.FOpen(pszFullname, pszAccess, psSHP->sHooks.pvUserData);
     if (psSHP->fpSHP == SHPLIB_NULLPTR)
     {
         memcpy(pszFullname + nLenWithoutExtension, ".SHP", 5);
-        psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess);
+        psSHP->fpSHP = psSHP->sHooks.FOpen(pszFullname, pszAccess,
+                                           psSHP->sHooks.pvUserData);
     }
 
     if (psSHP->fpSHP == SHPLIB_NULLPTR)
@@ -363,11 +365,13 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
     }
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
-    psSHP->fpSHX = psSHP->sHooks.FOpen(pszFullname, pszAccess);
+    psSHP->fpSHX =
+        psSHP->sHooks.FOpen(pszFullname, pszAccess, psSHP->sHooks.pvUserData);
     if (psSHP->fpSHX == SHPLIB_NULLPTR)
     {
         memcpy(pszFullname + nLenWithoutExtension, ".SHX", 5);
-        psSHP->fpSHX = psSHP->sHooks.FOpen(pszFullname, pszAccess);
+        psSHP->fpSHX = psSHP->sHooks.FOpen(pszFullname, pszAccess,
+                                           psSHP->sHooks.pvUserData);
     }
 
     if (psSHP->fpSHX == SHPLIB_NULLPTR)
@@ -708,11 +712,11 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
     char *pszFullname = STATIC_CAST(char *, malloc(nLenWithoutExtension + 5));
     memcpy(pszFullname, pszLayer, nLenWithoutExtension);
     memcpy(pszFullname + nLenWithoutExtension, ".shp", 5);
-    SAFile fpSHP = psHooks->FOpen(pszFullname, pszAccess);
+    SAFile fpSHP = psHooks->FOpen(pszFullname, pszAccess, psHooks->pvUserData);
     if (fpSHP == SHPLIB_NULLPTR)
     {
         memcpy(pszFullname + nLenWithoutExtension, ".SHP", 5);
-        fpSHP = psHooks->FOpen(pszFullname, pszAccess);
+        fpSHP = psHooks->FOpen(pszFullname, pszAccess, psHooks->pvUserData);
     }
 
     if (fpSHP == SHPLIB_NULLPTR)
@@ -756,7 +760,8 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
     const char pszSHXAccess[] = "w+b";
-    SAFile fpSHX = psHooks->FOpen(pszFullname, pszSHXAccess);
+    SAFile fpSHX =
+        psHooks->FOpen(pszFullname, pszSHXAccess, psHooks->pvUserData);
     if (fpSHX == SHPLIB_NULLPTR)
     {
         size_t nMessageLen = strlen(pszFullname) * 2 + 256;
@@ -1037,7 +1042,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     char *pszFullname = STATIC_CAST(char *, malloc(nLenWithoutExtension + 5));
     memcpy(pszFullname, pszLayer, nLenWithoutExtension);
     memcpy(pszFullname + nLenWithoutExtension, ".shp", 5);
-    SAFile fpSHP = psHooks->FOpen(pszFullname, "w+b");
+    SAFile fpSHP = psHooks->FOpen(pszFullname, "w+b", psHooks->pvUserData);
     if (fpSHP == SHPLIB_NULLPTR)
     {
         char szErrorMsg[200];
@@ -1050,7 +1055,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     }
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
-    SAFile fpSHX = psHooks->FOpen(pszFullname, "w+b");
+    SAFile fpSHX = psHooks->FOpen(pszFullname, "w+b", psHooks->pvUserData);
     if (fpSHX == SHPLIB_NULLPTR)
     {
         char szErrorMsg[200];
