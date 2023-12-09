@@ -3491,7 +3491,7 @@ TEST_F(test_gdal, open_shared_open_options)
     }
 }
 
-// Test GDAL_OF_SHARED flag and open options
+// Test DropCache() to check that no data is saved on disk
 TEST_F(test_gdal, drop_cache)
 {
     CPLErrorReset();
