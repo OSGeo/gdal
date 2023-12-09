@@ -102,6 +102,7 @@ jobs:
             id: coverage
             travis_branch: ubuntu_2004
             container: ubuntu_20.04
+            before_test_script: services.sh
             build_script: build.sh
             test_script: test.sh
 
