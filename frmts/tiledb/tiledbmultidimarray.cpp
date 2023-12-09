@@ -1272,9 +1272,15 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
         }
 
         std::vector<GUInt64> anBlockSize;
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         if (!FillBlockSize(aoDimensions, oDataType, anBlockSize, papszOptions))
             return nullptr;
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto poSchema =
             std::make_unique<tiledb::ArraySchema>(ctx, TILEDB_DENSE);
         poSchema->set_tile_order(TILEDB_ROW_MAJOR);

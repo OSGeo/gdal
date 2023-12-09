@@ -1,30 +1,75 @@
 FROM alpine:edge
 
 RUN apk add \
-    linux-headers gnu-libiconv-dev \
-    g++ make ccache cmake \
-    proj-dev proj proj-util \
-    curl-dev tiff-dev \
-    zlib-dev zstd-dev xz-dev snappy-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
-    py3-numpy-dev python3-dev py3-setuptools py3-numpy py3-pip swig \
-    poppler-dev postgresql-dev \
-    openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
-    netcdf-dev libaec-dev hdf5-dev freexl-dev \
-    lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
-    libarchive-dev \
-    kealib-dev libjxl-dev \
-    json-c-dev giflib-dev \
-    libspatialite-dev librasterlite2-dev \
-    mariadb-connector-c-dev \
-    pcre2-dev \
-    qhull-dev \
-    unixodbc-dev \
-    libpq-dev \
     apache-arrow-dev \
-    py3-pyarrow py3-pyarrow-pyc \
+    armadillo-dev \
+    basisu-dev \
+    blosc-dev \
+    brunsli-dev \
+    ccache \
+    cfitsio-dev \
+    cmake \
+    curl-dev \
+    expat-dev \
+    freexl-dev \
+    gcc \
+    g++ \
+    geos-dev \
+    giflib-dev \
+    gnu-libiconv-dev \
+    hdf5-dev \
+    json-c-dev \
+    kealib-dev \
+    libaec-dev \
+    libarchive-dev \
+    libdeflate-dev \
+    libgeotiff-dev \
+    libheif-dev \
+    libjpeg-turbo-dev \
+    libjxl-dev \
+    libkml-dev \
+    libpng-dev \
+    libpq-dev \
+    librasterlite2-dev \
+    libspatialite-dev \
+    libtirpc-dev \
+    libwebp-dev \
     libxml2-dev \
-    podofo-dev
+    libxslt-dev \
+    linux-headers \
+    lz4-dev \
+    make \
+    mariadb-connector-c-dev \
+    netcdf-dev \
+    odbc-cpp-wrapper-dev \
+    ogdi-dev \
+    openexr-dev \
+    openjpeg-dev \
+    openssl-dev \
+    pcre2-dev \
+    podofo-dev \
+    poppler-dev \
+    proj-dev \
+    proj-util \
+    py3-pyarrow \
+    py3-pyarrow-pyc \
+    py3-numpy \
+    py3-numpy-dev \
+    py3-pip \
+    py3-setuptools \
+    python3-dev \
+    qhull-dev \
+    sfcgal-dev \
+    snappy-dev \
+    sqlite-dev \
+    swig \
+    tiledb-dev \
+    tiff-dev \
+    unixodbc-dev \
+    xerces-c-dev \
+    xz-dev \
+    zlib-dev \
+    zstd-dev
 
 COPY requirements.txt /tmp/
 RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt

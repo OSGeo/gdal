@@ -12,7 +12,7 @@ FROM alpine:${ALPINE_VERSION} as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
-RUN apk add --no-cache  wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache  wget curl unzip cmake make libtool autoconf automake pkgconfig gcc g++ sqlite sqlite-dev tiff-dev
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
@@ -24,27 +24,70 @@ RUN \
 # For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
-    cmake linux-headers gnu-libiconv-dev \
-    curl-dev tiff-dev \
-    zlib-dev zstd-dev xz-dev snappy-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
-    py3-numpy-dev python3-dev py3-setuptools py3-numpy swig \
-    ${POPPLER_DEV} postgresql-dev \
-    openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
-    netcdf-dev hdf5-dev freexl-dev \
-    lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
-    libarchive-dev \
-    kealib-dev libjxl-dev \
-    json-c-dev giflib-dev \
-    mariadb-connector-c-dev \
-    pcre2-dev \
-    qhull-dev \
-    unixodbc-dev \
-    libpq-dev \
     apache-arrow-dev \
-    # For spatialite (and GDAL)
-    libxml2-dev \
+    armadillo-dev \
+    basisu-dev \
+    blosc-dev \
+    brunsli-dev \
+    ccache \
+    cfitsio-dev \
+    cmake \
+    curl-dev \
+    expat-dev \
+    freexl-dev \
+    geos-dev \
+    giflib-dev \
+    gnu-libiconv-dev \
+    hdf5-dev \
+    json-c-dev \
+    kealib-dev \
+    lerc-dev \
     libaec-dev \
+    libarchive-dev \
+    libdeflate-dev \
+    libgeotiff-dev \
+    libheif-dev \
+    libjpeg-turbo-dev \
+    libjxl-dev \
+    libkml-dev \
+    libpng-dev \
+    libpq-dev \
+    librasterlite2-dev \
+    libspatialite-dev \
+    libtirpc-dev \
+    libwebp-dev \
+    libxml2-dev \
+    linux-headers \
+    lz4-dev \
+    make \
+    mariadb-connector-c-dev \
+    netcdf-dev \
+    odbc-cpp-wrapper-dev \
+    ogdi-dev \
+    openexr-dev \
+    openjpeg-dev \
+    openssl-dev \
+    pcre2-dev \
+    poppler-dev \
+    proj-dev \
+    proj-util \
+    py3-numpy \
+    py3-numpy-dev \
+    py3-pip \
+    py3-setuptools \
+    python3-dev \
+    qhull-dev \
+    sfcgal-dev \
+    snappy-dev \
+    sqlite-dev \
+    swig \
+    tiledb-dev \
+    tiff-dev \
+    unixodbc-dev \
+    xerces-c-dev \
+    xz-dev \
+    zlib-dev \
+    zstd-dev \
     && mkdir -p /build_thirdparty/usr/lib
 
 # Build hdf4
@@ -65,24 +108,6 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     && cd .. \
     && rm -rf hdf4 \
     && apk del byacc flex portablexdr-dev \
-    ); fi
-
-# Build openjpeg
-# ARG OPENJPEG_VERSION=2.3.1
-RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
-    wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
-    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
-    && rm -f v${OPENJPEG_VERSION}.tar.gz \
-    && cd openjpeg-${OPENJPEG_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-    && make -j$(nproc) \
-    && make install \
-    && rm -f /usr/lib/libopenjp2.so.2.3.0 \
-    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf openjpeg-${OPENJPEG_VERSION} \
     ); fi
 
 RUN apk add --no-cache rsync ccache
@@ -127,28 +152,6 @@ RUN mkdir proj \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
-
-# Build freexl
-ARG FREEXL_VERSION=2.0.0
-RUN if test "${FREEXL_VERSION}" != ""; then ( \
-    wget -q https://www.gaia-gis.it/gaia-sins/freexl-${FREEXL_VERSION}.tar.gz \
-    && tar xzf freexl-${FREEXL_VERSION}.tar.gz \
-    && rm -f freexl-${FREEXL_VERSION}.tar.gz \
-    && apk add --no-cache minizip-dev \
-    && cd freexl-${FREEXL_VERSION} \
-    && wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -O config.guess \
-    && chmod +x config.guess \
-    && wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -O config.sub \
-    && chmod +x config.sub \
-    && ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && rm -f /usr/lib/libfreexl.* \
-    && make install \
-    && cp -P /usr/lib/libfreexl.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf freexl-${FREEXL_VERSION} \
-    ); fi
 
 # Build spatialite
 ARG SPATIALITE_VERSION=5.1.0
@@ -273,30 +276,72 @@ FROM alpine:${ALPINE_VERSION} as runner
 
 RUN date
 
-ARG POPPLER=poppler
 RUN apk add --no-cache \
-        libstdc++ \
-        gnu-libiconv \
-        sqlite-libs \
-        libcurl tiff \
-        zlib zstd-libs xz-libs snappy \
-        libjpeg-turbo libpng libwebp expat libkml \
+        armadillo \
+        basisu \
+        blosc \
+        brotli-libs \
+        brunsli-libs \
+        cfitsio \
+        expat \
+        freexl \
+        geos \
+        giflib \
+        gnu-libiconv-libs \
+        hdf5 \
         icu-libs \
-        python3 py3-numpy ${POPPLER} pcre2 libpq libxml2 portablexdr openjpeg \
-        netcdf hdf5 freexl \
-        openexr-libopenexr imath libheif xerces-c geos cfitsio minizip \
-        lz4-libs blosc libdeflate brotli-libs liburiparser \
-        libarchive \
-        kealib libjxl \
-        json-c giflib \
-        mariadb-connector-c \
-        qhull \
-        unixodbc \
-        libpq \
-        libarrow libparquet libarrow_dataset \
+        imath \
+        json-c \
+        kealib \
+        lerc \
         libaec \
-    # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
-    # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
+        libarchive \
+        libarrow \
+        libarrow_dataset \
+        libcrypto3 \
+        libcurl \
+        libdeflate \
+        libexpat \
+        libgcc \
+        libheif \
+        libjpeg-turbo \
+        libjxl \
+        libkml \
+        libparquet \
+        libpng \
+        libpq \
+        librasterlite2 \
+        libspatialite \
+        libstdc++ \
+        liburiparser \
+        libwebp \
+        libxml2 \
+        lz4-libs \
+        mariadb-connector-c \
+        netcdf \
+        minizip \
+        musl \
+        odbc-cpp-wrapper \
+        ogdi \
+        openexr-libopenexr \
+        openjpeg \
+        pcre2 \
+        poppler \
+        portablexdr \
+        proj \
+        python3 \
+        py3-numpy \
+        qhull \
+        sfcgal \
+        snappy \
+        sqlite-libs \
+        tiff \
+        tiledb \
+        unixodbc \
+        xerces-c \
+        xz-libs \
+        zlib \
+        zstd-libs \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # libpoppler-cpp.so is not used by GDAL. Only libpoppler.so*
