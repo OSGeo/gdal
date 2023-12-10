@@ -180,7 +180,7 @@ OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
             if (oDoc.LoadMemory(*gdalMetadata))
             {
                 auto oRoot = oDoc.GetRoot();
-                for (auto oDomain : oRoot.GetChildren())
+                for (const auto &oDomain : oRoot.GetChildren())
                 {
                     if (STARTS_WITH(oDomain.GetName().c_str(), "json:") &&
                         oDomain.GetType() == CPLJSONObject::Type::Object)
@@ -204,7 +204,7 @@ OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
                     }
                     else
                     {
-                        for (auto oItem : oDomain.GetChildren())
+                        for (const auto &oItem : oDomain.GetChildren())
                         {
                             if (oItem.GetType() == CPLJSONObject::Type::String)
                             {
