@@ -13,6 +13,8 @@
     which determines the order in which they are successively probed when opening
     a dataset. Most of the time, this order does not matter, but in some situations,
     several drivers may recognize the same file. The ``-if`` option of some utilities
-    can be specified to ask to use a particular driver to open the dataset.
+    can be specified to restrict opening the dataset with a subset of drivers (generally one).
+    Note that it does not force those drivers to open the dataset. In particular,
+    some drivers have requirements on file extensions.
     Alternatively, the :config:`GDAL_SKIP` configuration option can also be used
     to exclude one or several drivers.
