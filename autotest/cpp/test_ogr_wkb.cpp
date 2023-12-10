@@ -121,13 +121,15 @@ TEST_P(OGRWKBGetEnvelopeFixture, test)
     const double dfExpectedMaxY = std::get<4>(GetParam());
 
     OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom);
+    ASSERT_EQ(OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom),
+              OGRERR_NONE);
     ASSERT_TRUE(poGeom != nullptr);
     std::vector<GByte> abyWkb(poGeom->WkbSize());
     poGeom->exportToWkb(wkbNDR, abyWkb.data(), wkbVariantIso);
     delete poGeom;
     OGREnvelope sEnvelope;
-    OGRWKBGetBoundingBox(abyWkb.data(), abyWkb.size(), sEnvelope);
+    EXPECT_EQ(OGRWKBGetBoundingBox(abyWkb.data(), abyWkb.size(), sEnvelope),
+              true);
     EXPECT_EQ(sEnvelope.MinX, dfExpectedMinX);
     EXPECT_EQ(sEnvelope.MinY, dfExpectedMinY);
     EXPECT_EQ(sEnvelope.MaxX, dfExpectedMaxX);
@@ -206,13 +208,15 @@ TEST_P(OGRWKBGetEnvelope3DFixture, test)
     const double dfExpectedMaxZ = std::get<6>(GetParam());
 
     OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom);
+    ASSERT_EQ(OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom),
+              OGRERR_NONE);
     ASSERT_TRUE(poGeom != nullptr);
     std::vector<GByte> abyWkb(poGeom->WkbSize());
     poGeom->exportToWkb(wkbNDR, abyWkb.data(), wkbVariantIso);
     delete poGeom;
     OGREnvelope3D sEnvelope;
-    OGRWKBGetBoundingBox(abyWkb.data(), abyWkb.size(), sEnvelope);
+    EXPECT_EQ(OGRWKBGetBoundingBox(abyWkb.data(), abyWkb.size(), sEnvelope),
+              true);
     EXPECT_EQ(sEnvelope.MinX, dfExpectedMinX);
     EXPECT_EQ(sEnvelope.MinY, dfExpectedMinY);
     EXPECT_EQ(sEnvelope.MinZ, dfExpectedMinZ);
@@ -272,7 +276,8 @@ TEST_P(OGRWKBFixupCounterClockWiseExternalRingFixture, test)
     const char *pszExpected = std::get<1>(GetParam());
 
     OGRGeometry *poGeom = nullptr;
-    OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom);
+    ASSERT_EQ(OGRGeometryFactory::createFromWkt(pszInput, nullptr, &poGeom),
+              OGRERR_NONE);
     ASSERT_TRUE(poGeom != nullptr);
     std::vector<GByte> abyWkb(poGeom->WkbSize());
     poGeom->exportToWkb(wkbNDR, abyWkb.data());
