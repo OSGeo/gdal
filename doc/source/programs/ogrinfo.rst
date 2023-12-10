@@ -65,6 +65,8 @@ edit data.
     Enable random layer reading mode, i.e. iterate over features in the order
     they are found in the dataset, and not layer per layer. This can be
     significantly faster for some formats (for example OSM, GMLAS).
+    -rl cannot be used with -sql.
+
 
     .. versionadded:: 2.2
 
