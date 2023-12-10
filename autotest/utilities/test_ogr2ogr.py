@@ -2241,3 +2241,31 @@ def test_ogr2ogr_check_identity_transformation(ogr2ogr_path, tmp_path, x, y, sri
     feat = ds.GetLayer(0).GetNextFeature()
 
     assert feat.GetGeometryRef().GetX() == x and feat.GetGeometryRef().GetY() == y
+
+
+###############################################################################
+# Test -if
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_if_ok(ogr2ogr_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        ogr2ogr_path + " -if GPKG /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
+    )
+    assert ret == ""
+    assert err == ""
+
+
+###############################################################################
+# Test -if
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.require_driver("GeoJSON")
+def test_ogr2ogr_if_ko(ogr2ogr_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        ogr2ogr_path + " -if GeoJSON /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
+    )
+    assert "Unable to open datasource" in err

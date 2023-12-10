@@ -81,7 +81,8 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
         "               [-a_srs <srs_def>] [-t_srs <srs_def>] [-s_srs "
         "<srs_def>] "
         "[-ct <string>]\n"
-        "               [-f <format_name>] [-overwrite] "
+        "               [-if <input_drv_name>] [-f <output_drv_name>] "
+        "[-overwrite] "
         "[-dsco <NAME>=<VALUE>]...\n"
         "               [-lco <NAME>=<VALUE>]... [-nln <name>] \n"
         "               [-nlt "
@@ -233,8 +234,7 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
 static GDALVectorTranslateOptionsForBinary *
 GDALVectorTranslateOptionsForBinaryNew()
 {
-    return static_cast<GDALVectorTranslateOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALVectorTranslateOptionsForBinary)));
+    return new GDALVectorTranslateOptionsForBinary;
 }
 
 /************************************************************************/
@@ -244,14 +244,7 @@ GDALVectorTranslateOptionsForBinaryNew()
 static void GDALVectorTranslateOptionsForBinaryFree(
     GDALVectorTranslateOptionsForBinary *psOptionsForBinary)
 {
-    if (psOptionsForBinary)
-    {
-        CPLFree(psOptionsForBinary->pszDataSource);
-        CPLFree(psOptionsForBinary->pszDestDataSource);
-        CSLDestroy(psOptionsForBinary->papszOpenOptions);
-        CPLFree(psOptionsForBinary->pszFormat);
-        CPLFree(psOptionsForBinary);
-    }
+    delete psOptionsForBinary;
 }
 
 /************************************************************************/
@@ -327,10 +320,10 @@ MAIN_START(nArgc, papszArgv)
         goto exit;
     }
 
-    if (psOptionsForBinary->pszDataSource == nullptr ||
-        psOptionsForBinary->pszDestDataSource == nullptr)
+    if (psOptionsForBinary->osDataSource.empty() ||
+        !psOptionsForBinary->bDestSpecified)
     {
-        if (psOptionsForBinary->pszDestDataSource == nullptr)
+        if (!psOptionsForBinary->bDestSpecified)
             Usage(true, "no target datasource provided");
         else
             Usage(true, "no source datasource provided");
@@ -339,8 +332,8 @@ MAIN_START(nArgc, papszArgv)
         goto exit;
     }
 
-    if (strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0)
-        psOptionsForBinary->bQuiet = TRUE;
+    if (psOptionsForBinary->osDestDataSource == "/vsistdout/")
+        psOptionsForBinary->bQuiet = true;
 
     /* -------------------------------------------------------------------- */
     /*      Open data source.                                               */
@@ -350,12 +343,13 @@ MAIN_START(nArgc, papszArgv)
     // output Known to cause problems with at least FGdb, SQlite and GPKG
     // drivers. See #4270
     if (psOptionsForBinary->eAccessMode != ACCESS_CREATION &&
-        strcmp(psOptionsForBinary->pszDestDataSource,
-               psOptionsForBinary->pszDataSource) == 0)
+        psOptionsForBinary->osDestDataSource ==
+            psOptionsForBinary->osDataSource)
     {
-        hODS = GDALOpenEx(psOptionsForBinary->pszDataSource,
-                          GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
-                          psOptionsForBinary->papszOpenOptions, nullptr);
+        hODS = GDALOpenEx(psOptionsForBinary->osDataSource.c_str(),
+                          GDAL_OF_UPDATE | GDAL_OF_VECTOR,
+                          psOptionsForBinary->aosAllowInputDrivers.List(),
+                          psOptionsForBinary->aosOpenOptions.List(), nullptr);
 
         GDALDriverH hDriver =
             hODS != nullptr ? GDALGetDatasetDriver(hODS) : nullptr;
@@ -366,9 +360,10 @@ MAIN_START(nArgc, papszArgv)
                          EQUAL(GDALGetDescription(hDriver), "SQLite") ||
                          EQUAL(GDALGetDescription(hDriver), "GPKG")))
         {
-            hDS = GDALOpenEx(psOptionsForBinary->pszDataSource, GDAL_OF_VECTOR,
-                             nullptr, psOptionsForBinary->papszOpenOptions,
-                             nullptr);
+            hDS = GDALOpenEx(
+                psOptionsForBinary->osDataSource.c_str(), GDAL_OF_VECTOR,
+                psOptionsForBinary->aosAllowInputDrivers.List(),
+                psOptionsForBinary->aosOpenOptions.List(), nullptr);
         }
         else
         {
@@ -379,8 +374,9 @@ MAIN_START(nArgc, papszArgv)
     else
     {
         hDS =
-            GDALOpenEx(psOptionsForBinary->pszDataSource, GDAL_OF_VECTOR,
-                       nullptr, psOptionsForBinary->papszOpenOptions, nullptr);
+            GDALOpenEx(psOptionsForBinary->osDataSource.c_str(), GDAL_OF_VECTOR,
+                       psOptionsForBinary->aosAllowInputDrivers.List(),
+                       psOptionsForBinary->aosOpenOptions.List(), nullptr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -393,7 +389,7 @@ MAIN_START(nArgc, papszArgv)
         fprintf(stderr,
                 "FAILURE:\n"
                 "Unable to open datasource `%s' with the following drivers.\n",
-                psOptionsForBinary->pszDataSource);
+                psOptionsForBinary->osDataSource.c_str());
 
         for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
         {
@@ -411,16 +407,16 @@ MAIN_START(nArgc, papszArgv)
         goto exit;
     }
 
-    if (hODS != nullptr && psOptionsForBinary->pszFormat != nullptr)
+    if (hODS != nullptr && !psOptionsForBinary->osFormat.empty())
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 
         GDALDriver *poDriver =
-            poDM->GetDriverByName(psOptionsForBinary->pszFormat);
+            poDM->GetDriverByName(psOptionsForBinary->osFormat.c_str());
         if (poDriver == nullptr)
         {
             fprintf(stderr, "Unable to find driver `%s'.\n",
-                    psOptionsForBinary->pszFormat);
+                    psOptionsForBinary->osFormat.c_str());
             fprintf(stderr, "The following drivers are available:\n");
 
             for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
@@ -452,8 +448,9 @@ MAIN_START(nArgc, papszArgv)
     {
         // TODO(schwehr): Remove scope after removing gotos
         int bUsageError = FALSE;
-        hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource,
-                                     hODS, 1, &hDS, psOptions, &bUsageError);
+        hDstDS =
+            GDALVectorTranslate(psOptionsForBinary->osDestDataSource.c_str(),
+                                hODS, 1, &hDS, psOptions, &bUsageError);
         if (bUsageError)
             Usage(true);
         else
