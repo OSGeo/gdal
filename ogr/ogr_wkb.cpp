@@ -642,84 +642,48 @@ static bool OGRWKBIntersectsPessimistic(const GByte *data, const size_t size,
     const int nDim = 2 + (OGR_GT_HasZ(eGeometryType) ? 1 : 0) +
                      (OGR_GT_HasM(eGeometryType) ? 1 : 0);
 
+    if (eFlatType == wkbPoint)
+    {
+        if (size - iOffsetInOut < nDim * sizeof(double))
+            return false;
+        double dfX = 0;
+        double dfY = 0;
+        memcpy(&dfX, data + iOffsetInOut, sizeof(double));
+        memcpy(&dfY, data + iOffsetInOut + sizeof(double), sizeof(double));
+        iOffsetInOut += nDim * sizeof(double);
+        if (OGR_SWAP(eByteOrder))
+        {
+            CPL_SWAP64PTR(&dfX);
+            CPL_SWAP64PTR(&dfY);
+        }
+        if (std::isnan(dfX))
+        {
+            return false;
+        }
+        else
+        {
+            return dfX >= sEnvelope.MinX && dfX <= sEnvelope.MaxX &&
+                   dfY >= sEnvelope.MinY && dfY <= sEnvelope.MaxY;
+        }
+    }
+
     if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
     {
         return OGRWKBIntersectsPointSequencePessimistic(
             data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut);
     }
 
-    if (eFlatType == wkbPolygon)
+    if (eFlatType == wkbPolygon || eFlatType == wkbTriangle)
     {
         return OGRWKBIntersectsRingSequencePessimistic(
             data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut);
     }
 
-    if (eFlatType == wkbMultiLineString)
-    {
-        const uint32_t nParts =
-            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
-        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
-        {
-            bErrorOut = true;
-            return false;
-        }
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (iOffsetInOut + MIN_WKB_SIZE > size)
-            {
-                bErrorOut = true;
-                return false;
-            }
-            iOffsetInOut += WKB_PREFIX_SIZE;
-            if (OGRWKBIntersectsPointSequencePessimistic(data, size, eByteOrder,
-                                                         nDim, iOffsetInOut,
-                                                         sEnvelope, bErrorOut))
-            {
-                return true;
-            }
-            else if (bErrorOut)
-            {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    if (eFlatType == wkbMultiPolygon)
-    {
-        const uint32_t nParts =
-            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
-        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
-        {
-            bErrorOut = true;
-            return false;
-        }
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (iOffsetInOut + MIN_WKB_SIZE > size)
-            {
-                bErrorOut = true;
-                return false;
-            }
-            CPLAssert(data[iOffsetInOut] == eByteOrder);
-            iOffsetInOut += WKB_PREFIX_SIZE;
-            if (OGRWKBIntersectsRingSequencePessimistic(data, size, eByteOrder,
-                                                        nDim, iOffsetInOut,
-                                                        sEnvelope, bErrorOut))
-            {
-                return true;
-            }
-            else if (bErrorOut)
-            {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    if (eFlatType == wkbGeometryCollection || eFlatType == wkbCompoundCurve ||
-        eFlatType == wkbCurvePolygon || eFlatType == wkbMultiCurve ||
-        eFlatType == wkbMultiSurface)
+    if (eFlatType == wkbMultiPoint || eFlatType == wkbMultiLineString ||
+        eFlatType == wkbMultiPolygon || eFlatType == wkbGeometryCollection ||
+        eFlatType == wkbCompoundCurve || eFlatType == wkbCurvePolygon ||
+        eFlatType == wkbMultiCurve || eFlatType == wkbMultiSurface ||
+        eFlatType == wkbPolyhedralSurface || eFlatType == wkbTIN)
     {
         if (nRec == 128)
         {
