@@ -3570,7 +3570,7 @@ OGRErr OGRPGTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 
         /* Quiet error: ST_Estimated_Extent may return an error if statistics */
         /* have not been computed */
-        if (RunGetExtentRequest(psExtent, bForce, osCommand, TRUE) ==
+        if (RunGetExtentRequest(*psExtent, bForce, osCommand, TRUE) ==
             OGRERR_NONE)
             return OGRERR_NONE;
 

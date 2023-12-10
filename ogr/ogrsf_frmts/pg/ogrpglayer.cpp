@@ -1961,7 +1961,7 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 
     if (!osCommand.empty())
     {
-        if (RunGetExtentRequest(psExtent, bForce, osCommand, FALSE) ==
+        if (RunGetExtentRequest(*psExtent, bForce, osCommand, FALSE) ==
             OGRERR_NONE)
             return OGRERR_NONE;
     }
@@ -2025,7 +2025,7 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 
     if (!osCommand.empty())
     {
-        if (RunGetExtent3DRequest(psExtent3D, osCommand, FALSE) == OGRERR_NONE)
+        if (RunGetExtent3DRequest(*psExtent3D, osCommand, FALSE) == OGRERR_NONE)
             return OGRERR_NONE;
     }
 
@@ -2036,15 +2036,14 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope *psExtent,
+OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope &sExtent,
                                        CPL_UNUSED int bForce,
-                                       CPLString osCommand, int bErrorAsDebug)
+                                       const std::string &osCommand,
+                                       int bErrorAsDebug)
 {
-    if (psExtent == nullptr)
-        return OGRERR_FAILURE;
-
     PGconn *hPGConn = poDS->GetPGConn();
-    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand, FALSE, bErrorAsDebug);
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, osCommand.c_str(), FALSE, bErrorAsDebug);
     if (!hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK ||
         PQgetisnull(hResult, 0, 0))
     {
@@ -2092,10 +2091,10 @@ OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope *psExtent,
     // =>   X2 index calculated as nTokenCnt/2
     //      Y2 index calculated as nTokenCnt/2+1
 
-    psExtent->MinX = CPLAtof(papszTokens[0]);
-    psExtent->MinY = CPLAtof(papszTokens[1]);
-    psExtent->MaxX = CPLAtof(papszTokens[nTokenCnt / 2]);
-    psExtent->MaxY = CPLAtof(papszTokens[nTokenCnt / 2 + 1]);
+    sExtent.MinX = CPLAtof(papszTokens[0]);
+    sExtent.MinY = CPLAtof(papszTokens[1]);
+    sExtent.MaxX = CPLAtof(papszTokens[nTokenCnt / 2]);
+    sExtent.MaxY = CPLAtof(papszTokens[nTokenCnt / 2 + 1]);
 
     CSLDestroy(papszTokens);
     OGRPGClearResult(hResult);
@@ -2103,14 +2102,13 @@ OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope *psExtent,
     return OGRERR_NONE;
 }
 
-OGRErr OGRPGLayer::RunGetExtent3DRequest(OGREnvelope3D *psExtent3D,
-                                         CPLString osCommand, int bErrorAsDebug)
+OGRErr OGRPGLayer::RunGetExtent3DRequest(OGREnvelope3D &sExtent3D,
+                                         const std::string &osCommand,
+                                         int bErrorAsDebug)
 {
-    if (psExtent3D == nullptr)
-        return OGRERR_FAILURE;
-
     PGconn *hPGConn = poDS->GetPGConn();
-    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand, FALSE, bErrorAsDebug);
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, osCommand.c_str(), FALSE, bErrorAsDebug);
     if (!hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK ||
         PQgetisnull(hResult, 0, 0))
     {
@@ -2150,12 +2148,12 @@ OGRErr OGRPGLayer::RunGetExtent3DRequest(OGREnvelope3D *psExtent3D,
         return OGRERR_FAILURE;
     }
 
-    psExtent3D->MinX = CPLAtof(papszTokens[0]);
-    psExtent3D->MinY = CPLAtof(papszTokens[1]);
-    psExtent3D->MinZ = CPLAtof(papszTokens[2]);
-    psExtent3D->MaxX = CPLAtof(papszTokens[3]);
-    psExtent3D->MaxY = CPLAtof(papszTokens[4]);
-    psExtent3D->MaxZ = CPLAtof(papszTokens[5]);
+    sExtent3D.MinX = CPLAtof(papszTokens[0]);
+    sExtent3D.MinY = CPLAtof(papszTokens[1]);
+    sExtent3D.MinZ = CPLAtof(papszTokens[2]);
+    sExtent3D.MaxX = CPLAtof(papszTokens[3]);
+    sExtent3D.MaxY = CPLAtof(papszTokens[4]);
+    sExtent3D.MaxZ = CPLAtof(papszTokens[5]);
 
     CSLDestroy(papszTokens);
     OGRPGClearResult(hResult);
