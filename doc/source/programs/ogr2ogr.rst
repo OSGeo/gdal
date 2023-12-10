@@ -22,7 +22,7 @@ Synopsis
             [-preserve_fid] [-fid <FID>] [-limit <nb_features>]
             [-spat <xmin> <ymin> <xmax> <ymax>] [-spat_srs <srs_def>] [-geomfield <field>]
             [-a_srs <srs_def>] [-t_srs <srs_def>] [-s_srs <srs_def>] [-ct <string>]
-            [-f <format_name>] [-overwrite] [-dsco <NAME>=<VALUE>]...
+            [-if <input_drv_name>] [-f <format_name>] [-overwrite] [-dsco <NAME>=<VALUE>]...
             [-lco <NAME>=<VALUE>]... [-nln <name>]
             [-nlt <type>|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
             [-dim XY|XYZ|XYM|XYZM|<layer_dim>]
@@ -64,6 +64,10 @@ spatial or attribute selection, reducing the set of attributes, setting the
 output coordinate system or even reprojecting the features during translation.
 
 .. program:: ogr2ogr
+
+.. include:: options/help_and_help_general.rst
+
+.. include:: options/if.rst
 
 .. option:: -f <format_name>
 
