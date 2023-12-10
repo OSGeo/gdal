@@ -17,7 +17,7 @@ Synopsis
 .. code-block::
 
     ogrinfo [--help] [--help-general]
-            [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
+            [-if <driver_name>] [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
             [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>] [-fid <fid>]
             [-sql <statement>|@<filename>] [-dialect <sql_dialect>] [-al] [-rl]
             [-so|-features] [-fields={YES|NO}]]
@@ -37,6 +37,8 @@ edit data.
 .. program:: ogrinfo
 
 .. include:: options/help_and_help_general.rst
+
+.. include:: options/if.rst
 
 .. option:: -json
 
