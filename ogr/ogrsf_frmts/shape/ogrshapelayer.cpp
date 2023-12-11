@@ -53,6 +53,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "ogrlayerpool.h"
+#include "ograrrowarrayhelper.h"
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
 #include "shp_vsi.h"
@@ -3849,4 +3850,89 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
 GDALDataset *OGRShapeLayer::GetDataset()
 {
     return poDS;
+}
+
+/************************************************************************/
+/*                        GetNextArrowArray()                           */
+/************************************************************************/
+
+// Specialized implementation restricted to situations where only retrieving
+// of FID values is asked (without filters)
+// In other cases, fall back to generic implementation.
+int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
+                                     struct ArrowArray *out_array)
+{
+    m_bLastGetNextArrowArrayUsedOptimizedCodePath = false;
+    if (!TouchLayer())
+    {
+        memset(out_array, 0, sizeof(*out_array));
+        return EIO;
+    }
+
+    if (!hDBF || m_poAttrQuery != nullptr || m_poFilterGeom != nullptr)
+    {
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+
+    // If any field is not ignored, use generic implementation
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
+    for (int i = 0; i < nFieldCount; ++i)
+    {
+        if (!poFeatureDefn->GetFieldDefn(i)->IsIgnored())
+            return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+    if (GetGeomType() != wkbNone &&
+        !poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+
+    OGRArrowArrayHelper sHelper(poDS, poFeatureDefn,
+                                m_aosArrowArrayStreamOptions, out_array);
+    if (!sHelper.m_bIncludeFID)
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+
+    m_bLastGetNextArrowArrayUsedOptimizedCodePath = true;
+    int nCount = 0;
+    while (iNextShapeId < nTotalShapeCount)
+    {
+        const bool bIsDeleted =
+            CPL_TO_BOOL(DBFIsRecordDeleted(hDBF, iNextShapeId));
+        if (bIsDeleted)
+        {
+            ++iNextShapeId;
+            continue;
+        }
+        if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+        {
+            out_array->release(out_array);
+            memset(out_array, 0, sizeof(*out_array));
+            return EIO;
+        }
+        sHelper.m_panFIDValues[nCount] = iNextShapeId;
+        ++iNextShapeId;
+        ++nCount;
+        if (nCount == sHelper.m_nMaxBatchSize)
+            break;
+    }
+    sHelper.Shrink(nCount);
+    if (nCount == 0)
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+    }
+    return 0;
+}
+
+/************************************************************************/
+/*                        GetMetadataItem()                             */
+/************************************************************************/
+
+const char *OGRShapeLayer::GetMetadataItem(const char *pszName,
+                                           const char *pszDomain)
+{
+    if (pszName && pszDomain && EQUAL(pszDomain, "__DEBUG__") &&
+        EQUAL(pszName, "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH"))
+    {
+        return m_bLastGetNextArrowArrayUsedOptimizedCodePath ? "YES" : "NO";
+    }
+    return OGRLayer::GetMetadataItem(pszName, pszDomain);
 }
