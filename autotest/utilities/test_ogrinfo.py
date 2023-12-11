@@ -722,3 +722,30 @@ def test_ogrinfo_empty_gpkg(ogrinfo_path, tmp_path):
 
     (ret, err) = gdaltest.runexternal_out_and_err(ogrinfo_path + f" {filename}")
     assert err is None or err == "", "got error/warning"
+
+
+###############################################################################
+# Test -if
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogrinfo_if_ok(ogrinfo_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        ogrinfo_path + " -if GPKG ../ogr/data/gpkg/2d_envelope.gpkg"
+    )
+    assert err is None or err == "", "got error/warning"
+    assert ret.find("GPKG") != -1
+
+
+###############################################################################
+# Test -if
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_ogrinfo_if_ko(ogrinfo_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        ogrinfo_path + " -if GeoJSON ../ogr/data/gpkg/2d_envelope.gpkg"
+    )
+    assert "not recognized as a supported file format" in err
