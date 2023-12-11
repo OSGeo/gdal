@@ -442,7 +442,7 @@ CPLErr GDALArrayBandBlockCache::FlushBlock(int nXBlockOff, int nYBlockOff,
 
     CPLErr eErr = CE_None;
 
-    if (m_bWriteDirtyBlocks && bWriteDirtyBlock && poBlock->GetDirty())
+    if (!m_nWriteDirtyBlocksDisabled && bWriteDirtyBlock && poBlock->GetDirty())
     {
         UpdateDirtyBlockFlushingLog();
 

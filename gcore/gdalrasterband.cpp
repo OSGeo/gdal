@@ -1141,6 +1141,70 @@ CPLErr CPL_STDCALL GDALFlushRasterCache(GDALRasterBandH hBand)
 }
 
 /************************************************************************/
+/*                             DropCache()                              */
+/************************************************************************/
+
+/**
+* \brief Drop raster data cache : data in cache will be lost.
+*
+* This call will recover memory used to cache data blocks for this raster
+* band, and ensure that new requests are referred to the underlying driver.
+*
+* This method is the same as the C function GDALDropRasterCache().
+*
+* @return CE_None on success.
+* @since 3.9
+*/
+
+CPLErr GDALRasterBand::DropCache()
+
+{
+    CPLErr result = CE_None;
+
+    if (poBandBlockCache)
+        poBandBlockCache->DisableDirtyBlockWriting();
+
+    CPLErr eGlobalErr = eFlushBlockErr;
+
+    if (eFlushBlockErr != CE_None)
+    {
+        ReportError(
+            eFlushBlockErr, CPLE_AppDefined,
+            "An error occurred while writing a dirty block from DropCache");
+        eFlushBlockErr = CE_None;
+    }
+
+    if (poBandBlockCache == nullptr || !poBandBlockCache->IsInitOK())
+        result = eGlobalErr;
+    else
+        result = poBandBlockCache->FlushCache();
+
+    if (poBandBlockCache)
+        poBandBlockCache->EnableDirtyBlockWriting();
+
+    return result;
+}
+
+/************************************************************************/
+/*                        GDALDropRasterCache()                         */
+/************************************************************************/
+
+/**
+* \brief Drop raster data cache.
+*
+* @see GDALRasterBand::DropCache()
+* @since 3.9
+*/
+
+CPLErr CPL_STDCALL GDALDropRasterCache(GDALRasterBandH hBand)
+
+{
+    VALIDATE_POINTER1(hBand, "GDALDropRasterCache", CE_Failure);
+
+    return GDALRasterBand::FromHandle(hBand)->DropCache();
+}
+
+/************************************************************************/
 /*                        UnreferenceBlock()                            */
 /*                                                                      */
 /*      Unreference the block from our array of blocks                  */
