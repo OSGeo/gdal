@@ -28,7 +28,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import copy
 import json
+import math
 import struct
 from http.server import BaseHTTPRequestHandler
 
@@ -290,3 +292,109 @@ def test_stacta_network():
 
     finally:
         webserver.server_stop(process, port)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/stacta/test_with_raster_extension.json",
+        "data/stacta/test_with_raster_extension_no_eo_bands.json",
+        "data/stacta/test_stac_1_1.json",
+    ],
+)
+def test_stacta_with_raster_extension_nominal(filename):
+
+    ds = gdal.Open(filename)
+    assert ds.RasterCount == 6
+    band = ds.GetRasterBand(1)
+    if (
+        filename == "data/stacta/test_with_raster_extension.json"
+        or filename == "data/stacta/test_stac_1_1.json"
+    ):
+        assert band.GetMetadataItem("name") == "B1"
+    if filename == "data/stacta/test_stac_1_1.json":
+        assert band.GetMetadata_Dict() == {"common_name": "nir", "name": "B1"}
+    assert band.DataType == gdal.GDT_Byte
+    assert band.GetNoDataValue() == 1
+    assert band.GetOffset() == 1.2
+    assert band.GetScale() == 10
+    assert band.GetUnitType() == "dn"
+    assert band.GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "7"
+
+    band = ds.GetRasterBand(2)
+    assert band.DataType == gdal.GDT_Float32
+    assert band.GetNoDataValue() == 1.5
+    assert band.GetOffset() is None
+    assert band.GetScale() is None
+    assert band.GetUnitType() == ""
+
+    band = ds.GetRasterBand(3)
+    assert band.GetNoDataValue() == float("inf")
+
+    band = ds.GetRasterBand(4)
+    assert band.GetNoDataValue() == float("-inf")
+
+    band = ds.GetRasterBand(5)
+    assert math.isnan(band.GetNoDataValue())
+
+    band = ds.GetRasterBand(6)
+    assert band.GetNoDataValue() is None
+
+
+###############################################################################
+
+
+def test_stacta_with_raster_extension_errors():
+
+    j_ori = json.loads(open("data/stacta/test_with_raster_extension.json", "rb").read())
+
+    j = copy.deepcopy(j_ori)
+    del j["asset_templates"]["bands"]["raster:bands"]
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with pytest.raises(
+            Exception, match="Cannot open /vsimem/non_existing/WorldCRS84Quad/0/0/0.tif"
+        ):
+            gdal.Open("/vsimem/test.json")
+
+    j = copy.deepcopy(j_ori)
+    del j["asset_templates"]["bands"]["raster:bands"][4]
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with pytest.raises(
+            Exception, match="Cannot open /vsimem/non_existing/WorldCRS84Quad/0/0/0.tif"
+        ):
+            with gdal.quiet_errors():
+                gdal.Open("/vsimem/test.json")
+
+    j = copy.deepcopy(j_ori)
+    j["asset_templates"]["bands"]["raster:bands"][0] = "invalid"
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with pytest.raises(Exception, match=r"Wrong raster:bands\[0\]"):
+            with gdal.quiet_errors():
+                gdal.Open("/vsimem/test.json")
+
+    j = copy.deepcopy(j_ori)
+    del j["asset_templates"]["bands"]["raster:bands"][0]["data_type"]
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with pytest.raises(Exception, match=r"Wrong raster:bands\[0\].data_type"):
+            gdal.Open("/vsimem/test.json")
+
+    j = copy.deepcopy(j_ori)
+    j["asset_templates"]["bands"]["raster:bands"][0]["data_type"] = "invalid"
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with pytest.raises(Exception, match=r"Wrong raster:bands\[0\].data_type"):
+            gdal.Open("/vsimem/test.json")
+
+    j = copy.deepcopy(j_ori)
+    j["asset_templates"]["bands"]["raster:bands"][0]["nodata"] = "invalid"
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with gdal.quiet_errors():
+            assert gdal.Open("/vsimem/test.json") is not None
+
+    j = copy.deepcopy(j_ori)
+    j["asset_templates"]["bands"]["raster:bands"][0]["nodata"] = ["invalid json object"]
+    with gdaltest.tempfile("/vsimem/test.json", json.dumps(j)):
+        with gdal.quiet_errors():
+            assert gdal.Open("/vsimem/test.json") is not None

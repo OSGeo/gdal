@@ -107,9 +107,13 @@ class STACTADataset final : public GDALPamDataset
 
 class STACTARasterBand final : public GDALRasterBand
 {
+    friend class STACTADataset;
     GDALColorInterp m_eColorInterp = GCI_Undefined;
     int m_bHasNoDataValue = false;
     double m_dfNoData = 0;
+    double m_dfScale = 1.0;
+    double m_dfOffset = 0.0;
+    std::string m_osUnit{};
 
   public:
     STACTARasterBand(STACTADataset *poDSIn, int nBandIn,
@@ -125,6 +129,22 @@ class STACTARasterBand final : public GDALRasterBand
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int nIdx) override;
     double GetNoDataValue(int *pbHasNoData = nullptr) override;
+    const char *GetUnitType() override
+    {
+        return m_osUnit.c_str();
+    }
+    double GetScale(int *pbHasValue = nullptr) override
+    {
+        if (pbHasValue)
+            *pbHasValue = m_dfScale != 1.0;
+        return m_dfScale;
+    }
+    double GetOffset(int *pbHasValue = nullptr) override
+    {
+        if (pbHasValue)
+            *pbHasValue = m_dfOffset != 0.0;
+        return m_dfOffset;
+    }
 };
 
 /************************************************************************/
@@ -149,8 +169,11 @@ class STACTARawDataset final : public GDALDataset
     OGRSpatialReference m_oSRS{};
 
   public:
-    bool InitRaster(GDALDataset *poProtoDS, const gdal::TileMatrixSet *poTMS,
-                    const std::string &osTMId,
+    bool InitRaster(GDALDataset *poProtoDS,
+                    const std::vector<GDALDataType> &aeDT,
+                    const std::vector<bool> &abSetNoData,
+                    const std::vector<double> &adfNoData,
+                    const gdal::TileMatrixSet *poTMS, const std::string &osTMId,
                     const gdal::TileMatrixSet::TileMatrix &oTM,
                     const std::map<CPLString, Limits> &oMapLimits);
 
@@ -182,6 +205,10 @@ class STACTARawRasterBand final : public GDALRasterBand
   public:
     STACTARawRasterBand(STACTARawDataset *poDSIn, int nBandIn,
                         GDALRasterBand *poProtoBand);
+
+    STACTARawRasterBand(STACTARawDataset *poDSIn, int nBandIn, GDALDataType eDT,
+                        bool bSetNoData, double dfNoData);
+
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
