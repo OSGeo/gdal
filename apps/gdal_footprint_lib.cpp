@@ -44,6 +44,7 @@
 #include "cpl_error.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "gdal_priv.h"
@@ -111,6 +112,12 @@ struct GDALFootprintOptions
 
     /*! Whether to combine bands unioning (true) or intersecting (false) */
     bool bCombineBandsUnion = true;
+
+    /*! Field name where to write the path of the raster. Empty if not desired */
+    std::string osLocationFieldName = "location";
+
+    /*! Whether to force writing absolute paths in location field. */
+    bool bAbsolutePath = false;
 
     std::string osSrcNoData;
 };
@@ -501,6 +508,14 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
             osDestLayerName.c_str(), poSRS.get(),
             psOptions->bSplitPolys ? wkbPolygon : wkbMultiPolygon,
             const_cast<char **>(psOptions->aosLCO.List()));
+
+        if (!psOptions->osLocationFieldName.empty())
+        {
+            OGRFieldDefn oFieldDefn(psOptions->osLocationFieldName.c_str(),
+                                    OFTString);
+            if (poLayer->CreateField(&oFieldDefn) != OGRERR_NONE)
+                return nullptr;
+        }
     }
 
     return poLayer;
@@ -1009,6 +1024,25 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
 
         poDstFeature->SetGeometryDirectly(poGeom.release());
 
+        if (!psOptions->osLocationFieldName.empty())
+        {
+
+            std::string osFilename = poSrcDS->GetDescription();
+            // Make sure it is a file before building absolute path name.
+            VSIStatBufL sStatBuf;
+            if (psOptions->bAbsolutePath &&
+                CPLIsFilenameRelative(osFilename.c_str()) &&
+                VSIStatL(osFilename.c_str(), &sStatBuf) == 0)
+            {
+                const char *pszCurDir = CPLGetCurrentDir();
+                if (pszCurDir)
+                    osFilename = CPLProjectRelativeFilename(pszCurDir,
+                                                            osFilename.c_str());
+            }
+            poDstFeature->SetField(psOptions->osLocationFieldName.c_str(),
+                                   osFilename.c_str());
+        }
+
         if (poDstLayer->CreateFeature(poDstFeature.get()) != OGRERR_NONE)
         {
             return false;
@@ -1282,13 +1316,11 @@ GDALFootprintOptionsNew(char **papszArgv,
 
         else if (EQUAL(papszArgv[i], "-split_polys"))
         {
-            i++;
             psOptions->bSplitPolys = true;
         }
 
         else if (EQUAL(papszArgv[i], "-convex_hull"))
         {
-            i++;
             psOptions->bConvexHull = true;
         }
 
@@ -1342,6 +1374,22 @@ GDALFootprintOptionsNew(char **papszArgv,
                          "binary.");
                 return nullptr;
             }
+        }
+
+        else if (i < argc - 1 && EQUAL(papszArgv[i], "-location_field_name"))
+        {
+            i++;
+            psOptions->osLocationFieldName = papszArgv[i];
+        }
+
+        else if (EQUAL(papszArgv[i], "-no_location"))
+        {
+            psOptions->osLocationFieldName.clear();
+        }
+
+        else if (EQUAL(papszArgv[i], "-write_absolute_path"))
+        {
+            psOptions->bAbsolutePath = true;
         }
 
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-ovr"))
