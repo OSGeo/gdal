@@ -221,6 +221,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
     if (bCopyActive)
         EndCopy();
     UpdateSequenceIfNeeded();
+    SerializeMetadata();
 
     CPLFree(pszSqlTableName);
     CPLFree(pszTableName);
@@ -232,11 +233,206 @@ OGRPGTableLayer::~OGRPGTableLayer()
 }
 
 /************************************************************************/
+/*                              LoadMetadata()                          */
+/************************************************************************/
+
+void OGRPGTableLayer::LoadMetadata()
+{
+    if (m_bMetadataLoaded)
+        return;
+    m_bMetadataLoaded = true;
+
+    PGconn *hPGConn = poDS->GetPGConn();
+    const std::string osSQL(
+        CPLSPrintf("SELECT metadata FROM ogr_system_tables.metadata WHERE "
+                   "schema_name = %s AND table_name = %s",
+                   OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                   OGRPGEscapeString(hPGConn, pszTableName).c_str()));
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oBackuper;
+    auto poSqlLyr = poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
+    if (poSqlLyr)
+    {
+        auto poFeature =
+            std::unique_ptr<OGRFeature>(poSqlLyr->GetNextFeature());
+        if (poFeature)
+        {
+            if (poFeature->IsFieldSetAndNotNull(0))
+            {
+                const char *pszXML = poFeature->GetFieldAsString(0);
+                if (pszXML)
+                {
+                    auto psRoot = CPLParseXMLString(pszXML);
+                    if (psRoot)
+                    {
+                        oMDMD.XMLInit(psRoot, true);
+                        CPLDestroyXMLNode(psRoot);
+                    }
+                }
+            }
+        }
+        poDS->ReleaseResultSet(poSqlLyr);
+    }
+}
+
+/************************************************************************/
+/*                         SerializeMetadata()                          */
+/************************************************************************/
+
+void OGRPGTableLayer::SerializeMetadata()
+{
+    if (!m_bMetadataModified)
+        return;
+
+    PGconn *hPGConn = poDS->GetPGConn();
+    CPLXMLNode *psMD = oMDMD.Serialize();
+
+    if (psMD)
+    {
+        // Remove DESCRIPTION and OLMD_FID64 items from metadata
+
+        CPLXMLNode *psPrev = nullptr;
+        for (CPLXMLNode *psIter = psMD; psIter;)
+        {
+            CPLXMLNode *psNext = psIter->psNext;
+            if (psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "Metadata") == 0 &&
+                CPLGetXMLNode(psIter, "domain") == nullptr)
+            {
+                bool bFoundInterestingItems = false;
+                for (CPLXMLNode *psIter2 = psIter->psChild; psIter2;)
+                {
+                    CPLXMLNode *psNext2 = psIter2->psNext;
+                    if (psIter2->eType == CXT_Element &&
+                        strcmp(psIter2->pszValue, "MDI") == 0 &&
+                        (EQUAL(CPLGetXMLValue(psIter2, "key", ""),
+                               OLMD_FID64) ||
+                         EQUAL(CPLGetXMLValue(psIter2, "key", ""),
+                               "DESCRIPTION")))
+                    {
+                        CPLRemoveXMLChild(psIter, psIter2);
+                    }
+                    else
+                    {
+                        bFoundInterestingItems = true;
+                    }
+                    psIter2 = psNext2;
+                }
+                if (!bFoundInterestingItems)
+                {
+                    if (psPrev)
+                        psPrev->psNext = psNext;
+                    else
+                        psMD = psNext;
+                    psIter->psNext = nullptr;
+                    CPLDestroyXMLNode(psIter);
+                }
+            }
+            psIter = psNext;
+            psPrev = psIter;
+        }
+    }
+
+    if (psMD)
+    {
+        PGresult *hResult = OGRPG_PQexec(
+            hPGConn, "CREATE SCHEMA IF NOT EXISTS ogr_system_tables");
+        OGRPGClearResult(hResult);
+
+        hResult = OGRPG_PQexec(
+            hPGConn, "CREATE TABLE IF NOT EXISTS ogr_system_tables.metadata("
+                     "id SERIAL, "
+                     "schema_name TEXT NOT NULL, "
+                     "table_name TEXT NOT NULL, "
+                     "metadata TEXT,"
+                     "UNIQUE(schema_name, table_name))");
+        OGRPGClearResult(hResult);
+
+        hResult = OGRPG_PQexec(
+            hPGConn,
+            "DROP FUNCTION IF EXISTS "
+            "ogr_system_tables.event_trigger_function_for_metadata CASCADE");
+        OGRPGClearResult(hResult);
+
+        hResult = OGRPG_PQexec(
+            hPGConn,
+            "CREATE FUNCTION "
+            "ogr_system_tables.event_trigger_function_for_metadata()\n"
+            "RETURNS event_trigger LANGUAGE plpgsql AS $$\n"
+            "DECLARE\n"
+            "    obj record;\n"
+            "BEGIN\n"
+            "    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()\n"
+            "    LOOP\n"
+            "        IF obj.object_type = 'table' THEN\n"
+            "            DELETE FROM ogr_system_tables.metadata m WHERE "
+            "m.schema_name = obj.schema_name AND m.table_name = "
+            "obj.object_name;\n"
+            "        END IF;\n"
+            "    END LOOP;\n"
+            "END;\n"
+            "$$;");
+        OGRPGClearResult(hResult);
+
+        hResult = OGRPG_PQexec(hPGConn,
+                               "DROP EVENT TRIGGER IF EXISTS "
+                               "ogr_system_tables_event_trigger_for_metadata");
+        OGRPGClearResult(hResult);
+
+        hResult = OGRPG_PQexec(
+            hPGConn,
+            "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
+            "ON sql_drop "
+            "EXECUTE FUNCTION "
+            "ogr_system_tables.event_trigger_function_for_metadata()");
+        OGRPGClearResult(hResult);
+
+        CPLString osCommand;
+        osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
+                         "schema_name = %s AND table_name = %s",
+                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                         OGRPGEscapeString(hPGConn, pszTableName).c_str());
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        OGRPGClearResult(hResult);
+
+        CPLXMLNode *psRoot =
+            CPLCreateXMLNode(nullptr, CXT_Element, "GDALMetadata");
+        CPLAddXMLChild(psRoot, psMD);
+        char *pszXML = CPLSerializeXMLTree(psRoot);
+        // CPLDebug("PG", "Serializing %s", pszXML);
+
+        osCommand.Printf("INSERT INTO ogr_system_tables.metadata (schema_name, "
+                         "table_name, metadata) VALUES (%s, %s, %s)",
+                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                         OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+                         OGRPGEscapeString(hPGConn, pszXML).c_str());
+        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        OGRPGClearResult(hResult);
+
+        CPLDestroyXMLNode(psRoot);
+        CPLFree(pszXML);
+    }
+    else
+    {
+        CPLString osCommand;
+        osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
+                         "schema_name = %s AND table_name = %s",
+                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                         OGRPGEscapeString(hPGConn, pszTableName).c_str());
+        PGresult *hResult =
+            OGRPG_PQexec(hPGConn, osCommand.c_str(), false, true);
+        OGRPGClearResult(hResult);
+    }
+}
+
+/************************************************************************/
 /*                          GetMetadataDomainList()                     */
 /************************************************************************/
 
 char **OGRPGTableLayer::GetMetadataDomainList()
 {
+    LoadMetadata();
+
     if (m_pszTableDescription == nullptr)
         GetMetadata();
     if (m_pszTableDescription != nullptr && m_pszTableDescription[0] != '\0')
@@ -250,6 +446,8 @@ char **OGRPGTableLayer::GetMetadataDomainList()
 
 char **OGRPGTableLayer::GetMetadata(const char *pszDomain)
 {
+    LoadMetadata();
+
     if ((pszDomain == nullptr || EQUAL(pszDomain, "")) &&
         m_pszTableDescription == nullptr)
     {
@@ -289,6 +487,8 @@ char **OGRPGTableLayer::GetMetadata(const char *pszDomain)
 const char *OGRPGTableLayer::GetMetadataItem(const char *pszName,
                                              const char *pszDomain)
 {
+    LoadMetadata();
+
     GetMetadata(pszDomain);
     return OGRLayer::GetMetadataItem(pszName, pszDomain);
 }
@@ -299,7 +499,11 @@ const char *OGRPGTableLayer::GetMetadataItem(const char *pszName,
 
 CPLErr OGRPGTableLayer::SetMetadata(char **papszMD, const char *pszDomain)
 {
+    LoadMetadata();
+
     OGRLayer::SetMetadata(papszMD, pszDomain);
+    m_bMetadataModified = true;
+
     if (!osForcedDescription.empty() &&
         (pszDomain == nullptr || EQUAL(pszDomain, "")))
     {
@@ -337,17 +541,23 @@ CPLErr OGRPGTableLayer::SetMetadataItem(const char *pszName,
                                         const char *pszValue,
                                         const char *pszDomain)
 {
+    LoadMetadata();
+
     if ((pszDomain == nullptr || EQUAL(pszDomain, "")) && pszName != nullptr &&
         EQUAL(pszName, "DESCRIPTION") && !osForcedDescription.empty())
     {
         pszValue = osForcedDescription;
     }
+
     OGRLayer::SetMetadataItem(pszName, pszValue, pszDomain);
+    m_bMetadataModified = true;
+
     if (!bDeferredCreation && (pszDomain == nullptr || EQUAL(pszDomain, "")) &&
         pszName != nullptr && EQUAL(pszName, "DESCRIPTION"))
     {
         SetMetadata(GetMetadata());
     }
+
     return CE_None;
 }
 
@@ -506,7 +716,7 @@ int OGRPGTableLayer::ReadTableDefinition()
                 CPLDebug("PG", "Primary key name (FID): %s, type : %s",
                          osPrimaryKey.c_str(), pszFIDType);
                 if (EQUAL(pszFIDType, "int8"))
-                    SetMetadataItem(OLMD_FID64, "YES");
+                    OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
             }
         }
         else if (PQntuples(hResult) > 1)
@@ -1547,7 +1757,7 @@ OGRErr OGRPGTableLayer::ICreateFeature(OGRFeature *poFeature)
 
     /* Auto-promote FID column to 64bit if necessary */
     if (pszFIDColumn != nullptr && !CPL_INT64_FITS_ON_INT32(nFID) &&
-        GetMetadataItem(OLMD_FID64) == nullptr)
+        OGRLayer::GetMetadataItem(OLMD_FID64) == nullptr)
     {
         poDS->EndCopy();
 
@@ -1568,7 +1778,7 @@ OGRErr OGRPGTableLayer::ICreateFeature(OGRFeature *poFeature)
         }
         OGRPGClearResult(hResult);
 
-        SetMetadataItem(OLMD_FID64, "YES");
+        OGRLayer::SetMetadataItem(OLMD_FID64, "YES");
     }
 
     if (bFirstInsertion)

@@ -300,6 +300,8 @@ class OGRPGTableLayer final : public OGRPGLayer
     char *pszSchemaName = nullptr;
     char *m_pszTableDescription = nullptr;
     CPLString osForcedDescription{};
+    bool m_bMetadataLoaded = false;
+    bool m_bMetadataModified = false;
     char *pszSqlTableName = nullptr;
     int bTableDefinitionValid = -1;
 
@@ -366,6 +368,9 @@ class OGRPGTableLayer final : public OGRPGLayer
                                  int nIdx);
 
     void UpdateSequenceIfNeeded();
+
+    void LoadMetadata();
+    void SerializeMetadata();
 
   public:
     OGRPGTableLayer(OGRPGDataSource *, CPLString &osCurrentSchema,
