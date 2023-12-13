@@ -8763,9 +8763,10 @@ OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
         return OGRERR_FAILURE;
     }
 
-    // Check if layer is 3d
-    if (m_nZFlag == 0)
+    if (m_nZFlag == 0 && m_soFilter.empty())
     {
+        // If the layer doesn't contain any 3D geometry and no filter is set,
+        // we can fallback to the fast 2D GetExtent()
         const OGRErr retVal{GetExtent(iGeomField, psExtent3D, bForce)};
         psExtent3D->MinZ = std::numeric_limits<double>::infinity();
         psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();

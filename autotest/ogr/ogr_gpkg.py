@@ -9867,3 +9867,36 @@ def test_ogr_gpkg_extent3d_envelope_variants(file_name):
         float("inf"),
         float("-inf"),
     )
+
+
+def test_ogr_gpkg_extent3d_on_2d_dataset_with_filters(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1, 3, 2, 4, float("inf"), float("-inf"))
+
+    lyr.SetAttributeFilter("fid = 1")
+    ext3d = lyr.GetExtent3D()
+    lyr.SetAttributeFilter(None)
+    assert ext3d == (1, 1, 2, 2, float("inf"), float("-inf"))
+
+    lyr.SetSpatialFilterRect(2.5, 3.5, 3.5, 4.5)
+    ext3d = lyr.GetExtent3D()
+    lyr.SetSpatialFilter(None)
+    assert ext3d == (3, 3, 4, 4, float("inf"), float("-inf"))
+
+    ds = None
