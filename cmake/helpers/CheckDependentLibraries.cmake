@@ -375,11 +375,8 @@ if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-# First check with CMake config files (starting at version 8, due to issues with earlier ones), and then fallback to the FindPROJ module.
-find_package(PROJ 9 CONFIG QUIET)
-if (NOT PROJ_FOUND)
-  find_package(PROJ 8 CONFIG QUIET)
-endif()
+# First check with CMake config files, and then fallback to the FindPROJ module.
+find_package(PROJ CONFIG)
 if (PROJ_FOUND)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG)\n")
 else()
