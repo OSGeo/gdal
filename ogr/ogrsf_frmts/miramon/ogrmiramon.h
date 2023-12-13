@@ -49,14 +49,13 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     GUIntBig iNextFID;
 
-    struct MiraMonVectLayerInfo hMiraMonLayer;
-    struct MM_TH pMMHeader;
-    struct MiraMonFeature hMMFeature;
-
+    struct MiraMonVectLayerInfo hMiraMonLayer; // MiraMon layer
+    struct MM_TH pMMHeader; // Main header
+    struct MiraMonFeature hMMFeature; // Feature reading/writing
     struct MiraMonDataBase hLayerDB;
 
     bool bUpdate;
-    bool bHeaderComplete;
+    //bool bHeaderComplete;
 
     bool bRegionComplete;
     OGREnvelope sRegion;
@@ -64,12 +63,8 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     VSILFILE *m_fp = nullptr;
 
-    bool ReadLine();
     CPLString osLine;
     char **papszKeyedValues;
-
-    bool ScanAheadForHole();
-    bool NextIsFeature();
 
     OGRFeature *GetNextRawFeature();
 
@@ -80,14 +75,14 @@ class OGRMiraMonLayer final : public OGRLayer,
                                         OGRFeature *poFeature);
     OGRErr WriteGeometry(bool bExternalRing, 
                     OGRFeature *poFeature);
-    OGRErr CompleteHeader(OGRGeometry *);
     GIntBig GetFeatureCount(int bForce);
 
   public:
     bool bValidFile;
 
     OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
-                const OGRSpatialReference *poSRS, int bUpdate);
+                const OGRSpatialReference *poSRS, int bUpdate,
+                char **papszOpenOptions);
     virtual ~OGRMiraMonLayer();
 
     void ResetReading() override;
@@ -133,7 +128,8 @@ class OGRMiraMonDataSource final : public OGRDataSource
     virtual ~OGRMiraMonDataSource();
 
     int Open(const char *pszFilename, VSILFILE *fp,
-             const OGRSpatialReference *poSRS, int bUpdate);
+             const OGRSpatialReference *poSRS, int bUpdate,
+            char **papszOpenOptions);
     int Create(const char *pszFilename, char **papszOptions);
 
     const char *GetName() override
@@ -147,9 +143,9 @@ class OGRMiraMonDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
 
     virtual OGRLayer *ICreateLayer(const char *,
-                                   OGRSpatialReference * = nullptr,
+                                   const OGRSpatialReference * = nullptr,
                                    OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) ;
+                                   char ** = nullptr) override;
 
     int TestCapability(const char *) override;
 };

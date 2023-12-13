@@ -58,12 +58,14 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
 /************************************************************************/
 
 int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
-                           const OGRSpatialReference *poSRS, int bUpdateIn)
+                           const OGRSpatialReference *poSRS, int bUpdateIn,
+                            char **papszOpenOptionsUsr)
 
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
 
-    OGRMiraMonLayer *poLayer = new OGRMiraMonLayer(pszFilename, fp, poSRS, bUpdate);
+    OGRMiraMonLayer *poLayer = new OGRMiraMonLayer(pszFilename, fp, poSRS,
+                bUpdate, papszOpenOptionsUsr);
     if (!poLayer->bValidFile)
     {
         delete poLayer;
@@ -71,7 +73,8 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     }
 
     papoLayers = static_cast<OGRMiraMonLayer **>(
-        CPLRealloc(papoLayers, (size_t)(sizeof(OGRMiraMonLayer *) * ((size_t)nLayers + (size_t)1))));
+        CPLRealloc(papoLayers, (size_t)(sizeof(OGRMiraMonLayer *) *
+            ((size_t)nLayers + (size_t)1))));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
@@ -101,7 +104,7 @@ int OGRMiraMonDataSource::Create(const char *pszDSName, char ** /* papszOptions 
 /************************************************************************/
 
 OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
-                                         OGRSpatialReference *poSRS,
+                                         const OGRSpatialReference *poSRS,
                                          OGRwkbGeometryType eType,
                                          char **papszOptions)
 {
@@ -177,7 +180,9 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     else if(layerType!=MM_LayerType_Unknown)
     {
         // Extension is determined only for the type of the layer
-        osFilename = CPLFormFilename(osPath, pszLayerName, pszExtension);
+        const char *extension=CPLGetExtension(pszLayerName);
+        if(!EQUAL(extension, pszExtension))
+            osFilename = CPLFormFilename(osPath, pszLayerName, pszExtension);
     }
     else
     {
@@ -225,7 +230,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */
     /* -------------------------------------------------------------------- */
-    if (Open(osFilename, fp, poSRS, TRUE))
+    if (Open(osFilename, fp, poSRS, TRUE,papszOptions))
     {
         auto poLayer = papoLayers[nLayers - 1];
         if (layerType==MM_LayerType_Unknown)

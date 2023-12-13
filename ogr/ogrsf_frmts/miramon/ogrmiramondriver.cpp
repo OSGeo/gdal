@@ -37,12 +37,42 @@
 static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
+    if (poOpenInfo->fpL == nullptr)
+        return FALSE;
+    else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
-        return true;
+    {
+        if (!poOpenInfo->TryToIngest(7))
+            return FALSE;
 
-    return 0;
+        // Format
+        if ((poOpenInfo->pabyHeader[0] == 'P' &&
+                poOpenInfo->pabyHeader[1] == 'N' &&
+                poOpenInfo->pabyHeader[2] == 'T') ||
+                (poOpenInfo->pabyHeader[0] == 'A' &&
+                poOpenInfo->pabyHeader[1] == 'R' &&
+                poOpenInfo->pabyHeader[2] == 'C') ||
+                (poOpenInfo->pabyHeader[0] == 'P' &&
+                poOpenInfo->pabyHeader[1] == 'O' &&
+                poOpenInfo->pabyHeader[2] == 'L'))
+        {
+            // Version 1.1 or 2.0 
+            if(((poOpenInfo->pabyHeader[3] == ' ' &&
+                    poOpenInfo->pabyHeader[4] == '1') &&
+                    (poOpenInfo->pabyHeader[5] == '.' &&
+                    poOpenInfo->pabyHeader[6] == '1')) ||
+                (poOpenInfo->pabyHeader[3] == ' ' &&
+                    poOpenInfo->pabyHeader[4] == '2') &&
+                    (poOpenInfo->pabyHeader[5] == '.' &&
+                    poOpenInfo->pabyHeader[6] == '0'))
+            {
+                return TRUE;
+            }
+        }
+    }    
+
+    return FALSE;
 }
 
 /************************************************************************/
@@ -58,7 +88,7 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
     if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
-                    poOpenInfo->eAccess == GA_Update))
+                    poOpenInfo->eAccess == GA_Update, poOpenInfo->papszOpenOptions))
     {
         delete poDS;
         return nullptr;
@@ -119,6 +149,23 @@ void RegisterOGRMiraMon()
         "<Value>NULL</Value>"
         "</Option>"
         "</LayerCreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='Height' scope='vector' type='string' "
+        "description='Zoom level of full resolution. If not specified, maximum "
+        "non-empty zoom level'/>"
+        "  <Option name='BAND_COUNT' scope='raster' type='string-select' "
+        "description='Sets which of the possible heights is chosen: "
+        "the first, the highest or the lowest one.' default='First'>"
+        "    <Value>First</Value>"
+        "    <Value>Highest</Value>"
+        "    <Value>default</Value>"
+        "    <Value>NULL</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
+
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date Time DateTime "

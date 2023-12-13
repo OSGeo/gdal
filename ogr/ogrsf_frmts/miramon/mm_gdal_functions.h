@@ -45,6 +45,9 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
                             MM_BYTE nou_decimals,
 							MM_BYTE que_fer_amb_reformatat_decimals);
+
+int MM_DonaAlcadesDArc(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
+
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif

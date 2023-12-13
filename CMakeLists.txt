@@ -1,8 +1,6 @@
 # CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
 cmake_minimum_required(VERSION 3.9...3.27)
 
-list(APPEND CMAKE_PREFIX_PATH "C:/dev/vcpkg/vcpkg/installed")
-
 project(gdal LANGUAGES C CXX)
 include(CTest)
 

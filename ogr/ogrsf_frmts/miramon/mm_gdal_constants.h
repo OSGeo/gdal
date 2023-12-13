@@ -9,7 +9,7 @@ CPL_C_START // Necessary for compiling C in GDAL project
 
 #include <stddef.h> // For size_t 
 
-#define MM_STATISTICAL_UNDEFINED_VALUE (2.9E+301)
+#define MM_UNDEFINED_STATISTICAL_VALUE (2.9E+301)
 
 // BIT 1
 #define MM_BIT_1_ON     0x02    // Generated using MiraMon
@@ -18,7 +18,7 @@ CPL_C_START // Necessary for compiling C in GDAL project
 // BIT 4
 #define MM_BIT_4_ON     0x10    // 3d
 // BIT 5
-#define MM_BIT_5_ON     0x20	// Explicital polígons (every polígon has only one arc)
+#define MM_BIT_5_ON     0x20	// Explicital polygons (every polygon has only one arc)
 
 #define MM_CREATED_USING_MIRAMON    MM_BIT_1_ON
 #define MM_LAYER_MULTIPOLYGON       MM_BIT_3_ON
@@ -63,8 +63,9 @@ typedef unsigned __int64 MM_POLYGON_RINGS_COUNT;
 
 // Z Part
 typedef int MM_SELEC_COORDZ_TYPE;
-#define MM_SELECT_LOWEST_COORDZ 	0
+#define MM_SELECT_FIRST_COORDZ 	    0
 #define MM_SELECT_HIGHEST_COORDZ  	1
+#define MM_SELECT_LOWEST_COORDZ 	2
 
 #define MM_STRING_HIGHEST_ALTITUDE  0x0001
 #define MM_STRING_LOWEST_ALTITUDE   0x0002
@@ -171,7 +172,7 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 #define MM_PRIVATE_POLYGON_DB_FIELDS    6
 
 typedef unsigned char       MM_BYTE;
-typedef signed __int32 MM_TIPUS_N_ALCADES;
+typedef signed __int32      MM_N_HEIGHT_TYPE;
 
 #define MM_NOU_N_DECIMALS_NO_APLICA		    0
 #define MM_APLICAR_NOU_N_DECIMALS			1
@@ -183,7 +184,7 @@ typedef signed __int32 MM_TIPUS_N_ALCADES;
 #define MM_ARC_ALCADA_CONSTANT        -1
 #define MM_ARC_TIPUS_ALCADA(n)        (((n)<0) ? MM_ARC_ALCADA_CONSTANT : MM_ARC_ALCADA_PER_CADA_VERTEX)
 #define MM_ARC_N_ALCADES(n)           labs(n)
-#define MM_ARC_N_TOTAL_ALCADES_DISC(n,n_vrt) (((n)<0) ? labs(n) : (n)*(MM_TIPUS_N_ALCADES)(n_vrt))
+#define MM_ARC_N_TOTAL_ALCADES_DISC(n,n_vrt) (((n)<0) ? labs(n) : (n)*(MM_N_HEIGHT_TYPE)(n_vrt))
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

@@ -42,7 +42,7 @@
 
 //#include "mm_gdal\mm_gdal_driver_structs.h"    // SECCIO_VERSIO
 //#include "mm_gdal\mm_wrlayr.h" 
-//#include "mm_gdal\mm_gdal_functions.h"
+#include "mm_gdal\mm_gdal_functions.h" // Per a int MM_DonaAlcadesDArc()
 #include "mm_gdal\mm_gdal_constants.h"
 #else
 #include "ogr_api.h"    // For CPL_C_START
@@ -64,230 +64,7 @@ MM_TIPUS_ERROR MMRecuperaUltimError(void)
 	return lastErrorMM;
 }
 
-/*struct SMM_HANDLE_CAPA_VECTOR
-{
-	int tipus_fitxer;
-	struct TREBALL_ARC_NOD an;
-    char nom_fitxer[MM_MAX_PATH];
-    char nom_fitxer_arc[MM_MAX_PATH];
-	struct Capcalera_Top cap_top;
-    struct Capcalera_Top cap_top_arc;
-    MM_BOOLEAN es_3d;
-    struct CAPCALERA_VECTOR_3D *cap_arc_3d;  // pel cas en que necessitem llegir les capçaleres 3d amb el "pic i la pala".
-    FILE_TYPE *pf, *pfarc;
-};*/
-#ifdef TO_BE_REVISED
-MM_HANDLE_CAPA_VECTOR MMIniciaCapaVector(const char *nom_fitxer)
-{
-struct SMM_HANDLE_CAPA_VECTOR *shlayer;
-char ext[MAX_MIDA_EXTENSIO_FITXER];
 
-//Aquests defines fan que no es miri el tema de la llicència.
-#define ANY_CADUCITAT 2008
-#define MES_CADUCITAT 8
-#define DIA_CADUCITAT 1
-
-#if defined ANY_CADUCITAT && defined MES_CADUCITAT && defined DIA_CADUCITAT
-time_t t;
-   struct tm *tm_local;
-#endif
-
-#if defined ANY_CADUCITAT && defined MES_CADUCITAT && defined DIA_CADUCITAT
-   //   La llicència temporal. En aquest cas no es valida la llicència basada
-   //   en paràmetres.
-
-   t = time(NULL);
-   tm_local = localtime(&t);
-
-   if (tm_local->tm_year+1900>ANY_CADUCITAT ||
-       (tm_local->tm_year+1900==ANY_CADUCITAT && tm_local->tm_mon+1>MES_CADUCITAT) ||
-       (tm_local->tm_year+1900==ANY_CADUCITAT && tm_local->tm_mon+1==MES_CADUCITAT && tm_local->tm_mday>=DIA_CADUCITAT))
-   {
-    	lastErrorMM=MalInstallat_o_CopiaIllegal;
-       	return NULL;
-   }
-#endif
-
-
-	if(!nom_fitxer || VerificaSiPucLlegirFitxerXerraire(nom_fitxer, FALSE))
-    {
-	    lastErrorMM=No_puc_obrir_demanat;
-        return NULL;
-    }
-
-	if(NULL==(shlayer=calloc(1,sizeof(*shlayer))))
-    {
-	    lastErrorMM=No_mem;
-        return NULL;
-    }
-
-    OmpleExtensio(ext,MAX_MIDA_EXTENSIO_FITXER, nom_fitxer);
-    if(!stricmp(ext, ExtPoligons+1))
-    {
-        shlayer->bIsPolygon=TRUE;
-    }
-    else if(!stricmp(ext, ExtArcs+1))
-    {
-        shlayer->bIsArc=TRUE;
-    }
-    else if(!stricmp(ext, ExtNodes+1))
-    {
-    	shlayer->bIsNode=TRUE;
-    }
-    else if(!stricmp(ext, ExtPunts+1))
-    {
-        shlayer->bIsPoint=TRUE;
-    }
-    else
-    {
-	    lastErrorMM=Ext_incorrecta_No_puc_obrir;
-        free(shlayer);
-        return NULL;
-    }
-
-    shlayer->pszSrcLayerName=strdup_function(nom_fitxer);
-
-    if(shlayer->tipus_fitxer==MM32DLL_POL)
-    {
-        DonaNomArcDelPol(shlayer->nom_fitxer_arc, shlayer->nom_fitxer);
-        if ((shlayer->pfarc=fopen_function(shlayer->nom_fitxer_arc, "rb"))==0 || lect_capcalera_topo(shlayer->pfarc, ExtArcs, &(shlayer->cap_top_arc)))
-        {
-            lastErrorMM=No_puc_obrir_origen;
-            free(shlayer);
-            return NULL;
-        }
-
-        LlegeixStructTreballArcNod(shlayer->nom_fitxer, shlayer->nom_fitxer_arc, &(shlayer->an));
-
-        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtPoligons, &(shlayer->cap_top)))
-        {
-            lastErrorMM=No_puc_obrir_origen;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        shlayer->cap_arc_3d=NULL;
-        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
-    }
-    else if(shlayer->tipus_fitxer==MM32DLL_ARC)
-    {
-    	*(shlayer->nom_fitxer_arc)='\0';
-        shlayer->pfarc=NULL;
-
-        LlegeixStructTreballArcNod(NULL, shlayer->nom_fitxer, &(shlayer->an));
-        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0 || lect_capcalera_topo(shlayer->pf, ExtArcs, &(shlayer->cap_top)))
-        {
-            lastErrorMM=UltimErrorStb0;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
-    }
-    else if(shlayer->tipus_fitxer==MM32DLL_NOD)
-    {
-        sprintf(shlayer->nom_fitxer_arc, "%s%s", TreuExtensio(nom_fitxer), ExtArcs);
-
-        LlegeixStructTreballArcNod(NULL, shlayer->nom_fitxer_arc, &(shlayer->an));
-
-        if ((shlayer->pfarc=fopen_function(shlayer->nom_fitxer_arc, "rb"))==0)
-        {
-            lastErrorMM=No_puc_obrir_origen;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        if (lect_capcalera_topo(shlayer->pfarc, ExtArcs, &(shlayer->cap_top_arc)))
-        {
-            lastErrorMM=UltimErrorStb0;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0)
-        {
-            lastErrorMM=No_puc_obrir_origen;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        if (lect_capcalera_topo(shlayer->pf, ExtNodes, &(shlayer->cap_top)))
-        {
-            lastErrorMM=UltimErrorStb0;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-		if(shlayer->an.arcZ)
-    	    hMiraMonLayer->TopHeader.bIs3d=TRUE;
-        else
-	        hMiraMonLayer->TopHeader.bIs3d=FALSE;
-	}
-    else if(shlayer->tipus_fitxer==MM32DLL_PNT)
-    {
-    	*(shlayer->nom_fitxer_arc)='\0';
-        shlayer->pfarc=NULL;
-
-        if ((shlayer->pf=fopen_function(shlayer->nom_fitxer, "rb"))==0)
-        {
-            lastErrorMM=No_puc_obrir_origen;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        if (lect_capcalera_topo(shlayer->pf, ExtPunts, &(shlayer->cap_top)))
-        {
-            lastErrorMM=UltimErrorStb0;
-            MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-            return NULL;
-        }
-        hMiraMonLayer->TopHeader.bIs3d=(BOOL)(shlayer->cap_top.flag & AMB_INFORMACIO_ALTIMETRICA);
-	}
-
-    if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_ARC)
-    {
-	    if(NULL==(shlayer->cap_arc_3d=Llegeix_cap_arcZ(shlayer->pf, shlayer->an.cap_arc, shlayer->an.n_arc, NULL, NULL)))
-        {
-        	lastErrorMM=UltimErrorStb0;
-        	MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-  			return NULL;
-        }
-    }
-    if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_NOD)
-    {
-    	if(NULL==(shlayer->cap_arc_3d=Llegeix_cap_arcZ(shlayer->pfarc, shlayer->an.cap_arc, shlayer->an.n_arc, NULL, NULL)))
-  		{
-        	lastErrorMM=UltimErrorStb0;
-        	MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-  			return NULL;
-        }
-    }
-    else if(hMiraMonLayer->TopHeader.bIs3d && shlayer->tipus_fitxer==MM32DLL_PNT)
-    {
-	    if (NULL==(shlayer->cap_arc_3d=calloc(shlayer->cap_top.n_elem, sizeof(*(shlayer->cap_arc_3d)))))
-        {
-        	lastErrorMM=No_mem;
-        	MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-  			return NULL;
-        }
-        // Saltem la part de punts i llegim les capçaleres 3d
-        fseek_function(shlayer->pf, MIDA_CAPCALERA_TOP+shlayer->cap_top.n_elem*sizeof(double)*2+16+sizeof(double)*2,SEEK_SET);
-        // LLegim les capçaleres
-        if (fread_function(shlayer->cap_arc_3d, sizeof(struct CAPCALERA_VECTOR_3D), shlayer->cap_top.n_elem, shlayer->pf)!=(size_t)shlayer->cap_top.n_elem)
-        {
-            lastErrorMM=Mida_incoherent_Corromput;
-        	MMFinalitzaCapaVector(shlayer);
-            free(shlayer);
-  			return NULL;
-        }
-    }
-    return (MM_HANDLE_CAPA_VECTOR)shlayer;
-}
-#else
 int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, const char *pszFilename)
 {
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
@@ -388,19 +165,8 @@ int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_f
     // S'ha de llegir de la DBF
     // ·$· hMiraMonLayer->nCharSet=MM_JOC_CARAC_ANSI_DBASE;
     
-    if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->bIsPoint)
-    {
-        if(MMReadZSection(hMiraMonLayer, hMiraMonLayer->MMPoint.pF, 
-                   &hMiraMonLayer->MMPoint.pZSection))
-            return 1;
-
-        if(MMReadZDescriptionHeaders(hMiraMonLayer, hMiraMonLayer->MMPoint.pF, 
-            hMiraMonLayer->TopHeader.nElemCount, &hMiraMonLayer->MMPoint.pZSection))
-            return 1;
-    }
     return 0;
 }
-#endif // TO_BE_REVISED
 
 int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_INTERNAL_FID i_elem,
@@ -411,18 +177,18 @@ int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 {
 FILE_TYPE *pF;
 struct MM_AH *pArcHeader;
+struct MiraMonArcLayer *pMMArc;
+struct MM_ZD *pZDescription=NULL;
 
     if (hMiraMonLayer->bIsPolygon)
-    {
-        pF=hMiraMonLayer->MMPolygon.MMArc.pF;
-        pArcHeader=hMiraMonLayer->MMPolygon.MMArc.pArcHeader;
-    }
+        pMMArc=&hMiraMonLayer->MMPolygon.MMArc;
     else
-    {
-        pF=hMiraMonLayer->MMArc.pF;
-        pArcHeader=hMiraMonLayer->MMArc.pArcHeader;
-    }
-        
+        pMMArc=&hMiraMonLayer->MMArc;
+
+    pF=pMMArc->pF;
+    pArcHeader=pMMArc->pArcHeader;
+    if(hMiraMonLayer->TopHeader.bIs3d)
+        pZDescription=pMMArc->pZSection.pZDescription;    
                 
     fseek_function(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
 
@@ -447,12 +213,42 @@ struct MM_AH *pArcHeader;
             return 1;
         }
 
+        if (hMiraMonLayer->TopHeader.bIs3d)
+        {
+            if (MMResizeDoublePointer(&hMiraMonLayer->ReadedFeature.pZCoord,
+                &hMiraMonLayer->ReadedFeature.nMaxpZCoord,
+                nStartVertice + pArcHeader[i_elem].nElemCount*2,
+                0, 0))
+                return 1;
+
+            // +nStartVertice
+            MM_DonaAlcadesDArc(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice + pArcHeader[i_elem].nElemCount,
+                pF, pArcHeader[i_elem].nElemCount, pZDescription + i_elem, flag_z);
+
+            // If there is a value for Z-nodata in GDAL this lines can be uncomented
+            // and MM_GDAL_NODATA_COORD_Z can be defined
+            /*if(!DOUBLES_DIFERENTS_DJ(punts_z[k], MM_NODATA_COORD_Z))
+            {
+                MM_N_VERTICES_TYPE nIVertice;
+                for(nIVertice=0; nIVertice<pArcHeader[i_elem].nElemCount; nIVertice++)
+                    hMiraMonLayer->ReadedFeature.pZCoord[nIVertice]=MM_GDAL_NODATA_COORD_Z;
+            }
+            */
+        }
+
         // Reverse the vertices
         for (nIVertice = 0; nIVertice < pArcHeader[i_elem].nElemCount; nIVertice++)
         {
             memcpy(hMiraMonLayer->ReadedFeature.pCoord + nStartVertice - (bAvoidFirst ? 1 : 0) + nIVertice,
                 hMiraMonLayer->ReadedFeature.pCoord + nStartVertice + 2*pArcHeader[i_elem].nElemCount-nIVertice-1,
                 sizeof(*hMiraMonLayer->ReadedFeature.pCoord));
+
+            if (hMiraMonLayer->TopHeader.bIs3d)
+            {
+                memcpy(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice - (bAvoidFirst ? 1 : 0) + nIVertice,
+                    hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice + 2*pArcHeader[i_elem].nElemCount-nIVertice-1,
+                    sizeof(*hMiraMonLayer->ReadedFeature.pZCoord));
+            }
         }
     }
     else
@@ -471,40 +267,36 @@ struct MM_AH *pArcHeader;
             #endif
             return 1;
         }
+
+        if(hMiraMonLayer->TopHeader.bIs3d)
+        {
+            if(MMResizeDoublePointer(&hMiraMonLayer->ReadedFeature.pZCoord, 
+                    &hMiraMonLayer->ReadedFeature.nMaxpZCoord, 
+                    nStartVertice+pArcHeader[i_elem].nElemCount,
+                    0, 0))
+                return 1;
+
+            // +nStartVertice
+            MM_DonaAlcadesDArc(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice - (bAvoidFirst ? 1 : 0), pF, pArcHeader[i_elem].nElemCount,
+                pZDescription+i_elem, flag_z);
+
+            // If there is a value for Z-nodata in GDAL this lines can be uncomented
+            // and MM_GDAL_NODATA_COORD_Z can be defined
+            /*if(!DOUBLES_DIFERENTS_DJ(punts_z[k], MM_NODATA_COORD_Z))
+            {
+                MM_N_VERTICES_TYPE nIVertice;
+                for(nIVertice=0; nIVertice<pArcHeader[i_elem].nElemCount; nIVertice++)
+                    hMiraMonLayer->ReadedFeature.pZCoord[nIVertice]=MM_GDAL_NODATA_COORD_Z;
+            }
+            */
+        }
     }
     hMiraMonLayer->ReadedFeature.nNumpCoord=pArcHeader[i_elem].nElemCount-(bAvoidFirst?1:0);
 
-    #ifdef CAL_FER_3D_ARCS
-    if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->ReadedFeature.pZCoord)
-    {
-        pZDescription=hMiraMonLayer->MMArc.pZSection.pZDescription;
-
-        if(MMResizeDoublePointer(&hMiraMonLayer->ReadedFeature.pZCoord, 
-                &hMiraMonLayer->ReadedFeature.nMaxpZCoord, 
-                nStartVertice+pArcHeader[i_elem].nElemCount,
-                0, 0))
-            return 1;
-
-        // +nStartVertice
-        DonaAlcadesDArc(punts_z, pF, pArcHeader[i_elem].nElemCount,
-            pZDescription+i_elem, flag_z);
-
-        for(k=0; k<(pArcHeader[i_elem].nElemCount); k++)
-        {
-            // ·$· Which value is nodata por Z en GDAL?
-            /*if(!DOUBLES_DIFERENTS_DJ(punts_z[k], MM_NODATA_COORD_Z))
-                cz=-DBL_MAX;
-            else */cz=punts_z[k]; // Només ens quedem el primer.
-
-            hMiraMonLayer->ReadedFeature.pZCoord[k]=cz;
-        }
-    }
-    #endif //CAL_FER_3D_ARCS
     return 0;
 }
 
 int MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                OUT double **coord_z, 
                 IN size_t i_pol,
 				IN unsigned long int flag_z)
 {
@@ -616,6 +408,7 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
         if(hMiraMonLayer->ReadedFeature.pNCoordRing[hMiraMonLayer->ReadedFeature.nNRings]!=0)
             bAvoidFirst=TRUE;
 
+        // Add coordinates to hMiraMonLayer->ReadedFeature.pCoord
         if(MMAddStringLineCoordinates(hMiraMonLayer, (hMiraMonLayer->pArcs+nIndex)->nIArc, flag_z,
                 nNAcumulVertices,
                 bAvoidFirst, (hMiraMonLayer->pArcs+nIndex)->VFG))
@@ -643,61 +436,6 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
     if(pBuffer)
         free_function(pBuffer);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
     
-    #ifdef ANEM_FENT
-    
-
-    if (coord_z && *coord_z==NULL)
-    {
-		var_pols->Nomb_Max_Coord_Z=var_pols->Nomb_Max_Coord;
-		if (NULL==(*coord_z = MM_calloc(var_pols->Nomb_Max_Coord*sizeof(**coord_z))))
-        {
-    	    return 1;
-        }
-	}
-
-    ncoord=0;
-	if(hMiraMonLayer->ReadedFeature.nNumpCoord)
-	{
-		hMiraMonLayer->nNRing=0;
-		if(n_mini_pol_ext)
-			*n_mini_pol_ext=0;
-	}
-	else
-	{
-		hMiraMonLayer->nNRing=0;
-		if(n_mini_pol_ext)
-			*n_mini_pol_ext=0;
-	}
-
-    for( nIArcAux=0, nvertex_per_minipol=0;nIArcAux<pPolHeader->nArcsCount; nIArcAux++)
-    {
-		if (coord_z)
-        {
-            if ((ncoord+vertex_arc)>var_pols->Nomb_Max_Coord_Z)
-            {
-                if (NULL==(*coord_z = MM_recalloc(*coord_z, (ncoord+vertex_arc)*sizeof(**coord_z), var_pols->Nomb_Max_Coord_Z*sizeof(**coord_z))))
-                {
-					return 1;
-                }
-                var_pols->Nomb_Max_Coord_Z=ncoord+vertex_arc;
-            }
-	        DonaAlcadesDArc(*coord_z+(size_t)ncoord, hMiraMonLayer->MMPolygon.MMArc.pF, vertex_arc, cap_arcZ+(size_t)un_arc_del_pol.i_arc, flag_z);
-            if (un_arc_del_pol.vora_fi_gir&TOPO_ARC_GIRAR)
-            {
-                for ( reves=0; reves<vertex_arc/2; reves++)
-                {
-                    un_double=*(*coord_z+(size_t)ncoord+reves);
-                    *(*coord_z+(size_t)ncoord+reves)=*(*coord_z+((size_t)ncoord+vertex_arc-1-reves));
-                    *(*coord_z+(size_t)ncoord+vertex_arc-1-reves)=un_double;
-                }
-            }
-        }
-	}
-
-	
-    #endif //#ifdef ANEM_FENT
-	
-
 	return 0;
 }
 
@@ -706,7 +444,6 @@ int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERN
 FILE_TYPE *pF;
 struct MM_ZD *pZDescription;
 unsigned long int flag_z;
-double *z=NULL;
 int num;
 double cz;
 struct MM_AH *pArcHeader;
@@ -740,42 +477,6 @@ struct MM_PH *pPolHeader;
             return 1;
         }
 
-        if(hMiraMonLayer->TopHeader.bIs3d)
-        {
-            pZDescription=hMiraMonLayer->MMPoint.pZSection.pZDescription+i_elem;
-            num=MM_ARC_N_TOTAL_ALCADES_DISC(pZDescription->nZCount, 1);
-            if(num==0)
-                hMiraMonLayer->ReadedFeature.pZCoord[0]=MM_NODATA_COORD_Z;
-            else
-            {
-                if(MMResizeDoublePointer(&hMiraMonLayer->ReadedFeature.pZCoord, 
-                    &hMiraMonLayer->ReadedFeature.nMaxpZCoord, 
-                    hMiraMonLayer->ReadedFeature.nNumpZCoord, 1, 1))
-                    return 1;
-
-                fseek_function(pF, pZDescription->nOffsetZ ,SEEK_SET);
-                if((size_t)num!=fread_function(hMiraMonLayer->ReadedFeature.pZCoord,sizeof(*hMiraMonLayer->ReadedFeature.pZCoord),num,pF))
-                {
-                    #ifndef GDAL_COMPILATION
-                    lastErrorMM=Error_lectura_Corromput;
-                    #endif
-                    return 1;
-                }
-
-                // ·$· De moment agafarem el primer
-                /*if (flag_z==MM_STRING_HIGHEST_ALTITUDE)
-                    cz=pZDescription->dfBBmaxz;
-                else if (flag_z==MM_STRING_LOWEST_ALTITUDE)
-                    cz=pZDescription->dfBBminz;
-                else*/
-                    cz=hMiraMonLayer->ReadedFeature.pZCoord[0];
-
-                // ·$· Which value is nodata por Z en GDAL?
-                /*if(!DOUBLES_DIFERENTS_DJ(cz, MM_NODATA_COORD_Z))
-                    hMiraMonLayer->ReadedFeature.pZCoord[0]=-DBL_MAX;
-                else */hMiraMonLayer->ReadedFeature.pZCoord[0]=cz; // NomÃ©s ens quedem el primer.
-            }
-        }
         hMiraMonLayer->ReadedFeature.nNRings=1;
         
         if(MMResize_MM_N_VERTICES_TYPE_Pointer(&hMiraMonLayer->ReadedFeature.pNCoordRing, 
@@ -784,6 +485,44 @@ struct MM_PH *pPolHeader;
             return 1;
 
         hMiraMonLayer->ReadedFeature.pNCoordRing[0]=1;
+
+        if(hMiraMonLayer->TopHeader.bIs3d)
+        {
+            pZDescription=hMiraMonLayer->MMPoint.pZSection.pZDescription+i_elem;
+            num=MM_ARC_N_TOTAL_ALCADES_DISC(pZDescription->nZCount, 1);
+            if(num==0)
+                hMiraMonLayer->ReadedFeature.pZCoord[0]=MM_NODATA_COORD_Z;
+            else
+            {
+                if (MMResizeDoublePointer(&hMiraMonLayer->ReadedFeature.pZCoord,
+                    &hMiraMonLayer->ReadedFeature.nMaxpZCoord,
+                    1, 1, 1))
+                    return 1;
+
+                if (flag_z==MM_STRING_HIGHEST_ALTITUDE) // Max z
+                    cz=pZDescription->dfBBmaxz;
+                else if (flag_z==MM_STRING_LOWEST_ALTITUDE) // Min z
+                    cz=pZDescription->dfBBminz;
+                else
+                {
+                    // Reading the first z coordinate
+                    fseek_function(pF, pZDescription->nOffsetZ, SEEK_SET);
+                    if ((size_t)1 != fread_function(&cz, sizeof(*hMiraMonLayer->ReadedFeature.pZCoord), 1, pF))
+                    {
+                        #ifndef GDAL_COMPILATION
+                        lastErrorMM = Error_lectura_Corromput;
+                        #endif
+                        return 1;
+                    }
+                }
+                // If there is a value for Z-nodata in GDAL this lines can be uncomented
+                // and MM_GDAL_NODATA_COORD_Z can be defined
+                /*if(!DOUBLES_DIFERENTS_DJ(cz, MM_NODATA_COORD_Z))
+                    hMiraMonLayer->ReadedFeature.pZCoord[0]=MM_GDAL_NODATA_COORD_Z;
+                else */hMiraMonLayer->ReadedFeature.pZCoord[0]=cz;
+            }
+        }
+        
         return 0;
     }
 
@@ -792,6 +531,13 @@ struct MM_PH *pPolHeader;
     {
         if(MMAddStringLineCoordinates(hMiraMonLayer, i_elem, flag_z, 0, FALSE, 0))
             return 1;
+
+        if(MMResize_MM_N_VERTICES_TYPE_Pointer(&hMiraMonLayer->ReadedFeature.pNCoordRing, 
+                        &hMiraMonLayer->ReadedFeature.nMaxpNCoordRing, 
+                        1, 0, 1))
+            return 1;
+
+        hMiraMonLayer->ReadedFeature.pNCoordRing[0]=hMiraMonLayer->ReadedFeature.nNumpCoord;
 
         return 0;
     }
@@ -804,11 +550,11 @@ struct MM_PH *pPolHeader;
     if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->ReadedFeature.pZCoord)
     {
         pZDescription=hMiraMonLayer->MMPolygon.MMArc.pZSection.pZDescription;
-        if(MMGetMultiPolygonCoordinates(hMiraMonLayer, &z, i_elem, flag_z))
+        if(MMGetMultiPolygonCoordinates(hMiraMonLayer, i_elem, flag_z))
             return 1;
     }
     else
-        if(MMGetMultiPolygonCoordinates(hMiraMonLayer, NULL, i_elem, flag_z))
+        if(MMGetMultiPolygonCoordinates(hMiraMonLayer, i_elem, flag_z))
             return 1;
 
 	return 0;

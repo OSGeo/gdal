@@ -28,13 +28,13 @@
 #ifdef GDAL_COMPILATION
 #include "gdal.h"			// Per a GDALDatasetH
 #include "ogr_srs_api.h"	// Per a OSRGetAuthorityCode
-#include "mm_gdal_constants.h"     // MM_STATISTICAL_UNDEFINED_VALUE
+#include "mm_gdal_constants.h"     // MM_UNDEFINED_STATISTICAL_VALUE
 #include "mm_gdal_structures.h"    // struct MM_CAMP *camp
 #include "mm_gdal_functions.h"      // JocCaracMMaDBF()
 #include "mm_wrlayr.h" // fseek_function(),...
 #else
 #include "CmptCmp.h"
-#include "mm_gdal\mm_gdal_constants.h"     // MM_STATISTICAL_UNDEFINED_VALUE
+#include "mm_gdal\mm_gdal_constants.h"     // MM_UNDEFINED_STATISTICAL_VALUE
 #include "mm_gdal\mm_gdal_structures.h"    // struct MM_CAMP *camp
 #include "mm_gdal\mm_gdal_functions.h"      // JocCaracMMaDBF()
 #include "mm_gdal\mm_wrlayr.h" // fseek_function(),...
@@ -122,14 +122,12 @@ MM_EXT_DBF_N_FIELDS i;
         MM_InitializeField(camp);
         if (i<99999)
 			sprintf(camp->NomCamp, "CAMP%05u", (unsigned)(i+1));
-        else // Pot arribar a 67108863 (MAX_N_CAMPS_DBF_ESTESA), per la qual cosa poso el nom CM########.
-        	// També es podria escriu en hexadec. si es vol noms més curts o amb més espai per a la paraula camp
-        	sprintf(camp->NomCamp, "CM%u", (unsigned)(i+1));
+        else 
+			sprintf(camp->NomCamp, "CM%u", (unsigned)(i+1));
 		camp->TipusDeCamp='C';
         camp->DecimalsSiEsFloat=0;
 		camp->BytesPerCamp=50;
 		camp->mostrar_camp=MM_CAMP_MOSTRABLE;
-        //InitEstad_CAMP_BDXP_a_Indefinit(camp); No cal perquè MMInicialitzaCamp() ja ho ha fet.
 	}
     return bd_xp;
 } /* Fi de CreaCapcaleraDBF() */
@@ -237,7 +235,6 @@ size_t mida, j;
 	if(mida>=MM_MAX_LON_FIELD_NAME_DBF)
 		return MM_NOM_DBF_NO_VALID;
 
-	// Retornem cas invàlid
 	for(j=0;j<mida;j++)
 	{
 		if(!MM_Is_character_valid_for_extended_DBF_field_name((unsigned char)nom_camp[j], NULL))
@@ -247,17 +244,12 @@ size_t mida, j;
 	if(mida>=MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF)
 		return MM_NOM_DBF_ESTES_I_VALID;
 
-	// Retornem cas en que alguna lletra és típica de DBF estesa (un espai, un accent,...).
-	// Les minúscules no es contemplen aquí
 	if(!MM_is_classical_field_DBF_name_or_lowercase(nom_camp))
 		return MM_NOM_DBF_ESTES_I_VALID;
 	
-	// Retornem el cas en que tenim alguna minúscula (ja hem descartat el cas en que hi hagi
-	// caràcters de DBF estesa)
 	if(MM_is_field_name_lowercase(nom_camp))
 		return MM_NOM_DBF_MINUSCULES_I_VALID;
     
-	// Només queda el cas clàssica ja que hem descartat tots els altres.
 	return MM_NOM_DBF_CLASSICA_I_VALID;
 }
 
@@ -336,7 +328,7 @@ short int error_retornat=0;
 	for (p=cadena; *p; p++)
 	{
 		if ((*p>='A' && *p<='Z') || (*p>='0' && *p<='9') || *p=='_')
-        	; // De moment és legal
+        	;
 		else
 		{
 			*p='_';
@@ -1678,6 +1670,103 @@ int retorn_printf;
     
 	return 0;
 } /* Fi de MMChangeCFieldWidthDBF() */
+
+
+void MM_AdoptaAlcada(double *desti, const double *proposta, unsigned long int flag)
+{
+    if (*proposta==MM_NODATA_COORD_Z)
+        return;
+
+    if (flag&MM_STRING_HIGHEST_ALTITUDE)
+    {
+        if (*desti==MM_NODATA_COORD_Z || *desti<*proposta)
+            *desti=*proposta;
+    }
+    else if (flag&MM_STRING_LOWEST_ALTITUDE)
+    {
+        if (*desti==MM_NODATA_COORD_Z || *desti>*proposta)
+            *desti=*proposta;
+    }
+    else
+    {
+        // First coordinate of this vertice
+        if (*desti==MM_NODATA_COORD_Z)
+            *desti=*proposta;
+    }
+}
+
+int MM_DonaAlcadesDArc(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag)
+{
+MM_N_HEIGHT_TYPE i;
+MM_N_VERTICES_TYPE i_vrt;
+double *pcoord_z;
+MM_N_HEIGHT_TYPE n_alcada, n_h_total;
+int tipus;
+double *alcada=NULL, *palcada, *palcada_i;
+#define MM_N_ALCADA_LOCAL 50
+double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
+
+	for (i_vrt=0; i_vrt<n_vrt; i_vrt++)
+		coord_z[i_vrt]=MM_NODATA_COORD_Z;
+
+    tipus=MM_ARC_TIPUS_ALCADA(pZDescription->nZCount);
+    n_alcada=MM_ARC_N_ALCADES(pZDescription->nZCount);
+	if (n_vrt==0 || n_alcada==0)
+    	return 0;
+
+	if (tipus==MM_ARC_ALCADA_PER_CADA_VERTEX)
+        n_h_total=(MM_N_HEIGHT_TYPE)n_vrt*n_alcada;
+    else
+        n_h_total=n_alcada;
+
+    if (n_h_total<=MM_N_ALCADA_LOCAL)
+        palcada=local_CinquantaAlcades;
+    else
+    {
+        if (NULL==(palcada=alcada=malloc(n_vrt*sizeof(double)*n_alcada)))
+            return 1;
+    }
+
+    if (fseek_function(pF, pZDescription->nOffsetZ, SEEK_SET))
+    {
+	    if (alcada)
+    	    free(alcada);
+    	return 1;
+    }
+    if (n_h_total!=(MM_N_VERTICES_TYPE)fread_function(palcada, sizeof(double), n_h_total, pF))
+    {
+	    if (alcada)
+    	    free(alcada);
+    	return 1;
+    }
+
+    if (tipus==MM_ARC_ALCADA_PER_CADA_VERTEX)
+	{
+        palcada_i=palcada;
+        for (i=0; i<n_alcada; i++)
+        {
+            for (i_vrt=0, pcoord_z=coord_z; i_vrt<n_vrt; i_vrt++, pcoord_z++, palcada_i++)
+                MM_AdoptaAlcada(pcoord_z, palcada_i, flag);
+        }
+    }
+    else
+    {
+        palcada_i=palcada;
+        pcoord_z=coord_z;
+        for (i=0; i<n_alcada; i++, palcada_i++)
+            MM_AdoptaAlcada(pcoord_z, palcada_i, flag);
+
+        if (*pcoord_z!=MM_NODATA_COORD_Z)
+        {
+            /*Copio el mateix valor a totes les alcades.*/
+            for (i_vrt=1, pcoord_z++; i_vrt<(size_t)n_vrt; i_vrt++, pcoord_z++)
+	            *pcoord_z=*coord_z;
+        }
+    }
+    if (alcada)
+        free(alcada);
+	return 0;
+}
 
 
 #ifdef GDAL_COMPILATION

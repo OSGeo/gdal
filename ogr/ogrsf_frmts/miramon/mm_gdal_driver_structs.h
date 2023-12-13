@@ -167,6 +167,10 @@ enum FieldType
 #define MM_SIZE_OF_ZD_32_BITS   24
 #define MM_SIZE_OF_ZD_64_BITS   32
 
+// Coordinates
+#define MM_SIZE_OF_COORDINATE       16
+
+
 /* -------------------------------------------------------------------- */
 /*      Structures                                                      */
 /* -------------------------------------------------------------------- */
@@ -713,7 +717,9 @@ struct MiraMonVectLayerInfo
     // Temporary elements when reading features from MiraMon files
     struct MiraMonFeature ReadedFeature;
 
-    MM_SELEC_COORDZ_TYPE nSelectCoordz;
+    MM_SELEC_COORDZ_TYPE nSelectCoordz; // MM_SELECT_FIRST_COORDZ
+                                        // MM_SELECT_HIGHEST_COORDZ
+                                        // MM_SELECT_LOWEST_COORDZ
 
     // For polygon layer this is an efficient space to read 
     // the PAL section

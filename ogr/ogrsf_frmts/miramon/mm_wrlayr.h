@@ -23,6 +23,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     //#include "str_snyd.h"   // For struct SNY_TRANSFORMADOR_GEODESIA
     #include "nomsfitx.h"   // Per a CanviaExtensio()
     #include "fitxers.h"    // Per a removeAO()
+    #include "cadenes.h"	// Per a EsCadenaDeBlancs()
     #define calloc_function(a) MM_calloc((a))
     #define realloc_function MM_realloc
     #define free_function(a) MM_free((a))
@@ -42,6 +43,8 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define info_message_function puts
     #define printf_function fprintf_64
     #define max_function(a,b) max((a),(b))
+    #define get_extension_function(a) extensio(a)
+    #define is_empty_string_function(a) EsCadenaDeBlancs(a)
     #define reset_extension(a,b)    CanviaExtensio((a),(b))
     #define remove_function(a)  removeAO((a))
     #define OGR_F_GetFieldAsString_function(a,b) ptr_MM_OGR_F_GetFieldAsString((a),(b))
@@ -76,6 +79,8 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define info_message_function puts
     #define printf_function VSIFPrintfL
     #define max_function(a,b) MAX((a),(b))
+    #define get_extension_function(a) CPLGetExtension((a))
+    #define is_empty_string_function(a) IsEmptyString((a))
     #define reset_extension(a,b)    CPLResetExtension((a),(b))
     #define remove_function(a)  VSIUnlink((a))
     #define OGR_F_GetFieldAsString_function(a,b) OGR_F_GetFieldAsString((a),(b))
@@ -120,9 +125,6 @@ int MMReadZSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
                    FILE_TYPE *pF, 
                    struct MM_ZSection *pZSection);
 
-int MMReadZDescriptionHeaders(struct MiraMonVectLayerInfo *hMiraMonLayer, 
-                        FILE_TYPE *pF, MM_INTERNAL_FID nElements, 
-                        struct MM_ZSection *pZSection);
 // Feature functions
 int MMInitFeature(struct MiraMonFeature *MMFeature);
 void MMResetFeature(struct MiraMonFeature *MMFeature);

@@ -42,15 +42,17 @@
 /************************************************************************/
 
 OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
-                         const OGRSpatialReference *poSRS, int bUpdateIn)
+                         const OGRSpatialReference *poSRS, int bUpdateIn,
+                         char **papszOpenOptions)
     : poFeatureDefn(nullptr), iNextFID(0), bUpdate(CPL_TO_BOOL(bUpdateIn)),
       // Assume header complete in readonly mode.
-      bHeaderComplete(CPL_TO_BOOL(!bUpdate)), bRegionComplete(false),
+      bRegionComplete(false),
       nRegionOffset(0),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
       papszKeyedValues(nullptr), bValidFile(false), hMMFeature(),
       hMiraMonLayer(), pMMHeader(), hLayerDB()
 {
+
     if (m_fp == nullptr)
         return;
 
@@ -87,6 +89,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                         nMMVersion, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Point3d;
                 }
+
                 else
                 {
                     poFeatureDefn->SetGeomType(wkbPoint);
@@ -201,7 +204,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             else if (hMiraMonLayer.bIsPolygon)
             {
                 // 3D
-                if (hMiraMonLayer.TopHeader.Flag & MM_LAYER_3D_INFO)
+                if (hMiraMonLayer.TopHeader.bIs3d)
                 {
                     if (hMiraMonLayer.TopHeader.bIsMultipolygon)
                         poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
@@ -219,6 +222,21 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             else
                 bValidFile = false;
 
+            if (hMiraMonLayer.TopHeader.bIs3d)
+            {
+                const char* szHeight = CSLFetchNameValue(papszOpenOptions, "Height");
+                if (szHeight)
+                {
+                    if (!stricmp(szHeight, "Highest"))
+                        hMiraMonLayer.nSelectCoordz = MM_SELECT_HIGHEST_COORDZ;
+                    else if (!stricmp(szHeight, "Lowest"))
+                        hMiraMonLayer.nSelectCoordz = MM_SELECT_LOWEST_COORDZ;
+                    else
+                        hMiraMonLayer.nSelectCoordz = MM_SELECT_FIRST_COORDZ;
+                }
+                else
+                    hMiraMonLayer.nSelectCoordz = MM_SELECT_FIRST_COORDZ;
+            }
 
             if (hMiraMonLayer.nSRS_EPSG != 0)
             {
@@ -282,83 +300,6 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         VSIFCloseL(m_fp);
 }
 
-/************************************************************************/
-/*                              ReadLine()                              */
-/*                                                                      */
-/*      Read a line into osLine.  If it is a comment line with @        */
-/*      keyed values, parse out the keyed values into                   */
-/*      papszKeyedValues.                                               */
-/************************************************************************/
-
-bool OGRMiraMonLayer::ReadLine()
-
-{
-    /* -------------------------------------------------------------------- */
-    /*      Clear last line.                                                */
-    /* -------------------------------------------------------------------- */
-    osLine.erase();
-    if (papszKeyedValues)
-    {
-        CSLDestroy(papszKeyedValues);
-        papszKeyedValues = nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Read newline.                                                   */
-    /* -------------------------------------------------------------------- */
-    const char *pszLine = CPLReadLineL(m_fp);
-    if (pszLine == nullptr)
-        return false;  // end of file.
-
-    osLine = pszLine;
-
-    /* -------------------------------------------------------------------- */
-    /*      If this is a comment line with keyed values, parse them.        */
-    /* -------------------------------------------------------------------- */
-
-    if (osLine[0] != '#' || osLine.find_first_of('@') == std::string::npos)
-        return true;
-
-    CPLStringList aosKeyedValues;
-    for (size_t i = 0; i < osLine.length(); i++)
-    {
-        if (osLine[i] == '@' && i + 2 <= osLine.size())
-        {
-            bool bInQuotes = false;
-
-            size_t iValEnd = i + 2;  // Used after for.
-            for (; iValEnd < osLine.length(); iValEnd++)
-            {
-                if (!bInQuotes && isspace((unsigned char)osLine[iValEnd]))
-                    break;
-
-                if (bInQuotes && iValEnd < osLine.length() - 1 &&
-                    osLine[iValEnd] == '\\')
-                {
-                    iValEnd++;
-                }
-                else if (osLine[iValEnd] == '"')
-                    bInQuotes = !bInQuotes;
-            }
-
-            const CPLString osValue = osLine.substr(i + 2, iValEnd - i - 2);
-
-            // Unecape contents
-            char *pszUEValue =
-                CPLUnescapeString(osValue, nullptr, CPLES_BackslashQuotable);
-
-            CPLString osKeyValue = osLine.substr(i + 1, 1);
-            osKeyValue += pszUEValue;
-            CPLFree(pszUEValue);
-            aosKeyedValues.AddString(osKeyValue);
-
-            i = iValEnd;
-        }
-    }
-    papszKeyedValues = aosKeyedValues.StealList();
-
-    return true;
-}
 
 /************************************************************************/
 /*                            ResetReading()                            */
@@ -372,68 +313,8 @@ void OGRMiraMonLayer::ResetReading()
 
     iNextFID = 0;
     VSIFSeekL(m_fp, 0, SEEK_SET);
-    ReadLine();
 }
 
-/************************************************************************/
-/*                          ScanAheadForHole()                          */
-/*                                                                      */
-/*      Scan ahead to see if the next geometry is a hole.  If so        */
-/*      return true, otherwise seek back to where we were and return    */
-/*      false.                                                          */
-/************************************************************************/
-
-bool OGRMiraMonLayer::ScanAheadForHole()
-
-{
-    const CPLString osSavedLine = osLine;
-    const vsi_l_offset nSavedLocation = VSIFTellL(m_fp);
-
-    while (ReadLine() && osLine[0] == '#')
-    {
-        if (papszKeyedValues != nullptr && papszKeyedValues[0][0] == 'H')
-            return true;
-    }
-
-    VSIFSeekL(m_fp, nSavedLocation, SEEK_SET);
-    osLine = osSavedLine;
-
-    // We do not actually restore papszKeyedValues, but we
-    // assume it does not matter since this method is only called
-    // when processing the '>' line.
-
-    return false;
-}
-
-/************************************************************************/
-/*                           NextIsFeature()                            */
-/*                                                                      */
-/*      Returns true if the next line is a feature attribute line.      */
-/*      This generally indicates the end of a multilinestring or        */
-/*      multipolygon feature.                                           */
-/************************************************************************/
-
-bool OGRMiraMonLayer::NextIsFeature()
-
-{
-    const CPLString osSavedLine = osLine;
-    const vsi_l_offset nSavedLocation = VSIFTellL(m_fp);
-    bool bReturn = false;
-
-    ReadLine();
-
-    if (osLine[0] == '#' && strstr(osLine, "@D") != nullptr)
-        bReturn = true;
-
-    VSIFSeekL(m_fp, nSavedLocation, SEEK_SET);
-    osLine = osSavedLine;
-
-    // We do not actually restore papszKeyedValues, but we
-    // assume it does not matter since this method is only called
-    // when processing the '>' line.
-
-    return bReturn;
-}
 
 /************************************************************************/
 /*                         GetNextRawFeature()                          */
@@ -613,105 +494,6 @@ GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
         return (GIntBig)hMiraMonLayer.TopHeader.nElemCount-1;
     else
         return (GIntBig)hMiraMonLayer.TopHeader.nElemCount;
-}
-
-/************************************************************************/
-/*                           CompleteHeader()                           */
-/*                                                                      */
-/*      Finish writing out the header with field definitions and the    */
-/*      layer geometry type.                                            */
-/************************************************************************/
-
-OGRErr OGRMiraMonLayer::CompleteHeader(OGRGeometry *poThisGeom)
-
-{
-    /* -------------------------------------------------------------------- */
-    /*      If we do not already have a geometry type, try to work one      */
-    /*      out and write it now.                                           */
-    /* -------------------------------------------------------------------- */
-    if (poFeatureDefn->GetGeomType() == wkbUnknown && poThisGeom != nullptr)
-    {
-        poFeatureDefn->SetGeomType(wkbFlatten(poThisGeom->getGeometryType()));
-
-        const char *pszGeom = nullptr;
-        switch (wkbFlatten(poFeatureDefn->GetGeomType()))
-        {
-            case wkbPoint:
-                pszGeom = " @GPOINT";
-                break;
-            case wkbLineString:
-                pszGeom = " @GLINESTRING";
-                break;
-            case wkbPolygon:
-                pszGeom = " @GPOLYGON";
-                break;
-            case wkbMultiPoint:
-                pszGeom = " @GMULTIPOINT";
-                break;
-            case wkbMultiLineString:
-                pszGeom = " @GMULTILINESTRING";
-                break;
-            case wkbMultiPolygon:
-                pszGeom = " @GMULTIPOLYGON";
-                break;
-            default:
-                pszGeom = "";
-                break;
-        }
-
-        VSIFPrintfL(m_fp, "#%s\n", pszGeom);
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Prepare and write the field names and types.                    */
-    /* -------------------------------------------------------------------- */
-    CPLString osFieldNames;
-    CPLString osFieldTypes;
-
-    for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
-    {
-        if (iField > 0)
-        {
-            osFieldNames += "|";
-            osFieldTypes += "|";
-        }
-
-        osFieldNames += poFeatureDefn->GetFieldDefn(iField)->GetNameRef();
-        switch (poFeatureDefn->GetFieldDefn(iField)->GetType())
-        {
-            case OFTInteger:
-                osFieldTypes += "integer";
-                break;
-
-            case OFTReal:
-                osFieldTypes += "double";
-                break;
-
-            case OFTDateTime:
-                osFieldTypes += "datetime";
-                break;
-
-            default:
-                osFieldTypes += "string";
-                break;
-        }
-    }
-
-    if (poFeatureDefn->GetFieldCount() > 0)
-    {
-        VSIFPrintfL(m_fp, "# @N%s\n", osFieldNames.c_str());
-        VSIFPrintfL(m_fp, "# @T%s\n", osFieldTypes.c_str());
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Mark the end of the header, and start of feature data.          */
-    /* -------------------------------------------------------------------- */
-    VSIFPrintfL(m_fp, "# FEATURE_DATA\n");
-
-    bHeaderComplete = true;
-    bRegionComplete = true;  // no feature written, so we know them all!
-
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1462,13 +1244,6 @@ OGRErr OGRMiraMonLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                  "\nCannot create fields on read-only dataset.");
-        return OGRERR_FAILURE;
-    }
-
-    if (bHeaderComplete)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "\nUnable to create fields after features have been created.");
         return OGRERR_FAILURE;
     }
 

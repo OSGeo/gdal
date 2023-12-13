@@ -205,7 +205,14 @@ long reservat4=0L;
         if (fread_function(&reservat4, 4, 1, pF)!=1)
 		    return 1;
     }
-	return 0;
+
+    if(pMMHeader->Flag|MM_LAYER_3D_INFO)
+        pMMHeader->bIs3d=1;
+
+    if(pMMHeader->Flag|MM_LAYER_MULTIPOLYGON)
+        pMMHeader->bIsMultipolygon=1;
+
+    return 0;
 }
 
 
@@ -215,6 +222,9 @@ char dot='.';
 unsigned long NCount;
 long reservat4=0L;
 MM_INTERNAL_FID nNumber1=1, nNumber0=0;
+
+    if(!pF)
+        return 0;
 
     pMMHeader->Flag=MM_CREATED_USING_MIRAMON; // Created from MiraMon
     if(pMMHeader->bIs3d)
@@ -344,10 +354,10 @@ struct MM_TH pMMHeader;
 		    break;
     }
     pMMHeader.nElemCount=0;
-    pMMHeader.hBB.dfMinX=MM_STATISTICAL_UNDEFINED_VALUE;
-    pMMHeader.hBB.dfMaxX=-MM_STATISTICAL_UNDEFINED_VALUE;
-    pMMHeader.hBB.dfMinY=MM_STATISTICAL_UNDEFINED_VALUE;
-    pMMHeader.hBB.dfMaxY=-MM_STATISTICAL_UNDEFINED_VALUE;
+    pMMHeader.hBB.dfMinX=MM_UNDEFINED_STATISTICAL_VALUE;
+    pMMHeader.hBB.dfMaxX=-MM_UNDEFINED_STATISTICAL_VALUE;
+    pMMHeader.hBB.dfMinY=MM_UNDEFINED_STATISTICAL_VALUE;
+    pMMHeader.hBB.dfMaxY=-MM_UNDEFINED_STATISTICAL_VALUE;
 
 	return MMWriteHeader(pF, &pMMHeader);
 }
@@ -363,17 +373,19 @@ long reservat4=0L;
         pZSection->ZSectionOffset=hMiraMonLayer->nHeaderDiskSize+
             hMiraMonLayer->TopHeader.nElemCount*MM_SIZE_OF_TL;
     }
-    else if(hMiraMonLayer->bIsArc)
+    else if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
-        pZSection->ZSectionOffset=hMiraMonLayer->nHeaderDiskSize+
-            hMiraMonLayer->TopHeader.nElemCount*
-            hMiraMonLayer->MMArc.nSizeArcHeader;
+        // Z section begins just after last coordinate of the last arc
+        pZSection->ZSectionOffset=hMiraMonLayer->MMArc.pArcHeader[hMiraMonLayer->TopHeader.nElemCount-1].nOffset+
+        hMiraMonLayer->MMArc.pArcHeader[hMiraMonLayer->TopHeader.nElemCount-1].nElemCount*
+            MM_SIZE_OF_COORDINATE;
     }
     else if(hMiraMonLayer->bIsPolygon)
     {
-        pZSection->ZSectionOffset=hMiraMonLayer->nHeaderDiskSize+
-            hMiraMonLayer->MMPolygon.TopArcHeader.nElemCount*
-            hMiraMonLayer->MMPolygon.MMArc.nSizeArcHeader;
+        // Z section begins just after last coordinate of the last arc
+        pZSection->ZSectionOffset=hMiraMonLayer->MMPolygon.MMArc.pArcHeader[hMiraMonLayer->MMPolygon.TopArcHeader.nElemCount-1].nOffset+
+        hMiraMonLayer->MMPolygon.MMArc.pArcHeader[hMiraMonLayer->MMPolygon.TopArcHeader.nElemCount-1].nElemCount*
+            MM_SIZE_OF_COORDINATE;
     }
     else 
         return 1;
@@ -785,6 +797,16 @@ int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, int bIs3d)
             &hMiraMonLayer->MMPoint.pZSection))
             return 1;
     }
+    if(hMiraMonLayer->ReadOrWrite==MM_READING_MODE)
+    {
+        if(MMReadZSection(hMiraMonLayer, hMiraMonLayer->MMPoint.pF, 
+                    &hMiraMonLayer->MMPoint.pZSection))
+            return 1;
+
+        if(MMReadZDescriptionHeaders(hMiraMonLayer, hMiraMonLayer->MMPoint.pF, 
+            hMiraMonLayer->TopHeader.nElemCount, &hMiraMonLayer->MMPoint.pZSection))
+            return 1;
+    }
     
 
     // ·$· In which mode?
@@ -996,6 +1018,17 @@ struct MM_TH *pArcTopHeader;
                         pMMArcLayer->pF3d, 
                         &pMMArcLayer->pZSection))
             return 1;
+
+        if (hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
+        {
+            if(MMReadZSection(hMiraMonLayer, pMMArcLayer->pF, 
+                       &pMMArcLayer->pZSection))
+                return 1;
+
+            if(MMReadZDescriptionHeaders(hMiraMonLayer, pMMArcLayer->pF, 
+                pArcTopHeader->nElemCount, &pMMArcLayer->pZSection))
+                return 1;
+        }
     }
 
     // MIRAMON DATA BASE
@@ -1213,9 +1246,23 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if(hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
         {
             char *pszArcLayerName;
+            const char *pszExt;
             // StringLine associated to the polygon
             pszArcLayerName = strdup_function(ReturnValueFromSectionINIFile( pMMPolygonLayer->pszREL_LayerName,
                 SECTION_OVVW_ASPECTES_TECNICS, KEY_ArcSource));
+
+            // If extension is not specified, then we'll use ".arc"
+            pszExt=get_extension_function(pszArcLayerName);
+            if(is_empty_string_function(pszExt))
+            {
+                char *pszArcLayerNameAux=calloc_function(strlen(pszArcLayerName)+5);
+                if(!pszArcLayerNameAux)
+                    return 1;
+                strcpy(pszArcLayerNameAux, pszArcLayerName);
+                strcat(pszArcLayerNameAux, ".arc");
+                free_function(pszArcLayerName);
+                pszArcLayerName=pszArcLayerNameAux;
+            }
 
             pMMPolygonLayer->MMArc.pszLayerName=strdup(
                 form_filename_function(
@@ -1251,6 +1298,10 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
             MMFreeLayer(hMiraMonLayer);
             return 1;
         }
+
+        // Polygon is 3D if Arc is 3D, by definition.
+        hMiraMonLayer->TopHeader.bIs3d=
+            hMiraMonLayer->MMPolygon.TopArcHeader.bIs3d;
 
         if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
             MMSet1_1Version(&pMMPolygonLayer->TopArcHeader);
@@ -1337,7 +1388,7 @@ int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
     // Flushing if there is something to flush on the disk
-    if(!hMiraMonLayer->TopHeader.bIs3d)
+    if(!hMiraMonLayer->TopHeader.bIs3d || !pF || !pF3d || !pszF3d || !pZSection)
         return 0;
     
     pZSection->ZSectionOffset=FinalOffset;
@@ -1421,10 +1472,14 @@ struct MiraMonArcLayer *pMMArcLayer;
     if(MMMoveFromFileToFile(pMMArcLayer->MMNode.pFNL, 
             pMMArcLayer->MMNode.pF, &hMiraMonLayer->OffsetCheck))
         return 1;
-    fclose_function(pMMArcLayer->MMNode.pFNL);
-    remove_function(pMMArcLayer->MMNode.pszNLName);
 
-    fclose_function(pMMArcLayer->MMNode.pF);
+    if(pMMArcLayer->MMNode.pFNL)
+        fclose_function(pMMArcLayer->MMNode.pFNL);
+    if(pMMArcLayer->MMNode.pszNLName)
+        remove_function(pMMArcLayer->MMNode.pszNLName);
+
+    if(pMMArcLayer->MMNode.pF)
+        fclose_function(pMMArcLayer->MMNode.pF);
     
     return 0;
 }
@@ -1465,8 +1520,10 @@ struct MM_TH *pArcTopHeader;
     if(MMMoveFromFileToFile(pMMArcLayer->pFAL, pMMArcLayer->pF, 
         &hMiraMonLayer->OffsetCheck))
         return 1;
-    fclose_function(pMMArcLayer->pFAL);
-    remove_function(pMMArcLayer->pszALName);
+    if(pMMArcLayer->pFAL)
+        fclose_function(pMMArcLayer->pFAL);
+    if(pMMArcLayer->pszALName)
+        remove_function(pMMArcLayer->pszALName);
 
     // 3D Section
     if(MMClose3DSectionLayer(hMiraMonLayer, 
@@ -1478,7 +1535,8 @@ struct MM_TH *pArcTopHeader;
             hMiraMonLayer->OffsetCheck))
             return 1;
 
-    fclose_function(pMMArcLayer->pF);
+    if(pMMArcLayer->pF)
+        fclose_function(pMMArcLayer->pF);
     
     MMCloseNodeLayer(hMiraMonLayer);
 
@@ -1505,8 +1563,11 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
     if(MMMoveFromFileToFile(pMMPolygonLayer->pFPS, pMMPolygonLayer->pF, 
         &hMiraMonLayer->OffsetCheck))
         return 1;
-    fclose_function(pMMPolygonLayer->pFPS);
-    remove_function(pMMPolygonLayer->pszPSName);
+
+    if(pMMPolygonLayer->pFPS)
+        fclose_function(pMMPolygonLayer->pFPS);
+    if(pMMPolygonLayer->pszPSName)
+        remove_function(pMMPolygonLayer->pszPSName);
 
     // AH Section
     if(MMWritePHPolygonSection(hMiraMonLayer, hMiraMonLayer->OffsetCheck))
@@ -1519,10 +1580,13 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
     if(MMMoveFromFileToFile(pMMPolygonLayer->pFPAL, pMMPolygonLayer->pF, 
         &hMiraMonLayer->OffsetCheck))
         return 1;
-    fclose_function(pMMPolygonLayer->pFPAL);
-    remove_function(pMMPolygonLayer->pszPALName);
+    if(pMMPolygonLayer->pFPAL)
+        fclose_function(pMMPolygonLayer->pFPAL);
+    if(pMMPolygonLayer->pszPALName)
+        remove_function(pMMPolygonLayer->pszPALName);
 
-    fclose_function(pMMPolygonLayer->pF);
+    if(pMMPolygonLayer->pF)
+        fclose_function(pMMPolygonLayer->pF);
     
     return 0;
 }
@@ -1938,6 +2002,9 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
 size_t bufferSize = 100 * 1024 * 1024; // 100 MB buffer
 unsigned char* buffer = (unsigned char*)calloc_function(bufferSize);
 size_t bytesRead, bytesWritten;
+
+    if(!pSrcFile || !pDestFile || !nOffset)
+        return 0;
 
     if (!buffer)
         return 1;
@@ -2553,6 +2620,9 @@ char *pBuffer=NULL;
 unsigned long nUL32;
 MM_FILE_OFFSET nOffsetDiff;
 struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
+
+    if(!pMMPolygonLayer->pF)
+        return 0;
 
     nOffsetDiff=DiskOffset+
         hMiraMonLayer->TopHeader.nElemCount*
@@ -3956,6 +4026,9 @@ time_t currentTime;
 struct tm *pLocalTime;
 char aTimeString[30];
 
+    if(!hMMMD->aLayerName)
+        return 0;
+
     if(NULL==(pF=fopen_function(hMMMD->aLayerName, "w+t")))
     {
         info_message_function(aMessage);
@@ -4039,10 +4112,10 @@ char aTimeString[30];
     
     
 
-    if(hMMMD->hBB.dfMinX!=MM_STATISTICAL_UNDEFINED_VALUE &&
-        hMMMD->hBB.dfMaxX!=-MM_STATISTICAL_UNDEFINED_VALUE &&
-        hMMMD->hBB.dfMinY!=MM_STATISTICAL_UNDEFINED_VALUE &&
-        hMMMD->hBB.dfMaxY!=-MM_STATISTICAL_UNDEFINED_VALUE)
+    if(hMMMD->hBB.dfMinX!=MM_UNDEFINED_STATISTICAL_VALUE &&
+        hMMMD->hBB.dfMaxX!=-MM_UNDEFINED_STATISTICAL_VALUE &&
+        hMMMD->hBB.dfMinY!=MM_UNDEFINED_STATISTICAL_VALUE &&
+        hMMMD->hBB.dfMaxY!=-MM_UNDEFINED_STATISTICAL_VALUE)
     {
         printf_function(pF, "%s=%lf\n", KEY_MinX, hMMMD->hBB.dfMinX);
         printf_function(pF, "%s=%lf\n", KEY_MaxX, hMMMD->hBB.dfMaxX);
@@ -4213,7 +4286,8 @@ struct MiraMonVectorMetaData hMMMD;
     if(layerPlainType==MM_LayerType_Point)
     {
         hMMMD.aLayerName=hMiraMonLayer->MMPoint.pszREL_LayerName;
-        
+        if(!hMMMD.aLayerName)
+            return 0;
         memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB, sizeof(hMMMD.hBB));
         hMMMD.pLayerDB=hMiraMonLayer->pLayerDB;
         return MMWriteMetadataFile(&hMMMD);
@@ -4224,7 +4298,8 @@ struct MiraMonVectorMetaData hMMMD;
         if(layerMainPlainType==MM_LayerType_Arc)
         {
             hMMMD.aLayerName=hMiraMonLayer->MMArc.pszREL_LayerName;
-
+            if(!hMMMD.aLayerName)
+                return 0;
             memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB, sizeof(hMMMD.hBB));
             hMMMD.pLayerDB=hMiraMonLayer->pLayerDB;
         }
@@ -4233,6 +4308,8 @@ struct MiraMonVectorMetaData hMMMD;
         {
             // Arc from polygon
             hMMMD.aLayerName=hMiraMonLayer->MMPolygon.MMArc.pszREL_LayerName;
+            if(!hMMMD.aLayerName)
+                return 0;
 
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMPolygon.TopArcHeader.hBB, sizeof(hMMMD.hBB));
             hMMMD.pLayerDB=NULL;
@@ -4244,6 +4321,9 @@ struct MiraMonVectorMetaData hMMMD;
         int nResult;
 
         hMMMD.aLayerName=hMiraMonLayer->MMPolygon.pszREL_LayerName;
+
+        if(!hMMMD.aLayerName)
+            return 0;
 
         memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB, sizeof(hMMMD.hBB));
         hMMMD.pLayerDB=hMiraMonLayer->pLayerDB;
@@ -4258,11 +4338,15 @@ struct MiraMonVectorMetaData hMMMD;
         if(layerMainPlainType==MM_LayerType_Arc)
         {
             hMMMD.aLayerName=hMiraMonLayer->MMArc.pszREL_LayerName;
+            if(!hMMMD.aLayerName)
+                return 0;
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMArc.TopNodeHeader.hBB, sizeof(hMMMD.hBB));
         }
         else // Node from polygon
         {
             hMMMD.aLayerName=hMiraMonLayer->MMPolygon.MMArc.pszREL_LayerName;
+            if(!hMMMD.aLayerName)
+                return 0;
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMPolygon.MMArc.TopNodeHeader.hBB, sizeof(hMMMD.hBB));
         }
         hMMMD.pLayerDB=NULL;
@@ -5021,6 +5105,8 @@ struct MM_FLUSH_INFO *pFlushRecList;
 
 int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 {
+    if(!MMAdmDB->pMMBDXP)
+        return 0;
     // Updating number of features in database
     fseek_function(MMAdmDB->pFExtDBF, 4, SEEK_SET);
     // ·$· V2.0 !!!
@@ -5064,8 +5150,11 @@ int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         return 1;
 
     // Closing database files
-    if(fclose_function(MMAdmDB->pFExtDBF))
-        return 1;
+    if (MMAdmDB->pFExtDBF)
+    {
+        if (fclose_function(MMAdmDB->pFExtDBF))
+            return 1;
+    }
 
     return 0;
 }
