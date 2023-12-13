@@ -2573,24 +2573,25 @@ static void AttachDomainMetadata(GDALDatasetH hDS,
     {
 
         char *pszKey = nullptr;
-        char *pszKey2 = nullptr;
-        // parse twice because the first time picks the colon ":", second picks the "="
-        //    (so we can't have domain names with colons but we can have values like "OGC:CRS84")
-        // first key is E1 from E1:E2=E3
-        // value is E2=E3
-        // then second key is E2, second value is E3
-        const char *pszValue =
-            CPLParseNameValue(aosDomainMetadataOptions[i], &pszKey);
-        const char *pszValue2 = CPLParseNameValue(pszValue, &pszKey2);
+        char *pszDomain = nullptr;
 
-        if (pszKey && pszValue && pszKey2 && pszValue2)
+        // parse the DOMAIN:KEY=value, Remainder is KEY=value
+        const char *pszRemainder =
+            CPLParseNameValueSep(aosDomainMetadataOptions[i], &pszDomain, ':');
+
+        if (pszDomain && pszRemainder)
         {
-            CPLDebug("translate", "pszValue2: %s, pszKey2: %s, pszKey: %s",
-                     pszValue2, pszKey2, pszKey);
-            GDALSetMetadataItem(hDS, pszKey2, pszValue2, pszKey);
+
+            const char *pszValue =
+                CPLParseNameValueSep(pszRemainder, &pszKey, '=');
+            if (pszKey && pszValue)
+            {
+                GDALSetMetadataItem(hDS, pszKey, pszValue, pszDomain);
+            }
         }
         CPLFree(pszKey);
-        CPLFree(pszKey2);
+
+        CPLFree(pszDomain);
     }
 }
 

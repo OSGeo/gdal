@@ -1203,13 +1203,29 @@ def test_gdal_translate_dmo_option():
         "domain_2": {"key2": "value2"},
     }
     ds = gdal.Translate(
-        "/vsimem/dmo.vrt",
+        dst_vrt,
         gdal.Open("../gcore/data/byte.tif"),
         domainMetadataOptions=items,
     )
     md = ds.GetMetadata("domain_2")
     assert "key2" in md, "Did not get key2"
     assert md["key2"] == "value2"
+    ds = None
+
+    ds = gdal.Translate(
+        dst_vrt,
+        gdal.Open("../gcore/data/byte.tif"),
+        options=["-dmo", "FOO", "-dmo", "BOO:FAR", "-dmo", "dom=ain:SOO=VAR:1"],
+    )
+    mdl = ds.GetMetadataDomainList()
+    assert "FOO" not in mdl, "Found key 'FOO' from invalid input"
+    assert "BOO" not in mdl, "Found key 'BOO' from invalid input"
+    assert "dom=ain" in mdl, "Did not get dom=ain"
+
+    md = ds.GetMetadata("dom=ain")
+    assert "SOO" in md, "Did not get SOO"
+    assert md["SOO"] == "VAR:1", "Did not get value VAR:1"
+
     ds = None
 
 
