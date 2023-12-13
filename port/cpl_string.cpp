@@ -1817,7 +1817,7 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey)
  * @param pszNameValue string in "NAME=VALUE" format.
  * @param ppszKey optional pointer though which to return the name
  * portion.
- * @pararm chSep required single char separator
+ * @param chSep required single char separator
  * @return the value portion (pointing into original string).
  */
 
