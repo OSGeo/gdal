@@ -129,6 +129,8 @@ bool CPL_DLL CPLFetchBool(CSLConstList papszStrList, const char *pszKey,
                           bool bDefault);
 
 const char CPL_DLL *CPLParseNameValue(const char *pszNameValue, char **ppszKey);
+const char CPL_DLL *CPLParseNameValueSep(const char *pszNameValue,
+                                         char **ppszKey, char chSep);
 
 const char CPL_DLL *CSLFetchNameValue(CSLConstList papszStrList,
                                       const char *pszName);
