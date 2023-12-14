@@ -185,6 +185,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     bool bCreateSpatialIndexAtClose;
     bool bRewindOnWrite;
     bool m_bHasWarnedWrongWindingOrder = false;
+    bool m_bLastGetNextArrowArrayUsedOptimizedCodePath = false;
 
     bool m_bAutoRepack;
     typedef enum
@@ -241,6 +242,11 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
+
+    int GetNextArrowArray(struct ArrowArrayStream *,
+                          struct ArrowArray *out_array) override;
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain) override;
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
