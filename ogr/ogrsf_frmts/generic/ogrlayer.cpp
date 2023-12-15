@@ -273,7 +273,7 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
         else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent3D);
-            // This is required because getEnvelope intializes Z to 0 for 2D geometries
+            // This is required because getEnvelope initializes Z to 0 for 2D geometries
             if (!poGeom->Is3D())
             {
                 psExtent3D->MinZ = std::numeric_limits<double>::infinity();
@@ -284,7 +284,7 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
         else
         {
             poGeom->getEnvelope(&oEnv);
-            // This is required because getEnvelope intializes Z to 0 for 2D geometries
+            // This is required because getEnvelope initializes Z to 0 for 2D geometries
             if (!poGeom->Is3D())
             {
                 oEnv.MinZ = std::numeric_limits<double>::infinity();

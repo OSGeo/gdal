@@ -172,7 +172,7 @@ jobs:
             $env:MYSQL_LIBRARY="-DMYSQL_LIBRARY=" + $env:SDK_LIB + "\libmysql.lib"
             $env:POPPLER_EXTRA_LIBRARIES="-DPOPPLER_EXTRA_LIBRARIES=" + $env:SDK_LIB + "\freetype.lib;" + $env:SDK_LIB + "\harfbuzz.lib"
             # We disable Spatialite and external geotiff as they link to gisinternals proj9 and we have the following linking error
-            # refering to a file from the gisinternals build machine...
+            # referring to a file from the gisinternals build machine...
             # LINK : fatal error LNK1181: cannot open input file 'E:\buildsystem\release-1930\lib\proj9.lib' [D:\a\gdal\gdal\build\GDAL.vcxproj]
             # Disabling HDF4 (and netCDF) for similar reason: LINK : fatal error LNK1181: cannot open input file 'E:\buildsystem\release-1930\lib\mfhdf.lib'
             cmake -G $env:VS_VERSION -A $env:CMAKE_ARCHITECTURE .. $env:CMAKE_INSTALL_PREFIX -DCMAKE_BUILD_TYPE=Release $env:CMAKE_PREFIX_PATH -DCMAKE_C_FLAGS=" /WX $env:ARCH_FLAGS" -DCMAKE_CXX_FLAGS=" /WX $env:ARCH_FLAGS" -DGDAL_USE_DEFLATE=OFF $env:PROJ_ROOT $env:MYSQL_LIBRARY $env:POPPLER_EXTRA_LIBRARIES -DGDAL_USE_ZLIB_INTERNAL=ON -DECW_INTERFACE_COMPILE_DEFINITIONS="_MBCS;_UNICODE;UNICODE;_WINDOWS;LIBECWJ2;WIN32;_WINDLL;NO_X86_MMI" -DBUILD_CSHARP_BINDINGS=OFF -DBUILD_JAVA_BINDINGS=OFF -DOGR_ENABLE_DRIVER_LIBKML=OFF -DGDAL_USE_SPATIALITE=OFF -DGDAL_USE_GEOTIFF_INTERNAL=ON -DGDAL_USE_HDF4=OFF -DGDAL_USE_NETCDF=OFF -DGDAL_USE_WEBP=OFF
