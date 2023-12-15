@@ -25,6 +25,11 @@
 /*
  * TIFF Library.
  */
+
+#ifdef TIFF_DO_NOT_USE_NON_EXT_ALLOC_FUNCTIONS
+#undef TIFF_DO_NOT_USE_NON_EXT_ALLOC_FUNCTIONS
+#endif
+
 #include "tiffiop.h"
 #include <assert.h>
 #include <limits.h>
@@ -143,8 +148,17 @@ static void _TIFFEmitErrorAboveMaxCumulatedMemAlloc(TIFF *tif,
                   (uint64_t)tif->tif_max_cumulated_mem_alloc);
 }
 
-/* On x86_64, allocations of more than 16 bytes are aligned on 16 bytes */
-#define MALLOC_ALIGNEMENT (2 * SIZEOF_SIZE_T)
+/* When allocating memory, we write at the beginning of the buffer it size.
+ * This allows us to keep track of the total memory allocated when we
+ * malloc/calloc/realloc and free. In theory we need just SIZEOF_SIZE_T bytes
+ * for that, but on x86_64, allocations of more than 16 bytes are aligned on
+ * 16 bytes. Hence using 2 * SIZEOF_SIZE_T.
+ * It is critical that _TIFFmallocExt/_TIFFcallocExt/_TIFFreallocExt are
+ * paired with _TIFFfreeExt.
+ * CMakeLists.txt defines TIFF_DO_NOT_USE_NON_EXT_ALLOC_FUNCTIONS, which in
+ * turn disables the definition of the non Ext version in tiffio.h
+ */
+#define LEADING_AREA_TO_STORE_ALLOC_SIZE (2 * SIZEOF_SIZE_T)
 
 /** malloc() version that takes into account memory-specific open options */
 void *_TIFFmallocExt(TIFF *tif, tmsize_t s)
@@ -159,17 +173,17 @@ void *_TIFFmallocExt(TIFF *tif, tmsize_t s)
     {
         if (s > tif->tif_max_cumulated_mem_alloc -
                     tif->tif_cur_cumulated_mem_alloc ||
-            s > TIFF_TMSIZE_T_MAX - MALLOC_ALIGNEMENT)
+            s > TIFF_TMSIZE_T_MAX - LEADING_AREA_TO_STORE_ALLOC_SIZE)
         {
             _TIFFEmitErrorAboveMaxCumulatedMemAlloc(tif, "_TIFFmallocExt", s);
             return NULL;
         }
-        void *ptr = _TIFFmalloc(MALLOC_ALIGNEMENT + s);
+        void *ptr = _TIFFmalloc(LEADING_AREA_TO_STORE_ALLOC_SIZE + s);
         if (!ptr)
             return NULL;
         tif->tif_cur_cumulated_mem_alloc += s;
         memcpy(ptr, &s, sizeof(s));
-        return (char *)ptr + MALLOC_ALIGNEMENT;
+        return (char *)ptr + LEADING_AREA_TO_STORE_ALLOC_SIZE;
     }
     return _TIFFmalloc(s);
 }
@@ -193,17 +207,17 @@ void *_TIFFcallocExt(TIFF *tif, tmsize_t nmemb, tmsize_t siz)
         const tmsize_t s = nmemb * siz;
         if (s > tif->tif_max_cumulated_mem_alloc -
                     tif->tif_cur_cumulated_mem_alloc ||
-            s > TIFF_TMSIZE_T_MAX - MALLOC_ALIGNEMENT)
+            s > TIFF_TMSIZE_T_MAX - LEADING_AREA_TO_STORE_ALLOC_SIZE)
         {
             _TIFFEmitErrorAboveMaxCumulatedMemAlloc(tif, "_TIFFcallocExt", s);
             return NULL;
         }
-        void *ptr = _TIFFcalloc(MALLOC_ALIGNEMENT + s, 1);
+        void *ptr = _TIFFcalloc(LEADING_AREA_TO_STORE_ALLOC_SIZE + s, 1);
         if (!ptr)
             return NULL;
         tif->tif_cur_cumulated_mem_alloc += s;
         memcpy(ptr, &s, sizeof(s));
-        return (char *)ptr + MALLOC_ALIGNEMENT;
+        return (char *)ptr + LEADING_AREA_TO_STORE_ALLOC_SIZE;
     }
     return _TIFFcalloc(nmemb, siz);
 }
@@ -223,26 +237,27 @@ void *_TIFFreallocExt(TIFF *tif, void *p, tmsize_t s)
         tmsize_t oldSize = 0;
         if (p)
         {
-            oldPtr = (char *)p - MALLOC_ALIGNEMENT;
+            oldPtr = (char *)p - LEADING_AREA_TO_STORE_ALLOC_SIZE;
             memcpy(&oldSize, oldPtr, sizeof(oldSize));
             assert(oldSize <= tif->tif_cur_cumulated_mem_alloc);
         }
         if (s > oldSize &&
             (s > tif->tif_max_cumulated_mem_alloc -
                      (tif->tif_cur_cumulated_mem_alloc - oldSize) ||
-             s > TIFF_TMSIZE_T_MAX - MALLOC_ALIGNEMENT))
+             s > TIFF_TMSIZE_T_MAX - LEADING_AREA_TO_STORE_ALLOC_SIZE))
         {
             _TIFFEmitErrorAboveMaxCumulatedMemAlloc(tif, "_TIFFreallocExt",
                                                     s - oldSize);
             return NULL;
         }
-        void *newPtr = _TIFFrealloc(oldPtr, MALLOC_ALIGNEMENT + s);
+        void *newPtr =
+            _TIFFrealloc(oldPtr, LEADING_AREA_TO_STORE_ALLOC_SIZE + s);
         if (newPtr == NULL)
             return NULL;
         tif->tif_cur_cumulated_mem_alloc -= oldSize;
         tif->tif_cur_cumulated_mem_alloc += s;
         memcpy(newPtr, &s, sizeof(s));
-        return (char *)newPtr + MALLOC_ALIGNEMENT;
+        return (char *)newPtr + LEADING_AREA_TO_STORE_ALLOC_SIZE;
     }
     return _TIFFrealloc(p, s);
 }
@@ -252,7 +267,7 @@ void _TIFFfreeExt(TIFF *tif, void *p)
 {
     if (p != NULL && tif != NULL && tif->tif_max_cumulated_mem_alloc > 0)
     {
-        void *oldPtr = (char *)p - MALLOC_ALIGNEMENT;
+        void *oldPtr = (char *)p - LEADING_AREA_TO_STORE_ALLOC_SIZE;
         tmsize_t oldSize;
         memcpy(&oldSize, oldPtr, sizeof(oldSize));
         assert(oldSize <= tif->tif_cur_cumulated_mem_alloc);
