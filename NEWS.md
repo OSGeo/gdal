@@ -1,3 +1,87 @@
+# GDAL/OGR 3.8.2 Release Notes
+
+GDAL 3.8.2 is a bugfix release.
+
+## GDAL 3.8.2
+
+### Port
+
+* /vsis3/: takes into account AWS_CONTAINER_CREDENTIALS_FULL_URI environment
+  variable (#8858)
+* cpl_safemaths.hpp: fix compilation with clang targeting Windows (#8898)
+* CPLGetPhysicalRAM(): fix getting right value when running inside Docker on a
+  cgroups v1 system (like Amazon Linux 2) (#8968)
+
+### Algorithms
+
+* Rasterization: avoid burning pixel that we only touch (with an empty
+  intersection) (#8918)
+
+### Utilities
+
+* gdal_footprint: return an error if the requested output layer doesn't exist
+* gdal_translate: avoid useless extra GDALOpen() call on a target GeoRaster
+* pct2rgb.py: emit explicit exception when source file has no color table (#8793)
+
+### Raster drivers
+
+HDF5 driver:
+ * classic 2D API: handle char,ushort,uint,int64,uint64 attributes when
+   reading them as double
+ * multidim: better warning when nodata value is out of range
+
+JPEGXL driver:
+ * add compatibility with latest libjxl git HEAD
+
+NGSGEOID driver:
+ * make dataset identification robust to NaN values (#8879)
+
+OGCAPI driver:
+ * make it robust to missing 'type' on 'self' link (#8912)
+
+STACTA driver:
+ * use GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR instead of
+   CPL_VSIL_CURL_ALLOWED_EXTENSIONS
+ * use STAC Raster extension to get number of bands, their data type, nodata
+   value, scale/offset, units, and avoid fetching a metatile
+ * add support for upcoming STAC 1.1 which merges eo:bands and raster:bands
+   into bands
+
+netCDF, HDF4, HDF5:
+ * SubdatasetInfo API: fix various issues (#8869, #8881)
+
+VRT driver:
+ * VRTComplexSource: fix excessive RAM usage with many sources (#8967, 3.8.0 regression)
+
+### OGR 3.8.2
+
+### Core
+
+* OGRGeometryFactory::transformWithOptions(): fix WRAPDATELINE=YES on
+  multipoint geometries (#8889)
+* OGRSpatialReference::importFromUrl(): changes to no longer use a
+  'Accept: application/x-ogcwkt' header
+* OSRPJContextHolder: call pthread_atfork() once for the process, and
+  re-enable it for MacOS
+* OGRWKBIntersectsPessimisticFixture: handle all geometry types
+
+### Utilities
+
+* ogrinfo: really honours -if (refs #8590)
+* ogr2ogr: implement -if
+
+### Vector drivers
+
+* PMTiles: Correct extension for temporary mbtiles file
+
+## Python bindings
+
+* gdal.Footprint(): add a minRingArea option
+* fix build/install when there's a gdal-config from a pre-installed version in
+  the PATH (#8882)
+* add missing reference increment on Py_None in error case of
+  Geometry.GetPoints() (#8945)
+
 # GDAL/OGR 3.8.1 Release Notes
 
 GDAL 3.8.1 is a bugfix release.
