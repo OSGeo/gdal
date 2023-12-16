@@ -358,6 +358,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     /*      Overlay each source in turn over top this.                      */
     /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
+    VRTSource::WorkingState oWorkingState;
     for (int iSource = 0; eErr == CE_None && iSource < nSources; iSource++)
     {
         psExtraArg->pfnProgress = GDALScaledProgress;
@@ -369,7 +370,8 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
 
         eErr = papoSources[iSource]->RasterIO(
             eDataType, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
-            nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+            nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
+            l_poDS ? l_poDS->m_oWorkingState : oWorkingState);
 
         GDALDestroyScaledProgress(psExtraArg->pProgressData);
     }

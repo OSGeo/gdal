@@ -1280,7 +1280,8 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
                                  int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, GSpacing nPixelSpace,
                                  GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg *psExtraArgIn)
+                                 GDALRasterIOExtraArg *psExtraArgIn,
+                                 WorkingState & /*oWorkingState*/)
 
 {
     GDALRasterIOExtraArg sExtraArg;
@@ -1769,7 +1770,8 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
                                    void *pData, int nBufXSize, int nBufYSize,
                                    GDALDataType eBufType, GSpacing nPixelSpace,
                                    GSpacing nLineSpace,
-                                   GDALRasterIOExtraArg *psExtraArgIn)
+                                   GDALRasterIOExtraArg *psExtraArgIn,
+                                   WorkingState & /*oWorkingState*/)
 
 {
     GDALRasterIOExtraArg sExtraArg;
@@ -2367,7 +2369,8 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
                                   void *pData, int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, GSpacing nPixelSpace,
                                   GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg *psExtraArgIn)
+                                  GDALRasterIOExtraArg *psExtraArgIn,
+                                  WorkingState &oWorkingState)
 
 {
     GDALRasterIOExtraArg sExtraArg;
@@ -2454,13 +2457,13 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
                 return VRTSimpleSource::RasterIO(
                     eVRTBandDataType, nXOff, nYOff, nXSize, nYSize, pData,
                     nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace,
-                    psExtraArgIn);
+                    psExtraArgIn, oWorkingState);
             }
 
             return RasterIOProcessNoData<GByte, GDT_Byte>(
                 poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
                 nReqYSize, pabyOut, nOutXSize, nOutYSize, eBufType, nPixelSpace,
-                nLineSpace, psExtraArg);
+                nLineSpace, psExtraArg, oWorkingState);
         }
         else if (eSourceType == GDT_Int16)
         {
@@ -2469,13 +2472,13 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
                 return VRTSimpleSource::RasterIO(
                     eVRTBandDataType, nXOff, nYOff, nXSize, nYSize, pData,
                     nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace,
-                    psExtraArgIn);
+                    psExtraArgIn, oWorkingState);
             }
 
             return RasterIOProcessNoData<int16_t, GDT_Int16>(
                 poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
                 nReqYSize, pabyOut, nOutXSize, nOutYSize, eBufType, nPixelSpace,
-                nLineSpace, psExtraArg);
+                nLineSpace, psExtraArg, oWorkingState);
         }
         else if (eSourceType == GDT_UInt16)
         {
@@ -2484,13 +2487,13 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
                 return VRTSimpleSource::RasterIO(
                     eVRTBandDataType, nXOff, nYOff, nXSize, nYSize, pData,
                     nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace,
-                    psExtraArgIn);
+                    psExtraArgIn, oWorkingState);
             }
 
             return RasterIOProcessNoData<uint16_t, GDT_UInt16>(
                 poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
                 nReqYSize, pabyOut, nOutXSize, nOutYSize, eBufType, nPixelSpace,
-                nLineSpace, psExtraArg);
+                nLineSpace, psExtraArg, oWorkingState);
         }
     }
 
@@ -2505,14 +2508,16 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
         eErr = RasterIOInternal<double>(
             poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
             nReqYSize, pabyOut, nOutXSize, nOutYSize, eBufType, nPixelSpace,
-            nLineSpace, psExtraArg, bIsComplex ? GDT_CFloat64 : GDT_Float64);
+            nLineSpace, psExtraArg, bIsComplex ? GDT_CFloat64 : GDT_Float64,
+            oWorkingState);
     }
     else
     {
         eErr = RasterIOInternal<float>(
             poSourceBand, eVRTBandDataType, nReqXOff, nReqYOff, nReqXSize,
             nReqYSize, pabyOut, nOutXSize, nOutYSize, eBufType, nPixelSpace,
-            nLineSpace, psExtraArg, bIsComplex ? GDT_CFloat32 : GDT_Float32);
+            nLineSpace, psExtraArg, bIsComplex ? GDT_CFloat32 : GDT_Float32,
+            oWorkingState);
     }
 
     return eErr;
@@ -2544,7 +2549,8 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
     GDALRasterBand *poSourceBand, GDALDataType eVRTBandDataType, int nReqXOff,
     int nReqYOff, int nReqXSize, int nReqYSize, void *pData, int nOutXSize,
     int nOutYSize, GDALDataType eBufType, GSpacing nPixelSpace,
-    GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
+    WorkingState &oWorkingState)
 {
     CPLAssert(m_nProcessingFlags == PROCESSING_FLAG_NODATA);
     CPLAssert(GDALIsValueInRange<SourceDT>(m_dfNoDataValue));
@@ -2563,7 +2569,7 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
                      "Too large temporary buffer");
             return CE_Failure;
         }
-        m_abyWrkBuffer.resize(sizeof(SourceDT) * nPixelCount);
+        oWorkingState.m_abyWrkBuffer.resize(sizeof(SourceDT) * nPixelCount);
     }
     catch (const std::bad_alloc &e)
     {
@@ -2571,7 +2577,7 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
         return CE_Failure;
     }
     const auto paSrcData =
-        reinterpret_cast<const SourceDT *>(m_abyWrkBuffer.data());
+        reinterpret_cast<const SourceDT *>(oWorkingState.m_abyWrkBuffer.data());
 
     const GDALRIOResampleAlg eResampleAlgBack = psExtraArg->eResampleAlg;
     if (!m_osResampling.empty())
@@ -2581,7 +2587,7 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
 
     const CPLErr eErr = poSourceBand->RasterIO(
         GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-        m_abyWrkBuffer.data(), nOutXSize, nOutYSize, eSourceType,
+        oWorkingState.m_abyWrkBuffer.data(), nOutXSize, nOutYSize, eSourceType,
         sizeof(SourceDT), sizeof(SourceDT) * static_cast<GSpacing>(nOutXSize),
         psExtraArg);
     if (!m_osResampling.empty())
@@ -2726,7 +2732,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
     int nReqYOff, int nReqXSize, int nReqYSize, void *pData, int nOutXSize,
     int nOutYSize, GDALDataType eBufType, GSpacing nPixelSpace,
     GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
-    GDALDataType eWrkDataType)
+    GDALDataType eWrkDataType, WorkingState &oWorkingState)
 {
     const GDALColorTable *poColorTable = nullptr;
     const bool bIsComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eBufType));
@@ -2780,14 +2786,15 @@ CPLErr VRTComplexSource::RasterIOInternal(
                          "Too large temporary buffer");
                 return CE_Failure;
             }
-            m_abyWrkBuffer.resize(nWordSize * nPixelCount);
+            oWorkingState.m_abyWrkBuffer.resize(nWordSize * nPixelCount);
         }
         catch (const std::bad_alloc &e)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             return CE_Failure;
         }
-        pafData = reinterpret_cast<const WorkingDT *>(m_abyWrkBuffer.data());
+        pafData = reinterpret_cast<const WorkingDT *>(
+            oWorkingState.m_abyWrkBuffer.data());
 
         const GDALRIOResampleAlg eResampleAlgBack = psExtraArg->eResampleAlg;
         if (!m_osResampling.empty())
@@ -2798,9 +2805,9 @@ CPLErr VRTComplexSource::RasterIOInternal(
 
         const CPLErr eErr = poSourceBand->RasterIO(
             GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-            m_abyWrkBuffer.data(), nOutXSize, nOutYSize, eWrkDataType,
-            nWordSize, nWordSize * static_cast<GSpacing>(nOutXSize),
-            psExtraArg);
+            oWorkingState.m_abyWrkBuffer.data(), nOutXSize, nOutYSize,
+            eWrkDataType, nWordSize,
+            nWordSize * static_cast<GSpacing>(nOutXSize), psExtraArg);
         if (!m_osResampling.empty())
             psExtraArg->eResampleAlg = eResampleAlgBack;
 
@@ -2818,7 +2825,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
         {
             try
             {
-                m_abyWrkBufferMask.resize(nPixelCount);
+                oWorkingState.m_abyWrkBufferMask.resize(nPixelCount);
             }
             catch (const std::exception &)
             {
@@ -2826,8 +2833,8 @@ CPLErr VRTComplexSource::RasterIOInternal(
                          "Out of memory when allocating mask buffer");
                 return CE_Failure;
             }
-            pabyMask =
-                reinterpret_cast<const GByte *>(m_abyWrkBufferMask.data());
+            pabyMask = reinterpret_cast<const GByte *>(
+                oWorkingState.m_abyWrkBufferMask.data());
             auto poMaskBand =
                 (poSourceBand->GetColorInterpretation() == GCI_AlphaBand ||
                  GetMaskBandMainBand() != nullptr)
@@ -2835,8 +2842,9 @@ CPLErr VRTComplexSource::RasterIOInternal(
                     : poSourceBand->GetMaskBand();
             if (poMaskBand->RasterIO(
                     GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                    m_abyWrkBufferMask.data(), nOutXSize, nOutYSize, GDT_Byte,
-                    1, static_cast<GSpacing>(nOutXSize), psExtraArg) != CE_None)
+                    oWorkingState.m_abyWrkBufferMask.data(), nOutXSize,
+                    nOutYSize, GDT_Byte, 1, static_cast<GSpacing>(nOutXSize),
+                    psExtraArg) != CE_None)
             {
                 return CE_Failure;
             }
@@ -3021,7 +3029,7 @@ template CPLErr VRTComplexSource::RasterIOInternal<float>(
     int nReqYOff, int nReqXSize, int nReqYSize, void *pData, int nOutXSize,
     int nOutYSize, GDALDataType eBufType, GSpacing nPixelSpace,
     GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
-    GDALDataType eWrkDataType);
+    GDALDataType eWrkDataType, WorkingState &oWorkingState);
 
 /************************************************************************/
 /*                        AreValuesUnchanged()                          */
@@ -3127,7 +3135,8 @@ CPLErr VRTFuncSource::RasterIO(GDALDataType /*eVRTBandDataType*/, int nXOff,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, GSpacing nPixelSpace,
                                GSpacing nLineSpace,
-                               GDALRasterIOExtraArg * /* psExtraArg */)
+                               GDALRasterIOExtraArg * /* psExtraArg */,
+                               WorkingState & /* oWorkingState */)
 {
     if (nPixelSpace * 8 == GDALGetDataTypeSize(eBufType) &&
         nLineSpace == nPixelSpace * nXSize && nBufXSize == nXSize &&
