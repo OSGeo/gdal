@@ -1458,6 +1458,9 @@ GIntBig CPLGetPhysicalRAM(void)
         {
             // cgroup V1
             // Read memory.limit_in_byte in the whole szGroupName hierarchy
+            // Make sure to end up by reading
+            // /sys/fs/cgroup/memory/memory.limit_in_bytes itself, for
+            // scenarios like https://github.com/OSGeo/gdal/issues/8968
             while (true)
             {
                 snprintf(szFilename, sizeof(szFilename),
@@ -1477,7 +1480,7 @@ GIntBig CPLGetPhysicalRAM(void)
                         std::min(static_cast<GUIntBig>(nVal), nLimit));
                 }
                 char *pszLastSlash = strrchr(szGroupName, '/');
-                if (!pszLastSlash || pszLastSlash == szGroupName)
+                if (!pszLastSlash)
                     break;
                 *pszLastSlash = '\0';
             }
