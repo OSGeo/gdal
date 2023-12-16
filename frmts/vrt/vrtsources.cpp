@@ -2533,6 +2533,21 @@ static inline bool hasZeroByte(uint32_t v)
 /*                       RasterIOProcessNoData()                        */
 /************************************************************************/
 
+namespace
+{
+template <class T> struct VRTWorkBufferReleaser
+{
+    std::vector<T> &m_oVector;
+    explicit VRTWorkBufferReleaser(std::vector<T> &oVector) : m_oVector(oVector)
+    {
+    }
+    ~VRTWorkBufferReleaser()
+    {
+        std::vector<T>().swap(m_oVector);
+    }
+};
+}  // namespace
+
 // This method is an optimization of the generic RasterIOInternal()
 // that deals with a VRTComplexSource with only a NODATA value in it, and
 // no other processing flags.
@@ -2548,6 +2563,12 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
 {
     CPLAssert(m_nProcessingFlags == PROCESSING_FLAG_NODATA);
     CPLAssert(GDALIsValueInRange<SourceDT>(m_dfNoDataValue));
+
+    // WARNING: we need to make sure to clear that buffer in all exit
+    // paths otherwise when using many sources, we can easily exhaust RAM.
+    // That buffer should be at the dataset level, not the source, but we
+    // can't fix that in 3.8 branch without breaking ABI...
+    VRTWorkBufferReleaser<NoInitByte> oWrkBufferReleaser(m_abyWrkBuffer);
 
     /* -------------------------------------------------------------------- */
     /*      Read into a temporary buffer.                                   */
@@ -2732,6 +2753,14 @@ CPLErr VRTComplexSource::RasterIOInternal(
     const bool bIsComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eBufType));
     const int nWordSize = GDALGetDataTypeSizeBytes(eWrkDataType);
     assert(nWordSize != 0);
+
+    // WARNING: we need to make sure to clear those buffers in all exit
+    // paths otherwise when using many sources, we can easily exhaust RAM.
+    // Those buffers should be at the dataset level, not the source, but we
+    // can't fix that in 3.8 branch without breaking ABI...
+    VRTWorkBufferReleaser<NoInitByte> oWrkBufferReleaser(m_abyWrkBuffer);
+    VRTWorkBufferReleaser<NoInitByte> oWrkBufferMaskReleaser(
+        m_abyWrkBufferMask);
 
     // If no explicit <NODATA> is set, but UseMaskBand is set, and the band
     // has a nodata value, then use it as if it was set as <NODATA>
