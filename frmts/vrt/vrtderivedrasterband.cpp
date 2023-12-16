@@ -1125,6 +1125,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
 
     // Load values for sources into packed buffers.
     CPLErr eErr = CE_None;
+    VRTSource::WorkingState oWorkingState;
     for (int iBuffer = 0; iBuffer < nBufferCount && eErr == CE_None; iBuffer++)
     {
         const int iSource = anMapBufferIdxToSourceIdx[iBuffer];
@@ -1136,7 +1137,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                            (nYShiftInBuffer * nExtBufXSize + nXShiftInBuffer) *
                                nSrcTypeSize,
                        nExtBufXSizeReq, nExtBufYSizeReq, eSrcType, nSrcTypeSize,
-                       nSrcTypeSize * nExtBufXSize, &sExtraArg);
+                       nSrcTypeSize * nExtBufXSize, &sExtraArg, oWorkingState);
 
         // Extend first lines
         for (int iY = 0; iY < nYShiftInBuffer; iY++)

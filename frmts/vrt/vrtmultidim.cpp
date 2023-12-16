@@ -2602,8 +2602,8 @@ class VRTArraySource : public VRTSource
     CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                     int nXSize, int nYSize, void *pData, int nBufXSize,
                     int nBufYSize, GDALDataType eBufType, GSpacing nPixelSpace,
-                    GSpacing nLineSpace,
-                    GDALRasterIOExtraArg *psExtraArg) override;
+                    GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
+                    WorkingState &oWorkingState) override;
 
     double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override
     {
@@ -2641,11 +2641,13 @@ CPLErr VRTArraySource::RasterIO(GDALDataType eBandDataType, int nXOff,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, GSpacing nPixelSpace,
                                 GSpacing nLineSpace,
-                                GDALRasterIOExtraArg *psExtraArg)
+                                GDALRasterIOExtraArg *psExtraArg,
+                                WorkingState &oWorkingState)
 {
-    return m_poSimpleSource->RasterIO(
-        eBandDataType, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
-        nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+    return m_poSimpleSource->RasterIO(eBandDataType, nXOff, nYOff, nXSize,
+                                      nYSize, pData, nBufXSize, nBufYSize,
+                                      eBufType, nPixelSpace, nLineSpace,
+                                      psExtraArg, oWorkingState);
 }
 
 /************************************************************************/

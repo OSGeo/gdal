@@ -109,13 +109,39 @@ class VRTOverviewInfo
 class CPL_DLL VRTSource
 {
   public:
+    struct CPL_DLL WorkingState
+    {
+        // GByte whose initialization constructor does nothing
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+        struct NoInitByte
+        {
+            GByte value;
+            // cppcheck-suppress uninitMemberVar
+            NoInitByte()
+            {
+                // do nothing
+                /* coverity[uninit_member] */
+            }
+        };
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+        std::vector<NoInitByte> m_abyWrkBuffer{};
+        std::vector<NoInitByte> m_abyWrkBufferMask{};
+    };
+
     virtual ~VRTSource();
 
     virtual CPLErr RasterIO(GDALDataType eVRTBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg *psExtraArg) = 0;
+                            GDALRasterIOExtraArg *psExtraArg,
+                            WorkingState &oWorkingState) = 0;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) = 0;
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) = 0;
@@ -212,6 +238,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     std::map<CPLString, GDALDataset *> m_oMapSharedSources{};
     std::shared_ptr<VRTGroup> m_poRootGroup{};
+
+    VRTSource::WorkingState m_oWorkingState{};
 
     VRTRasterBand *InitBand(const char *pszSubclass, int nBand,
                             bool bAllowPansharpened);
@@ -1072,7 +1100,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg *psExtraArgIn) override;
+                            GDALRasterIOExtraArg *psExtraArgIn,
+                            WorkingState &oWorkingState) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
@@ -1133,7 +1162,8 @@ class VRTAveragedSource final : public VRTSimpleSource
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg *psExtraArgIn) override;
+                            GDALRasterIOExtraArg *psExtraArgIn,
+                            WorkingState &oWorkingState) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
@@ -1172,28 +1202,6 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
 
     int m_nProcessingFlags = 0;
 
-    // GByte whose initialization constructor does nothing
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weffc++"
-#endif
-    struct NoInitByte
-    {
-        GByte value;
-        // cppcheck-suppress uninitMemberVar
-        NoInitByte()
-        {
-            // do nothing
-            /* coverity[uninit_member] */
-        }
-    };
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
-    std::vector<NoInitByte> m_abyWrkBuffer{};
-    std::vector<NoInitByte> m_abyWrkBufferMask{};
-
     // adjusted value should be read with GetAdjustedNoDataValue()
     double m_dfNoDataValue = VRT_NODATA_UNSET;
     std::string
@@ -1224,7 +1232,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
                      int nReqXSize, int nReqYSize, void *pData, int nOutXSize,
                      int nOutYSize, GDALDataType eBufType, GSpacing nPixelSpace,
                      GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
-                     GDALDataType eWrkDataType);
+                     GDALDataType eWrkDataType, WorkingState &oWorkingState);
 
     template <class SourceDT, GDALDataType eSourceType>
     CPLErr RasterIOProcessNoData(GDALRasterBand *poSourceBand,
@@ -1233,7 +1241,8 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
                                  void *pData, int nOutXSize, int nOutYSize,
                                  GDALDataType eBufType, GSpacing nPixelSpace,
                                  GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg *psExtraArg);
+                                 GDALRasterIOExtraArg *psExtraArg,
+                                 WorkingState &oWorkingState);
 
   public:
     VRTComplexSource() = default;
@@ -1244,7 +1253,8 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg *psExtraArgIn) override;
+                            GDALRasterIOExtraArg *psExtraArgIn,
+                            WorkingState &oWorkingState) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
@@ -1313,7 +1323,8 @@ class VRTFilteredSource CPL_NON_FINAL : public VRTComplexSource
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg *psExtraArg) override;
+                            GDALRasterIOExtraArg *psExtraArg,
+                            WorkingState &oWorkingState) override;
 };
 
 /************************************************************************/
@@ -1387,7 +1398,8 @@ class VRTFuncSource final : public VRTSource
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GDALRasterIOExtraArg *psExtraArg) override;
+                            GDALRasterIOExtraArg *psExtraArg,
+                            WorkingState &oWorkingState) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
