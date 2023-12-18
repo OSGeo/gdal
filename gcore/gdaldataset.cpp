@@ -2589,6 +2589,10 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * nBufXSize * nBufYSize * nBandCount words of type eBufType.  It is organized
  * in left to right,top to bottom pixel order.  Spacing is controlled by the
  * nPixelSpace, and nLineSpace parameters.
+ * Note that even with eRWFlag==GF_Write, the content of the buffer might be
+ * temporarily modified during the execution of this method (and eventually
+ * restored back to its original content), so it is not safe to use a buffer
+ * stored in a read-only section of the calling program.
  *
  * @param nBufXSize the width of the buffer image into which the desired region
  * is to be read, or from which it is to be written.
