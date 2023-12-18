@@ -3887,6 +3887,11 @@ int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
     OGRArrowArrayHelper sHelper(poDS, poFeatureDefn,
                                 m_aosArrowArrayStreamOptions, out_array);
+    if (out_array->release == nullptr)
+    {
+        return ENOMEM;
+    }
+
     if (!sHelper.m_bIncludeFID)
         return OGRLayer::GetNextArrowArray(stream, out_array);
 
