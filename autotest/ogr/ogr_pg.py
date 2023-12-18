@@ -4905,6 +4905,43 @@ def test_ogr_pg_84(pg_ds):
 
 
 ###############################################################################
+# Test metadata
+
+
+@only_without_postgis
+def test_ogr_pg_metadata(pg_ds):
+
+    pg_ds = reconnect(pg_ds, update=1)
+    lyr = pg_ds.CreateLayer(
+        "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
+    )
+    lyr.SetMetadata({"foo": "bar"})
+    lyr.SetMetadataItem("bar", "baz")
+    lyr.SetMetadataItem("DESCRIPTION", "my_desc")
+
+    pg_ds = reconnect(pg_ds, update=1)
+    with pg_ds.ExecuteSQL(
+        "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {
+        "DESCRIPTION": "my_desc",
+        "foo": "bar",
+        "bar": "baz",
+    }
+    lyr.SetMetadata(None)
+
+    pg_ds = reconnect(pg_ds, update=1)
+    with pg_ds.ExecuteSQL(
+        "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {}
+
+
+###############################################################################
 # Test append of several layers in PG_USE_COPY mode (#6411)
 
 
