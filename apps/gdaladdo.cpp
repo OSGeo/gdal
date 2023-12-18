@@ -635,10 +635,9 @@ MAIN_START(nArgc, papszArgv)
     if (nArgc < 1)
         exit(-nArgc);
 
-    const char *pszResampling = "nearest";
+    std::string osResampling;
     const char *pszFilename = nullptr;
-    int anLevels[1024] = {};
-    int nLevelCount = 0;
+    std::vector<int> anLevels;
     int nResultStatus = 0;
     bool bReadOnly = false;
     bool bClean = false;
@@ -679,7 +678,7 @@ MAIN_START(nArgc, papszArgv)
         else if (EQUAL(papszArgv[iArg], "-r"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszResampling = papszArgv[++iArg];
+            osResampling = papszArgv[++iArg];
         }
         else if (EQUAL(papszArgv[iArg], "-ro"))
         {
@@ -752,11 +751,10 @@ MAIN_START(nArgc, papszArgv)
         {
             pszFilename = papszArgv[iArg];
         }
-        else if (atoi(papszArgv[iArg]) > 0 &&
-                 static_cast<size_t>(nLevelCount) < CPL_ARRAYSIZE(anLevels))
+        else if (atoi(papszArgv[iArg]) > 0)
         {
-            anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
-            if (anLevels[nLevelCount - 1] == 1)
+            anLevels.push_back(atoi(papszArgv[iArg]));
+            if (anLevels.back() == 1)
             {
                 printf(
                     "Warning: Overview with subsampling factor of 1 requested. "
@@ -813,24 +811,54 @@ MAIN_START(nArgc, papszArgv)
     if (hDataset == nullptr)
         exit(2);
 
+    if (!bClean && osResampling.empty())
+    {
+        auto poDS = GDALDataset::FromHandle(hDataset);
+        if (poDS->GetRasterCount() > 0)
+        {
+            auto poBand = poDS->GetRasterBand(1);
+            if (poBand->GetOverviewCount() > 0)
+            {
+                const char *pszResampling =
+                    poBand->GetOverview(0)->GetMetadataItem("RESAMPLING");
+                if (pszResampling)
+                {
+                    osResampling = pszResampling;
+                    if (pfnProgress == GDALDummyProgress)
+                        CPLDebug("GDAL",
+                                 "Reusing resampling method %s from existing "
+                                 "overview",
+                                 pszResampling);
+                    else
+                        printf("Info: reusing resampling method %s from "
+                               "existing overview.\n",
+                               pszResampling);
+                }
+            }
+        }
+        if (osResampling.empty())
+            osResampling = "nearest";
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Clean overviews.                                                */
     /* -------------------------------------------------------------------- */
     if (bClean)
     {
-        if (GDALBuildOverviews(hDataset, pszResampling, 0, nullptr, 0, nullptr,
+        if (GDALBuildOverviews(hDataset, "NONE", 0, nullptr, 0, nullptr,
                                pfnProgress, pProgressArg) != CE_None)
         {
-            printf("Cleaning overviews failed.\n");
+            fprintf(stderr, "Cleaning overviews failed.\n");
             nResultStatus = 200;
         }
     }
     else if (bPartialRefreshFromSourceTimestamp)
     {
         if (!PartialRefreshFromSourceTimestamp(
-                GDALDataset::FromHandle(hDataset), pszResampling, nLevelCount,
-                anLevels, nBandCount, panBandList, bMinSizeSpecified, nMinSize,
-                pfnProgress, pProgressArg))
+                GDALDataset::FromHandle(hDataset), osResampling.c_str(),
+                static_cast<int>(anLevels.size()), anLevels.data(), nBandCount,
+                panBandList, bMinSizeSpecified, nMinSize, pfnProgress,
+                pProgressArg))
         {
             nResultStatus = 1;
         }
@@ -839,8 +867,9 @@ MAIN_START(nArgc, papszArgv)
     {
         if (!PartialRefreshFromProjWin(
                 GDALDataset::FromHandle(hDataset), dfULX, dfULY, dfLRX, dfLRY,
-                pszResampling, nLevelCount, anLevels, nBandCount, panBandList,
-                bMinSizeSpecified, nMinSize, pfnProgress, pProgressArg))
+                osResampling.c_str(), static_cast<int>(anLevels.size()),
+                anLevels.data(), nBandCount, panBandList, bMinSizeSpecified,
+                nMinSize, pfnProgress, pProgressArg))
         {
             nResultStatus = 1;
         }
@@ -848,9 +877,10 @@ MAIN_START(nArgc, papszArgv)
     else if (bPartialRefreshFromSourceExtent)
     {
         if (!PartialRefreshFromSourceExtent(
-                GDALDataset::FromHandle(hDataset), aosSources, pszResampling,
-                nLevelCount, anLevels, nBandCount, panBandList,
-                bMinSizeSpecified, nMinSize, pfnProgress, pProgressArg))
+                GDALDataset::FromHandle(hDataset), aosSources,
+                osResampling.c_str(), static_cast<int>(anLevels.size()),
+                anLevels.data(), nBandCount, panBandList, bMinSizeSpecified,
+                nMinSize, pfnProgress, pProgressArg))
         {
             nResultStatus = 1;
         }
@@ -863,7 +893,32 @@ MAIN_START(nArgc, papszArgv)
         /* --------------------------------------------------------------------
          */
 
-        if (nLevelCount == 0)
+        // If no levels are specified, reuse the potentially existing ones.
+        if (anLevels.empty())
+        {
+            auto poDS = GDALDataset::FromHandle(hDataset);
+            if (poDS->GetRasterCount() > 0)
+            {
+                auto poBand = poDS->GetRasterBand(1);
+                const int nExistingCount = poBand->GetOverviewCount();
+                if (nExistingCount > 0)
+                {
+                    for (int iOvr = 0; iOvr < nExistingCount; ++iOvr)
+                    {
+                        auto poOverview = poBand->GetOverview(iOvr);
+                        if (poOverview)
+                        {
+                            const int nOvFactor = GDALComputeOvFactor(
+                                poOverview->GetXSize(), poBand->GetXSize(),
+                                poOverview->GetYSize(), poBand->GetYSize());
+                            anLevels.push_back(nOvFactor);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (anLevels.empty())
         {
             const int nXSize = GDALGetRasterXSize(hDataset);
             const int nYSize = GDALGetRasterYSize(hDataset);
@@ -872,7 +927,7 @@ MAIN_START(nArgc, papszArgv)
                    DIV_ROUND_UP(nYSize, nOvrFactor) > nMinSize)
             {
                 nOvrFactor *= 2;
-                anLevels[nLevelCount++] = nOvrFactor;
+                anLevels.push_back(nOvrFactor);
             }
         }
 
@@ -880,12 +935,13 @@ MAIN_START(nArgc, papszArgv)
         if (nBandCount > 0)
             CPLSetConfigOption("USE_RRD", "YES");
 
-        if (nLevelCount > 0 &&
-            GDALBuildOverviews(hDataset, pszResampling, nLevelCount, anLevels,
-                               nBandCount, panBandList, pfnProgress,
-                               pProgressArg) != CE_None)
+        if (!anLevels.empty() &&
+            GDALBuildOverviews(hDataset, osResampling.c_str(),
+                               static_cast<int>(anLevels.size()),
+                               anLevels.data(), nBandCount, panBandList,
+                               pfnProgress, pProgressArg) != CE_None)
         {
-            printf("Overview building failed.\n");
+            fprintf(stderr, "Overview building failed.\n");
             nResultStatus = 100;
         }
     }

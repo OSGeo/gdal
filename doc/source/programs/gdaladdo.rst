@@ -35,9 +35,16 @@ most supported file formats with one of several downsampling algorithms.
 
 .. option:: -r {nearest|average|rms|gauss|cubic|cubicspline|lanczos|average_magphase|mode}
 
-    Select a resampling algorithm.
+    Select a resampling algorithm. The default is ``nearest``, which is generally not
+    appropriate if sub-pixel accuracy is desired.
 
-    ``nearest`` applies a nearest neighbour (simple sampling) resampler (default)
+    Starting with GDAL 3.9, when refreshing existing TIFF overviews, the previously
+    used method, as noted in the RESAMPLING metadata item of the overview, will
+    be used if :option:`-r` is not specified.
+
+    The available methods are:
+
+    ``nearest`` applies a nearest neighbour (simple sampling) resampler.
 
     ``average`` computes the average of all non-NODATA contributing pixels. Starting with GDAL 3.1, this is a weighted average taking into account properly the weight of source pixels not contributing fully to the target pixel.
 
@@ -131,9 +138,14 @@ most supported file formats with one of several downsampling algorithms.
 
     .. versionadded:: 2.3
 
-        levels are no longer required to build overviews.
+        Levels are no longer required to build overviews.
         In which case, appropriate overview power-of-two factors will be selected
         until the smallest overview is smaller than the value of the -minsize switch.
+
+        Starting with GDAL 3.9, if there are already existing overviews, the
+        corresponding levels will be used to refresh them if no explicit levels
+        are specified.
+
 
 gdaladdo will honour properly NODATA_VALUES tuples (special dataset metadata) so
 that only a given RGB triplet (in case of a RGB image) will be considered as the
