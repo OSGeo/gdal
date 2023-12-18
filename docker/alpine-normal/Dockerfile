@@ -52,7 +52,6 @@ RUN apk add --no-cache \
     libkml-dev \
     libpng-dev \
     libpq-dev \
-    librasterlite2-dev \
     libspatialite-dev \
     libtirpc-dev \
     libwebp-dev \
@@ -89,6 +88,10 @@ RUN apk add --no-cache \
     zlib-dev \
     zstd-dev \
     && mkdir -p /build_thirdparty/usr/lib
+
+RUN if test "$(uname -m)" = "x86_64"; then ( \
+    apk add --no-cache librasterlite2-dev \
+    ); fi
 
 # Build hdf4
 ARG HDF4_VERSION=4.2.16
@@ -310,7 +313,6 @@ RUN apk add --no-cache \
         libparquet \
         libpng \
         libpq \
-        librasterlite2 \
         libspatialite \
         libstdc++ \
         liburiparser \
@@ -348,6 +350,10 @@ RUN apk add --no-cache \
     && rm -f /usr/lib/libpoppler-cpp.so* \
     # Only libwebp.so is used by GDAL
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
+
+RUN if test "$(uname -m)" = "x86_64"; then ( \
+    apk add --no-cache librasterlite2 \
+    ); fi
 
 # Install Pillow for -antialias option of gdal2tiles
 RUN apk add --no-cache py3-pillow
