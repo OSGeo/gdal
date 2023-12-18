@@ -320,14 +320,14 @@ jobs:
           docker push ${CONTAINER_NAME_FULL}
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: coverage_index.html
           path: build-${{ matrix.id }}/coverage_html/index.html
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: HTML
