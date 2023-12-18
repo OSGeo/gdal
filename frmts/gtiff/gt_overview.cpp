@@ -207,9 +207,13 @@ void GTIFFBuildOverviewMetadata(const char *pszResampling,
 {
     osMetadata = "<GDALMetadata>";
 
-    if (pszResampling && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
-        osMetadata += "<Item name=\"RESAMPLING\" sample=\"0\">"
-                      "AVERAGE_BIT2GRAYSCALE</Item>";
+    auto osNormalizedResampling = GDALGetNormalizedOvrResampling(pszResampling);
+    if (!osNormalizedResampling.empty())
+    {
+        osMetadata += "<Item name=\"RESAMPLING\" sample=\"0\">";
+        osMetadata += osNormalizedResampling;
+        osMetadata += "</Item>";
+    }
 
     if (poBaseDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1"))
     {

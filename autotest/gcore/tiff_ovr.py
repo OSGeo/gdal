@@ -1388,9 +1388,13 @@ def test_tiff_ovr_37(tmp_path, both_endian):
     shutil.copy("../gdrivers/data/n43.dt0", ovr37_dt0)
 
     ds = gdal.Open(ovr37_dt0)
+    with gdaltest.config_option("COMPRESS_OVERVIEW", "LZW"):
+        ds.BuildOverviews("NEAR", overviewlist=[2])
+    ds = None
+    no_predictor_size = os.stat(f"{ovr37_dt0}.ovr")[stat.ST_SIZE]
+    os.unlink(f"{ovr37_dt0}.ovr")
 
-    assert ds is not None, "Failed to open test dataset."
-
+    ds = gdal.Open(ovr37_dt0)
     with gdaltest.config_option("PREDICTOR_OVERVIEW", "2"):
         with gdaltest.config_option("COMPRESS_OVERVIEW", "LZW"):
             ds.BuildOverviews("NEAR", overviewlist=[2])
@@ -1403,9 +1407,7 @@ def test_tiff_ovr_37(tmp_path, both_endian):
     ds = None
 
     predictor2_size = os.stat(f"{ovr37_dt0}.ovr")[stat.ST_SIZE]
-    # 3789 : on little-endian host
-    # 3738 : on big-endian host
-    assert predictor2_size in (3789, 3738), "did not get expected file size."
+    assert predictor2_size < no_predictor_size
 
 
 ###############################################################################
