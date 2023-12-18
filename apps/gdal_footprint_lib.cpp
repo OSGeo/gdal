@@ -1034,10 +1034,13 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
                 CPLIsFilenameRelative(osFilename.c_str()) &&
                 VSIStatL(osFilename.c_str(), &sStatBuf) == 0)
             {
-                const char *pszCurDir = CPLGetCurrentDir();
+                char *pszCurDir = CPLGetCurrentDir();
                 if (pszCurDir)
+                {
                     osFilename = CPLProjectRelativeFilename(pszCurDir,
                                                             osFilename.c_str());
+                    CPLFree(pszCurDir);
+                }
             }
             poDstFeature->SetField(psOptions->osLocationFieldName.c_str(),
                                    osFilename.c_str());
