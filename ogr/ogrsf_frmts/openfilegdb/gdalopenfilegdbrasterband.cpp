@@ -1946,7 +1946,8 @@ GDALRasterAttributeTable *GDALOpenFileGDBRasterBand::GetDefaultRAT()
     // Instantiate a new dataset, os that the RAT is standalone
     auto poDSNew = std::make_unique<OGROpenFileGDBDataSource>();
     GDALOpenInfo oOpenInfo(poGDS->m_osDirName.c_str(), GA_ReadOnly);
-    if (!poDSNew->Open(&oOpenInfo))
+    bool bRetryFileGDBUnused = false;
+    if (!poDSNew->Open(&oOpenInfo, bRetryFileGDBUnused))
         return nullptr;
     auto poVatLayer = poDSNew->BuildLayerFromName(osVATTableName.c_str());
     if (!poVatLayer)

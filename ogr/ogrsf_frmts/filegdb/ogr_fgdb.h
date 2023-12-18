@@ -325,7 +325,8 @@ class FGdbDataSource final : public OGRDataSource
     int bPerLayerCopyingForTransaction;
 
   public:
-    FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection);
+    FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection,
+                   bool bUseOpenFileGDB);
     virtual ~FGdbDataSource();
 
     int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
@@ -417,6 +418,11 @@ class FGdbDataSource final : public OGRDataSource
     }
     void SetSymlinkFlagOnAllLayers();
 
+    bool UseOpenFileGDB() const
+    {
+        return m_bUseOpenFileGDB;
+    }
+
     /*
     protected:
 
@@ -435,6 +441,7 @@ class FGdbDataSource final : public OGRDataSource
     bool m_bUpdate;
     GDALDriver *m_poOpenFileGDBDrv;
     std::unique_ptr<GDALDataset> m_poOpenFileGDBDS;
+    bool m_bUseOpenFileGDB = false;
 };
 
 /************************************************************************/

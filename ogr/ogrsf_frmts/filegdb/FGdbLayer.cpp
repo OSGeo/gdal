@@ -3358,6 +3358,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
     /* Using OpenFileGDB to get reliable default values for integer/real fields
      */
     /* and alias */
+    if (m_pDS->UseOpenFileGDB())
     {
         const char *const apszDrivers[] = {"OpenFileGDB", nullptr};
         GDALDataset *poDS = GDALDataset::Open(

@@ -472,7 +472,8 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     bool OpenFileGDBv10(int iGDBItems, int nInterestTable,
                         const GDALOpenInfo *poOpenInfo,
                         const std::string &osRasterLayerName,
-                        std::set<int> &oSetIgnoredRasterLayerTableNum);
+                        std::set<int> &oSetIgnoredRasterLayerTableNum,
+                        bool &bRetryFileGDBOut);
     int OpenFileGDBv9(int iGDBFeatureClasses, int iGDBObjectClasses,
                       int nInterestTable, const GDALOpenInfo *poOpenInfo,
                       const std::string &osRasterLayerName,
@@ -514,7 +515,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     OGROpenFileGDBDataSource();
     virtual ~OGROpenFileGDBDataSource();
 
-    bool Open(const GDALOpenInfo *poOpenInfo);
+    bool Open(const GDALOpenInfo *poOpenInfo, bool &bRetryFileGDBOut);
     bool Create(const char *pszName);
 
     virtual CPLErr FlushCache(bool bAtClosing = false) override;
@@ -721,7 +722,8 @@ class GDALOpenFileGDBRasterAttributeTable final
     {
         auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
         GDALOpenInfo oOpenInfo(m_poDS->m_osDirName.c_str(), GA_ReadOnly);
-        if (!poDS->Open(&oOpenInfo))
+        bool bRetryFileGDBUnused = false;
+        if (!poDS->Open(&oOpenInfo, bRetryFileGDBUnused))
             return nullptr;
         auto poVatLayer = poDS->BuildLayerFromName(m_osVATTableName.c_str());
         if (!poVatLayer)
