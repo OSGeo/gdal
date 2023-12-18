@@ -54,6 +54,12 @@ void GTIFFSetWebPLossless(GDALDatasetH hGTIFFDS, bool bWebpLossless);
 void GTIFFSetZLevel(GDALDatasetH hGTIFFDS, int nZLevel);
 void GTIFFSetZSTDLevel(GDALDatasetH hGTIFFDS, int nZSTDLevel);
 void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError);
+#if HAVE_JXL
+void GTIFFSetJXLLossless(GDALDatasetH hGTIFFDS, bool bIsLossless);
+void GTIFFSetJXLEffort(GDALDatasetH hGTIFFDS, int nEffort);
+void GTIFFSetJXLDistance(GDALDatasetH hGTIFFDS, float fDistance);
+void GTIFFSetJXLAlphaDistance(GDALDatasetH hGTIFFDS, float fAlphaDistance);
+#endif
 const char *GTIFFGetCompressionMethodName(int nCompressionCode);
 int GTIFFGetCompressionMethod(const char *pszValue,
                               const char *pszVariableName);
