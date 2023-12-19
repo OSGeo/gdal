@@ -1,0 +1,187 @@
+name: Slow tests
+
+# Controls when the action will run.
+on:
+  # Run this action on a schedule
+  schedule:
+    - cron: '0 3 * * *' # Everyday at 03:00 UTC
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+
+  slow_tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: slow_tests
+            container: ubuntu_22.04
+            build_script: build.sh
+            test_script: test.sh
+
+    # Store the components of the container name as environment variables:
+    # ${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER}/${CONTAINER_NAME}
+    env:
+      CONTAINER_REGISTRY: ${{ vars.gdal_container_registry || 'ghcr.io' }}
+      CONTAINER_REGISTRY_USER: ${{ vars.gdal_container_registry_user || github.repository_owner }}
+      CONTAINER_NAME: gdal-deps
+      CONTAINER_TAG: ${{ matrix.container }}-${{ github.base_ref || github.ref_name }}
+      GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
+
+    defaults:
+      run:
+        # bash is needed to use ${CONTAINER_REGISTRY_USER,,}, which forces the
+        # username to lower-case as required by docker.
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        if: env.CONTAINER_REGISTRY == 'ghcr.io'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Set variables
+        shell: bash
+        run: |
+          CONTAINER_TAG_CLEAN=$(echo ${CONTAINER_TAG} | tr -d -c "[:alnum:].-")
+          echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}"
+          echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
+          CACHE_CONTAINER_TAG_CLEAN=$(echo ${CACHE_CONTAINER_TAG} | tr -d -c "[:alnum:].-")
+          echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}"
+          echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
+          echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN}"  >>${GITHUB_ENV}
+
+        # Pull build environment in forks or pull requests, unless [skip cache] is included in the commit message
+      - name: Pull build environment
+        if: "(github.repository_owner != 'OSGeo' || github.event_name == 'pull_request') && !contains(github.event.head_commit.message, '[skip cache]')"
+        run: |
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} || true
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} || true
+          docker pull ${CONTAINER_NAME_FULL} || true
+          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+
+      - name: Prepare build context
+        run: |
+          mkdir docker-build-context
+          cp autotest/requirements.txt docker-build-context
+
+      - name: Update build environment
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          # FIXME: for some reason, the fedora rawhide container pushed by
+          # master job is corrupted (looks like it contains an outdated layer
+          # symlinking libssl.so.3 to an older version of the actual file),
+          # once it is pushed. But in the job that generates it,
+          # compilation & tests work fine. It looks like some weird caching
+          # issue
+          if test "${{ matrix.container }}" = "fedora_rawhide"; then
+            DOCKER_BUILD_CACHE_FROM=""
+          else
+            BUILD_ARG_INLINE_CACHE="--build-arg BUILDKIT_INLINE_CACHE=1"
+          fi
+          docker build \
+            ${BUILD_ARG_INLINE_CACHE} \
+            ${DOCKER_BUILD_CACHE_FROM} \
+            -t ${CONTAINER_NAME_FULL} \
+            -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
+            docker-build-context
+
+      # cache the .ccache directory
+      # key it on the runner os, build type, deps, and arch
+      # It's especially important to include arch in the key because we
+      # may get runtime errors with -mavx2 from objects built on a
+      # different architecture.
+      - name: Restore build cache
+        id: restore-cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
+
+      - name: Prepare ccache
+        run: |
+          mkdir -p ${{ github.workspace }}/.ccache
+          chmod -R a+rw ${{ github.workspace }}/.ccache
+          docker run --rm \
+            -v ${{ github.workspace }}/.ccache:/.ccache \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
+            ${CONTAINER_NAME_FULL} \
+            sh -c "ccache -M 1G && ccache -sp && ccache -z"
+
+      - name: Build
+        run: |
+          mkdir -p build-${{ matrix.id }}
+          docker run --name gdal-build \
+            --rm \
+            -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
+            -v $(pwd):$(pwd):rw \
+            -v ${{ github.workspace }}/.ccache:/.ccache:rw \
+            --workdir $(pwd)/build-${{ matrix.id }} \
+            ${CONTAINER_NAME_FULL} \
+            $(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}
+
+      - name: Summarize ccache
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/.ccache:/.ccache \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
+            ${CONTAINER_NAME_FULL} \
+            ccache -s
+
+      - name: Save build cache
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+
+      - name: Push build environment
+        # if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker push ${CONTAINER_NAME_FULL}
+
+      - name: Run tests
+        env:
+          TRAVIS: yes
+          TRAVIS_BRANCH: ${{ matrix.travis_branch }}
+        run: |
+          TEST_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
+
+          # For cache
+          mkdir .gdal
+
+          docker run \
+            -e CI \
+            -e GITHUB_WORKFLOW \
+            -e TRAVIS \
+            -e TRAVIS_BRANCH \
+            -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
+            --security-opt seccomp=unconfined \
+            --add-host=host.docker.internal:host-gateway \
+            --rm \
+            -v $(pwd)/.gdal:/.gdal \
+            -v $(pwd):$(pwd) \
+            --workdir $(pwd)/build-${{ matrix.id }} \
+            ${CONTAINER_NAME_FULL} \
+            ${TEST_CMD}
