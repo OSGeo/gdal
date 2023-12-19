@@ -596,6 +596,9 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.gpkg_spatialite_computed_geom_column`
      - No
      - Yes, starting with GDAL 3.7.1
+   * - `OGC GeoPackage Related Tables Extension <http://www.geopackage.org/spec/related-tables/>`__
+     - Yes
+     - Yes, starting with GDAL 3.6
 
 Compressed files
 ----------------
