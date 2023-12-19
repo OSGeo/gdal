@@ -1103,7 +1103,8 @@ int GDALRasterBand::InitBlockInfo()
 CPLErr GDALRasterBand::FlushCache(bool bAtClosing)
 
 {
-    if (bAtClosing && poDS && poDS->IsMarkedSuppressOnClose() && poBandBlockCache)
+    if (bAtClosing && poDS && poDS->IsMarkedSuppressOnClose() &&
+        poBandBlockCache)
         poBandBlockCache->DisableDirtyBlockWriting();
 
     CPLErr eGlobalErr = eFlushBlockErr;

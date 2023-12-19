@@ -646,7 +646,10 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     /** Return MarkSuppressOnClose flag.
     * @return MarkSuppressOnClose flag.
     */
-    bool IsMarkedSuppressOnClose() {return bSuppressOnClose;}
+    bool IsMarkedSuppressOnClose()
+    {
+        return bSuppressOnClose;
+    }
 
     /** Return open options.
      * @return open options.
