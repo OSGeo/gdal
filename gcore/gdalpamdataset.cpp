@@ -164,7 +164,7 @@ GDALPamDataset::GDALPamDataset()
 GDALPamDataset::~GDALPamDataset()
 
 {
-    if (bSuppressOnClose)
+    if (IsMarkedSuppressOnClose())
     {
         if (psPam && psPam->pszPamFilename != nullptr)
             VSIUnlink(psPam->pszPamFilename);

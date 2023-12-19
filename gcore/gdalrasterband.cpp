@@ -85,7 +85,7 @@ GDALRasterBand::GDALRasterBand(int bForceCachedIOIn)
 GDALRasterBand::~GDALRasterBand()
 
 {
-    if (poDS && poDS->bSuppressOnClose)
+    if (poDS && poDS->IsMarkedSuppressOnClose())
     {
         if (poBandBlockCache)
             poBandBlockCache->DisableDirtyBlockWriting();
@@ -1103,7 +1103,7 @@ int GDALRasterBand::InitBlockInfo()
 CPLErr GDALRasterBand::FlushCache(bool bAtClosing)
 
 {
-    if (bAtClosing && poDS && poDS->bSuppressOnClose && poBandBlockCache)
+    if (bAtClosing && poDS && poDS->IsMarkedSuppressOnClose() && poBandBlockCache)
         poBandBlockCache->DisableDirtyBlockWriting();
 
     CPLErr eGlobalErr = eFlushBlockErr;
