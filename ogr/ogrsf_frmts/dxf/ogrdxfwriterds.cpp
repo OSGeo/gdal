@@ -64,7 +64,7 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
          */
         CPLDebug("DXF", "Compose final DXF file from components.");
 
-        if (bSuppressOnClose && fpTemp != nullptr)
+        if (IsMarkedSuppressOnClose() && fpTemp != nullptr)
         {
             CPLDebug("DXF", "Do not copy final DXF when 'suppress on close'.");
             VSIFCloseL(fpTemp);

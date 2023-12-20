@@ -137,7 +137,7 @@ CPLErr ENVIDataset::Close()
         if (fpImage)
         {
             // Make sure the binary file has the expected size
-            if (!bSuppressOnClose && bFillFile && nBands > 0)
+            if (!IsMarkedSuppressOnClose() && bFillFile && nBands > 0)
             {
                 const int nDataSize = GDALGetDataTypeSizeBytes(
                     GetRasterBand(1)->GetRasterDataType());
@@ -202,7 +202,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
 
     GDALRasterBand *band = GetRasterCount() > 0 ? GetRasterBand(1) : nullptr;
 
-    if (!band || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
+    if (!band || !bHeaderDirty || (bAtClosing && IsMarkedSuppressOnClose()))
         return eErr;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make
