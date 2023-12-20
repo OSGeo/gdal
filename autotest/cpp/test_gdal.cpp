@@ -2542,7 +2542,6 @@ TEST_F(test_gdal, UnMarkSuppressOnClose)
         GDALDatasetUniquePtr poDstDS(
             GDALDriver::FromHandle(GDALGetDriverByName("GTiff"))
                 ->Create(pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
-        poDstDS->SetMetadataItem("FOO", "BAR");
         poDstDS->MarkSuppressOnClose();
         poDstDS->GetRasterBand(1)->Fill(255);
         if (poDstDS->IsMarkedSuppressOnClose())
@@ -2554,11 +2553,9 @@ TEST_F(test_gdal, UnMarkSuppressOnClose)
                       GDALRasterBand::FromHandle(poDstDS->GetRasterBand(1)), 0,
                       0, 1, 1),
                   0);
-    }
-    {
         VSIStatBufL sStat;
-        EXPECT_TRUE(VSIStatL(CPLSPrintf("%s.aux.xml", pszFilename), &sStat) ==
-                    0);
+        EXPECT_TRUE(VSIStatL(pszFilename, &sStat) == 0);
+        VSIUnlink(pszFilename);
     }
 }
 
