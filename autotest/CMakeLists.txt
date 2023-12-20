@@ -70,6 +70,7 @@ function (symlink_or_copy source destination)
 endfunction ()
 
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py)
+  symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/run_slow_tests.sh ${CMAKE_CURRENT_BINARY_DIR}/run_slow_tests.sh)
 
   if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
       foreach (subdir IN ITEMS pymod proj_grids cpp/data)
@@ -91,7 +92,8 @@ endfunction ()
           gnm
           pyscripts
           utilities
-          benchmark)
+          benchmark
+          slow_tests)
     if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
         if (SKIP_COPYING_AUTOTEST_SUBDIRS)
           message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
