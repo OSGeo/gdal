@@ -179,6 +179,7 @@ Raster drivers
    usgsdem
    vicar
    vrt
+   vrtti
    wcs
    webp
    wms
