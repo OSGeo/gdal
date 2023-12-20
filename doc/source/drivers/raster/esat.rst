@@ -26,8 +26,8 @@ the "RECORDS" metadata domain.
 
 NOTE: Implemented as :source_file:`frmts/envisat/envisatdataset.cpp`.
 
-See Also: `Envisat Data
-Products <http://envisat.esa.int/dataproducts/>`__ at ESA.
+See Also: `Envisat 
+<https://earth.esa.int/eogateway/missions/envisat>`__ at ESA.
 
 Driver capabilities
 -------------------
