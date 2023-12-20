@@ -106,7 +106,7 @@ class CPL_DLL GDALMultiDomainMetadata
     GDALMultiDomainMetadata();
     ~GDALMultiDomainMetadata();
 
-    int XMLInit(CPLXMLNode *psMetadata, int bMerge);
+    int XMLInit(const CPLXMLNode *psMetadata, int bMerge);
     CPLXMLNode *Serialize();
 
     char **GetDomainList()
@@ -4006,7 +4006,7 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
                                    char **papszOpenOptions);
-char **GDALDeserializeOpenOptionsFromXML(CPLXMLNode *psParentNode);
+char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
 
 int GDALCanFileAcceptSidecarFile(const char *pszFilename);
 

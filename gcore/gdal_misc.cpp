@@ -4259,13 +4259,14 @@ void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
 /*                  GDALDeserializeOpenOptionsFromXML()                 */
 /************************************************************************/
 
-char **GDALDeserializeOpenOptionsFromXML(CPLXMLNode *psParentNode)
+char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode)
 {
     char **papszOpenOptions = nullptr;
-    CPLXMLNode *psOpenOptions = CPLGetXMLNode(psParentNode, "OpenOptions");
+    const CPLXMLNode *psOpenOptions =
+        CPLGetXMLNode(psParentNode, "OpenOptions");
     if (psOpenOptions != nullptr)
     {
-        CPLXMLNode *psOOI;
+        const CPLXMLNode *psOOI;
         for (psOOI = psOpenOptions->psChild; psOOI != nullptr;
              psOOI = psOOI->psNext)
         {

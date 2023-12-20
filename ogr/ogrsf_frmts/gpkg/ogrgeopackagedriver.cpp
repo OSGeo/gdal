@@ -35,6 +35,11 @@
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
+static inline bool ENDS_WITH_CI(const char *a, const char *b)
+{
+    return strlen(a) >= strlen(b) && EQUAL(a + strlen(a) - strlen(b), b);
+}
+
 /************************************************************************/
 /*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
@@ -85,6 +90,13 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
         !STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                      "SQLite format 3"))
     {
+        return FALSE;
+    }
+
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".vrt.gpkg"))
+    {
+        // Handled by VRT driver
         return FALSE;
     }
 
