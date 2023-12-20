@@ -29,7 +29,7 @@ an attribute containing the filename, and a polygon geometry outlining the
 raster.  This output is suitable for use with `MapServer <http://mapserver.org/>`__ as a raster
 tileindex.
 
-.. program:: ogrtindex
+.. program:: gdaltindex
 
 .. include:: options/help_and_help_general.rst
 
@@ -119,6 +119,11 @@ Examples
 ::
 
     gdaltindex doq_index.shp --optfile my_list.txt
+
+C API
+-----
+
+This utility is also callable from C with :cpp:func:`GDALTileIndex`.
 
 See also
 --------

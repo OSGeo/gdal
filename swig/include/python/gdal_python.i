@@ -3806,6 +3806,102 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
 
 
+def TileIndexOptions(options=None,
+                     format=None,
+                     layerName=None,
+                     locationFieldName="location",
+                     outputSRS=None,
+                     writeAbsolutePath=None,
+                     skipDifferentProjection=None):
+    """Create a TileIndexOptions() object that can be passed to gdal.TileIndex()
+
+    Parameters
+    ----------
+    options:
+        can be be an array of strings, a string or let empty and filled from other keywords.
+    format:
+        output format ("ESRI Shapefile", "GPKG", etc...)
+    layerName:
+        output layer name
+    locationFieldName:
+        Specifies the name of the field in the resulting vector dataset where the path of the input dataset will be stored. The default field name is "location". Can be set to None to disable creation of such field.
+    outputSRS:
+        assigned output SRS
+    writeAbsolutePath:
+        Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
+    skipDifferentProjection:
+        Whether to skip sources that have a different SRS
+    """
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if format:
+            new_options += ['-f', format]
+        if layerName is not None:
+            new_options += ['-lyr_name', layerName]
+        if locationFieldName is not None:
+            new_options += ['-tileindex', locationFieldName]
+        if outputSRS is not None:
+            new_options += ['-t_srs', str(outputSRS)]
+        if writeAbsolutePath:
+            new_options += ['-write_absolute_path']
+        if skipDifferentProjection:
+            new_options += ['-skip_different_projection']
+
+    if return_option_list:
+        return new_options
+
+    callback = None
+    callback_data = None
+    return (GDALTileIndexOptions(new_options), callback, callback_data)
+
+def TileIndex(destName, srcFilenames, **kwargs):
+    """Build a tileindex from a list of datasets.
+
+    Parameters
+    ----------
+    destName:
+        Output dataset name.
+    srcFilenames:
+        An array of filenames.
+    kwargs:
+        options: return of gdal.TileIndexOptions(), string or array of strings,
+        other keywords arguments of gdal.TileIndexOptions().
+        If options is provided as a gdal.TileIndexOptions() object,
+        other keywords are ignored.
+    """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, callback, callback_data) = TileIndexOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+
+    srcDSNamesTab = []
+
+    import os
+
+    if isinstance(srcFilenames, (str, os.PathLike)):
+        srcDSNamesTab = [str(srcFilenames)]
+    elif isinstance(srcFilenames, list):
+        for elt in srcFilenames:
+            srcDSNamesTab.append(str(elt))
+    else:
+        raise Exception("Unexpected type for srcFilenames")
+
+    return TileIndexInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
+
+
 def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
          arraySpecs=None, groupSpecs=None, subsetSpecs=None, scaleAxesSpecs=None,
          callback=None, callback_data=None):

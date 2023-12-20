@@ -222,6 +222,14 @@ struct GDALFootprintOptionsForBinary
     std::string osDestLayerName{};
 };
 
+struct GDALTileIndexOptionsForBinary
+{
+    CPLStringList aosSrcFiles{};
+    bool bDestSpecified = false;
+    std::string osDest{};
+    bool bQuiet = false;
+};
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */
