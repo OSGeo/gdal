@@ -50,6 +50,8 @@ def four_tiles(tmp_path_factory):
     fnames = [f"{dirname}/gdaltindex{i}.tif" for i in (1, 2, 3, 4)]
 
     ds = drv.Create(fnames[0], 10, 10, 1)
+    ds.SetMetadataItem("foo", "bar")
+    ds.SetMetadataItem("TIFFTAG_DATETIME", "2023:12:20 16:10:00")
     ds.SetProjection(wkt)
     ds.SetGeoTransform([49, 0.1, 0, 2, 0, -0.1])
     ds = None
@@ -355,3 +357,100 @@ def test_gdaltindex_lib_vrtti_xml(tmp_path, four_tiles):
     assert ds.GetRasterBand(1).GetNoDataValue() == 0
     assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+
+
+###############################################################################
+# Test directory exploration and filtering
+
+
+def test_gdaltindex_lib_directory(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_overwrite.shp")
+
+    gdal.TileIndex(
+        index_filename,
+        [os.path.dirname(four_tiles[0])],
+        recursive=True,
+        filenameFilter="*.?if",
+        minPixelSize=0,
+        maxPixelSize=1,
+    )
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 4
+    del ds
+
+    with gdal.quiet_errors():
+        gdal.TileIndex(
+            index_filename,
+            [os.path.dirname(four_tiles[0])],
+            minPixelSize=10,
+            overwrite=True,
+        )
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+    del ds
+
+    with gdal.quiet_errors():
+        gdal.TileIndex(
+            index_filename,
+            [os.path.dirname(four_tiles[0])],
+            maxPixelSize=1e-3,
+            overwrite=True,
+        )
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+    del ds
+
+    with pytest.raises(Exception, match="Cannot find any tile"):
+        gdal.TileIndex(
+            index_filename,
+            [os.path.dirname(four_tiles[0])],
+            filenameFilter="*.xyz",
+            overwrite=True,
+        )
+
+
+###############################################################################
+# Test -fetchMD
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdaltindex_lib_fetch_md(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_fetch_md.gpkg")
+
+    gdal.TileIndex(
+        index_filename,
+        four_tiles[0],
+        fetchMD=[
+            ("foo", "foo_field", "String"),
+            ("{PIXEL_SIZE}", "pixel_size", "Real"),
+            ("TIFFTAG_DATETIME", "dt", "DateTime"),
+        ],
+    )
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["foo_field"] == "bar"
+    assert f["dt"] == "2023/12/20 16:10:00"
+    assert f["pixel_size"] == pytest.approx(0.01)
+    del ds
+
+    gdal.TileIndex(
+        index_filename,
+        four_tiles[0],
+        fetchMD=("foo", "foo_field", "String"),
+        overwrite=True,
+    )
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["foo_field"] == "bar"

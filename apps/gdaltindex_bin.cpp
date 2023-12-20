@@ -43,7 +43,9 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
     fprintf(
         bIsError ? stderr : stdout, "%s",
         "Usage: gdaltindex [--help] [--help-general]\n"
-        "                  [-overwrite]\n"
+        "                  [-overwrite] [-recursive] [-filename_filter "
+        "<val>]...\n"
+        "                  [-min_pixel_size <val>] [-max_pixel_size <val>]\n"
         "                  [-f <format>] [-tileindex <field_name>] "
         "[-write_absolute_path] \n"
         "                  [-skip_different_projection] [-t_srs <target_srs>]\n"
@@ -57,7 +59,9 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
         "<val>[,<val>...]]\n"
         "                  [-colorinterp <val>[,<val>...]] [-mask]\n"
         "                  [-mo <KEY>=<VALUE>]...\n"
-        "                  <index_file> <gdal_file> [<gdal_file>]...\n"
+        "                  [-fetch_md <gdal_md_name> <fld_name> "
+        "<fld_type>]...\n"
+        "                  <index_file> <file_or_dir> [<file_or_dir>]...\n"
         "\n"
         "e.g.\n"
         "  % gdaltindex doq_index.shp doq/*.tif\n"

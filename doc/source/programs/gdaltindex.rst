@@ -16,7 +16,8 @@ Synopsis
 .. code-block::
 
     gdaltindex [--help] [--help-general]
-            [-overwrite]
+            [-overwrite] [-recursive] [-filename_filter <val>]...
+            [-min_pixel_size <val>] [-max_pixel_size <val>]
             [-f <format>] [-tileindex <field_name>] [-write_absolute_path]
             [-skip_different_projection] [-t_srs <target_srs>]
             [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
@@ -26,7 +27,8 @@ Synopsis
             [-ot <datatype>] [-bandcount <val>] [-nodata <val>[,<val>...]]
             [-colorinterp <val>[,<val>...]] [-mask]
             [-mo <KEY>=<VALUE>]...
-            <index_file> <gdal_file> [<gdal_file>]...
+            [-fetch_md <gdal_md_name> <fld_name> <fld_type>]...
+            <index_file> <file_or_dir> [<file_or_dir>]...
 
 Description
 -----------
@@ -45,6 +47,41 @@ tileindex, or as input for the :ref:`VRTTI <raster.vrtti>` driver.
     .. versionadded:: 3.9
 
     Overwrite the tile index if it already exists.
+
+.. option:: -recursive
+
+    .. versionadded:: 3.9
+
+    Whether directories specified in <file_or_dir> should be explored recursively.
+
+.. option:: -filename_filter <val>
+
+    .. versionadded:: 3.9
+
+    Pattern that the filenames contained in directories pointed by <file_or_dir>
+    should follow.
+    '*' is a wildcard character that matches any number of any characters
+    including none. '?' is a wildcard character that matches a single character.
+    Comparisons are done in a case insensitive way.
+    Several filters may be specified
+
+    For example :``-filename_filter "*.tif" -filename_filter "*.tiff"``
+
+.. option:: -min_pixel_size <val>
+
+    .. versionadded:: 3.9
+
+    Minimum pixel size that a raster should have to be selected. The pixel size
+    is evaluated after reprojection of its extent to the target SRS defined
+    by :option:`-t_srs`.
+
+.. option:: -max_pixel_size <val>
+
+    .. versionadded:: 3.9
+
+    Maximum pixel size that a raster should have to be selected. The pixel size
+    is evaluated after reprojection of its extent to the target SRS defined
+    by :option:`-t_srs`.
 
 .. option:: -f <format>
 
@@ -97,11 +134,14 @@ tileindex, or as input for the :ref:`VRTTI <raster.vrtti>` driver.
     be created if it doesn't already exist, otherwise it will append to the
     existing dataset.
 
-.. option:: <gdal_file>
+.. option:: <file_or_dir>
 
     The input GDAL raster files, can be multiple files separated by spaces.
     Wildcards my also be used. Stores the file locations in the same style as
     specified here, unless :option:`-write_absolute_path` option is also used.
+
+    Starting with GDAL 3.9, this can also be a directory name. :option:`-recursive`
+    might also be used to recursve down to sub-directories.
 
 
 Options specific to use by the GDAL VRTTI driver
@@ -229,6 +269,25 @@ specified.
     This option may be repeated.
 
     .. note:: This option cannot be used together :option:`-vrtti_filename`
+
+.. option:: -fetch_md <gdal_md_name> <fld_name> <fld_type>
+
+    .. versionadded:: 3.9
+
+    Fetch a metadata item from the raster tile and write it as a field in the
+    tile index.
+
+    <gdal_md_name> should be the name of the raster metadata item.
+    ``{PIXEL_SIZE}`` may be used as a special name to indicate the pixel size.
+
+    <fld_name> should be the name of the field to create in the tile index.
+
+    <fld_type> should be the name of the type to create.
+    One of ``String``, ``Integer``, ``Integer64``, ``Real``, ``Date``, ``DateTime``
+
+    This option may be repeated.
+
+    For example: ``-fetch_md TIFFTAG_DATETIME creation_date DateTime``
 
 Examples
 --------

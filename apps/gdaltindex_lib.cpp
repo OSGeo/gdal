@@ -39,6 +39,8 @@
 #include "ogr_spatialref.h"
 #include "commonutils.h"
 
+#include <ctype.h>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -51,6 +53,17 @@ typedef enum
     FORMAT_EPSG,
     FORMAT_PROJ
 } SrcSRSFormat;
+
+/************************************************************************/
+/*                        GDALTileIndexRasterMetadata                   */
+/************************************************************************/
+
+struct GDALTileIndexRasterMetadata
+{
+    OGRFieldType eType = OFTString;
+    std::string osFieldName{};
+    std::string osRasterItemName{};
+};
 
 /************************************************************************/
 /*                          GDALTileIndexOptions                        */
@@ -80,6 +93,186 @@ struct GDALTileIndexOptions
     bool bMaskBand = false;
     std::vector<std::string> aosMetadata{};
     std::string osVRTTIFilename{};
+    bool bRecursive = false;
+    double dfMinPixelSize = std::numeric_limits<double>::quiet_NaN();
+    double dfMaxPixelSize = std::numeric_limits<double>::quiet_NaN();
+    std::vector<GDALTileIndexRasterMetadata> aoFetchMD{};
+    std::set<std::string> oSetFilenameFilters{};
+};
+
+/************************************************************************/
+/*                               PatternMatch()                         */
+/************************************************************************/
+
+static bool PatternMatch(const char *input, const char *pattern)
+
+{
+    while (*input != '\0')
+    {
+        if (*pattern == '\0')
+            return false;
+
+        else if (*pattern == '?')
+        {
+            pattern++;
+            if (static_cast<unsigned int>(*input) > 127)
+            {
+                // Continuation bytes of such characters are of the form
+                // 10xxxxxx (0x80), whereas single-byte are 0xxxxxxx
+                // and the start of a multi-byte is 11xxxxxx
+                do
+                {
+                    input++;
+                } while (static_cast<unsigned int>(*input) > 127);
+            }
+            else
+            {
+                input++;
+            }
+        }
+        else if (*pattern == '*')
+        {
+            if (pattern[1] == '\0')
+                return true;
+
+            // Try eating varying amounts of the input till we get a positive.
+            for (int eat = 0; input[eat] != '\0'; eat++)
+            {
+                if (PatternMatch(input + eat, pattern + 1))
+                    return true;
+            }
+
+            return false;
+        }
+        else
+        {
+            if (tolower(*pattern) != tolower(*input))
+            {
+                return false;
+            }
+            else
+            {
+                input++;
+                pattern++;
+            }
+        }
+    }
+
+    if (*pattern != '\0' && strcmp(pattern, "*") != 0)
+        return false;
+    else
+        return true;
+}
+
+/************************************************************************/
+/*                        GDALTileIndexTileIterator                     */
+/************************************************************************/
+
+struct GDALTileIndexTileIterator
+{
+    const GDALTileIndexOptions *psOptions = nullptr;
+    int nSrcCount = 0;
+    const char *const *papszSrcDSNames = nullptr;
+    std::string osCurDir{};
+    int iCurSrc = 0;
+    VSIDIR *psDir = nullptr;
+
+    GDALTileIndexTileIterator(const GDALTileIndexOptions *psOptionsIn,
+                              int nSrcCountIn,
+                              const char *const *papszSrcDSNamesIn)
+        : psOptions(psOptionsIn), nSrcCount(nSrcCountIn),
+          papszSrcDSNames(papszSrcDSNamesIn)
+    {
+    }
+
+    void reset()
+    {
+        if (psDir)
+            VSICloseDir(psDir);
+        psDir = nullptr;
+        iCurSrc = 0;
+    }
+
+    std::string next()
+    {
+        while (true)
+        {
+            if (!psDir)
+            {
+                if (iCurSrc == nSrcCount)
+                {
+                    break;
+                }
+
+                VSIStatBufL sStatBuf;
+                const std::string osCurName = papszSrcDSNames[iCurSrc++];
+                if (VSIStatL(osCurName.c_str(), &sStatBuf) == 0 &&
+                    VSI_ISDIR(sStatBuf.st_mode))
+                {
+                    auto poSrcDS = std::unique_ptr<GDALDataset>(
+                        GDALDataset::Open(osCurName.c_str(), GDAL_OF_RASTER,
+                                          nullptr, nullptr, nullptr));
+                    if (poSrcDS)
+                        return osCurName;
+
+                    osCurDir = osCurName;
+                    psDir = VSIOpenDir(
+                        osCurDir.c_str(),
+                        /*nDepth=*/psOptions->bRecursive ? -1 : 0, nullptr);
+                    if (!psDir)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Cannot open directory %s", osCurDir.c_str());
+                        return std::string();
+                    }
+                }
+                else
+                {
+                    return osCurName;
+                }
+            }
+
+            auto psEntry = VSIGetNextDirEntry(psDir);
+            if (!psEntry)
+            {
+                VSICloseDir(psDir);
+                psDir = nullptr;
+                continue;
+            }
+
+            if (!psOptions->oSetFilenameFilters.empty())
+            {
+                bool bMatchFound = false;
+                const std::string osFilenameOnly =
+                    CPLGetFilename(psEntry->pszName);
+                for (const auto &osFilter : psOptions->oSetFilenameFilters)
+                {
+                    if (PatternMatch(osFilenameOnly.c_str(), osFilter.c_str()))
+                    {
+                        bMatchFound = true;
+                        break;
+                    }
+                }
+                if (!bMatchFound)
+                    continue;
+            }
+
+            const std::string osFilename =
+                CPLFormFilename(osCurDir.c_str(), psEntry->pszName, nullptr);
+            if (VSI_ISDIR(psEntry->nMode))
+            {
+                auto poSrcDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(osFilename.c_str(), GDAL_OF_RASTER,
+                                      nullptr, nullptr, nullptr));
+                if (poSrcDS)
+                    return osFilename;
+                continue;
+            }
+
+            return osFilename;
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/
@@ -127,6 +320,9 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     auto psOptions = psOptionsIn
                          ? std::make_unique<GDALTileIndexOptions>(*psOptionsIn)
                          : std::make_unique<GDALTileIndexOptions>();
+
+    GDALTileIndexTileIterator oGDALTileIndexTileIterator(
+        psOptions.get(), nSrcCount, papszSrcDSNames);
 
     /* -------------------------------------------------------------------- */
     /*      Create and validate target SRS if given.                        */
@@ -290,8 +486,15 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         }
         else
         {
+            std::string osFilename = oGDALTileIndexTileIterator.next();
+            if (osFilename.empty())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Cannot find any tile");
+                return nullptr;
+            }
+            oGDALTileIndexTileIterator.reset();
             auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                papszSrcDSNames[0], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                osFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
                 nullptr, nullptr, nullptr));
             if (!poSrcDS)
                 return nullptr;
@@ -319,6 +522,18 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                                       OFTString);
             oSrcSRSField.SetWidth(nMaxFieldSize);
             if (poLayer->CreateField(&oSrcSRSField) != OGRERR_NONE)
+                return nullptr;
+        }
+    }
+
+    auto poLayerDefn = poLayer->GetLayerDefn();
+
+    for (const auto &oFetchMD : psOptions->aoFetchMD)
+    {
+        if (poLayerDefn->GetFieldIndex(oFetchMD.osFieldName.c_str()) < 0)
+        {
+            OGRFieldDefn oField(oFetchMD.osFieldName.c_str(), oFetchMD.eType);
+            if (poLayer->CreateField(&oField) != OGRERR_NONE)
                 return nullptr;
         }
     }
@@ -495,7 +710,6 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         }
     }
 
-    auto poLayerDefn = poLayer->GetLayerDefn();
     const int ti_field =
         poLayerDefn->GetFieldIndex(psOptions->osLocationField.c_str());
     if (ti_field < 0)
@@ -574,22 +788,26 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     /* -------------------------------------------------------------------- */
     /*      loop over GDAL files, processing.                               */
     /* -------------------------------------------------------------------- */
-    for (int iSrc = 0; iSrc < nSrcCount; ++iSrc)
+    while (true)
     {
+        const std::string osSrcFilename = oGDALTileIndexTileIterator.next();
+        if (osSrcFilename.empty())
+            break;
+
         std::string osFileNameToWrite;
         VSIStatBuf sStatBuf;
 
         // Make sure it is a file before building absolute path name.
         if (!osCurrentPath.empty() &&
-            CPLIsFilenameRelative(papszSrcDSNames[iSrc]) &&
-            VSIStat(papszSrcDSNames[iSrc], &sStatBuf) == 0)
+            CPLIsFilenameRelative(osSrcFilename.c_str()) &&
+            VSIStat(osSrcFilename.c_str(), &sStatBuf) == 0)
         {
             osFileNameToWrite = CPLProjectRelativeFilename(
-                osCurrentPath.c_str(), papszSrcDSNames[iSrc]);
+                osCurrentPath.c_str(), osSrcFilename.c_str());
         }
         else
         {
-            osFileNameToWrite = papszSrcDSNames[iSrc];
+            osFileNameToWrite = osSrcFilename.c_str();
         }
 
         // Checks that file is not already in tileindex.
@@ -603,12 +821,12 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         }
 
         auto poSrcDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-            papszSrcDSNames[iSrc], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+            osSrcFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
             nullptr, nullptr, nullptr));
         if (poSrcDS == nullptr)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Unable to open %s, skipping.", papszSrcDSNames[iSrc]);
+                     "Unable to open %s, skipping.", osSrcFilename.c_str());
             continue;
         }
 
@@ -618,7 +836,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
             CPLError(CE_Warning, CPLE_AppDefined,
                      "It appears no georeferencing is available for\n"
                      "`%s', skipping.",
-                     papszSrcDSNames[iSrc]);
+                     osSrcFilename.c_str());
             continue;
         }
 
@@ -639,7 +857,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                         "This may cause problems when using it in MapServer "
                         "for example.\n"
                         "Use -t_srs option to set target projection system. %s",
-                        papszSrcDSNames[iSrc],
+                        osSrcFilename.c_str(),
                         psOptions->bSkipDifferentProjection
                             ? "Skipping this file."
                             : "");
@@ -658,6 +876,13 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
 
         const int nXSize = poSrcDS->GetRasterXSize();
         const int nYSize = poSrcDS->GetRasterYSize();
+        if (nXSize == 0 || nYSize == 0)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s has 0 width or height. Skipping",
+                     osSrcFilename.c_str());
+            continue;
+        }
 
         double adfX[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
         double adfY[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
@@ -716,8 +941,35 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                 "as other files in the tileindex. This is not compatible of "
                 "VRTTI use. Use -t_srs option to reproject tile extents "
                 "to a common SRS.",
-                papszSrcDSNames[iSrc]);
+                osSrcFilename.c_str());
             return nullptr;
+        }
+
+        const double dfMinX =
+            std::min(std::min(adfX[0], adfX[1]), std::min(adfX[2], adfX[3]));
+        const double dfMinY =
+            std::min(std::min(adfY[0], adfY[1]), std::min(adfY[2], adfY[3]));
+        const double dfMaxX =
+            std::max(std::max(adfX[0], adfX[1]), std::max(adfX[2], adfX[3]));
+        const double dfMaxY =
+            std::max(std::max(adfY[0], adfY[1]), std::max(adfY[2], adfY[3]));
+        const double dfRes =
+            (dfMaxX - dfMinX) * (dfMaxY - dfMinY) / nXSize / nYSize;
+        if (!std::isnan(psOptions->dfMinPixelSize) &&
+            dfRes < psOptions->dfMinPixelSize)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s has %f as pixel size (< %f). Skipping",
+                     osSrcFilename.c_str(), dfRes, psOptions->dfMinPixelSize);
+            continue;
+        }
+        if (!std::isnan(psOptions->dfMaxPixelSize) &&
+            dfRes > psOptions->dfMaxPixelSize)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s has %f as pixel size (> %f). Skipping",
+                     osSrcFilename.c_str(), dfRes, psOptions->dfMaxPixelSize);
+            continue;
         }
 
         auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
@@ -788,6 +1040,36 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                     poFeature->SetField(i_SrcSRSName,
                                         CPLSPrintf("%s:%s", pszAuthorityName,
                                                    pszAuthorityCode));
+            }
+        }
+
+        for (const auto &oFetchMD : psOptions->aoFetchMD)
+        {
+            if (EQUAL(oFetchMD.osRasterItemName.c_str(), "{PIXEL_SIZE}"))
+            {
+                poFeature->SetField(oFetchMD.osFieldName.c_str(), dfRes);
+                continue;
+            }
+
+            const char *pszMD =
+                poSrcDS->GetMetadataItem(oFetchMD.osRasterItemName.c_str());
+            if (pszMD)
+            {
+                if (EQUAL(oFetchMD.osRasterItemName.c_str(),
+                          "TIFFTAG_DATETIME"))
+                {
+                    int nYear, nMonth, nDay, nHour, nMin, nSec;
+                    if (sscanf(pszMD, "%04d:%02d:%02d %02d:%02d:%02d", &nYear,
+                               &nMonth, &nDay, &nHour, &nMin, &nSec) == 6)
+                    {
+                        poFeature->SetField(
+                            oFetchMD.osFieldName.c_str(),
+                            CPLSPrintf("%04d/%02d/%02d %02d:%02d:%02d", nYear,
+                                       nMonth, nDay, nHour, nMin, nSec));
+                        continue;
+                    }
+                }
+                poFeature->SetField(oFetchMD.osFieldName.c_str(), pszMD);
             }
         }
 
@@ -1014,6 +1296,52 @@ GDALTileIndexOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[iArg], "-overwrite"))
         {
             psOptions->bOverwrite = true;
+        }
+        else if (EQUAL(papszArgv[iArg], "-recursive"))
+        {
+            psOptions->bRecursive = true;
+        }
+        else if (EQUAL(papszArgv[iArg], "-min_pixel_size"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->dfMinPixelSize = CPLAtofM(papszArgv[++iArg]);
+        }
+        else if (EQUAL(papszArgv[iArg], "-max_pixel_size"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->dfMaxPixelSize = CPLAtofM(papszArgv[++iArg]);
+        }
+        else if (EQUAL(papszArgv[iArg], "-filename_filter"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->oSetFilenameFilters.insert(papszArgv[++iArg]);
+        }
+        else if (EQUAL(papszArgv[iArg], "-fetch_md"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(3);
+            GDALTileIndexRasterMetadata md;
+            md.osRasterItemName = papszArgv[++iArg];
+            md.osFieldName = papszArgv[++iArg];
+            const char *pszType = papszArgv[++iArg];
+            if (EQUAL(pszType, "String"))
+                md.eType = OFTString;
+            else if (EQUAL(pszType, "Integer"))
+                md.eType = OFTInteger;
+            else if (EQUAL(pszType, "Integer64"))
+                md.eType = OFTInteger64;
+            else if (EQUAL(pszType, "Real"))
+                md.eType = OFTReal;
+            else if (EQUAL(pszType, "Date"))
+                md.eType = OFTDate;
+            else if (EQUAL(pszType, "DateTime"))
+                md.eType = OFTDateTime;
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unknown type '%s'",
+                         pszType);
+                return nullptr;
+            }
+            psOptions->aoFetchMD.emplace_back(std::move(md));
         }
         else if (papszArgv[iArg][0] == '-')
         {
