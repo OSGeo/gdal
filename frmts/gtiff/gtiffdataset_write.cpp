@@ -3232,6 +3232,20 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                                         poBand->GetXSize(),
                                                         poBand->GetYSize()))
                     {
+                        if (iBand == 0)
+                        {
+                            const auto osNewResampling =
+                                GDALGetNormalizedOvrResampling(pszResampling);
+                            const char *pszExistingResampling =
+                                poOverview->GetMetadataItem("RESAMPLING");
+                            if (pszExistingResampling &&
+                                pszExistingResampling != osNewResampling)
+                            {
+                                poOverview->SetMetadataItem(
+                                    "RESAMPLING", osNewResampling.c_str());
+                            }
+                        }
+
                         abAlreadyUsedOverviewBand[j] = true;
                         CPLAssert(iCurOverview < poBand->GetOverviewCount());
                         papapoOverviewBands[iBand][iCurOverview] = poOverview;
@@ -3301,6 +3315,20 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
                                                         poBand->GetXSize(),
                                                         poBand->GetYSize()))
                     {
+                        if (iBand == 0)
+                        {
+                            const auto osNewResampling =
+                                GDALGetNormalizedOvrResampling(pszResampling);
+                            const char *pszExistingResampling =
+                                poOverview->GetMetadataItem("RESAMPLING");
+                            if (pszExistingResampling &&
+                                pszExistingResampling != osNewResampling)
+                            {
+                                poOverview->SetMetadataItem(
+                                    "RESAMPLING", osNewResampling.c_str());
+                            }
+                        }
+
                         abAlreadyUsedOverviewBand[j] = true;
                         CPLAssert(nNewOverviews < poBand->GetOverviewCount());
                         papoOverviewBands[nNewOverviews++] = poOverview;

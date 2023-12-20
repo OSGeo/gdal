@@ -321,5 +321,8 @@ def test_gdalcompare_different_overview(tmp_vsimem, captured_print, source_filen
     ds.BuildOverviews("AVERAGE", [2])
     ds = None
     assert (
-        gdalcompare.find_diff(golden_filename, filename, options=["SKIP_BINARY"]) == 1
+        gdalcompare.find_diff(
+            golden_filename, filename, options=["SKIP_METADATA", "SKIP_BINARY"]
+        )
+        == 1
     )

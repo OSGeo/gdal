@@ -3879,6 +3879,8 @@ typedef CPLErr (*GDALResampleFunction)(
 GDALResampleFunction GDALGetResampleFunction(const char *pszResampling,
                                              int *pnRadius);
 
+std::string GDALGetNormalizedOvrResampling(const char *pszResampling);
+
 GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
                                     GDALDataType eSrcDataType);
 
