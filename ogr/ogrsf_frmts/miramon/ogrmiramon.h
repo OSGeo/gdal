@@ -55,18 +55,15 @@ class OGRMiraMonLayer final : public OGRLayer,
     struct MiraMonDataBase hLayerDB;
 
     bool bUpdate;
-    //bool bHeaderComplete;
-
-    bool bRegionComplete;
-    OGREnvelope sRegion;
-    vsi_l_offset nRegionOffset;
-
+    
     VSILFILE *m_fp = nullptr;
 
     CPLString osLine;
     char **papszKeyedValues;
 
     OGRFeature *GetNextRawFeature();
+    void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
+                    MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
 
     OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
                     bool bExternalRing, int eLT);
@@ -76,7 +73,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     OGRErr WriteGeometry(bool bExternalRing, 
                     OGRFeature *poFeature);
     GIntBig GetFeatureCount(int bForce);
-
+    
   public:
     bool bValidFile;
 
@@ -92,7 +89,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     {
         return poFeatureDefn;
     }
-
+    
     OGRErr TranslateFieldsToMM();
     OGRErr TranslateFieldsValuesToMM(OGRFeature *poFeature);
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
@@ -104,7 +101,7 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) ;
 
     int TestCapability(const char *) override;

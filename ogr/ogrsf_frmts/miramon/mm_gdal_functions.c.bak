@@ -402,7 +402,7 @@ size_t longnomcamp;
     
     strcpy (NomCamp_SubIndex, nom_camp);
 
-    /* Convertir el subindex en car‡cters.	*/
+    /* Convertir el subindex en car√†cters.	*/
 	//itoa((int)index, subindex, 10);
 	sprintf(subindex, "%I64u", (unsigned __int64)index);
 
@@ -509,7 +509,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     if (fwrite_function(&(base_dades_XP->nfitxes), 4, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
-    /* de 8 a 9, posiciÛ MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
+    /* de 8 a 9, posici√≥ MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
@@ -569,8 +569,8 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     
 
 
-	/* Al byte 32 comenÁa la descripciÛ	 */
-	/* dels camps. Cada descripciÛ ocupa */
+	/* Al byte 32 comen√ßa la descripci√≥	 */
+	/* dels camps. Cada descripci√≥ ocupa */
 	/* 32 bytes.						 */
     bytes_acumulats=32+32*(base_dades_XP->ncamps)+1;
 
@@ -666,7 +666,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
                 free_function(zero);
 			    return FALSE;
 		    }
-            // De moment he escrit un zero. A OFFSET_BYTESxCAMP_CAMP_ESPECIAL escriurÈ el que toca.
+            // De moment he escrit un zero. A OFFSET_BYTESxCAMP_CAMP_ESPECIAL escriur√© el que toca.
         }
         else
         {
@@ -718,7 +718,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         }
         else
         {
-            /* Bytes de 21 a 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, longitud de camps especials, que ja no ho sÛn,
+            /* Bytes de 21 a 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, longitud de camps especials, que ja no ho s√≥n,
                                     com els C en DBF esteses */
             memset(base_dades_XP->Camp[i].reservat_2+MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL, '\0', 4);
             /* Bytes de 18 a 30 --> Reservats */
@@ -742,9 +742,9 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 	if (fwrite_function(&variable_byte, 1, 1, base_dades_XP->pfBaseDades) != 1)
         return FALSE;
     
-    // Cal veure que tinguem el lloc suficient per a col∑locar els noms estesos
-    // no fÛs cas que ara tinguÈssin, no mÈs camps, sinÛ mÈs noms estesos
-    // o noms mÈs llargs que abans.
+    // Cal veure que tinguem el lloc suficient per a col¬∑locar els noms estesos
+    // no f√≥s cas que ara tingu√©ssin, no m√©s camps, sin√≥ m√©s noms estesos
+    // o noms m√©s llargs que abans.
     
     #ifdef NOT_USED_IN_GDAL
     if(base_dades_XP->OffsetPrimeraFitxa!=bytes_acumulats)
@@ -757,7 +757,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         }
         base_dades_XP->OffsetPrimeraFitxa=bytes_acumulats;
         // Tornem a escriure l'offset de la primera fitxa
-        /* de 8 a 9, posiciÛ MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
+        /* de 8 a 9, posici√≥ MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
         offset_actual=ftell_function(base_dades_XP->pfBaseDades);
         fseek_function(base_dades_XP->pfBaseDades, MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA, SEEK_SET);
         if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1, 
@@ -796,7 +796,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 
         	// No podem usar el NomCamp (per ser massa gran) i guardem el que ja teniem guardat
             // a NomCampDBFClassica.
-            // Vigilem en quin joc de car‡cters escrivim
+            // Vigilem en quin joc de car√†cters escrivim
             strcpy(nom_camp, base_dades_XP->Camp[i].NomCamp);
             //CanviaJocCaracPerEscriureDBF(nom_camp, JocCaracDBFaMM(base_dades_XP->JocCaracters, ParMM.JocCaracDBFPerDefecte));
 
@@ -830,7 +830,7 @@ MM_EXT_DBF_N_FIELDS i;
 size_t j;
 char **cadena;
 
-	if (base_dades_XP->Camp) /* Si la capÁalera no tÈ cap camp el punter Ès NULL */
+	if (base_dades_XP->Camp) /* Si la cap√ßalera no t√© cap camp el punter √©s NULL */
 	{
 		for (i=0; i<base_dades_XP->ncamps; i++)
         {
@@ -925,7 +925,7 @@ int retorn=0;
 			}
 			if (i==100)
 			{
-				camp->NomCamp[strlen(camp->NomCamp)-2]='\0';  //Trec els 2 dÌgits.
+				camp->NomCamp[strlen(camp->NomCamp)-2]='\0';  //Trec els 2 d√≠gits.
 				if (strlen(camp->NomCamp)>mida_nom-4)
 					camp->NomCamp[mida_nom-4]='\0';
 				strcat(camp->NomCamp, "000");
@@ -1311,12 +1311,12 @@ int retorn_printf;
 	if (!valor_double)
     {
         retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
-        if (retorn_printf==EOF) // Poc probable, perÚ...
+        if (retorn_printf==EOF) // Poc probable, per√≤...
         {
             *cadena=*MM_CadenaBuida;
             return retorn_printf;
         }
-        // retorn_printf Ès el mateix que strlen(cadena_treball)
+        // retorn_printf √©s el mateix que strlen(cadena_treball)
         if (retorn_printf>amplada)
         {
         	int escurcament=retorn_printf-amplada;
@@ -1341,8 +1341,8 @@ int retorn_printf;
          valor_double>-VALOR_MASSA_PETIT_PER_IMPRIMIR_f) )
     {
         retorn_printf=sprintf (cadena_treball, "%*.*E", amplada, n_decimals, valor_double);
-        // retorn_printf Ès el mateix que strlen(cadena_treball)
-        if (retorn_printf==EOF) // Poc probable, perÚ...
+        // retorn_printf √©s el mateix que strlen(cadena_treball)
+        if (retorn_printf==EOF) // Poc probable, per√≤...
         {
             *cadena=*MM_CadenaBuida;
             return retorn_printf;
@@ -1366,12 +1366,12 @@ int retorn_printf;
     }
 
     retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
-    if (retorn_printf==EOF) // Poc probable, perÚ...
+    if (retorn_printf==EOF) // Poc probable, per√≤...
     {
         *cadena=*MM_CadenaBuida;
         return retorn_printf;
     }
-    // retorn_printf Ès el mateix que strlen(cadena_treball)
+    // retorn_printf √©s el mateix que strlen(cadena_treball)
     if (retorn_printf>amplada)
     {
         int escurcament=retorn_printf-amplada;

@@ -194,7 +194,8 @@ int MMResizeDoublePointer(double **pDouble,
                         unsigned __int64 nNum, 
                         unsigned __int64 nIncr,
                         unsigned __int64 nProposedMax);
-
+int MM_ResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
+                        MM_EXT_DBF_N_FIELDS nNewSize);
 int IsEmptyString(const char *string);
 char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord);
 // Metadata functions

@@ -19,8 +19,12 @@ CPL_C_START // Necessary for compiling in GDAL project
 			memcpy((bd_xp)->Camp[(i_camp)].reservat_2+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,&(offset_nom_camp),4)
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
+char *MM_PassaAMajuscules(char *linia);
 void MM_InitializeField(struct MM_CAMP *camp);
+struct MM_CAMP *MM_CreateAllFields(int ncamps);
+MM_FIRST_RECORD_OFFSET_TYPE MM_GiveOffsetExtendedFieldName(const struct MM_CAMP *camp);
 struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps, MM_BYTE nCharSet);
+MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF);
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP);
 MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitxer);
 int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp_inicial);
@@ -47,6 +51,15 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 							MM_BYTE que_fer_amb_reformatat_decimals);
 
 int MM_DonaAlcadesDArc(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
+
+// Strings
+char *MM_TreuBlancsDeFinalDeCadena(char * str);
+
+// DBF
+struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(FILE_TYPE *f, size_t n, MM_EXT_DBF_N_RECORDS n_dbf,
+        MM_FIRST_RECORD_OFFSET_TYPE offset_1era, MM_TIPUS_BYTES_ACUMULATS_DBF bytes_per_fitxa,
+        MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats_id_grafic,
+        MM_TIPUS_BYTES_PER_CAMP_DBF bytes_id_grafic, MM_BOOLEAN *isListField);
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

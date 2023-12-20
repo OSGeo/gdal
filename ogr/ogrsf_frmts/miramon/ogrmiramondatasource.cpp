@@ -120,11 +120,17 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         CSLFetchNameValue(papszOptions, "Version");
     int nMMVersion;
 
-    if(pszVersion && EQUAL(pszVersion, "V11"))
-        nMMVersion=MM_32BITS_VERSION;
-    else //if(EQUAL(pszVersion, "V20") ||
-        //EQUAL(pszVersion, "last_version"))
-        nMMVersion=MM_64BITS_VERSION;
+    if (pszVersion)
+    {
+        if (EQUAL(pszVersion, "V11"))
+            nMMVersion = MM_32BITS_VERSION;
+        else if (EQUAL(pszVersion, "V20") || EQUAL(pszVersion, "last_version"))
+            nMMVersion = MM_64BITS_VERSION;
+        else
+            nMMVersion = MM_32BITS_VERSION; // Default
+    }
+    else
+        nMMVersion = MM_32BITS_VERSION; // Default
 
     switch (eType)
     {

@@ -133,9 +133,6 @@ int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_f
     
     hMiraMonLayer->Version=MM_VECTOR_LAYER_LAST_VERSION;
     
-    // Don't free in destructor
-    hMiraMonLayer->pLayerDB=NULL; //·$·
-
     if(MMInitLayerByType(hMiraMonLayer))
         return 1;
     hMiraMonLayer->bIsBeenInit=1;
@@ -153,17 +150,9 @@ int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_f
     hMiraMonLayer->nSRS_EPSG=ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS);
     
     // If more nNumStringToOperate is needed, it'll be increased.
-    hMiraMonLayer->nNumStringToOperate=500; 
-    hMiraMonLayer->szStringToOperate=
-            calloc_function(hMiraMonLayer->nNumStringToOperate);
-    if(!hMiraMonLayer->szStringToOperate)
-    {
-        error_message_function("Not enough memory");
+    hMiraMonLayer->nNumStringToOperate=0;
+    if(MM_ResizeStringToOperateIfNeeded(hMiraMonLayer, 5000))
         return 1;
-    }
-
-    // S'ha de llegir de la DBF
-    // ·$· hMiraMonLayer->nCharSet=MM_JOC_CARAC_ANSI_DBASE;
     
     return 0;
 }
@@ -560,34 +549,344 @@ struct MM_PH *pPolHeader;
 	return 0;
 }
 
-#ifdef IS_COMING
-MM_TIPUS_BOLEA MMEs3DCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
+
+// READING THE HEADER OF AN EXTENDED DBF
+int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
-struct SMM_HANDLE_CAPA_VECTOR *shlayer;
+MM_BYTE  variable_byte;
+FILE_TYPE *pf;
+unsigned short int ushort;
+MM_EXT_DBF_N_FIELDS nIField, j;
+MM_FIRST_RECORD_OFFSET_TYPE offset_primera_fitxa;
+MM_FIRST_RECORD_OFFSET_TYPE offset_fals=0;
+MM_BOOLEAN grandaria_registre_incoherent=FALSE;
+char local_file_name[MM_MAX_PATH];
+MM_BYTE un_byte;
+MM_TIPUS_BYTES_PER_CAMP_DBF bytes_per_camp;
+MM_BYTE tretze_bytes[13];
+MM_FIRST_RECORD_OFFSET_TYPE offset_possible;
+MM_BYTE n_queixes_estructura_incorrecta=0;
+MM_FILE_OFFSET offset_reintent=0;
+struct MM_BASE_DADES_XP *pMMBDXP;
+char cpg_file[MM_MAX_PATH];
+char * pszRelFile=NULL, *pszDesc;
+char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 
-	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
- 	return (MM_TIPUS_BOLEA)hMiraMonLayer->TopHeader.bIs3d;
-}
+     pMMBDXP=hMiraMonLayer->pMMBDXP=calloc_function(sizeof(*pMMBDXP));
 
-MM_TIPUS_TIPUS_FITXER MMTipusFitxerCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
-{
-struct SMM_HANDLE_CAPA_VECTOR *shlayer;
+    if (hMiraMonLayer->bIsPoint)
+    {
+        hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP = pMMBDXP;
+        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName);
+        pszRelFile=hMiraMonLayer->MMPoint.pszREL_LayerName;
+    }
+    else if (hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
+    {
+        hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP = pMMBDXP;
+        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMArc.MMAdmDB.pszExtDBFLayerName);
+        pszRelFile=hMiraMonLayer->MMArc.pszREL_LayerName;
+    }
+    else if(hMiraMonLayer->bIsPolygon)
+    {
+        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP=pMMBDXP;
+        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPolygon.MMAdmDB.pszExtDBFLayerName);
+        pszRelFile=hMiraMonLayer->MMPolygon.pszREL_LayerName;
+    }        
 
-	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
- 	return (MM_TIPUS_TIPUS_FITXER)(shlayer->tipus_fitxer);
-}
+    strcpy(local_file_name, pMMBDXP->szNomFitxer);
+    strcpy(pMMBDXP->ModeLectura, "rb");
 
-void MMFinalitzaCapaVector(MM_HANDLE_CAPA_VECTOR hlayer)
-{
-struct SMM_HANDLE_CAPA_VECTOR *shlayer;
+	if ((pMMBDXP->pfBaseDades=fopen_function(pMMBDXP->szNomFitxer,
+    	 pMMBDXP->ModeLectura))==NULL)
+	      return 1;
 
-	shlayer=(struct SMM_HANDLE_CAPA_VECTOR *)hlayer;
-	AlliberaStructTreballArcNod(&(shlayer->an));
-    if(shlayer->pf)fclose_64(shlayer->pf);
-    if(shlayer->pfarc)fclose_64(shlayer->pfarc);
-    if(shlayer->cap_arc_3d)free(shlayer->cap_arc_3d);
-}
-#endif //#ifdef IS_COMING
+    pf=pMMBDXP->pfBaseDades;
+    
+	/* ====== Header reading (32 bytes) =================== */
+	offset_primera_fitxa=0;
+
+	if (1!=fread_function(&(pMMBDXP->versio_dbf), 1, 1, pf) ||
+		1!=fread_function(&variable_byte, 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->mes), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->dia), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->nfitxes), 4, 1, pf) ||
+		1!=fread_function(&offset_primera_fitxa, 2, 1, pf))
+	{
+		fclose_function(pMMBDXP->pfBaseDades);
+        return 1;
+	}
+
+	pMMBDXP->any = (short)(1900+variable_byte);
+    reintenta_lectura_per_si_error_CreaCampBD_XP:
+    
+    if (n_queixes_estructura_incorrecta>0)
+    {
+	    if (!MM_ES_DBF_ESTESA(pMMBDXP->versio_dbf))
+    	{
+    		offset_fals = offset_primera_fitxa;
+	        if ((offset_primera_fitxa-1)%32)
+    	    {
+            	for (offset_fals=(offset_primera_fitxa-1); !((offset_fals-1)%32); offset_fals--)
+                	;
+	        }
+		}
+    }
+    else
+		offset_reintent=ftell_function(pf);
+
+	if (1!=fread_function(&ushort, 2, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->reservat_1), 2, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->transaction_flag), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->encryption_flag), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->JocCaracters), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->reservat_2), 2, 1, pf))
+	{
+		fclose_function(pMMBDXP->pfBaseDades);
+        return 1;
+	}
+
+	// Checking for a cpg file
+	if (pMMBDXP->JocCaracters==0)
+	{
+        strcpy(cpg_file, pMMBDXP->szNomFitxer);
+        reset_extension(cpg_file, ".cpg");
+        FILE *f_cpg=fopen(cpg_file, "rt");
+        if(f_cpg)
+        {
+            char local_message[11];
+			fseek(f_cpg, 0L, SEEK_SET);
+			if(NULL!=fgets(local_message, 10, f_cpg))
+			{
+                char *p=strstr(local_message, "UTF-8");
+				if(p)
+                    pMMBDXP->JocCaracters=MM_JOC_CARAC_UTF8_DBF;
+                p=strstr(local_message, "UTF8");
+				if(p)
+                    pMMBDXP->JocCaracters=MM_JOC_CARAC_UTF8_DBF;
+                p=strstr(local_message, "ISO-8859-1");
+				if(p)
+                    pMMBDXP->JocCaracters=MM_JOC_CARAC_ANSI_DBASE;
+			}
+			fclose(f_cpg);
+		}
+	}
+    if (MM_ES_DBF_ESTESA(pMMBDXP->versio_dbf))
+    {
+    	memcpy(&pMMBDXP->OffsetPrimeraFitxa,&offset_primera_fitxa,2);
+    	memcpy(((char*)&pMMBDXP->OffsetPrimeraFitxa)+2,&pMMBDXP->reservat_2,2);
+
+	    if (n_queixes_estructura_incorrecta>0)
+    		offset_fals=pMMBDXP->OffsetPrimeraFitxa;
+        
+    	memcpy(&pMMBDXP->BytesPerFitxa, &ushort, 2);
+    	memcpy(((char*)&pMMBDXP->BytesPerFitxa)+2, &pMMBDXP->reservat_1, 2);
+    }
+    else
+    {
+		pMMBDXP->OffsetPrimeraFitxa=offset_primera_fitxa;
+    	pMMBDXP->BytesPerFitxa=ushort;
+    }
+
+	/* ====== Record structure ========================= */
+
+    if (n_queixes_estructura_incorrecta>0)
+        pMMBDXP->ncamps = (MM_EXT_DBF_N_FIELDS)(((offset_fals-1)-32)/32);   // Cas de DBF clÃ ssica
+    else
+    {
+    	MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats=1;
+
+    	pMMBDXP->ncamps=0;
+
+        fseek_function(pf, 0, SEEK_END);
+        if(32<(ftell_function(pf)-1))
+        {
+			fseek_function(pf, 32, SEEK_SET);
+			do
+			{
+				bytes_per_camp=0;
+				fseek_function(pf, 32+(MM_FILE_OFFSET)pMMBDXP->ncamps*32+(MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF+1+4), SEEK_SET);
+				if (1!=fread_function(&bytes_per_camp, 1, 1, pf) ||
+					1!=fread_function(&un_byte, 1, 1, pf) ||
+					1!=fread_function(&tretze_bytes, 3+sizeof(bytes_per_camp), 1, pf))
+				{
+					free(pMMBDXP->Camp);
+					fclose_function(pMMBDXP->pfBaseDades);
+					return 1;
+				}
+				if (bytes_per_camp==0)
+					memcpy(&bytes_per_camp, (char*)(&tretze_bytes)+3, sizeof(bytes_per_camp));
+
+				bytes_acumulats+=bytes_per_camp;
+				pMMBDXP->ncamps++;
+			}while(bytes_acumulats<pMMBDXP->BytesPerFitxa);
+		}
+    }
+
+    if(pMMBDXP->ncamps != 0)
+    {
+        pMMBDXP->Camp = MM_CreateAllFields(pMMBDXP->ncamps);
+        if (!pMMBDXP->Camp)
+        {
+			fclose_function(pMMBDXP->pfBaseDades);
+            return 1;
+        }
+    }
+    else
+    	pMMBDXP->Camp = NULL;
+
+    fseek_function(pf, 32, SEEK_SET);
+	for (nIField=0; nIField<pMMBDXP->ncamps; nIField++)
+	{
+    	if (1!=fread_function(pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF, 1, pf) ||
+			1!=fread_function(&(pMMBDXP->Camp[nIField].TipusDeCamp), 1, 1, pf) ||
+			1!=fread_function(&(pMMBDXP->Camp[nIField].reservat_1), 4, 1, pf) ||
+			1!=fread_function(&(pMMBDXP->Camp[nIField].BytesPerCamp), 1, 1, pf) ||
+			1!=fread_function(&(pMMBDXP->Camp[nIField].DecimalsSiEsFloat), 1, 1, pf) ||
+			1!=fread_function(&(pMMBDXP->Camp[nIField].reservat_2), 13, 1, pf) ||
+			1!=fread_function(&(pMMBDXP->Camp[nIField].MDX_camp_flag), 1, 1, pf))
+		{
+			free(pMMBDXP->Camp);
+            fclose_function(pMMBDXP->pfBaseDades);
+			return 1;
+		}
+
+        #ifdef CODIFICATION_NEED_TO_BE_FINISHED
+		MM_CanviaJocCaracLlegitDeDBF_CONSOLE(pMMBDXP->Camp[nIField].NomCamp, MM_JocCaracDBFaMM(pMMBDXP->JocCaracters, 850));
+        #endif
+
+		if(pMMBDXP->Camp[nIField].TipusDeCamp=='F')
+			pMMBDXP->Camp[nIField].TipusDeCamp='N';
+
+        pMMBDXP->Camp[nIField].NomCamp[MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF-1]='\0';
+        if (EQUAL(pMMBDXP->Camp[nIField].NomCamp, "ID_GRAFIC"))
+            pMMBDXP->CampIdGrafic=nIField;
+        
+        if (pMMBDXP->Camp[nIField].BytesPerCamp==0)
+        {
+			if (!MM_ES_DBF_ESTESA(pMMBDXP->versio_dbf))
+            {
+                free(pMMBDXP->Camp);
+                fclose_function(pMMBDXP->pfBaseDades);
+                return 1;
+            }
+			if (pMMBDXP->Camp[nIField].TipusDeCamp!='C')
+            {
+                free(pMMBDXP->Camp);
+                fclose_function(pMMBDXP->pfBaseDades);
+                return 1;
+            }
+
+            memcpy(&pMMBDXP->Camp[nIField].BytesPerCamp, (char*)(&pMMBDXP->Camp[nIField].reservat_2)+3,
+            			sizeof(MM_TIPUS_BYTES_PER_CAMP_DBF));
+        }
+
+		if (nIField)
+			pMMBDXP->Camp[nIField].BytesAcumulats=
+				(pMMBDXP->Camp[nIField-1].BytesAcumulats+
+					pMMBDXP->Camp[nIField-1].BytesPerCamp);
+		else
+			pMMBDXP->Camp[nIField].BytesAcumulats=1;
+
+	    for (j=0; j<MM_NUM_IDIOMES_MD_MULTIDIOMA; j++)
+		{
+        	pMMBDXP->Camp[nIField].separador[j]=NULL;
+
+            
+            sprintf(section, "TAULA_PRINCIPAL:%s", pMMBDXP->Camp[nIField].NomCamp);
+            pszDesc=ReturnValueFromSectionINIFile(pszRelFile, section, "descriptor_eng");
+            if(pszDesc)
+                MM_strnzcpy(pMMBDXP->Camp[nIField].DescripcioCamp[j], pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
+            else
+            {
+                sprintf(section, "TAULA_PRINCIPAL:%s", pMMBDXP->Camp[nIField].NomCamp);
+                pszDesc = ReturnValueFromSectionINIFile(pszRelFile, section, "descriptor");
+                if (pszDesc)
+                    MM_strnzcpy(pMMBDXP->Camp[nIField].DescripcioCamp[j], pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
+                pMMBDXP->Camp[nIField].DescripcioCamp[j][0] = 0;
+            }
+		}
+		pMMBDXP->Camp[nIField].mostrar_camp=MM_CAMP_MOSTRABLE;
+        pMMBDXP->Camp[nIField].simbolitzable=MM_CAMP_SIMBOLITZABLE;
+        pMMBDXP->Camp[nIField].TractamentVariable=MM_DBFFieldTypeToVariableProcessing(pMMBDXP->Camp[nIField].TipusDeCamp);
+	}
+
+    if (!pMMBDXP->ncamps)
+    {
+    	if (pMMBDXP->BytesPerFitxa)
+        	grandaria_registre_incoherent=TRUE;
+    }
+    else if(pMMBDXP->Camp[pMMBDXP->ncamps-1].BytesPerCamp+
+			pMMBDXP->Camp[pMMBDXP->ncamps-1].BytesAcumulats
+				>pMMBDXP->BytesPerFitxa)
+    	grandaria_registre_incoherent=TRUE;
+    if (grandaria_registre_incoherent)
+    {
+    	if (n_queixes_estructura_incorrecta==0)
+        {
+            grandaria_registre_incoherent=FALSE;
+            fseek_function(pf, offset_reintent, SEEK_SET);
+            n_queixes_estructura_incorrecta++;
+            goto reintenta_lectura_per_si_error_CreaCampBD_XP;
+        }
+    }
+
+    offset_possible=32+32*(pMMBDXP->ncamps)+1;
+
+    if (!grandaria_registre_incoherent &&
+    	offset_possible!=pMMBDXP->OffsetPrimeraFitxa)
+    {	// Extended names
+    	MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
+        int mida_nom;
+
+    	for(nIField=0; nIField<pMMBDXP->ncamps; nIField++)
+        {
+            offset_nom_camp=MM_GiveOffsetExtendedFieldName(pMMBDXP->Camp+nIField);
+			mida_nom=MM_DonaBytesNomEstesCamp(pMMBDXP->Camp+nIField);
+            if(mida_nom>0 && mida_nom<MM_MAX_LON_FIELD_NAME_DBF &&
+            	offset_nom_camp>=offset_possible &&
+            	offset_nom_camp<pMMBDXP->OffsetPrimeraFitxa)
+            {
+            	MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
+            	fseek_function(pf, offset_nom_camp, SEEK_SET);
+                if (1!=fread_function(pMMBDXP->Camp[nIField].NomCamp, mida_nom, 1, pf))
+                {
+                    free(pMMBDXP->Camp);
+                    fclose_function(pMMBDXP->pfBaseDades);
+                    return 1;
+                }
+                pMMBDXP->Camp[nIField].NomCamp[mida_nom]='\0';
+                #ifdef CODIFICATION_NEED_TO_BE_FINISHED
+                CanviaJocCaracLlegitDeDBF(pMMBDXP->Camp[nIField].NomCamp, JocCaracDBFaMM(pMMBDXP->JocCaracters, 850));
+                #endif          
+            }
+            else
+            {
+				MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
+				MM_PassaAMajuscules(pMMBDXP->Camp[nIField].NomCampDBFClassica);
+            }
+        }
+    }
+    else 
+    {
+    	for(nIField=0; nIField<pMMBDXP->ncamps; nIField++)
+		{
+	    	MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
+			MM_PassaAMajuscules(pMMBDXP->Camp[nIField].NomCampDBFClassica);
+		}
+    }
+
+    fclose_function(pf);
+	pMMBDXP->pfBaseDades=NULL;
+
+    pMMBDXP->CampIdEntitat=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
+
+    
+    return 0;
+} 
+
+
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

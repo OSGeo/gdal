@@ -45,6 +45,7 @@ MM_TIPUS_BOLEA MMEs3DCapaVector(MM_HANDLE_CAPA_VECTOR hlayer);
 
 
 int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem);
+int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
 void MMFinalitzaCapaVector(MM_HANDLE_CAPA_VECTOR hlayer);
 

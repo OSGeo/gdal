@@ -3966,7 +3966,7 @@ char *p;
         return 0;
     memset(aEPSGCodeSRS, '\0', sizeof(*aEPSGCodeSRS));
     #ifdef GDAL_COMPILATION
-    strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf"); //·$· !! How to get that file
+    strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf"); //Â·$Â· !! How to get that file
     #else
     strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf");
     #endif
@@ -4164,8 +4164,8 @@ char aTimeString[30];
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
     printf_function(pF, "%s=%s\n", KEY_CreationDate, aTimeString);
 
-    // ·$· TEMPORAL MENTRE NO HO FEM BÉ:
-    // A la documentació posa:
+    // Â·$Â· TEMPORAL MENTRE NO HO FEM BÃ‰:
+    // A la documentaciÃ³ posa:
     // -preserve_fid
     // Use the FID of the source features instead of letting the output driver automatically 
     // assign a new one (for formats that require a FID). If not in append mode, 
@@ -4631,7 +4631,7 @@ int MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         pMMAdmDB->pMMBDXP->pfBaseDades=pMMAdmDB->pFExtDBF;
 
-        // //·$·AP Nous decimals?
+        // //Â·$Â·AP Nous decimals?
         if(MM_ChangeDBFWidthField(pMMAdmDB->pMMBDXP, nIField, 
             nNewWidth, 0, nWTDNewDecimals))
             return 1;
@@ -5121,7 +5121,7 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
         return 0;
     // Updating number of features in database
     fseek_function(MMAdmDB->pFExtDBF, 4, SEEK_SET);
-    // ·$· V2.0 !!!
+    // Â·$Â· V2.0 !!!
     if (fwrite_function(&MMAdmDB->pMMBDXP->nfitxes, 4, 1, 
             MMAdmDB->pFExtDBF) != 1)
 		return 1;
