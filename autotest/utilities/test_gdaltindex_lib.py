@@ -244,3 +244,114 @@ def test_gdaltindex_lib_format_layerName(tmp_path, four_tiles):
         "got %d features, expecting 1" % lyr.GetFeatureCount()
     )
     ds = None
+
+
+###############################################################################
+# Test -overwrite
+
+
+def test_gdaltindex_lib_overwrite(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_overwrite.shp")
+
+    gdal.TileIndex(index_filename, [four_tiles[0]])
+    gdal.TileIndex(index_filename, [four_tiles[1], four_tiles[2]], overwrite=True)
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 2
+
+
+###############################################################################
+# Test VRTTI related options
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.require_driver("VRTTI")
+def test_gdaltindex_lib_vrtti_non_xml(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_vrtti_non_xml.vrt.gpkg")
+
+    gdal.TileIndex(
+        index_filename,
+        four_tiles,
+        layerName="tileindex",
+        xRes=60,
+        yRes=60,
+        outputBounds=[0, 1, 2, 3],
+        bandCount=1,
+        noData=0,
+        colorInterpretation="gray",
+        mask=True,
+        metadataOptions={"foo": "bar"},
+    )
+
+    ds = ogr.Open(index_filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem("RESX") == "60"
+    assert lyr.GetMetadataItem("RESY") == "60"
+    assert lyr.GetMetadataItem("MINX") == "0"
+    assert lyr.GetMetadataItem("MINY") == "1"
+    assert lyr.GetMetadataItem("MAXX") == "2"
+    assert lyr.GetMetadataItem("MAXY") == "3"
+    assert lyr.GetMetadataItem("BAND_COUNT") == "1"
+    assert lyr.GetMetadataItem("NODATA") == "0"
+    assert lyr.GetMetadataItem("COLOR_INTERPRETATION") == "gray"
+    assert lyr.GetMetadataItem("MASK_BAND") == "YES"
+    assert lyr.GetMetadataItem("foo") == "bar"
+    del ds
+
+    ds = gdal.Open(index_filename)
+    assert ds.GetGeoTransform() == (0.0, 60.0, 0.0, 3.0, 0.0, -60.0)
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    del ds
+
+
+###############################################################################
+# Test VRTTI related options
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.require_driver("VRTTI")
+def test_gdaltindex_lib_vrtti_xml(tmp_path, four_tiles):
+
+    index_filename = str(tmp_path / "test_gdaltindex_lib_vrtti_non_xml.vrt.gpkg")
+    vrtti_filename = str(tmp_path / "test_gdaltindex_lib_vrtti_non_xml.vrtti")
+
+    gdal.TileIndex(
+        index_filename,
+        four_tiles,
+        layerName="tileindex",
+        vrttiFilename=vrtti_filename,
+        xRes=60,
+        yRes=60,
+        outputBounds=[0, 1, 2, 3],
+        noData=[0],
+        colorInterpretation=["gray"],
+        mask=True,
+    )
+
+    xml = open(vrtti_filename, "rb").read().decode("UTF-8")
+    assert "test_gdaltindex_lib_vrtti_non_xml.vrt.gpkg</IndexDataset>" in xml
+    assert "<IndexLayer>tileindex</IndexLayer>" in xml
+    assert "<LocationField>location</LocationField>" in xml
+    assert "<ResX>60</ResX>" in xml
+    assert "<ResY>60</ResY>" in xml
+    assert "<MinX>0</MinX>" in xml
+    assert "<MinY>1</MinY>" in xml
+    assert "<MaxX>2</MaxX>" in xml
+    assert "<MaxY>3</MaxY>" in xml
+    assert (
+        """<Band band="1">\n    <NoDataValue>0</NoDataValue>\n    <ColorInterp>gray</ColorInterp>\n  </Band>"""
+        in xml
+    )
+    assert "<MaskBand>true</MaskBand>" in xml
+
+    ds = gdal.Open(vrtti_filename)
+    assert ds.GetGeoTransform() == (0.0, 60.0, 0.0, 3.0, 0.0, -60.0)
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).GetNoDataValue() == 0
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GrayIndex
+    assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET

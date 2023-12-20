@@ -3807,18 +3807,30 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
 
 
 def TileIndexOptions(options=None,
+                     overwrite=None,
                      format=None,
                      layerName=None,
                      locationFieldName="location",
                      outputSRS=None,
                      writeAbsolutePath=None,
-                     skipDifferentProjection=None):
+                     skipDifferentProjection=None,
+                     vrttiFilename=None,
+                     xRes=None,
+                     yRes=None,
+                     outputBounds=None,
+                     colorInterpretation=None,
+                     noData=None,
+                     bandCount=None,
+                     mask=None,
+                     metadataOptions=None):
     """Create a TileIndexOptions() object that can be passed to gdal.TileIndex()
 
     Parameters
     ----------
     options:
         can be be an array of strings, a string or let empty and filled from other keywords.
+    overwrite:
+        Whether to overwrite the existing tile index
     format:
         output format ("ESRI Shapefile", "GPKG", etc...)
     layerName:
@@ -3831,6 +3843,24 @@ def TileIndexOptions(options=None,
         Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
     skipDifferentProjection:
         Whether to skip sources that have a different SRS
+    vrttiFilename:
+        Filename of the XML Virtual Tile Index file
+    xRes:
+        output horizontal resolution
+    yRes:
+        output vertical resolution
+    outputBounds:
+        output bounds as [minx, miny, maxx, maxy]
+    colorInterpretation:
+        tile color interpretation, as a single value or a list, of the following values: "red", "green", "blue", "alpha", "grey", "undefined"
+    noData:
+        tile nodata value, as a single value or a list
+    bandCount:
+        number of band of tiles in the index
+    mask:
+        whether tiles have a band mask
+    metadataOptions:
+        list or dict of metadata options
     """
 
     # Only used for tests
@@ -3844,6 +3874,8 @@ def TileIndexOptions(options=None,
         new_options = ParseCommandLine(options)
     else:
         new_options = options
+        if overwrite:
+            new_options += ['-overwrite']
         if format:
             new_options += ['-f', format]
         if layerName is not None:
@@ -3856,6 +3888,39 @@ def TileIndexOptions(options=None,
             new_options += ['-write_absolute_path']
         if skipDifferentProjection:
             new_options += ['-skip_different_projection']
+        if vrttiFilename is not None:
+            new_options += ['-vrtti_filename', vrttiFilename]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
+        elif xRes is not None:
+            raise Exception("yRes should also be specified")
+        elif yRes is not None:
+            raise Exception("xRes should also be specified")
+        if outputBounds is not None:
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
+        if colorInterpretation is not None:
+            if isinstance(noData, list):
+                new_options += ['-colorinterp', ','.join(colorInterpretation)]
+            else:
+                new_options += ['-colorinterp', colorInterpretation]
+        if noData is not None:
+            if isinstance(noData, list):
+                new_options += ['-nodata', ','.join([_strHighPrec(x) for x in noData])]
+            else:
+                new_options += ['-nodata', _strHighPrec(noData)]
+        if bandCount is not None:
+            new_options += ['-bandcount', str(bandCount)]
+        if mask:
+            new_options += ['-mask']
+        if metadataOptions is not None:
+            if isinstance(metadataOptions, str):
+                new_options += ['-mo', metadataOptions]
+            elif isinstance(metadataOptions, dict):
+                for k, v in metadataOptions.items():
+                    new_options += ['-mo', f'{k}={v}']
+            else:
+                for opt in metadataOptions:
+                    new_options += ['-mo', opt]
 
     if return_option_list:
         return new_options

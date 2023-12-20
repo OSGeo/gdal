@@ -29,6 +29,7 @@
 
 #include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_minixml.h"
 #include "cpl_string.h"
 #include "gdal_utils.h"
 #include "gdal_priv.h"
@@ -38,7 +39,9 @@
 #include "ogr_spatialref.h"
 #include "commonutils.h"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <set>
 
 typedef enum
@@ -55,6 +58,7 @@ typedef enum
 
 struct GDALTileIndexOptions
 {
+    bool bOverwrite = false;
     std::string osFormat{};
     std::string osIndexLayerName{};
     std::string osLocationField = "location";
@@ -63,6 +67,19 @@ struct GDALTileIndexOptions
     bool bSkipDifferentProjection = false;
     std::string osSrcSRSFieldName{};
     SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
+    double xres = std::numeric_limits<double>::quiet_NaN();
+    double yres = std::numeric_limits<double>::quiet_NaN();
+    double xmin = std::numeric_limits<double>::quiet_NaN();
+    double ymin = std::numeric_limits<double>::quiet_NaN();
+    double xmax = std::numeric_limits<double>::quiet_NaN();
+    double ymax = std::numeric_limits<double>::quiet_NaN();
+    std::string osBandCount{};
+    std::string osNodata{};
+    std::string osColorInterp{};
+    std::string osDataType{};
+    bool bMaskBand = false;
+    std::vector<std::string> aosMetadata{};
+    std::string osVRTTIFilename{};
 };
 
 /************************************************************************/
@@ -131,6 +148,18 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     /* -------------------------------------------------------------------- */
     /*      Open or create the target datasource                            */
     /* -------------------------------------------------------------------- */
+
+    if (psOptions->bOverwrite)
+    {
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        auto hDriver = GDALIdentifyDriver(pszDest, nullptr);
+        if (hDriver)
+            GDALDeleteDataset(hDriver, pszDest);
+        else
+            VSIUnlink(pszDest);
+        CPLPopErrorHandler();
+    }
+
     auto poTileIndexDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
         pszDest, GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr, nullptr, nullptr));
     OGRLayer *poLayer = nullptr;
@@ -235,6 +264,20 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         }
         else
         {
+            if (psOptions->bOverwrite)
+            {
+                for (int i = 0; i < poTileIndexDS->GetLayerCount(); ++i)
+                {
+                    auto poExistingLayer = poTileIndexDS->GetLayer(i);
+                    if (poExistingLayer && poExistingLayer->GetName() ==
+                                               psOptions->osIndexLayerName)
+                    {
+                        poTileIndexDS->DeleteLayer(i);
+                        break;
+                    }
+                }
+            }
+
             osLayerName = psOptions->osIndexLayerName;
         }
 
@@ -277,6 +320,178 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
             oSrcSRSField.SetWidth(nMaxFieldSize);
             if (poLayer->CreateField(&oSrcSRSField) != OGRERR_NONE)
                 return nullptr;
+        }
+    }
+
+    if (!psOptions->osVRTTIFilename.empty())
+    {
+        if (!psOptions->aosMetadata.empty())
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "-mo is not supported when -vrtti_filename is used");
+            return nullptr;
+        }
+        CPLXMLNode *psRoot =
+            CPLCreateXMLNode(nullptr, CXT_Element, "VRTTileIndexDataset");
+        CPLCreateXMLElementAndValue(psRoot, "IndexDataset", pszDest);
+        CPLCreateXMLElementAndValue(psRoot, "IndexLayer", poLayer->GetName());
+        CPLCreateXMLElementAndValue(psRoot, "LocationField",
+                                    psOptions->osLocationField.c_str());
+        if (!std::isnan(psOptions->xres))
+        {
+            CPLCreateXMLElementAndValue(psRoot, "ResX",
+                                        CPLSPrintf("%.18g", psOptions->xres));
+            CPLCreateXMLElementAndValue(psRoot, "ResY",
+                                        CPLSPrintf("%.18g", psOptions->yres));
+        }
+        if (!std::isnan(psOptions->xmin))
+        {
+            CPLCreateXMLElementAndValue(psRoot, "MinX",
+                                        CPLSPrintf("%.18g", psOptions->xmin));
+            CPLCreateXMLElementAndValue(psRoot, "MinY",
+                                        CPLSPrintf("%.18g", psOptions->ymin));
+            CPLCreateXMLElementAndValue(psRoot, "MaxX",
+                                        CPLSPrintf("%.18g", psOptions->xmax));
+            CPLCreateXMLElementAndValue(psRoot, "MaxY",
+                                        CPLSPrintf("%.18g", psOptions->ymax));
+        }
+
+        int nBandCount = 0;
+        if (!psOptions->osBandCount.empty())
+        {
+            nBandCount = atoi(psOptions->osBandCount.c_str());
+        }
+        else
+        {
+            if (!psOptions->osDataType.empty())
+            {
+                nBandCount = std::max(
+                    nBandCount,
+                    CPLStringList(CSLTokenizeString2(
+                                      psOptions->osDataType.c_str(), ", ", 0))
+                        .size());
+            }
+            if (!psOptions->osNodata.empty())
+            {
+                nBandCount = std::max(
+                    nBandCount,
+                    CPLStringList(CSLTokenizeString2(
+                                      psOptions->osNodata.c_str(), ", ", 0))
+                        .size());
+            }
+            if (!psOptions->osColorInterp.empty())
+            {
+                nBandCount =
+                    std::max(nBandCount,
+                             CPLStringList(
+                                 CSLTokenizeString2(
+                                     psOptions->osColorInterp.c_str(), ", ", 0))
+                                 .size());
+            }
+        }
+
+        for (int i = 0; i < nBandCount; ++i)
+        {
+            auto psBand = CPLCreateXMLNode(psRoot, CXT_Element, "Band");
+            CPLAddXMLAttributeAndValue(psBand, "band", CPLSPrintf("%d", i + 1));
+            if (!psOptions->osDataType.empty())
+            {
+                const CPLStringList aosTokens(
+                    CSLTokenizeString2(psOptions->osDataType.c_str(), ", ", 0));
+                if (aosTokens.size() == 1)
+                    CPLAddXMLAttributeAndValue(psBand, "dataType",
+                                               aosTokens[0]);
+                else if (i < aosTokens.size())
+                    CPLAddXMLAttributeAndValue(psBand, "dataType",
+                                               aosTokens[i]);
+            }
+            if (!psOptions->osNodata.empty())
+            {
+                const CPLStringList aosTokens(
+                    CSLTokenizeString2(psOptions->osNodata.c_str(), ", ", 0));
+                if (aosTokens.size() == 1)
+                    CPLCreateXMLElementAndValue(psBand, "NoDataValue",
+                                                aosTokens[0]);
+                else if (i < aosTokens.size())
+                    CPLCreateXMLElementAndValue(psBand, "NoDataValue",
+                                                aosTokens[i]);
+            }
+            if (!psOptions->osColorInterp.empty())
+            {
+                const CPLStringList aosTokens(CSLTokenizeString2(
+                    psOptions->osColorInterp.c_str(), ", ", 0));
+                if (aosTokens.size() == 1)
+                    CPLCreateXMLElementAndValue(psBand, "ColorInterp",
+                                                aosTokens[0]);
+                else if (i < aosTokens.size())
+                    CPLCreateXMLElementAndValue(psBand, "ColorInterp",
+                                                aosTokens[i]);
+            }
+        }
+
+        if (psOptions->bMaskBand)
+        {
+            CPLCreateXMLElementAndValue(psRoot, "MaskBand", "true");
+        }
+        int res = CPLSerializeXMLTreeToFile(psRoot,
+                                            psOptions->osVRTTIFilename.c_str());
+        CPLDestroyXMLNode(psRoot);
+        if (!res)
+            return nullptr;
+    }
+    else
+    {
+        poLayer->SetMetadataItem("LOCATION_FIELD",
+                                 psOptions->osLocationField.c_str());
+        if (!std::isnan(psOptions->xres))
+        {
+            poLayer->SetMetadataItem("RESX",
+                                     CPLSPrintf("%.18g", psOptions->xres));
+            poLayer->SetMetadataItem("RESY",
+                                     CPLSPrintf("%.18g", psOptions->yres));
+        }
+        if (!std::isnan(psOptions->xmin))
+        {
+            poLayer->SetMetadataItem("MINX",
+                                     CPLSPrintf("%.18g", psOptions->xmin));
+            poLayer->SetMetadataItem("MINY",
+                                     CPLSPrintf("%.18g", psOptions->ymin));
+            poLayer->SetMetadataItem("MAXX",
+                                     CPLSPrintf("%.18g", psOptions->xmax));
+            poLayer->SetMetadataItem("MAXY",
+                                     CPLSPrintf("%.18g", psOptions->ymax));
+        }
+        if (!psOptions->osBandCount.empty())
+        {
+            poLayer->SetMetadataItem("BAND_COUNT",
+                                     psOptions->osBandCount.c_str());
+        }
+        if (!psOptions->osDataType.empty())
+        {
+            poLayer->SetMetadataItem("DATA_TYPE",
+                                     psOptions->osDataType.c_str());
+        }
+        if (!psOptions->osNodata.empty())
+        {
+            poLayer->SetMetadataItem("NODATA", psOptions->osNodata.c_str());
+        }
+        if (!psOptions->osColorInterp.empty())
+        {
+            poLayer->SetMetadataItem("COLOR_INTERPRETATION",
+                                     psOptions->osColorInterp.c_str());
+        }
+        if (psOptions->bMaskBand)
+        {
+            poLayer->SetMetadataItem("MASK_BAND", "YES");
+        }
+        for (const auto &osNameValue : psOptions->aosMetadata)
+        {
+            char *pszKey = nullptr;
+            const char *pszValue =
+                CPLParseNameValue(osNameValue.c_str(), &pszKey);
+            if (pszKey && pszValue)
+                poLayer->SetMetadataItem(pszKey, pszValue);
+            CPLFree(pszKey);
         }
     }
 
@@ -349,6 +564,13 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         CPLFree(pszCurrentPath);
     }
 
+    const bool bIsVRTTIContext =
+        !std::isnan(psOptions->xres) || !std::isnan(psOptions->xmin) ||
+        !psOptions->osBandCount.empty() || !psOptions->osNodata.empty() ||
+        !psOptions->osColorInterp.empty() || !psOptions->osDataType.empty() ||
+        psOptions->bMaskBand || !psOptions->aosMetadata.empty() ||
+        !psOptions->osVRTTIFilename.empty();
+
     /* -------------------------------------------------------------------- */
     /*      loop over GDAL files, processing.                               */
     /* -------------------------------------------------------------------- */
@@ -416,8 +638,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                         "as other files in the tileindex.\n"
                         "This may cause problems when using it in MapServer "
                         "for example.\n"
-                        "Use -t_srs option to set target projection system "
-                        "(not supported by MapServer). %s",
+                        "Use -t_srs option to set target projection system. %s",
                         papszSrcDSNames[iSrc],
                         psOptions->bSkipDifferentProjection
                             ? "Skipping this file."
@@ -484,6 +705,19 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                     continue;
                 }
             }
+        }
+        else if (bIsVRTTIContext && !oAlreadyExistingSRS.IsEmpty() &&
+                 (poSrcSRS == nullptr ||
+                  !poSrcSRS->IsSame(&oAlreadyExistingSRS)))
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "%s is not using the same projection system "
+                "as other files in the tileindex. This is not compatible of "
+                "VRTTI use. Use -t_srs option to reproject tile extents "
+                "to a common SRS.",
+                papszSrcDSNames[iSrc]);
+            return nullptr;
         }
 
         auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
@@ -728,6 +962,58 @@ GDALTileIndexOptionsNew(char **papszArgv,
             {
                 psOptionsForBinary->bQuiet = true;
             }
+        }
+        else if (EQUAL(papszArgv[iArg], "-tr"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
+            psOptions->xres = CPLAtofM(papszArgv[++iArg]);
+            psOptions->yres = CPLAtofM(papszArgv[++iArg]);
+        }
+        else if (EQUAL(papszArgv[iArg], "-te"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
+            psOptions->xmin = CPLAtofM(papszArgv[++iArg]);
+            psOptions->ymin = CPLAtofM(papszArgv[++iArg]);
+            psOptions->xmax = CPLAtofM(papszArgv[++iArg]);
+            psOptions->ymax = CPLAtofM(papszArgv[++iArg]);
+        }
+        else if (EQUAL(papszArgv[iArg], "-ot"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->osDataType = papszArgv[++iArg];
+        }
+        else if (EQUAL(papszArgv[iArg], "-mo"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->aosMetadata.push_back(papszArgv[++iArg]);
+        }
+        else if (EQUAL(papszArgv[iArg], "-bandcount"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->osBandCount = papszArgv[++iArg];
+        }
+        else if (EQUAL(papszArgv[iArg], "-nodata"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->osNodata = papszArgv[++iArg];
+        }
+        else if (EQUAL(papszArgv[iArg], "-colorinterp"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->osColorInterp = papszArgv[++iArg];
+        }
+        else if (EQUAL(papszArgv[iArg], "-mask"))
+        {
+            psOptions->bMaskBand = true;
+        }
+        else if (EQUAL(papszArgv[iArg], "-vrtti_filename"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->osVRTTIFilename = papszArgv[++iArg];
+        }
+        else if (EQUAL(papszArgv[iArg], "-overwrite"))
+        {
+            psOptions->bOverwrite = true;
         }
         else if (papszArgv[iArg][0] == '-')
         {

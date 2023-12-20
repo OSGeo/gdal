@@ -40,6 +40,13 @@ of the command line, or put in a text file (one filename per line) for very long
 or it can be a MapServer tileindex (see :ref:`gdaltindex` utility). In the later case, all
 entries in the tile index will be added to the VRT.
 
+.. note::
+
+    Starting with GDAL 3.9, for virtual mosaic with a very large number of tiles
+    (typically hundreds of thousands of tiles, or more), it is advised to use the
+    :ref:`gdaltindex` utility to generate a tile index compatible of the
+    :ref:`VRTTI <raster.vrtti>` driver.
+
 With -separate, each files goes into a separate band in the VRT dataset. Otherwise,
 the files are considered as tiles of a larger mosaic and the VRT file has as many bands as one
 of the input files.
