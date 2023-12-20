@@ -130,6 +130,13 @@ class GTiffDataset final : public GDALPamDataset
     friend void GTIFFSetZLevel(GDALDatasetH hGTIFFDS, int nZLevel);
     friend void GTIFFSetZSTDLevel(GDALDatasetH hGTIFFDS, int nZSTDLevel);
     friend void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError);
+#if HAVE_JXL
+    friend void GTIFFSetJXLLossless(GDALDatasetH hGTIFFDS, bool bIsLossless);
+    friend void GTIFFSetJXLEffort(GDALDatasetH hGTIFFDS, int nEffort);
+    friend void GTIFFSetJXLDistance(GDALDatasetH hGTIFFDS, float fDistance);
+    friend void GTIFFSetJXLAlphaDistance(GDALDatasetH hGTIFFDS,
+                                         float fAlphaDistance);
+#endif
 
     TIFF *m_hTIFF = nullptr;
     VSILFILE *m_fpL = nullptr;

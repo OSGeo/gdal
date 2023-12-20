@@ -203,6 +203,17 @@ For DEFLATE or LERC_DEFLATE compressed external and internal overviews, the comp
 For ZSTD or LERC_ZSTD compressed external and internal overviews, the compression level can be set with
 ``--config ZSTD_LEVEL_OVERVIEW value``. If not set, will default to 9. Added in GDAL 3.4.1
 
+For JPEG-XL compressed external and internal overviews, the following settings can be set since GDAL 3.9.0:
+
+* Whether compression should be lossless with ``--config JXL_LOSSLESS_OVERVIEW YES|NO``. Default is YES
+
+* Level of effort with ``--config JXL_EFFORT_OVERVIEW value``, with value between 1(fast) and 9(flow). Default is 5
+
+* Distance level for lossy compression with ``--config JXL_DISTANCE_OVERVIEW value``, with value: 0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3]. Default is 1.0. Ignored if JXL_LOSSLESS_OVERVIEW is YES
+
+* Distance level for lossy compression of alpha channel with ``--config JXL_ALPHA_DISTANCE_OVERVIEW value``, with value: 0=mathematically lossless, 1.0=visually lossless, usual range [0.5,3]. Default is the same value as JXL_DISTANCE_OVERVIEW. Ignored if JXL_LOSSLESS_OVERVIEW is YES
+
+
 For LZW, ZSTD or DEFLATE compressed external overviews, the predictor value can be set
 with ``--config PREDICTOR_OVERVIEW 1|2|3``.
 
