@@ -153,8 +153,11 @@ int OGROpenFileGDBDataSource::FileExists(const char *pszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
+bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
+                                    bool &bRetryFileGDBOut)
 {
+    bRetryFileGDBOut = false;
+
     if (poOpenInfo->nOpenFlags == (GDAL_OF_RASTER | GDAL_OF_UPDATE))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -392,9 +395,9 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
     {
         eAccess = poOpenInfo->eAccess;
 
-        const bool bRet =
-            OpenFileGDBv10(iGDBItems, nInterestTable, poOpenInfo,
-                           osRasterLayerName, oSetIgnoredRasterLayerTableNum);
+        const bool bRet = OpenFileGDBv10(
+            iGDBItems, nInterestTable, poOpenInfo, osRasterLayerName,
+            oSetIgnoredRasterLayerTableNum, bRetryFileGDBOut);
         if (!bRet)
             return false;
     }
@@ -621,7 +624,7 @@ OGRLayer *OGROpenFileGDBGroup::OpenVectorLayer(const std::string &osName,
 bool OGROpenFileGDBDataSource::OpenFileGDBv10(
     int iGDBItems, int nInterestTable, const GDALOpenInfo *poOpenInfo,
     const std::string &osRasterLayerName,
-    std::set<int> &oSetIgnoredRasterLayerTableNum)
+    std::set<int> &oSetIgnoredRasterLayerTableNum, bool &bRetryFileGDBOut)
 {
 
     CPLDebug("OpenFileGDB", "FileGDB v10 or later");
@@ -917,11 +920,11 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
         }
     }
 
-    // Return false if there are no vector layers and all candidate layers are
-    // compressed ones.
-    if (m_apoLayers.empty() && nCandidateLayers > 0 &&
-        nCandidateLayers == nLayersSDCOrCDF)
+    // If there's at least one .cdf layer and the FileGDB driver is present,
+    // retry with it.
+    if (nLayersSDCOrCDF > 0 && GDALGetDriverByName("FileGDB") != nullptr)
     {
+        bRetryFileGDBOut = true;
         return false;
     }
 

@@ -2999,3 +2999,33 @@ def test_ogr_filegdb_read_empty_polygon():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().IsEmpty()
+
+
+###############################################################################
+# Test reading a database with a compressed layer (.cdf)
+
+
+@pytest.mark.require_driver("OpenFileGDB")
+def test_ogr_filegdb_read_cdf_if_openfilegdb(openfilegdb_drv, fgdb_drv):
+    openfilegdb_drv.Deregister()
+    fgdb_drv.Deregister()
+
+    # Force OpenFileGDB first
+    openfilegdb_drv.Register()
+    fgdb_drv.Register()
+
+    ds = ogr.Open("data/filegdb/with_cdf.gdb")
+    assert ds.GetDriver().GetDescription() == "FileGDB"
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
+
+
+###############################################################################
+# Test reading a database with a compressed layer (.cdf)
+
+
+def test_ogr_filegdb_read_cdf():
+
+    ds = ogr.Open("data/filegdb/with_cdf.gdb")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3

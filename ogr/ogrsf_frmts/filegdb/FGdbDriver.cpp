@@ -67,26 +67,37 @@ static void OGRFileGDBDriverUnload(GDALDriver *)
 static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     const char *pszFilename = poOpenInfo->pszFilename;
+    // @MAY_USE_OPENFILEGDB may be set to NO by the OpenFileGDB driver in its
+    // Open() method when it detects that a dataset includes compressed tables
+    // (.cdf), and thus calls the FileGDB driver to make it handle such
+    // datasets. As the FileGDB driver would call, by default, OpenFileGDB for
+    // assistance to get some information, OpenFileGDB needs to instruct it not
+    // to do so to avoid a OpenFileGDB -> FileGDB -> OpenFileGDB cycle.
+    const bool bUseOpenFileGDB = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "@MAY_USE_OPENFILEGDB", "YES"));
 
-    if (OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszFilename) ==
-        GDAL_IDENTIFY_FALSE)
-        return nullptr;
-
-    // If this is a raster-only GDB, do not try to open it, to be consistent
-    // with OpenFileGDB behavior.
-    const char *const apszOpenFileGDBDriver[] = {"OpenFileGDB", nullptr};
-    auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-        pszFilename, GDAL_OF_RASTER, apszOpenFileGDBDriver, nullptr, nullptr));
-    if (poOpenFileGDBDS)
+    if (bUseOpenFileGDB)
     {
-        poOpenFileGDBDS.reset();
-        poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
-            GDALDataset::Open(pszFilename, GDAL_OF_VECTOR,
-                              apszOpenFileGDBDriver, nullptr, nullptr));
-        if (!poOpenFileGDBDS)
+        if (OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszFilename) ==
+            GDAL_IDENTIFY_FALSE)
             return nullptr;
+
+        // If this is a raster-only GDB, do not try to open it, to be consistent
+        // with OpenFileGDB behavior.
+        const char *const apszOpenFileGDBDriver[] = {"OpenFileGDB", nullptr};
+        auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(pszFilename, GDAL_OF_RASTER,
+                              apszOpenFileGDBDriver, nullptr, nullptr));
+        if (poOpenFileGDBDS)
+        {
+            poOpenFileGDBDS.reset();
+            poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+                GDALDataset::Open(pszFilename, GDAL_OF_VECTOR,
+                                  apszOpenFileGDBDriver, nullptr, nullptr));
+            if (!poOpenFileGDBDS)
+                return nullptr;
+        }
     }
-    poOpenFileGDBDS.reset();
 
     const bool bUpdate = poOpenInfo->eAccess == GA_Update;
     long hr;
@@ -151,7 +162,7 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 
     FGdbDataSource *pDS;
 
-    pDS = new FGdbDataSource(true, pConnection);
+    pDS = new FGdbDataSource(true, pConnection, bUseOpenFileGDB);
 
     if (!pDS->Open(pszFilename, bUpdate, nullptr))
     {
@@ -235,7 +246,7 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     (*poMapConnections)[pszName] = pConnection;
 
     /* Ready to embed the Geodatabase in an OGR Datasource */
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     if (!pDS->Open(pszName, bUpdate, nullptr))
     {
         delete pDS;
@@ -398,7 +409,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osDatabaseToReopen, TRUE, osNameOri);
 
 #ifndef WIN32
@@ -650,7 +661,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osNameOri, TRUE, nullptr);
     // pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
@@ -724,7 +735,7 @@ OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osNameOri, TRUE, nullptr);
     // pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);

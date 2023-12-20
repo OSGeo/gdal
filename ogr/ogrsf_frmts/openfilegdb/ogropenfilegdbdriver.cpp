@@ -98,7 +98,8 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 #endif
 
     auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
-    if (poDS->Open(poOpenInfo))
+    bool bRetryFileGDB = false;
+    if (poDS->Open(poOpenInfo, bRetryFileGDB))
     {
         if (poDS->GetSubdatasets().size() == 2)
         {
@@ -107,7 +108,7 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
                 poDS->GetSubdatasets().FetchNameValue("SUBDATASET_1_NAME"),
                 poOpenInfo->nOpenFlags);
             poDS = std::make_unique<OGROpenFileGDBDataSource>();
-            if (poDS->Open(&oOpenInfo))
+            if (poDS->Open(&oOpenInfo, bRetryFileGDB))
             {
                 poDS->SetDescription(poOpenInfo->pszFilename);
             }
@@ -117,6 +118,18 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
             }
         }
         return poDS.release();
+    }
+    else if (bRetryFileGDB)
+    {
+        auto poDriver = GetGDALDriverManager()->GetDriverByName("FileGDB");
+        if (poDriver)
+        {
+            GDALOpenInfo oOpenInfo(pszFilename, poOpenInfo->nOpenFlags);
+            CPLStringList aosOpenOptions;
+            aosOpenOptions.SetNameValue("@MAY_USE_OPENFILEGDB", "NO");
+            oOpenInfo.papszOpenOptions = aosOpenOptions.List();
+            return poDriver->Open(&oOpenInfo, false);
+        }
     }
 
     return nullptr;
