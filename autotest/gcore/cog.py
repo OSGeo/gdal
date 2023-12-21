@@ -144,14 +144,14 @@ KNOWN_INCOMPATIBLE_EDITION=NO
 def test_cog_creation_options():
 
     filename = "/vsimem/cog.tif"
-    src_ds = gdal.Open("data/byte.tif")
+    src_ds = gdal.Open("data/rgbsmall.tif")
     ds = gdal.GetDriverByName("COG").CreateCopy(
         filename, src_ds, options=["COMPRESS=DEFLATE", "LEVEL=1", "NUM_THREADS=2"]
     )
     assert ds
     ds = None
     ds = gdal.Open(filename)
-    assert ds.GetRasterBand(1).Checksum() == 4672
+    assert ds.GetRasterBand(1).Checksum() == 21212
     assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "DEFLATE"
     assert ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") is None
     ds = None
@@ -197,10 +197,12 @@ def test_cog_creation_options():
 
     if "<Value>WEBP" in colist:
 
-        with gdal.quiet_errors():
-            assert not gdal.GetDriverByName("COG").CreateCopy(
-                filename, src_ds, options=["COMPRESS=WEBP"]
-            )
+        assert gdal.GetDriverByName("COG").CreateCopy(
+            filename, src_ds, options=["COMPRESS=WEBP"]
+        )
+        ds = gdal.Open(filename)
+        assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "WEBP"
+        ds = None
 
     if "<Value>LERC" in colist:
 
