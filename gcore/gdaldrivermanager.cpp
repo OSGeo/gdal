@@ -411,8 +411,7 @@ GDALDriver *GDALDriverManager::GetDriver(int iDriver, bool bIncludeHidden)
     CPLMutexHolderD(&hDMMutex);
     if (!bIncludeHidden || iDriver < nDrivers)
         return GetDriver_unlocked(iDriver);
-    if (iDriver >= nDrivers &&
-        iDriver - nDrivers < static_cast<int>(m_aoHiddenDrivers.size()))
+    if (iDriver - nDrivers < static_cast<int>(m_aoHiddenDrivers.size()))
         return m_aoHiddenDrivers[iDriver - nDrivers].get();
     return nullptr;
 }

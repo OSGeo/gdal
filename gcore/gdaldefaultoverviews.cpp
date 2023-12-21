@@ -754,10 +754,11 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
                     {
                         if (auto poDriver = l_poODS->GetDriver())
                         {
-                            if (poDriver &&
-                                EQUAL(poDriver->GetDescription(), "GTiff"))
+                            if (EQUAL(poDriver->GetDescription(), "GTiff"))
+                            {
                                 poOverview->SetMetadataItem(
                                     "RESAMPLING", osNewResampling.c_str());
+                            }
                         }
                     }
                 }

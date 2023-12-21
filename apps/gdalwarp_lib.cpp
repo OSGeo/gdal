@@ -3451,7 +3451,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         oDstSRS.SetFromUserInput(pszDstSRS);
         const char *pszProjection = oDstSRS.GetAttrValue("PROJECTION");
         const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
-        double adfSrcGT[6];
+        double adfSrcGT[6] = {0};
         // This MAX_LAT values is equivalent to the semi_major_axis * PI
         // easting/northing value only for EPSG:3857, but it is also quite
         // reasonable for other Mercator projections

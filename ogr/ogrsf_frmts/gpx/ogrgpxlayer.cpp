@@ -151,8 +151,7 @@ OGRGPXLayer::OGRGPXLayer(const char *pszFilename, const char *pszLayerName,
         m_poFeatureDefn->AddFieldDefn(&oFieldTime);
 
 #ifdef HAVE_EXPAT
-        if (m_gpxGeomType == GPX_TRACK_POINT && gpxVersion &&
-            strcmp(gpxVersion, "1.0") == 0)
+        if (m_gpxGeomType == GPX_TRACK_POINT && strcmp(gpxVersion, "1.0") == 0)
         {
             OGRFieldDefn oFieldCourse("course", OFTReal);
             m_poFeatureDefn->AddFieldDefn(&oFieldCourse);
@@ -183,7 +182,7 @@ OGRGPXLayer::OGRGPXLayer(const char *pszFilename, const char *pszLayerName,
         m_poFeatureDefn->AddFieldDefn(&oFieldSrc);
 
 #ifdef HAVE_EXPAT
-        if (gpxVersion && strcmp(gpxVersion, "1.0") == 0)
+        if (strcmp(gpxVersion, "1.0") == 0)
         {
             OGRFieldDefn oFieldUrl("url", OFTString);
             m_poFeatureDefn->AddFieldDefn(&oFieldUrl);
