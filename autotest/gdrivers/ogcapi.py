@@ -32,7 +32,6 @@
 import os
 import re
 from http.server import BaseHTTPRequestHandler
-from tempfile import TemporaryDirectory
 
 import gdaltest
 import ogrtest
@@ -326,7 +325,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
     ),
 )
 @pytest.mark.require_driver("WMS")
-def test_ogr_ogcapi_raster(api, collection):
+def test_ogr_ogcapi_raster(api, collection, tmp_path):
 
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
@@ -348,27 +347,31 @@ def test_ogr_ogcapi_raster(api, collection):
 
     assert ds is not None
 
-    with TemporaryDirectory() as tmpdir:
-        options = gdal.TranslateOptions(
-            gdal.ParseCommandLine(
-                f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
-            )
+    options = gdal.TranslateOptions(
+        gdal.ParseCommandLine(
+            f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
         )
-        out_path = os.path.join(tmpdir, "lough_corrib.png")
+    )
+    out_path = str(tmp_path / "lough_corrib.png")
 
-        gdal.Translate(out_path, ds, options=options)
+    gdal.Translate(out_path, ds, options=options)
 
-        control_image_path = os.path.join(
-            BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
-        )
+    control_image_path = os.path.join(
+        BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
+    )
 
-        # When recording also regenerate control images
-        if RECORD:
-            shutil.copyfile(out_path, control_image_path)
+    # When recording also regenerate control images
+    if RECORD:
+        shutil.copyfile(out_path, control_image_path)
 
-        with open(control_image_path, "rb") as expected:
-            with open(out_path, "rb") as out_data:
-                assert out_data.read() == expected.read()
+    control_image_ds = gdal.Open(control_image_path)
+    out_ds = gdal.Open(out_path)
+    assert [
+        out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)
+    ] == [
+        control_image_ds.GetRasterBand(i + 1).Checksum()
+        for i in range(control_image_ds.RasterCount)
+    ]
 
 
 @pytest.mark.parametrize(
