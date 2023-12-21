@@ -7,11 +7,7 @@
 
 #include "minified_zutil.h"
 
-#ifndef STDC
-extern voidp  malloc OF((uInt size));
-extern voidp  calloc OF((uInt items, uInt size));
-extern void   free   OF((voidpf ptr));
-#endif
+#include <stdlib.h>
 
 voidpf ZLIB_INTERNAL zcalloc(voidpf opaque, unsigned items, unsigned size)
 {
