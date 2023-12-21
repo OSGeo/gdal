@@ -1081,7 +1081,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             }
 
             VRTSimpleSource *poSimpleSource;
-            if (bAllowSrcNoData)
+            if (bAllowSrcNoData &&
+                (nSrcNoDataCount > 0 ||
+                 psDatasetProperties->abHasNoData[nSrcBandIdx]))
             {
                 auto poComplexSource = new VRTComplexSource();
                 poSimpleSource = poComplexSource;
@@ -1094,7 +1096,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                         poComplexSource->SetNoDataValue(
                             padfSrcNoData[nSrcNoDataCount - 1]);
                 }
-                else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
+                else /* if (psDatasetProperties->abHasNoData[nSrcBandIdx]) */
                 {
                     poComplexSource->SetNoDataValue(
                         psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
