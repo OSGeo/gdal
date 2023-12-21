@@ -832,61 +832,6 @@ FITDataset::~FITDataset()
     }
 }
 
-// simple guard object to delete memory
-// when the guard goes out of scope
-template <class T> class DeleteGuard
-{
-  public:
-    explicit DeleteGuard(T *p) : _ptr(p)
-    {
-    }
-    ~DeleteGuard()
-    {
-        delete _ptr;
-    }
-
-    T *take()
-    {
-        T *tmp = _ptr;
-        _ptr = nullptr;
-        return tmp;
-    }
-
-  private:
-    T *_ptr;
-    // prevent default copy constructor and assignment operator
-    DeleteGuard(const DeleteGuard &);
-    DeleteGuard &operator=(const DeleteGuard &);
-};
-
-// simple guard object to free memory
-// when the guard goes out of scope
-template <class T> class FreeGuard
-{
-  public:
-    explicit FreeGuard(T *p) : _ptr(p)
-    {
-    }
-    ~FreeGuard()
-    {
-        if (_ptr)
-            free(_ptr);
-    }
-
-    T *take()
-    {
-        T *tmp = _ptr;
-        _ptr = NULL;
-        return tmp;
-    }
-
-  private:
-    T *_ptr;
-    // prevent default copy constructor and assignment operator
-    FreeGuard(const FreeGuard &);
-    FreeGuard &operator=(const FreeGuard &);
-};
-
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -916,8 +861,7 @@ GDALDataset *FITDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    FITDataset *poDS = new FITDataset();
-    DeleteGuard<FITDataset> guard(poDS);
+    auto poDS = std::make_unique<FITDataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
@@ -1063,7 +1007,7 @@ GDALDataset *FITDataset::Open(GDALOpenInfo *poOpenInfo)
     for (int i = 0; i < (int)head->cSize; i++)
     {
         FITRasterBand *poBand =
-            new FITRasterBand(poDS, i + 1, (int)head->cSize);
+            new FITRasterBand(poDS.get(), i + 1, (int)head->cSize);
         poDS->SetBand(i + 1, poBand);
         if (poBand->tmpImage == nullptr)
             return nullptr;
@@ -1078,10 +1022,10 @@ GDALDataset *FITDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for external overviews.                                   */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename,
                                 poOpenInfo->GetSiblingFiles());
 
-    return guard.take();
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -1127,8 +1071,9 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     // XXX - should FIT_PAGE_SIZE be based on file page size ??
 
     const size_t size = std::max(sizeof(FIThead02), FIT_PAGE_SIZE);
-    FIThead02 *head = (FIThead02 *)malloc(size);
-    FreeGuard<FIThead02> guardHead(head);
+    std::vector<GByte> abyHeader;
+    abyHeader.resize(size);
+    FIThead02 *head = reinterpret_cast<FIThead02 *>(abyHeader.data());
 
     // clean header so padding (past real header) is all zeros
     memset(head, 0, size);
@@ -1251,8 +1196,12 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     const size_t bytesPerPixel = static_cast<size_t>(nBands) * nDTSize;
 
     const size_t pageBytes = blockX * blockY * bytesPerPixel;
-    char *output = (char *)calloc(1, pageBytes);
-    if (!output)
+    std::vector<GByte> output;
+    try
+    {
+        output.resize(pageBytes);
+    }
+    catch (const std::bad_alloc &)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "FITRasterBand couldn't allocate %lu bytes",
@@ -1260,7 +1209,6 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
         return nullptr;
     }
-    FreeGuard<char> guardOutput(output);
 
     long maxx = (long)ceil(poSrcDS->GetRasterXSize() / (double)blockX);
     long maxy = (long)ceil(poSrcDS->GetRasterYSize() / (double)blockY);
@@ -1291,7 +1239,7 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
             // clean out image if only doing partial reads
             if (do_clean)
-                memset(output, 0, pageBytes);
+                memset(output.data(), 0, pageBytes);
 
             for (int iBand = 0; iBand < nBands; iBand++)
             {
@@ -1302,7 +1250,7 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                     static_cast<int>(y * blockY),  // nYOff
                     static_cast<int>(readX),       // nXSize
                     static_cast<int>(readY),       // nYSize
-                    output + iBand * nDTSize,
+                    output.data() + iBand * nDTSize,
                     // pData
                     blockX,  // nBufXSize
                     blockY,  // nBufYSize
@@ -1321,7 +1269,7 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             }  // for iBand
 
 #ifdef swapping
-            char *p = output;
+            GByte *p = output.data();
             unsigned long i;
             switch (nDTSize)
             {
@@ -1330,15 +1278,21 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                     break;
                 case 2:
                     for (i = 0; i < pageBytes; i += nDTSize)
-                        gst_swap16(p + i);
+                    {
+                        CPL_SWAP16PTR(p + i);
+                    }
                     break;
                 case 4:
                     for (i = 0; i < pageBytes; i += nDTSize)
-                        gst_swap32(p + i);
+                    {
+                        CPL_SWAP32PTR(p + i);
+                    }
                     break;
                 case 8:
                     for (i = 0; i < pageBytes; i += nDTSize)
-                        gst_swap64(p + i);
+                    {
+                        CPL_SWAP64PTR(p + i);
+                    }
                     break;
                 default:
                     CPLError(CE_Failure, CPLE_NotSupported,
@@ -1347,7 +1301,7 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             }  // switch
 #endif         // swapping
 
-            if (VSIFWriteL(output, 1, pageBytes, fpImage) != pageBytes)
+            if (VSIFWriteL(output.data(), 1, pageBytes, fpImage) != pageBytes)
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Write failed");
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
@@ -1359,14 +1313,11 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             if (!pfnProgress(perc, nullptr, pProgressData))
             {
                 CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
-                // free(output);
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
                 VSIUnlink(pszFilename);
                 return nullptr;
             }
         }  // for x
-
-    // free(output);
 
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
 
