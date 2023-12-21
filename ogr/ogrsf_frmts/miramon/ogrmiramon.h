@@ -61,6 +61,10 @@ class OGRMiraMonLayer final : public OGRLayer,
     CPLString osLine;
     char **papszKeyedValues;
 
+    // Array of string or doubles used in the field features processing
+    char** papszValues;
+    double* padfValues;
+
     OGRFeature *GetNextRawFeature();
     void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
                     MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
