@@ -8139,7 +8139,7 @@ def test_tiff_write_166():
 
 def test_tiff_write_167_deflate_zlevel():
 
-    src_ds = gdal.Open("data/byte.tif")
+    src_ds = gdal.Open("data/rgbsmall.tif")
     gdal.GetDriverByName("GTiff").CreateCopy(
         "/vsimem/out.tif", src_ds, options=["COMPRESS=DEFLATE", "ZLEVEL=1"]
     )
@@ -8156,11 +8156,15 @@ def test_tiff_write_167_deflate_zlevel():
     assert size2 < size1
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/out.tif", 20, 20, 1, options=["COMPRESS=DEFLATE", "ZLEVEL=9"]
+        "/vsimem/out.tif",
+        src_ds.RasterXSize,
+        src_ds.RasterYSize,
+        src_ds.RasterCount,
+        options=["COMPRESS=DEFLATE", "ZLEVEL=9"],
     )
     ds.SetProjection(src_ds.GetProjectionRef())
     ds.SetGeoTransform(src_ds.GetGeoTransform())
-    ds.WriteRaster(0, 0, 20, 20, src_ds.ReadRaster())
+    ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize, src_ds.ReadRaster())
     ds = None
 
     size2_create = gdal.VSIStatL("/vsimem/out.tif").size
