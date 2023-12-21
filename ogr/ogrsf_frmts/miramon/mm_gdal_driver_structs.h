@@ -715,7 +715,7 @@ struct MiraMonVectLayerInfo
 
     // Offset of every FID in the database
     MM_BOOLEAN isListField;  // It determines if fiels ar List or simple (multirecord).
-    MM_EXT_DBF_N_RECORDS nMaxN; // MAx number of elements in a field features list 
+    MM_EXT_DBF_N_RECORDS nMaxN; // Max number of elements in a field features list 
     struct MM_ID_GRAFIC_MULTIPLE_RECORD *pMultRecordIndex;
 
     // Charset of DBF files (same for all)
