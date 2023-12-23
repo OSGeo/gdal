@@ -7,17 +7,19 @@ should be formatted as "component/filename: Describe what the commit does (fixes
 so that anyone that parses 'git log' immediately knows what a commit is about.
 Do not hesitate to provide more context in the longer part of the commit message.
 
-GOOD: "GTiff: fix wrong color interpretation with -co ALPHA=YES (fixes #1234)
+For example:
+
+"GTiff: fix wrong color interpretation with -co ALPHA=YES (fixes #1234)
 
 When -co ALPHA=YES was used, but PHOTOMETRIC was not specified, the ExtraSample
 tag was wrongly set to unspecified.
 "
 
-BAD: "Fix crash", "fix #1234"
+The GDAL project requires specific code formatting for C/C++ and Python code.
+This is largely automated with the pre-commit tool.
+Consult how to [install and set it up](https://gdal.org/development/dev_practices.html#commit-hooks)
 
-In case you need several iterations to make continuous integration happy,
-please squash your commits in a single one at the end. See
-[Contributing](https://github.com/OSGeo/gdal/blob/master/CONTRIBUTING.md)
+More generally, consult [development practices](https://gdal.org/development/dev_practices.html)
 -->
 
 ## What does this PR do?
@@ -27,6 +29,7 @@ please squash your commits in a single one at the end. See
 ## Tasklist
 
  - [ ] ADD YOUR TASKS HERE
+ - [ ] Make sure code is correctly formatted (cf [pre-commit configuration](https://gdal.org/development/dev_practices.html#commit-hooks))
  - [ ] Add test case(s)
  - [ ] Add documentation
  - [ ] Updated Python API documentation (swig/include/python/docs/)
