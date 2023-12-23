@@ -888,8 +888,8 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                 else
                 {
                     // Failure: either we are not running on EC2 (or something
-                    // emulating it) or this doesn't implement yet IDMSv2 Go on
-                    // trying IDMSv1
+                    // emulating it) or this doesn't implement yet IMDSv2.
+                    // Fallback to IMDSv1
 
                     // /latest/api/token doesn't work inside a Docker container
                     // that has no host networking. Cf
@@ -910,28 +910,15 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                             if (psResult2->nStatus == 0 &&
                                 psResult2->pabyData != nullptr)
                             {
-                                VSIStatBufL sStat;
-                                if (VSIStatL("/.dockerenv", &sStat) == 0)
-                                {
-                                    CPLDebug("AWS",
-                                             "/latest/api/token EC2 IDMSv2 "
-                                             "request timed out, but "
-                                             "/latest/metadata succeeded. "
-                                             "Trying with IDMSv1. "
-                                             "Try running your Docker "
-                                             "container with --network=host.");
-                                }
-                                else
-                                {
-                                    CPLDebug(
-                                        "AWS",
-                                        "/latest/api/token EC2 IDMSv2 request "
-                                        "timed out, but /latest/metadata "
-                                        "succeeded. "
-                                        "Trying with IDMSv1. "
-                                        "Are you running inside a container "
-                                        "that has no host networking ?");
-                                }
+                                CPLDebug("AWS",
+                                         "/latest/api/token EC2 IMDSv2 request "
+                                         "timed out, but /latest/metadata "
+                                         "succeeded. "
+                                         "Trying with IMDSv1. "
+                                         "Consult "
+                                         "https://gdal.org/user/"
+                                         "virtual_file_systems.html#vsis3_imds "
+                                         "for IMDS related issues.");
                             }
                             CPLHTTPDestroyResult(psResult2);
                         }

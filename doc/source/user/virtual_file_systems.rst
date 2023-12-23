@@ -612,7 +612,7 @@ Several authentication methods are possible, and are attempted in the following 
 3. Starting with GDAL 2.3, alternate ways of providing credentials similar to what the "aws" command line utility or Boto3 support can be used. If the above mentioned environment variables are not provided, the ``~/.aws/credentials`` or ``%UserProfile%/.aws/credentials`` file will be read (or the file pointed by :config:`CPL_AWS_CREDENTIALS_FILE`). The profile may be specified with the :config:`AWS_DEFAULT_PROFILE` environment variable, or starting with GDAL 3.2 with the :config:`AWS_PROFILE` environment variable (the default profile is "default").
 4. The ``~/.aws/config`` or ``%UserProfile%/.aws/config`` file may also be used (or the file pointer by :config:`AWS_CONFIG_FILE`) to retrieve credentials and the AWS region.
 5. Starting with GDAL 3.6, if :config:`AWS_ROLE_ARN` and :config:`AWS_WEB_IDENTITY_TOKEN_FILE` are defined we will rely on credentials mechanism for web identity token based AWS STS action AssumeRoleWithWebIdentity (See.: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
-6. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances.
+6. If none of the above method succeeds, instance profile credentials will be retrieved when GDAL is used on EC2 instances (cf :ref:`vsis3_imds`)
 
 On writing, the file is uploaded using the S3 multipart upload API. The size of chunks is set to 50 MB by default, allowing creating files up to 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase the value of the :config:`VSIS3_CHUNK_SIZE` config option to a larger value (expressed in MB). In case the process is killed and the file not properly closed, the multipart upload will remain open, causing Amazon to charge you for the parts storage. You'll have to abort yourself with other means such "ghost" uploads (e.g. with the s3cmd utility) For files smaller than the chunk size, a simple PUT request is used instead of the multipart upload API.
 
@@ -625,7 +625,28 @@ The :config:`CPL_VSIS3_CREATE_DIR_OBJECT` configuration option can be set to NO 
 
 Starting with GDAL 3.5, profiles that use IAM role assumption (see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html) are handled. The ``role_arn`` and ``source_profile`` keywords are required in such profiles. The optional ``external_id``, ``mfa_serial`` and ``role_session_name`` can be specified. ``credential_source`` is not supported currently.
 
-.. versionadded:: 2.1
+.. _vsis3_imds:
+
+/vsis3/ and AWS Instance Metadata Service (IMDS)
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+On EC2 instances, GDAL will try to use the `IMDSv2 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html>`__ protocol in priority to get the authentication tokens for AWS S3, and fallback to IMDSv1 in case of failure. Note however that on recent Amazon Linux instances, IMDSv1 is no longer accessible, and thus IMDSv2 must be correctly configured (and even if IMDSv1 is available, mis-configured IMDSv2 will cause delays in the authentication step).
+
+There are known issues when running inside a Docker instance in a EC2 instance that require extra configuration of the instance. For example, you need to `increase the hop limit to 2 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html#imds-considerations>`__
+
+There are several ways to do this. One way is to run this command:
+::
+
+    aws ec2 modify-instance-metadata-options \
+        --instance-id <instance_id> \
+        --http-put-response-hop-limit 2 \
+        --http-endpoint enabled
+
+Another is to set the HttpPutResponseHopLimit metadata on an AutoScalingGroup LaunchTemplate:
+- https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_InstanceMetadataOptionsRequest.html
+- https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ec2-launchtemplate-metadataoptions.html
+
+Another possibility is to start the Docker container with host networking (``--network=host``), although this breaks isolation of containers by exposing all ports of the host to the container and has thus `security implications <https://stackoverflow.com/a/57051970/40785>`__.
 
 .. _vsis3_streaming:
 
