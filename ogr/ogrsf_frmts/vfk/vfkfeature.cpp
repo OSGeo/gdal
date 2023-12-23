@@ -161,8 +161,6 @@ void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3], double
   \param c_x circle center x coordinate
   \param c_y circle center y coordinate
   \param r circle radius
-
-  \return void
 */
 void IVFKFeature::AddCirclePointsToGeomString(OGRCircularString &poGeomString, double c_x, double c_y, double r)
 {
