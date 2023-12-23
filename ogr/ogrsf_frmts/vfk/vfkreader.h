@@ -117,9 +117,9 @@ class VFKProperty
 class IVFKFeature
 {
   private:
-    double GetDeterminatOfMatrixDim3(double [3], double [3], double [3]);
-    void GetCircleCenterFrom3Points(double [2], double [3], double [3]);
-    void AddCirclePointsToGeomString(OGRCircularString &, double, double, double);
+    static double GetDeterminatOfMatrixDim3(double [3], double [3], double [3]);
+    static void GetCircleCenterFrom3Points(double [2], double [3], double [3]);
+    static void AddCirclePointsToGeomString(OGRCircularString &, double, double, double);
 
   protected:
     IVFKDataBlock *m_poDataBlock;
