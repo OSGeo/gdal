@@ -3293,65 +3293,76 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
         *out_ymin = simple_min(&y_boundary_array[0], boundary_len);
         *out_ymax = simple_max(&y_boundary_array[0], boundary_len);
 
-        // For a projected CRS with a central meridian != 0, try to reproject
-        // the points with long = +/- 180deg of the central meridian and at lat
-        // = latitude_of_origin And also do the same for long = central_meridian
-        // and lat = +/- 90deg Helps for example for EPSG:4326 to ESRI:53037
         if (poSRSTarget->IsProjected())
         {
             CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
             CPLErrorStateBackuper oBackuper;
 
-            const double dfLon0 =
-                poSRSTarget->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
-            if (dfLon0 != 0)
+            auto poBaseTarget = std::unique_ptr<OGRSpatialReference>(
+                poSRSTarget->CloneGeogCS());
+            poBaseTarget->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+            auto poCTBaseTargetToSrc =
+                std::unique_ptr<OGRCoordinateTransformation>(
+                    OGRCreateCoordinateTransformation(poBaseTarget.get(),
+                                                      poSRSSource));
+            if (poCTBaseTargetToSrc)
             {
-                const double dfLat0 = poSRSTarget->GetNormProjParm(
-                    SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                const double dfLon0 =
+                    poSRSTarget->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
 
-                auto poBaseTarget = std::unique_ptr<OGRSpatialReference>(
-                    poSRSTarget->CloneGeogCS());
-                poBaseTarget->SetAxisMappingStrategy(
-                    OAMS_TRADITIONAL_GIS_ORDER);
-
-                constexpr double EPS = 1e-8;
-                for (int iSign = -1; iSign <= 1; iSign += 2)
+                double dfSignedPoleLat = 0;
+                double dfAbsPoleLat = 90;
+                bool bIncludesPole = false;
+                const char *pszProjection =
+                    poSRSTarget->GetAttrValue("PROJECTION");
+                if (pszProjection &&
+                    EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) && dfLon0 == 0)
                 {
-                    double dfX =
-                        fmod(dfLon0 + iSign * (180 - EPS) + 180, 360) - 180;
-                    double dfY = dfLat0;
-
-                    auto poCTBaseTargetToSrc =
-                        std::unique_ptr<OGRCoordinateTransformation>(
-                            OGRCreateCoordinateTransformation(
-                                poBaseTarget.get(), poSRSSource));
-                    if (poCTBaseTargetToSrc)
-                    {
-                        if (poCTBaseTargetToSrc->TransformWithErrorCodes(
-                                1, &dfX, &dfY, nullptr, nullptr, nullptr) &&
-                            dfX >= xmin && dfY >= ymin && dfX <= xmax &&
-                            dfY <= ymax &&
-                            TransformWithErrorCodes(1, &dfX, &dfY, nullptr,
-                                                    nullptr, nullptr))
-                        {
-                            *out_xmin = std::min(*out_xmin, dfX);
-                            *out_ymin = std::min(*out_ymin, dfY);
-                            *out_xmax = std::max(*out_xmax, dfX);
-                            *out_ymax = std::max(*out_ymax, dfY);
-                        }
-                    }
+                    // This MAX_LAT_MERCATOR values is equivalent to the
+                    // semi_major_axis * PI easting/northing value only
+                    // for EPSG:3857, but it is also quite
+                    // reasonable for other Mercator projections
+                    constexpr double MAX_LAT_MERCATOR = 85.0511287798066;
+                    dfAbsPoleLat = MAX_LAT_MERCATOR;
                 }
+
+                // Detect if a point at long = central_meridian and
+                // lat = +/- 90deg is included in the extent.
+                // Helps for example for EPSG:4326 to ESRI:53037
                 for (int iSign = -1; iSign <= 1; iSign += 2)
                 {
                     double dfX = dfLon0;
-                    double dfY = iSign * (90 - EPS);
+                    constexpr double EPS = 1e-8;
+                    double dfY = iSign * (dfAbsPoleLat - EPS);
 
-                    auto poCTBaseTargetToSrc =
-                        std::unique_ptr<OGRCoordinateTransformation>(
-                            OGRCreateCoordinateTransformation(
-                                poBaseTarget.get(), poSRSSource));
-                    if (poCTBaseTargetToSrc)
+                    if (poCTBaseTargetToSrc->TransformWithErrorCodes(
+                            1, &dfX, &dfY, nullptr, nullptr, nullptr) &&
+                        dfX >= xmin && dfY >= ymin && dfX <= xmax &&
+                        dfY <= ymax &&
+                        TransformWithErrorCodes(1, &dfX, &dfY, nullptr, nullptr,
+                                                nullptr))
                     {
+                        dfSignedPoleLat = iSign * dfAbsPoleLat;
+                        bIncludesPole = true;
+                        *out_xmin = std::min(*out_xmin, dfX);
+                        *out_ymin = std::min(*out_ymin, dfY);
+                        *out_xmax = std::max(*out_xmax, dfX);
+                        *out_ymax = std::max(*out_ymax, dfY);
+                    }
+                }
+
+                const auto TryAtPlusMinus180 =
+                    [this, dfLon0, xmin, ymin, xmax, ymax, out_xmin, out_ymin,
+                     out_xmax, out_ymax, &poCTBaseTargetToSrc](double dfLat)
+                {
+                    for (int iSign = -1; iSign <= 1; iSign += 2)
+                    {
+                        constexpr double EPS = 1e-8;
+                        double dfX =
+                            fmod(dfLon0 + iSign * (180 - EPS) + 180, 360) - 180;
+                        double dfY = dfLat;
+
                         if (poCTBaseTargetToSrc->TransformWithErrorCodes(
                                 1, &dfX, &dfY, nullptr, nullptr, nullptr) &&
                             dfX >= xmin && dfY >= ymin && dfX <= xmax &&
@@ -3365,6 +3376,21 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
                             *out_ymax = std::max(*out_ymax, dfY);
                         }
                     }
+                };
+
+                // For a projected CRS with a central meridian != 0, try to
+                // reproject the points with long = +/- 180deg of the central
+                // meridian and at lat = latitude_of_origin.
+                const double dfLat0 = poSRSTarget->GetNormProjParm(
+                    SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                if (dfLon0 != 0)
+                {
+                    TryAtPlusMinus180(dfLat0);
+                }
+
+                if (bIncludesPole && dfLat0 != dfSignedPoleLat)
+                {
+                    TryAtPlusMinus180(dfSignedPoleLat);
                 }
             }
         }
