@@ -108,8 +108,6 @@ double IVFKFeature::GetDeterminatOfMatrixDim3(double x[3], double y[3], double z
   \param c_xy circle center coordinates array
   \param x array of three x coordinates
   \param y array of three x coordinates
-
-  \return void
 */
 void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3], double y[3])
 {
