@@ -8092,6 +8092,45 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
 
 
 ###############################################################################
+# Test Arrow interface with bool fields
+
+
+def test_ogr_gpkg_arrow_stream_numpy_bool_field(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    field = ogr.FieldDefn("bool", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    for i in range(60):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("bool", False if (i % 3) == 0 else True)
+        lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 1
+    assert list(batches[0]["bool"]) == [
+        False if (i % 3) == 0 else True for i in range(60)
+    ]
+
+    ogr.GetDriverByName("GPKG").DeleteDataSource(filename)
+
+
+###############################################################################
 # Test ArrowArray interface with more than 125 columns
 
 
