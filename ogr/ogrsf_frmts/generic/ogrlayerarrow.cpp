@@ -6246,8 +6246,8 @@ static bool BuildOGRFieldInfo(
     }
     else
     {
-        const auto osExpectedOGRFieldName =
-            [&oMapArrowFieldNameToOGRFieldName, &sInfo]()
+        const std::string &osExpectedOGRFieldName =
+            [&oMapArrowFieldNameToOGRFieldName, &sInfo]() -> const std::string &
         {
             const auto oIter =
                 oMapArrowFieldNameToOGRFieldName.find(sInfo.osName);

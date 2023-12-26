@@ -731,9 +731,9 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
             auto poRelationship = ParseXMLRelationshipDef(psField->String);
             if (poRelationship)
             {
-                const auto relationshipName = poRelationship->GetName();
-                m_osMapRelationships[relationshipName] =
-                    std::move(poRelationship);
+                const auto &relationshipName = poRelationship->GetName();
+                m_osMapRelationships.insert(std::pair(
+                    std::string(relationshipName), std::move(poRelationship)));
             }
         }
     }
@@ -821,8 +821,9 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
             auto poDomain = ParseXMLFieldDomainDef(psField->String);
             if (poDomain)
             {
-                const auto domainName = poDomain->GetName();
-                m_oMapFieldDomains[domainName] = std::move(poDomain);
+                const auto &domainName = poDomain->GetName();
+                m_oMapFieldDomains.insert(
+                    std::pair(std::string(domainName), std::move(poDomain)));
             }
         }
         else if (psField && (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
