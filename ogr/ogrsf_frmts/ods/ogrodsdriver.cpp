@@ -237,7 +237,7 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Open Document/ LibreOffice / "
-                                                 "OpenOffice Spreadsheet ");
+                                                 "OpenOffice Spreadsheet");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "ods");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/ods.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
