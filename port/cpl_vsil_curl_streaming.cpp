@@ -1815,7 +1815,7 @@ VSIS3StreamingFSHandler::CreateFileHandle(const char *pszURL)
 VSIS3LikeStreamingHandle::VSIS3LikeStreamingHandle(
     IVSIS3LikeStreamingFSHandler *poFS,
     IVSIS3LikeHandleHelper *poS3HandleHelper)
-    : VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL()),
+    : VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL().c_str()),
       m_poS3HandleHelper(poS3HandleHelper)
 {
 }
@@ -1850,7 +1850,7 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError(const char *pszErrorMsg,
     if (m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
                                               bSetError))
     {
-        SetURL(m_poS3HandleHelper->GetURL());
+        SetURL(m_poS3HandleHelper->GetURL().c_str());
         return true;
     }
     return false;

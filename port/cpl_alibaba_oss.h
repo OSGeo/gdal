@@ -47,12 +47,12 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIOSSHandleHelper)
 
-    CPLString m_osURL{};
-    CPLString m_osSecretAccessKey{};
-    CPLString m_osAccessKeyId{};
-    CPLString m_osEndpoint{};
-    CPLString m_osBucket{};
-    CPLString m_osObjectKey{};
+    std::string m_osURL{};
+    std::string m_osSecretAccessKey{};
+    std::string m_osAccessKeyId{};
+    std::string m_osEndpoint{};
+    std::string m_osBucket{};
+    std::string m_osObjectKey{};
     bool m_bUseHTTPS = false;
     bool m_bUseVirtualHosting = false;
 
@@ -60,28 +60,29 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,
-                                 CPLString &osSecretAccessKey,
-                                 CPLString &osAccessKeyId);
+                                 std::string &osSecretAccessKey,
+                                 std::string &osAccessKeyId);
 
   protected:
   public:
-    VSIOSSHandleHelper(const CPLString &osSecretAccessKey,
-                       const CPLString &osAccessKeyId,
-                       const CPLString &osEndpoint, const CPLString &osBucket,
-                       const CPLString &osObjectKey, bool bUseHTTPS,
+    VSIOSSHandleHelper(const std::string &osSecretAccessKey,
+                       const std::string &osAccessKeyId,
+                       const std::string &osEndpoint,
+                       const std::string &osBucket,
+                       const std::string &osObjectKey, bool bUseHTTPS,
                        bool bUseVirtualHosting);
     ~VSIOSSHandleHelper();
 
     static VSIOSSHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,
                  bool bAllowNoObject, CSLConstList papszOptions = nullptr);
-    static CPLString BuildURL(const CPLString &osEndpoint,
-                              const CPLString &osBucket,
-                              const CPLString &osObjectKey, bool bUseHTTPS,
-                              bool bUseVirtualHosting);
+    static std::string BuildURL(const std::string &osEndpoint,
+                                const std::string &osBucket,
+                                const std::string &osObjectKey, bool bUseHTTPS,
+                                bool bUseVirtualHosting);
 
     struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerb,
+    GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders,
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const override;
@@ -89,19 +90,19 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
     bool CanRestartOnError(const char *, const char *pszHeaders,
                            bool bSetError) override;
 
-    const CPLString &GetURL() const override
+    const std::string &GetURL() const override
     {
         return m_osURL;
     }
-    const CPLString &GetBucket() const
+    const std::string &GetBucket() const
     {
         return m_osBucket;
     }
-    const CPLString &GetObjectKey() const
+    const std::string &GetObjectKey() const
     {
         return m_osObjectKey;
     }
-    const CPLString &GetEndpoint() const
+    const std::string &GetEndpoint() const
     {
         return m_osEndpoint;
     }
@@ -110,21 +111,21 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
         return m_bUseVirtualHosting;
     }
 
-    CPLString GetCopySourceHeader() const override
+    std::string GetCopySourceHeader() const override
     {
         return "x-oss-copy-source";
     }
 
-    void SetEndpoint(const CPLString &osStr);
+    void SetEndpoint(const std::string &osStr);
     void SetVirtualHosting(bool b);
 
-    CPLString GetSignedURL(CSLConstList papszOptions);
+    std::string GetSignedURL(CSLConstList papszOptions);
 };
 
 class VSIOSSUpdateParams
 {
   private:
-    CPLString m_osEndpoint{};
+    std::string m_osEndpoint{};
 
     explicit VSIOSSUpdateParams(const VSIOSSHandleHelper *poHelper)
         : m_osEndpoint(poHelper->GetEndpoint())
@@ -137,7 +138,7 @@ class VSIOSSUpdateParams
     }
 
     static std::mutex gsMutex;
-    static std::map<CPLString, VSIOSSUpdateParams> goMapBucketsToOSSParams;
+    static std::map<std::string, VSIOSSUpdateParams> goMapBucketsToOSSParams;
 
   public:
     VSIOSSUpdateParams() = default;

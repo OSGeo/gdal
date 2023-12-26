@@ -44,15 +44,15 @@
 /*                     CPLAzureGetSignature()                           */
 /************************************************************************/
 
-static CPLString CPLAzureGetSignature(const CPLString &osStringToSign,
-                                      const CPLString &osStorageKeyB64)
+static std::string CPLAzureGetSignature(const std::string &osStringToSign,
+                                        const std::string &osStorageKeyB64)
 {
 
     /* -------------------------------------------------------------------- */
     /*      Compute signature.                                              */
     /* -------------------------------------------------------------------- */
 
-    CPLString osStorageKeyUnbase64(osStorageKeyB64);
+    std::string osStorageKeyUnbase64(osStorageKeyB64);
     int nB64Length = CPLBase64DecodeInPlace(
         reinterpret_cast<GByte *>(&osStorageKeyUnbase64[0]));
     osStorageKeyUnbase64.resize(nB64Length);
@@ -61,11 +61,12 @@ static CPLString CPLAzureGetSignature(const CPLString &osStringToSign,
 #endif
 
     GByte abySignature[CPL_SHA256_HASH_SIZE] = {};
-    CPL_HMAC_SHA256(osStorageKeyUnbase64, nB64Length, osStringToSign,
-                    osStringToSign.size(), abySignature);
+    CPL_HMAC_SHA256(osStorageKeyUnbase64.c_str(), nB64Length,
+                    osStringToSign.c_str(), osStringToSign.size(),
+                    abySignature);
 
     char *pszB64Signature = CPLBase64Encode(CPL_SHA256_HASH_SIZE, abySignature);
-    CPLString osSignature(pszB64Signature);
+    std::string osSignature(pszB64Signature);
     CPLFree(pszB64Signature);
     return osSignature;
 }
@@ -74,19 +75,18 @@ static CPLString CPLAzureGetSignature(const CPLString &osStringToSign,
 /*                          GetAzureBlobHeaders()                       */
 /************************************************************************/
 
-static struct curl_slist *
-GetAzureBlobHeaders(const CPLString &osVerb,
-                    const struct curl_slist *psExistingHeaders,
-                    const CPLString &osResource,
-                    const std::map<CPLString, CPLString> &oMapQueryParameters,
-                    const CPLString &osStorageAccount,
-                    const CPLString &osStorageKeyB64, bool bIncludeMSVersion)
+static struct curl_slist *GetAzureBlobHeaders(
+    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osResource,
+    const std::map<std::string, std::string> &oMapQueryParameters,
+    const std::string &osStorageAccount, const std::string &osStorageKeyB64,
+    bool bIncludeMSVersion)
 {
     /* See
      * https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services
      */
 
-    CPLString osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
+    std::string osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
     if (osDate.empty())
     {
         osDate = IVSIS3LikeHandleHelper::GetRFC822DateTime();
@@ -99,21 +99,21 @@ GetAzureBlobHeaders(const CPLString &osVerb,
         return headers;
     }
 
-    CPLString osMsVersion("2019-12-12");
-    std::map<CPLString, CPLString> oSortedMapMSHeaders;
+    std::string osMsVersion("2019-12-12");
+    std::map<std::string, std::string> oSortedMapMSHeaders;
     if (bIncludeMSVersion)
         oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
-    CPLString osCanonicalizedHeaders(
+    std::string osCanonicalizedHeaders(
         IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
             oSortedMapMSHeaders, psExistingHeaders, "x-ms-"));
 
-    CPLString osCanonicalizedResource;
+    std::string osCanonicalizedResource;
     osCanonicalizedResource += "/" + osStorageAccount;
     osCanonicalizedResource += osResource;
 
     // We assume query parameters are in lower case and they are not repeated
-    std::map<CPLString, CPLString>::const_iterator oIter =
+    std::map<std::string, std::string>::const_iterator oIter =
         oMapQueryParameters.begin();
     for (; oIter != oMapQueryParameters.end(); ++oIter)
     {
@@ -123,13 +123,13 @@ GetAzureBlobHeaders(const CPLString &osVerb,
         osCanonicalizedResource += oIter->second;
     }
 
-    CPLString osStringToSign;
+    std::string osStringToSign;
     osStringToSign += osVerb + "\n";
     osStringToSign +=
         CPLAWSGetHeaderVal(psExistingHeaders, "Content-Encoding") + "\n";
     osStringToSign +=
         CPLAWSGetHeaderVal(psExistingHeaders, "Content-Language") + "\n";
-    CPLString osContentLength(
+    std::string osContentLength(
         CPLAWSGetHeaderVal(psExistingHeaders, "Content-Length"));
     if (osContentLength == "0")
         osContentLength.clear();  // since x-ms-version 2015-02-21
@@ -158,7 +158,7 @@ GetAzureBlobHeaders(const CPLString &osVerb,
     /*      Compute signature.                                              */
     /* -------------------------------------------------------------------- */
 
-    CPLString osAuthorization(
+    std::string osAuthorization(
         "SharedKey " + osStorageAccount + ":" +
         CPLAzureGetSignature(osStringToSign, osStorageKeyB64));
 
@@ -179,10 +179,10 @@ GetAzureBlobHeaders(const CPLString &osVerb,
 /*                     VSIAzureBlobHandleHelper()                       */
 /************************************************************************/
 VSIAzureBlobHandleHelper::VSIAzureBlobHandleHelper(
-    const std::string &osPathForOption, const CPLString &osEndpoint,
-    const CPLString &osBucket, const CPLString &osObjectKey,
-    const CPLString &osStorageAccount, const CPLString &osStorageKey,
-    const CPLString &osSAS, const CPLString &osAccessToken,
+    const std::string &osPathForOption, const std::string &osEndpoint,
+    const std::string &osBucket, const std::string &osObjectKey,
+    const std::string &osStorageAccount, const std::string &osStorageKey,
+    const std::string &osSAS, const std::string &osAccessToken,
     bool bFromManagedIdentities)
     : m_osPathForOption(osPathForOption),
       m_osURL(BuildURL(osEndpoint, osBucket, osObjectKey, osSAS)),
@@ -206,10 +206,10 @@ VSIAzureBlobHandleHelper::~VSIAzureBlobHandleHelper()
 /*                       AzureCSGetParameter()                          */
 /************************************************************************/
 
-static CPLString AzureCSGetParameter(const CPLString &osStr, const char *pszKey,
-                                     bool bErrorIfMissing)
+static std::string AzureCSGetParameter(const std::string &osStr,
+                                       const char *pszKey, bool bErrorIfMissing)
 {
-    CPLString osKey(pszKey + CPLString("="));
+    std::string osKey(pszKey + std::string("="));
     size_t nPos = osStr.find(osKey);
     if (nPos == std::string::npos)
     {
@@ -220,7 +220,7 @@ static CPLString AzureCSGetParameter(const CPLString &osStr, const char *pszKey,
             CPLDebug("AZURE", "%s", pszMsg);
             VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
         }
-        return CPLString();
+        return std::string();
     }
     size_t nPos2 = osStr.find(";", nPos);
     return osStr.substr(nPos + osKey.size(), nPos2 == std::string::npos
@@ -246,11 +246,11 @@ static std::map<std::string, CPLAzureCachedToken> goMapIMDSURLToCachedToken;
 
 static bool
 GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
-                                    CPLString &osAccessToken)
+                                    std::string &osAccessToken)
 {
     // coverity[tainted_data]
-    const CPLString osRootURL(CPLGetConfigOption("CPL_AZURE_VM_API_ROOT_URL",
-                                                 "http://169.254.169.254"));
+    const std::string osRootURL(CPLGetConfigOption("CPL_AZURE_VM_API_ROOT_URL",
+                                                   "http://169.254.169.254"));
     if (osRootURL == "disabled")
         return false;
 
@@ -297,9 +297,9 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
     {
         if (psResult->nStatus == 0 && psResult->pabyData != nullptr)
         {
-            const CPLString osJSon =
+            const std::string osJSon =
                 reinterpret_cast<char *>(psResult->pabyData);
-            oResponse = CPLParseKeyValueJson(osJSon);
+            oResponse = CPLParseKeyValueJson(osJSon.c_str());
             if (oResponse.FetchNameValue("error"))
             {
                 CPLDebug("AZURE",
@@ -335,7 +335,7 @@ static std::string gosFederatedToken{};
 
 // Azure Active Directory Workload Identity, typically for Azure Kubernetes
 // Cf https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/identity/azure-identity/azure/identity/_credentials/workload_identity.py
-static bool GetConfigurationFromWorkloadIdentity(CPLString &osAccessToken)
+static bool GetConfigurationFromWorkloadIdentity(std::string &osAccessToken)
 {
     const std::string AZURE_CLIENT_ID(
         CPLGetConfigOption("AZURE_CLIENT_ID", ""));
@@ -467,7 +467,7 @@ static bool GetConfigurationFromWorkloadIdentity(CPLString &osAccessToken)
 
 static bool
 GetConfigurationFromManagedIdentities(const std::string &osPathForOption,
-                                      CPLString &osAccessToken)
+                                      std::string &osAccessToken)
 {
     if (GetConfigurationFromWorkloadIdentity(osAccessToken))
         return true;
@@ -490,17 +490,19 @@ void VSIAzureBlobHandleHelper::ClearCache()
 /*                    ParseStorageConnectionString()                    */
 /************************************************************************/
 
-static bool ParseStorageConnectionString(
-    const std::string &osStorageConnectionString,
-    const std::string &osServicePrefix, bool &bUseHTTPS, CPLString &osEndpoint,
-    CPLString &osStorageAccount, CPLString &osStorageKey, CPLString &osSAS)
+static bool
+ParseStorageConnectionString(const std::string &osStorageConnectionString,
+                             const std::string &osServicePrefix,
+                             bool &bUseHTTPS, std::string &osEndpoint,
+                             std::string &osStorageAccount,
+                             std::string &osStorageKey, std::string &osSAS)
 {
     osStorageAccount =
         AzureCSGetParameter(osStorageConnectionString, "AccountName", false);
     osStorageKey =
         AzureCSGetParameter(osStorageConnectionString, "AccountKey", false);
 
-    const CPLString osProtocol(AzureCSGetParameter(
+    const std::string osProtocol(AzureCSGetParameter(
         osStorageConnectionString, "DefaultEndpointsProtocol", false));
     bUseHTTPS = (osProtocol != "http");
 
@@ -509,7 +511,7 @@ static bool ParseStorageConnectionString(
         osStorageAccount.clear();
         osStorageKey.clear();
 
-        const CPLString osBlobEndpoint = AzureCSGetParameter(
+        const std::string osBlobEndpoint = AzureCSGetParameter(
             osStorageConnectionString, "BlobEndpoint", false);
         osSAS = AzureCSGetParameter(osStorageConnectionString,
                                     "SharedAccessSignature", false);
@@ -522,7 +524,7 @@ static bool ParseStorageConnectionString(
         return false;
     }
 
-    const CPLString osBlobEndpoint =
+    const std::string osBlobEndpoint =
         AzureCSGetParameter(osStorageConnectionString, "BlobEndpoint", false);
     if (!osBlobEndpoint.empty())
     {
@@ -530,7 +532,7 @@ static bool ParseStorageConnectionString(
     }
     else
     {
-        const CPLString osEndpointSuffix(AzureCSGetParameter(
+        const std::string osEndpointSuffix(AzureCSGetParameter(
             osStorageConnectionString, "EndpointSuffix", false));
         if (!osEndpointSuffix.empty())
             osEndpoint = (bUseHTTPS ? "https://" : "http://") +
@@ -547,8 +549,8 @@ static bool ParseStorageConnectionString(
 
 static bool GetConfigurationFromCLIConfigFile(
     const std::string &osPathForOption, const std::string &osServicePrefix,
-    bool &bUseHTTPS, CPLString &osEndpoint, CPLString &osStorageAccount,
-    CPLString &osStorageKey, CPLString &osSAS, CPLString &osAccessToken,
+    bool &bUseHTTPS, std::string &osEndpoint, std::string &osStorageAccount,
+    std::string &osStorageKey, std::string &osSAS, std::string &osAccessToken,
     bool &bFromManagedIdentities)
 {
 #ifdef _WIN32
@@ -619,7 +621,7 @@ static bool GetConfigurationFromCLIConfigFile(
                     // https://docs.python.org/3/library/configparser.html#configparser.BasicInterpolation
                     // A token might end with %%3D which must be transformed to
                     // %3D
-                    osSAS.replaceAll("%%", '%');
+                    osSAS = CPLString(osSAS).replaceAll("%%", '%');
                 }
             }
             CPLFree(pszKey);
@@ -656,7 +658,7 @@ static bool GetConfigurationFromCLIConfigFile(
             return true;
         }
 
-        CPLString osTmpAccessToken;
+        std::string osTmpAccessToken;
         if (GetConfigurationFromManagedIdentities(osPathForOption,
                                                   osTmpAccessToken))
         {
@@ -678,20 +680,21 @@ static bool GetConfigurationFromCLIConfigFile(
 
 bool VSIAzureBlobHandleHelper::GetConfiguration(
     const std::string &osPathForOption, CSLConstList papszOptions,
-    Service eService, bool &bUseHTTPS, CPLString &osEndpoint,
-    CPLString &osStorageAccount, CPLString &osStorageKey, CPLString &osSAS,
-    CPLString &osAccessToken, bool &bFromManagedIdentities)
+    Service eService, bool &bUseHTTPS, std::string &osEndpoint,
+    std::string &osStorageAccount, std::string &osStorageKey,
+    std::string &osSAS, std::string &osAccessToken,
+    bool &bFromManagedIdentities)
 {
     bFromManagedIdentities = false;
 
-    const CPLString osServicePrefix(eService == Service::SERVICE_BLOB ? "blob"
-                                                                      : "dfs");
+    const std::string osServicePrefix(
+        eService == Service::SERVICE_BLOB ? "blob" : "dfs");
     bUseHTTPS = CPLTestBool(VSIGetPathSpecificOption(
         osPathForOption.c_str(), "CPL_AZURE_USE_HTTPS", "YES"));
     osEndpoint = VSIGetPathSpecificOption(osPathForOption.c_str(),
                                           "CPL_AZURE_ENDPOINT", "");
 
-    const CPLString osStorageConnectionString(CSLFetchNameValueDef(
+    const std::string osStorageConnectionString(CSLFetchNameValueDef(
         papszOptions, "AZURE_STORAGE_CONNECTION_STRING",
         VSIGetPathSpecificOption(osPathForOption.c_str(),
                                  "AZURE_STORAGE_CONNECTION_STRING", "")));
@@ -740,7 +743,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                         return true;
                     }
 
-                    CPLString osTmpAccessToken;
+                    std::string osTmpAccessToken;
                     if (GetConfigurationFromManagedIdentities(osPathForOption,
                                                               osTmpAccessToken))
                     {
@@ -805,11 +808,11 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
     osPathForOption += pszURI;
 
     bool bUseHTTPS = true;
-    CPLString osStorageAccount;
-    CPLString osStorageKey;
-    CPLString osEndpoint;
-    CPLString osSAS;
-    CPLString osAccessToken;
+    std::string osStorageAccount;
+    std::string osStorageKey;
+    std::string osEndpoint;
+    std::string osSAS;
+    std::string osAccessToken;
     bool bFromManagedIdentities = false;
 
     if (!GetConfiguration(osPathForOption, papszOptions, eService, bUseHTTPS,
@@ -828,9 +831,9 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
     }
 
     // pszURI == bucket/object
-    const CPLString osBucketObject(pszURI);
-    CPLString osBucket(osBucketObject);
-    CPLString osObjectKey;
+    const std::string osBucketObject(pszURI);
+    std::string osBucket(osBucketObject);
+    std::string osObjectKey;
     size_t nSlashPos = osBucketObject.find('/');
     if (nSlashPos != std::string::npos)
     {
@@ -847,12 +850,12 @@ VSIAzureBlobHandleHelper *VSIAzureBlobHandleHelper::BuildFromURI(
 /*                            BuildURL()                                */
 /************************************************************************/
 
-CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString &osEndpoint,
-                                             const CPLString &osBucket,
-                                             const CPLString &osObjectKey,
-                                             const CPLString &osSAS)
+std::string VSIAzureBlobHandleHelper::BuildURL(const std::string &osEndpoint,
+                                               const std::string &osBucket,
+                                               const std::string &osObjectKey,
+                                               const std::string &osSAS)
 {
-    CPLString osURL = osEndpoint;
+    std::string osURL = osEndpoint;
     osURL += "/";
     osURL += CPLAWSURLEncode(osBucket, false);
     if (!osObjectKey.empty())
@@ -868,7 +871,7 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString &osEndpoint,
 
 void VSIAzureBlobHandleHelper::RebuildURL()
 {
-    m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey, CPLString());
+    m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey, std::string());
     m_osURL += GetQueryString(false);
     if (!m_osSAS.empty())
         m_osURL += (m_oMapQueryParameters.empty() ? '?' : '&') + m_osSAS;
@@ -890,12 +893,12 @@ std::string VSIAzureBlobHandleHelper::GetSASQueryString() const
 /************************************************************************/
 
 struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
-    const CPLString &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
     const void *, size_t) const
 {
     if (m_bFromManagedIdentities || !m_osAccessToken.empty())
     {
-        CPLString osAccessToken;
+        std::string osAccessToken;
         if (m_bFromManagedIdentities)
         {
             if (!GetConfigurationFromManagedIdentities(m_osPathForOption,
@@ -918,7 +921,7 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
         return headers;
     }
 
-    CPLString osResource;
+    std::string osResource;
     const auto nSlashSlashPos = m_osEndpoint.find("//");
     if (nSlashSlashPos != std::string::npos)
     {
@@ -939,20 +942,20 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
+std::string VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
     if (m_osStorageKey.empty())
         return m_osURL;
 
-    CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp(time(nullptr)));
+    std::string osStartDate(CPLGetAWS_SIGN4_Timestamp(time(nullptr)));
     const char *pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
     if (pszStartDate)
         osStartDate = pszStartDate;
     int nYear, nMonth, nDay, nHour = 0, nMin = 0, nSec = 0;
-    if (sscanf(osStartDate, "%04d%02d%02dT%02d%02d%02dZ", &nYear, &nMonth,
-               &nDay, &nHour, &nMin, &nSec) < 3)
+    if (sscanf(osStartDate.c_str(), "%04d%02d%02dT%02d%02d%02dZ", &nYear,
+               &nMonth, &nDay, &nHour, &nMin, &nSec) < 3)
     {
-        return CPLString();
+        return std::string();
     }
     osStartDate = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear, nMonth,
                              nDay, nHour, nMin, nSec);
@@ -975,15 +978,16 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     nHour = brokendowntime.tm_hour;
     nMin = brokendowntime.tm_min;
     nSec = brokendowntime.tm_sec;
-    CPLString osEndDate = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear,
-                                     nMonth, nDay, nHour, nMin, nSec);
+    std::string osEndDate = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ", nYear,
+                                       nMonth, nDay, nHour, nMin, nSec);
 
-    CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
-    CPLString osSignedPermissions(CSLFetchNameValueDef(
+    std::string osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
+    std::string osSignedPermissions(CSLFetchNameValueDef(
         papszOptions, "SIGNEDPERMISSIONS",
-        (EQUAL(osVerb, "GET") || EQUAL(osVerb, "HEAD")) ? "r" : "w"));
+        (EQUAL(osVerb.c_str(), "GET") || EQUAL(osVerb.c_str(), "HEAD")) ? "r"
+                                                                        : "w"));
 
-    CPLString osSignedIdentifier(
+    std::string osSignedIdentifier(
         CSLFetchNameValueDef(papszOptions, "SIGNEDIDENTIFIER", ""));
 
     const std::string osSignedVersion("2020-12-06");
@@ -998,7 +1002,7 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     osCanonicalizedResource += CPLAWSURLEncode(m_osObjectKey, false);
 
     // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/create-service-sas
-    CPLString osStringToSign;
+    std::string osStringToSign;
     osStringToSign += osSignedPermissions + "\n";
     osStringToSign += osStartDate + "\n";
     osStringToSign += osEndDate + "\n";
@@ -1022,7 +1026,8 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     /* -------------------------------------------------------------------- */
     /*      Compute signature.                                              */
     /* -------------------------------------------------------------------- */
-    CPLString osSignature(CPLAzureGetSignature(osStringToSign, m_osStorageKey));
+    std::string osSignature(
+        CPLAzureGetSignature(osStringToSign, m_osStorageKey));
 
     ResetQueryParameters();
     AddQueryParameter("sv", osSignedVersion);

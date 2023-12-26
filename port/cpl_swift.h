@@ -40,50 +40,50 @@
 
 class VSISwiftHandleHelper final : public IVSIS3LikeHandleHelper
 {
-    CPLString m_osURL;
-    CPLString m_osStorageURL;
-    CPLString m_osAuthToken;
-    CPLString m_osBucket;
-    CPLString m_osObjectKey;
+    std::string m_osURL;
+    std::string m_osStorageURL;
+    std::string m_osAuthToken;
+    std::string m_osBucket;
+    std::string m_osObjectKey;
 
     static bool GetConfiguration(const std::string &osPathForOption,
-                                 CPLString &osStorageURL,
-                                 CPLString &osAuthToken);
+                                 std::string &osStorageURL,
+                                 std::string &osAuthToken);
 
     static bool GetCached(const std::string &osPathForOption,
                           const char *pszURLKey, const char *pszUserKey,
-                          const char *pszPasswordKey, CPLString &osStorageURL,
-                          CPLString &osAuthToken);
+                          const char *pszPasswordKey, std::string &osStorageURL,
+                          std::string &osAuthToken);
 
-    static CPLString BuildURL(const CPLString &osStorageURL,
-                              const CPLString &osBucket,
-                              const CPLString &osObjectKey);
+    static std::string BuildURL(const std::string &osStorageURL,
+                                const std::string &osBucket,
+                                const std::string &osObjectKey);
 
     void RebuildURL() override;
 
     // V1 Authentication
     static bool CheckCredentialsV1(const std::string &osPathForOption);
     static bool AuthV1(const std::string &osPathForOption,
-                       CPLString &osStorageURL, CPLString &osAuthToken);
+                       std::string &osStorageURL, std::string &osAuthToken);
 
     // V3 Authentication
     static bool CheckCredentialsV3(const std::string &osPathForOption,
-                                   const CPLString &osAuthType);
+                                   const std::string &osAuthType);
     static bool AuthV3(const std::string &osPathForOption,
-                       const CPLString &osAuthType, CPLString &osStorageURL,
-                       CPLString &osAuthToken);
+                       const std::string &osAuthType, std::string &osStorageURL,
+                       std::string &osAuthToken);
     static CPLJSONObject
     CreateAuthV3RequestObject(const std::string &osPathForOption,
-                              const CPLString &osAuthType);
+                              const std::string &osAuthType);
     static bool GetAuthV3StorageURL(const std::string &osPathForOption,
                                     const CPLHTTPResult *psResult,
-                                    CPLString &storageURL);
+                                    std::string &storageURL);
 
   public:
-    VSISwiftHandleHelper(const CPLString &osStorageURL,
-                         const CPLString &osAuthToken,
-                         const CPLString &osBucket,
-                         const CPLString &osObjectKey);
+    VSISwiftHandleHelper(const std::string &osStorageURL,
+                         const std::string &osAuthToken,
+                         const std::string &osBucket,
+                         const std::string &osObjectKey);
     ~VSISwiftHandleHelper();
 
     bool Authenticate(const std::string &osPathForOption);
@@ -92,12 +92,12 @@ class VSISwiftHandleHelper final : public IVSIS3LikeHandleHelper
                                               const char *pszFSPrefix);
 
     struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerbosVerb,
+    GetCurlHeaders(const std::string &osVerbosVerb,
                    const struct curl_slist *psExistingHeaders,
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const override;
 
-    const CPLString &GetURL() const override
+    const std::string &GetURL() const override
     {
         return m_osURL;
     }
