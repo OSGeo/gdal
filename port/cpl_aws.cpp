@@ -538,7 +538,14 @@ static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
 /*                  IsMachinePotentiallyEC2Instance()                   */
 /************************************************************************/
 
-static bool IsMachinePotentiallyEC2Instance()
+enum class EC2InstanceCertainty
+{
+    YES,
+    NO,
+    MAYBE
+};
+
+static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 {
 #if defined(__linux) || defined(WIN32)
     const auto IsMachinePotentiallyEC2InstanceFromLinuxHost = []()
@@ -560,7 +567,8 @@ static bool IsMachinePotentiallyEC2Instance()
             char uuid[36 + 1] = {0};
             VSIFReadL(uuid, 1, sizeof(uuid) - 1, fp);
             VSIFCloseL(fp);
-            return EQUALN(uuid, "ec2", 3);
+            return EQUALN(uuid, "ec2", 3) ? EC2InstanceCertainty::YES
+                                          : EC2InstanceCertainty::NO;
         }
 
         // Check for Nitro Hypervisor instances
@@ -572,11 +580,12 @@ static bool IsMachinePotentiallyEC2Instance()
             char buf[10 + 1] = {0};
             VSIFReadL(buf, 1, sizeof(buf) - 1, fp);
             VSIFCloseL(fp);
-            return EQUALN(buf, "Amazon EC2", 10);
+            return EQUALN(buf, "Amazon EC2", 10) ? EC2InstanceCertainty::YES
+                                                 : EC2InstanceCertainty::NO;
         }
 
         // Fallback: Check via the network
-        return true;
+        return EC2InstanceCertainty::MAYBE;
     };
 #endif
 
@@ -590,7 +599,7 @@ static bool IsMachinePotentiallyEC2Instance()
 
     if (!CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")))
     {
-        return true;
+        return EC2InstanceCertainty::MAYBE;
     }
     else
     {
@@ -601,7 +610,7 @@ static bool IsMachinePotentiallyEC2Instance()
                             "CPL_AWS_AUTODETECT_EC2 instead");
             if (!CPLTestBool(opt))
             {
-                return true;
+                return EC2InstanceCertainty::MAYBE;
             }
         }
     }
@@ -611,7 +620,7 @@ static bool IsMachinePotentiallyEC2Instance()
 #elif defined(WIN32)
     if (!CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")))
     {
-        return true;
+        return EC2InstanceCertainty::MAYBE;
     }
 
     // Regular UUID is not valid for WINE, fetch from sysfs instead.
@@ -628,26 +637,26 @@ static bool IsMachinePotentiallyEC2Instance()
             if (osMachineUUID.length() >= 3 &&
                 EQUALN(osMachineUUID.c_str(), "EC2", 3))
             {
-                return true;
+                return EC2InstanceCertainty::YES;
             }
             else if (osMachineUUID.length() >= 8 && osMachineUUID[4] == '2' &&
                      osMachineUUID[6] == 'E' && osMachineUUID[7] == 'C')
             {
-                return true;
+                return EC2InstanceCertainty::YES;
             }
             else
             {
-                return false;
+                return EC2InstanceCertainty::NO;
             }
         }
 #endif
     }
 
     // Fallback: Check via the network
-    return true;
+    return EC2InstanceCertainty::MAYBE;
 #else
     // At time of writing EC2 instances can be only Linux or Windows
-    return false;
+    return EC2InstanceCertainty::NO;
 #endif
 }
 
@@ -860,7 +869,8 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     }
     else
     {
-        if (!IsMachinePotentiallyEC2Instance())
+        const auto eIsEC2 = IsMachinePotentiallyEC2Instance();
+        if (eIsEC2 == EC2InstanceCertainty::NO)
             return false;
 
         // Use IMDSv2 protocol:
@@ -888,8 +898,8 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                 else
                 {
                     // Failure: either we are not running on EC2 (or something
-                    // emulating it) or this doesn't implement yet IDMSv2 Go on
-                    // trying IDMSv1
+                    // emulating it) or this doesn't implement yet IMDSv2.
+                    // Fallback to IMDSv1
 
                     // /latest/api/token doesn't work inside a Docker container
                     // that has no host networking. Cf
@@ -910,28 +920,15 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                             if (psResult2->nStatus == 0 &&
                                 psResult2->pabyData != nullptr)
                             {
-                                VSIStatBufL sStat;
-                                if (VSIStatL("/.dockerenv", &sStat) == 0)
-                                {
-                                    CPLDebug("AWS",
-                                             "/latest/api/token EC2 IDMSv2 "
-                                             "request timed out, but "
-                                             "/latest/metadata succeeded. "
-                                             "Trying with IDMSv1. "
-                                             "Try running your Docker "
-                                             "container with --network=host.");
-                                }
-                                else
-                                {
-                                    CPLDebug(
-                                        "AWS",
-                                        "/latest/api/token EC2 IDMSv2 request "
-                                        "timed out, but /latest/metadata "
-                                        "succeeded. "
-                                        "Trying with IDMSv1. "
-                                        "Are you running inside a container "
-                                        "that has no host networking ?");
-                                }
+                                CPLDebug("AWS",
+                                         "/latest/api/token EC2 IMDSv2 request "
+                                         "timed out, but /latest/metadata "
+                                         "succeeded. "
+                                         "Trying with IMDSv1. "
+                                         "Consult "
+                                         "https://gdal.org/user/"
+                                         "virtual_file_systems.html#vsis3_imds "
+                                         "for IMDS related issues.");
                             }
                             CPLHTTPDestroyResult(psResult2);
                         }
@@ -971,7 +968,17 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
             if (gosIAMRole.empty())
             {
                 // We didn't get the IAM role. We are definitely not running
-                // on EC2 or an emulation of it.
+                // on (a correctly configured) EC2 or an emulation of it.
+
+                if (eIsEC2 == EC2InstanceCertainty::YES)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "EC2 IMDSv2 and IMDSv1 requests failed. Consult "
+                             "https://gdal.org/user/"
+                             "virtual_file_systems.html#vsis3_imds "
+                             "for IMDS related issues.");
+                }
+
                 return false;
             }
         }
