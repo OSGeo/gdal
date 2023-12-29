@@ -256,7 +256,7 @@ std::string OGRFormatDouble(double val, const OGRWktOptions &opts)
 
     if (l_round)
         sval = intelliround(sval);
-    return removeTrailingZeros(sval);
+    return removeTrailingZeros(std::move(sval));
 }
 
 /************************************************************************/

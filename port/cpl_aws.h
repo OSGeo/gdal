@@ -43,54 +43,56 @@
 #include <curl/curl.h>
 #include <map>
 
-CPLString CPLGetLowerCaseHexSHA256(const void *pabyData, size_t nBytes);
-CPLString CPLGetLowerCaseHexSHA256(const CPLString &osStr);
+std::string CPLGetLowerCaseHexSHA256(const void *pabyData, size_t nBytes);
+std::string CPLGetLowerCaseHexSHA256(const std::string &osStr);
 
-CPLString CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp);
+std::string CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp);
 
-CPLString CPLAWSURLEncode(const CPLString &osURL, bool bEncodeSlash = true);
+std::string CPLAWSURLEncode(const std::string &osURL, bool bEncodeSlash = true);
 
-CPLString CPLAWSGetHeaderVal(const struct curl_slist *psExistingHeaders,
-                             const char *pszKey);
+std::string CPLAWSGetHeaderVal(const struct curl_slist *psExistingHeaders,
+                               const char *pszKey);
 
-CPLString CPLGetAWS_SIGN4_Signature(
-    const CPLString &osSecretAccessKey, const CPLString &osAccessToken,
-    const CPLString &osRegion, const CPLString &osRequestPayer,
-    const CPLString &osService, const CPLString &osVerb,
-    const struct curl_slist *psExistingHeaders, const CPLString &osHost,
-    const CPLString &osCanonicalURI, const CPLString &osCanonicalQueryString,
-    const CPLString &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
-    const CPLString &osTimestamp, CPLString &osSignedHeaders);
+std::string CPLGetAWS_SIGN4_Signature(
+    const std::string &osSecretAccessKey, const std::string &osAccessToken,
+    const std::string &osRegion, const std::string &osRequestPayer,
+    const std::string &osService, const std::string &osVerb,
+    const struct curl_slist *psExistingHeaders, const std::string &osHost,
+    const std::string &osCanonicalURI,
+    const std::string &osCanonicalQueryString,
+    const std::string &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
+    const std::string &osTimestamp, std::string &osSignedHeaders);
 
-CPLString CPLGetAWS_SIGN4_Authorization(
-    const CPLString &osSecretAccessKey, const CPLString &osAccessKeyId,
-    const CPLString &osAccessToken, const CPLString &osRegion,
-    const CPLString &osRequestPayer, const CPLString &osService,
-    const CPLString &osVerb, const struct curl_slist *psExistingHeaders,
-    const CPLString &osHost, const CPLString &osCanonicalURI,
-    const CPLString &osCanonicalQueryString,
-    const CPLString &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
-    const CPLString &osTimestamp);
+std::string CPLGetAWS_SIGN4_Authorization(
+    const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
+    const std::string &osAccessToken, const std::string &osRegion,
+    const std::string &osRequestPayer, const std::string &osService,
+    const std::string &osVerb, const struct curl_slist *psExistingHeaders,
+    const std::string &osHost, const std::string &osCanonicalURI,
+    const std::string &osCanonicalQueryString,
+    const std::string &osXAMZContentSHA256, bool bAddHeaderAMZContentSHA256,
+    const std::string &osTimestamp);
 
 class IVSIS3LikeHandleHelper
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeHandleHelper)
 
   protected:
-    std::map<CPLString, CPLString> m_oMapQueryParameters{};
+    std::map<std::string, std::string> m_oMapQueryParameters{};
 
     virtual void RebuildURL() = 0;
-    CPLString GetQueryString(bool bAddEmptyValueAfterEqual) const;
+    std::string GetQueryString(bool bAddEmptyValueAfterEqual) const;
 
   public:
     IVSIS3LikeHandleHelper() = default;
     virtual ~IVSIS3LikeHandleHelper() = default;
 
     void ResetQueryParameters();
-    void AddQueryParameter(const CPLString &osKey, const CPLString &osValue);
+    void AddQueryParameter(const std::string &osKey,
+                           const std::string &osValue);
 
     virtual struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerb,
+    GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders,
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const = 0;
@@ -105,10 +107,10 @@ class IVSIS3LikeHandleHelper
         return false;
     }
 
-    virtual const CPLString &GetURL() const = 0;
-    CPLString GetURLNoKVP() const;
+    virtual const std::string &GetURL() const = 0;
+    std::string GetURLNoKVP() const;
 
-    virtual CPLString GetCopySourceHeader() const
+    virtual std::string GetCopySourceHeader() const
     {
         return std::string();
     }
@@ -120,15 +122,15 @@ class IVSIS3LikeHandleHelper
     static bool GetBucketAndObjectKey(const char *pszURI,
                                       const char *pszFSPrefix,
                                       bool bAllowNoObject,
-                                      CPLString &osBucketOut,
-                                      CPLString &osObjectKeyOut);
+                                      std::string &osBucketOut,
+                                      std::string &osObjectKeyOut);
 
-    static CPLString
-    BuildCanonicalizedHeaders(std::map<CPLString, CPLString> &oSortedMapHeaders,
-                              const struct curl_slist *psExistingHeaders,
-                              const char *pszHeaderPrefix);
+    static std::string BuildCanonicalizedHeaders(
+        std::map<std::string, std::string> &oSortedMapHeaders,
+        const struct curl_slist *psExistingHeaders,
+        const char *pszHeaderPrefix);
 
-    static CPLString GetRFC822DateTime();
+    static std::string GetRFC822DateTime();
 };
 
 enum class AWSCredentialsSource
@@ -149,15 +151,15 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIS3HandleHelper)
 
-    CPLString m_osURL{};
-    mutable CPLString m_osSecretAccessKey{};
-    mutable CPLString m_osAccessKeyId{};
-    mutable CPLString m_osSessionToken{};
-    CPLString m_osEndpoint{};
-    CPLString m_osRegion{};
-    CPLString m_osRequestPayer{};
-    CPLString m_osBucket{};
-    CPLString m_osObjectKey{};
+    std::string m_osURL{};
+    mutable std::string m_osSecretAccessKey{};
+    mutable std::string m_osAccessKeyId{};
+    mutable std::string m_osSessionToken{};
+    std::string m_osEndpoint{};
+    std::string m_osRegion{};
+    std::string m_osRequestPayer{};
+    std::string m_osBucket{};
+    std::string m_osObjectKey{};
     bool m_bUseHTTPS = false;
     bool m_bUseVirtualHosting = false;
     AWSCredentialsSource m_eCredentialsSource = AWSCredentialsSource::REGULAR;
@@ -165,37 +167,38 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     void RebuildURL() override;
 
     static bool GetOrRefreshTemporaryCredentialsForRole(
-        bool bForceRefresh, CPLString &osSecretAccessKey,
-        CPLString &osAccessKeyId, CPLString &osSessionToken,
-        CPLString &osRegion);
+        bool bForceRefresh, std::string &osSecretAccessKey,
+        std::string &osAccessKeyId, std::string &osSessionToken,
+        std::string &osRegion);
 
     static bool GetConfigurationFromAssumeRoleWithWebIdentity(
         bool bForceRefresh, const std::string &osPathForOption,
         const std::string &osRoleArnIn,
         const std::string &osWebIdentityTokenFileIn,
-        CPLString &osSecretAccessKey, CPLString &osAccessKeyId,
-        CPLString &osSessionToken);
+        std::string &osSecretAccessKey, std::string &osAccessKeyId,
+        std::string &osSessionToken);
 
     static bool GetConfigurationFromEC2(bool bForceRefresh,
                                         const std::string &osPathForOption,
-                                        CPLString &osSecretAccessKey,
-                                        CPLString &osAccessKeyId,
-                                        CPLString &osSessionToken);
+                                        std::string &osSecretAccessKey,
+                                        std::string &osAccessKeyId,
+                                        std::string &osSessionToken);
 
     static bool GetConfigurationFromAWSConfigFiles(
         const std::string &osPathForOption, const char *pszProfile,
-        CPLString &osSecretAccessKey, CPLString &osAccessKeyId,
-        CPLString &osSessionToken, CPLString &osRegion,
-        CPLString &osCredentials, CPLString &osRoleArn,
-        CPLString &osSourceProfile, CPLString &osExternalId,
-        CPLString &osMFASerial, CPLString &osRoleSessionName,
-        CPLString &osWebIdentityTokenFile);
+        std::string &osSecretAccessKey, std::string &osAccessKeyId,
+        std::string &osSessionToken, std::string &osRegion,
+        std::string &osCredentials, std::string &osRoleArn,
+        std::string &osSourceProfile, std::string &osExternalId,
+        std::string &osMFASerial, std::string &osRoleSessionName,
+        std::string &osWebIdentityTokenFile);
 
     static bool GetConfiguration(const std::string &osPathForOption,
                                  CSLConstList papszOptions,
-                                 CPLString &osSecretAccessKey,
-                                 CPLString &osAccessKeyId,
-                                 CPLString &osSessionToken, CPLString &osRegion,
+                                 std::string &osSecretAccessKey,
+                                 std::string &osAccessKeyId,
+                                 std::string &osSessionToken,
+                                 std::string &osRegion,
                                  AWSCredentialsSource &eCredentialsSource);
 
     void RefreshCredentials(const std::string &osPathForOption,
@@ -203,27 +206,26 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
 
   protected:
   public:
-    VSIS3HandleHelper(const CPLString &osSecretAccessKey,
-                      const CPLString &osAccessKeyId,
-                      const CPLString &osSessionToken,
-                      const CPLString &osEndpoint, const CPLString &osRegion,
-                      const CPLString &osRequestPayer,
-                      const CPLString &osBucket, const CPLString &osObjectKey,
-                      bool bUseHTTPS, bool bUseVirtualHosting,
-                      AWSCredentialsSource eCredentialsSource);
+    VSIS3HandleHelper(
+        const std::string &osSecretAccessKey, const std::string &osAccessKeyId,
+        const std::string &osSessionToken, const std::string &osEndpoint,
+        const std::string &osRegion, const std::string &osRequestPayer,
+        const std::string &osBucket, const std::string &osObjectKey,
+        bool bUseHTTPS, bool bUseVirtualHosting,
+        AWSCredentialsSource eCredentialsSource);
     ~VSIS3HandleHelper();
 
     static VSIS3HandleHelper *BuildFromURI(const char *pszURI,
                                            const char *pszFSPrefix,
                                            bool bAllowNoObject,
                                            CSLConstList papszOptions = nullptr);
-    static CPLString BuildURL(const CPLString &osEndpoint,
-                              const CPLString &osBucket,
-                              const CPLString &osObjectKey, bool bUseHTTPS,
-                              bool bUseVirtualHosting);
+    static std::string BuildURL(const std::string &osEndpoint,
+                                const std::string &osBucket,
+                                const std::string &osObjectKey, bool bUseHTTPS,
+                                bool bUseVirtualHosting);
 
     struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerb,
+    GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders,
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const override;
@@ -235,27 +237,27 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     bool CanRestartOnError(const char *, const char *pszHeaders,
                            bool bSetError) override;
 
-    const CPLString &GetURL() const override
+    const std::string &GetURL() const override
     {
         return m_osURL;
     }
-    const CPLString &GetBucket() const
+    const std::string &GetBucket() const
     {
         return m_osBucket;
     }
-    const CPLString &GetObjectKey() const
+    const std::string &GetObjectKey() const
     {
         return m_osObjectKey;
     }
-    const CPLString &GetEndpoint() const
+    const std::string &GetEndpoint() const
     {
         return m_osEndpoint;
     }
-    const CPLString &GetRegion() const
+    const std::string &GetRegion() const
     {
         return m_osRegion;
     }
-    const CPLString &GetRequestPayer() const
+    const std::string &GetRequestPayer() const
     {
         return m_osRequestPayer;
     }
@@ -263,12 +265,12 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     {
         return m_bUseVirtualHosting;
     }
-    void SetEndpoint(const CPLString &osStr);
-    void SetRegion(const CPLString &osStr);
-    void SetRequestPayer(const CPLString &osStr);
+    void SetEndpoint(const std::string &osStr);
+    void SetRegion(const std::string &osStr);
+    void SetRequestPayer(const std::string &osStr);
     void SetVirtualHosting(bool b);
 
-    CPLString GetCopySourceHeader() const override
+    std::string GetCopySourceHeader() const override
     {
         return "x-amz-copy-source";
     }
@@ -277,7 +279,7 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         return "x-amz-metadata-directive: REPLACE";
     }
 
-    CPLString GetSignedURL(CSLConstList papszOptions);
+    std::string GetSignedURL(CSLConstList papszOptions);
 
     static void CleanMutex();
     static void ClearCache();
@@ -286,9 +288,9 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
 class VSIS3UpdateParams
 {
   private:
-    CPLString m_osRegion{};
-    CPLString m_osEndpoint{};
-    CPLString m_osRequestPayer{};
+    std::string m_osRegion{};
+    std::string m_osEndpoint{};
+    std::string m_osRequestPayer{};
     bool m_bUseVirtualHosting = false;
 
     explicit VSIS3UpdateParams(const VSIS3HandleHelper *poHelper)
@@ -308,7 +310,7 @@ class VSIS3UpdateParams
     }
 
     static std::mutex gsMutex;
-    static std::map<CPLString, VSIS3UpdateParams> goMapBucketsToS3Params;
+    static std::map<std::string, VSIS3UpdateParams> goMapBucketsToS3Params;
 
   public:
     VSIS3UpdateParams() = default;

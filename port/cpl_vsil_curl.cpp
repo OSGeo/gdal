@@ -298,7 +298,7 @@ static int VSICurlIsFileInList(char **papszList, const char *pszTarget)
 /*                      VSICurlGetURLFromFilename()                     */
 /************************************************************************/
 
-static CPLString VSICurlGetURLFromFilename(
+static std::string VSICurlGetURLFromFilename(
     const char *pszFilename, int *pnMaxRetry, double *pdfRetryDelay,
     bool *pbUseHead, bool *pbUseRedirectURLIfNoQueryStringParams,
     bool *pbListDir, bool *pbEmptyDir, char ***ppapszHTTPOptions,
@@ -327,7 +327,7 @@ static CPLString VSICurlGetURLFromFilename(
             papszTokens[i] = pszUnescaped;
         }
 
-        CPLString osURL;
+        std::string osURL;
         for (int i = 0; papszTokens[i]; i++)
         {
             char *pszKey = nullptr;
@@ -453,11 +453,13 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
     else
     {
         char *pszPCCollection = nullptr;
-        m_pszURL = CPLStrdup(VSICurlGetURLFromFilename(
-            pszFilename, &m_nMaxRetry, &m_dfRetryDelay, &m_bUseHead,
-            &m_bUseRedirectURLIfNoQueryStringParams, nullptr, nullptr,
-            &m_papszHTTPOptions, &m_bPlanetaryComputerURLSigning,
-            &pszPCCollection));
+        m_pszURL =
+            CPLStrdup(VSICurlGetURLFromFilename(
+                          pszFilename, &m_nMaxRetry, &m_dfRetryDelay,
+                          &m_bUseHead, &m_bUseRedirectURLIfNoQueryStringParams,
+                          nullptr, nullptr, &m_papszHTTPOptions,
+                          &m_bPlanetaryComputerURLSigning, &pszPCCollection)
+                          .c_str());
         if (pszPCCollection)
             m_osPlanetaryComputerCollection = pszPCCollection;
         CPLFree(pszPCCollection);
@@ -481,7 +483,7 @@ VSICurlHandle::~VSICurlHandle()
     if (!m_bCached)
     {
         poFS->InvalidateCachedData(m_pszURL);
-        poFS->InvalidateDirContent(CPLGetDirname(m_osFilename));
+        poFS->InvalidateDirContent(CPLGetDirname(m_osFilename.c_str()));
     }
     CPLFree(m_pszURL);
     CSLDestroy(m_papszHTTPOptions);
@@ -683,7 +685,7 @@ size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                 osDate.Trim();
 
                 GIntBig nTimestampDate =
-                    VSICurlGetTimeStampFromRFC822DateTime(osDate);
+                    VSICurlGetTimeStampFromRFC822DateTime(osDate.c_str());
 #if DEBUG_VERBOSE
                 CPLDebug("VSICURL", "Timestamp = " CPL_FRMT_GIB,
                          nTimestampDate);
@@ -1038,8 +1040,8 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
     if (oFileProp.bHasComputedFileSize && !bGetHeaders)
         return oFileProp.fileSize;
 
-    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
-    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
+    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("GetFileSize");
 
     oFileProp.bHasComputedFileSize = true;
@@ -1048,7 +1050,7 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
 
     ManagePlanetaryComputerSigning();
 
-    CPLString osURL(m_pszURL + m_osQueryString);
+    std::string osURL(m_pszURL + m_osQueryString);
     bool bRetryWithGet = false;
     bool bS3LikeRedirect = false;
     int nRetryCount = 0;
@@ -1058,19 +1060,19 @@ retry:
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
 
     WriteFuncStruct sWriteFuncHeaderData;
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr,
                                nullptr);
     sWriteFuncHeaderData.bDetectRangeDownloadingError = false;
-    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(osURL, "http");
+    sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(osURL.c_str(), "http");
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
 
-    CPLString osVerb;
-    CPLString osRange;  // leave in this scope !
+    std::string osVerb;
+    std::string osRange;  // leave in this scope !
     int nRoundedBufSize = 0;
     const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
     if (UseLimitRangeGetInsteadOfHead())
@@ -1085,15 +1087,16 @@ retry:
             knDOWNLOAD_CHUNK_SIZE;
 
         // so it gets included in Azure signature
-        osRange.Printf("Range: bytes=0-%d", nRoundedBufSize - 1);
+        osRange = CPLSPrintf("Range: bytes=0-%d", nRoundedBufSize - 1);
         headers = curl_slist_append(headers, osRange.c_str());
     }
     // HACK for mbtiles driver: http://a.tiles.mapbox.com/v3/ doesn't accept
     // HEAD, as it is a redirect to AWS S3 signed URL, but those are only valid
     // for a given type of HTTP request, and thus GET. This is valid for any
     // signed URL for AWS S3.
-    else if (bRetryWithGet || strstr(osURL, ".tiles.mapbox.com/") != nullptr ||
-             VSICurlIsS3LikeSignedURL(osURL) || !m_bUseHead)
+    else if (bRetryWithGet ||
+             strstr(osURL.c_str(), ".tiles.mapbox.com/") != nullptr ||
+             VSICurlIsS3LikeSignedURL(osURL.c_str()) || !m_bUseHead)
     {
         sWriteFuncData.bInterrupted = true;
         osVerb = "GET";
@@ -1145,7 +1148,7 @@ retry:
     else
         NetworkStatisticsLogger::LogHEAD();
 
-    if (STARTS_WITH(osURL, "ftp"))
+    if (STARTS_WITH(osURL.c_str(), "ftp"))
     {
         if (sWriteFuncData.pBuffer != nullptr)
         {
@@ -1199,7 +1202,7 @@ retry:
                      szCurlErrBuf);
         }
 
-        CPLString osEffectiveURL;
+        std::string osEffectiveURL;
         {
             char *pszEffectiveURL = nullptr;
             curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL,
@@ -1208,7 +1211,8 @@ retry:
                 osEffectiveURL = pszEffectiveURL;
         }
 
-        if (!osEffectiveURL.empty() && strstr(osEffectiveURL, osURL) == nullptr)
+        if (!osEffectiveURL.empty() &&
+            strstr(osEffectiveURL.c_str(), osURL.c_str()) == nullptr)
         {
             CPLDebug(poFS->GetDebugKey(), "Effective URL: %s",
                      osEffectiveURL.c_str());
@@ -1221,8 +1225,8 @@ retry:
             }
 
             // Is this is a redirect to a S3 URL?
-            if (VSICurlIsS3LikeSignedURL(osEffectiveURL) &&
-                !VSICurlIsS3LikeSignedURL(osURL))
+            if (VSICurlIsS3LikeSignedURL(osEffectiveURL.c_str()) &&
+                !VSICurlIsS3LikeSignedURL(osURL.c_str()))
             {
                 // Note that this is a redirect as we won't notice after the
                 // retry.
@@ -1251,7 +1255,7 @@ retry:
                 CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")))
         {
             const GIntBig nExpireTimestamp =
-                VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
+                VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL.c_str());
             if (nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10)
             {
                 const int nValidity = static_cast<int>(
@@ -1328,7 +1332,7 @@ retry:
                     if (bIsDir || bIsFile)
                     {
                         oFileProp.bIsDirectory = bIsDir;
-                        CPLString osPermissions;
+                        std::string osPermissions;
                         osPermissions.assign(pszPermissions,
                                              pszEOL - pszPermissions);
                         if (bIsDir)
@@ -1336,7 +1340,7 @@ retry:
                         else
                             oFileProp.nMode = S_IFREG;
                         oFileProp.nMode |=
-                            VSICurlParseUnixPermissions(osPermissions);
+                            VSICurlParseUnixPermissions(osPermissions.c_str());
                     }
                 }
             }
@@ -1396,7 +1400,8 @@ retry:
                 }
             }
         }
-        else if (IsDirectoryFromExists(osVerb, static_cast<int>(response_code)))
+        else if (IsDirectoryFromExists(osVerb.c_str(),
+                                       static_cast<int>(response_code)))
         {
             oFileProp.eExists = EXIST_YES;
             oFileProp.fileSize = 0;
@@ -1499,7 +1504,7 @@ retry:
         // Try to guess if this is a directory. Generally if this is a
         // directory, curl will retry with an URL with slash added.
         if (!osEffectiveURL.empty() &&
-            strncmp(osURL, osEffectiveURL, osURL.size()) == 0 &&
+            strncmp(osURL.c_str(), osEffectiveURL.c_str(), osURL.size()) == 0 &&
             osEffectiveURL[osURL.size()] == '/')
         {
             oFileProp.eExists = EXIST_YES;
@@ -1570,12 +1575,12 @@ vsi_l_offset VSICurlHandle::Tell()
 /*                       GetRedirectURLIfValid()                        */
 /************************************************************************/
 
-CPLString VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired) const
+std::string VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired) const
 {
     bHasExpired = false;
     poFS->GetCachedFileProp(m_pszURL, oFileProp);
 
-    CPLString osURL(m_pszURL + m_osQueryString);
+    std::string osURL(m_pszURL + m_osQueryString);
     if (oFileProp.bS3LikeRedirect)
     {
         if (time(nullptr) + 1 < oFileProp.nExpireTimestampLocal)
@@ -1758,7 +1763,7 @@ begin:
     ManagePlanetaryComputerSigning();
 
     bool bHasExpired = false;
-    CPLString osURL(GetRedirectURLIfValid(bHasExpired));
+    std::string osURL(GetRedirectURLIfValid(bHasExpired));
     bool bUsedRedirect = osURL != m_pszURL;
 
     WriteFuncStruct sWriteFuncData;
@@ -1769,7 +1774,7 @@ begin:
 retry:
     CURL *hCurlHandle = curl_easy_init();
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
 
     if (!AllowAutomaticRedirection())
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
@@ -1805,10 +1810,10 @@ retry:
         CPLDebug(poFS->GetDebugKey(), "Downloading %s (%s)...", rangeStr,
                  osURL.c_str());
 
-    CPLString osHeaderRange;  // leave in this scope
+    std::string osHeaderRange;  // leave in this scope
     if (sWriteFuncHeaderData.bIsHTTP)
     {
-        osHeaderRange.Printf("Range: bytes=%s", rangeStr);
+        osHeaderRange = CPLSPrintf("Range: bytes=%s", rangeStr);
         // So it gets included in Azure signature
         headers = curl_slist_append(headers, osHeaderRange.c_str());
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
@@ -2049,7 +2054,7 @@ retry:
 void VSICurlHandle::UpdateRedirectInfo(
     CURL *hCurlHandle, const WriteFuncStruct &sWriteFuncHeaderData)
 {
-    CPLString osEffectiveURL;
+    std::string osEffectiveURL;
     {
         char *pszEffectiveURL = nullptr;
         curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL,
@@ -2059,7 +2064,7 @@ void VSICurlHandle::UpdateRedirectInfo(
     }
 
     if (!oFileProp.bS3LikeRedirect && !osEffectiveURL.empty() &&
-        strstr(osEffectiveURL, m_pszURL) == nullptr)
+        strstr(osEffectiveURL.c_str(), m_pszURL) == nullptr)
     {
         CPLDebug(poFS->GetDebugKey(), "Effective URL: %s",
                  osEffectiveURL.c_str());
@@ -2068,13 +2073,13 @@ void VSICurlHandle::UpdateRedirectInfo(
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if (response_code >= 200 && response_code < 300 &&
             sWriteFuncHeaderData.nTimestampDate > 0 &&
-            VSICurlIsS3LikeSignedURL(osEffectiveURL) &&
+            VSICurlIsS3LikeSignedURL(osEffectiveURL.c_str()) &&
             !VSICurlIsS3LikeSignedURL(m_pszURL) &&
             CPLTestBool(
                 CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")))
         {
             GIntBig nExpireTimestamp =
-                VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
+                VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL.c_str());
             if (nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10)
             {
                 const int nValidity = static_cast<int>(
@@ -2140,8 +2145,8 @@ void VSICurlHandle::DownloadRegionPostProcess(const vsi_l_offset startOffset,
 size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
                            size_t const nMemb)
 {
-    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
-    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
+    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("Read");
 
     size_t nBufferRequestSize = nSize * nMemb;
@@ -2293,8 +2298,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
     if (oFileProp.eExists == EXIST_NO)
         return -1;
 
-    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
-    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
+    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("ReadMultiRange");
 
     const char *pszMultiRangeStrategy =
@@ -2314,7 +2319,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
     ManagePlanetaryComputerSigning();
 
     bool bHasExpired = false;
-    CPLString osURL(GetRedirectURLIfValid(bHasExpired));
+    std::string osURL(GetRedirectURLIfValid(bHasExpired));
     if (bHasExpired)
     {
         return VSIVirtualHandle::ReadMultiRange(nRanges, ppData, panOffsets,
@@ -2378,7 +2383,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
         struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+            VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
 
         VSICURLInitWriteFuncStruct(&asWriteFuncData[iRequest], this, pfnReadCbk,
                                    pReadCbkUserData);
@@ -2409,10 +2414,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
 
         if (asWriteFuncHeaderData[iRequest].bIsHTTP)
         {
-            CPLString osHeaderRange;
-            osHeaderRange.Printf("Range: bytes=%s", rangeStr);
             // So it gets included in Azure signature
-            char *pszRange = CPLStrdup(osHeaderRange);
+            char *pszRange = CPLStrdup(CPLSPrintf("Range: bytes=%s", rangeStr));
             apszRanges.push_back(pszRange);
             headers = curl_slist_append(headers, pszRange);
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
@@ -2552,14 +2555,14 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                                            const vsi_l_offset *const panOffsets,
                                            const size_t *const panSizes)
 {
-    CPLString osRanges;
-    CPLString osFirstRange;
-    CPLString osLastRange;
+    std::string osRanges;
+    std::string osFirstRange;
+    std::string osLastRange;
     int nMergedRanges = 0;
     vsi_l_offset nTotalReqSize = 0;
     for (int i = 0; i < nRanges; i++)
     {
-        CPLString osCurRange;
+        std::string osCurRange;
         if (i != 0)
             osRanges.append(",");
         osCurRange = CPLSPrintf(CPL_FRMT_GUIB "-", panOffsets[i]);
@@ -2702,7 +2705,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     // TODO(schwehr): Localize after removing gotos.
     int nRet = -1;
     char *pszBoundary;
-    CPLString osBoundary;
+    std::string osBoundary;
     char *pszNext = nullptr;
     int iRange = 0;
     int iPart = 0;
@@ -2873,7 +2876,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
 
         while (nBytesAvail > 0 &&
                (*pszNext != '-' ||
-                strncmp(pszNext, osBoundary, osBoundary.size()) != 0))
+                strncmp(pszNext, osBoundary.c_str(), osBoundary.size()) != 0))
         {
             pszNext++;
             nBytesAvail--;
@@ -2967,8 +2970,8 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     if (oFileProp.eExists == EXIST_NO)
         return static_cast<size_t>(-1);
 
-    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
-    NetworkStatisticsFile oContextFile(m_osFilename);
+    NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
+    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
     NetworkStatisticsAction oContextAction("PRead");
 
     std::string osURL;
@@ -3013,10 +3016,10 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
                  "Downloading %s (%s)...", rangeStr, osURL.c_str());
 #endif
 
-    CPLString osHeaderRange;
+    std::string osHeaderRange;
     if (sWriteFuncHeaderData.bIsHTTP)
     {
-        osHeaderRange.Printf("Range: bytes=%s", rangeStr);
+        osHeaderRange = CPLSPrintf("Range: bytes=%s", rangeStr);
         // So it gets included in Azure signature
         headers = curl_slist_append(headers, osHeaderRange.data());
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
@@ -3196,8 +3199,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
     {
         CURLM *hMultiHandle = curl_multi_init();
 
-        NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
-        NetworkStatisticsFile oContextFile(m_osFilename);
+        NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix().c_str());
+        NetworkStatisticsFile oContextFile(m_osFilename.c_str());
         NetworkStatisticsAction oContextAction("AdviseRead");
 
 #ifdef CURLPIPE_MULTIPLEX
@@ -3275,10 +3278,10 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
             if (asWriteFuncHeaderData[i].bIsHTTP)
             {
-                CPLString osHeaderRange;
-                osHeaderRange.Printf("Range: bytes=%s", rangeStr);
+                std::string osHeaderRange(
+                    CPLSPrintf("Range: bytes=%s", rangeStr));
                 // So it gets included in Azure signature
-                char *pszRange = CPLStrdup(osHeaderRange);
+                char *pszRange = CPLStrdup(osHeaderRange.c_str());
                 apszRanges.push_back(pszRange);
                 headers = curl_slist_append(headers, pszRange);
                 unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
@@ -3578,8 +3581,8 @@ bool VSICurlFilesystemHandlerBase::AllowCachedDataFor(const char *pszFilename)
 /*                     GetCurlMultiHandleFor()                          */
 /************************************************************************/
 
-CURLM *
-VSICurlFilesystemHandlerBase::GetCurlMultiHandleFor(const CPLString & /*osURL*/)
+CURLM *VSICurlFilesystemHandlerBase::GetCurlMultiHandleFor(
+    const std::string & /*osURL*/)
 {
     auto &conn = GetConnectionCache()[this];
     if (conn.hCurlMultiHandle == nullptr)
@@ -3730,10 +3733,10 @@ void VSICurlFilesystemHandlerBase::SetCachedDirList(
 /************************************************************************/
 
 bool VSICurlFilesystemHandlerBase::ExistsInCacheDirList(
-    const CPLString &osDirname, bool *pbIsDir)
+    const std::string &osDirname, bool *pbIsDir)
 {
     CachedDirList cachedDirList;
-    if (GetCachedDirList(osDirname, cachedDirList))
+    if (GetCachedDirList(osDirname.c_str(), cachedDirList))
     {
         if (pbIsDir)
             *pbIsDir = !cachedDirList.oFileList.empty();
@@ -3806,7 +3809,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
 {
     CPLMutexHolder oHolder(&hMutex);
 
-    CPLString osURL = GetURLFromFilename(pszFilenamePrefix);
+    std::string osURL = GetURLFromFilename(pszFilenamePrefix);
     {
         std::list<FilenameOffsetPair> keysToRemove;
         auto lambda =
@@ -3814,7 +3817,8 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
                 const lru11::KeyValuePair<FilenameOffsetPair,
                                           std::shared_ptr<std::string>> &kv)
         {
-            if (strncmp(kv.key.filename_.c_str(), osURL, osURL.size()) == 0)
+            if (strncmp(kv.key.filename_.c_str(), osURL.c_str(),
+                        osURL.size()) == 0)
                 keysToRemove.push_back(kv.key);
         };
         auto *poRegionCache = GetRegionCache();
@@ -3828,7 +3832,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
         auto lambda = [&keysToRemove,
                        &osURL](const lru11::KeyValuePair<std::string, bool> &kv)
         {
-            if (strncmp(kv.key.c_str(), osURL, osURL.size()) == 0)
+            if (strncmp(kv.key.c_str(), osURL.c_str(), osURL.size()) == 0)
                 keysToRemove.push_back(kv.key);
         };
         oCacheFileProp.cwalk(lambda);
@@ -3875,7 +3879,7 @@ const char *VSICurlFilesystemHandlerBase::GetActualURL(const char *pszFilename)
     VSICurlHandle *poHandle = CreateFileHandle(pszFilename);
     if (poHandle == nullptr)
         return pszFilename;
-    CPLString osURL(poHandle->GetURL());
+    std::string osURL(poHandle->GetURL());
     delete poHandle;
     return CPLSPrintf("%s", osURL.c_str());
 }
@@ -3941,8 +3945,8 @@ const char *VSICurlFilesystemHandlerBase::GetOptionsStatic()
 
 const char *VSICurlFilesystemHandlerBase::GetOptions()
 {
-    static CPLString osOptions(CPLString("<Options>") + GetOptionsStatic() +
-                               "</Options>");
+    static std::string osOptions(std::string("<Options>") + GetOptionsStatic() +
+                                 "</Options>");
     return osOptions.c_str();
 }
 
@@ -4025,7 +4029,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
                                                      bool bSetError,
                                                      CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?"))
         return nullptr;
 
@@ -4060,22 +4064,23 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         !bListDir || bEmptyDir || EQUAL(pszOptionVal, "EMPTY_DIR") ||
         CPLTestBool(pszOptionVal) || !AllowCachedDataFor(pszFilename);
 
-    CPLString osFilename(pszFilename);
+    std::string osFilename(pszFilename);
     bool bGotFileList = !bSkipReadDir;
     bool bForceExistsCheck = false;
     FileProp cachedFileProp;
-    if (!(GetCachedFileProp(osFilename + strlen(GetFSPrefix()),
+    if (!(GetCachedFileProp(osFilename.c_str() + strlen(GetFSPrefix().c_str()),
                             cachedFileProp) &&
           cachedFileProp.eExists == EXIST_YES) &&
-        strchr(CPLGetFilename(osFilename), '.') != nullptr &&
-        !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
+        strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
+        !STARTS_WITH(CPLGetExtension(osFilename.c_str()), "zip") &&
+        !bSkipReadDir)
     {
         char **papszFileList = ReadDirInternal(
-            (std::string(CPLGetDirname(osFilename)) + '/').c_str(), 0,
+            (std::string(CPLGetDirname(osFilename.c_str())) + '/').c_str(), 0,
             &bGotFileList);
         const bool bFound =
-            VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) !=
-            -1;
+            VSICurlIsFileInList(papszFileList,
+                                CPLGetFilename(osFilename.c_str())) != -1;
         if (bGotFileList && !bFound)
         {
             // Some file servers are case insensitive, so in case there is a
@@ -4085,7 +4090,8 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
             // that is queried by
             // gdalinfo
             // /vsicurl/http://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg004/mega90n000cb.lbl
-            if (CSLFindString(papszFileList, CPLGetFilename(osFilename)) != -1)
+            if (CSLFindString(papszFileList,
+                              CPLGetFilename(osFilename.c_str())) != -1)
             {
                 bForceExistsCheck = true;
             }
@@ -4098,7 +4104,7 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         CSLDestroy(papszFileList);
     }
 
-    VSICurlHandle *poHandle = CreateFileHandle(osFilename);
+    VSICurlHandle *poHandle = CreateFileHandle(osFilename.c_str());
     if (poHandle == nullptr)
         return nullptr;
     if (!bGotFileList || bForceExistsCheck)
@@ -4306,33 +4312,33 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
 {
     *pbGotFileList = false;
 
-    CPLString osURL(VSICurlGetURLFromFilename(
+    std::string osURL(VSICurlGetURLFromFilename(
         pszFilename, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
         nullptr, nullptr, nullptr));
     const char *pszDir = nullptr;
-    if (STARTS_WITH_CI(osURL, "http://"))
+    if (STARTS_WITH_CI(osURL.c_str(), "http://"))
         pszDir = strchr(osURL.c_str() + strlen("http://"), '/');
-    else if (STARTS_WITH_CI(osURL, "https://"))
+    else if (STARTS_WITH_CI(osURL.c_str(), "https://"))
         pszDir = strchr(osURL.c_str() + strlen("https://"), '/');
-    else if (STARTS_WITH_CI(osURL, "ftp://"))
+    else if (STARTS_WITH_CI(osURL.c_str(), "ftp://"))
         pszDir = strchr(osURL.c_str() + strlen("ftp://"), '/');
     if (pszDir == nullptr)
         pszDir = "";
 
     /* Apache */
-    CPLString osExpectedString = "<title>Index of ";
+    std::string osExpectedString = "<title>Index of ";
     osExpectedString += pszDir;
     osExpectedString += "</title>";
     /* shttpd */
-    CPLString osExpectedString2 = "<title>Index of ";
+    std::string osExpectedString2 = "<title>Index of ";
     osExpectedString2 += pszDir;
     osExpectedString2 += "/</title>";
     /* FTP */
-    CPLString osExpectedString3 = "FTP Listing of ";
+    std::string osExpectedString3 = "FTP Listing of ";
     osExpectedString3 += pszDir;
     osExpectedString3 += "/";
     /* Apache 1.3.33 */
-    CPLString osExpectedString4 = "<TITLE>Index of ";
+    std::string osExpectedString4 = "<TITLE>Index of ";
     osExpectedString4 += pszDir;
     osExpectedString4 += "</TITLE>";
 
@@ -4343,7 +4349,7 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
     // so we must try unescaped %20 also.
     // Similar with
     // http://datalib.usask.ca/gis/Data/Central_America_goodbutdoweown%3f/
-    CPLString osExpectedString_unescaped;
+    std::string osExpectedString_unescaped;
     if (strchr(pszDir, '%'))
     {
         char *pszUnescapedDir = CPLUnescapeString(pszDir, nullptr, CPLES_URL);
@@ -4464,17 +4470,17 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
                 if (strcmp(beginFilename, ".") != 0 &&
                     strcmp(beginFilename, "..") != 0)
                 {
-                    CPLString osCachedFilename =
+                    std::string osCachedFilename =
                         CPLSPrintf("%s/%s", osURL.c_str(), beginFilename);
 
                     FileProp cachedFileProp;
-                    GetCachedFileProp(osCachedFilename, cachedFileProp);
+                    GetCachedFileProp(osCachedFilename.c_str(), cachedFileProp);
                     cachedFileProp.eExists = EXIST_YES;
                     cachedFileProp.bIsDirectory = bIsDirectory;
                     cachedFileProp.mTime = static_cast<time_t>(mTime);
                     cachedFileProp.bHasComputedFileSize = nFileSize > 0;
                     cachedFileProp.fileSize = nFileSize;
-                    SetCachedFileProp(osCachedFilename, cachedFileProp);
+                    SetCachedFileProp(osCachedFilename.c_str(), cachedFileProp);
 
                     oFileList.AddString(beginFilename);
                     if (ENABLE_DEBUG_VERBOSE)
@@ -4664,24 +4670,25 @@ static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-CPLString
-VSICurlFilesystemHandlerBase::GetURLFromFilename(const CPLString &osFilename)
+std::string
+VSICurlFilesystemHandlerBase::GetURLFromFilename(const std::string &osFilename)
 {
-    return VSICurlGetURLFromFilename(osFilename, nullptr, nullptr, nullptr,
+    return VSICurlGetURLFromFilename(osFilename.c_str(), nullptr, nullptr,
                                      nullptr, nullptr, nullptr, nullptr,
-                                     nullptr, nullptr);
+                                     nullptr, nullptr, nullptr);
 }
 
 /************************************************************************/
 /*                         RegisterEmptyDir()                           */
 /************************************************************************/
 
-void VSICurlFilesystemHandlerBase::RegisterEmptyDir(const CPLString &osDirname)
+void VSICurlFilesystemHandlerBase::RegisterEmptyDir(
+    const std::string &osDirname)
 {
     CachedDirList cachedDirList;
     cachedDirList.bGotFileList = true;
     cachedDirList.oFileList.AddString(".");
-    SetCachedDirList(osDirname, cachedDirList);
+    SetCachedDirList(osDirname.c_str(), cachedDirList);
 }
 
 /************************************************************************/
@@ -4699,7 +4706,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    CPLString osURL(VSICurlGetURLFromFilename(
+    std::string osURL(VSICurlGetURLFromFilename(
         pszDirname, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
         nullptr, nullptr, nullptr));
     if (bEmptyDir)
@@ -4714,12 +4721,12 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     if (strstr(pszDirname, ".tiles.mapbox.com") != nullptr)
         return nullptr;
 
-    if (STARTS_WITH(osURL, "ftp://"))
+    if (STARTS_WITH(osURL.c_str(), "ftp://"))
     {
         WriteFuncStruct sWriteFuncData;
         sWriteFuncData.pBuffer = nullptr;
 
-        CPLString osDirname(osURL);
+        std::string osDirname(osURL);
         osDirname += '/';
 
         char **papszFileList = nullptr;
@@ -4800,17 +4807,19 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
                     if (strcmp(pszFilename, ".") != 0 &&
                         strcmp(pszFilename, "..") != 0)
                     {
-                        CPLString osCachedFilename =
+                        std::string osCachedFilename =
                             CPLSPrintf("%s/%s", osURL.c_str(), pszFilename);
 
                         FileProp cachedFileProp;
-                        GetCachedFileProp(osCachedFilename, cachedFileProp);
+                        GetCachedFileProp(osCachedFilename.c_str(),
+                                          cachedFileProp);
                         cachedFileProp.eExists = EXIST_YES;
                         cachedFileProp.bIsDirectory = bIsDirectory;
                         cachedFileProp.mTime = static_cast<time_t>(mUnixTime);
                         cachedFileProp.bHasComputedFileSize = bSizeValid;
                         cachedFileProp.fileSize = nFileSize;
-                        SetCachedFileProp(osCachedFilename, cachedFileProp);
+                        SetCachedFileProp(osCachedFilename.c_str(),
+                                          cachedFileProp);
 
                         oFileList.AddString(pszFilename);
                         if (ENABLE_DEBUG_VERBOSE)
@@ -4884,9 +4893,10 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     // Try to recognize HTML pages that list the content of a directory.
     // Currently this supports what Apache and shttpd can return.
-    else if (STARTS_WITH(osURL, "http://") || STARTS_WITH(osURL, "https://"))
+    else if (STARTS_WITH(osURL.c_str(), "http://") ||
+             STARTS_WITH(osURL.c_str(), "https://"))
     {
-        CPLString osDirname(osURL);
+        std::string osDirname(osURL);
         osDirname += '/';
 
         CURLM *hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
@@ -4926,9 +4936,8 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
         if (STARTS_WITH_CI(sWriteFuncData.pBuffer, "<?xml") &&
             strstr(sWriteFuncData.pBuffer, "<ListBucketResult") != nullptr)
         {
-            CPLString osNextMarker;
             CPLStringList osFileList;
-            CPLString osBaseURL(pszDirname);
+            std::string osBaseURL(pszDirname);
             osBaseURL += "/";
             bool bIsTruncated = true;
             bool ret = AnalyseS3FileList(
@@ -4993,7 +5002,7 @@ std::set<std::string> VSICurlFilesystemHandlerBase::GetS3IgnoredStorageClasses()
 int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
                                        VSIStatBufL *pStatBuf, int nFlags)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?"))
         return -1;
 
@@ -5002,7 +5011,8 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
     if ((nFlags & VSI_STAT_CACHE_ONLY) != 0)
     {
         cpl::FileProp oFileProp;
-        if (!GetCachedFileProp(GetURLFromFilename(pszFilename), oFileProp) ||
+        if (!GetCachedFileProp(GetURLFromFilename(pszFilename).c_str(),
+                               oFileProp) ||
             oFileProp.eExists != EXIST_YES)
         {
             return -1;
@@ -5013,17 +5023,17 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         return 0;
     }
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("Stat");
 
-    const CPLString osFilename(pszFilename);
+    const std::string osFilename(pszFilename);
 
     if (!IsAllowedFilename(pszFilename))
         return -1;
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    CPLString osURL(VSICurlGetURLFromFilename(
+    std::string osURL(VSICurlGetURLFromFilename(
         pszFilename, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
         nullptr, nullptr, nullptr));
 
@@ -5034,10 +5044,10 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         CPLTestBool(pszOptionVal) || !AllowCachedDataFor(pszFilename);
 
     // Does it look like a FTP directory?
-    if (STARTS_WITH(osURL, "ftp://") && osFilename.back() == '/' &&
+    if (STARTS_WITH(osURL.c_str(), "ftp://") && osFilename.back() == '/' &&
         !bSkipReadDir)
     {
-        char **papszFileList = ReadDirEx(osFilename, 0);
+        char **papszFileList = ReadDirEx(osFilename.c_str(), 0);
         if (papszFileList)
         {
             pStatBuf->st_mode = S_IFDIR;
@@ -5049,17 +5059,17 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         }
         return -1;
     }
-    else if (strchr(CPLGetFilename(osFilename), '.') != nullptr &&
-             !STARTS_WITH_CI(CPLGetExtension(osFilename), "zip") &&
-             strstr(osFilename, ".zip.") != nullptr &&
-             strstr(osFilename, ".ZIP.") != nullptr && !bSkipReadDir)
+    else if (strchr(CPLGetFilename(osFilename.c_str()), '.') != nullptr &&
+             !STARTS_WITH_CI(CPLGetExtension(osFilename.c_str()), "zip") &&
+             strstr(osFilename.c_str(), ".zip.") != nullptr &&
+             strstr(osFilename.c_str(), ".ZIP.") != nullptr && !bSkipReadDir)
     {
         bool bGotFileList = false;
-        char **papszFileList =
-            ReadDirInternal(CPLGetDirname(osFilename), 0, &bGotFileList);
+        char **papszFileList = ReadDirInternal(
+            CPLGetDirname(osFilename.c_str()), 0, &bGotFileList);
         const bool bFound =
-            VSICurlIsFileInList(papszFileList, CPLGetFilename(osFilename)) !=
-            -1;
+            VSICurlIsFileInList(papszFileList,
+                                CPLGetFilename(osFilename.c_str())) != -1;
         CSLDestroy(papszFileList);
         if (bGotFileList && !bFound)
         {
@@ -5067,7 +5077,7 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
         }
     }
 
-    VSICurlHandle *poHandle = CreateFileHandle(osFilename);
+    VSICurlHandle *poHandle = CreateFileHandle(osFilename.c_str());
     if (poHandle == nullptr)
         return -1;
 
@@ -5134,9 +5144,9 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
                                                      int nMaxFiles,
                                                      bool *pbGotFileList)
 {
-    CPLString osDirname(pszDirname);
+    std::string osDirname(pszDirname);
 
-    const char *pszUpDir = strstr(osDirname, "/..");
+    const char *pszUpDir = strstr(osDirname.c_str(), "/..");
     if (pszUpDir != nullptr)
     {
         int pos = static_cast<int>(pszUpDir - osDirname.c_str() - 1);
@@ -5144,11 +5154,11 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
             pos--;
         if (pos >= 1)
         {
-            osDirname = osDirname.substr(0, pos) + CPLString(pszUpDir + 3);
+            osDirname = osDirname.substr(0, pos) + std::string(pszUpDir + 3);
         }
     }
 
-    CPLString osDirnameOri(osDirname);
+    std::string osDirnameOri(osDirname);
     if (osDirname + "/" == GetFSPrefix())
     {
         osDirname += "/";
@@ -5166,7 +5176,7 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
         return nullptr;
     }
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("ReadDir");
 
     CPLMutexHolder oHolder(&hMutex);
@@ -5174,7 +5184,8 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
     // If we know the file exists and is not a directory,
     // then don't try to list its content.
     FileProp cachedFileProp;
-    if (GetCachedFileProp(GetURLFromFilename(osDirname), cachedFileProp) &&
+    if (GetCachedFileProp(GetURLFromFilename(osDirname.c_str()).c_str(),
+                          cachedFileProp) &&
         cachedFileProp.eExists == EXIST_YES && !cachedFileProp.bIsDirectory)
     {
         if (osDirnameOri != osDirname)
@@ -5198,11 +5209,11 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
     }
 
     CachedDirList cachedDirList;
-    if (!GetCachedDirList(osDirname, cachedDirList))
+    if (!GetCachedDirList(osDirname.c_str(), cachedDirList))
     {
-        cachedDirList.oFileList.Assign(
-            GetFileList(osDirname, nMaxFiles, &cachedDirList.bGotFileList),
-            true);
+        cachedDirList.oFileList.Assign(GetFileList(osDirname.c_str(), nMaxFiles,
+                                                   &cachedDirList.bGotFileList),
+                                       true);
         if (cachedDirList.bGotFileList && cachedDirList.oFileList.empty())
         {
             // To avoid an error to be reported
@@ -5211,7 +5222,7 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
         if (nMaxFiles <= 0 || cachedDirList.oFileList.size() < nMaxFiles)
         {
             // Only cache content if we didn't hit the limitation
-            SetCachedDirList(osDirname, cachedDirList);
+            SetCachedDirList(osDirname.c_str(), cachedDirList);
         }
     }
 
@@ -5276,7 +5287,7 @@ char **VSICurlFilesystemHandlerBase::GetFileMetadata(const char *pszFilename,
     if (poHandle == nullptr)
         return nullptr;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("GetFileMetadata");
 
     poHandle->GetFileSizeOrHeaders(true, true);
@@ -5715,7 +5726,7 @@ void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject &oJSON) const
         kv.second.AsJSON(childJSON);
         if (kv.first.eType == ContextPathType::FILESYSTEM)
         {
-            CPLString osName(kv.first.osName);
+            std::string osName(kv.first.osName);
             if (!osName.empty() && osName[0] == '/')
                 osName = osName.substr(1);
             if (!osName.empty() && osName.back() == '/')
@@ -5738,7 +5749,7 @@ void NetworkStatisticsLogger::Stats::AsJSON(CPLJSONObject &oJSON) const
     }
 }
 
-CPLString NetworkStatisticsLogger::GetReportAsSerializedJSON()
+std::string NetworkStatisticsLogger::GetReportAsSerializedJSON()
 {
     std::lock_guard<std::mutex> oLock(gInstance.m_mutex);
 
@@ -5954,8 +5965,8 @@ struct curl_slist *VSICurlSetContentTypeFromExt(struct curl_slist *poList,
             if (EQUAL(pszExt, pair.ext))
             {
 
-                CPLString osContentType;
-                osContentType.Printf("Content-Type: %s", pair.mime);
+                const std::string osContentType(
+                    CPLSPrintf("Content-Type: %s", pair.mime));
                 poList = curl_slist_append(poList, osContentType.c_str());
 #ifdef DEBUG_VERBOSE
                 CPLDebug("HTTP", "Setting %s, based on lookup table.",
@@ -5988,9 +5999,8 @@ struct curl_slist *VSICurlSetCreationHeadersFromOptions(
             {
                 bContentTypeFound = true;
             }
-            CPLString osVal;
-            osVal.Printf("%s: %s", pszKey, pszValue);
-            headers = curl_slist_append(headers, osVal.c_str());
+            headers = curl_slist_append(headers,
+                                        CPLSPrintf("%s: %s", pszKey, pszValue));
         }
         CPLFree(pszKey);
     }
@@ -6209,7 +6219,8 @@ void VSINetworkStatsReset(void)
 
 char *VSINetworkStatsGetAsSerializedJSON(CPL_UNUSED char **papszOptions)
 {
-    return CPLStrdup(cpl::NetworkStatisticsLogger::GetReportAsSerializedJSON());
+    return CPLStrdup(
+        cpl::NetworkStatisticsLogger::GetReportAsSerializedJSON().c_str());
 }
 
 #endif /* HAVE_CURL */
