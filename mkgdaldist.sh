@@ -22,6 +22,8 @@ if test $rc != 0; then
     exit $rc;
 fi
 
+gpg2 --version >/dev/null || (echo "gpg2 not available"; exit 1)
+
 GITURL="https://github.com/OSGeo/gdal"
 
 if [ $# -lt 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] ; then
@@ -194,6 +196,17 @@ cd ..
 $MD5 "gdal-${GDAL_VERSION}${RC}.tar.xz" > "gdal-${GDAL_VERSION}${RC}.tar.xz.md5"
 $MD5 "gdal-${GDAL_VERSION}${RC}.tar.gz" > "gdal-${GDAL_VERSION}${RC}.tar.gz.md5"
 $MD5 "gdal${COMPRESSED_VERSION}${RC}.zip" > "gdal${COMPRESSED_VERSION}${RC}.zip.md5"
+
+
+echo "* Signing..."
+export GPG_TTY=$(tty)
+for file in "gdal-${GDAL_VERSION}${RC}.tar.xz" "gdal-${GDAL_VERSION}${RC}.tar.gz" "gdal${COMPRESSED_VERSION}${RC}.zip"; do \
+  gpg2 --output ${file}.sig --detach-sig $file ; \
+done
+
+for file in "gdal-${GDAL_VERSION}${RC}.tar.xz" "gdal-${GDAL_VERSION}${RC}.tar.gz" "gdal${COMPRESSED_VERSION}${RC}.zip"; do \
+  gpg2 --verify ${file}.sig $file ; \
+done
 
 echo "* Cleaning..."
 rm -rf dist_wrk
