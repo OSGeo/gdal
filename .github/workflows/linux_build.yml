@@ -14,6 +14,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
 
   linux-build:
@@ -34,7 +37,6 @@ jobs:
       CACHE_CONTAINER_TAG: ${{ matrix.container }}-master
 
     permissions:
-      contents: write  # for Git to git push
       packages: write
 
     strategy:

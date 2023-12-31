@@ -15,8 +15,6 @@ permissions:
 
 jobs:
   docs:
-    permissions:
-      contents: write  # for Git to git push
     name: Docs
 
     runs-on: ubuntu-latest
