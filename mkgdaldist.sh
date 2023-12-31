@@ -199,7 +199,8 @@ $MD5 "gdal${COMPRESSED_VERSION}${RC}.zip" > "gdal${COMPRESSED_VERSION}${RC}.zip.
 
 
 echo "* Signing..."
-export GPG_TTY=$(tty)
+GPG_TTY=$(tty)
+export GPG_TTY
 for file in "gdal-${GDAL_VERSION}${RC}.tar.xz" "gdal-${GDAL_VERSION}${RC}.tar.gz" "gdal${COMPRESSED_VERSION}${RC}.zip"; do \
   gpg2 --output ${file}.sig --detach-sig $file ; \
 done
