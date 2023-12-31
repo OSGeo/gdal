@@ -315,7 +315,14 @@ e) Click the "Release" button and that is it! The release should be available in
 18) Create a release on GitHub
     Go to https://github.com/OSGeo/gdal/releases/new
     And create a release for the vX.Y.Z tag
-    Attach the gdal-X.Y.Z.tar.gz, gdal-X.Y.Z.tar.gz.md5, gdalXYZ.zip, gdalXYZ.zip.md5 and gdalautotest-X.Y.Z.zip files
+    Attach the following files:
+    - gdal-X.Y.Z.tar.gz
+    - gdal-X.Y.Z.tar.gz.sig
+    - gdal-X.Y.Z.tar.gz.md5
+    - gdalXYZ.zip
+    - gdalXYZ.zip.sig
+    - gdalXYZ.zip.md5
+    - gdalautotest-X.Y.Z.zip
 
 19) Regenerate Docker images
 
