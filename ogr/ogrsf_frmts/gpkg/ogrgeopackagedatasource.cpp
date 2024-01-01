@@ -2451,8 +2451,9 @@ bool GDALGeoPackageDataset::AllocCachedTiles()
             (GetUpdate() && m_eDT == GDT_Byte) ? 2 : 1;
     */
     m_pabyCachedTiles = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
-        nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) * m_nDTSize, nTileWidth,
-        nTileHeight));
+        cpl::fits_on<int>(nCacheCount * (m_eDT == GDT_Byte ? 4 : 1) *
+                          m_nDTSize),
+        nTileWidth, nTileHeight));
     if (m_pabyCachedTiles == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big tiles: %d x %d",
