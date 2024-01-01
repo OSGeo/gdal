@@ -128,7 +128,9 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
     /*      Load the desired data into the working buffer.                  */
     /* -------------------------------------------------------------------- */
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    VSIFSeekL(poGDS->fpImage, nBlockYOff * nBlockXSize * nDTSize, SEEK_SET);
+    VSIFSeekL(poGDS->fpImage,
+              static_cast<size_t>(nBlockYOff) * nBlockXSize * nDTSize,
+              SEEK_SET);
     VSIFReadL((unsigned char *)pImage, nBlockXSize, nDTSize, poGDS->fpImage);
 #ifdef CPL_LSB
     GDALSwapWords(pImage, nDTSize, nBlockXSize, nDTSize);
@@ -150,12 +152,15 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff,
         return CE_Failure;
 
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    VSIFSeekL(poGDS->fpImage, nBlockYOff * nBlockXSize * nDTSize, SEEK_SET);
+    VSIFSeekL(poGDS->fpImage,
+              static_cast<size_t>(nBlockYOff) * nBlockXSize * nDTSize,
+              SEEK_SET);
 
 #ifdef CPL_LSB
     if (nDTSize > 1)
     {
-        memcpy(poGDS->pabyBuffer, pImage, nBlockXSize * nDTSize);
+        memcpy(poGDS->pabyBuffer, pImage,
+               static_cast<size_t>(nBlockXSize) * nDTSize);
         GDALSwapWords(poGDS->pabyBuffer, nDTSize, nBlockXSize, nDTSize);
         VSIFWriteL(reinterpret_cast<unsigned char *>(poGDS->pabyBuffer),
                    nBlockXSize, nDTSize, poGDS->fpImage);
