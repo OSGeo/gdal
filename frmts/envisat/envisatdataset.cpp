@@ -104,7 +104,8 @@ CPLErr MerisL2FlagBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     CPLAssert(pReadBuf != nullptr);
 
     vsi_l_offset nOffset =
-        nImgOffset + nPrefixBytes + nBlockYOff * nBlockYSize * nRecordSize;
+        nImgOffset + nPrefixBytes +
+        static_cast<vsi_l_offset>(nBlockYOff) * nBlockYSize * nRecordSize;
 
     if (VSIFSeekL(fpImage, nOffset, SEEK_SET) != 0)
     {
@@ -545,8 +546,8 @@ void EnvisatDataset::ScanForGCPs_MERIS()
         ((GUInt32 *)pabyRecord) + nTPPerLine * 5; /* lon. DEM correction */
 
     nGCPCount = 0;
-    pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP),
-                                       arTP.getDSRCount() * nTPPerLine);
+    pasGCPList = (GDAL_GCP *)CPLCalloc(
+        sizeof(GDAL_GCP), static_cast<size_t>(arTP.getDSRCount()) * nTPPerLine);
 
     for (int ir = 0; ir < arTP.getDSRCount(); ir++)
     {
