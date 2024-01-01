@@ -460,7 +460,8 @@ int SDTSRasterReader::GetBlock(CPL_UNUSED int nXOffset, int nYOffset,
     /*      Copy the data to the application buffer, and byte swap if       */
     /*      required.                                                       */
     /* -------------------------------------------------------------------- */
-    memcpy(pData, poCVLS->GetData(), nXSize * nBytesPerValue);
+    memcpy(pData, poCVLS->GetData(),
+           static_cast<size_t>(nXSize) * nBytesPerValue);
 
 #ifdef CPL_LSB
     if (nBytesPerValue == 2)
