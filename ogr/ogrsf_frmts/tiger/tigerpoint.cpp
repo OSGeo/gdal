@@ -29,6 +29,8 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                             TigerPoint()                             */
 /************************************************************************/
@@ -61,11 +63,15 @@ OGRFeature *TigerPoint::GetFeature(int nRecordId, int nX0, int nX1, int nY0,
     if (fpPrimary == nullptr)
         return nullptr;
 
-    if (VSIFSeekL(fpPrimary, nRecordId * nRecordLength, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %sP",
-                 nRecordId * nRecordLength, pszModule);
-        return nullptr;
+        const auto nOffset = static_cast<uint64_t>(nRecordId) * nRecordLength;
+        if (VSIFSeekL(fpPrimary, nOffset, SEEK_SET) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %sP", nOffset,
+                     pszModule);
+            return nullptr;
+        }
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
