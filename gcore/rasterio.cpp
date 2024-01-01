@@ -1719,7 +1719,8 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
             nFullResYSizeQueried = nRasterYSize;
 
         void *pChunk = VSI_MALLOC3_VERBOSE(
-            GDALGetDataTypeSizeBytes(eWrkDataType) * nBandCount,
+            cpl::fits_on<int>(GDALGetDataTypeSizeBytes(eWrkDataType) *
+                              nBandCount),
             nFullResXSizeQueried, nFullResYSizeQueried);
         GByte *pabyChunkNoDataMask = nullptr;
 
