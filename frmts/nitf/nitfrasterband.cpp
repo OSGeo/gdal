@@ -557,11 +557,11 @@ CPLErr NITFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     /* -------------------------------------------------------------------- */
     if (psImage->bNoDataSet)
         memset(pImage, psImage->nNoDataValue,
-               psImage->nWordSize * psImage->nBlockWidth *
+               static_cast<size_t>(psImage->nWordSize) * psImage->nBlockWidth *
                    psImage->nBlockHeight);
     else
         memset(pImage, 0,
-               psImage->nWordSize * psImage->nBlockWidth *
+               static_cast<size_t>(psImage->nWordSize) * psImage->nBlockWidth *
                    psImage->nBlockHeight);
 
     return CE_None;

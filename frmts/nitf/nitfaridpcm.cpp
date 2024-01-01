@@ -415,8 +415,8 @@ int NITFUncompressARIDPCM(NITFImage *psImage, GByte *pabyInputData,
     /*      bit larger than the output buffer if the width or height is     */
     /*      not divisible by 8.                                             */
     /* -------------------------------------------------------------------- */
-    GByte *full_image =
-        reinterpret_cast<GByte *>(CPLMalloc(blocks_x * blocks_y * 8 * 8));
+    GByte *full_image = reinterpret_cast<GByte *>(
+        CPLMalloc(static_cast<size_t>(blocks_x) * blocks_y * 8 * 8));
 
     /* -------------------------------------------------------------------- */
     /*      Scan through all the neighbourhoods determining the busyness    */
