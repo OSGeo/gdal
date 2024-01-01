@@ -794,7 +794,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             if( line_space != 0 && band_space > line_space * nysize )
                 memset(data, 0, buf_size);
             else if( pixel_space != 0 && band_space < pixel_space &&
-                     pixel_space != GDALGetRasterCount(self) * ntypesize )
+                     pixel_space != (GIntBig)GDALGetRasterCount(self) * ntypesize )
                 memset(data, 0, buf_size);
         }
     }
