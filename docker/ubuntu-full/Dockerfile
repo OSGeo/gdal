@@ -495,7 +495,7 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     && /buildscripts/bh-proj.sh
 
 # Download exprtk
-RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/master/exprtk.hpp \
+RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
     && mv exprtk.hpp /usr/include
 
 # Build GDAL
