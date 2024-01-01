@@ -432,7 +432,8 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
     if (m_poBaseBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
                                m_pBuffer, nReqXSize, nReqYSize, eSrcDT,
-                               nSrcDTSize, nSrcDTSize * nBlockXSize,
+                               nSrcDTSize,
+                               static_cast<GSpacing>(nSrcDTSize) * nBlockXSize,
                                nullptr) != CE_None)
     {
         return CE_Failure;
@@ -3125,7 +3126,9 @@ bool PDS4Dataset::InitImageFile()
                     GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
                     if (y != 0)
                     {
-                        if (nOffset != nLastOffset + nBlockSizeBytes * nBands)
+                        if (nOffset !=
+                            nLastOffset +
+                                static_cast<GIntBig>(nBlockSizeBytes) * nBands)
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Block %d,%d not at expected "
