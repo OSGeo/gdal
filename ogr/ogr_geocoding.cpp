@@ -1236,7 +1236,7 @@ static OGRLayerH OGRGeocodeBuildLayer(const char *pszContent,
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
-                                  CPLString osURL, char **papszOptions)
+                                  std::string osURL, char **papszOptions)
 {
     // Only documented to work with OSM Nominatim.
     if (hSession->pszLanguage != nullptr)
@@ -1286,7 +1286,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
 
     char *pszCachedResult = nullptr;
     if (hSession->bReadCache)
-        pszCachedResult = OGRGeocodeGetFromCache(hSession, osURL);
+        pszCachedResult = OGRGeocodeGetFromCache(hSession, osURL.c_str());
     if (pszCachedResult == nullptr)
     {
         double *pdfLastQueryTime = nullptr;
@@ -1347,7 +1347,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
                 if (hSession->bWriteCache)
                 {
                     // coverity[tainted_data]
-                    OGRGeocodePutIntoCache(hSession, osURL, pszResult);
+                    OGRGeocodePutIntoCache(hSession, osURL.c_str(), pszResult);
                 }
                 hLayer = OGRGeocodeBuildLayer(pszResult, bAddRawFeature);
             }
@@ -1443,8 +1443,21 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession, const char *pszQuery,
         return nullptr;
     }
 
+    constexpr const char *PCT_S = "%s";
+    const char *pszPctS = strstr(hSession->pszQueryTemplate, PCT_S);
+    if (!pszPctS)
+    {
+        // should not happen given OGRGeocodeHasStringValidFormat()
+        return nullptr;
+    }
+
     char *pszEscapedQuery = CPLEscapeString(pszQuery, -1, CPLES_URL);
-    CPLString osURL = CPLSPrintf(hSession->pszQueryTemplate, pszEscapedQuery);
+
+    std::string osURL;
+    osURL.assign(hSession->pszQueryTemplate,
+                 pszPctS - hSession->pszQueryTemplate);
+    osURL += pszEscapedQuery;
+    osURL += (pszPctS + strlen(PCT_S));
     CPLFree(pszEscapedQuery);
 
     if (EQUAL(hSession->pszGeocodingService, "OSM_NOMINATIM") ||
