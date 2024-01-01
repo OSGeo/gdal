@@ -29,6 +29,8 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
+#include <cinttypes>
+
 static const char FOUR_FILE_CODE[] = "4";
 
 static const TigerFieldInfo rt4_fields[] = {
@@ -91,10 +93,11 @@ OGRFeature *TigerAltName::GetFeature(int nRecordId)
     if (fpPrimary == nullptr)
         return nullptr;
 
-    if (VSIFSeekL(fpPrimary, nRecordId * nRecordLength, SEEK_SET) != 0)
+    const auto nOffset = static_cast<uint64_t>(nRecordId) * nRecordLength;
+    if (VSIFSeekL(fpPrimary, nOffset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s4",
-                 nRecordId * nRecordLength, pszModule);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to seek to %" PRIu64 " of %s4", nOffset, pszModule);
         return nullptr;
     }
 
