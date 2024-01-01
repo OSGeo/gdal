@@ -1242,8 +1242,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.nLength = (tagdescArray[i].length == 0)
                                   ? nTokens
                                   : tagdescArray[i].length;
-                tag.pabyVal = reinterpret_cast<GByte *>(
-                    CPLCalloc(1, nDataTypeSize * tag.nLength));
+                tag.pabyVal = reinterpret_cast<GByte *>(CPLCalloc(
+                    1, cpl::fits_on<int>(nDataTypeSize * tag.nLength)));
 
                 GUInt32 nOffset = 0;
                 for (GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++)
