@@ -13,18 +13,16 @@ between software packages supporting tabular data and are also easily
 produced manually with a text editor or with end-user written scripts or
 programs.
 
-While in theory .csv files could have any extension, in order to
-auto-recognise the format OGR only supports CSV files ending with the
-extension ".csv". The datasource name may be either a single CSV file or
+The datasource name may be either a single CSV file or
 point to a directory. For a directory to be recognised as a .csv
 datasource at least half the files in the directory need to have the
 extension .csv. One layer (table) is produced from each .csv file
 accessed.
-Starting with GDAL 3.7, pipe separated values files with .psv extension
+Starting with GDAL 3.7, pipe separated values files with a ".psv" extension
 are also recognized.
 
 For files structured as CSV, but not ending
-with .CSV extension, the 'CSV:' prefix can be added before the filename
+with the ".csv" extension, the 'CSV:' prefix can be added before the filename
 to force loading by the CSV driver.
 
 The OGR CSV driver supports reading and writing. Because the CSV format
