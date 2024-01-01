@@ -156,7 +156,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     const int nXSize = GetXSize();
     if (poGDS->fpImage == nullptr)
     {
-        memset(pImage, 0, nPixelSize * nXSize);
+        memset(pImage, 0, cpl::fits_on<int>(nPixelSize * nXSize));
         return CE_None;
     }
 
@@ -174,7 +174,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     // Transfer between the working buffer and the caller's buffer.
     if (nPixelSize == nPixelOffset)
-        memcpy(pImage, pabyScanline, nPixelSize * nXSize);
+        memcpy(pImage, pabyScanline, cpl::fits_on<int>(nPixelSize * nXSize));
     else if (nPixelSize == 1)
     {
         for (int i = 0; i < nXSize; i++)
@@ -1080,7 +1080,8 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     {
                         memcpy(&(reinterpret_cast<GByte *>(
                                    pData)[(y * nLineSpace)]),
-                               pabyScanline, nBandCount * nXSize);
+                               pabyScanline,
+                               cpl::fits_on<int>(nBandCount * nXSize));
                     }
                     else
                     {
@@ -1379,8 +1380,8 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     if (pabyBuffer == nullptr)
     {
-        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
-            nPixelOffset * GetRasterXSize() * nMaxChunkLines));
+        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+            nPixelOffset, GetRasterXSize(), nMaxChunkLines));
 
         if (pabyBuffer == nullptr)
         {
@@ -1404,8 +1405,8 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     // Allocate and populate rows array. We create a row for each row in the
     // image but use our dummy line for rows not in the target window.
-    png_bytep dummy_row =
-        reinterpret_cast<png_bytep>(CPLMalloc(nPixelOffset * GetRasterXSize()));
+    png_bytep dummy_row = reinterpret_cast<png_bytep>(
+        CPLMalloc(cpl::fits_on<int>(nPixelOffset * GetRasterXSize())));
     png_bytep *png_rows = reinterpret_cast<png_bytep *>(
         CPLMalloc(sizeof(png_bytep) * GetRasterYSize()));
 
@@ -1466,7 +1467,7 @@ CPLErr PNGDataset::LoadScanline(int nLine)
     // Ensure we have space allocated for one scanline.
     if (pabyBuffer == nullptr)
         pabyBuffer = reinterpret_cast<GByte *>(
-            CPLMalloc(nPixelOffset * GetRasterXSize()));
+            CPLMalloc(cpl::fits_on<int>(nPixelOffset * GetRasterXSize())));
 
     // Otherwise we just try to read the requested row. Do we need to rewind and
     // start over?
@@ -2676,8 +2677,8 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     CPLErr eErr = CE_None;
     const int nWordSize = GDALGetDataTypeSize(eType) / 8;
 
-    GByte *pabyScanline =
-        reinterpret_cast<GByte *>(CPLMalloc(nBands * nXSize * nWordSize));
+    GByte *pabyScanline = reinterpret_cast<GByte *>(
+        CPLMalloc(cpl::fits_on<int>(nBands * nXSize * nWordSize)));
 
     for (int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++)
     {
@@ -2685,8 +2686,9 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
 
         eErr = poSrcDS->RasterIO(
             GF_Read, 0, iLine, nXSize, 1, pabyScanline, nXSize, 1, eType,
-            nBands, nullptr, nBands * nWordSize, nBands * nXSize * nWordSize,
-            nWordSize, nullptr);
+            nBands, nullptr, static_cast<GSpacing>(nBands) * nWordSize,
+            static_cast<GSpacing>(nBands) * nXSize * nWordSize, nWordSize,
+            nullptr);
 
 #ifdef CPL_LSB
         if (nBitDepth == 16)
