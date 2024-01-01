@@ -138,8 +138,8 @@ CPLErr BTRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     /*      Seek to profile.                                                */
     /* -------------------------------------------------------------------- */
     if (VSIFSeekL(fpImage,
-                  256 + nBlockXOff * nDataSize *
-                            static_cast<vsi_l_offset>(nRasterYSize),
+                  256 + static_cast<vsi_l_offset>(nBlockXOff) * nDataSize *
+                            nRasterYSize,
                   SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO, ".bt Seek failed:%s",
@@ -213,8 +213,8 @@ CPLErr BTRasterBand::IWriteBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Allocate working buffer.                                        */
     /* -------------------------------------------------------------------- */
-    GByte *pabyWrkBlock =
-        static_cast<GByte *>(CPLMalloc(nDataSize * nRasterYSize));
+    GByte *pabyWrkBlock = static_cast<GByte *>(
+        CPLMalloc(static_cast<size_t>(nDataSize) * nRasterYSize));
 
     /* -------------------------------------------------------------------- */
     /*      Vertical flip data into work buffer, since GDAL expects         */
@@ -223,7 +223,8 @@ CPLErr BTRasterBand::IWriteBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     /* -------------------------------------------------------------------- */
     for (int i = 0; i < nRasterYSize; i++)
     {
-        memcpy(pabyWrkBlock + (nRasterYSize - i - 1) * nDataSize,
+        memcpy(pabyWrkBlock +
+                   static_cast<size_t>(nRasterYSize - i - 1) * nDataSize,
                reinterpret_cast<GByte *>(pImage) + i * nDataSize, nDataSize);
     }
 
@@ -919,8 +920,8 @@ GDALDataset *BTDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     if (VSIFWriteL(abyHeader, 256, 1, fp) != 1 ||
         VSIFSeekL(fp,
-                  (GDALGetDataTypeSize(eType) / 8) * nXSize *
-                          static_cast<vsi_l_offset>(nYSize) -
+                  static_cast<vsi_l_offset>(GDALGetDataTypeSizeBytes(eType)) *
+                          nXSize * nYSize -
                       1,
                   SEEK_CUR) != 0 ||
         VSIFWriteL(abyHeader + 255, 1, 1, fp) != 1)
