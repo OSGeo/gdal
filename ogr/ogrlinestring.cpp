@@ -1878,7 +1878,8 @@ std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions &opts,
                 2 + ((hasZ) ? 1 : 0) + ((hasM) ? 1 : 0);
             // At least 2 bytes per ordinate: one for the value,
             // and one for the separator...
-            wkt.reserve(wkt.size() + 2 * nPointCount * nOrdinatesPerVertex);
+            wkt.reserve(wkt.size() + 2 * static_cast<size_t>(nPointCount) *
+                                         nOrdinatesPerVertex);
 
             for (int i = 0; i < nPointCount; i++)
             {
