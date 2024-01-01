@@ -1112,15 +1112,18 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
         char *sliceBuffer;
         if (pixelType == UINT)
         {
-            bufferUInt.resize(nBands * nChunkXSize * nChunkYSize);
+            bufferUInt.resize(static_cast<size_t>(nBands) * nChunkXSize *
+                              nChunkYSize);
             sliceBuffer = reinterpret_cast<char *>(bufferUInt.data());
         }
         else
         {
-            bufferFloat.resize(nBands * nChunkXSize * nChunkYSize);
+            bufferFloat.resize(static_cast<size_t>(nBands) * nChunkXSize *
+                               nChunkYSize);
             if (pixelType == HALF)
             {
-                bufferHalf.resize(nBands * nChunkXSize * nChunkYSize);
+                bufferHalf.resize(static_cast<size_t>(nBands) * nChunkXSize *
+                                  nChunkYSize);
                 sliceBuffer = reinterpret_cast<char *>(bufferHalf.data());
             }
             else
