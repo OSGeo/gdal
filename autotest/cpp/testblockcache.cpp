@@ -459,7 +459,8 @@ TEST(testblockcache, test)
                          papszOptions);
         if (bCheck)
         {
-            GByte *pabyLine = (GByte *)VSIMalloc(nBands * nXSize);
+            GByte *pabyLine =
+                (GByte *)VSIMalloc(static_cast<size_t>(nBands) * nXSize);
             for (int iY = 0; iY < nYSize; iY++)
             {
                 for (int iX = 0; iX < nXSize; iX++)
