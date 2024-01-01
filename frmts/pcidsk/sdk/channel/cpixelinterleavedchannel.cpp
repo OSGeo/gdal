@@ -109,7 +109,7 @@ int CPixelInterleavedChannel::ReadBlock( int block_index, void *buffer,
 /*      cases for 16/32bit data that is word aligned.                   */
 /* -------------------------------------------------------------------- */
     if( pixel_size == pixel_group )
-        memcpy( buffer, pixel_buffer, pixel_size * win_xsize );
+        memcpy( buffer, pixel_buffer, static_cast<size_t>(pixel_size) * win_xsize );
     else
     {
         int i;
@@ -219,7 +219,7 @@ int CPixelInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /* -------------------------------------------------------------------- */
     if( pixel_size == pixel_group )
     {
-        memcpy( pixel_buffer, buffer, pixel_size * width );
+        memcpy( pixel_buffer, buffer, static_cast<size_t>(pixel_size) * width );
 
         if( needs_swap )
         {
