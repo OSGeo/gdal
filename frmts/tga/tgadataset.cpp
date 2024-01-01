@@ -398,7 +398,9 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             {
                 if (pImage == nullptr)
                 {
-                    VSIFSeekL(poGDS->m_fpImage, nPixelsToFill * nBytesPerPixel,
+                    VSIFSeekL(poGDS->m_fpImage,
+                              static_cast<size_t>(nPixelsToFill) *
+                                  nBytesPerPixel,
                               SEEK_CUR);
                 }
                 else
@@ -406,11 +408,13 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                     if (nBands == 1)
                     {
                         VSIFReadL(static_cast<GByte *>(pImage) + x * nDTSize, 1,
-                                  nPixelsToFill * nDTSize, poGDS->m_fpImage);
+                                  static_cast<size_t>(nPixelsToFill) * nDTSize,
+                                  poGDS->m_fpImage);
                     }
                     else
                     {
-                        abyData.resize(nBytesPerPixel * nPixelsToFill);
+                        abyData.resize(static_cast<size_t>(nBytesPerPixel) *
+                                       nPixelsToFill);
                         VSIFReadL(&abyData[0], 1, abyData.size(),
                                   poGDS->m_fpImage);
                         if (poGDS->m_sImageHeader.nPixelDepth == 16)
@@ -482,7 +486,8 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             poGDS->m_nImageDataOffset +
             static_cast<vsi_l_offset>(nLine) * nRasterXSize * nDTSize;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
-        VSIFReadL(pImage, 1, nRasterXSize * nDTSize, poGDS->m_fpImage);
+        VSIFReadL(pImage, 1, static_cast<size_t>(nRasterXSize) * nDTSize,
+                  poGDS->m_fpImage);
 #ifdef CPL_MSB
         if (nDTSize > 1)
         {
@@ -495,13 +500,12 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         const int nBytesPerPixel =
             (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
         std::vector<GByte> abyData;
-        abyData.resize(nBytesPerPixel * nRasterXSize);
+        abyData.resize(static_cast<size_t>(nBytesPerPixel) * nRasterXSize);
         vsi_l_offset nOffset =
             poGDS->m_nImageDataOffset +
             static_cast<vsi_l_offset>(nLine) * nRasterXSize * nBytesPerPixel;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
-        VSIFReadL(&abyData[0], 1, nRasterXSize * nBytesPerPixel,
-                  poGDS->m_fpImage);
+        VSIFReadL(&abyData[0], 1, abyData.size(), poGDS->m_fpImage);
         if (poGDS->m_sImageHeader.nPixelDepth == 16)
         {
             for (int i = 0; i < nRasterXSize; i++)
