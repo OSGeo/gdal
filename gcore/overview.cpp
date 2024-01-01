@@ -5729,7 +5729,7 @@ CPLErr CPL_STDCALL GDALComputeBandStats(GDALRasterBandH hSrcBand,
             }
 
             dfSum += fValue;
-            dfSum2 += fValue * fValue;
+            dfSum2 += static_cast<double>(fValue) * fValue;
         }
 
         nSamples += nWidth;
