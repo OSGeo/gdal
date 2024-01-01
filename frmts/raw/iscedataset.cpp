@@ -631,7 +631,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 // theoretical nLineOffset multiplied by nBands...
                 VSIFSeekL(poDS->fpImage, 0, SEEK_END);
                 const GUIntBig nWrongFileSize =
-                    nDTSize * nWidth *
+                    static_cast<GUIntBig>(nDTSize) * nWidth *
                     (static_cast<GUIntBig>(nHeight - 1) * nBands * nBands +
                      nBands);
                 if (VSIFTellL(poDS->fpImage) == nWrongFileSize)
