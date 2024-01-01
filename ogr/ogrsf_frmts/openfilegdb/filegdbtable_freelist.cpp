@@ -416,11 +416,13 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
     // Remove entry from page
     if (iBestCandidateEntry < nBestCandidateNumEntries - 1)
     {
-        memmove(
-            abyPage.data() + nPageHeaderSize + iBestCandidateEntry * nEntrySize,
-            abyPage.data() + nPageHeaderSize +
-                (iBestCandidateEntry + 1) * nEntrySize,
-            (nBestCandidateNumEntries - 1 - iBestCandidateEntry) * nEntrySize);
+        memmove(abyPage.data() + nPageHeaderSize +
+                    iBestCandidateEntry * nEntrySize,
+                abyPage.data() + nPageHeaderSize +
+                    (iBestCandidateEntry + 1) * nEntrySize,
+                cpl::fits_on<int>(
+                    (nBestCandidateNumEntries - 1 - iBestCandidateEntry) *
+                    nEntrySize));
     }
     memset(abyPage.data() + nPageHeaderSize +
                (nBestCandidateNumEntries - 1) * nEntrySize,
