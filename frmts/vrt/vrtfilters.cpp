@@ -541,7 +541,8 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
 
                 for (int iI = nIMin; iI < nIMax; ++iI)
                 {
-                    const GPtrDiff_t iIndex = iI * nIStride + iJ * nJStride;
+                    const GPtrDiff_t iIndex =
+                        static_cast<GPtrDiff_t>(iI) * nIStride + iJ * nJStride;
 
                     if (bHasNoData && pafSrcData[iIndex] == fNoData)
                     {

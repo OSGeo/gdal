@@ -531,10 +531,10 @@ CPLErr VRTSourcedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
-                     nBlockYOff * nBlockYSize, nReadXSize, nReadYSize, pImage,
-                     nReadXSize, nReadYSize, eDataType, nPixelSize,
-                     nPixelSize * nBlockXSize, &sExtraArg);
+    return IRasterIO(
+        GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize, nReadXSize,
+        nReadYSize, pImage, nReadXSize, nReadYSize, eDataType, nPixelSize,
+        static_cast<GSpacing>(nPixelSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
