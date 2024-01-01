@@ -573,8 +573,8 @@ GDALDataset *RasterliteCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     GDALDataType eDataType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
-    GByte *pabyMEMDSBuffer = reinterpret_cast<GByte *>(
-        VSIMalloc3(nBlockXSize, nBlockYSize, nBands * nDataTypeSize));
+    GByte *pabyMEMDSBuffer = reinterpret_cast<GByte *>(VSIMalloc3(
+        nBlockXSize, nBlockYSize, cpl::fits_on<int>(nBands * nDataTypeSize)));
     if (pabyMEMDSBuffer == nullptr)
     {
         OGRReleaseDataSource(hDS);
