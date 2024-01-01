@@ -824,7 +824,8 @@ int write_header(VSILFILE *fp, Header *poHeader)
     if (write_intarray(fp, anTemp, 4) == 0)
         return 0;
     if (write_intarray(fp, poHeader->panConnectivity,
-                       poHeader->nElements * poHeader->nPointsPerElement) == 0)
+                       static_cast<size_t>(poHeader->nElements) *
+                           poHeader->nPointsPerElement) == 0)
         return 0;
     if (write_intarray(fp, poHeader->panBorder, poHeader->nPoints) == 0)
         return 0;
