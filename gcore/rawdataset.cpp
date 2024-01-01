@@ -370,7 +370,8 @@ bool RawRasterBand::IsBIP() const
             eByteOrder == poFirstBand->eByteOrder &&
             nPixelOffset == poFirstBand->nPixelOffset &&
             nLineOffset == poFirstBand->nLineOffset &&
-            nImgOffset == poFirstBand->nImgOffset + (nBand - 1) * nDTSize)
+            nImgOffset == poFirstBand->nImgOffset +
+                              static_cast<vsi_l_offset>(nBand - 1) * nDTSize)
         {
             return true;
         }
@@ -630,7 +631,9 @@ CPLErr RawRasterBand::AccessLine(int iLine)
         if (poDS != nullptr && poDS->GetRasterCount() > 1 && IsBIP())
         {
             const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-            DoByteSwap(pLineBuffer, nBlockXSize * poDS->GetRasterCount(),
+            DoByteSwap(pLineBuffer,
+                       static_cast<size_t>(nBlockXSize) *
+                           poDS->GetRasterCount(),
                        nDTSize, true);
         }
         else
@@ -864,7 +867,9 @@ bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
         if (poDS != nullptr && poDS->GetRasterCount() > 1 && IsBIP())
         {
             const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-            DoByteSwap(pLineBuffer, nBlockXSize * poDS->GetRasterCount(),
+            DoByteSwap(pLineBuffer,
+                       static_cast<size_t>(nBlockXSize) *
+                           poDS->GetRasterCount(),
                        nDTSize, false);
         }
         else
@@ -903,7 +908,9 @@ bool RawRasterBand::FlushCurrentLine(bool bNeedUsableBufferAfter)
         if (poDS != nullptr && poDS->GetRasterCount() > 1 && IsBIP())
         {
             const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-            DoByteSwap(pLineBuffer, nBlockXSize * poDS->GetRasterCount(),
+            DoByteSwap(pLineBuffer,
+                       static_cast<size_t>(nBlockXSize) *
+                           poDS->GetRasterCount(),
                        nDTSize, true);
         }
         else
@@ -1513,7 +1520,8 @@ CPLVirtualMem *RawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
 
     const vsi_l_offset nSize =
         static_cast<vsi_l_offset>(nRasterYSize - 1) * nLineOffset +
-        (nRasterXSize - 1) * nPixelOffset + GDALGetDataTypeSizeBytes(eDataType);
+        static_cast<vsi_l_offset>(nRasterXSize - 1) * nPixelOffset +
+        GDALGetDataTypeSizeBytes(eDataType);
 
     const char *pszImpl = CSLFetchNameValueDef(
         papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
@@ -1640,15 +1648,17 @@ CPLErr RawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         poFirstBand = poBand;
                         bCanDirectAccessToBIPDataset =
                             eDT == eBufType && nBandSpace == nDTSize &&
-                            poFirstBand->nPixelOffset == nBands * nDTSize;
+                            poFirstBand->nPixelOffset ==
+                                cpl::fits_on<int>(nBands * nDTSize);
                     }
                     else
                     {
                         bCanDirectAccessToBIPDataset =
                             eDT == poFirstBand->GetRasterDataType() &&
                             poBand->fpRawL == poFirstBand->fpRawL &&
-                            poBand->nImgOffset == poFirstBand->nImgOffset +
-                                                      iBandIndex * nDTSize &&
+                            poBand->nImgOffset ==
+                                poFirstBand->nImgOffset +
+                                    cpl::fits_on<int>(iBandIndex * nDTSize) &&
                             poBand->nPixelOffset == poFirstBand->nPixelOffset &&
                             poBand->nLineOffset == poFirstBand->nLineOffset &&
                             poBand->eByteOrder == poFirstBand->eByteOrder;
