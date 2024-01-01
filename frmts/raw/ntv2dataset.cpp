@@ -650,7 +650,7 @@ bool NTv2Dataset::OpenGrid(const char *pachHeader, vsi_l_offset nGridOffsetIn)
         auto poBand = RawRasterBand::Create(
             this, iBand + 1, fpImage,
             nGridOffset + 4 * iBand + 11 * nRecordSize +
-                (nRasterXSize - 1) * nPixelSize +
+                static_cast<vsi_l_offset>(nRasterXSize - 1) * nPixelSize +
                 static_cast<vsi_l_offset>(nRasterYSize - 1) * nPixelSize *
                     nRasterXSize,
             -nPixelSize, -nPixelSize * nRasterXSize, GDT_Float32, m_eByteOrder,
