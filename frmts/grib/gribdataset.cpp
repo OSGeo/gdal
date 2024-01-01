@@ -1174,7 +1174,8 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
             CSLTokenizeString2(psSidecar.c_str(), "\n",
                                CSLT_PRESERVEQUOTES | CSLT_STRIPLEADSPACES));
         inv_len_ = aosMsgs.size();
-        inv_ = new inventoryType[inv_len_];
+        inv_ = static_cast<inventoryType *>(
+            CPLMalloc(inv_len_ * sizeof(inventoryType)));
 
         for (size_t i = 0; i < inv_len_; ++i)
         {
@@ -1248,7 +1249,7 @@ class InventoryWrapperSidecar : public gdal::grib::InventoryWrapper
         for (unsigned i = 0; i < inv_len_; i++)
             VSIFree(inv_[i].longFstLevel);
 
-        delete[] inv_;
+        VSIFree(inv_);
     }
 };
 
