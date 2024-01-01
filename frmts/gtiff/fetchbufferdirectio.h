@@ -95,7 +95,8 @@ class FetchBufferDirectIO final
                 nSeekForward -= nToRead;
             }
         }
-        if (VSIFReadL(pabyDstBuffer, nPixels * nDTSize, 1, fp) != 1)
+        if (VSIFReadL(pabyDstBuffer, static_cast<size_t>(nPixels) * nDTSize, 1,
+                      fp) != 1)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);

@@ -578,7 +578,8 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
             if (bOrderedBands && nXSize == m_nBlockXSize &&
                 nYSize == m_nBlockYSize && eBufType == eDataType &&
-                nBandSpace == nDTSize && nPixelSpace == nDTSize * nBands &&
+                nBandSpace == nDTSize &&
+                nPixelSpace == static_cast<GSpacing>(nDTSize) * nBands &&
                 nLineSpace == nPixelSpace * m_nBlockXSize)
             {
                 // If writing one single block with the right data type and
@@ -644,7 +645,8 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 m_pabyBlockBuf + static_cast<size_t>(iY) *
                                                      m_nBlockXSize * nBands *
                                                      nDTSize,
-                                eDataType, nDTSize, nValidX * nBands);
+                                eDataType, nDTSize,
+                                static_cast<GPtrDiff_t>(nValidX) * nBands);
                         }
                     }
                     else
