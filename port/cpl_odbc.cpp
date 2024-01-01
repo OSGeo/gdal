@@ -613,13 +613,22 @@ bool CPLODBCSession::ConnectToMsAccess(const char *pszName,
     const auto Connect =
         [this, &pszName](const char *l_pszDSNStringTemplate, bool bVerboseError)
     {
-        char *pszDSN = static_cast<char *>(
-            CPLMalloc(strlen(pszName) + strlen(l_pszDSNStringTemplate) + 100));
-        /* coverity[tainted_string] */
-        snprintf(pszDSN, strlen(pszName) + strlen(l_pszDSNStringTemplate) + 100,
-                 l_pszDSNStringTemplate, pszName);
-        CPLDebug("ODBC", "EstablishSession(%s)", pszDSN);
-        int bError = !EstablishSession(pszDSN, nullptr, nullptr);
+        std::string osDSN;
+        constexpr const char *PCT_S = "%s";
+        const char *pszPctS = strstr(l_pszDSNStringTemplate, PCT_S);
+        if (!pszPctS)
+        {
+            osDSN = l_pszDSNStringTemplate;
+        }
+        else
+        {
+            osDSN.assign(l_pszDSNStringTemplate,
+                         pszPctS - l_pszDSNStringTemplate);
+            osDSN += pszName;
+            osDSN += (pszPctS + strlen(PCT_S));
+        }
+        CPLDebug("ODBC", "EstablishSession(%s)", osDSN.c_str());
+        int bError = !EstablishSession(osDSN.c_str(), nullptr, nullptr);
         if (bError)
         {
             if (bVerboseError)
@@ -627,13 +636,11 @@ bool CPLODBCSession::ConnectToMsAccess(const char *pszName,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unable to initialize ODBC connection to DSN for %s,\n"
                          "%s",
-                         pszDSN, GetLastError());
+                         osDSN.c_str(), GetLastError());
             }
-            CPLFree(pszDSN);
             return false;
         }
 
-        CPLFree(pszDSN);
         return true;
     };
 
