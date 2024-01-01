@@ -4418,7 +4418,8 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
     }
     else
     {
-        GByte *pabyLine = (GByte *)CPLMalloc(nReqXSize * nBands);
+        GByte *pabyLine =
+            (GByte *)CPLMalloc(static_cast<size_t>(nReqXSize) * nBands);
         for (int iLine = 0; iLine < nReqYSize; iLine++)
         {
             /* Get pixel interleaved data */
@@ -4464,7 +4465,8 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
                 }
             }
 
-            if (VSIFWriteL(pabyLine, nReqXSize * nBands, 1, m_fp) != 1)
+            if (VSIFWriteL(pabyLine, static_cast<size_t>(nReqXSize) * nBands, 1,
+                           m_fp) != 1)
             {
                 eErr = CE_Failure;
                 break;
