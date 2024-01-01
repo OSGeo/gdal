@@ -287,13 +287,14 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             return GDALRasterBand::IRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize,
-                nBufYSize, eWrkDT, nWrkDTSize, nBufXSize * nWrkDTSize,
-                psExtraArg);
+                nBufYSize, eWrkDT, nWrkDTSize,
+                static_cast<GSpacing>(nBufXSize) * nWrkDTSize, psExtraArg);
         }
 
         const CPLErr eErr = m_poParent->RasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize, nBufYSize,
-            eWrkDT, nWrkDTSize, nBufXSize * nWrkDTSize, psExtraArg);
+            eWrkDT, nWrkDTSize, static_cast<GSpacing>(nBufXSize) * nWrkDTSize,
+            psExtraArg);
         if (eErr != CE_None)
         {
             VSIFree(pTemp);
