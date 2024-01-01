@@ -2180,8 +2180,8 @@ CPLErr JPGDataset::LoadScanline(int iLine, GByte *outBuffer)
                 CPLAssert(false);
         }
 
-        m_pabyScanline =
-            static_cast<GByte *>(CPLMalloc(nJPEGBands * GetRasterXSize() * 2));
+        m_pabyScanline = static_cast<GByte *>(
+            CPLMalloc(cpl::fits_on<int>(nJPEGBands * GetRasterXSize() * 2)));
     }
 
     if (iLine < nLoadedScanline)
@@ -4579,8 +4579,8 @@ GDALDataset *JPGDataset::CreateCopyStage2(
 
     // Loop over image, copying image data.
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
-    pabyScanline =
-        static_cast<GByte *>(CPLMalloc(nBands * nXSize * nWorkDTSize));
+    pabyScanline = static_cast<GByte *>(
+        CPLMalloc(cpl::fits_on<int>(nBands * nXSize * nWorkDTSize)));
 
     if (setjmp(sUserData.setjmp_buffer))
     {
@@ -4596,8 +4596,9 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     {
         eErr = poSrcDS->RasterIO(
             GF_Read, 0, iLine, nXSize, 1, pabyScanline, nXSize, 1, eWorkDT,
-            nBands, nullptr, nBands * nWorkDTSize,
-            nBands * nXSize * nWorkDTSize, nWorkDTSize, nullptr);
+            nBands, nullptr, cpl::fits_on<int>(nBands * nWorkDTSize),
+            cpl::fits_on<int>(nBands * nXSize * nWorkDTSize), nWorkDTSize,
+            nullptr);
 
         // Clamp 16bit values to 12bit.
         if (nWorkDTSize == 2)
