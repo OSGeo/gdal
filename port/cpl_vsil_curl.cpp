@@ -1794,7 +1794,8 @@ retry:
     sWriteFuncHeaderData.bIsHTTP = STARTS_WITH(m_pszURL, "http");
     sWriteFuncHeaderData.nStartOffset = startOffset;
     sWriteFuncHeaderData.nEndOffset =
-        startOffset + nBlocks * VSICURLGetDownloadChunkSize() - 1;
+        startOffset +
+        static_cast<vsi_l_offset>(nBlocks) * VSICURLGetDownloadChunkSize() - 1;
     // Some servers don't like we try to read after end-of-file (#5786).
     if (oFileProp.bHasComputedFileSize &&
         sWriteFuncHeaderData.nEndOffset >= oFileProp.fileSize)
@@ -2107,7 +2108,8 @@ void VSICurlHandle::DownloadRegionPostProcess(const vsi_l_offset startOffset,
                                               const char *pBuffer, size_t nSize)
 {
     const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
-    lastDownloadedOffset = startOffset + nBlocks * knDOWNLOAD_CHUNK_SIZE;
+    lastDownloadedOffset = startOffset + static_cast<vsi_l_offset>(nBlocks) *
+                                             knDOWNLOAD_CHUNK_SIZE;
 
     if (nSize > static_cast<size_t>(nBlocks) * knDOWNLOAD_CHUNK_SIZE)
     {
@@ -2224,7 +2226,8 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             for (int i = 1; i < nBlocksToDownload; i++)
             {
                 if (poFS->GetRegion(m_pszURL, nOffsetToDownload +
-                                                  i * knDOWNLOAD_CHUNK_SIZE) !=
+                                                  static_cast<vsi_l_offset>(i) *
+                                                      knDOWNLOAD_CHUNK_SIZE) !=
                     nullptr)
                 {
                     nBlocksToDownload = i;
