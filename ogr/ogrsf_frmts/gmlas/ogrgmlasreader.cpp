@@ -344,11 +344,7 @@ GMLASBaseEntityResolver::resolveEntity(const XMLCh *const /*publicId*/,
 
     if (fp != nullptr)
     {
-        if (osNewPath.find("/vsicurl_streaming/") == 0)
-            m_oSetSchemaURLs.insert(
-                osNewPath.substr(strlen("/vsicurl_streaming/")));
-        else
-            m_oSetSchemaURLs.insert(osNewPath);
+        m_oSetSchemaURLs.insert(osNewPath);
 
         CPLDebug("GMLAS", "Opening %s", osNewPath.c_str());
         DoExtraSchemaProcessing(osNewPath, fp);
@@ -542,8 +538,7 @@ bool GMLASReader::LoadXSDInParser(
         if (osXSDFilename.find("http://") == 0 ||
             osXSDFilename.find("https://") == 0)
         {
-            osXSDDirname = CPLGetDirname(
-                ("/vsicurl_streaming/" + osModifXSDFilename).c_str());
+            osXSDDirname = osXSDFilename.substr(0, osXSDFilename.rfind('/'));
         }
         oXSDEntityResolver.SetBasePath(osXSDDirname);
         oXSDEntityResolver.DoExtraSchemaProcessing(osResolvedFilename, fpXSD);
