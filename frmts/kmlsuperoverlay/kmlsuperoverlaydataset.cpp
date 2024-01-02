@@ -2160,7 +2160,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     GDALDataset *poImageDS = poGDS->poCurTileDS;
     if (poImageDS == nullptr)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         return CE_None;
     }
     int nXSize = poImageDS->GetRasterXSize();
@@ -2188,7 +2188,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         if (nBand == 4 && poColorTable == nullptr)
         {
             /* Add fake alpha band */
-            memset(pImage, 255, nBlockXSize * nBlockYSize);
+            memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
             eErr = CE_None;
         }
         else
@@ -2237,7 +2237,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (nBand == 4 && poImageDS->GetRasterCount() == 3)
     {
         /* Add fake alpha band */
-        memset(pImage, 255, nBlockXSize * nBlockYSize);
+        memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         eErr = CE_None;
     }
 
