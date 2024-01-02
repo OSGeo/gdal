@@ -2019,10 +2019,10 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
                 continue;
 
             // get the data in the buffer, interleaved
-            eErr =
-                poSrc->RasterIO(GF_Read, col, row, nCols, nRows, buffer, nCols,
-                                nRows, eDT, nBandCount, nullptr, nBands * dts,
-                                nBands * dts * nCols, dts, nullptr);
+            eErr = poSrc->RasterIO(
+                GF_Read, col, row, nCols, nRows, buffer, nCols, nRows, eDT,
+                nBandCount, nullptr, static_cast<GSpacing>(nBands) * dts,
+                static_cast<GSpacing>(nBands) * dts * nCols, dts, nullptr);
 
             if (eErr != CE_None)
                 break;
@@ -2048,9 +2048,10 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
 
             // Write
             if (eErr == CE_None)
-                eErr = RasterIO(GF_Write, col, row, nCols, nRows, buffer, nCols,
-                                nRows, eDT, nBandCount, nullptr, nBands * dts,
-                                nBands * dts * nCols, dts, nullptr);
+                eErr = RasterIO(
+                    GF_Write, col, row, nCols, nRows, buffer, nCols, nRows, eDT,
+                    nBandCount, nullptr, static_cast<GSpacing>(nBands) * dts,
+                    static_cast<GSpacing>(nBands) * dts * nCols, dts, nullptr);
 
         }  // Columns
         if (eErr != CE_None)
