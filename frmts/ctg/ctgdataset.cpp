@@ -183,16 +183,16 @@ CTGRasterBand::~CTGRasterBand()
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr CTGRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
-                                 CPL_UNUSED int nBlockYOff, void *pImage)
+CPLErr CTGRasterBand::IReadBlock(int /* nBlockXOff */, int /* nBlockYOff */,
+                                 void *pImage)
 {
     CTGDataset *poGDS = (CTGDataset *)poDS;
 
     poGDS->ReadImagery();
     memcpy(pImage,
            poGDS->pabyImage +
-               (nBand - 1) * nBlockXSize * nBlockYSize * sizeof(int),
-           nBlockXSize * nBlockYSize * sizeof(int));
+               sizeof(int) * (nBand - 1) * nBlockXSize * nBlockYSize,
+           sizeof(int) * nBlockXSize * nBlockYSize);
 
     return CE_None;
 }
@@ -290,10 +290,10 @@ int CTGDataset::ReadImagery()
     szLine[80] = 0;
     int nLine = HEADER_LINE_COUNT;
     VSIFSeekL(fp, nLine * 80, SEEK_SET);
-    int nCells = nRasterXSize * nRasterYSize;
+    const int nCells = nRasterXSize * nRasterYSize;
     while (VSIFReadL(szLine, 1, 80, fp) == 80)
     {
-        int nZone = atoi(ExtractField(szField, szLine, 0, 3));
+        const int nZone = atoi(ExtractField(szField, szLine, 0, 3));
         if (nZone != nUTMZone)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -301,10 +301,12 @@ int CTGDataset::ReadImagery()
                      nLine, szLine, nZone);
             return FALSE;
         }
-        int nX = atoi(ExtractField(szField, szLine, 3, 8)) - nCellSize / 2;
-        int nY = atoi(ExtractField(szField, szLine, 11, 8)) + nCellSize / 2;
-        GIntBig nDiffX = static_cast<GIntBig>(nX) - nNWEasting;
-        GIntBig nDiffY = static_cast<GIntBig>(nNWNorthing) - nY;
+        const int nX =
+            atoi(ExtractField(szField, szLine, 3, 8)) - nCellSize / 2;
+        const int nY =
+            atoi(ExtractField(szField, szLine, 11, 8)) + nCellSize / 2;
+        const GIntBig nDiffX = static_cast<GIntBig>(nX) - nNWEasting;
+        const GIntBig nDiffY = static_cast<GIntBig>(nNWNorthing) - nY;
         if (nDiffX < 0 || (nDiffX % nCellSize) != 0 || nDiffY < 0 ||
             (nDiffY % nCellSize) != 0)
         {
@@ -313,8 +315,8 @@ int CTGDataset::ReadImagery()
                      nLine, szLine);
             return FALSE;
         }
-        GIntBig nCellX = nDiffX / nCellSize;
-        GIntBig nCellY = nDiffY / nCellSize;
+        const GIntBig nCellX = nDiffX / nCellSize;
+        const GIntBig nCellY = nDiffY / nCellSize;
         if (nCellX >= nRasterXSize || nCellY >= nRasterYSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -327,7 +329,9 @@ int CTGDataset::ReadImagery()
             int nVal = atoi(ExtractField(szField, szLine, 20 + 10 * i, 10));
             if (nVal >= 2000000000)
                 nVal = 0;
-            ((int *)pabyImage)[i * nCells + nCellY * nRasterXSize + nCellX] =
+            ((int *)
+                 pabyImage)[i * nCells +
+                            static_cast<int>(nCellY) * nRasterXSize + nCellX] =
                 nVal;
         }
 
@@ -496,7 +500,8 @@ GDALDataset *CTGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Read the imagery                                                */
     /* -------------------------------------------------------------------- */
-    GByte *pabyImage = (GByte *)VSICalloc(nCols * nRows, 6 * sizeof(int));
+    GByte *pabyImage =
+        (GByte *)VSICalloc(static_cast<size_t>(nCols) * nRows, 6 * sizeof(int));
     if (pabyImage == nullptr)
     {
         delete poDS;
