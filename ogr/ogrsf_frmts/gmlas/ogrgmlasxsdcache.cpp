@@ -167,6 +167,146 @@ GMLASXSDCache::GMLASXSDCache()
 GMLASXSDCache::~GMLASXSDCache()
 {
 }
+
+/************************************************************************/
+/*                          CacheAllGML321()                            */
+/************************************************************************/
+
+bool GMLASXSDCache::CacheAllGML321()
+{
+    // As of today (2024-01-02), the schemas in https://schemas.opengis.net/gml/3.2.1
+    // are actually the same as the ones in the https://schemas.opengis.net/gml/gml-3_2_2.zip archive.
+    // Download the later and unzip it for faster fetching of GML schemas.
+
+    bool bSuccess = false;
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
+
+    const char *pszHTTPZIP = "https://schemas.opengis.net/gml/gml-3_2_2.zip";
+    CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
+    if (psResult && psResult->nDataLen)
+    {
+        const std::string osZIPFilename(CPLSPrintf("/vsimem/%p.zip", this));
+        auto fpZIP =
+            VSIFileFromMemBuffer(osZIPFilename.c_str(), psResult->pabyData,
+                                 psResult->nDataLen, FALSE);
+        if (fpZIP)
+        {
+            VSIFCloseL(fpZIP);
+
+            const std::string osVSIZIPFilename("/vsizip/" + osZIPFilename);
+            const CPLStringList aosFiles(
+                VSIReadDirRecursive(osVSIZIPFilename.c_str()));
+            for (int i = 0; i < aosFiles.size(); ++i)
+            {
+                if (strstr(aosFiles[i], ".xsd"))
+                {
+                    const std::string osFilename(
+                        std::string("https://schemas.opengis.net/gml/3.2.1/") +
+                        CPLGetFilename(aosFiles[i]));
+                    const std::string osCachedFileName(
+                        GetCachedFilename(osFilename.c_str()));
+
+                    std::string osTmpfilename(osCachedFileName + ".tmp");
+                    if (CPLCopyFile(
+                            osTmpfilename.c_str(),
+                            (osVSIZIPFilename + "/" + aosFiles[i]).c_str()) ==
+                        0)
+                    {
+                        VSIRename(osTmpfilename.c_str(),
+                                  osCachedFileName.c_str());
+                        bSuccess = true;
+                    }
+                }
+            }
+        }
+        VSIUnlink(osZIPFilename.c_str());
+    }
+    CPLHTTPDestroyResult(psResult);
+    if (!bSuccess)
+    {
+        static bool bHasWarned = false;
+        if (!bHasWarned)
+        {
+            bHasWarned = true;
+            CPLDebug("GMLAS", "Cannot get GML schemas from %s", pszHTTPZIP);
+        }
+    }
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                         CacheAllISO20070417()                        */
+/************************************************************************/
+
+bool GMLASXSDCache::CacheAllISO20070417()
+{
+    // As of today (2024-01-02), the schemas in https://schemas.opengis.net/iso/19139/20070417/
+    // are actually the same as the ones in the iso19139-20070417_5-v20220526.zip archive
+    // in https://schemas.opengis.net/iso/19139/iso19139-20070417.zip archive.
+    // Download the later and unzip it for faster fetching of ISO schemas.
+
+    bool bSuccess = false;
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
+
+    const char *pszHTTPZIP =
+        "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip";
+    CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
+    if (psResult && psResult->nDataLen)
+    {
+        const std::string osZIPFilename(CPLSPrintf("/vsimem/%p.zip", this));
+        auto fpZIP =
+            VSIFileFromMemBuffer(osZIPFilename.c_str(), psResult->pabyData,
+                                 psResult->nDataLen, FALSE);
+        if (fpZIP)
+        {
+            VSIFCloseL(fpZIP);
+
+            const std::string osVSIZIPFilename(
+                "/vsizip//vsizip/" + osZIPFilename +
+                "/iso19139-20070417_5-v20220526.zip");
+            const CPLStringList aosFiles(
+                VSIReadDirRecursive(osVSIZIPFilename.c_str()));
+            for (int i = 0; i < aosFiles.size(); ++i)
+            {
+                if (STARTS_WITH(aosFiles[i], "iso/19139/20070417/") &&
+                    strstr(aosFiles[i], ".xsd"))
+                {
+                    const std::string osFilename(
+                        std::string("https://schemas.opengis.net/") +
+                        aosFiles[i]);
+                    const std::string osCachedFileName(
+                        GetCachedFilename(osFilename.c_str()));
+
+                    std::string osTmpfilename(osCachedFileName + ".tmp");
+                    if (CPLCopyFile(
+                            osTmpfilename.c_str(),
+                            (osVSIZIPFilename + "/" + aosFiles[i]).c_str()) ==
+                        0)
+                    {
+                        VSIRename(osTmpfilename.c_str(),
+                                  osCachedFileName.c_str());
+                        bSuccess = true;
+                    }
+                }
+            }
+        }
+        VSIUnlink(osZIPFilename.c_str());
+    }
+    CPLHTTPDestroyResult(psResult);
+    if (!bSuccess)
+    {
+        static bool bHasWarned = false;
+        if (!bHasWarned)
+        {
+            bHasWarned = true;
+            CPLDebug("GMLAS", "Cannot get ISO schemas from %s", pszHTTPZIP);
+        }
+    }
+    return bSuccess;
+}
+
 /************************************************************************/
 /*                               Open()                                 */
 /************************************************************************/
@@ -199,6 +339,8 @@ VSILFILE *GMLASXSDCache::Open(const std::string &osResource,
              osBasePath.c_str(), osOutFilename.c_str());
 
     VSILFILE *fp = nullptr;
+    bool bHasTriedZIPArchive = false;
+retry:
     if (!m_osCacheDirectory.empty() &&
         (STARTS_WITH(osOutFilename.c_str(), "http://") ||
          STARTS_WITH(osOutFilename.c_str(), "https://")) &&
@@ -219,6 +361,28 @@ VSILFILE *GMLASXSDCache::Open(const std::string &osResource,
         {
             if (m_bRefresh)
                 m_aoSetRefreshedFiles.insert(osCachedFileName);
+
+            else if (!bHasTriedZIPArchive &&
+                     strstr(osOutFilename.c_str(),
+                            "://schemas.opengis.net/gml/3.2.1/") &&
+                     CPLTestBool(CPLGetConfigOption(
+                         "OGR_GMLAS_USE_SCHEMAS_FROM_OGC_ZIP", "YES")))
+            {
+                bHasTriedZIPArchive = true;
+                if (CacheAllGML321())
+                    goto retry;
+            }
+
+            else if (!bHasTriedZIPArchive &&
+                     strstr(osOutFilename.c_str(),
+                            "://schemas.opengis.net/iso/19139/20070417/") &&
+                     CPLTestBool(CPLGetConfigOption(
+                         "OGR_GMLAS_USE_SCHEMAS_FROM_OGC_ZIP", "YES")))
+            {
+                bHasTriedZIPArchive = true;
+                if (CacheAllISO20070417())
+                    goto retry;
+            }
 
             CPLHTTPResult *psResult =
                 CPLHTTPFetch(osOutFilename.c_str(), nullptr);

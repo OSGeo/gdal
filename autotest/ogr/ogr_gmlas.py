@@ -3422,3 +3422,23 @@ def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
         f.GetGeometryRef().ExportToIsoWkt()
         == "LINESTRING Z (1 2 3,4 5 6,7 8 9,10 11 12)"
     )
+
+
+###############################################################################
+# Test getting real GML and ISO schemas and the optimizations to fetch them
+# through .zip archives
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
+
+    cache_path = str(tmp_path / "cache")
+
+    ds = gdal.OpenEx(
+        "GMLAS:",
+        open_options=[
+            "XSD=https://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd",
+            f"CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>true</AllowRemoteSchemaDownload><SchemaCache><Directory>{cache_path}</Directory></SchemaCache><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>",
+        ],
+    )
+    assert ds

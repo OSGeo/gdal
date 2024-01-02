@@ -113,6 +113,9 @@ class GMLASResourceCache
 
 class GMLASXSDCache final : public GMLASResourceCache
 {
+    bool CacheAllGML321();
+    bool CacheAllISO20070417();
+
   public:
     GMLASXSDCache();
     virtual ~GMLASXSDCache();
