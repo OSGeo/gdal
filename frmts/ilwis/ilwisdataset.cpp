@@ -1613,7 +1613,8 @@ CPLErr ILWISRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 #endif
 
-    VSIFSeekL(fpRaw, nBlockSize * nBlockYOff, SEEK_SET);
+    VSIFSeekL(fpRaw, static_cast<vsi_l_offset>(nBlockSize) * nBlockYOff,
+              SEEK_SET);
     void *pData = (char *)CPLMalloc(nBlockSize);
     if (VSIFReadL(pData, 1, nBlockSize, fpRaw) < 1)
     {
@@ -1752,7 +1753,7 @@ double ILWISRasterBand::GetValue(void *pImage, int i)
 void ILWISRasterBand::FillWithNoData(void *pImage)
 {
     if (psInfo.stStoreType == stByte)
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
     else
     {
         switch (psInfo.stStoreType)
@@ -1802,7 +1803,8 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     int nBlockSize = nBlockXSize * nBlockYSize * nSizePerPixel;
     void *pData = CPLMalloc(nBlockSize);
 
-    VSIFSeekL(fpRaw, nBlockSize * nBlockYOff, SEEK_SET);
+    VSIFSeekL(fpRaw, static_cast<vsi_l_offset>(nBlockSize) * nBlockYOff,
+              SEEK_SET);
 
     bool fDataExists = (VSIFReadL(pData, 1, nBlockSize, fpRaw) >= 1);
 
@@ -1907,7 +1909,8 @@ CPLErr ILWISRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     // Officially we should also translate "nodata" values, but at this point
     // we can't tell what's the "nodata" value of the source (foreign) dataset
 
-    VSIFSeekL(fpRaw, nBlockSize * nBlockYOff, SEEK_SET);
+    VSIFSeekL(fpRaw, static_cast<vsi_l_offset>(nBlockSize) * nBlockYOff,
+              SEEK_SET);
 
     if (VSIFWriteL(pData, 1, nBlockSize, fpRaw) < 1)
     {
