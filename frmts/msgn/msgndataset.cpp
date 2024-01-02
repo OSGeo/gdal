@@ -205,15 +205,17 @@ CPLErr MSGNRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         data_offset =
             poGDS->msg_reader_core->get_f_data_offset() +
             static_cast<vsi_l_offset>(interline_spacing) * i_nBlockYOff +
-            (band_in_file - 1) * packet_size + (packet_size - data_length);
+            static_cast<vsi_l_offset>(band_in_file - 1) * packet_size +
+            (packet_size - data_length);
     }
     else
     {
-        data_offset = poGDS->msg_reader_core->get_f_data_offset() +
-                      static_cast<vsi_l_offset>(interline_spacing) *
-                          (int(i_nBlockYOff / 3) + 1) -
-                      packet_size * (3 - (i_nBlockYOff % 3)) +
-                      (packet_size - data_length);
+        data_offset =
+            poGDS->msg_reader_core->get_f_data_offset() +
+            static_cast<vsi_l_offset>(interline_spacing) *
+                (int(i_nBlockYOff / 3) + 1) -
+            static_cast<vsi_l_offset>(packet_size) * (3 - (i_nBlockYOff % 3)) +
+            (packet_size - data_length);
     }
 
     if (VSIFSeekL(poGDS->fp, data_offset, SEEK_SET) != 0)
