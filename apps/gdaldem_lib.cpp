@@ -2161,7 +2161,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             (poGDS->panSourceBuf) ? GDT_Int32 : GDT_Float32, 0, 0);
         if (eErr != CE_None)
         {
-            memset(pImage, 0, nBlockXSize * nBlockYSize);
+            memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
             return eErr;
         }
     }
