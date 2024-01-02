@@ -254,8 +254,8 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     int nPixelsRead = 0;
 
-    GByte *pabyRecord =
-        (GByte *)CPLMalloc(ImageDesc->BytesPerPixel * nBlockXSize);
+    GByte *pabyRecord = (GByte *)CPLMalloc(
+        static_cast<size_t>(ImageDesc->BytesPerPixel) * nBlockXSize);
 
     for (int iRecord = 0; iRecord < ImageDesc->RecordsPerLine; iRecord++)
     {
@@ -269,7 +269,8 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         CPL_IGNORE_RET_VAL(VSIFSeekL(poGDS->fpImage, offset, SEEK_SET));
         CPL_IGNORE_RET_VAL(VSIFReadL(
             pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel, 1,
-            nPixelsToRead * ImageDesc->BytesPerPixel, poGDS->fpImage));
+            static_cast<vsi_l_offset>(nPixelsToRead) * ImageDesc->BytesPerPixel,
+            poGDS->fpImage));
 
         nPixelsRead += nPixelsToRead;
         offset += ImageDesc->BytesPerRecord;
@@ -279,7 +280,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     /*      Copy the desired band out based on the size of the type, and    */
     /*      the interleaving mode.                                          */
     /* -------------------------------------------------------------------- */
-    const int nBytesPerSample = GDALGetDataTypeSize(eDataType) / 8;
+    const int nBytesPerSample = GDALGetDataTypeSizeBytes(eDataType);
 
     if (ImageDesc->ChannelInterleaving == CEOS_IL_PIXEL)
     {
@@ -295,7 +296,8 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     }
     else if (ImageDesc->ChannelInterleaving == CEOS_IL_BAND)
     {
-        memcpy(pImage, pabyRecord, nBytesPerSample * nBlockXSize);
+        memcpy(pImage, pabyRecord,
+               static_cast<size_t>(nBytesPerSample) * nBlockXSize);
     }
 
 #ifdef CPL_LSB
