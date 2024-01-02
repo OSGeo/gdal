@@ -908,7 +908,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
              (!m_bNoDataValueSet || m_dfNoDataValue == 0))
     {
         memset(pData, 0,
-               static_cast<size_t>(nBufXSize) * nBufYSize * nPixelSpace);
+               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
     }
     else if (m_bNoDataValueSet)
     {
