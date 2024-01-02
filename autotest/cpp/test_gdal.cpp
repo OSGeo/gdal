@@ -2583,7 +2583,8 @@ template <class T> void TestCachedPixelAccessor()
         }
     }
 
-    std::vector<T> values(poBand->GetYSize() * poBand->GetXSize());
+    std::vector<T> values(static_cast<size_t>(poBand->GetYSize()) *
+                          poBand->GetXSize());
     accessor.FlushCache();
     EXPECT_EQ(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(),
                                poBand->GetYSize(), values.data(),
