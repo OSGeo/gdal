@@ -184,7 +184,8 @@ bool GDALNearblackFloodFillAlg::LoadLine(int iY)
                 if (m_poDstDS->RasterIO(
                         GF_Write, 0, m_nLoadedLine, nXSize, 1, m_abyLine.data(),
                         nXSize, 1, GDT_Byte, m_nDstBands, nullptr, m_nDstBands,
-                        nXSize * m_nDstBands, 1, nullptr) != CE_None)
+                        static_cast<GSpacing>(nXSize) * m_nDstBands, 1,
+                        nullptr) != CE_None)
                 {
                     return false;
                 }
@@ -214,7 +215,8 @@ bool GDALNearblackFloodFillAlg::LoadLine(int iY)
                 if (m_poDstDS->RasterIO(
                         GF_Read, 0, iY, nXSize, 1, m_abyLine.data(), nXSize, 1,
                         GDT_Byte, m_nDstBands, nullptr, m_nDstBands,
-                        nXSize * m_nDstBands, 1, nullptr) != CE_None)
+                        static_cast<GSpacing>(nXSize) * m_nDstBands, 1,
+                        nullptr) != CE_None)
                 {
                     return false;
                 }
@@ -228,7 +230,8 @@ bool GDALNearblackFloodFillAlg::LoadLine(int iY)
                         // m_nSrcBands intended
                         m_nSrcBands,
                         // m_nDstBands intended
-                        nullptr, m_nDstBands, nXSize * m_nDstBands, 1,
+                        nullptr, m_nDstBands,
+                        static_cast<GSpacing>(nXSize) * m_nDstBands, 1,
                         nullptr) != CE_None)
                 {
                     return false;
@@ -464,7 +467,7 @@ bool GDALNearblackFloodFillAlg::Process()
     /* -------------------------------------------------------------------- */
     try
     {
-        m_abyLine.resize(nXSize * m_nDstBands);
+        m_abyLine.resize(static_cast<size_t>(nXSize) * m_nDstBands);
         m_abyLineMustSet.resize(nXSize);
         if (m_bSetMask)
             m_abyMask.resize(nXSize);
