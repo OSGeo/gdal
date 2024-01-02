@@ -1,6 +1,6 @@
 # GDAL/OGR 3.8.3 Release Notes
 
-GDAL 3.8.2 is a bugfix release.
+GDAL 3.8.3 is a bugfix release.
 
 ## Build
 
@@ -33,7 +33,7 @@ VRT driver:
 * OGRArrowArrayHelper::SetBoolOn(): fix wrong bit shift computation.
   Affects ogr2ogr from GPKG/FlatGeoBuf to something else) (#8998)
 
-# GDAL/OGR 3.8.3 Release Notes
+# GDAL/OGR 3.8.2 Release Notes
 
 GDAL 3.8.2 is a bugfix release.
 
