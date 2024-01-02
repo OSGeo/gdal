@@ -1,4 +1,39 @@
-# GDAL/OGR 3.8.2 Release Notes
+# GDAL/OGR 3.8.3 Release Notes
+
+GDAL 3.8.2 is a bugfix release.
+
+## Build
+
+* infback9: fix various build issues with clang 17
+
+## GDAL 3.8.3
+
+### Port
+
+* AWS S3: add explicit error message when IMDS fails and we know we are on EC2
+
+### Utilities
+
+* gdalbuildvrt: in -separate mode, only use ComplexSource if needed
+
+### Raster drivers
+
+VRT driver:
+* VRTDerivedRasterBand::IRasterIO(): fix potential multiplication overflow
+
+## OGR 3.8.3
+
+### OGRSpatialReference
+
+* CoordinateTransformation::TransformBounds(): fix polar stereographic (
+  including pole) to Web Mercator (#8996)
+
+### Vector drivers
+
+* OGRArrowArrayHelper::SetBoolOn(): fix wrong bit shift computation.
+  Affects ogr2ogr from GPKG/FlatGeoBuf to something else) (#8998)
+
+# GDAL/OGR 3.8.3 Release Notes
 
 GDAL 3.8.2 is a bugfix release.
 
