@@ -2960,7 +2960,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     const sqlite3_int64 nTotalChangesBefore =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3021,7 +3021,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
     sqlite3_clear_bindings(m_poUpdateStatement);
 
     const sqlite3_int64 nTotalChangesAfter =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3227,7 +3227,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     }
 
     const sqlite3_int64 nTotalChangesBefore =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3248,7 +3248,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     sqlite3_clear_bindings(m_poUpdateStatement);
 
     const sqlite3_int64 nTotalChangesAfter =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3581,7 +3581,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
                  SQLEscapeName(m_pszFidColumn).c_str(), nFID);
 
     const sqlite3_int64 nTotalChangesBefore =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3591,7 +3591,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     if (eErr == OGRERR_NONE)
     {
         const sqlite3_int64 nTotalChangesAfter =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
             sqlite3_total_changes64(m_poDS->GetDB());
 #else
             sqlite3_total_changes(m_poDS->GetDB());
