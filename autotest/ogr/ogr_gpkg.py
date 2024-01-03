@@ -8092,6 +8092,46 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
 
 
 ###############################################################################
+# Test GetArrowStreamAsNumPy() and multi-threading
+
+
+def test_ogr_gpkg_arrow_stream_numpy_multi_threading(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+
+    for i in range(1000):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(f"POINT({i} {i})"))
+        lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    num_threads = max(2, min(gdal.GetNumCPUs(), 4))
+    with gdaltest.config_option("OGR_GPKG_NUM_THREADS", str(num_threads)):
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=10"]
+        )
+        batches = [batch for batch in stream]
+        assert len(batches) == 100
+        i = 0
+        for batch in batches:
+            for wkb in batch["geom"]:
+                assert (
+                    ogr.CreateGeometryFromWkb(wkb).ExportToIsoWkt()
+                    == f"POINT ({i} {i})"
+                )
+                i += 1
+        assert i == 1000
+
+
+###############################################################################
 # Test Arrow interface with bool fields
 
 
