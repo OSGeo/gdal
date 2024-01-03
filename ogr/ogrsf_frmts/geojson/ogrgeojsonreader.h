@@ -118,7 +118,6 @@ class OGRGeoJSONBaseReader
 
     bool ExtentRead() const;
 
-    OGREnvelope GetExtent() const;
     OGREnvelope3D GetExtent3D() const;
 
   protected:
@@ -275,9 +274,6 @@ bool CPL_DLL OGRJSonParse(const char *pszText, json_object **ppoObj,
 bool OGRGeoJSONUpdateLayerGeomType(bool &bFirstGeom,
                                    OGRwkbGeometryType eGeomType,
                                    OGRwkbGeometryType &eLayerGeomType);
-
-// Get the extent from the geometry coordinates of a feature
-bool OGRGeoJSONGetExtent(json_object *poObj, OGREnvelope *poEnvelope);
 
 // Get the 3D extent from the geometry coordinates of a feature
 bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope);

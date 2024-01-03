@@ -5023,3 +5023,36 @@ def test_ogr_json_getextent3d(tmp_vsimem):
 
     assert lyr.GetExtent() == (1.0, 7.0, 1.0, 7.0)
     assert lyr.GetExtent3D() == (1.0, 7.0, 1.0, 7.0, 1.0, 7.0)
+
+    # Test geometrycollection
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        r"""
+        {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "GeometryCollection",
+                    "geometries": [{
+                            "type": "Point",
+                            "coordinates": [6, 7]
+                        }, {
+                            "type": "Polygon",
+                            "coordinates": [[[3, 4, 2], [5, 4, 4], [5, 5, 5], [4, 5, 5], [3, 4, 2]]]
+                        }]
+                }
+            }]
+        }
+        """,
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (3.0, 6.0, 4.0, 7.0)
+    assert lyr.GetExtent3D() == (3.0, 6.0, 4.0, 7.0, 2.0, 5.0)

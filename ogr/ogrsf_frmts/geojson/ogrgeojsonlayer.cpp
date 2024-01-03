@@ -454,7 +454,7 @@ OGRErr OGRGeoJSONLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
     if (poReader_ && poReader_->ExtentRead() &&
         TestCapability(OLCFastGetExtent))
     {
-        *psExtent = poReader_->GetExtent();
+        *psExtent = poReader_->GetExtent3D();
         return OGRERR_NONE;
     }
     else
