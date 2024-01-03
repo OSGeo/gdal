@@ -8416,9 +8416,9 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     const auto GetThreadsAvailable = []()
     {
         const char *pszMaxThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+            CPLGetConfigOption("OGR_GPKG_NUM_THREADS", nullptr);
         if (pszMaxThreads == nullptr)
-            return std::min(4, CPLGetNumCPUs());
+            return 0;
         else if (EQUAL(pszMaxThreads, "ALL_CPUS"))
             return CPLGetNumCPUs();
         else
