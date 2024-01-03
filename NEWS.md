@@ -5,6 +5,7 @@ GDAL 3.8.3 is a bugfix release.
 ## Build
 
 * infback9: fix various build issues with clang 17
+* fix build with sqlite 3.36.x (#9021)
 
 ## GDAL 3.8.3
 
@@ -28,10 +29,20 @@ VRT driver:
 * CoordinateTransformation::TransformBounds(): fix polar stereographic (
   including pole) to Web Mercator (#8996)
 
+### Utilities
+
+* ogr2ogr: do not use ArrowArray interface if -clipsrc, -clipdst, -gcp or
+  -wrapdateline are specified (#9013)
+
 ### Vector drivers
 
 * OGRArrowArrayHelper::SetBoolOn(): fix wrong bit shift computation.
   Affects ogr2ogr from GPKG/FlatGeoBuf to something else) (#8998)
+
+GPKG driver:
+ * disable by default multi-threaded ArrowArray interface. Make it opt-in with
+   the OGR_GPKG_NUM_THREADS config option
+   (cf https://github.com/OSGeo/gdal/pull/9018)
 
 # GDAL/OGR 3.8.2 Release Notes
 
