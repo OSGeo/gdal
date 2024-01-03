@@ -3216,7 +3216,7 @@ bool OGRGeoJSONGetExtent(json_object *poObj, OGREnvelope *poEnvelope)
         {
             const auto nItems = json_object_array_length(poObjCoordsIn);
 
-            double dXVal = std::numeric_limits<double>::quiet_NaN();
+            double dXVal;
 
             for (auto i = decltype(nItems){0}; i < nItems; ++i)
             {
@@ -3249,7 +3249,6 @@ bool OGRGeoJSONGetExtent(json_object *poObj, OGREnvelope *poEnvelope)
                             const double dYVal =
                                 json_object_get_double(poObjCoordsElement);
                             poEnvelopeIn->Merge(dXVal, dYVal);
-                            dXVal = std::numeric_limits<double>::quiet_NaN();
                             break;
                         }
                         default:
@@ -3298,8 +3297,8 @@ bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope)
         {
             const auto nItems = json_object_array_length(poObjCoordsIn);
 
-            double dXVal = std::numeric_limits<double>::quiet_NaN();
-            double dYVal = std::numeric_limits<double>::quiet_NaN();
+            double dXVal;
+            double dYVal;
 
             for (auto i = decltype(nItems){0}; i < nItems; ++i)
             {
@@ -3337,8 +3336,6 @@ bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope)
                             const double dZVal =
                                 json_object_get_double(poObjCoordsElement);
                             poEnvelopeIn->Merge(dXVal, dYVal, dZVal);
-                            dXVal = std::numeric_limits<double>::quiet_NaN();
-                            dYVal = std::numeric_limits<double>::quiet_NaN();
                             break;
                         }
                         default:
