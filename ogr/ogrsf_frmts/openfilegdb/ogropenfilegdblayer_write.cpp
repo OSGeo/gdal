@@ -2759,7 +2759,7 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
                 pszShapeType = "esriGeometryMultipoint";
                 break;
             case FGTGT_LINE:
-                pszShapeType = "esriGeometryLine";
+                pszShapeType = m_bArcGISPro32OrLater ? "esriGeometryPolyline" : "esriGeometryLine";
                 break;
             case FGTGT_POLYGON:
                 pszShapeType = "esriGeometryPolygon";
