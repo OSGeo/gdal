@@ -4493,3 +4493,24 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
         f = sql_lyr.GetNextFeature()
         assert f["MIN_timestamp_offset"] == "1900/12/31 14:01:01"
         assert f["MAX_timestamp_offset"] == "2023/12/30 14:01:01"
+
+
+###############################################################################
+# Test creating line layer with (ArcGIS Pro >= 3.2)
+
+
+def test_ogr_openfilegdb_write_line_layer_arcgis_pro_3_2():
+
+    dirname = "/vsimem/test_ogr_openfilegdb_write_line_layer_arcgis_pro_3_2.gdb"
+    try:
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        ds.CreateLayer("test", geom_type=ogr.wkbLineString, options=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"])
+        ds = None
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbMultiLineString
+
+    finally:
+        gdal.RmdirRecursive(dirname)
+
