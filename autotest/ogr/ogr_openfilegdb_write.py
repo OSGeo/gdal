@@ -4504,7 +4504,11 @@ def test_ogr_openfilegdb_write_line_layer_arcgis_pro_3_2():
     dirname = "/vsimem/test_ogr_openfilegdb_write_line_layer_arcgis_pro_3_2.gdb"
     try:
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        ds.CreateLayer("test", geom_type=ogr.wkbLineString, options=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"])
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbLineString,
+            options=["TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER"],
+        )
         ds = None
 
         ds = ogr.Open(dirname)
@@ -4513,4 +4517,3 @@ def test_ogr_openfilegdb_write_line_layer_arcgis_pro_3_2():
 
     finally:
         gdal.RmdirRecursive(dirname)
-
