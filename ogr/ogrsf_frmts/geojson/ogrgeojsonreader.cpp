@@ -3269,12 +3269,13 @@ bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope)
     // This function looks for "coordinates" and for "geometries" to handle
     // geometry collections.  It will recurse on itself to handle nested geometry.
     std::function<bool(json_object *, OGREnvelope3D *)> fParseGeometry;
-    fParseGeometry = [&fParseGeometry, &fParseCoords](
-                         json_object *poObj, OGREnvelope3D *poEnvelope) -> bool
+    fParseGeometry = [&fParseGeometry,
+                      &fParseCoords](json_object *poObjIn,
+                                     OGREnvelope3D *poEnvelopeIn) -> bool
     {
         // Get the "coordinates" array from the JSON object
         json_object *poObjCoords =
-            OGRGeoJSONFindMemberByName(poObj, "coordinates");
+            OGRGeoJSONFindMemberByName(poObjIn, "coordinates");
 
         // Return if found and not an array
         if (poObjCoords && json_object_get_type(poObjCoords) != json_type_array)
@@ -3283,13 +3284,13 @@ bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope)
         }
         else if (poObjCoords)
         {
-            return fParseCoords(poObjCoords, poEnvelope);
+            return fParseCoords(poObjCoords, poEnvelopeIn);
         }
 
         // Try "geometries"
         if (!poObjCoords)
         {
-            poObjCoords = OGRGeoJSONFindMemberByName(poObj, "geometries");
+            poObjCoords = OGRGeoJSONFindMemberByName(poObjIn, "geometries");
         }
 
         // Return if not found or not an array
@@ -3308,7 +3309,7 @@ bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope)
                     json_object_array_get_idx(poObjCoords, i);
 
                 // Recurse
-                if (!fParseGeometry(poObjGeometry, poEnvelope))
+                if (!fParseGeometry(poObjGeometry, poEnvelopeIn))
                 {
                     return false;
                 }
