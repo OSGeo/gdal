@@ -463,10 +463,9 @@ available:
      This is the number of threads used when reading tables through the
      ArrowArray interface, when no filter is applied and when features have
      consecutive feature ID numbering.
+     The default is the minimum of 4 and the number of CPUs.
      Note that setting this value too high is not recommended: a value of 4 is
      close to the optimal.
-     Although note that at time of writing, this option might not be fully
-     reliable (cf  https://lists.osgeo.org/pipermail/gdal-dev/2024-January/058177.html)
 
 
 Metadata
