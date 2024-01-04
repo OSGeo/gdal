@@ -6,6 +6,7 @@ GDAL 3.8.3 is a bugfix release.
 
 * infback9: fix various build issues with clang 17
 * fix build with sqlite 3.36.x (#9021)
+* fix build of optional utility gdal2ogr
 
 ## GDAL 3.8.3
 
@@ -40,9 +41,12 @@ VRT driver:
   Affects ogr2ogr from GPKG/FlatGeoBuf to something else) (#8998)
 
 GPKG driver:
- * disable by default multi-threaded ArrowArray interface. Make it opt-in with
-   the OGR_GPKG_NUM_THREADS config option
-   (cf https://github.com/OSGeo/gdal/pull/9018)
+ * Fix error message that sometimes occured with multi-threaded ArrowArray
+   interface, and add OGR_GPKG_NUM_THREADS config option. (#9018, 9030)
+
+GeoJSON driver:
+  * Internal libjson: resync random_seed.c with upstream, and use getrandom()
+    implementation when available (#9024)
 
 # GDAL/OGR 3.8.2 Release Notes
 
