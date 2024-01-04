@@ -299,6 +299,9 @@ function(is_plugin _result _target)
     endif ()
 endfunction()
 
+# Recursively adds properties from a list of targets and their dependencies to a given target.
+# Usage:
+#   gdal_target_interfaces(<target> <libraries_to_skip> <library_to_process> [<library_to_process> ...])
 function(gdal_target_interfaces _TARGET _seen_libs)
     foreach (_LIB IN ITEMS ${ARGN})
         if (TARGET ${_LIB} AND NOT ${_LIB} IN_LIST _seen_libs)
