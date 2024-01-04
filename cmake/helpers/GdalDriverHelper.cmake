@@ -361,7 +361,7 @@ function(gdal_target_link_libraries target)
             endif()
         endforeach()
     else ()
-        gdal_target_interfaces(${target} ${_DRIVER_PRIVATE})
+        gdal_target_interfaces(${target} "" ${_DRIVER_PRIVATE})
         gdal_add_private_link_libraries(${_DRIVER_PRIVATE})
     endif ()
 

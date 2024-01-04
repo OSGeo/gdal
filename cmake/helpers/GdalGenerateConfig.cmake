@@ -48,7 +48,7 @@ function(gdal_flatten_link_libraries _result)
             # Library has already been processed
             continue()
         endif()
-        list(APPEND _seen "${_lib}")
+        list(APPEND _seen_libs "${_lib}")
         gdal_resolve_link_genex(_lib "${_lib}")
         if(_lib)
             list(APPEND _libs "${_lib}")
