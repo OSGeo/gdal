@@ -790,7 +790,7 @@ def test_jpegxl_apply_orientation(orientation):
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 5
     vals = struct.unpack("B" * 3 * 5, ds.ReadRaster())
-    vals = [1 if v else 0 for v in vals]
+    vals = [1 if v >= 128 else 0 for v in vals]
     assert vals == [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0]
     if orientation != 1:
         assert ds.GetMetadataItem("EXIF_Orientation", "EXIF") is None
