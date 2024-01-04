@@ -116,6 +116,10 @@ class OGRGeoJSONBaseReader
     OGRFeature *ReadFeature(OGRLayer *poLayer, json_object *poObj,
                             const char *pszSerializedObj);
 
+    bool ExtentRead() const;
+
+    OGREnvelope3D GetExtent3D() const;
+
   protected:
     bool bGeometryPreserve_ = true;
     bool bAttributesSkip_ = false;
@@ -139,8 +143,10 @@ class OGRGeoJSONBaseReader
     bool bFeatureLevelIdAsFID_ = false;
     bool m_bNeedFID64 = false;
 
-    bool m_bDetectLayerGeomType = true;
     bool m_bFirstGeometry = true;
+    OGREnvelope3D m_oEnvelope3D;
+    // Becomes true when extent has been read from data
+    bool m_bExtentRead = false;
     OGRwkbGeometryType m_eLayerGeomType = wkbUnknown;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONBaseReader)
@@ -268,6 +274,9 @@ bool CPL_DLL OGRJSonParse(const char *pszText, json_object **ppoObj,
 bool OGRGeoJSONUpdateLayerGeomType(bool &bFirstGeom,
                                    OGRwkbGeometryType eGeomType,
                                    OGRwkbGeometryType &eLayerGeomType);
+
+// Get the 3D extent from the geometry coordinates of a feature
+bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope);
 
 /************************************************************************/
 /*                 GeoJSON Geometry Translators                         */
