@@ -70,6 +70,12 @@
 /* Define to 1 if you have the 5 args `mremap' function. */
 #cmakedefine HAVE_5ARGS_MREMAP 1
 
+/* Define to 1 if you have the <sys/random.h> header file. */
+#cmakedefine HAVE_SYS_RANDOM_H 1
+
+/* Define to 1 if you have the `getrandom' function. */
+#cmakedefine HAVE_GETRANDOM 1
+
 /* Define to 1 if you have the `getrlimit' function. */
 #cmakedefine HAVE_GETRLIMIT 1
 
