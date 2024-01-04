@@ -8353,9 +8353,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         {
             // Should not normally happen, unless the user messes with
             // GetNextFeature()
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Worker thread task has not expected m_iStartShapeId value");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Worker thread task has not expected m_iStartShapeId "
+                     "value. Got " CPL_FRMT_GIB ", expected " CPL_FRMT_GIB,
+                     task->m_iStartShapeId, m_iNextShapeId);
             if (task->m_psArrowArray->release)
                 task->m_psArrowArray->release(task->m_psArrowArray.get());
 
@@ -8418,7 +8419,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         const char *pszMaxThreads =
             CPLGetConfigOption("OGR_GPKG_NUM_THREADS", nullptr);
         if (pszMaxThreads == nullptr)
-            return 0;
+            return std::min(4, CPLGetNumCPUs());
         else if (EQUAL(pszMaxThreads, "ALL_CPUS"))
             return CPLGetNumCPUs();
         else
@@ -8434,8 +8435,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         CPLGetUsablePhysicalRAM() > 1024 * 1024 * 1024)
     {
         const int nMaxTasks = static_cast<int>(std::min<GIntBig>(
-            DIV_ROUND_UP(m_nTotalFeatureCount - m_iNextShapeId, nMaxBatchSize),
+            DIV_ROUND_UP(m_nTotalFeatureCount - nMaxBatchSize - m_iNextShapeId,
+                         nMaxBatchSize),
             GetThreadsAvailable()));
+        CPLDebug("GPKG", "Using %d threads", nMaxTasks);
         GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
         oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
         oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;

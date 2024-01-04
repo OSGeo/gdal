@@ -8095,7 +8095,24 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
 # Test GetArrowStreamAsNumPy() and multi-threading
 
 
-def test_ogr_gpkg_arrow_stream_numpy_multi_threading(tmp_vsimem):
+@pytest.mark.parametrize(
+    "num_features,batch_size,num_threads",
+    [
+        (201, 100, 1),
+        (200, 100, 2),
+        (201, 100, 2),
+        (201, 100, 3),
+        (299, 100, 3),
+        (300, 100, 3),
+        (301, 100, 3),
+        (400, 100, 3),
+        (901, 100, 3),
+        (1001, 100, 3),
+    ],
+)
+def test_ogr_gpkg_arrow_stream_numpy_multi_threading(
+    tmp_vsimem, num_features, batch_size, num_threads
+):
     pytest.importorskip("osgeo.gdal_array")
     pytest.importorskip("numpy")
 
@@ -8104,7 +8121,7 @@ def test_ogr_gpkg_arrow_stream_numpy_multi_threading(tmp_vsimem):
     ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
 
-    for i in range(1000):
+    for i in range(num_features):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(f"POINT({i} {i})"))
         lyr.CreateFeature(f)
@@ -8113,22 +8130,30 @@ def test_ogr_gpkg_arrow_stream_numpy_multi_threading(tmp_vsimem):
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
-    num_threads = max(2, min(gdal.GetNumCPUs(), 4))
     with gdaltest.config_option("OGR_GPKG_NUM_THREADS", str(num_threads)):
         stream = lyr.GetArrowStreamAsNumPy(
-            options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=10"]
+            options=["USE_MASKED_ARRAYS=NO", f"MAX_FEATURES_IN_BATCH={batch_size}"]
         )
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler):
         batches = [batch for batch in stream]
-        assert len(batches) == 100
-        i = 0
-        for batch in batches:
-            for wkb in batch["geom"]:
-                assert (
-                    ogr.CreateGeometryFromWkb(wkb).ExportToIsoWkt()
-                    == f"POINT ({i} {i})"
-                )
-                i += 1
-        assert i == 1000
+
+    assert len(got_msg) == 0
+
+    assert len(batches) == (num_features + batch_size - 1) // batch_size
+    i = 0
+    for batch in batches:
+        for wkb in batch["geom"]:
+            assert ogr.CreateGeometryFromWkb(wkb).ExportToIsoWkt() == f"POINT ({i} {i})"
+            i += 1
+    assert i == num_features
 
 
 ###############################################################################
