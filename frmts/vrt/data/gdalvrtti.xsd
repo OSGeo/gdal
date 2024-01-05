@@ -34,7 +34,9 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
-                    <xs:element name="IndexDataset" type="xs:string" minOccurs="1"/>
+                    <!-- IndexDataset is required for a standalone XML VRTTI -->
+                    <!-- It is ignored if the XML document is embedded in the xml:VRTTI metadata domain of a vector layer -->
+                    <xs:element name="IndexDataset" type="xs:string"/>
 
                     <xs:element name="IndexLayer" type="xs:string"/>
                     <xs:element name="Filter" type="xs:string"/>

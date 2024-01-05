@@ -2553,3 +2553,46 @@ def test_vrttileindex_open_options(tmp_vsimem):
     assert vrt_ds.GetGeoTransform() == pytest.approx(
         (440720.0, 30.0, 0.0, 3751320.0, 0.0, -30.0)
     )
+
+
+def test_vrttileindex_xml_vrtti_embedded(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+
+    xml_content = """<VRTTileIndexDataset>
+  <ResX>60</ResX>
+  <ResY>60</ResY>
+  <SortField>location</SortField>
+  <SortFieldAsc>true</SortFieldAsc>
+  <Band band="1" dataType="UInt16">
+      <Description>my band</Description>
+      <Offset>2</Offset>
+      <Scale>3</Scale>
+      <NoDataValue>4</NoDataValue>
+      <UnitType>dn</UnitType>
+      <ColorInterp>Gray</ColorInterp>
+      <ColorTable/>
+      <CategoryNames><Category>cat</Category></CategoryNames>
+      <GDALRasterAttributeTable/>
+  </Band>
+</VRTTileIndexDataset>"""
+
+    lyr.SetMetadata([xml_content], "xml:VRTTI")
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    band = vrt_ds.GetRasterBand(1)
+    assert band.GetDescription() == "my band"
+    assert band.DataType == gdal.GDT_UInt16
+    assert band.GetOffset() == 2
+    assert band.GetScale() == 3
+    assert band.GetNoDataValue() == 4
+    assert band.GetUnitType() == "dn"
+    assert band.GetColorInterpretation() == gdal.GCI_GrayIndex
+    assert band.GetColorTable() is not None
+    assert band.GetCategoryNames() == ["cat"]
+    assert band.GetDefaultRAT() is not None
+    del vrt_ds

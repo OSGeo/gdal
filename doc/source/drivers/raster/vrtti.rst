@@ -223,6 +223,11 @@ In addition to those layer metadata items, the dataset-level metadata item
 ``TILE_INDEX_LAYER`` may be set to indicate, for dataset with multiple layers,
 which one should be used as the tile index layer.
 
+Alternatively to setting those metadata items individually, the corresponding
+information can be grouped together in a VRTTI XML document, attached in the
+``xml:VRTTI`` metadata domain of the layer (for drivers that support alternate
+metadata domains such as GeoPackage)
+
 VRTTI XML format
 ----------------
 
@@ -236,7 +241,7 @@ mentioned in the previous section.
 .. code-block:: xml
 
     <VRTTileIndexDataset>
-        <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required -->
+        <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required for stanalone XML VRTTI files. Ignored if embedded in the xml:VRTTI metadata domain of the layer  -->
         <IndexLayer>my_layer</IndexLayer>              <!-- optional, but required if there are multiple layers in IndexDataset -->
         <Filter>pub_date >= '2023/12/01'</Filter>      <!-- optional -->
         <SortField>pub_date</SortField>                <!-- optional -->

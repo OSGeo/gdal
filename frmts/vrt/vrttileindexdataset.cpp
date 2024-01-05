@@ -572,6 +572,26 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
+    // Try to get the metadata from an embedded xml:VRTTI domain
+    if (!m_psXMLTree)
+    {
+        char **papszMD = m_poLayer->GetMetadata("xml:VRTTI");
+        if (papszMD && papszMD[0])
+        {
+            m_psXMLTree.reset(CPLParseXMLString(papszMD[0]));
+            if (m_psXMLTree == nullptr)
+                return false;
+
+            psRoot = CPLGetXMLNode(m_psXMLTree.get(), "=VRTTileIndexDataset");
+            if (psRoot == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Missing VRTTileIndexDataset root element.");
+                return false;
+            }
+        }
+    }
+
     const auto GetOption = [poOpenInfo, psRoot, this](const char *pszItem)
     {
         if (psRoot)
