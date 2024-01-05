@@ -676,6 +676,8 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_hdf5
     GDALRegister_BAG();
     GDALRegister_S102();
+    GDALRegister_S104();
+    GDALRegister_S111();
     GDALRegister_HDF5();
     GDALRegister_HDF5Image();
 #endif

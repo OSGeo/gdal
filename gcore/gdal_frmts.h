@@ -119,6 +119,8 @@ void CPL_DLL GDALRegister_NDF(void);
 void CPL_DLL GDALRegister_RMF(void);
 void CPL_DLL GDALRegister_BAG(void);
 void CPL_DLL GDALRegister_S102(void);
+void CPL_DLL GDALRegister_S104(void);
+void CPL_DLL GDALRegister_S111(void);
 void CPL_DLL GDALRegister_HDF5(void);
 void DeclareDeferredHDF5Plugin(void);
 void CPL_DLL GDALRegister_HDF5Image(void);

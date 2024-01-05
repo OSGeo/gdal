@@ -1052,6 +1052,129 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
         memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
     }
 
+    // Special case for S104 nodata value that is typically -9999
+    if (STARTS_WITH(GetFullName().c_str(), "/WaterLevel/WaterLevel.01/") &&
+        GetFullName().find("/values") != std::string::npos &&
+        m_dt.GetClass() == GEDTC_COMPOUND && m_dt.GetSize() == 8 &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        // In theory should be Byte, but 104US00_ches_dcf2_20190606T12Z.h5 uses Int32
+        (m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Byte ||
+         m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Int32))
+    {
+        m_abyNoData.resize(m_dt.GetSize());
+        float fNoData = -9999.0f;
+
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray = poGroupF->OpenMDArray("WaterLevel");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() >= 2)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        if (pszVal0)
+                        {
+                            fNoData = static_cast<float>(CPLAtof(pszVal0));
+                        }
+                        CPLFree(pszVal0);
+                    }
+                }
+            }
+        }
+
+        memcpy(m_abyNoData.data(), &fNoData, sizeof(float));
+    }
+
+    // Special case for S111 nodata value that is typically -9999
+    if (STARTS_WITH(GetFullName().c_str(),
+                    "/SurfaceCurrent/SurfaceCurrent.01/") &&
+        GetFullName().find("/values") != std::string::npos &&
+        m_dt.GetClass() == GEDTC_COMPOUND &&
+        m_dt.GetSize() == 2 * sizeof(float) &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Float32)
+    {
+        float afNoData[2] = {-9999.0f, -9999.0f};
+
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray =
+                    poGroupF->OpenMDArray("SurfaceCurrent");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() >= 2)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        char *pszVal1 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const GUInt64 anArrayStartIdx1[] = {1};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        poFillValue->Read(anArrayStartIdx1, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal1);
+                        if (pszVal0 && pszVal1)
+                        {
+                            afNoData[0] = static_cast<float>(CPLAtof(pszVal0));
+                            afNoData[1] = static_cast<float>(CPLAtof(pszVal1));
+                        }
+                        CPLFree(pszVal0);
+                        CPLFree(pszVal1);
+                    }
+                }
+            }
+        }
+
+        m_abyNoData.resize(m_dt.GetSize());
+        memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
+    }
+
     if (bSkipFullDimensionInstantiation)
     {
         const int nDims = H5Sget_simple_extent_ndims(m_hDataSpace);
@@ -1299,9 +1422,8 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             return;
         }
 
-        // Special case for S102
-
-        const auto SpecialCaseS102 = [&](const std::string &osCoverageName)
+        // Special case for S100-family of products (S102, S104, S111)
+        const auto SpecialCaseS100 = [&](const std::string &osCoverageName)
         {
             auto poRootGroup = m_poShared->GetRootGroup();
             if (poRootGroup)
@@ -1348,14 +1470,34 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             GetFullName() ==
                 "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values")
         {
-            if (SpecialCaseS102("/BathymetryCoverage/BathymetryCoverage.01"))
+            // S102
+            if (SpecialCaseS100("/BathymetryCoverage/BathymetryCoverage.01"))
                 return;
         }
         else if (nDims == 2 &&
                  GetFullName() ==
                      "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values")
         {
-            if (SpecialCaseS102("/QualityOfSurvey/QualityOfSurvey.01"))
+            // S102
+            if (SpecialCaseS100("/QualityOfSurvey/QualityOfSurvey.01"))
+                return;
+        }
+        else if (nDims == 2 &&
+                 STARTS_WITH(GetFullName().c_str(),
+                             "/WaterLevel/WaterLevel.01/") &&
+                 GetFullName().find("/values"))
+        {
+            // S104
+            if (SpecialCaseS100("/WaterLevel/WaterLevel.01"))
+                return;
+        }
+        else if (nDims == 2 &&
+                 STARTS_WITH(GetFullName().c_str(),
+                             "/SurfaceCurrent/SurfaceCurrent.01/") &&
+                 GetFullName().find("/values"))
+        {
+            // S111
+            if (SpecialCaseS100("/SurfaceCurrent/SurfaceCurrent.01"))
                 return;
         }
     }

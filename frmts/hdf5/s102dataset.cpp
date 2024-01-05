@@ -43,23 +43,16 @@
 /*                             S102Dataset                              */
 /************************************************************************/
 
-class S102Dataset final : public GDALPamDataset
+class S102Dataset final : public S100BaseDataset
 {
-    OGRSpatialReference m_oSRS{};
-    bool m_bHasGT = false;
-    double m_adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};
-    std::string m_osMetadataFile{};
-
     bool OpenQualityOfSurvey(GDALOpenInfo *poOpenInfo,
                              const std::shared_ptr<GDALGroup> &poRootGroup);
 
   public:
-    S102Dataset() = default;
-
-    CPLErr GetGeoTransform(double *) override;
-    const OGRSpatialReference *GetSpatialRef() const override;
-
-    char **GetFileList() override;
+    explicit S102Dataset(const std::string &osFilename)
+        : S100BaseDataset(osFilename)
+    {
+    }
 
     static GDALDataset *Open(GDALOpenInfo *);
 };
@@ -148,45 +141,6 @@ class S102GeoreferencedMetadataRasterBand : public GDALProxyRasterBand
 };
 
 /************************************************************************/
-/*                          GetGeoTransform()                           */
-/************************************************************************/
-
-CPLErr S102Dataset::GetGeoTransform(double *padfGeoTransform)
-
-{
-    if (m_bHasGT)
-    {
-        memcpy(padfGeoTransform, m_adfGeoTransform, sizeof(double) * 6);
-        return CE_None;
-    }
-
-    return GDALPamDataset::GetGeoTransform(padfGeoTransform);
-}
-
-/************************************************************************/
-/*                         GetSpatialRef()                              */
-/************************************************************************/
-
-const OGRSpatialReference *S102Dataset::GetSpatialRef() const
-{
-    if (!m_oSRS.IsEmpty())
-        return &m_oSRS;
-    return GDALPamDataset::GetSpatialRef();
-}
-
-/************************************************************************/
-/*                         GetFileList()                                */
-/************************************************************************/
-
-char **S102Dataset::GetFileList()
-{
-    char **papszFileList = GDALPamDataset::GetFileList();
-    if (!m_osMetadataFile.empty())
-        papszFileList = CSLAddString(papszFileList, m_osMetadataFile.c_str());
-    return papszFileList;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -246,23 +200,11 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    // Open the file as an HDF5 file.
-    hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
-    hid_t hHDF5 = H5Fopen(osFilename.c_str(), H5F_ACC_RDONLY, fapl);
-    H5Pclose(fapl);
-    if (hHDF5 < 0)
+    auto poDS = std::make_unique<S102Dataset>(osFilename);
+    if (!poDS->Init())
         return nullptr;
 
-    auto poSharedResources = GDAL::HDF5SharedResources::Create(osFilename);
-    poSharedResources->m_hHDF5 = hHDF5;
-
-    auto poRootGroup = HDF5Dataset::OpenGroup(poSharedResources);
-    if (!poRootGroup)
-        return nullptr;
-
-    auto poDS = std::make_unique<S102Dataset>();
-
+    auto &poRootGroup = poDS->m_poRootGroup;
     auto poBathymetryCoverage01 = poRootGroup->OpenGroupFromFullname(
         "/BathymetryCoverage/BathymetryCoverage.01");
     if (!poBathymetryCoverage01)
@@ -270,9 +212,6 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     const bool bNorthUp = CPLTestBool(
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
-
-    // Get SRS
-    S100ReadSRS(poRootGroup.get(), poDS->m_oSRS);
 
     if (bIsQualityOfSurvey)
     {
@@ -427,126 +366,6 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     poDS->SetBand(2, poUncertaintyBand);
-
-    // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.0.0_Final_Clean_Web.pdf
-    // Table S100_VerticalAndSoundingDatum page 20
-    static const struct
-    {
-        int nCode;
-        const char *pszMeaning;
-        const char *pszAbbrev;
-    } asVerticalDatums[] = {
-        {1, "meanLowWaterSprings", "MLWS"},
-        {2, "meanLowerLowWaterSprings", nullptr},
-        {3, "meanSeaLevel", "MSL"},
-        {4, "lowestLowWater", nullptr},
-        {5, "meanLowWater", "MLW"},
-        {6, "lowestLowWaterSprings", nullptr},
-        {7, "approximateMeanLowWaterSprings", nullptr},
-        {8, "indianSpringLowWater", nullptr},
-        {9, "lowWaterSprings", nullptr},
-        {10, "approximateLowestAstronomicalTide", nullptr},
-        {11, "nearlyLowestLowWater", nullptr},
-        {12, "meanLowerLowWater", "MLLW"},
-        {13, "lowWater", "LW"},
-        {14, "approximateMeanLowWater", nullptr},
-        {15, "approximateMeanLowerLowWater", nullptr},
-        {16, "meanHighWater", "MHW"},
-        {17, "meanHighWaterSprings", "MHWS"},
-        {18, "highWater", "HW"},
-        {19, "approximateMeanSeaLevel", nullptr},
-        {20, "highWaterSprings", nullptr},
-        {21, "meanHigherHighWater", "MHHW"},
-        {22, "equinoctialSpringLowWater", nullptr},
-        {23, "lowestAstronomicalTide", "LAT"},
-        {24, "localDatum", nullptr},
-        {25, "internationalGreatLakesDatum1985", nullptr},
-        {26, "meanWaterLevel", nullptr},
-        {27, "lowerLowWaterLargeTide", nullptr},
-        {28, "higherHighWaterLargeTide", nullptr},
-        {29, "nearlyHighestHighWater", nullptr},
-        {30, "highestAstronomicalTide", "HAT"},
-        {44, "balticSeaChartDatum2000", nullptr},
-        {46, "internationalGreatLakesDatum2020", nullptr},
-    };
-
-    auto poVerticalDatum = poRootGroup->GetAttribute("verticalDatum");
-    if (poVerticalDatum &&
-        poVerticalDatum->GetDataType().GetClass() == GEDTC_NUMERIC)
-    {
-        bool bFound = false;
-        const auto nVal = poVerticalDatum->ReadAsInt();
-        for (const auto &sVerticalDatum : asVerticalDatums)
-        {
-            if (sVerticalDatum.nCode == nVal)
-            {
-                bFound = true;
-                poDS->GDALDataset::SetMetadataItem("VERTICAL_DATUM_MEANING",
-                                                   sVerticalDatum.pszMeaning);
-                if (sVerticalDatum.pszAbbrev)
-                    poDS->GDALDataset::SetMetadataItem(
-                        "VERTICAL_DATUM_ABBREV", sVerticalDatum.pszAbbrev);
-                break;
-            }
-        }
-        if (!bFound)
-        {
-            poDS->GDALDataset::SetMetadataItem("verticalDatum",
-                                               CPLSPrintf("%d", nVal));
-        }
-    }
-
-    for (const auto &poAttr : poRootGroup->GetAttributes())
-    {
-        const auto &osName = poAttr->GetName();
-        if (osName == "metadata")
-        {
-            const char *pszVal = poAttr->ReadAsString();
-            if (pszVal && pszVal[0])
-            {
-                poDS->m_osMetadataFile = CPLFormFilename(
-                    CPLGetPath(osFilename.c_str()), pszVal, nullptr);
-                VSIStatBufL sStat;
-                if (VSIStatL(poDS->m_osMetadataFile.c_str(), &sStat) != 0)
-                {
-                    // Test products from https://data.admiralty.co.uk/portal/apps/sites/#/marine-data-portal/pages/s-100
-                    // advertise a metadata filename starting with "MD_", per the spec,
-                    // but the actual filename does not start with "MD_"...
-                    if (STARTS_WITH(pszVal, "MD_"))
-                    {
-                        poDS->m_osMetadataFile =
-                            CPLFormFilename(CPLGetPath(osFilename.c_str()),
-                                            pszVal + strlen("MD_"), nullptr);
-                        if (VSIStatL(poDS->m_osMetadataFile.c_str(), &sStat) !=
-                            0)
-                        {
-                            poDS->m_osMetadataFile.clear();
-                        }
-                    }
-                    else
-                    {
-                        poDS->m_osMetadataFile.clear();
-                    }
-                }
-            }
-        }
-        else if (osName != "horizontalCRS" &&
-                 osName != "horizontalDatumReference" &&
-                 osName != "horizontalDatumValue" &&
-                 osName != "productSpecification" &&
-                 osName != "eastBoundLongitude" &&
-                 osName != "northBoundLatitude" &&
-                 osName != "southBoundLatitude" &&
-                 osName != "westBoundLongitude" && osName != "extentTypeCode" &&
-                 osName != "verticalCS" && osName != "verticalCoordinateBase" &&
-                 osName != "verticalDatumReference" &&
-                 osName != "verticalDatum")
-        {
-            const char *pszVal = poAttr->ReadAsString();
-            if (pszVal && pszVal[0])
-                poDS->GDALDataset::SetMetadataItem(osName.c_str(), pszVal);
-        }
-    }
 
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 

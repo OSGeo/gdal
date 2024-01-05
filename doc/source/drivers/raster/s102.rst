@@ -75,3 +75,5 @@ See Also
 -  Implemented as :source_file:`frmts/hdf5/s102dataset.cpp`.
 -  `S-102 Bathymetric Surface Product Specification <https://registry.iho.int/productspec/view.do?idx=199&product_ID=S-102&statusS=5&domainS=20&category=product_ID&searchValue=>`__
 -  :ref:`BAG driver <raster.bag>`
+-  :ref:`S-104 driver <raster.s104>`
+-  :ref:`S-111 driver <raster.s111>`
