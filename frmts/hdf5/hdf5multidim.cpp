@@ -153,7 +153,7 @@ class HDF5Dimension final : public GDALDimension
 /************************************************************************/
 
 static GDALExtendedDataType
-BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
+BuildDataType(hid_t hDataType, bool &bHasString, bool &bNonNativeDataType,
               const std::vector<std::pair<std::string, hid_t>> &oTypes)
 {
     const auto klass = H5Tget_class(hDataType);
@@ -162,8 +162,7 @@ BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
         return GDALExtendedDataType::Create(eDT);
     else if (klass == H5T_STRING)
     {
-        if (H5Tis_variable_str(hDataType))
-            bHasVLen = true;
+        bHasString = true;
         return GDALExtendedDataType::CreateString();
     }
     else if (klass == H5T_COMPOUND)
@@ -183,7 +182,7 @@ BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
                 return GDALExtendedDataType::Create(GDT_Unknown);
             const hid_t hNativeMemberType =
                 H5Tget_native_type(hMemberType, H5T_DIR_ASCEND);
-            auto memberDT = BuildDataType(hNativeMemberType, bHasVLen,
+            auto memberDT = BuildDataType(hNativeMemberType, bHasString,
                                           bNonNativeDataType, oTypes);
             H5Tclose(hNativeMemberType);
             H5Tclose(hMemberType);
@@ -224,8 +223,8 @@ BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
     {
         const auto hParent = H5Tget_super(hDataType);
         const hid_t hNativeParent = H5Tget_native_type(hParent, H5T_DIR_ASCEND);
-        auto ret(
-            BuildDataType(hNativeParent, bHasVLen, bNonNativeDataType, oTypes));
+        auto ret(BuildDataType(hNativeParent, bHasString, bNonNativeDataType,
+                               oTypes));
         H5Tclose(hNativeParent);
         H5Tclose(hParent);
         return ret;
@@ -284,7 +283,7 @@ class HDF5Array final : public GDALMDArray
     hid_t m_hNativeDT = H5I_INVALID_HID;
     mutable std::vector<std::shared_ptr<GDALAttribute>> m_oListAttributes{};
     mutable bool m_bShowAllAttributes = false;
-    bool m_bHasVLenMember = false;
+    bool m_bHasString = false;
     bool m_bHasNonNativeDataType = false;
     mutable bool m_bWarnedNoData = false;
     mutable std::vector<GByte> m_abyNoData{};
@@ -407,7 +406,7 @@ class HDF5Attribute final : public GDALAttribute
     GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Unknown);
     hid_t m_hNativeDT = H5I_INVALID_HID;
     size_t m_nElements = 1;
-    bool m_bHasVLenMember = false;
+    bool m_bHasString = false;
     bool m_bHasNonNativeDataType = false;
 
     HDF5Attribute(const std::string &osGroupFullName,
@@ -448,8 +447,8 @@ class HDF5Attribute final : public GDALAttribute
             GetDataTypesInGroup(m_poShared->GetHDF5(), osGroupFullName, oTypes);
         }
 
-        m_dt = BuildDataType(m_hNativeDT, m_bHasVLenMember,
-                             m_bHasNonNativeDataType, oTypes);
+        m_dt = BuildDataType(m_hNativeDT, m_bHasString, m_bHasNonNativeDataType,
+                             oTypes);
         for (auto &oPair : oTypes)
             H5Tclose(oPair.second);
         if (m_dt.GetClass() == GEDTC_NUMERIC &&
@@ -972,7 +971,7 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
         GetDataTypesInGroup(m_poShared->GetHDF5(), osParentName, oTypes);
     }
 
-    m_dt = BuildDataType(m_hNativeDT, m_bHasVLenMember, m_bHasNonNativeDataType,
+    m_dt = BuildDataType(m_hNativeDT, m_bHasString, m_bHasNonNativeDataType,
                          oTypes);
     for (auto &oPair : oTypes)
         H5Tclose(oPair.second);
@@ -2218,8 +2217,7 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     else
     {
         hBufferType = H5Tcopy(m_hNativeDT);
-        if (m_dt != bufferDataType || m_bHasVLenMember ||
-            m_bHasNonNativeDataType)
+        if (m_dt != bufferDataType || m_bHasString || m_bHasNonNativeDataType)
         {
             const size_t nDataTypeSize = H5Tget_size(m_hNativeDT);
             pabyTemp = static_cast<GByte *>(
@@ -2287,7 +2285,7 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             CopyToFinalBuffer(pDstBuffer, pabyTemp, nDims, count, bufferStride,
                               m_hNativeDT, bufferDataType);
 
-            if (m_bHasVLenMember)
+            if (m_bHasString)
             {
                 const size_t nBufferTypeSize = H5Tget_size(hBufferType);
                 GByte *pabyPtr = pabyTemp;
@@ -2496,7 +2494,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     }
     CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep, bufferStride,
                           bufferDataType, pDstBuffer, hBufferType, pabyTemp);
-    if (bufferDataType.GetClass() == GEDTC_COMPOUND && m_bHasVLenMember)
+    if (bufferDataType.GetClass() == GEDTC_COMPOUND && m_bHasString)
     {
         GByte *pabyPtr = pabyTemp;
         for (size_t i = 0; i < m_nElements; ++i)
