@@ -50,6 +50,7 @@ def test_tiledb_write_complex(mode):
     )
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 5028, "Did not get expected checksum on still-open file"
@@ -72,6 +73,7 @@ def test_tiledb_write_custom_blocksize(mode):
     )
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 50054, "Did not get expected checksum on still-open file"
@@ -97,6 +99,7 @@ def test_tiledb_write_update(mode):
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
     del new_ds
 
     update_ds = gdal.Open("tmp/tiledb_update", gdal.GA_Update)
@@ -125,6 +128,7 @@ def test_tiledb_write_rgb(mode):
     new_ds = gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_rgb", src_ds, options=options)
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
     assert new_ds.RasterCount == 3, "Did not get expected band count"
     bnd = new_ds.GetRasterBand(2)
     assert bnd.Checksum() == 21053, "Did not get expected checksum on still-open file"
@@ -164,6 +168,7 @@ def test_tiledb_write_attributes(mode):
     assert new_ds.RasterCount == src_ds.RasterCount
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
 
     with gdaltest.disable_exceptions():
         new_ds = None
@@ -242,6 +247,7 @@ def test_tiledb_write_band_meta(mode):
 
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
 
     bnd = new_ds.GetRasterBand(1)
     bnd.SetMetadataItem("Item", "Value")
@@ -273,6 +279,8 @@ def test_tiledb_write_history(mode):
 
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
+    assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
+
     del new_ds
 
     ts = [2, 3, 4, 5]
