@@ -986,7 +986,7 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
 
     HDF5Array::GetAttributes();
 
-    // Special case for S102 nodata value that is at 1e6
+    // Special case for S102 nodata value that is typically at 1e6
     if (GetFullName() ==
             "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values" &&
         m_dt.GetClass() == GEDTC_COMPOUND &&
@@ -998,6 +998,57 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
     {
         m_abyNoData.resize(m_dt.GetSize());
         float afNoData[2] = {1e6f, 1e6f};
+
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray =
+                    poGroupF->OpenMDArray("BathymetryCoverage");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() == 2)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        char *pszVal1 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const GUInt64 anArrayStartIdx1[] = {1};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        poFillValue->Read(anArrayStartIdx1, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal1);
+                        if (pszVal0 && pszVal1)
+                        {
+                            afNoData[0] = static_cast<float>(CPLAtof(pszVal0));
+                            afNoData[1] = static_cast<float>(CPLAtof(pszVal1));
+                        }
+                        CPLFree(pszVal0);
+                        CPLFree(pszVal1);
+                    }
+                }
+            }
+        }
+
+        m_abyNoData.resize(m_dt.GetSize());
         memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
     }
 

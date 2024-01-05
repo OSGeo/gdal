@@ -340,14 +340,14 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         EQUAL(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                                    "DEPTH_OR_ELEVATION", "DEPTH"),
               "ELEVATION");
-    constexpr double NODATA = 1e6;
     const bool bInvertDepth = (bUseElevation && !bCSIsElevation) ||
                               (!bUseElevation && bCSIsElevation);
-    auto poDepthDS = [&poDepth, bInvertDepth, NODATA]()
+    const double dfDepthNoData = poDepth->GetNoDataValueAsDouble();
+    auto poDepthDS = [&poDepth, bInvertDepth, dfDepthNoData]()
     {
         if (bInvertDepth)
         {
-            auto poInverted = poDepth->GetUnscaled(-1, 0, NODATA);
+            auto poInverted = poDepth->GetUnscaled(-1, 0, dfDepthNoData);
             return std::unique_ptr<GDALDataset>(
                 poInverted->AsClassicDataset(1, 0));
         }
@@ -359,6 +359,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }();
 
     auto poUncertainty = poValuesArray->GetView("[\"uncertainty\"]");
+    const double dfUncertaintyNoData = poUncertainty->GetNoDataValueAsDouble();
     auto poUncertaintyDS =
         std::unique_ptr<GDALDataset>(poUncertainty->AsClassicDataset(1, 0));
 
@@ -374,7 +375,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         poMinimumDepth->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         const double dfVal = poMinimumDepth->ReadAsDouble();
-        if (dfVal != NODATA)
+        if (dfVal != dfDepthNoData)
         {
             if (bInvertDepth)
                 poDepthBand->m_dfMaximum = -dfVal;
@@ -388,7 +389,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         poMaximumDepth->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         const double dfVal = poMaximumDepth->ReadAsDouble();
-        if (dfVal != NODATA)
+        if (dfVal != dfDepthNoData)
         {
             if (bInvertDepth)
                 poDepthBand->m_dfMinimum = -dfVal;
@@ -408,7 +409,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         poMinimumUncertainty->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         const double dfVal = poMinimumUncertainty->ReadAsDouble();
-        if (dfVal != NODATA)
+        if (dfVal != dfUncertaintyNoData)
         {
             poUncertaintyBand->m_dfMinimum = dfVal;
         }
@@ -419,7 +420,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         poMaximumUncertainty->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
         const double dfVal = poMaximumUncertainty->ReadAsDouble();
-        if (dfVal != NODATA)
+        if (dfVal != dfUncertaintyNoData)
         {
             poUncertaintyBand->m_dfMaximum = dfVal;
         }
