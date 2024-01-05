@@ -604,6 +604,19 @@ bool S102Dataset::OpenQualityOfSurvey(
         return false;
     }
 
+    if (auto poStartSequence =
+            poGroupQualityOfSurvey01->GetAttribute("startSequence"))
+    {
+        const char *pszStartSequence = poStartSequence->ReadAsString();
+        if (pszStartSequence && !EQUAL(pszStartSequence, "0,0"))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "startSequence (=%s) != 0,0 is not supported",
+                     pszStartSequence);
+            return false;
+        }
+    }
+
     // Compute geotransform
     m_bHasGT = S100GetGeoTransform(poGroupQualityOfSurvey01.get(),
                                    m_adfGeoTransform, bNorthUp);
