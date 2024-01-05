@@ -1249,9 +1249,8 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
         }
 
         // Special case for S102
-        if (nDims == 2 &&
-            GetFullName() ==
-                "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values")
+
+        const auto SpecialCaseS102 = [&](const std::string &osCoverageName)
         {
             auto poRootGroup = m_poShared->GetRootGroup();
             if (poRootGroup)
@@ -1270,13 +1269,12 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                     m_poSRS.reset();
                 }
 
-                auto poBathymetryCoverage01 =
-                    poRootGroup->OpenGroupFromFullname(
-                        "/BathymetryCoverage/BathymetryCoverage.01");
-                if (poBathymetryCoverage01)
+                auto poCoverage =
+                    poRootGroup->OpenGroupFromFullname(osCoverageName);
+                if (poCoverage)
                 {
                     std::vector<std::shared_ptr<GDALMDArray>> apoIndexingVars;
-                    if (S100GetDimensions(poBathymetryCoverage01.get(), m_dims,
+                    if (S100GetDimensions(poCoverage.get(), m_dims,
                                           apoIndexingVars) &&
                         m_dims.size() == 2 &&
                         m_dims[0]->GetSize() == anDimSizes[0] &&
@@ -1284,7 +1282,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                     {
                         for (const auto &poIndexingVar : apoIndexingVars)
                             m_poShared->KeepRef(poIndexingVar);
-                        return;
+                        return true;
                     }
                     else
                     {
@@ -1292,6 +1290,22 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                     }
                 }
             }
+            return false;
+        };
+
+        if (nDims == 2 &&
+            GetFullName() ==
+                "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values")
+        {
+            if (SpecialCaseS102("/BathymetryCoverage/BathymetryCoverage.01"))
+                return;
+        }
+        else if (nDims == 2 &&
+                 GetFullName() ==
+                     "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values")
+        {
+            if (SpecialCaseS102("/QualityOfSurvey/QualityOfSurvey.01"))
+                return;
         }
     }
 

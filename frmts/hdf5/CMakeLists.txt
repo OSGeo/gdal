@@ -10,6 +10,7 @@ set(SOURCE
     bagdataset.cpp
     hdf5multidim.cpp
     hdf5eosparser.cpp
+    rat.cpp
     s100.cpp
     s100.h
     s102dataset.cpp

@@ -30,10 +30,12 @@
 #include "hdf5dataset.h"
 #include "hdf5drivercore.h"
 #include "gh5_convenience.h"
+#include "rat.h"
 #include "s100.h"
 
 #include "gdal_priv.h"
 #include "gdal_proxy.h"
+#include "gdal_rat.h"
 
 #include <limits>
 
@@ -46,9 +48,10 @@ class S102Dataset final : public GDALPamDataset
     OGRSpatialReference m_oSRS{};
     bool m_bHasGT = false;
     double m_adfGeoTransform[6] = {0, 1, 0, 0, 0, 1};
-    std::unique_ptr<GDALDataset> m_poDepthDS{};
-    std::unique_ptr<GDALDataset> m_poUncertaintyDS{};
     std::string m_osMetadataFile{};
+
+    bool OpenQualityOfSurvey(GDALOpenInfo *poOpenInfo,
+                             const std::shared_ptr<GDALGroup> &poRootGroup);
 
   public:
     S102Dataset() = default;
@@ -68,16 +71,18 @@ class S102Dataset final : public GDALPamDataset
 class S102RasterBand : public GDALProxyRasterBand
 {
     friend class S102Dataset;
+    std::unique_ptr<GDALDataset> m_poDS{};
     GDALRasterBand *m_poUnderlyingBand = nullptr;
     double m_dfMinimum = std::numeric_limits<double>::quiet_NaN();
     double m_dfMaximum = std::numeric_limits<double>::quiet_NaN();
 
   public:
-    explicit S102RasterBand(GDALRasterBand *poUnderlyingBand)
-        : m_poUnderlyingBand(poUnderlyingBand)
+    explicit S102RasterBand(std::unique_ptr<GDALDataset> &&poDSIn)
+        : m_poDS(std::move(poDSIn)),
+          m_poUnderlyingBand(m_poDS->GetRasterBand(1))
     {
-        eDataType = poUnderlyingBand->GetRasterDataType();
-        poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        eDataType = m_poUnderlyingBand->GetRasterDataType();
+        m_poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 
     GDALRasterBand *
@@ -103,6 +108,42 @@ class S102RasterBand : public GDALProxyRasterBand
     const char *GetUnitType() override
     {
         return "metre";
+    }
+};
+
+/************************************************************************/
+/*                   S102GeoreferencedMetadataRasterBand                */
+/************************************************************************/
+
+class S102GeoreferencedMetadataRasterBand : public GDALProxyRasterBand
+{
+    friend class S102Dataset;
+
+    std::unique_ptr<GDALDataset> m_poDS{};
+    GDALRasterBand *m_poUnderlyingBand = nullptr;
+    std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
+
+  public:
+    explicit S102GeoreferencedMetadataRasterBand(
+        std::unique_ptr<GDALDataset> &&poDSIn,
+        std::unique_ptr<GDALRasterAttributeTable> &&poRAT)
+        : m_poDS(std::move(poDSIn)),
+          m_poUnderlyingBand(m_poDS->GetRasterBand(1)),
+          m_poRAT(std::move(poRAT))
+    {
+        eDataType = m_poUnderlyingBand->GetRasterDataType();
+        m_poUnderlyingBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    }
+
+    GDALRasterBand *
+    RefUnderlyingRasterBand(bool /*bForceOpen*/ = true) const override
+    {
+        return m_poUnderlyingBand;
+    }
+
+    GDALRasterAttributeTable *GetDefaultRAT() override
+    {
+        return m_poRAT.get();
     }
 };
 
@@ -172,6 +213,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     std::string osFilename(poOpenInfo->pszFilename);
+    bool bIsQualityOfSurvey = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
     {
         const CPLStringList aosTokens(
@@ -181,6 +223,22 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (aosTokens.size() == 2)
         {
             osFilename = aosTokens[1];
+        }
+        else if (aosTokens.size() == 3)
+        {
+            osFilename = aosTokens[1];
+            if (EQUAL(aosTokens[2], "QualityOfSurvey"))
+            {
+                bIsQualityOfSurvey = true;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported subdataset component: '%s'. Expected "
+                         "'QualityOfSurvey'",
+                         aosTokens[2]);
+                return nullptr;
+            }
         }
         else
         {
@@ -203,10 +261,38 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (!poRootGroup)
         return nullptr;
 
+    auto poDS = std::make_unique<S102Dataset>();
+
     auto poBathymetryCoverage01 = poRootGroup->OpenGroupFromFullname(
         "/BathymetryCoverage/BathymetryCoverage.01");
     if (!poBathymetryCoverage01)
         return nullptr;
+
+    const bool bNorthUp = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
+
+    // Get SRS
+    S100ReadSRS(poRootGroup.get(), poDS->m_oSRS);
+
+    if (bIsQualityOfSurvey)
+    {
+        if (!poDS->OpenQualityOfSurvey(poOpenInfo, poRootGroup))
+            return nullptr;
+
+        // Setup/check for pam .aux.xml.
+        poDS->SetDescription(osFilename.c_str());
+        poDS->TryLoadXML();
+
+        // Setup overviews.
+        poDS->oOvManager.Initialize(poDS.get(), osFilename.c_str());
+
+        return poDS.release();
+    }
+
+    // Compute geotransform
+    poDS->m_bHasGT = S100GetGeoTransform(poBathymetryCoverage01.get(),
+                                         poDS->m_adfGeoTransform, bNorthUp);
+
     auto poGroup001 = poBathymetryCoverage01->OpenGroup("Group_001");
     if (!poGroup001)
         return nullptr;
@@ -224,10 +310,6 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    auto poDS = std::make_unique<S102Dataset>();
-
-    const bool bNorthUp = CPLTestBool(
-        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
     if (bNorthUp)
         poValuesArray = poValuesArray->GetView("[::-1,...]");
 
@@ -261,24 +343,30 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     constexpr double NODATA = 1e6;
     const bool bInvertDepth = (bUseElevation && !bCSIsElevation) ||
                               (!bUseElevation && bCSIsElevation);
-    if (bInvertDepth)
+    auto poDepthDS = [&poDepth, bInvertDepth, NODATA]()
     {
-        auto poInverted = poDepth->GetUnscaled(-1, 0, NODATA);
-        poDS->m_poDepthDS.reset(poInverted->AsClassicDataset(1, 0));
-    }
-    else
-    {
-        poDS->m_poDepthDS.reset(poDepth->AsClassicDataset(1, 0));
-    }
+        if (bInvertDepth)
+        {
+            auto poInverted = poDepth->GetUnscaled(-1, 0, NODATA);
+            return std::unique_ptr<GDALDataset>(
+                poInverted->AsClassicDataset(1, 0));
+        }
+        else
+        {
+            return std::unique_ptr<GDALDataset>(
+                poDepth->AsClassicDataset(1, 0));
+        }
+    }();
 
     auto poUncertainty = poValuesArray->GetView("[\"uncertainty\"]");
-    poDS->m_poUncertaintyDS.reset(poUncertainty->AsClassicDataset(1, 0));
+    auto poUncertaintyDS =
+        std::unique_ptr<GDALDataset>(poUncertainty->AsClassicDataset(1, 0));
 
-    poDS->nRasterXSize = poDS->m_poDepthDS->GetRasterXSize();
-    poDS->nRasterYSize = poDS->m_poDepthDS->GetRasterYSize();
+    poDS->nRasterXSize = poDepthDS->GetRasterXSize();
+    poDS->nRasterYSize = poDepthDS->GetRasterYSize();
 
     // Create depth (or elevation) band
-    auto poDepthBand = new S102RasterBand(poDS->m_poDepthDS->GetRasterBand(1));
+    auto poDepthBand = new S102RasterBand(std::move(poDepthDS));
     poDepthBand->SetDescription(bUseElevation ? "elevation" : "depth");
 
     auto poMinimumDepth = poGroup001->GetAttribute("minimumDepth");
@@ -312,8 +400,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetBand(1, poDepthBand);
 
     // Create uncertainty band
-    auto poUncertaintyBand =
-        new S102RasterBand(poDS->m_poUncertaintyDS->GetRasterBand(1));
+    auto poUncertaintyBand = new S102RasterBand(std::move(poUncertaintyDS));
     poUncertaintyBand->SetDescription("uncertainty");
 
     auto poMinimumUncertainty = poGroup001->GetAttribute("minimumUncertainty");
@@ -339,13 +426,6 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     poDS->SetBand(2, poUncertaintyBand);
-
-    // Compute geotransform
-    poDS->m_bHasGT = S100GetGeoTransform(poBathymetryCoverage01.get(),
-                                         poDS->m_adfGeoTransform, bNorthUp);
-
-    // Get SRS
-    S100ReadSRS(poRootGroup.get(), poDS->m_oSRS);
 
     // https://iho.int/uploads/user/pubs/standards/s-100/S-100_5.0.0_Final_Clean_Web.pdf
     // Table S100_VerticalAndSoundingDatum page 20
@@ -469,6 +549,23 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
+    auto poGroupQualityOfSurvey = poRootGroup->OpenGroup("QualityOfSurvey");
+    if (poGroupQualityOfSurvey)
+    {
+        auto poGroupQualityOfSurvey01 =
+            poGroupQualityOfSurvey->OpenGroup("QualityOfSurvey.01");
+        if (poGroupQualityOfSurvey01)
+        {
+            poDS->GDALDataset::SetMetadataItem(
+                "SUBDATASET_1_NAME",
+                CPLSPrintf("S102:\"%s\":QualityOfSurvey", osFilename.c_str()),
+                "SUBDATASETS");
+            poDS->GDALDataset::SetMetadataItem(
+                "SUBDATASET_1_DESC", "Georeferenced metadata QualityOfSurvey",
+                "SUBDATASETS");
+        }
+    }
+
     // Setup/check for pam .aux.xml.
     poDS->SetDescription(osFilename.c_str());
     poDS->TryLoadXML();
@@ -477,6 +574,122 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->oOvManager.Initialize(poDS.get(), osFilename.c_str());
 
     return poDS.release();
+}
+
+/************************************************************************/
+/*                       OpenQualityOfSurvey()                          */
+/************************************************************************/
+
+bool S102Dataset::OpenQualityOfSurvey(
+    GDALOpenInfo *poOpenInfo, const std::shared_ptr<GDALGroup> &poRootGroup)
+{
+    const bool bNorthUp = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "NORTH_UP", "YES"));
+
+    auto poGroupQualityOfSurvey = poRootGroup->OpenGroup("QualityOfSurvey");
+    if (!poGroupQualityOfSurvey)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find group /QualityOfSurvey");
+        return false;
+    }
+
+    auto poGroupQualityOfSurvey01 =
+        poGroupQualityOfSurvey->OpenGroup("QualityOfSurvey.01");
+    if (!poGroupQualityOfSurvey01)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find group /QualityOfSurvey/QualityOfSurvey.01");
+        return false;
+    }
+
+    // Compute geotransform
+    m_bHasGT = S100GetGeoTransform(poGroupQualityOfSurvey01.get(),
+                                   m_adfGeoTransform, bNorthUp);
+
+    auto poGroup001 = poGroupQualityOfSurvey01->OpenGroup("Group_001");
+    if (!poGroup001)
+    {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "Cannot find group /QualityOfSurvey/QualityOfSurvey.01/Group_001");
+        return false;
+    }
+
+    auto poValuesArray = poGroup001->OpenMDArray("values");
+    if (!poValuesArray)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find array "
+                 "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values");
+        return false;
+    }
+
+    {
+        const auto &oType = poValuesArray->GetDataType();
+        if (oType.GetClass() != GEDTC_NUMERIC &&
+            oType.GetNumericDataType() != GDT_UInt32)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported data type for %s",
+                     poValuesArray->GetFullName().c_str());
+            return false;
+        }
+    }
+
+    if (poValuesArray->GetDimensionCount() != 2)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported number of dimensions for %s",
+                 poValuesArray->GetFullName().c_str());
+        return false;
+    }
+
+    auto poFeatureAttributeTable =
+        poGroupQualityOfSurvey->OpenMDArray("featureAttributeTable");
+    if (!poFeatureAttributeTable)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot find array /QualityOfSurvey/featureAttributeTable");
+        return false;
+    }
+
+    {
+        const auto &oType = poFeatureAttributeTable->GetDataType();
+        if (oType.GetClass() != GEDTC_COMPOUND)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported data type for %s",
+                     poFeatureAttributeTable->GetFullName().c_str());
+            return false;
+        }
+
+        const auto &poComponents = oType.GetComponents();
+        if (poComponents.size() >= 1 && poComponents[0]->GetName() != "id")
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing 'id' component in %s",
+                     poFeatureAttributeTable->GetFullName().c_str());
+            return false;
+        }
+    }
+
+    if (bNorthUp)
+        poValuesArray = poValuesArray->GetView("[::-1,...]");
+
+    auto poDS =
+        std::unique_ptr<GDALDataset>(poValuesArray->AsClassicDataset(1, 0));
+
+    nRasterXSize = poDS->GetRasterXSize();
+    nRasterYSize = poDS->GetRasterYSize();
+
+    auto poRAT =
+        HDF5CreateRAT(poFeatureAttributeTable, /* bFirstColIsMinMax = */ true);
+    auto poBand = std::make_unique<S102GeoreferencedMetadataRasterBand>(
+        std::move(poDS), std::move(poRAT));
+    SetBand(1, poBand.release());
+
+    return true;
 }
 
 /************************************************************************/
