@@ -365,7 +365,7 @@ struct MMAdmDatabase
 struct MM_ID_GRAFIC_MULTIPLE_RECORD
 {
 	MM_FILE_OFFSET offset;
-	MM_EXT_DBF_N_RECORDS n;  // Determines the number of the list (multiple record)
+	MM_EXT_DBF_N_MULTIPLE_RECORDS nMR;  // Determines the number of the list (multiple record)
 };
 
 // MIRAMON GEOMETRY
@@ -642,9 +642,9 @@ struct MiraMonFeature
     MM_COORD_TYPE *pZCoord; 
 
     // Records of the feature
-	MM_EXT_DBF_N_RECORDS nNumRecords;
+	MM_EXT_DBF_N_MULTIPLE_RECORDS nNumMRecords;
     // Number of reserved elements in *pRecords
-    MM_EXT_DBF_N_RECORDS nMaxRecords; 
+    MM_EXT_DBF_N_MULTIPLE_RECORDS nMaxMRecords; 
 	struct MiraMonRecord *pRecords;
 };
 
@@ -718,7 +718,7 @@ struct MiraMonVectLayerInfo
     MM_EXT_DBF_N_RECORDS nMaxN; // Max number of elements in a field features list 
     struct MM_ID_GRAFIC_MULTIPLE_RECORD *pMultRecordIndex;
 
-    // Charset of DBF files (same for all)
+    // Charset of DBF files (same for all) when writing it.
     //  MM_JOC_CARAC_UTF8_DBF
     //  MM_JOC_CARAC_ANSI_DBASE;
     MM_BYTE nCharSet;

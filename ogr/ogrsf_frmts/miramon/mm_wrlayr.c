@@ -94,7 +94,8 @@ int MMCheckVersionForFID(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
 // Extended DBF functions
 int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer);
-int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB);
+int MM_WriteNRecordsMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
+    struct MMAdmDatabase *MMAdmDB);
 int MMAddPointRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, 
             struct MiraMonFeature *hMMFeature,MM_INTERNAL_FID nElemCount);
 int MMAddArcRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, 
@@ -2764,9 +2765,9 @@ int MMInitFeature(struct MiraMonFeature *hMMFeature)
 {
     memset(hMMFeature, 0, sizeof(*hMMFeature));
 
-    hMMFeature->nMaxRecords=MM_INIT_NUMBER_OF_RECORDS;
+    hMMFeature->nMaxMRecords=MM_INIT_NUMBER_OF_RECORDS;
     if((hMMFeature->pRecords=calloc_function(
-            hMMFeature->nMaxRecords*sizeof(*(hMMFeature->pRecords))))==NULL)
+            hMMFeature->nMaxMRecords*sizeof(*(hMMFeature->pRecords))))==NULL)
         return 1;
 
     hMMFeature->pRecords[0].nMaxField = MM_INIT_NUMBER_OF_FIELDS;
@@ -2813,10 +2814,10 @@ void MMResetFeature(struct MiraMonFeature *hMMFeature)
 
     if(hMMFeature->pRecords)
     {
-        MM_EXT_DBF_N_RECORDS nIRecord;
+        MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
         MM_EXT_DBF_N_FIELDS nIField;
 
-        for(nIRecord=0; nIRecord<hMMFeature->nMaxRecords; nIRecord++)
+        for(nIRecord=0; nIRecord<hMMFeature->nMaxMRecords; nIRecord++)
         {
             if(!hMMFeature->pRecords[nIRecord].pField)
                 continue;
@@ -2857,10 +2858,10 @@ void MMDestroyFeature(struct MiraMonFeature *hMMFeature)
 
     if(hMMFeature->pRecords)
     {
-        MM_EXT_DBF_N_RECORDS nIRecord;
+        MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
         MM_EXT_DBF_N_FIELDS nIField;
 
-        for(nIRecord=0; nIRecord<hMMFeature->nMaxRecords; nIRecord++)
+        for(nIRecord=0; nIRecord<hMMFeature->nMaxMRecords; nIRecord++)
         {
             if(!hMMFeature->pRecords[nIRecord].pField)
                 continue;
@@ -2876,8 +2877,8 @@ void MMDestroyFeature(struct MiraMonFeature *hMMFeature)
     }
 	
     hMMFeature->nNRings=0;
-    hMMFeature->nNumRecords=0;
-    hMMFeature->nMaxRecords=0;
+    hMMFeature->nNumMRecords=0;
+    hMMFeature->nMaxMRecords=0;
 }
 
 int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer, 
@@ -3365,6 +3366,7 @@ unsigned __int64 nIPart, nIVertice;
 unsigned __int64 nCoord;
 struct MM_ZD *pZDescription=NULL;
 MM_INTERNAL_FID nElemCount;
+int result;
 
     if(hMiraMonLayer->TopHeader.bIs3d)
 		pZ=hMMFeature->pZCoord;
@@ -3440,10 +3442,10 @@ MM_INTERNAL_FID nElemCount;
             hMiraMonLayer->MMPoint.FlushTL.SizeOfBlockToBeSaved=sizeof(pCoord->dfX);
             hMiraMonLayer->MMPoint.FlushTL.pBlockToBeSaved=(void *)&pCoord->dfX;
             if(MM_AppendBlockToBuffer(&hMiraMonLayer->MMPoint.FlushTL))
-                return 1;
+                return MM_FATAL_ERROR_WRITING_FEATURES;
             hMiraMonLayer->MMPoint.FlushTL.pBlockToBeSaved=(void *)&pCoord->dfY;
             if(MM_AppendBlockToBuffer(&hMiraMonLayer->MMPoint.FlushTL))
-                return 1;
+                return MM_FATAL_ERROR_WRITING_FEATURES;
 
             // Adding the 3D part, if exists, at the memory block
 	        if (hMiraMonLayer->TopHeader.bIs3d)
@@ -3451,7 +3453,7 @@ MM_INTERNAL_FID nElemCount;
         	    hMiraMonLayer->MMPoint.pZSection.FlushZL.SizeOfBlockToBeSaved=sizeof(*pZ);
                 hMiraMonLayer->MMPoint.pZSection.FlushZL.pBlockToBeSaved=(void *)pZ;
                 if(MM_AppendBlockToBuffer(&hMiraMonLayer->MMPoint.pZSection.FlushZL))
-                    return 1;
+                    return MM_FATAL_ERROR_WRITING_FEATURES;
 
                 if (pZDescription[nElemCount].dfBBminz>*pZ)
                 	pZDescription[nElemCount].dfBBminz=*pZ;
@@ -3468,11 +3470,13 @@ MM_INTERNAL_FID nElemCount;
         if(hMiraMonLayer->TopHeader.nElemCount==0)
         {
             if(MMCreateMMDB(hMiraMonLayer))
-                return 1;
+                return MM_FATAL_ERROR_WRITING_FEATURES;
         }
 
-        if(MMAddPointRecordToMMDB(hMiraMonLayer, hMMFeature, nElemCount))
-            return 1;
+        result=MMAddPointRecordToMMDB(hMiraMonLayer, hMMFeature, nElemCount);
+        if(result==MM_FATAL_ERROR_WRITING_FEATURES ||
+            result== MM_STOP_WRITING_FEATURES)
+            return result;
     }
     // Updating nElemCount at the header of the layer
     hMiraMonLayer->TopHeader.nElemCount=nElemCount;
@@ -3650,10 +3654,10 @@ MM_POLYGON_ARCS_COUNT nPrevMax;
 }
 
 int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord, 
-                        unsigned __int32 *nMax, 
-                        unsigned __int32 nNum, 
-                        unsigned __int32 nIncr,
-                        unsigned __int32 nProposedMax)
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS *nMax, 
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nNum, 
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nIncr,
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nProposedMax)
 {
 unsigned __int32 nPrevMax;
 
@@ -3883,148 +3887,193 @@ char *trimmed_line, *parsed_key, *parsed_value;
 /* -------------------------------------------------------------------- */
 char *ReturnMMIDSRSFromEPSGCodeSRS (char *pSRS)
 {
-static char aMMIDSRS[MM_MAX_ID_SNY], aTempIDSRS[MM_MAX_ID_SNY];
-char aMMIDDBFFile[MM_MAX_PATH]; //m_idofic.dbf
-MM_BOOLEAN bIDFounded;
-GDALDatasetH hIDOfic;
-OGRLayerH hLayer;
-OGRFeatureH hFeature;
-OGRFeatureDefnH hFeatureDefn;
-OGRFieldDefnH hFieldDefn;
-int numFields=0, niField, j;
-char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF];
+static char aMMCodeSRS[MM_MAX_ID_SNY], aTempIDSRS[MM_MAX_ID_SNY];
+const char *aMMIDDBFFile=NULL; //m_idofic.dbf
+struct MM_BASE_DADES_XP pfMMSRS;
+MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
+MM_EXT_DBF_N_FIELDS niField_ID_GEODES, niField_PSIDGEODES;
 
-    memset(aMMIDSRS, '\0', sizeof(*aMMIDSRS));
+    if(!pSRS)
+        return 0;
+    memset(aMMCodeSRS, '\0', sizeof(*aMMCodeSRS));
+
     #ifdef GDAL_COMPILATION
-    strcpy(aMMIDDBFFile, "m_idofic.dbf"); 
+    aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.dbf");
     #else
-    strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf");
+    aMMIDDBFFile=strdup("m_idofic.dbf");
     #endif
 
-    // Opening DBF file
-    hIDOfic = GDALOpenEx_function(aMMIDDBFFile, GDAL_OF_VECTOR, NULL, NULL, NULL);
-    if (hIDOfic == NULL) {
-        printf("Error opening the DBF file.\n");
-        return aMMIDSRS;
+    if(!aMMIDDBFFile)
+    {
+        printf("Error opening data\\MM_m_idofic.dbf.\n");
+        return NULL;
     }
 
-    // Get the layer from the dataset (assuming there is only one layer)
-    hLayer = GDALDatasetGetLayer_function(hIDOfic, 0);
-    OGR_L_ResetReading_function(hLayer);
-    bIDFounded=0;
-    while ((hFeature = OGR_L_GetNextFeature_function(hLayer)) != NULL)
+    // Opening the file with SRS information
+    strcpy(pfMMSRS.szNomFitxer, aMMIDDBFFile);
+    if (MM_ReadExtendedDBFHeaderFromFile(&pfMMSRS, NULL))
     {
-        hFeatureDefn = OGR_L_GetLayerDefn_function(hLayer);
-        numFields = OGR_FD_GetFieldCount_function(hFeatureDefn);
-        for (niField=0; niField<numFields; niField++)
-        {
-            hFieldDefn = OGR_FD_GetFieldDefn_function(hFeatureDefn, niField);
-            MM_strnzcpy(pszFieldName,OGR_Fld_GetNameRef_function(hFieldDefn), MM_MAX_LON_FIELD_NAME_DBF);
-            if(0==stricmp(pszFieldName, "PSIDGEODES") && 0==stricmp(pSRS, OGR_F_GetFieldAsString_function(hFeature, niField)))
-            {
-                bIDFounded=1;
-                for (j=niField+1; j<numFields; j++)
-                {
-                    hFieldDefn = OGR_FD_GetFieldDefn_function(hFeatureDefn, j);
-                    MM_strnzcpy(pszFieldName,OGR_Fld_GetNameRef_function(hFieldDefn), MM_MAX_LON_FIELD_NAME_DBF);
-                    if(0==stricmp(pszFieldName, "ID_GEODES"))
-                    {
-                        MM_strnzcpy(aMMIDSRS, OGR_F_GetFieldAsString_function(hFeature, j),MM_MAX_ID_SNY);
-                        OGR_F_Destroy_function(hFeature);
-                        GDALClose_function(hIDOfic);
-                        return aMMIDSRS;
-                    }
-                }
-                break;
-            }
-        }
-        OGR_F_Destroy_function(hFeature);
-        if(bIDFounded)
+        printf("Error opening miramon\\m_idofic.dbf.\n");
+        return NULL;
+    }
+
+    // Looking for the information
+    for (niField_PSIDGEODES = 0; niField_PSIDGEODES < pfMMSRS.ncamps; niField_PSIDGEODES++)
+    {
+        if(0==stricmp(pfMMSRS.Camp[niField_PSIDGEODES].NomCamp, "PSIDGEODES"))
             break;
     }
-    GDALClose_function(hIDOfic);
+    if(niField_PSIDGEODES == pfMMSRS.ncamps)
+        return NULL;  // PSIDGEODES not found
 
-    return aMMIDSRS;
+    for (niField_ID_GEODES = 0; niField_ID_GEODES < pfMMSRS.ncamps; niField_ID_GEODES++)
+    {
+        if(0==stricmp(pfMMSRS.Camp[niField_ID_GEODES].NomCamp, "ID_GEODES"))
+            break;
+    }
+    if(niField_ID_GEODES == pfMMSRS.ncamps)
+        return NULL;  // ID_GEODES not found
+       
+
+    for(nIRecord=0; nIRecord<pfMMSRS.nRecords; nIRecord++)
+    {
+        fseek_function(pfMMSRS.pfBaseDades,
+            pfMMSRS.OffsetPrimeraFitxa+
+            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
+            pfMMSRS.Camp[niField_ID_GEODES].BytesAcumulats,
+            SEEK_SET);
+
+        memset(aMMCodeSRS, 0, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp);
+        fread_function(aMMCodeSRS, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp,
+            1, pfMMSRS.pfBaseDades);
+
+        aMMCodeSRS[pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp] = '\0';
+        MM_TreuBlancsDeFinalDeCadena(aMMCodeSRS);
+        if(strcmp(pSRS, aMMCodeSRS))
+            continue;
+
+        fseek_function(pfMMSRS.pfBaseDades,
+            pfMMSRS.OffsetPrimeraFitxa+
+            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
+            pfMMSRS.Camp[niField_ID_GEODES].BytesAcumulats,
+            SEEK_SET);
+
+        memset(aTempIDSRS, 0, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp);
+        fread_function(aTempIDSRS, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp,
+            1, pfMMSRS.pfBaseDades);
+
+        aTempIDSRS[pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp] = '\0';
+        MM_TreuBlancsDeFinalDeCadena(aTempIDSRS);
+
+        // ·$· Alliberar MM_ReadExtendedDBFHeaderFromFile()
+        return aTempIDSRS;
+    }
+
+    // ·$· Alliberar MM_ReadExtendedDBFHeaderFromFile()
+    return NULL;
 }
 
 // Returns 0 if no EPSG code is found.
 int ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS)
 {
 static char aEPSGCodeSRS[MM_MAX_ID_SNY], aTempIDSRS[MM_MAX_ID_SNY];
-char aMMIDDBFFile[MM_MAX_PATH]; //m_idofic.dbf
-MM_BOOLEAN bIDFounded;
-GDALDatasetH hIDOfic;
-OGRLayerH hLayer;
-OGRFeatureH hFeature;
-OGRFeatureDefnH hFeatureDefn;
-OGRFieldDefnH hFieldDefn;
-int numFields=0, niField, j;
-char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF];
+const char *aMMIDDBFFile=NULL; //m_idofic.dbf
+struct MM_BASE_DADES_XP pfMMSRS;
 char *p;
+MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
+MM_EXT_DBF_N_FIELDS niField_ID_GEODES, niField_PSIDGEODES;
+size_t nLong;
 
     if(!pMMSRS)
         return 0;
     memset(aEPSGCodeSRS, '\0', sizeof(*aEPSGCodeSRS));
+
     #ifdef GDAL_COMPILATION
-    strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf"); //�$� !! How to get that file
+    aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.dbf");
     #else
-    strcpy(aMMIDDBFFile, "d:\\progs\\m_idofic.dbf");
+    aMMIDDBFFile=strdup("m_idofic.dbf");
     #endif
 
-    // Opening DBF file
-    hIDOfic = GDALOpenEx_function(aMMIDDBFFile, GDAL_OF_VECTOR, NULL, NULL, NULL);
-    if (hIDOfic == NULL) {
-        printf("Error opening the DBF file.\n");
-        return 0;
+    if(!aMMIDDBFFile)
+    {
+        printf("Error opening data\\MM_m_idofic.dbf.\n");
+        return 1;
     }
 
-    // Get the layer from the dataset (assuming there is only one layer)
-    hLayer = GDALDatasetGetLayer_function(hIDOfic, 0);
-    OGR_L_ResetReading_function(hLayer);
-    bIDFounded=0;
-    while ((hFeature = OGR_L_GetNextFeature_function(hLayer)) != NULL)
+    // Opening the file with SRS information
+    strcpy(pfMMSRS.szNomFitxer, aMMIDDBFFile);
+    if (MM_ReadExtendedDBFHeaderFromFile(&pfMMSRS, NULL))
     {
-        hFeatureDefn = OGR_L_GetLayerDefn_function(hLayer);
-        numFields = OGR_FD_GetFieldCount_function(hFeatureDefn);
-        for (niField=0; niField<numFields; niField++)
-        {
-            hFieldDefn = OGR_FD_GetFieldDefn_function(hFeatureDefn, niField);
-            MM_strnzcpy(pszFieldName,OGR_Fld_GetNameRef_function(hFieldDefn), MM_MAX_LON_FIELD_NAME_DBF);
-            if(0==stricmp(pszFieldName, "ID_GEODES") && 0==stricmp(pMMSRS, OGR_F_GetFieldAsString_function(hFeature, niField)))
-            {
-                bIDFounded=1;
-                for (j=0; j<numFields; j++)
-                {
-					if(j==niField)
-						continue;
-                    hFieldDefn = OGR_FD_GetFieldDefn_function(hFeatureDefn, j);
-                    MM_strnzcpy(pszFieldName,OGR_Fld_GetNameRef_function(hFieldDefn), MM_MAX_LON_FIELD_NAME_DBF);
-                    if(0==stricmp(pszFieldName, "PSIDGEODES"))
-                    {
-                        size_t nLong;
-                        MM_strnzcpy(aEPSGCodeSRS, OGR_F_GetFieldAsString_function(hFeature, j),MM_MAX_ID_SNY);
-                        p=strstr(aEPSGCodeSRS, "EPSG:");
-                        nLong=strlen("EPSG:");
-                        if (p && !strncmp(p, aEPSGCodeSRS, nLong))
-                        {
-                            OGR_F_Destroy_function(hFeature);
-                            GDALClose_function(hIDOfic);
-                            if (p + nLong)
-                                return atoi(p + nLong);
-                            else
-                                return 0;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        OGR_F_Destroy_function(hFeature);
-        if(bIDFounded)
+        printf("Error opening miramon\\m_idofic.dbf.\n");
+        return 1;
+    }
+
+    // Looking for the information
+    for (niField_ID_GEODES = 0; niField_ID_GEODES < pfMMSRS.ncamps; niField_ID_GEODES++)
+    {
+        if(0==stricmp(pfMMSRS.Camp[niField_ID_GEODES].NomCamp, "ID_GEODES"))
             break;
     }
-    GDALClose_function(hIDOfic);
+    if(niField_ID_GEODES == pfMMSRS.ncamps)
+        return 0;  // ID_GEODES not found
 
+    for (niField_PSIDGEODES = 0; niField_PSIDGEODES < pfMMSRS.ncamps; niField_PSIDGEODES++)
+    {
+        if(0==stricmp(pfMMSRS.Camp[niField_PSIDGEODES].NomCamp, "PSIDGEODES"))
+            break;
+    }
+    if(niField_PSIDGEODES == pfMMSRS.ncamps)
+        return 0;  // PSIDGEODES not found
+
+    for(nIRecord=0; nIRecord<pfMMSRS.nRecords; nIRecord++)
+    {
+        fseek_function(pfMMSRS.pfBaseDades,
+            pfMMSRS.OffsetPrimeraFitxa+
+            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
+            pfMMSRS.Camp[niField_ID_GEODES].BytesAcumulats,
+            SEEK_SET);
+
+        memset(aEPSGCodeSRS, 0, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp);
+        fread_function(aEPSGCodeSRS, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp,
+            1, pfMMSRS.pfBaseDades);
+
+        aEPSGCodeSRS[pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp] = '\0';
+        MM_TreuBlancsDeFinalDeCadena(aEPSGCodeSRS);
+        if(strcmp(pMMSRS, aEPSGCodeSRS))
+            continue;
+
+        fseek_function(pfMMSRS.pfBaseDades,
+            pfMMSRS.OffsetPrimeraFitxa+
+            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
+            pfMMSRS.Camp[niField_PSIDGEODES].BytesAcumulats,
+            SEEK_SET);
+
+        memset(aTempIDSRS, 0, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp);
+        fread_function(aTempIDSRS, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp,
+            1, pfMMSRS.pfBaseDades);
+
+        aTempIDSRS[pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp] = '\0';
+        MM_TreuBlancsDeFinalDeCadena(aTempIDSRS);
+
+        p=strstr(aTempIDSRS, "EPSG:");
+        nLong=strlen("EPSG:");
+        if (p && !strncmp(p, aTempIDSRS, nLong))
+        {
+            if (p + nLong)
+            {
+                // ·$· Alliberar MM_ReadExtendedDBFHeaderFromFile()
+                return atoi(p + nLong);
+            }
+            else
+            {
+                // ·$· Alliberar MM_ReadExtendedDBFHeaderFromFile()
+                return 0;
+            }
+                
+        }
+    }
+
+    // ·$· Alliberar MM_ReadExtendedDBFHeaderFromFile()
     return 0;
 }
 
@@ -4621,7 +4670,7 @@ int MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if(nNewWidth>camp->BytesPerCamp)
     {
-        if(MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
+        if(MM_WriteNRecordsMMBD_XPFile(hMiraMonLayer, pMMAdmDB))
             return 1;
         
         // Flushing all to be flushed
@@ -4752,12 +4801,12 @@ int MMAddFeatureRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                              MM_EXT_DBF_N_RECORDS *nNumRecords,
                              MM_EXT_DBF_N_FIELDS nNumPrivateMMField)
 {
-unsigned __int32 nIRecord;
+MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
 MM_EXT_DBF_N_FIELDS nIField;
 struct MM_BASE_DADES_XP *pBD_XP=NULL;
 
     pBD_XP=pMMAdmDB->pMMBDXP;
-    for(nIRecord=0; nIRecord<hMMFeature->nNumRecords; nIRecord++)
+    for(nIRecord=0; nIRecord<hMMFeature->nNumMRecords; nIRecord++)
     {
         for (nIField=0; nIField<hMMFeature->pRecords[nIRecord].nNumField; nIField++)
         {
@@ -4837,7 +4886,7 @@ int MM_DetectAndFixDBFWidthChange(struct MiraMonVectLayerInfo *hMiraMonLayer,
                             struct MMAdmDatabase *pMMAdmDB,
                             struct MM_FLUSH_INFO *pFlushRecList,
                             MM_EXT_DBF_N_FIELDS nNumPrivateMMField,
-                            unsigned __int32 nIRecord,
+                            MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord,
                             MM_EXT_DBF_N_FIELDS nIField)
 {
 struct MM_BASE_DADES_XP *pBD_XP;
@@ -4846,7 +4895,7 @@ struct MM_BASE_DADES_XP *pBD_XP;
         return 0;
 
     pBD_XP=pMMAdmDB->pMMBDXP;
-    if(nIRecord>=hMMFeature->nNumRecords)
+    if(nIRecord>=hMMFeature->nNumMRecords)
         return 0;
     
     if(nIField>=hMMFeature->pRecords[nIRecord].nNumField)
@@ -4887,6 +4936,11 @@ MM_EXT_DBF_N_FIELDS nNumPrivateMMField=MM_PRIVATE_POINT_DB_FIELDS;
 char *pszRecordOnCourse;
 struct MM_FLUSH_INFO *pFlushRecList;
 
+    // In V1.1 only _UI32_MAX records number is allowed
+    if(MMCheckVersionForFID(hMiraMonLayer, 
+            hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP->nRecords+hMMFeature->nNumMRecords))
+        return MM_STOP_WRITING_FEATURES;
+    
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
     pFlushRecList=&hMiraMonLayer->MMPoint.MMAdmDB.FlushRecList;
@@ -4900,7 +4954,7 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &hMiraMonLayer->MMPoint.MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-        return 1;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
 
     // Reassign the point because the function can realloc it.
     pszRecordOnCourse=hMiraMonLayer->MMPoint.MMAdmDB.szRecordOnCourse;
@@ -4916,10 +4970,10 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(MMAddFeatureRecordToMMDB(hMiraMonLayer, hMMFeature, 
             &hMiraMonLayer->MMPoint.MMAdmDB,
             pszRecordOnCourse, pFlushRecList, 
-            &hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP->nfitxes,
+            &hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP->nRecords,
             nNumPrivateMMField))
-        return 1;
-    return 0;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
+    return MM_CONTINUE_WRITING_FEATURES;
 }
 
 int MMAddArcRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, struct MiraMonFeature *hMMFeature,
@@ -4935,6 +4989,20 @@ struct MM_FLUSH_INFO *pFlushRecList;
         pMMArcLayer=&hMiraMonLayer->MMPolygon.MMArc;
     else
         pMMArcLayer=&hMiraMonLayer->MMArc;
+
+    // In V1.1 only _UI32_MAX records number is allowed
+    if(hMiraMonLayer->bIsPolygon)
+    {
+        if(MMCheckVersionForFID(hMiraMonLayer, 
+            pMMArcLayer->MMAdmDB.pMMBDXP->nRecords+1))
+        return MM_STOP_WRITING_FEATURES;
+    }
+    else
+    {
+        if(MMCheckVersionForFID(hMiraMonLayer, 
+            pMMArcLayer->MMAdmDB.pMMBDXP->nRecords+hMMFeature->nNumMRecords))
+        return MM_STOP_WRITING_FEATURES;
+    }
 
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
@@ -4954,7 +5022,7 @@ struct MM_FLUSH_INFO *pFlushRecList;
         if (MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &pMMArcLayer->MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-            return 1;
+            return MM_FATAL_ERROR_WRITING_FEATURES;
     }
 
     // Now lenght is sure, write
@@ -4982,19 +5050,19 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(hMiraMonLayer->bIsPolygon)
     {
         if(MM_AppendBlockToBuffer(pFlushRecList))
-            return 1;
-        pMMArcLayer->MMAdmDB.pMMBDXP->nfitxes++;
-        return 0;
+            return MM_FATAL_ERROR_WRITING_FEATURES;
+        pMMArcLayer->MMAdmDB.pMMBDXP->nRecords++;
+        return MM_CONTINUE_WRITING_FEATURES;
     }
 
     pFlushRecList->SizeOfBlockToBeSaved=pBD_XP->BytesPerFitxa;
     if(MMAddFeatureRecordToMMDB(hMiraMonLayer, hMMFeature, 
             &pMMArcLayer->MMAdmDB,
             pszRecordOnCourse, pFlushRecList, 
-            &pMMArcLayer->MMAdmDB.pMMBDXP->nfitxes,
+            &pMMArcLayer->MMAdmDB.pMMBDXP->nRecords,
             nNumPrivateMMField))
-        return 1;
-    return 0;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
+    return MM_CONTINUE_WRITING_FEATURES;
 }
 
 int MMAddNodeRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, 
@@ -5009,6 +5077,11 @@ double nDoubleValue;
         pMMNodeLayer=&hMiraMonLayer->MMPolygon.MMArc.MMNode;
     else
         pMMNodeLayer=&hMiraMonLayer->MMArc.MMNode;
+
+    // In V1.1 only _UI32_MAX records number is allowed
+    if(MMCheckVersionForFID(hMiraMonLayer, 
+            pMMNodeLayer->MMAdmDB.pMMBDXP->nRecords+1))
+        return MM_STOP_WRITING_FEATURES;
 
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
@@ -5037,9 +5110,9 @@ double nDoubleValue;
         &nDoubleValue, FALSE);
 
     if(MM_AppendBlockToBuffer(&pMMNodeLayer->MMAdmDB.FlushRecList))
-        return 1;
-    pMMNodeLayer->MMAdmDB.pMMBDXP->nfitxes++;
-    return 0;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
+    pMMNodeLayer->MMAdmDB.pMMBDXP->nRecords++;
+    return MM_CONTINUE_WRITING_FEATURES;
 }
 
 int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, 
@@ -5053,6 +5126,11 @@ char *pszRecordOnCourse;
 MM_EXT_DBF_N_FIELDS nNumPrivateMMField=MM_PRIVATE_POLYGON_DB_FIELDS;
 struct MM_FLUSH_INFO *pFlushRecList;
 
+    // In V1.1 only _UI32_MAX records number is allowed
+    if(MMCheckVersionForFID(hMiraMonLayer, 
+         hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nRecords+hMMFeature->nNumMRecords))
+    return MM_STOP_WRITING_FEATURES;
+    
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
     pFlushRecList=&hMiraMonLayer->MMPolygon.MMAdmDB.FlushRecList;
@@ -5069,7 +5147,7 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(MM_DetectAndFixDBFWidthChange(hMiraMonLayer,
             hMMFeature, &hMiraMonLayer->MMPolygon.MMAdmDB,
             pFlushRecList, nNumPrivateMMField, 0, 0))
-        return 1;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
 
     // Now lenght is sure, write
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerFitxa);
@@ -5080,9 +5158,9 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(!hMMFeature)
     {
         if(MM_AppendBlockToBuffer(pFlushRecList))
-            return 1;
-        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nfitxes++;
-        return 0;
+            return MM_FATAL_ERROR_WRITING_FEATURES;
+        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nRecords++;
+        return MM_CONTINUE_WRITING_FEATURES;
     }
 
     MMWriteValueToRecordDBXP(hMiraMonLayer, 
@@ -5109,22 +5187,31 @@ struct MM_FLUSH_INFO *pFlushRecList;
     if(MMAddFeatureRecordToMMDB(hMiraMonLayer, hMMFeature, 
             &hMiraMonLayer->MMPolygon.MMAdmDB,
             pszRecordOnCourse, pFlushRecList, 
-            & hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nfitxes,
+            & hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nRecords,
             nNumPrivateMMField))
-        return 1;
-    return 0;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
+    return MM_CONTINUE_WRITING_FEATURES;
 }
 
-int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
+int MM_WriteNRecordsMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
+            struct MMAdmDatabase *MMAdmDB)
 {
     if(!MMAdmDB->pMMBDXP)
         return 0;
+
     // Updating number of features in database
-    fseek_function(MMAdmDB->pFExtDBF, 4, SEEK_SET);
-    // �$� V2.0 !!!
-    if (fwrite_function(&MMAdmDB->pMMBDXP->nfitxes, 4, 1, 
+    fseek_function(MMAdmDB->pFExtDBF, MM_FIRST_OFFSET_to_N_RECORDS, SEEK_SET);
+    if (fwrite_function(&MMAdmDB->pMMBDXP->nRecords, 4, 1, 
+        MMAdmDB->pFExtDBF) != 1)
+	return 1;
+    if(hMiraMonLayer->LayerVersion==MM_64BITS_VERSION)
+    {
+        fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
+        if (fwrite_function(((char*)&MMAdmDB->pMMBDXP->nRecords)+4, 4, 1, 
             MMAdmDB->pFExtDBF) != 1)
 		return 1;
+    }
+        
     return 0;
 }
 
@@ -5153,7 +5240,7 @@ int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         }
     }
 
-    if(MM_WriteNRecordsMMBD_XPFile(MMAdmDB))
+    if(MM_WriteNRecordsMMBD_XPFile(hMiraMonLayer, MMAdmDB))
         return 1;
     
     // Flushing all to be flushed

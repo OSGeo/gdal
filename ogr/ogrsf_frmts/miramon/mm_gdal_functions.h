@@ -50,7 +50,7 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
                             MM_BYTE nou_decimals,
 							MM_BYTE que_fer_amb_reformatat_decimals);
 
-int MM_DonaAlcadesDArc(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
+int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
 
 // Strings
 char *MM_TreuBlancsDeFinalDeCadena(char * str);

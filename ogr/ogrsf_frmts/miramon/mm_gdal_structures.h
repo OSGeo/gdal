@@ -122,7 +122,7 @@ struct MM_BASE_DADES_XP // MiraMon Database Structure
 	MM_BYTE JocCaracters; 
 	//BYTE InfoJocCaracExterna;
 	char ModeLectura[4];
-	MM_EXT_DBF_N_RECORDS nfitxes;
+	MM_EXT_DBF_N_RECORDS nRecords;
 	MM_TIPUS_BYTES_ACUMULATS_DBF BytesPerFitxa;
 	MM_EXT_DBF_N_FIELDS ncamps;
 	struct MM_CAMP *Camp;

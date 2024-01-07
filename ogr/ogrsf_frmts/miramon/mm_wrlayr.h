@@ -166,10 +166,10 @@ int MMResizeMiraMonPolygonArcs(struct MM_PAL_MEM **pFID,
                         MM_POLYGON_ARCS_COUNT nProposedMax);
 
 int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord, 
-                        unsigned __int32 *nMax, 
-                        unsigned __int32 nNum, 
-                        unsigned __int32 nIncr,
-                        unsigned __int32 nProposedMax);
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS *nMax, 
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nNum, 
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nIncr,
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nProposedMax);
 
 int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64, 
                         MM_POLYGON_RINGS_COUNT *nMax, 

@@ -505,11 +505,11 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     if (fwrite_function(&(base_dades_XP->dia), 1, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
-    /* de 4 a 7 */
-    if (fwrite_function(&(base_dades_XP->nfitxes), 4, 1,
+    /* de 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
+    if (fwrite_function(&(base_dades_XP->nRecords), 4, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
-    /* de 8 a 9, posici� MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
+    /* de 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
@@ -539,10 +539,26 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     if (fwrite_function(&(base_dades_XP->encryption_flag), 1, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
+
     /* de 16 a 27 */
-    if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 12, 1,
-                base_dades_XP->pfBaseDades) != 1)
-        return FALSE;
+    if (base_dades_XP->nRecords < _UI32_MAX)
+    {
+        if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 12, 1,
+            base_dades_XP->pfBaseDades) != 1)
+            return FALSE;
+    }
+    else
+    {
+        /* de 16 a 19, position MM_SECOND_OFFSET_to_N_RECORDS */
+        if (fwrite_function((char*)&(base_dades_XP->nRecords), 4, 1,
+            base_dades_XP->pfBaseDades) != 1)
+            return FALSE;
+
+        /* de 20 a 27 */
+        if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 8, 1,
+            base_dades_XP->pfBaseDades) != 1)
+            return FALSE;
+    }
     /* byte 28 */
     if (fwrite_function(&(base_dades_XP->MDX_flag), 1, 1,
                 base_dades_XP->pfBaseDades) != 1)
@@ -1441,7 +1457,7 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 {
 char *record, *whites=NULL;
 MM_TIPUS_BYTES_PER_CAMP_DBF l_glop1, l_glop2, i_glop2;
-MM_EXT_DBF_N_RECORDS i_reg, nfitx;
+MM_EXT_DBF_N_RECORDS nfitx, i_reg;
 int canvi_amplada;
 signed __int32 j;
 MM_EXT_DBF_N_FIELDS i_camp;
@@ -1453,7 +1469,7 @@ int retorn_printf;
 
 	canvi_amplada = nNewWidth - base_dades_XP->Camp[nIField].BytesPerCamp;
 	
-    if (base_dades_XP->nfitxes != 0)
+    if (base_dades_XP->nRecords != 0)
 	{
 		l_glop1 = base_dades_XP->Camp[nIField].BytesAcumulats;
 		i_glop2 = l_glop1 + base_dades_XP->Camp[nIField].BytesPerCamp;
@@ -1476,7 +1492,7 @@ int retorn_printf;
         memset(whites, ' ', nNewWidth);
         
 
-		nfitx = base_dades_XP->nfitxes;
+		nfitx = base_dades_XP->nRecords;
 
         #ifdef _MSC_VER
         #pragma warning( disable : 4127 )
@@ -1506,8 +1522,8 @@ int retorn_printf;
             
 
             if(0!=fseek_function(base_dades_XP->pfBaseDades,
-                            base_dades_XP->OffsetPrimeraFitxa +
-                            (MM_FILE_OFFSET)i_reg * (base_dades_XP->BytesPerFitxa + canvi_amplada),
+                            (MM_FILE_OFFSET)base_dades_XP->OffsetPrimeraFitxa +
+                            i_reg * ((MM_FILE_OFFSET)base_dades_XP->BytesPerFitxa + canvi_amplada),
                             SEEK_SET))
             {
                 if (whites) free_function(whites);
@@ -1673,8 +1689,9 @@ int retorn_printf;
 		free_function(record);
 
         retorn_TruncaFitxer=TruncateFile_function(base_dades_XP->pfBaseDades,
-					  base_dades_XP->OffsetPrimeraFitxa +
-					  (MM_FILE_OFFSET)base_dades_XP->nfitxes *(base_dades_XP->BytesPerFitxa+canvi_amplada));
+					  (MM_FILE_OFFSET)base_dades_XP->OffsetPrimeraFitxa +
+					  (MM_FILE_OFFSET)base_dades_XP->nRecords *
+                      ((MM_FILE_OFFSET)base_dades_XP->BytesPerFitxa+canvi_amplada));
 		if (canvi_amplada<0 && retorn_TruncaFitxer)
 			return 1;
 	} /* Fi de registres de != 0*/
@@ -1720,7 +1737,7 @@ void MM_AdoptaAlcada(double *desti, const double *proposta, unsigned long int fl
     }
 }
 
-int MM_DonaAlcadesDArc(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag)
+int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag)
 {
 MM_N_HEIGHT_TYPE i;
 MM_N_VERTICES_TYPE i_vrt;
@@ -1891,11 +1908,11 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
 		id[(size_t)i].offset=(MM_FILE_OFFSET)offset_1era+(MM_FILE_OFFSET)(i_dbf-1)*bytes_per_fitxa;
 		do
 		{
-			id[(size_t)i].n++;
-            if(!(*isListField) && id[(size_t)i].n>1)
+			id[(size_t)i].nMR++;
+            if(!(*isListField) && id[(size_t)i].nMR>1)
                 *isListField=TRUE;
-            if(*nMaxN<id[(size_t)i].n)
-                *nMaxN=id[(size_t)i].n;
+            if(*nMaxN<id[(size_t)i].nMR)
+                *nMaxN=id[(size_t)i].nMR;
 
 			if (i_dbf==n_dbf)
 			{
@@ -1919,6 +1936,67 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
 	}
 }//Fi de MMCreateExtendedDBFIndex()
 
+// If n_bytes is USHRT_MAX the translation is until '\0' is found.,
+char *MM_oemansi_n(char *szcadena, size_t n_bytes)
+{
+size_t u_i;
+unsigned char *punter_bait;
+unsigned char t_oemansi[128]=
+	/*
+	// Conversió OEM_850 -> ANSI. Copiada del conversor de Borland NOMÉS HI HA ELS 128 MÉS ALTS
+	{	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
+		196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
+		163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
+		172, 189, 188, 161, 171, 187,  95,  95,  95, 166, 166, 193, 194, 192,
+		169, 166, 166,  43,  43, 162, 165,  43,  43,  45,  45,  43,  45,  43,
+		227, 195,  43,  43,  45,  45, 166,  45,  43, 164, 240, 208, 202, 203,
+		200, 105, 205, 206, 207,  43,  43,  95,  95, 166, 204,  95, 211, 223,
+		212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
+		173, 177,  95, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
+		 95,  32
+	};*/
+	// Conversió OEM_850 -> ANSI. Copiada del conversor de Borland però evitant usar caràcters
+    // substituts menors a 128, de forma que les cerques de cadenes que no contenen caràcters
+    // estesos poden ser molt més ràpides perquè no cal convertir les cadenes. L'explicació del
+    // criteri de canvi en cada caràcter és al fitxer OEM_ANSI_amb_valors_inferiors_a_128.xls
+    // (directori include\general), en la pestanya OEM_a_ANSI, però en essència
+    // el que s'ha fet és substituir les vores de bloc tan típiques dels requadres
+    // en aplicacions DOS per un valor 164, que també és una forma que pot servir
+    // per definir una cenefa (en comptes de jugar amb signes positius i negatius),
+    // evitar l'ús de subratllat arbitrari com a substitut de caràcters que no
+    // se sap com convertir en favor del mateix valor 164 i evitar un espai en blanc
+    // usant un petit punt volat. El valor 164 té la gràcia que coincideix en dibuixet
+    // amb el SUBSTITUT_RECOMANAT_ANSI_OEM.
+    // NOMÉS HI HA ELS 128 MÉS ALTS
+	{	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
+		196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
+		163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
+		172, 189, 188, 161, 171, 187, 164, 164, 164, 166, 166, 193, 194, 192,
+		169, 166, 166, 164, 164, 162, 165, 164, 164, 164, 164, 164, 164, 164,
+		227, 195, 164, 164, 164, 164, 166, 164, 164, 164, 240, 208, 202, 203,
+		200, 180, 205, 206, 207, 164, 164, 164, 164, 166, 204, 164, 211, 223,
+		212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
+		173, 177, 164, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
+		164, 183
+	};
+	if (n_bytes==USHRT_MAX) /* Bandera que m'indica que és una cadena
+							acabada en '\0' i que l'he de recórrer tota
+							en lloc d'usar el propi valor de n_bytes. */
+		for ( punter_bait = (unsigned char *)szcadena; *punter_bait; punter_bait++)
+		{
+			if ( *punter_bait > 127)
+				*punter_bait = t_oemansi[*punter_bait-128];
+		} /* Clau IMPRESCINDIBLE per tal que el següent "else" es refereixi
+			al primer if i no al de *punter_bait > 127 */
+	else
+		for ( u_i=0, punter_bait = (unsigned char *)szcadena;
+			u_i<n_bytes; punter_bait++, u_i++)
+		{
+			if ( *punter_bait > 127)
+				*punter_bait = t_oemansi[*punter_bait-128];
+		}
+	return szcadena;
+}
 
 #ifdef CODIFICATION_NEED_TO_BE_FINISHED
 char * MM_ansioem_n(char *szcadena, enum AnsiOemMode mode, int substitut)

@@ -42,7 +42,7 @@
 
 //#include "mm_gdal\mm_gdal_driver_structs.h"    // SECCIO_VERSIO
 //#include "mm_gdal\mm_wrlayr.h" 
-#include "mm_gdal\mm_gdal_functions.h" // Per a int MM_DonaAlcadesDArc()
+#include "mm_gdal\mm_gdal_functions.h" // Per a int MM_GetArcHeights()
 #include "mm_gdal\mm_gdal_constants.h"
 #else
 #include "ogr_api.h"    // For CPL_C_START
@@ -211,7 +211,7 @@ struct MM_ZD *pZDescription=NULL;
                 return 1;
 
             // +nStartVertice
-            MM_DonaAlcadesDArc(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice + pArcHeader[i_elem].nElemCount,
+            MM_GetArcHeights(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice + pArcHeader[i_elem].nElemCount,
                 pF, pArcHeader[i_elem].nElemCount, pZDescription + i_elem, flag_z);
 
             // If there is a value for Z-nodata in GDAL this lines can be uncomented
@@ -266,7 +266,7 @@ struct MM_ZD *pZDescription=NULL;
                 return 1;
 
             // +nStartVertice
-            MM_DonaAlcadesDArc(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice - (bAvoidFirst ? 1 : 0), pF, pArcHeader[i_elem].nElemCount,
+            MM_GetArcHeights(hMiraMonLayer->ReadedFeature.pZCoord + nStartVertice - (bAvoidFirst ? 1 : 0), pF, pArcHeader[i_elem].nElemCount,
                 pZDescription+i_elem, flag_z);
 
             // If there is a value for Z-nodata in GDAL this lines can be uncomented
@@ -551,7 +551,7 @@ struct MM_PH *pPolHeader;
 
 
 // READING THE HEADER OF AN EXTENDED DBF
-int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
+int MM_ReadExtendedDBFHeaderFromFile(struct MM_BASE_DADES_XP *pMMBDXP, char * pszRelFile)
 {
 MM_BYTE  variable_byte;
 FILE_TYPE *pf;
@@ -560,40 +560,17 @@ MM_EXT_DBF_N_FIELDS nIField, j;
 MM_FIRST_RECORD_OFFSET_TYPE offset_primera_fitxa;
 MM_FIRST_RECORD_OFFSET_TYPE offset_fals=0;
 MM_BOOLEAN grandaria_registre_incoherent=FALSE;
-char local_file_name[MM_MAX_PATH];
 MM_BYTE un_byte;
 MM_TIPUS_BYTES_PER_CAMP_DBF bytes_per_camp;
 MM_BYTE tretze_bytes[13];
 MM_FIRST_RECORD_OFFSET_TYPE offset_possible;
 MM_BYTE n_queixes_estructura_incorrecta=0;
 MM_FILE_OFFSET offset_reintent=0;
-struct MM_BASE_DADES_XP *pMMBDXP;
 char cpg_file[MM_MAX_PATH];
-char * pszRelFile=NULL, *pszDesc;
+char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
+unsigned __int32 second_part_n_records;
 
-     pMMBDXP=hMiraMonLayer->pMMBDXP=calloc_function(sizeof(*pMMBDXP));
-
-    if (hMiraMonLayer->bIsPoint)
-    {
-        hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP = pMMBDXP;
-        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName);
-        pszRelFile=hMiraMonLayer->MMPoint.pszREL_LayerName;
-    }
-    else if (hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
-    {
-        hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP = pMMBDXP;
-        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMArc.MMAdmDB.pszExtDBFLayerName);
-        pszRelFile=hMiraMonLayer->MMArc.pszREL_LayerName;
-    }
-    else if(hMiraMonLayer->bIsPolygon)
-    {
-        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP=pMMBDXP;
-        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPolygon.MMAdmDB.pszExtDBFLayerName);
-        pszRelFile=hMiraMonLayer->MMPolygon.pszREL_LayerName;
-    }        
-
-    strcpy(local_file_name, pMMBDXP->szNomFitxer);
     strcpy(pMMBDXP->ModeLectura, "rb");
 
 	if ((pMMBDXP->pfBaseDades=fopen_function(pMMBDXP->szNomFitxer,
@@ -601,22 +578,32 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 	      return 1;
 
     pf=pMMBDXP->pfBaseDades;
-    
-	/* ====== Header reading (32 bytes) =================== */
+
+    // Guessing if the number of records is a 32 or 64 bits variable.
+    // second_part_n_records==0 => 32 bits is enough
+    fseek_function(pf, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
+    if(1!=fread_function(&second_part_n_records, 4, 1, pf))
+    {
+		fclose_function(pf);
+        return 1;
+	}
+
+    fseek_function(pf, 0, SEEK_SET);
+    /* ====== Header reading (32 bytes) =================== */
 	offset_primera_fitxa=0;
 
 	if (1!=fread_function(&(pMMBDXP->versio_dbf), 1, 1, pf) ||
 		1!=fread_function(&variable_byte, 1, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->mes), 1, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->dia), 1, 1, pf) ||
-		1!=fread_function(&(pMMBDXP->nfitxes), 4, 1, pf) ||
+		1!=fread_function(&pMMBDXP->nRecords, 4, 1, pf) ||
 		1!=fread_function(&offset_primera_fitxa, 2, 1, pf))
 	{
-		fclose_function(pMMBDXP->pfBaseDades);
+		fclose_function(pf);
         return 1;
 	}
 
-	pMMBDXP->any = (short)(1900+variable_byte);
+    pMMBDXP->any = (short)(1900+variable_byte);
     reintenta_lectura_per_si_error_CreaCampBD_XP:
     
     if (n_queixes_estructura_incorrecta>0)
@@ -637,13 +624,40 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 	if (1!=fread_function(&ushort, 2, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->reservat_1), 2, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->transaction_flag), 1, 1, pf) ||
-		1!=fread_function(&(pMMBDXP->encryption_flag), 1, 1, pf) ||
-		1!=fread_function(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf) ||
-		1!=fread_function(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
+		1!=fread_function(&(pMMBDXP->encryption_flag), 1, 1, pf))
+	{
+		fclose_function(pf);
+        return 1;
+	}
+
+    if (!second_part_n_records)
+    {
+        if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf))
+        {
+            fclose_function(pf);
+            return 1;
+        }
+    }
+    else
+    {
+        if (1 != fread_function(((char *)&(pMMBDXP->nRecords))+4, 4, 1, pf))
+        {
+            fclose_function(pf);
+            return 1;
+        }
+
+        if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 8, 1, pf))
+        {
+            fclose_function(pf);
+            return 1;
+        }
+    }
+
+    if (1!=fread_function(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->JocCaracters), 1, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->reservat_2), 2, 1, pf))
 	{
-		fclose_function(pMMBDXP->pfBaseDades);
+		fclose_function(pf);
         return 1;
 	}
 
@@ -712,7 +726,7 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 					1!=fread_function(&tretze_bytes, 3+sizeof(bytes_per_camp), 1, pf))
 				{
 					free(pMMBDXP->Camp);
-					fclose_function(pMMBDXP->pfBaseDades);
+					fclose_function(pf);
 					return 1;
 				}
 				if (bytes_per_camp==0)
@@ -729,7 +743,7 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
         pMMBDXP->Camp = MM_CreateAllFields(pMMBDXP->ncamps);
         if (!pMMBDXP->Camp)
         {
-			fclose_function(pMMBDXP->pfBaseDades);
+			fclose_function(pf);
             return 1;
         }
     }
@@ -748,7 +762,7 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 			1!=fread_function(&(pMMBDXP->Camp[nIField].MDX_camp_flag), 1, 1, pf))
 		{
 			free(pMMBDXP->Camp);
-            fclose_function(pMMBDXP->pfBaseDades);
+            fclose_function(pf);
 			return 1;
 		}
 
@@ -768,13 +782,13 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 			if (!MM_ES_DBF_ESTESA(pMMBDXP->versio_dbf))
             {
                 free(pMMBDXP->Camp);
-                fclose_function(pMMBDXP->pfBaseDades);
+                fclose_function(pf);
                 return 1;
             }
 			if (pMMBDXP->Camp[nIField].TipusDeCamp!='C')
             {
                 free(pMMBDXP->Camp);
-                fclose_function(pMMBDXP->pfBaseDades);
+                fclose_function(pf);
                 return 1;
             }
 
@@ -793,18 +807,20 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 		{
         	pMMBDXP->Camp[nIField].separador[j]=NULL;
 
-            
-            sprintf(section, "TAULA_PRINCIPAL:%s", pMMBDXP->Camp[nIField].NomCamp);
-            pszDesc=ReturnValueFromSectionINIFile(pszRelFile, section, "descriptor_eng");
-            if(pszDesc)
-                MM_strnzcpy(pMMBDXP->Camp[nIField].DescripcioCamp[j], pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
-            else
+            if (pszRelFile)
             {
                 sprintf(section, "TAULA_PRINCIPAL:%s", pMMBDXP->Camp[nIField].NomCamp);
-                pszDesc = ReturnValueFromSectionINIFile(pszRelFile, section, "descriptor");
+                pszDesc = ReturnValueFromSectionINIFile(pszRelFile, section, "descriptor_eng");
                 if (pszDesc)
                     MM_strnzcpy(pMMBDXP->Camp[nIField].DescripcioCamp[j], pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
-                pMMBDXP->Camp[nIField].DescripcioCamp[j][0] = 0;
+                else
+                {
+                    sprintf(section, "TAULA_PRINCIPAL:%s", pMMBDXP->Camp[nIField].NomCamp);
+                    pszDesc = ReturnValueFromSectionINIFile(pszRelFile, section, "descriptor");
+                    if (pszDesc)
+                        MM_strnzcpy(pMMBDXP->Camp[nIField].DescripcioCamp[j], pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
+                    pMMBDXP->Camp[nIField].DescripcioCamp[j][0] = 0;
+                }
             }
 		}
 		pMMBDXP->Camp[nIField].mostrar_camp=MM_CAMP_MOSTRABLE;
@@ -853,7 +869,7 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
                 if (1!=fread_function(pMMBDXP->Camp[nIField].NomCamp, mida_nom, 1, pf))
                 {
                     free(pMMBDXP->Camp);
-                    fclose_function(pMMBDXP->pfBaseDades);
+                    fclose_function(pf);
                     return 1;
                 }
                 pMMBDXP->Camp[nIField].NomCamp[mida_nom]='\0';
@@ -877,15 +893,45 @@ char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 		}
     }
 
-    fclose_function(pf);
+    pMMBDXP->CampIdEntitat=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
+    return 0;
+}
+
+int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
+{
+char * pszRelFile=NULL;
+struct MM_BASE_DADES_XP *pMMBDXP;
+
+
+     pMMBDXP=hMiraMonLayer->pMMBDXP=calloc_function(sizeof(*pMMBDXP));
+
+    if (hMiraMonLayer->bIsPoint)
+    {
+        hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP = pMMBDXP;
+        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName);
+        pszRelFile=hMiraMonLayer->MMPoint.pszREL_LayerName;
+    }
+    else if (hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
+    {
+        hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP = pMMBDXP;
+        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMArc.MMAdmDB.pszExtDBFLayerName);
+        pszRelFile=hMiraMonLayer->MMArc.pszREL_LayerName;
+    }
+    else if(hMiraMonLayer->bIsPolygon)
+    {
+        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP=pMMBDXP;
+        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPolygon.MMAdmDB.pszExtDBFLayerName);
+        pszRelFile=hMiraMonLayer->MMPolygon.pszREL_LayerName;
+    }        
+
+    if(MM_ReadExtendedDBFHeaderFromFile(pMMBDXP, pszRelFile))
+        return 1;
+
+    fclose_function(pMMBDXP->pfBaseDades);
 	pMMBDXP->pfBaseDades=NULL;
 
-    pMMBDXP->CampIdEntitat=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
-
-    
     return 0;
 } 
-
 
 
 #ifdef GDAL_COMPILATION

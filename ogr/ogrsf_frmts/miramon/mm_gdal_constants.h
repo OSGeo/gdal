@@ -89,9 +89,10 @@ typedef int MM_SELEC_COORDZ_TYPE;
 // Type of the number of fields of an extended DBF
 typedef unsigned __int32 MM_EXT_DBF_N_FIELDS;  //(TIPUS_NUMERADOR_CAMP in MiraMon internal code) 
 // Type of the number of records of an extended DBF
-typedef unsigned __int32 MM_EXT_DBF_N_RECORDS; // ·$· <-- 64
-typedef signed __int32 MM_EXT_DBF_SIGNED_N_RECORDS; // ·$· <-- 64
-#define scanf_MM_EXT_DBF_SIGNED_N_RECORDS  "%I32d" // ·$· <-- 64 Be careful.
+typedef unsigned __int32 MM_EXT_DBF_N_MULTIPLE_RECORDS;
+typedef unsigned __int64 MM_EXT_DBF_N_RECORDS;
+typedef signed __int64 MM_EXT_DBF_SIGNED_N_RECORDS;
+#define scanf_MM_EXT_DBF_SIGNED_N_RECORDS  "%I64d"
 typedef __int32 MM_FIRST_RECORD_OFFSET_TYPE;
 
 #define MM_MAX_EXT_DBF_N_FIELDS_TYPE            _UI32_MAX
@@ -149,10 +150,11 @@ typedef __int32 MM_FIRST_RECORD_OFFSET_TYPE;
 #define MM_CAMP_ES_PENDENT          20
 #define MM_CAMP_ES_ORIENTACIO       21
 
-#define MM_JOC_CARAC_ANSI_MM    1252
-#define MM_JOC_CARAC_ANSI_DBASE 0x58
-#define MM_JOC_CARAC_UTF8_DBF   0xFF
-#define MM_JOC_CARAC_UTF8_MM    8
+#define MM_JOC_CARAC_ANSI_MM        1252
+#define MM_JOC_CARAC_ANSI_DBASE     0x58
+#define MM_JOC_CARAC_OEM850_DBASE   0x14
+#define MM_JOC_CARAC_UTF8_DBF       0xFF
+#define MM_JOC_CARAC_UTF8_MM        8
 
 enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VALID, MM_NOM_DBF_ESTES_I_VALID, MM_NOM_DBF_NO_VALID};
 #define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES  11
@@ -161,6 +163,9 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 
 #define MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA 8
 #define MM_SEGON_OFFSET_a_OFFSET_1a_FITXA  30
+
+#define MM_FIRST_OFFSET_to_N_RECORDS    4
+#define MM_SECOND_OFFSET_to_N_RECORDS   16
 
 #define MM_NOM_CAMP_MASSA_LLARG         0x01
 #define MM_NOM_CAMP_CARACTER_INVALID    0x02
