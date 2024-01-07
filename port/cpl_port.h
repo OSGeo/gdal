@@ -39,17 +39,6 @@
  *
  */
 
-/* ==================================================================== */
-/*      We will use WIN32 as a standard windows define.                 */
-/* ==================================================================== */
-#if defined(_WIN32) && !defined(_WIN32)
-#define WIN32
-#endif
-
-#if defined(_WINDOWS) && !defined(_WIN32)
-#define WIN32
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      The following apparently allow you to use strcpy() and other    */
 /*      functions judged "unsafe" by microsoft in VS 8 (2005).          */
