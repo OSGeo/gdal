@@ -1177,7 +1177,7 @@ CPLErr OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
                 {
                     const bool bOverwrite = CPLTestBool(
                         CPLGetConfigOption("OGR_GEOJSON_REWRITE_IN_PLACE",
-#ifdef WIN32
+#ifdef _WIN32
                                            "YES"
 #else
                                            "NO"

@@ -949,7 +949,7 @@ int FGdbDataSource::HasPerLayerCopyingForTransaction()
 {
     if (bPerLayerCopyingForTransaction >= 0)
         return bPerLayerCopyingForTransaction;
-#ifdef WIN32
+#ifdef _WIN32
     bPerLayerCopyingForTransaction = FALSE;
 #else
     bPerLayerCopyingForTransaction =

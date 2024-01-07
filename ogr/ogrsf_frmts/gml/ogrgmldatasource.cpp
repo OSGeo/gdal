@@ -2862,7 +2862,7 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
     osWork.vPrintf(fmt, args);
     va_end(args);
 
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszEOL = "\r\n";
 #else
     const char *pszEOL = "\n";

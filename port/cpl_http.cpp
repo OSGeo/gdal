@@ -61,7 +61,7 @@
 #include <openssl/engine.h>
 #include <openssl/x509v3.h>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <wincrypt.h>
 #endif
 
@@ -85,7 +85,7 @@ static CPLMutex *hSessionMapMutex = nullptr;
 static bool bHasCheckVersion = false;
 static bool bSupportGZip = false;
 static bool bSupportHTTP2 = false;
-#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#if defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
 static std::vector<X509 *> *poWindowsCertificateList = nullptr;
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
@@ -96,7 +96,7 @@ static std::vector<X509 *> *poWindowsCertificateList = nullptr;
 #define X509_get_extended_key_usage(x) (x->ex_xkusage)
 #endif
 
-#endif  // defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#endif  // defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
 
 #if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
 
@@ -156,7 +156,7 @@ static void CPLOpenSSLCleanup()
 
 #endif
 
-#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#if defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
 
 /************************************************************************/
 /*                    CPLWindowsCertificateListCleanup()                */
@@ -289,7 +289,7 @@ static CURLcode CPL_ssl_ctx_callback(CURL *, void *pSSL, void *)
     return CURLE_OK;
 }
 
-#endif  // defined(WIN32) && defined (HAVE_OPENSSL_CRYPTO)
+#endif  // defined(_WIN32) && defined (HAVE_OPENSSL_CRYPTO)
 
 /************************************************************************/
 /*                       CheckCurlFeatures()                            */
@@ -1838,7 +1838,7 @@ void CPLHTTPDestroyMultiResult(CPLHTTPResult **papsResults, int nCount)
 
 #ifdef HAVE_CURL
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <windows.h>
 
@@ -2211,16 +2211,16 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
         pszUseCAPIStore = CPLGetConfigOption("GDAL_HTTP_USE_CAPI_STORE", "NO");
     if (CPLTestBool(pszUseCAPIStore))
     {
-#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#if defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
         // Use certificates from Windows certificate store; requires
         // crypt32.lib, OpenSSL crypto and ssl libraries.
         unchecked_curl_easy_setopt(http_handle, CURLOPT_SSL_CTX_FUNCTION,
                                    *CPL_ssl_ctx_callback);
-#else   // defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#else   // defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GDAL_HTTP_USE_CAPI_STORE requested, but libcurl too old, "
                  "non-Windows platform or OpenSSL missing.");
-#endif  // defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#endif  // defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
     }
 
     // Enable OCSP stapling if requested.
@@ -2246,7 +2246,7 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
         // Name of environment variable used by the curl binary (tested
         // after CURL_CA_BUNDLE
         pszCAInfo = CPLGetConfigOption("SSL_CERT_FILE", nullptr);
-#ifdef WIN32
+#ifdef _WIN32
     if (pszCAInfo == nullptr)
     {
         pszCAInfo = CPLFindWin32CurlCaBundleCrt();
@@ -2566,7 +2566,7 @@ void CPLHTTPCleanup()
     CPLDestroyMutex(hSessionMapMutex);
     hSessionMapMutex = nullptr;
 
-#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+#if defined(_WIN32) && defined(HAVE_OPENSSL_CRYPTO)
     // This cleanup must be absolutely done before CPLOpenSSLCleanup()
     // for some unknown reason, but otherwise X509_free() in
     // CPLWindowsCertificateListCleanup() will crash.

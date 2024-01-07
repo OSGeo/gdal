@@ -2873,7 +2873,7 @@ OGRErr OGRShapeLayer::Repack()
             CPLGetBasename(papszCandidates[i]);
         const CPLString osCandidateExtension =
             CPLGetExtension(papszCandidates[i]);
-#ifdef WIN32
+#ifdef _WIN32
         // On Windows, as filenames are case insensitive, a shapefile layer can
         // be made of foo.shp and FOO.DBF, so use case insensitive comparison.
         if (EQUAL(osCandidateBasename, osBasename))
@@ -3026,7 +3026,7 @@ OGRErr OGRShapeLayer::Repack()
     // many issues with files being locked, at the expense of more I/O
     const bool bPackInPlace =
         CPLTestBool(CPLGetConfigOption("OGR_SHAPE_PACK_IN_PLACE",
-#ifdef WIN32
+#ifdef _WIN32
                                        "YES"
 #else
                                        "NO"

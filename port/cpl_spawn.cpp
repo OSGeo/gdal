@@ -37,7 +37,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <windows.h>
 #else
 #include <cassert>
@@ -161,7 +161,7 @@ int CPLSpawn(const char *const papszArgv[], VSILFILE *fin, VSILFILE *fout,
     return CPLSpawnAsyncFinish(sp, TRUE, FALSE);
 }
 
-#if defined(WIN32)
+#if defined(_WIN32)
 
 /************************************************************************/
 /*                          CPLPipeRead()                               */

@@ -150,7 +150,7 @@ void OGRGMLASDriverSetCommonMetadata(GDALDriver *poDriver)
          szLINEFORMAT_OPTION +
          "' type='string-select' "
          "description='end-of-line sequence' "
-#ifdef WIN32
+#ifdef _WIN32
          "default='" +
          szCRLF +
          "'>"

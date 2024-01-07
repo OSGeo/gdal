@@ -339,7 +339,7 @@ void RegisterOGRCSV()
         "    <Value>TAB</Value>"
         "    <Value>SPACE</Value>"
         "  </Option>"
-#ifdef WIN32
+#ifdef _WIN32
         "  <Option name='LINEFORMAT' type='string-select' "
         "description='end-of-line sequence' default='CRLF'>"
 #else

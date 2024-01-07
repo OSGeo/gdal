@@ -247,7 +247,7 @@ class VSIIOStream final : public CNCSJPCIOStream
         }
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
         if (CSLTestBoolean(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
         {
             wchar_t *pwszFilename = CPLRecodeToWChar(

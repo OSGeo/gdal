@@ -182,7 +182,7 @@ GDALOpenInfo::GDALOpenInfo(const char *pszFilenameIn, int nOpenFlagsIn,
 /*      Ensure that C: is treated as C:\ so we can stat it on           */
 /*      Windows.  Similar to what is done in CPLStat().                 */
 /* -------------------------------------------------------------------- */
-#ifdef WIN32
+#ifdef _WIN32
     if (strlen(pszFilenameIn) == 2 && pszFilenameIn[1] == ':')
     {
         char szAltPath[10];

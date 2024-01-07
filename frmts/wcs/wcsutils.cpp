@@ -399,7 +399,7 @@ bool SetupCache(std::string &cache, bool clear)
 {
     if (cache == "")
     {
-#ifdef WIN32
+#ifdef _WIN32
         const char *home = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
         const char *home = CPLGetConfigOption("HOME", nullptr);

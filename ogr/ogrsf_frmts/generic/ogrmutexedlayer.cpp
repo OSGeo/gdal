@@ -331,7 +331,7 @@ OGRErr OGRMutexedLayer::Rename(const char *pszNewName)
     return OGRLayerDecorator::Rename(pszNewName);
 }
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(_WIN32) && defined(_MSC_VER)
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself
 void OGRRegisterMutexedLayer();

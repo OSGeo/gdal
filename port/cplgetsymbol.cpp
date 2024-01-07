@@ -41,7 +41,7 @@
 /* ==================================================================== */
 
 /* MinGW32 might define HAVE_DLFCN_H, so skip the unix implementation */
-#if defined(HAVE_DLFCN_H) && !defined(WIN32)
+#if defined(HAVE_DLFCN_H) && !defined(_WIN32)
 
 #define GOT_GETSYMBOL
 
@@ -126,7 +126,7 @@ void *CPLGetSymbol(const char *pszLibrary, const char *pszSymbolName)
 /* ==================================================================== */
 /*                 Windows Implementation                               */
 /* ==================================================================== */
-#if defined(WIN32)
+#if defined(_WIN32)
 
 #define GOT_GETSYMBOL
 

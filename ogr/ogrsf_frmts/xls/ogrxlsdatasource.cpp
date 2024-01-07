@@ -60,7 +60,7 @@ OGRXLSDataSource::~OGRXLSDataSource()
 
     if (xlshandle)
         freexl_close(xlshandle);
-#ifdef WIN32
+#ifdef _WIN32
     if (m_osTempFilename.empty())
     {
         VSIUnlink(m_osTempFilename);
@@ -105,7 +105,7 @@ int OGRXLSDataSource::Open(const char *pszFilename, int bUpdateIn)
 
     pszName = CPLStrdup(pszFilename);
     m_osANSIFilename = pszFilename;
-#ifdef WIN32
+#ifdef _WIN32
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         CPLErrorReset();

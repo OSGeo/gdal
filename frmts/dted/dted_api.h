@@ -54,7 +54,7 @@
 #endif
 
 #ifndef EQUAL
-#if defined(WIN32) || defined(_WIN32) || defined(_WINDOWS)
+#if defined(_WIN32)
 #define EQUALN(a, b, n) (strnicmp(a, b, n) == 0)
 #define EQUAL(a, b) (stricmp(a, b) == 0)
 #else

@@ -107,7 +107,7 @@ OGRGPSBabelDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
     static int bGPSBabelFound = -1;
     if (pszGPSBabelDriverName != nullptr && bGPSBabelFound < 0)
     {
-#ifndef WIN32
+#ifndef _WIN32
         VSIStatBufL sStat;
         bGPSBabelFound = VSIStatL("/usr/bin/gpsbabel", &sStat) == 0;
         if (!bGPSBabelFound)

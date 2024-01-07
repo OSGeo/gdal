@@ -278,7 +278,7 @@ bool CPLODBCDriverInstaller::LibraryExists(const char *pszLibPath)
 
 void CPLODBCDriverInstaller::InstallMdbToolsDriver()
 {
-#ifdef WIN32
+#ifdef _WIN32
     return;
 #else
     static std::once_flag oofDriverInstallAttempted;

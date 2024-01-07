@@ -53,7 +53,7 @@
 constexpr int CPL_PATH_BUF_SIZE = 2048;
 constexpr int CPL_PATH_BUF_COUNT = 10;
 
-#if defined(WIN32)
+#if defined(_WIN32)
 constexpr char SEP_STRING[] = "\\";
 #else
 constexpr char SEP_STRING[] = "/";
@@ -490,7 +490,7 @@ const char *CPLResetExtension(const char *pszPath, const char *pszExt)
 /*                       RequiresUnixPathSeparator()                    */
 /************************************************************************/
 
-#if defined(WIN32)
+#if defined(_WIN32)
 static bool RequiresUnixPathSeparator(const char *pszPath)
 {
     return strcmp(pszPath, "/vsimem") == 0 || STARTS_WITH(pszPath, "http://") ||
@@ -602,7 +602,7 @@ const char *CPLFormFilename(const char *pszPath, const char *pszBasename,
     else if (nLenPath > 0 && pszPath[nLenPath - 1] != '/' &&
              pszPath[nLenPath - 1] != '\\')
     {
-#if defined(WIN32)
+#if defined(_WIN32)
         // FIXME? Would be better to ask the filesystems what it
         // prefers as directory separator?
         if (RequiresUnixPathSeparator(pszPath))
@@ -787,7 +787,7 @@ const char *CPLProjectRelativeFilename(const char *pszProjectDir,
         // FIXME: Better to ask the filesystems what it
         // prefers as directory separator?
         const char *pszAddedPathSep = nullptr;
-#if defined(WIN32)
+#if defined(_WIN32)
         if (RequiresUnixPathSeparator(pszStaticResult))
             pszAddedPathSep = "/";
         else
@@ -1181,7 +1181,7 @@ const char *CPLExpandTilde(const char *pszFilename)
 const char *CPLGetHomeDir()
 
 {
-#ifdef WIN32
+#ifdef _WIN32
     return CPLGetConfigOption("USERPROFILE", nullptr);
 #else
     return CPLGetConfigOption("HOME", nullptr);

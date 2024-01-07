@@ -34,7 +34,7 @@
 
 #ifdef __cplusplus
 
-#if defined(WIN32) && (defined(_MSC_VER) || defined(SUPPORTS_WMAIN))
+#if defined(_WIN32) && (defined(_MSC_VER) || defined(SUPPORTS_WMAIN))
 
 #include <wchar.h>
 #include <stdlib.h>
@@ -73,13 +73,13 @@ extern "C" int wmain(int argc, wchar_t **argv_w, wchar_t ** /* envp */);
 
 #define MAIN_END }
 
-#else  // defined(WIN32)
+#else  // defined(_WIN32)
 
 #define MAIN_START(argc, argv) int main(int argc, char **argv)
 
 #define MAIN_END
 
-#endif  // defined(WIN32)
+#endif  // defined(_WIN32)
 #endif  // defined(__cplusplus)
 
 CPL_C_START
