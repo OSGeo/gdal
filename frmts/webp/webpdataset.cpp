@@ -316,12 +316,14 @@ CPLErr WEBPDataset::Uncompress()
     if (nBands == 4)
         pRet = WebPDecodeRGBAInto(pabyCompressed, static_cast<uint32_t>(nSize),
                                   static_cast<uint8_t *>(pabyUncompressed),
-                                  nRasterXSize * nRasterYSize * nBands,
+                                  static_cast<size_t>(nRasterXSize) *
+                                      nRasterYSize * nBands,
                                   nRasterXSize * nBands);
     else
         pRet = WebPDecodeRGBInto(pabyCompressed, static_cast<uint32_t>(nSize),
                                  static_cast<uint8_t *>(pabyUncompressed),
-                                 nRasterXSize * nRasterYSize * nBands,
+                                 static_cast<size_t>(nRasterXSize) *
+                                     nRasterYSize * nBands,
                                  nRasterXSize * nBands);
 
     VSIFree(pabyCompressed);
@@ -360,7 +362,8 @@ CPLErr WEBPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         if (nPixelSpace == nBands && nLineSpace == (nPixelSpace * nXSize) &&
             nBandSpace == 1)
         {
-            memcpy(pData, pabyUncompressed, nBands * nXSize * nYSize);
+            memcpy(pData, pabyUncompressed,
+                   static_cast<size_t>(nBands) * nXSize * nYSize);
         }
         else
         {
@@ -920,7 +923,7 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /*      Allocate memory                                                 */
     /* -------------------------------------------------------------------- */
     GByte *pabyBuffer =
-        reinterpret_cast<GByte *>(VSIMalloc(nBands * nXSize * nYSize));
+        reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(nBands, nXSize, nYSize));
     if (pabyBuffer == nullptr)
     {
         return nullptr;
@@ -965,9 +968,10 @@ GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Acquire source imagery.                                         */
     /* -------------------------------------------------------------------- */
-    CPLErr eErr = poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, pabyBuffer,
-                                    nXSize, nYSize, GDT_Byte, nBands, nullptr,
-                                    nBands, nBands * nXSize, 1, nullptr);
+    CPLErr eErr =
+        poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, pabyBuffer, nXSize,
+                          nYSize, GDT_Byte, nBands, nullptr, nBands,
+                          static_cast<GSpacing>(nBands) * nXSize, 1, nullptr);
 
 /* -------------------------------------------------------------------- */
 /*      Import and write to file                                        */
