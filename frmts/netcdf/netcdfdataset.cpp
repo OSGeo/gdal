@@ -2374,10 +2374,10 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
     void *pImageNC = pImage;
     if (edge[nBandXPos] != static_cast<size_t>(nBlockXSize))
     {
-        pImageNC =
-            static_cast<GByte *>(pImage) +
-            ((nBlockXSize * nBlockYSize - edge[nBandXPos] * nYChunkSize) *
-             (GDALGetDataTypeSize(eDataType) / 8));
+        pImageNC = static_cast<GByte *>(pImage) +
+                   ((static_cast<size_t>(nBlockXSize) * nBlockYSize -
+                     edge[nBandXPos] * nYChunkSize) *
+                    (GDALGetDataTypeSize(eDataType) / 8));
     }
 
     // Read data according to type.
@@ -2546,7 +2546,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     // Locate X, Y and Z position in the array.
 
-    size_t xstart = nBlockXOff * nBlockXSize;
+    size_t xstart = static_cast<size_t>(nBlockXOff) * nBlockXSize;
     size_t ystart = 0;
 
     // Check y order.
@@ -2562,7 +2562,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             else
             {
                 // in GDAL space
-                ystart = nBlockYOff * nBlockYSize;
+                ystart = static_cast<size_t>(nBlockYOff) * nBlockYSize;
                 const size_t yend =
                     std::min(ystart + nBlockYSize - 1,
                              static_cast<size_t>(nRasterYSize - 1));
@@ -2644,7 +2644,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            ystart = nBlockYOff * nBlockYSize;
+            ystart = static_cast<size_t>(nBlockYOff) * nBlockYSize;
         }
     }
 
@@ -2674,7 +2674,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     size_t start[MAX_NC_DIMS];
     memset(start, 0, sizeof(start));
-    start[nBandXPos] = nBlockXOff * nBlockXSize;
+    start[nBandXPos] = static_cast<size_t>(nBlockXOff) * nBlockXSize;
 
     // check y order.
     if (static_cast<netCDFDataset *>(poDS)->bBottomUp)
@@ -2694,7 +2694,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        start[nBandYPos] = nBlockYOff * nBlockYSize;  // y
+        start[nBandYPos] = static_cast<size_t>(nBlockYOff) * nBlockYSize;  // y
     }
 
     size_t edge[MAX_NC_DIMS] = {};
