@@ -686,6 +686,8 @@ bool GMLASReader::Init(const char *pszFilename, VSILFILE *fp,
     m_poSAXReader->setContentHandler(this);
     m_poSAXReader->setLexicalHandler(this);
     m_poSAXReader->setDTDHandler(this);
+    m_poSAXReader->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution,
+                              true);
 
     m_oErrorHandler.SetSchemaFullCheckingEnabled(bSchemaFullChecking);
     m_oErrorHandler.SetHandleMultipleImportsEnabled(bHandleMultipleImports);
