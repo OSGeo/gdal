@@ -548,7 +548,7 @@ jobs:
         ctest --test-dir $GITHUB_WORKSPACE/build -C RelWithDebInfo -V -j 3
       env:
         SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
-        BUILD_NAME: "build-windows-conda"
+        BUILD_NAME: "build-windows-minimum"
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc

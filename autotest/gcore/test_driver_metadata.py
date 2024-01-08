@@ -43,7 +43,8 @@ from osgeo import gdal
 # And now this breaks on build-windows-conda too
 pytestmark = pytest.mark.skipif(
     gdaltest.is_travis_branch("mingw64")
-    or gdaltest.is_travis_branch("build-windows-conda"),
+    or gdaltest.is_travis_branch("build-windows-conda")
+    or gdaltest.is_travis_branch("build-windows-minimum"),
     reason="Crashes for unknown reason",
 )
 
