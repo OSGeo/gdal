@@ -277,8 +277,9 @@ static int get_cryptgenrandom_seed(int *seed)
 	DEBUG_SEED("get_cryptgenrandom_seed");
 
 	/* WinNT 4 and Win98 do no support CRYPT_SILENT */
-	if (LOBYTE(LOWORD(GetVersion())) > 4)
-		dwFlags |= CRYPT_SILENT;
+	// E.Rouault: commented out to avoid warning C4996: 'GetVersion': was declared deprecated
+	//if (LOBYTE(LOWORD(GetVersion())) > 4)
+	dwFlags |= CRYPT_SILENT;
 
 	if (!CryptAcquireContextA(&hProvider, 0, 0, PROV_RSA_FULL, dwFlags))
 	{
