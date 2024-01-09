@@ -1809,7 +1809,9 @@ GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
  * @param pszDest the destination dataset path.
  * @param nSrcCount the number of input datasets.
  * @param pahSrcDS the list of input datasets (or NULL, exclusive with
- * papszSrcDSNames)
+ * papszSrcDSNames). For practical purposes, the type
+ * of this argument should be considered as "const GDALDatasetH* const*", that
+ * is neither the array nor its values are mutated by this function.
  * @param papszSrcDSNames the list of input dataset names (or NULL, exclusive
  * with pahSrcDS)
  * @param psOptionsIn the options struct returned by GDALBuildVRTOptionsNew() or
@@ -1817,7 +1819,12 @@ GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
  * @param pbUsageError pointer to a integer output variable to store if any
  * usage error has occurred.
  * @return the output dataset (new dataset that must be closed using
- * GDALClose()) or NULL in case of error.
+ * GDALClose()) or NULL in case of error. If using pahSrcDS, the returned VRT
+ * dataset has a reference to each pahSrcDS[] element. Hence pahSrcDS[] elements
+ * should be closed after the returned dataset if using GDALClose().
+ * A safer alternative is to use GDALReleaseDataset() instead of using
+ * GDALClose(), in which case you can close datasets in any order.
+
  *
  * @since GDAL 2.1
  */
