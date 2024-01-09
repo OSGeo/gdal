@@ -296,7 +296,7 @@ static bool PartialRefreshFromSourceTimestamp(
         return false;
     }
 
-    std::vector<VRTTISourceDesc> regions;
+    std::vector<GTISourceDesc> regions;
 
     double dfTotalPixels = 0;
 
@@ -357,7 +357,7 @@ static bool PartialRefreshFromSourceTimestamp(
                         }
 
                         dfTotalPixels += static_cast<double>(nXSize) * nYSize;
-                        VRTTISourceDesc region;
+                        GTISourceDesc region;
                         region.osFilename = poSource->GetSourceDatasetName();
                         region.nDstXOff = nXOff;
                         region.nDstYOff = nYOff;
@@ -369,10 +369,9 @@ static bool PartialRefreshFromSourceTimestamp(
             }
         }
     }
-    else if (auto poVRTTIDS = GDALDatasetCastToVRTTIDataset(poDS))
+    else if (auto poGTIDS = GDALDatasetCastToGTIDataset(poDS))
     {
-        regions =
-            VRTTIGetSourcesMoreRecentThan(poVRTTIDS, sStatVRTOvr.st_mtime);
+        regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatVRTOvr.st_mtime);
         for (const auto &region : regions)
         {
             dfTotalPixels +=

@@ -264,14 +264,14 @@ def test_gdaltindex_lib_overwrite(tmp_path, four_tiles):
 
 
 ###############################################################################
-# Test VRTTI related options
+# Test GTI related options
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_driver("VRTTI")
-def test_gdaltindex_lib_vrtti_non_xml(tmp_path, four_tiles):
+@pytest.mark.require_driver("GTI")
+def test_gdaltindex_lib_gti_non_xml(tmp_path, four_tiles):
 
-    index_filename = str(tmp_path / "test_gdaltindex_lib_vrtti_non_xml.vrt.gpkg")
+    index_filename = str(tmp_path / "test_gdaltindex_lib_gti_non_xml.gti.gpkg")
 
     gdal.TileIndex(
         index_filename,
@@ -312,21 +312,21 @@ def test_gdaltindex_lib_vrtti_non_xml(tmp_path, four_tiles):
 
 
 ###############################################################################
-# Test VRTTI related options
+# Test GTI related options
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_driver("VRTTI")
-def test_gdaltindex_lib_vrtti_xml(tmp_path, four_tiles):
+@pytest.mark.require_driver("GTI")
+def test_gdaltindex_lib_gti_xml(tmp_path, four_tiles):
 
-    index_filename = str(tmp_path / "test_gdaltindex_lib_vrtti_non_xml.vrt.gpkg")
-    vrtti_filename = str(tmp_path / "test_gdaltindex_lib_vrtti_non_xml.vrtti")
+    index_filename = str(tmp_path / "test_gdaltindex_lib_gti_non_xml.gti.gpkg")
+    gti_filename = str(tmp_path / "test_gdaltindex_lib_gti_non_xml.gti")
 
     gdal.TileIndex(
         index_filename,
         four_tiles,
         layerName="tileindex",
-        vrttiFilename=vrtti_filename,
+        gtiFilename=gti_filename,
         xRes=60,
         yRes=60,
         outputBounds=[0, 1, 2, 3],
@@ -335,8 +335,8 @@ def test_gdaltindex_lib_vrtti_xml(tmp_path, four_tiles):
         mask=True,
     )
 
-    xml = open(vrtti_filename, "rb").read().decode("UTF-8")
-    assert "test_gdaltindex_lib_vrtti_non_xml.vrt.gpkg</IndexDataset>" in xml
+    xml = open(gti_filename, "rb").read().decode("UTF-8")
+    assert "test_gdaltindex_lib_gti_non_xml.gti.gpkg</IndexDataset>" in xml
     assert "<IndexLayer>tileindex</IndexLayer>" in xml
     assert "<LocationField>location</LocationField>" in xml
     assert "<ResX>60</ResX>" in xml
@@ -351,7 +351,7 @@ def test_gdaltindex_lib_vrtti_xml(tmp_path, four_tiles):
     )
     assert "<MaskBand>true</MaskBand>" in xml
 
-    ds = gdal.Open(vrtti_filename)
+    ds = gdal.Open(gti_filename)
     assert ds.GetGeoTransform() == (0.0, 60.0, 0.0, 3.0, 0.0, -60.0)
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetNoDataValue() == 0

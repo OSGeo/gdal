@@ -3818,7 +3818,7 @@ def TileIndexOptions(options=None,
                      outputSRS=None,
                      writeAbsolutePath=None,
                      skipDifferentProjection=None,
-                     vrttiFilename=None,
+                     gtiFilename=None,
                      xRes=None,
                      yRes=None,
                      outputBounds=None,
@@ -3856,8 +3856,8 @@ def TileIndexOptions(options=None,
         Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
     skipDifferentProjection:
         Whether to skip sources that have a different SRS
-    vrttiFilename:
-        Filename of the XML Virtual Tile Index file
+    gtiFilename:
+        Filename of the GDAL XML Tile Index file
     xRes:
         output horizontal resolution
     yRes:
@@ -3917,8 +3917,8 @@ def TileIndexOptions(options=None,
             new_options += ['-write_absolute_path']
         if skipDifferentProjection:
             new_options += ['-skip_different_projection']
-        if vrttiFilename is not None:
-            new_options += ['-vrtti_filename', vrttiFilename]
+        if gtiFilename is not None:
+            new_options += ['-gti_filename', gtiFilename]
         if xRes is not None and yRes is not None:
             new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
         elif xRes is not None:

@@ -178,7 +178,7 @@ def test_translate_vrtti(tmp_path):
     del tile_ds
 
     print("Creating tile index...")
-    tileindex = str(tmp_path / "tileindex.vrt.gpkg")
+    tileindex = str(tmp_path / "tileindex.gti.gpkg")
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(tileindex)
     lyr = ds.CreateLayer("index", geom_type=ogr.wkbPolygon, srs=srs)
     lyr.CreateField(ogr.FieldDefn("location", ogr.OFTString))

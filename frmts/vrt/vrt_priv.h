@@ -36,7 +36,7 @@
 #include <string>
 #include <vector>
 
-struct CPL_DLL VRTTISourceDesc
+struct CPL_DLL GTISourceDesc
 {
     std::string osFilename{};
     int nDstXOff = 0;
@@ -45,12 +45,12 @@ struct CPL_DLL VRTTISourceDesc
     int nDstYSize = 0;
 };
 
-class VRTTileIndexDataset;
+class GDALTileIndexDataset;
 
-VRTTileIndexDataset CPL_DLL *GDALDatasetCastToVRTTIDataset(GDALDataset *poDS);
+GDALTileIndexDataset CPL_DLL *GDALDatasetCastToGTIDataset(GDALDataset *poDS);
 
-std::vector<VRTTISourceDesc> CPL_DLL
-VRTTIGetSourcesMoreRecentThan(VRTTileIndexDataset *poDS, int64_t mTime);
+std::vector<GTISourceDesc> CPL_DLL
+GTIGetSourcesMoreRecentThan(GDALTileIndexDataset *poDS, int64_t mTime);
 
 CPLStringList VRTParseCategoryNames(const CPLXMLNode *psCategoryNames);
 

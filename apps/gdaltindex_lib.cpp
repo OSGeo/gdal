@@ -92,7 +92,7 @@ struct GDALTileIndexOptions
     std::string osDataType{};
     bool bMaskBand = false;
     std::vector<std::string> aosMetadata{};
-    std::string osVRTTIFilename{};
+    std::string osGTIFilename{};
     bool bRecursive = false;
     double dfMinPixelSize = std::numeric_limits<double>::quiet_NaN();
     double dfMaxPixelSize = std::numeric_limits<double>::quiet_NaN();
@@ -538,16 +538,16 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         }
     }
 
-    if (!psOptions->osVRTTIFilename.empty())
+    if (!psOptions->osGTIFilename.empty())
     {
         if (!psOptions->aosMetadata.empty())
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "-mo is not supported when -vrtti_filename is used");
+                     "-mo is not supported when -gti_filename is used");
             return nullptr;
         }
         CPLXMLNode *psRoot =
-            CPLCreateXMLNode(nullptr, CXT_Element, "VRTTileIndexDataset");
+            CPLCreateXMLNode(nullptr, CXT_Element, "GDALTileIndexDataset");
         CPLCreateXMLElementAndValue(psRoot, "IndexDataset", pszDest);
         CPLCreateXMLElementAndValue(psRoot, "IndexLayer", poLayer->GetName());
         CPLCreateXMLElementAndValue(psRoot, "LocationField",
@@ -648,8 +648,8 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         {
             CPLCreateXMLElementAndValue(psRoot, "MaskBand", "true");
         }
-        int res = CPLSerializeXMLTreeToFile(psRoot,
-                                            psOptions->osVRTTIFilename.c_str());
+        int res =
+            CPLSerializeXMLTreeToFile(psRoot, psOptions->osGTIFilename.c_str());
         CPLDestroyXMLNode(psRoot);
         if (!res)
             return nullptr;
@@ -778,12 +778,12 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         CPLFree(pszCurrentPath);
     }
 
-    const bool bIsVRTTIContext =
+    const bool bIsGTIContext =
         !std::isnan(psOptions->xres) || !std::isnan(psOptions->xmin) ||
         !psOptions->osBandCount.empty() || !psOptions->osNodata.empty() ||
         !psOptions->osColorInterp.empty() || !psOptions->osDataType.empty() ||
         psOptions->bMaskBand || !psOptions->aosMetadata.empty() ||
-        !psOptions->osVRTTIFilename.empty();
+        !psOptions->osGTIFilename.empty();
 
     /* -------------------------------------------------------------------- */
     /*      loop over GDAL files, processing.                               */
@@ -931,7 +931,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                 }
             }
         }
-        else if (bIsVRTTIContext && !oAlreadyExistingSRS.IsEmpty() &&
+        else if (bIsGTIContext && !oAlreadyExistingSRS.IsEmpty() &&
                  (poSrcSRS == nullptr ||
                   !poSrcSRS->IsSame(&oAlreadyExistingSRS)))
         {
@@ -939,7 +939,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                 CE_Failure, CPLE_AppDefined,
                 "%s is not using the same projection system "
                 "as other files in the tileindex. This is not compatible of "
-                "VRTTI use. Use -t_srs option to reproject tile extents "
+                "GTI use. Use -t_srs option to reproject tile extents "
                 "to a common SRS.",
                 osSrcFilename.c_str());
             return nullptr;
@@ -1288,10 +1288,10 @@ GDALTileIndexOptionsNew(char **papszArgv,
         {
             psOptions->bMaskBand = true;
         }
-        else if (EQUAL(papszArgv[iArg], "-vrtti_filename"))
+        else if (EQUAL(papszArgv[iArg], "-gti_filename"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osVRTTIFilename = papszArgv[++iArg];
+            psOptions->osGTIFilename = papszArgv[++iArg];
         }
         else if (EQUAL(papszArgv[iArg], "-overwrite"))
         {

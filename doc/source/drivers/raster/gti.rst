@@ -1,19 +1,19 @@
-.. _raster.vrtti:
+.. _raster.gti:
 
 ================================================================================
-VRTTI -- GDAL Virtual Raster Tile Index
+GTI -- GDAL Raster Tile Index
 ================================================================================
 
 .. versionadded:: 3.9
 
-.. shortname:: VRTTI
+.. shortname:: GTI
 
 .. built_in_by_default::
 
 Introduction
 ------------
 
-The VRTTI driver is a driver that allows to handle catalogs with a large
+The GTI driver is a driver that allows to handle catalogs with a large
 number of raster files (called "tiles" in the rest of this document, even if a
 regular tiling is not required by the driver), and build a virtual mosaic from
 them. Each tile may be in any GDAL supported raster format, and be a file
@@ -26,52 +26,52 @@ driver with the following main differences:
 * The tiles are listed as features of any GDAL supported vector format. Use of
   formats with efficient spatial filtering is recommended, such as
   :ref:`GeoPackage <vector.gpkg>`, :ref:`FlatGeoBuf <vector.flatgeobuf>` or
-  :ref:`PostGIS <vector.pg>`. The VRTTI driver can thus use a larger number of
+  :ref:`PostGIS <vector.pg>`. The GTI driver can thus use a larger number of
   tiles than the VRT driver (hundreds of thousands or more), provided the
   underlying vector format is efficient.
 
-* The tiles may have different SRS. The VRTTI driver is capable of on-the-fly
+* The tiles may have different SRS. The GTI driver is capable of on-the-fly
   reprojection
 
-* The VRTTI driver offers control on the order in which tiles are composited,
+* The GTI driver offers control on the order in which tiles are composited,
   when they overlap (z-order)
 
-* The VRTTI driver honours the mask/alpha band when compositing together
+* The GTI driver honours the mask/alpha band when compositing together
   overlapping tiles.
 
-* Contrary to the VRT driver, the VRTTI driver does not enable to alter
+* Contrary to the VRT driver, the GTI driver does not enable to alter
   characteristics of referenced tiles, such as their georeferencing, nodata value,
   etc. If such behavior is desired, the tiles must be for example wrapped
-  individually in a VRT file before being referenced in the VRTTI index.
+  individually in a VRT file before being referenced in the GTI index.
 
 Connection strings
 ------------------
 
-The VRTTI driver accepts different types of connection strings:
+The GTI driver accepts different types of connection strings:
 
-* a vector file in GeoPackage format with a ``.vrt.gpkg`` extension, or in
-  FlatGeoBuf format with a ``.vrt.fgb`` extension, meeting the minimum requirements
-  for a VRTTI compatible tile index, detailed later.
+* a vector file in GeoPackage format with a ``.gti.gpkg`` extension, or in
+  FlatGeoBuf format with a ``.gti.fgb`` extension, meeting the minimum requirements
+  for a GTI compatible tile index, detailed later.
 
-  For example: ``tileindex.vrt.gpkg``
+  For example: ``tileindex.gti.gpkg``
 
 * any vector file in a GDAL supported format, with its filename (or connection
-  string prefixed with ``VRTTI:``
+  string prefixed with ``GTI:``
 
-  For example: ``VRTTI:tileindex.shp`` or ``VRTTI:PG:database=my_db schema=tileindex``
+  For example: ``GTI:tileindex.shp`` or ``GTI:PG:database=my_db schema=tileindex``
 
-* a XML file, following the below VRTTI XML format, generally with the
-  recommended ``.vrtti`` extension, referencing a vector file. Using such
+* a XML file, following the below GTI XML format, generally with the
+  recommended ``.gti`` extension, referencing a vector file. Using such
   XML file may be more practical for tile indexes not stored in a file, or
   if some additional metadata must be defined at the dataset or band level of
   the virtual mosaic.
 
-  For example: ``tileindex.vrtti``
+  For example: ``tileindex.gti``
 
 Tile index requirements
 -----------------------
 
-The minimum requirements for a VRTTI compatible tile index is to be a
+The minimum requirements for a GTI compatible tile index is to be a
 vector format supported by GDAL, with a geometry column storing polygons with
 the extent of the tiles, and an attribute field of type string, storing the
 path to each tile. The default name for this attribute field is ``location``.
@@ -191,8 +191,8 @@ PostGIS, ...), the following layer metadata items may be set:
 * ``OVERVIEW_<idx>_DATASET=<string>`` where idx is an integer index starting at 0.
 
   Name of the dataset to use as the first overview level. This may be a
-  raster dataset (for example a GeoTIFF file, or another VRTTI dataset).
-  This may also be a vector dataset with a VRTTI compatible layer, potentially
+  raster dataset (for example a GeoTIFF file, or another GTI dataset).
+  This may also be a vector dataset with a GTI compatible layer, potentially
   specified with ``OVERVIEW_<idx>_LAYER``.
 
 * ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index starting at 0.
@@ -216,7 +216,7 @@ PostGIS, ...), the following layer metadata items may be set:
   specified to point to another tile index.
 
 All overviews *must* have exactly the same extent as the full resolution
-virtual mosaic. The VRTTI driver does not check that, and if that condition is
+virtual mosaic. The GTI driver does not check that, and if that condition is
 not met, subsampled pixel request will lead to incorrect result.
 
 In addition to those layer metadata items, the dataset-level metadata item
@@ -224,14 +224,14 @@ In addition to those layer metadata items, the dataset-level metadata item
 which one should be used as the tile index layer.
 
 Alternatively to setting those metadata items individually, the corresponding
-information can be grouped together in a VRTTI XML document, attached in the
-``xml:VRTTI`` metadata domain of the layer (for drivers that support alternate
+information can be grouped together in a GTI XML document, attached in the
+``xml:GTI`` metadata domain of the layer (for drivers that support alternate
 metadata domains such as GeoPackage)
 
-VRTTI XML format
+GTI XML format
 ----------------
 
-A `XML schema of the GDAL VRTTI format <https://raw.githubusercontent.com/OSGeo/gdal/master/data/gdalvrtti.xsd>`_
+A `XML schema of the GDAL GTI format <https://raw.githubusercontent.com/OSGeo/gdal/master/data/gdaltileindex.xsd>`_
 is available.
 
 The following artificial example contains all potential elements and attributes.
@@ -240,8 +240,8 @@ mentioned in the previous section.
 
 .. code-block:: xml
 
-    <VRTTileIndexDataset>
-        <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required for stanalone XML VRTTI files. Ignored if embedded in the xml:VRTTI metadata domain of the layer  -->
+    <GDALTileIndexDataset>
+        <IndexDataset>PG:dbname=my_db</IndexDataset>   <!-- required for stanalone XML GTI files. Ignored if embedded in the xml:GTI metadata domain of the layer  -->
         <IndexLayer>my_layer</IndexLayer>              <!-- optional, but required if there are multiple layers in IndexDataset -->
         <Filter>pub_date >= '2023/12/01'</Filter>      <!-- optional -->
         <SortField>pub_date</SortField>                <!-- optional -->
@@ -312,8 +312,8 @@ mentioned in the previous section.
             <Dataset>some.tif</Dataset>
         </Overview>
         <Overview>                                     <!-- optional -->
-            <!-- Last overview level points to another VRTTI dataset -->
-            <Dataset>other.vrt.gpkg</Dataset>
+            <!-- Last overview level points to another GTI dataset -->
+            <Dataset>other.gti.gpkg</Dataset>
             <Layer>other_layer</Layer>
             <OpenOptions>                              <!-- optional -->
                 <OOI key="XMIN">0</OOI>
@@ -323,10 +323,10 @@ mentioned in the previous section.
             </OpenOptions>
         </Overview>
 
-    </VRTTileIndexDataset>
+    </GDALTileIndexDataset>
 
 
-At the VRTTileIndexDataset level, the elements specific to VRTTI XML are:
+At the GDALTileIndexDataset level, the elements specific to GTI XML are:
 
 * ``Filter``: value of a SQL WHERE clause, used to select a subset of the
   features of the index.
@@ -337,20 +337,20 @@ At the VRTTileIndexDataset level, the elements specific to VRTTI XML are:
 * ``Metadata``: defines dataset-level metadata. You can refer to the
   documentation of the :ref:`VRT <raster.vrt>` driver for its syntax.
 
-At the Band level, the elements specific to VRTTI XML are: Description,
+At the Band level, the elements specific to GTI XML are: Description,
 Offset, Scale, UnitType, ColorTable, CategoryNames, GDALRasterAttributeTable,
 Metadata.
 You can refer to the documentation of the :ref:`VRT <raster.vrt>` driver for
 their syntax and semantics.
 
 
-How to build a VRTTI comptatible index ?
+How to build a GTI comptatible index ?
 ----------------------------------------
 
 The :ref:`gdaltindex` program may be used to generate both a vector tile index,
-and optionally a wrapping .vrtti XML file.
+and optionally a wrapping .gti XML file.
 
-A VRTTI comptatible index may also be created by any programmatic means, provided
+A GTI comptatible index may also be created by any programmatic means, provided
 the above format specifications are met.
 
 
@@ -358,7 +358,7 @@ Open options
 ------------
 
 The following open options are available. Most of them can be
-also defined as layer metadata items or in the .vrtti XML file
+also defined as layer metadata items or in the .gti XML file
 
 
 -  .. oo:: LAYER

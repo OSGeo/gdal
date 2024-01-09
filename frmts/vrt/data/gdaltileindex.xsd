@@ -4,7 +4,7 @@
  * $Id$
  *
  * Project:  GDAL/OGR
- * Purpose:  XML Schema for GDAL VRTTI files.
+ * Purpose:  XML Schema for GDAL GTI files.
  * Author:   Even Rouault, <even dot rouault at spatialys dot com>
  *
  **********************************************************************
@@ -30,12 +30,12 @@
  ****************************************************************************/
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="1.0">
-    <xs:element name="VRTTileIndexDataset">
+    <xs:element name="GDALTileIndexDataset">
         <xs:complexType>
             <xs:sequence>
                 <xs:choice minOccurs="0" maxOccurs="unbounded">
-                    <!-- IndexDataset is required for a standalone XML VRTTI -->
-                    <!-- It is ignored if the XML document is embedded in the xml:VRTTI metadata domain of a vector layer -->
+                    <!-- IndexDataset is required for a standalone XML GTI -->
+                    <!-- It is ignored if the XML document is embedded in the xml:GTI metadata domain of a vector layer -->
                     <xs:element name="IndexDataset" type="xs:string"/>
 
                     <xs:element name="IndexLayer" type="xs:string"/>

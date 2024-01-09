@@ -62,7 +62,7 @@ constexpr int GT_TOPLEFT_Y = 3;
 constexpr int GT_ROTATION_PARAM2 = 4;
 constexpr int GT_NS_RES = 5;
 
-constexpr const char *VRTTI_PREFIX = "VRTTI:";
+constexpr const char *GTI_PREFIX = "GTI:";
 
 constexpr const char *MD_DS_TILE_INDEX_LAYER = "TILE_INDEX_LAYER";
 
@@ -116,31 +116,31 @@ constexpr const char *const MD_BAND_UNITTYPE = "UNITTYPE";
 constexpr const char *const apszReservedBandItems[] = {
     MD_BAND_OFFSET, MD_BAND_SCALE, MD_BAND_UNITTYPE};
 
-constexpr const char *VRTTI_XML_BANDCOUNT = "BandCount";
-constexpr const char *VRTTI_XML_DATATYPE = "DataType";
-constexpr const char *VRTTI_XML_NODATAVALUE = "NoDataValue";
-constexpr const char *VRTTI_XML_COLORINTERP = "ColorInterp";
-constexpr const char *VRTTI_XML_LOCATIONFIELD = "LocationField";
-constexpr const char *VRTTI_XML_SORTFIELD = "SortField";
-constexpr const char *VRTTI_XML_SORTFIELDASC = "SortFieldAsc";
-constexpr const char *VRTTI_XML_MASKBAND = "MaskBand";
-constexpr const char *VRTTI_XML_OVERVIEW_ELEMENT = "Overview";
-constexpr const char *VRTTI_XML_OVERVIEW_DATASET = "Dataset";
-constexpr const char *VRTTI_XML_OVERVIEW_LAYER = "Layer";
-constexpr const char *VRTTI_XML_OVERVIEW_FACTOR = "Factor";
+constexpr const char *GTI_XML_BANDCOUNT = "BandCount";
+constexpr const char *GTI_XML_DATATYPE = "DataType";
+constexpr const char *GTI_XML_NODATAVALUE = "NoDataValue";
+constexpr const char *GTI_XML_COLORINTERP = "ColorInterp";
+constexpr const char *GTI_XML_LOCATIONFIELD = "LocationField";
+constexpr const char *GTI_XML_SORTFIELD = "SortField";
+constexpr const char *GTI_XML_SORTFIELDASC = "SortFieldAsc";
+constexpr const char *GTI_XML_MASKBAND = "MaskBand";
+constexpr const char *GTI_XML_OVERVIEW_ELEMENT = "Overview";
+constexpr const char *GTI_XML_OVERVIEW_DATASET = "Dataset";
+constexpr const char *GTI_XML_OVERVIEW_LAYER = "Layer";
+constexpr const char *GTI_XML_OVERVIEW_FACTOR = "Factor";
 
-constexpr const char *VRTTI_XML_BAND_ELEMENT = "Band";
-constexpr const char *VRTTI_XML_BAND_NUMBER = "band";
-constexpr const char *VRTTI_XML_BAND_DATATYPE = "dataType";
-constexpr const char *VRTTI_XML_BAND_DESCRIPTION = "Description";
-constexpr const char *VRTTI_XML_BAND_OFFSET = "Offset";
-constexpr const char *VRTTI_XML_BAND_SCALE = "Scale";
-constexpr const char *VRTTI_XML_BAND_NODATAVALUE = "NoDataValue";
-constexpr const char *VRTTI_XML_BAND_UNITTYPE = "UnitType";
-constexpr const char *VRTTI_XML_BAND_COLORINTERP = "ColorInterp";
-constexpr const char *VRTTI_XML_CATEGORYNAMES = "CategoryNames";
-constexpr const char *VRTTI_XML_COLORTABLE = "ColorTable";
-constexpr const char *VRTTI_XML_RAT = "GDALRasterAttributeTable";
+constexpr const char *GTI_XML_BAND_ELEMENT = "Band";
+constexpr const char *GTI_XML_BAND_NUMBER = "band";
+constexpr const char *GTI_XML_BAND_DATATYPE = "dataType";
+constexpr const char *GTI_XML_BAND_DESCRIPTION = "Description";
+constexpr const char *GTI_XML_BAND_OFFSET = "Offset";
+constexpr const char *GTI_XML_BAND_SCALE = "Scale";
+constexpr const char *GTI_XML_BAND_NODATAVALUE = "NoDataValue";
+constexpr const char *GTI_XML_BAND_UNITTYPE = "UnitType";
+constexpr const char *GTI_XML_BAND_COLORINTERP = "ColorInterp";
+constexpr const char *GTI_XML_CATEGORYNAMES = "CategoryNames";
+constexpr const char *GTI_XML_COLORTABLE = "ColorTable";
+constexpr const char *GTI_XML_RAT = "GDALRasterAttributeTable";
 
 /************************************************************************/
 /*                           ENDS_WITH_CI()                             */
@@ -152,13 +152,13 @@ static inline bool ENDS_WITH_CI(const char *a, const char *b)
 }
 
 /************************************************************************/
-/*                       VRTTileIndexDataset                            */
+/*                       GDALTileIndexDataset                           */
 /************************************************************************/
 
-class VRTTileIndexBand;
-class VRTTileIndexDataset final : public GDALPamDataset
+class GDALTileIndexBand;
+class GDALTileIndexDataset final : public GDALPamDataset
 {
-    friend class VRTTileIndexBand;
+    friend class GDALTileIndexBand;
 
     CPLXMLTreeCloser m_psXMLTree{nullptr};
     bool m_bXMLUpdatable = false;
@@ -171,7 +171,7 @@ class VRTTileIndexDataset final : public GDALPamDataset
     OGRSpatialReference m_oSRS{};
     lru11::Cache<std::string, std::shared_ptr<GDALDataset>> m_oMapSharedSources{
         500};
-    std::unique_ptr<VRTTileIndexBand> m_poMaskBand{};
+    std::unique_ptr<GDALTileIndexBand> m_poMaskBand{};
     bool m_bSameDataType = true;
     bool m_bSameNoData = true;
     double m_dfLastMinXFilter = std::numeric_limits<double>::quiet_NaN();
@@ -216,11 +216,11 @@ class VRTTileIndexDataset final : public GDALPamDataset
 
     bool TileIndexSupportsEditingLayerMetadata() const;
 
-    CPL_DISALLOW_COPY_ASSIGN(VRTTileIndexDataset)
+    CPL_DISALLOW_COPY_ASSIGN(GDALTileIndexDataset)
 
   public:
-    VRTTileIndexDataset();
-    ~VRTTileIndexDataset() override;
+    GDALTileIndexDataset();
+    ~GDALTileIndexDataset() override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 
@@ -244,18 +244,18 @@ class VRTTileIndexDataset final : public GDALPamDataset
 
     void LoadOverviews();
 
-    std::vector<VRTTISourceDesc> GetSourcesMoreRecentThan(int64_t mTime);
+    std::vector<GTISourceDesc> GetSourcesMoreRecentThan(int64_t mTime);
 };
 
 /************************************************************************/
-/*                            VRTTileIndexBand                          */
+/*                            GDALTileIndexBand                          */
 /************************************************************************/
 
-class VRTTileIndexBand final : public GDALPamRasterBand
+class GDALTileIndexBand final : public GDALPamRasterBand
 {
-    friend class VRTTileIndexDataset;
+    friend class GDALTileIndexDataset;
 
-    VRTTileIndexDataset *m_poDS = nullptr;
+    GDALTileIndexDataset *m_poDS = nullptr;
     bool m_bNoDataValueSet = false;
     double m_dfNoDataValue = 0;
     GDALColorInterp m_eColorInterp = GCI_Undefined;
@@ -267,11 +267,11 @@ class VRTTileIndexBand final : public GDALPamRasterBand
     std::unique_ptr<GDALColorTable> m_poColorTable{};
     std::unique_ptr<GDALRasterAttributeTable> m_poRAT{};
 
-    CPL_DISALLOW_COPY_ASSIGN(VRTTileIndexBand)
+    CPL_DISALLOW_COPY_ASSIGN(GDALTileIndexBand)
 
   public:
-    VRTTileIndexBand(VRTTileIndexDataset *poDSIn, int nBandIn, GDALDataType eDT,
-                     int nBlockXSizeIn, int nBlockYSizeIn);
+    GDALTileIndexBand(GDALTileIndexDataset *poDSIn, int nBandIn,
+                      GDALDataType eDT, int nBlockXSizeIn, int nBlockYSizeIn);
 
     double GetNoDataValue(int *pbHasNoData) override
     {
@@ -381,10 +381,10 @@ static inline bool IsSameNaNAware(double a, double b)
 }
 
 /************************************************************************/
-/*                         VRTTileIndexDataset()                        */
+/*                         GDALTileIndexDataset()                        */
 /************************************************************************/
 
-VRTTileIndexDataset::VRTTileIndexDataset()
+GDALTileIndexDataset::GDALTileIndexDataset()
     : m_osUniqueHandle(CPLSPrintf("%p", this))
 {
 }
@@ -398,7 +398,7 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
 {
     if (CPLIsFilenameRelative(pszTileName) &&
         !STARTS_WITH(pszTileName, "<VRTDataset") &&
-        !STARTS_WITH(pszVRTName, "<VRTTileIndexDataset"))
+        !STARTS_WITH(pszVRTName, "<GDALTileIndexDataset"))
     {
         const auto oSubDSInfo(GDALGetSubdatasetInfo(pszTileName));
         if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
@@ -427,25 +427,25 @@ static std::string GetAbsoluteFileName(const char *pszTileName,
 /*                                Open()                                */
 /************************************************************************/
 
-bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
+bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     eAccess = poOpenInfo->eAccess;
 
     CPLXMLNode *psRoot = nullptr;
     const char *pszIndexDataset = poOpenInfo->pszFilename;
 
-    if (STARTS_WITH(poOpenInfo->pszFilename, VRTTI_PREFIX))
+    if (STARTS_WITH(poOpenInfo->pszFilename, GTI_PREFIX))
     {
-        pszIndexDataset = poOpenInfo->pszFilename + strlen(VRTTI_PREFIX);
+        pszIndexDataset = poOpenInfo->pszFilename + strlen(GTI_PREFIX);
     }
-    else if (STARTS_WITH(poOpenInfo->pszFilename, "<VRTTileIndexDataset"))
+    else if (STARTS_WITH(poOpenInfo->pszFilename, "<GDALTileIndexDataset"))
     {
         m_psXMLTree.reset(CPLParseXMLString(poOpenInfo->pszFilename));
         if (m_psXMLTree == nullptr)
             return false;
     }
     else if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                    "<VRTTileIndexDataset"))
+                    "<GDALTileIndexDataset"))
     {
         m_psXMLTree.reset(CPLParseXMLFile(poOpenInfo->pszFilename));
         if (m_psXMLTree == nullptr)
@@ -455,11 +455,11 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (m_psXMLTree)
     {
-        psRoot = CPLGetXMLNode(m_psXMLTree.get(), "=VRTTileIndexDataset");
+        psRoot = CPLGetXMLNode(m_psXMLTree.get(), "=GDALTileIndexDataset");
         if (psRoot == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Missing VRTTileIndexDataset root element.");
+                     "Missing GDALTileIndexDataset root element.");
             return false;
         }
 
@@ -545,7 +545,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        if (STARTS_WITH(poOpenInfo->pszFilename, VRTTI_PREFIX))
+        if (STARTS_WITH(poOpenInfo->pszFilename, GTI_PREFIX))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "%s has more than one layer. LAYER open option "
@@ -572,21 +572,21 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         return false;
     }
 
-    // Try to get the metadata from an embedded xml:VRTTI domain
+    // Try to get the metadata from an embedded xml:GTI domain
     if (!m_psXMLTree)
     {
-        char **papszMD = m_poLayer->GetMetadata("xml:VRTTI");
+        char **papszMD = m_poLayer->GetMetadata("xml:GTI");
         if (papszMD && papszMD[0])
         {
             m_psXMLTree.reset(CPLParseXMLString(papszMD[0]));
             if (m_psXMLTree == nullptr)
                 return false;
 
-            psRoot = CPLGetXMLNode(m_psXMLTree.get(), "=VRTTileIndexDataset");
+            psRoot = CPLGetXMLNode(m_psXMLTree.get(), "=GDALTileIndexDataset");
             if (psRoot == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Missing VRTTileIndexDataset root element.");
+                         "Missing GDALTileIndexDataset root element.");
                 return false;
             }
         }
@@ -601,21 +601,21 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                 return pszVal;
 
             if (EQUAL(pszItem, MD_BAND_COUNT))
-                pszItem = VRTTI_XML_BANDCOUNT;
+                pszItem = GTI_XML_BANDCOUNT;
             else if (EQUAL(pszItem, MD_DATA_TYPE))
-                pszItem = VRTTI_XML_DATATYPE;
+                pszItem = GTI_XML_DATATYPE;
             else if (EQUAL(pszItem, MD_NODATA))
-                pszItem = VRTTI_XML_NODATAVALUE;
+                pszItem = GTI_XML_NODATAVALUE;
             else if (EQUAL(pszItem, MD_COLOR_INTERPRETATION))
-                pszItem = VRTTI_XML_COLORINTERP;
+                pszItem = GTI_XML_COLORINTERP;
             else if (EQUAL(pszItem, MD_LOCATION_FIELD))
-                pszItem = VRTTI_XML_LOCATIONFIELD;
+                pszItem = GTI_XML_LOCATIONFIELD;
             else if (EQUAL(pszItem, MD_SORT_FIELD))
-                pszItem = VRTTI_XML_SORTFIELD;
+                pszItem = GTI_XML_SORTFIELD;
             else if (EQUAL(pszItem, MD_SORT_FIELD_ASC))
-                pszItem = VRTTI_XML_SORTFIELDASC;
+                pszItem = GTI_XML_SORTFIELDASC;
             else if (EQUAL(pszItem, MD_MASK_BAND))
-                pszItem = VRTTI_XML_MASKBAND;
+                pszItem = GTI_XML_MASKBAND;
             pszVal = CPLGetXMLValue(psRoot, pszItem, nullptr);
             if (pszVal)
                 return pszVal;
@@ -776,15 +776,15 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
              psIter = psIter->psNext)
         {
             if (psIter->eType == CXT_Element &&
-                strcmp(psIter->pszValue, VRTTI_XML_BAND_ELEMENT) == 0)
+                strcmp(psIter->pszValue, GTI_XML_BAND_ELEMENT) == 0)
             {
                 const char *pszBand =
-                    CPLGetXMLValue(psIter, VRTTI_XML_BAND_NUMBER, nullptr);
+                    CPLGetXMLValue(psIter, GTI_XML_BAND_NUMBER, nullptr);
                 if (!pszBand)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "%s attribute missing on %s element",
-                             VRTTI_XML_BAND_NUMBER, VRTTI_XML_BAND_ELEMENT);
+                             GTI_XML_BAND_NUMBER, GTI_XML_BAND_ELEMENT);
                     return false;
                 }
                 const int nBand = atoi(pszBand);
@@ -819,7 +819,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Inconsistent %s with actual number of %s elements",
-                     VRTTI_XML_BANDCOUNT, VRTTI_XML_BAND_ELEMENT);
+                     GTI_XML_BANDCOUNT, GTI_XML_BAND_ELEMENT);
             return false;
         }
     }
@@ -1389,14 +1389,14 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         nRasterYSize = static_cast<int>(std::ceil(nRasterYSize / dfOvrFactor));
     }
 
-    VRTTileIndexBand *poFirstBand = nullptr;
+    GDALTileIndexBand *poFirstBand = nullptr;
     for (int i = 0; i < nBandCount; ++i)
     {
         GDALDataType eDataType = aeDataTypes[i];
         if (!apoXMLNodeBands.empty())
         {
-            const char *pszVal = CPLGetXMLValue(
-                apoXMLNodeBands[i], VRTTI_XML_BAND_DATATYPE, nullptr);
+            const char *pszVal = CPLGetXMLValue(apoXMLNodeBands[i],
+                                                GTI_XML_BAND_DATATYPE, nullptr);
             if (pszVal)
             {
                 eDataType = GDALGetDataTypeByName(pszVal);
@@ -1404,7 +1404,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     return false;
             }
         }
-        auto poBandUniquePtr = std::make_unique<VRTTileIndexBand>(
+        auto poBandUniquePtr = std::make_unique<GDALTileIndexBand>(
             this, i + 1, eDataType, nBlockXSize, nBlockYSize);
         auto poBand = poBandUniquePtr.get();
         SetBand(i + 1, poBandUniquePtr.release());
@@ -1418,7 +1418,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!apoXMLNodeBands.empty())
         {
             const char *pszVal = CPLGetXMLValue(
-                apoXMLNodeBands[i], VRTTI_XML_BAND_DESCRIPTION, nullptr);
+                apoXMLNodeBands[i], GTI_XML_BAND_DESCRIPTION, nullptr);
             if (pszVal)
             {
                 poBand->GDALRasterBand::SetDescription(pszVal);
@@ -1433,7 +1433,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!apoXMLNodeBands.empty())
         {
             const char *pszVal = CPLGetXMLValue(
-                apoXMLNodeBands[i], VRTTI_XML_BAND_NODATAVALUE, nullptr);
+                apoXMLNodeBands[i], GTI_XML_BAND_NODATAVALUE, nullptr);
             if (pszVal)
             {
                 poBand->m_bNoDataValueSet = true;
@@ -1454,7 +1454,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!apoXMLNodeBands.empty())
         {
             const char *pszVal = CPLGetXMLValue(
-                apoXMLNodeBands[i], VRTTI_XML_BAND_COLORINTERP, nullptr);
+                apoXMLNodeBands[i], GTI_XML_BAND_COLORINTERP, nullptr);
             if (pszVal)
             {
                 poBand->m_eColorInterp =
@@ -1469,8 +1469,8 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (!apoXMLNodeBands.empty())
         {
-            const char *pszVal = CPLGetXMLValue(apoXMLNodeBands[i],
-                                                VRTTI_XML_BAND_SCALE, nullptr);
+            const char *pszVal =
+                CPLGetXMLValue(apoXMLNodeBands[i], GTI_XML_BAND_SCALE, nullptr);
             if (pszVal)
             {
                 poBand->m_dfScale = CPLAtof(pszVal);
@@ -1485,7 +1485,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!apoXMLNodeBands.empty())
         {
             const char *pszVal = CPLGetXMLValue(apoXMLNodeBands[i],
-                                                VRTTI_XML_BAND_OFFSET, nullptr);
+                                                GTI_XML_BAND_OFFSET, nullptr);
             if (pszVal)
             {
                 poBand->m_dfOffset = CPLAtof(pszVal);
@@ -1499,8 +1499,8 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (!apoXMLNodeBands.empty())
         {
-            const char *pszVal = CPLGetXMLValue(
-                apoXMLNodeBands[i], VRTTI_XML_BAND_UNITTYPE, nullptr);
+            const char *pszVal = CPLGetXMLValue(apoXMLNodeBands[i],
+                                                GTI_XML_BAND_UNITTYPE, nullptr);
             if (pszVal)
             {
                 poBand->m_osUnit = pszVal;
@@ -1513,20 +1513,20 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             poBand->oMDMD.XMLInit(psBandNode, TRUE);
 
             if (const CPLXMLNode *psCategoryNames =
-                    CPLGetXMLNode(psBandNode, VRTTI_XML_CATEGORYNAMES))
+                    CPLGetXMLNode(psBandNode, GTI_XML_CATEGORYNAMES))
             {
                 poBand->m_aosCategoryNames =
                     VRTParseCategoryNames(psCategoryNames);
             }
 
             if (const CPLXMLNode *psColorTable =
-                    CPLGetXMLNode(psBandNode, VRTTI_XML_COLORTABLE))
+                    CPLGetXMLNode(psBandNode, GTI_XML_COLORTABLE))
             {
                 poBand->m_poColorTable = VRTParseColorTable(psColorTable);
             }
 
             if (const CPLXMLNode *psRAT =
-                    CPLGetXMLNode(psBandNode, VRTTI_XML_RAT))
+                    CPLGetXMLNode(psBandNode, GTI_XML_RAT))
             {
                 poBand->m_poRAT =
                     std::make_unique<GDALDefaultRasterAttributeTable>();
@@ -1540,7 +1540,7 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         bHasMaskBand = CPLTestBool(pszMaskBand);
     if (bHasMaskBand)
     {
-        m_poMaskBand = std::make_unique<VRTTileIndexBand>(
+        m_poMaskBand = std::make_unique<GDALTileIndexBand>(
             this, 0, GDT_Byte, nBlockXSize, nBlockYSize);
     }
 
@@ -1552,23 +1552,22 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                  psIter = psIter->psNext)
             {
                 if (psIter->eType == CXT_Element &&
-                    strcmp(psIter->pszValue, VRTTI_XML_OVERVIEW_ELEMENT) == 0)
+                    strcmp(psIter->pszValue, GTI_XML_OVERVIEW_ELEMENT) == 0)
                 {
                     const char *pszDataset = CPLGetXMLValue(
-                        psIter, VRTTI_XML_OVERVIEW_DATASET, nullptr);
-                    const char *pszLayer = CPLGetXMLValue(
-                        psIter, VRTTI_XML_OVERVIEW_LAYER, nullptr);
+                        psIter, GTI_XML_OVERVIEW_DATASET, nullptr);
+                    const char *pszLayer =
+                        CPLGetXMLValue(psIter, GTI_XML_OVERVIEW_LAYER, nullptr);
                     const char *pszFactor = CPLGetXMLValue(
-                        psIter, VRTTI_XML_OVERVIEW_FACTOR, nullptr);
+                        psIter, GTI_XML_OVERVIEW_FACTOR, nullptr);
                     if (!pszDataset && !pszLayer && !pszFactor)
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "At least one of %s, %s or %s element "
-                                 "must be present as an %s child",
-                                 VRTTI_XML_OVERVIEW_DATASET,
-                                 VRTTI_XML_OVERVIEW_LAYER,
-                                 VRTTI_XML_OVERVIEW_FACTOR,
-                                 VRTTI_XML_OVERVIEW_ELEMENT);
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "At least one of %s, %s or %s element "
+                            "must be present as an %s child",
+                            GTI_XML_OVERVIEW_DATASET, GTI_XML_OVERVIEW_LAYER,
+                            GTI_XML_OVERVIEW_FACTOR, GTI_XML_OVERVIEW_ELEMENT);
                         return false;
                     }
                     m_aoOverviewDescriptor.emplace_back(
@@ -1703,8 +1702,8 @@ bool VRTTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                        GetMetadataItem()                             */
 /************************************************************************/
 
-const char *VRTTileIndexDataset::GetMetadataItem(const char *pszName,
-                                                 const char *pszDomain)
+const char *GDALTileIndexDataset::GetMetadataItem(const char *pszName,
+                                                  const char *pszDomain)
 {
     if (pszName && pszDomain && EQUAL(pszDomain, "__DEBUG__"))
     {
@@ -1724,7 +1723,7 @@ const char *VRTTileIndexDataset::GetMetadataItem(const char *pszName,
 /*                TileIndexSupportsEditingLayerMetadata()               */
 /************************************************************************/
 
-bool VRTTileIndexDataset::TileIndexSupportsEditingLayerMetadata() const
+bool GDALTileIndexDataset::TileIndexSupportsEditingLayerMetadata() const
 {
     return eAccess == GA_Update && m_poVectorDS->GetDriver() &&
            EQUAL(m_poVectorDS->GetDriver()->GetDescription(), "GPKG");
@@ -1734,9 +1733,9 @@ bool VRTTileIndexDataset::TileIndexSupportsEditingLayerMetadata() const
 /*                        SetMetadataItem()                             */
 /************************************************************************/
 
-CPLErr VRTTileIndexDataset::SetMetadataItem(const char *pszName,
-                                            const char *pszValue,
-                                            const char *pszDomain)
+CPLErr GDALTileIndexDataset::SetMetadataItem(const char *pszName,
+                                             const char *pszValue,
+                                             const char *pszDomain)
 {
     if (m_bXMLUpdatable)
     {
@@ -1758,7 +1757,7 @@ CPLErr VRTTileIndexDataset::SetMetadataItem(const char *pszName,
 /*                           SetMetadata()                              */
 /************************************************************************/
 
-CPLErr VRTTileIndexDataset::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr GDALTileIndexDataset::SetMetadata(char **papszMD, const char *pszDomain)
 {
     if (m_bXMLUpdatable)
     {
@@ -1810,60 +1809,60 @@ CPLErr VRTTileIndexDataset::SetMetadata(char **papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                     VRTTileIndexDatasetIdentify()                    */
+/*                     GDALTileIndexDatasetIdentify()                    */
 /************************************************************************/
 
-static int VRTTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
+static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, VRTTI_PREFIX))
+    if (STARTS_WITH(poOpenInfo->pszFilename, GTI_PREFIX))
         return true;
 
-    if (STARTS_WITH(poOpenInfo->pszFilename, "<VRTTileIndexDataset"))
+    if (STARTS_WITH(poOpenInfo->pszFilename, "<GDALTileIndexDataset"))
         return true;
 
     return poOpenInfo->nHeaderBytes > 0 &&
            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
            (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                   "<VRTTileIndexDataset") ||
-            ENDS_WITH_CI(poOpenInfo->pszFilename, ".vrt.gpkg") ||
-            ENDS_WITH_CI(poOpenInfo->pszFilename, ".vrt.fgb") ||
-            ENDS_WITH_CI(poOpenInfo->pszFilename, ".vrt.parquet"));
+                   "<GDALTileIndexDataset") ||
+            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg") ||
+            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.fgb") ||
+            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.parquet"));
 }
 
 /************************************************************************/
-/*                      VRTTileIndexDatasetOpen()                       */
+/*                      GDALTileIndexDatasetOpen()                       */
 /************************************************************************/
 
-static GDALDataset *VRTTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
+static GDALDataset *GDALTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
 {
-    if (!VRTTileIndexDatasetIdentify(poOpenInfo))
+    if (!GDALTileIndexDatasetIdentify(poOpenInfo))
         return nullptr;
-    auto poDS = std::make_unique<VRTTileIndexDataset>();
+    auto poDS = std::make_unique<GDALTileIndexDataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();
 }
 
 /************************************************************************/
-/*                          ~VRTTileIndexDataset()                      */
+/*                          ~GDALTileIndexDataset()                      */
 /************************************************************************/
 
-VRTTileIndexDataset::~VRTTileIndexDataset()
+GDALTileIndexDataset::~GDALTileIndexDataset()
 {
-    VRTTileIndexDataset::FlushCache(true);
+    GDALTileIndexDataset::FlushCache(true);
 }
 
 /************************************************************************/
 /*                              FlushCache()                            */
 /************************************************************************/
 
-CPLErr VRTTileIndexDataset::FlushCache(bool bAtClosing)
+CPLErr GDALTileIndexDataset::FlushCache(bool bAtClosing)
 {
     CPLErr eErr = CE_None;
     if (bAtClosing && m_bXMLModified)
     {
         CPLXMLNode *psRoot =
-            CPLGetXMLNode(m_psXMLTree.get(), "=VRTTileIndexDataset");
+            CPLGetXMLNode(m_psXMLTree.get(), "=GDALTileIndexDataset");
 
         // Suppress existing dataset metadata
         while (true)
@@ -1879,16 +1878,16 @@ CPLErr VRTTileIndexDataset::FlushCache(bool bAtClosing)
             CPLAddXMLChild(psRoot, psMD);
 
         // Update existing band metadata
-        if (CPLGetXMLNode(psRoot, VRTTI_XML_BAND_ELEMENT))
+        if (CPLGetXMLNode(psRoot, GTI_XML_BAND_ELEMENT))
         {
             for (CPLXMLNode *psIter = psRoot->psChild; psIter;
                  psIter = psIter->psNext)
             {
                 if (psIter->eType == CXT_Element &&
-                    strcmp(psIter->pszValue, VRTTI_XML_BAND_ELEMENT))
+                    strcmp(psIter->pszValue, GTI_XML_BAND_ELEMENT))
                 {
                     const char *pszBand =
-                        CPLGetXMLValue(psIter, VRTTI_XML_BAND_NUMBER, nullptr);
+                        CPLGetXMLValue(psIter, GTI_XML_BAND_NUMBER, nullptr);
                     if (pszBand)
                     {
                         const int nBand = atoi(pszBand);
@@ -1903,7 +1902,7 @@ CPLErr VRTTileIndexDataset::FlushCache(bool bAtClosing)
                                 CPLRemoveXMLChild(psIter, psExistingMetadata);
                             }
 
-                            auto poBand = cpl::down_cast<VRTTileIndexBand *>(
+                            auto poBand = cpl::down_cast<GDALTileIndexBand *>(
                                 papoBands[nBand - 1]);
                             if (CPLXMLNode *psMD = poBand->oMDMD.Serialize())
                                 CPLAddXMLChild(psIter, psMD);
@@ -1920,7 +1919,7 @@ CPLErr VRTTileIndexDataset::FlushCache(bool bAtClosing)
             for (int i = 1; i <= nBands; ++i)
             {
                 auto poBand =
-                    cpl::down_cast<VRTTileIndexBand *>(papoBands[i - 1]);
+                    cpl::down_cast<GDALTileIndexBand *>(papoBands[i - 1]);
                 auto psMD = poBand->oMDMD.Serialize();
                 if (psMD)
                     bHasBandMD = true;
@@ -1931,43 +1930,43 @@ CPLErr VRTTileIndexDataset::FlushCache(bool bAtClosing)
                 for (int i = 1; i <= nBands; ++i)
                 {
                     auto poBand =
-                        cpl::down_cast<VRTTileIndexBand *>(papoBands[i - 1]);
+                        cpl::down_cast<GDALTileIndexBand *>(papoBands[i - 1]);
 
-                    CPLXMLNode *psBand = CPLCreateXMLNode(
-                        psRoot, CXT_Element, VRTTI_XML_BAND_ELEMENT);
-                    CPLAddXMLAttributeAndValue(psBand, VRTTI_XML_BAND_NUMBER,
+                    CPLXMLNode *psBand = CPLCreateXMLNode(psRoot, CXT_Element,
+                                                          GTI_XML_BAND_ELEMENT);
+                    CPLAddXMLAttributeAndValue(psBand, GTI_XML_BAND_NUMBER,
                                                CPLSPrintf("%d", i));
                     CPLAddXMLAttributeAndValue(
-                        psBand, VRTTI_XML_BAND_DATATYPE,
+                        psBand, GTI_XML_BAND_DATATYPE,
                         GDALGetDataTypeName(poBand->GetRasterDataType()));
 
                     const char *pszDescription = poBand->GetDescription();
                     if (pszDescription && pszDescription[0])
-                        CPLSetXMLValue(psBand, VRTTI_XML_BAND_DESCRIPTION,
+                        CPLSetXMLValue(psBand, GTI_XML_BAND_DESCRIPTION,
                                        pszDescription);
 
                     const auto eColorInterp = poBand->GetColorInterpretation();
                     if (eColorInterp != GCI_Undefined)
                         CPLSetXMLValue(
-                            psBand, VRTTI_XML_BAND_COLORINTERP,
+                            psBand, GTI_XML_BAND_COLORINTERP,
                             GDALGetColorInterpretationName(eColorInterp));
 
                     if (!std::isnan(poBand->m_dfOffset))
-                        CPLSetXMLValue(psBand, VRTTI_XML_BAND_OFFSET,
+                        CPLSetXMLValue(psBand, GTI_XML_BAND_OFFSET,
                                        CPLSPrintf("%.16g", poBand->m_dfOffset));
 
                     if (!std::isnan(poBand->m_dfScale))
-                        CPLSetXMLValue(psBand, VRTTI_XML_BAND_SCALE,
+                        CPLSetXMLValue(psBand, GTI_XML_BAND_SCALE,
                                        CPLSPrintf("%.16g", poBand->m_dfScale));
 
                     if (!poBand->m_osUnit.empty())
-                        CPLSetXMLValue(psBand, VRTTI_XML_BAND_UNITTYPE,
+                        CPLSetXMLValue(psBand, GTI_XML_BAND_UNITTYPE,
                                        poBand->m_osUnit.c_str());
 
                     if (poBand->m_bNoDataValueSet)
                     {
                         CPLSetXMLValue(
-                            psBand, VRTTI_XML_BAND_NODATAVALUE,
+                            psBand, GTI_XML_BAND_NODATAVALUE,
                             VRTSerializeNoData(poBand->m_dfNoDataValue,
                                                poBand->GetRasterDataType(), 18)
                                 .c_str());
@@ -1999,7 +1998,7 @@ CPLErr VRTTileIndexDataset::FlushCache(bool bAtClosing)
 /*                            LoadOverviews()                           */
 /************************************************************************/
 
-void VRTTileIndexDataset::LoadOverviews()
+void GDALTileIndexDataset::LoadOverviews()
 {
     if (m_apoOverviews.empty() && !m_aoOverviewDescriptor.empty())
     {
@@ -2042,7 +2041,7 @@ void VRTTileIndexDataset::LoadOverviews()
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
-int VRTTileIndexBand::GetOverviewCount()
+int GDALTileIndexBand::GetOverviewCount()
 {
     const int nPAMOverviews = GDALPamRasterBand::GetOverviewCount();
     if (nPAMOverviews)
@@ -2056,7 +2055,7 @@ int VRTTileIndexBand::GetOverviewCount()
 /*                             GetOverview()                            */
 /************************************************************************/
 
-GDALRasterBand *VRTTileIndexBand::GetOverview(int iOvr)
+GDALRasterBand *GDALTileIndexBand::GetOverview(int iOvr)
 {
     if (iOvr < 0 || iOvr >= GetOverviewCount())
         return nullptr;
@@ -2082,7 +2081,7 @@ GDALRasterBand *VRTTileIndexBand::GetOverview(int iOvr)
 /*                           GetGeoTransform()                          */
 /************************************************************************/
 
-CPLErr VRTTileIndexDataset::GetGeoTransform(double *padfGeoTransform)
+CPLErr GDALTileIndexDataset::GetGeoTransform(double *padfGeoTransform)
 {
     memcpy(padfGeoTransform, m_adfGeoTransform.data(), 6 * sizeof(double));
     return CE_None;
@@ -2092,18 +2091,18 @@ CPLErr VRTTileIndexDataset::GetGeoTransform(double *padfGeoTransform)
 /*                            GetSpatialRef()                           */
 /************************************************************************/
 
-const OGRSpatialReference *VRTTileIndexDataset::GetSpatialRef() const
+const OGRSpatialReference *GDALTileIndexDataset::GetSpatialRef() const
 {
     return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
 }
 
 /************************************************************************/
-/*                           VRTTileIndexBand()                         */
+/*                           GDALTileIndexBand()                         */
 /************************************************************************/
 
-VRTTileIndexBand::VRTTileIndexBand(VRTTileIndexDataset *poDSIn, int nBandIn,
-                                   GDALDataType eDT, int nBlockXSizeIn,
-                                   int nBlockYSizeIn)
+GDALTileIndexBand::GDALTileIndexBand(GDALTileIndexDataset *poDSIn, int nBandIn,
+                                     GDALDataType eDT, int nBlockXSizeIn,
+                                     int nBlockYSizeIn)
 {
     m_poDS = poDSIn;
     nBand = nBandIn;
@@ -2118,8 +2117,8 @@ VRTTileIndexBand::VRTTileIndexBand(VRTTileIndexDataset *poDSIn, int nBandIn,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr VRTTileIndexBand::IReadBlock(int nBlockXOff, int nBlockYOff,
-                                    void *pImage)
+CPLErr GDALTileIndexBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                     void *pImage)
 
 {
     const int nPixelSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -2141,12 +2140,12 @@ CPLErr VRTTileIndexBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr VRTTileIndexBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                   int nXSize, int nYSize, void *pData,
-                                   int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
-                                   GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALTileIndexBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                    int nXSize, int nYSize, void *pData,
+                                    int nBufXSize, int nBufYSize,
+                                    GDALDataType eBufType, GSpacing nPixelSpace,
+                                    GSpacing nLineSpace,
+                                    GDALRasterIOExtraArg *psExtraArg)
 {
     int anBand[] = {nBand};
 
@@ -2159,7 +2158,7 @@ CPLErr VRTTileIndexBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                      GetMetadataDomainList()                         */
 /************************************************************************/
 
-char **VRTTileIndexBand::GetMetadataDomainList()
+char **GDALTileIndexBand::GetMetadataDomainList()
 {
     return CSLAddString(GDALRasterBand::GetMetadataDomainList(),
                         "LocationInfo");
@@ -2169,8 +2168,8 @@ char **VRTTileIndexBand::GetMetadataDomainList()
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
-const char *VRTTileIndexBand::GetMetadataItem(const char *pszName,
-                                              const char *pszDomain)
+const char *GDALTileIndexBand::GetMetadataItem(const char *pszName,
+                                               const char *pszDomain)
 
 {
     /* ==================================================================== */
@@ -2232,7 +2231,7 @@ const char *VRTTileIndexBand::GetMetadataItem(const char *pszName,
         if (!m_poDS->m_aoSourceDesc.empty())
         {
             const auto AddSource =
-                [&](const VRTTileIndexDataset::SourceDesc &oSourceDesc)
+                [&](const GDALTileIndexDataset::SourceDesc &oSourceDesc)
             {
                 m_osLastLocationInfo += "<File>";
                 char *const pszXMLEscaped =
@@ -2269,9 +2268,9 @@ const char *VRTTileIndexBand::GetMetadataItem(const char *pszName,
 /*                        SetMetadataItem()                             */
 /************************************************************************/
 
-CPLErr VRTTileIndexBand::SetMetadataItem(const char *pszName,
-                                         const char *pszValue,
-                                         const char *pszDomain)
+CPLErr GDALTileIndexBand::SetMetadataItem(const char *pszName,
+                                          const char *pszValue,
+                                          const char *pszDomain)
 {
     if (nBand > 0 && m_poDS->m_bXMLUpdatable)
     {
@@ -2294,7 +2293,7 @@ CPLErr VRTTileIndexBand::SetMetadataItem(const char *pszName,
 /*                           SetMetadata()                              */
 /************************************************************************/
 
-CPLErr VRTTileIndexBand::SetMetadata(char **papszMD, const char *pszDomain)
+CPLErr GDALTileIndexBand::SetMetadata(char **papszMD, const char *pszDomain)
 {
     if (nBand > 0 && m_poDS->m_bXMLUpdatable)
     {
@@ -2428,20 +2427,20 @@ static bool GetSrcDstWin(const double adfTileGT[6], int nTileXSize,
 }
 
 /************************************************************************/
-/*                   GDALDatasetCastToVRTTIDataset()                    */
+/*                   GDALDatasetCastToGTIDataset()                    */
 /************************************************************************/
 
-VRTTileIndexDataset *GDALDatasetCastToVRTTIDataset(GDALDataset *poDS)
+GDALTileIndexDataset *GDALDatasetCastToGTIDataset(GDALDataset *poDS)
 {
-    return dynamic_cast<VRTTileIndexDataset *>(poDS);
+    return dynamic_cast<GDALTileIndexDataset *>(poDS);
 }
 
 /************************************************************************/
-/*                   VRTTIGetSourcesMoreRecentThan()                    */
+/*                   GTIGetSourcesMoreRecentThan()                    */
 /************************************************************************/
 
-std::vector<VRTTISourceDesc>
-VRTTIGetSourcesMoreRecentThan(VRTTileIndexDataset *poDS, int64_t mTime)
+std::vector<GTISourceDesc>
+GTIGetSourcesMoreRecentThan(GDALTileIndexDataset *poDS, int64_t mTime)
 {
     return poDS->GetSourcesMoreRecentThan(mTime);
 }
@@ -2450,10 +2449,10 @@ VRTTIGetSourcesMoreRecentThan(VRTTileIndexDataset *poDS, int64_t mTime)
 /*                       GetSourcesMoreRecentThan()                     */
 /************************************************************************/
 
-std::vector<VRTTISourceDesc>
-VRTTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
+std::vector<GTISourceDesc>
+GDALTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 {
-    std::vector<VRTTISourceDesc> oRes;
+    std::vector<GTISourceDesc> oRes;
 
     m_poLayer->SetSpatialFilter(nullptr);
     for (auto &&poFeature : m_poLayer)
@@ -2512,7 +2511,7 @@ VRTTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
         }
 
         constexpr double EPS = 1e-8;
-        VRTTISourceDesc oSourceDesc;
+        GTISourceDesc oSourceDesc;
         oSourceDesc.osFilename = osTileName;
         oSourceDesc.nDstXOff = static_cast<int>(dfXOff + EPS);
         oSourceDesc.nDstYOff = static_cast<int>(dfYOff + EPS);
@@ -2528,8 +2527,8 @@ VRTTileIndexDataset::GetSourcesMoreRecentThan(int64_t mTime)
 /*                         GetSourceDesc()                              */
 /************************************************************************/
 
-bool VRTTileIndexDataset::GetSourceDesc(const std::string &osTileName,
-                                        SourceDesc &oSourceDesc)
+bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
+                                         SourceDesc &oSourceDesc)
 {
     std::shared_ptr<GDALDataset> poTileDS;
     if (!m_oMapSharedSources.tryGet(osTileName, poTileDS))
@@ -2780,8 +2779,8 @@ bool VRTTileIndexDataset::GetSourceDesc(const std::string &osTileName,
 /*                        CollectSources()                              */
 /************************************************************************/
 
-bool VRTTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
-                                         double dfXSize, double dfYSize)
+bool GDALTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
+                                          double dfXSize, double dfYSize)
 {
     const double dfMinX =
         m_adfGeoTransform[GT_TOPLEFT_X] + dfXOff * m_adfGeoTransform[GT_WE_RES];
@@ -2906,7 +2905,7 @@ bool VRTTileIndexDataset::CollectSources(double dfXOff, double dfYOff,
 /*                          SortSourceDesc()                            */
 /************************************************************************/
 
-void VRTTileIndexDataset::SortSourceDesc()
+void GDALTileIndexDataset::SortSourceDesc()
 {
     const auto eFieldType = m_nSortFieldIndex >= 0
                                 ? m_poLayer->GetLayerDefn()
@@ -3079,8 +3078,8 @@ CompositeSrcWithMaskIntoDest(const int nOutXSize, const int nOutYSize,
 /************************************************************************/
 
 // Must be called after CollectSources()
-bool VRTTileIndexDataset::NeedInitBuffer(int nBandCount,
-                                         const int *panBandMap) const
+bool GDALTileIndexDataset::NeedInitBuffer(int nBandCount,
+                                          const int *panBandMap) const
 {
     bool bNeedInitBuffer = true;
     // If the last source (that is the most prioritary one) covers at least
@@ -3113,11 +3112,11 @@ bool VRTTileIndexDataset::NeedInitBuffer(int nBandCount,
 /*                            InitBuffer()                              */
 /************************************************************************/
 
-void VRTTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType, int nBandCount,
-                                     const int *panBandMap,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                                     GSpacing nBandSpace) const
+void GDALTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
+                                      GDALDataType eBufType, int nBandCount,
+                                      const int *panBandMap,
+                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      GSpacing nBandSpace) const
 {
     const int nBufTypeSize = GDALGetDataTypeSizeBytes(eBufType);
     if (m_bSameNoData && nBandCount > 1 &&
@@ -3132,7 +3131,7 @@ void VRTTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
         auto poVRTBand =
             nBandNr == 0
                 ? m_poMaskBand.get()
-                : cpl::down_cast<VRTTileIndexBand *>(papoBands[nBandNr - 1]);
+                : cpl::down_cast<GDALTileIndexBand *>(papoBands[nBandNr - 1]);
         const double dfNoData = poVRTBand->m_dfNoDataValue;
         if (dfNoData == 0.0)
         {
@@ -3153,7 +3152,7 @@ void VRTTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
         {
             const int nBandNr = panBandMap[i];
             auto poVRTBand = nBandNr == 0 ? m_poMaskBand.get()
-                                          : cpl::down_cast<VRTTileIndexBand *>(
+                                          : cpl::down_cast<GDALTileIndexBand *>(
                                                 papoBands[nBandNr - 1]);
             GByte *pabyBandData = static_cast<GByte *>(pData) + i * nBandSpace;
             if (nPixelSpace == nBufTypeSize &&
@@ -3195,13 +3194,13 @@ void VRTTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr VRTTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                      int nXSize, int nYSize, void *pData,
-                                      int nBufXSize, int nBufYSize,
-                                      GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
-                                      GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                       int nXSize, int nYSize, void *pData,
+                                       int nBufXSize, int nBufYSize,
+                                       GDALDataType eBufType, int nBandCount,
+                                       int *panBandMap, GSpacing nPixelSpace,
+                                       GSpacing nLineSpace, GSpacing nBandSpace,
+                                       GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag != GF_Read)
         return CE_Failure;
@@ -3600,25 +3599,25 @@ CPLErr VRTTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                         GDALRegister_VRTTI()                         */
+/*                         GDALRegister_GTI()                           */
 /************************************************************************/
 
-void GDALRegister_VRTTI()
+void GDALRegister_GTI()
 {
-    if (GDALGetDriverByName("VRTTI") != nullptr)
+    if (GDALGetDriverByName("GTI") != nullptr)
         return;
 
     auto poDriver = std::make_unique<VRTDriver>();
 
-    poDriver->SetDescription("VRTTI");
+    poDriver->SetDescription("GTI");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Virtual Raster Tile Index");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "vrt.gpkg vrt.fgb vrtti");
-    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, VRTTI_PREFIX);
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/vrtti.html");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GDAL Raster Tile Index");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "gti.gpkg gti.fgb gti");
+    poDriver->SetMetadataItem(GDAL_DMD_CONNECTION_PREFIX, GTI_PREFIX);
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/gti.html");
 
-    poDriver->pfnOpen = VRTTileIndexDatasetOpen;
-    poDriver->pfnIdentify = VRTTileIndexDatasetIdentify;
+    poDriver->pfnOpen = GDALTileIndexDatasetOpen;
+    poDriver->pfnIdentify = GDALTileIndexDatasetIdentify;
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

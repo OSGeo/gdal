@@ -81,6 +81,7 @@ Raster drivers
    gsbg
    gsc
    gta
+   gti
    gtiff
    gxf
    hdf4
@@ -179,7 +180,6 @@ Raster drivers
    usgsdem
    vicar
    vrt
-   vrtti
    wcs
    webp
    wms

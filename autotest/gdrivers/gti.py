@@ -3,7 +3,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test VRTTileIndexDataset support.
+# Purpose:  Test GDALTileIndexDataset support.
 # Author:   Even Rouault <even.rouault@spatialys.com>
 #
 ###############################################################################
@@ -38,7 +38,7 @@ import pytest
 
 from osgeo import gdal, ogr
 
-pytestmark = [pytest.mark.require_driver("VRTTI"), pytest.mark.require_driver("GPKG")]
+pytestmark = [pytest.mark.require_driver("GTI"), pytest.mark.require_driver("GPKG")]
 
 
 def create_basic_tileindex(
@@ -113,9 +113,9 @@ def check_basic(
     assert vrt_ds.GetMetadata_Dict() == expected_md
 
 
-def test_vrttileindex_no_metadata(tmp_vsimem):
+def test_gti_no_metadata(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
@@ -146,9 +146,9 @@ def test_vrttileindex_no_metadata(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).GetOverview(0) is None
 
 
-def test_vrttileindex_custom_metadata(tmp_vsimem):
+def test_gti_custom_metadata(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -162,9 +162,9 @@ def test_vrttileindex_custom_metadata(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).GetBlockSize() == [2, 4]
 
 
-def test_vrttileindex_cannot_open_index(tmp_vsimem):
+def test_gti_cannot_open_index(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     f = gdal.VSIFOpenL(index_filename, "wb+")
     assert f
     gdal.VSIFTruncateL(f, 100)
@@ -174,9 +174,9 @@ def test_vrttileindex_cannot_open_index(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_several_layers(tmp_vsimem):
+def test_gti_several_layers(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
@@ -192,10 +192,10 @@ def test_vrttileindex_several_layers(tmp_vsimem):
     with pytest.raises(
         Exception, match="has more than one layer. LAYER open option must be defined"
     ):
-        gdal.Open("VRTTI:" + index_filename)
+        gdal.Open("GTI:" + index_filename)
 
     assert (
-        gdal.OpenEx("VRTTI:" + index_filename, open_options=["LAYER=index"]) is not None
+        gdal.OpenEx("GTI:" + index_filename, open_options=["LAYER=index"]) is not None
     )
 
     index_ds = ogr.Open(index_filename, update=1)
@@ -209,11 +209,11 @@ def test_vrttileindex_several_layers(tmp_vsimem):
     )
 
 
-def test_vrttileindex_no_metadata_several_layers_wrong_TILE_INDEX_LAYER(
+def test_gti_no_metadata_several_layers_wrong_TILE_INDEX_LAYER(
     tmp_vsimem,
 ):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
@@ -225,18 +225,18 @@ def test_vrttileindex_no_metadata_several_layers_wrong_TILE_INDEX_LAYER(
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_no_layer(tmp_vsimem):
+def test_gti_no_layer(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
 
     with pytest.raises(Exception, match="has no vector layer"):
         gdal.Open(index_filename, gdal.GA_Update)
 
 
-def test_vrttileindex_no_feature(tmp_vsimem):
+def test_gti_no_feature(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index")
     lyr.CreateField(ogr.FieldDefn("location"))
@@ -246,9 +246,9 @@ def test_vrttileindex_no_feature(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_location_wrong_type(tmp_vsimem):
+def test_gti_location_wrong_type(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index")
     lyr.CreateField(ogr.FieldDefn("location", ogr.OFTInteger))
@@ -258,9 +258,9 @@ def test_vrttileindex_location_wrong_type(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_prototype_tile(tmp_vsimem):
+def test_gti_wrong_prototype_tile(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index")
     lyr.CreateField(ogr.FieldDefn("location"))
@@ -273,9 +273,9 @@ def test_vrttileindex_wrong_prototype_tile(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_prototype_tile_no_gt(tmp_vsimem):
+def test_gti_prototype_tile_no_gt(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     del ds
@@ -291,9 +291,9 @@ def test_vrttileindex_prototype_tile_no_gt(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_prototype_tile_wrong_gt_3rd_value(tmp_vsimem):
+def test_gti_prototype_tile_wrong_gt_3rd_value(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     del ds
@@ -312,9 +312,9 @@ def test_vrttileindex_prototype_tile_wrong_gt_3rd_value(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_prototype_tile_wrong_gt_5th_value(tmp_vsimem):
+def test_gti_prototype_tile_wrong_gt_5th_value(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     del ds
@@ -333,9 +333,9 @@ def test_vrttileindex_prototype_tile_wrong_gt_5th_value(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
+def test_gti_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     del ds
@@ -354,9 +354,9 @@ def test_vrttileindex_prototype_tile_wrong_gt_6th_value(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_no_extent(tmp_vsimem):
+def test_gti_no_extent(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
@@ -373,9 +373,9 @@ def test_vrttileindex_no_extent(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_too_big_x(tmp_vsimem):
+def test_gti_too_big_x(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     ds.SetGeoTransform([0, 1e-30, 0, 0, 0, -1])
@@ -393,9 +393,9 @@ def test_vrttileindex_too_big_x(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_too_big_y(tmp_vsimem):
+def test_gti_too_big_y(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     protods_filename = str(tmp_vsimem / "protods_filename.tif")
     ds = gdal.GetDriverByName("GTiff").Create(protods_filename, 1, 1)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1e-30])
@@ -413,9 +413,9 @@ def test_vrttileindex_too_big_y(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_location_field_missing(tmp_vsimem):
+def test_gti_location_field_missing(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     # Missing LOCATION_FIELD and non-default location field name
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
@@ -428,9 +428,9 @@ def test_vrttileindex_location_field_missing(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_location_field_set(tmp_vsimem):
+def test_gti_location_field_set(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     # LOCATION_FIELD set
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
@@ -445,9 +445,9 @@ def test_vrttileindex_location_field_set(tmp_vsimem):
 
 
 @pytest.mark.parametrize("missing_item", ["RESX", "RESY"])
-def test_vrttileindex_resx_resy(tmp_vsimem, missing_item):
+def test_gti_resx_resy(tmp_vsimem, missing_item):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -478,9 +478,9 @@ def test_vrttileindex_resx_resy(tmp_vsimem, missing_item):
 
 
 @pytest.mark.parametrize("missing_item", [None, "XSIZE", "YSIZE", "GEOTRANSFORM"])
-def test_vrttileindex_width_height_geotransform(tmp_vsimem, missing_item):
+def test_gti_width_height_geotransform(tmp_vsimem, missing_item):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -508,9 +508,9 @@ def test_vrttileindex_width_height_geotransform(tmp_vsimem, missing_item):
             gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_width(tmp_vsimem):
+def test_gti_wrong_width(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -524,9 +524,9 @@ def test_vrttileindex_wrong_width(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_height(tmp_vsimem):
+def test_gti_wrong_height(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -540,9 +540,9 @@ def test_vrttileindex_wrong_height(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_blockxsize(tmp_vsimem):
+def test_gti_wrong_blockxsize(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -553,9 +553,9 @@ def test_vrttileindex_wrong_blockxsize(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_blockysize(tmp_vsimem):
+def test_gti_wrong_blockysize(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -566,9 +566,9 @@ def test_vrttileindex_wrong_blockysize(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_blockxsize_blockysize(tmp_vsimem):
+def test_gti_wrong_blockxsize_blockysize(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -580,9 +580,9 @@ def test_vrttileindex_wrong_blockxsize_blockysize(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_gt(tmp_vsimem):
+def test_gti_wrong_gt(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -598,9 +598,9 @@ def test_vrttileindex_wrong_gt(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_gt_3rd_term(tmp_vsimem):
+def test_gti_wrong_gt_3rd_term(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -613,9 +613,9 @@ def test_vrttileindex_wrong_gt_3rd_term(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_gt_5th_term(tmp_vsimem):
+def test_gti_wrong_gt_5th_term(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -628,9 +628,9 @@ def test_vrttileindex_wrong_gt_5th_term(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_gt_6th_term(tmp_vsimem):
+def test_gti_wrong_gt_6th_term(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -644,9 +644,9 @@ def test_vrttileindex_wrong_gt_6th_term(tmp_vsimem):
 
 
 @pytest.mark.parametrize("missing_item", [None, "MINX", "MINY", "MAXX", "MAXY"])
-def test_vrttileindex_minx_miny_maxx_maxy(tmp_vsimem, missing_item):
+def test_gti_minx_miny_maxx_maxy(tmp_vsimem, missing_item):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -688,9 +688,9 @@ def test_vrttileindex_minx_miny_maxx_maxy(tmp_vsimem, missing_item):
             gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_resx(tmp_vsimem):
+def test_gti_wrong_resx(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -702,9 +702,9 @@ def test_vrttileindex_wrong_resx(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_resy(tmp_vsimem):
+def test_gti_wrong_resy(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -716,9 +716,9 @@ def test_vrttileindex_wrong_resy(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_minx(tmp_vsimem):
+def test_gti_wrong_minx(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -736,9 +736,9 @@ def test_vrttileindex_wrong_minx(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_miny(tmp_vsimem):
+def test_gti_wrong_miny(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -756,9 +756,9 @@ def test_vrttileindex_wrong_miny(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_resx_wrt_min_max_xy(tmp_vsimem):
+def test_gti_wrong_resx_wrt_min_max_xy(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -775,9 +775,9 @@ def test_vrttileindex_wrong_resx_wrt_min_max_xy(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_wrong_resy_wrt_min_max_xy(tmp_vsimem):
+def test_gti_wrong_resy_wrt_min_max_xy(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -794,9 +794,9 @@ def test_vrttileindex_wrong_resy_wrt_min_max_xy(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_invalid_srs(tmp_vsimem):
+def test_gti_invalid_srs(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -807,9 +807,9 @@ def test_vrttileindex_invalid_srs(tmp_vsimem):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_valid_srs(tmp_vsimem):
+def test_gti_valid_srs(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -820,9 +820,9 @@ def test_vrttileindex_valid_srs(tmp_vsimem):
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "4267"
 
 
-def test_vrttileindex_invalid_band_count(tmp_vsimem):
+def test_gti_invalid_band_count(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -854,9 +854,9 @@ def test_vrttileindex_invalid_band_count(tmp_vsimem):
         ),
     ],
 )
-def test_vrttileindex_inconsistent_number_of_values(tmp_vsimem, md, error_msg):
+def test_gti_inconsistent_number_of_values(tmp_vsimem, md, error_msg):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -889,9 +889,9 @@ def test_vrttileindex_inconsistent_number_of_values(tmp_vsimem, md, error_msg):
         ),
     ],
 )
-def test_vrttileindex_valid_nodata(tmp_vsimem, md, expected_nodata):
+def test_gti_valid_nodata(tmp_vsimem, md, expected_nodata):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -921,9 +921,9 @@ def test_vrttileindex_valid_nodata(tmp_vsimem, md, expected_nodata):
         ),
     ],
 )
-def test_vrttileindex_invalid_nodata(tmp_vsimem, md, error_msg):
+def test_gti_invalid_nodata(tmp_vsimem, md, error_msg):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -949,9 +949,9 @@ def test_vrttileindex_invalid_nodata(tmp_vsimem, md, error_msg):
         ),
     ],
 )
-def test_vrttileindex_invalid_data_type(tmp_vsimem, md, error_msg):
+def test_gti_invalid_data_type(tmp_vsimem, md, error_msg):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -980,9 +980,9 @@ def test_vrttileindex_invalid_data_type(tmp_vsimem, md, error_msg):
         ),
     ],
 )
-def test_vrttileindex_invalid_color_interpretation(tmp_vsimem, md, error_msg):
+def test_gti_invalid_color_interpretation(tmp_vsimem, md, error_msg):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -994,9 +994,9 @@ def test_vrttileindex_invalid_color_interpretation(tmp_vsimem, md, error_msg):
         gdal.Open(index_filename)
 
 
-def test_vrttileindex_no_metadata_rgb(tmp_vsimem):
+def test_gti_no_metadata_rgb(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "small_world.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
@@ -1006,9 +1006,9 @@ def test_vrttileindex_no_metadata_rgb(tmp_vsimem):
     check_basic(vrt_ds, src_ds)
 
 
-def test_vrttileindex_rgb_left_right(tmp_vsimem):
+def test_gti_rgb_left_right(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open("data/small_world.tif")
 
@@ -1047,11 +1047,11 @@ def test_vrttileindex_rgb_left_right(tmp_vsimem):
 
     assert (
         vrt_ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-        == "<LocationInfo><File>/vsimem/test_vrttileindex_rgb_left_right/left.tif</File></LocationInfo>"
+        == "<LocationInfo><File>/vsimem/test_gti_rgb_left_right/left.tif</File></LocationInfo>"
     )
 
 
-def test_vrttileindex_overlapping_sources(tmp_vsimem):
+def test_gti_overlapping_sources(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 1)
@@ -1066,7 +1066,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     del ds
 
     # No sorting field: feature with max FID has the priority
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, _ = create_basic_tileindex(
         index_filename, [gdal.Open(filename1), gdal.Open(filename2)]
     )
@@ -1076,7 +1076,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2
 
     # Test unsupported sort_field_type = OFTBinary
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [None, None]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1091,7 +1091,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
         gdal.Open(index_filename)
 
     # Test non existent SORT_FIELD
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [None, None]
     index_ds, lyr = create_basic_tileindex(index_filename, gdal.Open(filename1))
     lyr.SetMetadataItem("SORT_FIELD", "non_existing")
@@ -1101,7 +1101,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
         gdal.Open(index_filename)
 
     # Test sort_field_type = OFTString
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = ["2", "1"]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1129,7 +1129,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 1, sort_values
 
     # Test sort_field_type = OFTString
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = ["1", "1"]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1144,7 +1144,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2, sort_values
 
     # Test sort_field_type = OFTInteger
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [2, 1]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1172,7 +1172,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 1, sort_values
 
     # Test sort_field_type = OFTInteger64
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1234567890123 + 2, 1234567890123 + 1]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1200,7 +1200,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 1, sort_values
 
     # Test sort_field_type = OFTReal
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [2.5, 1.5]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1228,7 +1228,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 1, sort_values
 
     # Test sort_field_type = OFTDate
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     for sort_values in [
         ["2023-01-01", "2022-12-31"],
         ["2023-02-01", "2023-01-31"],
@@ -1260,7 +1260,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
         assert vrt_ds.GetRasterBand(1).Checksum() == 1, sort_values
 
     # Test sort_field_type = OFTDateTime
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     for sort_values in [
         ["2023-01-01T00:00:00", "2022-12-31T23:59:59"],
         ["2023-02-01T00:00:00", "2023-01-31T23:59:59"],
@@ -1295,7 +1295,7 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
         assert vrt_ds.GetRasterBand(1).Checksum() == 1, sort_values
 
     # Test SORT_FIELD_ASC=NO
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, lyr = create_basic_tileindex(
         index_filename,
         [gdal.Open(filename1), gdal.Open(filename2)],
@@ -1310,9 +1310,9 @@ def test_vrttileindex_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2, sort_values
 
 
-def test_vrttileindex_no_source(tmp_vsimem):
+def test_gti_no_source(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, lyr = create_basic_tileindex(index_filename, [])
     lyr.SetMetadataItem("XSIZE", "2")
     lyr.SetMetadataItem("YSIZE", "3")
@@ -1351,9 +1351,9 @@ def test_vrttileindex_no_source(tmp_vsimem):
     )
 
 
-def test_vrttileindex_invalid_source(tmp_vsimem):
+def test_gti_invalid_source(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index", geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn("location"))
@@ -1382,7 +1382,7 @@ def test_vrttileindex_invalid_source(tmp_vsimem):
         vrt_ds.ReadRaster()
 
 
-def test_vrttileindex_source_relative_location(tmp_vsimem):
+def test_gti_source_relative_location(tmp_vsimem):
 
     tile_filename = str(tmp_vsimem / "tile.tif")
     ds = gdal.GetDriverByName("GTiff").Create(tile_filename, 1, 1)
@@ -1390,7 +1390,7 @@ def test_vrttileindex_source_relative_location(tmp_vsimem):
     ds.GetRasterBand(1).Fill(255)
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index", geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn("location"))
@@ -1411,14 +1411,14 @@ def test_vrttileindex_source_relative_location(tmp_vsimem):
     assert vrt_ds.ReadRaster() == b"\xFF"
 
 
-def test_vrttileindex_source_lacks_bands(tmp_vsimem):
+def test_gti_source_lacks_bands(tmp_vsimem):
 
     tile_filename = str(tmp_vsimem / "tile.tif")
     ds = gdal.GetDriverByName("GTiff").Create(tile_filename, 1, 1)
     ds.SetGeoTransform([10, 1, 0, 20, 0, -1])
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index", geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn("location"))
@@ -1440,14 +1440,14 @@ def test_vrttileindex_source_lacks_bands(tmp_vsimem):
         vrt_ds.ReadRaster()
 
 
-def test_vrttileindex_source_lacks_bands_and_relative_location(tmp_vsimem):
+def test_gti_source_lacks_bands_and_relative_location(tmp_vsimem):
 
     tile_filename = str(tmp_vsimem / "tile.tif")
     ds = gdal.GetDriverByName("GTiff").Create(tile_filename, 1, 1)
     ds.SetGeoTransform([10, 1, 0, 20, 0, -1])
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
     lyr = index_ds.CreateLayer("index", geom_type=ogr.wkbPolygon)
     lyr.CreateField(ogr.FieldDefn("location"))
@@ -1470,9 +1470,9 @@ def test_vrttileindex_source_lacks_bands_and_relative_location(tmp_vsimem):
 
 
 @pytest.mark.require_driver("netCDF")
-def test_vrttileindex_source_netcdf_subdataset_absolute(tmp_path):
+def test_gti_source_netcdf_subdataset_absolute(tmp_path):
 
-    index_filename = str(tmp_path / "index.vrt.gpkg")
+    index_filename = str(tmp_path / "index.gti.gpkg")
     src_ds = gdal.Open(
         'netCDF:"' + os.path.join(os.getcwd(), "data", "netcdf", "byte.nc") + '":Band1'
     )
@@ -1483,11 +1483,11 @@ def test_vrttileindex_source_netcdf_subdataset_absolute(tmp_path):
 
 
 @pytest.mark.require_driver("netCDF")
-def test_vrttileindex_source_netcdf_subdataset_relative(tmp_path):
+def test_gti_source_netcdf_subdataset_relative(tmp_path):
 
     tmp_netcdf_filename = str(tmp_path / "byte.nc")
     shutil.copy("data/netcdf/byte.nc", tmp_netcdf_filename)
-    index_filename = str(tmp_path / "index.vrt.gpkg")
+    index_filename = str(tmp_path / "index.gti.gpkg")
     cwd = os.getcwd()
     try:
         os.chdir(tmp_path)
@@ -1500,7 +1500,7 @@ def test_vrttileindex_source_netcdf_subdataset_relative(tmp_path):
     assert gdal.Open(index_filename) is not None
 
 
-def test_vrttileindex_single_source_nodata_same_as_vrt(tmp_vsimem):
+def test_gti_single_source_nodata_same_as_vrt(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 3, 1, 3)
@@ -1513,7 +1513,7 @@ def test_vrttileindex_single_source_nodata_same_as_vrt(tmp_vsimem):
     ds.GetRasterBand(3).SetNoDataValue(1)
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, lyr = create_basic_tileindex(index_filename, gdal.Open(filename1))
     lyr.SetMetadataItem("NODATA", "1")
     del index_ds
@@ -1522,11 +1522,11 @@ def test_vrttileindex_single_source_nodata_same_as_vrt(tmp_vsimem):
     assert vrt_ds.ReadRaster() == b"\x01\x02\x01" + b"\x01\x03\x01" + b"\x01\x04\x01"
     assert (
         vrt_ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-        == "<LocationInfo><File>/vsimem/test_vrttileindex_single_source_nodata_same_as_vrt/one.tif</File></LocationInfo>"
+        == "<LocationInfo><File>/vsimem/test_gti_single_source_nodata_same_as_vrt/one.tif</File></LocationInfo>"
     )
 
 
-def test_vrttileindex_overlapping_sources_nodata(tmp_vsimem):
+def test_gti_overlapping_sources_nodata(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 3, 1)
@@ -1542,7 +1542,7 @@ def test_vrttileindex_overlapping_sources_nodata(tmp_vsimem):
     ds.GetRasterBand(1).SetNoDataValue(3)
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, lyr = create_basic_tileindex(
         index_filename,
@@ -1559,11 +1559,11 @@ def test_vrttileindex_overlapping_sources_nodata(tmp_vsimem):
 
     assert (
         vrt_ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-        == "<LocationInfo><File>/vsimem/test_vrttileindex_overlapping_sources_nodata/one.tif</File><File>/vsimem/test_vrttileindex_overlapping_sources_nodata/two.tif</File></LocationInfo>"
+        == "<LocationInfo><File>/vsimem/test_gti_overlapping_sources_nodata/one.tif</File><File>/vsimem/test_gti_overlapping_sources_nodata/two.tif</File></LocationInfo>"
     )
 
 
-def test_vrttileindex_on_the_fly_rgb_color_table_expansion(tmp_vsimem):
+def test_gti_on_the_fly_rgb_color_table_expansion(tmp_vsimem):
 
     tile_filename = str(tmp_vsimem / "color_table.tif")
     tile_ds = gdal.GetDriverByName("GTiff").Create(tile_filename, 1, 1)
@@ -1573,7 +1573,7 @@ def test_vrttileindex_on_the_fly_rgb_color_table_expansion(tmp_vsimem):
     assert tile_ds.GetRasterBand(1).SetRasterColorTable(ct) == gdal.CE_None
     tile_ds = None
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, lyr = create_basic_tileindex(index_filename, gdal.Open(tile_filename))
     lyr.SetMetadataItem("BAND_COUNT", "3")
     lyr.SetMetadataItem("COLOR_INTERPRETATION", "Red,Green,Blue")
@@ -1585,7 +1585,7 @@ def test_vrttileindex_on_the_fly_rgb_color_table_expansion(tmp_vsimem):
     assert vrt_ds.GetRasterBand(3).ReadRaster() == b"\x03"
 
 
-def test_vrttileindex_on_the_fly_rgba_color_table_expansion(tmp_vsimem):
+def test_gti_on_the_fly_rgba_color_table_expansion(tmp_vsimem):
 
     tile_filename = str(tmp_vsimem / "color_table.tif")
     tile_ds = gdal.GetDriverByName("GTiff").Create(tile_filename, 1, 1)
@@ -1595,7 +1595,7 @@ def test_vrttileindex_on_the_fly_rgba_color_table_expansion(tmp_vsimem):
     assert tile_ds.GetRasterBand(1).SetRasterColorTable(ct) == gdal.CE_None
     tile_ds = None
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, lyr = create_basic_tileindex(index_filename, gdal.Open(tile_filename))
     lyr.SetMetadataItem("BAND_COUNT", "4")
     lyr.SetMetadataItem("COLOR_INTERPRETATION", "Red,Green,Blue,Alpha")
@@ -1608,9 +1608,9 @@ def test_vrttileindex_on_the_fly_rgba_color_table_expansion(tmp_vsimem):
     assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xFF"
 
 
-def test_vrttileindex_on_the_fly_warping(tmp_vsimem):
+def test_gti_on_the_fly_warping(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     warped_ds = gdal.Warp("", src_ds, format="VRT", dstSRS="EPSG:4267")
@@ -1660,7 +1660,7 @@ def test_vrttileindex_on_the_fly_warping(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1) == b"\xFE"
 
 
-def test_vrttileindex_single_source_alpha_no_dest_nodata(tmp_vsimem):
+def test_gti_single_source_alpha_no_dest_nodata(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 2, 1, 2)
@@ -1670,7 +1670,7 @@ def test_vrttileindex_single_source_alpha_no_dest_nodata(tmp_vsimem):
     ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xFF\x00")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, _ = create_basic_tileindex(index_filename, gdal.Open(filename1))
     del index_ds
 
@@ -1684,7 +1684,7 @@ def test_vrttileindex_single_source_alpha_no_dest_nodata(tmp_vsimem):
     assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xFF\x00"
 
 
-def test_vrttileindex_overlapping_opaque_sources(tmp_vsimem):
+def test_gti_overlapping_opaque_sources(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 1, 1)
@@ -1698,7 +1698,7 @@ def test_vrttileindex_overlapping_opaque_sources(tmp_vsimem):
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\x02")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1715,11 +1715,11 @@ def test_vrttileindex_overlapping_opaque_sources(tmp_vsimem):
 
     assert (
         vrt_ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-        == "<LocationInfo><File>/vsimem/test_vrttileindex_overlapping_opaque_sources/two.tif</File></LocationInfo>"
+        == "<LocationInfo><File>/vsimem/test_gti_overlapping_opaque_sources/two.tif</File></LocationInfo>"
     )
 
 
-def test_vrttileindex_overlapping_sources_alpha_2x1(tmp_vsimem):
+def test_gti_overlapping_sources_alpha_2x1(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 2, 1, 2)
@@ -1737,7 +1737,7 @@ def test_vrttileindex_overlapping_sources_alpha_2x1(tmp_vsimem):
     ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x00\xFE")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1775,7 +1775,7 @@ def test_vrttileindex_overlapping_sources_alpha_2x1(tmp_vsimem):
     )
 
 
-def test_vrttileindex_overlapping_sources_alpha_1x2(tmp_vsimem):
+def test_gti_overlapping_sources_alpha_1x2(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 2, 2)
@@ -1793,7 +1793,7 @@ def test_vrttileindex_overlapping_sources_alpha_1x2(tmp_vsimem):
     ds.GetRasterBand(2).WriteRaster(0, 0, 1, 2, b"\x00\xFE")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1827,7 +1827,7 @@ def test_vrttileindex_overlapping_sources_alpha_1x2(tmp_vsimem):
     )
 
 
-def test_vrttileindex_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
+def test_gti_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 17, 1, 2)
@@ -1869,7 +1869,7 @@ def test_vrttileindex_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
     )
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1892,7 +1892,7 @@ def test_vrttileindex_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
     )
 
 
-def test_vrttileindex_mix_rgb_rgba(tmp_vsimem):
+def test_gti_mix_rgb_rgba(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "rgba.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 2, 1, 4)
@@ -1912,7 +1912,7 @@ def test_vrttileindex_mix_rgb_rgba(tmp_vsimem):
     ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, b"\x0C\x0D")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1931,7 +1931,7 @@ def test_vrttileindex_mix_rgb_rgba(tmp_vsimem):
     assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xFF\xFF"
     assert vrt_ds.ReadRaster() == b"\x07\x08" + b"\x0A\x0B" + b"\x0C\x0D" + b"\xFF\xFF"
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [2, 1]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -1951,7 +1951,7 @@ def test_vrttileindex_mix_rgb_rgba(tmp_vsimem):
     assert vrt_ds.ReadRaster() == b"\x01\x08" + b"\x03\x0B" + b"\x05\x0D" + b"\xFE\xFF"
 
 
-def test_vrttileindex_overlapping_sources_mask_band(tmp_vsimem):
+def test_gti_overlapping_sources_mask_band(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 2, 1)
@@ -1969,7 +1969,7 @@ def test_vrttileindex_overlapping_sources_mask_band(tmp_vsimem):
     ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFE")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [1, 2]
     index_ds, _ = create_basic_tileindex(
         index_filename,
@@ -2002,9 +2002,9 @@ def test_vrttileindex_overlapping_sources_mask_band(tmp_vsimem):
     ) == (255, 254)
 
 
-def test_vrttileindex_mask_band_explicit(tmp_vsimem):
+def test_gti_mask_band_explicit(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2019,7 +2019,7 @@ def test_vrttileindex_mask_band_explicit(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\xFF" * (20 * 20)
 
 
-def test_vrttileindex_flushcache(tmp_vsimem):
+def test_gti_flushcache(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 1, 1, 1)
@@ -2027,7 +2027,7 @@ def test_vrttileindex_flushcache(tmp_vsimem):
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\x01")
     del ds
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
     index_ds, _ = create_basic_tileindex(
         index_filename,
         gdal.Open(filename1),
@@ -2051,9 +2051,9 @@ def test_vrttileindex_flushcache(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x02"
 
 
-def test_vrttileindex_ovr_factor(tmp_vsimem):
+def test_gti_ovr_factor(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2089,9 +2089,9 @@ def test_vrttileindex_ovr_factor(tmp_vsimem):
     ) == src_ds.ReadRaster(buf_xsize=10, buf_ysize=10)
 
 
-def test_vrttileindex_ovr_factor_invalid(tmp_vsimem):
+def test_gti_ovr_factor_invalid(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2103,9 +2103,9 @@ def test_vrttileindex_ovr_factor_invalid(tmp_vsimem):
         assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
 
-def test_vrttileindex_ovr_ds_name(tmp_vsimem):
+def test_gti_ovr_ds_name(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2117,9 +2117,9 @@ def test_vrttileindex_ovr_ds_name(tmp_vsimem):
         assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
 
-def test_vrttileindex_ovr_lyr_name(tmp_vsimem):
+def test_gti_ovr_lyr_name(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2131,9 +2131,9 @@ def test_vrttileindex_ovr_lyr_name(tmp_vsimem):
         assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
 
-def test_vrttileindex_external_ovr(tmp_vsimem):
+def test_gti_external_ovr(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
@@ -2149,9 +2149,9 @@ def test_vrttileindex_external_ovr(tmp_vsimem):
     ) == src_ds.ReadRaster(buf_xsize=10, buf_ysize=10, resample_alg=gdal.GRIORA_Cubic)
 
 
-def test_vrttileindex_dataset_metadata(tmp_vsimem):
+def test_gti_dataset_metadata(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2192,9 +2192,9 @@ def test_vrttileindex_dataset_metadata(tmp_vsimem):
     del vrt_ds
 
 
-def test_vrttileindex_band_metadata(tmp_vsimem):
+def test_gti_band_metadata(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
@@ -2283,31 +2283,31 @@ def test_vrttileindex_band_metadata(tmp_vsimem):
     }
 
 
-def test_vrttileindex_connection_prefix(tmp_vsimem):
+def test_gti_connection_prefix(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
-    vrt_ds = gdal.Open(f"VRTTI:{index_filename}")
+    vrt_ds = gdal.Open(f"GTI:{index_filename}")
     check_basic(vrt_ds, src_ds)
     del vrt_ds
 
 
-def test_vrttileindex_xml(tmp_vsimem):
+def test_gti_xml(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
     del index_ds
 
     xml_filename = str(tmp_vsimem / "index.xml")
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
 
     vrt_ds = gdal.Open(xml_content)
     check_basic(vrt_ds, src_ds)
@@ -2335,14 +2335,14 @@ def test_vrttileindex_xml(tmp_vsimem):
         }
         del vrt_ds
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <Filter>invalid</Filter>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(Exception, match="failed to prepare SQL"):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <ResX>60</ResX>
   <ResY>60</ResY>
@@ -2359,7 +2359,7 @@ def test_vrttileindex_xml(tmp_vsimem):
       <CategoryNames><Category>cat</Category></CategoryNames>
       <GDALRasterAttributeTable/>
   </Band>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
 
     vrt_ds = gdal.Open(xml_content)
     band = vrt_ds.GetRasterBand(1)
@@ -2375,79 +2375,79 @@ def test_vrttileindex_xml(tmp_vsimem):
     assert band.GetDefaultRAT() is not None
     del vrt_ds
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <ResX>60</ResX>
   <ResY>60</ResY>
   <Band/>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(Exception, match="band attribute missing on Band element"):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <ResX>60</ResX>
   <ResY>60</ResY>
   <Band band="-1" dataType="UInt16"/>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(Exception, match="Invalid band number"):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <ResX>60</ResX>
   <ResY>60</ResY>
   <Band band="2" dataType="UInt16"/>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(Exception, match="Invalid band number: found 2, expected 1"):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <ResX>60</ResX>
   <ResY>60</ResY>
   <BandCount>2</BandCount>
   <Band band="1" dataType="UInt16"/>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(
         Exception, match="Inconsistent BandCount with actual number of Band elements"
     ):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
           <Factor>2</Factor>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 10
     del vrt_ds
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
           <Dataset>{index_filename}</Dataset>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 20
     del vrt_ds
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
           <Layer>index</Layer>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 20
     del vrt_ds
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
           <Layer>index</Layer>
@@ -2455,13 +2455,13 @@ def test_vrttileindex_xml(tmp_vsimem):
               <OOI name="@FACTOR">2</OOI>
           </OpenOptions>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrt_ds.GetRasterBand(1).GetOverview(0).XSize == 10
     del vrt_ds
 
-    xml_content = """<VRTTileIndexDataset"""
+    xml_content = """<GDALTileIndexDataset"""
     with pytest.raises(
         Exception,
         match="Parse error at EOF",
@@ -2475,75 +2475,75 @@ def test_vrttileindex_xml(tmp_vsimem):
         ):
             gdal.Open(xml_filename)
 
-    xml_content = """<foo><![CDATA[<VRTTileIndexDataset]]></foo>"""
+    xml_content = """<foo><![CDATA[<GDALTileIndexDataset]]></foo>"""
     with gdaltest.tempfile(xml_filename, xml_content):
         with pytest.raises(
             Exception,
-            match="Missing VRTTileIndexDataset root element",
+            match="Missing GDALTileIndexDataset root element",
         ):
             gdal.Open(xml_filename)
 
-    xml_content = """<VRTTileIndexDataset/>"""
+    xml_content = """<GDALTileIndexDataset/>"""
     with pytest.raises(
         Exception,
         match="Missing IndexDataset element",
     ):
         gdal.Open(xml_content)
 
-    xml_content = """<VRTTileIndexDataset>
+    xml_content = """<GDALTileIndexDataset>
     <IndexDataset>i_do_not_exist</IndexDataset>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(
         Exception,
         match="i_do_not_exist",
     ):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
   <IndexLayer>i_do_not_exist</IndexLayer>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(
         Exception,
         match="i_do_not_exist",
     ):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     with pytest.raises(
         Exception,
         match="At least one of Dataset, Layer or Factor element must be present as an Overview child",
     ):
         gdal.Open(xml_content)
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
           <Dataset>i_do_not_exist</Dataset>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     with pytest.raises(Exception, match="i_do_not_exist"):
         assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
-    xml_content = f"""<VRTTileIndexDataset>
+    xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
       <Overview>
           <Layer>i_do_not_exist</Layer>
       </Overview>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     with pytest.raises(Exception, match="i_do_not_exist"):
         assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
 
 
-def test_vrttileindex_open_options(tmp_vsimem):
+def test_gti_open_options(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, _ = create_basic_tileindex(index_filename, src_ds)
@@ -2555,14 +2555,14 @@ def test_vrttileindex_open_options(tmp_vsimem):
     )
 
 
-def test_vrttileindex_xml_vrtti_embedded(tmp_vsimem):
+def test_gti_xml_vrtti_embedded(tmp_vsimem):
 
-    index_filename = str(tmp_vsimem / "index.vrt.gpkg")
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
 
     src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
     index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
 
-    xml_content = """<VRTTileIndexDataset>
+    xml_content = """<GDALTileIndexDataset>
   <ResX>60</ResX>
   <ResY>60</ResY>
   <SortField>location</SortField>
@@ -2578,9 +2578,9 @@ def test_vrttileindex_xml_vrtti_embedded(tmp_vsimem):
       <CategoryNames><Category>cat</Category></CategoryNames>
       <GDALRasterAttributeTable/>
   </Band>
-</VRTTileIndexDataset>"""
+</GDALTileIndexDataset>"""
 
-    lyr.SetMetadata([xml_content], "xml:VRTTI")
+    lyr.SetMetadata([xml_content], "xml:GTI")
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)

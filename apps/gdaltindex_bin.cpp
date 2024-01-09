@@ -52,7 +52,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
         "                  [-src_srs_name field_name] [-src_srs_format "
         "{AUTO|WKT|EPSG|PROJ}]\n"
         "                  [-lyr_name <name>]\n"
-        "                  [-vrtti_filename <name>]\n"
+        "                  [-gti_filename <name>]\n"
         "                  [-tr <xres> <yres>] [-te <xmin> <ymin> <xmax> "
         "<ymax>]\n"
         "                  [-ot <datatype>] [-bandcount <val>] [-nodata "

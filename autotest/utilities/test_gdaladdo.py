@@ -378,11 +378,11 @@ def test_gdaladdo_reuse_previous_resampling_and_levels(
 
 
 ###############################################################################
-# Test --partial-refresh-from-source-timestamp with VRTTI dataset
+# Test --partial-refresh-from-source-timestamp with GTI dataset
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdaladdo_partial_refresh_from_source_timestamp_vrtti(gdaladdo_path, tmp_path):
+def test_gdaladdo_partial_refresh_from_source_timestamp_gti(gdaladdo_path, tmp_path):
 
     left_tif = str(tmp_path / "left.tif")
     right_tif = str(tmp_path / "right.tif")
@@ -391,7 +391,7 @@ def test_gdaladdo_partial_refresh_from_source_timestamp_vrtti(gdaladdo_path, tmp
     gdal.Translate(right_tif, "../gcore/data/byte.tif", options="-srcwin 10 0 10 20")
 
     source_ds = [gdal.Open(left_tif), gdal.Open(right_tif)]
-    tmp_vrt = str(tmp_path / "test.vrt.gpkg")
+    tmp_vrt = str(tmp_path / "test.gti.gpkg")
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmp_vrt)
     lyr = index_ds.CreateLayer("index", srs=source_ds[0].GetSpatialRef())
     lyr.CreateField(ogr.FieldDefn("location"))

@@ -94,9 +94,9 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
     }
 
     if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-        ENDS_WITH_CI(poOpenInfo->pszFilename, ".vrt.gpkg"))
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
     {
-        // Handled by VRT driver
+        // Handled by GTI driver
         return FALSE;
     }
 

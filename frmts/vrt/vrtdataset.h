@@ -1024,8 +1024,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
   protected:
     friend class VRTSourcedRasterBand;
     friend class VRTDataset;
-    friend class VRTTileIndexDataset;
-    friend class VRTTileIndexBand;
+    friend class GDALTileIndexDataset;
+    friend class GDALTileIndexBand;
 
     int m_nBand = 0;
     bool m_bGetMaskBand = false;
