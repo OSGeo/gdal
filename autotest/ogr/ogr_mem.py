@@ -746,6 +746,16 @@ def test_ogr_mem_arrow_stream_pycapsule_interface():
         # "something" should rather by a PyCapsule with an ArrowSchema...
         lyr.__arrow_c_stream__(requested_schema="something")
 
+    # Also test GetArrowArrayStreamInterface() to be able to specify options
+    stream = lyr.GetArrowArrayStreamInterface(
+        {"INCLUDE_FID": "NO"}
+    ).__arrow_c_stream__()
+    assert stream
+    t = type(stream)
+    assert t.__module__ == "builtins"
+    assert t.__name__ == "PyCapsule"
+    del stream
+
 
 ###############################################################################
 

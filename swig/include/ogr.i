@@ -1523,12 +1523,12 @@ public:
 
 #ifdef SWIGPYTHON
 
-    PyObject* ExportArrowArrayStreamPyCapsule()
+    PyObject* ExportArrowArrayStreamPyCapsule(char** options = NULL)
     {
         struct ArrowArrayStream* stream =
             (struct ArrowArrayStream*)CPLMalloc(sizeof(struct ArrowArrayStream));
 
-        const int success = OGR_L_GetArrowStream(self, stream, NULL);
+        const int success = OGR_L_GetArrowStream(self, stream, options);
 
         PyObject* ret;
         SWIG_PYTHON_THREAD_BEGIN_BLOCK;
