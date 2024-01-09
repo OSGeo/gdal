@@ -25,6 +25,7 @@ struct MM_CAMP *MM_CreateAllFields(int ncamps);
 MM_FIRST_RECORD_OFFSET_TYPE MM_GiveOffsetExtendedFieldName(const struct MM_CAMP *camp);
 struct MM_BASE_DADES_XP * MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps, MM_BYTE nCharSet);
 MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF);
+void MM_ReleaseMainFields(struct MM_BASE_DADES_XP * base_dades_XP);
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP);
 MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitxer);
 int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp_inicial);

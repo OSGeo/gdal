@@ -2586,7 +2586,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         /*      Create the output data source. */
         /* --------------------------------------------------------------------
          */
-        poODS = poDriver->Create(osDestFilename, 0, 0, 0, GDT_Unknown,
+       poODS = poDriver->Create(osDestFilename, 0, 0, 0, GDT_Unknown,
                                  aosDSCO.List());
         if (poODS == nullptr)
         {

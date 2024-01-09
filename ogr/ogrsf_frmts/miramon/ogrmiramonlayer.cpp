@@ -160,6 +160,17 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 hMiraMonLayer.bNameNeedsCorrection = 1;
             }
         }
+        if (poSRS)
+        {
+            //m_poSRS = poSRS->Clone();
+            //m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+            if (poSRS->GetAuthorityName(nullptr) &&
+                    EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
+                hMiraMonLayer.pSRS = CPLStrdup(poSRS->GetAuthorityCode(nullptr));
+        }
+        
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     }
     else
     {
@@ -299,15 +310,13 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 }
             }
         }
-        else
+        
+        if (poSRS)
         {
-            if (poSRS)
-            {
-                m_poSRS = poSRS->Clone();
-                m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            }
+            m_poSRS = poSRS->Clone();
+            m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
-
+        
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     }
 
@@ -709,6 +718,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 /************************************************************************/
 GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 {
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
+        return OGRLayer::GetFeatureCount(bForce);
+
     if(hMiraMonLayer.bIsPolygon)
         return (GIntBig)hMiraMonLayer.TopHeader.nElemCount-1;
     else
@@ -1011,7 +1023,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     if (poFeatureDefn->GetFieldCount() == 0)
         return OGRERR_NONE;
 
-    // If the structure i fill we do anything
+    // If the structure is filled we do anything
     if(hMiraMonLayer.pLayerDB)
         return OGRERR_NONE;
 
@@ -1097,13 +1109,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                 char* pszString =
                     CPLRecode(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
                         CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
-                for (size_t i = 0; pszString[i] != '\0'; i++)
-                {
-                    if (pszString[i] == ' ')
-                        pszString[i] = '_';
-                }
                 MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldName,
                     pszString, MM_MAX_LON_FIELD_NAME_DBF);
+                CPLFree(pszString);
             }
             
             if (poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef())
@@ -1111,11 +1119,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                 char* pszString =
                     CPLRecode(poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef(),
                         CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
-                for (size_t i = 0; pszString[i] != '\0'; i++)
-                {
-                    if (pszString[i] == ' ')
-                        pszString[i] = '_';
-                }
                 MM_strnzcpy(hMiraMonLayer.pLayerDB->pFields[iField].pszFieldDescription,
                     pszString, MM_MAX_BYTES_FIELD_DESC);
                 CPLFree(pszString);

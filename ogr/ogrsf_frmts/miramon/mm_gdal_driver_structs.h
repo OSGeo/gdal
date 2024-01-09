@@ -12,7 +12,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #else
 #include "mm_gdal\mm_gdal_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
-// Falta això o es queixa a diversos llocs
+// Falta aixÃ² o es queixa a diversos llocs
 #include "str_snyd.h"	// Per a struct SNY_TRANSFORMADOR_GEODESIA  
 #endif
 
@@ -281,14 +281,6 @@ struct MiraMonRasterMetaData
     char **pValueUnit;
     MM_BOOLEAN *pHasANoDataVaule;
     double *pNoDataValue;
-
-	/*
-    ·$· Metadata que s'ha de calcular/revisar mentre s'afegeixen features:    
-        Nom fitxer de sortida per cada banda
-        Mínim i màxim dels valors dels píxels
-        DonaMD_CoverageContentType? (revisar GDALMM2.c sobre la línia 632
-            
-            */
 };
 
 // MIRAMON DATA BASE

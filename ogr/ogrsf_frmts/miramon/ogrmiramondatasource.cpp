@@ -248,7 +248,6 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     VSIFCloseL(fp);
     return nullptr;
-
 }
 
 /************************************************************************/

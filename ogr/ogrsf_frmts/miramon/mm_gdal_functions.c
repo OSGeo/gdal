@@ -394,17 +394,14 @@ char *_subindex;
 char subindex[6];
 size_t longsubindex;
 size_t longnomcamp;
-       					/* Faig un duplicat del nom del camp. */
-						/* El duplicat ha de tenir de amplada size_t ampladamax */
+       					
     NomCamp_SubIndex = calloc_function(ampladamax*sizeof(char));
     if(!NomCamp_SubIndex)
         return NULL;
     
     strcpy (NomCamp_SubIndex, nom_camp);
 
-    /* Convertir el subindex en car�cters.	*/
-	//itoa((int)index, subindex, 10);
-	sprintf(subindex, "%I64u", (unsigned __int64)index);
+    sprintf(subindex, "%I64u", (unsigned __int64)index);
 
 	_subindex = MM_GiveNewStringWithCharacterAhead(subindex, '_');
     longsubindex = strlen(_subindex);
@@ -433,7 +430,7 @@ MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
 MM_BOOLEAN MM_UpdateEntireHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 {
 MM_BYTE variable_byte;
-MM_EXT_DBF_N_FIELDS i, j=0;  // Per a fer callar el compilador
+MM_EXT_DBF_N_FIELDS i, j=0;
 const size_t max_n_zeros=11;
 char *zero;
 const MM_BYTE byte_zero=0;
@@ -495,7 +492,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         return FALSE;
     }
 
-    /* MM_BYTE de 1 a 3 */
+    /* MM_BYTE from 1 to 3 */
     variable_byte = (MM_BYTE)(base_dades_XP->any-1900);
     if(fwrite_function(&variable_byte, 1, 1, base_dades_XP->pfBaseDades) != 1)
         return FALSE;
@@ -505,15 +502,15 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     if (fwrite_function(&(base_dades_XP->dia), 1, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
-    /* de 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
+    /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
     if (fwrite_function(&(base_dades_XP->nRecords), 4, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
-    /* de 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
+    /* from 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
-    /* de 10 a 11, i de 12 a 13 */
+    /* from 10 to 11, & from 12 to 13 */
     if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf))
     {
         if (fwrite_function(&(base_dades_XP->BytesPerFitxa), sizeof(MM_TIPUS_BYTES_ACUMULATS_DBF), 1,
@@ -522,11 +519,11 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     }
     else
     {
-        /* de 10 a 11 */
+        /* from 10 to 11 */
         if (fwrite_function(&(base_dades_XP->BytesPerFitxa), 2, 1,
                     base_dades_XP->pfBaseDades) != 1)
             return FALSE;
-        /* de 12 a 13 */
+        /* from 12 to 13 */
         if (fwrite_function(&(base_dades_XP->reservat_1), 2, 1,
                     base_dades_XP->pfBaseDades) != 1)
             return FALSE;
@@ -540,7 +537,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
 
-    /* de 16 a 27 */
+    /* from 16 to 27 */
     if (base_dades_XP->nRecords < _UI32_MAX)
     {
         if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 12, 1,
@@ -549,12 +546,12 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     }
     else
     {
-        /* de 16 a 19, position MM_SECOND_OFFSET_to_N_RECORDS */
+        /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
         if (fwrite_function((char*)&(base_dades_XP->nRecords), 4, 1,
             base_dades_XP->pfBaseDades) != 1)
             return FALSE;
 
-        /* de 20 a 27 */
+        /* from 20 to 27 */
         if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 8, 1,
             base_dades_XP->pfBaseDades) != 1)
             return FALSE;
@@ -569,7 +566,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
 
-    /* Bytes 30 a 31, a MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
+    /* Bytes from 30 to 31, in position MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
     if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf))
     {
         if (fwrite_function(((char*)&(base_dades_XP->OffsetPrimeraFitxa))+2, 2, 1,
@@ -585,14 +582,13 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     
 
 
-	/* Al byte 32 comen�a la descripci�	 */
-	/* dels camps. Cada descripci� ocupa */
-	/* 32 bytes.						 */
+	/* At 32th byte begins fields description	*/
+	/* Every description is 32 bytes long       */
     bytes_acumulats=32+32*(base_dades_XP->ncamps)+1;
 
 	for (i = 0; i < base_dades_XP->ncamps; i++)
 	{
-		/* Bytes de 0 a 10	-> Nom del camp, acabat amb \0				*/
+		/* Bytes from 0 to 10	-> Field name, \0 finished */
 		estat=MM_ISExtendedNameBD_XP(base_dades_XP->Camp[i].NomCamp);
 		if(estat==MM_NOM_DBF_CLASSICA_I_VALID || estat==MM_NOM_DBF_MINUSCULES_I_VALID)
         {
@@ -619,10 +615,8 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
                	{
 					char *c;
 
-					// Modifico el nom a la base de dades !
 					c=MM_SetSubIndexFieldNam(nom_temp, i, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
 
-					//el nom que acabo de construir, existeix a la base de dades?
 					j = 0;
 					while (MM_CheckClassicFieldNameEqual(base_dades_XP, c) == TRUE && j < base_dades_XP->ncamps)
 					{
@@ -630,7 +624,6 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 						c = MM_SetSubIndexFieldNam(nom_temp, ++j, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
 					}
 
-					// Deso el nom del camp a l'estructura
 					strcpy(base_dades_XP->Camp[i].NomCampDBFClassica, c);
 					free_function(c);
                 }
@@ -662,19 +655,19 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
             free_function(zero);
 			return FALSE;
 		}
-        /* Byte 11, Tipus de Camp */
+        /* Byte 11, Field type */
         if (fwrite_function(&base_dades_XP->Camp[i].TipusDeCamp, 1, 1, base_dades_XP->pfBaseDades) != 1)
         {
             free_function(zero);
 			return FALSE;
 		}
-        /* Bytes 12 a 15 --> Reservats */
+        /* Bytes 12 to 15 --> Reserved */
         if (fwrite_function(&base_dades_XP->Camp[i].reservat_1, 4, 1, base_dades_XP->pfBaseDades) != 1)
         {
             free_function(zero);
 			return FALSE;
 		}
-        /* Byte 16, o OFFSET_BYTESxCAMP_CAMP_CLASSIC --> BytesPerCamp */
+        /* Byte 16, or OFFSET_BYTESxCAMP_CAMP_CLASSIC --> BytesPerCamp */
         if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf) && base_dades_XP->Camp[i].TipusDeCamp=='C')
         {
             if (fwrite_function((void *)&byte_zero, 1, 1, base_dades_XP->pfBaseDades) != 1)
@@ -682,7 +675,6 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
                 free_function(zero);
 			    return FALSE;
 		    }
-            // De moment he escrit un zero. A OFFSET_BYTESxCAMP_CAMP_ESPECIAL escriur� el que toca.
         }
         else
         {
@@ -692,7 +684,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 		        return FALSE;
 		    }
         }
-        /* Byte 17 --> En els camps 'N' i 'F' indica els decimals.*/
+        /* 17th byte 17 --> In Fields, 'N' and 'F' indicate the decimals.*/
         if(base_dades_XP->Camp[i].TipusDeCamp == 'N' || base_dades_XP->Camp[i].TipusDeCamp == 'F')
         {
             if (fwrite_function(&base_dades_XP->Camp[i].DecimalsSiEsFloat, 1, 1, base_dades_XP->pfBaseDades) != 1)
@@ -711,21 +703,21 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         }
         if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf) && base_dades_XP->Camp[i].TipusDeCamp=='C')
         {
-            /* Bytes de 18 a 20 --> Reservats */
+            /* Bytes from 18 to 20 --> Reserved */
             if (fwrite_function(&base_dades_XP->Camp[i].reservat_2, 20-18+1, 1, base_dades_XP->pfBaseDades) != 1)
             {
                 free_function(zero);
 		        return FALSE;
 		    }
-            /* Bytes de 21 a 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, longitud de camps especials, com els C
-                                    en DBF esteses */
+            /* Bytes from 21 to 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, special fields, like C
+                                    in extended DBF's */
             if (fwrite_function(&base_dades_XP->Camp[i].BytesPerCamp, sizeof(MM_TIPUS_BYTES_PER_CAMP_DBF), 1, base_dades_XP->pfBaseDades) != 1)
             {
                 free_function(zero);
 		        return FALSE;
 		    }
 
-            /* Bytes de 25 a 30 --> Reservats */
+            /* Bytes from 25 to 30 --> Reserved */
             if (fwrite_function(&base_dades_XP->Camp[i].reservat_2[25-18], 30-25+1, 1, base_dades_XP->pfBaseDades) != 1)
             {
                 free_function(zero);
@@ -734,10 +726,9 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         }
         else
         {
-            /* Bytes de 21 a 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, longitud de camps especials, que ja no ho s�n,
-                                    com els C en DBF esteses */
+            /* Bytes de 21 a 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, special fields, like C */
             memset(base_dades_XP->Camp[i].reservat_2+MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL, '\0', 4);
-            /* Bytes de 18 a 30 --> Reservats */
+            /* Bytes from 18 to 30 --> Reserved */
             if (fwrite_function(&base_dades_XP->Camp[i].reservat_2, 13, 1, base_dades_XP->pfBaseDades) != 1)
             {
                 free_function(zero);
@@ -758,50 +749,12 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 	if (fwrite_function(&variable_byte, 1, 1, base_dades_XP->pfBaseDades) != 1)
         return FALSE;
     
-    // Cal veure que tinguem el lloc suficient per a col�locar els noms estesos
-    // no f�s cas que ara tingu�ssin, no m�s camps, sin� m�s noms estesos
-    // o noms m�s llargs que abans.
     
-    #ifdef NOT_USED_IN_GDAL
-    if(base_dades_XP->OffsetPrimeraFitxa!=bytes_acumulats)
-    {
-        if(TraslladaFragmentFinalDeFitxer_64(base_dades_XP->pfBaseDades,
-                bytes_acumulats, base_dades_XP->OffsetPrimeraFitxa,
-                base_dades_XP->szNomFitxer))
-        {
-            return FALSE;
-        }
-        base_dades_XP->OffsetPrimeraFitxa=bytes_acumulats;
-        // Tornem a escriure l'offset de la primera fitxa
-        /* de 8 a 9, posici� MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
-        offset_actual=ftell_function(base_dades_XP->pfBaseDades);
-        fseek_function(base_dades_XP->pfBaseDades, MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA, SEEK_SET);
-        if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1, 
-                    base_dades_XP->pfBaseDades) != 1)
-            return FALSE;
-        /* Bytes 30 a 31, a MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
-        fseek_function(base_dades_XP->pfBaseDades, MM_SEGON_OFFSET_a_OFFSET_1a_FITXA, SEEK_SET);
-        if (MM_ES_DBF_ESTESA(base_dades_XP->versio_dbf))
-        {
-            if (fwrite_function(((char*)&(base_dades_XP->OffsetPrimeraFitxa))+2, 2, 1,
-                    base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
-        }
-        else
-        {
-            if (fwrite_function(&(base_dades_XP->reservat_2), 2, 1,
-                    base_dades_XP->pfBaseDades) != 1)
-                return FALSE;
-        }
-        fseek_function(base_dades_XP->pfBaseDades, offset_actual, SEEK_SET);
-    }
-    #else
     if(base_dades_XP->OffsetPrimeraFitxa!=bytes_acumulats)
         return FALSE;    
-    #endif //NOT_USED_IN_GDAL
 
-    // Guardem els noms estesos (en els casos que en tinguem).
-	for (i = 0; i < base_dades_XP->ncamps; i++)
+    // Extended fields
+    for (i = 0; i < base_dades_XP->ncamps; i++)
 	{
 		if(MM_NOM_DBF_ESTES_I_VALID==MM_ISExtendedNameBD_XP(base_dades_XP->Camp[i].NomCamp))
         {
@@ -810,10 +763,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
 
             fseek_function(base_dades_XP->pfBaseDades, bytes_acumulats, SEEK_SET);
 
-        	// No podem usar el NomCamp (per ser massa gran) i guardem el que ja teniem guardat
-            // a NomCampDBFClassica.
-            // Vigilem en quin joc de car�cters escrivim
-            strcpy(nom_camp, base_dades_XP->Camp[i].NomCamp);
+        	strcpy(nom_camp, base_dades_XP->Camp[i].NomCamp);
             //CanviaJocCaracPerEscriureDBF(nom_camp, JocCaracDBFaMM(base_dades_XP->JocCaracters, ParMM.JocCaracDBFPerDefecte));
 
             retorn_fwrite=fwrite_function(nom_camp, 1, mida_nom, base_dades_XP->pfBaseDades);
@@ -846,7 +796,7 @@ MM_EXT_DBF_N_FIELDS i;
 size_t j;
 char **cadena;
 
-	if (base_dades_XP->Camp) /* Si la cap�alera no t� cap camp el punter �s NULL */
+	if (base_dades_XP->Camp)
 	{
 		for (i=0; i<base_dades_XP->ncamps; i++)
         {
@@ -941,7 +891,7 @@ int retorn=0;
 			}
 			if (i==100)
 			{
-				camp->NomCamp[strlen(camp->NomCamp)-2]='\0';  //Trec els 2 d�gits.
+				camp->NomCamp[strlen(camp->NomCamp)-2]='\0';
 				if (strlen(camp->NomCamp)>mida_nom-4)
 					camp->NomCamp[mida_nom-4]='\0';
 				strcat(camp->NomCamp, "000");
@@ -1071,7 +1021,7 @@ size_t i;
 }
 
 static const char MM_LletresMajusculesOEM850[]="µ·ÔÖÞàãéëØš€¥ŽÇ¶ÓÒ×™âåêíÑ";
-static const char MM_LletresMinusculesOEM850[]=" …‚Š¡¢•£—‹‡¤„Æƒ†‰ˆŒ”“ä–ìÐ";
+static const char MM_LletresMinusculesOEM850[]=" …‚Š¡¢•£—‹‡¤„Æƒ†‰ˆŒ”“ä–ìÐ";
 char *MM_PassaAMajuscules(char *linia)
 {
     const char *pm;
@@ -1327,12 +1277,12 @@ int retorn_printf;
 	if (!valor_double)
     {
         retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
-        if (retorn_printf==EOF) // Poc probable, per�...
+        if (retorn_printf==EOF)
         {
             *cadena=*MM_CadenaBuida;
             return retorn_printf;
         }
-        // retorn_printf �s el mateix que strlen(cadena_treball)
+     
         if (retorn_printf>amplada)
         {
         	int escurcament=retorn_printf-amplada;
@@ -1357,8 +1307,7 @@ int retorn_printf;
          valor_double>-VALOR_MASSA_PETIT_PER_IMPRIMIR_f) )
     {
         retorn_printf=sprintf (cadena_treball, "%*.*E", amplada, n_decimals, valor_double);
-        // retorn_printf �s el mateix que strlen(cadena_treball)
-        if (retorn_printf==EOF) // Poc probable, per�...
+        if (retorn_printf==EOF)
         {
             *cadena=*MM_CadenaBuida;
             return retorn_printf;
@@ -1382,12 +1331,12 @@ int retorn_printf;
     }
 
     retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
-    if (retorn_printf==EOF) // Poc probable, per�...
+    if (retorn_printf==EOF)
     {
         *cadena=*MM_CadenaBuida;
         return retorn_printf;
     }
-    // retorn_printf �s el mateix que strlen(cadena_treball)
+
     if (retorn_printf>amplada)
     {
         int escurcament=retorn_printf-amplada;
@@ -1935,134 +1884,6 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
 		}while (id_grafic==i);
 	}
 }//Fi de MMCreateExtendedDBFIndex()
-
-// If n_bytes is USHRT_MAX the translation is until '\0' is found.,
-char *MM_oemansi_n(char *szcadena, size_t n_bytes)
-{
-size_t u_i;
-unsigned char *punter_bait;
-unsigned char t_oemansi[128]=
-	/*
-	// Conversió OEM_850 -> ANSI. Copiada del conversor de Borland NOMÉS HI HA ELS 128 MÉS ALTS
-	{	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
-		196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
-		163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
-		172, 189, 188, 161, 171, 187,  95,  95,  95, 166, 166, 193, 194, 192,
-		169, 166, 166,  43,  43, 162, 165,  43,  43,  45,  45,  43,  45,  43,
-		227, 195,  43,  43,  45,  45, 166,  45,  43, 164, 240, 208, 202, 203,
-		200, 105, 205, 206, 207,  43,  43,  95,  95, 166, 204,  95, 211, 223,
-		212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
-		173, 177,  95, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
-		 95,  32
-	};*/
-	// Conversió OEM_850 -> ANSI. Copiada del conversor de Borland però evitant usar caràcters
-    // substituts menors a 128, de forma que les cerques de cadenes que no contenen caràcters
-    // estesos poden ser molt més ràpides perquè no cal convertir les cadenes. L'explicació del
-    // criteri de canvi en cada caràcter és al fitxer OEM_ANSI_amb_valors_inferiors_a_128.xls
-    // (directori include\general), en la pestanya OEM_a_ANSI, però en essència
-    // el que s'ha fet és substituir les vores de bloc tan típiques dels requadres
-    // en aplicacions DOS per un valor 164, que també és una forma que pot servir
-    // per definir una cenefa (en comptes de jugar amb signes positius i negatius),
-    // evitar l'ús de subratllat arbitrari com a substitut de caràcters que no
-    // se sap com convertir en favor del mateix valor 164 i evitar un espai en blanc
-    // usant un petit punt volat. El valor 164 té la gràcia que coincideix en dibuixet
-    // amb el SUBSTITUT_RECOMANAT_ANSI_OEM.
-    // NOMÉS HI HA ELS 128 MÉS ALTS
-	{	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
-		196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
-		163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
-		172, 189, 188, 161, 171, 187, 164, 164, 164, 166, 166, 193, 194, 192,
-		169, 166, 166, 164, 164, 162, 165, 164, 164, 164, 164, 164, 164, 164,
-		227, 195, 164, 164, 164, 164, 166, 164, 164, 164, 240, 208, 202, 203,
-		200, 180, 205, 206, 207, 164, 164, 164, 164, 166, 204, 164, 211, 223,
-		212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
-		173, 177, 164, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
-		164, 183
-	};
-	if (n_bytes==USHRT_MAX) /* Bandera que m'indica que és una cadena
-							acabada en '\0' i que l'he de recórrer tota
-							en lloc d'usar el propi valor de n_bytes. */
-		for ( punter_bait = (unsigned char *)szcadena; *punter_bait; punter_bait++)
-		{
-			if ( *punter_bait > 127)
-				*punter_bait = t_oemansi[*punter_bait-128];
-		} /* Clau IMPRESCINDIBLE per tal que el següent "else" es refereixi
-			al primer if i no al de *punter_bait > 127 */
-	else
-		for ( u_i=0, punter_bait = (unsigned char *)szcadena;
-			u_i<n_bytes; punter_bait++, u_i++)
-		{
-			if ( *punter_bait > 127)
-				*punter_bait = t_oemansi[*punter_bait-128];
-		}
-	return szcadena;
-}
-
-#ifdef CODIFICATION_NEED_TO_BE_FINISHED
-char * MM_ansioem_n(char *szcadena, enum AnsiOemMode mode, int substitut)
-{
-size_t u_i;
-unsigned char *punter_bait;
-unsigned char t_ansioem_Borland[128]=
-	 {	128, 129, 207, 159, 207, 207, 253, 252, 136, 207, 207, 207, 207, 141,
-		142, 143, 144, 39/*207*/, 39/*207*/, 34/*207*/, 34/*207*/, 250, 45/*240*/, 45/*240*/, 152, 153, 207, 207,
-		207, 157, 158, 237, 250, 173, 189, 156, 207, 190, 221, 245, 249, 184,
-		166, 174, 170, 240, 169, 238, 248, 241, 253, 252, 239, 230, 244, 250,
-		247, 251, 167, 175, 172, 171, 243, 168, 183, 181, 182, 199, 142, 143,
-		146, 128, 212, 144, 210, 211, 222, 214, 215, 216, 209, 165, 227, 224,
-		226, 229, 153, 158, 157, 235, 233, 234, 154, 237, 232, 225, 133, 160,
-		131, 198, 132, 134, 145, 135, 138, 130, 136, 137, 141, 161, 140, 139,
-		208, 164, 149, 162, 147, 228, 148, 246, 155, 151, 163, 150, 129, 236,
-		231, 152
-	};
-
-unsigned char SEstricta[NumSEstricta] =
-	{	128, 129, 132, 133, 134, 135, 136, 137, 140, 141, 142,
-		143, 144,
-        152, 153, 156, 157, 158,
-		159
-	};
-
-
-    if (ModePreviANSIOEM_local != mode)
-    {
-        if (t_ansioem_treball == NULL)
-        {
-            if ((t_ansioem_treball = (unsigned char*)malloc(128)) == NULL)
-            {
-                puts("\n\aNo memory");
-                return NULL;
-            }
-        }
-        memcpy(t_ansioem_treball, t_ansioem_Borland, 128);
-
-        if (mode == 1)
-        {
-            for (u_i = 0; u_i < NumSEstricta; u_i++)
-                t_ansioem_treball[SEstricta[u_i] - 128] = (unsigned char)substitut;
-        }
-		
-		ModePreviANSIOEM_local = mode;
-	}
-
-    for (punter_bait = (unsigned char*)szcadena; *punter_bait; punter_bait++)
-    {
-        if (*punter_bait > 127)
-            *punter_bait = t_ansioem_treball[*punter_bait - 128];
-    }
-
-	return szcadena;
-}
-
-char *MM_CanviaJocCaracLlegitDeDBF_CONSOLE(char *s, int joc_carac)
-{
-   	if (joc_carac==MM_JOC_CARAC_ANSI_MM)
-        MM_ansioem_n(s, 1, 207);
-    else if(joc_carac==MM_JOC_CARAC_UTF8_MM)
-		UTF8AChar(s,s,strlen(s)+1);	
-	return s;
-}
-#endif // CODIFICATION_NEED_TO_BE_FINISHED
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

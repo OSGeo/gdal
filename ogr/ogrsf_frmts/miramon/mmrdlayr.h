@@ -33,7 +33,7 @@ MM_TIPUS_ERROR MMRecuperaUltimError(void);
 #define MM32DLL_POL 	3
 
 int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem);
-int MM_ReadExtendedDBFHeaderFromFile(struct MM_BASE_DADES_XP *pMMBDXP, char * pszRelFile);
+int MM_ReadExtendedDBFHeaderFromFile(const char * szFileName, struct MM_BASE_DADES_XP *pMMBDXP, char * pszRelFile);
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
 #ifdef GDAL_COMPILATION

@@ -37,7 +37,7 @@
 static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (poOpenInfo->fpL == nullptr)
+    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes<7)
         return FALSE;
     else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||

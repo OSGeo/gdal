@@ -551,7 +551,7 @@ struct MM_PH *pPolHeader;
 
 
 // READING THE HEADER OF AN EXTENDED DBF
-int MM_ReadExtendedDBFHeaderFromFile(struct MM_BASE_DADES_XP *pMMBDXP, char * pszRelFile)
+int MM_ReadExtendedDBFHeaderFromFile(const char * szFileName, struct MM_BASE_DADES_XP *pMMBDXP, char * pszRelFile)
 {
 MM_BYTE  variable_byte;
 FILE_TYPE *pf;
@@ -570,7 +570,12 @@ char cpg_file[MM_MAX_PATH];
 char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 unsigned __int32 second_part_n_records;
+unsigned __int32 nRecords;
 
+    if(!szFileName)
+        return 1;
+
+    strcpy(pMMBDXP->szNomFitxer, szFileName);
     strcpy(pMMBDXP->ModeLectura, "rb");
 
 	if ((pMMBDXP->pfBaseDades=fopen_function(pMMBDXP->szNomFitxer,
@@ -592,12 +597,35 @@ unsigned __int32 second_part_n_records;
     /* ====== Header reading (32 bytes) =================== */
 	offset_primera_fitxa=0;
 
-	if (1!=fread_function(&(pMMBDXP->versio_dbf), 1, 1, pf) ||
+    if (1!=fread_function(&(pMMBDXP->versio_dbf), 1, 1, pf) ||
 		1!=fread_function(&variable_byte, 1, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->mes), 1, 1, pf) ||
-		1!=fread_function(&(pMMBDXP->dia), 1, 1, pf) ||
-		1!=fread_function(&pMMBDXP->nRecords, 4, 1, pf) ||
-		1!=fread_function(&offset_primera_fitxa, 2, 1, pf))
+		1!=fread_function(&(pMMBDXP->dia), 1, 1, pf))
+	{
+		fclose_function(pf);
+        return 1;
+	}
+
+    if (!second_part_n_records)
+    {
+        if (1 != fread_function(&nRecords, 4, 1, pf))
+        {
+            fclose_function(pf);
+            return 1;
+        }
+        pMMBDXP->nRecords=nRecords;
+    }
+    else
+    {
+        //·$· Revisar!!
+        if (1 != fread_function(&pMMBDXP->nRecords, 4, 1, pf))
+        {
+            fclose_function(pf);
+            return 1;
+        }
+    }
+
+    if (1!=fread_function(&offset_primera_fitxa, 2, 1, pf))
 	{
 		fclose_function(pf);
         return 1;
@@ -664,9 +692,11 @@ unsigned __int32 second_part_n_records;
 	// Checking for a cpg file
 	if (pMMBDXP->JocCaracters==0)
 	{
+        FILE *f_cpg;
+
         strcpy(cpg_file, pMMBDXP->szNomFitxer);
         reset_extension(cpg_file, ".cpg");
-        FILE *f_cpg=fopen(cpg_file, "rt");
+        f_cpg=fopen(cpg_file, "rt");
         if(f_cpg)
         {
             char local_message[11];
@@ -901,6 +931,7 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
 char * pszRelFile=NULL;
 struct MM_BASE_DADES_XP *pMMBDXP;
+const char *szDBFFileName=NULL;
 
 
      pMMBDXP=hMiraMonLayer->pMMBDXP=calloc_function(sizeof(*pMMBDXP));
@@ -908,23 +939,23 @@ struct MM_BASE_DADES_XP *pMMBDXP;
     if (hMiraMonLayer->bIsPoint)
     {
         hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP = pMMBDXP;
-        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName);
+        szDBFFileName=hMiraMonLayer->MMPoint.MMAdmDB.pszExtDBFLayerName;
         pszRelFile=hMiraMonLayer->MMPoint.pszREL_LayerName;
     }
     else if (hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
         hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP = pMMBDXP;
-        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMArc.MMAdmDB.pszExtDBFLayerName);
+        szDBFFileName=hMiraMonLayer->MMArc.MMAdmDB.pszExtDBFLayerName;
         pszRelFile=hMiraMonLayer->MMArc.pszREL_LayerName;
     }
     else if(hMiraMonLayer->bIsPolygon)
     {
         hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP=pMMBDXP;
-        strcpy(pMMBDXP->szNomFitxer, hMiraMonLayer->MMPolygon.MMAdmDB.pszExtDBFLayerName);
+        szDBFFileName=hMiraMonLayer->MMPolygon.MMAdmDB.pszExtDBFLayerName;
         pszRelFile=hMiraMonLayer->MMPolygon.pszREL_LayerName;
     }        
 
-    if(MM_ReadExtendedDBFHeaderFromFile(pMMBDXP, pszRelFile))
+    if(MM_ReadExtendedDBFHeaderFromFile(szDBFFileName, pMMBDXP, pszRelFile))
         return 1;
 
     fclose_function(pMMBDXP->pfBaseDades);
