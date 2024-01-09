@@ -111,8 +111,8 @@ def test_numpy_rw_multidim_numpy_array_as_dataset():
         np.int32,
         np.float32,
         np.float64,
-        np.cfloat,
-        np.cdouble,
+        np.complex64,
+        np.complex128,
     ):
         ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=typ)
         ds = gdal_array.OpenMultiDimensionalNumPyArray(ar)
@@ -123,7 +123,7 @@ def test_numpy_rw_multidim_numpy_array_as_dataset():
         assert myarray
         assert np.array_equal(myarray.ReadAsArray(), ar)
 
-    ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.unicode_)
+    ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.str_)
     with pytest.raises(
         Exception, match="Unable to access numpy arrays of typecode `U'"
     ):
@@ -190,8 +190,8 @@ def test_numpy_rw_multidim_numpy_array_as_dataset_negative_strides():
         np.int32,
         np.float32,
         np.float64,
-        np.cfloat,
-        np.cdouble,
+        np.complex64,
+        np.complex128,
     ):
         ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=typ)
         ar = ar[::-1, ::-1]  # Test negative strides
