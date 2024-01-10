@@ -342,6 +342,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     /* -------------------------------------------------------------------- */
     MMCloseLayer(&hMiraMonLayer);
 	MMFreeLayer(&hMiraMonLayer);
+    MMDestroyFeature(&hMMFeature);
 
     /* -------------------------------------------------------------------- */
     /*      Clean up.                                                       */

@@ -664,7 +664,7 @@ struct MiraMonVectLayerInfo
     MM_FILE_OFFSET OffsetCheck;
 
     // EPSG code of the coordinate system information.
-    char *pSRS; // User has to free it.
+    char *pSRS;
     int nSRS_EPSG; // Ref. system if has EPSG code. 
 
     // In GDAL->MiraMon sense:

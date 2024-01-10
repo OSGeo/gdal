@@ -57,14 +57,6 @@
 CPL_C_START  // Necessary for compiling in GDAL project
 #endif
 
-static MM_TIPUS_ERROR lastErrorMM;
-
-MM_TIPUS_ERROR MMRecuperaUltimError(void)
-{
-	return lastErrorMM;
-}
-
-
 int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, const char *pszFilename)
 {
 char szResult[MM_MAX_ID_SNY+10];

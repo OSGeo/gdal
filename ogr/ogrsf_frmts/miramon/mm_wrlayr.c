@@ -1436,32 +1436,36 @@ int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
-    hMiraMonLayer->nFinalElemCount=hMiraMonLayer->TopHeader.nElemCount;
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        hMiraMonLayer->nFinalElemCount = hMiraMonLayer->TopHeader.nElemCount;
 
-    if(MMWriteHeader(hMiraMonLayer->MMPoint.pF, &hMiraMonLayer->TopHeader))
-        return 1;
-    hMiraMonLayer->OffsetCheck=hMiraMonLayer->nHeaderDiskSize;
+        if (MMWriteHeader(hMiraMonLayer->MMPoint.pF, &hMiraMonLayer->TopHeader))
+            return 1;
+        hMiraMonLayer->OffsetCheck = hMiraMonLayer->nHeaderDiskSize;
 
-    // TL Section
-    hMiraMonLayer->MMPoint.FlushTL.SizeOfBlockToBeSaved=0;
-    if(MM_AppendBlockToBuffer(&hMiraMonLayer->MMPoint.FlushTL))
-        return 1;
-    if(MMMoveFromFileToFile(hMiraMonLayer->MMPoint.pFTL, 
+        // TL Section
+        hMiraMonLayer->MMPoint.FlushTL.SizeOfBlockToBeSaved = 0;
+        if (MM_AppendBlockToBuffer(&hMiraMonLayer->MMPoint.FlushTL))
+            return 1;
+        if (MMMoveFromFileToFile(hMiraMonLayer->MMPoint.pFTL,
             hMiraMonLayer->MMPoint.pF, &hMiraMonLayer->OffsetCheck))
-        return 1;
-    fclose_function(hMiraMonLayer->MMPoint.pFTL);
-    remove_function(hMiraMonLayer->MMPoint.pszTLName);
-    
-    if(MMClose3DSectionLayer(hMiraMonLayer, 
-        hMiraMonLayer->TopHeader.nElemCount,
-        hMiraMonLayer->MMPoint.pF, 
-        hMiraMonLayer->MMPoint.pF3d, 
-        hMiraMonLayer->MMPoint.psz3DLayerName,
-        &hMiraMonLayer->MMPoint.pZSection,
-        hMiraMonLayer->OffsetCheck))
-        return 1;
+            return 1;
 
-    fclose_function(hMiraMonLayer->MMPoint.pF);
+        fclose_function(hMiraMonLayer->MMPoint.pFTL);
+        remove_function(hMiraMonLayer->MMPoint.pszTLName);
+
+        if (MMClose3DSectionLayer(hMiraMonLayer,
+            hMiraMonLayer->TopHeader.nElemCount,
+            hMiraMonLayer->MMPoint.pF,
+            hMiraMonLayer->MMPoint.pF3d,
+            hMiraMonLayer->MMPoint.psz3DLayerName,
+            &hMiraMonLayer->MMPoint.pZSection,
+            hMiraMonLayer->OffsetCheck))
+            return 1;
+    }
+    if(hMiraMonLayer->MMPoint.pF)
+        fclose_function(hMiraMonLayer->MMPoint.pF);
     return 0;
 }
 
@@ -1471,31 +1475,34 @@ struct MiraMonArcLayer *pMMArcLayer;
 
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
-    if(hMiraMonLayer->bIsPolygon)
-        pMMArcLayer=&hMiraMonLayer->MMPolygon.MMArc;
+    if (hMiraMonLayer->bIsPolygon)
+        pMMArcLayer = &hMiraMonLayer->MMPolygon.MMArc;
     else
-        pMMArcLayer=&hMiraMonLayer->MMArc;
+        pMMArcLayer = &hMiraMonLayer->MMArc;
 
-    if(MMWriteHeader(pMMArcLayer->MMNode.pF, &pMMArcLayer->TopNodeHeader))
-        return 1;
-    hMiraMonLayer->OffsetCheck=hMiraMonLayer->nHeaderDiskSize;
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        if (MMWriteHeader(pMMArcLayer->MMNode.pF, &pMMArcLayer->TopNodeHeader))
+            return 1;
+        hMiraMonLayer->OffsetCheck = hMiraMonLayer->nHeaderDiskSize;
 
-    // NH Section
-    if(MMWriteNHNodeSection(hMiraMonLayer, hMiraMonLayer->nHeaderDiskSize))
-        return 1;
+        // NH Section
+        if (MMWriteNHNodeSection(hMiraMonLayer, hMiraMonLayer->nHeaderDiskSize))
+            return 1;
 
-    // NL Section
-    pMMArcLayer->MMNode.FlushNL.SizeOfBlockToBeSaved=0;
-    if(MM_AppendBlockToBuffer(&pMMArcLayer->MMNode.FlushNL))
-        return 1;
-    if(MMMoveFromFileToFile(pMMArcLayer->MMNode.pFNL, 
+        // NL Section
+        pMMArcLayer->MMNode.FlushNL.SizeOfBlockToBeSaved = 0;
+        if (MM_AppendBlockToBuffer(&pMMArcLayer->MMNode.FlushNL))
+            return 1;
+        if (MMMoveFromFileToFile(pMMArcLayer->MMNode.pFNL,
             pMMArcLayer->MMNode.pF, &hMiraMonLayer->OffsetCheck))
-        return 1;
+            return 1;
 
-    if(pMMArcLayer->MMNode.pFNL)
-        fclose_function(pMMArcLayer->MMNode.pFNL);
-    if(pMMArcLayer->MMNode.pszNLName)
-        remove_function(pMMArcLayer->MMNode.pszNLName);
+        if (pMMArcLayer->MMNode.pFNL)
+            fclose_function(pMMArcLayer->MMNode.pFNL);
+        if (pMMArcLayer->MMNode.pszNLName)
+            remove_function(pMMArcLayer->MMNode.pszNLName);
+    }
 
     if(pMMArcLayer->MMNode.pF)
         fclose_function(pMMArcLayer->MMNode.pF);
@@ -1510,49 +1517,51 @@ struct MM_TH *pArcTopHeader;
 
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
-    if(hMiraMonLayer->bIsPolygon)
+    if (hMiraMonLayer->bIsPolygon)
     {
-        pMMArcLayer=&hMiraMonLayer->MMPolygon.MMArc;
-        pArcTopHeader=&hMiraMonLayer->MMPolygon.TopArcHeader;
+        pMMArcLayer = &hMiraMonLayer->MMPolygon.MMArc;
+        pArcTopHeader = &hMiraMonLayer->MMPolygon.TopArcHeader;
     }
     else
     {
-        pMMArcLayer=&hMiraMonLayer->MMArc;
-        pArcTopHeader=&hMiraMonLayer->TopHeader;
+        pMMArcLayer = &hMiraMonLayer->MMArc;
+        pArcTopHeader = &hMiraMonLayer->TopHeader;
     }
+            
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        hMiraMonLayer->nFinalElemCount = pArcTopHeader->nElemCount;
 
-    
-    hMiraMonLayer->nFinalElemCount=pArcTopHeader->nElemCount;
-    
-    if(MMWriteHeader(pMMArcLayer->pF, pArcTopHeader))
-        return 1;
-    hMiraMonLayer->OffsetCheck=hMiraMonLayer->nHeaderDiskSize;
-    
-    // AH Section
-    if(MMWriteAHArcSection(hMiraMonLayer, hMiraMonLayer->OffsetCheck))
-        return 1;
+        if (MMWriteHeader(pMMArcLayer->pF, pArcTopHeader))
+            return 1;
+        hMiraMonLayer->OffsetCheck = hMiraMonLayer->nHeaderDiskSize;
 
-    // AL Section
-    pMMArcLayer->FlushAL.SizeOfBlockToBeSaved=0;
-    if(MM_AppendBlockToBuffer(&pMMArcLayer->FlushAL))
-        return 1;
-    if(MMMoveFromFileToFile(pMMArcLayer->pFAL, pMMArcLayer->pF, 
-        &hMiraMonLayer->OffsetCheck))
-        return 1;
-    if(pMMArcLayer->pFAL)
-        fclose_function(pMMArcLayer->pFAL);
-    if(pMMArcLayer->pszALName)
-        remove_function(pMMArcLayer->pszALName);
+        // AH Section
+        if (MMWriteAHArcSection(hMiraMonLayer, hMiraMonLayer->OffsetCheck))
+            return 1;
 
-    // 3D Section
-    if(MMClose3DSectionLayer(hMiraMonLayer, 
+        // AL Section
+        pMMArcLayer->FlushAL.SizeOfBlockToBeSaved = 0;
+        if (MM_AppendBlockToBuffer(&pMMArcLayer->FlushAL))
+            return 1;
+        if (MMMoveFromFileToFile(pMMArcLayer->pFAL, pMMArcLayer->pF,
+            &hMiraMonLayer->OffsetCheck))
+            return 1;
+        if (pMMArcLayer->pFAL)
+            fclose_function(pMMArcLayer->pFAL);
+        if (pMMArcLayer->pszALName)
+            remove_function(pMMArcLayer->pszALName);
+
+        // 3D Section
+        if (MMClose3DSectionLayer(hMiraMonLayer,
             pArcTopHeader->nElemCount,
-            pMMArcLayer->pF, 
-            pMMArcLayer->pF3d, 
+            pMMArcLayer->pF,
+            pMMArcLayer->pF3d,
             pMMArcLayer->psz3DLayerName,
             &pMMArcLayer->pZSection,
             hMiraMonLayer->OffsetCheck))
             return 1;
+    }
 
     if(pMMArcLayer->pF)
         fclose_function(pMMArcLayer->pF);
@@ -1570,39 +1579,42 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
 
     MMCloseArcLayer(hMiraMonLayer);
 
-    hMiraMonLayer->nFinalElemCount=hMiraMonLayer->TopHeader.nElemCount;
-    if(MMWriteHeader(pMMPolygonLayer->pF, &hMiraMonLayer->TopHeader))
-        return 1;
-    hMiraMonLayer->OffsetCheck=hMiraMonLayer->nHeaderDiskSize;
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        hMiraMonLayer->nFinalElemCount = hMiraMonLayer->TopHeader.nElemCount;
+        if (MMWriteHeader(pMMPolygonLayer->pF, &hMiraMonLayer->TopHeader))
+            return 1;
+        hMiraMonLayer->OffsetCheck = hMiraMonLayer->nHeaderDiskSize;
 
-    // PS Section
-    pMMPolygonLayer->FlushPS.SizeOfBlockToBeSaved=0;
-    if(MM_AppendBlockToBuffer(&pMMPolygonLayer->FlushPS))
-        return 1;
-    if(MMMoveFromFileToFile(pMMPolygonLayer->pFPS, pMMPolygonLayer->pF, 
-        &hMiraMonLayer->OffsetCheck))
-        return 1;
+        // PS Section
+        pMMPolygonLayer->FlushPS.SizeOfBlockToBeSaved = 0;
+        if (MM_AppendBlockToBuffer(&pMMPolygonLayer->FlushPS))
+            return 1;
+        if (MMMoveFromFileToFile(pMMPolygonLayer->pFPS, pMMPolygonLayer->pF,
+            &hMiraMonLayer->OffsetCheck))
+            return 1;
 
-    if(pMMPolygonLayer->pFPS)
-        fclose_function(pMMPolygonLayer->pFPS);
-    if(pMMPolygonLayer->pszPSName)
-        remove_function(pMMPolygonLayer->pszPSName);
+        if (pMMPolygonLayer->pFPS)
+            fclose_function(pMMPolygonLayer->pFPS);
+        if (pMMPolygonLayer->pszPSName)
+            remove_function(pMMPolygonLayer->pszPSName);
 
-    // AH Section
-    if(MMWritePHPolygonSection(hMiraMonLayer, hMiraMonLayer->OffsetCheck))
-        return 1;
+        // AH Section
+        if (MMWritePHPolygonSection(hMiraMonLayer, hMiraMonLayer->OffsetCheck))
+            return 1;
 
-    // PAL Section
-    pMMPolygonLayer->FlushPAL.SizeOfBlockToBeSaved=0;
-    if(MM_AppendBlockToBuffer(&pMMPolygonLayer->FlushPAL))
-        return 1;
-    if(MMMoveFromFileToFile(pMMPolygonLayer->pFPAL, pMMPolygonLayer->pF, 
-        &hMiraMonLayer->OffsetCheck))
-        return 1;
-    if(pMMPolygonLayer->pFPAL)
-        fclose_function(pMMPolygonLayer->pFPAL);
-    if(pMMPolygonLayer->pszPALName)
-        remove_function(pMMPolygonLayer->pszPALName);
+        // PAL Section
+        pMMPolygonLayer->FlushPAL.SizeOfBlockToBeSaved = 0;
+        if (MM_AppendBlockToBuffer(&pMMPolygonLayer->FlushPAL))
+            return 1;
+        if (MMMoveFromFileToFile(pMMPolygonLayer->pFPAL, pMMPolygonLayer->pF,
+            &hMiraMonLayer->OffsetCheck))
+            return 1;
+        if (pMMPolygonLayer->pFPAL)
+            fclose_function(pMMPolygonLayer->pFPAL);
+        if (pMMPolygonLayer->pszPALName)
+            remove_function(pMMPolygonLayer->pszPALName);
+    }
 
     if(pMMPolygonLayer->pF)
         fclose_function(pMMPolygonLayer->pF);
@@ -1638,9 +1650,13 @@ int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         remove_function(hMiraMonLayer->pszSrcLayerName);
     }
 
+
     // MiraMon metadata files
-    if(MMWriteVectorMetadata(hMiraMonLayer))
-        return 1;
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        if (MMWriteVectorMetadata(hMiraMonLayer))
+            return 1;
+    }
 
     // MiraMon database files
     if(MMCloseMMBD_XP(hMiraMonLayer))
@@ -1699,7 +1715,12 @@ int MMDestroyPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
             hMiraMonLayer->MMPoint.psz3DLayerName=NULL;
         }
     }
-
+    if(hMiraMonLayer->MMPoint.pszREL_LayerName)
+    {
+        free_function(hMiraMonLayer->MMPoint.pszREL_LayerName);
+        hMiraMonLayer->MMPoint.pszREL_LayerName=NULL;
+    }
+    
     MMDestroyMMAdmDB(&hMiraMonLayer->MMPoint.MMAdmDB);
 
     return 0;
@@ -1730,6 +1751,11 @@ struct MiraMonArcLayer *pMMArcLayer;
     {
         free_function(pMMArcLayer->MMNode.pszLayerName);
         pMMArcLayer->MMNode.pszLayerName=NULL;
+    }
+    if(pMMArcLayer->MMNode.pszREL_LayerName)
+    {
+        free_function(pMMArcLayer->MMNode.pszREL_LayerName);
+        pMMArcLayer->MMNode.pszREL_LayerName=NULL;
     }
 
     MMDestroyMMAdmDB(&hMiraMonLayer->MMArc.MMNode.MMAdmDB);
@@ -1771,6 +1797,11 @@ struct MiraMonArcLayer *pMMArcLayer;
     {
         free_function(pMMArcLayer->pszLayerName);
         pMMArcLayer->pszLayerName=NULL;
+    }
+    if(pMMArcLayer->pszREL_LayerName)
+    {
+        free_function(pMMArcLayer->pszREL_LayerName);
+        pMMArcLayer->pszREL_LayerName=NULL;
     }
 
     MMDestroyMMAdmDB(&pMMArcLayer->MMAdmDB);
@@ -1821,6 +1852,12 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         pMMPolygonLayer->pszLayerName=NULL;
     }
 
+    if(pMMPolygonLayer->pszREL_LayerName)
+    {
+        free_function(pMMPolygonLayer->pszREL_LayerName);
+        pMMPolygonLayer->pszREL_LayerName=NULL;
+    }
+
     if(pMMPolygonLayer->pszPSName)
     {
         free_function(pMMPolygonLayer->pszPSName);
@@ -1857,13 +1894,42 @@ int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         free_function(hMiraMonLayer->pszSrcLayerName);
         hMiraMonLayer->pszSrcLayerName=NULL;
     }
+    if(hMiraMonLayer->pSRS)
+    {
+        free_function(hMiraMonLayer->pSRS);
+        hMiraMonLayer->pSRS=NULL;
+    }
 
+    if(hMiraMonLayer->pMultRecordIndex)
+    {
+        free_function(hMiraMonLayer->pMultRecordIndex);
+        hMiraMonLayer->pMultRecordIndex=NULL;
+    }
+
+    if(hMiraMonLayer->pArcs)
+    {
+        free_function(hMiraMonLayer->pArcs);
+        hMiraMonLayer->pArcs=NULL;
+    }
+    
     if(hMiraMonLayer->szStringToOperate)
     {
         free_function(hMiraMonLayer->szStringToOperate);
         hMiraMonLayer->szStringToOperate=NULL;
         hMiraMonLayer->nNumStringToOperate=0;
     }
+
+    if (hMiraMonLayer->pLayerDB)
+    {
+        if(hMiraMonLayer->pLayerDB->pFields)
+        {
+            free_function(hMiraMonLayer->pLayerDB->pFields);
+            hMiraMonLayer->pLayerDB->pFields=NULL;
+        }
+        free_function(hMiraMonLayer->pLayerDB);
+        hMiraMonLayer->pLayerDB=NULL;
+    }
+    
 
     // Destroys all database objects
     MMDestroyMMDB(hMiraMonLayer);
@@ -3964,6 +4030,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * szResult, MM_BYTE dir
     id_geodes=strstr(pszBuffer, "ID_GEODES");
     if(!id_geodes)
     {
+        free_function(pszBuffer);
+        fclose(pfMMSRS);
         printf("Wrong format in data\\m_idofic.csv.\n");
         return 1;
     }
@@ -5236,13 +5304,16 @@ int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         }
     }
 
-    if(MM_WriteNRecordsMMBD_XPFile(hMiraMonLayer, MMAdmDB))
-        return 1;
-    
-    // Flushing all to be flushed
-    MMAdmDB->FlushRecList.SizeOfBlockToBeSaved=0;
-    if(MM_AppendBlockToBuffer(&MMAdmDB->FlushRecList))
-        return 1;
+    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
+    {
+        if (MM_WriteNRecordsMMBD_XPFile(hMiraMonLayer, MMAdmDB))
+            return 1;
+
+        // Flushing all to be flushed
+        MMAdmDB->FlushRecList.SizeOfBlockToBeSaved = 0;
+        if (MM_AppendBlockToBuffer(&MMAdmDB->FlushRecList))
+            return 1;
+    }
 
     // Closing database files
     if (MMAdmDB->pFExtDBF)
@@ -5256,6 +5327,12 @@ int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
 int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
+    if (hMiraMonLayer->pMMBDXP && hMiraMonLayer->pMMBDXP->pfBaseDades)
+    {
+        fclose_function(hMiraMonLayer->pMMBDXP->pfBaseDades);
+        hMiraMonLayer->pMMBDXP->pfBaseDades = NULL;
+    }
+
     if(hMiraMonLayer->bIsPoint)
         return MMCloseMMBD_XPFile(hMiraMonLayer, 
                         &hMiraMonLayer->MMPoint.MMAdmDB);
@@ -5278,6 +5355,7 @@ int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer)
         return MMCloseMMBD_XPFile(hMiraMonLayer, 
             &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB);
     }
+        
     return 0;
 }
 
