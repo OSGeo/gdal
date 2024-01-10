@@ -193,9 +193,6 @@ struct MM_ZD *pZDescription=NULL;
             fread_function(hMiraMonLayer->ReadedFeature.pCoord + nStartVertice + pArcHeader[i_elem].nElemCount,
                 sizeof(*hMiraMonLayer->ReadedFeature.pCoord), pArcHeader[i_elem].nElemCount, pF))
         {
-            #ifndef GDAL_COMPILATION
-            lastErrorMM = Mida_incoherent_Corromput;
-            #endif
             return 1;
         }
 
@@ -248,9 +245,6 @@ struct MM_ZD *pZDescription=NULL;
         if (pArcHeader[i_elem].nElemCount !=
             fread_function(hMiraMonLayer->ReadedFeature.pCoord + nStartVertice - (bAvoidFirst ? 1 : 0), sizeof(*hMiraMonLayer->ReadedFeature.pCoord), pArcHeader[i_elem].nElemCount, pF))
         {
-            #ifndef GDAL_COMPILATION
-            lastErrorMM = Mida_incoherent_Corromput;
-            #endif
             return 1;
         }
 
@@ -457,9 +451,6 @@ struct MM_PH *pPolHeader;
 
         if (1!=fread_function(hMiraMonLayer->ReadedFeature.pCoord, sizeof(MM_COORD_TYPE)*2, 1, pF))
         {
-            #ifndef GDAL_COMPILATION
-            lastErrorMM=Error_lectura_Corromput;
-            #endif
             return 1;
         }
 
@@ -495,9 +486,6 @@ struct MM_PH *pPolHeader;
                     fseek_function(pF, pZDescription->nOffsetZ, SEEK_SET);
                     if ((size_t)1 != fread_function(&cz, sizeof(*hMiraMonLayer->ReadedFeature.pZCoord), 1, pF))
                     {
-                        #ifndef GDAL_COMPILATION
-                        lastErrorMM = Error_lectura_Corromput;
-                        #endif
                         return 1;
                     }
                 }
