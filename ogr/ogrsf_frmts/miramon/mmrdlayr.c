@@ -67,6 +67,8 @@ MM_TIPUS_ERROR MMRecuperaUltimError(void)
 
 int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, const char *pszFilename)
 {
+char szResult[MM_MAX_ID_SNY+10];
+
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
     MMReadHeader(m_fp, &hMiraMonLayer->TopHeader);
     hMiraMonLayer->ReadOrWrite=MM_READING_MODE;
@@ -146,8 +148,11 @@ int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_f
         hMiraMonLayer->pSRS=strdup(ReturnValueFromSectionINIFile(hMiraMonLayer->MMPolygon.MMArc.pszREL_LayerName, 
             "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier"));
     }
-
-    hMiraMonLayer->nSRS_EPSG=ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS);
+    ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS,szResult);
+    if(IsEmptyString(szResult))
+        hMiraMonLayer->nSRS_EPSG=0;
+    else
+        hMiraMonLayer->nSRS_EPSG=atoi(szResult);
     
     // If more nNumStringToOperate is needed, it'll be increased.
     hMiraMonLayer->nNumStringToOperate=0;

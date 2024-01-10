@@ -3915,212 +3915,162 @@ char *trimmed_line, *parsed_key, *parsed_value;
 /* -------------------------------------------------------------------- */
 /*      Metadata Functions                                              */
 /* -------------------------------------------------------------------- */
-char *ReturnMMIDSRSFromEPSGCodeSRS (char *pSRS)
+int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * szResult, MM_BYTE direction)
 {
-static char aMMCodeSRS[MM_MAX_ID_SNY], aTempIDSRS[MM_MAX_ID_SNY];
-const char *aMMIDDBFFile=NULL; //m_idofic.dbf
-struct MM_BASE_DADES_XP pfMMSRS;
-MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
-MM_EXT_DBF_N_FIELDS niField_ID_GEODES, niField_PSIDGEODES;
-size_t nLong;
-char *p;
+    static char aEPSGCodeSRS[MM_MAX_ID_SNY];
+    const char* aMMIDDBFFile = NULL; //m_idofic.dbf
+    FILE* pfMMSRS;
+    size_t nLong;
+    int nLongBuffer = 5000;
+    char* pszBuffer = calloc_function(nLongBuffer);
+    char *id_geodes, *psidgeodes, *epsg;
 
-    if(!pSRS)
-        return 0;
-    memset(aMMCodeSRS, '\0', sizeof(*aMMCodeSRS));
-
-    #ifdef GDAL_COMPILATION
-    aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.dbf");
-    #else
-    aMMIDDBFFile=strdup("m_idofic.dbf");
-    #endif
-
-    if(!aMMIDDBFFile)
+    if (!pszBuffer)
     {
-        printf("Error opening data\\MM_m_idofic.dbf.\n");
-        return NULL;
+        printf("No memory.\n");
+        return 1;
     }
-
-    // Opening the file with SRS information
-    if (MM_ReadExtendedDBFHeaderFromFile(aMMIDDBFFile, &pfMMSRS, NULL))
+    if (!pMMSRS_or_pSRS)
     {
-        printf("Error opening miramon\\MM_m_idofic.dbf.\n");
-        return NULL;
+        free_function(pszBuffer);
+        return 1;
     }
-
-    // Looking for the information
-    for (niField_PSIDGEODES = 0; niField_PSIDGEODES < pfMMSRS.ncamps; niField_PSIDGEODES++)
-    {
-        if(0==stricmp(pfMMSRS.Camp[niField_PSIDGEODES].NomCamp, "PSIDGEODES"))
-            break;
-    }
-    if(niField_PSIDGEODES == pfMMSRS.ncamps)
-        return NULL;  // PSIDGEODES not found
-
-    for (niField_ID_GEODES = 0; niField_ID_GEODES < pfMMSRS.ncamps; niField_ID_GEODES++)
-    {
-        if(0==stricmp(pfMMSRS.Camp[niField_ID_GEODES].NomCamp, "ID_GEODES"))
-            break;
-    }
-    if(niField_ID_GEODES == pfMMSRS.ncamps)
-        return NULL;  // ID_GEODES not found
-       
-
-    for(nIRecord=0; nIRecord<pfMMSRS.nRecords; nIRecord++)
-    {
-        fseek_function(pfMMSRS.pfBaseDades,
-            pfMMSRS.OffsetPrimeraFitxa+
-            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
-            pfMMSRS.Camp[niField_PSIDGEODES].BytesAcumulats,
-            SEEK_SET);
-
-        memset(aMMCodeSRS, 0, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp);
-        fread_function(aMMCodeSRS, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp,
-            1, pfMMSRS.pfBaseDades);
-
-        aMMCodeSRS[pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp] = '\0';
-        MM_TreuBlancsDeFinalDeCadena(aMMCodeSRS);
-
-        p=strstr(aMMCodeSRS, "EPSG:");
-        nLong=strlen("EPSG:");
-        if (p && !strncmp(p, aMMCodeSRS, nLong))
-        {
-            if (p + nLong)
-                strcpy(aMMCodeSRS, (p + nLong));
-            else
-                continue;
-        }
-
-        if(strcmp(pSRS, aMMCodeSRS))
-            continue;
-
-        fseek_function(pfMMSRS.pfBaseDades,
-            pfMMSRS.OffsetPrimeraFitxa+
-            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
-            pfMMSRS.Camp[niField_ID_GEODES].BytesAcumulats,
-            SEEK_SET);
-
-        memset(aTempIDSRS, 0, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp);
-        fread_function(aTempIDSRS, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp,
-            1, pfMMSRS.pfBaseDades);
-
-        aTempIDSRS[pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp] = '\0';
-        MM_TreuBlancsDeFinalDeCadena(aTempIDSRS);
-
-        MM_ReleaseMainFields(&pfMMSRS);
-        fclose_function(pfMMSRS.pfBaseDades);
-        return aTempIDSRS;
-    }
-
-    MM_ReleaseMainFields(&pfMMSRS);
-    fclose_function(pfMMSRS.pfBaseDades);
-    return NULL;
-}
-
-// Returns 0 if no EPSG code is found.
-int ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS)
-{
-static char aEPSGCodeSRS[MM_MAX_ID_SNY], aTempIDSRS[MM_MAX_ID_SNY];
-const char *aMMIDDBFFile=NULL; //m_idofic.dbf
-struct MM_BASE_DADES_XP pfMMSRS;
-char *p;
-MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
-MM_EXT_DBF_N_FIELDS niField_ID_GEODES, niField_PSIDGEODES;
-size_t nLong;
-
-    if(!pMMSRS)
-        return 0;
     memset(aEPSGCodeSRS, '\0', sizeof(*aEPSGCodeSRS));
 
     #ifdef GDAL_COMPILATION
-    aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.dbf");
+    aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.csv");
     #else
-    aMMIDDBFFile=strdup("m_idofic.dbf");
+    aMMIDDBFFile=strdup("m_idofic.csv"); // Â·$Â· Use internal MM paths
     #endif
 
     if(!aMMIDDBFFile)
     {
-        printf("Error opening data\\MM_m_idofic.dbf.\n");
+        free_function(pszBuffer);
+        printf("Error opening data\\MM_m_idofic.csv.\n");
         return 1;
     }
 
     // Opening the file with SRS information
-    if (MM_ReadExtendedDBFHeaderFromFile(aMMIDDBFFile, &pfMMSRS, NULL))
+    if(NULL==(pfMMSRS=fopen(aMMIDDBFFile, "r")))
     {
-        printf("Error opening miramon\\m_idofic.dbf.\n");
+        free_function(pszBuffer);
+        printf("Error opening data\\m_idofic.csv.\n");
+        return 1;
+    }
+
+    // Checking the header of the csv file
+    memset(pszBuffer, 0, nLongBuffer);
+    fgets(pszBuffer, nLongBuffer, pfMMSRS);
+    id_geodes=strstr(pszBuffer, "ID_GEODES");
+    if(!id_geodes)
+    {
+        printf("Wrong format in data\\m_idofic.csv.\n");
+        return 1;
+    }
+    id_geodes[strlen("ID_GEODES")]='\0';
+    psidgeodes=strstr(pszBuffer, "PSIDGEODES");
+    if(!psidgeodes)
+    {
+        free_function(pszBuffer);
+        fclose(pfMMSRS);
+        printf("Wrong format in data\\m_idofic.csv.\n");
+        return 1;
+    }
+    psidgeodes[strlen("PSIDGEODES")]='\0';
+
+    // Is PSIDGEODES in first place?
+    if(strncmp(pszBuffer, psidgeodes, strlen("PSIDGEODES")))
+    {
+        free_function(pszBuffer);
+        fclose(pfMMSRS);
+        printf("Wrong format in data\\m_idofic.csv.\n");
+        return 1;
+    }
+    // Is ID_GEODES after PSIDGEODES?
+    if(strncmp(pszBuffer+strlen("PSIDGEODES")+1, "ID_GEODES", strlen("ID_GEODES")))
+    {
+        free_function(pszBuffer);
+        fclose(pfMMSRS);
+        printf("Wrong format in data\\m_idofic.csv.\n");
         return 1;
     }
 
     // Looking for the information
-    for (niField_ID_GEODES = 0; niField_ID_GEODES < pfMMSRS.ncamps; niField_ID_GEODES++)
+    while(fgets(pszBuffer, nLongBuffer, pfMMSRS))
     {
-        if(0==stricmp(pfMMSRS.Camp[niField_ID_GEODES].NomCamp, "ID_GEODES"))
-            break;
-    }
-    if(niField_ID_GEODES == pfMMSRS.ncamps)
-        return 0;  // ID_GEODES not found
-
-    for (niField_PSIDGEODES = 0; niField_PSIDGEODES < pfMMSRS.ncamps; niField_PSIDGEODES++)
-    {
-        if(0==stricmp(pfMMSRS.Camp[niField_PSIDGEODES].NomCamp, "PSIDGEODES"))
-            break;
-    }
-    if(niField_PSIDGEODES == pfMMSRS.ncamps)
-        return 0;  // PSIDGEODES not found
-
-    for(nIRecord=0; nIRecord<pfMMSRS.nRecords; nIRecord++)
-    {
-        fseek_function(pfMMSRS.pfBaseDades,
-            pfMMSRS.OffsetPrimeraFitxa+
-            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
-            pfMMSRS.Camp[niField_ID_GEODES].BytesAcumulats,
-            SEEK_SET);
-
-        memset(aEPSGCodeSRS, 0, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp);
-        fread_function(aEPSGCodeSRS, pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp,
-            1, pfMMSRS.pfBaseDades);
-
-        aEPSGCodeSRS[pfMMSRS.Camp[niField_ID_GEODES].BytesPerCamp] = '\0';
-        MM_TreuBlancsDeFinalDeCadena(aEPSGCodeSRS);
-        if(strcmp(pMMSRS, aEPSGCodeSRS))
-            continue;
-
-        fseek_function(pfMMSRS.pfBaseDades,
-            pfMMSRS.OffsetPrimeraFitxa+
-            (MM_FILE_OFFSET)nIRecord * pfMMSRS.BytesPerFitxa +
-            pfMMSRS.Camp[niField_PSIDGEODES].BytesAcumulats,
-            SEEK_SET);
-
-        memset(aTempIDSRS, 0, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp);
-        fread_function(aTempIDSRS, pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp,
-            1, pfMMSRS.pfBaseDades);
-
-        aTempIDSRS[pfMMSRS.Camp[niField_PSIDGEODES].BytesPerCamp] = '\0';
-        MM_TreuBlancsDeFinalDeCadena(aTempIDSRS);
-
-        p=strstr(aTempIDSRS, "EPSG:");
-        nLong=strlen("EPSG:");
-        if (p && !strncmp(p, aTempIDSRS, nLong))
+        id_geodes=strstr(pszBuffer, ";");
+        if(!id_geodes || (id_geodes+1)[0]=='\n')
         {
-            if (p + nLong)
+            free_function(pszBuffer);
+            fclose(pfMMSRS);
+            printf("Wrong format in data\\m_idofic.csv.\n");
+            return 1;
+        }
+
+        psidgeodes=strstr(id_geodes+1, ";");
+        if(!psidgeodes)
+        {
+            free_function(pszBuffer);
+            fclose(pfMMSRS);
+            printf("Wrong format in data\\m_idofic.csv.\n");
+            return 1;
+        }
+
+        id_geodes[(ptrdiff_t)psidgeodes-(ptrdiff_t)id_geodes]='\0';
+        psidgeodes=pszBuffer;
+        psidgeodes[(ptrdiff_t)id_geodes-(ptrdiff_t)psidgeodes]='\0';
+        id_geodes++;
+
+        if(direction==EPSG_FROM_MMSRS)
+        {
+            // I have pMMSRS and I want pSRS
+            if(strcmp(pMMSRS_or_pSRS, id_geodes))
+                continue;
+
+            epsg=strstr(psidgeodes, "EPSG:");
+            nLong=strlen("EPSG:");
+            if (epsg && !strncmp(epsg, psidgeodes, nLong))
             {
-                MM_ReleaseMainFields(&pfMMSRS);
-                fclose_function(pfMMSRS.pfBaseDades);
-                return atoi(p + nLong);
+                if (epsg + nLong)
+                {
+                    strcpy(szResult, epsg + nLong);
+                    free_function(pszBuffer);
+                    fclose(pfMMSRS);
+                    return 0; // found
+                }
+                else
+                {
+                    free_function(pszBuffer);
+                    fclose(pfMMSRS);
+                    *szResult='\0';
+                    return 1; // not found
+                }
             }
-            else
+        }
+        else
+        {
+            // I have pSRS and I want pMMSRS
+            epsg=strstr(psidgeodes, "EPSG:");
+            nLong=strlen("EPSG:");
+            if (epsg && !strncmp(epsg, psidgeodes, nLong))
             {
-                MM_ReleaseMainFields(&pfMMSRS);
-                fclose_function(pfMMSRS.pfBaseDades);
-                return 0;
+                if (epsg + nLong)
+                {
+                    if(!strcmp(pMMSRS_or_pSRS, epsg + nLong))
+                    {
+                        strcpy(szResult, id_geodes);
+                        free_function(pszBuffer);
+                        fclose(pfMMSRS);
+                        return 0; // found
+                    }
+                }
             }
-                
         }
     }
-
-    MM_ReleaseMainFields(&pfMMSRS);
-    fclose_function(pfMMSRS.pfBaseDades);
-    return 0;
+        
+    free_function(pszBuffer);
+    fclose(pfMMSRS);
+    return 1; // not found
 }
 
 char *GenerateFileIdentifierFromMetadataFileName(char *pMMFN)
@@ -4183,14 +4133,14 @@ char aTimeString[30];
     printf_function(pF, "\n[%s]\n", SECTION_IDENTIFICATION);
     printf_function(pF, "%s=%s\n", KEY_code, aFileIdentifier);
     printf_function(pF, "%s=\n", KEY_codeSpace);
-    printf_function(pF, "%s=%s\n", KEY_DatasetTitle, hMMMD->aLayerName);
+    printf_function(pF, "%s=%s\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
 
     if(hMMMD->ePlainLT!=MM_LayerType_Node)
     {
         if(hMMMD->pSRS && hMMMD->ePlainLT!=MM_LayerType_Pol)
         {
             printf_function(pF, "\n[%s:%s]\n", SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
-            strcpy(aMMIDSRS,ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS));
+            ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS,aMMIDSRS);
             if(!IsEmptyString(aMMIDSRS))
                 printf_function(pF, "%s=%s\n", KEY_HorizontalSystemIdentifier, aMMIDSRS);
             else
@@ -4259,8 +4209,8 @@ char aTimeString[30];
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
     printf_function(pF, "%s=%s\n", KEY_CreationDate, aTimeString);
 
-    // Â·$Â· TEMPORAL MENTRE NO HO FEM BÃ‰:
-    // A la documentaciÃ³ posa:
+    // ·$· TEMPORAL MENTRE NO HO FEM BÉ:
+    // A la documentació posa:
     // -preserve_fid
     // Use the FID of the source features instead of letting the output driver automatically 
     // assign a new one (for formats that require a FID). If not in append mode, 
@@ -4411,6 +4361,7 @@ struct MiraMonVectorMetaData hMMMD;
 
     if(layerPlainType==MM_LayerType_Point)
     {
+        hMMMD.szLayerTitle=hMiraMonLayer->pszSrcLayerName;
         hMMMD.aLayerName=hMiraMonLayer->MMPoint.pszREL_LayerName;
         if(!hMMMD.aLayerName)
             return 0;

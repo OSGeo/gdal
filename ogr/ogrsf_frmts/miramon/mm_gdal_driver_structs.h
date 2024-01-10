@@ -12,7 +12,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #else
 #include "mm_gdal\mm_gdal_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
-// Falta aixÃ² o es queixa a diversos llocs
+// Falta això o es queixa a diversos llocs
 #include "str_snyd.h"	// Per a struct SNY_TRANSFORMADOR_GEODESIA  
 #endif
 
@@ -238,6 +238,7 @@ struct MM_FLUSH_INFO
 // MIRAMON METADATA
 struct MiraMonVectorMetaData
 {
+    char *szLayerTitle;
     char *aLayerName;
     char *aArcFile; // Polygon's arc name
     int ePlainLT; // Plain layer type (no 3D specified): MM_LayerType_Point, 
@@ -252,35 +253,6 @@ struct MiraMonVectorMetaData
     // Pointer to a Layer DataBase, used to create MiraMon DBF (extended) file.
     struct MiraMonDataBase *pLayerDB;
 
-};
-//-> To rasted part
-struct MiraMonRasterMetaData
-{
-    char aLayerName[MM_MAX_LEN_LAYER_NAME];
-    char *pSRS; // EPSG code of the coordinate system information.
-    char *pXUnit; // X units if pszSRS is empty. 
-    char *pYUnit; // Y units if pszSRS is empty. If Y units is empty,
-                  // X unit will be assigned as Y unit by default.
-
-	unsigned __int32 nBands; // number of bands (in vector layer, always 1).
-
-    struct MMBoundingBox *hBB; // Bounding box of every band of a raster file
-                               // or bounding box of the entire layer in case
-                               // of a vector file.
-
-    // Only for rasters, for each band:
-    char **pBandName;
-    unsigned __int32 *pnBandNumber;
-    char **pBandDescription;
-    unsigned __int64 *nNCol;
-    unsigned __int64 *nNFil;
-    double *pXResolution;
-    double *pYResolution;
-    enum DataType *peDataType;
-    enum TreatmentVariable *peTreatmentVariable;
-    char **pValueUnit;
-    MM_BOOLEAN *pHasANoDataVaule;
-    double *pNoDataValue;
 };
 
 // MIRAMON DATA BASE

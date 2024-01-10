@@ -199,8 +199,13 @@ int MM_ResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
 int IsEmptyString(const char *string);
 char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord);
 // Metadata functions
-char *ReturnMMIDSRSFromEPSGCodeSRS (char *pSRS);
-int ReturnEPSGCodeSRSFromMMIDSRS (char *pMMSRS);
+int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * result, MM_BYTE direction);
+
+#define EPSG_FROM_MMSRS 0
+#define MMSRS_FROM_EPSG 1
+#define ReturnEPSGCodeSRSFromMMIDSRS(pMMSRS,szResult) ReturnCodeFromMM_m_idofic((pMMSRS),(szResult),EPSG_FROM_MMSRS)
+#define ReturnMMIDSRSFromEPSGCodeSRS(pSRS,szResult) ReturnCodeFromMM_m_idofic((pSRS),(szResult),MMSRS_FROM_EPSG)
+
 int MMWriteVectorMetadata(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
 #ifdef GDAL_COMPILATION
