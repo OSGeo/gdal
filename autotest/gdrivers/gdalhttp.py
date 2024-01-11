@@ -89,7 +89,9 @@ def test_http_1():
         tst.testOpen()
     except Exception:
         skip_if_unreachable(url)
-        if gdaltest.is_travis_branch("build-windows-conda"):
+        if gdaltest.is_travis_branch(
+            "build-windows-conda"
+        ) or gdaltest.is_travis_branch("build-windows-minimum"):
             pytest.xfail("randomly fail on that configuration for unknown reason")
         pytest.fail()
 

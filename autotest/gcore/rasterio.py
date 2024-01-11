@@ -3189,3 +3189,108 @@ def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
     assert struct.unpack(struct_type * (2 * 2), data) == pytest.approx(
         (val, val, val, val), rel=1e-14
     )
+
+
+###############################################################################
+# Test RasterIO() overview selection logic
+
+
+def test_rasterio_overview_selection():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 1)
+    ds.BuildOverviews("NEAR", [2, 4])
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(1).GetOverview(0).Fill(2)
+    ds.GetRasterBand(1).GetOverview(1).Fill(3)
+
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 101, 101)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 99, 99)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 60, 60)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 59, 59)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 50, 50)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 49, 49)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 3
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3
+
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 101, 101, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 100, 100, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 99, 99, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 60, 60, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 59, 59, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 50, 50, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 49, 49, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 30, 30, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 29, 29, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 25, 25, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 3
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 24, 24, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 3
+    )
+
+    with gdaltest.config_option("GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", "1.0"):
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 101, 101)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 99, 99)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 60, 60)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 59, 59)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 50, 50)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 49, 49)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3
