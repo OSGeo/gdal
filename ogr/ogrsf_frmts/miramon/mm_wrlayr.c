@@ -1050,16 +1050,9 @@ struct MM_TH *pArcTopHeader;
                 pMMArcLayer->pszLayerName, "A.rel"))
         return 1;
 
-    pMMArcLayer->pszREL_LayerName=
-        calloc_function(strlen(pMMArcLayer->pszLayerName)+6);
-    if(MMResetExtensionAndLastLetter(pMMArcLayer->pszREL_LayerName, 
-                pMMArcLayer->pszLayerName, "A.rel"))
-        return 1;
-
     if(!hMiraMonLayer->bIsPolygon)
         hMiraMonLayer->pszMainREL_LayerName=pMMArcLayer->pszREL_LayerName;
 
-    
     // MIRAMON DATA BASE
     // Creating the DBF file name
     pMMArcLayer->MMAdmDB.pszExtDBFLayerName=
@@ -1306,6 +1299,8 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
             if(MMReadPHPolygonSection(hMiraMonLayer))
                 return 1;
+
+            fclose_function(hMiraMonLayer->MMPolygon.MMArc.pF);
         }
         else
         {
@@ -1757,6 +1752,11 @@ struct MiraMonArcLayer *pMMArcLayer;
         free_function(pMMArcLayer->MMNode.pszREL_LayerName);
         pMMArcLayer->MMNode.pszREL_LayerName=NULL;
     }
+    if(pMMArcLayer->MMNode.pNodeHeader)
+    {
+        free_function(pMMArcLayer->MMNode.pNodeHeader);
+        pMMArcLayer->MMNode.pNodeHeader=NULL;
+    }
 
     MMDestroyMMAdmDB(&hMiraMonLayer->MMArc.MMNode.MMAdmDB);
     return 0;
@@ -1803,7 +1803,7 @@ struct MiraMonArcLayer *pMMArcLayer;
         free_function(pMMArcLayer->pszREL_LayerName);
         pMMArcLayer->pszREL_LayerName=NULL;
     }
-
+    
     MMDestroyMMAdmDB(&pMMArcLayer->MMAdmDB);
 
     MMDestroyNodeLayer(hMiraMonLayer);
@@ -1906,6 +1906,32 @@ int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         hMiraMonLayer->pMultRecordIndex=NULL;
     }
 
+    if(hMiraMonLayer->ReadedFeature.pNCoordRing)
+    {
+        free(hMiraMonLayer->ReadedFeature.pNCoordRing);
+        hMiraMonLayer->ReadedFeature.pNCoordRing=NULL;
+    }
+    if(hMiraMonLayer->ReadedFeature.pCoord)
+    {
+        free(hMiraMonLayer->ReadedFeature.pCoord);
+        hMiraMonLayer->ReadedFeature.pCoord=NULL;
+    }
+    if(hMiraMonLayer->ReadedFeature.pZCoord)
+    {
+        free(hMiraMonLayer->ReadedFeature.pZCoord);
+        hMiraMonLayer->ReadedFeature.pZCoord=NULL;
+    }
+    if(hMiraMonLayer->ReadedFeature.pRecords)
+    {
+        free(hMiraMonLayer->ReadedFeature.pRecords);
+        hMiraMonLayer->ReadedFeature.pRecords=NULL;
+    }
+    if(hMiraMonLayer->ReadedFeature.pbArcInfo)
+    {
+        free(hMiraMonLayer->ReadedFeature.pbArcInfo);
+        hMiraMonLayer->ReadedFeature.pbArcInfo=NULL;
+    }
+
     if(hMiraMonLayer->pArcs)
     {
         free_function(hMiraMonLayer->pArcs);
@@ -1929,7 +1955,6 @@ int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         free_function(hMiraMonLayer->pLayerDB);
         hMiraMonLayer->pLayerDB=NULL;
     }
-    
 
     // Destroys all database objects
     MMDestroyMMDB(hMiraMonLayer);
@@ -2085,11 +2110,13 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
                          MM_FILE_OFFSET *nOffset)
 {
 size_t bufferSize = 100 * 1024 * 1024; // 100 MB buffer
-unsigned char* buffer = (unsigned char*)calloc_function(bufferSize);
+unsigned char* buffer;
 size_t bytesRead, bytesWritten;
 
     if(!pSrcFile || !pDestFile || !nOffset)
         return 0;
+
+    buffer = (unsigned char*)calloc_function(bufferSize);
 
     if (!buffer)
         return 1;

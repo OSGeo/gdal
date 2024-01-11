@@ -587,7 +587,6 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     poGeom->assignSpatialReference(m_poSRS);
     poFeature->SetGeometryDirectly(poGeom);
     
-
     /* -------------------------------------------------------------------- */
     /*      Process field values.                                           */
     /* -------------------------------------------------------------------- */
