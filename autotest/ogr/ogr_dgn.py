@@ -30,7 +30,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("DGN")
 
@@ -293,3 +293,23 @@ def test_ogr_dgn_online_1():
     wkt = "LINESTRING (82.9999500717185 23.2084166997284,83.0007450788903 23.2084495986816,83.00081490524 23.2068095339824,82.9999503769036 23.2067737968078)"
 
     ogrtest.check_feature_geometry(feat, wkt)
+
+
+###############################################################################
+# Test opening a (not supported by this driver) DGNv8 file
+
+
+def test_ogr_dgn_open_dgnv8_not_supported():
+
+    dgnv8_drv = gdal.GetDriverByName("DGNv8")
+    if dgnv8_drv:
+        dgnv8_drv.Deregister()
+    try:
+        with pytest.raises(
+            Exception,
+            match="recognized as a DGNv8 dataset, but the DGNv8 driver is not available in this GDAL build",
+        ):
+            ogr.Open("data/dgnv8/test_dgnv8.dgn")
+    finally:
+        if dgnv8_drv:
+            dgnv8_drv.Register()

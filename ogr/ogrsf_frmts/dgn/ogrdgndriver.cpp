@@ -36,8 +36,32 @@
 static int OGRDGNDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    return poOpenInfo->fpL != nullptr && poOpenInfo->nHeaderBytes >= 512 &&
-           DGNTestOpen(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
+    if (poOpenInfo->fpL != nullptr && poOpenInfo->nHeaderBytes >= 512 &&
+        DGNTestOpen(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes))
+    {
+        return TRUE;
+    }
+
+    // Is this is a DGNv8 file ? If so, and if the DGNV8 driver is not
+    // available, and we are called from GDALError(), emit an explicit
+    // error.
+    VSIStatBuf sStat;
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_FROM_GDALOPEN) != 0 &&
+        poOpenInfo->papszAllowedDrivers == nullptr &&
+        poOpenInfo->fpL != nullptr && poOpenInfo->nHeaderBytes >= 512 &&
+        memcmp(poOpenInfo->pabyHeader, "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", 8) ==
+            0 &&
+        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "DGN") &&
+        VSIStat(poOpenInfo->pszFilename, &sStat) == 0 &&
+        GDALGetDriverByName("DGNV8") == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "`%s' recognized as a DGNv8 dataset, but the DGNv8 driver is "
+                 "not available in this GDAL build. Consult "
+                 "https://gdal.org/drivers/vector/dgnv8.html",
+                 poOpenInfo->pszFilename);
+    }
+    return FALSE;
 }
 
 /************************************************************************/
