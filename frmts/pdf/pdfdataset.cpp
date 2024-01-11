@@ -131,7 +131,8 @@ class GDALPDFOutputDev : public SplashOutputDev
         SplashOutputDev::startPage(pageNum, state, xrefIn);
         SplashBitmap *poBitmap = getBitmap();
         memset(poBitmap->getDataPtr(), 255,
-               poBitmap->getRowSize() * poBitmap->getHeight());
+               static_cast<size_t>(poBitmap->getRowSize()) *
+                   poBitmap->getHeight());
     }
 
     virtual void stroke(GfxState *state) override
@@ -670,7 +671,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
     int iTile = poGDS->m_aiTiles[nBlockYOff * nXBlocks + nBlockXOff];
     if (iTile < 0)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         return CE_None;
     }
 
@@ -709,11 +710,13 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
                 if (pabyStream == nullptr)
                     return CE_Failure;
 
-                int nReqXSize1 = (nReqXSize + 7) / 8;
+                const int nReqXSize1 = (nReqXSize + 7) / 8;
                 if ((nBits == 8 &&
-                     poStream->GetLength() != nReqXSize * nReqYSize) ||
+                     static_cast<size_t>(poStream->GetLength()) !=
+                         static_cast<size_t>(nReqXSize) * nReqYSize) ||
                     (nBits == 1 &&
-                     poStream->GetLength() != nReqXSize1 * nReqYSize))
+                     static_cast<size_t>(poStream->GetLength()) !=
+                         static_cast<size_t>(nReqXSize1) * nReqYSize))
                 {
                     VSIFree(pabyStream);
                     return CE_Failure;
@@ -722,7 +725,8 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
                 GByte *pabyData = (GByte *)pImage;
                 if (nReqXSize != nBlockXSize || nReqYSize != nBlockYSize)
                 {
-                    memset(pabyData, 0, nBlockXSize * nBlockYSize);
+                    memset(pabyData, 0,
+                           static_cast<size_t>(nBlockXSize) * nBlockYSize);
                 }
 
                 if (nBits == 8)
@@ -756,7 +760,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
             }
         }
 
-        memset(pImage, 255, nBlockXSize * nBlockYSize);
+        memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         return CE_None;
     }
 
@@ -790,7 +794,8 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
         if (pabyStream == nullptr)
             return CE_Failure;
 
-        if (poStream->GetLength() != sTile.nBands * nReqXSize * nReqYSize)
+        if (static_cast<size_t>(poStream->GetLength()) !=
+            static_cast<size_t>(sTile.nBands) * nReqXSize * nReqYSize)
         {
             VSIFree(pabyStream);
             return CE_Failure;
@@ -806,7 +811,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
     GByte *pabyData = (GByte *)pImage;
     if (nBand != 4 && (nReqXSize != nBlockXSize || nReqYSize != nBlockYSize))
     {
-        memset(pabyData, 0, nBlockXSize * nBlockYSize);
+        memset(pabyData, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
     }
 
     if (poGDS->nBands >= 3 && sTile.nBands == 3)
@@ -951,8 +956,8 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         memcpy(pImage,
                poGDS->m_pabyCachedData +
-                   (nBand - 1) * nBlockXSize * nBlockYSize,
-               nBlockXSize * nBlockYSize);
+                   static_cast<size_t>(nBand - 1) * nBlockXSize * nBlockYSize,
+               static_cast<size_t>(nBlockXSize) * nBlockYSize);
 
         if (poGDS->m_bCacheBlocksForOtherBands && nBand == 1)
         {
@@ -974,8 +979,9 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                     {
                         memcpy(poBlock->GetDataRef(),
                                poGDS->m_pabyCachedData +
-                                   (iBand - 1) * nBlockXSize * nBlockYSize,
-                               nBlockXSize * nBlockYSize);
+                                   static_cast<size_t>(iBand - 1) *
+                                       nBlockXSize * nBlockYSize,
+                               static_cast<size_t>(nBlockXSize) * nBlockYSize);
                         poBlock->DropLock();
                     }
                 }
@@ -2334,7 +2340,8 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
         GByte *pabyStream = nullptr;
 
         if (poStream == nullptr ||
-            poStream->GetLength() != nBands * nRasterXSize * nRasterYSize ||
+            static_cast<size_t>(poStream->GetLength()) !=
+                static_cast<size_t>(nBands) * nRasterXSize * nRasterYSize ||
             (pabyStream = (GByte *)poStream->GetBytes()) == nullptr)
         {
             VSIFree(poGDS->m_pabyCachedData);
@@ -2345,14 +2352,18 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
         if (nBands == 3)
         {
             /* pixel interleaved to band interleaved */
-            for (int i = 0; i < nRasterXSize * nRasterYSize; i++)
+            for (size_t i = 0;
+                 i < static_cast<size_t>(nRasterXSize) * nRasterYSize; i++)
             {
-                poGDS->m_pabyCachedData[0 * nRasterXSize * nRasterYSize + i] =
-                    pabyStream[3 * i + 0];
-                poGDS->m_pabyCachedData[1 * nRasterXSize * nRasterYSize + i] =
-                    pabyStream[3 * i + 1];
-                poGDS->m_pabyCachedData[2 * nRasterXSize * nRasterYSize + i] =
-                    pabyStream[3 * i + 2];
+                poGDS->m_pabyCachedData[0 * static_cast<size_t>(nRasterXSize) *
+                                            nRasterYSize +
+                                        i] = pabyStream[3 * i + 0];
+                poGDS->m_pabyCachedData[1 * static_cast<size_t>(nRasterXSize) *
+                                            nRasterYSize +
+                                        i] = pabyStream[3 * i + 1];
+                poGDS->m_pabyCachedData[2 * static_cast<size_t>(nRasterXSize) *
+                                            nRasterYSize +
+                                        i] = pabyStream[3 * i + 2];
             }
             VSIFree(pabyStream);
         }
@@ -2368,8 +2379,9 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
     else
         memcpy(pImage,
                poGDS->m_pabyCachedData +
-                   (nBand - 1) * nRasterXSize * nRasterYSize +
-                   nBlockYOff * nRasterXSize,
+                   static_cast<size_t>(nBand - 1) * nRasterXSize *
+                       nRasterYSize +
+                   static_cast<size_t>(nBlockYOff) * nRasterXSize,
                nRasterXSize);
 
     return CE_None;
@@ -3152,7 +3164,7 @@ int PDFDataset::CheckTiledRaster()
     }
 
     /* Third pass to set the aiTiles array */
-    m_aiTiles.resize(nXBlocks * nYBlocks, -1);
+    m_aiTiles.resize(static_cast<size_t>(nXBlocks) * nYBlocks, -1);
     for (i = 0; i < m_asTiles.size(); i++)
     {
         double dfX = m_asTiles[i].adfCM[4] * dfUserUnit;

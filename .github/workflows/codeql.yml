@@ -1,0 +1,149 @@
+name: "CodeQL"
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze
+    # Runner size impacts CodeQL analysis time. To learn more, please see:
+    #   - https://gh.io/recommended-hardware-resources-for-running-codeql
+    #   - https://gh.io/supported-runners-and-hardware-resources
+    #   - https://gh.io/using-larger-runners
+    # Consider using larger runners for possible analysis time improvements.
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'c-cpp' ]
+        # CodeQL supports [ 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift' ]
+        # Use only 'java-kotlin' to analyze code written in Java, Kotlin or both
+        # Use only 'javascript-typescript' to analyze code written in JavaScript, TypeScript or both
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+
+        # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+        # queries: security-extended,security-and-quality
+        config: |
+          query-filters:
+            - exclude:
+                id: cpp/non-https-url
+
+    - name: Install dependencies
+      run: |
+          sudo apt-get install -y ccache cmake g++ swig python3-numpy libproj-dev libqhull-dev
+          sudo apt-get install -y \
+            libblosc-dev \
+            libboost-dev \
+            libcairo2-dev \
+            libcfitsio-dev \
+            libcrypto++-dev \
+            libcurl4-gnutls-dev \
+            libexpat-dev \
+            libfcgi-dev \
+            libfyba-dev \
+            libfreexl-dev \
+            libgeos-dev \
+            libgeotiff-dev \
+            libgif-dev \
+            libhdf5-serial-dev \
+            libjpeg-dev \
+            libkml-dev \
+            liblcms2-2 \
+            liblz4-dev \
+            liblzma-dev \
+            libmysqlclient-dev \
+            libnetcdf-dev \
+            libogdi-dev \
+            libopenexr-dev \
+            libopenjp2-7-dev \
+            libpcre3-dev \
+            libpng-dev \
+            libpoppler-dev \
+            libpoppler-private-dev \
+            libpq-dev \
+            libproj-dev \
+            librasterlite2-dev \
+            libspatialite-dev \
+            libssl-dev \
+            libwebp-dev \
+            libxerces-c-dev \
+            libxml2-dev \
+            libxslt-dev \
+            libzstd-dev \
+            unixodbc-dev
+
+    # cache the .ccache directory
+    # key it on the runner os, build type, deps, and arch
+    # It's especially important to include arch in the key because we
+    # may get runtime errors with -mavx2 from objects built on a
+    # different architecture.
+    - name: Restore build cache
+      if: matrix.language == 'c-cpp'
+      id: restore-cache
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ github.workspace }}/.ccache
+        key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
+          ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
+
+    - name: Configure ccache
+      if: matrix.language == 'c-cpp'
+      run: |
+          echo CCACHE_BASEDIR=${{ github.workspace }} >> ${GITHUB_ENV}
+          echo CCACHE_DIR=${{ github.workspace }}/.ccache >> ${GITHUB_ENV}
+          echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
+          ccache -z
+
+    - name: Build
+      if: matrix.language == 'c-cpp'
+      run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_CCACHE=YES -DGDAL_USE_LERC_INTERNAL=OFF
+          make -j$(nproc)
+
+    - name: Summarize ccache
+      if: matrix.language == 'c-cpp'
+      run: |
+        ccache -s
+
+    - name: Save build cache
+      if: matrix.language == 'c-cpp'
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ github.workspace }}/.ccache
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

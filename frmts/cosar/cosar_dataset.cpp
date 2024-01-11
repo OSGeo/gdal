@@ -121,7 +121,9 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
     }
 
     /* zero out the range line */
-    memset(pImage, 0, nBlockXSize * GDALGetDataTypeSizeBytes(eDataType));
+    memset(pImage, 0,
+           static_cast<size_t>(nBlockXSize) *
+               GDALGetDataTypeSizeBytes(eDataType));
 
     /* properly account for validity mask */
     if (nRSFV > 1)

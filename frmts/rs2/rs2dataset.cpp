@@ -169,8 +169,8 @@ CPLErr RS2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -186,8 +186,8 @@ CPLErr RS2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -358,8 +358,8 @@ CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
     else
     {

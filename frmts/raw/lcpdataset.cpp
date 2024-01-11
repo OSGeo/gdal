@@ -1578,7 +1578,8 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
             GDALRasterBand *poBand = poSrcDS->GetRasterBand(iBand + 1);
             CPLErr eErr = poBand->RasterIO(
                 GF_Read, 0, iLine, nXSize, 1, panScanline + iBand, nXSize, 1,
-                GDT_Int16, nBands * 2, nBands * nXSize * 2, nullptr);
+                GDT_Int16, nBands * 2, static_cast<size_t>(nBands) * nXSize * 2,
+                nullptr);
             // Not sure what to do here.
             if (eErr != CE_None)
             {
@@ -1588,9 +1589,11 @@ GDALDataset *LCPDataset::CreateCopy(const char *pszFilename,
             }
         }
 #ifdef CPL_MSB
-        GDALSwapWords(panScanline, 2, nBands * nXSize, 2);
+        GDALSwapWordsEx(panScanline, 2, static_cast<size_t>(nBands) * nXSize,
+                        2);
 #endif
-        CPL_IGNORE_RET_VAL(VSIFWriteL(panScanline, 2, nBands * nXSize, fp));
+        CPL_IGNORE_RET_VAL(VSIFWriteL(
+            panScanline, 2, static_cast<size_t>(nBands) * nXSize, fp));
 
         if (!pfnProgress(iLine / static_cast<double>(nYSize), nullptr,
                          pProgressData))

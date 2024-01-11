@@ -90,7 +90,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         if (fld[j] > rmax) rmax=fld[j];
         if (fld[j] < rmin) rmin=fld[j];
       }
-      if( !(floor(rmin*dscale) >= -FLT_MAX && floor(rmin*dscale) <= FLT_MAX) )
+      if( !(floor((double)rmin*dscale) >= -FLT_MAX && floor((double)rmin*dscale) <= FLT_MAX) )
       {
          fprintf(stderr,
                     "Scaled min value not representable on IEEE754 "
@@ -98,7 +98,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         *lcpack = -1;
         return;
       }
-      if( !(floor(rmax*dscale) >= -FLT_MAX && floor(rmax*dscale) <= FLT_MAX) )
+      if( !(floor((double)rmax*dscale) >= -FLT_MAX && floor((double)rmax*dscale) <= FLT_MAX) )
       {
          fprintf(stderr,
                     "Scaled max value not representable on IEEE754 "
@@ -224,7 +224,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         idrstmpl[2]=0;
         if( dscale != 1.0 )
         {
-          ref = (float)floor(rmin * dscale) / dscale;
+          ref = (float)floor((double)rmin * dscale) / dscale;
         }
         else
         {

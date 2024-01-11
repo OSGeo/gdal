@@ -549,8 +549,8 @@ static bool WriteIndex(
             else
             {
                 WriteUInt32(abyPage, 0);
-                nNumFeaturesInPage = static_cast<int>(
-                    asValues.size() - i * numMaxFeaturesPerPage);
+                nNumFeaturesInPage = static_cast<int>(asValues.size()) -
+                                     i * numMaxFeaturesPerPage;
             }
             CPLAssert(nNumFeaturesInPage > 0 &&
                       nNumFeaturesInPage <= NUM_MAX_FEATURES_PER_PAGE);

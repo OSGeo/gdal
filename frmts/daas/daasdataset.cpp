@@ -2520,7 +2520,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
                     GF_Read, iXBlock * nBlockXSize, iYBlock * nBlockYSize,
                     nBlockActualXSize, nBlockActualYSize, pabyDstBuffer,
                     nBlockActualXSize, nBlockActualYSize, eIterBandDT, nDTSize,
-                    nDTSize * nBlockXSize, nullptr);
+                    static_cast<GSpacing>(nDTSize) * nBlockXSize, nullptr);
 
                 if (poBlock)
                     poBlock->DropLock();

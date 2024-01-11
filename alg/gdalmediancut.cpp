@@ -359,6 +359,7 @@ int GDALComputeMedianCutPCTInternal(
     }
 
     const int nCLevels = 1 << nBits;
+    const int nCLevelsCube = nCLevels * nCLevels * nCLevels;
     T *histogram = nullptr;
     HashHistogram *psHashHistogram = nullptr;
     if (panHistogram)
@@ -376,13 +377,13 @@ int GDALComputeMedianCutPCTInternal(
         else
         {
             histogram = panHistogram;
-            memset(histogram, 0, nCLevels * nCLevels * nCLevels * sizeof(T));
+            memset(histogram, 0, nCLevelsCube * sizeof(T));
         }
     }
     else
     {
-        histogram = static_cast<T *>(
-            VSI_CALLOC_VERBOSE(nCLevels * nCLevels * nCLevels, sizeof(T)));
+        histogram =
+            static_cast<T *>(VSI_CALLOC_VERBOSE(nCLevelsCube, sizeof(T)));
         if (histogram == nullptr)
         {
             return CE_Failure;

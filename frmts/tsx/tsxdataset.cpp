@@ -195,8 +195,8 @@ CPLErr TSXRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
     else
     {

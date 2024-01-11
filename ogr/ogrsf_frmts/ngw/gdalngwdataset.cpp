@@ -1294,7 +1294,7 @@ CPLErr OGRNGWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
                 // Fill buffer transparent color.
                 memset(pData, 0,
-                       nBufXSize * nBufYSize * nBandCount *
+                       static_cast<size_t>(nBufXSize) * nBufYSize * nBandCount *
                            GDALGetDataTypeSizeBytes(eBufType));
                 return CE_None;
             }

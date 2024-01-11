@@ -171,8 +171,8 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
     /* -------------------------------------------------------------------- */
     const int nBands = poDS->GetRasterCount();
     const int nWrkDTSize = GDALGetDataTypeSizeBytes(eWrkDT);
-    GByte *pabySrc = static_cast<GByte *>(
-        VSI_MALLOC3_VERBOSE(nBands * nWrkDTSize, nBlockXSize, nBlockYSize));
+    GByte *pabySrc = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+        cpl::fits_on<int>(nBands * nWrkDTSize), nBlockXSize, nBlockYSize));
     if (pabySrc == nullptr)
     {
         return CE_Failure;

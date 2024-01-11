@@ -604,7 +604,7 @@ import org.gdal.gdalconst.gdalconstConstants;
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return CE_Failure;
         }
-        if (nioBufferSize < nBlockXSize * nBlockYSize * nDataTypeSize)
+        if (nioBufferSize < (size_t)nBlockXSize * nBlockYSize * nDataTypeSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Buffer not big enough");
             return CE_Failure;

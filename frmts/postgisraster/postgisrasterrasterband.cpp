@@ -348,7 +348,8 @@ CPLErr PostGISRasterRasterBand::IRasterIO(
                 poTile->GetRasterBand(nBand));
 
         nMemoryRequiredForTiles +=
-            poTileBand->GetXSize() * poTileBand->GetYSize() * nBandDataTypeSize;
+            static_cast<GIntBig>(poTileBand->GetXSize()) *
+            poTileBand->GetYSize() * nBandDataTypeSize;
 
         // Missing tile: we'll need to query for it
         if (!poTileBand->IsCached())

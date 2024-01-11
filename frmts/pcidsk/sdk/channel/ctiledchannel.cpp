@@ -138,7 +138,7 @@ void CTiledChannel::ReadTile(void * buffer, uint32 nCol, uint32 nRow)
         // Do byte swapping if needed.
         if( needs_swap )
         {
-            SwapPixels( buffer, nDataType, nTileXSize * nTileYSize );
+            SwapPixels( buffer, nDataType, static_cast<size_t>(nTileXSize) * nTileYSize );
         }
 
         return;
@@ -153,7 +153,7 @@ void CTiledChannel::ReadTile(void * buffer, uint32 nCol, uint32 nRow)
         // Do byte swapping if needed.
         if( needs_swap )
         {
-            SwapPixels( buffer, nDataType, nTileXSize * nTileYSize );
+            SwapPixels( buffer, nDataType, static_cast<size_t>(nTileXSize) * nTileYSize );
         }
 
         return;
@@ -188,7 +188,7 @@ void CTiledChannel::ReadTile(void * buffer, uint32 nCol, uint32 nRow)
 /* -------------------------------------------------------------------- */
     if( needs_swap )
         SwapPixels( oUncompressedData.buffer, nDataType,
-                    nTileXSize * nTileYSize );
+                    static_cast<size_t>(nTileXSize) * nTileYSize );
 
     memcpy(buffer, oUncompressedData.buffer, oUncompressedData.buffer_size);
 }
@@ -320,7 +320,7 @@ int CTiledChannel::ReadBlock( int iBlock, void *buffer,
         {
             memcpy((char*) buffer + iy * xsize * nPixelSize,
                    oTileData.buffer + ((iy + yoff) * nTileXSize + xoff) * nPixelSize,
-                   xsize * nPixelSize);
+                   static_cast<size_t>(xsize) * nPixelSize);
         }
     }
 
@@ -670,7 +670,7 @@ void CTiledChannel::RLECompressBlock( PCIDSKBuffer &oUncompressedData,
             oCompressedData.buffer[dst_offset++] = (char) count;
             memcpy( oCompressedData.buffer + dst_offset,
                     src + src_offset,
-                    count * nPixelSize );
+                    cpl::fits_on<int>(count * nPixelSize) );
             src_offset += count * nPixelSize;
             dst_offset += count * nPixelSize;
         }

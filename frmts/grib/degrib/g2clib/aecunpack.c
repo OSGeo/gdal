@@ -35,7 +35,7 @@ g2int aecunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          g2int* ifld=(g2int *)calloc(ndpts,sizeof(g2int));
          // Was checked just before
          // coverity[integer_overflow,overflow_sink]
-         unsigned char* ctemp=(unsigned char *)calloc(ndpts * nbytes_per_sample,1);
+         unsigned char* ctemp=(unsigned char *)calloc((size_t)(ndpts) * nbytes_per_sample,1);
          if ( ifld == NULL || ctemp == NULL) {
             fprintf(stderr, "Could not allocate space in aecunpack.\n"
                     "Data field NOT unpacked.\n");
@@ -53,7 +53,7 @@ g2int aecunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          strm.next_in = cpack;
          strm.avail_in = len;
          strm.next_out = ctemp;
-         strm.avail_out = ndpts * nbytes_per_sample;
+         strm.avail_out = (size_t)(ndpts) * nbytes_per_sample;
 
          // Note: libaec doesn't seem to be very robust to invalid inputs...
          int status = aec_buffer_decode(&strm);

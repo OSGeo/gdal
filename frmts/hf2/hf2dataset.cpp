@@ -974,8 +974,8 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     const int nXBlocks = (nXSize + nTileSize - 1) / nTileSize;
     const int nYBlocks = (nYSize + nTileSize - 1) / nTileSize;
 
-    void *pTileBuffer = (void *)VSI_MALLOC_VERBOSE(
-        nTileSize * nTileSize * (GDALGetDataTypeSize(eReqDT) / 8));
+    void *pTileBuffer = VSI_MALLOC3_VERBOSE(nTileSize, nTileSize,
+                                            GDALGetDataTypeSizeBytes(eReqDT));
     if (pTileBuffer == nullptr)
     {
         VSIFCloseL(fp);

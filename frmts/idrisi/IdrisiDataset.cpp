@@ -1404,8 +1404,8 @@ IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDSIn, int nBandIn,
     : poDefaultRAT(nullptr),
       nRecordSize(poDSIn->GetRasterXSize() * poDSIn->nBands *
                   GDALGetDataTypeSizeBytes(eDataTypeIn)),
-      pabyScanLine(static_cast<GByte *>(VSI_MALLOC2_VERBOSE(
-          poDSIn->GetRasterXSize() * GDALGetDataTypeSizeBytes(eDataTypeIn),
+      pabyScanLine(static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+          poDSIn->GetRasterXSize(), GDALGetDataTypeSizeBytes(eDataTypeIn),
           poDSIn->nBands))),
       fMaximum(0.0), fMinimum(0.0), bFirstVal(true)
 {

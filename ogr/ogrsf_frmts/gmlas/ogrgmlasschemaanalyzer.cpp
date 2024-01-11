@@ -183,6 +183,8 @@ static void CollectNamespacePrefixes(
     GMLASErrorHandler oErrorHandler;
     poReader->setErrorHandler(&oErrorHandler);
 
+    poReader->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution, true);
+
     std::string osErrorMsg;
     try
     {
@@ -880,6 +882,9 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
         // xsi:schemaLocation attributes).
         //
         poParser->setFeature(XMLUni::fgXercesLoadSchema, false);
+
+        poParser->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution,
+                             true);
 
         Grammar *poGrammar = nullptr;
         if (!GMLASReader::LoadXSDInParser(

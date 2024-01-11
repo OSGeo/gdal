@@ -1051,7 +1051,8 @@ std::string VSIWebHDFSHandle::DownloadRegion(const vsi_l_offset startOffset,
     double dfRetryDelay = m_dfRetryDelay;
     bool bInRedirect = false;
     const vsi_l_offset nEndOffset =
-        startOffset + nBlocks * VSICURLGetDownloadChunkSize() - 1;
+        startOffset +
+        static_cast<vsi_l_offset>(nBlocks) * VSICURLGetDownloadChunkSize() - 1;
 
 retry:
     CURL *hCurlHandle = curl_easy_init();

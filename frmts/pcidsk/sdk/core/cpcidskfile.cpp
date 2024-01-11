@@ -1043,8 +1043,8 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 
     ReadFromFile( last_block_data,
                   first_line_offset + block_index*block_size
-                  + win_xoff * pixel_group_size,
-                  pixel_group_size * win_xsize );
+                  + static_cast<uint64_t>(win_xoff) * pixel_group_size,
+                  static_cast<uint64_t>(pixel_group_size) * win_xsize );
     last_block_index = block_index;
     last_block_xoff = win_xoff;
     last_block_xsize = win_xsize;

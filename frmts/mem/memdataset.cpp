@@ -1332,9 +1332,9 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
         MEMRasterBand *poNewBand = nullptr;
 
         if (bPixelInterleaved)
-            poNewBand =
-                new MEMRasterBand(poDS, iBand + 1, apbyBandData[iBand], eType,
-                                  nWordSize * nBandsIn, 0, iBand == 0);
+            poNewBand = new MEMRasterBand(
+                poDS, iBand + 1, apbyBandData[iBand], eType,
+                cpl::fits_on<int>(nWordSize * nBandsIn), 0, iBand == 0);
         else
             poNewBand = new MEMRasterBand(poDS, iBand + 1, apbyBandData[iBand],
                                           eType, 0, 0, iBand == 0);

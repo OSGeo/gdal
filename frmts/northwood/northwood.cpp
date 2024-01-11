@@ -194,10 +194,11 @@ int nwt_ParseHeader(NWT_GRID *pGrd, const unsigned char *nwtHeader)
                        pGrd->stClassDict->nNumClassifiedItems + 1));
 
         // load the dictionary
-        for (usTmp = 0; usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++)
+        for (unsigned int iItem = 0;
+             iItem < pGrd->stClassDict->nNumClassifiedItems; iItem++)
         {
             NWT_CLASSIFIED_ITEM *psItem =
-                pGrd->stClassDict->stClassifiedItem[usTmp] =
+                pGrd->stClassDict->stClassifiedItem[iItem] =
                     reinterpret_cast<NWT_CLASSIFIED_ITEM *>(
                         calloc(sizeof(NWT_CLASSIFIED_ITEM), 1));
 
@@ -452,10 +453,10 @@ void nwtCloseGrid(NWT_GRID *pGrd)
     if ((pGrd->cFormat & 0x80) &&
         pGrd->stClassDict)  // if is GRC - free the Dictionary
     {
-        for (unsigned short usTmp = 0;
-             usTmp < pGrd->stClassDict->nNumClassifiedItems; usTmp++)
+        for (unsigned int i = 0; i < pGrd->stClassDict->nNumClassifiedItems;
+             i++)
         {
-            free(pGrd->stClassDict->stClassifiedItem[usTmp]);
+            free(pGrd->stClassDict->stClassifiedItem[i]);
         }
         free(pGrd->stClassDict->stClassifiedItem);
         free(pGrd->stClassDict);

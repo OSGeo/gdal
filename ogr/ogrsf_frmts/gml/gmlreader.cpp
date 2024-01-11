@@ -303,6 +303,8 @@ bool GMLReader::SetupParserXerces()
         m_poSAXReader->setLexicalHandler(poXercesHandler);
         m_poSAXReader->setEntityResolver(poXercesHandler);
         m_poSAXReader->setDTDHandler(poXercesHandler);
+        m_poSAXReader->setFeature(
+            XMLUni::fgXercesDisableDefaultEntityResolution, true);
 
         xmlUriValid =
             XMLString::transcode("http://xml.org/sax/features/validation");

@@ -797,7 +797,8 @@ CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         poGDS->m_dfSrcNoData, m_dfNoData);
             CPLErr eErr = RawRasterBand::IRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyTemp, nBufXSize,
-                nBufYSize, eDataType, nDTSize, nDTSize * nBufXSize, psExtraArg);
+                nBufYSize, eDataType, nDTSize,
+                static_cast<GSpacing>(nDTSize) * nBufXSize, psExtraArg);
             VSIFree(pabyTemp);
             return eErr;
         }
@@ -1139,7 +1140,8 @@ CPLErr ISIS3WrapperRasterBand::IRasterIO(
                         poGDS->m_dfSrcNoData, m_dfNoData);
             CPLErr eErr = GDALProxyRasterBand::IRasterIO(
                 eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyTemp, nBufXSize,
-                nBufYSize, eDataType, nDTSize, nDTSize * nBufXSize, psExtraArg);
+                nBufYSize, eDataType, nDTSize,
+                static_cast<GSpacing>(nDTSize) * nBufXSize, psExtraArg);
             VSIFree(pabyTemp);
             return eErr;
         }
@@ -1227,7 +1229,8 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
     if (m_poBaseBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
                                m_pBuffer, nReqXSize, nReqYSize, eSrcDT,
-                               nSrcDTSize, nSrcDTSize * nBlockXSize,
+                               nSrcDTSize,
+                               static_cast<GSpacing>(nSrcDTSize) * nBlockXSize,
                                nullptr) != CE_None)
     {
         return CE_Failure;
@@ -3510,7 +3513,8 @@ void ISIS3Dataset::WriteLabel()
                     n = nMaxPerPage;
                 else
                     n = static_cast<int>(nImagePixels - i);
-                if (VSIFWriteL(pabyTemp, n * nDTSize, 1, m_fpImage) != 1)
+                if (VSIFWriteL(pabyTemp, static_cast<size_t>(n) * nDTSize, 1,
+                               m_fpImage) != 1)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Cannot initialize imagery to null");

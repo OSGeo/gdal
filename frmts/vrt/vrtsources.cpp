@@ -1635,8 +1635,8 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                       eVRTBandDataType))
     {
         const int nBandDTSize = GDALGetDataTypeSizeBytes(eVRTBandDataType);
-        void *pTemp =
-            VSI_MALLOC3_VERBOSE(nOutXSize, nOutYSize, nBandDTSize * nBandCount);
+        void *pTemp = VSI_MALLOC3_VERBOSE(
+            nOutXSize, nOutYSize, cpl::fits_on<int>(nBandDTSize * nBandCount));
         if (pTemp)
         {
             eErr = poDS->RasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize,

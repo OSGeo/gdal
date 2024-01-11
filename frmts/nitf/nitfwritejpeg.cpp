@@ -213,7 +213,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
     const int nWorkDTSize = GDALGetDataTypeSizeBytes(eWorkDT);
 
     GByte *pabyScanline = reinterpret_cast<GByte *>(
-        CPLMalloc(nBands * nBlockXSize * nWorkDTSize));
+        CPLMalloc(cpl::fits_on<int>(nBands * nBlockXSize * nWorkDTSize)));
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
@@ -244,7 +244,8 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                 GF_Read, nBlockXSize * nBlockXOff,
                 iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1,
                 pabyScanline, nBlockXSizeToRead, 1, eWorkDT, nBands, anBandList,
-                nBands * nWorkDTSize, nBands * nBlockXSize * nWorkDTSize,
+                static_cast<GSpacing>(nBands) * nWorkDTSize,
+                static_cast<GSpacing>(nBands) * nWorkDTSize * nBlockXSize,
                 nWorkDTSize, nullptr);
 
 #if !defined(JPEG_LIB_MK1_OR_12BIT)

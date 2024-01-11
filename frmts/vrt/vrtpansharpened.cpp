@@ -1558,7 +1558,8 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     if (IRasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pImage,
                   nReqXSize, nReqYSize, eDataType, nDataTypeSize,
-                  nDataTypeSize * nReqXSize, &sExtraArg) != CE_None)
+                  static_cast<GSpacing>(nDataTypeSize) * nReqXSize,
+                  &sExtraArg) != CE_None)
     {
         return CE_Failure;
     }
@@ -1567,20 +1568,26 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         for (int j = nReqYSize - 1; j >= 0; j--)
         {
-            memmove(
-                static_cast<GByte *>(pImage) + j * nDataTypeSize * nBlockXSize,
-                static_cast<GByte *>(pImage) + j * nDataTypeSize * nReqXSize,
-                nReqXSize * nDataTypeSize);
+            memmove(static_cast<GByte *>(pImage) +
+                        static_cast<size_t>(j) * nDataTypeSize * nBlockXSize,
+                    static_cast<GByte *>(pImage) +
+                        static_cast<size_t>(j) * nDataTypeSize * nReqXSize,
+                    static_cast<size_t>(nReqXSize) * nDataTypeSize);
             memset(static_cast<GByte *>(pImage) +
-                       (j * nBlockXSize + nReqXSize) * nDataTypeSize,
-                   0, (nBlockXSize - nReqXSize) * nDataTypeSize);
+                       (static_cast<size_t>(j) * nBlockXSize + nReqXSize) *
+                           nDataTypeSize,
+                   0,
+                   static_cast<size_t>(nBlockXSize - nReqXSize) *
+                       nDataTypeSize);
         }
     }
     if (nReqYSize < nBlockYSize)
     {
         memset(static_cast<GByte *>(pImage) +
-                   nReqYSize * nBlockXSize * nDataTypeSize,
-               0, (nBlockYSize - nReqYSize) * nBlockXSize * nDataTypeSize);
+                   static_cast<size_t>(nReqYSize) * nBlockXSize * nDataTypeSize,
+               0,
+               static_cast<size_t>(nBlockYSize - nReqYSize) * nBlockXSize *
+                   nDataTypeSize);
     }
 
     // Cache other bands

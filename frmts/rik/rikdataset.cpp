@@ -284,9 +284,7 @@ CPLErr RIKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     }
     nBlockSize -= nBlockOffset;
 
-    GUInt32 pixels;
-
-    pixels = poRDS->nBlockXSize * poRDS->nBlockYSize;
+    const GUInt32 pixels = poRDS->nBlockXSize * poRDS->nBlockYSize;
 
     if (!nBlockOffset || !nBlockSize
 #ifdef RIK_SINGLE_BLOCK
@@ -306,7 +304,7 @@ CPLErr RIKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (poRDS->options == 0x00 || poRDS->options == 0x40)
     {
-        VSIFReadL(pImage, 1, nBlockXSize * nBlockYSize, poRDS->fp);
+        VSIFReadL(pImage, 1, pixels, poRDS->fp);
         return CE_None;
     }
 

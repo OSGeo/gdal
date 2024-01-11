@@ -812,7 +812,9 @@ static int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
         return -1;
     if (numVertices > 10 * 1024 * 1024 &&
         !AVCRawBinIsFileGreaterThan(
-            psFile, numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)))
+            psFile,
+            cpl::fits_on<int>(numVertices *
+                              ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16))))
     {
         return -1;
     }
@@ -1392,7 +1394,9 @@ static int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
     if (numVertices > 10 * 1024 * 1024 &&
         !AVCRawBinIsFileGreaterThan(
-            psFile, numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)))
+            psFile,
+            cpl::fits_on<int>(numVertices *
+                              ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16))))
     {
         return -1;
     }
@@ -1492,7 +1496,9 @@ static int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
         return -1;
     if (numVertices > 10 * 1024 * 1024 &&
         !AVCRawBinIsFileGreaterThan(
-            psFile, numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)))
+            psFile,
+            cpl::fits_on<int>(numVertices *
+                              ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16))))
     {
         return -1;
     }

@@ -277,9 +277,10 @@ CPLErr RMFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                poGDS->sHeader.nBitDepth == 32)) ||
              (poGDS->eRMFType == RMFT_MTW))
     {
-        size_t nTilePixelSize = poGDS->sHeader.nBitDepth / 8;
-        size_t nTileLineSize = nTilePixelSize * nRawXSize;
-        size_t nBlockLineSize = nDataSize * nBlockXSize;
+        const size_t nTilePixelSize = poGDS->sHeader.nBitDepth / 8;
+        const size_t nTileLineSize = nTilePixelSize * nRawXSize;
+        const size_t nBlockLineSize =
+            static_cast<size_t>(nDataSize) * nBlockXSize;
         int iDstBand = (poGDS->nBands - nBand);
         for (GUInt32 iLine = 0; iLine != nRawYSize; ++iLine)
         {
@@ -298,9 +299,10 @@ CPLErr RMFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     else if (poGDS->eRMFType == RMFT_RSW && poGDS->sHeader.nBitDepth == 16 &&
              poGDS->nBands == 3)
     {
-        size_t nTilePixelBits = poGDS->sHeader.nBitDepth;
-        size_t nTileLineSize = nTilePixelBits * nRawXSize / 8;
-        size_t nBlockLineSize = nDataSize * nBlockXSize;
+        const size_t nTilePixelBits = poGDS->sHeader.nBitDepth;
+        const size_t nTileLineSize = nTilePixelBits * nRawXSize / 8;
+        const size_t nBlockLineSize =
+            static_cast<size_t>(nDataSize) * nBlockXSize;
 
         for (GUInt32 iLine = 0; iLine != nRawYSize; ++iLine)
         {
@@ -345,9 +347,10 @@ CPLErr RMFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             return CE_Failure;
         }
 
-        size_t nTilePixelBits = poGDS->sHeader.nBitDepth;
-        size_t nTileLineSize = nTilePixelBits * nRawXSize / 8;
-        size_t nBlockLineSize = nDataSize * nBlockXSize;
+        const size_t nTilePixelBits = poGDS->sHeader.nBitDepth;
+        const size_t nTileLineSize = nTilePixelBits * nRawXSize / 8;
+        const size_t nBlockLineSize =
+            static_cast<size_t>(nDataSize) * nBlockXSize;
 
         for (GUInt32 iLine = 0; iLine != nRawYSize; ++iLine)
         {
@@ -377,9 +380,10 @@ CPLErr RMFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             return CE_Failure;
         }
 
-        size_t nTilePixelBits = poGDS->sHeader.nBitDepth;
-        size_t nTileLineSize = nTilePixelBits * nRawXSize / 8;
-        size_t nBlockLineSize = nDataSize * nBlockXSize;
+        const size_t nTilePixelBits = poGDS->sHeader.nBitDepth;
+        const size_t nTileLineSize = nTilePixelBits * nRawXSize / 8;
+        const size_t nBlockLineSize =
+            static_cast<size_t>(nDataSize) * nBlockXSize;
 
         for (GUInt32 iLine = 0; iLine != nRawYSize; ++iLine)
         {
@@ -457,10 +461,11 @@ CPLErr RMFRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         static_cast<GUInt32>(nBlockYOff) == poGDS->nYTiles - 1)
         nRawYSize = nLastTileHeight;
 
-    size_t nTilePixelSize = nDataSize * poGDS->nBands;
-    size_t nTileLineSize = nTilePixelSize * nRawXSize;
-    size_t nTileSize = nTileLineSize * nRawYSize;
-    size_t nBlockLineSize = nDataSize * nBlockXSize;
+    const size_t nTilePixelSize =
+        static_cast<size_t>(nDataSize) * poGDS->nBands;
+    const size_t nTileLineSize = nTilePixelSize * nRawXSize;
+    const size_t nTileSize = nTileLineSize * nRawYSize;
+    const size_t nBlockLineSize = static_cast<size_t>(nDataSize) * nBlockXSize;
 
 #ifdef DEBUG
     CPLDebug(
@@ -475,7 +480,8 @@ CPLErr RMFRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {  // Immediate write
         return poGDS->WriteTile(
             nBlockXOff, nBlockYOff, reinterpret_cast<GByte *>(pImage),
-            nRawXSize * nRawYSize * nDataSize, nRawXSize, nRawYSize);
+            static_cast<size_t>(nRawXSize) * nRawYSize * nDataSize, nRawXSize,
+            nRawYSize);
     }
     else
     {  // Try to construct full tile in memory and write later
@@ -2295,13 +2301,13 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     // Add blocks flags
     poDS->sHeader.nFlagsTblOffset = poDS->GetRMFOffset(nCurPtr, &nCurPtr);
     poDS->sHeader.nFlagsTblSize =
-        poDS->sHeader.nXTiles * poDS->sHeader.nYTiles * sizeof(GByte);
+        sizeof(GByte) * poDS->sHeader.nXTiles * poDS->sHeader.nYTiles;
     nCurPtr += poDS->sHeader.nFlagsTblSize;
 
     // Blocks table
     poDS->sHeader.nTileTblOffset = poDS->GetRMFOffset(nCurPtr, &nCurPtr);
     poDS->sHeader.nTileTblSize =
-        poDS->sHeader.nXTiles * poDS->sHeader.nYTiles * 4 * 2;
+        2 * sizeof(GUInt32) * poDS->sHeader.nXTiles * poDS->sHeader.nYTiles;
     poDS->paiTiles =
         reinterpret_cast<GUInt32 *>(CPLCalloc(poDS->sHeader.nTileTblSize, 1));
     // nCurPtr += poDS->sHeader.nTileTblSize;

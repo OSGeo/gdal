@@ -5812,8 +5812,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 nYReduced = 1;
         }
 
-        void *pData = CPLMalloc(GDALGetDataTypeSizeBytes(eDataType) *
-                                nXReduced * nYReduced);
+        void *pData = CPLMalloc(cpl::fits_on<int>(
+            GDALGetDataTypeSizeBytes(eDataType) * nXReduced * nYReduced));
 
         const CPLErr eErr =
             IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
@@ -6721,8 +6721,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
                 nYReduced = 1;
         }
 
-        void *const pData = CPLMalloc(GDALGetDataTypeSizeBytes(eDataType) *
-                                      nXReduced * nYReduced);
+        void *const pData = CPLMalloc(cpl::fits_on<int>(
+            GDALGetDataTypeSizeBytes(eDataType) * nXReduced * nYReduced));
 
         const CPLErr eErr =
             IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,

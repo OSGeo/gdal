@@ -744,8 +744,9 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
                 if (m_asCachedTilesDesc[i].nIdxWithinTileData >= 0)
                 {
                     return m_pabyCachedTiles +
-                           m_asCachedTilesDesc[i].nIdxWithinTileData *
-                               nTileBands * nBandBlockSize;
+                           nBandBlockSize *
+                               m_asCachedTilesDesc[i].nIdxWithinTileData *
+                               nTileBands;
                 }
                 else
                 {
@@ -770,8 +771,9 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
                                 ? 3
                                 : 2;
                     pabyData = m_pabyCachedTiles +
-                               m_asCachedTilesDesc[i].nIdxWithinTileData *
-                                   nTileBands * nBandBlockSize;
+                               nBandBlockSize *
+                                   m_asCachedTilesDesc[i].nIdxWithinTileData *
+                                   nTileBands;
                     break;
                 }
             }
@@ -2860,11 +2862,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
             return CE_Failure;
         }
         SQLCommand(m_hTempDB, "PRAGMA synchronous = OFF");
-        /* coverity[tainted_string] */
-        SQLCommand(m_hTempDB,
-                   (CPLString("PRAGMA journal_mode = ") +
-                    CPLGetConfigOption("PARTIAL_TILES_JOURNAL_MODE", "OFF"))
-                       .c_str());
+        SQLCommand(m_hTempDB, "PRAGMA journal_mode = OFF");
         SQLCommand(m_hTempDB, "CREATE TABLE partial_tiles("
                               "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                               "zoom_level INTEGER NOT NULL,"
@@ -2974,13 +2972,13 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
     {
         memcpy(pabyTemp +
                    (static_cast<size_t>(nBand - 1) * nBlockXSize * nBlockYSize +
-                    iY * nBlockXSize + nDstXOffset) *
+                    static_cast<size_t>(iY) * nBlockXSize + nDstXOffset) *
                        m_nDTSize,
                m_pabyCachedTiles +
                    (static_cast<size_t>(nBand - 1) * nBlockXSize * nBlockYSize +
-                    iY * nBlockXSize + nDstXOffset) *
+                    static_cast<size_t>(iY) * nBlockXSize + nDstXOffset) *
                        m_nDTSize,
-               nDstXSize * m_nDTSize);
+               static_cast<size_t>(nDstXSize) * m_nDTSize);
     }
 
 #ifdef notdef

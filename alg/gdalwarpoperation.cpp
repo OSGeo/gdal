@@ -689,8 +689,9 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     /* -------------------------------------------------------------------- */
     const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
 
-    void *pDstBuffer = VSI_MALLOC3_VERBOSE(nWordSize * psOptions->nBandCount,
-                                           nDstXSize, nDstYSize);
+    void *pDstBuffer = VSI_MALLOC3_VERBOSE(
+        cpl::fits_on<int>(nWordSize * psOptions->nBandCount), nDstXSize,
+        nDstYSize);
     if (pDstBuffer == nullptr)
     {
         return nullptr;

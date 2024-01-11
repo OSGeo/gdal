@@ -1056,11 +1056,11 @@ void HFABand::NullBlock(void *pData)
 #ifdef ESRI_BUILD
         // We want special defaulting for 1 bit data in ArcGIS.
         if (eDataType >= EPT_u2)
-            memset(pData, 0, nChunkSize * nWords);
+            memset(pData, 0, static_cast<size_t>(nChunkSize) * nWords);
         else
-            memset(pData, 255, nChunkSize * nWords);
+            memset(pData, 255, static_cast<size_t>(nChunkSize) * nWords);
 #else
-        memset(pData, 0, nChunkSize * nWords);
+        memset(pData, 0, static_cast<size_t>(nChunkSize) * nWords);
 #endif
     }
     else
@@ -1438,7 +1438,7 @@ CPLErr HFABand::SetRasterBlock(int nXBlock, int nYBlock, void *pData)
     {
         // Write compressed data.
         int nInBlockSize = static_cast<int>(
-            (nBlockXSize * nBlockYSize *
+            (static_cast<GIntBig>(nBlockXSize) * nBlockYSize *
                  static_cast<GIntBig>(HFAGetDataTypeBits(eDataType)) +
              7) /
             8);

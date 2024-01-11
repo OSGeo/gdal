@@ -462,7 +462,7 @@ int wrapper_GridCreate( char* algorithmOptions,
 
     CPLErrorReset();
 
-    if (xSize * ySize * (GDALGetDataTypeSize(dataType) / 8) > nioBufferSize)
+    if ((GUIntBig)xSize * ySize * GDALGetDataTypeSizeBytes(dataType) > nioBufferSize)
     {
         CPLError( eErr, CPLE_AppDefined, "Buffer too small" );
         return eErr;

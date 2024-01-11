@@ -30,6 +30,8 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
+#include <cinttypes>
+
 static const TigerFieldInfo rtA_2002_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
     {"MODULE", ' ', ' ', OFTString, 0, 0, 8, 1, 0},
@@ -475,11 +477,15 @@ OGRFeature *TigerPolygon::GetFeature(int nRecordId)
         return nullptr;
     }
 
-    if (VSIFSeekL(fpPrimary, nRecordId * nRecordLength, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %sA",
-                 nRecordId * nRecordLength, pszModule);
-        return nullptr;
+        const auto nOffset = static_cast<uint64_t>(nRecordId) * nRecordLength;
+        if (VSIFSeekL(fpPrimary, nOffset, SEEK_SET) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %sA", nOffset,
+                     pszModule);
+            return nullptr;
+        }
     }
 
     if (VSIFReadL(achRecord, nRecordLength, 1, fpPrimary) != 1)
@@ -505,12 +511,16 @@ OGRFeature *TigerPolygon::GetFeature(int nRecordId)
     {
         char achRTSRec[OGR_TIGER_RECBUF_LEN];
 
-        if (VSIFSeekL(fpRTS, nRecordId * nRTSRecLen, SEEK_SET) != 0)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %sS",
-                     nRecordId * nRTSRecLen, pszModule);
-            delete poFeature;
-            return nullptr;
+            const auto nOffset = static_cast<uint64_t>(nRecordId) * nRTSRecLen;
+            if (VSIFSeekL(fpRTS, nOffset, SEEK_SET) != 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Failed to seek to %" PRIu64 " of %sS", nOffset,
+                         pszModule);
+                delete poFeature;
+                return nullptr;
+            }
         }
 
         // Overflow cannot happen since psRTInfo->nRecordLength is unsigned

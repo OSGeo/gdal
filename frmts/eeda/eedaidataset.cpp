@@ -519,7 +519,7 @@ bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
                     GF_Read, iXBlock * nBlockXSize, iYBlock * nBlockYSize,
                     nBlockActualXSize, nBlockActualYSize, pabyDstBuffer,
                     nBlockActualXSize, nBlockActualYSize, eDT, nDTSize,
-                    nDTSize * nBlockXSize, nullptr);
+                    static_cast<GSpacing>(nDTSize) * nBlockXSize, nullptr);
 
                 if (poBlock)
                     poBlock->DropLock();
