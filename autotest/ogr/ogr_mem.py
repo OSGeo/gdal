@@ -710,6 +710,54 @@ def test_ogr_mem_alter_geom_field_defn():
 
 
 ###############################################################################
+# Test ogr.Layer.__arrow_c_stream__() interface.
+# Cf https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_arrow_stream_pycapsule_interface():
+    import ctypes
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    stream = lyr.__arrow_c_stream__()
+    assert stream
+    t = type(stream)
+    assert t.__module__ == "builtins"
+    assert t.__name__ == "PyCapsule"
+    capsule_get_name = ctypes.pythonapi.PyCapsule_GetName
+    capsule_get_name.argtypes = [ctypes.py_object]
+    capsule_get_name.restype = ctypes.c_char_p
+    assert capsule_get_name(ctypes.py_object(stream)) == b"arrow_array_stream"
+
+    with pytest.raises(
+        Exception, match="An arrow Arrow Stream is in progress on that layer"
+    ):
+        lyr.__arrow_c_stream__()
+
+    del stream
+
+    stream = lyr.__arrow_c_stream__()
+    assert stream
+    del stream
+
+    with pytest.raises(Exception, match="requested_schema != None not implemented"):
+        # "something" should rather by a PyCapsule with an ArrowSchema...
+        lyr.__arrow_c_stream__(requested_schema="something")
+
+    # Also test GetArrowArrayStreamInterface() to be able to specify options
+    stream = lyr.GetArrowArrayStreamInterface(
+        {"INCLUDE_FID": "NO"}
+    ).__arrow_c_stream__()
+    assert stream
+    t = type(stream)
+    assert t.__module__ == "builtins"
+    assert t.__name__ == "PyCapsule"
+    del stream
+
+
+###############################################################################
 
 
 def test_ogr_mem_arrow_stream_numpy():

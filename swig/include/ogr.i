@@ -1143,6 +1143,22 @@ public:
 }; /* class ArrowArrayStream */
 #endif
 
+#ifdef SWIGPYTHON
+// Implements __arrow_c_stream__ export interface:
+// https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html#create-a-pycapsule
+%{
+static void ReleaseArrowArrayStreamPyCapsule(PyObject* capsule) {
+    struct ArrowArrayStream* stream =
+        (struct ArrowArrayStream*)PyCapsule_GetPointer(capsule, "arrow_array_stream");
+    if (stream->release != NULL) {
+        stream->release(stream);
+    }
+    CPLFree(stream);
+}
+%}
+
+#endif
+
 /************************************************************************/
 /*                               OGRLayer                               */
 /************************************************************************/
@@ -1506,6 +1522,31 @@ public:
   }
 
 #ifdef SWIGPYTHON
+
+    PyObject* ExportArrowArrayStreamPyCapsule(char** options = NULL)
+    {
+        struct ArrowArrayStream* stream =
+            (struct ArrowArrayStream*)CPLMalloc(sizeof(struct ArrowArrayStream));
+
+        const int success = OGR_L_GetArrowStream(self, stream, options);
+
+        PyObject* ret;
+        SWIG_PYTHON_THREAD_BEGIN_BLOCK;
+        if( success )
+        {
+            ret = PyCapsule_New(stream, "arrow_array_stream", ReleaseArrowArrayStreamPyCapsule);
+        }
+        else
+        {
+            CPLFree(stream);
+            Py_INCREF(Py_None);
+            ret = Py_None;
+        }
+
+        SWIG_PYTHON_THREAD_END_BLOCK;
+
+        return ret;
+    }
 
 %newobject GetArrowStream;
   ArrowArrayStream* GetArrowStream(char** options = NULL) {
