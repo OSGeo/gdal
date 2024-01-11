@@ -158,7 +158,7 @@ GDALRasterBand::~GDALRasterBand()
  * option. Also note that starting with GDAL 3.9, when the resampling algorithm
  * specified in psExtraArg->eResampleAlg is different from GRIORA_NearestNeighbour,
  * this oversampling threshold defaults to 1. Consequently if there are overviews
- * of downscaling factor 2, 4 and 8, and that the desired downscaling factor is
+ * of downscaling factor 2, 4 and 8, and the desired downscaling factor is
  * 7.99, the overview of factor 4 will be selected for a non nearest resampling.
  *
  * For highest performance full resolution data access, read and write
