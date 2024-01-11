@@ -2633,7 +2633,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n"215229.266","168","35043411"')
+    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n215229.266,168,"35043411"')
 
     ds = gdal.OpenEx(
         tmp_vsimem / "ogr_csv_string_quoting_always.csv",
@@ -2653,7 +2653,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert data.startswith(
-        '"AREA","EAS_ID","PRFEDEA"\n"215229.266","168","35043411"\n"247328.172","179","35043423"'
+        '"AREA","EAS_ID","PRFEDEA"\n215229.266,168,"35043411"\n247328.172,179,"35043423"'
     )
 
 
