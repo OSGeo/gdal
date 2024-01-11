@@ -102,6 +102,13 @@ the health of the project:
            :width: 150 px
            :target: https://www.sparkgeo.com
 
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-maxar.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.maxar.com
+
 
 - Supporter level:
 
