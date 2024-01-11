@@ -1309,8 +1309,21 @@ const char *VSICTime(unsigned long nTime)
 
 {
     time_t tTime = static_cast<time_t>(nTime);
-
+#if HAVE_CTIME_R
+    // Cf https://linux.die.net/man/3/ctime_r:
+    // "The reentrant version ctime_r() does the same, but stores the string in
+    // a user-supplied buffer which should have room for at least 26 bytes"
+    char buffer[26];
+    char *ret = ctime_r(&tTime, buffer);
+    return ret ? CPLSPrintf("%s", ret) : nullptr;
+#elif defined(_WIN32)
+    char buffer[26];
+    return ctime_s(buffer, sizeof(buffer), &tTime) == 0
+               ? CPLSPrintf("%s", buffer)
+               : nullptr;
+#else
     return reinterpret_cast<const char *>(ctime(&tTime));
+#endif
 }
 
 /************************************************************************/
@@ -1322,12 +1335,14 @@ struct tm *VSIGMTime(const time_t *pnTime, struct tm *poBrokenTime)
 
 #if HAVE_GMTIME_R
     gmtime_r(pnTime, poBrokenTime);
+    return poBrokenTime;
+#elif defined(_WIN32)
+    return gmtime_s(poBrokenTime, pnTime) == 0 ? poBrokenTime : nullptr;
 #else
     struct tm *poTime = gmtime(pnTime);
     memcpy(poBrokenTime, poTime, sizeof(tm));
-#endif
-
     return poBrokenTime;
+#endif
 }
 
 /************************************************************************/
@@ -1339,12 +1354,14 @@ struct tm *VSILocalTime(const time_t *pnTime, struct tm *poBrokenTime)
 
 #if HAVE_LOCALTIME_R
     localtime_r(pnTime, poBrokenTime);
+    return poBrokenTime;
+#elif defined(_WIN32)
+    return localtime_s(poBrokenTime, pnTime) == 0 ? poBrokenTime : nullptr;
 #else
     struct tm *poTime = localtime(pnTime);
     memcpy(poBrokenTime, poTime, sizeof(tm));
-#endif
-
     return poBrokenTime;
+#endif
 }
 
 /************************************************************************/
