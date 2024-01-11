@@ -11752,9 +11752,10 @@ static void NCDFAddHistory(int fpImage, const char *pszAddHist,
     time_t tp = time(nullptr);
     if (tp != -1)
     {
-        struct tm *ltime = localtime(&tp);
+        struct tm ltime;
+        VSILocalTime(&tp, &ltime);
         (void)strftime(strtime, sizeof(strtime),
-                       "%a %b %d %H:%M:%S %Y: ", ltime);
+                       "%a %b %d %H:%M:%S %Y: ", &ltime);
     }
 
     // status = nc_get_att_text(fpImage, NC_GLOBAL,
