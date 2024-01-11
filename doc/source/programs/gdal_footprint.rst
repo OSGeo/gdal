@@ -26,6 +26,8 @@ Synopsis
        [-convex_hull] [-densify <value>] [-simplify <value>]
        [-min_ring_area <value>] [-max_points <value>|unlimited]
        [-of <ogr_format>] [-lyr_name <dst_layername>]
+       [-location_field_name <field_name>] [-no_location]
+       [-write_absolute_path]
        [-dsco <name>=<value>]... [-lco <name>=<value>]... [-overwrite] [-q]
        <src_filename> <dst_filename>
 
@@ -147,6 +149,30 @@ proper mask bands.
 
     Select the output format. Use the short format name. Guessed from the
     file extension if not specified
+
+.. option:: -location_field_name <field_name>
+
+    .. versionadded:: 3.9.0
+
+    Specifies the name of the field in the resulting vector dataset where the
+    path of the input dataset will be stored. The default field name is
+    "location". To prevent writing the path of the input dataset, use
+    :option:`-no_location`
+
+.. option:: -no_location
+
+    .. versionadded:: 3.9.0
+
+    Turns off the writing of the path of the input dataset as a field in the
+    output vector dataset.
+
+.. option:: -write_absolute_path
+
+    .. versionadded:: 3.9.0
+
+    Enables writing the absolute path of the input dataset. By default, the
+    filename is written in the location field exactly as specified on the
+    command line.
 
 .. option:: -lco <NAME>=<VALUE>
 

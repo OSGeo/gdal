@@ -887,7 +887,7 @@ const TIFFField *_TIFFFindOrRegisterField(TIFF *tif, uint32_t tag,
     if (fld == NULL)
     {
         fld = _TIFFCreateAnonField(tif, tag, dt);
-        if (!_TIFFMergeFields(tif, fld, 1))
+        if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
             return NULL;
     }
 

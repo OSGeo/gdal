@@ -86,7 +86,6 @@ class OGRKMLLayer final : public OGRLayer
     OGRFeatureDefn *poFeatureDefn_;
 
     int iNextKMLId_;
-    int nTotalKMLCount_;
     bool bWriter_;
     int nLayerNumber_;
     int nWroteFeatureCount_;

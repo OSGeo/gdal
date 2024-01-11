@@ -17,6 +17,10 @@ from a potentially big dataset according to a tiling scheme, with several zoom
 levels. The driver provides a single raster view, with overviews, of the dataset
 described by the JSON file. The driver supports metatiles of arbitrary size.
 
+The driver may use the `Electro-Optical Extension <https://github.com/stac-extensions/eo>`__
+and, starting with GDAL 3.8.2, the `Raster Extension <https://github.com/stac-extensions/raster>`__
+attached to an asset template.
+
 Configuration options
 ---------------------
 

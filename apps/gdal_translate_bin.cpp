@@ -69,7 +69,8 @@ static void Usage(bool bIsError, const char *pszErrorMsg, bool bShort)
         "[<elevation>]]...\n"
         "       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]\n"
         "       |-colorinterp {red|green|blue|alpha|gray|undefined},...]\n"
-        "       [-mo <META-TAG>=<VALUE>]... [-q] [-sds]\n"
+        "       [-mo <META-TAG>=<VALUE>]... [-dmo "
+        "<DOMAIN:META-TAG>=<VALUE>]... [-q] [-sds]\n"
         "       [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]\n"
         "       [-oo <NAME>=<VALUE>]...\n"
         "       <src_dataset> <dst_dataset>\n");

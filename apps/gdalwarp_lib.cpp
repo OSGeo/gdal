@@ -48,8 +48,10 @@
 
 // Suppress deprecation warning for GDALOpenVerticalShiftGrid and
 // GDALApplyVerticalShiftGrid
+#ifndef CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid
 #define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid(x)
 #define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+#endif
 
 #include "commonutils.h"
 #include "cpl_conv.h"
@@ -74,12 +76,6 @@
 #if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
 #define USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
 #endif
-
-// those values shouldn't be changed, because overview levels >= 0 are meant
-// to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
-// automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
-constexpr int OVR_LEVEL_AUTO = -2;
-constexpr int OVR_LEVEL_NONE = -1;
 
 /************************************************************************/
 /*                        GDALWarpAppOptions                            */
@@ -1369,13 +1365,20 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
  * @param pszDest the destination dataset path or NULL.
  * @param hDstDS the destination dataset or NULL.
  * @param nSrcCount the number of input datasets.
- * @param pahSrcDS the list of input datasets.
+ * @param pahSrcDS the list of input datasets. For practical purposes, the type
+ * of this argument should be considered as "const GDALDatasetH* const*", that
+ * is neither the array nor its values are mutated by this function.
  * @param psOptionsIn the options struct returned by GDALWarpAppOptionsNew() or
  * NULL.
  * @param pbUsageError pointer to a integer output variable to store if any
  * usage error has occurred, or NULL.
  * @return the output dataset (new dataset that must be closed using
- * GDALClose(), or hDstDS if not NULL) or NULL in case of error.
+ * GDALClose(), or hDstDS if not NULL) or NULL in case of error. If the output
+ * format is a VRT dataset, then the returned VRT dataset has a reference to
+ * pahSrcDS[0]. Hence pahSrcDS[0] should be closed after the returned dataset
+ * if using GDALClose().
+ * A safer alternative is to use GDALReleaseDataset() instead of using
+ * GDALClose(), in which case you can close datasets in any order.
  *
  * @since GDAL 2.1
  */
@@ -3455,7 +3458,7 @@ static GDALDatasetH GDALWarpCreateOutput(
         oDstSRS.SetFromUserInput(pszDstSRS);
         const char *pszProjection = oDstSRS.GetAttrValue("PROJECTION");
         const char *pszMethod = CSLFetchNameValue(papszTO, "METHOD");
-        double adfSrcGT[6];
+        double adfSrcGT[6] = {0};
         // This MAX_LAT values is equivalent to the semi_major_axis * PI
         // easting/northing value only for EPSG:3857, but it is also quite
         // reasonable for other Mercator projections
@@ -5252,17 +5255,26 @@ static bool IsValidSRS(const char *pszUserInput)
 /*                             GDALWarpAppOptionsNew()                  */
 /************************************************************************/
 
+#ifndef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
+static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
+                                         int nExtraArg, int nArgc)
+{
+    if (i + nExtraArg >= nArgc)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "%s option requires %d argument%s", papszArgv[i], nExtraArg,
+                 nExtraArg == 1 ? "" : "s");
+        return false;
+    }
+    return true;
+}
+
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
-    do                                                                         \
+    if (!CheckHasEnoughAdditionalArgs(papszArgv, i, nExtraArg, nArgc))         \
     {                                                                          \
-        if (i + nExtraArg >= argc)                                             \
-        {                                                                      \
-            CPLError(CE_Failure, CPLE_IllegalArg,                              \
-                     "%s option requires %d argument%s", papszArgv[i],         \
-                     nExtraArg, nExtraArg == 1 ? "" : "s");                    \
-            return nullptr;                                                    \
-        }                                                                      \
-    } while (false)
+        return nullptr;                                                        \
+    }
+#endif
 
 /**
  * Allocates a GDALWarpAppOptions struct.
@@ -5289,8 +5301,8 @@ GDALWarpAppOptionsNew(char **papszArgv,
     /* -------------------------------------------------------------------- */
     /*      Parse arguments.                                                */
     /* -------------------------------------------------------------------- */
-    int argc = CSLCount(papszArgv);
-    for (int i = 0; papszArgv != nullptr && i < argc; i++)
+    int nArgc = CSLCount(papszArgv);
+    for (int i = 0; papszArgv != nullptr && i < nArgc; i++)
     {
         if (EQUAL(papszArgv[i], "-tps") || EQUAL(papszArgv[i], "-rpc") ||
             EQUAL(papszArgv[i], "-geoloc"))
@@ -5366,7 +5378,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
             psOptions->aosTransformerOptions.SetNameValue("DST_SRS", pszSRS);
         }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-t_coord_epoch"))
+        else if (i + 1 < nArgc && EQUAL(papszArgv[i], "-t_coord_epoch"))
         {
             const char *pszCoordinateEpoch = papszArgv[++i];
             psOptions->aosTransformerOptions.SetNameValue(
@@ -5420,7 +5432,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
                          "The tolerance for -refine_gcps may not be negative.");
                 return nullptr;
             }
-            if (i < argc - 1 && atoi(papszArgv[i + 1]) >= 0 &&
+            if (i < nArgc - 1 && atoi(papszArgv[i + 1]) >= 0 &&
                 isdigit(papszArgv[i + 1][0]))
             {
                 psOptions->aosTransformerOptions.SetNameValue(
@@ -5477,7 +5489,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osDstNodata = papszArgv[++i];
         }
-        else if (EQUAL(papszArgv[i], "-tr") && i + 1 < argc &&
+        else if (EQUAL(papszArgv[i], "-tr") && i + 1 < nArgc &&
                  EQUAL(papszArgv[i + 1], "square"))
         {
             ++i;

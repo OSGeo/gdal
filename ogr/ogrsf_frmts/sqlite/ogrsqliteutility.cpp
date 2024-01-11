@@ -740,3 +740,12 @@ bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName)
     }
     return false;
 }
+
+double SQLResult::GetValueAsDouble(int iColNum, int iRowNum) const
+{
+    const char *pszValue = GetValue(iColNum, iRowNum);
+    if (!pszValue)
+        return 0;
+
+    return CPLStrtod(pszValue, nullptr);
+}

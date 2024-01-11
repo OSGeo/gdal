@@ -74,6 +74,9 @@ endforeach ()
 configure_file(jmorecfg.h.12 ${CMAKE_CURRENT_BINARY_DIR}/jmorecfg.h COPYONLY)
 
 add_library(libjpeg12 OBJECT ${SOURCES_12})
+
+set_property(TARGET libjpeg12 PROPERTY UNITY_BUILD OFF)
+
 target_include_directories(libjpeg12 PRIVATE ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_PROPERTY:cpl,SOURCE_DIR>
                                              $<TARGET_PROPERTY:cpl,BINARY_DIR>)
 target_compile_options(libjpeg12 PRIVATE ${GDAL_C_WARNING_FLAGS} ${GDAL_SOFTWARNFLAGS})

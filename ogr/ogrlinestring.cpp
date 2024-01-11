@@ -1878,7 +1878,8 @@ std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions &opts,
                 2 + ((hasZ) ? 1 : 0) + ((hasM) ? 1 : 0);
             // At least 2 bytes per ordinate: one for the value,
             // and one for the separator...
-            wkt.reserve(wkt.size() + 2 * nPointCount * nOrdinatesPerVertex);
+            wkt.reserve(wkt.size() + 2 * static_cast<size_t>(nPointCount) *
+                                         nOrdinatesPerVertex);
 
             for (int i = 0; i < nPointCount; i++)
             {
@@ -2009,33 +2010,19 @@ void OGRSimpleCurve::Value(double dfDistance, OGRPoint *poPoint) const
  * from point to the linestring. The distance from begin of linestring to
  * the point projection returned.
  *
- * This method is built on the GEOS library (GEOS >= 3.2.0), check it for the
+ * This method is built on the GEOS library. Check it for the
  * definition of the geometry operation.
  * If OGR is built without the GEOS library, this method will always return -1,
  * issuing a CPLE_NotSupported error.
  *
  * @return a distance from the begin of the linestring to the projected point.
- *
- * @since OGR 1.11.0
  */
 
-// GEOS >= 3.2.0 for project capability.
-#if defined(HAVE_GEOS)
-#if GEOS_VERSION_MAJOR > 3 ||                                                  \
-    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
-#define HAVE_GEOS_PROJECT
-#endif
-#endif
-
-double OGRSimpleCurve::Project(const OGRPoint *
-#ifdef HAVE_GEOS_PROJECT
-                                   poPoint
-#endif
-) const
+double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
 
 {
     double dfResult = -1;
-#ifndef HAVE_GEOS_PROJECT
+#ifndef HAVE_GEOS
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
     return dfResult;
 #else
@@ -2955,17 +2942,6 @@ double OGRLineString::get_AreaOfCurveSegments() const
 }
 
 /************************************************************************/
-/*                            epsilonEqual()                            */
-/************************************************************************/
-
-constexpr double EPSILON = 1.0E-5;
-
-static inline bool epsilonEqual(double a, double b, double eps)
-{
-    return ::fabs(a - b) < eps;
-}
-
-/************************************************************************/
 /*                            isClockwise()                             */
 /************************************************************************/
 
@@ -3015,6 +2991,10 @@ int OGRLineString::isClockwise() const
     {
         next = nPointCount - 1 - 1;
     }
+
+    constexpr double EPSILON = 1.0E-5;
+    const auto epsilonEqual = [](double a, double b, double eps)
+    { return ::fabs(a - b) < eps; };
 
     if (epsilonEqual(paoPoints[next].x, paoPoints[v].x, EPSILON) &&
         epsilonEqual(paoPoints[next].y, paoPoints[v].y, EPSILON))

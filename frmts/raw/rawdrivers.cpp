@@ -1,8 +1,10 @@
 #include "gdal_frmts.h"
 
 extern "C" void CPL_DLL GDALRegister_raw();
+extern "C" void CPL_DLL GDALRegister_raw_no_sidecar();
+extern "C" void CPL_DLL GDALRegister_raw_with_sidecar();
 
-void GDALRegister_raw()
+void GDALRegister_raw_no_sidecar()
 {
     GDALRegister_PNM();
     GDALRegister_DOQ1();
@@ -31,11 +33,20 @@ void GDALRegister_raw()
     GDALRegister_BYN();
     GDALRegister_NOAA_B();
     GDALRegister_NSIDCbin();
+}
 
+void GDALRegister_raw_with_sidecar()
+{
     // Drivers that that absolutely need to look for side car files in their
     // Identify()/Open() procedure.
     GDALRegister_GenBin();
     GDALRegister_ENVI();
     GDALRegister_EHdr();
     GDALRegister_ISCE();
+}
+
+void GDALRegister_raw()
+{
+    GDALRegister_raw_no_sidecar();
+    GDALRegister_raw_with_sidecar();
 }

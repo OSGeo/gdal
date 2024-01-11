@@ -74,7 +74,7 @@ predefined files.
 The following locations are tried by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`:
 
  - the location pointed by the environment variable (or configuration option)
-   :config:`GDAL_CONFIG_FILE` is attempted first. If it set, the next steps are not
+   :config:`GDAL_CONFIG_FILE` is attempted first. If it is set, the next steps are not
    attempted
 
  - for Unix builds, the location pointed by ${sysconfdir}/gdal/gdalrc is first
@@ -403,7 +403,7 @@ General options
       :choices: NEAR, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE, RMS, MODE, GAUSS
       :default: NEAR
 
-      Sets the resampling algorithm to be used when reading a from a raster
+      Sets the resampling algorithm to be used when reading from a raster
       into a buffer with different dimensions from the source region.
 
 -  .. config:: OGR_ARC_STEPSIZE
@@ -930,11 +930,11 @@ PROJ options
 
       This option can be used to control the behavior of gdalwarp when warping global
       datasets or when transforming from/to polar projections, which causes
-      coordinates discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
+      coordinate discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
 
       The background is that PROJ does not guarantee that converting from src_srs to
       dst_srs and then from dst_srs to src_srs will yield to the initial coordinates.
-      This can cause to errors in the computation of the target bounding box of
+      This can lead to errors in the computation of the target bounding box of
       gdalwarp, or to visual artifacts.
 
       If CHECK_WITH_INVERT_PROJ option is not set, gdalwarp will check that the the

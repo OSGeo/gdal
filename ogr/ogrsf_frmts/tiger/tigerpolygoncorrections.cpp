@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "B";
+static const char B_FILE_CODE[] = "B";
 
 static const TigerFieldInfo rtB_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -64,7 +64,7 @@ static const TigerRecordInfo rtB_info = {
 
 TigerPolygonCorrections::TigerPolygonCorrections(
     OGRTigerDataSource *poDSIn, const char * /* pszPrototypeModule */)
-    : TigerFileBase(&rtB_info, FILE_CODE)
+    : TigerFileBase(&rtB_info, B_FILE_CODE)
 {
     OGRFieldDefn oField("", OFTInteger);
 

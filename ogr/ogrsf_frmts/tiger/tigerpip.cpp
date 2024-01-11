@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "P";
+static const char P_FILE_CODE[] = "P";
 
 static const TigerFieldInfo rtP_2002_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -61,7 +61,7 @@ static const TigerRecordInfo rtP_info = {
 
 TigerPIP::TigerPIP(OGRTigerDataSource *poDSIn,
                    CPL_UNUSED const char *pszPrototypeModule)
-    : TigerPoint(nullptr, FILE_CODE)
+    : TigerPoint(nullptr, P_FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("PIP");

@@ -85,7 +85,7 @@ GDALRasterBand::GDALRasterBand(int bForceCachedIOIn)
 GDALRasterBand::~GDALRasterBand()
 
 {
-    if (poDS && poDS->bSuppressOnClose)
+    if (poDS && poDS->IsMarkedSuppressOnClose())
     {
         if (poBandBlockCache)
             poBandBlockCache->DisableDirtyBlockWriting();
@@ -153,6 +153,14 @@ GDALRasterBand::~GDALRasterBand()
  * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
  * ]8 / 1.2, infinity[        | 8x downsampled band
  *
+ * Note that starting with GDAL 3.9, this 1.2 oversampling factor can be
+ * modified by setting the GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD configuration
+ * option. Also note that starting with GDAL 3.9, when the resampling algorithm
+ * specified in psExtraArg->eResampleAlg is different from GRIORA_NearestNeighbour,
+ * this oversampling threshold defaults to 1. Consequently if there are overviews
+ * of downscaling factor 2, 4 and 8, and the desired downscaling factor is
+ * 7.99, the overview of factor 4 will be selected for a non nearest resampling.
+ *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
  * ReadBlock() and WriteBlock() methods.
@@ -178,6 +186,10 @@ GDALRasterBand::~GDALRasterBand()
  * nBufYSize words of type eBufType. It is organized in left to right,
  * top to bottom pixel order. Spacing is controlled by the nPixelSpace,
  * and nLineSpace parameters.
+ * Note that even with eRWFlag==GF_Write, the content of the buffer might be
+ * temporarily modified during the execution of this method (and eventually
+ * restored back to its original content), so it is not safe to use a buffer
+ * stored in a read-only section of the calling program.
  *
  * @param nBufXSize the width of the buffer image into which the desired region
  * is to be read, or from which it is to be written.
@@ -680,7 +692,10 @@ CPLErr GDALRasterBand::IWriteBlock(int /*nBlockXOff*/, int /*nBlockYOff*/,
  *
  * @param pImage the buffer from which the data will be written.  The buffer
  * must be large enough to hold GetBlockXSize()*GetBlockYSize() words
- * of type GetRasterDataType().
+ * of type GetRasterDataType(). Note that the content of the buffer might be
+ * temporarily modified during the execution of this method (and eventually
+ * restored back to its original content), so it is not safe to use a buffer
+ * stored in a read-only section of the calling program.
  *
  * @return CE_None on success or CE_Failure on an error.
  */
@@ -1103,7 +1118,8 @@ int GDALRasterBand::InitBlockInfo()
 CPLErr GDALRasterBand::FlushCache(bool bAtClosing)
 
 {
-    if (bAtClosing && poDS && poDS->bSuppressOnClose && poBandBlockCache)
+    if (bAtClosing && poDS && poDS->IsMarkedSuppressOnClose() &&
+        poBandBlockCache)
         poBandBlockCache->DisableDirtyBlockWriting();
 
     CPLErr eGlobalErr = eFlushBlockErr;
@@ -1138,6 +1154,70 @@ CPLErr CPL_STDCALL GDALFlushRasterCache(GDALRasterBandH hBand)
     VALIDATE_POINTER1(hBand, "GDALFlushRasterCache", CE_Failure);
 
     return GDALRasterBand::FromHandle(hBand)->FlushCache(false);
+}
+
+/************************************************************************/
+/*                             DropCache()                              */
+/************************************************************************/
+
+/**
+* \brief Drop raster data cache : data in cache will be lost.
+*
+* This call will recover memory used to cache data blocks for this raster
+* band, and ensure that new requests are referred to the underlying driver.
+*
+* This method is the same as the C function GDALDropRasterCache().
+*
+* @return CE_None on success.
+* @since 3.9
+*/
+
+CPLErr GDALRasterBand::DropCache()
+
+{
+    CPLErr result = CE_None;
+
+    if (poBandBlockCache)
+        poBandBlockCache->DisableDirtyBlockWriting();
+
+    CPLErr eGlobalErr = eFlushBlockErr;
+
+    if (eFlushBlockErr != CE_None)
+    {
+        ReportError(
+            eFlushBlockErr, CPLE_AppDefined,
+            "An error occurred while writing a dirty block from DropCache");
+        eFlushBlockErr = CE_None;
+    }
+
+    if (poBandBlockCache == nullptr || !poBandBlockCache->IsInitOK())
+        result = eGlobalErr;
+    else
+        result = poBandBlockCache->FlushCache();
+
+    if (poBandBlockCache)
+        poBandBlockCache->EnableDirtyBlockWriting();
+
+    return result;
+}
+
+/************************************************************************/
+/*                        GDALDropRasterCache()                         */
+/************************************************************************/
+
+/**
+* \brief Drop raster data cache.
+*
+* @see GDALRasterBand::DropCache()
+* @since 3.9
+*/
+
+CPLErr CPL_STDCALL GDALDropRasterCache(GDALRasterBandH hBand)
+
+{
+    VALIDATE_POINTER1(hBand, "GDALDropRasterCache", CE_Failure);
+
+    return GDALRasterBand::FromHandle(hBand)->DropCache();
 }
 
 /************************************************************************/
@@ -5740,8 +5820,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 nYReduced = 1;
         }
 
-        void *pData = CPLMalloc(GDALGetDataTypeSizeBytes(eDataType) *
-                                nXReduced * nYReduced);
+        void *pData = CPLMalloc(cpl::fits_on<int>(
+            GDALGetDataTypeSizeBytes(eDataType) * nXReduced * nYReduced));
 
         const CPLErr eErr =
             IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
@@ -6649,8 +6729,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
                 nYReduced = 1;
         }
 
-        void *const pData = CPLMalloc(GDALGetDataTypeSizeBytes(eDataType) *
-                                      nXReduced * nYReduced);
+        void *const pData = CPLMalloc(cpl::fits_on<int>(
+            GDALGetDataTypeSizeBytes(eDataType) * nXReduced * nYReduced));
 
         const CPLErr eErr =
             IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,

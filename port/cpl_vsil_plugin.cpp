@@ -470,6 +470,12 @@ int VSIInstallPluginHandler(const char *pszPrefix,
     return 0;
 }
 
+int VSIRemovePluginHandler(const char *pszPrefix)
+{
+    VSIFileManager::RemoveHandler(pszPrefix);
+    return 0;
+}
+
 VSIFilesystemPluginCallbacksStruct *
 VSIAllocFilesystemPluginCallbacksStruct(void)
 {

@@ -258,14 +258,6 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
 
-    /**
-     * @brief GetExtent3D computes the 3D extent of the layer.
-     * @param iGeomField 0-based index of the geometry field to consider.
-     * @param psExtent3D the computed 3D extent of the layer.
-     * @param bForce if TRUE, the extent will be computed even if all the
-     *        layer features have to be fetched.
-     * @return OGRERR_NONE on success or an error code in case of failure.
-     */
     virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
                                int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
 

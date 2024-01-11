@@ -98,7 +98,7 @@ class CPL_DLL OGRArrowArrayHelper
     {
         static_cast<uint8_t *>(
             const_cast<void *>(psArray->buffers[1]))[iFeat / 8] |=
-            static_cast<uint8_t>(1 << (iFeat / 8));
+            static_cast<uint8_t>(1 << (iFeat % 8));
     }
 
     inline static void SetInt8(struct ArrowArray *psArray, int iFeat,

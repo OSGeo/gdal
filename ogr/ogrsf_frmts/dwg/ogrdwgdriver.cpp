@@ -77,7 +77,7 @@ static GDALDataset *OGRDWGDriverOpen(GDALOpenInfo *poOpenInfo)
 void RegisterOGRDWG()
 
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(DWG_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();

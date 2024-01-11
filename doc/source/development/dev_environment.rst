@@ -13,15 +13,15 @@ Build requirements
 
 The minimum requirements to build GDAL are:
 
-- CMake >= 3.10, and an associated build system (make, ninja, Visual Studio, etc.)
+- CMake >= 3.16, and an associated build system (make, ninja, Visual Studio, etc.)
 - C99 compiler
 - C++17 compiler since GDAL 3.9 (C++11 in previous versions)
-- PROJ >= 6.0
+- PROJ >= 6.3.1
 
 Additional requirements to run the GDAL test suite are:
 
 - SWIG >= 4, for building bindings to other programming languages
-- Python >= 3.6
+- Python >= 3.8
 - Python packages listed in `autotest/requirements.txt`
 
 A number of optional libraries are also strongly recommended for most builds:

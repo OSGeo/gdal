@@ -165,14 +165,10 @@ class OGRDWGLayer final : public OGRLayer
 
 class OGRDWGDataSource final : public OGRDataSource
 {
-    VSILFILE *fp;
-
     CPLString m_osName;
     std::vector<OGRLayer *> apoLayers;
 
     std::set<CPLString> attributeFields;
-
-    int iEntitiesSectionOffset;
 
     std::map<CPLString, DWGBlockDefinition> oBlockMap;
     std::map<CPLString, CPLString> oHeaderVariables;

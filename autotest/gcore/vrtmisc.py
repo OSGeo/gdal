@@ -940,7 +940,7 @@ def test_vrtmisc_serialize_complexsource_with_NODATA():
     gdal.VSIFCloseL(fp)
     gdal.Unlink(tmpfilename)
 
-    print(content)
+    # print(content)
     assert "<NODATA>1</NODATA>" in content
 
 
@@ -1077,4 +1077,6 @@ def test_vrt_read_netcdf():
         ds = None
 
         with open(vrt_copy_path, "r") as xml:
-            assert 'NETCDF:"alldatatypes.nc":ubyte_var' in xml.read()
+            xml_data = xml.read()
+            # print(xml_data)
+            assert 'NETCDF:"alldatatypes.nc":ubyte_var' in xml_data

@@ -72,6 +72,8 @@
 #include "../sqlite/ogrsqliteexecutesql.h"
 #endif
 
+extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
+
 CPL_C_START
 GDALAsyncReader *GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff,
                                            int nYOff, int nXSize, int nYSize,
@@ -299,7 +301,7 @@ GDALDataset::~GDALDataset()
             CPLDebug("GDAL", "GDALClose(%s, this=%p)", GetDescription(), this);
     }
 
-    if (bSuppressOnClose)
+    if (IsMarkedSuppressOnClose())
     {
         if (poDriver == nullptr ||
             // Someone issuing Create("foo.tif") on a
@@ -612,6 +614,59 @@ CPLErr CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
 }
 
 /************************************************************************/
+/*                             DropCache()                              */
+/************************************************************************/
+
+/**
+* \brief Drop all write cached data
+*
+* This method is the same as the C function GDALDropCache().
+*
+* @return CE_None in case of success
+* @since 3.9
+*/
+
+CPLErr GDALDataset::DropCache()
+
+{
+    CPLErr eErr = CE_None;
+
+    if (papoBands)
+    {
+        for (int i = 0; i < nBands; ++i)
+        {
+            if (papoBands[i])
+            {
+                if (papoBands[i]->DropCache() != CE_None)
+                    eErr = CE_Failure;
+            }
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                           GDALDropCache()                           */
+/************************************************************************/
+
+/**
+* \brief Drop all write cached data
+*
+* @see GDALDataset::DropCache().
+* @return CE_None in case of success
+* @since 3.9
+*/
+
+CPLErr CPL_STDCALL GDALDropCache(GDALDatasetH hDS)
+
+{
+    VALIDATE_POINTER1(hDS, "GDALDropCache", CE_Failure);
+
+    return GDALDataset::FromHandle(hDS)->DropCache();
+}
+
+/************************************************************************/
 /*                      GetEstimatedRAMUsage()                          */
 /************************************************************************/
 
@@ -657,7 +712,7 @@ CPLErr GDALDataset::BlockBasedFlushCache(bool bAtClosing)
 
 {
     GDALRasterBand *poBand1 = GetRasterBand(1);
-    if (poBand1 == nullptr || (bSuppressOnClose && bAtClosing))
+    if (poBand1 == nullptr || (IsMarkedSuppressOnClose() && bAtClosing))
     {
         return GDALDataset::FlushCache(bAtClosing);
     }
@@ -1631,6 +1686,16 @@ void GDALDataset::MarkSuppressOnClose()
 }
 
 /************************************************************************/
+/*                       UnMarkSuppressOnClose()                        */
+/************************************************************************/
+
+/** Remove the flag requesting the dataset to be deleted on close. */
+void GDALDataset::UnMarkSuppressOnClose()
+{
+    bSuppressOnClose = false;
+}
+
+/************************************************************************/
 /*                        CleanupPostFileClosing()                      */
 /************************************************************************/
 
@@ -1641,7 +1706,7 @@ void GDALDataset::MarkSuppressOnClose()
  */
 void GDALDataset::CleanupPostFileClosing()
 {
-    if (bSuppressOnClose)
+    if (IsMarkedSuppressOnClose())
     {
         char **papszFileList = GetFileList();
         for (int i = 0; papszFileList && papszFileList[i]; ++i)
@@ -2509,6 +2574,14 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
  * ]8 / 1.2, infinity[        | 8x downsampled band
  *
+ * Note that starting with GDAL 3.9, this 1.2 oversampling factor can be
+ * modified by setting the GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD configuration
+ * option. Also note that starting with GDAL 3.9, when the resampling algorithm
+ * specified in psExtraArg->eResampleAlg is different from GRIORA_NearestNeighbour,
+ * this oversampling threshold defaults to 1. Consequently if there are overviews
+ * of downscaling factor 2, 4 and 8, and the desired downscaling factor is
+ * 7.99, the overview of factor 4 will be selected for a non nearest resampling.
+ *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
  * ReadBlock() and WriteBlock() methods.
@@ -2534,6 +2607,10 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * nBufXSize * nBufYSize * nBandCount words of type eBufType.  It is organized
  * in left to right,top to bottom pixel order.  Spacing is controlled by the
  * nPixelSpace, and nLineSpace parameters.
+ * Note that even with eRWFlag==GF_Write, the content of the buffer might be
+ * temporarily modified during the execution of this method (and eventually
+ * restored back to its original content), so it is not safe to use a buffer
+ * stored in a read-only section of the calling program.
  *
  * @param nBufXSize the width of the buffer image into which the desired region
  * is to be read, or from which it is to be written.
@@ -3025,12 +3102,12 @@ struct GDALAntiRecursionStruct
 
 #ifdef WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
-static void FreeAntiRecursion(void *pData)
+static void FreeAntiRecursionOpen(void *pData)
 {
     delete static_cast<GDALAntiRecursionStruct *>(pData);
 }
 
-static GDALAntiRecursionStruct &GetAntiRecursion()
+static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 {
     static GDALAntiRecursionStruct dummy;
     int bMemoryErrorOccurred = false;
@@ -3044,7 +3121,7 @@ static GDALAntiRecursionStruct &GetAntiRecursion()
     {
         auto pAntiRecursion = new GDALAntiRecursionStruct();
         CPLSetTLSWithFreeFuncEx(CTLS_GDALOPEN_ANTIRECURSION, pAntiRecursion,
-                                FreeAntiRecursion, &bMemoryErrorOccurred);
+                                FreeAntiRecursionOpen, &bMemoryErrorOccurred);
         if (bMemoryErrorOccurred)
         {
             delete pAntiRecursion;
@@ -3056,7 +3133,7 @@ static GDALAntiRecursionStruct &GetAntiRecursion()
 }
 #else
 static thread_local GDALAntiRecursionStruct g_tls_antiRecursion;
-static GDALAntiRecursionStruct &GetAntiRecursion()
+static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 {
     return g_tls_antiRecursion;
 }
@@ -3064,7 +3141,7 @@ static GDALAntiRecursionStruct &GetAntiRecursion()
 
 //! @cond Doxygen_Suppress
 GDALAntiRecursionGuard::GDALAntiRecursionGuard(const std::string &osIdentifier)
-    : m_psAntiRecursionStruct(&GetAntiRecursion()),
+    : m_psAntiRecursionStruct(&GetAntiRecursionOpen()),
       m_osIdentifier(osIdentifier),
       m_nDepth(++m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier])
 {
@@ -3120,7 +3197,7 @@ char **GDALDataset::GetFileList()
     CPLString osMainFilename = GetDescription();
     VSIStatBufL sStat;
 
-    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursion();
+    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursionOpen();
     const GDALAntiRecursionStruct::DatasetContext datasetCtxt(osMainFilename, 0,
                                                               std::string());
     auto &aosDatasetList = sAntiRecursion.aosDatasetNamesWithFlags;
@@ -3511,7 +3588,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                            const_cast<char **>(papszSiblingFiles));
     oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
-    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursion();
+    GDALAntiRecursionStruct &sAntiRecursion = GetAntiRecursionOpen();
     if (sAntiRecursion.nRecLevel == 100)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3545,6 +3622,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
     }
 
     oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
+    oOpenInfo.nOpenFlags |= GDAL_OF_FROM_GDALOPEN;
 
 #ifdef OGRAPISPY_ENABLED
     const bool bUpdate = (nOpenFlags & GDAL_OF_UPDATE) != 0;
@@ -3872,20 +3950,56 @@ retry:
                 }
                 else
                 {
-                    const char *pszInstallationMsg =
-                        poMissingPluginDriver->GetMetadataItem(
-                            GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE);
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as a supported file format. "
-                             "It could have been recognized by driver %s, "
-                             "but plugin %s is not available in your "
-                             "installation.%s%s",
-                             pszFilename,
-                             poMissingPluginDriver->GetDescription(),
-                             poMissingPluginDriver->GetMetadataItem(
-                                 "MISSING_PLUGIN_FILENAME"),
-                             pszInstallationMsg ? " " : "",
-                             pszInstallationMsg ? pszInstallationMsg : "");
+                    std::string osMsg("`");
+                    osMsg += pszFilename;
+                    osMsg += "' not recognized as a supported file format. "
+                             "It could have been recognized by driver ";
+                    osMsg += poMissingPluginDriver->GetDescription();
+                    osMsg += ", but plugin ";
+                    osMsg += poMissingPluginDriver->GetMetadataItem(
+                        "MISSING_PLUGIN_FILENAME");
+                    osMsg += " is not available in your "
+                             "installation.";
+                    if (const char *pszInstallationMsg =
+                            poMissingPluginDriver->GetMetadataItem(
+                                GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE))
+                    {
+                        osMsg += " ";
+                        osMsg += pszInstallationMsg;
+                    }
+
+                    VSIStatBuf sStat;
+                    if (const char *pszGDALDriverPath =
+                            CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr))
+                    {
+                        if (VSIStat(pszGDALDriverPath, &sStat) != 0)
+                        {
+                            osMsg += ". Directory '";
+                            osMsg += pszGDALDriverPath;
+                            osMsg +=
+                                "' pointed by GDAL_DRIVER_PATH does not exist.";
+                        }
+                    }
+                    else
+                    {
+#ifdef INSTALL_PLUGIN_FULL_DIR
+                        if (VSIStat(INSTALL_PLUGIN_FULL_DIR, &sStat) != 0)
+                        {
+                            osMsg += ". Directory '";
+                            osMsg += INSTALL_PLUGIN_FULL_DIR;
+                            osMsg += "' hardcoded in the GDAL library does not "
+                                     "exist and the GDAL_DRIVER_PATH "
+                                     "configuration option is not set.";
+                        }
+                        else
+#endif
+                        {
+                            osMsg += ". The GDAL_DRIVER_PATH configuration "
+                                     "option is not set.";
+                        }
+                    }
+
+                    CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
                 }
             }
             else

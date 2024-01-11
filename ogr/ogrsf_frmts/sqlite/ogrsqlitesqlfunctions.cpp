@@ -1156,11 +1156,7 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
             }
             if (bRegisterMakeValid)
             {
-                OGRPoint p(0, 0);
-                CPLErrorStateBackuper oBackuper;
-                CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-                auto validGeom = std::unique_ptr<OGRGeometry>(p.MakeValid());
-                return validGeom != nullptr;
+                return OGRGeometryFactory::haveGEOS();
             }
             return false;
         }();

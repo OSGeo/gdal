@@ -53,6 +53,7 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 #include "ogrlayerpool.h"
+#include "ograrrowarrayhelper.h"
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
 #include "shp_vsi.h"
@@ -1677,14 +1678,49 @@ GIntBig OGRShapeLayer::GetFeatureCount(int bForce)
 OGRErr OGRShapeLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
-    OGREnvelope3D envelope3D;
-    const OGRErr retVal{GetExtent3D(0, &envelope3D, bForce)};
-    *psExtent = envelope3D;
-    return retVal;
+    if (!TouchLayer())
+        return OGRERR_FAILURE;
+
+    if (hSHP == nullptr)
+        return OGRERR_FAILURE;
+
+    double adMin[4] = {0.0, 0.0, 0.0, 0.0};
+    double adMax[4] = {0.0, 0.0, 0.0, 0.0};
+
+    SHPGetInfo(hSHP, nullptr, nullptr, adMin, adMax);
+
+    psExtent->MinX = adMin[0];
+    psExtent->MinY = adMin[1];
+    psExtent->MaxX = adMax[0];
+    psExtent->MaxY = adMax[1];
+
+    if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
+        CPLIsNan(adMax[1]))
+    {
+        CPLDebug("SHAPE", "Invalid extent in shape header");
+
+        // Disable filters to avoid infinite recursion in GetNextFeature()
+        // that calls ScanIndices() that call GetExtent.
+        OGRFeatureQuery *poAttrQuery = m_poAttrQuery;
+        m_poAttrQuery = nullptr;
+        OGRGeometry *poFilterGeom = m_poFilterGeom;
+        m_poFilterGeom = nullptr;
+
+        const OGRErr eErr = OGRLayer::GetExtent(psExtent, bForce);
+
+        m_poAttrQuery = poAttrQuery;
+        m_poFilterGeom = poFilterGeom;
+        return eErr;
+    }
+
+    return OGRERR_NONE;
 }
 
 OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
 {
+    if (m_poFilterGeom || m_poAttrQuery)
+        return OGRLayer::GetExtent3D(0, psExtent3D, bForce);
+
     if (!TouchLayer())
         return OGRERR_FAILURE;
 
@@ -1708,8 +1744,8 @@ OGRErr OGRShapeLayer::GetExtent3D(int, OGREnvelope3D *psExtent3D, int bForce)
     }
     else
     {
-        psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
-        psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
+        psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+        psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
     }
 
     if (CPLIsNan(adMin[0]) || CPLIsNan(adMin[1]) || CPLIsNan(adMax[0]) ||
@@ -1773,7 +1809,7 @@ int OGRShapeLayer::TestCapability(const char *pszCap)
         return TRUE;
 
     if (EQUAL(pszCap, OLCFastGetExtent3D))
-        return TRUE;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
         return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
@@ -3814,4 +3850,94 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
 GDALDataset *OGRShapeLayer::GetDataset()
 {
     return poDS;
+}
+
+/************************************************************************/
+/*                        GetNextArrowArray()                           */
+/************************************************************************/
+
+// Specialized implementation restricted to situations where only retrieving
+// of FID values is asked (without filters)
+// In other cases, fall back to generic implementation.
+int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
+                                     struct ArrowArray *out_array)
+{
+    m_bLastGetNextArrowArrayUsedOptimizedCodePath = false;
+    if (!TouchLayer())
+    {
+        memset(out_array, 0, sizeof(*out_array));
+        return EIO;
+    }
+
+    if (!hDBF || m_poAttrQuery != nullptr || m_poFilterGeom != nullptr)
+    {
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+
+    // If any field is not ignored, use generic implementation
+    const int nFieldCount = poFeatureDefn->GetFieldCount();
+    for (int i = 0; i < nFieldCount; ++i)
+    {
+        if (!poFeatureDefn->GetFieldDefn(i)->IsIgnored())
+            return OGRLayer::GetNextArrowArray(stream, out_array);
+    }
+    if (GetGeomType() != wkbNone &&
+        !poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+
+    OGRArrowArrayHelper sHelper(poDS, poFeatureDefn,
+                                m_aosArrowArrayStreamOptions, out_array);
+    if (out_array->release == nullptr)
+    {
+        return ENOMEM;
+    }
+
+    if (!sHelper.m_bIncludeFID)
+        return OGRLayer::GetNextArrowArray(stream, out_array);
+
+    m_bLastGetNextArrowArrayUsedOptimizedCodePath = true;
+    int nCount = 0;
+    while (iNextShapeId < nTotalShapeCount)
+    {
+        const bool bIsDeleted =
+            CPL_TO_BOOL(DBFIsRecordDeleted(hDBF, iNextShapeId));
+        if (bIsDeleted)
+        {
+            ++iNextShapeId;
+            continue;
+        }
+        if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+        {
+            out_array->release(out_array);
+            memset(out_array, 0, sizeof(*out_array));
+            return EIO;
+        }
+        sHelper.m_panFIDValues[nCount] = iNextShapeId;
+        ++iNextShapeId;
+        ++nCount;
+        if (nCount == sHelper.m_nMaxBatchSize)
+            break;
+    }
+    sHelper.Shrink(nCount);
+    if (nCount == 0)
+    {
+        out_array->release(out_array);
+        memset(out_array, 0, sizeof(*out_array));
+    }
+    return 0;
+}
+
+/************************************************************************/
+/*                        GetMetadataItem()                             */
+/************************************************************************/
+
+const char *OGRShapeLayer::GetMetadataItem(const char *pszName,
+                                           const char *pszDomain)
+{
+    if (pszName && pszDomain && EQUAL(pszDomain, "__DEBUG__") &&
+        EQUAL(pszName, "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH"))
+    {
+        return m_bLastGetNextArrowArrayUsedOptimizedCodePath ? "YES" : "NO";
+    }
+    return OGRLayer::GetMetadataItem(pszName, pszDomain);
 }

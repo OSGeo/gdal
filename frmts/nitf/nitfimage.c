@@ -36,9 +36,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 static int NITFReadIMRFCA(NITFImage *psImage, NITFRPC00BInfo *psRPC);
 static char *NITFTrimWhite(char *);
@@ -288,16 +291,28 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
             }
             else if (psImage->chICORDS == 'G' || psImage->chICORDS == 'C')
             {
-                pdfXY[1] =
-                    CPLAtof(NITFGetField(szTemp, pszCoordPair, 0, 2)) +
-                    CPLAtof(NITFGetField(szTemp, pszCoordPair, 2, 2)) / 60.0 +
+                // It is critical to do the fetching of the D, M, S components
+                // in 3 separate statements, otherwise if NITFGetField() is
+                // defined in this compilation unit, the MSVC optimizer will
+                // generate bad code, due to szTemp being overwritten before
+                // being evaluated by CPLAtof() !
+                pdfXY[1] = CPLAtof(NITFGetField(szTemp, pszCoordPair, 0, 2));
+                pdfXY[1] +=
+                    CPLAtof(NITFGetField(szTemp, pszCoordPair, 2, 2)) / 60.0;
+                pdfXY[1] +=
                     CPLAtof(NITFGetField(szTemp, pszCoordPair, 4, 2)) / 3600.0;
                 if (pszCoordPair[6] == 's' || pszCoordPair[6] == 'S')
                     pdfXY[1] *= -1;
 
-                pdfXY[0] =
-                    CPLAtof(NITFGetField(szTemp, pszCoordPair, 7, 3)) +
-                    CPLAtof(NITFGetField(szTemp, pszCoordPair, 10, 2)) / 60.0 +
+                // It is critical to do the fetching of the D, M, S components
+                // in 3 separate statements, otherwise if NITFGetField() is
+                // defined in this compilation unit, the MSVC optimizer will
+                // generate bad code, due to szTemp being overwritten before
+                // being evaluated by CPLAtof() !
+                pdfXY[0] = CPLAtof(NITFGetField(szTemp, pszCoordPair, 7, 3));
+                pdfXY[0] +=
+                    CPLAtof(NITFGetField(szTemp, pszCoordPair, 10, 2)) / 60.0;
+                pdfXY[0] +=
                     CPLAtof(NITFGetField(szTemp, pszCoordPair, 12, 2)) / 3600.0;
 
                 if (pszCoordPair[14] == 'w' || pszCoordPair[14] == 'W')
@@ -346,6 +361,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
 
         nOffset += 60;
     }
+#undef GetMD
 
     /* -------------------------------------------------------------------- */
     /*      Should we reorient the IGEOLO points in an attempt to handle    */
@@ -647,7 +663,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
         // into account the block size as well and/or the size of an entry
         // in the offset table.
         if (VSIFTellL(psFile->fp) <
-            (unsigned)(psImage->nBlocksPerRow) * psImage->nBlocksPerColumn)
+            (vsi_l_offset)(psImage->nBlocksPerRow) * psImage->nBlocksPerColumn)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "File is too small compared to the number of blocks");
@@ -782,7 +798,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     }
     else if (psImage->chIMODE == 'P')
     {
-        psImage->nPixelOffset = psImage->nWordSize * psImage->nBands;
+        psImage->nPixelOffset = (GIntBig)psImage->nWordSize * psImage->nBands;
         psImage->nLineOffset = ((GIntBig)psImage->nBlockWidth *
                                 psImage->nBitsPerSample * psImage->nBands) /
                                8;
@@ -812,7 +828,8 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
 
     /* Int overflow already checked above */
     psImage->panBlockStart = (GUIntBig *)VSI_CALLOC_VERBOSE(
-        psImage->nBlocksPerRow * psImage->nBlocksPerColumn * psImage->nBands,
+        (size_t)psImage->nBlocksPerRow * psImage->nBlocksPerColumn *
+            psImage->nBands,
         sizeof(GUIntBig));
     if (psImage->panBlockStart == NULL)
     {
@@ -1317,7 +1334,9 @@ int NITFReadImageBlock(NITFImage *psImage, int nBlockX, int nBlockY, int nBand,
         }
         if (VSIFSeekL(psImage->psFile->fp,
                       psImage->panBlockStart[0] +
-                          (psImage->nBlockWidth * psImage->nBlockHeight + 7) /
+                          ((vsi_l_offset)psImage->nBlockWidth *
+                               psImage->nBlockHeight +
+                           7) /
                               8 * (nBand - 1),
                       SEEK_SET) == 0 &&
             VSIFReadL(pData,
@@ -3083,16 +3102,26 @@ void NITFGetGCP(const char *pachCoord, double *pdfXYs, int iCoord)
         /* (00 to 99) of longitude, with Y = E for east or W for west.  */
         /* ------------------------------------------------------------ */
 
-        pdfXYs[1] = CPLAtof(NITFGetField(szTemp, pachCoord, 1, 2)) +
-                    CPLAtof(NITFGetField(szTemp, pachCoord, 3, 2)) / 60.0 +
-                    CPLAtof(NITFGetField(szTemp, pachCoord, 5, 5)) / 3600.0;
+        // It is critical to do the fetching of the D, M, S components
+        // in 3 separate statements, otherwise if NITFGetField() is
+        // defined in this compilation unit, the MSVC optimizer will
+        // generate bad code, due to szTemp being overwritten before
+        // being evaluated by CPLAtof() !
+        pdfXYs[1] = CPLAtof(NITFGetField(szTemp, pachCoord, 1, 2));
+        pdfXYs[1] += CPLAtof(NITFGetField(szTemp, pachCoord, 3, 2)) / 60.0;
+        pdfXYs[1] += CPLAtof(NITFGetField(szTemp, pachCoord, 5, 5)) / 3600.0;
 
         if (pachCoord[0] == 's' || pachCoord[0] == 'S')
             pdfXYs[1] *= -1;
 
-        pdfXYs[0] = CPLAtof(NITFGetField(szTemp, pachCoord, 11, 3)) +
-                    CPLAtof(NITFGetField(szTemp, pachCoord, 14, 2)) / 60.0 +
-                    CPLAtof(NITFGetField(szTemp, pachCoord, 16, 5)) / 3600.0;
+        // It is critical to do the fetching of the D, M, S components
+        // in 3 separate statements, otherwise if NITFGetField() is
+        // defined in this compilation unit, the MSVC optimizer will
+        // generate bad code, due to szTemp being overwritten before
+        // being evaluated by CPLAtof() !
+        pdfXYs[0] = CPLAtof(NITFGetField(szTemp, pachCoord, 11, 3));
+        pdfXYs[0] += CPLAtof(NITFGetField(szTemp, pachCoord, 14, 2)) / 60.0;
+        pdfXYs[0] += CPLAtof(NITFGetField(szTemp, pachCoord, 16, 5)) / 3600.0;
 
         if (pachCoord[10] == 'w' || pachCoord[10] == 'W')
             pdfXYs[0] *= -1;

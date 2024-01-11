@@ -57,8 +57,9 @@
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
-static int ArgIsNumeric(const char *);
 static void AttachMetadata(GDALDatasetH, const CPLStringList &);
+static void AttachDomainMetadata(GDALDatasetH, const CPLStringList &);
+
 static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
                          int bCanCopyStatsMetadata, int bCopyScale,
                          int bCopyNoData, bool bCopyRAT,
@@ -70,12 +71,6 @@ typedef enum
     MASK_AUTO,
     MASK_USER
 } MaskMode;
-
-// those values shouldn't be changed, because overview levels >= 0 are meant
-// to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
-// automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
-constexpr int OVR_LEVEL_AUTO = -2;
-constexpr int OVR_LEVEL_NONE = -1;
 
 /************************************************************************/
 /*                         GDALTranslateScaleParams                     */
@@ -196,10 +191,11 @@ struct GDALTranslateOptions
 
     bool bHasUsedExplicitExponentBand = false;
 
-    /*! list of metadata key and value to set on the output dataset if possible.
-     *  GDALTranslateOptionsSetMetadataOptions() and
-     * GDALTranslateOptionsAddMetadataOptions() should be used */
+    /*! list of metadata key and value to set on the output dataset if possible. */
     CPLStringList aosMetadataOptions{};
+
+    /*! list of metadata key and value in a domain to set on the output dataset if possible. */
+    CPLStringList aosDomainMetadataOptions{};
 
     /*! override the projection for the output file. The SRS may be any of the
        usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
@@ -681,7 +677,12 @@ static double AdjustNoDataValue(double dfInputNoDataValue,
  * @param pbUsageError pointer to a integer output variable to store if any
  * usage error has occurred or NULL.
  * @return the output dataset (new dataset that must be closed using
- * GDALClose()) or NULL in case of error.
+ * GDALClose()) or NULL in case of error. If the output
+ * format is a VRT dataset, then the returned VRT dataset has a reference to
+ * hSrcDataset. Hence hSrcDataset should be closed after the returned dataset
+ * if using GDALClose().
+ * A safer alternative is to use GDALReleaseDataset() instead of using
+ * GDALClose(), in which case you can close datasets in any order.
  *
  * @since GDAL 2.1
  */
@@ -1110,104 +1111,16 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (!psOptions->aosCreateOptions.FetchBool("APPEND_SUBDATASET", false))
     {
-        // Someone issuing Create("foo.tif") on a
-        // memory driver doesn't expect files with those names to be deleted
-        // on a file system...
-        // This is somewhat messy. Ideally there should be a way for the
-        // driver to overload the default behavior
-        if (!EQUAL(psOptions->osFormat.c_str(), "MEM") &&
-            !EQUAL(psOptions->osFormat.c_str(), "Memory") &&
-            // Also exclude database formats for which there's no file list
-            // and whose opening might be slow (GeoRaster in particular)
-            !EQUAL(psOptions->osFormat.c_str(), "GeoRaster") &&
-            !EQUAL(psOptions->osFormat.c_str(), "PostGISRaster"))
+        if (!EQUAL(psOptions->osFormat.c_str(), "VRT"))
         {
-            /* --------------------------------------------------------------------
-             */
-            /*      Establish list of files of output dataset if it already
-             * exists. */
-            /* --------------------------------------------------------------------
-             */
-            std::set<std::string> oSetExistingDestFiles;
-            {
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                const char *const apszAllowedDrivers[] = {
-                    psOptions->osFormat.c_str(), nullptr};
-                auto poExistingOutputDS =
-                    std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        pszDest, GDAL_OF_RASTER, apszAllowedDrivers));
-                if (poExistingOutputDS)
-                {
-                    char **papszFileList = poExistingOutputDS->GetFileList();
-                    for (char **papszIter = papszFileList;
-                         papszIter && *papszIter; ++papszIter)
-                    {
-                        oSetExistingDestFiles.insert(
-                            CPLString(*papszIter).replaceAll('\\', '/'));
-                    }
-                    CSLDestroy(papszFileList);
-                }
-                CPLPopErrorHandler();
-            }
-
-            /* --------------------------------------------------------------------
-             */
-            /*      Check if the source dataset shares some files with the dest
-             * one.*/
-            /* --------------------------------------------------------------------
-             */
-            std::set<std::string> oSetExistingDestFilesFoundInSource;
-            if (!oSetExistingDestFiles.empty())
-            {
-                CPLPushErrorHandler(CPLQuietErrorHandler);
-                // We need to reopen in a temporary dataset for the particular
-                // case of overwritten a .tif.ovr file from a .tif
-                // If we probe the file list of the .tif, it will then open the
-                // .tif.ovr !
-                const char *const apszAllowedDrivers[] = {
-                    poSrcDS->GetDriver()
-                        ? poSrcDS->GetDriver()->GetDescription()
-                        : nullptr,
-                    nullptr};
-                auto poSrcDSTmp = std::unique_ptr<GDALDataset>(
-                    GDALDataset::Open(poSrcDS->GetDescription(), GDAL_OF_RASTER,
-                                      apszAllowedDrivers));
-                if (poSrcDSTmp)
-                {
-                    char **papszFileList = poSrcDSTmp->GetFileList();
-                    for (char **papszIter = papszFileList;
-                         papszIter && *papszIter; ++papszIter)
-                    {
-                        CPLString osFilename(*papszIter);
-                        osFilename.replaceAll('\\', '/');
-                        if (oSetExistingDestFiles.find(osFilename) !=
-                            oSetExistingDestFiles.end())
-                        {
-                            oSetExistingDestFilesFoundInSource.insert(
-                                osFilename);
-                        }
-                    }
-                    CSLDestroy(papszFileList);
-                }
-                CPLPopErrorHandler();
-            }
-
-            // If the source file(s) and the dest one share some files in
-            // common, only remove the files that are *not* in common
-            if (!oSetExistingDestFilesFoundInSource.empty())
-            {
-                for (const std::string &osFilename : oSetExistingDestFiles)
-                {
-                    if (oSetExistingDestFilesFoundInSource.find(osFilename) ==
-                        oSetExistingDestFilesFoundInSource.end())
-                    {
-                        VSIUnlink(osFilename.c_str());
-                    }
-                }
-            }
-
-            GDALDriver::FromHandle(hDriver)->QuietDelete(pszDest);
+            // Prevent GDALDriver::CreateCopy() from doing that again.
+            psOptions->aosCreateOptions.SetNameValue(
+                "@QUIET_DELETE_ON_CREATE_COPY", "NO");
         }
+
+        GDALDriver::FromHandle(hDriver)->QuietDeleteForCreateCopy(pszDest,
+                                                                  poSrcDS);
+
         // Make sure to load early overviews, so that on the GTiff driver
         // external .ovr is looked for before it might be created as the
         // output dataset !
@@ -1263,10 +1176,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->asScaleParams.empty() && psOptions->adfExponent.empty() &&
         !psOptions->bUnscale && !psOptions->bSetScale &&
         !psOptions->bSetOffset && psOptions->aosMetadataOptions.empty() &&
-        bAllBandsInOrder && psOptions->eMaskMode == MASK_AUTO &&
-        bSpatialArrangementPreserved && !psOptions->bNoGCP &&
-        psOptions->nGCPCount == 0 && !bGotBounds && !bGotGeoTransform &&
-        psOptions->osOutputSRS.empty() &&
+        psOptions->aosDomainMetadataOptions.empty() && bAllBandsInOrder &&
+        psOptions->eMaskMode == MASK_AUTO && bSpatialArrangementPreserved &&
+        !psOptions->bNoGCP && psOptions->nGCPCount == 0 && !bGotBounds &&
+        !bGotGeoTransform && psOptions->osOutputSRS.empty() &&
         psOptions->dfOutputCoordinateEpoch == 0 && !psOptions->bSetNoData &&
         !psOptions->bUnsetNoData && psOptions->nRGBExpand == 0 &&
         !psOptions->bNoRAT && psOptions->anColorInterp.empty() &&
@@ -1809,6 +1722,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     poVDS->SetMetadata(papszMetadata);
     CSLDestroy(papszMetadata);
     AttachMetadata(GDALDataset::ToHandle(poVDS), psOptions->aosMetadataOptions);
+
+    AttachDomainMetadata(GDALDataset::ToHandle(poVDS),
+                         psOptions->aosDomainMetadataOptions);
 
     const char *pszInterleave =
         poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
@@ -2649,6 +2565,42 @@ static void AttachMetadata(GDALDatasetH hDS,
 }
 
 /************************************************************************/
+/*                           AttachDomainMetadata()                     */
+/************************************************************************/
+
+static void AttachDomainMetadata(GDALDatasetH hDS,
+                                 const CPLStringList &aosDomainMetadataOptions)
+
+{
+    const int nCount = aosDomainMetadataOptions.size();
+
+    for (int i = 0; i < nCount; i++)
+    {
+
+        char *pszKey = nullptr;
+        char *pszDomain = nullptr;
+
+        // parse the DOMAIN:KEY=value, Remainder is KEY=value
+        const char *pszRemainder =
+            CPLParseNameValueSep(aosDomainMetadataOptions[i], &pszDomain, ':');
+
+        if (pszDomain && pszRemainder)
+        {
+
+            const char *pszValue =
+                CPLParseNameValueSep(pszRemainder, &pszKey, '=');
+            if (pszKey && pszValue)
+            {
+                GDALSetMetadataItem(hDS, pszKey, pszValue, pszDomain);
+            }
+        }
+        CPLFree(pszKey);
+
+        CPLFree(pszDomain);
+    }
+}
+
+/************************************************************************/
 /*                           CopyBandInfo()                            */
 /************************************************************************/
 
@@ -2741,16 +2693,6 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
     if (bCanCopyStatsMetadata && bCopyScale &&
         !EQUAL(poSrcBand->GetUnitType(), ""))
         poDstBand->SetUnitType(poSrcBand->GetUnitType());
-}
-
-/************************************************************************/
-/*                            ArgIsNumeric()                            */
-/************************************************************************/
-
-int ArgIsNumeric(const char *pszArg)
-
-{
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
 }
 
 /************************************************************************/
@@ -3146,6 +3088,10 @@ GDALTranslateOptionsNew(char **papszArgv,
             psOptions->aosMetadataOptions.AddString(papszArgv[++i]);
         }
 
+        else if (EQUAL(papszArgv[i], "-dmo") && papszArgv[i + 1])
+        {
+            psOptions->aosDomainMetadataOptions.AddString(papszArgv[++i]);
+        }
         else if (i + 2 < argc && EQUAL(papszArgv[i], "-outsize") &&
                  papszArgv[i + 1] != nullptr)
         {

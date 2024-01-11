@@ -392,7 +392,8 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         {
             toc->entries[i].frameEntries =
                 reinterpret_cast<RPFTocFrameEntry *>(VSI_CALLOC_VERBOSE(
-                    toc->entries[i].nVertFrames * toc->entries[i].nHorizFrames,
+                    static_cast<size_t>(toc->entries[i].nVertFrames) *
+                        toc->entries[i].nHorizFrames,
                     sizeof(RPFTocFrameEntry)));
         }
         if (toc->entries[i].frameEntries == nullptr)

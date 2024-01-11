@@ -1018,6 +1018,73 @@ by the OGRSFDriverManager.
 */
 
 /**
+ \fn OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D, int bForce = TRUE);
+
+ \brief Fetch the 3D extent of this layer, on the specified geometry field.
+
+ Returns the 3D extent (MBR) of the data in the layer.  If bForce is FALSE,
+ and it would be expensive to establish the extent then OGRERR_FAILURE
+ will be returned indicating that the extent isn't know.  If bForce is
+ TRUE then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+
+ (Contrarty to GetExtent() 2D), the returned extent will always take into
+ account the attribute and spatial filters that may be installed.
+
+ Layers without any geometry may return OGRERR_FAILURE just indicating that
+ no meaningful extents could be collected.
+
+ For layers that have no 3D geometries, the psExtent3D->MinZ and psExtent3D->MaxZ
+ fields will be respectively set to +Infinity and -Infinity.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
+ This function is the same as the C function OGR_L_GetExtent3D().
+
+ @param iGeomField 0-based index of the geometry field to consider.
+ @param psExtent3D the computed 3D extent of the layer.
+ @param bForce if TRUE, the extent will be computed even if all the
+        layer features have to be fetched.
+ @return OGRERR_NONE on success or an error code in case of failure.
+ @since GDAL 3.9
+*/
+
+/**
+ \fn OGRErr OGR_L_GetExtent3D( OGRLayerH hLayer, int iGeomField, OGREnvelope3D *psExtent3D, int bForce);
+
+ \brief Fetch the 3D extent of this layer, on the specified geometry field.
+
+ Returns the 3D extent (MBR) of the data in the layer.  If bForce is FALSE,
+ and it would be expensive to establish the extent then OGRERR_FAILURE
+ will be returned indicating that the extent isn't know.  If bForce is
+ TRUE then some implementations will actually scan the entire layer once
+ to compute the MBR of all the features in the layer.
+
+ (Contrarty to GetExtent() 2D), the returned extent will always take into
+ account the attribute and spatial filters that may be installed.
+
+ Layers without any geometry may return OGRERR_FAILURE just indicating that
+ no meaningful extents could be collected.
+
+ For layers that have no 3D geometries, the psExtent3D->MinZ and psExtent3D->MaxZ
+ fields will be respectively set to +Infinity and -Infinity.
+
+ Note that some implementations of this method may alter the read cursor
+ of the layer.
+
+ This function is the same as the C++ method OGRLayer::GetExtent3D().
+
+ @param hLayer the layer to consider.
+ @param iGeomField 0-based index of the geometry field to consider.
+ @param psExtent3D the computed 3D extent of the layer.
+ @param bForce if TRUE, the extent will be computed even if all the
+        layer features have to be fetched.
+ @return OGRERR_NONE on success or an error code in case of failure.
+ @since GDAL 3.9
+*/
+
+/**
  \fn void OGRLayer::SetSpatialFilter( OGRGeometry * poFilter );
 
  \brief Set a new spatial filter.

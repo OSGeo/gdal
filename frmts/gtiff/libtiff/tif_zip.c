@@ -83,9 +83,9 @@ typedef struct
     TIFFVSetMethod vsetparent; /* super-class method */
 } ZIPState;
 
-#define ZState(tif) ((ZIPState *)(tif)->tif_data)
-#define DecoderState(tif) ZState(tif)
-#define EncoderState(tif) ZState(tif)
+#define GetZIPState(tif) ((ZIPState *)(tif)->tif_data)
+#define ZIPDecoderState(tif) GetZIPState(tif)
+#define ZIPEncoderState(tif) GetZIPState(tif)
 
 static int ZIPEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s);
 static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s);
@@ -99,7 +99,7 @@ static int ZIPFixupTags(TIFF *tif)
 static int ZIPSetupDecode(TIFF *tif)
 {
     static const char module[] = "ZIPSetupDecode";
-    ZIPState *sp = DecoderState(tif);
+    ZIPState *sp = ZIPDecoderState(tif);
 
     assert(sp != NULL);
 
@@ -131,7 +131,7 @@ static int ZIPSetupDecode(TIFF *tif)
  */
 static int ZIPPreDecode(TIFF *tif, uint16_t s)
 {
-    ZIPState *sp = DecoderState(tif);
+    ZIPState *sp = ZIPDecoderState(tif);
 
     (void)s;
     assert(sp != NULL);
@@ -156,7 +156,7 @@ static int ZIPPreDecode(TIFF *tif, uint16_t s)
 static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 {
     static const char module[] = "ZIPDecode";
-    ZIPState *sp = DecoderState(tif);
+    ZIPState *sp = ZIPDecoderState(tif);
 
     (void)s;
     assert(sp != NULL);
@@ -290,7 +290,7 @@ static int ZIPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 static int ZIPSetupEncode(TIFF *tif)
 {
     static const char module[] = "ZIPSetupEncode";
-    ZIPState *sp = EncoderState(tif);
+    ZIPState *sp = ZIPEncoderState(tif);
     int cappedQuality;
 
     assert(sp != NULL);
@@ -321,7 +321,7 @@ static int ZIPSetupEncode(TIFF *tif)
  */
 static int ZIPPreEncode(TIFF *tif, uint16_t s)
 {
-    ZIPState *sp = EncoderState(tif);
+    ZIPState *sp = ZIPEncoderState(tif);
 
     (void)s;
     assert(sp != NULL);
@@ -348,7 +348,7 @@ static int ZIPPreEncode(TIFF *tif, uint16_t s)
 static int ZIPEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 {
     static const char module[] = "ZIPEncode";
-    ZIPState *sp = EncoderState(tif);
+    ZIPState *sp = ZIPEncoderState(tif);
 
     assert(sp != NULL);
     assert(sp->state == ZSTATE_INIT_ENCODE);
@@ -487,7 +487,7 @@ static int ZIPEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 static int ZIPPostEncode(TIFF *tif)
 {
     static const char module[] = "ZIPPostEncode";
-    ZIPState *sp = EncoderState(tif);
+    ZIPState *sp = ZIPEncoderState(tif);
     int state;
 
 #if LIBDEFLATE_SUPPORT
@@ -526,7 +526,7 @@ static int ZIPPostEncode(TIFF *tif)
 
 static void ZIPCleanup(TIFF *tif)
 {
-    ZIPState *sp = ZState(tif);
+    ZIPState *sp = GetZIPState(tif);
 
     assert(sp != 0);
 
@@ -562,7 +562,7 @@ static void ZIPCleanup(TIFF *tif)
 static int ZIPVSetField(TIFF *tif, uint32_t tag, va_list ap)
 {
     static const char module[] = "ZIPVSetField";
-    ZIPState *sp = ZState(tif);
+    ZIPState *sp = GetZIPState(tif);
 
     switch (tag)
     {
@@ -628,7 +628,7 @@ static int ZIPVSetField(TIFF *tif, uint32_t tag, va_list ap)
 
 static int ZIPVGetField(TIFF *tif, uint32_t tag, va_list ap)
 {
-    ZIPState *sp = ZState(tif);
+    ZIPState *sp = GetZIPState(tif);
 
     switch (tag)
     {
@@ -680,7 +680,7 @@ int TIFFInitZIP(TIFF *tif, int scheme)
     tif->tif_data = (uint8_t *)_TIFFcallocExt(tif, sizeof(ZIPState), 1);
     if (tif->tif_data == NULL)
         goto bad;
-    sp = ZState(tif);
+    sp = GetZIPState(tif);
     sp->stream.zalloc = NULL;
     sp->stream.zfree = NULL;
     sp->stream.opaque = NULL;

@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "8";
+static const char EIGHT_FILE_CODE[] = "8";
 
 static const TigerFieldInfo rt8_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -50,7 +50,7 @@ static const TigerRecordInfo rt8_info = {
 
 TigerAreaLandmarks::TigerAreaLandmarks(
     OGRTigerDataSource *poDSIn, CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(&rt8_info, FILE_CODE)
+    : TigerFileBase(&rt8_info, EIGHT_FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("AreaLandmarks");

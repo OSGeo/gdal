@@ -144,6 +144,12 @@ else ()
   check_function_exists(getrlimit HAVE_GETRLIMIT)
   check_symbol_exists(RLIMIT_AS "sys/resource.h" HAVE_RLIMIT_AS)
 
+  # For internal libjson-c
+  check_include_file(sys/random.h HAVE_SYS_RANDOM_H)
+  if (HAVE_SYS_RANDOM_H)
+    check_symbol_exists(getrandom "sys/random.h" HAVE_GETRANDOM)
+  endif()
+
   check_function_exists(ftell64 HAVE_FTELL64)
   if (HAVE_FTELL64)
     set(VSI_FTELL64 "ftell64")

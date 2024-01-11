@@ -1422,9 +1422,6 @@ utf8_constexpr14_impl utf8_int32_t utf8lwrcodepoint(utf8_int32_t cp) {
     case 0x01ac:
       cp = 0x01ad;
       break;
-    case 0x01af:
-      cp = 0x01b0;
-      break;
     case 0x01b8:
       cp = 0x01b9;
       break;
@@ -1587,9 +1584,6 @@ utf8_constexpr14_impl utf8_int32_t utf8uprcodepoint(utf8_int32_t cp) {
       break;
     case 0x01ad:
       cp = 0x01ac;
-      break;
-    case 0x01b0:
-      cp = 0x01af;
       break;
     case 0x01b9:
       cp = 0x01b8;

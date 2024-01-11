@@ -57,9 +57,23 @@ Open options
      exposed by the driver by setting this option to NO (in which case the
      6th term of the geotransform matrix will be positive)
 
+Spatial metadata support
+------------------------
+
+Starting with GDAL 3.9, GDAL can handle QualityOfSurvey spatial metadata.
+
+When such spatial metadata is present, the subdataset list will include
+a name of the form ``S102:"{filename}":QualityOfSurvey``
+
+The ``/QualityOfSurvey/featureAttributeTable`` dataset is exposed as a
+GDAL Raster Attribute Table associated to the GDAL raster band. The pixel
+values of the raster match the ``id`` column of the Raster Attribute Table.
+
 See Also
 --------
 
 -  Implemented as :source_file:`frmts/hdf5/s102dataset.cpp`.
 -  `S-102 Bathymetric Surface Product Specification <https://registry.iho.int/productspec/view.do?idx=199&product_ID=S-102&statusS=5&domainS=20&category=product_ID&searchValue=>`__
 -  :ref:`BAG driver <raster.bag>`
+-  :ref:`S-104 driver <raster.s104>`
+-  :ref:`S-111 driver <raster.s111>`

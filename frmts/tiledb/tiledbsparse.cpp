@@ -38,6 +38,7 @@
 #include <limits>
 
 constexpr int SECONDS_PER_DAY = 3600 * 24;
+constexpr const char *GEOMETRY_DATASET_TYPE = "geometry";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -3745,6 +3746,10 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
                                   static_cast<int>(strlen(pszGeomColName)),
                                   pszGeomColName);
         }
+
+        m_array->put_metadata("dataset_type", TILEDB_STRING_UTF8,
+                              static_cast<int>(strlen(GEOMETRY_DATASET_TYPE)),
+                              GEOMETRY_DATASET_TYPE);
 
         auto poSRS = GetSpatialRef();
         if (poSRS)

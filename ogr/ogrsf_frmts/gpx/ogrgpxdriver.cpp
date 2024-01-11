@@ -39,22 +39,32 @@
 #include "ogr_core.h"
 
 /************************************************************************/
+/*                               Identify()                             */
+/************************************************************************/
+
+static int OGRGPXDriverIdentify(GDALOpenInfo *poOpenInfo)
+
+{
+    if (poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr)
+        return false;
+
+    return strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                  "<gpx") != nullptr;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRGPXDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr)
-        return nullptr;
-
-    if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-               "<gpx") == nullptr)
+    if (poOpenInfo->eAccess == GA_Update || !OGRGPXDriverIdentify(poOpenInfo))
         return nullptr;
 
     OGRGPXDataSource *poDS = new OGRGPXDataSource();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, FALSE))
+    if (!poDS->Open(poOpenInfo))
     {
         delete poDS;
         poDS = nullptr;
@@ -123,6 +133,19 @@ void RegisterOGRGPX()
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='N_MAX_LINKS' type='integer' default='2' "
+        "description='Maximum number of links attributes'/>"
+        "  <Option name='ELE_AS_25D' type='boolean' default='NO' "
+        "description='Whether to use the value of the ele element as the Z "
+        "ordinate of geometries'/>"
+        "  <Option name='SHORT_NAMES' type='boolean' default='NO' "
+        "description='Whether to use short field names (typically for "
+        "shapefile compatibility'/>"
+        "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"
 #ifdef WIN32
@@ -174,6 +197,7 @@ void RegisterOGRGPX()
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
 
+    poDriver->pfnIdentify = OGRGPXDriverIdentify;
     poDriver->pfnOpen = OGRGPXDriverOpen;
     poDriver->pfnCreate = OGRGPXDriverCreate;
     poDriver->pfnDelete = OGRGPXDriverDelete;

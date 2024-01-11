@@ -1091,13 +1091,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     /*  #|name|type|notnull|default|pk */
     /*  0|id|integer|0||1 */
     /*  1|name|varchar|0||0 */
-#if SQLITE_VERSION_NUMBER >= 3026000L
-    // SQLite 3.26 or later has table_xinfo() with an extra column to indicate
-    // hidden layers
     char *pszSQL = sqlite3_mprintf("pragma table_xinfo('%q')", m_pszTableName);
-#else
-    char *pszSQL = sqlite3_mprintf("pragma table_info('%q')", m_pszTableName);
-#endif
     auto oResultTable = SQLQuery(poDb, pszSQL);
     sqlite3_free(pszSQL);
 
@@ -1135,9 +1129,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         int bNotNull = oResultTable->GetValueAsInteger(3, iRecord);
         const char *pszDefault = oResultTable->GetValue(4, iRecord);
         int nPKIDIndex = oResultTable->GetValueAsInteger(5, iRecord);
-#if SQLITE_VERSION_NUMBER >= 3026000L
         int nHiddenValue = oResultTable->GetValueAsInteger(6, iRecord);
-#endif
 
         OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
@@ -1155,7 +1147,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             bIsGenerated = true;
             osType.resize(osType.size() - strlen(GENERATED_ALWAYS_SUFFIX));
         }
-#if SQLITE_VERSION_NUMBER >= 3026000L
         constexpr int GENERATED_VIRTUAL = 2;
         constexpr int GENERATED_STORED = 3;
         if (nHiddenValue == GENERATED_VIRTUAL ||
@@ -1163,7 +1154,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         {
             bIsGenerated = true;
         }
-#endif
 
         if (!osType.empty() || m_bIsTable)
         {
@@ -2210,31 +2200,19 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
     std::string osUpsertUniqueColumnName;
     if (bUpsert && poFeature->GetFID() == OGRNullFID)
     {
-#if SQLITE_VERSION_NUMBER >= 3024000L
         int nUniqueColumns = 0;
-#endif
         const int nFieldCount = m_poFeatureDefn->GetFieldCount();
         for (int i = 0; i < nFieldCount; ++i)
         {
             const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
             if (poFieldDefn->IsUnique())
             {
-#if SQLITE_VERSION_NUMBER < 3024000L
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "UPSERT of a feature without a FID but with a UNIQUE "
-                         "column "
-                         "requires SQLite 3.24 or later");
-                return OGRERR_FAILURE;
-#else
                 if (osUpsertUniqueColumnName.empty())
                     osUpsertUniqueColumnName = poFieldDefn->GetNameRef();
                 nUniqueColumns++;
-#endif
             }
         }
-#if SQLITE_VERSION_NUMBER >= 3024000L
         if (nUniqueColumns == 0)
-#endif
         {
             // This is just a regular INSERT
             bUpsert = false;
@@ -2982,7 +2960,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
 
     const sqlite3_int64 nTotalChangesBefore =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3043,7 +3021,7 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
     sqlite3_clear_bindings(m_poUpdateStatement);
 
     const sqlite3_int64 nTotalChangesAfter =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3249,7 +3227,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     }
 
     const sqlite3_int64 nTotalChangesBefore =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3270,7 +3248,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     sqlite3_clear_bindings(m_poUpdateStatement);
 
     const sqlite3_int64 nTotalChangesAfter =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3603,7 +3581,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
                  SQLEscapeName(m_pszFidColumn).c_str(), nFID);
 
     const sqlite3_int64 nTotalChangesBefore =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
         sqlite3_total_changes64(m_poDS->GetDB());
 #else
         sqlite3_total_changes(m_poDS->GetDB());
@@ -3613,7 +3591,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
     if (eErr == OGRERR_NONE)
     {
         const sqlite3_int64 nTotalChangesAfter =
-#if SQLITE_VERSION_NUMBER >= 3036000L
+#if SQLITE_VERSION_NUMBER >= 3037000L
             sqlite3_total_changes64(m_poDS->GetDB());
 #else
             sqlite3_total_changes(m_poDS->GetDB());
@@ -4281,6 +4259,8 @@ int OGRGeoPackageTableLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCMeasuredGeometries))
         return TRUE;
     else if (EQUAL(pszCap, OLCZGeometries))
+        return TRUE;
+    if (EQUAL(pszCap, OLCFastGetExtent3D))
         return TRUE;
     else
     {
@@ -6560,15 +6540,9 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
-    // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
-    // 3.26.0 was required so that foreign key constraints are updated as well
-#if SQLITE_VERSION_NUMBER >= 3026000L
     const bool bUseRenameColumn = (nActualFlags == ALTER_NAME_FLAG);
     if (bUseRenameColumn)
         bUseRewriteSchemaMethod = false;
-#else
-    constexpr bool bUseRenameColumn = false;
-#endif
 
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
         return OGRERR_FAILURE;
@@ -6607,7 +6581,6 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         }
     }
 
-#if SQLITE_VERSION_NUMBER >= 3026000L
     if (bUseRenameColumn)
     {
         if (eErr == OGRERR_NONE)
@@ -6623,9 +6596,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
                     .c_str());
         }
     }
-    else
-#endif
-        if (!bUseRewriteSchemaMethod)
+    else if (!bUseRewriteSchemaMethod)
     {
         /* --------------------------------------------------------------------
          */
@@ -6993,11 +6964,6 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         strcmp(poGeomFieldDefn->GetNameRef(),
                poNewGeomFieldDefn->GetNameRef()) != 0)
     {
-        // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
-        // 3.26.0 was required so that foreign key constraints are updated as
-        // well
-#if SQLITE_VERSION_NUMBER >= 3026000L
-
         const bool bHasSpatialIndex = HasSpatialIndex();
 
         if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
@@ -7093,12 +7059,6 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         {
             m_osRTreeName = osNewRTreeName;
         }
-
-#else
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Geometry field renaming only supported with SQLite >= 3.26");
-        return OGRERR_FAILURE;
-#endif
     }
 
     if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_FLAG) != 0 ||
@@ -8393,9 +8353,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         {
             // Should not normally happen, unless the user messes with
             // GetNextFeature()
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Worker thread task has not expected m_iStartShapeId value");
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Worker thread task has not expected m_iStartShapeId "
+                     "value. Got " CPL_FRMT_GIB ", expected " CPL_FRMT_GIB,
+                     task->m_iStartShapeId, m_iNextShapeId);
             if (task->m_psArrowArray->release)
                 task->m_psArrowArray->release(task->m_psArrowArray.get());
 
@@ -8456,7 +8417,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     const auto GetThreadsAvailable = []()
     {
         const char *pszMaxThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+            CPLGetConfigOption("OGR_GPKG_NUM_THREADS", nullptr);
         if (pszMaxThreads == nullptr)
             return std::min(4, CPLGetNumCPUs());
         else if (EQUAL(pszMaxThreads, "ALL_CPUS"))
@@ -8474,8 +8435,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         CPLGetUsablePhysicalRAM() > 1024 * 1024 * 1024)
     {
         const int nMaxTasks = static_cast<int>(std::min<GIntBig>(
-            DIV_ROUND_UP(m_nTotalFeatureCount - m_iNextShapeId, nMaxBatchSize),
+            DIV_ROUND_UP(m_nTotalFeatureCount - nMaxBatchSize - m_iNextShapeId,
+                         nMaxBatchSize),
             GetThreadsAvailable()));
+        CPLDebug("GPKG", "Using %d threads", nMaxTasks);
         GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
         oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
         oOpenInfo.nOpenFlags = GDAL_OF_VECTOR;
@@ -8706,4 +8669,157 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     m_iNextShapeId += sFillArrowArray.nCountRows;
 
     return 0;
+}
+
+/************************************************************************/
+/*               OGR_GPKG_GeometryExtent3DAggregate()                   */
+/************************************************************************/
+
+namespace
+{
+struct GeometryExtent3DAggregateContext
+{
+    sqlite3 *m_hDB = nullptr;
+    OGREnvelope3D m_oExtent3D;
+
+    explicit GeometryExtent3DAggregateContext(sqlite3 *hDB)
+        : m_hDB(hDB), m_oExtent3D()
+    {
+    }
+    GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
+        delete;
+    GeometryExtent3DAggregateContext &
+    operator=(const GeometryExtent3DAggregateContext &) = delete;
+};
+
+}  // namespace
+
+static void OGR_GPKG_GeometryExtent3DAggregate_Step(sqlite3_context *pContext,
+                                                    int /*argc*/,
+                                                    sqlite3_value **argv)
+{
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+
+    auto poContext = static_cast<GeometryExtent3DAggregateContext *>(
+        sqlite3_user_data(pContext));
+
+    if (pabyBLOB != nullptr)
+    {
+        GPkgHeader sHeader;
+        if (OGRGeoPackageGetHeader(pContext, 0, argv, &sHeader, true, true))
+        {
+            OGREnvelope3D extent3D;
+            extent3D.MinX = sHeader.MinX;
+            extent3D.MaxX = sHeader.MaxX;
+            extent3D.MinY = sHeader.MinY;
+            extent3D.MaxY = sHeader.MaxY;
+            extent3D.MinZ = sHeader.MinZ;
+            extent3D.MaxZ = sHeader.MaxZ;
+            poContext->m_oExtent3D.Merge(extent3D);
+        }
+        else if (!sHeader.bEmpty)
+        {
+            // Try also spatialite geometry blobs
+            const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+            OGRGeometry *poGeom = nullptr;
+            if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
+                                                  &poGeom) == OGRERR_NONE &&
+                poGeom && !poGeom->IsEmpty())
+            {
+                OGREnvelope3D extent3D;
+                poGeom->getEnvelope(&extent3D);
+                poContext->m_oExtent3D.Merge(extent3D);
+            }
+            delete poGeom;
+        }
+    }
+}
+
+static void OGR_GPKG_GeometryExtent3DAggregate_Finalize(sqlite3_context *)
+{
+}
+
+/************************************************************************/
+/*                      GetExtent3D                                     */
+/************************************************************************/
+OGRErr OGRGeoPackageTableLayer::GetExtent3D(int iGeomField,
+                                            OGREnvelope3D *psExtent3D,
+                                            int bForce)
+{
+
+    OGRFeatureDefn *poDefn = GetLayerDefn();
+
+    /* -------------------------------------------------------------------- */
+    /*      Deferred actions, reset state.                                   */
+    /* -------------------------------------------------------------------- */
+    RunDeferredCreationIfNecessary();
+    if (!RunDeferredSpatialIndexUpdate())
+    {
+        return OGRERR_FAILURE;
+    }
+
+    const int nGeomFieldCount = poDefn->GetGeomFieldCount();
+    if (iGeomField < 0 || iGeomField >= nGeomFieldCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for iGeomField");
+        return OGRERR_FAILURE;
+    }
+
+    if (m_nZFlag == 0 && m_soFilter.empty())
+    {
+        // If the layer doesn't contain any 3D geometry and no filter is set,
+        // we can fallback to the fast 2D GetExtent()
+        const OGRErr retVal{GetExtent(iGeomField, psExtent3D, bForce)};
+        psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+        psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
+        return retVal;
+    }
+    else
+    {
+        *psExtent3D = OGREnvelope3D();
+    }
+
+    // For internal use only
+
+    GeometryExtent3DAggregateContext sContext(m_poDS->hDB);
+
+    CPLString osFuncName;
+    osFuncName.Printf("OGR_GPKG_GeometryExtent3DAggregate_INTERNAL_%p",
+                      &sContext);
+
+    sqlite3_create_function(m_poDS->hDB, osFuncName.c_str(), 1, SQLITE_UTF8,
+                            &sContext, nullptr,
+                            OGR_GPKG_GeometryExtent3DAggregate_Step,
+                            OGR_GPKG_GeometryExtent3DAggregate_Finalize);
+
+    char *pszSQL = sqlite3_mprintf(
+        "SELECT %s(\"%w\") FROM \"%w\"%s", osFuncName.c_str(),
+        poDefn->GetGeomFieldDefn(iGeomField)->GetNameRef(), m_pszTableName,
+        m_soFilter.empty() ? "" : (" WHERE " + m_soFilter).c_str());
+    char *pszErrMsg = nullptr;
+    const int rc =
+        sqlite3_exec(m_poDS->hDB, pszSQL, nullptr, nullptr, &(pszErrMsg));
+
+    // Delete function
+    sqlite3_create_function(m_poDS->GetDB(), osFuncName.c_str(), 1, SQLITE_UTF8,
+                            nullptr, nullptr, nullptr, nullptr);
+
+    if (rc != SQLITE_OK)
+    {
+        if (rc != SQLITE_INTERRUPT)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "sqlite3_exec(%s) failed: %s",
+                     pszSQL, pszErrMsg);
+        }
+        sqlite3_free(pszErrMsg);
+        sqlite3_free(pszSQL);
+        return OGRERR_FAILURE;
+    }
+    sqlite3_free(pszErrMsg);
+    sqlite3_free(pszSQL);
+
+    *psExtent3D = sContext.m_oExtent3D;
+
+    return OGRERR_NONE;
 }

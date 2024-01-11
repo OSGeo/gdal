@@ -55,8 +55,6 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 
-CPL_CVSID("$Id$")
-
 struct _GDALWarpChunk
 {
     int dx, dy, dsx, dsy;
@@ -691,8 +689,9 @@ void *GDALWarpOperation::CreateDestinationBuffer(int nDstXSize, int nDstYSize,
     /* -------------------------------------------------------------------- */
     const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
 
-    void *pDstBuffer = VSI_MALLOC3_VERBOSE(nWordSize * psOptions->nBandCount,
-                                           nDstXSize, nDstYSize);
+    void *pDstBuffer = VSI_MALLOC3_VERBOSE(
+        cpl::fits_on<int>(nWordSize * psOptions->nBandCount), nDstXSize,
+        nDstYSize);
     if (pDstBuffer == nullptr)
     {
         return nullptr;

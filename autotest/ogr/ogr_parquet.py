@@ -238,6 +238,8 @@ def _check_test_parquet(
     assert lyr.GetFeatureCount() == 5
     assert lyr.GetExtent() == (0.0, 4.0, 2.0, 2.0)
     assert lyr.GetExtent(geom_field=0) == (0.0, 4.0, 2.0, 2.0)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D) == 0
+    assert lyr.GetExtent3D() == (0.0, 4.0, 2.0, 2.0, float("inf"), float("-inf"))
     with pytest.raises(Exception):
         lyr.GetExtent(geom_field=-1)
     with pytest.raises(Exception):
@@ -3283,3 +3285,50 @@ def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
                 "dict",
             ) and "nan" not in str(src_f.GetField(j)):
                 assert src_f.GetField(j) == f.GetField(j), field_name
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_metadata(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_metadata.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.SetMetadataItem("foo", "bar")
+    lyr.SetMetadata(['{"foo":["bar","baz"]}'], "json:test")
+    lyr.SetMetadata(["<foo/>"], "xml:test")
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadata_Dict() == {"foo": "bar"}
+    assert lyr.GetMetadata_List("json:test")[0] == '{"foo":["bar","baz"]}'
+    assert lyr.GetMetadata_List("xml:test")[0] == "<foo/>"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_get_extent_3d(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_get_extent_3d.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbLineString25D)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING Z (1 2 3,4 5 6)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.GetExtent3D() == (1.0, 4.0, 2.0, 5.0, 3.0, 6.0)
+
+    with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
+        ds = ogr.Open(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.TestCapability(ogr.OLCFastGetExtent3D) == 0
+        assert lyr.GetExtent3D() == (1.0, 4.0, 2.0, 5.0, 3.0, 6.0)

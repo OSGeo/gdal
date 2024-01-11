@@ -27,6 +27,26 @@ extern "C"
 {
 #endif
 
+    /************************************************************************/
+    /*           Version related macros (added in 1.6.0)                    */
+    /************************************************************************/
+
+#define SHAPELIB_VERSION_MAJOR 1
+#define SHAPELIB_VERSION_MINOR 6
+#define SHAPELIB_VERSION_MICRO 0
+
+#define SHAPELIB_MAKE_VERSION_NUMBER(major, minor, micro)                      \
+    ((major)*10000 + (minor)*100 + (micro))
+
+#define SHAPELIB_VERSION_NUMBER                                                \
+    SHAPELIB_MAKE_VERSION_NUMBER(SHAPELIB_VERSION_MAJOR,                       \
+                                 SHAPELIB_VERSION_MINOR,                       \
+                                 SHAPELIB_VERSION_MICRO)
+
+#define SHAPELIB_AT_LEAST(major, minor, micro)                                 \
+    (SHAPELIB_VERSION_NUMBER >=                                                \
+     SHAPELIB_MAKE_VERSION_NUMBER(major, minor, micro))
+
 /************************************************************************/
 /*                        Configuration options.                        */
 /************************************************************************/
@@ -115,7 +135,8 @@ extern "C"
 
     typedef struct
     {
-        SAFile (*FOpen)(const char *filename, const char *access);
+        SAFile (*FOpen)(const char *filename, const char *access,
+                        void *pvUserData);
         SAOffset (*FRead)(void *p, SAOffset size, SAOffset nmemb, SAFile file);
         SAOffset (*FWrite)(const void *p, SAOffset size, SAOffset nmemb,
                            SAFile file);
@@ -123,10 +144,11 @@ extern "C"
         SAOffset (*FTell)(SAFile file);
         int (*FFlush)(SAFile file);
         int (*FClose)(SAFile file);
-        int (*Remove)(const char *filename);
+        int (*Remove)(const char *filename, void *pvUserData);
 
         void (*Error)(const char *message);
         double (*Atof)(const char *str);
+        void *pvUserData;
     } SAHooks;
 
     void SHPAPI_CALL SASetupDefaultHooks(SAHooks *psHooks);

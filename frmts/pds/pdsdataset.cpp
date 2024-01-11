@@ -33,12 +33,12 @@
  ****************************************************************************/
 
 // Set up PDS NULL values
-constexpr int NULL1 = 0;
-constexpr int NULL2 = -32768;
+constexpr int PDS_NULL1 = 0;
+constexpr int PDS_NULL2 = -32768;
 // #define NULL3 -0.3402822655089E+39
 // Same as ESRI_GRID_FLOAT_NO_DATA
 // #define NULL3 -340282346638528859811704183484516925440.0
-constexpr double NULL3 = -3.4028226550889044521e+38;
+constexpr double PDS_NULL3 = -3.4028226550889044521e+38;
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -1051,27 +1051,27 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
         {
             case 8:
                 eDataType = GDT_Byte;
-                dfNoData = NULL1;
+                dfNoData = PDS_NULL1;
                 break;
             case 16:
                 if (strstr(osST, "UNSIGNED") != nullptr)
                 {
-                    dfNoData = NULL1;
+                    dfNoData = PDS_NULL1;
                     eDataType = GDT_UInt16;
                 }
                 else
                 {
                     eDataType = GDT_Int16;
-                    dfNoData = NULL2;
+                    dfNoData = PDS_NULL2;
                 }
                 break;
             case 32:
                 eDataType = GDT_Float32;
-                dfNoData = NULL3;
+                dfNoData = PDS_NULL3;
                 break;
             case 64:
                 eDataType = GDT_Float64;
-                dfNoData = NULL3;
+                dfNoData = PDS_NULL3;
                 break;
             default:
                 CPLError(CE_Failure, CPLE_AppDefined,

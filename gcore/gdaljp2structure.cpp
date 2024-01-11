@@ -1779,7 +1779,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 const GUInt16 Lcpf = nMarkerSize;
                 if (Lcpf > 2 && (Lcpf % 2) == 0)
                 {
-                    for (GUInt16 i = 0; i < (Lcpf - 2) / 2; i++)
+                    for (int i = 0; i < (Lcpf - 2) / 2; i++)
                     {
                         READ_MARKER_FIELD_UINT16(CPLSPrintf("Pcpf%d", i + 1));
                     }

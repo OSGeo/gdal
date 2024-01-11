@@ -710,6 +710,16 @@ def test_ogr_gpkg_9(gpkg_ds):
     extent = lyr.GetExtent()
     assert extent == (5.0, 10.0, 5.0, 10.0), "got bad extent"
 
+    extent = lyr.GetExtent3D()
+    assert extent == (
+        5.0,
+        10.0,
+        5.0,
+        10.0,
+        float("inf"),
+        float("-inf"),
+    ), "got bad extent"
+
     fcount = lyr.GetFeatureCount()
     assert fcount == 10, "got bad featurecount"
 
@@ -6622,9 +6632,9 @@ def test_ogr_gpkg_spatial_view_computed_geom_column(tmp_vsimem, tmp_path):
         ds = None
         pytest.skip("spatialite missing")
 
-    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint25D)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
     lyr.CreateFeature(f)
 
     ds.ExecuteSQL(
@@ -6634,7 +6644,7 @@ def test_ogr_gpkg_spatial_view_computed_geom_column(tmp_vsimem, tmp_path):
         "INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'geom_view', 'geom_view', 'features', 4326 )"
     )
     ds.ExecuteSQL(
-        "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'MULTIPOINT', 4326, 0, 0)"
+        "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'MULTIPOINT', 4326, 1, 0)"
     )
     ds.ExecuteSQL(
         "INSERT INTO gpkg_extensions VALUES('geom_view', 'my_geom', 'gdal_spatialite_computed_geom_column', 'https://gdal.org/drivers/vector/gpkg_spatialite_computed_column.html', 'read-write')"
@@ -6661,10 +6671,12 @@ def test_ogr_gpkg_spatial_view_computed_geom_column(tmp_vsimem, tmp_path):
     ds = ogr.Open(filename)
 
     lyr = ds.GetLayerByName("geom_view")
-    assert lyr.GetGeomType() == ogr.wkbMultiPoint
+    assert lyr.GetGeomType() == ogr.wkbMultiPoint25D
     assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
     f = lyr.GetNextFeature()
-    assert f.GetGeometryRef().ExportToWkt() == "MULTIPOINT (1 2)"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT Z ((1 2 3))"
+    assert lyr.GetExtent() == (1, 1, 2, 2)
+    assert lyr.GetExtent3D() == (1, 1, 2, 2, 3, 3)
 
     ds = None
 
@@ -7664,32 +7676,31 @@ def test_ogr_gpkg_alter_geom_field_defn(tmp_vsimem, tmp_path):
     lyr.CreateFeature(f)
     ds = None
 
-    # Test renaming column (only supported for SQLite >= 3.26)
-    if get_sqlite_version() >= (3, 26, 0):
-        ds = ogr.Open(filename, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+    # Test renaming column
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
 
-        new_geom_field_defn = ogr.GeomFieldDefn("new_geom_name", ogr.wkbNone)
-        assert (
-            lyr.AlterGeomFieldDefn(
-                0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
-            )
-            == ogr.OGRERR_NONE
+    new_geom_field_defn = ogr.GeomFieldDefn("new_geom_name", ogr.wkbNone)
+    assert (
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
         )
-        assert lyr.GetGeometryColumn() == "new_geom_name"
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetGeometryColumn() == "new_geom_name"
 
-        ds = None
+    ds = None
 
-        assert validate(filename, tmpdir=tmp_path), "validation failed"
+    assert validate(filename, tmpdir=tmp_path), "validation failed"
 
-        ds = ogr.Open(filename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeometryColumn() == "new_geom_name"
-        srs = lyr.GetSpatialRef()
-        assert srs is not None
-        assert srs.GetAuthorityCode(None) == "4326"
-        ds = None
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "new_geom_name"
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == "4326"
+    ds = None
 
     ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
@@ -8081,6 +8092,110 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
 
 
 ###############################################################################
+# Test GetArrowStreamAsNumPy() and multi-threading
+
+
+@pytest.mark.parametrize(
+    "num_features,batch_size,num_threads",
+    [
+        (201, 100, 1),
+        (200, 100, 2),
+        (201, 100, 2),
+        (201, 100, 3),
+        (299, 100, 3),
+        (300, 100, 3),
+        (301, 100, 3),
+        (400, 100, 3),
+        (901, 100, 3),
+        (1001, 100, 3),
+    ],
+)
+def test_ogr_gpkg_arrow_stream_numpy_multi_threading(
+    tmp_vsimem, num_features, batch_size, num_threads
+):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+
+    for i in range(num_features):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(f"POINT({i} {i})"))
+        lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    with gdaltest.config_option("OGR_GPKG_NUM_THREADS", str(num_threads)):
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", f"MAX_FEATURES_IN_BATCH={batch_size}"]
+        )
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler):
+        batches = [batch for batch in stream]
+
+    assert len(got_msg) == 0
+
+    assert len(batches) == (num_features + batch_size - 1) // batch_size
+    i = 0
+    for batch in batches:
+        for wkb in batch["geom"]:
+            assert ogr.CreateGeometryFromWkb(wkb).ExportToIsoWkt() == f"POINT ({i} {i})"
+            i += 1
+    assert i == num_features
+
+
+###############################################################################
+# Test Arrow interface with bool fields
+
+
+def test_ogr_gpkg_arrow_stream_numpy_bool_field(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = tmp_vsimem / "test.gpkg"
+
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    field = ogr.FieldDefn("bool", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    for i in range(60):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("bool", False if (i % 3) == 0 else True)
+        lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 1
+    assert list(batches[0]["bool"]) == [
+        False if (i % 3) == 0 else True for i in range(60)
+    ]
+
+    ogr.GetDriverByName("GPKG").DeleteDataSource(filename)
+
+
+###############################################################################
 # Test ArrowArray interface with more than 125 columns
 
 
@@ -8311,10 +8426,6 @@ def test_ogr_gpkg_immutable(tmp_path):
 ###############################################################################
 
 
-@pytest.mark.skipif(
-    get_sqlite_version() < (3, 24, 0),
-    reason="sqlite >= 3.24 needed",
-)
 @pytest.mark.parametrize("with_geom", [True, False])
 @pytest.mark.parametrize("gpkg_version", ["1.2", "1.4"])
 def test_ogr_gpkg_upsert_without_fid(tmp_vsimem, tmp_path, with_geom, gpkg_version):
@@ -8792,10 +8903,6 @@ def test_ogr_gpkg_st_area(tmp_vsimem, wkt_or_binary, area):
 # Test reading a layer with a generated column
 
 
-@pytest.mark.skipif(
-    get_sqlite_version() < (3, 31, 0),
-    reason="sqlite >= 3.31 needed",
-)
 def test_ogr_gpkg_read_generated_column(tmp_vsimem):
 
     filename = tmp_vsimem / "test_ogr_gpkg_read_generated_column.gpkg"
@@ -9790,3 +9897,110 @@ def test_ogr_gpkg_like_utf8(tmp_vsimem):
 
     with ds.ExecuteSQL("SELECT * FROM test WHERE 'e' LIKE 'E'") as sql_lyr:
         assert sql_lyr.GetFeatureCount() == 1
+
+
+@pytest.mark.parametrize(
+    "geom1,geom2,extent2d,extent3d",
+    (
+        (
+            "POINT(0 1 2)",
+            "POINT(1 2 3)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, 2.0, 3.0),
+        ),
+        (
+            "POINT(0 1)",
+            "POINT(1 2 3)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, 3.0, 3.0),
+        ),
+        (
+            "POINT(0 1)",
+            "POINT(1 2)",
+            (0.0, 1.0, 1.0, 2.0),
+            (0.0, 1.0, 1.0, 2.0, float("inf"), float("-inf")),
+        ),
+    ),
+)
+def test_ogr_gpkg_extent3d(tmp_vsimem, geom1, geom2, extent2d, extent3d):
+    """Test 3D extent of a gpkg"""
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint25D)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(geom1))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt(geom2))
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == extent3d
+    ext2d = lyr.GetExtent()
+    assert ext2d == extent2d
+    ds = None
+
+
+@pytest.mark.parametrize("file_name", ("no_envelope", "2d_envelope", "3d_envelope"))
+def test_ogr_gpkg_extent3d_envelope_variants(file_name):
+    """Test all variants of envelope in gpkg"""
+
+    file_name = os.path.join("data", "gpkg", file_name + ".gpkg")
+    ds = gdal.OpenEx(file_name, gdal.OF_VECTOR | gdal.OF_READONLY)
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
+
+    lyr.SetAttributeFilter("1 = 1")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (0.0, 3.0, 0.0, 3.0, 0.0, 3.0)
+
+    lyr.SetAttributeFilter("1 = 0")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (
+        float("inf"),
+        float("-inf"),
+        float("inf"),
+        float("-inf"),
+        float("inf"),
+        float("-inf"),
+    )
+
+
+def test_ogr_gpkg_extent3d_on_2d_dataset_with_filters(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    lyr.CreateFeature(feat)
+    feat = None
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayerByName("foo")
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1, 3, 2, 4, float("inf"), float("-inf"))
+
+    lyr.SetAttributeFilter("fid = 1")
+    ext3d = lyr.GetExtent3D()
+    lyr.SetAttributeFilter(None)
+    assert ext3d == (1, 1, 2, 2, float("inf"), float("-inf"))
+
+    lyr.SetSpatialFilterRect(2.5, 3.5, 3.5, 4.5)
+    ext3d = lyr.GetExtent3D()
+    lyr.SetSpatialFilter(None)
+    assert ext3d == (3, 3, 4, 4, float("inf"), float("-inf"))
+
+    ds = None

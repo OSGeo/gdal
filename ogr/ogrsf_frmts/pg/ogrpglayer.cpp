@@ -1961,7 +1961,7 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 
     if (!osCommand.empty())
     {
-        if (RunGetExtentRequest(psExtent, bForce, osCommand, FALSE) ==
+        if (RunGetExtentRequest(*psExtent, bForce, osCommand, FALSE) ==
             OGRERR_NONE)
             return OGRERR_NONE;
     }
@@ -1971,19 +1971,79 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
 }
 
+OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                               int bForce)
+{
+    // If the geometry field is not 3D go for 2D
+    if (GetLayerDefn()->GetGeomFieldCount() > iGeomField &&
+        !OGR_GT_HasZ(GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType()))
+    {
+        const OGRErr retVal{GetExtent(iGeomField, psExtent3D, bForce)};
+        psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+        psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
+        return retVal;
+    }
+
+    CPLString osCommand;
+
+    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        CPLAssertNotNull(GetLayerDefn()->GetGeomFieldDefn(iGeomField))
+                ->GetType() == wkbNone)
+    {
+        if (iGeomField != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    OGRPGGeomFieldDefn *poGeomFieldDefn =
+        poFeatureDefn->GetGeomFieldDefn(iGeomField);
+
+    const char *pszExtentFct =
+        poDS->sPostGISVersion.nMajor >= 2 ? "ST_3DExtent" : "ST_Extent3D";
+
+    if (TestCapability(OLCFastGetExtent3D))
+    {
+        /* Do not take the spatial filter into account */
+        osCommand.Printf(
+            "SELECT %s(%s) FROM %s AS ogrpgextent", pszExtentFct,
+            OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
+            GetFromClauseForGetExtent().c_str());
+    }
+    else if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
+    {
+        /* Probably not very efficient, but more efficient than client-side
+         * implementation */
+        osCommand.Printf(
+            "SELECT %s(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s AS ogrpgextent",
+            pszExtentFct,
+            OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
+            GetFromClauseForGetExtent().c_str());
+    }
+
+    if (!osCommand.empty())
+    {
+        if (RunGetExtent3DRequest(*psExtent3D, osCommand, FALSE) == OGRERR_NONE)
+            return OGRERR_NONE;
+    }
+
+    return OGRLayer::GetExtent3D(iGeomField, psExtent3D, bForce);
+}
+
 /************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
 
-OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope *psExtent,
+OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope &sExtent,
                                        CPL_UNUSED int bForce,
-                                       CPLString osCommand, int bErrorAsDebug)
+                                       const std::string &osCommand,
+                                       int bErrorAsDebug)
 {
-    if (psExtent == nullptr)
-        return OGRERR_FAILURE;
-
     PGconn *hPGConn = poDS->GetPGConn();
-    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand, FALSE, bErrorAsDebug);
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, osCommand.c_str(), FALSE, bErrorAsDebug);
     if (!hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK ||
         PQgetisnull(hResult, 0, 0))
     {
@@ -2031,10 +2091,69 @@ OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope *psExtent,
     // =>   X2 index calculated as nTokenCnt/2
     //      Y2 index calculated as nTokenCnt/2+1
 
-    psExtent->MinX = CPLAtof(papszTokens[0]);
-    psExtent->MinY = CPLAtof(papszTokens[1]);
-    psExtent->MaxX = CPLAtof(papszTokens[nTokenCnt / 2]);
-    psExtent->MaxY = CPLAtof(papszTokens[nTokenCnt / 2 + 1]);
+    sExtent.MinX = CPLAtof(papszTokens[0]);
+    sExtent.MinY = CPLAtof(papszTokens[1]);
+    sExtent.MaxX = CPLAtof(papszTokens[nTokenCnt / 2]);
+    sExtent.MaxY = CPLAtof(papszTokens[nTokenCnt / 2 + 1]);
+
+    CSLDestroy(papszTokens);
+    OGRPGClearResult(hResult);
+
+    return OGRERR_NONE;
+}
+
+OGRErr OGRPGLayer::RunGetExtent3DRequest(OGREnvelope3D &sExtent3D,
+                                         const std::string &osCommand,
+                                         int bErrorAsDebug)
+{
+    PGconn *hPGConn = poDS->GetPGConn();
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, osCommand.c_str(), FALSE, bErrorAsDebug);
+    if (!hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK ||
+        PQgetisnull(hResult, 0, 0))
+    {
+        OGRPGClearResult(hResult);
+        CPLDebug("PG", "Unable to get extent 3D by PostGIS.");
+        return OGRERR_FAILURE;
+    }
+
+    char *pszBox = PQgetvalue(hResult, 0, 0);
+    char *ptr, *ptrEndParenthesis;
+    char szVals[64 * 6 + 6];
+
+    ptr = strchr(pszBox, '(');
+    if (ptr)
+        ptr++;
+    if (ptr == nullptr || (ptrEndParenthesis = strchr(ptr, ')')) == nullptr ||
+        ptrEndParenthesis - ptr > static_cast<int>(sizeof(szVals) - 1))
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Bad extent representation: '%s'",
+                 pszBox);
+
+        OGRPGClearResult(hResult);
+        return OGRERR_FAILURE;
+    }
+
+    strncpy(szVals, ptr, ptrEndParenthesis - ptr);
+    szVals[ptrEndParenthesis - ptr] = '\0';
+
+    char **papszTokens = CSLTokenizeString2(szVals, " ,", CSLT_HONOURSTRINGS);
+    if (CSLCount(papszTokens) != 6)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Bad extent 3D representation: '%s'", pszBox);
+        CSLDestroy(papszTokens);
+
+        OGRPGClearResult(hResult);
+        return OGRERR_FAILURE;
+    }
+
+    sExtent3D.MinX = CPLAtof(papszTokens[0]);
+    sExtent3D.MinY = CPLAtof(papszTokens[1]);
+    sExtent3D.MinZ = CPLAtof(papszTokens[2]);
+    sExtent3D.MaxX = CPLAtof(papszTokens[3]);
+    sExtent3D.MaxY = CPLAtof(papszTokens[4]);
+    sExtent3D.MaxZ = CPLAtof(papszTokens[5]);
 
     CSLDestroy(papszTokens);
     OGRPGClearResult(hResult);

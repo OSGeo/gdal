@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef OGARROWWRITERLAYER_HPP_INCLUDED
+#define OGARROWWRITERLAYER_HPP_INCLUDED
+
 #include "ogr_arrow.h"
 
 #include "cpl_json.h"
@@ -2181,3 +2184,5 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     }
     return false;
 }
+
+#endif /* OGARROWWRITERLAYER_HPP_INCLUDED */

@@ -171,10 +171,12 @@ GIntBig OGRILI1Layer::GetFeatureCount(int bForce)
     }
 }
 
+#ifndef d2str_defined
+#define d2str_defined
 static const char *d2str(double val)
 {
-    if (val == static_cast<int>(val))
-        return CPLSPrintf("%d", static_cast<int>(val));
+    if (val == (int)val)
+        return CPLSPrintf("%d", (int)val);
     if (fabs(val) < 370)
         return CPLSPrintf("%.16g", val);
     if (fabs(val) > 100000000.0)
@@ -182,6 +184,7 @@ static const char *d2str(double val)
 
     return CPLSPrintf("%.3f", val);
 }
+#endif
 
 static void AppendCoordinateList(OGRLineString *poLine, OGRILI1DataSource *poDS)
 {

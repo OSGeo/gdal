@@ -30,9 +30,12 @@
 
 #include "aigrid.h"
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 /************************************************************************/
 /*                              AIGOpen()                               */
@@ -166,7 +169,8 @@ AIGInfo_t *AIGOpen(const char *pszInputName, const char *pszAccess)
     /*      Setup tile infos, but defer reading of tile data.               */
     /* -------------------------------------------------------------------- */
     psInfo->pasTileInfo = (AIGTileInfo *)VSI_CALLOC_VERBOSE(
-        sizeof(AIGTileInfo), psInfo->nTilesPerRow * psInfo->nTilesPerColumn);
+        sizeof(AIGTileInfo),
+        (size_t)psInfo->nTilesPerRow * psInfo->nTilesPerColumn);
     if (psInfo->pasTileInfo == NULL)
     {
         AIGClose(psInfo);

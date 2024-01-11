@@ -75,13 +75,14 @@ jobs:
           if grep -e "atof(" ogr/ogrsf_frmts/geojson/libjson/*.c; then echo "Unexpected use of atof()."; /bin/false; fi
 
       - name: Shellcheck
-        run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
+        # SC2129: (style): Consider using { cmd1; cmd2; } >> file instead of individual redirects
+        run: shellcheck -e SC2086,SC2046,SC2164,SC2054,SC2129 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
   linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
       - uses: pre-commit/action@v3.0.0
 
   doxygen:
@@ -100,28 +101,6 @@ jobs:
             cd doc
             make .doxygen_up_to_date >log.txt 2>&1
             if grep -i warning log.txt | grep -v -e russian -e brazilian; then echo "Doxygen warnings found" && cat log.txt && /bin/false; else echo "No Doxygen warnings found"; fi
-
-  formatting-check:
-
-    name: Formatting Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout GDAL
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 100
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.7
-
-      - name: Install Run clang-format style check for C/C++ programs.
-        run: pip install clang-format==15.0.4
-
-      - name: Check new code with clang-format
-        run: ./scripts/clang-format.sh
 
   other_checks:
     runs-on: ubuntu-latest
@@ -148,7 +127,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.8
     - name: Install lint tool

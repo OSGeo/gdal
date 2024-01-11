@@ -875,8 +875,8 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, const unsigned char *inbuf,
     /* Clear level info structure */
     memset(linfo, 0, sizeof(linfo));
 
-    base = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
-    diff = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
+    base = BLXmalloc(sizeof(blxdata) * 2 * baseside[0] * baseside[0]);
+    diff = BLXmalloc(sizeof(blxdata) * 2 * baseside[0] * baseside[0]);
     if (base == NULL || diff == NULL)
     {
         BLXerror0("Not enough memory\n");
@@ -932,7 +932,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, const unsigned char *inbuf,
         }
 
         linfo[level][0].data =
-            BLXmalloc(baseside[level] * baseside[level] * sizeof(blxdata));
+            BLXmalloc(sizeof(blxdata) * baseside[level] * baseside[level]);
         if (linfo[level][0].data == NULL)
         {
             BLXerror0("Not enough memory\n");
@@ -953,7 +953,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, const unsigned char *inbuf,
             }
 
             linfo[level][c].data =
-                BLXmalloc(baseside[level] * baseside[level] * sizeof(blxdata));
+                BLXmalloc(sizeof(blxdata) * baseside[level] * baseside[level]);
             if (linfo[level][c].data == NULL)
             {
                 BLXerror0("Not enough memory\n");

@@ -53,7 +53,7 @@ int KTX2DriverIdentify(GDALOpenInfo *poOpenInfo)
 
 void KTX2DriverSetCommonMetadata(GDALDriver *poDriver)
 {
-    poDriver->SetDescription(DRIVER_NAME);
+    poDriver->SetDescription(KTX2_DRIVER_NAME);
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "KTX2 texture format");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/ktx2.html");
@@ -78,7 +78,7 @@ void KTX2DriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef PLUGIN_FILENAME
 void DeclareDeferredKTX2Plugin()
 {
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
+    if (GDALGetDriverByName(KTX2_DRIVER_NAME) != nullptr)
     {
         return;
     }

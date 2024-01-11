@@ -537,6 +537,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     Bands GetBands();
 
     virtual CPLErr FlushCache(bool bAtClosing = false);
+    virtual CPLErr DropCache();
 
     virtual GIntBig GetEstimatedRAMUsage();
 
@@ -641,6 +642,14 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     void MarkAsShared();
 
     void MarkSuppressOnClose();
+    void UnMarkSuppressOnClose();
+    /** Return MarkSuppressOnClose flag.
+    * @return MarkSuppressOnClose flag.
+    */
+    bool IsMarkedSuppressOnClose()
+    {
+        return bSuppressOnClose;
+    }
 
     /** Return open options.
      * @return open options.
@@ -1188,7 +1197,7 @@ class GDALAbstractBandBlockCache
 
     int m_nInitialDirtyBlocksInFlushCache = 0;
     int m_nLastTick = -1;
-    bool m_bWriteDirtyBlocks = true;
+    size_t m_nWriteDirtyBlocksDisabled = 0;
 
     void FreeDanglingBlocks();
     void UnreferenceBlockBase();
@@ -1205,9 +1214,13 @@ class GDALAbstractBandBlockCache
     void AddBlockToFreeList(GDALRasterBlock *);
     void IncDirtyBlocks(int nInc);
     void WaitCompletionPendingTasks();
+    void EnableDirtyBlockWriting()
+    {
+        --m_nWriteDirtyBlocksDisabled;
+    }
     void DisableDirtyBlockWriting()
     {
-        m_bWriteDirtyBlocks = false;
+        ++m_nWriteDirtyBlocksDisabled;
     }
     bool HasDirtyBlocks() const
     {
@@ -1412,6 +1425,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     // New OpengIS CV_SampleDimension stuff.
 
     virtual CPLErr FlushCache(bool bAtClosing = false);
+    virtual CPLErr DropCache();
     virtual char **GetCategoryNames();
     virtual double GetNoDataValue(int *pbSuccess = nullptr);
     virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr);
@@ -1887,6 +1901,10 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                    int bStrict, CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+
+    CPLErr QuietDeleteForCreateCopy(const char *pszFilename,
+                                    GDALDataset *poSrcDS);
+
     //! @endcond
     static CPLErr QuietDelete(const char *pszName,
                               CSLConstList papszAllowedDrivers = nullptr);
@@ -3860,6 +3878,8 @@ typedef CPLErr (*GDALResampleFunction)(
 
 GDALResampleFunction GDALGetResampleFunction(const char *pszResampling,
                                              int *pnRadius);
+
+std::string GDALGetNormalizedOvrResampling(const char *pszResampling);
 
 GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
                                     GDALDataType eSrcDataType);

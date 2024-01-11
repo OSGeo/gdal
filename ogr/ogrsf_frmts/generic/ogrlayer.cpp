@@ -231,8 +231,8 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
     psExtent3D->MaxX = 0.0;
     psExtent3D->MinY = 0.0;
     psExtent3D->MaxY = 0.0;
-    psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
-    psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
+    psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+    psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
 
     /* -------------------------------------------------------------------- */
     /*      If this layer has a none geometry type, then we can             */
@@ -273,24 +273,24 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
         else if (!bExtentSet)
         {
             poGeom->getEnvelope(psExtent3D);
-            // This is required because getEnvelope intializes Z to 0 for 2D geometries
+            // This is required because getEnvelope initializes Z to 0 for 2D geometries
             if (!poGeom->Is3D())
             {
-                psExtent3D->MinZ = std::numeric_limits<double>::quiet_NaN();
-                psExtent3D->MaxZ = std::numeric_limits<double>::quiet_NaN();
+                psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+                psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
             }
             bExtentSet = true;
         }
         else
         {
             poGeom->getEnvelope(&oEnv);
-            // This is required because getEnvelope intializes Z to 0 for 2D geometries
+            // This is required because getEnvelope initializes Z to 0 for 2D geometries
             if (!poGeom->Is3D())
             {
-                oEnv.MinZ = std::numeric_limits<double>::quiet_NaN();
-                oEnv.MaxZ = std::numeric_limits<double>::quiet_NaN();
+                oEnv.MinZ = std::numeric_limits<double>::infinity();
+                oEnv.MaxZ = -std::numeric_limits<double>::infinity();
             }
-            // Merge handles NaN correctly
+            // Merge handles infinity correctly
             psExtent3D->Merge(oEnv);
         }
     }

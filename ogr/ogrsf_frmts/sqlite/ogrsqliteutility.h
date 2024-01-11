@@ -57,6 +57,7 @@ class SQLResult
 
     const char *GetValue(int iColumnNum, int iRowNum) const;
     int GetValueAsInteger(int iColNum, int iRowNum) const;
+    double GetValueAsDouble(int iColNum, int iRowNum) const;
 
   private:
     char **papszResult = nullptr;

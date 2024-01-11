@@ -36,6 +36,7 @@
 #include <cstring>
 #include <cwchar>
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -2022,6 +2023,48 @@ OGRErr OGROpenFileGDBLayer::GetExtent(OGREnvelope *psExtent, int /* bForce */)
 }
 
 /***********************************************************************/
+/*                           GetExtent3D()                             */
+/***********************************************************************/
+
+OGRErr OGROpenFileGDBLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                                        int bForce)
+{
+    if (!BuildLayerDefinition())
+        return OGRERR_FAILURE;
+
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
+        m_iGeomFieldIdx >= 0 && m_poLyrTable->GetValidRecordCount() > 0)
+    {
+        FileGDBGeomField *poGDBGeomField = reinterpret_cast<FileGDBGeomField *>(
+            m_poLyrTable->GetField(m_iGeomFieldIdx));
+        if (!std::isnan(poGDBGeomField->GetXMin()))
+        {
+            psExtent->MinX = poGDBGeomField->GetXMin();
+            psExtent->MinY = poGDBGeomField->GetYMin();
+            psExtent->MaxX = poGDBGeomField->GetXMax();
+            psExtent->MaxY = poGDBGeomField->GetYMax();
+            if (!std::isnan(poGDBGeomField->GetZMin()))
+            {
+                psExtent->MinZ = poGDBGeomField->GetZMin();
+                psExtent->MaxZ = poGDBGeomField->GetZMax();
+            }
+            else
+            {
+                if (OGR_GT_HasZ(m_eGeomType))
+                {
+                    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+                }
+                psExtent->MinZ = std::numeric_limits<double>::infinity();
+                psExtent->MaxZ = -std::numeric_limits<double>::infinity();
+            }
+            return OGRERR_NONE;
+        }
+    }
+
+    return OGRLayer::GetExtent3D(iGeomField, psExtent, bForce);
+}
+
+/***********************************************************************/
 /*                         GetFeatureCount()                           */
 /***********************************************************************/
 
@@ -2208,6 +2251,28 @@ int OGROpenFileGDBLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastGetExtent))
     {
         return TRUE;
+    }
+    else if (EQUAL(pszCap, OLCFastGetExtent3D))
+    {
+        if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
+            m_iGeomFieldIdx >= 0 && m_poLyrTable->GetValidRecordCount() > 0)
+        {
+            FileGDBGeomField *poGDBGeomField =
+                reinterpret_cast<FileGDBGeomField *>(
+                    m_poLyrTable->GetField(m_iGeomFieldIdx));
+            if (!std::isnan(poGDBGeomField->GetXMin()))
+            {
+                if (!std::isnan(poGDBGeomField->GetZMin()))
+                {
+                    return TRUE;
+                }
+                else
+                {
+                    return !OGR_GT_HasZ(m_eGeomType);
+                }
+            }
+        }
+        return FALSE;
     }
     else if (EQUAL(pszCap, OLCIgnoreFields))
     {

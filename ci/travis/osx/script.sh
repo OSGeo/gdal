@@ -9,7 +9,7 @@ echo 'Running CPP unit tests'
 
 echo 'Running Python unit tests'
 # install test dependencies
-sudo -H pip3 install -U -r autotest/requirements.txt
+sudo -H pip3 install -r autotest/requirements.txt
 
 # https://github.com/rouault/gdal/runs/1300694473
 # import issues of ogr_pg from ../ogr

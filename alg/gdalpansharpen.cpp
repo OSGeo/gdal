@@ -53,8 +53,6 @@
 // Limit types to practical use cases.
 #define LIMIT_TYPES 1
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                     GDALCreatePansharpenOptions()                    */
 /************************************************************************/
@@ -1189,7 +1187,8 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 #endif
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eWorkDataType);
     GByte *pUpsampledSpectralBuffer = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
-        nXSize, nYSize, psOptions->nInputSpectralBands * nDataTypeSize));
+        nXSize, nYSize,
+        cpl::fits_on<int>(psOptions->nInputSpectralBands * nDataTypeSize)));
     GByte *pPanBuffer = static_cast<GByte *>(
         VSI_MALLOC3_VERBOSE(nXSize, nYSize, nDataTypeSize));
     if (pUpsampledSpectralBuffer == nullptr || pPanBuffer == nullptr)
@@ -1268,7 +1267,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 
         GByte *pSpectralBuffer = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
             nXSizeExtract, nYSizeExtract,
-            psOptions->nInputSpectralBands * nDataTypeSize));
+            cpl::fits_on<int>(psOptions->nInputSpectralBands * nDataTypeSize)));
         if (pSpectralBuffer == nullptr)
         {
             VSIFree(pUpsampledSpectralBuffer);

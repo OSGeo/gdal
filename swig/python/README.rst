@@ -48,17 +48,23 @@ GDAL can be installed from the `Python Package Index <https://pypi.org/project/G
 
 ::
 
-    pip install GDAL
+    pip install gdal
 
 It will be necessary to have libgdal and its development headers installed
 if pip is expected to do a source build because no wheel is available
 for your specified platform and Python version.
 
+To install with numpy support, you need to require the optional numpy component:
+
+::
+
+    pip install gdal[numpy]
+
 To install the version of the Python bindings matching your native GDAL library:
 
 ::
 
-    pip install GDAL=="$(gdal-config --version).*"
+    pip install gdal=="$(gdal-config --version).*"
 
 Building as part of the GDAL library source tree
 ------------------------------------------------

@@ -263,6 +263,9 @@ class CPL_DLL OGRFieldDefn
             m_poFieldDefn->Unseal();
         }
 
+        TemporaryUnsealer(TemporaryUnsealer &&) = default;
+        TemporaryUnsealer &operator=(TemporaryUnsealer &&) = default;
+
         ~TemporaryUnsealer()
         {
             m_poFieldDefn->Seal();
@@ -409,6 +412,9 @@ class CPL_DLL OGRGeomFieldDefn
         {
             m_poFieldDefn->Unseal();
         }
+
+        TemporaryUnsealer(TemporaryUnsealer &&) = default;
+        TemporaryUnsealer &operator=(TemporaryUnsealer &&) = default;
 
         ~TemporaryUnsealer()
         {
@@ -780,6 +786,9 @@ class CPL_DLL OGRFeatureDefn
       public:
         explicit TemporaryUnsealer(OGRFeatureDefn *poFeatureDefn,
                                    bool bSealFields);
+
+        TemporaryUnsealer(TemporaryUnsealer &&) = default;
+        TemporaryUnsealer &operator=(TemporaryUnsealer &&) = default;
 
         ~TemporaryUnsealer();
 

@@ -51,8 +51,8 @@ g2int g2_unpack5(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ndp
 //
 //$$$//
 {
-      g2int ierr,needext,i,j,nbits,isecnum;
-      g2int lensec,isign,newlen;
+      g2int ierr,needext,i,j,nbits,isecnum = 0;
+      g2int lensec,isign = 0,newlen;
       g2int *lidrstmpl=0;
       gtemplate *mapdrs;
       int ret=0;

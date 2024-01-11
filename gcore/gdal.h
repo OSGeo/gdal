@@ -1013,6 +1013,12 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared(const char *, GDALAccess)
 #define GDAL_OF_BLOCK_ACCESS_MASK 0x300
 #endif
 
+#ifndef DOXYGEN_SKIP
+/** Set by GDALOpenEx() to indicate to Identify() method that they are called
+ * from it */
+#define GDAL_OF_FROM_GDALOPEN 0x400
+#endif
+
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx(
     const char *pszFilename, unsigned int nOpenFlags,
     const char *const *papszAllowedDrivers, const char *const *papszOpenOptions,
@@ -1040,6 +1046,10 @@ CPLErr CPL_DLL CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH,
                                                 const char *pszOldName);
 int CPL_DLL CPL_STDCALL
 GDALValidateCreationOptions(GDALDriverH, CSLConstList papszCreationOptions);
+char CPL_DLL **GDALGetOutputDriversForDatasetName(const char *pszDestFilename,
+                                                  int nFlagRasterVector,
+                                                  bool bSingleMatch,
+                                                  bool bEmitWarning);
 
 /* The following are deprecated */
 const char CPL_DLL *CPL_STDCALL GDALGetDriverShortName(GDALDriverH);
@@ -1191,6 +1201,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALBuildOverviewsEx(
 void CPL_DLL CPL_STDCALL GDALGetOpenDatasets(GDALDatasetH **hDS, int *pnCount);
 int CPL_DLL CPL_STDCALL GDALGetAccess(GDALDatasetH hDS);
 CPLErr CPL_DLL CPL_STDCALL GDALFlushCache(GDALDatasetH hDS);
+CPLErr CPL_DLL CPL_STDCALL GDALDropCache(GDALDatasetH hDS);
 
 CPLErr CPL_DLL CPL_STDCALL GDALCreateDatasetMaskBand(GDALDatasetH hDS,
                                                      int nFlags);
@@ -1545,6 +1556,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALComputeRasterMinMax(GDALRasterBandH hBand,
                                                    int bApproxOK,
                                                    double adfMinMax[2]);
 CPLErr CPL_DLL CPL_STDCALL GDALFlushRasterCache(GDALRasterBandH hBand);
+CPLErr CPL_DLL CPL_STDCALL GDALDropRasterCache(GDALRasterBandH hBand);
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram(
     GDALRasterBandH hBand, double dfMin, double dfMax, int nBuckets,
     int *panHistogram, int bIncludeOutOfRange, int bApproxOK,

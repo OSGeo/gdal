@@ -49,14 +49,11 @@
 #include "tiff.h"
 #include "tiffvers.h"
 #include "tifvsi.h"
+#include "tif_jxl.h"
 #include "xtiffio.h"
 
 // TODO(schwehr): Explain why 128 and not 127.
 constexpr int knMaxOverviews = 128;
-
-#if TIFFLIB_VERSION > 20181110  // > 4.0.10
-#define SUPPORTS_GET_OFFSET_BYTECOUNT
-#endif
 
 /************************************************************************/
 /*                         GTIFFWriteDirectory()                        */
@@ -178,9 +175,7 @@ toff_t GTIFFWriteDirectory(TIFF *hTIFF, int nSubfileType, int nXSize,
 
     if (bDeferStrileArrayWriting)
     {
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
         TIFFDeferStrileArrayWriting(hTIFF);
-#endif
     }
 
     /* -------------------------------------------------------------------- */
@@ -213,9 +208,13 @@ void GTIFFBuildOverviewMetadata(const char *pszResampling,
 {
     osMetadata = "<GDALMetadata>";
 
-    if (pszResampling && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
-        osMetadata += "<Item name=\"RESAMPLING\" sample=\"0\">"
-                      "AVERAGE_BIT2GRAYSCALE</Item>";
+    auto osNormalizedResampling = GDALGetNormalizedOvrResampling(pszResampling);
+    if (!osNormalizedResampling.empty())
+    {
+        osMetadata += "<Item name=\"RESAMPLING\" sample=\"0\">";
+        osMetadata += osNormalizedResampling;
+        osMetadata += "</Item>";
+    }
 
     if (poBaseDS->GetMetadataItem("INTERNAL_MASK_FLAGS_1"))
     {
@@ -528,7 +527,8 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         {
             nPlanarConfig = PLANARCONFIG_CONTIG;
         }
-        else if (nCompression == COMPRESSION_WEBP)
+        else if (nCompression == COMPRESSION_WEBP ||
+                 nCompression == COMPRESSION_JXL)
         {
             nPlanarConfig = PLANARCONFIG_CONTIG;
         }
@@ -1016,6 +1016,44 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
             GTIFFSetMaxZError(GDALDataset::ToHandle(hODS), dfMaxZError);
         }
     }
+
+#if HAVE_JXL
+    if (nCompression == COMPRESSION_JXL)
+    {
+        if (const char *pszJXLLossLess =
+                GetOptionValue("JXL_LOSSLESS", "JXL_LOSSLESS_OVERVIEW"))
+        {
+            const double bJXLLossless = CPLTestBool(pszJXLLossLess);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_LOSSYNESS,
+                         bJXLLossless ? JXL_LOSSLESS : JXL_LOSSY);
+            GTIFFSetJXLLossless(GDALDataset::ToHandle(hODS), bJXLLossless);
+        }
+        if (const char *pszJXLEffort =
+                GetOptionValue("JXL_EFFORT", "JXL_EFFORT_OVERVIEW"))
+        {
+            const int nJXLEffort = atoi(pszJXLEffort);
+            TIFFSetField(hTIFF, TIFFTAG_JXL_EFFORT, nJXLEffort);
+            GTIFFSetJXLEffort(GDALDataset::ToHandle(hODS), nJXLEffort);
+        }
+        if (const char *pszJXLDistance =
+                GetOptionValue("JXL_DISTANCE", "JXL_DISTANCE_OVERVIEW"))
+        {
+            const float fJXLDistance =
+                static_cast<float>(CPLAtof(pszJXLDistance));
+            TIFFSetField(hTIFF, TIFFTAG_JXL_DISTANCE, fJXLDistance);
+            GTIFFSetJXLDistance(GDALDataset::ToHandle(hODS), fJXLDistance);
+        }
+        if (const char *pszJXLAlphaDistance = GetOptionValue(
+                "JXL_ALPHA_DISTANCE", "JXL_ALPHA_DISTANCE_OVERVIEW"))
+        {
+            const float fJXLAlphaDistance =
+                static_cast<float>(CPLAtof(pszJXLAlphaDistance));
+            TIFFSetField(hTIFF, TIFFTAG_JXL_ALPHA_DISTANCE, fJXLAlphaDistance);
+            GTIFFSetJXLAlphaDistance(GDALDataset::ToHandle(hODS),
+                                     fJXLAlphaDistance);
+        }
+    }
+#endif
 
     /* -------------------------------------------------------------------- */
     /*      Loop writing overview data.                                     */

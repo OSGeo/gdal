@@ -47,7 +47,10 @@ done
 sort -u < $OUT_FILE > $OUT_FILE.tmp
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" > $OUT_FILE
+echo "#ifndef GDAL_SHAPELIB_SYMBOL_RENAME_H_INCLUDED" >> $OUT_FILE
+echo "#define GDAL_SHAPELIB_SYMBOL_RENAME_H_INCLUDED" >> $OUT_FILE
 cat $OUT_FILE.tmp >> $OUT_FILE
+echo "#endif /* GDAL_SHAPELIB_SYMBOL_RENAME_H_INCLUDED */" >> $OUT_FILE
 rm -f $OUT_FILE.tmp
 
 rm shapelib.so

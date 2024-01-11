@@ -1259,11 +1259,17 @@ def test_pdf_check_identity_iso32000(poppler_or_pdfium):
     data_ref = f.read()
     f.close()
 
+    f = open("data/pdf/test_iso32000_libpng_1_6_40.pdf", "rb")
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1289,11 +1295,17 @@ def test_pdf_check_identity_ogc_bp(poppler_or_pdfium):
     data_ref = f.read()
     f.close()
 
+    f = open("data/pdf/test_ogc_bp_libpng_1_6_40.pdf", "rb")
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -2097,11 +2109,17 @@ if (button == 4) app.launchURL('http://gdal.org/');</Javascript>
     data_ref = f.read()
     f.close()
 
+    f = open("data/pdf/test_pdf_composition_libpng_1_6_40.pdf", "rb")
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdal.Unlink(out_filename)
 
@@ -2137,11 +2155,19 @@ def test_pdf_composition_raster_tiled_blending():
     data_ref = f.read()
     f.close()
 
+    f = open(
+        "data/pdf/test_pdf_composition_raster_tiled_blending_libpng_1_6_40.pdf", "rb"
+    )
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdal.Unlink(out_filename)
 
@@ -2384,11 +2410,19 @@ def test_pdf_composition_raster_georeferenced():
     data_ref = f.read()
     f.close()
 
+    f = open(
+        "data/pdf/test_pdf_composition_raster_georeferenced_libpng_1_6_40.pdf", "rb"
+    )
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdal.Unlink(out_filename)
 

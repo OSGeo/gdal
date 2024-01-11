@@ -1146,6 +1146,24 @@ extern "C++"
 #else
 #define CPL_NULLPTR NULL
 #endif
+
+#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+extern "C++"
+{
+    namespace cpl
+    {
+    /** Function to indicate that the result of an arithmetic operation
+         * does fit on the specified type. Typically used to avoid warnings
+         * about potentially overflowing multiplications by static analyzers.
+         */
+    template <typename T> inline T fits_on(T t)
+    {
+        return t;
+    }
+    }  // namespace cpl
+}
+#endif
+
 /*! @endcond */
 
 /* This typedef is for C functions that take char** as argument, but */

@@ -148,7 +148,9 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<Constraint> m_asAttributeFilterConstraints{};
 
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
-    LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
+    LoadGDALSchema(const arrow::KeyValueMetadata *kv_metadata);
+
+    void LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
 
     OGRArrowLayer(OGRArrowDataset *poDS, const char *pszLayerName);
 
@@ -208,8 +210,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ComputeConstraintsArrayIdx();
 
     virtual bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const;
+    bool FastGetExtent3D(int iGeomField, OGREnvelope3D *psExtent) const;
     static OGRErr GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
-                                        OGREnvelope *psExtent);
+                                        OGREnvelope3D *psExtent);
 
     int GetArrowSchema(struct ArrowArrayStream *,
                        struct ArrowSchema *out) override;
@@ -232,6 +235,8 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                      int bForce = TRUE) override;
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                       int bForce = TRUE) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
     void SetSpatialFilter(OGRGeometry *poGeom) override

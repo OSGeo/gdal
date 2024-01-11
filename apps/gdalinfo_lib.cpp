@@ -149,6 +149,8 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
                                    bool bJson, json_object *poMetadata,
                                    CPLString &osStr);
 
+#ifndef Concat_defined
+#define Concat_defined
 static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
                    ...) CPL_PRINT_FUNC_FORMAT(3, 4);
 
@@ -179,6 +181,7 @@ static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
 
     va_end(args);
 }
+#endif
 
 /************************************************************************/
 /*           gdal_json_object_new_double_or_str_for_non_finite()        */
@@ -739,6 +742,9 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     /* -------------------------------------------------------------------- */
     if (bJson && GDALGetRasterXSize(hDataset))
     {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oBackuper;
+
         json_object *poLinearRing = json_object_new_array();
         json_object *poCornerCoordinates = json_object_new_object();
         json_object *poLongLatExtent = json_object_new_object();
@@ -780,6 +786,9 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     }
     else if (GDALGetRasterXSize(hDataset))
     {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oBackuper;
+
         Concat(osStr, psOptions->bStdoutOutput, "Corner Coordinates:\n");
         GDALInfoReportCorner(psOptions, hDataset, hTransform, "Upper Left", 0.0,
                              0.0, bJson, nullptr, nullptr, osStr);

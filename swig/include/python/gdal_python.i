@@ -794,7 +794,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             if( line_space != 0 && band_space > line_space * nysize )
                 memset(data, 0, buf_size);
             else if( pixel_space != 0 && band_space < pixel_space &&
-                     pixel_space != GDALGetRasterCount(self) * ntypesize )
+                     pixel_space != (GIntBig)GDALGetRasterCount(self) * ntypesize )
                 memset(data, 0, buf_size);
         }
     }
@@ -1733,7 +1733,7 @@ def VectorInfoOptions(options=None,
         featureCount:
             whether to compute and display the feature count
         extent:
-            whether to compute and display the layer extent
+            whether to compute and display the layer extent. Can also be set to the string '3D' to request a 3D extent
         dumpFeatures:
             set to True to get the dump of all features
     """
@@ -1764,7 +1764,9 @@ def VectorInfoOptions(options=None,
             new_options += ['-wkt_format', wktFormat]
         if not featureCount:
             new_options += ['-nocount']
-        if not extent:
+        if extent in ('3d', '3D'):
+            new_options += ['-extent3D']
+        elif not extent:
             new_options += ['-noextent']
         if layers:
             new_options += ["dummy_dataset_name"]
@@ -1893,7 +1895,8 @@ def TranslateOptions(options=None, format=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
               overviewLevel = 'AUTO',
-              callback=None, callback_data=None):
+              callback=None, callback_data=None,
+              domainMetadataOptions = None):
     """Create a TranslateOptions() object that can be passed to gdal.Translate()
 
     Parameters
@@ -1966,6 +1969,8 @@ def TranslateOptions(options=None, format=None,
         callback method
     callback_data:
         user data for callback
+    domainMetadataOptions:
+        list or dict of domain-specific metadata options
     """
 
     # Only used for tests
@@ -2034,6 +2039,17 @@ def TranslateOptions(options=None, format=None,
             else:
                 for opt in metadataOptions:
                     new_options += ['-mo', opt]
+        if domainMetadataOptions is not None:
+            if isinstance(domainMetadataOptions, str):
+                new_options += ['-dmo', domainMetadataOptions]
+            elif isinstance(domainMetadataOptions, dict):
+                for d in domainMetadataOptions:
+                  things = domainMetadataOptions[d]
+                  for k, v in things.items():
+                    new_options += ['-dmo', f'{d}:{k}={v}']
+            else:
+                for opt in domainMetadataOptions:
+                    new_options += ['-dmo', opt]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS)]
         if nogcp:
@@ -3418,6 +3434,8 @@ def FootprintOptions(options=None,
                      maxPoints=None,
                      minRingArea=None,
                      layerName=None,
+                     locationFieldName="location",
+                     writeAbsolutePath=False,
                      layerCreationOptions=None,
                      datasetCreationOptions=None,
                      callback=None, callback_data=None):
@@ -3457,6 +3475,10 @@ def FootprintOptions(options=None,
         maximum number of points (100 by default, "unlimited" for unlimited)
     minRingArea:
         Minimum value for the area of a ring The unit of the area is in square pixels if targetCoordinateSystem equals "pixel", or otherwise in georeferenced units of the target vector dataset. This option is applied after the reprojection implied by dstSRS
+    locationFieldName:
+        Specifies the name of the field in the resulting vector dataset where the path of the input dataset will be stored. The default field name is "location". Can be set to None to disable creation of such field.
+    writeAbsolutePath:
+        Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
     layerName:
         output layer name
     callback:
@@ -3520,6 +3542,12 @@ def FootprintOptions(options=None,
             else:
                 for opt in layerCreationOptions:
                     new_options += ['-lco', opt]
+        if locationFieldName is not None:
+            new_options += ['-location_field_name', locationFieldName]
+        else:
+            new_options += ['-no_location']
+        if writeAbsolutePath:
+            new_options += ['-write_absolute_path']
 
     if return_option_list:
         return new_options

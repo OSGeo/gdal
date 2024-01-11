@@ -4197,6 +4197,16 @@ TEST_F(test_cpl, VSI_plugin_minimal_testing)
 
     VSIFCloseL(fp);
     EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+
+    // Check that we can remove the handler
+    VSIRemovePluginHandler("/vsimyplugin/");
+
+    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/test", "rb") == nullptr);
+    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+
+    // Removing a non-existing handler is a no-op
+    VSIRemovePluginHandler("/vsimyplugin/");
+    VSIRemovePluginHandler("/vsifoobar/");
 }
 
 TEST_F(test_cpl, VSI_plugin_advise_read)

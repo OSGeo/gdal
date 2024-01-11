@@ -765,15 +765,6 @@ GIntBig CPL_DLL OGR_L_GetFeatureCount(OGRLayerH, int);
 OGRErr CPL_DLL OGR_L_GetExtent(OGRLayerH, OGREnvelope *, int);
 OGRErr CPL_DLL OGR_L_GetExtentEx(OGRLayerH, int iGeomField,
                                  OGREnvelope *psExtent, int bForce);
-/**
- * @brief OGR_L_GetExtent3D computes the 3D extent of the layer.
- * @param hLayer the layer to consider.
- * @param iGeomField 0-based index of the geometry field to consider.
- * @param psExtent3D the computed 3D extent of the layer.
- * @param bForce if TRUE, the extent will be computed even if all the
- *        layer features have to be fetched.
- * @return OGRERR_NONE on success or an error code in case of failure.
- */
 OGRErr CPL_DLL OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
                                  OGREnvelope3D *psExtent3D, int bForce);
 int CPL_DLL OGR_L_TestCapability(OGRLayerH, const char *);

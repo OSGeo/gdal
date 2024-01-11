@@ -4911,6 +4911,109 @@ def test_nitf_tre_overflow_des_errorinvalid_DESITEM():
 
 
 ###############################################################################
+# Test reading a XML_DATA_CONTENT DES
+
+
+def test_nitf_des_XML_DATA_CONTENT(tmp_vsimem):
+    des_data = "02U" + " " * 166 + r"0000<test/>"
+
+    filename = str(tmp_vsimem / "test_nitf_des_XML_DATA_CONTENT.ntf")
+    ds = gdal.GetDriverByName("NITF").Create(
+        filename,
+        1,
+        1,
+        options=["DES=XML_DATA_CONTENT=" + des_data],
+    )
+    ds = None
+
+    ds = gdal.Open(filename)
+    data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    assert (
+        data
+        == """<des_list>
+  <des name="XML_DATA_CONTENT">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0000" />
+    <field name="DESDATA">
+      <xml_content>
+        <test />
+      </xml_content>
+    </field>
+  </des>
+</des_list>
+"""
+    )
+
+
+###############################################################################
+# Test reading a invalid XML_DATA_CONTENT DES
+
+
+def test_nitf_des_XML_DATA_CONTENT_invalid(tmp_vsimem):
+    des_data = "02U" + " " * 166 + r"0000invalid <xml"
+
+    filename = str(tmp_vsimem / "test_nitf_des_XML_DATA_CONTENT_invalid.ntf")
+    ds = gdal.GetDriverByName("NITF").Create(
+        filename,
+        1,
+        1,
+        options=["DES=XML_DATA_CONTENT=" + des_data],
+    )
+    ds = None
+
+    with gdal.quiet_errors():
+        ds = gdal.Open(filename)
+        data = ds.GetMetadata("xml:DES")[0]
+    ds = None
+
+    assert (
+        data
+        == """<des_list>
+  <des name="XML_DATA_CONTENT">
+    <field name="DESVER" value="02" />
+    <field name="DECLAS" value="U" />
+    <field name="DESCLSY" value="" />
+    <field name="DESCODE" value="" />
+    <field name="DESCTLH" value="" />
+    <field name="DESREL" value="" />
+    <field name="DESDCTP" value="" />
+    <field name="DESDCDT" value="" />
+    <field name="DESDCXM" value="" />
+    <field name="DESDG" value="" />
+    <field name="DESDGDT" value="" />
+    <field name="DESCLTX" value="" />
+    <field name="DESCATP" value="" />
+    <field name="DESCAUT" value="" />
+    <field name="DESCRSN" value="" />
+    <field name="DESSRDT" value="" />
+    <field name="DESCTLN" value="" />
+    <field name="DESSHL" value="0000" />
+    <field name="DESDATA" value="aW52YWxpZCA8eG1s" />
+  </des>
+</des_list>
+"""
+    )
+
+
+###############################################################################
 # Test reading/writing headers in ISO-8859-1 encoding
 def test_nitf_header_encoding():
     # mu character encoded in UTF-8

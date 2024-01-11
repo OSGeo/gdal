@@ -65,7 +65,9 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
 
     LoadGeoMetadata(kv_metadata);
     const auto oMapFieldNameToGDALSchemaFieldDefn =
-        LoadGDALMetadata(kv_metadata.get());
+        LoadGDALSchema(kv_metadata.get());
+
+    LoadGDALMetadata(kv_metadata.get());
 
     const auto fields = m_poSchema->fields();
     for (int i = 0; i < m_poSchema->num_fields(); ++i)
@@ -255,20 +257,13 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                                 auto oRoot = oDoc.GetRoot();
                                 auto oColumns = oRoot.GetObj("columns");
                                 auto oCol = oColumns.GetObj(pszGeomFieldName);
-                                OGREnvelope sFragmentExtent;
+                                OGREnvelope3D sFragmentExtent;
                                 if (oCol.IsValid() &&
                                     GetExtentFromMetadata(
                                         oCol, &sFragmentExtent) == OGRERR_NONE)
                                 {
                                     nBBoxFragmentCount++;
-                                    psExtent->MinX = std::min(
-                                        psExtent->MinX, sFragmentExtent.MinX);
-                                    psExtent->MinY = std::min(
-                                        psExtent->MinY, sFragmentExtent.MinY);
-                                    psExtent->MaxX = std::max(
-                                        psExtent->MaxX, sFragmentExtent.MaxX);
-                                    psExtent->MaxY = std::max(
-                                        psExtent->MaxY, sFragmentExtent.MaxY);
+                                    psExtent->Merge(sFragmentExtent);
                                 }
                             }
                         }

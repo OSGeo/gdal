@@ -748,6 +748,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     md = tiledb_md["array"]["metadata"]
     del md["CRS"]
     assert md == {
+        "dataset_type": {"type": "STRING_UTF8", "value": "geometry"},
         "FEATURE_COUNT": {"type": "INT64", "value": 3},
         "FID_ATTRIBUTE_NAME": {"type": "STRING_UTF8", "value": "FID"},
         "GEOMETRY_ATTRIBUTE_NAME": {"type": "STRING_UTF8", "value": "wkb_geometry"},

@@ -49,6 +49,8 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
             "       [-convex_hull] [-densify <value>] [-simplify <value>]\n"
             "       [-min_ring_area <value>] [-max_points <value>|unlimited]\n"
             "       [-of <ogr_format>] [-lyr_name <dst_layername>]\n"
+            "       [-location_field_name <field_name>] [-no_location]\n"
+            "       [-write_absolute_path]\n"
             "       [-dsco <name>=<value>]... [-lco <name>=<value>]... "
             "[-overwrite] [-q]\n"
             "       <src_filename> <dst_filename>\n");

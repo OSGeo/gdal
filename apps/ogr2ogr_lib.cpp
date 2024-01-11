@@ -97,7 +97,7 @@ typedef enum
 /*                              CopyableGCPs                            */
 /************************************************************************/
 
-namespace
+namespace gdal::ogr2ogr_lib
 {
 struct CopyableGCPs
 {
@@ -127,7 +127,9 @@ struct CopyableGCPs
         }
     }
 };
-}  // namespace
+}  // namespace gdal::ogr2ogr_lib
+
+using namespace gdal::ogr2ogr_lib;
 
 /************************************************************************/
 /*                        GDALVectorTranslateOptions                    */
@@ -3860,6 +3862,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
           CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "YES"))) ||
          CPLTestBool(CPLGetConfigOption("OGR2OGR_USE_ARROW_API", "NO"))) &&
         !psOptions->bSkipFailures && !psOptions->bTransform &&
+        !psOptions->poClipSrc && !psOptions->poClipDst &&
+        psOptions->oGCPs.nGCPCount == 0 && !psOptions->bWrapDateline &&
         !m_papszSelFields && !m_bAddMissingFields &&
         m_eGType == GEOMTYPE_UNCHANGED && psOptions->eGeomOp == GEOMOP_NONE &&
         m_eGeomTypeConversion == GTC_DEFAULT && m_nCoordDim < 0 &&
@@ -6434,6 +6438,7 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 /*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
 /************************************************************************/
 
+#ifndef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {
@@ -6452,6 +6457,7 @@ static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
     {                                                                          \
         return nullptr;                                                        \
     }
+#endif
 
 /************************************************************************/
 /*                       GDALVectorTranslateOptionsNew()                */
@@ -6487,7 +6493,22 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         {
             psOptions->bQuiet = true;
             if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = TRUE;
+                psOptionsForBinary->bQuiet = true;
+        }
+        else if (EQUAL(papszArgv[i], "-if"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            i++;
+            if (psOptionsForBinary)
+            {
+                if (GDALGetDriverByName(papszArgv[i]) == nullptr)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "%s is not a recognized driver", papszArgv[i]);
+                }
+                psOptionsForBinary->aosAllowInputDrivers.AddString(
+                    papszArgv[i]);
+            }
         }
         else if (EQUAL(papszArgv[i], "-f") || EQUAL(papszArgv[i], "-of"))
         {
@@ -6511,8 +6532,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
             ++i;
             if (psOptionsForBinary)
             {
-                psOptionsForBinary->papszOpenOptions = CSLAddString(
-                    psOptionsForBinary->papszOpenOptions, papszArgv[i]);
+                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
             }
         }
         else if (EQUAL(papszArgv[i], "-doo"))
@@ -6854,21 +6874,12 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         }
         else if (EQUAL(papszArgv[i], "-makevalid"))
         {
-            // Check that OGRGeometry::MakeValid() is available
-            OGRGeometry *poInputGeom = nullptr;
-            OGRGeometryFactory::createFromWkt("POLYGON((0 0,1 1,1 0,0 1,0 0))",
-                                              nullptr, &poInputGeom);
-            CPLAssert(poInputGeom);
-            OGRGeometry *poValidGeom = poInputGeom->MakeValid();
-            delete poInputGeom;
-            if (poValidGeom == nullptr)
+            if (!OGRGeometryFactory::haveGEOS())
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "-makevalid only supported for builds against GEOS "
-                         "3.8 or later");
+                         "-makevalid only supported for builds against GEOS");
                 return nullptr;
             }
-            delete poValidGeom;
             psOptions->bMakeValid = true;
         }
         else if (EQUAL(papszArgv[i], "-fieldTypeToString"))
@@ -7262,17 +7273,16 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                      papszArgv[i]);
             return nullptr;
         }
-        else if (psOptionsForBinary &&
-                 psOptionsForBinary->pszDestDataSource == nullptr)
+        else if (psOptionsForBinary && !psOptionsForBinary->bDestSpecified)
         {
             iArgStart = -1;
-            psOptionsForBinary->pszDestDataSource = CPLStrdup(papszArgv[i]);
+            psOptionsForBinary->bDestSpecified = true;
+            psOptionsForBinary->osDestDataSource = papszArgv[i];
         }
-        else if (psOptionsForBinary &&
-                 psOptionsForBinary->pszDataSource == nullptr)
+        else if (psOptionsForBinary && psOptionsForBinary->osDataSource.empty())
         {
             iArgStart = -1;
-            psOptionsForBinary->pszDataSource = CPLStrdup(papszArgv[i]);
+            psOptionsForBinary->osDataSource = papszArgv[i];
         }
         else
         {
@@ -7292,26 +7302,23 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
     if (psOptionsForBinary)
     {
         psOptionsForBinary->eAccessMode = psOptions->eAccessMode;
-        if (!psOptions->osFormat.empty())
-            psOptionsForBinary->pszFormat =
-                CPLStrdup(psOptions->osFormat.c_str());
+        psOptionsForBinary->osFormat = psOptions->osFormat;
 
-        if (!(CPLTestBool(CSLFetchNameValueDef(
-                psOptionsForBinary->papszOpenOptions, "NATIVE_DATA",
-                CSLFetchNameValueDef(psOptionsForBinary->papszOpenOptions,
-                                     "@NATIVE_DATA", "TRUE")))))
+        if (!(CPLTestBool(psOptionsForBinary->aosOpenOptions.FetchNameValueDef(
+                "NATIVE_DATA",
+                psOptionsForBinary->aosOpenOptions.FetchNameValueDef(
+                    "@NATIVE_DATA", "TRUE")))))
         {
             psOptions->bNativeData = false;
         }
 
         if (psOptions->bNativeData &&
-            CSLFetchNameValue(psOptionsForBinary->papszOpenOptions,
-                              "NATIVE_DATA") == nullptr &&
-            CSLFetchNameValue(psOptionsForBinary->papszOpenOptions,
-                              "@NATIVE_DATA") == nullptr)
+            psOptionsForBinary->aosOpenOptions.FetchNameValue("NATIVE_DATA") ==
+                nullptr &&
+            psOptionsForBinary->aosOpenOptions.FetchNameValue("@NATIVE_DATA") ==
+                nullptr)
         {
-            psOptionsForBinary->papszOpenOptions = CSLAddString(
-                psOptionsForBinary->papszOpenOptions, "@NATIVE_DATA=YES");
+            psOptionsForBinary->aosOpenOptions.AddString("@NATIVE_DATA=YES");
         }
     }
 

@@ -105,7 +105,7 @@ hid_t GDAL_HDF5Open(const std::string &osFilename);
 class HDF5Dataset;
 class HDF5EOSParser;
 class BAGDataset;
-class S102Dataset;
+class S100BaseDataset;
 
 namespace GDAL
 {
@@ -119,7 +119,7 @@ class HDF5SharedResources
 {
     friend class ::HDF5Dataset;
     friend class ::BAGDataset;
-    friend class ::S102Dataset;
+    friend class ::S100BaseDataset;
 
     std::weak_ptr<HDF5SharedResources> m_poSelf{};
     bool m_bReadOnly = true;

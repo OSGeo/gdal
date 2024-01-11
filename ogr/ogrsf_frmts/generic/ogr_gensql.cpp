@@ -38,6 +38,7 @@
 #include <vector>
 
 //! @cond Doxygen_Suppress
+extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
 class OGRGenSQLGeomFieldDefn final : public OGRGeomFieldDefn
 {

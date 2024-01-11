@@ -1075,14 +1075,15 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
             if (!RAWDatasetCheckMemoryUsage(
                     poDS->nRasterXSize, poDS->nRasterYSize, nBands, iWordSize,
                     iWordSize, iWordSize * nBands * poDS->nRasterXSize,
-                    nHeaderOffset, iWordSize * poDS->nRasterXSize,
+                    nHeaderOffset,
+                    static_cast<vsi_l_offset>(iWordSize) * poDS->nRasterXSize,
                     poDS->fpImage))
             {
                 return nullptr;
             }
-            if (nHeaderOffset >
-                std::numeric_limits<GIntBig>::max() -
-                    (nBands - 1) * iWordSize * poDS->nRasterXSize)
+            if (nHeaderOffset > std::numeric_limits<GIntBig>::max() -
+                                    static_cast<GIntBig>(nBands - 1) *
+                                        iWordSize * poDS->nRasterXSize)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "int overflow: too large nHeaderOffset");
@@ -1094,7 +1095,8 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                 // Assume pixel interleaved.
                 auto poBand = std::make_unique<ERSRasterBand>(
                     poDS.get(), iBand + 1, poDS->fpImage,
-                    nHeaderOffset + iWordSize * iBand * poDS->nRasterXSize,
+                    nHeaderOffset + static_cast<vsi_l_offset>(iWordSize) *
+                                        iBand * poDS->nRasterXSize,
                     iWordSize, iWordSize * nBands * poDS->nRasterXSize, eType,
                     bNative);
                 if (!poBand->IsValid())

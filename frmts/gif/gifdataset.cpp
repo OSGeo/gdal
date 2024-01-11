@@ -48,9 +48,6 @@ GifFileType *EGifOpen(void *userData, OutputFunc writeFunc);
 
 CPL_C_END
 
-constexpr int InterlacedOffset[] = {0, 4, 2, 1};
-constexpr int InterlacedJumps[] = {8, 8, 4, 2};
-
 /************************************************************************/
 /*                          VSIGIFWriteFunc()                           */
 /*                                                                      */
@@ -561,7 +558,7 @@ GDALDataset *GIFDataset::CreateCopy(const char *pszFilename,
         {
             const CPLErr eErr = poBand->RasterIO(
                 GF_Read, 0, iLine, nXSize, 1, pabyScanline, nXSize, 1, GDT_Byte,
-                nBands, nBands * nXSize, nullptr);
+                nBands, static_cast<GSpacing>(nBands) * nXSize, nullptr);
 
             if (eErr != CE_None ||
                 EGifPutLine(hGifFile, pabyScanline, nXSize) == GIF_ERROR)

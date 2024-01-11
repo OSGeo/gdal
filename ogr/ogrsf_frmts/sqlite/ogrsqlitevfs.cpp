@@ -223,16 +223,12 @@ static const sqlite3_io_methods OGRSQLiteIOMethods = {
     OGRSQLiteIOFileControl,
     OGRSQLiteIOSectorSize,
     OGRSQLiteIODeviceCharacteristics,
-#if SQLITE_VERSION_NUMBER >= 3007004L /* perhaps older too ? */
-    nullptr,                          // xShmMap
-    nullptr,                          // xShmLock
-    nullptr,                          // xShmBarrier
-    nullptr,                          // xShmUnmap
-#if SQLITE_VERSION_NUMBER >= 3007017L /* perhaps older too ? */
-    nullptr,                          // xFetch
-    nullptr,                          // xUnfetch
-#endif
-#endif
+    nullptr,  // xShmMap
+    nullptr,  // xShmLock
+    nullptr,  // xShmBarrier
+    nullptr,  // xShmUnmap
+    nullptr,  // xFetch
+    nullptr,  // xUnfetch
 };
 
 static int OGRSQLiteVFSOpen(sqlite3_vfs *pVFS, const char *zName,
@@ -395,18 +391,8 @@ static void OGRSQLiteVFSDlError(sqlite3_vfs *pVFS, int nByte, char *zErrMsg)
     pUnderlyingVFS->xDlError(pUnderlyingVFS, nByte, zErrMsg);
 }
 
-/* xDlSym member signature changed in sqlite 3.6.7
- * (http://www.sqlite.org/changes.html) */
-/* This was supposed to be done "in a way that is backwards compatible but which
- * might cause compiler warnings" */
-/* Perhaps in C, but definitely not in C++ ( #4515 ) */
-#if SQLITE_VERSION_NUMBER >= 3006007
 static void (*OGRSQLiteVFSDlSym(sqlite3_vfs *pVFS, void *pHandle,
                                 const char *zSymbol))(void)
-#else
-static void(*OGRSQLiteVFSDlSym(sqlite3_vfs *pVFS, void *pHandle,
-                               const char *zSymbol))
-#endif
 {
     sqlite3_vfs *pUnderlyingVFS = GET_UNDERLYING_VFS(pVFS);
     // CPLDebug("SQLITE", "OGRSQLiteVFSDlSym(%s)", zSymbol);
@@ -512,13 +498,7 @@ sqlite3_vfs *OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void *pfnUserData)
     pVFSAppData->pfnUserData = pfnUserData;
     pVFSAppData->nCounter = 0;
 
-#if SQLITE_VERSION_NUMBER >=                                                   \
-    3008000L /* perhaps not the minimal version that defines                   \
-                xCurrentTimeInt64, but who cares */
     pMyVFS->iVersion = 2;
-#else
-    pMyVFS->iVersion = 1;
-#endif
     pMyVFS->szOsFile = sizeof(OGRSQLiteFileStruct);
     // must be large enough to hold potentially very long names like
     // /vsicurl/.... with AWS S3 security tokens
@@ -538,12 +518,7 @@ sqlite3_vfs *OGRSQLiteCreateVFS(pfnNotifyFileOpenedType pfn, void *pfnUserData)
     pMyVFS->xSleep = OGRSQLiteVFSSleep;
     pMyVFS->xCurrentTime = OGRSQLiteVFSCurrentTime;
     pMyVFS->xGetLastError = OGRSQLiteVFSGetLastError;
-#if SQLITE_VERSION_NUMBER >=                                                   \
-    3008000L /* perhaps not the minimal version that defines                   \
-                xCurrentTimeInt64, but who cares */
-    if (pMyVFS->iVersion >= 2)
-        pMyVFS->xCurrentTimeInt64 = OGRSQLiteVFSCurrentTimeInt64;
-#endif
+    pMyVFS->xCurrentTimeInt64 = OGRSQLiteVFSCurrentTimeInt64;
 
     return pMyVFS;
 }

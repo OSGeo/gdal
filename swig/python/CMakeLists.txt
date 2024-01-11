@@ -115,8 +115,6 @@ add_custom_target(python_generated_files
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 function (symlink_or_copy source destination)
-
-  if (CMAKE_VERSION VERSION_GREATER 3.14)
     file(
       CREATE_LINK ${source} ${destination}
       RESULT res
@@ -125,15 +123,6 @@ function (symlink_or_copy source destination)
       message(STATUS "Copying content of ${source} to ${destination}")
       execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
     endif ()
-  else ()
-    if (NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${source} ${destination})
-    else ()
-      message(STATUS "Copying content of ${source} to ${destination}")
-      execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${source} ${destination})
-    endif ()
-  endif ()
-
 endfunction ()
 
 if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
@@ -188,6 +177,7 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.rst ${CMAKE_CURRENT_BINARY_DIR}/README.rst @ONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml @ONLY)
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/get_suffix.py
        "from importlib.machinery import EXTENSION_SUFFIXES; print(EXTENSION_SUFFIXES[0])\n")
@@ -214,8 +204,11 @@ if (Python_Interpreter_FOUND)
       GENERATE
       OUTPUT "${BUILD_EXT_FILENAME}"
       CONTENT
-        "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,\"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\">)\n"
+        "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)
+         execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,\"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace,${CMAKE_COMMAND} -E echo \"setup.py build_ext only run in configuration != Debug\"> RESULT_VARIABLE res)
+         if(NOT res EQUAL 0)
+           message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+         endif()"
       )
   else ()
     set(BUILD_EXT_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/build_ext.cmake")
@@ -224,10 +217,14 @@ if (Python_Interpreter_FOUND)
       OUTPUT "${BUILD_EXT_FILENAME}"
       CONTENT
          "file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/build)\n
-          execute_process(COMMAND \"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace)\n")
+          execute_process(COMMAND \"${Python_EXECUTABLE_CMAKE}\" \"${SETUP_PY_FILENAME}\" build_ext --inplace RESULT_VARIABLE res)
+          if(NOT res EQUAL 0)
+            message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+          endif()"
+      )
   endif ()
 
-  if((CMAKE_VERSION VERSION_GREATER_EQUAL 3.12) AND CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
+  if(CMAKE_NM AND BUILD_SHARED_LIBS AND NOT _isMultiConfig)
       # Optimization to avoid rebuilding the .o and .so each time libgdal
       # is touched. We only consider the list of exported symbols as the
       # dependency rule
@@ -311,6 +308,7 @@ if (Python_Interpreter_FOUND)
         symlink_or_copy("${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils" "${INSTALL_WORKING_DIRECTORY}/gdal-utils")
         set(BUILD_EXT_WITH_RPATH_CONTENT)
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/README.rst\" \"${INSTALL_WORKING_DIRECTORY}/README.rst\" @ONLY)\n")
+        string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml\" \"${INSTALL_WORKING_DIRECTORY}/pyproject.toml\" @ONLY)\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(COPY \"${CMAKE_CURRENT_BINARY_DIR}/extensions\" DESTINATION \"${INSTALL_WORKING_DIRECTORY}\")\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "file(GLOB PY_FILES \"${CMAKE_CURRENT_BINARY_DIR}/osgeo/*.py\")\n")
         string(APPEND BUILD_EXT_WITH_RPATH_CONTENT "foreach(_file IN LISTS PY_FILES)\n")
@@ -347,11 +345,19 @@ if (Python_Interpreter_FOUND)
       GENERATE
       OUTPUT ${BUILD_BDIST_WHEEL_FILENAME}
       CONTENT
-        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\">)"
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel,${CMAKE_COMMAND} -E echo \"setup.py bdist_wheel only run in configuration != Debug\"> RESULT_VARIABLE res)
+        if(NOT res EQUAL 0)
+           message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+        endif()
+        "
       )
   else ()
     set(BUILD_BDIST_WHEEL_FILENAME ${CMAKE_CURRENT_BINARY_DIR}/build_bdist_wheel.cmake)
-    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME} "execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel)\n")
+    file(WRITE ${BUILD_BDIST_WHEEL_FILENAME}
+         "execute_process(COMMAND ${Python_EXECUTABLE_CMAKE} ${SETUP_PY_FILENAME} bdist_wheel RESULT_VARIABLE res)
+          if(NOT res EQUAL 0)
+            message(FATAL_ERROR \"setup.py bdist_wheel failed\")
+          endif()")
   endif ()
   add_custom_target(
     python_wheel

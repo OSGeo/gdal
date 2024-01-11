@@ -4905,6 +4905,43 @@ def test_ogr_pg_84(pg_ds):
 
 
 ###############################################################################
+# Test metadata
+
+
+@only_without_postgis
+def test_ogr_pg_metadata(pg_ds):
+
+    pg_ds = reconnect(pg_ds, update=1)
+    lyr = pg_ds.CreateLayer(
+        "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
+    )
+    lyr.SetMetadata({"foo": "bar"})
+    lyr.SetMetadataItem("bar", "baz")
+    lyr.SetMetadataItem("DESCRIPTION", "my_desc")
+
+    pg_ds = reconnect(pg_ds, update=1)
+    with pg_ds.ExecuteSQL(
+        "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {
+        "DESCRIPTION": "my_desc",
+        "foo": "bar",
+        "bar": "baz",
+    }
+    lyr.SetMetadata(None)
+
+    pg_ds = reconnect(pg_ds, update=1)
+    with pg_ds.ExecuteSQL(
+        "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {}
+
+
+###############################################################################
 # Test append of several layers in PG_USE_COPY mode (#6411)
 
 
@@ -5835,3 +5872,54 @@ def test_ogr_pg_long_identifiers(pg_ds):
     got_lyr = pg_ds.GetLayerByName(long_name)
     assert got_lyr
     assert got_lyr.GetName() == short_name
+
+
+###############################################################################
+# Test extent 3D
+
+
+@only_with_postgis
+def test_extent3d(pg_ds):
+
+    # Create a 3D layer
+    lyr = pg_ds.CreateLayer("test_extent3d", geom_type=ogr.wkbPoint25D)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
+
+    # Create a 2D layer
+    lyr = pg_ds.CreateLayer("test_extent2d", geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, float("inf"), float("-inf"))
+
+    # Create a geography layer
+    lyr = pg_ds.CreateLayer(
+        "test_extent3d_geography",
+        geom_type=ogr.wkbPoint25D,
+        options=["GEOM_TYPE=geography"],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)

@@ -77,11 +77,11 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
         return "GS";
     }
 
-    CPLString GetFSPrefix() const override
+    std::string GetFSPrefix() const override
     {
         return m_osPrefix;
     }
-    CPLString GetURLFromFilename(const CPLString &osFilename) override;
+    std::string GetURLFromFilename(const std::string &osFilename) override;
 
     IVSIS3LikeHandleHelper *CreateHandleHelper(const char *pszURI,
                                                bool bAllowNoObject) override;
@@ -145,7 +145,7 @@ class VSIGSHandle final : public IVSIS3LikeHandle
 
   protected:
     struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerb,
+    GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders) override;
 
   public:
@@ -182,7 +182,7 @@ void VSIGSFSHandler::ClearCache()
 VSICurlHandle *VSIGSFSHandler::CreateFileHandle(const char *pszFilename)
 {
     VSIGSHandleHelper *poHandleHelper = VSIGSHandleHelper::BuildFromURI(
-        pszFilename + GetFSPrefix().size(), GetFSPrefix());
+        pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
         return nullptr;
     return new VSIGSHandle(this, pszFilename, poHandleHelper);
@@ -194,8 +194,8 @@ VSICurlHandle *VSIGSFSHandler::CreateFileHandle(const char *pszFilename)
 
 const char *VSIGSFSHandler::GetOptions()
 {
-    static CPLString osOptions(
-        CPLString("<Options>") +
+    static std::string osOptions(
+        std::string("<Options>") +
         "  <Option name='GS_SECRET_ACCESS_KEY' type='string' "
         "description='Secret access key. To use with GS_ACCESS_KEY_ID'/>"
         "  <Option name='GS_ACCESS_KEY_ID' type='string' "
@@ -244,7 +244,7 @@ const char *VSIGSFSHandler::GetOptions()
 char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
                                    CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
 
     VSIGSHandleHelper *poHandleHelper =
@@ -255,24 +255,25 @@ char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
         return nullptr;
     }
 
-    CPLString osRet(poHandleHelper->GetSignedURL(papszOptions));
+    std::string osRet(poHandleHelper->GetSignedURL(papszOptions));
 
     delete poHandleHelper;
-    return osRet.empty() ? nullptr : CPLStrdup(osRet);
+    return osRet.empty() ? nullptr : CPLStrdup(osRet.c_str());
 }
 
 /************************************************************************/
 /*                          GetURLFromFilename()                         */
 /************************************************************************/
 
-CPLString VSIGSFSHandler::GetURLFromFilename(const CPLString &osFilename)
+std::string VSIGSFSHandler::GetURLFromFilename(const std::string &osFilename)
 {
-    CPLString osFilenameWithoutPrefix = osFilename.substr(GetFSPrefix().size());
-    VSIGSHandleHelper *poHandleHelper =
-        VSIGSHandleHelper::BuildFromURI(osFilenameWithoutPrefix, GetFSPrefix());
+    std::string osFilenameWithoutPrefix =
+        osFilename.substr(GetFSPrefix().size());
+    VSIGSHandleHelper *poHandleHelper = VSIGSHandleHelper::BuildFromURI(
+        osFilenameWithoutPrefix.c_str(), GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
-        return CPLString();
-    CPLString osURL(poHandleHelper->GetURL());
+        return std::string();
+    std::string osURL(poHandleHelper->GetURL());
     delete poHandleHelper;
     return osURL;
 }
@@ -316,7 +317,7 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
                                        const char *pszDomain,
                                        CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
 
     if (pszDomain == nullptr || !EQUAL(pszDomain, "ACL"))
@@ -331,7 +332,7 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
     if (!poHandleHelper)
         return nullptr;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("GetFileMetadata");
 
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
@@ -413,7 +414,7 @@ bool VSIGSFSHandler::SetFileMetadata(const char *pszFilename,
                                      const char *pszDomain,
                                      CSLConstList /* papszOptions */)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return false;
 
     if (pszDomain == nullptr ||
@@ -442,7 +443,7 @@ bool VSIGSFSHandler::SetFileMetadata(const char *pszFilename,
     if (!poHandleHelper)
         return false;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("SetFileMetadata");
 
     bool bRetry;
@@ -547,7 +548,7 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
     if (!poHandleHelper || pszFirstFilename == nullptr)
         return panRet;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("UnlinkBatch");
 
     // coverity[tainted_data]
@@ -562,20 +563,20 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
     const int nBatchSize =
         std::max(1, std::min(100, atoi(CPLGetConfigOption(
                                       "CPL_VSIGS_UNLINK_BATCH_SIZE", "100"))));
-    CPLString osPOSTContent;
+    std::string osPOSTContent;
 
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(pszFirstFilename));
 
     for (int i = 0; papszFiles && papszFiles[i]; i++)
     {
-        CPLAssert(STARTS_WITH_CI(papszFiles[i], GetFSPrefix()));
+        CPLAssert(STARTS_WITH_CI(papszFiles[i], GetFSPrefix().c_str()));
         const char *pszFilenameWithoutPrefix =
             papszFiles[i] + GetFSPrefix().size();
         const char *pszSlash = strchr(pszFilenameWithoutPrefix, '/');
         if (!pszSlash)
             return panRet;
-        CPLString osBucket;
+        std::string osBucket;
         osBucket.assign(pszFilenameWithoutPrefix,
                         pszSlash - pszFilenameWithoutPrefix);
 
@@ -775,7 +776,7 @@ VSIGSFSHandler::GetStreamingFilename(const std::string &osFilename) const
 
 VSIGSHandle::VSIGSHandle(VSIGSFSHandler *poFSIn, const char *pszFilename,
                          VSIGSHandleHelper *poHandleHelper)
-    : IVSIS3LikeHandle(poFSIn, pszFilename, poHandleHelper->GetURL()),
+    : IVSIS3LikeHandle(poFSIn, pszFilename, poHandleHelper->GetURL().c_str()),
       m_poHandleHelper(poHandleHelper)
 {
 }
@@ -794,7 +795,7 @@ VSIGSHandle::~VSIGSHandle()
 /************************************************************************/
 
 struct curl_slist *
-VSIGSHandle::GetCurlHeaders(const CPLString &osVerb,
+VSIGSHandle::GetCurlHeaders(const std::string &osVerb,
                             const struct curl_slist *psExistingHeaders)
 {
     return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);

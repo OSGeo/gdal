@@ -137,7 +137,7 @@ class OGRGPXLayer final : public OGRLayer
   public:
     OGRGPXLayer(const char *pszFilename, const char *layerName,
                 GPXGeometryType gpxGeomType, OGRGPXDataSource *poDS,
-                bool bWriteMode);
+                bool bWriteMode, CSLConstList papszOpenOptions);
     ~OGRGPXLayer();
 
     void ResetReading() override;
@@ -223,7 +223,7 @@ class OGRGPXDataSource final : public GDALDataset
     int m_nLastTrkId = -1;
     int m_nLastTrkSegId = -1;
 
-    int Open(const char *pszFilename, int bUpdate);
+    int Open(GDALOpenInfo *poOpenInfo);
 
     int Create(const char *pszFilename, char **papszOptions);
 

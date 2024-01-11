@@ -411,8 +411,7 @@ GDALDriver *GDALDriverManager::GetDriver(int iDriver, bool bIncludeHidden)
     CPLMutexHolderD(&hDMMutex);
     if (!bIncludeHidden || iDriver < nDrivers)
         return GetDriver_unlocked(iDriver);
-    if (iDriver >= nDrivers &&
-        iDriver - nDrivers < static_cast<int>(m_aoHiddenDrivers.size()))
+    if (iDriver - nDrivers < static_cast<int>(m_aoHiddenDrivers.size()))
         return m_aoHiddenDrivers[iDriver - nDrivers].get();
     return nullptr;
 }
@@ -1288,6 +1287,7 @@ static const char *const apszProxyMetadataItems[] = {
     GDAL_DCAP_NONSPATIAL,
     GDAL_DMD_CONNECTION_PREFIX,
     GDAL_DCAP_VECTOR_TRANSLATE_FROM,
+    GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
 };
 
 const char *GDALPluginDriverProxy::GetMetadataItem(const char *pszName,
@@ -1332,8 +1332,7 @@ const char *GDALPluginDriverProxy::GetMetadataItem(const char *pszName,
             }
             return pszValue;
         }
-        else if (!EQUAL(pszName, GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE) &&
-                 m_oSetMetadataItems.find(pszName) != m_oSetMetadataItems.end())
+        else if (m_oSetMetadataItems.find(pszName) != m_oSetMetadataItems.end())
         {
             return GDALDriver::GetMetadataItem(pszName, pszDomain);
         }

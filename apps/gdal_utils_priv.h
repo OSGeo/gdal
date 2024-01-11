@@ -88,26 +88,6 @@ struct GDALWarpAppOptionsForBinary
     char **papszAllowInputDrivers;
 };
 
-/* Access modes */
-typedef enum
-{
-    ACCESS_CREATION,
-    ACCESS_UPDATE, /* open existing output datasource in update mode rather than
-                      trying to create a new one */
-    ACCESS_APPEND, /* append to existing layer instead of creating new */
-    ACCESS_OVERWRITE /*  delete the output layer and recreate it empty */
-} GDALVectorTranslateAccessMode;
-
-struct GDALVectorTranslateOptionsForBinary
-{
-    char *pszDataSource;
-    char *pszDestDataSource;
-    int bQuiet;
-    char **papszOpenOptions;
-    char *pszFormat;
-    GDALVectorTranslateAccessMode eAccessMode;
-};
-
 struct GDALDEMProcessingOptionsForBinary
 {
     char *pszProcessing;
@@ -134,6 +114,30 @@ struct GDALBuildVRTOptionsForBinary
 };
 
 CPL_C_END
+
+/* Access modes */
+typedef enum
+{
+    ACCESS_CREATION,
+    ACCESS_UPDATE, /* open existing output datasource in update mode rather than
+                      trying to create a new one */
+    ACCESS_APPEND, /* append to existing layer instead of creating new */
+    ACCESS_OVERWRITE /*  delete the output layer and recreate it empty */
+} GDALVectorTranslateAccessMode;
+
+struct GDALVectorTranslateOptionsForBinary
+{
+    std::string osDataSource{};
+    bool bDestSpecified = false;
+    std::string osDestDataSource{};
+    bool bQuiet = false;
+    CPLStringList aosOpenOptions{};
+    std::string osFormat;
+    GDALVectorTranslateAccessMode eAccessMode = ACCESS_CREATION;
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowInputDrivers{};
+};
 
 struct GDALMultiDimInfoOptionsForBinary
 {

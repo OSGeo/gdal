@@ -49,6 +49,7 @@
 /************************************************************************/
 /*     Support for special attributes (feature query and selection)     */
 /************************************************************************/
+extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
 const char *const SpecialFieldNames[SPECIAL_FIELD_COUNT] = {
     "FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT", "OGR_GEOM_AREA"};
@@ -148,6 +149,11 @@ OGRFeatureQuery::Compile(OGRLayer *poLayer, OGRFeatureDefn *poDefn,
     for (int iField = 0; iField < poDefn->GetFieldCount(); iField++)
     {
         OGRFieldDefn *poField = poDefn->GetFieldDefn(iField);
+        if (!poField)
+        {
+            CPLAssert(0);
+            break;
+        }
 
         papszFieldNames[iField] = const_cast<char *>(poField->GetNameRef());
 
@@ -748,7 +754,14 @@ char **OGRFeatureQuery::FieldCollector(void *pBareOp, char **papszList)
         }
         else if (nIdx >= 0 && nIdx < poTargetDefn->GetFieldCount())
         {
-            pszFieldName = poTargetDefn->GetFieldDefn(nIdx)->GetNameRef();
+            auto poFieldDefn = poTargetDefn->GetFieldDefn(nIdx);
+            if (!poFieldDefn)
+            {
+                CPLAssert(false);
+                CSLDestroy(papszList);
+                return nullptr;
+            }
+            pszFieldName = poFieldDefn->GetNameRef();
         }
         else
         {

@@ -7573,7 +7573,7 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock(int nBlockXOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
-                     nDTSize * nBlockXSize, &sExtraArg);
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -8775,7 +8775,7 @@ CPLErr GDALRasterBandFromArray::IReadBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
-                     nDTSize * nBlockXSize, &sExtraArg);
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -8794,7 +8794,7 @@ CPLErr GDALRasterBandFromArray::IWriteBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Write, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
-                     nDTSize * nBlockXSize, &sExtraArg);
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/

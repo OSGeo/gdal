@@ -559,6 +559,51 @@ TEST_F(test_gdal, GDALWarp_error_flush_cache)
     delete poDriver;
 }
 
+// Test GDALWarp() to VRT and that we can call GDALReleaseDataset() on the
+// source dataset when we want.
+TEST_F(test_gdal, GDALWarp_VRT)
+{
+    const char *args[] = {"-of", "VRT", nullptr};
+    GDALWarpAppOptions *psOptions =
+        GDALWarpAppOptionsNew((char **)args, nullptr);
+    GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    GDALDatasetH hOutDS = GDALWarp("", nullptr, 1, &hSrcDS, psOptions, nullptr);
+    GDALWarpAppOptionsFree(psOptions);
+    GDALReleaseDataset(hSrcDS);
+    EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
+              4672);
+    GDALReleaseDataset(hOutDS);
+}
+
+// Test GDALTranslate() to VRT and that we can call GDALReleaseDataset() on the
+// source dataset when we want.
+TEST_F(test_gdal, GDALTranslate_VRT)
+{
+    const char *args[] = {"-of", "VRT", nullptr};
+    GDALTranslateOptions *psOptions =
+        GDALTranslateOptionsNew((char **)args, nullptr);
+    GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, nullptr);
+    GDALTranslateOptionsFree(psOptions);
+    GDALReleaseDataset(hSrcDS);
+    EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
+              4672);
+    GDALReleaseDataset(hOutDS);
+}
+
+// Test GDALBuildVRT() and that we can call GDALReleaseDataset() on the
+// source dataset when we want.
+TEST_F(test_gdal, GDALBuildVRT)
+{
+    GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    GDALDatasetH hOutDS =
+        GDALBuildVRT("", 1, &hSrcDS, nullptr, nullptr, nullptr);
+    GDALReleaseDataset(hSrcDS);
+    EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
+              4672);
+    GDALReleaseDataset(hOutDS);
+}
+
 // Test that GDALSwapWords() with unaligned buffers
 TEST_F(test_gdal, GDALSwapWords_unaligned_buffers)
 {
@@ -2533,6 +2578,32 @@ TEST_F(test_gdal, MarkSuppressOnClose)
     }
 }
 
+// Test effect of UnMarkSuppressOnClose()
+TEST_F(test_gdal, UnMarkSuppressOnClose)
+{
+    const char *pszFilename = "/vsimem/out.tif";
+    const char *const apszOptions[] = {"PROFILE=BASELINE", nullptr};
+    {
+        GDALDatasetUniquePtr poDstDS(
+            GDALDriver::FromHandle(GDALGetDriverByName("GTiff"))
+                ->Create(pszFilename, 1, 1, 1, GDT_Byte, apszOptions));
+        poDstDS->MarkSuppressOnClose();
+        poDstDS->GetRasterBand(1)->Fill(255);
+        if (poDstDS->IsMarkedSuppressOnClose())
+            poDstDS->UnMarkSuppressOnClose();
+        poDstDS->FlushCache(true);
+        // All buffers have been flushed, and our dirty block should have
+        // been written hence the checksum will not be 0
+        EXPECT_NE(GDALChecksumImage(
+                      GDALRasterBand::FromHandle(poDstDS->GetRasterBand(1)), 0,
+                      0, 1, 1),
+                  0);
+        VSIStatBufL sStat;
+        EXPECT_TRUE(VSIStatL(pszFilename, &sStat) == 0);
+        VSIUnlink(pszFilename);
+    }
+}
+
 template <class T> void TestCachedPixelAccessor()
 {
     constexpr auto eType = GDALCachedPixelAccessorGetDataType<T>::DataType;
@@ -2557,7 +2628,8 @@ template <class T> void TestCachedPixelAccessor()
         }
     }
 
-    std::vector<T> values(poBand->GetYSize() * poBand->GetXSize());
+    std::vector<T> values(static_cast<size_t>(poBand->GetYSize()) *
+                          poBand->GetXSize());
     accessor.FlushCache();
     EXPECT_EQ(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(),
                                poBand->GetYSize(), values.data(),
@@ -3488,6 +3560,40 @@ TEST_F(test_gdal, open_shared_open_options)
         GDALClose(poDS1);
         GDALClose(poDS2);
         GDALClose(poDS3);
+    }
+}
+
+// Test DropCache() to check that no data is saved on disk
+TEST_F(test_gdal, drop_cache)
+{
+    CPLErrorReset();
+    {
+        GDALDriverManager *gdalDriverManager = GetGDALDriverManager();
+        if (!gdalDriverManager)
+            return;
+        GDALDriver *enviDriver = gdalDriverManager->GetDriverByName("ENVI");
+        if (!enviDriver)
+            return;
+        const char *enviOptions[] = {"SUFFIX=ADD", "INTERLEAVE=BIL", nullptr};
+
+        const char *filename = GCORE_DATA_DIR "test_drop_cache.bil";
+
+        auto poDS = std::unique_ptr<GDALDataset>(enviDriver->Create(
+            filename, 1, 1, 1, GDALDataType::GDT_Float32, enviOptions));
+        if (!poDS)
+            return;
+        poDS->GetRasterBand(1)->Fill(1);
+        poDS->DropCache();
+        poDS.reset();
+
+        poDS.reset(
+            GDALDataset::Open(filename, GDAL_OF_SHARED, nullptr, nullptr));
+        if (!poDS)
+            return;
+
+        EXPECT_EQ(GDALChecksumImage(poDS->GetRasterBand(1), 0, 0, 1, 1), 0);
+        poDS->MarkSuppressOnClose();
+        poDS.reset();
     }
 }
 

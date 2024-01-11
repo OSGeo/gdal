@@ -42,8 +42,6 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$")
-
 static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
                                    int *panNearY, int bForward, int iLine,
                                    int nXSize, double nMaxDist,
@@ -584,7 +582,8 @@ static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
              panSrcScanline[iPixel] != *pdfSrcNoDataValue) &&
             dfNearDistSq <= dfMaxDist * dfMaxDist &&
             (pafProximity[iPixel] < 0 ||
-             dfNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]))
+             dfNearDistSq < static_cast<double>(pafProximity[iPixel]) *
+                                pafProximity[iPixel]))
             pafProximity[iPixel] = static_cast<float>(sqrt(dfNearDistSq));
     }
 

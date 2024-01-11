@@ -45,6 +45,7 @@
 #include <vector>
 #include <set>
 
+#include "commonutils.h"
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_progress.h"
@@ -68,7 +69,7 @@
 #define GEOTRSFRM_ROTATION_PARAM2 4
 #define GEOTRSFRM_NS_RES 5
 
-namespace
+namespace gdal::GDALBuildVRT
 {
 typedef enum
 {
@@ -123,17 +124,9 @@ struct BandProperty
     bool bHasScale = false;
     double dfScale = 0;
 };
-}  // namespace
+}  // namespace gdal::GDALBuildVRT
 
-/************************************************************************/
-/*                            ArgIsNumeric()                            */
-/************************************************************************/
-
-static int ArgIsNumeric(const char *pszArg)
-
-{
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
-}
+using namespace gdal::GDALBuildVRT;
 
 /************************************************************************/
 /*                         GetSrcDstWin()                               */
@@ -1088,7 +1081,9 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
             }
 
             VRTSimpleSource *poSimpleSource;
-            if (bAllowSrcNoData)
+            if (bAllowSrcNoData &&
+                (nSrcNoDataCount > 0 ||
+                 psDatasetProperties->abHasNoData[nSrcBandIdx]))
             {
                 auto poComplexSource = new VRTComplexSource();
                 poSimpleSource = poComplexSource;
@@ -1101,7 +1096,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                         poComplexSource->SetNoDataValue(
                             padfSrcNoData[nSrcNoDataCount - 1]);
                 }
-                else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
+                else /* if (psDatasetProperties->abHasNoData[nSrcBandIdx]) */
                 {
                     poComplexSource->SetNoDataValue(
                         psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
@@ -1814,7 +1809,9 @@ GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
  * @param pszDest the destination dataset path.
  * @param nSrcCount the number of input datasets.
  * @param pahSrcDS the list of input datasets (or NULL, exclusive with
- * papszSrcDSNames)
+ * papszSrcDSNames). For practical purposes, the type
+ * of this argument should be considered as "const GDALDatasetH* const*", that
+ * is neither the array nor its values are mutated by this function.
  * @param papszSrcDSNames the list of input dataset names (or NULL, exclusive
  * with pahSrcDS)
  * @param psOptionsIn the options struct returned by GDALBuildVRTOptionsNew() or
@@ -1822,7 +1819,12 @@ GDALBuildVRTOptionsClone(const GDALBuildVRTOptions *psOptionsIn)
  * @param pbUsageError pointer to a integer output variable to store if any
  * usage error has occurred.
  * @return the output dataset (new dataset that must be closed using
- * GDALClose()) or NULL in case of error.
+ * GDALClose()) or NULL in case of error. If using pahSrcDS, the returned VRT
+ * dataset has a reference to each pahSrcDS[] element. Hence pahSrcDS[] elements
+ * should be closed after the returned dataset if using GDALClose().
+ * A safer alternative is to use GDALReleaseDataset() instead of using
+ * GDALClose(), in which case you can close datasets in any order.
+
  *
  * @since GDAL 2.1
  */

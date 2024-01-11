@@ -31,3 +31,5 @@ endif ()
 if (RENAME_INTERNAL_ZLIB_SYMBOLS)
   target_compile_definitions(libz PUBLIC -DRENAME_INTERNAL_ZLIB_SYMBOLS)
 endif ()
+
+set_property(TARGET libz PROPERTY UNITY_BUILD OFF)

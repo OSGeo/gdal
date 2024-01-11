@@ -88,10 +88,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     void NullBlock(void *pData);
     CPLErr FillCacheForOtherBands(int nBlockXOff, int nBlockYOff);
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     void CacheMaskForBlock(int nBlockXOff, int nBlockYOff);
-#endif
-
     void ResetNoDataValues(bool bResetDatasetToo);
 
     int ComputeBlockId(int nBlockXOff, int nBlockYOff) const;

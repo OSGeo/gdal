@@ -331,8 +331,9 @@ OGRFeature *OGRNTFRasterLayer::GetNextFeature()
 
     iReqColumn =
         static_cast<int>((iCurrentFC - 1) / poReader->GetRasterYSize());
-    iReqRow = static_cast<int>(iCurrentFC -
-                               iReqColumn * poReader->GetRasterYSize() - 1);
+    iReqRow = static_cast<int>(
+        iCurrentFC -
+        static_cast<GIntBig>(iReqColumn) * poReader->GetRasterYSize() - 1);
 
     if (iReqRow + nDEMSample > poReader->GetRasterYSize())
     {
@@ -374,8 +375,9 @@ OGRFeature *OGRNTFRasterLayer::GetFeature(GIntBig nFeatureId)
     /* -------------------------------------------------------------------- */
     iReqColumn =
         static_cast<int>((nFeatureId - 1) / poReader->GetRasterYSize());
-    iReqRow = static_cast<int>(nFeatureId -
-                               iReqColumn * poReader->GetRasterYSize() - 1);
+    iReqRow = static_cast<int>(
+        nFeatureId -
+        static_cast<GIntBig>(iReqColumn) * poReader->GetRasterYSize() - 1);
 
     if (iReqColumn != iColumnOffset)
     {

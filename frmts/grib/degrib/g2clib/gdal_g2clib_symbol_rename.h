@@ -1,4 +1,6 @@
 /* This is a generated file by rename_g2clib_symbols.h. *DO NOT EDIT MANUALLY !* */
+#ifndef GDAL_G2CLIB_SYMBOL_RENAME_H_INCLUDED
+#define GDAL_G2CLIB_SYMBOL_RENAME_H_INCLUDED
 #define aecunpack gdal_aecunpack
 #define cmplxpack gdal_cmplxpack
 #define compack gdal_compack
@@ -65,3 +67,4 @@
 #define templatesdrs gdal_templatesdrs
 #define templatesgrid gdal_templatesgrid
 #define templatespds gdal_templatespds
+#endif /* GDAL_G2CLIB_SYMBOL_RENAME_H_INCLUDED */

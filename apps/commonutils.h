@@ -99,6 +99,14 @@ CPLString CPL_DLL GetOutputDriverForRaster(const char *pszDestFilename);
 void GDALRemoveBOM(GByte *pabyData);
 std::string GDALRemoveSQLComments(const std::string &osInput);
 
+int ArgIsNumeric(const char *pszArg);
+
+// those values shouldn't be changed, because overview levels >= 0 are meant
+// to be overview indices, and ovr_level < OVR_LEVEL_AUTO mean overview level
+// automatically selected minus (OVR_LEVEL_AUTO - ovr_level)
+constexpr int OVR_LEVEL_AUTO = -2;
+constexpr int OVR_LEVEL_NONE = -1;
+
 #endif /* __cplusplus */
 
 #endif /* COMMONUTILS_H_INCLUDED */

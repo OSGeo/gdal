@@ -150,7 +150,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         OGR_DS_ExecuteSQL(poGDS->hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr == nullptr)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+        memset(pImage, 0,
+               static_cast<size_t>(nBlockXSize) * nBlockYSize * nDataTypeSize);
         return CE_None;
     }
 
@@ -179,7 +180,9 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             CPLError(CE_Failure, CPLE_AppDefined, "null geometry found");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            memset(pImage, 0,
+                   static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                       nDataTypeSize);
             return CE_Failure;
         }
 
@@ -201,7 +204,9 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             CPLError(CE_Failure, CPLE_AppDefined, "invalid tile size");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            memset(pImage, 0,
+                   static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                       nDataTypeSize);
             return CE_Failure;
         }
 
@@ -216,7 +221,9 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             CPLError(CE_Failure, CPLE_AppDefined, "invalid geometry");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            memset(pImage, 0,
+                   static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                       nDataTypeSize);
             return CE_Failure;
         }
         int nDstXOff = static_cast<int>(dfDstXOff + 0.5);
@@ -341,7 +348,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                     !bHasMemsetTile)
                 {
                     memset(pImage, 0,
-                           nBlockXSize * nBlockYSize * nDataTypeSize);
+                           static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                               nDataTypeSize);
                     bHasMemsetTile = true;
                     bHasJustMemsetTileBand1 = true;
                 }
@@ -461,7 +469,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
                         if (bHasJustMemsetTileBand1)
                             memset(pabySrcBlock, 0,
-                                   nBlockXSize * nBlockYSize * nDataTypeSize);
+                                   static_cast<size_t>(nBlockXSize) *
+                                       nBlockYSize * nDataTypeSize);
 
                         /* --------------------------------------------------------------------
                          */
@@ -540,7 +549,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (!bHasFoundTile)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+        memset(pImage, 0,
+               static_cast<size_t>(nBlockXSize) * nBlockYSize * nDataTypeSize);
     }
 
     OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);

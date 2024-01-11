@@ -38,13 +38,6 @@
 using namespace PCIDSK;
 
 /* -------------------------------------------------------------------- */
-/*      Size of a block in the record/vertex block tables.  This is    */
-/*      determined by the PCIDSK format and may not be changed.         */
-/* -------------------------------------------------------------------- */
-static const int block_page_size = 8192;
-
-
-/* -------------------------------------------------------------------- */
 /*      Size of one page of loaded shapeids.  This is not related to    */
 /*      the file format, and may be changed to alter the number of      */
 /*      shapeid pointers kept in RAM at one time from the shape         */

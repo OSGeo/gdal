@@ -174,21 +174,21 @@ void GDALDefaultOverviews::TransferSiblingFiles(char **papszSiblingFiles)
 namespace
 {
 // Prevent infinite recursion.
-struct AntiRecursionStruct
+struct AntiRecursionStructDefaultOvr
 {
     int nRecLevel = 0;
     std::set<CPLString> oSetFiles{};
 };
 }  // namespace
 
-static void FreeAntiRecursion(void *pData)
+static void FreeAntiRecursionDefaultOvr(void *pData)
 {
-    delete static_cast<AntiRecursionStruct *>(pData);
+    delete static_cast<AntiRecursionStructDefaultOvr *>(pData);
 }
 
-static AntiRecursionStruct &GetAntiRecursion()
+static AntiRecursionStructDefaultOvr &GetAntiRecursionDefaultOvr()
 {
-    static AntiRecursionStruct dummy;
+    static AntiRecursionStructDefaultOvr dummy;
     int bMemoryErrorOccurred = false;
     void *pData =
         CPLGetTLSEx(CTLS_GDALDEFAULTOVR_ANTIREC, &bMemoryErrorOccurred);
@@ -198,9 +198,10 @@ static AntiRecursionStruct &GetAntiRecursion()
     }
     if (pData == nullptr)
     {
-        auto pAntiRecursion = new AntiRecursionStruct();
+        auto pAntiRecursion = new AntiRecursionStructDefaultOvr();
         CPLSetTLSWithFreeFuncEx(CTLS_GDALDEFAULTOVR_ANTIREC, pAntiRecursion,
-                                FreeAntiRecursion, &bMemoryErrorOccurred);
+                                FreeAntiRecursionDefaultOvr,
+                                &bMemoryErrorOccurred);
         if (bMemoryErrorOccurred)
         {
             delete pAntiRecursion;
@@ -208,7 +209,7 @@ static AntiRecursionStruct &GetAntiRecursion()
         }
         return *pAntiRecursion;
     }
-    return *static_cast<AntiRecursionStruct *>(pData);
+    return *static_cast<AntiRecursionStructDefaultOvr *>(pData);
 }
 
 /************************************************************************/
@@ -230,7 +231,7 @@ void GDALDefaultOverviews::OverviewScan()
     if (pszInitName == nullptr)
         pszInitName = CPLStrdup(poDS->GetDescription());
 
-    AntiRecursionStruct &antiRec = GetAntiRecursion();
+    AntiRecursionStructDefaultOvr &antiRec = GetAntiRecursionDefaultOvr();
     // 32 should be enough to handle a .ovr.ovr.ovr...
     if (antiRec.nRecLevel == 32)
         return;
@@ -742,6 +743,26 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
                                                 poBand->GetXSize(),
                                                 poBand->GetYSize()))
             {
+                const auto osNewResampling =
+                    GDALGetNormalizedOvrResampling(pszResampling);
+                const char *pszExistingResampling =
+                    poOverview->GetMetadataItem("RESAMPLING");
+                if (pszExistingResampling &&
+                    pszExistingResampling != osNewResampling)
+                {
+                    if (auto l_poODS = poOverview->GetDataset())
+                    {
+                        if (auto poDriver = l_poODS->GetDriver())
+                        {
+                            if (EQUAL(poDriver->GetDescription(), "GTiff"))
+                            {
+                                poOverview->SetMetadataItem(
+                                    "RESAMPLING", osNewResampling.c_str());
+                            }
+                        }
+                    }
+                }
+
                 abRequireRefresh[i] = true;
                 break;
             }
@@ -1280,4 +1301,29 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                    GDALGetNormalizedOvrResampling()                  */
+/************************************************************************/
+
+std::string GDALGetNormalizedOvrResampling(const char *pszResampling)
+{
+    if (pszResampling &&
+        EQUAL(pszResampling, "AVERAGE_BIT2GRAYSCALE_MINISWHITE"))
+        return "AVERAGE_BIT2GRAYSCALE_MINISWHITE";
+    else if (pszResampling && STARTS_WITH_CI(pszResampling, "AVERAGE_BIT2"))
+        return "AVERAGE_BIT2GRAYSCALE";
+    else if (pszResampling && STARTS_WITH_CI(pszResampling, "NEAR"))
+        return "NEAREST";
+    else if (pszResampling && EQUAL(pszResampling, "AVERAGE_MAGPHASE"))
+        return "AVERAGE_MAGPHASE";
+    else if (pszResampling && STARTS_WITH_CI(pszResampling, "AVER"))
+        return "AVERAGE";
+    else if (pszResampling && !EQUAL(pszResampling, "NONE"))
+    {
+        return CPLString(pszResampling).toupper();
+    }
+    return std::string();
+}
+
 //! @endcond

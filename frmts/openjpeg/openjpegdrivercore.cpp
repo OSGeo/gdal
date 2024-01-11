@@ -50,9 +50,12 @@
 /*                            Identify()                                */
 /************************************************************************/
 
+#ifndef jpc_header_defined
+#define jpc_header_defined
 static const unsigned char jpc_header[] = {0xff, 0x4f, 0xff,
                                            0x51};  // SOC + RSIZ markers
 static const unsigned char jp2_box_jp[] = {0x6a, 0x50, 0x20, 0x20}; /* 'jP  ' */
+#endif
 
 static int Identify(GDALOpenInfo *poOpenInfo)
 
@@ -228,12 +231,10 @@ void OPENJPEGDriverSetCommonMetadata(GDALDriver *poDriver)
         "source dataset is JPEG2000, whether to reuse the codestream of "
         "the "
         "source dataset unmodified' default='NO'/>"
-#if IS_OPENJPEG_OR_LATER(2, 3, 0)
         "   <Option name='CODEBLOCK_STYLE' type='string' "
         "description='Comma-separated combination of BYPASS, RESET, "
         "TERMALL, "
         "VSC, PREDICTABLE, SEGSYM or value between 0 and 63'/>"
-#endif
 #if IS_OPENJPEG_OR_LATER(2, 4, 0)
         "   <Option name='PLT' type='boolean' description='True to insert "
         "PLT "

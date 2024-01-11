@@ -358,6 +358,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     /*      Overlay each source in turn over top this.                      */
     /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
+    VRTSource::WorkingState oWorkingState;
     for (int iSource = 0; eErr == CE_None && iSource < nSources; iSource++)
     {
         psExtraArg->pfnProgress = GDALScaledProgress;
@@ -369,7 +370,8 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
 
         eErr = papoSources[iSource]->RasterIO(
             eDataType, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
-            nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+            nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
+            l_poDS ? l_poDS->m_oWorkingState : oWorkingState);
 
         GDALDestroyScaledProgress(psExtraArg->pProgressData);
     }
@@ -529,10 +531,10 @@ CPLErr VRTSourcedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    return IRasterIO(GF_Read, nBlockXOff * nBlockXSize,
-                     nBlockYOff * nBlockYSize, nReadXSize, nReadYSize, pImage,
-                     nReadXSize, nReadYSize, eDataType, nPixelSize,
-                     nPixelSize * nBlockXSize, &sExtraArg);
+    return IRasterIO(
+        GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize, nReadXSize,
+        nReadYSize, pImage, nReadXSize, nReadYSize, eDataType, nPixelSize,
+        static_cast<GSpacing>(nPixelSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/

@@ -234,7 +234,7 @@ extern "C++"
         /** Returns TRUE if MinZ and MaxZ are both valid numbers. */
         bool Is3D() const
         {
-            return !std::isnan(MinZ) && !std::isnan(MaxZ);
+            return std::isfinite(MinZ) && std::isfinite(MaxZ);
         }
 
         /** Minimum Z value */
@@ -265,19 +265,8 @@ extern "C++"
             MaxX = MAX(MaxX, sOther.MaxX);
             MinY = MIN(MinY, sOther.MinY);
             MaxY = MAX(MaxY, sOther.MaxY);
-            if (!std::isnan(sOther.MinZ) && !std::isnan(sOther.MaxZ))
-            {
-                if (std::isnan(MinZ) || std::isnan(MaxZ))
-                {
-                    MinZ = sOther.MinZ;
-                    MaxZ = sOther.MaxZ;
-                }
-                else
-                {
-                    MinZ = MIN(MinZ, sOther.MinZ);
-                    MaxZ = MAX(MaxZ, sOther.MaxZ);
-                }
-            }
+            MinZ = MIN(MinZ, sOther.MinZ);
+            MaxZ = MAX(MaxZ, sOther.MaxZ);
         }
 
         /** Update the current object by computing its union with the other

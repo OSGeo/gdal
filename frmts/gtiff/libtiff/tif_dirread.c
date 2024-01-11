@@ -4278,11 +4278,9 @@ int TIFFReadDirectory(TIFF *tif)
                                 dp->tdir_tag, dp->tdir_tag);
                 /* the following knowingly leaks the
                    anonymous field structure */
-                if (!_TIFFMergeFields(
-                        tif,
-                        _TIFFCreateAnonField(tif, dp->tdir_tag,
-                                             (TIFFDataType)dp->tdir_type),
-                        1))
+                const TIFFField *fld = _TIFFCreateAnonField(
+                    tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
+                if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
                 {
                     TIFFWarningExtR(
                         tif, module,
@@ -5156,11 +5154,9 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
                             "Unknown field with tag %" PRIu16 " (0x%" PRIx16
                             ") encountered",
                             dp->tdir_tag, dp->tdir_tag);
-            if (!_TIFFMergeFields(
-                    tif,
-                    _TIFFCreateAnonField(tif, dp->tdir_tag,
-                                         (TIFFDataType)dp->tdir_type),
-                    1))
+            const TIFFField *fld = _TIFFCreateAnonField(
+                tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
+            if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
             {
                 TIFFWarningExtR(tif, module,
                                 "Registering anonymous field with tag %" PRIu16
@@ -5256,9 +5252,7 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
  */
 int TIFFReadEXIFDirectory(TIFF *tif, toff_t diroff)
 {
-    const TIFFFieldArray *exifFieldArray;
-    exifFieldArray = _TIFFGetExifFields();
-    return TIFFReadCustomDirectory(tif, diroff, exifFieldArray);
+    return TIFFReadCustomDirectory(tif, diroff, _TIFFGetExifFields());
 }
 
 /*
@@ -5266,9 +5260,7 @@ int TIFFReadEXIFDirectory(TIFF *tif, toff_t diroff)
  */
 int TIFFReadGPSDirectory(TIFF *tif, toff_t diroff)
 {
-    const TIFFFieldArray *gpsFieldArray;
-    gpsFieldArray = _TIFFGetGpsFields();
-    return TIFFReadCustomDirectory(tif, diroff, gpsFieldArray);
+    return TIFFReadCustomDirectory(tif, diroff, _TIFFGetGpsFields());
 }
 
 static int EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
@@ -6141,15 +6133,15 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
                         fip->field_name);
                 else if (mb + 1 > (uint32_t)dp->tdir_count)
                 {
-                    uint8_t *o;
-                    TIFFWarningExtR(
-                        tif, module,
-                        "ASCII value for tag \"%s\" does not end in null byte",
-                        fip->field_name);
+                    TIFFWarningExtR(tif, module,
+                                    "ASCII value for tag \"%s\" does not end "
+                                    "in null byte. Forcing it to be null",
+                                    fip->field_name);
                     /* TIFFReadDirEntryArrayWithLimit() ensures this can't be
                      * larger than MAX_SIZE_TAG_DATA */
                     assert((uint32_t)dp->tdir_count + 1 == dp->tdir_count + 1);
-                    o = _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                    uint8_t *o =
+                        _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
                     if (o == NULL)
                     {
                         if (data != NULL)
@@ -6649,12 +6641,29 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
                     if (data != 0 && dp->tdir_count > 0 &&
                         data[dp->tdir_count - 1] != '\0')
                     {
-                        TIFFWarningExtR(
-                            tif, module,
-                            "ASCII value for tag \"%s\" does not end in null "
-                            "byte. Forcing it to be null",
-                            fip->field_name);
-                        data[dp->tdir_count - 1] = '\0';
+                        TIFFWarningExtR(tif, module,
+                                        "ASCII value for ASCII array tag "
+                                        "\"%s\" does not end in null "
+                                        "byte. Forcing it to be null",
+                                        fip->field_name);
+                        /* Enlarge buffer and add terminating null. */
+                        uint8_t *o =
+                            _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                        if (o == NULL)
+                        {
+                            if (data != NULL)
+                                _TIFFfreeExt(tif, data);
+                            return (0);
+                        }
+                        if (dp->tdir_count > 0)
+                        {
+                            _TIFFmemcpy(o, data, (uint32_t)dp->tdir_count);
+                        }
+                        o[(uint32_t)dp->tdir_count] = 0;
+                        dp->tdir_count++; /* Increment for added null. */
+                        if (data != 0)
+                            _TIFFfreeExt(tif, data);
+                        data = o;
                     }
                     m = TIFFSetField(tif, dp->tdir_tag,
                                      (uint16_t)(dp->tdir_count), data);
@@ -6931,11 +6940,29 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
                 if (data != 0 && dp->tdir_count > 0 &&
                     data[dp->tdir_count - 1] != '\0')
                 {
-                    TIFFWarningExtR(tif, module,
-                                    "ASCII value for tag \"%s\" does not end "
-                                    "in null byte. Forcing it to be null",
-                                    fip->field_name);
-                    data[dp->tdir_count - 1] = '\0';
+                    TIFFWarningExtR(
+                        tif, module,
+                        "ASCII value for ASCII array tag \"%s\" does not end "
+                        "in null byte. Forcing it to be null",
+                        fip->field_name);
+                    /* Enlarge buffer and add terminating null. */
+                    uint8_t *o =
+                        _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                    if (o == NULL)
+                    {
+                        if (data != NULL)
+                            _TIFFfreeExt(tif, data);
+                        return (0);
+                    }
+                    if (dp->tdir_count > 0)
+                    {
+                        _TIFFmemcpy(o, data, (uint32_t)dp->tdir_count);
+                    }
+                    o[(uint32_t)dp->tdir_count] = 0;
+                    dp->tdir_count++; /* Increment for added null. */
+                    if (data != 0)
+                        _TIFFfreeExt(tif, data);
+                    data = o;
                 }
                 m = TIFFSetField(tif, dp->tdir_tag, (uint32_t)(dp->tdir_count),
                                  data);

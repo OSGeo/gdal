@@ -232,7 +232,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
     std::vector<uint8> temp_buffer_vec;
     try
     {
-        temp_buffer_vec.resize(src_block_width*src_block_height*pixel_size);
+        temp_buffer_vec.resize(static_cast<size_t>(src_block_width)*src_block_height*pixel_size);
     }
     catch( const std::exception& )
     {
@@ -307,7 +307,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         {
             memcpy( ((uint8*) buffer) + i_line * xsize * pixel_size,
                     temp_buffer + i_line * axsize * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
     }
 
@@ -346,7 +346,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
             memcpy( ((uint8*) buffer)
                     + (block1_xsize + i_line * xsize) * pixel_size,
                     temp_buffer + i_line * axsize * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
     }
 
@@ -385,7 +385,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
             memcpy( ((uint8*) buffer)
                     + (i_line + block1_ysize) * xsize * pixel_size,
                     temp_buffer + i_line * axsize * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
     }
 
@@ -424,7 +424,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
             memcpy( ((uint8*) buffer)
                     + (block1_xsize + (i_line + block1_ysize) * xsize) * pixel_size,
                     temp_buffer + i_line * axsize * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
     }
 
@@ -463,7 +463,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
     int src_blocks_per_row = (db->GetWidth() + src_block_width - 1)
         / src_block_width;
     int pixel_size = DataTypeSize(GetType());
-    uint8 *temp_buffer = (uint8 *) calloc(src_block_width*src_block_height,
+    uint8 *temp_buffer = (uint8 *) calloc(static_cast<size_t>(src_block_width)*src_block_height,
                                           pixel_size);
     int txoff, tyoff, txsize, tysize;
     int dst_blockx, dst_blocky;
@@ -532,7 +532,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
                     + (i_line+ayoff) * src_block_width * pixel_size
                     + axoff * pixel_size,
                     ((uint8*) buffer) + i_line * block_width * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
 
         db->WriteBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
@@ -576,7 +576,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
                     + axoff * pixel_size,
                     ((uint8*) buffer) + i_line * block_width * pixel_size
                     + block1_xsize * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
 
         db->WriteBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
@@ -620,7 +620,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
                     + axoff * pixel_size,
                     ((uint8*) buffer)
                     + (i_line+block1_ysize) * block_width * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
 
         db->WriteBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,
@@ -665,7 +665,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
                     ((uint8*) buffer)
                     + (i_line+block1_ysize) * block_width * pixel_size
                     + block1_xsize * pixel_size,
-                    axsize * pixel_size );
+                    static_cast<size_t>(axsize) * pixel_size );
         }
 
         db->WriteBlock( echannel, ablock_x + ablock_y * src_blocks_per_row,

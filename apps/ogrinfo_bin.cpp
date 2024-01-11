@@ -44,7 +44,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
 {
     fprintf(bIsError ? stderr : stdout,
             "Usage: ogrinfo [--help] [--help-general]\n"
-            "               [-json] [-ro] [-q] [-where "
+            "               [-if <driver_name>] [-json] [-ro] [-q] [-where "
             "<restricted_where>|@f<ilename>]\n"
             "               [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield "
             "<field>] "
@@ -56,8 +56,9 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
             "               [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] "
             "[-oo <NAME>=<VALUE>]...\n"
             "               [-nomd] [-listmdd] [-mdd {<domain>|all}]...\n"
-            "               [-nocount] [-noextent] [-nogeomtype] [-wkt_format "
-            "WKT1|WKT2|<other_values>]\n"
+            "               [-nocount] [-nogeomtype] "
+            "[[-noextent] | [-extent3D]]\n"
+            "               [-wkt_format WKT1|WKT2|<other_values>]\n"
             "               [-fielddomain <name>]\n"
             "               <datasource_name> [<layer> [<layer> ...]]\n");
 
@@ -137,8 +138,9 @@ MAIN_START(argc, argv)
         else if (psOptionsForBinary->osSQLStatement.empty())
         {
             nFlags |= GDAL_OF_READONLY;
-            if (GDALIdentifyDriverEx(psOptionsForBinary->osFilename.c_str(),
-                                     GDAL_OF_VECTOR, nullptr, nullptr))
+            if (GDALIdentifyDriverEx(
+                    psOptionsForBinary->osFilename.c_str(), GDAL_OF_VECTOR,
+                    psOptionsForBinary->aosAllowInputDrivers.List(), nullptr))
             {
                 bMayRetryUpdateMode = true;
             }
@@ -151,7 +153,8 @@ MAIN_START(argc, argv)
         else
             nFlags |= GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR;
         GDALDataset *poDS = GDALDataset::Open(
-            psOptionsForBinary->osFilename.c_str(), nFlags, nullptr,
+            psOptionsForBinary->osFilename.c_str(), nFlags,
+            psOptionsForBinary->aosAllowInputDrivers.List(),
             psOptionsForBinary->aosOpenOptions.List(), nullptr);
 
         if (poDS == nullptr && !psOptionsForBinary->bReadOnly &&
@@ -164,14 +167,16 @@ MAIN_START(argc, argv)
                 // read-only mode fails, so retry in update mode
                 poDS = GDALDataset::Open(
                     psOptionsForBinary->osFilename.c_str(),
-                    GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr,
+                    GDAL_OF_UPDATE | GDAL_OF_VECTOR,
+                    psOptionsForBinary->aosAllowInputDrivers.List(),
                     psOptionsForBinary->aosOpenOptions.List(), nullptr);
             }
             else if (!psOptionsForBinary->osSQLStatement.empty())
             {
                 poDS = GDALDataset::Open(
                     psOptionsForBinary->osFilename.c_str(),
-                    GDAL_OF_READONLY | GDAL_OF_VECTOR, nullptr,
+                    GDAL_OF_READONLY | GDAL_OF_VECTOR,
+                    psOptionsForBinary->aosAllowInputDrivers.List(),
                     psOptionsForBinary->aosOpenOptions.List(), nullptr);
                 if (poDS != nullptr && psOptionsForBinary->bVerbose)
                 {

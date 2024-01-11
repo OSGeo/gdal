@@ -44,6 +44,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+#include "rat.h"
 
 #include <cassert>
 #include <algorithm>
@@ -790,7 +791,8 @@ CPLErr BAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         static_cast<H5OFFSET_TYPE>(nXOff)};
 
     const int nSizeOfData = static_cast<int>(H5Tget_size(m_hNative));
-    memset(pImage, 0, nBlockXSize * nBlockYSize * nSizeOfData);
+    memset(pImage, 0,
+           static_cast<size_t>(nBlockXSize) * nBlockYSize * nSizeOfData);
 
     //  Blocksize may not be a multiple of imagesize.
     hsize_t count[3] = {
@@ -912,8 +914,8 @@ CPLErr BAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     const int nLinesToFlip = static_cast<int>(count[0]);
     const int nSizeOfData = static_cast<int>(H5Tget_size(m_hNative));
     const int nLineSize = nSizeOfData * nBlockXSize;
-    GByte *const pabyTemp =
-        static_cast<GByte *>(CPLMalloc(nLineSize * nLinesToFlip));
+    GByte *const pabyTemp = static_cast<GByte *>(
+        CPLMalloc(static_cast<size_t>(nLineSize) * nLinesToFlip));
     GByte *const pbyImage = static_cast<GByte *>(pImage);
 
     for (int iY = 0; iY < nLinesToFlip; iY++)
@@ -1212,17 +1214,18 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (poGDS->m_bMask)
     {
         CPLAssert(pImage);  // to make CLang Static Analyzer happy
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
     }
     else if (poGDS->m_ePopulation == BAGDataset::Population::MEAN)
     {
-        counts.resize(nBlockXSize * nBlockYSize);
+        counts.resize(static_cast<size_t>(nBlockXSize) * nBlockYSize);
     }
     else if (poGDS->m_ePopulation == BAGDataset::Population::COUNT)
     {
         CPLAssert(pImage);  // to make CLang Static Analyzer happy
         memset(pImage, 0,
-               nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType));
+               static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                   GDALGetDataTypeSizeBytes(eDataType));
     }
 
     const int nReqCountX =
@@ -1276,7 +1279,8 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    std::vector<BAGRefinementGrid> rgrids(nCountLowResY * nCountLowResX);
+    std::vector<BAGRefinementGrid> rgrids(static_cast<size_t>(nCountLowResY) *
+                                          nCountLowResX);
     if (!(poGDS->ReadVarresMetadataValue(nLowResMinIdxY, nLowResMinIdxX,
                                          memspaceVarresMD, rgrids.data(),
                                          nCountLowResY, nCountLowResX)))
@@ -1313,10 +1317,12 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             // Super grid bounding box with pixel-center convention
             const double dfMinX =
                 poGDS->m_dfLowResMinX + x * dfLowResResX + rgrid.fSWX;
-            const double dfMaxX = dfMinX + (rgrid.nWidth - 1) * rgrid.fResX;
+            const double dfMaxX =
+                dfMinX + (rgrid.nWidth - 1) * static_cast<double>(rgrid.fResX);
             const double dfMinY =
                 poGDS->m_dfLowResMinY + y * dfLowResResY + rgrid.fSWY;
-            const double dfMaxY = dfMinY + (rgrid.nHeight - 1) * rgrid.fResY;
+            const double dfMaxY =
+                dfMinY + (rgrid.nHeight - 1) * static_cast<double>(rgrid.fResY);
 
             // Intersection of super grid with block
             const double dfInterMinX = std::max(dfBlockMinX, dfMinX);
@@ -1350,7 +1356,8 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
             for (int super_y = nMinSrcY; super_y <= nMaxSrcY; super_y++)
             {
-                const double dfSrcY = dfMinY + super_y * rgrid.fResY;
+                const double dfSrcY =
+                    dfMinY + super_y * static_cast<double>(rgrid.fResY);
                 const int nTargetY = static_cast<int>(std::floor(
                     (dfBlockMaxY - dfSrcY) / -poGDS->adfGeoTransform[5]));
                 if (!(nTargetY >= 0 && nTargetY < nReqCountY))
@@ -1722,7 +1729,8 @@ CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    std::vector<BAGRefinementGrid> rgrids(nCountLowResY * nCountLowResX);
+    std::vector<BAGRefinementGrid> rgrids(static_cast<size_t>(nCountLowResY) *
+                                          nCountLowResX);
     if (!(poGDS->ReadVarresMetadataValue(nLowResMinIdxY, nLowResMinIdxX,
                                          memspaceVarresMD, rgrids.data(),
                                          nCountLowResY, nCountLowResX)))
@@ -2146,8 +2154,10 @@ void BAGInterpolatedBand::LoadClosestRefinedNodes(
         const auto pafRefValues = poGDS->GetRefinementValues(nRefinementIndex);
         if (pafRefValues)
         {
-            adfX.push_back(dfMinRefinedX + iXAdjusted * rgrid.fResX);
-            adfY.push_back(dfMinRefinedY + iYAdjusted * rgrid.fResY);
+            adfX.push_back(dfMinRefinedX +
+                           iXAdjusted * static_cast<double>(rgrid.fResX));
+            adfY.push_back(dfMinRefinedY +
+                           iYAdjusted * static_cast<double>(rgrid.fResY));
             afDepth.push_back(pafRefValues[0]);
             afUncrt.push_back(pafRefValues[1]);
         }
@@ -2167,83 +2177,6 @@ void BAGInterpolatedBand::LoadClosestRefinedNodes(
 }
 
 /************************************************************************/
-/*                             CreateRAT()                              */
-/************************************************************************/
-
-static GDALRasterAttributeTable *
-CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
-{
-    auto poRAT = new GDALDefaultRasterAttributeTable();
-    const auto &poComponents = poValues->GetDataType().GetComponents();
-    for (const auto &poComponent : poComponents)
-    {
-        GDALRATFieldType eType;
-        if (poComponent->GetType().GetClass() == GEDTC_NUMERIC)
-        {
-            if (GDALDataTypeIsInteger(
-                    poComponent->GetType().GetNumericDataType()))
-                eType = GFT_Integer;
-            else
-                eType = GFT_Real;
-        }
-        else
-        {
-            eType = GFT_String;
-        }
-        poRAT->CreateColumn(poComponent->GetName().c_str(), eType, GFU_Generic);
-    }
-
-    const auto &oValuesDT = poValues->GetDataType();
-    std::vector<GByte> abyRow(oValuesDT.GetSize());
-    const int nRows = static_cast<int>(poValues->GetDimensions()[0]->GetSize());
-    for (int iRow = 0; iRow < nRows; iRow++)
-    {
-        const GUInt64 arrayStartIdx = static_cast<GUInt64>(iRow);
-        const size_t count = 1;
-        const GInt64 arrayStep = 0;
-        const GPtrDiff_t bufferStride = 0;
-        poValues->Read(&arrayStartIdx, &count, &arrayStep, &bufferStride,
-                       oValuesDT, &abyRow[0]);
-        int iCol = 0;
-        for (const auto &poComponent : poComponents)
-        {
-            const auto eRATType = poRAT->GetTypeOfCol(iCol);
-            if (eRATType == GFT_Integer)
-            {
-                int nValue = 0;
-                GDALCopyWords(&abyRow[poComponent->GetOffset()],
-                              poComponent->GetType().GetNumericDataType(), 0,
-                              &nValue, GDT_Int32, 0, 1);
-                poRAT->SetValue(iRow, iCol, nValue);
-            }
-            else if (eRATType == GFT_Real)
-            {
-                double dfValue = 0;
-                GDALCopyWords(&abyRow[poComponent->GetOffset()],
-                              poComponent->GetType().GetNumericDataType(), 0,
-                              &dfValue, GDT_Float64, 0, 1);
-                poRAT->SetValue(iRow, iCol, dfValue);
-            }
-            else
-            {
-                char *pszStr = nullptr;
-                GDALExtendedDataType::CopyValue(
-                    &abyRow[poComponent->GetOffset()], poComponent->GetType(),
-                    &pszStr, GDALExtendedDataType::CreateString());
-                if (pszStr)
-                {
-                    poRAT->SetValue(iRow, iCol, pszStr);
-                }
-                CPLFree(pszStr);
-            }
-            iCol++;
-        }
-        oValuesDT.FreeDynamicMemory(&abyRow[0]);
-    }
-    return poRAT;
-}
-
-/************************************************************************/
 /* ==================================================================== */
 /*                        BAGGeorefMDBandBase                           */
 /* ==================================================================== */
@@ -2260,7 +2193,7 @@ class BAGGeorefMDBandBase CPL_NON_FINAL : public GDALPamRasterBand
                         const std::shared_ptr<GDALMDArray> &poKeys,
                         GDALRasterBand *poElevBand)
         : m_poKeys(poKeys), m_poElevBand(poElevBand),
-          m_poRAT(CreateRAT(poValues))
+          m_poRAT(HDF5CreateRAT(poValues, false))
     {
     }
 
@@ -2292,7 +2225,7 @@ double BAGGeorefMDBandBase::GetNoDataValue(int *pbSuccess)
 CPLErr BAGGeorefMDBandBase::IReadBlockFromElevBand(int nBlockXOff,
                                                    int nBlockYOff, void *pImage)
 {
-    std::vector<float> afData(nBlockXSize * nBlockYSize);
+    std::vector<float> afData(static_cast<size_t>(nBlockXSize) * nBlockYSize);
     const int nXOff = nBlockXOff * nBlockXSize;
     const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
     const int nYOff = nBlockYOff * nBlockYSize;
@@ -3454,7 +3387,8 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         const double dfMinY =
             adfGeoTransform[3] + m_nLowResHeight * adfGeoTransform[5] +
             nY * -adfGeoTransform[5] + pSuperGrid.fSWY - pSuperGrid.fResY / 2;
-        const double dfMaxY = dfMinY + pSuperGrid.nHeight * pSuperGrid.fResY;
+        const double dfMaxY =
+            dfMinY + pSuperGrid.nHeight * static_cast<double>(pSuperGrid.fResY);
 
         adfGeoTransform[0] = dfMinX;
         adfGeoTransform[1] = pSuperGrid.fResX;
@@ -3796,7 +3730,8 @@ bool BAGDataset::GetMeanSupergridsResolution(double &dfResX, double &dfResY)
     dfResX = 0.0;
     dfResY = 0.0;
     int nValidSuperGrids = 0;
-    std::vector<BAGRefinementGrid> rgrids(nChunkXSize * nChunkYSize);
+    std::vector<BAGRefinementGrid> rgrids(static_cast<size_t>(nChunkXSize) *
+                                          nChunkYSize);
     const int county = (m_nLowResHeight + nChunkYSize - 1) / nChunkYSize;
     const int countx = (m_nLowResWidth + nChunkXSize - 1) / nChunkXSize;
     for (int y = 0; y < county; y++)
@@ -3960,7 +3895,8 @@ bool BAGDataset::ReadVarresMetadataValue(int y, int x, hid_t memspace,
                                          int width)
 {
     constexpr int metadata_elt_size = 3 * 4 + 4 * 4;  // 3 uint and 4 float
-    std::vector<char> buffer(metadata_elt_size * height * width);
+    std::vector<char> buffer(static_cast<size_t>(metadata_elt_size) * height *
+                             width);
 
     hsize_t count[2] = {static_cast<hsize_t>(height),
                         static_cast<hsize_t>(width)};
@@ -4388,7 +4324,8 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         atoi(CPLGetConfigOption("GDAL_BAG_MAX_SIZE_VARRES_MAP", "50000000"));
     const int nChunkXSize = m_nChunkXSizeVarresMD;
     const int nChunkYSize = m_nChunkYSizeVarresMD;
-    std::vector<BAGRefinementGrid> rgrids(nChunkXSize * nChunkYSize);
+    std::vector<BAGRefinementGrid> rgrids(static_cast<size_t>(nChunkXSize) *
+                                          nChunkYSize);
     bool bOK = true;
     for (int blockY = nMinY / nChunkYSize; bOK && blockY <= nMaxY / nChunkYSize;
          blockY++)
@@ -4525,14 +4462,16 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                                               x * adfGeoTransform[1] +
                                               rgrid.fSWX - rgrid.fResX / 2;
                         const double dfMaxX =
-                            dfMinX + rgrid.nWidth * rgrid.fResX;
+                            dfMinX +
+                            rgrid.nWidth * static_cast<double>(rgrid.fResX);
                         const double dfMinY =
                             adfGeoTransform[3] +
                             m_nLowResHeight * adfGeoTransform[5] +
                             y * -adfGeoTransform[5] + rgrid.fSWY -
                             rgrid.fResY / 2;
                         const double dfMaxY =
-                            dfMinY + rgrid.nHeight * rgrid.fResY;
+                            dfMinY +
+                            static_cast<double>(rgrid.nHeight) * rgrid.fResY;
 
                         if ((oSupergrids.empty() ||
                              oSupergrids.find(yx(static_cast<int>(y),
@@ -5674,11 +5613,12 @@ bool BAGCreator::CreateElevationOrUncertainty(
         if (hFileSpace < 0)
             break;
 
-        int nYBlocks =
+        const int nYBlocks =
             static_cast<int>((nYSize + nBlockYSize - 1) / nBlockYSize);
-        int nXBlocks =
+        const int nXBlocks =
             static_cast<int>((nXSize + nBlockXSize - 1) / nBlockXSize);
-        std::vector<float> afValues(nBlockYSize * nBlockXSize);
+        std::vector<float> afValues(static_cast<size_t>(nBlockYSize) *
+                                    nBlockXSize);
         ret = true;
         const bool bReverseY = adfGeoTransform[5] < 0;
 

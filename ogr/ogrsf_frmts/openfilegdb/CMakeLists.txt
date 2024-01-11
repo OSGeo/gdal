@@ -24,6 +24,9 @@ if(NOT TARGET ogr_OpenFileGDB)
     return()
 endif()
 
+# because of use of GDAL_RELEASE_NAME
+set_property(SOURCE filegdbtable_write.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+
 gdal_standard_includes(ogr_OpenFileGDB)
 target_include_directories(ogr_OpenFileGDB PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOURCE_DIR>)
 

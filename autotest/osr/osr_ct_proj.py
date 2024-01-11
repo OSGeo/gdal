@@ -35,7 +35,7 @@ import os
 import gdaltest
 import pytest
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["bonne"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",0.0],PARAMETER["Standard_Parallel_1",60.0],UNIT["Meter",1.0]]'
 
@@ -682,3 +682,28 @@ def test_transform_bounds__epsg_4326_to_esri_53037():
         (-17243953.787082285, -8392929.693707585, 17243953.787082285, 8392929.693707585)
     )
     assert gdal.GetLastErrorMsg() == ""
+
+
+def test_transform_bounds_polar_to_webmercator():
+    src = osr.SpatialReference()
+    src.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert (
+        src.ImportFromProj4(
+            "+proj=stere +lat_0=90 +lat_ts=60 +lon_0=-80 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+        )
+        == ogr.OGRERR_NONE
+    )
+    dst = osr.SpatialReference()
+    dst.SetAxisMappingStrategy(osr.OAMS_AUTHORITY_COMPLIANT)
+    assert dst.ImportFromEPSG(3857) == ogr.OGRERR_NONE
+    ctr = osr.CoordinateTransformation(src, dst)
+    assert ctr.TransformBounds(
+        -12288000, -12288000, 12288000, 12288000, 21
+    ) == pytest.approx(
+        (
+            -20037508.34167605,
+            -2450824.9835280986,
+            20037508.341676045,
+            20037508.329885136,
+        )
+    )

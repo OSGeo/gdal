@@ -66,9 +66,9 @@ namespace cpl
 /*                         GetContinuationToken()                       */
 /************************************************************************/
 
-static CPLString GetContinuationToken(const char *pszHeaders)
+static std::string GetContinuationToken(const char *pszHeaders)
 {
-    CPLString osContinuation;
+    std::string osContinuation;
     if (pszHeaders)
     {
         const char *pszContinuation = strstr(pszHeaders, "x-ms-continuation: ");
@@ -90,9 +90,9 @@ static CPLString GetContinuationToken(const char *pszHeaders)
 /*                        RemoveTrailingSlash()                        */
 /************************************************************************/
 
-static CPLString RemoveTrailingSlash(const CPLString &osFilename)
+static std::string RemoveTrailingSlash(const std::string &osFilename)
 {
-    CPLString osWithoutSlash(osFilename);
+    std::string osWithoutSlash(osFilename);
     if (!osWithoutSlash.empty() && osWithoutSlash.back() == '/')
         osWithoutSlash.resize(osWithoutSlash.size() - 1);
     return osWithoutSlash;
@@ -106,12 +106,12 @@ class VSIADLSFSHandler;
 
 struct VSIDIRADLS : public VSIDIR
 {
-    CPLString m_osRootPath{};
+    std::string m_osRootPath{};
     int m_nRecurseDepth = 0;
 
     struct Iterator
     {
-        CPLString m_osNextMarker{};
+        std::string m_osNextMarker{};
         std::vector<std::unique_ptr<VSIDIREntry>> m_aoEntries{};
         int m_nPos = 0;
 
@@ -130,8 +130,8 @@ struct VSIDIRADLS : public VSIDIR
     // the account root
     bool m_bRecursiveRequestFromAccountRoot = false;
 
-    CPLString m_osFilesystem{};
-    CPLString m_osObjectKey{};
+    std::string m_osFilesystem{};
+    std::string m_osObjectKey{};
     VSIADLSFSHandler *m_poFS = nullptr;
     int m_nMaxFiles = 0;
     bool m_bCacheEntries = true;
@@ -149,8 +149,9 @@ struct VSIDIRADLS : public VSIDIR
     const VSIDIREntry *NextDirEntry() override;
 
     bool IssueListDir();
-    bool AnalysePathList(const CPLString &osBaseURL, const char *pszJSON);
-    bool AnalyseFilesystemList(const CPLString &osBaseURL, const char *pszJSON);
+    bool AnalysePathList(const std::string &osBaseURL, const char *pszJSON);
+    bool AnalyseFilesystemList(const std::string &osBaseURL,
+                               const char *pszJSON);
     void clear();
 };
 
@@ -164,7 +165,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
-    CPLString GetURLFromFilename(const CPLString &osFilename) override;
+    std::string GetURLFromFilename(const std::string &osFilename) override;
 
     char **GetFileList(const char *pszFilename, int nMaxFiles,
                        bool *pbGotFileList) override;
@@ -190,7 +191,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     VSIADLSFSHandler() = default;
     ~VSIADLSFSHandler() override = default;
 
-    CPLString GetFSPrefix() const override
+    std::string GetFSPrefix() const override
     {
         return "/vsiadls/";
     }
@@ -233,7 +234,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     };
 
     // Block list upload
-    bool UploadFile(const CPLString &osFilename, Event event,
+    bool UploadFile(const std::string &osFilename, Event event,
                     vsi_l_offset nPosition, const void *pabyBuffer,
                     size_t nBufferSize,
                     IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
@@ -245,10 +246,9 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
         return true;
     }
 
-    CPLString InitiateMultipartUpload(const std::string &osFilename,
-                                      IVSIS3LikeHandleHelper *poS3HandleHelper,
-                                      int nMaxRetry, double dfRetryDelay,
-                                      CSLConstList papszOptions) override
+    std::string InitiateMultipartUpload(
+        const std::string &osFilename, IVSIS3LikeHandleHelper *poS3HandleHelper,
+        int nMaxRetry, double dfRetryDelay, CSLConstList papszOptions) override
     {
         return UploadFile(osFilename, Event::CREATE_FILE, 0, nullptr, 0,
                           poS3HandleHelper, nMaxRetry, dfRetryDelay,
@@ -257,13 +257,13 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                    : std::string();
     }
 
-    CPLString UploadPart(const CPLString &osFilename, int /* nPartNumber */,
-                         const std::string & /* osUploadID */,
-                         vsi_l_offset nPosition, const void *pabyBuffer,
-                         size_t nBufferSize,
-                         IVSIS3LikeHandleHelper *poS3HandleHelper,
-                         int nMaxRetry, double dfRetryDelay,
-                         CSLConstList /* papszOptions */) override
+    std::string UploadPart(const std::string &osFilename, int /* nPartNumber */,
+                           const std::string & /* osUploadID */,
+                           vsi_l_offset nPosition, const void *pabyBuffer,
+                           size_t nBufferSize,
+                           IVSIS3LikeHandleHelper *poS3HandleHelper,
+                           int nMaxRetry, double dfRetryDelay,
+                           CSLConstList /* papszOptions */) override
     {
         return UploadFile(osFilename, Event::APPEND_DATA, nPosition, pabyBuffer,
                           nBufferSize, poS3HandleHelper, nMaxRetry,
@@ -272,9 +272,9 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                    : std::string();
     }
 
-    bool CompleteMultipart(const CPLString &osFilename,
-                           const CPLString & /* osUploadID */,
-                           const std::vector<CPLString> & /* aosEtags */,
+    bool CompleteMultipart(const std::string &osFilename,
+                           const std::string & /* osUploadID */,
+                           const std::vector<std::string> & /* aosEtags */,
                            vsi_l_offset nTotalSize,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry, double dfRetryDelay) override
@@ -283,8 +283,8 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
                           poS3HandleHelper, nMaxRetry, dfRetryDelay, nullptr);
     }
 
-    bool AbortMultipart(const CPLString & /* osFilename */,
-                        const CPLString & /* osUploadID */,
+    bool AbortMultipart(const std::string & /* osFilename */,
+                        const std::string & /* osUploadID */,
                         IVSIS3LikeHandleHelper * /*poS3HandleHelper */,
                         int /* nMaxRetry */, double /* dfRetryDelay */) override
     {
@@ -361,7 +361,7 @@ static GIntBig GetUnixTimeFromRFC822(const char *pszRFC822DateTime)
 /*                           AnalysePathList()                          */
 /************************************************************************/
 
-bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
+bool VSIDIRADLS::AnalysePathList(const std::string &osBaseURL,
                                  const char *pszJSON)
 {
 #if DEBUG_VERBOSE
@@ -388,9 +388,9 @@ bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
         // Returns relative path to the filesystem, so for example
         // "mydir/foo.bin" for
         // https://{account}.dfs.core.windows.net/{filesystem}/mydir/foo.bin
-        const CPLString osName(oPath.GetString("name"));
+        const std::string osName(oPath.GetString("name"));
         if (!m_osObjectKey.empty() &&
-            STARTS_WITH(osName, (m_osObjectKey + "/").c_str()))
+            STARTS_WITH(osName.c_str(), (m_osObjectKey + "/").c_str()))
             entry->pszName =
                 CPLStrdup(osName.substr(m_osObjectKey.size() + 1).c_str());
         else if (m_bRecursiveRequestFromAccountRoot && !m_osFilesystem.empty())
@@ -405,7 +405,7 @@ bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
             VSICurlParseUnixPermissions(oPath.GetString("permissions").c_str());
         entry->bModeKnown = true;
 
-        CPLString ETag = oPath.GetString("etag");
+        std::string ETag = oPath.GetString("etag");
         if (!ETag.empty())
         {
             entry->papszExtra =
@@ -431,13 +431,13 @@ bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
             prop.mTime = static_cast<time_t>(entry->nMTime);
             prop.ETag = ETag;
 
-            CPLString osCachedFilename =
+            std::string osCachedFilename =
                 osBaseURL + "/" + CPLAWSURLEncode(osName, false);
 #if DEBUG_VERBOSE
             CPLDebug(m_poFS->GetDebugKey(), "Cache %s",
                      osCachedFilename.c_str());
 #endif
-            m_poFS->SetCachedFileProp(osCachedFilename, prop);
+            m_poFS->SetCachedFileProp(osCachedFilename.c_str(), prop);
         }
 
         if (m_nMaxFiles > 0 && m_oIterWithinFilesystem.m_aoEntries.size() >
@@ -454,7 +454,7 @@ bool VSIDIRADLS::AnalysePathList(const CPLString &osBaseURL,
 /*                         AnalysePathList()                            */
 /************************************************************************/
 
-bool VSIDIRADLS::AnalyseFilesystemList(const CPLString &osBaseURL,
+bool VSIDIRADLS::AnalyseFilesystemList(const std::string &osBaseURL,
                                        const char *pszJSON)
 {
 #if DEBUG_VERBOSE
@@ -478,14 +478,14 @@ bool VSIDIRADLS::AnalyseFilesystemList(const CPLString &osBaseURL,
             std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
         auto &entry = m_oIterFromRoot.m_aoEntries.back();
 
-        const CPLString osName(oPath.GetString("name"));
+        const std::string osName(oPath.GetString("name"));
         entry->pszName = CPLStrdup(osName.c_str());
         entry->nSize = 0;
         entry->bSizeKnown = true;
         entry->nMode = S_IFDIR;
         entry->bModeKnown = true;
 
-        CPLString ETag = oPath.GetString("etag");
+        std::string ETag = oPath.GetString("etag");
         if (!ETag.empty())
         {
             entry->papszExtra =
@@ -510,13 +510,13 @@ bool VSIDIRADLS::AnalyseFilesystemList(const CPLString &osBaseURL,
             prop.mTime = static_cast<time_t>(entry->nMTime);
             prop.ETag = ETag;
 
-            CPLString osCachedFilename =
+            std::string osCachedFilename =
                 osBaseURL + CPLAWSURLEncode(osName, false);
 #if DEBUG_VERBOSE
             CPLDebug(m_poFS->GetDebugKey(), "Cache %s",
                      osCachedFilename.c_str());
 #endif
-            m_poFS->SetCachedFileProp(osCachedFilename, prop);
+            m_poFS->SetCachedFileProp(osCachedFilename.c_str(), prop);
         }
 
         if (m_nMaxFiles > 0 && m_oIterFromRoot.m_aoEntries.size() >
@@ -539,10 +539,10 @@ bool VSIDIRADLS::IssueListDir()
 
     auto &oIter =
         !m_osFilesystem.empty() ? m_oIterWithinFilesystem : m_oIterFromRoot;
-    const CPLString l_osNextMarker(oIter.m_osNextMarker);
+    const std::string l_osNextMarker(oIter.m_osNextMarker);
     clear();
 
-    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("ListBucket");
 
     CPLString osMaxKeys = CPLGetConfigOption("AZURE_MAX_RESULTS", "");
@@ -554,13 +554,13 @@ bool VSIDIRADLS::IssueListDir()
     }
 
     auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-        m_poFS->CreateHandleHelper(m_osFilesystem, true));
+        m_poFS->CreateHandleHelper(m_osFilesystem.c_str(), true));
     if (poHandleHelper == nullptr)
     {
         return false;
     }
 
-    const CPLString osBaseURL(poHandleHelper->GetURLNoKVP());
+    const std::string osBaseURL(poHandleHelper->GetURLNoKVP());
 
     CURL *hCurlHandle = curl_easy_init();
 
@@ -592,7 +592,7 @@ bool VSIDIRADLS::IssueListDir()
         CPLHTTPGetOptionsFromEnv(osFilename.c_str()));
 
     struct curl_slist *headers = VSICurlSetOptions(
-        hCurlHandle, poHandleHelper->GetURL(), aosHTTPOptions.List());
+        hCurlHandle, poHandleHelper->GetURL().c_str(), aosHTTPOptions.List());
     headers = VSICurlMergeHeaders(
         headers, poHandleHelper->GetCurlHeaders("GET", headers));
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -703,7 +703,7 @@ class VSIADLSHandle final : public VSICurlHandle
 
   protected:
     virtual struct curl_slist *
-    GetCurlHeaders(const CPLString &osVerb,
+    GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders) override;
 
   public:
@@ -719,7 +719,7 @@ VSICurlHandle *VSIADLSFSHandler::CreateFileHandle(const char *pszFilename)
 {
     VSIAzureBlobHandleHelper *poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI(
-            pszFilename + GetFSPrefix().size(), GetFSPrefix());
+            pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
         return nullptr;
     return new VSIADLSHandle(this, pszFilename, poHandleHelper);
@@ -735,7 +735,7 @@ VSIADLSFSHandler::CreateWriteHandle(const char *pszFilename,
 {
     VSIAzureBlobHandleHelper *poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI(
-            pszFilename + GetFSPrefix().size(), GetFSPrefix());
+            pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
         return nullptr;
     auto poHandle =
@@ -754,14 +754,14 @@ VSIADLSFSHandler::CreateWriteHandle(const char *pszFilename,
 int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                            int nFlags)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return -1;
 
     if ((nFlags & VSI_STAT_CACHE_ONLY) != 0)
         return VSICurlFilesystemHandlerBase::Stat(pszFilename, pStatBuf,
                                                   nFlags);
 
-    const CPLString osFilenameWithoutSlash(RemoveTrailingSlash(pszFilename));
+    const std::string osFilenameWithoutSlash(RemoveTrailingSlash(pszFilename));
 
     // Stat("/vsiadls/") ?
     if (osFilenameWithoutSlash + "/" == GetFSPrefix())
@@ -769,7 +769,7 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
         // List file systems (stop at the first one), to confirm that the
         // account is correct
         bool bGotFileList = false;
-        CSLDestroy(GetFileList(GetFSPrefix(), 1, false, &bGotFileList));
+        CSLDestroy(GetFileList(GetFSPrefix().c_str(), 1, false, &bGotFileList));
         if (bGotFileList)
         {
             memset(pStatBuf, 0, sizeof(VSIStatBufL));
@@ -789,13 +789,13 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
         // Use
         // https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/filesystem/getproperties
 
-        NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+        NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
         NetworkStatisticsAction oContextAction("GetProperties");
 
-        const CPLString osFilesystem(
+        const std::string osFilesystem(
             osFilenameWithoutSlash.substr(GetFSPrefix().size()));
         auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-            CreateHandleHelper(osFilesystem, true));
+            CreateHandleHelper(osFilesystem.c_str(), true));
         if (poHandleHelper == nullptr)
         {
             return -1;
@@ -805,8 +805,9 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 
         poHandleHelper->AddQueryParameter("resource", "filesystem");
 
-        struct curl_slist *headers = VSICurlSetOptions(
-            hCurlHandle, poHandleHelper->GetURL(), aosHTTPOptions.List());
+        struct curl_slist *headers =
+            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                              aosHTTPOptions.List());
 
         headers = VSICurlMergeHeaders(
             headers, poHandleHelper->GetCurlHeaders("HEAD", headers));
@@ -838,7 +839,7 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
             const char *pszEOL = strstr(pszLastModified, "\r\n");
             if (pszEOL)
             {
-                CPLString osLastModified;
+                std::string osLastModified;
                 osLastModified.assign(pszLastModified,
                                       pszEOL - pszLastModified);
 
@@ -856,8 +857,8 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
         return 0;
     }
 
-    return VSICurlFilesystemHandlerBase::Stat(osFilenameWithoutSlash, pStatBuf,
-                                              nFlags);
+    return VSICurlFilesystemHandlerBase::Stat(osFilenameWithoutSlash.c_str(),
+                                              pStatBuf, nFlags);
 }
 
 /************************************************************************/
@@ -868,7 +869,7 @@ char **VSIADLSFSHandler::GetFileMetadata(const char *pszFilename,
                                          const char *pszDomain,
                                          CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
 
     if (pszDomain == nullptr ||
@@ -885,7 +886,7 @@ char **VSIADLSFSHandler::GetFileMetadata(const char *pszFilename,
         return nullptr;
     }
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("GetFileMetadata");
 
     bool bRetry;
@@ -910,8 +911,9 @@ char **VSIADLSFSHandler::GetFileMetadata(const char *pszFilename,
                                                         ? "getStatus"
                                                         : "getAccessControl");
 
-        struct curl_slist *headers = VSICurlSetOptions(
-            hCurlHandle, poHandleHelper->GetURL(), aosHTTPOptions.List());
+        struct curl_slist *headers =
+            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                              aosHTTPOptions.List());
 
         headers = VSICurlMergeHeaders(
             headers, poHandleHelper->GetCurlHeaders("HEAD", headers));
@@ -988,7 +990,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
                                        const char *pszDomain,
                                        CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return false;
 
     if (pszDomain == nullptr ||
@@ -1017,7 +1019,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
         return false;
     }
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("SetFileMetadata");
 
     bool bRetry;
@@ -1155,7 +1157,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
 VSIADLSWriteHandle::VSIADLSWriteHandle(VSIADLSFSHandler *poFS,
                                        const char *pszFilename,
                                        VSIAzureBlobHandleHelper *poHandleHelper)
-    : VSIAppendWriteHandle(poFS, poFS->GetFSPrefix(), pszFilename,
+    : VSIAppendWriteHandle(poFS, poFS->GetFSPrefix().c_str(), pszFilename,
                            GetAzureBufferSize()),
       m_poHandleHelper(poHandleHelper)
 {
@@ -1178,8 +1180,8 @@ void VSIADLSWriteHandle::InvalidateParentDirectory()
 {
     m_poFS->InvalidateCachedData(m_poHandleHelper->GetURLNoKVP().c_str());
 
-    const CPLString osFilenameWithoutSlash(RemoveTrailingSlash(m_osFilename));
-    m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash));
+    const std::string osFilenameWithoutSlash(RemoveTrailingSlash(m_osFilename));
+    m_poFS->InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
 }
 
 /************************************************************************/
@@ -1254,15 +1256,16 @@ void VSIADLSFSHandler::ClearCache()
 /*                          GetURLFromFilename()                        */
 /************************************************************************/
 
-CPLString VSIADLSFSHandler::GetURLFromFilename(const CPLString &osFilename)
+std::string VSIADLSFSHandler::GetURLFromFilename(const std::string &osFilename)
 {
-    CPLString osFilenameWithoutPrefix = osFilename.substr(GetFSPrefix().size());
+    std::string osFilenameWithoutPrefix =
+        osFilename.substr(GetFSPrefix().size());
     VSIAzureBlobHandleHelper *poHandleHelper =
-        VSIAzureBlobHandleHelper::BuildFromURI(osFilenameWithoutPrefix,
-                                               GetFSPrefix());
+        VSIAzureBlobHandleHelper::BuildFromURI(osFilenameWithoutPrefix.c_str(),
+                                               GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
-        return CPLString();
-    CPLString osURL(poHandleHelper->GetURLNoKVP());
+        return std::string();
+    std::string osURL(poHandleHelper->GetURLNoKVP());
     delete poHandleHelper;
     return osURL;
 }
@@ -1284,12 +1287,12 @@ IVSIS3LikeHandleHelper *VSIADLSFSHandler::CreateHandleHelper(const char *pszURI,
 
 int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath)
 {
-    if (!STARTS_WITH_CI(oldpath, GetFSPrefix()))
+    if (!STARTS_WITH_CI(oldpath, GetFSPrefix().c_str()))
         return -1;
-    if (!STARTS_WITH_CI(newpath, GetFSPrefix()))
+    if (!STARTS_WITH_CI(newpath, GetFSPrefix().c_str()))
         return -1;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("Rename");
 
     VSIStatBufL sStat;
@@ -1311,7 +1314,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath)
         return -1;
     }
 
-    CPLString osContinuation;
+    std::string osContinuation;
     int nRet = 0;
     bool bRetry;
 
@@ -1323,8 +1326,8 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath)
         oldpath, "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
     int nRetryCount = 0;
 
-    InvalidateCachedData(GetURLFromFilename(oldpath));
-    InvalidateCachedData(GetURLFromFilename(newpath));
+    InvalidateCachedData(GetURLFromFilename(oldpath).c_str());
+    InvalidateCachedData(GetURLFromFilename(newpath).c_str());
     InvalidateDirContent(CPLGetDirname(oldpath));
 
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(oldpath));
@@ -1344,7 +1347,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath)
             CPLHTTPSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
                               aosHTTPOptions.List()));
         headers = curl_slist_append(headers, "Content-Length: 0");
-        CPLString osRenameSource("x-ms-rename-source: /");
+        std::string osRenameSource("x-ms-rename-source: /");
         osRenameSource +=
             CPLAWSURLEncode(oldpath + GetFSPrefix().size(), false);
         headers = curl_slist_append(headers, osRenameSource.c_str());
@@ -1420,18 +1423,18 @@ int VSIADLSFSHandler::Unlink(const char *pszFilename)
 int VSIADLSFSHandler::MkdirInternal(const char *pszDirname, long nMode,
                                     bool bDoStatCheck)
 {
-    if (!STARTS_WITH_CI(pszDirname, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszDirname, GetFSPrefix().c_str()))
         return -1;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("Mkdir");
 
-    const CPLString osDirname(pszDirname);
+    const std::string osDirname(pszDirname);
 
     if (bDoStatCheck)
     {
         VSIStatBufL sStat;
-        if (VSIStatL(osDirname, &sStat) == 0)
+        if (VSIStatL(osDirname.c_str(), &sStat) == 0)
         {
             CPLDebug(GetDebugKey(), "Directory or file %s already exists",
                      osDirname.c_str());
@@ -1440,7 +1443,7 @@ int VSIADLSFSHandler::MkdirInternal(const char *pszDirname, long nMode,
         }
     }
 
-    const CPLString osDirnameWithoutEndSlash(RemoveTrailingSlash(osDirname));
+    const std::string osDirnameWithoutEndSlash(RemoveTrailingSlash(osDirname));
     auto poHandleHelper =
         std::unique_ptr<IVSIS3LikeHandleHelper>(CreateHandleHelper(
             osDirnameWithoutEndSlash.c_str() + GetFSPrefix().size(), false));
@@ -1449,9 +1452,10 @@ int VSIADLSFSHandler::MkdirInternal(const char *pszDirname, long nMode,
         return -1;
     }
 
-    InvalidateCachedData(GetURLFromFilename(osDirname));
-    InvalidateCachedData(GetURLFromFilename(osDirnameWithoutEndSlash));
-    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash));
+    InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
+    InvalidateCachedData(
+        GetURLFromFilename(osDirnameWithoutEndSlash.c_str()).c_str());
+    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
 
     int nRet = 0;
 
@@ -1554,8 +1558,9 @@ int VSIADLSFSHandler::Mkdir(const char *pszDirname, long nMode)
 
 int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
 {
-    const CPLString osDirname(pszDirname);
-    const CPLString osDirnameWithoutEndSlash(RemoveTrailingSlash(osDirname));
+    const std::string osDirname(pszDirname);
+    const std::string osDirnameWithoutEndSlash(
+        RemoveTrailingSlash(osDirname.c_str()));
 
     const bool bIsFileSystem =
         osDirnameWithoutEndSlash.find('/', GetFSPrefix().size()) ==
@@ -1566,8 +1571,8 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
         // List content, to confirm it is empty first, as filesystem deletion
         // is recursive by default.
         bool bGotFileList = false;
-        CSLDestroy(
-            GetFileList(osDirnameWithoutEndSlash, 1, false, &bGotFileList));
+        CSLDestroy(GetFileList(osDirnameWithoutEndSlash.c_str(), 1, false,
+                               &bGotFileList));
         if (bGotFileList)
         {
             CPLDebug(GetDebugKey(), "Cannot delete filesystem with "
@@ -1580,7 +1585,7 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
     if (!bIsFileSystem)
     {
         VSIStatBufL sStat;
-        if (VSIStatL(osDirname, &sStat) != 0)
+        if (VSIStatL(osDirname.c_str(), &sStat) != 0)
         {
             CPLDebug(GetDebugKey(), "Object %s does not exist",
                      osDirname.c_str());
@@ -1604,15 +1609,16 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
         return -1;
     }
 
-    InvalidateCachedData(GetURLFromFilename(osDirname));
-    InvalidateCachedData(GetURLFromFilename(osDirnameWithoutEndSlash));
-    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash));
+    InvalidateCachedData(GetURLFromFilename(osDirname.c_str()).c_str());
+    InvalidateCachedData(
+        GetURLFromFilename(osDirnameWithoutEndSlash.c_str()).c_str());
+    InvalidateDirContent(CPLGetDirname(osDirnameWithoutEndSlash.c_str()));
     if (bRecursive)
     {
-        PartialClearCache(osDirnameWithoutEndSlash);
+        PartialClearCache(osDirnameWithoutEndSlash.c_str());
     }
 
-    CPLString osContinuation;
+    std::string osContinuation;
     int nRet = 0;
     bool bRetry;
 
@@ -1730,10 +1736,10 @@ int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
 
 int VSIADLSFSHandler::Rmdir(const char *pszDirname)
 {
-    if (!STARTS_WITH_CI(pszDirname, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszDirname, GetFSPrefix().c_str()))
         return -1;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("Rmdir");
 
     return RmdirInternal(pszDirname, false);
@@ -1745,10 +1751,10 @@ int VSIADLSFSHandler::Rmdir(const char *pszDirname)
 
 int VSIADLSFSHandler::RmdirRecursive(const char *pszDirname)
 {
-    if (!STARTS_WITH_CI(pszDirname, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszDirname, GetFSPrefix().c_str()))
         return -1;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("RmdirRecursive");
 
     return RmdirInternal(pszDirname, true);
@@ -1763,28 +1769,28 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
 {
     // There is no CopyObject in ADLS... So use the base Azure blob one...
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("CopyObject");
 
-    CPLString osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
+    std::string osTargetNameWithoutPrefix = newpath + GetFSPrefix().size();
     auto poAzHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-        VSIAzureBlobHandleHelper::BuildFromURI(osTargetNameWithoutPrefix,
-                                               "/vsiaz/"));
+        VSIAzureBlobHandleHelper::BuildFromURI(
+            osTargetNameWithoutPrefix.c_str(), "/vsiaz/"));
     if (poAzHandleHelper == nullptr)
     {
         return -1;
     }
 
-    CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
+    std::string osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
     auto poAzHandleHelperSource = std::unique_ptr<IVSIS3LikeHandleHelper>(
-        VSIAzureBlobHandleHelper::BuildFromURI(osSourceNameWithoutPrefix,
-                                               "/vsiaz/"));
+        VSIAzureBlobHandleHelper::BuildFromURI(
+            osSourceNameWithoutPrefix.c_str(), "/vsiaz/"));
     if (poAzHandleHelperSource == nullptr)
     {
         return -1;
     }
 
-    CPLString osSourceHeader("x-ms-copy-source: ");
+    std::string osSourceHeader("x-ms-copy-source: ");
     osSourceHeader += poAzHandleHelperSource->GetURLNoKVP();
 
     int nRet = 0;
@@ -1857,13 +1863,13 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
         {
             auto poADLSHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
                 VSIAzureBlobHandleHelper::BuildFromURI(
-                    osTargetNameWithoutPrefix, GetFSPrefix()));
+                    osTargetNameWithoutPrefix.c_str(), GetFSPrefix().c_str()));
             if (poADLSHandleHelper != nullptr)
                 InvalidateCachedData(poADLSHandleHelper->GetURLNoKVP().c_str());
 
-            const CPLString osFilenameWithoutSlash(
+            const std::string osFilenameWithoutSlash(
                 RemoveTrailingSlash(newpath));
-            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash));
+            InvalidateDirContent(CPLGetDirname(osFilenameWithoutSlash.c_str()));
         }
 
         curl_easy_cleanup(hCurlHandle);
@@ -1876,21 +1882,21 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
 /*                          UploadFile()                                */
 /************************************************************************/
 
-bool VSIADLSFSHandler::UploadFile(const CPLString &osFilename, Event event,
+bool VSIADLSFSHandler::UploadFile(const std::string &osFilename, Event event,
                                   vsi_l_offset nPosition,
                                   const void *pabyBuffer, size_t nBufferSize,
                                   IVSIS3LikeHandleHelper *poHandleHelper,
                                   int nMaxRetry, double dfRetryDelay,
                                   CSLConstList papszOptions)
 {
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
-    NetworkStatisticsFile oContextFile(osFilename);
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
+    NetworkStatisticsFile oContextFile(osFilename.c_str());
     NetworkStatisticsAction oContextAction("UploadFile");
 
     if (event == Event::CREATE_FILE)
     {
         InvalidateCachedData(poHandleHelper->GetURLNoKVP().c_str());
-        InvalidateDirContent(CPLGetDirname(osFilename));
+        InvalidateDirContent(CPLGetDirname(osFilename.c_str()));
     }
 
     const CPLStringList aosHTTPOptions(
@@ -2065,8 +2071,8 @@ char **VSIADLSFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
 
 const char *VSIADLSFSHandler::GetOptions()
 {
-    static CPLString osOptions(
-        CPLString("<Options>") +
+    static std::string osOptions(
+        std::string("<Options>") +
         "  <Option name='AZURE_STORAGE_CONNECTION_STRING' type='string' "
         "description='Connection string that contains account name and "
         "secret key'/>"
@@ -2088,7 +2094,7 @@ const char *VSIADLSFSHandler::GetOptions()
 char *VSIADLSFSHandler::GetSignedURL(const char *pszFilename,
                                      CSLConstList papszOptions)
 {
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
 
     auto poHandleHelper = std::unique_ptr<VSIAzureBlobHandleHelper>(
@@ -2101,9 +2107,9 @@ char *VSIADLSFSHandler::GetSignedURL(const char *pszFilename,
         return nullptr;
     }
 
-    CPLString osRet(poHandleHelper->GetSignedURL(papszOptions));
+    std::string osRet(poHandleHelper->GetSignedURL(papszOptions));
 
-    return CPLStrdup(osRet);
+    return CPLStrdup(osRet.c_str());
 }
 
 /************************************************************************/
@@ -2119,16 +2125,16 @@ VSIDIR *VSIADLSFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
                                              papszOptions);
     }
 
-    if (!STARTS_WITH_CI(pszPath, GetFSPrefix()))
+    if (!STARTS_WITH_CI(pszPath, GetFSPrefix().c_str()))
         return nullptr;
 
-    NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("OpenDir");
 
-    const CPLString osDirnameWithoutPrefix =
+    const std::string osDirnameWithoutPrefix =
         RemoveTrailingSlash(pszPath + GetFSPrefix().size());
-    CPLString osFilesystem(osDirnameWithoutPrefix);
-    CPLString osObjectKey;
+    std::string osFilesystem(osDirnameWithoutPrefix);
+    std::string osObjectKey;
     size_t nSlashPos = osDirnameWithoutPrefix.find('/');
     if (nSlashPos != std::string::npos)
     {
@@ -2175,7 +2181,7 @@ VSIADLSFSHandler::GetStreamingFilename(const std::string &osFilename) const
 
 VSIADLSHandle::VSIADLSHandle(VSIADLSFSHandler *poFSIn, const char *pszFilename,
                              VSIAzureBlobHandleHelper *poHandleHelper)
-    : VSICurlHandle(poFSIn, pszFilename, poHandleHelper->GetURLNoKVP()),
+    : VSICurlHandle(poFSIn, pszFilename, poHandleHelper->GetURLNoKVP().c_str()),
       m_poHandleHelper(poHandleHelper)
 {
     m_osQueryString = poHandleHelper->GetSASQueryString();
@@ -2186,7 +2192,7 @@ VSIADLSHandle::VSIADLSHandle(VSIADLSFSHandler *poFSIn, const char *pszFilename,
 /************************************************************************/
 
 struct curl_slist *
-VSIADLSHandle::GetCurlHeaders(const CPLString &osVerb,
+VSIADLSHandle::GetCurlHeaders(const std::string &osVerb,
                               const struct curl_slist *psExistingHeaders)
 {
     return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);

@@ -2413,6 +2413,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
         osBuildInfo +=
             "COMPILER=Intel compiler " STRINGIFY(__INTEL_COMPILER) "\n";
 #endif
+#ifdef CMAKE_UNITY_BUILD
+        osBuildInfo += "CMAKE_UNITY_BUILD=YES\n";
+#endif
 
 #undef STRINGIFY_HELPER
 #undef STRINGIFY
@@ -3359,10 +3362,29 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 if (osKind.empty())
                     osKind = "unknown kind";
 
-                printf("  %s -%s- (%s%s%s%s): %s\n", /*ok*/
+                std::string osExtensions;
+                if (const char *pszExtensions = CSLFetchNameValueDef(
+                        papszMD, GDAL_DMD_EXTENSIONS,
+                        CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
+                {
+                    const CPLStringList aosExt(
+                        CSLTokenizeString2(pszExtensions, " ", 0));
+                    for (int i = 0; i < aosExt.size(); ++i)
+                    {
+                        if (i == 0)
+                            osExtensions = " (*.";
+                        else
+                            osExtensions += ", *.";
+                        osExtensions += aosExt[i];
+                    }
+                    if (!osExtensions.empty())
+                        osExtensions += ')';
+                }
+
+                printf("  %s -%s- (%s%s%s%s): %s%s\n", /*ok*/
                        GDALGetDriverShortName(hDriver), osKind.c_str(),
                        pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
-                       GDALGetDriverLongName(hDriver));
+                       GDALGetDriverLongName(hDriver), osExtensions.c_str());
             }
 
             return 0;

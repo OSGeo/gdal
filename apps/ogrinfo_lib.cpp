@@ -64,6 +64,7 @@ struct GDALVectorInfoOptions
     bool bShowMetadata = true;
     bool bFeatureCount = true;
     bool bExtent = true;
+    bool bExtent3D = false;
     bool bGeomType = true;
     bool bDatasetGetNextFeature = false;
     bool bVerbose = true;
@@ -98,6 +99,8 @@ void GDALVectorInfoOptionsFree(GDALVectorInfoOptions *psOptions)
 /*                            Concat()                                  */
 /************************************************************************/
 
+#ifndef Concat_defined
+#define Concat_defined
 static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
                    ...) CPL_PRINT_FUNC_FORMAT(3, 4);
 
@@ -128,6 +131,7 @@ static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
 
     va_end(args);
 }
+#endif
 
 static void ConcatStr(CPLString &osRet, bool bStdoutOutput, const char *pszStr)
 {
@@ -877,7 +881,6 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
         const char *const apszWKTOptions[] = {osWKTFormat.c_str(),
                                               "MULTILINE=YES", nullptr};
 
-        OGREnvelope oExt;
         if (bJson || nGeomFieldCount > 1)
         {
             CPLJSONArray oGeometryFields;
@@ -899,15 +902,51 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                                                  /*bSpaceBeforeZM=*/false));
                     oGeometryField.Set("nullable",
                                        CPL_TO_BOOL(poGFldDefn->IsNullable()));
-                    if (psOptions->bExtent &&
-                        poLayer->GetExtent(iGeom, &oExt, TRUE) == OGRERR_NONE)
+                    if (psOptions->bExtent3D)
                     {
-                        CPLJSONArray oBbox;
-                        oBbox.Add(oExt.MinX);
-                        oBbox.Add(oExt.MinY);
-                        oBbox.Add(oExt.MaxX);
-                        oBbox.Add(oExt.MaxY);
-                        oGeometryField.Add("extent", oBbox);
+                        OGREnvelope3D oExt;
+                        if (poLayer->GetExtent3D(iGeom, &oExt, TRUE) ==
+                            OGRERR_NONE)
+                        {
+                            {
+                                CPLJSONArray oBbox;
+                                oBbox.Add(oExt.MinX);
+                                oBbox.Add(oExt.MinY);
+                                oBbox.Add(oExt.MaxX);
+                                oBbox.Add(oExt.MaxY);
+                                oGeometryField.Add("extent", oBbox);
+                            }
+                            {
+                                CPLJSONArray oBbox;
+                                oBbox.Add(oExt.MinX);
+                                oBbox.Add(oExt.MinY);
+                                if (std::isfinite(oExt.MinZ))
+                                    oBbox.Add(oExt.MinZ);
+                                else
+                                    oBbox.AddNull();
+                                oBbox.Add(oExt.MaxX);
+                                oBbox.Add(oExt.MaxY);
+                                if (std::isfinite(oExt.MaxZ))
+                                    oBbox.Add(oExt.MaxZ);
+                                else
+                                    oBbox.AddNull();
+                                oGeometryField.Add("extent3D", oBbox);
+                            }
+                        }
+                    }
+                    else if (psOptions->bExtent)
+                    {
+                        OGREnvelope oExt;
+                        if (poLayer->GetExtent(iGeom, &oExt, TRUE) ==
+                            OGRERR_NONE)
+                        {
+                            CPLJSONArray oBbox;
+                            oBbox.Add(oExt.MinX);
+                            oBbox.Add(oExt.MinY);
+                            oBbox.Add(oExt.MaxX);
+                            oBbox.Add(oExt.MaxY);
+                            oGeometryField.Add("extent", oBbox);
+                        }
                     }
                     const OGRSpatialReference *poSRS =
                         poGFldDefn->GetSpatialRef();
@@ -1026,23 +1065,68 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
         {
             for (int iGeom = 0; iGeom < nGeomFieldCount; iGeom++)
             {
-                if (poLayer->GetExtent(iGeom, &oExt, TRUE) == OGRERR_NONE)
+                if (psOptions->bExtent3D)
                 {
-                    OGRGeomFieldDefn *poGFldDefn =
-                        poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
-                    Concat(osRet, psOptions->bStdoutOutput,
-                           "Extent (%s): (%f, %f) - (%f, %f)\n",
-                           poGFldDefn->GetNameRef(), oExt.MinX, oExt.MinY,
-                           oExt.MaxX, oExt.MaxY);
+                    OGREnvelope3D oExt;
+                    if (poLayer->GetExtent3D(iGeom, &oExt, TRUE) == OGRERR_NONE)
+                    {
+                        OGRGeomFieldDefn *poGFldDefn =
+                            poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                        Concat(osRet, psOptions->bStdoutOutput,
+                               "Extent (%s): (%f, %f, %s) - (%f, %f, %s)\n",
+                               poGFldDefn->GetNameRef(), oExt.MinX, oExt.MinY,
+                               std::isfinite(oExt.MinZ)
+                                   ? CPLSPrintf("%f", oExt.MinZ)
+                                   : "none",
+                               oExt.MaxX, oExt.MaxY,
+                               std::isfinite(oExt.MaxZ)
+                                   ? CPLSPrintf("%f", oExt.MaxZ)
+                                   : "none");
+                    }
+                }
+                else
+                {
+                    OGREnvelope oExt;
+                    if (poLayer->GetExtent(iGeom, &oExt, TRUE) == OGRERR_NONE)
+                    {
+                        OGRGeomFieldDefn *poGFldDefn =
+                            poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
+                        Concat(osRet, psOptions->bStdoutOutput,
+                               "Extent (%s): (%f, %f) - (%f, %f)\n",
+                               poGFldDefn->GetNameRef(), oExt.MinX, oExt.MinY,
+                               oExt.MaxX, oExt.MaxY);
+                    }
                 }
             }
         }
-        else if (!bJson && psOptions->bExtent &&
-                 poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
+        else if (!bJson && psOptions->bExtent)
         {
-            Concat(osRet, psOptions->bStdoutOutput,
-                   "Extent: (%f, %f) - (%f, %f)\n", oExt.MinX, oExt.MinY,
-                   oExt.MaxX, oExt.MaxY);
+            if (psOptions->bExtent3D)
+            {
+                OGREnvelope3D oExt;
+                if (poLayer->GetExtent3D(0, &oExt, TRUE) == OGRERR_NONE)
+                {
+                    Concat(
+                        osRet, psOptions->bStdoutOutput,
+                        "Extent: (%f, %f, %s) - (%f, %f, %s)\n", oExt.MinX,
+                        oExt.MinY,
+                        std::isfinite(oExt.MinZ) ? CPLSPrintf("%f", oExt.MinZ)
+                                                 : "none",
+                        oExt.MaxX, oExt.MaxY,
+                        std::isfinite(oExt.MaxZ) ? CPLSPrintf("%f", oExt.MaxZ)
+                                                 : "none");
+                }
+            }
+            else
+            {
+                OGREnvelope oExt;
+                if (poLayer->GetExtent(&oExt, TRUE) == OGRERR_NONE)
+                {
+                    Concat(osRet, psOptions->bStdoutOutput,
+                           "Extent: (%f, %f) - (%f, %f)\n", oExt.MinX,
+                           oExt.MinY, oExt.MaxX, oExt.MaxY);
+                }
+            }
         }
 
         const auto displayExtraInfoSRS =
@@ -2204,6 +2288,10 @@ GDALVectorInfoOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[iArg], "-noextent"))
         {
             psOptions->bExtent = false;
+        }
+        else if (EQUAL(papszArgv[iArg], "-extent3D"))
+        {
+            psOptions->bExtent3D = true;
         }
         else if (EQUAL(papszArgv[iArg], "-nogeomtype"))
         {

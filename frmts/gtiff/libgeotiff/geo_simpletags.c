@@ -67,10 +67,10 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 
     const int item_size = ST_TypeSize( data_type );
 
-    void *ret_value = (char *)_GTIFcalloc( *count * item_size );
+    void *ret_value = (char *)_GTIFcalloc( (size_t)(*count) * item_size );
     if (!ret_value) return 0;
 
-    _TIFFmemcpy( ret_value, internal_value,  item_size * *count );
+    _TIFFmemcpy( ret_value, internal_value, (size_t)(item_size) * *count );
 
     *(void **)val = ret_value;
     return 1;
@@ -207,7 +207,7 @@ int ST_SetKey( ST_TIFF *st, int tag, int count, int st_type, void *data )
             st->key_list[i].type = st_type;
             /* +1 to make clang static analyzer not warn about potential malloc(0) */
             st->key_list[i].data = malloc(item_size*count+1);
-            memcpy( st->key_list[i].data, data, count * item_size );
+            memcpy( st->key_list[i].data, data, (size_t)count * item_size );
             return 1;
         }
     }
@@ -222,8 +222,8 @@ int ST_SetKey( ST_TIFF *st, int tag, int count, int st_type, void *data )
     st->key_list[st->key_count-1].count = count;
     st->key_list[st->key_count-1].type = st_type;
     /* +1 to make clang static analyzer not warn about potential malloc(0) */
-    st->key_list[st->key_count-1].data = malloc(item_size * count+1);
-    memcpy( st->key_list[st->key_count-1].data, data, item_size * count );
+    st->key_list[st->key_count-1].data = malloc((size_t)(item_size) * count+1);
+    memcpy( st->key_list[st->key_count-1].data, data, (size_t)(item_size) * count );
 
     return 1;
 }

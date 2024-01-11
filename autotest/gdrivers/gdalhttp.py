@@ -89,7 +89,9 @@ def test_http_1():
         tst.testOpen()
     except Exception:
         skip_if_unreachable(url)
-        if gdaltest.is_travis_branch("build-windows-conda"):
+        if gdaltest.is_travis_branch(
+            "build-windows-conda"
+        ) or gdaltest.is_travis_branch("build-windows-minimum"):
             pytest.xfail("randomly fail on that configuration for unknown reason")
         pytest.fail()
 
@@ -125,6 +127,7 @@ def test_http_3():
 # Verify /vsicurl (ftp)
 
 
+@pytest.mark.skip(reason="remove server does not work")
 def test_http_4():
     # Too unreliable
     gdaltest.skip_on_travis()

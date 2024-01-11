@@ -962,7 +962,8 @@ GDALDataset *PAuxDataset::Create(const char *pszFilename, int nXSize,
         {
             nPixelOffset = GDALGetDataTypeSizeBytes(eType);
             nLineOffset = nXSize * nPixelSizeSum;
-            nNextImgOffset = nImgOffset + nPixelOffset * nXSize;
+            nNextImgOffset =
+                nImgOffset + static_cast<vsi_l_offset>(nPixelOffset) * nXSize;
         }
         else if (EQUAL(pszInterleave, "PIXEL"))
         {

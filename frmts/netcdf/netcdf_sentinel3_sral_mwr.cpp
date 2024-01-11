@@ -35,8 +35,6 @@
 
 #include <limits>
 
-#ifdef NETCDF_HAS_NC4
-
 /************************************************************************/
 /*                      Sentinel3_SRAL_MWR_Layer                        */
 /************************************************************************/
@@ -490,5 +488,3 @@ void netCDFDataset::ProcessSentinel3_SRAL_MWR()
     if (poSRS)
         poSRS->Release();
 }
-
-#endif  // NETCDF_HAS_NC4

@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "6";
+static const char SIX_FILE_CODE[] = "6";
 
 static const TigerFieldInfo rt6_fields[] = {
     // fieldname    fmt  type OFTType     beg  end  len  bDefine bSet
@@ -55,7 +55,7 @@ static const TigerRecordInfo rt6_info = {
 
 TigerZipCodes::TigerZipCodes(OGRTigerDataSource *poDSIn,
                              CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(&rt6_info, FILE_CODE)
+    : TigerFileBase(&rt6_info, SIX_FILE_CODE)
 
 {
     poDS = poDSIn;

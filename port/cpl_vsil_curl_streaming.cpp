@@ -642,17 +642,11 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     double dfSize = 0;
     if (eExists != EXIST_YES)
     {
-#if CURL_AT_LEAST_VERSION(7, 55, 0)
         curl_off_t nSizeTmp = 0;
         const CURLcode code = curl_easy_getinfo(
             hLocalHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &nSizeTmp);
         CPL_IGNORE_RET_VAL(dfSize);
         dfSize = static_cast<double>(nSizeTmp);
-#else
-        dfSize = 0;
-        const CURLcode code = curl_easy_getinfo(
-            hLocalHandle, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &dfSize);
-#endif
         if (code == 0)
         {
             eExists = EXIST_YES;
@@ -1821,7 +1815,7 @@ VSIS3StreamingFSHandler::CreateFileHandle(const char *pszURL)
 VSIS3LikeStreamingHandle::VSIS3LikeStreamingHandle(
     IVSIS3LikeStreamingFSHandler *poFS,
     IVSIS3LikeHandleHelper *poS3HandleHelper)
-    : VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL()),
+    : VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL().c_str()),
       m_poS3HandleHelper(poS3HandleHelper)
 {
 }
@@ -1856,7 +1850,7 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError(const char *pszErrorMsg,
     if (m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
                                               bSetError))
     {
-        SetURL(m_poS3HandleHelper->GetURL());
+        SetURL(m_poS3HandleHelper->GetURL().c_str());
         return true;
     }
     return false;
@@ -2193,5 +2187,7 @@ void VSICurlStreamingClearCache(void)
 }
 
 //! @endcond
+
+#undef ENABLE_DEBUG
 
 #endif  // !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)

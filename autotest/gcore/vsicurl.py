@@ -1107,3 +1107,23 @@ def test_vsicurl_bearer():
         gdal.VSIFSeekL(f, 0, 0)
         data = gdal.VSIFReadL(1, vsilen, f).decode("ascii")
         assert token in data
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/issues/8922
+
+
+@gdaltest.enable_exceptions()
+def test_vsicurl_404_repeated_same_resource(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("HEAD", "/does/not/exist.bin", 404)
+    handler.add("GET", "/does/not/", 404)
+    with webserver.install_http_handler(handler):
+        with pytest.raises(Exception, match="404"):
+            gdal.Open("/vsicurl/http://localhost:%d/does/not/exist.bin" % server.port)
+
+    with pytest.raises(Exception, match="404"):
+        gdal.Open("/vsicurl/http://localhost:%d/does/not/exist.bin" % server.port)

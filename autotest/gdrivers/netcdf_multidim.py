@@ -41,18 +41,8 @@ import pytest
 
 from osgeo import gdal, osr
 
-
-def has_nc4():
-    netcdf_drv = gdal.GetDriverByName("NETCDF")
-    if netcdf_drv is None:
-        return False
-    metadata = netcdf_drv.GetMetadata()
-    return "NETCDF_HAS_NC4" in metadata and metadata["NETCDF_HAS_NC4"] == "YES"
-
-
 pytestmark = [
     pytest.mark.require_driver("netCDF"),
-    pytest.mark.skipif(not has_nc4(), reason="netCDF 4 support missing"),
 ]
 
 

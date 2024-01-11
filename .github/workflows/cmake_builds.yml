@@ -41,15 +41,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
             ${{ runner.os }}-${{ env.cache-name }}
-    - name: Install CMake 3.9.1
-      run: |
-        cd ${GITHUB_WORKSPACE}
-        wget https://github.com/Kitware/CMake/releases/download/v3.9.1/cmake-3.9.1-Linux-x86_64.tar.gz
-        tar xzf cmake-3.9.1-Linux-x86_64.tar.gz
-        echo "CMAKE_DIR=$GITHUB_WORKSPACE/cmake-3.9.1-Linux-x86_64/bin" >> $GITHUB_ENV
-        echo "$GITHUB_WORKSPACE/cmake-3.9.1-Linux-x86_64/bin" >> $GITHUB_PATH
-    - run: |
-        cmake --version
     - name: Install dependency
       run: |
         # This currently fails as of https://lists.osgeo.org/pipermail/ubuntu/2023-October/002046.html
@@ -173,7 +164,7 @@ jobs:
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         mkdir -p $GITHUB_WORKSPACE/superbuild
         cd $GITHUB_WORKSPACE/superbuild
-        printf "cmake_minimum_required(VERSION 3.9)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
+        printf "cmake_minimum_required(VERSION 3.16)\nproject(test)\nenable_testing()\nadd_subdirectory(gdal)" > CMakeLists.txt
         ln -s .. gdal
         mkdir build
         cd build
@@ -421,7 +412,7 @@ jobs:
       shell: pwsh
       run: |
         echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -464,7 +455,7 @@ jobs:
       # Build PDF driver as plugin due to the PDFium build including libopenjp2 symbols which would conflict with external libopenjp2
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON
+        cmake -G "${generator}" -Werror=dev "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal" "-DUSE_CCACHE=ON" "-DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DGDAL_ENABLE_PLUGINS:BOOL=ON -DGDAL_ENABLE_PLUGINS_NO_DEPS:BOOL=ON -DGDAL_USE_PUBLICDECOMPWT:BOOL=ON -DPUBLICDECOMPWT_URL=https://github.com/rouault/PublicDecompWT -DBUILD_JAVA_BINDINGS=OFF -DBUILD_CSHARP_BINDINGS=ON -DGDAL_USE_MYSQL:BOOL=OFF -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DWERROR_DEV_FLAG="-Werror=dev" -DCMAKE_BUILD_TYPE=Release -DPDFIUM_ROOT=$GITHUB_WORKSPACE/install-pdfium -DGDAL_ENABLE_DRIVER_PDF_PLUGIN:BOOL=ON -DCMAKE_UNITY_BUILD=ON
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
@@ -507,6 +498,7 @@ jobs:
     env:
         architecture: x64
         generator: Visual Studio 17 2022
+        GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY: YES
     steps:
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
@@ -515,7 +507,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -556,7 +548,7 @@ jobs:
         ctest --test-dir $GITHUB_WORKSPACE/build -C RelWithDebInfo -V -j 3
       env:
         SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
-        BUILD_NAME: "build-windows-conda"
+        BUILD_NAME: "build-windows-minimum"
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
@@ -591,10 +583,11 @@ jobs:
         cmake --version
     - name: Install dependency
       run: |
+        rm -rf /usr/local/lib/node_modules # conflicts with node@18 from brew
         brew update
         brew outdated
         brew unlink python
-        brew install --overwrite python@3.10 python@3.11
+        brew install --overwrite python@3.11 python@3.12
         brew install postgresql || brew link postgresql
         brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive libkml boost
         brew install ccache swig
@@ -658,7 +651,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         activate-environment: gdalenv
         python-version: 3.9

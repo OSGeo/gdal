@@ -2274,9 +2274,6 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
 
-    // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
-    // 3.26.0 was required so that foreign key constraints are updated as well
-#if SQLITE_VERSION_NUMBER >= 3026000L
     if (nActualFlags == ALTER_NAME_FLAG)
     {
         CPLDebug("SQLite", "Running ALTER TABLE RENAME COLUMN");
@@ -2293,7 +2290,6 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
             return eErr;
     }
     else
-#endif
     {
         /* --------------------------------------------------------------------
          */

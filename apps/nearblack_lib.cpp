@@ -358,7 +358,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
     /*      Allocate a line buffer.                                         */
     /* -------------------------------------------------------------------- */
 
-    std::vector<GByte> abyLine(nXSize * nDstBands);
+    std::vector<GByte> abyLine(static_cast<size_t>(nXSize) * nDstBands);
     GByte *pabyLine = abyLine.data();
 
     std::vector<GByte> abyMask;

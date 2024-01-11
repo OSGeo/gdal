@@ -54,13 +54,11 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
     if (poOpenInfo->fpL != nullptr && STARTS_WITH(pszHeader, "netcdf ") &&
         strstr(pszHeader, "dimensions:") && strstr(pszHeader, "variables:"))
     {
-#ifdef NETCDF_HAS_NC4
         if (strstr(pszHeader, "// NC4C"))
             return NCDF_FORMAT_NC4C;
         else if (strstr(pszHeader, "// NC4"))
             return NCDF_FORMAT_NC4;
         else
-#endif  // NETCDF_HAS_NC4
             return NCDF_FORMAT_NC;
     }
 #endif  // ENABLE_NCDUMP
@@ -135,12 +133,7 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         }
 #endif
 
-// Check for netcdf-4 support in libnetcdf.
-#ifdef NETCDF_HAS_NC4
         return NCDF_FORMAT_NC4;
-#else
-        return NCDF_FORMAT_HDF5;
-#endif
     }
     else if (STARTS_WITH_CI(pszHeader, "\016\003\023\001"))
     {
@@ -185,11 +178,7 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
             }
             if (memcmp(abyBuf, achHDF5Signature, 8) == 0)
             {
-#ifdef NETCDF_HAS_NC4
                 return NCDF_FORMAT_NC4;
-#else
-                return NCDF_FORMAT_HDF5;
-#endif
             }
             nOffset *= 2;
         }
@@ -250,12 +239,23 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
             m_driverPrefixComponent = aosParts[0];
 
             int subdatasetIndex{2};
-            const bool hasDriveLetter{
-                (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
-                (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
 
-            const bool hasProtocol{std::string{aosParts[1]}.find("/vsicurl/") !=
-                                   std::string::npos};
+            std::string part1{aosParts[1]};
+            if (!part1.empty() && part1[0] == '"')
+            {
+                part1 = part1.substr(1);
+            }
+
+            const bool hasDriveLetter{
+                (strlen(aosParts[2]) > 1 &&
+                 (aosParts[2][0] == '\\' || aosParts[2][0] == '/')) &&
+                part1.length() == 1 && std::isalpha(part1.at(0))};
+
+            const bool hasProtocol{part1 == "/vsicurl/http" ||
+                                   part1 == "/vsicurl/https" ||
+                                   part1 == "/vsicurl_streaming/http" ||
+                                   part1 == "/vsicurl_streaming/https" ||
+                                   part1 == "http" || part1 == "https"};
 
             m_pathComponent = aosParts[1];
             if (hasDriveLetter || hasProtocol)
@@ -277,6 +277,19 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
                     m_subdatasetComponent.append(aosParts[i]);
                 }
             }
+
+            // Remove quotes from subdataset component
+            if (!m_subdatasetComponent.empty() &&
+                m_subdatasetComponent[0] == '"')
+            {
+                m_subdatasetComponent = m_subdatasetComponent.substr(1);
+            }
+            if (m_subdatasetComponent.rfind('"') ==
+                m_subdatasetComponent.length() - 1)
+            {
+                m_subdatasetComponent = m_subdatasetComponent.substr(
+                    0, m_subdatasetComponent.length() - 1);
+            }
         }
     }
 };
@@ -287,8 +300,8 @@ static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             std::make_unique<NCDFDriverSubdatasetInfo>(pszFileName);
-        if (!info->GetSubdatasetComponent().empty() &&
-            !info->GetPathComponent().empty())
+        // Subdataset component can be empty, path cannot.
+        if (!info->GetPathComponent().empty())
         {
             return info.release();
         }
@@ -343,11 +356,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "</OpenOptionList>");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONDATATYPES,
-#ifdef NETCDF_HAS_NC4
         "Byte Int8 UInt16 Int16 UInt32 Int32 Int64 UInt64 "
-#else
-        "Byte Int8 Int16 Int32 "
-#endif
         "Float32 Float64 "
         "CInt16 CInt32 CFloat32 CFloat64");
     poDriver->SetMetadataItem(
@@ -358,12 +367,9 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef NETCDF_HAS_NC2
         "     <Value>NC2</Value>"
 #endif
-#ifdef NETCDF_HAS_NC4
         "     <Value>NC4</Value>"
         "     <Value>NC4C</Value>"
-#endif
         "   </Option>"
-#ifdef NETCDF_HAS_NC4
         "   <Option name='COMPRESS' type='string-select' scope='raster' "
         "default='NONE'>"
         "     <Value>NONE</Value>"
@@ -371,7 +377,6 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "   </Option>"
         "   <Option name='ZLEVEL' type='int' scope='raster' "
         "description='DEFLATE compression level 1-9' default='1'/>"
-#endif
         "   <Option name='WRITE_BOTTOMUP' type='boolean' scope='raster' "
         "default='YES'>"
         "   </Option>"
@@ -399,9 +404,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "default='NO'>"
         "       <Value>NO</Value>"
         "       <Value>SEPARATE_FILES</Value>"
-#ifdef NETCDF_HAS_NC4
         "       <Value>SEPARATE_GROUPS</Value>"
-#endif
         "   </Option>"
         "   <Option name='GEOMETRY_ENCODING' type='string' scope='vector' "
         "default='CF_1.8' description='Specifies the type of geometry encoding "
@@ -422,27 +425,21 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='RECORD_DIM_NAME' type='string' description='Name of "
         "the unlimited dimension' default='record'/>"
         "   <Option name='STRING_DEFAULT_WIDTH' type='int' description='"
-#ifdef NETCDF_HAS_NC4
         "For non-NC4 format, "
-#endif
         "default width of strings. Default is 10 in autogrow mode, 80 "
         "otherwise.'/>"
         "   <Option name='WKT_DEFAULT_WIDTH' type='int' description='"
-#ifdef NETCDF_HAS_NC4
         "For non-NC4 format, "
-#endif
         "default width of WKT strings. Default is 1000 in autogrow mode, 10000 "
         "otherwise.'/>"
         "   <Option name='AUTOGROW_STRINGS' type='boolean' "
         "description='Whether to auto-grow non-bounded string fields of "
         "bidimensional char variable' default='YES'/>"
-#ifdef NETCDF_HAS_NC4
         "   <Option name='USE_STRING_IN_NC4' type='boolean' "
         "description='Whether to use NetCDF string type for strings in NC4 "
         "format. If NO, bidimensional char variable are used' default='YES'/>"
 #if 0
 "   <Option name='NCDUMP_COMPAT' type='boolean' description='When USE_STRING_IN_NC4=YEs, whether to use empty string instead of null string to avoid crashes with ncdump' default='NO'/>"
-#endif
 #endif
         "   <Option name='FEATURE_TYPE' type='string-select' description='CF "
         "FeatureType' default='AUTO'>"
@@ -471,9 +468,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef NETCDF_HAS_NC2
     poDriver->SetMetadataItem("NETCDF_HAS_NC2", "YES");
 #endif
-#ifdef NETCDF_HAS_NC4
     poDriver->SetMetadataItem("NETCDF_HAS_NC4", "YES");
-#endif
 #ifdef NETCDF_HAS_HDF4
     poDriver->SetMetadataItem("NETCDF_HAS_HDF4", "YES");
 #endif
@@ -483,15 +478,12 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
 #ifdef HAVE_HDF5
     poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
 #endif
-#ifdef HAVE_NETCDF_MEM
     poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
-#endif
 
 #ifdef ENABLE_NCDUMP
     poDriver->SetMetadataItem("ENABLE_NCDUMP", "YES");
 #endif
 
-#ifdef NETCDF_HAS_NC4
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
 
     poDriver->SetMetadataItem(
@@ -555,7 +547,6 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
                               "     <Value>NC_UINT64</Value>"
                               "   </Option>"
                               "</MultiDimAttributeCreationOptionList>");
-#endif
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
                               "Integer Integer64 Real String Date DateTime");
@@ -569,9 +560,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
-#ifdef NETCDF_HAS_NC4
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
-#endif
 }
 
 /************************************************************************/

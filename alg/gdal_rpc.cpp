@@ -59,8 +59,6 @@
 
 // #define DEBUG_VERBOSE_EXTRACT_DEM
 
-CPL_CVSID("$Id$")
-
 CPL_C_START
 CPLXMLNode *GDALSerializeRPCTransformer(void *pTransformArg);
 void *GDALDeserializeRPCTransformer(CPLXMLNode *psTree);
@@ -1668,7 +1666,7 @@ GDALRPCTransformWholeLineWithDEM(const GDALRPCTransformInfo *psTransform,
                                  int nXWidth, int nYTop, int nYHeight)
 {
     double *padfDEMBuffer = static_cast<double *>(
-        VSI_MALLOC2_VERBOSE(sizeof(double), nXWidth * nYHeight));
+        VSI_MALLOC3_VERBOSE(sizeof(double), nXWidth, nYHeight));
     if (padfDEMBuffer == nullptr)
     {
         for (int i = 0; i < nPointCount; i++)

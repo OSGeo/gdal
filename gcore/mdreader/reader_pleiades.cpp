@@ -311,7 +311,7 @@ void GDALMDReaderPleiades::LoadMetadata()
  * LoadRPCXmlFile()
  */
 
-static const char *const apszRPBMap[] = {
+static const char *const apszRPBMapPleiades[] = {
     RPC_LINE_OFF,     "RFM_Validity.LINE_OFF",  // do not change order !
     RPC_SAMP_OFF,     "RFM_Validity.SAMP_OFF",  // do not change order !
     RPC_LAT_OFF,      "RFM_Validity.LAT_OFF",
@@ -324,7 +324,7 @@ static const char *const apszRPBMap[] = {
     RPC_HEIGHT_SCALE, "RFM_Validity.HEIGHT_SCALE",
     nullptr,          nullptr};
 
-static const char *const apszRPCTXT20ValItems[] = {
+static const char *const apszRPCTXT20ValItemsPleiades[] = {
     RPC_LINE_NUM_COEFF, RPC_LINE_DEN_COEFF, RPC_SAMP_NUM_COEFF,
     RPC_SAMP_DEN_COEFF, nullptr};
 
@@ -439,10 +439,10 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
 
     // format list
     char **papszRPB = nullptr;
-    for (int i = 0; apszRPBMap[i] != nullptr; i += 2)
+    for (int i = 0; apszRPBMapPleiades[i] != nullptr; i += 2)
     {
         const char *pszValue =
-            CSLFetchNameValue(papszRawRPCList, apszRPBMap[i + 1]);
+            CSLFetchNameValue(papszRawRPCList, apszRPBMapPleiades[i + 1]);
         if ((i == 0 || i == 2) && pszValue)  //i.e. LINE_OFF or SAMP_OFF
         {
             CPLString osField;
@@ -452,16 +452,18 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
             else
                 dfVal += nPixelOffShift;
             osField.Printf("%.15g", dfVal);
-            papszRPB = CSLAddNameValue(papszRPB, apszRPBMap[i], osField);
+            papszRPB =
+                CSLAddNameValue(papszRPB, apszRPBMapPleiades[i], osField);
         }
         else
         {
-            papszRPB = CSLAddNameValue(papszRPB, apszRPBMap[i], pszValue);
+            papszRPB =
+                CSLAddNameValue(papszRPB, apszRPBMapPleiades[i], pszValue);
         }
     }
 
     // merge coefficients
-    for (int i = 0; apszRPCTXT20ValItems[i] != nullptr; i++)
+    for (int i = 0; apszRPCTXT20ValItemsPleiades[i] != nullptr; i++)
     {
         CPLString value;
         for (int j = 1; j < 21; j++)
@@ -473,7 +475,8 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
             // (alt)"""
             const char *pszValue = CSLFetchNameValue(
                 papszRawRPCList,
-                CPLSPrintf("Inverse_Model.%s_%d", apszRPCTXT20ValItems[i], j));
+                CPLSPrintf("Inverse_Model.%s_%d",
+                           apszRPCTXT20ValItemsPleiades[i], j));
             if (nullptr != pszValue)
             {
                 value = value + " " + CPLString(pszValue);
@@ -481,15 +484,17 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
             else
             {
                 pszValue = CSLFetchNameValue(
-                    papszRawRPCList, CPLSPrintf("GroundtoImage_Values.%s_%d",
-                                                apszRPCTXT20ValItems[i], j));
+                    papszRawRPCList,
+                    CPLSPrintf("GroundtoImage_Values.%s_%d",
+                               apszRPCTXT20ValItemsPleiades[i], j));
                 if (nullptr != pszValue)
                 {
                     value = value + " " + CPLString(pszValue);
                 }
             }
         }
-        papszRPB = CSLAddNameValue(papszRPB, apszRPCTXT20ValItems[i], value);
+        papszRPB =
+            CSLAddNameValue(papszRPB, apszRPCTXT20ValItemsPleiades[i], value);
     }
 
     CSLDestroy(papszRawRPCList);

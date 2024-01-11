@@ -1096,28 +1096,6 @@ def test_gdal_translate_lib_overview_level(tmp_vsimem):
 
 
 ###############################################################################
-# Test overviewLevel option in a situation where overview bands have not a
-# dedicated owner dataset.
-# Test last part of GDALOverviewDataset::IRasterIO() implementation
-
-
-@pytest.mark.require_driver("JP2KAK")
-def test_gdal_translate_lib_overview_level_freestanding(tmp_vsimem):
-
-    tmp_filename = tmp_vsimem / "tmp.jp2"
-
-    src_ds = gdal.Translate(
-        tmp_filename,
-        "../gcore/data/byte.tif",
-        width=20 * 32,
-        creationOptions=["QUALITY=100"],
-        format="JP2KAK",
-    )
-    out_ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0, width=20)
-    assert out_ds.GetRasterBand(1).Checksum() == 4667
-
-
-###############################################################################
 # Test copying a raster with no input band
 
 
@@ -1178,6 +1156,77 @@ def test_gdal_translate_lib_dict_arguments():
         "-mo",
         "TIFFTAG_XRESOLUTION=123",
     ]
+
+
+###############################################################################
+# Test -dmo option
+
+
+def test_gdal_translate_dmo_option():
+
+    dst_vrt = "/vsimem/test_dmo.vrt"
+
+    ## string dmo input
+    ds = gdal.Translate(
+        dst_vrt,
+        "../gcore/data/byte.tif",
+        domainMetadataOptions="NEW_DOMAIN:META-TAG=value",
+    )
+
+    md = ds.GetMetadata("NEW_DOMAIN")
+    assert "META-TAG" in md, "Did not get META-TAG"
+    assert md["META-TAG"] == "value"
+    ds = None
+
+    ## list dmo input
+    ds = gdal.Translate(
+        dst_vrt,
+        "../gcore/data/byte.tif",
+        domainMetadataOptions=[
+            "NEW_DOMAIN:META-TAG=value",
+            "ANOTHER_NEW_DOMAIN:META2-TAG=value",
+        ],
+    )
+
+    md = ds.GetMetadata("NEW_DOMAIN")
+    assert "META-TAG" in md, "Did not get META-TAG"
+    assert md["META-TAG"] == "value"
+    md = ds.GetMetadata("ANOTHER_NEW_DOMAIN")
+    assert "META2-TAG" in md, "Did not get META2-TAG"
+    assert md["META2-TAG"] == "value"
+
+    ds = None
+
+    ## pythonic dict dmo input
+    items = {
+        "domain_name": {"key": "value", "key1": "value1"},
+        "domain_2": {"key2": "value2"},
+    }
+    ds = gdal.Translate(
+        dst_vrt,
+        gdal.Open("../gcore/data/byte.tif"),
+        domainMetadataOptions=items,
+    )
+    md = ds.GetMetadata("domain_2")
+    assert "key2" in md, "Did not get key2"
+    assert md["key2"] == "value2"
+    ds = None
+
+    ds = gdal.Translate(
+        dst_vrt,
+        gdal.Open("../gcore/data/byte.tif"),
+        options=["-dmo", "FOO", "-dmo", "BOO:FAR", "-dmo", "dom=ain:SOO=VAR:1"],
+    )
+    mdl = ds.GetMetadataDomainList()
+    assert "FOO" not in mdl, "Found key 'FOO' from invalid input"
+    assert "BOO" not in mdl, "Found key 'BOO' from invalid input"
+    assert "dom=ain" in mdl, "Did not get dom=ain"
+
+    md = ds.GetMetadata("dom=ain")
+    assert "SOO" in md, "Did not get SOO"
+    assert md["SOO"] == "VAR:1", "Did not get value VAR:1"
+
+    ds = None
 
 
 ###############################################################################

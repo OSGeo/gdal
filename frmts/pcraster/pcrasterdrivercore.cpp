@@ -29,8 +29,10 @@
 #include "pcrasterdrivercore.h"
 
 /* value for first 27 bytes of MAIN_HEADER.signature */
+#ifndef CSF_SIG
 #define CSF_SIG "RUU CROSS SYSTEM MAP FORMAT"
 #define CSF_SIZE_SIG (sizeof(CSF_SIG) - 1)
+#endif
 
 /************************************************************************/
 /*                     PCRasterDriverIdentify()                         */
@@ -44,6 +46,9 @@ int PCRasterDriverIdentify(GDALOpenInfo *poOpenInfo)
             strncmp(reinterpret_cast<char *>(poOpenInfo->pabyHeader), CSF_SIG,
                     CSF_SIZE_SIG) == 0);
 }
+
+#undef CSF_SIG
+#undef CSF_SIZE_SIG
 
 /************************************************************************/
 /*                    PCRasterDriverSetCommonMetadata()                 */

@@ -33,6 +33,8 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                           TigerFileBase()                            */
 /************************************************************************/
@@ -352,11 +354,14 @@ OGRFeature *TigerFileBase::GetFeature(int nRecordId)
     if (fpPrimary == nullptr)
         return nullptr;
 
-    if (VSIFSeekL(fpPrimary, nRecordId * nRecordLength, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s",
-                 nRecordId * nRecordLength, pszModule);
-        return nullptr;
+        const auto nOffset = static_cast<uint64_t>(nRecordId) * nRecordLength;
+        if (VSIFSeekL(fpPrimary, nOffset, SEEK_SET) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %s", nOffset, pszModule);
+            return nullptr;
+        }
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned

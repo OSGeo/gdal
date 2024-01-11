@@ -324,3 +324,54 @@ def test_gdaladdo_partial_refresh_from_source_extent(gdaladdo_path, tmp_path):
             ovr_data_refreshed[idx] = ovr_data_ori[idx]
     assert ovr_data_refreshed == ovr_data_ori
     ds = None
+
+
+###############################################################################
+# Test reuse of previous resampling method and overview levels
+
+
+@pytest.mark.parametrize("read_only", [True, False])
+def test_gdaladdo_reuse_previous_resampling_and_levels(
+    gdaladdo_path, tmp_path, read_only
+):
+
+    tmpfilename = str(tmp_path / "test.tif")
+
+    gdal.Translate(tmpfilename, "../gcore/data/byte.tif")
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} -r average {tmpfilename}"
+        + (" -ro" if read_only else "")
+        + " 2 4"
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("RESAMPLING") == "AVERAGE"
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1152
+    ds = None
+
+    # Change resampling method to CUBIC
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} -r cubic {tmpfilename}" + (" -ro" if read_only else "")
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("RESAMPLING") == "CUBIC"
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1059
+    # Zeroize overview
+    ds.GetRasterBand(1).GetOverview(0).Fill(0)
+    ds = None
+
+    # Invoke gdaladdo without arguments and check overviews are regenerated
+    # using CUBIC
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} {tmpfilename}" + (" -ro" if read_only else "")
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("RESAMPLING") == "CUBIC"
+    assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1059
+    ds = None

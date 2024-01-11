@@ -61,17 +61,7 @@ add_library(
   ogr_proj_p.cpp
   ogr_wkb.cpp)
 add_dependencies(ogr generate_gdal_version_h)
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(
-    SOURCE ogrfeaturequery.cpp
-           ogr_srs_usgs.cpp
-           ogr_srs_panorama.cpp
-           swq_expr_node.cpp
-           swq_op_general.cpp
-           swq_parser.cpp
-           swq_select.cpp
-    PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-endif ()
+
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})

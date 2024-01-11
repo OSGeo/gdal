@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.18
+ARG ALPINE_VERSION=3.19
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -69,11 +69,12 @@ RUN mkdir proj \
         export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
         ccache -M 100M; \
     fi \
+    # IPO disabled since it crashes with gcc 13.2.1
     && cmake . \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
-        -DENABLE_IPO=ON \
+        -DENABLE_IPO=OFF \
         -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install \

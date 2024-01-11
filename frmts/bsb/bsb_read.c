@@ -99,7 +99,7 @@ note.  I would be happy to send you a copy of this conversion program.
 ... later email ...
 
          Well, here is my little proof of concept program. I hereby give
-you permission to distribute it freely, modify for you own use, etc.
+you permission to distribute it freely, modify for your own use, etc.
 I built it as a "WIN32 Console application" which means it runs in an MS
 DOS box under Microsoft Windows. But the only Windows specific stuff in it
 are the include files for the BMP file headers.  If you ripped out the BMP

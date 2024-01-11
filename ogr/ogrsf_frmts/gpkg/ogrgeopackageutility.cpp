@@ -28,7 +28,8 @@
 
 #include "ogrgeopackageutility.h"
 #include "ogr_p.h"
-
+#include "ogr_wkb.h"
+#include "sqlite/ogrsqlitebase.h"
 #include <limits>
 
 /* Requirement 20: A GeoPackage SHALL store feature table geometries */
@@ -369,6 +370,7 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
     if (nGpkgLen < 8 || pabyGpkg[0] != 0x47 || pabyGpkg[1] != 0x50 ||
         pabyGpkg[2] != 0) /* Version (only 0 supported at this time)*/
     {
+        memset(poHeader, 0, sizeof(*poHeader));
         return OGRERR_FAILURE;
     }
 
@@ -504,4 +506,89 @@ OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,
         return nullptr;
 
     return poGeom;
+}
+
+/************************************************************************/
+/*                     OGRGeoPackageGetHeader()                         */
+/************************************************************************/
+
+bool OGRGeoPackageGetHeader(sqlite3_context * /*pContext*/, int /*argc*/,
+                            sqlite3_value **argv, GPkgHeader *psHeader,
+                            bool bNeedExtent, bool bNeedExtent3D, int iGeomIdx)
+{
+
+    // Extent3D implies extent
+    const bool bNeedAnyExtent{bNeedExtent || bNeedExtent3D};
+
+    if (sqlite3_value_type(argv[iGeomIdx]) != SQLITE_BLOB)
+    {
+        memset(psHeader, 0, sizeof(*psHeader));
+        return false;
+    }
+    const int nBLOBLen = sqlite3_value_bytes(argv[iGeomIdx]);
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[iGeomIdx]));
+
+    if (nBLOBLen < 8)
+    {
+        memset(psHeader, 0, sizeof(*psHeader));
+        return false;
+    }
+    else if (GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, psHeader) != OGRERR_NONE)
+    {
+        bool bEmpty = false;
+        memset(psHeader, 0, sizeof(*psHeader));
+        if (OGRSQLiteGetSpatialiteGeometryHeader(
+                pabyBLOB, nBLOBLen, &(psHeader->iSrsId), nullptr, &bEmpty,
+                &(psHeader->MinX), &(psHeader->MinY), &(psHeader->MaxX),
+                &(psHeader->MaxY)) == OGRERR_NONE)
+        {
+            psHeader->bEmpty = bEmpty;
+            psHeader->bExtentHasXY = !bEmpty;
+            if (!bNeedExtent3D && !(bEmpty && bNeedAnyExtent))
+                return true;
+        }
+
+        return false;
+    }
+
+    if (psHeader->bEmpty && bNeedAnyExtent)
+    {
+        return false;
+    }
+    else if (!psHeader->bExtentHasXY && bNeedExtent && !bNeedExtent3D)
+    {
+        OGREnvelope sEnvelope;
+        if (OGRWKBGetBoundingBox(pabyBLOB + psHeader->nHeaderLen,
+                                 static_cast<size_t>(nBLOBLen) -
+                                     psHeader->nHeaderLen,
+                                 sEnvelope))
+        {
+            psHeader->MinX = sEnvelope.MinX;
+            psHeader->MaxX = sEnvelope.MaxX;
+            psHeader->MinY = sEnvelope.MinY;
+            psHeader->MaxY = sEnvelope.MaxY;
+            return true;
+        }
+        return false;
+    }
+    else if (!psHeader->bExtentHasZ && bNeedExtent3D)
+    {
+        OGREnvelope3D sEnvelope3D;
+        if (OGRWKBGetBoundingBox(pabyBLOB + psHeader->nHeaderLen,
+                                 static_cast<size_t>(nBLOBLen) -
+                                     psHeader->nHeaderLen,
+                                 sEnvelope3D))
+        {
+            psHeader->MinX = sEnvelope3D.MinX;
+            psHeader->MaxX = sEnvelope3D.MaxX;
+            psHeader->MinY = sEnvelope3D.MinY;
+            psHeader->MaxY = sEnvelope3D.MaxY;
+            psHeader->MinZ = sEnvelope3D.MinZ;
+            psHeader->MaxZ = sEnvelope3D.MaxZ;
+            return true;
+        }
+        return false;
+    }
+    return true;
 }

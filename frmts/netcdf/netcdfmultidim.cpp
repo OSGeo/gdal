@@ -32,11 +32,7 @@
 #include "netcdfdataset.h"
 #include "netcdfdrivercore.h"
 
-#ifdef HAVE_NETCDF_MEM
 #include "netcdf_mem.h"
-#endif
-
-#ifdef NETCDF_HAS_NC4
 
 /************************************************************************/
 /*                         netCDFSharedResources                        */
@@ -4947,7 +4943,6 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     poSharedResources->m_bFileToDestroyAtClosing = bFileToDestroyAtClosing;
 #endif
 
-#ifdef HAVE_NETCDF_MEM
     if (STARTS_WITH(osFilenameForNCOpen, "/vsimem/") &&
         poOpenInfo->eAccess == GA_ReadOnly)
     {
@@ -4968,7 +4963,6 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         }
     }
     else
-#endif
     {
 #ifdef ENABLE_UFFD
         bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
@@ -5131,5 +5125,3 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
 
     return poDS;
 }
-
-#endif  // NETCDF_HAS_NC4

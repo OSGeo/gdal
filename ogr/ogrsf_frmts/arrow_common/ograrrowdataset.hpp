@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef OGARROWDATASET_HPP_INCLUDED
+#define OGARROWDATASET_HPP_INCLUDED
+
 #include "ogr_arrow.h"
 
 /************************************************************************/
@@ -105,3 +108,5 @@ inline OGRLayer *OGRArrowDataset::GetLayer(int idx)
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
+
+#endif /* OGARROWDATASET_HPP_INCLUDED */

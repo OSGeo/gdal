@@ -32,7 +32,6 @@
 import os
 import re
 from http.server import BaseHTTPRequestHandler
-from tempfile import TemporaryDirectory
 
 import gdaltest
 import ogrtest
@@ -76,6 +75,9 @@ def sanitize_url(url):
         text = text.replace(c, "_")
     text = REPLACE_PRECISION_RE.sub("\\1", text)
     return text.replace("_fakeogcapi", "request")
+
+
+global_remove_type_application_json = False
 
 
 class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
@@ -158,6 +160,17 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                         ).encode("utf8"),
                         fd.read(),
                     )
+
+                    if global_remove_type_application_json:
+                        response = response.replace(
+                            b""""type" : "application/json",""", b""
+                        )
+
+                    REMOVE_CONTENT_LENGTH_HEADER_RE = re.compile(
+                        rb"Content-Length: \d+\r\n"
+                    )
+                    response = REMOVE_CONTENT_LENGTH_HEADER_RE.sub(b"", response)
+
                     self.wfile.write(response)
                 return
 
@@ -197,44 +210,55 @@ def init():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
-def test_ogr_ogcapi_features():
+@pytest.mark.parametrize("remove_type_application_json", [False, True])
+def test_ogr_ogcapi_features(remove_type_application_json):
 
-    ds = gdal.OpenEx(
-        "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
-        gdal.OF_VECTOR,
-        open_options=["CACHE=NO", "API=ITEMS"],
-    )
+    global global_remove_type_application_json
+    global_remove_type_application_json = remove_type_application_json
 
-    assert ds is not None
+    try:
+        ds = gdal.OpenEx(
+            "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
+            gdal.OF_VECTOR,
+            open_options=["CACHE=NO", "API=ITEMS"],
+        )
 
-    sub_ds_uri = [
-        v[0] for v in ds.GetSubDatasets() if v[1] == "Collection ne_10m_lakes_europe"
-    ][0]
+        assert ds is not None
 
-    del ds
+        sub_ds_uri = [
+            v[0]
+            for v in ds.GetSubDatasets()
+            if v[1] == "Collection ne_10m_lakes_europe"
+        ][0]
 
-    ds = gdal.OpenEx(sub_ds_uri, gdal.OF_VECTOR, open_options=["CACHE=NO", "API=ITEMS"])
-    assert ds is not None
+        del ds
 
-    lyr = ds.GetLayerByName("NaturalEarth:physical:ne_10m_lakes_europe")
-    assert lyr is not None
+        ds = gdal.OpenEx(
+            sub_ds_uri, gdal.OF_VECTOR, open_options=["CACHE=NO", "API=ITEMS"]
+        )
+        assert ds is not None
 
-    feat = lyr.GetNextFeature()
-    fdef = feat.GetDefnRef()
-    assert fdef.GetFieldDefn(0).GetName() == "feature::id"
-    assert fdef.GetFieldDefn(3).GetName() == "name"
+        lyr = ds.GetLayerByName("NaturalEarth:physical:ne_10m_lakes_europe")
+        assert lyr is not None
 
-    ogrtest.check_feature_geometry(
-        feat,
-        "POLYGON ((-4.6543673319905 58.1553000824025,-4.6250972807178 58.1436693142282,-4.6081017670756 58.1342702801685,-4.5893036989562 58.1245279023988,-4.5722223493866 58.1163305713239,-4.5518792345724 58.1083907480315,-4.5339395257279 58.101137612159,-4.5218366599524 58.0922965116279,-4.4935108038821 58.0780048297015,-4.4530820820363 58.0534128364768,-4.4285330067753 58.0354731276323,-4.4254429133858 58.0470180598791,-4.4260437648782 58.0616530855155,-4.4324814594397 58.0646573429775,-4.4707642830983 58.0880047152536,-4.5038969511079 58.1081761582128,-4.5227808551547 58.1120816929134,-4.5409780717817 58.1248712461088,-4.5504200238052 58.126330456876,-4.563467084783 58.126330456876,-4.5802050906427 58.14002128731,-4.6111918604651 58.154055461454,-4.6317924830617 58.1573601446622,-4.6504188793261 58.1622527925289,-4.6814056491485 58.1725960217909,-4.7105898644937 58.182252563633,-4.7324780260026 58.1904928126717,-4.7421774858085 58.1910936641641,-4.7303321278154 58.179591649881,-4.6950535616188 58.1656003937008,-4.6762554934994 58.1598064685955,-4.6543673319905 58.1553000824025))",
-        max_error=0.00001,
-    )
-    assert feat.GetField("name") == "Loch Bhanabhaidh"
-    assert feat.GetField("feature::id") == 1
-    assert feat.GetField("id") == 98696
+        feat = lyr.GetNextFeature()
+        fdef = feat.GetDefnRef()
+        assert fdef.GetFieldDefn(0).GetName() == "feature::id"
+        assert fdef.GetFieldDefn(3).GetName() == "name"
 
-    del lyr
-    del ds
+        ogrtest.check_feature_geometry(
+            feat,
+            "POLYGON ((-4.6543673319905 58.1553000824025,-4.6250972807178 58.1436693142282,-4.6081017670756 58.1342702801685,-4.5893036989562 58.1245279023988,-4.5722223493866 58.1163305713239,-4.5518792345724 58.1083907480315,-4.5339395257279 58.101137612159,-4.5218366599524 58.0922965116279,-4.4935108038821 58.0780048297015,-4.4530820820363 58.0534128364768,-4.4285330067753 58.0354731276323,-4.4254429133858 58.0470180598791,-4.4260437648782 58.0616530855155,-4.4324814594397 58.0646573429775,-4.4707642830983 58.0880047152536,-4.5038969511079 58.1081761582128,-4.5227808551547 58.1120816929134,-4.5409780717817 58.1248712461088,-4.5504200238052 58.126330456876,-4.563467084783 58.126330456876,-4.5802050906427 58.14002128731,-4.6111918604651 58.154055461454,-4.6317924830617 58.1573601446622,-4.6504188793261 58.1622527925289,-4.6814056491485 58.1725960217909,-4.7105898644937 58.182252563633,-4.7324780260026 58.1904928126717,-4.7421774858085 58.1910936641641,-4.7303321278154 58.179591649881,-4.6950535616188 58.1656003937008,-4.6762554934994 58.1598064685955,-4.6543673319905 58.1553000824025))",
+            max_error=0.00001,
+        )
+        assert feat.GetField("name") == "Loch Bhanabhaidh"
+        assert feat.GetField("feature::id") == 1
+        assert feat.GetField("id") == 98696
+
+        del lyr
+        del ds
+    finally:
+        global_remove_type_application_json = False
 
 
 @pytest.mark.parametrize(
@@ -301,7 +325,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
     ),
 )
 @pytest.mark.require_driver("WMS")
-def test_ogr_ogcapi_raster(api, collection):
+def test_ogr_ogcapi_raster(api, collection, tmp_path):
 
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
@@ -323,27 +347,31 @@ def test_ogr_ogcapi_raster(api, collection):
 
     assert ds is not None
 
-    with TemporaryDirectory() as tmpdir:
-        options = gdal.TranslateOptions(
-            gdal.ParseCommandLine(
-                f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
-            )
+    options = gdal.TranslateOptions(
+        gdal.ParseCommandLine(
+            f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
         )
-        out_path = os.path.join(tmpdir, "lough_corrib.png")
+    )
+    out_path = str(tmp_path / "lough_corrib.png")
 
-        gdal.Translate(out_path, ds, options=options)
+    gdal.Translate(out_path, ds, options=options)
 
-        control_image_path = os.path.join(
-            BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
-        )
+    control_image_path = os.path.join(
+        BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
+    )
 
-        # When recording also regenerate control images
-        if RECORD:
-            shutil.copyfile(out_path, control_image_path)
+    # When recording also regenerate control images
+    if RECORD:
+        shutil.copyfile(out_path, control_image_path)
 
-        with open(control_image_path, "rb") as expected:
-            with open(out_path, "rb") as out_data:
-                assert out_data.read() == expected.read()
+    control_image_ds = gdal.Open(control_image_path)
+    out_ds = gdal.Open(out_path)
+    assert [
+        out_ds.GetRasterBand(i + 1).Checksum() for i in range(out_ds.RasterCount)
+    ] == [
+        control_image_ds.GetRasterBand(i + 1).Checksum()
+        for i in range(control_image_ds.RasterCount)
+    ]
 
 
 @pytest.mark.parametrize(

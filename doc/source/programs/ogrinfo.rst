@@ -17,13 +17,14 @@ Synopsis
 .. code-block::
 
     ogrinfo [--help] [--help-general]
-            [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
+            [-if <driver_name>] [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
             [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>] [-fid <fid>]
             [-sql <statement>|@<filename>] [-dialect <sql_dialect>] [-al] [-rl]
             [-so|-features] [-fields={YES|NO}]]
             [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] [-oo <NAME>=<VALUE>]...
             [-nomd] [-listmdd] [-mdd <domain>|all]...
-            [-nocount] [-noextent] [-nogeomtype] [-wkt_format WKT1|WKT2|<other_values>]
+            [-nocount] [-nogeomtype] [[-noextent] | [-extent3D]]
+            [-wkt_format WKT1|WKT2|<other_values>]
             [-fielddomain <name>]
             <datasource_name> [<layer> [<layer> ...]]
 
@@ -37,6 +38,8 @@ edit data.
 .. program:: ogrinfo
 
 .. include:: options/help_and_help_general.rst
+
+.. include:: options/if.rst
 
 .. option:: -json
 
@@ -64,6 +67,8 @@ edit data.
     Enable random layer reading mode, i.e. iterate over features in the order
     they are found in the dataset, and not layer per layer. This can be
     significantly faster for some formats (for example OSM, GMLAS).
+    -rl cannot be used with -sql.
+
 
     .. versionadded:: 2.2
 
@@ -172,6 +177,14 @@ edit data.
 .. option:: -noextent
 
     Suppress spatial extent printing.
+
+.. option:: -extent3D
+
+    .. versionadded:: 3.9
+
+    Request a 3D extent to be reported (the default is 2D only). Note that this
+    operation might be slower than requesting the 2D extent, depending on format
+    and driver capabilities.
 
 .. option:: -nogeomtype
 

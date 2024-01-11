@@ -234,10 +234,18 @@ typedef unsigned char boolean;
 #include "jerror.h"
 #include "jpeglib.h"
 
+#ifndef TIFF_jpeg_source_mgr_defined
+#define TIFF_jpeg_source_mgr_defined
+typedef struct jpeg_source_mgr jpeg_source_mgr;
+#endif
+
+#ifndef TIFF_jpeg_error_mgr_defined
+#define TIFF_jpeg_error_mgr_defined
 typedef struct jpeg_error_mgr jpeg_error_mgr;
+#endif
+
 typedef struct jpeg_common_struct jpeg_common_struct;
 typedef struct jpeg_decompress_struct jpeg_decompress_struct;
-typedef struct jpeg_source_mgr jpeg_source_mgr;
 
 typedef enum
 {

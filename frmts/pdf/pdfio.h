@@ -38,55 +38,25 @@
 
 #define BUFFER_SIZE 1024
 
-#define getPos_ret_type Goffset
-#define getStart_ret_type Goffset
-#define makeSubStream_offset_type Goffset
-#define setPos_offset_type Goffset
-#define moveStart_delta_type Goffset
-
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-#define makeSubStream_object_type Object &&
-#else
-#define makeSubStream_object_type Object *
-#endif
-
-// Detect Poppler 0.71 that no longer defines GBool
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 69
-#ifndef initObj
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 71
-#define GBool bool
-#define gFalse false
-#endif
-#endif
-#endif
-
 class VSIPDFFileStream final : public BaseStream
 {
   public:
-    VSIPDFFileStream(VSILFILE *f, const char *pszFilename,
-                     makeSubStream_object_type dictA);
+    VSIPDFFileStream(VSILFILE *f, const char *pszFilename, Object &&dictA);
     VSIPDFFileStream(VSIPDFFileStream *poParent, vsi_l_offset startA,
-                     GBool limitedA, vsi_l_offset lengthA,
-                     makeSubStream_object_type dictA);
+                     bool limitedA, vsi_l_offset lengthA, Object &&dictA);
     virtual ~VSIPDFFileStream();
 
     virtual BaseStream *copy() override;
 
-    virtual Stream *makeSubStream(makeSubStream_offset_type startA,
-                                  GBool limitedA,
-                                  makeSubStream_offset_type lengthA,
-                                  makeSubStream_object_type dictA) override;
-    virtual getPos_ret_type getPos() override;
-    virtual getStart_ret_type getStart() override;
+    virtual Stream *makeSubStream(Goffset startA, bool limitedA,
+                                  Goffset lengthA, Object &&dictA) override;
+    virtual Goffset getPos() override;
+    virtual Goffset getStart() override;
 
-    virtual void setPos(setPos_offset_type pos, int dir = 0) override;
-    virtual void moveStart(moveStart_delta_type delta) override;
+    virtual void setPos(Goffset pos, int dir = 0) override;
+    virtual void moveStart(Goffset delta) override;
 
-    virtual StreamKind getKind()
-#if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 83
-        const
-#endif
-        override;
+    virtual StreamKind getKind() const override;
 
     virtual GooString *getFileName() override;
 
@@ -104,14 +74,14 @@ class VSIPDFFileStream final : public BaseStream
     }
 
   private:
-    virtual GBool hasGetChars() override;
-    virtual int getChars(int nChars, Guchar *buffer) override;
+    virtual bool hasGetChars() override;
+    virtual int getChars(int nChars, unsigned char *buffer) override;
 
     VSIPDFFileStream *poParent;
     GooString *poFilename;
     VSILFILE *f;
     vsi_l_offset nStart;
-    GBool bLimited;
+    bool bLimited;
     vsi_l_offset nLength;
 
     vsi_l_offset nCurrentPos;

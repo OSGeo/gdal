@@ -209,16 +209,8 @@ def test_jp2kak_13(use_stripe_compressor):
         ov_band.XSize == 250 and ov_band.YSize == 4
     ), "did not get expected overview size."
     #
-    # Note, due to oddities of rounding related to identifying discard
-    # levels the overview is actually generated with no discard levels
-    # and in the debug output we see 500x7 -> 500x7 -> 250x4.
     checksum = ov_band.Checksum()
-    assert checksum in (
-        11767,
-        11776,
-        11736,
-        11801,
-    ), "did not get expected overview checksum"
+    assert checksum == 12061, "did not get expected overview checksum"
 
 
 ###############################################################################
@@ -580,12 +572,7 @@ def test_jp2kak_21():
         0, 0, 20, 20, 40, 40, resample_alg=gdal.GRIORA_Cubic
     )
 
-    mem_ds = gdal.GetDriverByName("MEM").Create("", 40, 40, 1, gdal.GDT_Int16)
-    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, ref_upsampled_data)
-    ref_cs = mem_ds.GetRasterBand(1).Checksum()
-    mem_ds.GetRasterBand(1).WriteRaster(0, 0, 40, 40, upsampled_data)
-    cs = mem_ds.GetRasterBand(1).Checksum()
-    assert cs == ref_cs
+    assert upsampled_data == ref_upsampled_data
 
 
 ###############################################################################

@@ -347,8 +347,6 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
     return CE_Failure;
 }
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-
 struct GTiffDecompressContext
 {
     std::mutex oMutex{};
@@ -856,8 +854,8 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             (static_cast<size_t>(nYOffsetInBlock) * poDS->m_nBlockXSize +
              nXOffsetInBlock) *
                 nDTSize * nBandsPerStrile;
-        const size_t nSrcLineInc =
-            poDS->m_nBlockXSize * nDTSize * nBandsPerStrile;
+        const size_t nSrcLineInc = static_cast<size_t>(poDS->m_nBlockXSize) *
+                                   nDTSize * nBandsPerStrile;
 
         // Optimization when writing to BIP buffer.
         if (psContext->bUseBIPOptim)
@@ -1418,8 +1416,6 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     return sContext.bSuccess ? CE_None : CE_Failure;
 }
 
-#endif  // SUPPORTS_GET_OFFSET_BYTECOUNT
-
 /************************************************************************/
 /*                        FetchBufferVirtualMemIO                       */
 /************************************************************************/
@@ -1441,7 +1437,7 @@ class FetchBufferVirtualMemIO final
     const GByte *FetchBytes(vsi_l_offset nOffset, int nPixels, int nDTSize,
                             bool bIsByteSwapped, bool bIsComplex, int nBlockId)
     {
-        if (nOffset + nPixels * nDTSize > nMappingSize)
+        if (nOffset + static_cast<size_t>(nPixels) * nDTSize > nMappingSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);
@@ -1449,7 +1445,8 @@ class FetchBufferVirtualMemIO final
         }
         if (!bIsByteSwapped)
             return pabySrcData + nOffset;
-        memcpy(pTempBuffer, pabySrcData + nOffset, nPixels * nDTSize);
+        memcpy(pTempBuffer, pabySrcData + nOffset,
+               static_cast<size_t>(nPixels) * nDTSize);
         if (bIsComplex)
             GDALSwapWords(pTempBuffer, nDTSize / 2, 2 * nPixels, nDTSize / 2);
         else
@@ -1461,13 +1458,14 @@ class FetchBufferVirtualMemIO final
                     int nDTSize, bool bIsByteSwapped, bool bIsComplex,
                     int nBlockId)
     {
-        if (nOffset + nPixels * nDTSize > nMappingSize)
+        if (nOffset + static_cast<size_t>(nPixels) * nDTSize > nMappingSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);
             return false;
         }
-        memcpy(pabyDstBuffer, pabySrcData + nOffset, nPixels * nDTSize);
+        memcpy(pabyDstBuffer, pabySrcData + nOffset,
+               static_cast<size_t>(nPixels) * nDTSize);
         if (bIsByteSwapped)
         {
             if (bIsComplex)
@@ -3013,7 +3011,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
             (nXOff +
              static_cast<vsi_l_offset>(nYOffsetInBlock) * m_nBlockXSize) *
             nSrcPixelSize;
-        panSizes[iLine] = nReqXSize * nSrcPixelSize;
+        panSizes[iLine] = static_cast<size_t>(nReqXSize) * nSrcPixelSize;
     }
 
     // Extract data from the file.
@@ -3140,7 +3138,6 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
 bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
                               GPtrDiff_t nBlockReqSize)
 {
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     // Optimization by which we can save some libtiff buffer copy
     std::pair<vsi_l_offset, vsi_l_offset> oPair;
     if (
@@ -3170,7 +3167,6 @@ bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
             return true;
         }
     }
-#endif
 
     // For debugging
     if (m_poBaseDS)
@@ -5044,22 +5040,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         m_nBlockYSize == nRasterYSize && nRasterYSize > 2000 && !bTreatAsRGBA &&
         CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
     {
-        // libtiff 4.0.0beta5 (also
-        // 20091104) and older will crash when trying to open a
-        // all-in-one-strip YCbCr JPEG compressed TIFF (see #3259).
-#if (TIFFLIB_VERSION <= 20091104)
-        if (m_nPhotometric == PHOTOMETRIC_YCBCR &&
-            m_nCompression == COMPRESSION_JPEG)
-        {
-            CPLDebug("GTiff",
-                     "Avoid using split band to open all-in-one-strip "
-                     "YCbCr JPEG compressed TIFF because of older libtiff");
-        }
-        else
-#endif
-        {
-            m_bTreatAsSplit = true;
-        }
+        m_bTreatAsSplit = true;
     }
 
     /* -------------------------------------------------------------------- */

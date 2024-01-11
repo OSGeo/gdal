@@ -91,6 +91,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
                                   int nFlags) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce = TRUE) override;
+    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                               int bForce = TRUE) override;
 
     //
     // OGRGeoJSONLayer Interface
@@ -116,7 +121,6 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     OGRGeoJSONReader *poReader_;
     bool bHasAppendedFeatures_;
     CPLString sFIDColumn_;
-    bool bUpdated_;
     bool bOriginalIdModified_;
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;
@@ -191,7 +195,6 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 
     bool bRFC7946_;
     bool bWrapDateLine_ = false;
-    bool bHasMakeValid_ = false;
     std::string osForeignMembers_{};
     OGRCoordinateTransformation *poCT_;
     OGRGeometryFactory::TransformWithOptionsCache oTransformCache_;

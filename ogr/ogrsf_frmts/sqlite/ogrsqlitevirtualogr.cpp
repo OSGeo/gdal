@@ -1914,19 +1914,13 @@ static const struct sqlite3_module sOGR2SQLITEModule = {
     nullptr,
     /* xFindFunction */  // OGR2SQLITE_FindFunction;
     OGR2SQLITE_Rename,
-#if SQLITE_VERSION_NUMBER >=                                                   \
-    3007007L /* should be the first version with the below symbols */
     nullptr,  // xSavepoint
     nullptr,  // xRelease
     nullptr,  // xRollbackTo
-#if SQLITE_VERSION_NUMBER >=                                                   \
-    3025003L /* should be the first version with the below symbols */
     nullptr,  // xShadowName
 #if SQLITE_VERSION_NUMBER >=                                                   \
     3044000L /* should be the first version with the below symbols */
     nullptr,  // xIntegrity
-#endif
-#endif
 #endif
 };
 

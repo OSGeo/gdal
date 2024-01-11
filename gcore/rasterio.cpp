@@ -1719,7 +1719,8 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
             nFullResYSizeQueried = nRasterYSize;
 
         void *pChunk = VSI_MALLOC3_VERBOSE(
-            GDALGetDataTypeSizeBytes(eWrkDataType) * nBandCount,
+            cpl::fits_on<int>(GDALGetDataTypeSizeBytes(eWrkDataType) *
+                              nBandCount),
             nFullResXSizeQueried, nFullResYSizeQueried);
         GByte *pabyChunkNoDataMask = nullptr;
 
@@ -3577,29 +3578,34 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
                                   int nBufXSize, int nBufYSize,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
-    double dfDesiredResolution = 0.0;
     /* -------------------------------------------------------------------- */
-    /*      Compute the desired resolution.  The resolution is              */
+    /*      Compute the desired downsampling factor.  It is                 */
     /*      based on the least reduced axis, and represents the number      */
     /*      of source pixels to one destination pixel.                      */
     /* -------------------------------------------------------------------- */
-    if ((nXSize / static_cast<double>(nBufXSize)) <
-            (nYSize / static_cast<double>(nBufYSize)) ||
-        nBufYSize == 1)
-        dfDesiredResolution = nXSize / static_cast<double>(nBufXSize);
-    else
-        dfDesiredResolution = nYSize / static_cast<double>(nBufYSize);
+    const double dfDesiredDownsamplingFactor =
+        ((nXSize / static_cast<double>(nBufXSize)) <
+             (nYSize / static_cast<double>(nBufYSize)) ||
+         nBufYSize == 1)
+            ? nXSize / static_cast<double>(nBufXSize)
+            : nYSize / static_cast<double>(nBufYSize);
 
     /* -------------------------------------------------------------------- */
-    /*      Find the overview level that largest resolution value (most     */
+    /*      Find the overview level that largest downsampling factor (most  */
     /*      downsampled) that is still less than (or only a little more)    */
     /*      downsampled than the request.                                   */
     /* -------------------------------------------------------------------- */
-    int nOverviewCount = poBand->GetOverviewCount();
+    const int nOverviewCount = poBand->GetOverviewCount();
     GDALRasterBand *poBestOverview = nullptr;
-    double dfBestResolution = 0;
+    double dfBestDownsamplingFactor = 0;
     int nBestOverviewLevel = -1;
 
+    const char *pszOversampligThreshold =
+        CPLGetConfigOption("GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", nullptr);
+    const double dfOversamplingThreshold =
+        pszOversampligThreshold ? CPLAtof(pszOversampligThreshold)
+        : psExtraArg->eResampleAlg != GRIORA_NearestNeighbour ? 1.0
+                                                              : 1.2;
     for (int iOverview = 0; iOverview < nOverviewCount; iOverview++)
     {
         GDALRasterBand *poOverview = poBand->GetOverview(iOverview);
@@ -3610,22 +3616,22 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
             continue;
         }
 
-        double dfResolution = 0.0;
+        // Compute downsampling factor of this overview
+        const double dfDownsamplingFactor = std::min(
+            poBand->GetXSize() / static_cast<double>(poOverview->GetXSize()),
+            poBand->GetYSize() / static_cast<double>(poOverview->GetYSize()));
 
-        // What resolution is this?
-        if ((poBand->GetXSize() / static_cast<double>(poOverview->GetXSize())) <
-            (poBand->GetYSize() / static_cast<double>(poOverview->GetYSize())))
-            dfResolution = poBand->GetXSize() /
-                           static_cast<double>(poOverview->GetXSize());
-        else
-            dfResolution = poBand->GetYSize() /
-                           static_cast<double>(poOverview->GetYSize());
-
-        // Is it nearly the requested resolution and better (lower) than
-        // the current best resolution?
-        if (dfResolution >= dfDesiredResolution * 1.2 ||
-            dfResolution <= dfBestResolution)
+        // Is it nearly the requested factor and better (lower) than
+        // the current best factor?
+        if ((dfOversamplingThreshold == 1.0 &&
+             dfDownsamplingFactor > dfDesiredDownsamplingFactor) ||
+            (dfOversamplingThreshold > 1.0 &&
+             dfDownsamplingFactor >=
+                 dfDesiredDownsamplingFactor * dfOversamplingThreshold) ||
+            dfDownsamplingFactor <= dfBestDownsamplingFactor)
+        {
             continue;
+        }
 
         // Ignore AVERAGE_BIT2GRAYSCALE overviews for RasterIO purposes.
         const char *pszResampling = poOverview->GetMetadataItem("RESAMPLING");
@@ -3637,7 +3643,7 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
         // OK, this is our new best overview.
         poBestOverview = poOverview;
         nBestOverviewLevel = iOverview;
-        dfBestResolution = dfResolution;
+        dfBestDownsamplingFactor = dfDownsamplingFactor;
     }
 
     /* -------------------------------------------------------------------- */
@@ -3651,17 +3657,19 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
     /*      Recompute the source window in terms of the selected            */
     /*      overview.                                                       */
     /* -------------------------------------------------------------------- */
-    const double dfXRes =
+    const double dfXFactor =
         poBand->GetXSize() / static_cast<double>(poBestOverview->GetXSize());
-    const double dfYRes =
+    const double dfYFactor =
         poBand->GetYSize() / static_cast<double>(poBestOverview->GetYSize());
+    CPLDebug("GDAL", "Selecting overview %d x %d", poBestOverview->GetXSize(),
+             poBestOverview->GetYSize());
 
     const int nOXOff = std::min(poBestOverview->GetXSize() - 1,
-                                static_cast<int>(nXOff / dfXRes + 0.5));
+                                static_cast<int>(nXOff / dfXFactor + 0.5));
     const int nOYOff = std::min(poBestOverview->GetYSize() - 1,
-                                static_cast<int>(nYOff / dfYRes + 0.5));
-    int nOXSize = std::max(1, static_cast<int>(nXSize / dfXRes + 0.5));
-    int nOYSize = std::max(1, static_cast<int>(nYSize / dfYRes + 0.5));
+                                static_cast<int>(nYOff / dfYFactor + 0.5));
+    int nOXSize = std::max(1, static_cast<int>(nXSize / dfXFactor + 0.5));
+    int nOYSize = std::max(1, static_cast<int>(nYSize / dfYFactor + 0.5));
     if (nOXOff + nOXSize > poBestOverview->GetXSize())
         nOXSize = poBestOverview->GetXSize() - nOXOff;
     if (nOYOff + nOYSize > poBestOverview->GetYSize())
@@ -3671,18 +3679,18 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
     {
         if (psExtraArg->bFloatingPointWindowValidity)
         {
-            psExtraArg->dfXOff /= dfXRes;
-            psExtraArg->dfXSize /= dfXRes;
-            psExtraArg->dfYOff /= dfYRes;
-            psExtraArg->dfYSize /= dfYRes;
+            psExtraArg->dfXOff /= dfXFactor;
+            psExtraArg->dfXSize /= dfXFactor;
+            psExtraArg->dfYOff /= dfYFactor;
+            psExtraArg->dfYSize /= dfYFactor;
         }
         else if (psExtraArg->eResampleAlg != GRIORA_NearestNeighbour)
         {
             psExtraArg->bFloatingPointWindowValidity = true;
-            psExtraArg->dfXOff = nXOff / dfXRes;
-            psExtraArg->dfXSize = nXSize / dfXRes;
-            psExtraArg->dfYOff = nYOff / dfYRes;
-            psExtraArg->dfYSize = nYSize / dfYRes;
+            psExtraArg->dfXOff = nXOff / dfXFactor;
+            psExtraArg->dfXSize = nXSize / dfXFactor;
+            psExtraArg->dfYOff = nYOff / dfYFactor;
+            psExtraArg->dfYSize = nYSize / dfYFactor;
         }
     }
 

@@ -1673,15 +1673,12 @@ int FileGDBDateTimeWithOffsetToOGRDate(double dfVal, int16_t nUTCOffset,
                                        OGRField *psField)
 {
     int ret = FileGDBDoubleDateToOGRDate(dfVal, true, psField);
-    if (ret)
+    if (nUTCOffset >= -14 * 60 && nUTCOffset <= 14 * 60)
     {
-        if (nUTCOffset >= -14 * 60 && nUTCOffset <= 14 * 60)
-        {
-            psField->Date.TZFlag = static_cast<GByte>(100 + nUTCOffset / 15);
-        }
-        else
-            ret = FALSE;
+        psField->Date.TZFlag = static_cast<GByte>(100 + nUTCOffset / 15);
     }
+    else
+        ret = FALSE;
     return ret;
 }
 

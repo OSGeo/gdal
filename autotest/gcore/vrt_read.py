@@ -1659,6 +1659,25 @@ def test_vrt_protocol():
         assert not gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=true")
         assert not gdal.Open("vrt://data/byte.tif?srcwin=20,20,1,1&epo=false&eco=true")
 
+    ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2")
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    ## the component name is "1"
+    ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=1")
+    assert ds.GetRasterBand(1).Checksum() == 35731
+    with pytest.raises(Exception):
+        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2&sd_name=1")
+        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd=3")
+        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=sds")
+
+
+@pytest.mark.require_driver("NetCDF")
+def test_vrt_protocol_netcdf_component_name():
+    ds = gdal.Open(
+        "vrt://../gdrivers/data/netcdf/alldatatypes.nc?sd_name=ubyte_y2_x2_var"
+    )
+    assert ds.GetRasterBand(1).Checksum() == 71
+
 
 @pytest.mark.require_proj(7, 2)
 def test_vrt_protocol_a_coord_epoch_option():

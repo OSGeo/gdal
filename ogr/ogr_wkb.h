@@ -40,6 +40,9 @@ bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
                                double &dfArea);
 
 bool CPL_DLL OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
+                                  OGREnvelope3D &sEnvelope);
+
+bool CPL_DLL OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
                                   OGREnvelope &sEnvelope);
 
 bool CPL_DLL OGRWKBIntersectsPessimistic(const GByte *pabyWkb, size_t nWKBSize,

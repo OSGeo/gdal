@@ -7,6 +7,9 @@ on:
         branches-ignore:
             - 'backport**'
 
+permissions:
+  contents: read
+
 jobs:
   delete-untagged-containers:
     name: Delete all containers from gdal-deps without tags

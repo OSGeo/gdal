@@ -59,7 +59,7 @@ g2int g2_unpack1(unsigned char *cgrib,g2int *iofst,g2int **ids,g2int *idslen)
 */
 {
 
-      g2int i,lensec,nbits,ierr,isecnum;
+      g2int i,lensec,nbits,ierr,isecnum = 0;
       g2int mapid[13]={2,2,1,1,1,2,1,1,1,1,1,1,1};
 
       ierr=0;

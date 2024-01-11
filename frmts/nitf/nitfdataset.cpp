@@ -3575,7 +3575,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
     /*      Allocate offset array                                           */
     /* -------------------------------------------------------------------- */
     panJPEGBlockOffset = reinterpret_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
-        sizeof(GIntBig), psImage->nBlocksPerRow * psImage->nBlocksPerColumn));
+        sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
+                             psImage->nBlocksPerColumn));
     if (panJPEGBlockOffset == nullptr)
     {
         return CE_Failure;
@@ -3705,8 +3706,8 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
             /* --------------------------------------------------------------------
              */
             panJPEGBlockOffset = reinterpret_cast<GIntBig *>(VSI_CALLOC_VERBOSE(
-                sizeof(GIntBig),
-                psImage->nBlocksPerRow * psImage->nBlocksPerColumn));
+                sizeof(GIntBig), static_cast<size_t>(psImage->nBlocksPerRow) *
+                                     psImage->nBlocksPerColumn));
             if (panJPEGBlockOffset == nullptr)
             {
                 return CE_Failure;
@@ -3753,7 +3754,8 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
     {
         /* Allocate enough memory to hold 12bit JPEG data */
         pabyJPEGBlock = reinterpret_cast<GByte *>(VSI_CALLOC_VERBOSE(
-            psImage->nBands, psImage->nBlockWidth * psImage->nBlockHeight * 2));
+            psImage->nBands, static_cast<size_t>(psImage->nBlockWidth) *
+                                 psImage->nBlockHeight * 2));
         if (pabyJPEGBlock == nullptr)
         {
             return CE_Failure;
@@ -3769,8 +3771,8 @@ CPLErr NITFDataset::ReadJPEGBlock(int iBlockX, int iBlockY)
         panJPEGBlockOffset[iBlock] == UINT_MAX)
     {
         memset(pabyJPEGBlock, 0,
-               psImage->nBands * psImage->nBlockWidth * psImage->nBlockHeight *
-                   2);
+               static_cast<size_t>(psImage->nBands) * psImage->nBlockWidth *
+                   psImage->nBlockHeight * 2);
         return CE_None;
     }
 
@@ -6797,7 +6799,8 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
         bOK &= VSIFWriteL(&nTPXCDLNTH, 2, 1, fp) == 1;
 
         /* Reserve space for the table itself */
-        bOK &= VSIFSeekL(fp, nNBPC * nNBPR * 4, SEEK_CUR) == 0;
+        bOK &= VSIFSeekL(fp, static_cast<vsi_l_offset>(nNBPC) * nNBPR * 4,
+                         SEEK_CUR) == 0;
     }
 
     /* -------------------------------------------------------------------- */

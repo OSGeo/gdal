@@ -31,7 +31,18 @@
 #define FALSE 0
 #endif
 
+#ifndef bBigEndian
+#if defined(CPL_LSB)
+#define bBigEndian false
+#elif defined(CPL_MSB)
+#define bBigEndian true
+#else
+#ifndef static_var_bBigEndian_defined
+#define static_var_bBigEndian_defined
 static bool bBigEndian = false;
+#endif
+#endif
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      If the following is 0.5, nodes will be split in half.  If it    */
@@ -573,7 +584,7 @@ static void SHPTreeCollectShapeIds(SHPTree *hTree, SHPTreeNode *psTreeNode,
 /************************************************************************/
 
 /* helper for qsort */
-static int compare_ints(const void *a, const void *b)
+static int SHPTreeCompareInts(const void *a, const void *b)
 {
     return *REINTERPRET_CAST(const int *, a) -
            *REINTERPRET_CAST(const int *, b);
@@ -599,7 +610,7 @@ int SHPAPI_CALL1(*)
     /* -------------------------------------------------------------------- */
 
     if (panShapeList != SHPLIB_NULLPTR)
-        qsort(panShapeList, *pnShapeCount, sizeof(int), compare_ints);
+        qsort(panShapeList, *pnShapeCount, sizeof(int), SHPTreeCompareInts);
 
     return panShapeList;
 }
@@ -682,6 +693,8 @@ void SHPAPI_CALL SHPTreeTrimExtraNodes(SHPTree *hTree)
 /*      Swap a 2, 4 or 8 byte word.                                     */
 /************************************************************************/
 
+#ifndef SwapWord_defined
+#define SwapWord_defined
 static void SwapWord(int length, void *wordP)
 
 {
@@ -695,6 +708,7 @@ static void SwapWord(int length, void *wordP)
         STATIC_CAST(unsigned char *, wordP)[length - i - 1] = temp;
     }
 }
+#endif
 
 struct SHPDiskTreeInfo
 {
@@ -719,7 +733,8 @@ SHPTreeDiskHandle SHPOpenDiskTree(const char *pszQIXFilename,
     else
         memcpy(&(hDiskTree->sHooks), psHooks, sizeof(SAHooks));
 
-    hDiskTree->fpQIX = hDiskTree->sHooks.FOpen(pszQIXFilename, "rb");
+    hDiskTree->fpQIX = hDiskTree->sHooks.FOpen(pszQIXFilename, "rb",
+                                               hDiskTree->sHooks.pvUserData);
     if (hDiskTree->fpQIX == SHPLIB_NULLPTR)
     {
         free(hDiskTree);
@@ -943,7 +958,6 @@ int *SHPSearchDiskTreeEx(SHPTreeDiskHandle hDiskTree, double *padfBoundsMin,
                          double *padfBoundsMax, int *pnShapeCount)
 
 {
-    int i;
     int nBufferMax = 0;
     unsigned char abyBuf[16];
     int *panResultBuffer = SHPLIB_NULLPTR;
@@ -953,11 +967,15 @@ int *SHPSearchDiskTreeEx(SHPTreeDiskHandle hDiskTree, double *padfBoundsMin,
     /* -------------------------------------------------------------------- */
     /*	Establish the byte order on this machine.	  	        */
     /* -------------------------------------------------------------------- */
-    i = 1;
-    if (*REINTERPRET_CAST(unsigned char *, &i) == 1)
-        bBigEndian = false;
-    else
-        bBigEndian = true;
+#if !defined(bBigEndian)
+    {
+        int i = 1;
+        if (*REINTERPRET_CAST(unsigned char *, &i) == 1)
+            bBigEndian = false;
+        else
+            bBigEndian = true;
+    }
+#endif
 
     /* -------------------------------------------------------------------- */
     /*      Read the header.                                                */
@@ -994,7 +1012,7 @@ int *SHPSearchDiskTreeEx(SHPTreeDiskHandle hDiskTree, double *padfBoundsMin,
     if (panResultBuffer == SHPLIB_NULLPTR)
         panResultBuffer = STATIC_CAST(int *, calloc(1, sizeof(int)));
     else
-        qsort(panResultBuffer, *pnShapeCount, sizeof(int), compare_ints);
+        qsort(panResultBuffer, *pnShapeCount, sizeof(int), SHPTreeCompareInts);
 
     return panResultBuffer;
 }
@@ -1095,7 +1113,6 @@ int SHPAPI_CALL SHPWriteTree(SHPTree *tree, const char *filename)
 int SHPWriteTreeLL(SHPTree *tree, const char *filename, const SAHooks *psHooks)
 {
     const char signature[4] = "SQT";
-    int i;
     char abyBuf[32];
     SAFile fp;
 
@@ -1109,7 +1126,7 @@ int SHPWriteTreeLL(SHPTree *tree, const char *filename, const SAHooks *psHooks)
     /* -------------------------------------------------------------------- */
     /*      Open the output file.                                           */
     /* -------------------------------------------------------------------- */
-    fp = psHooks->FOpen(filename, "wb");
+    fp = psHooks->FOpen(filename, "wb", psHooks->pvUserData);
     if (fp == SHPLIB_NULLPTR)
     {
         return FALSE;
@@ -1118,11 +1135,15 @@ int SHPWriteTreeLL(SHPTree *tree, const char *filename, const SAHooks *psHooks)
     /* -------------------------------------------------------------------- */
     /*	Establish the byte order on this machine.	  	        */
     /* -------------------------------------------------------------------- */
-    i = 1;
-    if (*REINTERPRET_CAST(unsigned char *, &i) == 1)
-        bBigEndian = false;
-    else
-        bBigEndian = true;
+#if !defined(bBigEndian)
+    {
+        int i = 1;
+        if (*REINTERPRET_CAST(unsigned char *, &i) == 1)
+            bBigEndian = false;
+        else
+            bBigEndian = true;
+    }
+#endif
 
     /* -------------------------------------------------------------------- */
     /*      Write the header.                                               */

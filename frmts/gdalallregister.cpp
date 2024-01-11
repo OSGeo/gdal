@@ -42,7 +42,8 @@
 extern "C" void DeclareExternalDeferredPlugins(void);
 #endif
 
-extern "C" void CPL_DLL GDALRegister_raw();
+extern "C" void CPL_DLL GDALRegister_raw_no_sidecar();
+extern "C" void CPL_DLL GDALRegister_raw_with_sidecar();
 
 /************************************************************************/
 /*                          GDALRegisterPlugin()                        */
@@ -647,7 +648,7 @@ void CPL_STDCALL GDALAllRegister()
     /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_raw
-    GDALRegister_raw();
+    GDALRegister_raw_no_sidecar();
 #endif
 
     /* -------------------------------------------------------------------- */
@@ -675,6 +676,8 @@ void CPL_STDCALL GDALAllRegister()
 #ifdef FRMT_hdf5
     GDALRegister_BAG();
     GDALRegister_S102();
+    GDALRegister_S104();
+    GDALRegister_S111();
     GDALRegister_HDF5();
     GDALRegister_HDF5Image();
 #endif
@@ -807,10 +810,7 @@ void CPL_STDCALL GDALAllRegister()
     /* -------------------------------------------------------------------- */
 
 #ifdef FRMT_raw
-    GDALRegister_GenBin();
-    GDALRegister_ENVI();
-    GDALRegister_EHdr();
-    GDALRegister_ISCE();
+    GDALRegister_raw_with_sidecar();
 #endif
 
 #ifdef FRMT_zarr
