@@ -4233,16 +4233,27 @@ static GDALDatasetH GDALWarpCreateOutput(
             (psOptions->bCropToCutline &&
              psOptions->aosWarpOptions.FetchBool("CUTLINE_ALL_TOUCHED", false)))
         {
-            bDetectBlankBorders = true;
-
-            psOptions->dfMinX = floor(psOptions->dfMinX / psOptions->dfXRes) *
-                                psOptions->dfXRes;
+            if ((psOptions->bTargetAlignedPixels &&
+                 bNeedsSuggestedWarpOutput) ||
+                (psOptions->bCropToCutline &&
+                 psOptions->aosWarpOptions.FetchBool("CUTLINE_ALL_TOUCHED",
+                                                     false)))
+            {
+                bDetectBlankBorders = true;
+            }
+            constexpr double EPS = 1e-8;
+            psOptions->dfMinX =
+                floor(psOptions->dfMinX / psOptions->dfXRes + EPS) *
+                psOptions->dfXRes;
             psOptions->dfMaxX =
-                ceil(psOptions->dfMaxX / psOptions->dfXRes) * psOptions->dfXRes;
-            psOptions->dfMinY = floor(psOptions->dfMinY / psOptions->dfYRes) *
-                                psOptions->dfYRes;
+                ceil(psOptions->dfMaxX / psOptions->dfXRes - EPS) *
+                psOptions->dfXRes;
+            psOptions->dfMinY =
+                floor(psOptions->dfMinY / psOptions->dfYRes + EPS) *
+                psOptions->dfYRes;
             psOptions->dfMaxY =
-                ceil(psOptions->dfMaxY / psOptions->dfYRes) * psOptions->dfYRes;
+                ceil(psOptions->dfMaxY / psOptions->dfYRes - EPS) *
+                psOptions->dfYRes;
         }
 
         const auto UpdateGeoTransformandAndPixelLines = [&]()

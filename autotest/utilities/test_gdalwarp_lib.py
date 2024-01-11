@@ -666,6 +666,36 @@ def test_gdalwarp_lib_32():
 
 
 ###############################################################################
+# Test -tap, -tr and -te
+
+
+def test_gdalwarp_lib_tap_tr_te(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 10980, 10980, 1, options=["SPARSE_OK=YES"]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([600000, 10, 0, 5700000, 0, -10])
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="VRT",
+        targetAlignedPixels=True,
+        xRes=10,
+        yRes=10,
+        outputBounds=[599800.0, 5590200.0, 709800.0, 5700000.0],
+    )
+    assert ds is not None
+    assert ds.GetGeoTransform() == pytest.approx(
+        (599800.0, 10.0, 0.0, 5700000.0, 0.0, -10.0)
+    )
+
+
+###############################################################################
 # Test warping multiple sources
 
 
