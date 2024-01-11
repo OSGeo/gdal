@@ -59,10 +59,16 @@ void    PCIDSK::GetCurrentDateTime( char *out_time )
 
 {
     time_t          clock;
-    char            ctime_out[25];
+    char            ctime_out[26] = {0};
 
     time( &clock );
-    strncpy( ctime_out, ctime(&clock), 24 ); // TODO: reentrance issue?
+#ifdef HAVE_CTIME_R
+    ctime_r(&clock, ctime_out);
+#elif defined(_WIN32)
+    ctime_s(ctime_out, sizeof(ctime_out), &clock);
+#else
+    strncpy( ctime_out, ctime(&clock), 25 );
+#endif
 
     // ctime() products: "Wed Jun 30 21:49:08 1993\n"
 
