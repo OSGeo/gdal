@@ -2578,73 +2578,21 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
 }
 
 /************************************************************************/
-/*                        ComputeSourceWindow()                         */
+/*                    ComputeSourceWindowTransformPoints()              */
 /************************************************************************/
 
-CPLErr GDALWarpOperation::ComputeSourceWindow(
-    int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, int *pnSrcXOff,
-    int *pnSrcYOff, int *pnSrcXSize, int *pnSrcYSize, double *pdfSrcXExtraSize,
-    double *pdfSrcYExtraSize, double *pdfSrcFillRatio)
-
+bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
+    int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, bool bUseGrid,
+    bool bAll, int nStepCount, bool bTryWithCheckWithInvertProj,
+    double &dfMinXOut, double &dfMinYOut, double &dfMaxXOut, double &dfMaxYOut,
+    int &nSamplePoints, int &nFailedCount)
 {
-    /* -------------------------------------------------------------------- */
-    /*      Figure out whether we just want to do the usual "along the      */
-    /*      edge" sampling, or using a grid.  The grid usage is             */
-    /*      important in some weird "inside out" cases like WGS84 to        */
-    /*      polar stereographic around the pole.   Also figure out the      */
-    /*      sampling rate.                                                  */
-    /* -------------------------------------------------------------------- */
-    int nSampleMax = 0;
-    int nStepCount = DEFAULT_STEP_COUNT;
-    int *pabSuccess = nullptr;
-    double *padfX = nullptr;
-    double *padfY = nullptr;
-    double *padfZ = nullptr;
-    int nSamplePoints = 0;
-    bool bAll = false;
-
-    const char *pszSampleSteps =
-        CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS");
-    if (pszSampleSteps)
-    {
-        if (EQUAL(pszSampleSteps, "ALL"))
-        {
-            bAll = true;
-        }
-        else
-        {
-            nStepCount = atoi(pszSampleSteps);
-            nStepCount = std::max(2, nStepCount);
-        }
-    }
-
-    bool bUseGrid =
-        CPLFetchBool(psOptions->papszWarpOptions, "SAMPLE_GRID", false);
-
-    // Use grid sampling as soon as a special point falls into the extent of
-    // the target raster.
-    if (!bUseGrid && psOptions->hDstDS)
-    {
-        for (const auto &xy : aDstXYSpecialPoints)
-        {
-            if (0 <= xy.first &&
-                GDALGetRasterXSize(psOptions->hDstDS) >= xy.first &&
-                0 <= xy.second &&
-                GDALGetRasterYSize(psOptions->hDstDS) >= xy.second)
-            {
-                bAll = false;
-                bUseGrid = true;
-                break;
-            }
-        }
-    }
-
-    bool bTryWithCheckWithInvertProj = false;
-
-TryAgain:
-    const double dfStepSize = bAll ? 0 : 1.0 / (nStepCount - 1);
     nSamplePoints = 0;
+    nFailedCount = 0;
+
+    const double dfStepSize = bAll ? 0 : 1.0 / (nStepCount - 1);
     constexpr int knIntMax = std::numeric_limits<int>::max();
+    int nSampleMax = 0;
     if (bUseGrid)
     {
         if (bAll)
@@ -2652,7 +2600,7 @@ TryAgain:
             if (nDstYSize > knIntMax / (nDstXSize + 1) - 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
-                return CE_Failure;
+                return false;
             }
             nSampleMax = (nDstXSize + 1) * (nDstYSize + 1);
         }
@@ -2663,7 +2611,7 @@ TryAgain:
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d",
                          nStepCount);
-                return CE_Failure;
+                return false;
             }
             nSampleMax = (nStepCount + 2) * (nStepCount + 2);
         }
@@ -2676,7 +2624,7 @@ TryAgain:
             {
                 // Extremely unlikely !
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps");
-                return CE_Failure;
+                return false;
             }
             nSampleMax = 2 * (nDstXSize + nDstYSize);
         }
@@ -2686,24 +2634,24 @@ TryAgain:
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too many steps : %d * 4",
                          nStepCount);
-                return CE_Failure;
+                return false;
             }
             nSampleMax = nStepCount * 4;
         }
     }
 
-    pabSuccess =
+    int *pabSuccess =
         static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nSampleMax));
-    padfX = static_cast<double *>(
+    double *padfX = static_cast<double *>(
         VSI_MALLOC2_VERBOSE(sizeof(double) * 3, nSampleMax));
     if (pabSuccess == nullptr || padfX == nullptr)
     {
         CPLFree(padfX);
         CPLFree(pabSuccess);
-        return CE_Failure;
+        return false;
     }
-    padfY = padfX + nSampleMax;
-    padfZ = padfX + nSampleMax * 2;
+    double *padfY = padfX + nSampleMax;
+    double *padfZ = padfX + nSampleMax * 2;
 
     /* -------------------------------------------------------------------- */
     /*      Setup sample points on a grid pattern throughout the area.      */
@@ -2845,18 +2793,12 @@ TryAgain:
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALWarperOperation::ComputeSourceWindow() failed because "
                  "the pfnTransformer failed.");
-        return CE_Failure;
+        return false;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Collect the bounds, ignoring any failed points.                 */
     /* -------------------------------------------------------------------- */
-    double dfMinXOut = std::numeric_limits<double>::infinity();
-    double dfMinYOut = std::numeric_limits<double>::infinity();
-    double dfMaxXOut = -std::numeric_limits<double>::infinity();
-    double dfMaxYOut = -std::numeric_limits<double>::infinity();
-    int nFailedCount = 0;
-
     for (int i = 0; i < nSamplePoints; i++)
     {
         if (!pabSuccess[i])
@@ -2889,6 +2831,115 @@ TryAgain:
 
     CPLFree(padfX);
     CPLFree(pabSuccess);
+    return true;
+}
+
+/************************************************************************/
+/*                        ComputeSourceWindow()                         */
+/************************************************************************/
+
+CPLErr GDALWarpOperation::ComputeSourceWindow(
+    int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, int *pnSrcXOff,
+    int *pnSrcYOff, int *pnSrcXSize, int *pnSrcYSize, double *pdfSrcXExtraSize,
+    double *pdfSrcYExtraSize, double *pdfSrcFillRatio)
+
+{
+    /* -------------------------------------------------------------------- */
+    /*      Figure out whether we just want to do the usual "along the      */
+    /*      edge" sampling, or using a grid.  The grid usage is             */
+    /*      important in some weird "inside out" cases like WGS84 to        */
+    /*      polar stereographic around the pole.   Also figure out the      */
+    /*      sampling rate.                                                  */
+    /* -------------------------------------------------------------------- */
+    int nStepCount = DEFAULT_STEP_COUNT;
+    bool bAll = false;
+
+    bool bUseGrid =
+        CPLFetchBool(psOptions->papszWarpOptions, "SAMPLE_GRID", false);
+
+    const char *pszSampleSteps =
+        CSLFetchNameValue(psOptions->papszWarpOptions, "SAMPLE_STEPS");
+    if (pszSampleSteps)
+    {
+        if (EQUAL(pszSampleSteps, "ALL"))
+        {
+            bAll = true;
+        }
+        else
+        {
+            nStepCount = atoi(pszSampleSteps);
+            nStepCount = std::max(2, nStepCount);
+        }
+    }
+    else if (!bUseGrid)
+    {
+        // Detect if at least one of the 4 corner in destination raster fails
+        // to project back to source.
+        // Helps for long-lat to orthographic on areas that are partly in
+        // space / partly on Earth. Cf https://github.com/OSGeo/gdal/issues/9056
+        double adfCornerX[4];
+        double adfCornerY[4];
+        double adfCornerZ[4] = {0, 0, 0, 0};
+        int anCornerSuccess[4] = {FALSE, FALSE, FALSE, FALSE};
+        adfCornerX[0] = nDstXOff;
+        adfCornerY[0] = nDstYOff;
+        adfCornerX[1] = nDstXOff + nDstXSize;
+        adfCornerY[1] = nDstYOff;
+        adfCornerX[2] = nDstXOff;
+        adfCornerY[2] = nDstYOff + nDstYSize;
+        adfCornerX[3] = nDstXOff + nDstXSize;
+        adfCornerY[3] = nDstYOff + nDstYSize;
+        if (!psOptions->pfnTransformer(psOptions->pTransformerArg, TRUE, 4,
+                                       adfCornerX, adfCornerY, adfCornerZ,
+                                       anCornerSuccess) ||
+            !anCornerSuccess[0] || !anCornerSuccess[1] || !anCornerSuccess[2] ||
+            !anCornerSuccess[3])
+        {
+            bAll = true;
+        }
+    }
+
+    bool bTryWithCheckWithInvertProj = false;
+    double dfMinXOut = std::numeric_limits<double>::infinity();
+    double dfMinYOut = std::numeric_limits<double>::infinity();
+    double dfMaxXOut = -std::numeric_limits<double>::infinity();
+    double dfMaxYOut = -std::numeric_limits<double>::infinity();
+
+    int nSamplePoints = 0;
+    int nFailedCount = 0;
+    if (!ComputeSourceWindowTransformPoints(
+            nDstXOff, nDstYOff, nDstXSize, nDstYSize, bUseGrid, bAll,
+            nStepCount, bTryWithCheckWithInvertProj, dfMinXOut, dfMinYOut,
+            dfMaxXOut, dfMaxYOut, nSamplePoints, nFailedCount))
+    {
+        return CE_Failure;
+    }
+
+    // Use grid sampling as soon as a special point falls into the extent of
+    // the target raster.
+    if (!bUseGrid && psOptions->hDstDS)
+    {
+        for (const auto &xy : aDstXYSpecialPoints)
+        {
+            if (0 <= xy.first &&
+                GDALGetRasterXSize(psOptions->hDstDS) >= xy.first &&
+                0 <= xy.second &&
+                GDALGetRasterYSize(psOptions->hDstDS) >= xy.second)
+            {
+                bUseGrid = true;
+                bAll = false;
+                if (!ComputeSourceWindowTransformPoints(
+                        nDstXOff, nDstYOff, nDstXSize, nDstYSize, bUseGrid,
+                        bAll, nStepCount, bTryWithCheckWithInvertProj,
+                        dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut,
+                        nSamplePoints, nFailedCount))
+                {
+                    return CE_Failure;
+                }
+                break;
+            }
+        }
+    }
 
     const int nRasterXSize = GDALGetRasterXSize(psOptions->hSrcDS);
     const int nRasterYSize = GDALGetRasterYSize(psOptions->hSrcDS);
@@ -2911,7 +2962,13 @@ TryAgain:
 
         // We should probably perform the coordinate transformation in the
         // warp kernel under CHECK_WITH_INVERT_PROJ too...
-        goto TryAgain;
+        if (!ComputeSourceWindowTransformPoints(
+                nDstXOff, nDstYOff, nDstXSize, nDstYSize, bUseGrid, bAll,
+                nStepCount, bTryWithCheckWithInvertProj, dfMinXOut, dfMinYOut,
+                dfMaxXOut, dfMaxYOut, nSamplePoints, nFailedCount))
+        {
+            return CE_Failure;
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -2923,7 +2980,13 @@ TryAgain:
     {
         bUseGrid = true;
         bAll = false;
-        goto TryAgain;
+        if (!ComputeSourceWindowTransformPoints(
+                nDstXOff, nDstYOff, nDstXSize, nDstYSize, bUseGrid, bAll,
+                nStepCount, bTryWithCheckWithInvertProj, dfMinXOut, dfMinYOut,
+                dfMaxXOut, dfMaxYOut, nSamplePoints, nFailedCount))
+        {
+            return CE_Failure;
+        }
     }
 
     /* -------------------------------------------------------------------- */

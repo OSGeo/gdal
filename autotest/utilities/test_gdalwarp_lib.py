@@ -3795,3 +3795,24 @@ def test_gdalwarp_lib_dict_arguments():
     )
 
     assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
+
+
+###############################################################################
+# Test warping from long/lat to ortho
+
+
+def test_gdalwarp_lib_long_lat_to_ortho():
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", options="-f VRT -outsize 10800 5400"
+    )
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        width=2138,
+        height=2063,
+        outputBounds=[-6378137, 3178376, -3189246, 6356752],
+        dstSRS="+proj=ortho +datum=WGS84 +units=m +no_defs",
+    )
+    assert ds.GetRasterBand(1).ReadRaster()[2100 + 600 * 2138] != 0
