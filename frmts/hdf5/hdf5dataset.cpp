@@ -119,6 +119,8 @@ void GDALRegister_HDF5()
     GDALRegister_HDF5Image();
     GDALRegister_BAG();
     GDALRegister_S102();
+    GDALRegister_S104();
+    GDALRegister_S111();
 #endif
 }
 
@@ -479,6 +481,34 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
             CPLString(poOpenInfo->pszFilename).replaceAll("\"", "\\\"");
         osS102Filename += '"';
         return GDALDataset::Open(osS102Filename.c_str(), GDAL_OF_RASTER);
+    }
+
+    // Safety belt if S104Dataset::Identify() failed
+    if (STARTS_WITH(
+            poDS->m_aosMetadata.FetchNameValueDef("productSpecification", ""),
+            "INT.IHO.S-104.") &&
+        GDALGetDriverByName("S104") != nullptr)
+    {
+        delete poDS;
+        std::string osS104Filename("S104:\"");
+        osS104Filename +=
+            CPLString(poOpenInfo->pszFilename).replaceAll("\"", "\\\"");
+        osS104Filename += '"';
+        return GDALDataset::Open(osS104Filename.c_str(), GDAL_OF_RASTER);
+    }
+
+    // Safety belt if S111Dataset::Identify() failed
+    if (STARTS_WITH(
+            poDS->m_aosMetadata.FetchNameValueDef("productSpecification", ""),
+            "INT.IHO.S-111.") &&
+        GDALGetDriverByName("S111") != nullptr)
+    {
+        delete poDS;
+        std::string osS111Filename("S111:\"");
+        osS111Filename +=
+            CPLString(poOpenInfo->pszFilename).replaceAll("\"", "\\\"");
+        osS111Filename += '"';
+        return GDALDataset::Open(osS111Filename.c_str(), GDAL_OF_RASTER);
     }
 
     poDS->SetMetadata(poDS->m_aosMetadata.List());

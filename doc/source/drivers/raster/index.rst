@@ -157,6 +157,8 @@ Raster drivers
    rraster
    rs2
    s102
+   s104
+   s111
    safe
    sar_ceos
    sdat

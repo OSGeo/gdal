@@ -1,11 +1,11 @@
 /******************************************************************************
  *
- * Project:  GDAL
- * Purpose:  HDF5 driver
- * Author:   Even Rouault, <even.rouault at spatialys.com>
+ * Project:  Hierarchical Data Format Release 5 (HDF5)
+ * Purpose:  RAT utility
+ * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
- * Copyright (c) 2023, Even Rouault, <even.rouault at spatialys.com>
+ * Copyright (c) 2023, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,45 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef HDF5DRIVERCORE_H
-#define HDF5DRIVERCORE_H
+#ifndef RAT_H_INCLUDED
+#define RAT_H_INCLUDED
 
+#include "gdal_rat.h"
 #include "gdal_priv.h"
 
-constexpr const char *HDF5_DRIVER_NAME = "HDF5";
+#include <memory>
 
-constexpr const char *HDF5_IMAGE_DRIVER_NAME = "HDF5Image";
+std::unique_ptr<GDALRasterAttributeTable>
+HDF5CreateRAT(const std::shared_ptr<GDALMDArray> &poValues,
+              bool bFirstColIsMinMax);
 
-constexpr const char *BAG_DRIVER_NAME = "BAG";
-
-constexpr const char *S102_DRIVER_NAME = "S102";
-
-constexpr const char *S104_DRIVER_NAME = "S104";
-
-constexpr const char *S111_DRIVER_NAME = "S111";
-
-int CPL_DLL HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo);
-
-int CPL_DLL HDF5ImageDatasetIdentify(GDALOpenInfo *poOpenInfo);
-
-int CPL_DLL BAGDatasetIdentify(GDALOpenInfo *poOpenInfo);
-
-int CPL_DLL S102DatasetIdentify(GDALOpenInfo *poOpenInfo);
-
-int CPL_DLL S104DatasetIdentify(GDALOpenInfo *poOpenInfo);
-
-int CPL_DLL S111DatasetIdentify(GDALOpenInfo *poOpenInfo);
-
-void CPL_DLL HDF5DriverSetCommonMetadata(GDALDriver *poDriver);
-
-void CPL_DLL HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver);
-
-void CPL_DLL BAGDriverSetCommonMetadata(GDALDriver *poDriver);
-
-void CPL_DLL S102DriverSetCommonMetadata(GDALDriver *poDriver);
-
-void CPL_DLL S104DriverSetCommonMetadata(GDALDriver *poDriver);
-
-void CPL_DLL S111DriverSetCommonMetadata(GDALDriver *poDriver);
-
-#endif
+#endif  // RAT_H_INCLUDED

@@ -35,7 +35,7 @@ import h5py
 import numpy as np
 
 
-def generate(filename, version):
+def generate(filename, version, with_QualityOfSurvey=False):
     f = h5py.File(os.path.join(os.path.dirname(__file__), f"{filename}.h5"), "w")
     BathymetryCoverage = f.create_group("BathymetryCoverage")
     BathymetryCoverage_01 = BathymetryCoverage.create_group("BathymetryCoverage.01")
@@ -90,6 +90,59 @@ def generate(filename, version):
         b"<nothing/>"
     )
 
+    if with_QualityOfSurvey:
+        QualityOfSurvey = f.create_group("QualityOfSurvey")
+        QualityOfSurvey_01 = QualityOfSurvey.create_group("QualityOfSurvey.01")
+
+        for attr_name in (
+            "gridOriginLongitude",
+            "gridOriginLatitude",
+            "gridSpacingLongitudinal",
+            "gridSpacingLatitudinal",
+            "numPointsLongitudinal",
+            "numPointsLatitudinal",
+        ):
+            QualityOfSurvey_01.attrs[attr_name] = BathymetryCoverage_01.attrs[attr_name]
+
+        Group_001 = QualityOfSurvey_01.create_group("Group_001")
+
+        values = Group_001.create_dataset("values", (2, 3), dtype=np.uint32)
+        data = np.array(
+            [0, 1, 2, 1000000, 3, 2],
+            dtype=np.uint32,
+        ).reshape(values.shape)
+        values[...] = data
+
+        featureAttributeTable_struct_type = np.dtype(
+            [
+                ("id", "u4"),
+                ("floatval", "f4"),
+                ("strval", "S2"),
+            ]
+        )
+
+        featureAttributeTable = QualityOfSurvey.create_dataset(
+            "featureAttributeTable", (5,), dtype=featureAttributeTable_struct_type
+        )
+
+        data = np.array(
+            [
+                (0, 1.5, "a"),
+                (1, 2.5, "b"),
+                (2, 3.5, "c"),
+                (3, 4.5, "d"),
+                (1000000, 5.5, "e"),
+            ],
+            dtype=featureAttributeTable_struct_type,
+        )
+        featureAttributeTable[...] = data
+
 
 generate("test_s102_v2.1", "INT.IHO.S-102.2.1")
 generate("test_s102_v2.2", "INT.IHO.S-102.2.2")
+
+generate(
+    "test_s102_v2.2_with_QualityOfSurvey",
+    "INT.IHO.S-102.2.2",
+    with_QualityOfSurvey=True,
+)
