@@ -3941,20 +3941,56 @@ retry:
                 }
                 else
                 {
-                    const char *pszInstallationMsg =
-                        poMissingPluginDriver->GetMetadataItem(
-                            GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE);
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as a supported file format. "
-                             "It could have been recognized by driver %s, "
-                             "but plugin %s is not available in your "
-                             "installation.%s%s",
-                             pszFilename,
-                             poMissingPluginDriver->GetDescription(),
-                             poMissingPluginDriver->GetMetadataItem(
-                                 "MISSING_PLUGIN_FILENAME"),
-                             pszInstallationMsg ? " " : "",
-                             pszInstallationMsg ? pszInstallationMsg : "");
+                    std::string osMsg("`");
+                    osMsg += pszFilename;
+                    osMsg += "' not recognized as a supported file format. "
+                             "It could have been recognized by driver ";
+                    osMsg += poMissingPluginDriver->GetDescription();
+                    osMsg += ", but plugin ";
+                    osMsg += poMissingPluginDriver->GetMetadataItem(
+                        "MISSING_PLUGIN_FILENAME");
+                    osMsg += " is not available in your "
+                             "installation.";
+                    if (const char *pszInstallationMsg =
+                            poMissingPluginDriver->GetMetadataItem(
+                                GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE))
+                    {
+                        osMsg += " ";
+                        osMsg += pszInstallationMsg;
+                    }
+
+                    VSIStatBuf sStat;
+                    if (const char *pszGDALDriverPath =
+                            CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr))
+                    {
+                        if (VSIStat(pszGDALDriverPath, &sStat) != 0)
+                        {
+                            osMsg += ". Directory '";
+                            osMsg += pszGDALDriverPath;
+                            osMsg +=
+                                "' pointed by GDAL_DRIVER_PATH does not exist.";
+                        }
+                    }
+                    else
+                    {
+#ifdef INSTALL_PLUGIN_FULL_DIR
+                        if (VSIStat(INSTALL_PLUGIN_FULL_DIR, &sStat) != 0)
+                        {
+                            osMsg += ". Directory '";
+                            osMsg += INSTALL_PLUGIN_FULL_DIR;
+                            osMsg += "' hardcoded in the GDAL library does not "
+                                     "exist and the GDAL_DRIVER_PATH "
+                                     "configuration option is not set.";
+                        }
+                        else
+#endif
+                        {
+                            osMsg += ". The GDAL_DRIVER_PATH configuration "
+                                     "option is not set.";
+                        }
+                    }
+
+                    CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
                 }
             }
             else
