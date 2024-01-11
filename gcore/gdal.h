@@ -1040,6 +1040,10 @@ CPLErr CPL_DLL CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH,
                                                 const char *pszOldName);
 int CPL_DLL CPL_STDCALL
 GDALValidateCreationOptions(GDALDriverH, CSLConstList papszCreationOptions);
+char CPL_DLL **GDALGetOutputDriversForDatasetName(const char *pszDestFilename,
+                                                  int nFlagRasterVector,
+                                                  bool bSingleMatch,
+                                                  bool bEmitWarning);
 
 /* The following are deprecated */
 const char CPL_DLL *CPL_STDCALL GDALGetDriverShortName(GDALDriverH);
