@@ -140,12 +140,23 @@ char szResult[MM_MAX_ID_SNY+10];
         hMiraMonLayer->pSRS=strdup(ReturnValueFromSectionINIFile(hMiraMonLayer->MMPolygon.MMArc.pszREL_LayerName, 
             "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier"));
     }
-    ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS,szResult);
-    if(IsEmptyString(szResult))
-        hMiraMonLayer->nSRS_EPSG=0;
+    if (!ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS, szResult))
+    {
+        if (IsEmptyString(szResult))
+            hMiraMonLayer->nSRS_EPSG = 0;
+        else
+            hMiraMonLayer->nSRS_EPSG = atoi(szResult);
+    }
     else
-        hMiraMonLayer->nSRS_EPSG=atoi(szResult);
-    
+        hMiraMonLayer->nSRS_EPSG = 0;
+
+    if(hMiraMonLayer->nSRS_EPSG == 0)
+    {
+        MM_CPLWarning(CE_Warning, CPLE_NotSupported,
+                            "The MiraMon layer HRS has no equivalent "
+                            "in EPSG code");
+    }
+
     // If more nNumStringToOperate is needed, it'll be increased.
     hMiraMonLayer->nNumStringToOperate=0;
     if(MM_ResizeStringToOperateIfNeeded(hMiraMonLayer, 5000))
@@ -537,7 +548,7 @@ struct MM_PH *pPolHeader;
 
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
-char * pszRelFile=NULL;
+const char * pszRelFile=NULL;
 struct MM_BASE_DADES_XP *pMMBDXP;
 const char *szDBFFileName=NULL;
 

@@ -39,8 +39,6 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define strdup_function(p)  strdup((p))
     #define get_filename_function TreuAdreca
     #define get_path_function DonaAdreca
-    #define error_message_function puts
-    #define info_message_function puts
     #define printf_function fprintf_64
     #define max_function(a,b) max((a),(b))
     #define get_extension_function(a) extensio(a)
@@ -75,8 +73,6 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define strdup_function(p)  CPLStrdup((p))
     #define get_filename_function CPLGetFilename
     #define get_path_function CPLGetPath
-    #define error_message_function puts //CPLError
-    #define info_message_function puts
     #define printf_function VSIFPrintfL
     #define max_function(a,b) MAX((a),(b))
     #define get_extension_function(a) CPLGetExtension((a))
@@ -100,6 +96,19 @@ CPL_C_START // Necessary for compiling in GDAL project
 /* -------------------------------------------------------------------- */
 /*      Functions                                                       */
 /* -------------------------------------------------------------------- */
+// MM-GDAL functions
+void MM_CPLError(
+    #ifdef GDAL_COMPILATION
+    int level, int code,
+    #endif
+    const char* format, ...);
+
+void MM_CPLWarning(
+    #ifdef GDAL_COMPILATION
+    int level, int code,
+    #endif
+    const char* format, ...);
+
 // Layer functions
 struct MiraMonVectLayerInfo * MMCreateLayer(char *pzFileName, 
                 __int32 LayerVersion, 
@@ -148,7 +157,7 @@ int MMReadIntegerDependingOnVersion(
 int MMResetExtensionAndLastLetter(char *pzNewLayerName, 
                                 const char *pzOldLayerName, 
                                 const char *MDExt);
-char * ReturnValueFromSectionINIFile(const char *filename, 
+const char * ReturnValueFromSectionINIFile(const char *filename, 
                                 const char *section, const char *key);
 
 // In order to be efficient we reserve space to reuse it every
@@ -207,6 +216,7 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * result, MM_BYTE direc
 #define ReturnMMIDSRSFromEPSGCodeSRS(pSRS,szResult) ReturnCodeFromMM_m_idofic((pSRS),(szResult),MMSRS_FROM_EPSG)
 
 int MMWriteVectorMetadata(struct MiraMonVectLayerInfo *hMiraMonLayer);
+int MM_Check_REL_FILE(const char *szREL_file);
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

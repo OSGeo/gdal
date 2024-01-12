@@ -601,9 +601,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 
             if(poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType()==OFTStringList)
             {
-                for (nIRecord = 0; nIRecord < hMiraMonLayer.pMultRecordIndex[iNextFID].nMR; nIRecord++)
+                for (nIRecord = 0; nIRecord < hMiraMonLayer.pMultRecordIndex[nIElem].nMR; nIRecord++)
                 {
-                    GoToFieldOfMultipleRecord((MM_INTERNAL_FID)iNextFID, nIRecord, nIField);
+                    GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
                     memset(hMiraMonLayer.szStringToOperate, 0, hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp);
                     fread_function(hMiraMonLayer.szStringToOperate,
                         hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp,
@@ -633,7 +633,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
             }
             else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTString)
             {
-                GoToFieldOfMultipleRecord((MM_INTERNAL_FID)iNextFID, 0, nIField);
+                GoToFieldOfMultipleRecord(nIElem, 0, nIField);
                 memset(hMiraMonLayer.szStringToOperate, 0, hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(hMiraMonLayer.szStringToOperate,
                     hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp,
@@ -660,9 +660,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTInteger64List ||
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTRealList)
             {
-                for (nIRecord = 0; nIRecord < hMiraMonLayer.pMultRecordIndex[iNextFID].nMR; nIRecord++)
+                for (nIRecord = 0; nIRecord < hMiraMonLayer.pMultRecordIndex[nIElem].nMR; nIRecord++)
                 {
-                    GoToFieldOfMultipleRecord((MM_INTERNAL_FID)iNextFID, nIRecord, nIField);
+                    GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
                     memset(hMiraMonLayer.szStringToOperate, 0, hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp);
                     fread_function(hMiraMonLayer.szStringToOperate,
                         hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp,
@@ -675,13 +675,13 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                         padfValues[nIRecord] = atof(hMiraMonLayer.szStringToOperate);
                 }
 
-                poFeature->SetField(nIField,hMiraMonLayer.pMultRecordIndex[iNextFID].nMR, padfValues);
+                poFeature->SetField(nIField,hMiraMonLayer.pMultRecordIndex[nIElem].nMR, padfValues);
             }
             else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTInteger ||
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTInteger64 ||
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTReal)
             {
-                GoToFieldOfMultipleRecord((MM_INTERNAL_FID)iNextFID, 0, nIField);
+                GoToFieldOfMultipleRecord(nIElem, 0, nIField);
                 memset(hMiraMonLayer.szStringToOperate, 0, hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(hMiraMonLayer.szStringToOperate,
                     hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp,
@@ -693,7 +693,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
             else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTDate ||
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTDateTime)
             {
-                GoToFieldOfMultipleRecord((MM_INTERNAL_FID)iNextFID, 0, nIField);
+                GoToFieldOfMultipleRecord(nIElem, 0, nIField);
                 memset(hMiraMonLayer.szStringToOperate, 0, hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(hMiraMonLayer.szStringToOperate,
                     hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp,
@@ -701,13 +701,39 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 hMiraMonLayer.szStringToOperate[hMiraMonLayer.pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
 
                 MM_TreuBlancsDeFinalDeCadena(hMiraMonLayer.szStringToOperate);
-                // ·$· To refine data mode
-                poFeature->SetField(nIField, hMiraMonLayer.szStringToOperate);   
+                if(!IsEmptyString(hMiraMonLayer.szStringToOperate))
+                {
+                    char pszDate[9];
+                    int Year, Month, Day;
+
+                    strncpy(pszDate, hMiraMonLayer.szStringToOperate, 9);
+                    pszDate[4]='\0';
+                    Year=atoi(pszDate);
+
+                    strncpy(pszDate, hMiraMonLayer.szStringToOperate, 9);
+                    (pszDate+4)[2]='\0';
+                    Month=atoi(pszDate+4);
+
+                    strncpy(pszDate, hMiraMonLayer.szStringToOperate, 9);
+                    (pszDate+6)[2]='\0';
+                    Day=atoi(pszDate+6);
+
+                    poFeature->SetField(nIField, Year, Month, Day);
+                }
+                else
+                    poFeature->SetField(nIField, hMiraMonLayer.szStringToOperate);
             }
         }
     }
 
-    poFeature->SetFID(iNextFID++);
+    // In polygons, if MiraMon is asked to give the 0-th element,
+    // in fact is the first one, because the 0-th one is the called
+    // universal polygon (you can find the description of that in
+    // the format description).
+    if(hMiraMonLayer.bIsPolygon)
+        poFeature->SetFID(++iNextFID);
+    else
+        poFeature->SetFID(iNextFID++);
     m_nFeaturesRead++;
 
     return poFeature;
@@ -1331,8 +1357,12 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
             const OGRField *poField = poFeature->GetRawFieldRef(iField);
             char szDate[9];
-            sprintf(szDate, "%04d%02d%02d", poField->Date.Year,
-                        poField->Date.Month, poField->Date.Day);
+            if (poField->Date.Year >= 0 && poField->Date.Month >= 0 && poField->Date.Day >= 0)
+                sprintf(szDate, "%04d%02d%02d", poField->Date.Year,
+                    poField->Date.Month, poField->Date.Day);
+            else
+                sprintf(szDate, "%04d%02d%02d", 0, 0, 0);
+
             if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
                     szDate, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                 return OGRERR_NOT_ENOUGH_MEMORY;

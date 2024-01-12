@@ -819,7 +819,7 @@ char **cadena;
 
 // READING THE HEADER OF AN EXTENDED DBF
 // Free with MM_ReleaseDBFHeader()
-int MM_ReadExtendedDBFHeaderFromFile(const char * szFileName, struct MM_BASE_DADES_XP *pMMBDXP, char * pszRelFile)
+int MM_ReadExtendedDBFHeaderFromFile(const char * szFileName, struct MM_BASE_DADES_XP *pMMBDXP, const char * pszRelFile)
 {
 MM_BYTE  variable_byte;
 FILE_TYPE *pf;
@@ -835,7 +835,7 @@ MM_FIRST_RECORD_OFFSET_TYPE offset_possible;
 MM_BYTE n_queixes_estructura_incorrecta=0;
 MM_FILE_OFFSET offset_reintent=0;
 char cpg_file[MM_MAX_PATH];
-char *pszDesc;
+const char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 unsigned __int32 second_part_n_records;
 unsigned __int32 nRecords;
