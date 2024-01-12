@@ -126,8 +126,10 @@ static const char *L2A_BandDescription_SNW =
     "for high confidence snow/ice";
 
 static const SENTINEL2_L2A_BandDescription asL2ABandDesc[] = {
+    {"AOT", L2A_BandDescription_AOT, 10, TL_IMG_DATA_Rxxm},
     {"AOT", L2A_BandDescription_AOT, 20, TL_IMG_DATA_Rxxm},
     {"AOT", L2A_BandDescription_AOT, 60, TL_IMG_DATA_Rxxm},
+    {"WVP", L2A_BandDescription_WVP, 10, TL_IMG_DATA_Rxxm},
     {"WVP", L2A_BandDescription_WVP, 20, TL_IMG_DATA_Rxxm},
     {"WVP", L2A_BandDescription_WVP, 60, TL_IMG_DATA_Rxxm},
     {"SCL", L2A_BandDescription_SCL, 20, TL_IMG_DATA_Rxxm},
