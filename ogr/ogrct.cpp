@@ -2308,25 +2308,43 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
     /* -------------------------------------------------------------------- */
     /*      Apply data axis to source CRS mapping.                          */
     /* -------------------------------------------------------------------- */
+
+    // Since we may swap the x and y pointers, but cannot tell the caller about this swap,
+    // we save the original pointer. The same axis swap code is executed for poSRSTarget.
+    // If this nullifies, we save the swap of both axes
+    const auto xOriginal = x;
+
     if (poSRSSource)
     {
         const auto &mapping = poSRSSource->GetDataAxisToSRSAxisMapping();
-        if (mapping.size() >= 2 && (mapping[0] != 1 || mapping[1] != 2))
+        if (mapping.size() >= 2)
         {
-            for (size_t i = 0; i < nCount; i++)
+            if (std::abs(mapping[0]) == 2 && std::abs(mapping[1]) == 1)
             {
-                double newX = (mapping[0] == 1)    ? x[i]
-                              : (mapping[0] == -1) ? -x[i]
-                              : (mapping[0] == 2)  ? y[i]
-                                                   : -y[i];
-                double newY = (mapping[1] == 2)    ? y[i]
-                              : (mapping[1] == -2) ? -y[i]
-                              : (mapping[1] == 1)  ? x[i]
-                                                   : -x[i];
-                x[i] = newX;
-                y[i] = newY;
-                if (z && mapping.size() >= 3 && mapping[2] == -3)
+                std::swap(x, y);
+            }
+            const bool bNegateX = mapping[0] < 0;
+            if (bNegateX)
+            {
+                for (size_t i = 0; i < nCount; i++)
+                {
+                    x[i] = -x[i];
+                }
+            }
+            const bool bNegateY = mapping[1] < 0;
+            if (bNegateY)
+            {
+                for (size_t i = 0; i < nCount; i++)
+                {
+                    y[i] = -y[i];
+                }
+            }
+            if (z && mapping.size() >= 3 && mapping[2] == -3)
+            {
+                for (size_t i = 0; i < nCount; i++)
+                {
                     z[i] = -z[i];
+                }
             }
         }
     }
@@ -2374,10 +2392,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
 
         if (m_eSourceFirstAxisOrient != OAO_East)
         {
-            for (size_t i = 0; i < nCount; i++)
-            {
-                std::swap(x[i], y[i]);
-            }
+            std::swap(x, y);
         }
 
         double y0 = y[0];
@@ -2458,10 +2473,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
 
         if (m_eTargetFirstAxisOrient != OAO_East)
         {
-            for (size_t i = 0; i < nCount; i++)
-            {
-                std::swap(x[i], y[i]);
-            }
+            std::swap(x, y);
         }
 
         bTransformDone = true;
@@ -2830,24 +2842,42 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
     if (poSRSTarget)
     {
         const auto &mapping = poSRSTarget->GetDataAxisToSRSAxisMapping();
-        if (mapping.size() >= 2 && (mapping[0] != 1 || mapping[1] != 2))
+        if (mapping.size() >= 2)
         {
-            for (size_t i = 0; i < nCount; i++)
+            if (std::abs(mapping[0]) == 2 && std::abs(mapping[1]) == 1)
             {
-                double newX = (mapping[0] == 1)    ? x[i]
-                              : (mapping[0] == -1) ? -x[i]
-                              : (mapping[0] == 2)  ? y[i]
-                                                   : -y[i];
-                double newY = (mapping[1] == 2)    ? y[i]
-                              : (mapping[1] == -2) ? -y[i]
-                              : (mapping[1] == 1)  ? x[i]
-                                                   : -x[i];
-                x[i] = newX;
-                y[i] = newY;
-                if (z && mapping.size() >= 3 && mapping[2] == -3)
+                std::swap(x, y);
+            }
+            const bool bNegateX = mapping[0] < 0;
+            if (bNegateX)
+            {
+                for (size_t i = 0; i < nCount; i++)
+                {
+                    x[i] = -x[i];
+                }
+            }
+            const bool bNegateY = mapping[1] < 0;
+            if (bNegateY)
+            {
+                for (size_t i = 0; i < nCount; i++)
+                {
+                    y[i] = -y[i];
+                }
+            }
+            if (z && mapping.size() >= 3 && mapping[2] == -3)
+            {
+                for (size_t i = 0; i < nCount; i++)
+                {
                     z[i] = -z[i];
+                }
             }
         }
+    }
+
+    // Check whether final "genuine" axis swap is really necessary
+    if (x != xOriginal)
+    {
+        std::swap_ranges(x, x + nCount, y);
     }
 
 #ifdef DEBUG_VERBOSE
