@@ -4700,11 +4700,14 @@ class CutlineTransformer : public OGRCoordinateTransformation
         GDALDestroyTransformer(hSrcImageTransformer);
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double *z,
+    virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
     {
-        return GDALGenImgProjTransform(hSrcImageTransformer, TRUE, nCount, x, y,
-                                       z, pabSuccess);
+        CPLAssert(nCount <=
+                  static_cast<size_t>(std::numeric_limits<int>::max()));
+        return GDALGenImgProjTransform(hSrcImageTransformer, TRUE,
+                                       static_cast<int>(nCount), x, y, z,
+                                       pabSuccess);
     }
 
     virtual OGRCoordinateTransformation *Clone() const override
