@@ -229,6 +229,7 @@ static int get_dev_random_seed(int *seed)
 	if ((buf.st_mode & S_IFCHR) == 0)
 		return -1;
 
+	/* coverity[toctou] */
 	int fd = open(dev_random_file, O_RDONLY);
 	if (fd < 0)
 	{
