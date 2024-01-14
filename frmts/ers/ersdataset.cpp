@@ -1057,7 +1057,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
         else
             poDS->fpImage = VSIFOpenL(osDataFilePath, "r");
 
-        poDS->osRawFilename = osDataFilePath;
+        poDS->osRawFilename = std::move(osDataFilePath);
 
         if (poDS->fpImage != nullptr && nBands > 0)
         {

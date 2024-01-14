@@ -307,7 +307,8 @@ int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
                     if (auto poRelationship =
                             ParseXMLRelationshipDef(osDefinition))
                     {
-                        const auto relationshipName = poRelationship->GetName();
+                        const std::string relationshipName(
+                            poRelationship->GetName());
                         m_osMapRelationships[relationshipName] =
                             std::move(poRelationship);
                     }

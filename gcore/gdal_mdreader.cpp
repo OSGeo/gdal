@@ -1183,7 +1183,7 @@ CPLErr GDALWriteIMDFile(const char *pszFilename, char **papszMD)
             bOK &=
                 VSIFPrintfL(fp, "BEGIN_GROUP = %s\n", osKeySection.c_str()) > 0;
 
-        osCurSection = osKeySection;
+        osCurSection = std::move(osKeySection);
 
         /* --------------------------------------------------------------------
          */

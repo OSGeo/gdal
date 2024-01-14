@@ -138,7 +138,7 @@ OGRElasticAggregationLayer::Build(OGRElasticDataSource *poDS,
     auto poLayer = std::unique_ptr<OGRElasticAggregationLayer>(
         new OGRElasticAggregationLayer(poDS));
     poLayer->m_osIndexName = osIndex;
-    poLayer->m_osGeometryField = osGeometryField;
+    poLayer->m_osGeometryField = std::move(osGeometryField);
 
     // Parse geohash_grid options
     auto oGeohashGrid = oRoot["geohash_grid"];

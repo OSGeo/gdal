@@ -1442,6 +1442,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     {
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
+        // coverity[copy_constructor_call]
         GDALDataset::Layers::Iterator newIter(srcIter);
         ASSERT_EQ(*newIter, layers[1]);
     }
@@ -1451,6 +1452,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
         GDALDataset::Layers::Iterator newIter;
+        // coverity[copy_assignent_call]
         newIter = srcIter;
         ASSERT_EQ(*newIter, layers[1]);
     }

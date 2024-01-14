@@ -47,11 +47,11 @@ GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
     const char *pszDirName = CPLGetDirname(pszPath);
     const char *pszBaseName = CPLGetBasename(pszPath);
 
-    CPLString osIMDSourceFilename = CPLFormFilename(
+    std::string osIMDSourceFilename = CPLFormFilename(
         pszDirName, CPLSPrintf("%s_metadata", pszBaseName), "xml");
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osXMLSourceFilename = osIMDSourceFilename;
+        m_osXMLSourceFilename = std::move(osIMDSourceFilename);
     }
     else
     {
@@ -59,7 +59,7 @@ GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
             pszDirName, CPLSPrintf("%s_METADATA", pszBaseName), "XML");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osXMLSourceFilename = osIMDSourceFilename;
+            m_osXMLSourceFilename = std::move(osIMDSourceFilename);
         }
     }
 

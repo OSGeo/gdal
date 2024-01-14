@@ -554,17 +554,17 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     VSIStatBufL sStat;
-    CPLString osMDFilename(osFilename);
+    std::string osMDFilename(osFilename);
     if (VSIStatL(osFilename.c_str(), &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
     {
         osMDFilename = CPLFormCIFilename(osFilename, "METADATA.DIM", nullptr);
 
         /* DIMAP2 */
-        if (VSIStatL(osMDFilename, &sStat) != 0)
+        if (VSIStatL(osMDFilename.c_str(), &sStat) != 0)
         {
             osMDFilename =
                 CPLFormCIFilename(osFilename, "VOL_PHR.XML", nullptr);
-            if (VSIStatL(osMDFilename, &sStat) != 0)
+            if (VSIStatL(osMDFilename.c_str(), &sStat) != 0)
             {
                 // DIMAP VHR2020 file.
                 osMDFilename =
@@ -576,7 +576,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Ingest the xml file.                                            */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename);
+    CPLXMLNode *psProduct = CPLParseXMLFile(osMDFilename.c_str());
     if (psProduct == nullptr)
         return nullptr;
 
@@ -592,9 +592,9 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     const int nProductVersion = dfMetadataFormatVersion >= 2.0 ? 2 : 1;
 
-    CPLString osImageDSFilename;
-    CPLString osDIMAPFilename;
-    CPLString osRPCFilename;
+    std::string osImageDSFilename;
+    std::string osDIMAPFilename;
+    std::string osRPCFilename;
     CPLXMLNode *psProductDim = nullptr;
     CPLXMLNode *psProductStrip = nullptr;
 
@@ -662,7 +662,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                         }
                         else
                         {
-                            CPLString osPath = CPLGetPath(osMDFilename);
+                            CPLString osPath = CPLGetPath(osMDFilename.c_str());
                             osDIMAPFilename =
                                 CPLFormFilename(osPath, pszHref, nullptr);
                         }
@@ -674,7 +674,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                         if (strlen(pszDataFileHref) > 0)
                         {
-                            CPLString osPath = CPLGetPath(osMDFilename);
+                            CPLString osPath = CPLGetPath(osMDFilename.c_str());
                             osImageDSFilename = CPLFormFilename(
                                 osPath, pszDataFileHref, nullptr);
                         }
@@ -692,7 +692,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
 
-            psProductDim = CPLParseXMLFile(osDIMAPFilename);
+            psProductDim = CPLParseXMLFile(osDIMAPFilename.c_str());
             if (psProductDim == nullptr)
             {
                 CPLDestroyXMLNode(psProduct);
@@ -724,7 +724,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (strlen(pszHref) > 0)  // STRIP product found.
                     {
-                        CPLString osPath = CPLGetPath(osDIMAPFilename);
+                        CPLString osPath = CPLGetPath(osDIMAPFilename.c_str());
                         osSTRIPFilename =
                             CPLFormCIFilename(osPath, pszHref, nullptr);
                         if (VSIStatL(osSTRIPFilename, &sStat) == 0)
@@ -755,7 +755,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     if (strlen(pszHref) > 0)  // RPC product found.
                     {
-                        CPLString osPath = CPLGetPath(osDIMAPFilename);
+                        CPLString osPath = CPLGetPath(osDIMAPFilename.c_str());
                         osRPCFilename =
                             CPLFormCIFilename(osPath, pszHref, nullptr);
 
@@ -778,11 +778,11 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->psProduct = psProduct;
     poDS->psProductDim = psProductDim;
     poDS->psProductStrip = psProductStrip;
-    poDS->osRPCFilename = osRPCFilename;
+    poDS->osRPCFilename = std::move(osRPCFilename);
     poDS->nProductVersion = nProductVersion;
-    poDS->osMDFilename = osMDFilename;
-    poDS->osImageDSFilename = osImageDSFilename;
-    poDS->osDIMAPFilename = osDIMAPFilename;
+    poDS->osMDFilename = std::move(osMDFilename);
+    poDS->osImageDSFilename = std::move(osImageDSFilename);
+    poDS->osDIMAPFilename = std::move(osDIMAPFilename);
 
     const int res = (nProductVersion == 2) ? poDS->ReadImageInformation2()
                                            : poDS->ReadImageInformation();

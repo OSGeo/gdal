@@ -263,7 +263,7 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 #endif
-        m_anLastStartIdx = anStartIdx;
+        m_anLastStartIdx = std::move(anStartIdx);
 #if defined(__GNUC__) && __GNUC__ >= 13
 #pragma GCC diagnostic pop
 #endif

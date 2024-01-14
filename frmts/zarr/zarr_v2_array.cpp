@@ -1564,7 +1564,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 auto poNewRG = poRG->m_poParent.lock();
                 if (poNewRG == nullptr)
                     break;
-                poRG = poNewRG;
+                poRG = std::move(poNewRG);
             }
 
             for (int i = 0; i < oShape.Size(); ++i)

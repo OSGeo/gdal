@@ -8443,7 +8443,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
 #endif
                         oMapVarToId[pszVarName] = nVarId;
                         oMapVarIdToType[nVarId] = nc_datatype;
-                        oMapVarIdToVectorOfDimId[nVarId] = aoDimIds;
+                        oMapVarIdToVectorOfDimId[nVarId] = std::move(aoDimIds);
                     }
                 }
                 CSLDestroy(papszTokens);

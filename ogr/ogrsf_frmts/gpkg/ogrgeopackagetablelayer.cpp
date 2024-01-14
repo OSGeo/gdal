@@ -5301,7 +5301,7 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
             if (bHasSpatialIndex)
             {
                 m_poDS->RemoveTableFromSQLiteMasterCache(m_osRTreeName);
-                m_osRTreeName = osRTreeNameNew;
+                m_osRTreeName = std::move(osRTreeNameNew);
             }
         }
     }

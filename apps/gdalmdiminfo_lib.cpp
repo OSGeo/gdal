@@ -757,7 +757,7 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
     }
 
     serializer.AddObjKey("datatype");
-    const auto dt(array->GetDataType());
+    const auto &dt(array->GetDataType());
     DumpDataType(dt, serializer);
 
     auto dims = array->GetDimensions();
@@ -1128,7 +1128,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
                              "Cannot find group %s", aosTokens[i]);
                     return nullptr;
                 }
-                curGroup = curGroupNew;
+                curGroup = std::move(curGroupNew);
             }
             const char *pszArrayName = aosTokens[aosTokens.size() - 1];
             auto array(curGroup->OpenMDArray(pszArrayName));

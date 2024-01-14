@@ -3440,8 +3440,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                          osGeorefMetadataLayer.c_str());
                 return false;
             }
-            const auto poValuesDims = poValues->GetDimensions();
-            if (poValuesDims.size() != 1)
+            if (poValues->GetDimensionCount() != 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Wrong dimensions for %s/values",
@@ -4863,7 +4862,7 @@ OGRErr BAGDataset::ParseWKTFromXML(const char *pszISOXML)
                     &m_oSRS, &oVertCRS);
                 oCompoundCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                m_oSRS = oCompoundCRS;
+                m_oSRS = std::move(oCompoundCRS);
             }
 
             CPLFree(pszVertCRSWKT);

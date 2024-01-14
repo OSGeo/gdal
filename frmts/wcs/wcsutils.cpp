@@ -680,7 +680,7 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
     VSIFWriteL(entry.c_str(), sizeof(char), entry.size(), f);
     VSIFCloseL(f);
 
-    filename = path;
+    filename = std::move(path);
     return CE_None;
 }
 

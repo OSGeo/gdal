@@ -91,7 +91,7 @@ template <class ITEM_TYPE>
 NodeItem calcExtent(const std::deque<ITEM_TYPE> &items)
 {
     return std::accumulate(items.begin(), items.end(), NodeItem::create(0),
-                           [](NodeItem a, const ITEM_TYPE &b)
+                           [](NodeItem a, const ITEM_TYPE &b) -> NodeItem
                            { return a.expand(b.nodeItem); });
 }
 

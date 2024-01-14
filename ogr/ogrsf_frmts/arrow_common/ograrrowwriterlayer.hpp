@@ -2129,7 +2129,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         }
     }
 
-    auto poRecordBatchResult = arrow::ImportRecordBatch(array, poSchema);
+    auto poRecordBatchResult =
+        arrow::ImportRecordBatch(array, std::move(poSchema));
     if (!poRecordBatchResult.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined,

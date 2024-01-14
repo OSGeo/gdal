@@ -753,7 +753,7 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Convert coordinate system back to WKT.                          */
     /* -------------------------------------------------------------------- */
     if (oSRS.GetRoot() != nullptr)
-        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS = std::move(oSRS);
 
     /* -------------------------------------------------------------------- */
     /*      Get georeferencing bounds.                                      */

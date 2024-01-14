@@ -1125,15 +1125,15 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                     detectGeometryType_);
             geometryColumnDesc.isNullable = rsmd->isNullable(clmIndex);
 
-            columnDescriptions.push_back(
-                {true, AttributeColumnDescription(), geometryColumnDesc});
+            columnDescriptions.push_back({true, AttributeColumnDescription(),
+                                          std::move(geometryColumnDesc)});
         }
         else
         {
             AttributeColumnDescription attributeColumnDesc;
-            attributeColumnDesc.name = columnName;
+            attributeColumnDesc.name = std::move(columnName);
             attributeColumnDesc.type = dataType;
-            attributeColumnDesc.typeName = typeName;
+            attributeColumnDesc.typeName = std::move(typeName);
             attributeColumnDesc.isArray = isArray;
             attributeColumnDesc.isNullable = rsmd->isNullable(clmIndex);
             attributeColumnDesc.isAutoIncrement =
@@ -1142,10 +1142,10 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
                 static_cast<int>(rsmd->getColumnLength(clmIndex));
             attributeColumnDesc.precision = rsmd->getPrecision(clmIndex);
             attributeColumnDesc.scale = rsmd->getScale(clmIndex);
-            attributeColumnDesc.defaultValue = defaultValue;
+            attributeColumnDesc.defaultValue = std::move(defaultValue);
 
-            columnDescriptions.push_back(
-                {false, attributeColumnDesc, GeometryColumnDescription()});
+            columnDescriptions.push_back({false, std::move(attributeColumnDesc),
+                                          GeometryColumnDescription()});
         }
     }
 

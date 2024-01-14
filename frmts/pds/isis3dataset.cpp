@@ -2476,7 +2476,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         if (oSRS2.importFromESRI(papszLines) == OGRERR_NONE)
         {
             poDS->m_aosAdditionalFiles.AddString(pszPrjFile);
-            poDS->m_oSRS = oSRS2;
+            poDS->m_oSRS = std::move(oSRS2);
             poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 
@@ -3161,7 +3161,7 @@ void ISIS3Dataset::BuildLabel()
                     "!*^PLACEHOLDER_%d_STARTBYTE^*!",
                     static_cast<int>(m_aoNonPixelSections.size()) + 1);
                 oObj.Set("StartByte", osPlaceHolder);
-                oSection.osPlaceHolder = osPlaceHolder;
+                oSection.osPlaceHolder = std::move(osPlaceHolder);
             }
 
             if (!m_osExternalFilename.empty())
@@ -4005,7 +4005,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
     VSILFILE *fpImage = nullptr;
-    CPLString osExternalFilename;
+    std::string osExternalFilename;
     GDALDataset *poExternalDS = nullptr;
     bool bGeoTIFFAsRegularExternal = false;
     if (EQUAL(pszDataLocation, "EXTERNAL"))
@@ -4013,7 +4013,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         osExternalFilename =
             CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
                                  CPLResetExtension(pszFilename, "cub"));
-        fpImage = VSIFOpenExL(osExternalFilename, "wb", true);
+        fpImage = VSIFOpenExL(osExternalFilename.c_str(), "wb", true);
         if (fpImage == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s",
@@ -4077,7 +4077,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
             }
         }
 
-        poExternalDS = poDrv->Create(osExternalFilename, nXSize, nYSize,
+        poExternalDS = poDrv->Create(osExternalFilename.c_str(), nXSize, nYSize,
                                      nBandsIn, eType, papszGTiffOptions);
         CSLDestroy(papszGTiffOptions);
         if (poExternalDS == nullptr)
@@ -4094,7 +4094,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
     poDS->eAccess = GA_Update;
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
-    poDS->m_osExternalFilename = osExternalFilename;
+    poDS->m_osExternalFilename = std::move(osExternalFilename);
     poDS->m_poExternalDS = poExternalDS;
     poDS->m_bGeoTIFFAsRegularExternal = bGeoTIFFAsRegularExternal;
     if (bGeoTIFFAsRegularExternal)

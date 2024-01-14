@@ -3270,7 +3270,7 @@ VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
     poDS->m_osTargetName =
         CSLFetchNameValueDef(papszOptions, "TARGET_NAME", "");
     poDS->m_bInitToNodata = true;
-    poDS->m_oSrcJSonLabel = oSrcJSonLabel;
+    poDS->m_oSrcJSonLabel = std::move(oSrcJSonLabel);
     poDS->m_eCompress = eCompress;
     poDS->m_anRecordOffsets = std::move(anRecordOffsets);
     poDS->eAccess = GA_Update;

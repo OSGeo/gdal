@@ -193,7 +193,7 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
         if (LibraryExists(strLibPath.c_str()))
         {
             // Save custom driver path
-            osDriverFile = strLibPath;
+            osDriverFile = std::move(strLibPath);
             return true;
         }
     }

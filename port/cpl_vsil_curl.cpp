@@ -4709,7 +4709,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    std::string osURL(VSICurlGetURLFromFilename(
+    const std::string osURL(VSICurlGetURLFromFilename(
         pszDirname, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
         nullptr, nullptr, nullptr));
     if (bEmptyDir)

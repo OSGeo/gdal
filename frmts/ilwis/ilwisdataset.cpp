@@ -73,9 +73,7 @@ static std::string GetLine(VSILFILE *fil)
     if (p == nullptr)
         return std::string();
 
-    CPLString osWrk = p;
-    osWrk.Trim();
-    return std::string(osWrk);
+    return CPLString(p).Trim();
 }
 
 //////////////////////////////////////////////////////////////////////

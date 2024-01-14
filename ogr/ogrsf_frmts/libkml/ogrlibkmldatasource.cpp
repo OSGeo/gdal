@@ -455,7 +455,7 @@ bool OGRLIBKMLDataSource::WriteKmz()
             if (!poKmlDocument->get_schema_array_size() && poKmlSchema &&
                 poKmlSchema->get_simplefield_array_size())
             {
-                poKmlDocument->add_schema(poKmlSchema);
+                poKmlDocument->add_schema(std::move(poKmlSchema));
             }
 
             papoLayers[iLayer]->Finalize(poKmlDocument);
@@ -585,7 +585,7 @@ bool OGRLIBKMLDataSource::WriteDir()
             if (!poKmlDocument->get_schema_array_size() && poKmlSchema &&
                 poKmlSchema->get_simplefield_array_size())
             {
-                poKmlDocument->add_schema(poKmlSchema);
+                poKmlDocument->add_schema(std::move(poKmlSchema));
             }
 
             papoLayers[iLayer]->Finalize(poKmlDocument);
@@ -781,7 +781,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
             {
                 if (EQUAL(pszID, poKmlSchema->get_id().c_str()))
                 {
-                    poKmlSchemaResult = poKmlSchema;
+                    poKmlSchemaResult = std::move(poKmlSchema);
                     break;
                 }
             }
@@ -790,7 +790,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
             {
                 if (EQUAL(pszSchemaName, poKmlSchema->get_name().c_str()))
                 {
-                    poKmlSchemaResult = poKmlSchema;
+                    poKmlSchemaResult = std::move(poKmlSchema);
                     break;
                 }
             }
@@ -1283,8 +1283,8 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
      * write it *****/
     if (nLinks)
     {
-        m_poKmlDocKml = poKmlContainer;
-        m_poKmlDocKmlRoot = poKmlDocKmlRoot;
+        m_poKmlDocKml = std::move(poKmlContainer);
+        m_poKmlDocKmlRoot = std::move(poKmlDocKmlRoot);
     }
     /***** if the doc.kml has no links treat it as a normal kml file *****/
     else

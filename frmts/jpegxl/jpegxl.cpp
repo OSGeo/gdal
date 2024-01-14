@@ -889,7 +889,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                             osName.size() + 1) == JXL_DEC_SUCCESS &&
                         osName != CPLSPrintf("Band %d", i))
                     {
-                        osBandName = osName;
+                        osBandName = std::move(osName);
                     }
                 }
             }

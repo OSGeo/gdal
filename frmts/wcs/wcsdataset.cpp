@@ -745,12 +745,9 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
     /* -------------------------------------------------------------------- */
     if (poDS == nullptr)
     {
-        std::string osTempFilename;
-        VSILFILE *fpTemp;
-
-        osTempFilename = CPLString().Printf("/tmp/%p_wcs.dat", this);
-
-        fpTemp = VSIFOpenL(osTempFilename.c_str(), "wb");
+        const std::string osTempFilename =
+            CPLString().Printf("/tmp/%p_wcs.dat", this);
+        VSILFILE *fpTemp = VSIFOpenL(osTempFilename.c_str(), "wb");
         if (fpTemp == nullptr)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,

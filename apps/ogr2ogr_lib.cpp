@@ -3905,8 +3905,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                                 const auto poSrcFieldDefn =
                                     poSrcFDefn->GetFieldDefn(iSrcField);
                                 // Create field domain in output dataset if not already existing.
-                                const auto osDomainName =
-                                    poSrcFieldDefn->GetDomainName();
+                                const std::string osDomainName(
+                                    poSrcFieldDefn->GetDomainName());
                                 if (!osDomainName.empty())
                                 {
                                     if (m_poDstDS->TestCapability(
@@ -4921,7 +4921,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
 
             // Create field domain in output dataset if not already existing.
-            const auto osDomainName = oFieldDefn.GetDomainName();
+            const std::string osDomainName(oFieldDefn.GetDomainName());
             if (!osDomainName.empty())
             {
                 if (m_poDstDS->TestCapability(ODsCAddFieldDomain) &&

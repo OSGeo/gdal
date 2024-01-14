@@ -1884,7 +1884,7 @@ static void LoadPythonDriver(const char *pszFilename)
             osValue.resize(osValue.size() - 1);
         if (EQUAL(osKey, "NAME"))
         {
-            osPluginName = osValue;
+            osPluginName = std::move(osValue);
         }
         else if (EQUAL(osKey, "SUPPORTED_API_VERSION"))
         {

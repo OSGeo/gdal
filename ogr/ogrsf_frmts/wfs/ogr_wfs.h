@@ -205,7 +205,7 @@ class OGRWFSLayer final : public OGRLayer
     OGRFeatureDefn *ParseSchema(const CPLXMLNode *psSchema);
     OGRFeatureDefn *BuildLayerDefn(OGRFeatureDefn *poSrcFDefn = nullptr);
 
-    OGRErr DeleteFromFilter(CPLString osOGCFilter);
+    OGRErr DeleteFromFilter(const std::string &osOGCFilter);
 
     const std::vector<CPLString> &GetLastInsertedFIDList()
     {

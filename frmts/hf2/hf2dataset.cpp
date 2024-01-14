@@ -659,7 +659,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
             oSRS.SetUTM(std::abs(static_cast<int>(nUTMZone)), nUTMZone > 0);
         }
         if (bHasSRS)
-            poDS->m_oSRS = oSRS;
+            poDS->m_oSRS = std::move(oSRS);
     }
 
     /* -------------------------------------------------------------------- */

@@ -3251,7 +3251,7 @@ GByte *GDALRawResult::StealData()
 GDALRawResult GDALAttribute::ReadAsRaw() const
 {
     const auto nEltCount(GetTotalElementsCount());
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     const auto nDTSize(dt.GetSize());
     GByte *res = static_cast<GByte *>(
         VSI_MALLOC2_VERBOSE(static_cast<size_t>(nEltCount), nDTSize));
@@ -9163,10 +9163,11 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                 }
             }
 
-            oItem.osDefinition = osModDefinition;
+            oItem.osDefinition = std::move(osModDefinition);
             oItem.bDefinitionUsesPctForG = bDefinitionUsesPctForG;
 
-            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(oItem);
+            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(
+                std::move(oItem));
         }
     }
 

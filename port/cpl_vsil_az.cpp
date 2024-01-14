@@ -301,7 +301,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                         prop.fileSize = entry->nSize;
                         prop.bIsDirectory = false;
                         prop.mTime = static_cast<time_t>(entry->nMTime);
-                        prop.ETag = ETag;
+                        prop.ETag = std::move(ETag);
                         prop.nMode = entry->nMode;
 
                         std::string osCachedFilename =

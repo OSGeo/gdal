@@ -1276,7 +1276,7 @@ std::map<int,int> CPCIDSKFile::GetEDBChannelMap(std::string oExtFilename)
 
 void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
                                 Mutex ***io_mutex_pp,
-                                std::string filename,
+                                const std::string& filename,
                                 bool writable )
 
 {

@@ -648,6 +648,7 @@ TEST_F(test_cpl, CPLStringList_NameValue)
     {
         CPLStringList oTemp;
         oTemp.AddString("test");
+        // coverity[copy_assignment_call]
         oCopy = oTemp;
     }
     EXPECT_STREQ(oCopy[0], "test");

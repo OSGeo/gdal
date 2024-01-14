@@ -1276,7 +1276,8 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                             if (ret > 0)
                             {
                                 referenceName.resize(ret);
-                                mapDimIndexToDimFullName[i] = referenceName;
+                                mapDimIndexToDimFullName[i] =
+                                    std::move(referenceName);
                             }
                         }
                     }
@@ -2781,7 +2782,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     }
 
     auto poDS(new HDF5Dataset());
-    poDS->m_poRootGroup = poGroup;
+    poDS->m_poRootGroup = std::move(poGroup);
 
     poDS->SetDescription(poOpenInfo->pszFilename);
 

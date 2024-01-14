@@ -683,7 +683,6 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage,
     bool in_band_range = false;
 
     unsigned int field_index = 1;
-    std::string field_name;
     std::vector<std::string> nodata_array;
 
     for (CPLXMLNode *field = record->psChild; field != nullptr;
@@ -773,10 +772,6 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage,
                     *metadata, (key + "INTERVAL").c_str(), interval.c_str());
             }
 
-            if (field_name == "")
-            {
-                field_name = fname;
-            }
             nodata_array.push_back(nodata);
             fields += 1;
         }

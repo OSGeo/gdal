@@ -106,7 +106,7 @@ void GDALOpenInfoDeclareFileNotToOpen(const char *pszFilename,
         memcpy(fnto.pabyHeader, pabyHeader, nHeaderBytes);
         fnto.pabyHeader[nHeaderBytes] = 0;
         fnto.nHeaderBytes = nHeaderBytes;
-        (*pMapFNTO)[pszFilename] = fnto;
+        (*pMapFNTO)[pszFilename] = std::move(fnto);
     }
 }
 

@@ -358,7 +358,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                         prop.fileSize = entry->nSize;
                         prop.bIsDirectory = (entry->nMode == S_IFDIR);
                         prop.mTime = static_cast<time_t>(entry->nMTime);
-                        prop.ETag = ETag;
+                        prop.ETag = std::move(ETag);
 
                         std::string osCachedFilename =
                             osBaseURL + CPLAWSURLEncode(osPrefix, false) +
@@ -4223,7 +4223,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     if (CanSkipDownloadFromNetworkToLocal(
                             osSubSource.c_str(), osSubTarget.c_str(),
                             chunk.nMTime, oIterExistingTarget->second.nMTime,
-                            [&chunk](const char *) { return chunk.osETag; }))
+                            [&chunk](const char *) -> std::string
+                            { return chunk.osETag; }))
                     {
                         bSkip = true;
                     }
@@ -4299,7 +4300,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
                         def.nTotalSize = chunk.nTotalSize;
-                        oMapMultiPartDefs[osSubTarget] = def;
+                        oMapMultiPartDefs[osSubTarget] = std::move(def);
                     }
                     else
                     {
@@ -4400,7 +4401,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             if (CanSkipDownloadFromNetworkToLocal(
                     osSourceWithoutSlash.c_str(), osTarget.c_str(),
                     sSource.st_mtime, sTarget.st_mtime,
-                    [this](const char *pszFilename)
+                    [this](const char *pszFilename) -> std::string
                     {
                         FileProp cachedFileProp;
                         if (GetCachedFileProp(
