@@ -2,10 +2,13 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
- * Author:   Abel Pau, a.pau@creaf.uab.cat
- *
+ * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
+ *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
+ *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat Autònoma de Barcelona. For a complete list of
+ *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
- * Copyright (c) 2023,  MiraMon
+ * Copyright (c) 2024, Xavier Pons
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -4104,7 +4107,7 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * szResult, MM_BYTE dir
     #ifdef GDAL_COMPILATION
     aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.csv");
     #else
-    aMMIDDBFFile=strdup("m_idofic.csv"); // ·$· Use internal MM paths
+    aMMIDDBFFile=strdup("m_idofic.csv"); // Â·$Â· Use internal MM paths
     #endif
 
     if(!aMMIDDBFFile)
@@ -4380,8 +4383,8 @@ char aTimeString[30];
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
     printf_function(pF, "%s=%s\n", KEY_CreationDate, aTimeString);
 
-    // �$� TEMPORAL MENTRE NO HO FEM B�:
-    // A la documentaci� posa:
+    // ·$· TEMPORAL MENTRE NO HO FEM BÉ:
+    // A la documentació posa:
     // -preserve_fid
     // Use the FID of the source features instead of letting the output driver automatically 
     // assign a new one (for formats that require a FID). If not in append mode, 

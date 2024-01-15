@@ -1,11 +1,10 @@
 /******************************************************************************
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Implements OGRMiraMonDriver class.
- * Author:   Abel Pau, a.pau@creaf.uab.cat
- *
+ * Purpose:  C API to create a MiraMon layer
+ * Author:   Abel Pau
  ******************************************************************************
- * Copyright (c) 2023,  MiraMon
+ * Copyright (c) 2024, Xavier Pons
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
