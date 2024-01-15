@@ -59,15 +59,9 @@ typedef void (*CPLThreadFunc)(void *);
 void CPL_DLL *CPLLockFile(const char *pszPath, double dfWaitInSeconds);
 void CPL_DLL CPLUnlockFile(void *hLock);
 
-#ifdef DEBUG
 typedef struct _CPLMutex CPLMutex;
 typedef struct _CPLCond CPLCond;
 typedef struct _CPLJoinableThread CPLJoinableThread;
-#else
-#define CPLMutex void
-#define CPLCond void
-#define CPLJoinableThread void
-#endif
 
 /* Options for CPLCreateMutexEx() and CPLCreateOrAcquireMutexEx() */
 #define CPL_MUTEX_RECURSIVE 0
