@@ -946,6 +946,13 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     /*      Attach the Virtual Table OGR2SQLITE module to it.               */
     /* -------------------------------------------------------------------- */
     OGR2SQLITEModule *poModule = OGR2SQLITE_Setup(poDS, poSQLiteDS);
+    if (!poModule)
+    {
+        delete poSQLiteDS;
+        VSIUnlink(pszTmpDBName);
+        CPLFree(pszTmpDBName);
+        return nullptr;
+    }
     sqlite3 *hDB = poSQLiteDS->GetDB();
 
     /* -------------------------------------------------------------------- */
