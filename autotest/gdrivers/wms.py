@@ -1032,3 +1032,9 @@ def test_gdal_subdataset_modify_filename(filename):
             )
             == "WMS:https://xxxx/?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES"
         )
+
+
+def test_wms_cache_path_error():
+
+    with pytest.raises(Exception):
+        gdal.Open("<GDAL_WMS><Service/><Cache/></GDAL_WMS>")

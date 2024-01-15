@@ -252,8 +252,8 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig)
     // Separate folder for each unique dataset url
     if (CPLTestBool(CPLGetXMLValue(pConfig, "Unique", "True")))
     {
-        m_osCachePath =
-            CPLFormFilename(m_osCachePath, CPLMD5String(pszUrl), nullptr);
+        m_osCachePath = CPLFormFilename(
+            m_osCachePath, CPLMD5String(pszUrl ? pszUrl : ""), nullptr);
     }
 
     // TODO: Add sqlite db cache type
