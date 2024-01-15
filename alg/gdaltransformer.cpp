@@ -980,8 +980,28 @@ retry:
                                                                      &Y) &&
                                 fabs(Y - Yinit) <= 1e-6)
                             {
-                                dfMinXOut = -180;
-                                dfMaxXOut = 180;
+                                bool bMinXMaxXSet = false;
+                                if (poSourceCRS)
+                                {
+                                    const char *pszProjection =
+                                        poSourceCRS->GetAttrValue("PROJECTION");
+                                    if (pszProjection &&
+                                        EQUAL(pszProjection,
+                                              SRS_PT_ORTHOGRAPHIC))
+                                    {
+                                        const double dfLon0 =
+                                            poSourceCRS->GetNormProjParm(
+                                                SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                                        dfMinXOut = dfLon0 - 90;
+                                        dfMaxXOut = dfLon0 + 90;
+                                        bMinXMaxXSet = true;
+                                    }
+                                }
+                                if (!bMinXMaxXSet)
+                                {
+                                    dfMinXOut = -180;
+                                    dfMaxXOut = 180;
+                                }
                                 if (sign < 0)
                                     dfMinYOut = Yinit;
                                 else
