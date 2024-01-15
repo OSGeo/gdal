@@ -3648,7 +3648,8 @@ OGRProjCT *OGRProjCT::FindFromCache(
  * @param x Array of nCount x values.
  * @param y Array of nCount y values.
  * @param z Array of nCount z values.
- * @return TRUE or FALSE
+ * @return TRUE if a transformation could be found (but not all points may
+ * have necessarily succeed to transform), otherwise FALSE.
  */
 int CPL_STDCALL OCTTransform(OGRCoordinateTransformationH hTransform,
                              int nCount, double *x, double *y, double *z)
@@ -3672,7 +3673,8 @@ int CPL_STDCALL OCTTransform(OGRCoordinateTransformationH hTransform,
  * @param y Array of nCount y values.
  * @param z Array of nCount z values.
  * @param pabSuccess Output array of nCount value that will be set to TRUE/FALSE
- * @return TRUE or FALSE
+ * @return TRUE if a transformation could be found (but not all points may
+ * have necessarily succeed to transform), otherwise FALSE.
  */
 int CPL_STDCALL OCTTransformEx(OGRCoordinateTransformationH hTransform,
                                int nCount, double *x, double *y, double *z,
@@ -3700,7 +3702,8 @@ int CPL_STDCALL OCTTransformEx(OGRCoordinateTransformationH hTransform,
  * @param pabSuccess Output array of nCount value that will be set to
  * TRUE/FALSE. Might be NULL.
  * @since GDAL 3.0
- * @return TRUE or FALSE
+ * @return TRUE if a transformation could be found (but not all points may
+ * have necessarily succeed to transform), otherwise FALSE.
  */
 int OCTTransform4D(OGRCoordinateTransformationH hTransform, int nCount,
                    double *x, double *y, double *z, double *t, int *pabSuccess)
@@ -3728,7 +3731,8 @@ int OCTTransform4D(OGRCoordinateTransformationH hTransform, int nCount,
  *                      success, or a non-zero value for failure. Refer to
  *                      PROJ 8 public error codes. Might be NULL
  * @since GDAL 3.3, and PROJ 8 to be able to use PROJ public error codes
- * @return TRUE or FALSE
+ * @return TRUE if a transformation could be found (but not all points may
+ * have necessarily succeed to transform), otherwise FALSE.
  */
 int OCTTransform4DWithErrorCodes(OGRCoordinateTransformationH hTransform,
                                  int nCount, double *x, double *y, double *z,
@@ -3742,7 +3746,7 @@ int OCTTransform4DWithErrorCodes(OGRCoordinateTransformationH hTransform,
 }
 
 /************************************************************************/
-/*                           OCTTransformBounds()                           */
+/*                           OCTTransformBounds()                       */
 /************************************************************************/
 /** \brief Transform boundary.
  *
