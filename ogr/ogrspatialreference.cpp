@@ -12004,7 +12004,7 @@ const int *OSRGetDataAxisToSRSAxisMapping(OGRSpatialReferenceH hSRS,
  * check that, beyond checking there are at least 2 elements, so that this
  * method and setting the CRS can be done in any order).
  * This is taken into account by OGRCoordinateTransformation to transform the
- * order of ordinates to transform to the order expected by the CRS before
+ * order of coordinates to the order expected by the CRS before
  * transformation, and back to the data order after transformation.
  *
  * The mapping[i] value (one based) represents the data axis number for the i(th)
