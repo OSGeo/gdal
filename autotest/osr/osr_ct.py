@@ -800,3 +800,43 @@ def test_osr_ct_point_motion_operation():
     assert abs(x - 582395.993) < 1e-3, x
     assert abs(y - 6708035.973) < 1e-3, y
     assert abs(z - 0.060) < 1e-3, z
+
+
+###############################################################################
+# Test effect of SetDataAxisToSRSAxisMapping([1,2,-3])
+
+
+def test_osr_ct_source_z_axis_reversal():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(4979)
+    s.SetDataAxisToSRSAxisMapping([1, 2, -3])
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4979)
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, z = ct.TransformPoint(1, 2, -3)
+    assert x == pytest.approx(1)
+    assert y == pytest.approx(2)
+    assert z == pytest.approx(3)
+
+
+###############################################################################
+# Test effect of SetDataAxisToSRSAxisMapping([1,2,-3])
+
+
+def test_osr_ct_target_z_axis_reversal():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(4979)
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4979)
+    t.SetDataAxisToSRSAxisMapping([1, 2, -3])
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, z = ct.TransformPoint(1, 2, -3)
+    assert x == pytest.approx(1)
+    assert y == pytest.approx(2)
+    assert z == pytest.approx(3)
