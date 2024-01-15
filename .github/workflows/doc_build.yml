@@ -23,7 +23,7 @@ jobs:
     container: ghcr.io/osgeo/proj-docs
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Setup environment
       shell: bash -l {0}
       run: |
@@ -81,15 +81,15 @@ jobs:
     #  run: |
     #    make spelling
     #  working-directory: ./doc
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
       with:
         name: PDF
         path: doc/build/latex/gdal.pdf
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
       with:
         name: HTML
         path: doc/build/html/*
-    #- uses: actions/upload-artifact@v4
+    #- uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
     #  with:
     #    name: Misspelled
     #    path: doc/build/spelling/output.txt
