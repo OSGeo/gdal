@@ -1155,3 +1155,6 @@ def test_wms_cache_path():
             ds.GetMetadataItem("CACHE_PATH").replace("\\", "/")
             == "./gdalwmscache_b37af3c29458379e6fdf4ed73300f54e/b37af3c29458379e6fdf4ed73300f54e"
         )
+
+    with pytest.raises(Exception):
+        gdal.Open("<GDAL_WMS><Service/><Cache/></GDAL_WMS>")
