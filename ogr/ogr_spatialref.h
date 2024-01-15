@@ -802,7 +802,8 @@ class CPL_DLL OGRCoordinateTransformation
      *
      * This method is the same as the C function OCTTransformEx().
      *
-     * @param nCount number of points to transform.
+     * @param nCount number of points to transform (`size_t` type since 3.9,
+     *               `int` in previous versions).
      * @param x array of nCount X vertices, modified in place. Should not be
      * NULL.
      * @param y array of nCount Y vertices, modified in place. Should not be
@@ -814,7 +815,7 @@ class CPL_DLL OGRCoordinateTransformation
      * @return TRUE if a transformation could be found (but not all points may
      * have necessarily succeed to transform), otherwise FALSE.
      */
-    int Transform(int nCount, double *x, double *y, double *z = nullptr,
+    int Transform(size_t nCount, double *x, double *y, double *z = nullptr,
                   int *pabSuccess = nullptr);
 
     /**
@@ -822,7 +823,8 @@ class CPL_DLL OGRCoordinateTransformation
      *
      * This method is the same as the C function OCTTransform4D().
      *
-     * @param nCount number of points to transform.
+     * @param nCount number of points to transform (`size_t` type since 3.9,
+     *               `int` in previous versions).
      * @param x array of nCount X vertices, modified in place. Should not be
      * NULL.
      * @param y array of nCount Y vertices, modified in place. Should not be
@@ -835,7 +837,7 @@ class CPL_DLL OGRCoordinateTransformation
      * @return TRUE if a transformation could be found (but not all points may
      * have necessarily succeed to transform), otherwise FALSE.
      */
-    virtual int Transform(int nCount, double *x, double *y, double *z,
+    virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double *t, int *pabSuccess) = 0;
 
     /**
@@ -843,7 +845,8 @@ class CPL_DLL OGRCoordinateTransformation
      *
      * This method is the same as the C function OCTTransform4DWithErrorCodes().
      *
-     * @param nCount number of points to transform.
+     * @param nCount number of points to transform (`size_t` type since 3.9,
+     *               `int` in previous versions).
      * @param x array of nCount X vertices, modified in place. Should not be
      * NULL.
      * @param y array of nCount Y vertices, modified in place. Should not be
@@ -857,7 +860,7 @@ class CPL_DLL OGRCoordinateTransformation
      * have necessarily succeed to transform), otherwise FALSE.
      * @since GDAL 3.3, and PROJ 8 to be able to use PROJ public error codes
      */
-    virtual int TransformWithErrorCodes(int nCount, double *x, double *y,
+    virtual int TransformWithErrorCodes(size_t nCount, double *x, double *y,
                                         double *z, double *t,
                                         int *panErrorCodes);
 

@@ -7492,8 +7492,6 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
                     m = 1;
                 else if (m == static_cast<int>(m_iYDim) + 1)
                     m = 2;
-                else
-                    m = 0;
             }
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
@@ -8464,8 +8462,6 @@ class GDALDatasetFromArray final : public GDALPamDataset
                     m = 1;
                 else if (m == static_cast<int>(m_iYDim) + 1)
                     m = 2;
-                else
-                    m = 0;
             }
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
