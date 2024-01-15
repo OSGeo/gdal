@@ -77,7 +77,7 @@ void RegisterOGRPGDump()
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"
-#ifdef WIN32
+#ifdef _WIN32
         "  <Option name='LINEFORMAT' type='string-select' "
         "description='end-of-line sequence' default='CRLF'>"
 #else

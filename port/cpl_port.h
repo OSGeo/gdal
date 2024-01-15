@@ -39,17 +39,6 @@
  *
  */
 
-/* ==================================================================== */
-/*      We will use WIN32 as a standard windows define.                 */
-/* ==================================================================== */
-#if defined(_WIN32) && !defined(WIN32)
-#define WIN32
-#endif
-
-#if defined(_WINDOWS) && !defined(WIN32)
-#define WIN32
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      The following apparently allow you to use strcpy() and other    */
 /*      functions judged "unsafe" by microsoft in VS 8 (2005).          */
@@ -147,7 +136,7 @@
 #include <direct.h>
 #endif
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #include <strings.h>
 #endif
 
@@ -277,7 +266,7 @@ typedef uintptr_t GUIntptr_t;
 #endif
 
 #if (defined(__MSVCRT__) && !(defined(__MINGW64__) && __GNUC__ >= 10)) ||      \
-    (defined(WIN32) && defined(_MSC_VER))
+    (defined(_WIN32) && defined(_MSC_VER))
 #define CPL_FRMT_GB_WITHOUT_PREFIX "I64"
 #else
 /** Printf formatting suffix for GIntBig */
@@ -547,7 +536,7 @@ static inline char *CPL_afl_friendly_strstr(const char *haystack,
 
 #endif /* defined(AFL_FRIENDLY) && defined(__GNUC__) */
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define STRCASECMP(a, b) (_stricmp(a, b))
 #define STRNCASECMP(a, b, n) (_strnicmp(a, b, n))
 #else

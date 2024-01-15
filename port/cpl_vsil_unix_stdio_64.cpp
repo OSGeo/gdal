@@ -57,7 +57,7 @@
 
 #include "cpl_port.h"
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"

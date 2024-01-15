@@ -3100,7 +3100,7 @@ struct GDALAntiRecursionStruct
     std::map<std::string, int> m_oMapDepth{};
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
 static void FreeAntiRecursionOpen(void *pData)
 {

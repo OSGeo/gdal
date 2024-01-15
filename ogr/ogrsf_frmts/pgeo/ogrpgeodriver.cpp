@@ -58,7 +58,7 @@ static GDALDataset *OGRPGeoDriverOpen(GDALOpenInfo *poOpenInfo)
     if (OGRPGeoDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
-#ifndef WIN32
+#ifndef _WIN32
     // Try to register MDB Tools driver
     CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */

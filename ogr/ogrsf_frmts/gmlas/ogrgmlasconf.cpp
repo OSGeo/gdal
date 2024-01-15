@@ -79,7 +79,7 @@ GMLASConfiguration::~GMLASConfiguration()
 
 CPLString GMLASConfiguration::GetBaseCacheDirectory()
 {
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
     const char *pszHome = CPLGetConfigOption("HOME", nullptr);

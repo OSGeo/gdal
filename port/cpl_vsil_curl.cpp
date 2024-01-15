@@ -3485,7 +3485,7 @@ struct CachedConnection
 };
 }  // namespace
 
-#ifdef WIN32
+#ifdef _WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
 static void FreeCachedConnection(void *pData)
 {

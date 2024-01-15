@@ -101,7 +101,7 @@ static int CheckDSNStringTemplate(const char *pszStr)
 
 int OGRODBCDataSource::OpenMDB(GDALOpenInfo *poOpenInfo)
 {
-#ifndef WIN32
+#ifndef _WIN32
     // Try to register MDB Tools driver
     CPLODBCDriverInstaller::InstallMdbToolsDriver();
 #endif /* ndef WIN32 */

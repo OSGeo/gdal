@@ -47,7 +47,7 @@
 
 #include <cmath>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define PATHDELIM '\\'
 #else
 #define PATHDELIM '/'

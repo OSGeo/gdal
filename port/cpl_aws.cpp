@@ -41,7 +41,7 @@
 
 // #define DEBUG_VERBOSE 1
 
-#ifdef WIN32
+#ifdef _WIN32
 #if defined(HAVE_ATLBASE_H)
 bool CPLFetchWindowsProductUUID(
     std::string &osStr);  // defined in cpl_aws_win32.cpp
@@ -549,7 +549,7 @@ enum class EC2InstanceCertainty
 
 static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 {
-#if defined(__linux) || defined(WIN32)
+#if defined(__linux) || defined(_WIN32)
     const auto IsMachinePotentiallyEC2InstanceFromLinuxHost = []()
     {
         // On the newer Nitro Hypervisor (C5, M5, H1, T3), use
@@ -620,7 +620,7 @@ static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 
     return IsMachinePotentiallyEC2InstanceFromLinuxHost();
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
     if (!CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")))
     {
         return EC2InstanceCertainty::MAYBE;
@@ -1134,7 +1134,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     const std::string osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
     constexpr char SEP_STRING[] = "\\";
 #else

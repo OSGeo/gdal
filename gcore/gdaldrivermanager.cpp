@@ -773,7 +773,7 @@ char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
 #ifndef GDAL_NO_AUTOLOAD
     if (pszGDAL_DRIVER_PATH != nullptr)
     {
-#ifdef WIN32
+#ifdef _WIN32
         papszSearchPaths =
             CSLTokenizeStringComplex(pszGDAL_DRIVER_PATH, ";", TRUE, FALSE);
 #else

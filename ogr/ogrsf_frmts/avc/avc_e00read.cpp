@@ -128,7 +128,7 @@
 
 #include "avc.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h> /* getcwd() */
 #else
 #include <unistd.h> /* getcwd() */
@@ -211,7 +211,7 @@ AVCE00ReadPtr AVCE00ReadOpen(const char *pszCoverPath)
             psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
         else
         {
-#ifdef WIN32
+#ifdef _WIN32
             psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s\\", pszCoverPath));
 #else
             psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s/", pszCoverPath));
@@ -308,7 +308,7 @@ AVCE00ReadPtr AVCE00ReadOpen(const char *pszCoverPath)
          *------------------------------------------------------------*/
         size_t nInfoPathLen = strlen(psInfo->pszCoverPath) + 9;
         psInfo->pszInfoPath = (char *)CPLMalloc(nInfoPathLen);
-#ifdef WIN32
+#ifdef _WIN32
 #define AVC_INFOPATH "..\\info\\"
 #else
 #define AVC_INFOPATH "../info/"
@@ -980,7 +980,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
      * extension.
      * We need also make sure cover path is all in uppercase.
      *----------------------------------------------------------------*/
-#ifdef WIN32
+#ifdef _WIN32
     if (psInfo->pszCoverPath[0] != '\\' &&
         !(isalpha(psInfo->pszCoverPath[0]) && psInfo->pszCoverPath[1] == ':'))
 #else
@@ -992,7 +992,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
 
         nLen = (int)strlen(szCWD);
 
-#ifdef WIN32
+#ifdef _WIN32
         if (nLen > 0 && szCWD[nLen - 1] != '\\')
             strcat(szCWD, "\\");
 #else

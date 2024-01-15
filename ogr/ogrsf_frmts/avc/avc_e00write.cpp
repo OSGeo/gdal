@@ -256,7 +256,7 @@ AVCE00WritePtr AVCE00WriteOpen(const char *pszCoverPath,
         psInfo->pszCoverPath = CPLStrdup(pszCoverPath);
     else
     {
-#ifdef WIN32
+#ifdef _WIN32
         psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s\\", pszCoverPath));
 #else
         psInfo->pszCoverPath = CPLStrdup(CPLSPrintf("%s/", pszCoverPath));
@@ -327,7 +327,7 @@ AVCE00WritePtr AVCE00WriteOpen(const char *pszCoverPath,
          *------------------------------------------------------------*/
         size_t nInfoPathLen = strlen(psInfo->pszCoverPath) + 9;
         psInfo->pszInfoPath = (char *)CPLMalloc(nInfoPathLen);
-#ifdef WIN32
+#ifdef _WIN32
 #define AVC_INFOPATH "..\\info\\"
 #else
 #define AVC_INFOPATH "../info/"

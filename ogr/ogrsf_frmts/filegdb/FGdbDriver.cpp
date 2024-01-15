@@ -295,7 +295,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
     if (osName.back() == '/' || osName.back() == '\\')
         osName.resize(osName.size() - 1);
 
-#ifndef WIN32
+#ifndef _WIN32
     int bPerLayerCopyingForTransaction =
         poDS->HasPerLayerCopyingForTransaction();
 #endif
@@ -318,7 +318,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
     OGRErr eErr = OGRERR_NONE;
 
     CPLString osDatabaseToReopen;
-#ifndef WIN32
+#ifndef _WIN32
     if (bPerLayerCopyingForTransaction)
     {
         int bError = FALSE;
@@ -412,7 +412,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
     FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osDatabaseToReopen, TRUE, osNameOri);
 
-#ifndef WIN32
+#ifndef _WIN32
     if (eErr == OGRERR_NONE && bPerLayerCopyingForTransaction)
     {
         pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
@@ -454,7 +454,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
     if (osName.back() == '/' || osName.back() == '\\')
         osName.resize(osName.size() - 1);
 
-#ifndef WIN32
+#ifndef _WIN32
     int bPerLayerCopyingForTransaction =
         poDS->HasPerLayerCopyingForTransaction();
 #endif
@@ -470,7 +470,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
     CPLString osEditedName(osName);
     osEditedName += ".ogredited";
 
-#ifndef WIN32
+#ifndef _WIN32
     if (bPerLayerCopyingForTransaction)
     {
         int bError = FALSE;

@@ -1865,7 +1865,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
                  psTableDef->szDataFile);
         psFile->pszFilename = CPLStrdup(pszFname);
 
-#ifdef WIN32
+#ifdef _WIN32
         /*-------------------------------------------------------------
          * On a Windows system, we have to change the '/' to '\\' in the
          * data file path.

@@ -45,7 +45,7 @@
 #endif
 
 // TODO(rouault): Why is this here?
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #include <string.h>
 #endif
 

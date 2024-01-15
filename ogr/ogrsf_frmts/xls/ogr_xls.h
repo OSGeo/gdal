@@ -99,7 +99,7 @@ class OGRXLSDataSource final : public OGRDataSource
     const void *xlshandle;
 
     CPLString m_osANSIFilename;
-#ifdef WIN32
+#ifdef _WIN32
     CPLString m_osTempFilename;
 #endif
   public:
