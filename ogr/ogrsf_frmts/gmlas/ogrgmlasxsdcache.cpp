@@ -30,6 +30,7 @@
 
 #include "ogr_gmlas.h"
 
+#include "cpl_http.h"
 #include "cpl_sha256.h"
 
 /************************************************************************/
@@ -54,7 +55,7 @@ GMLASResourceCache::~GMLASResourceCache()
 /*                         SetCacheDirectory()                          */
 /************************************************************************/
 
-void GMLASResourceCache::SetCacheDirectory(const CPLString &osCacheDirectory)
+void GMLASResourceCache::SetCacheDirectory(const std::string &osCacheDirectory)
 {
     m_osCacheDirectory = osCacheDirectory;
 }
@@ -64,21 +65,21 @@ void GMLASResourceCache::SetCacheDirectory(const CPLString &osCacheDirectory)
 /************************************************************************/
 
 bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded(
-    const CPLString &osDirname)
+    const std::string &osDirname)
 {
     VSIStatBufL sStat;
-    if (VSIStatL(osDirname, &sStat) == 0)
+    if (VSIStatL(osDirname.c_str(), &sStat) == 0)
     {
         return true;
     }
 
-    CPLString osParent = CPLGetDirname(osDirname);
+    std::string osParent = CPLGetDirname(osDirname.c_str());
     if (!osParent.empty() && osParent != ".")
     {
-        if (!RecursivelyCreateDirectoryIfNeeded(osParent))
+        if (!RecursivelyCreateDirectoryIfNeeded(osParent.c_str()))
             return false;
     }
-    return VSIMkdir(osDirname, 0755) == 0;
+    return VSIMkdir(osDirname.c_str(), 0755) == 0;
 }
 
 bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded()
@@ -101,14 +102,12 @@ bool GMLASResourceCache::RecursivelyCreateDirectoryIfNeeded()
 /*                        GetCachedFilename()                           */
 /************************************************************************/
 
-CPLString GMLASResourceCache::GetCachedFilename(const CPLString &osResource)
+std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
 {
-    CPLString osLaunderedName(osResource);
-    if (osLaunderedName.find("/vsicurl_streaming/") == 0)
-        osLaunderedName = osLaunderedName.substr(strlen("/vsicurl_streaming/"));
-    if (osLaunderedName.find("http://") == 0)
+    std::string osLaunderedName(osResource);
+    if (STARTS_WITH(osLaunderedName.c_str(), "http://"))
         osLaunderedName = osLaunderedName.substr(strlen("http://"));
-    else if (osLaunderedName.find("https://") == 0)
+    else if (STARTS_WITH(osLaunderedName.c_str(), "https://"))
         osLaunderedName = osLaunderedName.substr(strlen("https://"));
     for (size_t i = 0; i < osLaunderedName.size(); i++)
     {
@@ -139,7 +138,7 @@ CPLString GMLASResourceCache::GetCachedFilename(const CPLString &osResource)
     if (osLaunderedName.size() >= nMaxFilenameSize - strlen(".tmp"))
     {
         GByte abyHash[CPL_SHA256_HASH_SIZE];
-        CPL_SHA256(osResource, osResource.size(), abyHash);
+        CPL_SHA256(osResource.c_str(), osResource.size(), abyHash);
         char *pszHash = CPLBinaryToHex(CPL_SHA256_HASH_SIZE, abyHash);
         osLaunderedName.resize(nMaxFilenameSize - strlen(".tmp") -
                                2 * CPL_SHA256_HASH_SIZE);
@@ -149,7 +148,8 @@ CPLString GMLASResourceCache::GetCachedFilename(const CPLString &osResource)
                  osLaunderedName.c_str());
     }
 
-    return CPLFormFilename(m_osCacheDirectory, osLaunderedName, nullptr);
+    return CPLFormFilename(m_osCacheDirectory.c_str(), osLaunderedName.c_str(),
+                           nullptr);
 }
 
 /************************************************************************/
@@ -167,49 +167,191 @@ GMLASXSDCache::GMLASXSDCache()
 GMLASXSDCache::~GMLASXSDCache()
 {
 }
+
+/************************************************************************/
+/*                          CacheAllGML321()                            */
+/************************************************************************/
+
+bool GMLASXSDCache::CacheAllGML321()
+{
+    // As of today (2024-01-02), the schemas in https://schemas.opengis.net/gml/3.2.1
+    // are actually the same as the ones in the https://schemas.opengis.net/gml/gml-3_2_2.zip archive.
+    // Download the later and unzip it for faster fetching of GML schemas.
+
+    bool bSuccess = false;
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
+
+    const char *pszHTTPZIP = "https://schemas.opengis.net/gml/gml-3_2_2.zip";
+    CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
+    if (psResult && psResult->nDataLen)
+    {
+        const std::string osZIPFilename(CPLSPrintf("/vsimem/%p.zip", this));
+        auto fpZIP =
+            VSIFileFromMemBuffer(osZIPFilename.c_str(), psResult->pabyData,
+                                 psResult->nDataLen, FALSE);
+        if (fpZIP)
+        {
+            VSIFCloseL(fpZIP);
+
+            const std::string osVSIZIPFilename("/vsizip/" + osZIPFilename);
+            const CPLStringList aosFiles(
+                VSIReadDirRecursive(osVSIZIPFilename.c_str()));
+            for (int i = 0; i < aosFiles.size(); ++i)
+            {
+                if (strstr(aosFiles[i], ".xsd"))
+                {
+                    const std::string osFilename(
+                        std::string("https://schemas.opengis.net/gml/3.2.1/") +
+                        CPLGetFilename(aosFiles[i]));
+                    const std::string osCachedFileName(
+                        GetCachedFilename(osFilename.c_str()));
+
+                    std::string osTmpfilename(osCachedFileName + ".tmp");
+                    if (CPLCopyFile(
+                            osTmpfilename.c_str(),
+                            (osVSIZIPFilename + "/" + aosFiles[i]).c_str()) ==
+                        0)
+                    {
+                        VSIRename(osTmpfilename.c_str(),
+                                  osCachedFileName.c_str());
+                        bSuccess = true;
+                    }
+                }
+            }
+        }
+        VSIUnlink(osZIPFilename.c_str());
+    }
+    CPLHTTPDestroyResult(psResult);
+    if (!bSuccess)
+    {
+        static bool bHasWarned = false;
+        if (!bHasWarned)
+        {
+            bHasWarned = true;
+            CPLDebug("GMLAS", "Cannot get GML schemas from %s", pszHTTPZIP);
+        }
+    }
+    return bSuccess;
+}
+
+/************************************************************************/
+/*                         CacheAllISO20070417()                        */
+/************************************************************************/
+
+bool GMLASXSDCache::CacheAllISO20070417()
+{
+    // As of today (2024-01-02), the schemas in https://schemas.opengis.net/iso/19139/20070417/
+    // are actually the same as the ones in the iso19139-20070417_5-v20220526.zip archive
+    // in https://schemas.opengis.net/iso/19139/iso19139-20070417.zip archive.
+    // Download the later and unzip it for faster fetching of ISO schemas.
+
+    bool bSuccess = false;
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
+
+    const char *pszHTTPZIP =
+        "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip";
+    CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
+    if (psResult && psResult->nDataLen)
+    {
+        const std::string osZIPFilename(CPLSPrintf("/vsimem/%p.zip", this));
+        auto fpZIP =
+            VSIFileFromMemBuffer(osZIPFilename.c_str(), psResult->pabyData,
+                                 psResult->nDataLen, FALSE);
+        if (fpZIP)
+        {
+            VSIFCloseL(fpZIP);
+
+            const std::string osVSIZIPFilename(
+                "/vsizip//vsizip/" + osZIPFilename +
+                "/iso19139-20070417_5-v20220526.zip");
+            const CPLStringList aosFiles(
+                VSIReadDirRecursive(osVSIZIPFilename.c_str()));
+            for (int i = 0; i < aosFiles.size(); ++i)
+            {
+                if (STARTS_WITH(aosFiles[i], "iso/19139/20070417/") &&
+                    strstr(aosFiles[i], ".xsd"))
+                {
+                    const std::string osFilename(
+                        std::string("https://schemas.opengis.net/") +
+                        aosFiles[i]);
+                    const std::string osCachedFileName(
+                        GetCachedFilename(osFilename.c_str()));
+
+                    std::string osTmpfilename(osCachedFileName + ".tmp");
+                    if (CPLCopyFile(
+                            osTmpfilename.c_str(),
+                            (osVSIZIPFilename + "/" + aosFiles[i]).c_str()) ==
+                        0)
+                    {
+                        VSIRename(osTmpfilename.c_str(),
+                                  osCachedFileName.c_str());
+                        bSuccess = true;
+                    }
+                }
+            }
+        }
+        VSIUnlink(osZIPFilename.c_str());
+    }
+    CPLHTTPDestroyResult(psResult);
+    if (!bSuccess)
+    {
+        static bool bHasWarned = false;
+        if (!bHasWarned)
+        {
+            bHasWarned = true;
+            CPLDebug("GMLAS", "Cannot get ISO schemas from %s", pszHTTPZIP);
+        }
+    }
+    return bSuccess;
+}
+
 /************************************************************************/
 /*                               Open()                                 */
 /************************************************************************/
 
-VSILFILE *GMLASXSDCache::Open(const CPLString &osResource,
-                              const CPLString &osBasePath,
-                              CPLString &osOutFilename)
+VSILFILE *GMLASXSDCache::Open(const std::string &osResource,
+                              const std::string &osBasePath,
+                              std::string &osOutFilename)
 {
     osOutFilename = osResource;
-    if (osResource.find("http://") == 0 || osResource.find("https://") == 0)
-    {
-        osOutFilename = "/vsicurl_streaming/" + osResource;
-    }
-    else if (CPLIsFilenameRelative(osResource) && !osResource.empty())
+    if (!STARTS_WITH(osResource.c_str(), "http://") &&
+        !STARTS_WITH(osResource.c_str(), "https://") &&
+        CPLIsFilenameRelative(osResource.c_str()) && !osResource.empty())
     {
         /* Transform a/b + ../c --> a/c */
-        CPLString osResourceModified(osResource);
-        CPLString osBasePathModified(osBasePath);
-        while ((osResourceModified.find("../") == 0 ||
-                osResourceModified.find("..\\") == 0) &&
+        std::string osResourceModified(osResource);
+        std::string osBasePathModified(osBasePath);
+        while ((STARTS_WITH(osResourceModified.c_str(), "../") ||
+                STARTS_WITH(osResourceModified.c_str(), "..\\")) &&
                !osBasePathModified.empty())
         {
-            osBasePathModified = CPLGetDirname(osBasePathModified);
+            osBasePathModified = CPLGetDirname(osBasePathModified.c_str());
             osResourceModified = osResourceModified.substr(3);
         }
 
-        osOutFilename =
-            CPLFormFilename(osBasePathModified, osResourceModified, nullptr);
+        osOutFilename = CPLFormFilename(osBasePathModified.c_str(),
+                                        osResourceModified.c_str(), nullptr);
     }
 
     CPLDebug("GMLAS", "Resolving %s (%s) to %s", osResource.c_str(),
              osBasePath.c_str(), osOutFilename.c_str());
 
     VSILFILE *fp = nullptr;
+    bool bHasTriedZIPArchive = false;
+retry:
     if (!m_osCacheDirectory.empty() &&
-        osOutFilename.find("/vsicurl_streaming/") == 0 &&
+        (STARTS_WITH(osOutFilename.c_str(), "http://") ||
+         STARTS_WITH(osOutFilename.c_str(), "https://")) &&
         RecursivelyCreateDirectoryIfNeeded())
     {
-        CPLString osCachedFileName(GetCachedFilename(osOutFilename));
+        const std::string osCachedFileName(
+            GetCachedFilename(osOutFilename.c_str()));
         if (!m_bRefresh || m_aoSetRefreshedFiles.find(osCachedFileName) !=
                                m_aoSetRefreshedFiles.end())
         {
-            fp = VSIFOpenL(osCachedFileName, "rb");
+            fp = VSIFOpenL(osCachedFileName.c_str(), "rb");
         }
         if (fp != nullptr)
         {
@@ -220,32 +362,87 @@ VSILFILE *GMLASXSDCache::Open(const CPLString &osResource,
             if (m_bRefresh)
                 m_aoSetRefreshedFiles.insert(osCachedFileName);
 
-            CPLString osTmpfilename(osCachedFileName + ".tmp");
-            if (CPLCopyFile(osTmpfilename, osOutFilename) == 0)
+            else if (!bHasTriedZIPArchive &&
+                     strstr(osOutFilename.c_str(),
+                            "://schemas.opengis.net/gml/3.2.1/") &&
+                     CPLTestBool(CPLGetConfigOption(
+                         "OGR_GMLAS_USE_SCHEMAS_FROM_OGC_ZIP", "YES")))
             {
-                // Due to the caching done by /vsicurl_streaming/, if the
-                // web server is no longer available but was before in the
-                // same process, then file opening will succeed. Hence we
-                // check that the downloaded file is not 0. This will only
-                // happen in practice with the unit tests.
-                VSIStatBufL sStat;
-                if (VSIStatL(osTmpfilename, &sStat) == 0 && sStat.st_size != 0)
+                bHasTriedZIPArchive = true;
+                if (CacheAllGML321())
+                    goto retry;
+            }
+
+            else if (!bHasTriedZIPArchive &&
+                     strstr(osOutFilename.c_str(),
+                            "://schemas.opengis.net/iso/19139/20070417/") &&
+                     CPLTestBool(CPLGetConfigOption(
+                         "OGR_GMLAS_USE_SCHEMAS_FROM_OGC_ZIP", "YES")))
+            {
+                bHasTriedZIPArchive = true;
+                if (CacheAllISO20070417())
+                    goto retry;
+            }
+
+            CPLHTTPResult *psResult =
+                CPLHTTPFetch(osOutFilename.c_str(), nullptr);
+            if (psResult == nullptr || psResult->nDataLen == 0)
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot resolve %s",
+                         osResource.c_str());
+                CPLHTTPDestroyResult(psResult);
+                return nullptr;
+            }
+
+            std::string osTmpfilename(osCachedFileName + ".tmp");
+            VSILFILE *fpTmp = VSIFOpenL(osTmpfilename.c_str(), "wb");
+            if (fpTmp)
+            {
+                const auto nRet = VSIFWriteL(psResult->pabyData,
+                                             psResult->nDataLen, 1, fpTmp);
+                VSIFCloseL(fpTmp);
+                if (nRet == 1)
                 {
-                    VSIRename(osTmpfilename, osCachedFileName);
-                    fp = VSIFOpenL(osCachedFileName, "rb");
-                }
-                else
-                {
-                    VSIUnlink(osTmpfilename);
+                    VSIRename(osTmpfilename.c_str(), osCachedFileName.c_str());
+                    fp = VSIFOpenL(osCachedFileName.c_str(), "rb");
                 }
             }
+
+            CPLHTTPDestroyResult(psResult);
         }
     }
     else
     {
-        if (m_bAllowDownload || osOutFilename.find("/vsicurl_streaming/") != 0)
+        if (STARTS_WITH(osOutFilename.c_str(), "http://") ||
+            STARTS_WITH(osOutFilename.c_str(), "https://"))
         {
-            fp = VSIFOpenL(osOutFilename, "rb");
+            if (m_bAllowDownload)
+            {
+                CPLHTTPResult *psResult =
+                    CPLHTTPFetch(osOutFilename.c_str(), nullptr);
+                if (psResult == nullptr || psResult->nDataLen == 0)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO, "Cannot resolve %s",
+                             osResource.c_str());
+                    CPLHTTPDestroyResult(psResult);
+                    return nullptr;
+                }
+
+                fp = VSIFileFromMemBuffer(nullptr, psResult->pabyData,
+                                          psResult->nDataLen, TRUE);
+                if (fp)
+                {
+                    // Steal the memory buffer from HTTP result
+                    psResult->pabyData = nullptr;
+                    psResult->nDataLen = 0;
+                    psResult->nDataAlloc = 0;
+                }
+                CPLHTTPDestroyResult(psResult);
+            }
+        }
+        else
+        {
+            fp = VSIFOpenL(osOutFilename.c_str(), "rb");
         }
     }
 
