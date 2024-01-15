@@ -72,7 +72,7 @@ TEST_P(OrganizePolygonsTest, EmptyInputVector)
 {
     std::vector<OGRGeometry *> polygons;
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -87,7 +87,7 @@ TEST_P(OrganizePolygonsTest, SinglePolygonInput)
 
     std::unique_ptr<OGRGeometry> expected(polygons.front()->clone());
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -102,7 +102,7 @@ TEST_P(OrganizePolygonsTest, SingleCurvePolygonInput)
 
     std::unique_ptr<OGRGeometry> expected(polygons.front()->clone());
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -115,7 +115,7 @@ TEST_P(OrganizePolygonsTest, SinglePointInput)
     std::vector<OGRGeometry *> polygons;
     polygons.push_back(readWKT("POINT (0 0)"));
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -130,7 +130,7 @@ TEST_P(OrganizePolygonsTest, MixedPolygonCurvePolygonInput)
         readWKT("POLYGON ((10 10, 20 10, 20 20, 20 10, 10 10))"));
     polygons.push_back(readWKT("CURVEPOLYGON ((0 0, 1 0, 1 1, 0 0))"));
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -152,7 +152,7 @@ TEST_P(OrganizePolygonsTest, MixedPolygonPointInput)
 
     std::unique_ptr<OGRGeometry> expected(polygons[0]->clone());
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -165,7 +165,7 @@ TEST_P(OrganizePolygonsTest, CWPolygonCCWHole)
     polygons.push_back(readWKT("POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))"));
     polygons.push_back(readWKT("POLYGON ((1 1, 2 1, 2 2, 1 2, 1 1))"));
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -195,7 +195,7 @@ TEST_P(OrganizePolygonsTest, CWPolygonCCWLakeCWIslandInLake)
     polygons.push_back(
         readWKT("POLYGON ((15 15, 15 16, 16 16, 16 15, 15 15))"));  // CW
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -217,7 +217,7 @@ TEST_P(OrganizePolygonsTest, AdjacentCCWPolygons)
     polygons.push_back(readWKT("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))"));  // CCW
     polygons.push_back(readWKT("POLYGON ((1 0, 2 0, 2 1, 1 1, 1 0))"));  // CCW
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -236,7 +236,7 @@ TEST_P(OrganizePolygonsTest, HoleAlongEdge)
         readWKT("POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))"));             // CW
     polygons.push_back(readWKT("POLYGON ((0 2, 1 2, 1 3, 0 3, 0 2))"));  // CCW
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);
@@ -257,7 +257,7 @@ TEST_P(OrganizePolygonsTest, CrossingCCWPolygons)
     polygons.push_back(readWKT("POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0))"));
     polygons.push_back(readWKT("POLYGON ((5 5, 15 5, 15 15, 5 15, 5 5))"));
 
-    auto method = GetParam();
+    const auto &method = GetParam();
     auto result = organizePolygons(polygons, method);
 
     ASSERT_NE(result, nullptr);

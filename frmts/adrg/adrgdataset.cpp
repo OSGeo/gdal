@@ -1779,7 +1779,7 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
     poDS->fdIMG = fdIMG;
     poDS->fdTHF = fdTHF;
 
-    poDS->osBaseFileName = osBaseFileName;
+    poDS->osBaseFileName = std::move(osBaseFileName);
     poDS->bCreation = TRUE;
     poDS->nNextAvailableBlock = 1;
     poDS->NFC = (nXSize + 127) / 128;

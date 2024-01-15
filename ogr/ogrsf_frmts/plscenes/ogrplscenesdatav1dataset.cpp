@@ -594,7 +594,7 @@ retry:
         VSIStatBufL sStat;
         if (VSIStatL(osTmpURL, &sStat) == 0 && sStat.st_size > 0)
         {
-            osRasterURL = osTmpURL;
+            osRasterURL = std::move(osTmpURL);
         }
         else
         {

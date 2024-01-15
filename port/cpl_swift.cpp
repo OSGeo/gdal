@@ -194,9 +194,9 @@ bool VSISwiftHandleHelper::AuthV1(const std::string &osPathForOption,
     // Cache credentials
     {
         CPLMutexHolder oHolder(&g_hMutex);
-        g_osLastAuthURL = osAuthURL;
-        g_osLastUser = osUser;
-        g_osLastKey = osKey;
+        g_osLastAuthURL = std::move(osAuthURL);
+        g_osLastUser = std::move(osUser);
+        g_osLastKey = std::move(osKey);
         g_osLastStorageURL = osStorageURL;
         g_osLastAuthToken = osAuthToken;
     }
@@ -439,9 +439,9 @@ bool VSISwiftHandleHelper::AuthV3(const std::string &osPathForOption,
     // Cache credentials
     {
         CPLMutexHolder oHolder(&g_hMutex);
-        g_osLastAuthURL = osAuthURL;
-        g_osLastUser = osAuthID;
-        g_osLastKey = osAuthKey;
+        g_osLastAuthURL = std::move(osAuthURL);
+        g_osLastUser = std::move(osAuthID);
+        g_osLastKey = std::move(osAuthKey);
         g_osLastStorageURL = osStorageURL;
         g_osLastAuthToken = osAuthToken;
     }

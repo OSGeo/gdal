@@ -245,7 +245,7 @@ std::vector<T> DirectedAcyclicGraph<T, V>::getTopologicalOrdering()
         if (iter != outgoingNodes.end())
         {
             // Need to take a copy as we remove edges during iteration
-            const auto myOutgoingNodes = iter->second;
+            const std::set<T> myOutgoingNodes = iter->second;
             for (const T &m : myOutgoingNodes)
             {
                 const char *retRemoveEdge = removeEdge(n, m);

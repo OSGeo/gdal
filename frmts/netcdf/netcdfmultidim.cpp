@@ -4110,7 +4110,7 @@ netCDFVariable::GetCoordinateVariables() const
                 auto poLat = poLocationGroup->OpenMDArray("lat");
                 if (poLon && poLat)
                 {
-                    return {poLon, poLat};
+                    return {std::move(poLon), std::move(poLat)};
                 }
             }
         }
@@ -4542,7 +4542,7 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     if (dt.GetClass() == GEDTC_NUMERIC &&
         dt.GetNumericDataType() == GDT_Unknown)
     {

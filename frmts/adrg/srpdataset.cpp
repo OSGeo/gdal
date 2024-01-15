@@ -1617,7 +1617,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
                     return nullptr;
             }
 
-            osGENFileName = osFileName;
+            osGENFileName = std::move(osFileName);
         }
     }
 

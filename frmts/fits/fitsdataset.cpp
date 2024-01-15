@@ -1048,7 +1048,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
                 (iBit = strtol(pszBit + strlen("_bit"), &pszEndPtr, 10)) > 0 &&
                 pszEndPtr && *pszEndPtr == '\0')
             {
-                CPLString osName;
+                std::string osName;
                 osName.assign(pszFieldName, pszBit - pszFieldName);
                 if (oSetBitFieldNames.find(osName) == oSetBitFieldNames.end())
                 {
@@ -1060,7 +1060,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
 
                     if (osPendingBitFieldName.empty())
                     {
-                        osPendingBitFieldName = osName;
+                        osPendingBitFieldName = std::move(osName);
                         nPendingBitFieldSize = 1;
                         continue;
                     }

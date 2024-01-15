@@ -1241,8 +1241,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             if (nRemainingMarkerSize >= 1)
             {
                 v = *pabyMarkerDataIter;
-                const auto comment =
-                    commentFunc ? commentFunc(v) : std::string();
+                const std::string comment(commentFunc ? commentFunc(v)
+                                                      : std::string());
                 AddField(psMarker, psLastChild, psDumpContext, name,
                          *pabyMarkerDataIter,
                          comment.empty() ? nullptr : comment.c_str());

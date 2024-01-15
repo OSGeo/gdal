@@ -1923,8 +1923,9 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                 bInvertAxis ? tileMatrix.mTopLeftX : tileMatrix.mTopLeftY;
 
             const auto CreateWMS_XML =
-                [=, &tileMatrix](int minRow, int rowCount, int nCoalesce,
-                                 double &dfStripMinY, double &dfStripMaxY)
+                [=, &osURL, &tileMatrix](int minRow, int rowCount,
+                                         int nCoalesce, double &dfStripMinY,
+                                         double &dfStripMaxY)
             {
                 int minCol = 0;
                 int maxCol = tileMatrix.mMatrixWidth - 1;

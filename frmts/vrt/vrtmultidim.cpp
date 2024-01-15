@@ -1121,7 +1121,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const char *pszVRTPath,
         std::shared_ptr<VRTGroup>(new VRTGroup(pszVRTPath ? pszVRTPath : ""));
     auto poArray = Create(poDummyGroup, std::string(), psNode);
     if (poArray)
-        poArray->m_poDummyOwningGroup = poDummyGroup;
+        poArray->m_poDummyOwningGroup = std::move(poDummyGroup);
     return poArray;
 }
 
@@ -1984,7 +1984,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
             if (!poSrcDS)
                 return false;
             poSrcDSWrapper = std::make_shared<VRTArrayDatasetWrapper>(poSrcDS);
-            oPair.first = poSrcDSWrapper;
+            oPair.first = std::move(poSrcDSWrapper);
             oPair.second.insert(this);
             g_cacheSources.insert(key, oPair);
         }

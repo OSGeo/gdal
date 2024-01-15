@@ -1142,9 +1142,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     constexpr char SEP_STRING[] = "/";
 #endif
 
-    std::string osDotAws(pszHome ? pszHome : "");
-    osDotAws += SEP_STRING;
-    osDotAws += ".aws";
+    const std::string osDotAws(
+        std::string(pszHome ? pszHome : "").append(SEP_STRING).append(".aws"));
 
     // Read first ~/.aws/credential file
 
@@ -1562,8 +1561,9 @@ bool VSIS3HandleHelper::GetConfiguration(
                             osSecretAccessKey, osAccessKeyId, osSessionToken))
                     {
                         CPLMutexHolder oHolder(&ghMutex);
-                        gosRoleArnWebIdentity = osRoleArnSP;
-                        gosWebIdentityTokenFile = osWebIdentityTokenFile;
+                        gosRoleArnWebIdentity = std::move(osRoleArnSP);
+                        gosWebIdentityTokenFile =
+                            std::move(osWebIdentityTokenFile);
                     }
                 }
             }
@@ -1614,9 +1614,9 @@ bool VSIS3HandleHelper::GetConfiguration(
                     gosGlobalSessionToken = osTempSessionToken;
                     gosRegion = osRegion;
                 }
-                osSecretAccessKey = osTempSecretAccessKey;
-                osAccessKeyId = osTempAccessKeyId;
-                osSessionToken = osTempSessionToken;
+                osSecretAccessKey = std::move(osTempSecretAccessKey);
+                osAccessKeyId = std::move(osTempAccessKeyId);
+                osSessionToken = std::move(osTempSessionToken);
                 eCredentialsSource = AWSCredentialsSource::ASSUMED_ROLE;
                 return true;
             }
@@ -1831,9 +1831,9 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                                     osSecretAccessKey, osAccessKeyId,
                                     osSessionToken))
         {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
         }
     }
     else if (m_eCredentialsSource == AWSCredentialsSource::ASSUMED_ROLE)
@@ -1844,9 +1844,9 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                 bForceRefresh, osSecretAccessKey, osAccessKeyId, osSessionToken,
                 osRegion))
         {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
         }
     }
     else if (m_eCredentialsSource == AWSCredentialsSource::WEB_IDENTITY)
@@ -1857,9 +1857,9 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                 std::string(), osSecretAccessKey, osAccessKeyId,
                 osSessionToken))
         {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
         }
     }
 }

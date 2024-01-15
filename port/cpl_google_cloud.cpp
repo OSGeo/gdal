@@ -629,8 +629,8 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                 }
                 else if (nCount == 2)
                 {
-                    osClientId = osOAuth2ClientId;
-                    osClientSecret = osOAuth2ClientSecret;
+                    osClientId = std::move(osOAuth2ClientId);
+                    osClientSecret = std::move(osOAuth2ClientSecret);
                     bClientInfoFromFile = true;
                 }
             }

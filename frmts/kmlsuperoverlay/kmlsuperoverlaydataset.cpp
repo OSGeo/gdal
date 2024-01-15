@@ -1818,7 +1818,7 @@ static GDALDataset *KmlSuperOverlayLoadIcon(const char *pszBaseFilename,
 /*                    KmlSuperOverlayComputeDepth()                     */
 /************************************************************************/
 
-static bool KmlSuperOverlayComputeDepth(CPLString osFilename,
+static bool KmlSuperOverlayComputeDepth(const std::string &osFilename,
                                         CPLXMLNode *psDocument, int &nLevel)
 {
     CPLXMLNode *psIter = psDocument->psChild;
@@ -1839,8 +1839,8 @@ static bool KmlSuperOverlayComputeDepth(CPLString osFilename,
                         CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
-                    osSubFilename = CPLFormFilename(CPLGetPath(osFilename),
-                                                    pszHref, nullptr);
+                    osSubFilename = CPLFormFilename(
+                        CPLGetPath(osFilename.c_str()), pszHref, nullptr);
                     osSubFilename = KMLRemoveSlash(osSubFilename);
                 }
 
@@ -2468,7 +2468,7 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
         poDS->SetBand(iBand, new KmlSingleDocRasterRasterBand(poDS, iBand));
     poDS->SetDescription(pszFilename);
     poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    poDS->aosDescs = aosDescs;
+    poDS->aosDescs = std::move(aosDescs);
 
     return poDS;
 }

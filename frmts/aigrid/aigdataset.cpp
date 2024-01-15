@@ -689,19 +689,20 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
     // Look in parent if we don't find a .clr in the coverage dir.
     if (osClrFilename.empty())
     {
-        osTestName.Printf("%s/../%s.clr", psInfo->pszCoverName,
-                          CPLGetFilename(osCleanPath));
+        CPLString osTestClrFilename;
+        osTestClrFilename.Printf("%s/../%s.clr", psInfo->pszCoverName,
+                                 CPLGetFilename(osCleanPath));
 
-        if (VSIStatL(osTestName, &sStatBuf) != 0)
+        if (VSIStatL(osTestClrFilename, &sStatBuf) != 0)
         {
-            osTestName.Printf("%s/../%s.CLR", psInfo->pszCoverName,
-                              CPLGetFilename(osCleanPath));
+            osTestClrFilename.Printf("%s/../%s.CLR", psInfo->pszCoverName,
+                                     CPLGetFilename(osCleanPath));
 
-            if (!VSIStatL(osTestName, &sStatBuf))
-                osClrFilename = osTestName;
+            if (!VSIStatL(osTestClrFilename, &sStatBuf))
+                osClrFilename = std::move(osTestClrFilename);
         }
         else
-            osClrFilename = osTestName;
+            osClrFilename = std::move(osTestClrFilename);
     }
 
     if (!osClrFilename.empty())

@@ -211,9 +211,10 @@ OGRErr GDALGeoPackageDataset::SetApplicationAndUserVersionId()
 {
     CPLAssert(hDB != nullptr);
 
-    const auto osPragma = CPLString().Printf("PRAGMA application_id = %u;"
-                                             "PRAGMA user_version = %u",
-                                             m_nApplicationId, m_nUserVersion);
+    const CPLString osPragma(CPLString().Printf("PRAGMA application_id = %u;"
+                                                "PRAGMA user_version = %u",
+                                                m_nApplicationId,
+                                                m_nUserVersion));
     return SQLCommand(hDB, osPragma.c_str());
 }
 
@@ -7436,9 +7437,9 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
     /*      Create layer.                                                   */
     /* -------------------------------------------------------------------- */
 
-    CPLString osSQL = osSQLCommand;
     OGRLayer *poLayer = new OGRGeoPackageSelectLayer(
-        this, osSQL, hSQLStmt, bUseStatementForGetNextFeature, bEmptyLayer);
+        this, osSQLCommand, hSQLStmt, bUseStatementForGetNextFeature,
+        bEmptyLayer);
 
     if (poSpatialFilter != nullptr &&
         poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
@@ -9490,7 +9491,7 @@ GDALGeoPackageDataset::GetFieldDomain(const std::string &name) const
 bool GDALGeoPackageDataset::AddFieldDomain(
     std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (!GetUpdate())
     {
         CPLError(CE_Failure, CPLE_NotSupported,

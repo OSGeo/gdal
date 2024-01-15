@@ -2644,7 +2644,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
         if (poArray)
         {
             m_oSetIndexingVariables.push_back(poArray);
-            poDim->SetIndexingVariable(poArray);
+            poDim->SetIndexingVariable(std::move(poArray));
         }
     }
 

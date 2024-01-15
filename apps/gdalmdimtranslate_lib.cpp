@@ -424,8 +424,9 @@ GetDimensionDesc(DimensionRemapper &oDimRemapper,
 
             const bool bIsNumeric =
                 var->GetDataType().GetClass() == GEDTC_NUMERIC;
-            const auto dt(bIsNumeric ? GDALExtendedDataType::Create(GDT_Float64)
-                                     : GDALExtendedDataType::CreateString());
+            const GDALExtendedDataType dt(
+                bIsNumeric ? GDALExtendedDataType::Create(GDT_Float64)
+                           : GDALExtendedDataType::CreateString());
 
             double dfMin = 0;
             double dfMax = 0;
@@ -1158,7 +1159,7 @@ static bool TranslateArray(
                         dt.FreeDynamicMemory(&abyTmp[0]);
                     }
 
-                    const auto unit(srcIndexVar->GetUnit());
+                    const auto &unit(srcIndexVar->GetUnit());
                     if (!unit.empty())
                     {
                         auto dstAttr = dstArray->CreateAttribute(
@@ -1197,9 +1198,11 @@ static bool TranslateArray(
                 band < 0 ? srcArray->GetFullName() : std::string(),
                 band >= 1 ? CPLSPrintf("%d", band) : std::string(),
                 std::move(anTransposedAxis),
-                bResampled ? (viewExpr.empty() ? std::string("resample=true")
-                                               : "resample=true," + viewExpr)
-                           : viewExpr,
+                bResampled
+                    ? (viewExpr.empty() ? std::string("resample=true")
+                                        : std::string("resample=true,")
+                                              .append(std::move(viewExpr)))
+                    : std::move(viewExpr),
                 std::move(anSrcOffset), std::move(anCount), std::move(anStep),
                 std::move(anDstOffset)));
         dstArrayVRT->AddSource(std::move(poSource));
@@ -1316,7 +1319,8 @@ static bool CopyGroup(
             {
                 CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
                 CPLErrorStateBackuper oErrorStateBackuper;
-                oCorrespondingDimIter->second->SetIndexingVariable(dstArray);
+                oCorrespondingDimIter->second->SetIndexingVariable(
+                    std::move(dstArray));
             }
         }
     }

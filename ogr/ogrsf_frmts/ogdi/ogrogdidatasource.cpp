@@ -96,6 +96,7 @@ int OGROGDIDataSource::Open(const char *pszNewName)
     char *pszWorkingName = CPLStrdup(pszNewName);
 
     char *pszFamily = strrchr(pszWorkingName, ':');
+    CPLAssert(pszFamily);
 
     // Don't treat drive name colon as family separator.  It is assumed
     // that drive names are on character long, and preceded by a

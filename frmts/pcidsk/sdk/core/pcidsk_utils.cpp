@@ -604,13 +604,11 @@ std::string PCIDSK::DefaultMergeRelativePath(const PCIDSK::IOInterfaces *io_inte
 /* -------------------------------------------------------------------- */
 /*      Merge paths.                                                    */
 /* -------------------------------------------------------------------- */
-    std::string base_path = ExtractPath( base );
-    std::string result;
+    std::string result = ExtractPath( base );
 
-    if( base_path == "" )
+    if( result.empty() )
         return src_filename;
 
-    result = base_path;
     result += path_split;
     result += src_filename;
 

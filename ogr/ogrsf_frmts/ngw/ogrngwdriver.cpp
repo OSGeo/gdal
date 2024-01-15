@@ -302,7 +302,7 @@ static GDALDataset *OGRNGWDriverCreateCopy(const char *pszFilename,
         if (poTmpDS != nullptr)
         {
             bCloseDS = true;
-            osFilename = osTempFilename;
+            osFilename = std::move(osTempFilename);
             poSrcDS = poTmpDS;
         }
         else

@@ -526,7 +526,7 @@ bool ZarrGroupBase::Rename(const std::string &osNewName)
     m_poSharedResource->RenameZMetadataRecursive(m_osDirectoryName,
                                                  osNewDirectoryName);
 
-    m_osDirectoryName = osNewDirectoryName;
+    m_osDirectoryName = std::move(osNewDirectoryName);
 
     BaseRename(osNewName);
 

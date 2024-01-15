@@ -236,12 +236,12 @@ BuildBandDescArray(json_object *poBands,
 
         EEDAIBandDesc oDesc;
         oDesc.osName = pszBandId;
-        oDesc.osWKT = osWKT;
+        oDesc.osWKT = std::move(osWKT);
         oDesc.eDT = eDT;
         oDesc.adfGeoTransform = std::move(adfGeoTransform);
         oDesc.nWidth = nWidth;
         oDesc.nHeight = nHeight;
-        aoBandDesc.push_back(oDesc);
+        aoBandDesc.emplace_back(std::move(oDesc));
     }
     return aoBandDesc;
 }

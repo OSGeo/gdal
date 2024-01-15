@@ -93,12 +93,13 @@ class ISIS2Dataset final : public RawDataset
                                char **papszParamList);
 
     // Write related.
-    static int WriteRaster(CPLString osFilename, bool includeLabel,
+    static int WriteRaster(const std::string &osFilename, bool includeLabel,
                            GUIntBig iRecord, GUIntBig iLabelRecords,
                            GDALDataType eType, const char *pszInterleaving);
 
-    static int WriteLabel(CPLString osFilename, CPLString osRasterFile,
-                          CPLString sObjectTag, unsigned int nXSize,
+    static int WriteLabel(const std::string &osFilename,
+                          const std::string &osRasterFile,
+                          const std::string &sObjectTag, unsigned int nXSize,
                           unsigned int nYSize, unsigned int nBandsIn,
                           GDALDataType eType, GUIntBig iRecords,
                           const char *pszInterleaving, GUIntBig &iLabelRecords,
@@ -986,16 +987,12 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
 /*                            WriteRaster()                             */
 /************************************************************************/
 
-int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel,
+int ISIS2Dataset::WriteRaster(const std::string &osFilename, bool includeLabel,
                               GUIntBig iRecords, GUIntBig iLabelRecords,
                               CPL_UNUSED GDALDataType eType,
                               CPL_UNUSED const char *pszInterleaving)
 {
-    CPLString pszAccess("wb");
-    if (includeLabel)
-        pszAccess = "ab";
-
-    VSILFILE *fpBin = VSIFOpenL(osFilename, pszAccess.c_str());
+    VSILFILE *fpBin = VSIFOpenL(osFilename.c_str(), includeLabel ? "ab" : "wb");
     if (fpBin == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create %s:\n%s",
@@ -1142,8 +1139,9 @@ int ISIS2Dataset::WriteQUBE_Information(
 /*      bRelaunch : flag to allow recursive call                        */
 /************************************************************************/
 
-int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
-                             CPLString sObjectTag, unsigned int nXSize,
+int ISIS2Dataset::WriteLabel(const std::string &osFilename,
+                             const std::string &osRasterFile,
+                             const std::string &sObjectTag, unsigned int nXSize,
                              unsigned int nYSize, unsigned int nBandsIn,
                              GDALDataType eType, GUIntBig iRecords,
                              const char *pszInterleaving,
@@ -1151,9 +1149,9 @@ int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
 {
     CPLDebug("ISIS2", "Write Label filename = %s, rasterfile = %s",
              osFilename.c_str(), osRasterFile.c_str());
-    bool bAttachedLabel = EQUAL(osRasterFile, "");
+    bool bAttachedLabel = EQUAL(osRasterFile.c_str(), "");
 
-    VSILFILE *fpLabel = VSIFOpenL(osFilename, "w");
+    VSILFILE *fpLabel = VSIFOpenL(osFilename.c_str(), "w");
 
     if (fpLabel == nullptr)
     {
@@ -1184,7 +1182,7 @@ int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
     if (!bAttachedLabel)
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword(
-            fpLabel, iLevel, "FILE_NAME", CPLGetFilename(osRasterFile));
+            fpLabel, iLevel, "FILE_NAME", CPLGetFilename(osRasterFile.c_str()));
     }
     nWritingBytes += ISIS2Dataset::WriteFormatting(fpLabel, "");
 
@@ -1201,10 +1199,11 @@ int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword(
             fpLabel, iLevel, CPLString().Printf("^%s", sObjectTag.c_str()),
-            CPLString().Printf("(\"%s\",1)", CPLGetFilename(osRasterFile)));
+            CPLString().Printf("(\"%s\",1)",
+                               CPLGetFilename(osRasterFile.c_str())));
     }
 
-    if (EQUAL(sObjectTag, "QUBE"))
+    if (EQUAL(sObjectTag.c_str(), "QUBE"))
     {
         ISIS2Dataset::WriteQUBE_Information(fpLabel, iLevel, nWritingBytes,
                                             nXSize, nYSize, nBandsIn, eType,

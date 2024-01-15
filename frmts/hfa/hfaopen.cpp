@@ -3750,9 +3750,9 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         {
             if (strncmp(aosNL[i], pszOldBase, strlen(pszOldBase)) == 0)
             {
-                CPLString osNew = pszNewBase;
+                std::string osNew = pszNewBase;
                 osNew += aosNL[i].c_str() + strlen(pszOldBase);
-                aosNL[i] = osNew;
+                aosNL[i] = std::move(osNew);
             }
         }
 

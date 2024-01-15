@@ -2147,7 +2147,7 @@ void GDALDefaultRasterAttributeTable::RemoveStatistics()
                 }
         }
     }
-    aoFields = aoNewFields;
+    aoFields = std::move(aoNewFields);
 }
 
 /************************************************************************/
