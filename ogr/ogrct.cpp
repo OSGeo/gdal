@@ -2844,10 +2844,6 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
         const auto &mapping = poSRSTarget->GetDataAxisToSRSAxisMapping();
         if (mapping.size() >= 2)
         {
-            if (std::abs(mapping[0]) == 2 && std::abs(mapping[1]) == 1)
-            {
-                std::swap(x, y);
-            }
             const bool bNegateX = mapping[0] < 0;
             if (bNegateX)
             {
@@ -2870,6 +2866,11 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                 {
                     z[i] = -z[i];
                 }
+            }
+
+            if (std::abs(mapping[0]) == 2 && std::abs(mapping[1]) == 1)
+            {
+                std::swap(x, y);
             }
         }
     }

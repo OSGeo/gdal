@@ -840,3 +840,61 @@ def test_osr_ct_target_z_axis_reversal():
     assert x == pytest.approx(1)
     assert y == pytest.approx(2)
     assert z == pytest.approx(3)
+
+
+###############################################################################
+# Test effect of SetDataAxisToSRSAxisMapping([-2,1])
+
+
+def test_osr_ct_source_mapping_minus_two_one():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(4326)
+    s.SetDataAxisToSRSAxisMapping([-2, 1])
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4326)
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, _ = ct.TransformPoint(10, 20, 0)
+    assert x == pytest.approx(-20)
+    assert y == pytest.approx(10)
+
+
+###############################################################################
+# Test effect of SetDataAxisToSRSAxisMapping([-2,1])
+
+
+def test_osr_ct_target_mapping_minus_two_one():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(4326)
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4326)
+    t.SetDataAxisToSRSAxisMapping([-2, 1])
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, _ = ct.TransformPoint(-20, 10, 0)
+    assert x == pytest.approx(10)
+    assert y == pytest.approx(20)
+
+
+###############################################################################
+# Test effect of SetDataAxisToSRSAxisMapping([-2,1])
+
+
+def test_osr_ct_source_and_target_mapping_minus_two_one():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(4326)
+    s.SetDataAxisToSRSAxisMapping([-2, 1])
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(4326)
+    t.SetDataAxisToSRSAxisMapping([-2, 1])
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, _ = ct.TransformPoint(10, 20, 0)
+    assert x == pytest.approx(10)
+    assert y == pytest.approx(20)
