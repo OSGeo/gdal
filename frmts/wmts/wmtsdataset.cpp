@@ -857,7 +857,7 @@ int WMTSDataset::ReadTMLimits(
         oTMLimits.nMaxTileRow = atoi(pszMaxTileRow);
         oTMLimits.nMinTileCol = atoi(pszMinTileCol);
         oTMLimits.nMaxTileCol = atoi(pszMaxTileCol);
-        aoMapTileMatrixLimits[pszTileMatrix] = oTMLimits;
+        aoMapTileMatrixLimits[pszTileMatrix] = std::move(oTMLimits);
     }
     return TRUE;
 }
@@ -2160,6 +2160,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!osURLFeatureInfoTemplate.empty())
             osURLFeatureInfoTemplate += osExtraQueryParameters;
         poDS->osURLFeatureInfoTemplate = osURLFeatureInfoTemplate;
+        CPL_IGNORE_RET_VAL(osURLFeatureInfoTemplate);
 
         // Build all TMS datasets, wrapped in VRT datasets
         for (int i = static_cast<int>(oTMS.aoTM.size() - 1); i >= 0; i--)

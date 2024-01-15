@@ -383,7 +383,7 @@ GDALDataset *NDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (oSRS.GetRoot() != nullptr)
     {
-        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS = std::move(oSRS);
     }
 
     /* -------------------------------------------------------------------- */

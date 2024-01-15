@@ -52,11 +52,11 @@ GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
     const char *pszBaseName = CPLGetBasename(pszPath);
     const char *pszDirName = CPLGetDirname(pszPath);
 
-    CPLString osRPBSourceFilename =
+    std::string osRPBSourceFilename =
         CPLFormFilename(pszDirName, CPLSPrintf("%s_rpc", pszBaseName), "txt");
     if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = osRPBSourceFilename;
+        m_osRPBSourceFilename = std::move(osRPBSourceFilename);
     }
     else
     {
@@ -64,7 +64,7 @@ GDALMDReaderOrbView::GDALMDReaderOrbView(const char *pszPath,
             pszDirName, CPLSPrintf("%s_RPC", pszBaseName), "TXT");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = osRPBSourceFilename;
+            m_osRPBSourceFilename = std::move(osRPBSourceFilename);
         }
     }
 

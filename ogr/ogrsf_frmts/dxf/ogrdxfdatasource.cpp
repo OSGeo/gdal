@@ -449,7 +449,7 @@ bool OGRDXFDataSource::ReadLayerDefinition()
     }
 
     if (!oLayerProperties.empty())
-        oLayerTable[osLayerName] = oLayerProperties;
+        oLayerTable[osLayerName] = std::move(oLayerProperties);
 
     if (nCode == 0)
         UnreadValue();
@@ -545,7 +545,7 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
                         oLineTypeDef.end());
         }
 
-        oLineTypeTable[osLineTypeName] = oLineTypeDef;
+        oLineTypeTable[osLineTypeName] = std::move(oLineTypeDef);
     }
 
     if (nCode == 0)
@@ -643,7 +643,7 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
         UnreadValue();
 
     if (osStyleHandle != "")
-        oTextStyleHandles[osStyleHandle] = osStyleName;
+        oTextStyleHandles[osStyleHandle] = std::move(osStyleName);
 
     return true;
 }
@@ -762,7 +762,7 @@ bool OGRDXFDataSource::ReadDimStyleDefinition()
     }
 
     if (!oDimStyleProperties.empty())
-        oDimStyleTable[osDimStyleName] = oDimStyleProperties;
+        oDimStyleTable[osDimStyleName] = std::move(oDimStyleProperties);
 
     if (nCode == 0)
         UnreadValue();

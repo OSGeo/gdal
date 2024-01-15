@@ -412,7 +412,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         for (int i = 0, n = CSLCount(substs); i < n && substs; i++)
             m_parent_dataset->SetMetadataItem("Change", substs[i], nullptr);
 
-        CPLString GTS(CPLGetXMLValue(config, "Configuration", ""));
+        const CPLString GTS(CPLGetXMLValue(config, "Configuration", ""));
         CPLString decodedGTS;
 
         if (GTS.size() != 0)

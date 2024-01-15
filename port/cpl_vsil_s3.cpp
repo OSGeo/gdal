@@ -3577,8 +3577,8 @@ VSIDIR *IVSIS3LikeFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     dir->nRecurseDepth = nRecurseDepth;
     dir->poFS = this;
     dir->poS3HandleHelper = poS3HandleHelper;
-    dir->osBucket = osBucket;
-    dir->osObjectKey = osObjectKey;
+    dir->osBucket = std::move(osBucket);
+    dir->osObjectKey = std::move(osObjectKey);
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->bCacheEntries = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "TRUE"));
@@ -4235,7 +4235,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     if (CanSkipUploadFromLocalToNetwork(
                             fpIn, osSubSource.c_str(), osSubTarget.c_str(),
                             chunk.nMTime, oIterExistingTarget->second.nMTime,
-                            [&oIterExistingTarget](const char *)
+                            [&oIterExistingTarget](const char *) -> std::string
                             {
                                 return std::string(CSLFetchNameValueDef(
                                     oIterExistingTarget->second.papszExtra,
@@ -4429,7 +4429,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             if (CanSkipUploadFromLocalToNetwork(
                     fpIn, osSourceWithoutSlash.c_str(), osTarget.c_str(),
                     sSource.st_mtime, sTarget.st_mtime,
-                    [this](const char *pszFilename)
+                    [this](const char *pszFilename) -> std::string
                     {
                         FileProp cachedFileProp;
                         if (GetCachedFileProp(
@@ -4509,7 +4509,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         def.nExpectedCount = static_cast<int>(
                             (chunk.nTotalSize + chunk.nSize - 1) / chunk.nSize);
                         def.nTotalSize = chunk.nTotalSize;
-                        oMapMultiPartDefs[osTarget] = def;
+                        oMapMultiPartDefs[osTarget] = std::move(def);
                     }
                     else
                     {

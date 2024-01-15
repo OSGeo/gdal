@@ -487,7 +487,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsDoubleArray(int fieldIndex) const
         feature_.GetFieldAsDoubleList(fieldIndex, &numElements);
     return CreateStringFromValues<double>(
         values, numElements,
-        [](double value)
+        [](double value) -> std::string
         { return std::isnan(value) ? "NULL" : std::to_string(value); });
 }
 

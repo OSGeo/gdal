@@ -1109,7 +1109,7 @@ void CPCIDSKFile::FlushBlock()
 
 bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
                                      Mutex **io_mutex_p,
-                                     std::string filename )
+                                     const std::string& filename )
 
 {
     *file_p = nullptr;
@@ -1207,7 +1207,7 @@ std::string CPCIDSKFile::GetUniqueEDBFilename()
         //trigger call to AccessDB()
         poChannel->GetBlockWidth();
 
-        std::string oFilename = poExt->GetExternalFilename();
+        const std::string oFilename = poExt->GetExternalFilename();
 
         if(oEDBName.size() == 0)
         {

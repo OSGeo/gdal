@@ -1068,7 +1068,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     fabs(dfULY_AEQD - dfURY_AEQD) < 1e-6 * fabs(dfURY_AEQD) &&
                     fabs(dfLLY_AEQD - dfLRY_AEQD) < 1e-6 * fabs(dfLRY_AEQD))
                 {
-                    poDS->m_oSRS = oSRS_AEQD;
+                    poDS->m_oSRS = std::move(oSRS_AEQD);
 
                     poDS->bGotGeoTransform = TRUE;
                     poDS->adfGeoTransform[0] = dfULX_AEQD;
@@ -2055,7 +2055,7 @@ void NITFDataset::CheckGeoSDEInfo()
     /* -------------------------------------------------------------------- */
     /*      Apply back to dataset.                                          */
     /* -------------------------------------------------------------------- */
-    m_oSRS = oSRS;
+    m_oSRS = std::move(oSRS);
 
     memcpy(adfGeoTransform, adfGT, sizeof(double) * 6);
     bGotGeoTransform = TRUE;

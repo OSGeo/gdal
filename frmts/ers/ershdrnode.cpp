@@ -427,7 +427,8 @@ const char *ERSHdrNode::FindElem(const char *pszPath, int iElem,
 ERSHdrNode *ERSHdrNode::FindNode(const char *pszPath)
 
 {
-    CPLString osPathFirst, osPathRest, osPath = pszPath;
+    std::string osPathFirst, osPathRest;
+    const std::string osPath = pszPath;
     size_t iDot = osPath.find_first_of('.');
     if (iDot == std::string::npos)
     {
@@ -441,12 +442,12 @@ ERSHdrNode *ERSHdrNode::FindNode(const char *pszPath)
 
     for (int i = 0; i < nItemCount; i++)
     {
-        if (EQUAL(osPathFirst, papszItemName[i]))
+        if (EQUAL(osPathFirst.c_str(), papszItemName[i]))
         {
             if (papoItemChild[i] != nullptr)
             {
                 if (osPathRest.length() > 0)
-                    return papoItemChild[i]->FindNode(osPathRest);
+                    return papoItemChild[i]->FindNode(osPathRest.c_str());
                 else
                     return papoItemChild[i];
             }

@@ -404,7 +404,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     if (osMainArray.empty())
                     {
-                        poMainArray = poArray;
+                        poMainArray = std::move(poArray);
                         osMainArray = osArrayName;
                     }
                     else
@@ -1118,10 +1118,11 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
     const bool bBandInterleave =
         EQUAL(CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BAND"), "BAND");
-    std::shared_ptr<GDALDimension> poBandDim;
-    if (bSingleArray && nBandsIn > 1)
-        poBandDim = poRG->CreateDimension("Band", std::string(), std::string(),
-                                          nBandsIn);
+    const std::shared_ptr<GDALDimension> poBandDim(
+        (bSingleArray && nBandsIn > 1)
+            ? poRG->CreateDimension("Band", std::string(), std::string(),
+                                    nBandsIn)
+            : nullptr);
 
     const char *pszNonNullArrayName =
         pszArrayName ? pszArrayName : CPLGetBasename(pszName);

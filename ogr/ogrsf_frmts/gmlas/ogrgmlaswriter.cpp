@@ -512,6 +512,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
     else
     {
         m_osGMLVersion = osGMLVersion;
+        CPL_IGNORE_RET_VAL(osGMLVersion);
     }
 
     m_osSRSNameFormat = CSLFetchNameValueDef(
@@ -2326,7 +2327,7 @@ bool GMLASWriter::WriteFieldRegular(
     if (!bWriteEltContent)
         VSIFPrintfL(m_fpXML, "\"");
 
-    aoCurComponents = aoFieldComponents;
+    aoCurComponents = std::move(aoFieldComponents);
     bCurIsRegularField = true;
 
     return true;
@@ -2440,7 +2441,7 @@ bool GMLASWriter::WriteFieldNoLink(
                 </xs:complexType>
             </xs:element>
             */
-            aoNewInitialContext = aoFieldComponents;
+            aoNewInitialContext = std::move(aoFieldComponents);
         }
         else if (aoFieldComponents.size() == aoLayerComponents.size() + 2)
         {
@@ -2455,7 +2456,7 @@ bool GMLASWriter::WriteFieldNoLink(
                 </xs:complexType>
             </xs:element>
             */
-            aoNewInitialContext = aoFieldComponents;
+            aoNewInitialContext = std::move(aoFieldComponents);
             aoNewInitialContext.resize(aoNewInitialContext.size() - 1);
         }
         else
@@ -2471,7 +2472,7 @@ bool GMLASWriter::WriteFieldNoLink(
                 </xs:complexType>
             </xs:element>
             */
-            aoNewInitialContext = aoLayerComponents;
+            aoNewInitialContext = std::move(aoLayerComponents);
         }
 
         WriteClosingAndStartingTags(aoCurComponents, aoNewInitialContext,
@@ -2652,7 +2653,7 @@ bool GMLASWriter::WriteFieldWithLink(
     const bool bHasChild = poChildFeature != nullptr;
     if (bHasChild)
     {
-        aoInitialComponents = aoFieldComponents;
+        aoInitialComponents = std::move(aoFieldComponents);
         if (!aoInitialComponents.empty())
             aoInitialComponents.resize(aoInitialComponents.size() - 1);
         WriteClosingAndStartingTags(aoCurComponents, aoInitialComponents,
@@ -2676,7 +2677,7 @@ bool GMLASWriter::WriteFieldWithLink(
     if (bHasChild)
     {
         bAtLeastOneFieldWritten = true;
-        aoCurComponents = aoInitialComponents;
+        aoCurComponents = std::move(aoInitialComponents);
         bCurIsRegularField = false;
     }
 
@@ -2833,7 +2834,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
     if (bHasChild)
     {
         bAtLeastOneFieldWritten = true;
-        aoCurComponents = aoInitialComponents;
+        aoCurComponents = std::move(aoInitialComponents);
         bCurIsRegularField = false;
     }
 

@@ -175,7 +175,7 @@ bool OGRMemDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         failureReason = "A domain of identical name already exists";
         return false;
     }
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
 }
@@ -221,7 +221,7 @@ bool OGRMemDataSource::DeleteFieldDomain(const std::string &name,
 bool OGRMemDataSource::UpdateFieldDomain(
     std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     const auto iter = m_oMapFieldDomains.find(domainName);
     if (iter == m_oMapFieldDomains.end())
     {

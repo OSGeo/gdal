@@ -764,6 +764,7 @@ int VSIMemFilesystemHandler::Mkdir(const char *pszPathname, long /* nMode */)
     CPLDebug("VSIMEM", "Mkdir on %s: ref_count=%d", pszPathname,
              static_cast<int>(poFile.use_count()));
 #endif
+    CPL_IGNORE_RET_VAL(poFile);
     return 0;
 }
 
@@ -1056,7 +1057,7 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
     /* -------------------------------------------------------------------- */
     VSIMemHandle *poHandle = new VSIMemHandle;
 
-    poHandle->poFile = poFile;
+    poHandle->poFile = std::move(poFile);
     poHandle->bUpdate = true;
     return poHandle;
 }

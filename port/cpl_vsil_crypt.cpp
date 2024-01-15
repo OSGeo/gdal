@@ -1731,6 +1731,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
 
         VSICryptFileHeader *poHeader = new VSICryptFileHeader();
         poHeader->osIV = osIV;
+        CPL_IGNORE_RET_VAL(osIV);
         poHeader->eAlg = eAlg;
         poHeader->eMode = eMode;
         poHeader->nSectorSize = static_cast<GUInt16>(nSectorSize);

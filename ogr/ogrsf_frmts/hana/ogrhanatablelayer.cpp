@@ -271,7 +271,7 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
 
     CPLError(CE_Failure, CPLE_NotSupported, "Unknown column type '%s'.",
              typeName.c_str());
-    return {typeName, odbc::SQLDataTypes::Unknown, 0, 0};
+    return {std::move(typeName), odbc::SQLDataTypes::Unknown, 0, 0};
 }
 
 CPLString GetColumnDefinition(const ColumnTypeInfo &typeInfo)

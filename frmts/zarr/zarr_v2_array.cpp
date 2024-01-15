@@ -940,7 +940,7 @@ bool ZarrV2Array::FlushDirtyTile() const
             void *out_buffer = &abyCompressedData[0];
             size_t out_size = abyCompressedData.size();
             CPLStringList aosOptions;
-            const auto compressorConfig = m_oCompressorJSon;
+            const auto &compressorConfig = m_oCompressorJSon;
             for (const auto &obj : compressorConfig.GetChildren())
             {
                 aosOptions.SetNameValue(obj.GetName().c_str(),
@@ -1632,7 +1632,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
 
                                     poDimParentGroup
                                         ->m_oMapDimensions[poDim->GetName()] =
-                                        poDimLocal;
+                                        std::move(poDimLocal);
                                 }
                             }
                         }

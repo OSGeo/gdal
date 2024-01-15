@@ -2535,8 +2535,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         osMetadataFile = pszMetadataFile;
     }
 
-    CPLString osTileExtension(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                   "TILE_EXTENSION", "pbf"));
+    const CPLString osTileExtension(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
     bool bJsonField =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
@@ -4833,7 +4833,7 @@ void OGRMVTWriterDataset::EncodeFeature(
                 }
 
                 nFeaturesInTile++;
-                poTargetLayer->addFeature(poFeature);
+                poTargetLayer->addFeature(std::move(poFeature));
             }
         }
     }
@@ -4887,7 +4887,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
                     MVTLayerProperties props;
                     props.m_nMinZoom = nZ;
                     props.m_nMaxZoom = nZ;
-                    oMapLayerProps[pszLayerName] = props;
+                    oMapLayerProps[pszLayerName] = std::move(props);
                     poLayerProperties = &(oMapLayerProps[pszLayerName]);
                 }
             }

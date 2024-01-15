@@ -293,7 +293,7 @@ void GDALWMSMetaDataset::AddSubDataset(const char *pszLayerName,
 
 void GDALWMSMetaDataset::AddWMSCSubDataset(WMSCTileSetDesc &oWMSCTileSetDesc,
                                            const char *pszTitle,
-                                           CPLString osTransparent)
+                                           const CPLString &osTransparent)
 {
     CPLString osSubdatasetName = "WMS:";
     osSubdatasetName += osGetURL;
@@ -579,7 +579,7 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode *psXML)
             oWMSCTileSet.nTileWidth = nTileWidth;
             oWMSCTileSet.nTileHeight = nTileHeight;
 
-            osMapWMSCTileSet[oWMSCKey] = oWMSCTileSet;
+            osMapWMSCTileSet[oWMSCKey] = std::move(oWMSCTileSet);
         }
     }
 }

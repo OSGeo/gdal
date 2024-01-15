@@ -766,6 +766,7 @@ CPLErr WCSDataset110::ParseCapabilities(CPLXMLNode *Capabilities,
                                    "Country", "ElectronicMailAddress"});
                 AddSimpleMetaData(&metadata, info, path6, "Phone",
                                   {"Voice", "Facsimile"});
+                CPL_IGNORE_RET_VAL(path4);
             }
         }
     }

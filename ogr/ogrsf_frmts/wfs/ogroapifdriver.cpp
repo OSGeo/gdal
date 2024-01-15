@@ -1557,7 +1557,7 @@ static bool BuildExampleRecursively(CPLJSONObject &oRes,
                 oArray.Add(oChildRes);
             }
         }
-        oRes = oArray;
+        oRes = std::move(oArray);
         return true;
     }
     else if (osType == "string")
@@ -2527,13 +2527,11 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
                  m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
                      m_aoSetQueryableAttributes.end())
         {
-            CPLString osEscapedFieldName;
-            {
-                char *pszEscapedFieldName =
-                    CPLEscapeString(poFieldDefn->GetNameRef(), -1, CPLES_URL);
-                osEscapedFieldName = pszEscapedFieldName;
-                CPLFree(pszEscapedFieldName);
-            }
+            char *pszEscapedFieldName =
+                CPLEscapeString(poFieldDefn->GetNameRef(), -1, CPLES_URL);
+            const CPLString osEscapedFieldName(pszEscapedFieldName);
+            CPLFree(pszEscapedFieldName);
+
             if (poNode->papoSubExpr[1]->field_type == SWQ_STRING)
             {
                 char *pszEscapedValue = CPLEscapeString(

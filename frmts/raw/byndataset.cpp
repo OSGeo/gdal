@@ -496,7 +496,7 @@ const OGRSpatialReference *BYNDataset::GetSpatialRef() const
     {
         /* Return COMPD_CS with GEOGCS and VERT_CS */
 
-        m_oSRS = oSRSComp;
+        m_oSRS = std::move(oSRSComp);
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         return &m_oSRS;
     }

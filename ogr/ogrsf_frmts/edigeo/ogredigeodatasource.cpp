@@ -369,7 +369,7 @@ int OGREDIGEODataSource::ReadDIC()
                 OGREDIGEOAttributeDef sAttributeDef;
                 sAttributeDef.osLAB = osLAB;
                 sAttributeDef.osTYP = osTYP;
-                mapAttributes[osRID] = sAttributeDef;
+                mapAttributes[osRID] = std::move(sAttributeDef);
             }
         }
 
@@ -753,7 +753,7 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
                 feaDesc.aosAttIdVal = aosAttIdVal;
                 feaDesc.osSCP = osSCP;
                 feaDesc.osQUP_RID = osQUP_RID;
-                mapFEA[osRID] = feaDesc;
+                mapFEA[osRID] = std::move(feaDesc);
             }
             else if (osRTY == "PNO")
             {

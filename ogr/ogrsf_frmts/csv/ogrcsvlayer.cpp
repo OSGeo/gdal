@@ -338,7 +338,8 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         const char *pszExt = CPLGetExtension(pszFilename);
         if (pszExt[0])
         {
-            std::string osCSVTFilename = CPLResetExtension(pszFilename, "csvt");
+            const std::string osCSVTFilename =
+                CPLResetExtension(pszFilename, "csvt");
             VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {

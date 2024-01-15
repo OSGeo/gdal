@@ -910,7 +910,7 @@ class netCDFDataset final : public GDALPamDataset
                // value is (groupId, varId)
                std::map<std::array<int, 3>, std::vector<std::pair<int, int>>>
                    &oMap2DDimsToGroupAndVar);
-    CPLErr CreateGrpVectorLayers(int nCdfId, CPLString osFeatureType,
+    CPLErr CreateGrpVectorLayers(int nCdfId, const CPLString &osFeatureType,
                                  const std::vector<int> &anPotentialVectorVarID,
                                  const std::map<int, int> &oMapDimIdToCount,
                                  int nVarXId, int nVarYId, int nVarZId,

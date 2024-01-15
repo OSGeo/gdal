@@ -793,7 +793,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
             sr.SetStatePlane(iUTMZone, bNAD83);
     }
 
-    m_oSRS = sr;
+    m_oSRS = std::move(sr);
 
     /* -------------------------------------------------------------------- */
     /*      For UTM we use the extents (really the UTM coordinates of       */

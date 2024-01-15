@@ -1265,10 +1265,10 @@ netCDFGroup::GetGroupNames(CSLConstList papszOptions) const
             for (const auto &osArrayName : GetMDArrayNames(nullptr))
             {
                 const auto poArray = OpenMDArray(osArrayName, nullptr);
-                const auto apoDims = poArray->GetDimensions();
+                const auto &apoDims = poArray->GetDimensions();
                 if (apoDims.size() == 1)
                 {
-                    const auto osDimName = apoDims[0]->GetName();
+                    const auto &osDimName = apoDims[0]->GetName();
                     if (oSetDimNames.find(osDimName) == oSetDimNames.end())
                     {
                         oSetDimNames.insert(osDimName);
@@ -1713,7 +1713,7 @@ netCDFVirtualGroupBySameDimension::GetMDArrayNames(CSLConstList) const
         auto poArray = m_poGroup->OpenMDArray(srcName, nullptr);
         if (poArray)
         {
-            const auto apoArrayDims = poArray->GetDimensions();
+            const auto &apoArrayDims = poArray->GetDimensions();
             if (apoArrayDims.size() == 1 &&
                 apoArrayDims[0]->GetName() == m_osDimName)
             {
@@ -1932,7 +1932,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
         if (!poArrayNC)
             continue;
 
-        const auto apoArrayDims = poArray->GetDimensions();
+        const auto &apoArrayDims = poArray->GetDimensions();
         if (apoArrayDims.size() == 1)
         {
             const auto &poArrayDim = apoArrayDims[0];
@@ -2598,7 +2598,7 @@ std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
 /*                            SetSpatialRef()                           */
 /************************************************************************/
 
-static void WriteDimAttr(std::shared_ptr<GDALMDArray> poVar,
+static void WriteDimAttr(std::shared_ptr<GDALMDArray> &poVar,
                          const char *pszAttrName, const char *pszAttrValue)
 {
     auto poAttr = poVar->GetAttribute(pszAttrName);
@@ -2622,7 +2622,7 @@ static void WriteDimAttr(std::shared_ptr<GDALMDArray> poVar,
     }
 }
 
-static void WriteDimAttrs(std::shared_ptr<GDALDimension> dim,
+static void WriteDimAttrs(const std::shared_ptr<GDALDimension> &dim,
                           const char *pszStandardName, const char *pszLongName,
                           const char *pszUnits)
 {
@@ -4739,7 +4739,7 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     if (dt.GetClass() == GEDTC_NUMERIC &&
         dt.GetNumericDataType() == GDT_Unknown)
     {

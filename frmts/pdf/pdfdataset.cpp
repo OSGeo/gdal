@@ -3935,9 +3935,13 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
                     PDFSanitizeLayerName(poName->GetString().c_str());
                 // coverity[copy_paste_error]
                 if (!osTopLayer.empty())
-                    osCurLayer = osTopLayer + "." + osName;
+                {
+                    osCurLayer = osTopLayer;
+                    osCurLayer += '.';
+                    osCurLayer += std::move(osName);
+                }
                 else
-                    osCurLayer = osName;
+                    osCurLayer = std::move(osName);
                 // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
                 AddLayer(osCurLayer.c_str());
@@ -6474,7 +6478,7 @@ int PDFDataset::ParseProjDict(GDALPDFDictionary *poProjDict)
     /* -------------------------------------------------------------------- */
     /*      Export SpatialRef                                               */
     /* -------------------------------------------------------------------- */
-    m_oSRS = oSRS;
+    m_oSRS = std::move(oSRS);
 
     return TRUE;
 }
@@ -6863,7 +6867,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
                 }
                 if (bSRSOK)
                 {
-                    m_oSRS = oSRS_ESRI;
+                    m_oSRS = std::move(oSRS_ESRI);
                 }
             }
         }

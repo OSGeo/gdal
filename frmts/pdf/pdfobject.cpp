@@ -2320,7 +2320,7 @@ GDALPDFObjectPdfium::Build(RetainPtr<const CPDF_Object> obj)
             return nullptr;
         }
     }
-    return new GDALPDFObjectPdfium(obj);
+    return new GDALPDFObjectPdfium(std::move(obj));
 }
 
 /************************************************************************/

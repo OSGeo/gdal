@@ -439,7 +439,7 @@ bool TSXDataset::getGCPsFromGEOREF_XML(char *pszGeorefFilename)
         // CPLAtof(CPLGetXMLValue(psNode,"height",""));
     }
 
-    m_oGCPSRS = osr;
+    m_oGCPSRS = std::move(osr);
 
     CPLDestroyXMLNode(psGeorefData);
 

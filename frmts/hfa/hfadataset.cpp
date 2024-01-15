@@ -4218,7 +4218,7 @@ CPLErr HFADataset::ReadProjection()
                          "configuration option to NO.",
                          pszProjName);
             }
-            m_oSRS = oSRSFromPE;
+            m_oSRS = std::move(oSRSFromPE);
         }
         CPLFree(pszPE_COORDSYS);
         return m_oSRS.IsEmpty() ? CE_Failure : CE_None;

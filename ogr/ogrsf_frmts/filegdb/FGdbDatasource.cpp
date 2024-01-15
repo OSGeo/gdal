@@ -1099,7 +1099,7 @@ bool FGdbDataSource::DeleteFieldDomain(const std::string &name,
 bool FGdbDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                                        std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (!m_bUpdate)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

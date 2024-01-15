@@ -68,11 +68,11 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
-    CPLString osIMDSourceFilename =
+    std::string osIMDSourceFilename =
         CPLFormFilename(pszDirName, szMetadataName, nullptr);
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = osIMDSourceFilename;
+        m_osIMDSourceFilename = std::move(osIMDSourceFilename);
     }
     else
     {
@@ -81,7 +81,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
             CPLFormFilename(pszDirName, szMetadataName, nullptr);
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = osIMDSourceFilename;
+            m_osIMDSourceFilename = std::move(osIMDSourceFilename);
         }
     }
 

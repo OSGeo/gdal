@@ -537,7 +537,7 @@ static void DumpArrayRec(std::shared_ptr<GDALMDArray> array,
         auto arrayContext(serializer.MakeArrayContext());
         if (nCurDim + 1 == dimSizes.size())
         {
-            const auto dt(array->GetDataType());
+            const auto &dt(array->GetDataType());
             const auto nDTSize(dt.GetSize());
             const auto lambdaDumpValue =
                 [&serializer, &dt, nDTSize](std::vector<GByte> &abyTmp,
@@ -805,7 +805,7 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
         DumpAttrs(attrs, serializer, psOptions);
     }
 
-    auto unit = array->GetUnit();
+    const auto &unit = array->GetUnit();
     if (!unit.empty())
     {
         serializer.AddObjKey("unit");

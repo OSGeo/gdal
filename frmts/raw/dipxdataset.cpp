@@ -296,7 +296,7 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
         oSR.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (oSR.importFromEPSG(poDS->sHeader.SRID) == OGRERR_NONE)
         {
-            poDS->m_oSRS = oSR;
+            poDS->m_oSRS = std::move(oSR);
         }
     }
 

@@ -412,7 +412,7 @@ GDALDataset *SIGDEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     SIGDEMDataset *poDS = new SIGDEMDataset(sHeader);
 
-    poDS->m_oSRS = oSRS;
+    poDS->m_oSRS = std::move(oSRS);
 
     poDS->fpImage = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;

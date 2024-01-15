@@ -3423,7 +3423,7 @@ void FGdbLayer::ResetReading()
     EndBulkLoad();
 
 #ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
-    const auto wstrSubFieldBackup = m_wstrSubfields;
+    const std::wstring wstrSubFieldBackup(m_wstrSubfields);
     if (!m_apoByteArrays.empty())
     {
         m_bWorkaroundCrashOnCDFWithBinaryField = CPLTestBool(CPLGetConfigOption(

@@ -229,10 +229,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
                     newAppendOsValue.append(CPLString(pszPos + 1));
 
                     // the new value
-                    oHeaders[osKey] = newAppendOsValue;
-
-                    // printf ("Append value for %s is %s \n", osKey.c_str(),
-                    // newAppendOsValue.c_str());
+                    oHeaders[osKey] = std::move(newAppendOsValue);
                 }
                 else
                 {

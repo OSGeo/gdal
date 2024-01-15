@@ -460,7 +460,7 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
-    poDS->osDataFilename = osDataFilename;
+    poDS->osDataFilename = std::move(osDataFilename);
     poDS->bHasNoData = bHasNoData;
     poDS->dfNoData = dfNoData;
     poDS->bHasMin = bHasMin;

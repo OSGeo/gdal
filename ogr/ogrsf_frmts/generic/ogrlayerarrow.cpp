@@ -2623,7 +2623,7 @@ OGRParseArrowMetadata(const char *pabyMetadata)
         osValue.assign(pabyMetadata, nSizeValue);
         pabyMetadata += nSizeValue;
 
-        oMetadata[osKey] = osValue;
+        oMetadata[osKey] = std::move(osValue);
     }
 
     return oMetadata;

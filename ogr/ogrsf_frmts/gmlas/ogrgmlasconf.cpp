@@ -227,8 +227,9 @@ static void ParseNamespaces(CPLXMLNode *psContainerNode,
             if (psIter->eType == CXT_Element &&
                 EQUAL(psIter->pszValue, "Namespace"))
             {
-                CPLString osPrefix = CPLGetXMLValue(psIter, "prefix", "");
-                CPLString osURI = CPLGetXMLValue(psIter, "uri", "");
+                const std::string osPrefix =
+                    CPLGetXMLValue(psIter, "prefix", "");
+                const std::string osURI = CPLGetXMLValue(psIter, "uri", "");
                 if (!osPrefix.empty() && !osURI.empty())
                 {
                     if (oMap.find(osPrefix) == oMap.end())

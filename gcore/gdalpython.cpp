@@ -345,7 +345,8 @@ static bool LoadPythonAPI()
                                             0 &&
                                         S_ISLNK(sStat.st_mode))
                                     {
-                                        osPythonBinary = osResolvedFullLink;
+                                        osPythonBinary =
+                                            std::move(osResolvedFullLink);
                                         continue;
                                     }
 

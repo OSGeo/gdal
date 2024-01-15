@@ -59,7 +59,7 @@ namespace PCIDSK
     bool   BigEndianSystem(void);
     void   GetCurrentDateTime( char *out_datetime );
 
-    void   ParseTileFormat(std::string oOptions, int & nTileSize,
+    void   ParseTileFormat(const std::string& oOptions, int & nTileSize,
                            std::string & oCompress);
 
     void   SwapPixels(void* const data,

@@ -187,7 +187,11 @@ OGRFeature *OGREditableLayer::Translate(OGRFeatureDefn *poTargetDefn,
                                          ->GetNameRef()] = iField;
         }
         if (poTargetDefn == m_poEditableFeatureDefn)
-            m_oMapEditableFDefnFieldNameToIdx = oMapTargetFieldNameToIdx;
+        {
+            m_oMapEditableFDefnFieldNameToIdx =
+                std::move(oMapTargetFieldNameToIdx);
+            poMap = &m_oMapEditableFDefnFieldNameToIdx;
+        }
     }
 
     int *panMap = static_cast<int *>(
