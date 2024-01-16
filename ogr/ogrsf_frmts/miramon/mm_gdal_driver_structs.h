@@ -323,6 +323,7 @@ struct MMAdmDatabase
 
     // Temporary space where to mount the DBF record.
     // Reused every time a feature is created
+    unsigned __int64 nNumRecordOnCourse;
     char *szRecordOnCourse;
 };
 
@@ -642,7 +643,17 @@ struct MiraMonVectLayerInfo
     
     // Final number of elements of the layer. 
     MM_INTERNAL_FID nFinalElemCount; // Real element count after conversion
-    
+
+    // Ratio used to enhance certain aspects of memory
+    // In some memory settings, a block of 256 or 512 bytes is used.
+    // This parameter can be adjusted to achieve
+    // nMemoryRatio*256 or nMemoryRatio*512.
+    // For example, nMemoryRatio=2 in powerful computers and
+    // nMemoryRatio=0.5 in less powerful computers.
+    // By increasing this parameter, more memory will be required,
+    // but there will be fewer read/write operations to the disk.
+    double nMemoryRatio;
+
     // Header of the layer
     __int32 nHeaderDiskSize;
     struct MM_TH TopHeader;
@@ -692,7 +703,7 @@ struct MiraMonVectLayerInfo
     // Dinamic string that is used as temporary buffer
     // with variable size as needed. Its value is 
     // very temporary. Copy in a safe place to save its value.
-    MM_EXT_DBF_N_FIELDS nNumStringToOperate;
+    unsigned __int64 nNumStringToOperate;
     char *szStringToOperate;
 
     // Temporary elements when reading features from MiraMon files

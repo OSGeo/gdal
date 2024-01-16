@@ -98,15 +98,11 @@ CPL_C_START // Necessary for compiling in GDAL project
 /* -------------------------------------------------------------------- */
 // MM-GDAL functions
 void MM_CPLError(
-    #ifdef GDAL_COMPILATION
     int level, int code,
-    #endif
     const char* format, ...);
 
 void MM_CPLWarning(
-    #ifdef GDAL_COMPILATION
     int level, int code,
-    #endif
     const char* format, ...);
 
 // Layer functions

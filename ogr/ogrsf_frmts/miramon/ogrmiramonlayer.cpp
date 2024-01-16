@@ -52,6 +52,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     if (m_fp == nullptr)
         return;
 
+    CPLDebug("MiraMon", "Creating/Opening MiraMon layer...");
     /* -------------------------------------------------------------------- */
     /*      Create the feature definition                                   */
     /* -------------------------------------------------------------------- */
@@ -826,8 +827,13 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     eErr = LoadGeometry(OGRGeometry::ToHandle(poGeom), true, poFeature);
 
     // Writes coordinates to the disk
-    if(eErr == OGRERR_NONE)
-        return WriteGeometry(true, poFeature);
+    if (eErr == OGRERR_NONE)
+    {
+        eErr=WriteGeometry(true, poFeature);
+        return eErr;
+    }
+    else
+        CPLDebug("MiraMon", "Error in LoadGeometry()");
 
     return eErr;
 }
@@ -1012,19 +1018,24 @@ OGRErr OGRMiraMonLayer::WriteGeometry(bool bExternalRing,
 
     // All coordinates can be written to the disk
     int result = TranslateFieldsValuesToMM(poFeature);
-    if(result!=OGRERR_NONE)
+    if (result != OGRERR_NONE)
+    {
+        CPLDebug("MiraMon", "Error in TranslateFieldsValuesToMM()");
         return result;
+    }
 
     result = AddMMFeature(&hMiraMonLayer, &hMMFeature);
         
     if(result==MM_FATAL_ERROR_WRITING_FEATURES)
     {
+        CPLDebug("MiraMon", "Error in AddMMFeature() MM_FATAL_ERROR_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                         VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if(result==MM_STOP_WRITING_FEATURES)
     {
+        CPLDebug("MiraMon", "Error in AddMMFeature() MM_STOP_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon format limitations.");
         CPLError(CE_Failure, CPLE_FileIO, "\nTry V2.0 option.");
         return OGRERR_FAILURE;
@@ -1047,6 +1058,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     if (poFeatureDefn->GetFieldCount() == 0)
         return OGRERR_NONE;
 
+    CPLDebug("MiraMon", "Starting TranslateFieldsToMM()");
     // If the structure is filled we do anything
     if(hMiraMonLayer.pLayerDB)
         return OGRERR_NONE;
@@ -1150,7 +1162,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
             hMiraMonLayer.pLayerDB->nNFields++;
         }
     }
-        
+
+    CPLDebug("MiraMon", "Finishing TranslateFieldsToMM()");
     return OGRERR_NONE;
 }
 
