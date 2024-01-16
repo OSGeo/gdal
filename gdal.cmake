@@ -677,7 +677,6 @@ set(GDAL_DATA_FILES
     data/pci_datum.txt
     data/pci_ellips.txt
     data/pdfcomposition.xsd
-    data/pds4_template.xml
     data/plscenesconf.json
     data/stateplane.csv
     data/template_tiles.mapml
