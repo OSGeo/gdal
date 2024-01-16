@@ -662,7 +662,6 @@ set(GDAL_DATA_FILES
     data/gdalicon.png
     data/gt_datum.csv
     data/gt_ellips.csv
-    data/ogrvrt.xsd
     data/ozi_datum.csv
     data/ozi_ellips.csv
     data/pci_datum.txt
