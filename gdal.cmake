@@ -674,7 +674,6 @@ set(GDAL_DATA_FILES
     data/pci_datum.txt
     data/pci_ellips.txt
     data/pdfcomposition.xsd
-    data/plscenesconf.json
     data/stateplane.csv
     data/template_tiles.mapml
     data/tms_LINZAntarticaMapTileGrid.json
