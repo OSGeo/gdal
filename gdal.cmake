@@ -666,8 +666,6 @@ set(GDAL_DATA_FILES
     data/gdalinfo_output.schema.json
     data/gdalmdiminfo_output.schema.json
     data/gdalvrt.xsd
-    data/gmlasconf.xml
-    data/gmlasconf.xsd
     data/gt_datum.csv
     data/gt_ellips.csv
     data/netcdf_config.xsd
