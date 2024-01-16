@@ -658,7 +658,6 @@ set(GDAL_DATA_FILES
     data/cubewerx_extra.wkt
     data/default.rsc
     data/ecw_cs.wkt
-    data/eedaconf.json
     data/epsg.wkt
     data/esri_StatePlane_extra.wkt
     data/gdalicon.png
