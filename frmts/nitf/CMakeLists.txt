@@ -23,6 +23,8 @@ add_gdal_driver(
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xml
     ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xsd
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_datum.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_ellips.csv
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

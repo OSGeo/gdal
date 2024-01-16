@@ -660,8 +660,6 @@ set(GDAL_DATA_FILES
     data/epsg.wkt
     data/esri_StatePlane_extra.wkt
     data/gdalicon.png
-    data/gt_datum.csv
-    data/gt_ellips.csv
     data/ozi_datum.csv
     data/ozi_ellips.csv
     data/pci_datum.txt
