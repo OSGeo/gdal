@@ -655,7 +655,6 @@ set(GDAL_DATA_FILES
     data/GDALLogoBW.svg
     data/GDALLogoColor.svg
     data/GDALLogoGS.svg
-    data/bag_template.xml
     data/cubewerx_extra.wkt
     data/default.rsc
     data/ecw_cs.wkt
