@@ -341,7 +341,7 @@ following logic (first listed criterion is prioritary over following ones):
    If ``USER`` is not set, ``USERNAME`` is used if set.
    If neither ``USERNAME`` or ``USER`` are set, the md5sum of the filename of the configuration file is used)
 
-- ``./gdalwmscache_{md5sum(filename)}`` if none of the above mentionned configuration options are set.
+- ``./gdalwmscache_{md5sum(filename)}`` if none of the above mentioned configuration options are set.
 
 Note that if the <Unique> element is set to true (which is its default value),
 a subdirectory whose name is the md5sum of the filename of the configuration file
