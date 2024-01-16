@@ -681,8 +681,6 @@ set(GDAL_DATA_FILES
     data/pdfcomposition.xsd
     data/pds4_template.xml
     data/plscenesconf.json
-    data/seed_2d.dgn
-    data/seed_3d.dgn
     data/stateplane.csv
     data/template_tiles.mapml
     data/tms_LINZAntarticaMapTileGrid.json
