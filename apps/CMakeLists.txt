@@ -194,3 +194,13 @@ if (BUILD_APPS)
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
   endforeach ()
 endif ()
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
