@@ -681,10 +681,6 @@ set(GDAL_DATA_FILES
     data/pdfcomposition.xsd
     data/pds4_template.xml
     data/plscenesconf.json
-    data/s57agencies.csv
-    data/s57attributes.csv
-    data/s57expectedinput.csv
-    data/s57objectclasses.csv
     data/seed_2d.dgn
     data/seed_3d.dgn
     data/stateplane.csv
