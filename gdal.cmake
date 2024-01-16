@@ -656,7 +656,6 @@ set(GDAL_DATA_FILES
     data/GDALLogoColor.svg
     data/GDALLogoGS.svg
     data/gdalicon.png
-    data/template_tiles.mapml
     data/tms_LINZAntarticaMapTileGrid.json
     data/tms_MapML_APSTILE.json
     data/tms_MapML_CBMTILE.json
