@@ -181,3 +181,14 @@ target_public_header(
   gdal_mdreader.h
   gdalsubdatasetinfo.h
 )
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_LINZAntarticaMapTileGrid.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_MapML_APSTILE.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_MapML_CBMTILE.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/tms_NZTM2000.json
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")

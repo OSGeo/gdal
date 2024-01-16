@@ -656,10 +656,6 @@ set(GDAL_DATA_FILES
     data/GDALLogoColor.svg
     data/GDALLogoGS.svg
     data/gdalicon.png
-    data/tms_LINZAntarticaMapTileGrid.json
-    data/tms_MapML_APSTILE.json
-    data/tms_MapML_CBMTILE.json
-    data/tms_NZTM2000.json
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
