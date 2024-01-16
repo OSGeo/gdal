@@ -1265,7 +1265,12 @@ CPLErr GDALPluginDriverProxy::SetMetadataItem(const char *pszName,
                                               const char *pszDomain)
 {
     if (!pszDomain || pszDomain[0] == 0)
-        m_oSetMetadataItems.insert(pszName);
+    {
+        if (!EQUAL(pszName, GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE))
+        {
+            m_oSetMetadataItems.insert(pszName);
+        }
+    }
     return GDALDriver::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
