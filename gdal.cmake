@@ -666,44 +666,10 @@ set(GDAL_DATA_FILES
     data/gdalinfo_output.schema.json
     data/gdalmdiminfo_output.schema.json
     data/gdalvrt.xsd
-    data/gfs.xsd
-    data/gml_registry.xml
-    data/gml_registry.xsd
     data/gmlasconf.xml
     data/gmlasconf.xsd
     data/gt_datum.csv
     data/gt_ellips.csv
-    data/inspire_cp_BasicPropertyUnit.gfs
-    data/inspire_cp_CadastralBoundary.gfs
-    data/inspire_cp_CadastralParcel.gfs
-    data/inspire_cp_CadastralZoning.gfs
-    data/jpfgdgml_AdmArea.gfs
-    data/jpfgdgml_AdmBdry.gfs
-    data/jpfgdgml_AdmPt.gfs
-    data/jpfgdgml_BldA.gfs
-    data/jpfgdgml_BldL.gfs
-    data/jpfgdgml_Cntr.gfs
-    data/jpfgdgml_CommBdry.gfs
-    data/jpfgdgml_CommPt.gfs
-    data/jpfgdgml_Cstline.gfs
-    data/jpfgdgml_ElevPt.gfs
-    data/jpfgdgml_GCP.gfs
-    data/jpfgdgml_LeveeEdge.gfs
-    data/jpfgdgml_RailCL.gfs
-    data/jpfgdgml_RdASL.gfs
-    data/jpfgdgml_RdArea.gfs
-    data/jpfgdgml_RdCompt.gfs
-    data/jpfgdgml_RdEdg.gfs
-    data/jpfgdgml_RdMgtBdry.gfs
-    data/jpfgdgml_RdSgmtA.gfs
-    data/jpfgdgml_RvrMgtBdry.gfs
-    data/jpfgdgml_SBAPt.gfs
-    data/jpfgdgml_SBArea.gfs
-    data/jpfgdgml_SBBdry.gfs
-    data/jpfgdgml_WA.gfs
-    data/jpfgdgml_WL.gfs
-    data/jpfgdgml_WStrA.gfs
-    data/jpfgdgml_WStrL.gfs
     data/netcdf_config.xsd
     data/nitf_spec.xml
     data/nitf_spec.xsd
@@ -717,10 +683,6 @@ set(GDAL_DATA_FILES
     data/pdfcomposition.xsd
     data/pds4_template.xml
     data/plscenesconf.json
-    data/ruian_vf_ob_v1.gfs
-    data/ruian_vf_st_uvoh_v1.gfs
-    data/ruian_vf_st_v1.gfs
-    data/ruian_vf_v1.gfs
     data/s57agencies.csv
     data/s57attributes.csv
     data/s57expectedinput.csv
