@@ -672,7 +672,6 @@ set(GDAL_DATA_FILES
     data/ozi_ellips.csv
     data/pci_datum.txt
     data/pci_ellips.txt
-    data/pdfcomposition.xsd
     data/stateplane.csv
     data/template_tiles.mapml
     data/tms_LINZAntarticaMapTileGrid.json
