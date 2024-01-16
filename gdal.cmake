@@ -655,16 +655,7 @@ set(GDAL_DATA_FILES
     data/GDALLogoBW.svg
     data/GDALLogoColor.svg
     data/GDALLogoGS.svg
-    data/cubewerx_extra.wkt
-    data/ecw_cs.wkt
-    data/epsg.wkt
-    data/esri_StatePlane_extra.wkt
     data/gdalicon.png
-    data/ozi_datum.csv
-    data/ozi_ellips.csv
-    data/pci_datum.txt
-    data/pci_ellips.txt
-    data/stateplane.csv
     data/template_tiles.mapml
     data/tms_LINZAntarticaMapTileGrid.json
     data/tms_MapML_APSTILE.json
