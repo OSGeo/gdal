@@ -667,7 +667,6 @@ set(GDAL_DATA_FILES
     data/gdalvrt.xsd
     data/gt_datum.csv
     data/gt_ellips.csv
-    data/netcdf_config.xsd
     data/ogrvrt.xsd
     data/ogrinfo_output.schema.json
     data/ozi_datum.csv
