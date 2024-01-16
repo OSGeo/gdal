@@ -656,7 +656,6 @@ set(GDAL_DATA_FILES
     data/GDALLogoColor.svg
     data/GDALLogoGS.svg
     data/cubewerx_extra.wkt
-    data/default.rsc
     data/ecw_cs.wkt
     data/epsg.wkt
     data/esri_StatePlane_extra.wkt
