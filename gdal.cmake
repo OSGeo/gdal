@@ -738,7 +738,6 @@ set(GDAL_DATA_FILES
     data/grib2_table_4_5.csv
     data/gt_datum.csv
     data/gt_ellips.csv
-    data/header.dxf
     data/inspire_cp_BasicPropertyUnit.gfs
     data/inspire_cp_CadastralBoundary.gfs
     data/inspire_cp_CadastralParcel.gfs
@@ -799,7 +798,6 @@ set(GDAL_DATA_FILES
     data/tms_MapML_APSTILE.json
     data/tms_MapML_CBMTILE.json
     data/tms_NZTM2000.json
-    data/trailer.dxf
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
