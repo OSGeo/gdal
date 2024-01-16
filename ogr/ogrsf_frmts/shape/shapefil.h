@@ -115,7 +115,7 @@ extern "C"
 /*      On some platforms, additional file IO hooks are defined that    */
 /*      UTF-8 encoded filenames Unicode filenames                       */
 /* -------------------------------------------------------------------- */
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#if defined(_WIN32)
 #define SHPAPI_WINDOWS
 #define SHPAPI_UTF8_HOOKS
 #endif

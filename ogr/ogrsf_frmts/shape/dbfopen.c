@@ -26,7 +26,7 @@
 
 #if defined(_MSC_VER)
 #define STRCASECMP(a, b) (_stricmp(a, b))
-#elif defined(_WIN32) || defined(_WIN32)
+#elif defined(_WIN32)
 #define STRCASECMP(a, b) (stricmp(a, b))
 #else
 #include <strings.h>
@@ -37,7 +37,7 @@
 #if _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
-#elif defined(_WIN32) || defined(_WIN32)
+#elif defined(_WIN32)
 #ifndef snprintf
 #define snprintf _snprintf
 #endif
