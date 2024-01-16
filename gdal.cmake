@@ -808,6 +808,15 @@ set_property(
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
+get_property(
+  _data_files
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  PROPERTY RESOURCE)
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/data")
+foreach(_file IN LISTS _data_files)
+    configure_file("${_file}" "${CMAKE_CURRENT_BINARY_DIR}/data" COPYONLY)
+endforeach()
+
 if (GDAL_ENABLE_MACOSX_FRAMEWORK)
   # We need to add data files and public headers as sources of the library os they get installed through the framework
   # installation mechanisms
