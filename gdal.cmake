@@ -800,8 +800,6 @@ set(GDAL_DATA_FILES
     data/tms_MapML_CBMTILE.json
     data/tms_NZTM2000.json
     data/trailer.dxf
-    data/vdv452.xml
-    data/vdv452.xsd
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
