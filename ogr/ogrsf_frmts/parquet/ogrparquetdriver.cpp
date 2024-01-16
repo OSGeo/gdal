@@ -477,9 +477,6 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                 }
             }
         }
-
-        if (poOpenInfo->bIsDirectory)
-            return nullptr;
     }
 #endif
 
@@ -487,6 +484,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
     {
         return nullptr;
     }
+
+    if (poOpenInfo->bIsDirectory)
+        return nullptr;
 
     std::string osFilename(poOpenInfo->pszFilename);
     if (STARTS_WITH(poOpenInfo->pszFilename, "PARQUET:"))
