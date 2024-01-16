@@ -33,6 +33,7 @@
 
 import gdaltest
 import ogrtest
+import pytest
 
 from osgeo import gdal, ogr
 
@@ -911,7 +912,7 @@ def test_ogr_factory_failed_forceTo():
         (
             "MULTICURVE ZM ((0.0 0.0,0 0,0 0,0 0,0.0 0.0))",
             ogr.wkbTINM,
-            "MULTICURVE ZM ((0.0 0.0,0 0,0 0,0 0,0.0 0.0))",
+            "POLYGON M ((0 0 0,0 0 0,0 0 0,0 0 0,0 0 0))",
         ),
     ]
     for (src_wkt, target_type, exp_wkt) in tests:
@@ -919,3 +920,246 @@ def test_ogr_factory_failed_forceTo():
         dst_geom = ogr.ForceTo(src_geom, target_type)
 
         ogrtest.check_feature_geometry(dst_geom, exp_wkt)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "input_wkt,output_type,expected_wkt",
+    [
+        ("POINT EMPTY", ogr.wkbPoint, "POINT EMPTY"),
+        ("POINT EMPTY", ogr.wkbPoint25D, "POINT Z EMPTY"),
+        ("POINT Z EMPTY", ogr.wkbPoint, "POINT EMPTY"),
+        ("POINT Z EMPTY", ogr.wkbPoint25D, "POINT Z EMPTY"),
+        ("POINT (1 2)", ogr.wkbPoint, "POINT (1 2)"),
+        ("POINT (1 2)", ogr.wkbPoint25D, "POINT Z (1 2 0)"),
+        ("POINT (1 2 3)", ogr.wkbPoint25D, "POINT Z (1 2 3)"),
+        ("POINT (1 2 3)", ogr.wkbPoint, "POINT (1 2)"),
+        ("POINT (1 2)", ogr.wkbMultiPoint, "MULTIPOINT ((1 2))"),
+        ("POINT (1 2)", ogr.wkbMultiPoint25D, "MULTIPOINT Z ((1 2 0))"),
+        ("POINT (1 2 3)", ogr.wkbMultiPoint, "MULTIPOINT ((1 2))"),
+        ("POINT (1 2 3)", ogr.wkbMultiPoint25D, "MULTIPOINT Z ((1 2 3))"),
+        ("MULTIPOINT EMPTY", ogr.wkbPoint, "POINT EMPTY"),
+        ("MULTIPOINT EMPTY", ogr.wkbPoint25D, "POINT Z EMPTY"),
+        ("MULTIPOINT Z EMPTY", ogr.wkbPoint, "POINT EMPTY"),
+        ("MULTIPOINT Z EMPTY", ogr.wkbPoint25D, "POINT Z EMPTY"),
+        ("MULTIPOINT ((1 2))", ogr.wkbPoint, "POINT (1 2)"),
+        ("MULTIPOINT ((1 2))", ogr.wkbPoint25D, "POINT Z (1 2 0)"),
+        ("MULTIPOINT ((1 2 3))", ogr.wkbPoint25D, "POINT Z (1 2 3)"),
+        ("MULTIPOINT ((1 2 3))", ogr.wkbPoint, "POINT (1 2)"),
+        ("MULTIPOINT ((1 2))", ogr.wkbMultiPoint, "MULTIPOINT ((1 2))"),
+        ("MULTIPOINT ((1 2))", ogr.wkbMultiPoint25D, "MULTIPOINT Z ((1 2 0))"),
+        ("MULTIPOINT ((1 2 3))", ogr.wkbMultiPoint, "MULTIPOINT ((1 2))"),
+        ("MULTIPOINT ((1 2 3))", ogr.wkbMultiPoint25D, "MULTIPOINT Z ((1 2 3))"),
+        ("LINESTRING EMPTY", ogr.wkbLineString, "LINESTRING EMPTY"),
+        ("LINESTRING EMPTY", ogr.wkbLineString25D, "LINESTRING Z EMPTY"),
+        ("LINESTRING Z EMPTY", ogr.wkbLineString, "LINESTRING EMPTY"),
+        ("LINESTRING Z EMPTY", ogr.wkbLineString25D, "LINESTRING Z EMPTY"),
+        ("LINESTRING (1 2)", ogr.wkbLineString, "LINESTRING (1 2)"),
+        ("LINESTRING (1 2)", ogr.wkbLineString25D, "LINESTRING Z (1 2 0)"),
+        ("LINESTRING (1 2 3)", ogr.wkbLineString25D, "LINESTRING Z (1 2 3)"),
+        ("LINESTRING (1 2 3)", ogr.wkbLineString, "LINESTRING (1 2)"),
+        ("LINESTRING (1 2)", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2))"),
+        ("LINESTRING (1 2)", ogr.wkbMultiLineString25D, "MULTILINESTRING Z ((1 2 0))"),
+        ("LINESTRING (1 2 3)", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2))"),
+        (
+            "LINESTRING (1 2 3)",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((1 2 3))",
+        ),
+        ("MULTILINESTRING EMPTY", ogr.wkbLineString, "LINESTRING EMPTY"),
+        ("MULTILINESTRING EMPTY", ogr.wkbLineString25D, "LINESTRING Z EMPTY"),
+        ("MULTILINESTRING Z EMPTY", ogr.wkbLineString, "LINESTRING EMPTY"),
+        ("MULTILINESTRING Z EMPTY", ogr.wkbLineString25D, "LINESTRING Z EMPTY"),
+        ("MULTILINESTRING ((1 2))", ogr.wkbLineString, "LINESTRING (1 2)"),
+        ("MULTILINESTRING ((1 2))", ogr.wkbLineString25D, "LINESTRING Z (1 2 0)"),
+        ("MULTILINESTRING ((1 2 3))", ogr.wkbLineString25D, "LINESTRING Z (1 2 3)"),
+        ("MULTILINESTRING ((1 2 3))", ogr.wkbLineString, "LINESTRING (1 2)"),
+        ("MULTILINESTRING ((1 2))", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2))"),
+        (
+            "MULTILINESTRING ((1 2))",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((1 2 0))",
+        ),
+        (
+            "MULTILINESTRING ((1 2 3))",
+            ogr.wkbMultiLineString,
+            "MULTILINESTRING ((1 2))",
+        ),
+        (
+            "MULTILINESTRING ((1 2 3))",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((1 2 3))",
+        ),
+        ("POLYGON EMPTY", ogr.wkbPolygon, "POLYGON EMPTY"),
+        ("POLYGON EMPTY", ogr.wkbPolygon25D, "POLYGON Z EMPTY"),
+        ("POLYGON Z EMPTY", ogr.wkbPolygon, "POLYGON EMPTY"),
+        ("POLYGON Z EMPTY", ogr.wkbPolygon25D, "POLYGON Z EMPTY"),
+        ("POLYGON ((0 0,0 1,1 1,0 0))", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,0 0))"),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbPolygon25D,
+            "POLYGON Z ((0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbPolygon,
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbPolygon25D,
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+        ),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbMultiPolygon,
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+        ),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbMultiPolygon25D,
+            "MULTIPOLYGON Z (((0 0 0,0 1 0,1 1 0,0 0 0)))",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbMultiPolygon,
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbMultiPolygon25D,
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+        ),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbLineString,
+            "LINESTRING (0 0,0 1,1 1,0 0)",
+        ),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbLineString25D,
+            "LINESTRING Z (0 0 0,0 1 0,1 1 0,0 0 0)",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbLineString,
+            "LINESTRING (0 0,0 1,1 1,0 0)",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbLineString25D,
+            "LINESTRING Z (0 0 10,0 1 10,1 1 10,0 0 10)",
+        ),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbMultiLineString,
+            "MULTILINESTRING ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbMultiLineString,
+            "MULTILINESTRING ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+        ),
+        ("MULTIPOLYGON EMPTY", ogr.wkbPolygon, "POLYGON EMPTY"),
+        ("MULTIPOLYGON EMPTY", ogr.wkbPolygon25D, "POLYGON Z EMPTY"),
+        ("MULTIPOLYGON Z EMPTY", ogr.wkbPolygon, "POLYGON EMPTY"),
+        ("MULTIPOLYGON Z EMPTY", ogr.wkbPolygon25D, "POLYGON Z EMPTY"),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbPolygon,
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbPolygon25D,
+            "POLYGON Z ((0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbPolygon,
+            "POLYGON ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbPolygon25D,
+            "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbMultiPolygon,
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbMultiPolygon25D,
+            "MULTIPOLYGON Z (((0 0 0,0 1 0,1 1 0,0 0 0)))",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbMultiPolygon,
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbMultiPolygon25D,
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbLineString,
+            "LINESTRING (0 0,0 1,1 1,0 0)",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbLineString25D,
+            "LINESTRING Z (0 0 0,0 1 0,1 1 0,0 0 0)",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbLineString,
+            "LINESTRING (0 0,0 1,1 1,0 0)",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbLineString25D,
+            "LINESTRING Z (0 0 10,0 1 10,1 1 10,0 0 10)",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbMultiLineString,
+            "MULTILINESTRING ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((0 0 0,0 1 0,1 1 0,0 0 0))",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbMultiLineString,
+            "MULTILINESTRING ((0 0,0 1,1 1,0 0))",
+        ),
+        (
+            "MULTIPOLYGON Z (((0 0 10,0 1 10,1 1 10,0 0 10)))",
+            ogr.wkbMultiLineString25D,
+            "MULTILINESTRING Z ((0 0 10,0 1 10,1 1 10,0 0 10))",
+        ),
+    ],
+)
+def test_ogr_factory_ForceTo(input_wkt, output_type, expected_wkt):
+
+    g = ogr.CreateGeometryFromWkt(input_wkt)
+    g = ogr.ForceTo(g, output_type)
+    assert g.ExportToIsoWkt() == expected_wkt
