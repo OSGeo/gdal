@@ -113,6 +113,8 @@ OGRGPSBabelDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
         if (!bGPSBabelFound)
 #endif
         {
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper;
             const char *const apszArgs[] = {"gpsbabel", "-V", nullptr};
             CPLString osTmpFileName("/vsimem/gpsbabel_tmp.tmp");
             VSILFILE *tmpfp = VSIFOpenL(osTmpFileName, "wb");
@@ -123,7 +125,16 @@ OGRGPSBabelDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
     }
 
     if (bGPSBabelFound)
+    {
         *ppszGSPBabelDriverName = pszGPSBabelDriverName;
+    }
+    else if (pszGPSBabelDriverName)
+    {
+        CPLDebug("GPSBABEL",
+                 "File %s could be recognized by GPSBABEL (sub-driver %s), but "
+                 "binary 'gpsbabel' is missing in the PATH",
+                 poOpenInfo->pszFilename, pszGPSBabelDriverName);
+    }
     return *ppszGSPBabelDriverName != nullptr;
 }
 
