@@ -165,7 +165,7 @@ endif ()
 # ~~~
 #
 
-set(ODBCCPP_INCLUDE_DIR "D:/GitHub-repository/odbc-cpp-wrapper/src")
+#set(ODBCCPP_INCLUDE_DIR "D:/GitHub-repository/odbc-cpp-wrapper/src")
 
 include(FeatureSummary)
 
