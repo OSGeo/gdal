@@ -38,7 +38,7 @@ Configuration
 -------------
 
 In the *data* folder of the GDAL distribution, you can find an
-:source_file:`data/osmconf.ini`
+:source_file:`ogr/ogrsf_frmts/osm/data/osmconf.ini`
 file that can be customized to fit your needs. You can also define an
 alternate path with the :config:`OSM_CONFIG_FILE` configuration option.
 

@@ -24,6 +24,14 @@ function(declare_def DEF)
     endif()
 endfunction()
 
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/netcdf_config.xsd
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 # NETCDF prefix is from Find module, netCDF prefix is from Config
 if (NETCDF_HAS_HDF4 OR netCDF_HAS_HDF4)
   declare_def(-DNETCDF_HAS_HDF4)
