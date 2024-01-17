@@ -3841,9 +3841,9 @@ def TileIndexOptions(options=None,
     filenameFilter:
         Pattern that the filenames contained in directories pointed by <file_or_dir> should follow. '*' and '?' wildcard can be used. String or list of strings.
     minPixelSize:
-        Minimum pixel size that a raster should have to be selected.
+        Minimum pixel size in term of geospatial extent per pixel (resolution) that a raster should have to be selected.
     maxPixelSize:
-        Maximum pixel size that a raster should have to be selected.
+        Maximum pixel size in term of geospatial extent per pixel (resolution) that a raster should have to be selected.
     format:
         output format ("ESRI Shapefile", "GPKG", etc...)
     layerName:

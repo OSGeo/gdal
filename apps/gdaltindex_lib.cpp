@@ -1249,7 +1249,7 @@ GDALTileIndexOptionsNew(char **papszArgv,
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
             psOptions->xres = CPLAtofM(papszArgv[++iArg]);
-            psOptions->yres = CPLAtofM(papszArgv[++iArg]);
+            psOptions->yres = std::fabs(CPLAtofM(papszArgv[++iArg]));
         }
         else if (EQUAL(papszArgv[iArg], "-te"))
         {

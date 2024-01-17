@@ -63,7 +63,7 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
     '*' is a wildcard character that matches any number of any characters
     including none. '?' is a wildcard character that matches a single character.
     Comparisons are done in a case insensitive way.
-    Several filters may be specified
+    Several filters may be specified.
 
     For example :``-filename_filter "*.tif" -filename_filter "*.tiff"``
 
@@ -71,7 +71,8 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
     .. versionadded:: 3.9
 
-    Minimum pixel size that a raster should have to be selected. The pixel size
+    Minimum pixel size in term of geospatial extent per pixel (resolution) that
+    a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target SRS defined
     by :option:`-t_srs`.
 
@@ -79,7 +80,8 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
     .. versionadded:: 3.9
 
-    Maximum pixel size that a raster should have to be selected. The pixel size
+    Maximum pixel size in term of geospatial extent per pixel (resolution) that
+    a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target SRS defined
     by :option:`-t_srs`.
 
@@ -141,7 +143,10 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
     specified here, unless :option:`-write_absolute_path` option is also used.
 
     Starting with GDAL 3.9, this can also be a directory name. :option:`-recursive`
-    might also be used to recursve down to sub-directories.
+    can also be used to recurse down to sub-directories.
+
+    It is also possible to use the generic option ``--optfile filelist.txt``
+    to specify a list of source files.
 
 
 Options specific to use by the GDAL GTI driver
@@ -186,7 +191,7 @@ specified.
 
     Target resolution in SRS unit per pixel.
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``RESX`` and ``RESY`` layer metadata items for formats that
     support layer metadata.
 
@@ -196,7 +201,7 @@ specified.
 
     Target extent in SRS unit.
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``MINX``, ``MINY``, ``MAXX`` and ``MAXY`` layer metadata
     items for formats that support layer metadata.
 
@@ -208,7 +213,7 @@ specified.
     ``Int16``, ``UInt32``, ``Int32``, ``UInt64``, ``Int64``, ``Float32``, ``Float64``, ``CInt16``,
     ``CInt32``, ``CFloat32`` or ``CFloat64``
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``DATA_TYPE`` layer metadata item for formats that
     support layer metadata.
 
@@ -218,7 +223,7 @@ specified.
 
     Number of bands of the tiles of the tile index.
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``BAND_COUNT`` layer metadata item for formats that
     support layer metadata.
 
@@ -235,7 +240,7 @@ specified.
 
     Nodata value of the tiles of the tile index.
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``NODATA`` layer metadata item for formats that
     support layer metadata.
 
@@ -246,7 +251,7 @@ specified.
     Color interpretation of of the tiles of the tile index:
     ``red``, ``green``, ``blue``, ``alpha``, ``gray``, ``undefined``.
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``COLOR_INTERPRETATION`` layer metadata item for formats that
     support layer metadata.
 
@@ -256,7 +261,7 @@ specified.
 
     Whether tiles in the tile index have a mask band.
 
-    Written in the XML Virtutual Tile Index if :option:`-gti_filename`
+    Written in the XML Virtual Tile Index if :option:`-gti_filename`
     is specified, or as ``MASK_BAND`` layer metadata item for formats that
     support layer metadata.
 

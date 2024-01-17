@@ -269,6 +269,7 @@ def test_gti_wrong_prototype_tile(tmp_vsimem):
     lyr.CreateFeature(f)
     del index_ds
 
+    # no match, because error message is operating system dependent
     with pytest.raises(Exception):
         gdal.Open(index_filename)
 
@@ -520,7 +521,7 @@ def test_gti_wrong_width(tmp_vsimem):
     lyr.SetMetadataItem("GEOTRANSFORM", ",".join([str(x) for x in gt]))
     del index_ds
 
-    with pytest.raises(Exception, match="XSIZE metadata item should be > 0"):
+    with pytest.raises(Exception, match="XSIZE metadata item must be > 0"):
         gdal.Open(index_filename)
 
 
@@ -536,7 +537,7 @@ def test_gti_wrong_height(tmp_vsimem):
     lyr.SetMetadataItem("GEOTRANSFORM", ",".join([str(x) for x in gt]))
     del index_ds
 
-    with pytest.raises(Exception, match="YSIZE metadata item should be > 0"):
+    with pytest.raises(Exception, match="YSIZE metadata item must be > 0"):
         gdal.Open(index_filename)
 
 
@@ -593,7 +594,7 @@ def test_gti_wrong_gt(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="GEOTRANSFORM metadata item should be 6 numeric values separated with comma",
+        match="GEOTRANSFORM metadata item must be 6 numeric values separated with comma",
     ):
         gdal.Open(index_filename)
 
@@ -609,7 +610,7 @@ def test_gti_wrong_gt_3rd_term(tmp_vsimem):
     lyr.SetMetadataItem("GEOTRANSFORM", "0,1,123,0,0,-1")
     del index_ds
 
-    with pytest.raises(Exception, match="3rd value of GEOTRANSFORM should be 0"):
+    with pytest.raises(Exception, match="3rd value of GEOTRANSFORM must be 0"):
         gdal.Open(index_filename)
 
 
@@ -624,7 +625,7 @@ def test_gti_wrong_gt_5th_term(tmp_vsimem):
     lyr.SetMetadataItem("GEOTRANSFORM", "0,1,0,0,1234,-1")
     del index_ds
 
-    with pytest.raises(Exception, match="5th value of GEOTRANSFORM should be 0"):
+    with pytest.raises(Exception, match="5th value of GEOTRANSFORM must be 0"):
         gdal.Open(index_filename)
 
 
@@ -639,7 +640,7 @@ def test_gti_wrong_gt_6th_term(tmp_vsimem):
     lyr.SetMetadataItem("GEOTRANSFORM", "0,1,0,0,0,1")
     del index_ds
 
-    with pytest.raises(Exception, match="6th value of GEOTRANSFORM should be < 0"):
+    with pytest.raises(Exception, match="6th value of GEOTRANSFORM must be < 0"):
         gdal.Open(index_filename)
 
 
@@ -698,7 +699,7 @@ def test_gti_wrong_resx(tmp_vsimem):
     lyr.SetMetadataItem("RESY", "1")
     del index_ds
 
-    with pytest.raises(Exception, match="RESX metadata item should be > 0"):
+    with pytest.raises(Exception, match="RESX metadata item must be > 0"):
         gdal.Open(index_filename)
 
 
@@ -712,7 +713,7 @@ def test_gti_wrong_resy(tmp_vsimem):
     lyr.SetMetadataItem("RESY", "0")
     del index_ds
 
-    with pytest.raises(Exception, match="RESY metadata item should be > 0"):
+    with pytest.raises(Exception, match="RESY metadata item must be > 0"):
         gdal.Open(index_filename)
 
 
@@ -732,7 +733,7 @@ def test_gti_wrong_minx(tmp_vsimem):
     lyr.SetMetadataItem("MAXY", str(gt[3]))
     del index_ds
 
-    with pytest.raises(Exception, match="MAXX metadata item should be > MINX"):
+    with pytest.raises(Exception, match="MAXX metadata item must be > MINX"):
         gdal.Open(index_filename)
 
 
@@ -752,7 +753,7 @@ def test_gti_wrong_miny(tmp_vsimem):
     lyr.SetMetadataItem("MAXY", str(gt[3]))
     del index_ds
 
-    with pytest.raises(Exception, match="MAXY metadata item should be > MINY"):
+    with pytest.raises(Exception, match="MAXY metadata item must be > MINY"):
         gdal.Open(index_filename)
 
 
@@ -917,7 +918,7 @@ def test_gti_valid_nodata(tmp_vsimem, md, expected_nodata):
         ({"BAND_COUNT": "2", "NODATA": "0,invalid"}, "Invalid value for NODATA"),
         (
             {"BAND_COUNT": "2", "NODATA": "0,0,0"},
-            "Number of values in NODATA should be 1 or BAND_COUNT",
+            "Number of values in NODATA must be 1 or BAND_COUNT",
         ),
     ],
 )
@@ -945,7 +946,7 @@ def test_gti_invalid_nodata(tmp_vsimem, md, error_msg):
         ),
         (
             {"BAND_COUNT": "2", "DATA_TYPE": "byte,byte,byte"},
-            "Number of values in DATA_TYPE should be 1 or BAND_COUNT",
+            "Number of values in DATA_TYPE must be 1 or BAND_COUNT",
         ),
     ],
 )
@@ -976,7 +977,7 @@ def test_gti_invalid_data_type(tmp_vsimem, md, error_msg):
                 "BAND_COUNT": "2",
                 "COLOR_INTERPRETATION": "undefined,undefined,undefined",
             },
-            "Number of values in COLOR_INTERPRETATION should be 1 or BAND_COUNT",
+            "Number of values in COLOR_INTERPRETATION must be 1 or BAND_COUNT",
         ),
     ],
 )

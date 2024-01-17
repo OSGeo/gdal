@@ -225,6 +225,7 @@ def test_gdaltindex_lib_outputSRS_writeAbsoluePath(tmp_path, four_tile_index):
         "got %d features, expecting 5" % ds.GetLayer(0).GetFeatureCount()
     )
     filename = lyr.GetFeature(4).GetField("location")
+    # Check that path is absolute
     assert filename.endswith("gdaltindex5.tif")
     assert filename != "gdaltindex5.tif"
 
@@ -382,6 +383,7 @@ def test_gdaltindex_lib_directory(tmp_path, four_tiles):
     del ds
 
     with gdal.quiet_errors():
+        # triggers warnings: "file XXXX has 0.010000 as pixel size (< 10.000000). Skipping"
         gdal.TileIndex(
             index_filename,
             [os.path.dirname(four_tiles[0])],

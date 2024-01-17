@@ -964,6 +964,17 @@ struct CPL_DLL GDALDatasetUniquePtrDeleter
 };
 //! @endcond
 
+//! @cond Doxygen_Suppress
+struct CPL_DLL GDALDatasetUniquePtrReleaser
+{
+    void operator()(GDALDataset *poDataset) const
+    {
+        if (poDataset)
+            poDataset->Release();
+    }
+};
+//! @endcond
+
 /** Unique pointer type for GDALDataset.
  * Appropriate for use on datasets open in non-shared mode and onto which
  * reference counter has not been manually modified.
