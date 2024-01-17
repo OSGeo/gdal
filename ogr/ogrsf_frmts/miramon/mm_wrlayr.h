@@ -106,13 +106,15 @@ void MM_CPLWarning(
     const char* format, ...);
 
 // Layer functions
+#ifndef GDAL_COMPILATION
 struct MiraMonVectLayerInfo * MMCreateLayer(char *pzFileName, 
-                __int32 LayerVersion, 
+                __int32 LayerVersion, double nMMMemoryRatio,
                 struct MiraMonDataBase *attributes,
                 MM_BOOLEAN ReadOrWrite);
+#endif
 int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, 
                 const char *pzFileName, 
-                __int32 LayerVersion, 
+                __int32 LayerVersion, double nMMMemoryRatio,
                 struct MiraMonDataBase *pLayerDB,
                 MM_BOOLEAN ReadOrWrite);
 int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer);

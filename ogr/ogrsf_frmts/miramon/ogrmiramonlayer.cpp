@@ -24,16 +24,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-
 #include "ogrmiramon.h"
-#include "cpl_conv.h"
-#include "ogr_p.h"
 
-#include <algorithm>
-
-#include "mm_gdal_functions.h"  // For MM_strnzcpy()
+#include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
 #include "mmrdlayr.h"
-#include "mm_wrlayr.h"  // For MMInitLayer()
 
 /************************************************************************/
 /*                            OGRMiraMonLayer()                         */
@@ -60,6 +54,17 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
 
+    /* -------------------------------------------------------------------- */
+    /*      Establish the nMemoryRatio to use                                    */
+    /* -------------------------------------------------------------------- */
+    const char *pszMemoryRatio=
+        CSLFetchNameValue(papszOpenOptions, "MemoryRatio");
+    
+    if (pszMemoryRatio)
+        nMMMemoryRatio=atof(pszMemoryRatio);
+    else
+        nMMMemoryRatio = 1; // Default
+
     if (bUpdate)
     {
         /* -------------------------------------------------------------------- */
@@ -84,15 +89,14 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 {
                     poFeatureDefn->SetGeomType(wkbPoint25D);
                     MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, NULL, MM_WRITTING_MODE);
+                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Point3d;
                 }
-
                 else
                 {
                     poFeatureDefn->SetGeomType(wkbPoint);
                     MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, NULL, MM_WRITTING_MODE);
+                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Point;
                 }
                 MMInitLayerByType(&hMiraMonLayer);
@@ -107,14 +111,14 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 {
                     poFeatureDefn->SetGeomType(wkbLineString25D);
                     MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, NULL, MM_WRITTING_MODE);
+                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Arc3d;
                 }
                 else
                 {
                     poFeatureDefn->SetGeomType(wkbLineString);
                     MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, NULL, MM_WRITTING_MODE);
+                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Arc;
                 }
                 MMInitLayerByType(&hMiraMonLayer);
@@ -133,7 +137,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     else
                         poFeatureDefn->SetGeomType(wkbPolygon25D);
                     MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, NULL, MM_WRITTING_MODE);
+                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Pol3d;
                 }
                 else
@@ -143,7 +147,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     else
                         poFeatureDefn->SetGeomType(wkbPolygon);
                     MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, NULL, MM_WRITTING_MODE);
+                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                     hMiraMonLayer.eLT = MM_LayerType_Pol;
                 }
                 MMInitLayerByType(&hMiraMonLayer);
@@ -154,16 +158,13 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             {
                 // Unknown type
                 MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, NULL, MM_WRITTING_MODE);
+                    nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
                 hMiraMonLayer.bIsBeenInit = 0;
                 hMiraMonLayer.bNameNeedsCorrection = 1;
             }
         }
         if (poSRS)
         {
-            //m_poSRS = poSRS->Clone();
-            //m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-
             if (poSRS->GetAuthorityName(nullptr) &&
                     EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
                 hMiraMonLayer.pSRS = CPLStrdup(poSRS->GetAuthorityCode(nullptr));
@@ -1343,7 +1344,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-            // ·$· it can be optimized
             char *pszString =
                 CPLRecode(pszRawValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
             if (MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,

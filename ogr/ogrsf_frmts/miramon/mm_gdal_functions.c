@@ -29,27 +29,20 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #ifdef GDAL_COMPILATION
-#include "gdal.h"			// Per a GDALDatasetH
-#include "ogr_srs_api.h"	// Per a OSRGetAuthorityCode
-#include "mm_gdal_constants.h"     // MM_UNDEFINED_STATISTICAL_VALUE
-#include "mm_gdal_structures.h"    // struct MM_CAMP *camp
-#include "mm_gdal_functions.h"      // JocCaracMMaDBF()
-#include "mm_wrlayr.h" // fseek_function(),...
+#include "ogr_api.h"    // For CPL_C_START
+#include "mm_gdal_functions.h"      // For MM_strnzcpy()
+#include "mm_wrlayr.h" // For calloc_function(),...
 #else
 #include "CmptCmp.h"
-#include "mm_gdal\mm_gdal_constants.h"     // MM_UNDEFINED_STATISTICAL_VALUE
-#include "mm_gdal\mm_gdal_structures.h"    // struct MM_CAMP *camp
-#include "mm_gdal\mm_gdal_functions.h"      // JocCaracMMaDBF()
-#include "mm_gdal\mm_wrlayr.h" // fseek_function(),...
+#include "mm_gdal\mm_gdal_functions.h"      // For MM_strnzcpy()
+#include "mm_gdal\mm_wrlayr.h" // For calloc_function(),...
 #endif
-
-
-// CREATING AN EXTENDED DBF
 
 #ifdef GDAL_COMPILATION
 CPL_C_START // Necessary for compiling in GDAL project
 #endif
 
+// CREATING AN EXTENDED MIRAMON DBF
 void MM_InitializeField(struct MM_CAMP *camp)
 {
 	memset(camp, '\0', sizeof(*camp));
@@ -59,7 +52,7 @@ void MM_InitializeField(struct MM_CAMP *camp)
 	camp->CampDescHipervincle=MM_MAX_EXT_DBF_N_FIELDS_TYPE;	
     camp->TractamentVariable=MM_CAMP_INDETERMINAT;
 	camp->TipusCampGeoTopo=MM_NO_ES_CAMP_GEOTOPO;
-}//Fi de MM_InitializeField()
+}
 
 struct MM_CAMP *MM_CreateAllFields(int ncamps)
 {
@@ -72,8 +65,7 @@ MM_EXT_DBF_N_FIELDS i;
     for (i=0; i<(size_t)ncamps; i++)
     	MM_InitializeField(camp+i);
 	return camp;
-}//Fi de CreaTotsElsCamps()
-
+}
 
 struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS n_camps)
 {
@@ -131,7 +123,7 @@ MM_EXT_DBF_N_FIELDS i;
 		camp->mostrar_camp=MM_CAMP_MOSTRABLE;
 	}
     return bd_xp;
-} /* Fi de MM_CreateDBFHeader() */
+}
 
 MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF)
 {
@@ -279,7 +271,7 @@ MM_FIRST_RECORD_OFFSET_TYPE MM_CalculateBytesFirstRecordOffset(struct MM_BASE_DA
 	if(bd_xp)
 		return (32+32*bd_xp->ncamps+1+MM_CalculateBytesExtendedFieldNames(bd_xp));
 	return 0;	
-}//MM_CalculateBytesFirstRecordOffset()
+}
 
 void MM_CheckDBFHeader(struct MM_BASE_DADES_XP * bd_xp)
 {
@@ -308,7 +300,7 @@ MM_BOOLEAN cal_DBF_estesa=FALSE;
 		bd_xp->versio_dbf=(MM_BYTE)MM_MARCA_VERSIO_1_DBF_ESTESA;
     else
         bd_xp->versio_dbf=MM_MARCA_DBASE4;
-} // Fi de MM_CheckDBFHeader()
+}
 
 
 void MM_InitializeOffsetExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
@@ -388,7 +380,7 @@ size_t i;
     *ptr=caracter;
     memcpy(ptr+1,text,i+1);
 	return ptr;
-} // Fi de DonaNovaCadenaAmbCaracterDavant()
+}
 
 char *MM_SetSubIndexFieldNam(char *nom_camp, MM_EXT_DBF_N_FIELDS index, size_t ampladamax)
 {
@@ -428,7 +420,6 @@ MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
     memcpy(&offset_nom_camp, (char*)(&camp->reservat_2)+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES, 4);
     return offset_nom_camp;
 }
-
 
 MM_BOOLEAN MM_UpdateEntireHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 {
@@ -783,7 +774,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     }
 
 	return TRUE;
-} /* Fi de MM_UpdateEntireHeader() */
+} /* End of MM_UpdateEntireHeader() */
 
 MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitxer)
 {
@@ -888,7 +879,7 @@ unsigned __int32 nRecords;
     }
     else
     {
-        //·$· Revisar!!
+        //�$� Revisar!!
         if (1 != fread_function(&pMMBDXP->nRecords, 4, 1, pf))
         {
             fclose_function(pf);
@@ -1007,7 +998,7 @@ unsigned __int32 nRecords;
 	/* ====== Record structure ========================= */
 
     if (n_queixes_estructura_incorrecta>0)
-        pMMBDXP->ncamps = (MM_EXT_DBF_N_FIELDS)(((offset_fals-1)-32)/32);   // Cas de DBF clàssica
+        pMMBDXP->ncamps = (MM_EXT_DBF_N_FIELDS)(((offset_fals-1)-32)/32);
     else
     {
     	MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats=1;
@@ -1196,7 +1187,7 @@ unsigned __int32 nRecords;
 
     pMMBDXP->CampIdEntitat=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
     return 0;
-}
+} // End of MM_ReadExtendedDBFHeaderFromFile()
 
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 {
@@ -1207,7 +1198,6 @@ void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 	}
 	return;
 }
-
 
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(struct MM_CAMP *camp,
 			struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom)
@@ -1353,7 +1343,7 @@ int retorn=0;
 			return retorn;
 	}
 	return 2;
-} // Fi de MM_ModifyFieldNameAndDescriptorIfPresentBD_XP()
+} // End of MM_ModifyFieldNameAndDescriptorIfPresentBD_XP()
 
 int MM_DuplicateMultilingualString(char *(cadena_final[MM_NUM_IDIOMES_MD_MULTIDIOMA]), 
                                const char * const (cadena_inicial[MM_NUM_IDIOMES_MD_MULTIDIOMA]))
@@ -1371,7 +1361,7 @@ size_t i;
 			cadena_final[i]=NULL;
     }
     return 0;
-}//Fi de MM_DuplicateMultilingualString()
+}
 
 int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp_inicial)
 {
@@ -1381,7 +1371,7 @@ int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp
 		return 1;
     
 	return 0;
-} //Fi de MM_DuplicateFieldDBXP()
+}
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen)
 {
@@ -1401,8 +1391,8 @@ size_t i;
 	return dest;
 }
 
-static const char MM_LletresMajusculesOEM850[]="µ·ÔÖÞàãéëØš€¥ŽÇ¶ÓÒ×™âåêíÑ";
-static const char MM_LletresMinusculesOEM850[]=" …‚Š¡¢•£—‹‡¤„Æƒ†‰ˆŒ”“ä–ìÐ";
+static const char MM_LletresMajusculesOEM850[]="ÂµÂ·ÂÃ”Ã–ÃžÃ Ã£Ã©Ã«Ã˜Å¡â‚¬Â¥Å½Ã‡Â¶ÂÃ“Ã’Ã—â„¢Ã¢Ã¥ÃªÃ­Ã‘";
+static const char MM_LletresMinusculesOEM850[]="Â â€¦â€šÅ Â¡ÂÂ¢â€¢Â£â€”â€¹Ââ€¡Â¤â€žÃ†Æ’â€ â€°Ë†Å’â€â€œÃ¤â€“Ã¬ÃÂ";
 char *MM_PassaAMajuscules(char *linia)
 {
     const char *pm;
@@ -1624,7 +1614,8 @@ __int64 exp, mantissa;
 	if (exp == 0x7FF0000000000000ui64 && mantissa != 0)
 		return TRUE;
 	return FALSE;
-}//Fi de MM_EsNANDouble()
+}
+
 #define MM_EsDoubleInfinit(a) (((*(unsigned __int64*)&(a)&0x7FFFFFFFFFFFFFFFui64)==0x7FF0000000000000ui64)?TRUE:FALSE)
 
 int MM_SprintfDoubleAmplada(char * cadena, int amplada, int n_decimals, double valor_double,
@@ -1737,7 +1728,7 @@ int retorn_printf;
 
 #undef VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E
 #undef VALOR_MASSA_PETIT_PER_IMPRIMIR_f
-} // Fi de SprintfDoubleAmplada()
+} // Fi de MM_SprintfDoubleAmplada()
 
 MM_BOOLEAN MM_EsCadenaDeBlancs(const char *cadena)
 {
@@ -2041,7 +2032,7 @@ int retorn_printf;
 		return 1;
     
 	return 0;
-} /* Fi de MMChangeCFieldWidthDBF() */
+} /* End of MMChangeCFieldWidthDBF() */
 
 
 void MM_AdoptaAlcada(double *desti, const double *proposta, unsigned long int flag)
@@ -2138,7 +2129,7 @@ double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
     if (alcada)
         free(alcada);
 	return 0;
-}
+} // End of MM_GetArcHeights()
 
 char *MM_l_TreuBlancsDeFinalDeCadena(char *punter,
 											size_t l_cadena)
@@ -2164,7 +2155,6 @@ int longitud_cadena=(int)l_cadena;
 	punter[++longitud_cadena]='\0';
 	return  punter;
 }
-
 
 char *MM_TreuBlancsDeFinalDeCadena(char * str)
 {
@@ -2264,7 +2254,7 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
 			i_dbf++;
 		}while (id_grafic==i);
 	}
-}//Fi de MMCreateExtendedDBFIndex()
+}// End of MMCreateExtendedDBFIndex()
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project

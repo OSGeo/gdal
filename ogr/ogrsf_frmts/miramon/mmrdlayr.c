@@ -30,26 +30,13 @@
  ****************************************************************************/
 
 #ifndef GDAL_COMPILATION
-#include <windows.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include "giraarc.h"
-#include "env.h"
-#include "DefTopMM.h"
-#include "libtop.h"
-#include "metadata.h"
-#include "NomsFitx.h" // Per a OmpleExtensio()
-#include "ExtensMM.h"	//Per a ExtPoligons,...
-
-//#include "mm_gdal\mm_gdal_driver_structs.h"    // SECCIO_VERSIO
-//#include "mm_gdal\mm_wrlayr.h" 
-#include "mm_gdal\mm_gdal_functions.h" // Per a int MM_GetArcHeights()
+#include "mm_gdal\mm_wrlayr.h"            // For MMReadHeader()
+#include "mm_gdal\mm_gdal_functions.h"  // For int MM_GetArcHeights()
 #include "mm_gdal\mm_gdal_constants.h"
 #else
 #include "ogr_api.h"    // For CPL_C_START
 #include "mm_wrlayr.h" 
+#include "mm_wrlayr.h" // For MMReadHeader()
 #include "mm_gdal_functions.h"
 #include "mm_gdal_constants.h"
 #endif

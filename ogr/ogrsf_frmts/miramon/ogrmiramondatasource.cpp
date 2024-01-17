@@ -25,8 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
 #include "ogrmiramon.h"
 
 /************************************************************************/
@@ -111,9 +109,8 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     const char *pszExtension= "pol";
 
     /* -------------------------------------------------------------------- */
-    /*      Establish the geometry type.  Note this logic                   */
+    /*      Establish the version to use                                    */
     /* -------------------------------------------------------------------- */
-    int layerType= 0;
     const char *pszVersion =
         CSLFetchNameValue(papszOptions, "Version");
     int nMMVersion;
@@ -130,6 +127,10 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     else
         nMMVersion = MM_32BITS_VERSION; // Default
 
+    /* -------------------------------------------------------------------- */
+    /*      Establish the layer type                                        */
+    /* -------------------------------------------------------------------- */
+    int layerType= 0;
     switch (eType)
     {
         case wkbPoint:
@@ -210,26 +211,6 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     if(MMWriteEmptyHeader(fp, layerType, nMMVersion))
         return nullptr;
-
-    // Revisar
-    /* -------------------------------------------------------------------- */
-    /*      Write the projection, if possible.                              */
-    /* -------------------------------------------------------------------- */
-    /*if (poSRS != nullptr)
-    {
-        hMiraMonLayer.ePlainLT=layerType;
-
-        if (poSRS->GetAuthorityName(nullptr) &&
-                EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
-            hMiraMonLayer.pSRS=CPLStrdup(poSRS->GetAuthorityCode(nullptr));
-
-        if (MMWriteVectorMetadata(&hMiraMonLayer))
-        {
-            CPLFree(hMiraMonLayer.pSRS);
-            return nullptr;
-        }
-        CPLFree(hMiraMonLayer.pSRS);
-    }*/
 
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */

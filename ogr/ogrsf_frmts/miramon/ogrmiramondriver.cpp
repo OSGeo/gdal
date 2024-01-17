@@ -26,11 +26,9 @@
  ****************************************************************************/
 
 #include "ogrmiramon.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
 
 /************************************************************************/
-/*                    OGRMMDriverIdentify()                            */
+/*                    OGRMMDriverIdentify()                             */
 /************************************************************************/
 
 static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -153,15 +151,30 @@ void RegisterOGRMiraMon()
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
         "  <Option name='Height' scope='vector' type='string' "
-        "description='Zoom level of full resolution. If not specified, maximum "
-        "non-empty zoom level'/>"
-        "  <Option name='BAND_COUNT' scope='raster' type='string-select' "
-        "description='Sets which of the possible heights is chosen: "
-        "the first, the highest or the lowest one.' default='First'>"
+        "   description='Sets which of the possible heights is chosen: "
+        "   the first, the highest or the lowest one.' default='First'>"
         "    <Value>First</Value>"
         "    <Value>Highest</Value>"
         "    <Value>default</Value>"
         "    <Value>NULL</Value>"
+        "  </Option>"
+        "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='MemoryRatio' scope='vector' type='float' "
+        "   description='Ratio used to enhance certain aspects of memory"
+        "   In some memory settings, a block of 256 or 512 bytes is used."
+        "   This parameter can be adjusted to achieve"
+        "   nMemoryRatio*256 or nMemoryRatio*512."
+        "   For example, nMemoryRatio=2 in powerful computers and"
+        "   nMemoryRatio=0.5 in less powerful computers."
+        "   By increasing this parameter, more memory will be required,"
+        "   but there will be fewer read/write operations to the disk.'/>"
+        "    <Value>0.5</Value>"
+        "    <Value>1</Value>"
+        "    <Value>2</Value>"
         "  </Option>"
         "</OpenOptionList>");
 
