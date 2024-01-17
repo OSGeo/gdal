@@ -1199,9 +1199,9 @@ static bool TranslateArray(
                 band >= 1 ? CPLSPrintf("%d", band) : std::string(),
                 std::move(anTransposedAxis),
                 bResampled
-                    ? (viewExpr.empty() ? std::string("resample=true")
-                                        : std::string("resample=true,")
-                                              .append(std::move(viewExpr)))
+                    ? (viewExpr.empty()
+                           ? std::string("resample=true")
+                           : std::string("resample=true,").append(viewExpr))
                     : std::move(viewExpr),
                 std::move(anSrcOffset), std::move(anCount), std::move(anStep),
                 std::move(anDstOffset)));
