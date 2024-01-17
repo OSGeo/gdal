@@ -299,7 +299,7 @@ OGRGeometry *GML_BuildOGRGeometryFromList(
     if (pszNameLookup != nullptr)
     {
         SRSCache *poSRSCache = static_cast<SRSCache *>(hCacheSRS);
-        SRSDesc &oSRSDesc = poSRSCache->Get(pszNameLookup);
+        const SRSDesc &oSRSDesc = poSRSCache->Get(pszNameLookup);
         poGeom->assignSpatialReference(oSRSDesc.poSRS);
         if ((eSwapCoordinates == GML_SWAP_AUTO && oSRSDesc.bAxisInvert &&
              bInvertAxisOrderIfLatLong) ||

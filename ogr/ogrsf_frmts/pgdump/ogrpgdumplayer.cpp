@@ -1183,8 +1183,8 @@ char *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen)
 /*                       OGRPGCommonLayerGetType()                      */
 /************************************************************************/
 
-CPLString OGRPGCommonLayerGetType(OGRFieldDefn &oField, bool bPreservePrecision,
-                                  bool bApproxOK)
+CPLString OGRPGCommonLayerGetType(const OGRFieldDefn &oField,
+                                  bool bPreservePrecision, bool bApproxOK)
 {
     const char *pszFieldType = "";
 

@@ -78,8 +78,10 @@ swq_select::~swq_select()
         delete col.expr;
     }
 
+    // cppcheck-suppress constVariableReference
     for (auto &entry : m_exclude_fields)
     {
+        // cppcheck-suppress constVariableReference
         for (auto &col : entry.second)
         {
             CPLFree(col.table_name);

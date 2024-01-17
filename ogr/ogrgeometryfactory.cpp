@@ -1052,7 +1052,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint(OGRGeometry *poGeom)
     if (eGeomType == wkbGeometryCollection)
     {
         OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
-        for (auto &poMember : poGC)
+        for (const auto &poMember : poGC)
         {
             if (wkbFlatten(poMember->getGeometryType()) != wkbPoint)
                 return poGeom;

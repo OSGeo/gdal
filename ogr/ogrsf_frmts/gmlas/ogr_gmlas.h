@@ -1542,7 +1542,7 @@ class OGRGMLASLayer final : public OGRLayer
     bool EvaluateFilter(OGRFeature *poFeature);
 
     bool RemoveField(int nIdx);
-    void InsertNewField(int nInsertPos, OGRFieldDefn &oFieldDefn,
+    void InsertNewField(int nInsertPos, const OGRFieldDefn &oFieldDefn,
                         const CPLString &osXPath);
 
     CPLString
@@ -1894,7 +1894,8 @@ class GMLASReader final : public DefaultHandler
     {
         return m_oMapElementIdToLayer;
     }
-    void SetMapElementIdToLayer(std::map<CPLString, OGRGMLASLayer *> &oMap)
+    void
+    SetMapElementIdToLayer(const std::map<CPLString, OGRGMLASLayer *> &oMap)
     {
         m_oMapElementIdToLayer = oMap;
     }

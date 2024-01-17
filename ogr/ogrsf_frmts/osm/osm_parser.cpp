@@ -1680,6 +1680,7 @@ static bool RunDecompressionJobs(OSMContext *psCtxt)
 /*                          ProcessSingleBlob()                         */
 /************************************************************************/
 
+// cppcheck-suppress constParameterReference
 static bool ProcessSingleBlob(OSMContext *psCtxt, DecompressionJob &sJob,
                               BlobType eType)
 {

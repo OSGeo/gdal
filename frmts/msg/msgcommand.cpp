@@ -375,7 +375,7 @@ std::string MSGCommand::sChannel(int iChannel)
     }
 }
 
-std::string MSGCommand::sTimeStampToFolder(std::string &sTimeStamp)
+std::string MSGCommand::sTimeStampToFolder(const std::string &sTimeStamp)
 {
     std::string sYear(sTimeStamp.substr(0, 4));
     std::string sMonth(sTimeStamp.substr(4, 2));

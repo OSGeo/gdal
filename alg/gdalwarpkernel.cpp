@@ -362,6 +362,7 @@ void GWKThreadsEnd(void *psThreadDataIn)
     GWKThreadData *psThreadData = static_cast<GWKThreadData *>(psThreadDataIn);
     if (psThreadData->poJobQueue)
     {
+        // cppcheck-suppress constVariableReference
         for (auto &pair : psThreadData->mapThreadToTransformerArg)
         {
             CPLAssert(pair.second != psThreadData->pTransformerArgInput);
@@ -533,15 +534,14 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
          */
         if (poWK->pfnProgress != GDALDummyProgress)
         {
-            int &counter = psThreadData->counter;
-            while (counter < nDstYSize)
+            while (psThreadData->counter < nDstYSize)
             {
                 psThreadData->cv.wait(lock);
-                if (!poWK->pfnProgress(
-                        poWK->dfProgressBase +
-                            poWK->dfProgressScale *
-                                (counter / static_cast<double>(nDstYSize)),
-                        "", poWK->pProgress))
+                if (!poWK->pfnProgress(poWK->dfProgressBase +
+                                           poWK->dfProgressScale *
+                                               (psThreadData->counter /
+                                                static_cast<double>(nDstYSize)),
+                                       "", poWK->pProgress))
                 {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     psThreadData->stopFlag = true;

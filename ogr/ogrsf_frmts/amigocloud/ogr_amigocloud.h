@@ -210,7 +210,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     void SetDeferredCreation(OGRwkbGeometryType eGType,
                              OGRSpatialReference *poSRS, int bGeomNullable);
 
-    static CPLString GetAmigoCloudType(OGRFieldDefn &oField);
+    static CPLString GetAmigoCloudType(const OGRFieldDefn &oField);
 
     OGRErr RunDeferredCreationIfNecessary();
     int GetDeferredCreation() const

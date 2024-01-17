@@ -1418,7 +1418,7 @@ bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
                      pszGeoreferencingId);
             return false;
         }
-        auto &georeferencing = iter->second;
+        const auto &georeferencing = iter->second;
         dfX1 = georeferencing.m_bboxX1;
         dfY1 = georeferencing.m_bboxY1;
         dfX2 = georeferencing.m_bboxX2;
@@ -1657,7 +1657,7 @@ bool GDALPDFComposerWriter::SetupVectorGeoreferencing(
                  "Cannot find georeferencing of id %s", pszGeoreferencingId);
         return false;
     }
-    auto &georeferencing = iter->second;
+    const auto &georeferencing = iter->second;
     const double dfX1 = georeferencing.m_bboxX1;
     const double dfY1 = georeferencing.m_bboxY1;
     const double dfX2 = georeferencing.m_bboxX2;

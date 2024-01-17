@@ -1092,10 +1092,10 @@ GDAL_GCP CPL_DLL *CPL_STDCALL GDALDuplicateGCPs(int, const GDAL_GCP *);
 int CPL_DLL CPL_STDCALL GDALGCPsToGeoTransform(
     int nGCPCount, const GDAL_GCP *pasGCPs, double *padfGeoTransform,
     int bApproxOK) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPL_STDCALL GDALInvGeoTransform(double *padfGeoTransformIn,
+int CPL_DLL CPL_STDCALL GDALInvGeoTransform(const double *padfGeoTransformIn,
                                             double *padfInvGeoTransformOut)
     CPL_WARN_UNUSED_RESULT;
-void CPL_DLL CPL_STDCALL GDALApplyGeoTransform(double *, double, double,
+void CPL_DLL CPL_STDCALL GDALApplyGeoTransform(const double *, double, double,
                                                double *, double *);
 void CPL_DLL GDALComposeGeoTransforms(const double *padfGeoTransform1,
                                       const double *padfGeoTransform2,

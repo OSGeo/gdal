@@ -363,7 +363,7 @@ std::string OGRElasticAggregationLayer::BuildRequest()
     geo_centroid.Set("field", m_osGeometryField);
 
     // Add extra fields
-    for (auto &oChild : m_oAggregatedFieldsRequest.GetChildren())
+    for (const auto &oChild : m_oAggregatedFieldsRequest.GetChildren())
     {
         subaggs.Add(oChild.GetName(), oChild);
     }

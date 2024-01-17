@@ -82,7 +82,7 @@ static bool ProcessMetadata(GDALDataset *poSQLiteDS, pmtiles::headerv3 &sHeader,
                          "Cannot parse 'json' metadata item");
                 return false;
             }
-            for (auto &oChild : oJsonDoc.GetRoot().GetChildren())
+            for (const auto &oChild : oJsonDoc.GetRoot().GetChildren())
             {
                 oObj.Add(oChild.GetName(), oChild);
             }

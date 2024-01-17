@@ -106,7 +106,7 @@ std::string CreateResource(const std::string &osUrl,
                            char **papszHTTPOptions);
 bool UpdateResource(const std::string &osUrl, const std::string &osResourceId,
                     const std::string &osPayload, char **papszHTTPOptions);
-void FillResmeta(CPLJSONObject &oRoot, char **papszMetadata);
+void FillResmeta(const CPLJSONObject &oRoot, char **papszMetadata);
 std::string GetResmetaSuffix(CPLJSONObject::Type eType);
 bool DeleteFeature(const std::string &osUrl, const std::string &osResourceId,
                    const std::string &osFeatureId, char **papszHTTPOptions);

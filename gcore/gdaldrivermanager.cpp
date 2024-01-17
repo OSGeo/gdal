@@ -882,9 +882,9 @@ CPLErr GDALDriverManager::LoadPlugin(const char *name)
         CPLString gdal_or_ogr[2] = {"gdal_", "ogr_"};
         CPLString platformExtensions[3] = {"so", "dll", "dylib"};
 
-        for (CPLString &prefix : gdal_or_ogr)
+        for (const CPLString &prefix : gdal_or_ogr)
         {
-            for (CPLString &extension : platformExtensions)
+            for (const CPLString &extension : platformExtensions)
             {
                 const char *pszFilename = CPLFormFilename(
                     osABISpecificDir, CPLSPrintf("%s%s", prefix.c_str(), name),

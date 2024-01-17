@@ -238,7 +238,7 @@ netCDFVDimension &netCDFVID::virtualDIDToDim(int virtualID)
     return dimList[virtualID];
 }
 
-int netCDFVID::nameToVirtualVID(std::string &name)
+int netCDFVID::nameToVirtualVID(const std::string &name)
 {
     if (nameVarTable.count(name) < 1)
     {
@@ -248,7 +248,7 @@ int netCDFVID::nameToVirtualVID(std::string &name)
     return nameVarTable.at(name);
 }
 
-int netCDFVID::nameToVirtualDID(std::string &name)
+int netCDFVID::nameToVirtualDID(const std::string &name)
 {
     if (nameDimTable.count(name) < 1)
     {

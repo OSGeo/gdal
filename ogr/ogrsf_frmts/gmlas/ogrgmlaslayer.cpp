@@ -1091,7 +1091,8 @@ static void InsertTargetIndex(std::map<CPLString, int> &oMap, int nIdx)
 /*                            InsertNewField()                          */
 /************************************************************************/
 
-void OGRGMLASLayer::InsertNewField(int nInsertPos, OGRFieldDefn &oFieldDefn,
+void OGRGMLASLayer::InsertNewField(int nInsertPos,
+                                   const OGRFieldDefn &oFieldDefn,
                                    const CPLString &osXPath)
 {
     CPLAssert(nInsertPos >= 0 &&

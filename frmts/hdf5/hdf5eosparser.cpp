@@ -619,7 +619,7 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(
         int nRasterXSize = 0;
         int nRasterYSize = 0;
 
-        for (auto &oDim : aoDimensions)
+        for (const auto &oDim : aoDimensions)
         {
             if (oDim.osName == "XDim")
                 nRasterXSize = oDim.nSize;

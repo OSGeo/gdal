@@ -301,6 +301,7 @@ static std::string FeatureToJsonString(OGRFeature *poFeature)
  */
 static void FreeMap(std::map<GIntBig, OGRFeature *> &moFeatures)
 {
+    // cppcheck-suppress constVariableReference
     for (auto &oPair : moFeatures)
     {
         OGRFeature::DestroyFeature(oPair.second);

@@ -1001,7 +1001,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
-                swq_summary &oSummary = psSelectInfo->column_summary[iField];
+                const swq_summary &oSummary =
+                    psSelectInfo->column_summary[iField];
                 if (psColDef->col_func == SWQCF_COUNT)
                 {
                     if (CPL_INT64_FITS_ON_INT32(oSummary.count))
@@ -1025,7 +1026,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
             swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
             if (!psSelectInfo->column_summary.empty())
             {
-                swq_summary &oSummary = psSelectInfo->column_summary[iField];
+                const swq_summary &oSummary =
+                    psSelectInfo->column_summary[iField];
 
                 if (psColDef->col_func == SWQCF_AVG && oSummary.count > 0)
                 {

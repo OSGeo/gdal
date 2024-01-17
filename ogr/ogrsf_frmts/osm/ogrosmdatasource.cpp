@@ -2258,6 +2258,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     if (bMissing)
     {
+        // cppcheck-suppress constVariableReference
         for (auto &oIter : aoMapWays)
             CPLFree(oIter.second.second);
 
@@ -2402,6 +2403,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     CPLFree(papoPolygons);
 
+    // cppcheck-suppress constVariableReference
     for (auto &oIter : aoMapWays)
         CPLFree(oIter.second.second);
 
@@ -2477,6 +2479,7 @@ OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
         poColl = nullptr;
     }
 
+    // cppcheck-suppress constVariableReference
     for (auto &oIter : aoMapWays)
         CPLFree(oIter.second.second);
 

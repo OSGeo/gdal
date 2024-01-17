@@ -2011,7 +2011,7 @@ int OGRStyleTool::ComputeWithUnit(int nValue, OGRSTUnitId eUnit)
  * @return Undocumented.
  */
 const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam,
-                                      OGRStyleValue &sStyleValue,
+                                      const OGRStyleValue &sStyleValue,
                                       GBool &bValueIsNull)
 {
     if (!Parse())
@@ -2065,7 +2065,8 @@ const char *OGRStyleTool::GetParamStr(const OGRStyleParamId &sStyleParam,
  * @return Undocumented.
  */
 int OGRStyleTool::GetParamNum(const OGRStyleParamId &sStyleParam,
-                              OGRStyleValue &sStyleValue, GBool &bValueIsNull)
+                              const OGRStyleValue &sStyleValue,
+                              GBool &bValueIsNull)
 {
     return static_cast<int>(
         GetParamDbl(sStyleParam, sStyleValue, bValueIsNull));
@@ -2085,7 +2086,7 @@ int OGRStyleTool::GetParamNum(const OGRStyleParamId &sStyleParam,
  * @return Undocumented.
  */
 double OGRStyleTool::GetParamDbl(const OGRStyleParamId &sStyleParam,
-                                 OGRStyleValue &sStyleValue,
+                                 const OGRStyleValue &sStyleValue,
                                  GBool &bValueIsNull)
 {
     if (!Parse())

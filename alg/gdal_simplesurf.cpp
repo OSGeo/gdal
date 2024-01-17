@@ -134,6 +134,17 @@ double &GDALFeaturePoint::operator[](int nIndex)
     return padfDescriptor[nIndex];
 }
 
+double GDALFeaturePoint::operator[](int nIndex) const
+{
+    if (nIndex < 0 || nIndex >= DESC_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Descriptor index is out of range");
+    }
+
+    return padfDescriptor[nIndex];
+}
+
 GDALFeaturePoint::~GDALFeaturePoint()
 {
     delete[] padfDescriptor;
@@ -273,8 +284,8 @@ GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
     return poCollection;
 }
 
-double GDALSimpleSURF::GetEuclideanDistance(GDALFeaturePoint &firstPoint,
-                                            GDALFeaturePoint &secondPoint)
+double GDALSimpleSURF::GetEuclideanDistance(const GDALFeaturePoint &firstPoint,
+                                            const GDALFeaturePoint &secondPoint)
 {
     double sum = 0.0;
 

@@ -495,7 +495,7 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
     auto oTemporaryUnsealer(poLayerDefn->GetTemporaryUnsealer());
 
     std::set<std::string> oSetFieldNames;
-    for (auto &poFieldDefn : oBuildContext.apoFieldDefn)
+    for (const auto &poFieldDefn : oBuildContext.apoFieldDefn)
         oSetFieldNames.insert(poFieldDefn->GetNameRef());
 
     auto AddTimeField =

@@ -4299,9 +4299,9 @@ int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
  * location is placed.
  */
 
-void CPL_STDCALL GDALApplyGeoTransform(double *padfGeoTransform, double dfPixel,
-                                       double dfLine, double *pdfGeoX,
-                                       double *pdfGeoY)
+void CPL_STDCALL GDALApplyGeoTransform(const double *padfGeoTransform,
+                                       double dfPixel, double dfLine,
+                                       double *pdfGeoX, double *pdfGeoY)
 {
     *pdfGeoX = padfGeoTransform[0] + dfPixel * padfGeoTransform[1] +
                dfLine * padfGeoTransform[2];
@@ -4325,7 +4325,7 @@ void CPL_STDCALL GDALApplyGeoTransform(double *padfGeoTransform, double dfPixel,
  * @return TRUE on success or FALSE if the equation is uninvertable.
  */
 
-int CPL_STDCALL GDALInvGeoTransform(double *gt_in, double *gt_out)
+int CPL_STDCALL GDALInvGeoTransform(const double *gt_in, double *gt_out)
 
 {
     // Special case - no rotation - to avoid computing determinate

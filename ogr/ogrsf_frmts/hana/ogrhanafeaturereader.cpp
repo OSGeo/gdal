@@ -82,7 +82,7 @@ template <typename T> T strToInt(const char *value)
 
 }  // anonymous namespace
 
-OGRHanaFeatureReader::OGRHanaFeatureReader(OGRFeature &feature)
+OGRHanaFeatureReader::OGRHanaFeatureReader(const OGRFeature &feature)
     : feature_(feature)
 {
 }
