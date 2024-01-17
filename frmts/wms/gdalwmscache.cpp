@@ -296,7 +296,9 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig)
             else
             {
                 m_osCachePath = CPLFormFilename(
-                    pszDir, CPLSPrintf("gdalwmscache_%s", CPLMD5String(pszUrl)),
+                    pszDir,
+                    CPLSPrintf("gdalwmscache_%s",
+                               CPLMD5String(pszUrl ? pszUrl : "")),
                     nullptr);
             }
         }
@@ -305,8 +307,8 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig)
     // Separate folder for each unique dataset url
     if (CPLTestBool(CPLGetXMLValue(pConfig, "Unique", "True")))
     {
-        m_osCachePath =
-            CPLFormFilename(m_osCachePath, CPLMD5String(pszUrl), nullptr);
+        m_osCachePath = CPLFormFilename(
+            m_osCachePath, CPLMD5String(pszUrl ? pszUrl : ""), nullptr);
     }
     CPLDebug("WMS", "Using %s for cache", m_osCachePath.c_str());
 

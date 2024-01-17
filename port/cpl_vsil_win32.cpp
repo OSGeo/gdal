@@ -29,7 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 
 #include <windows.h>
 #include <winioctl.h>  // for FSCTL_SET_SPARSE

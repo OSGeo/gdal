@@ -63,11 +63,11 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
         osRadixMetadataName.resize(i);
 
     // form metadata file name
-    CPLString osIMDSourceFilename = CPLFormFilename(
+    std::string osIMDSourceFilename = CPLFormFilename(
         osDirName, (osRadixMetadataName + "_metadata.txt").c_str(), nullptr);
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = osIMDSourceFilename;
+        m_osIMDSourceFilename = std::move(osIMDSourceFilename);
     }
     else
     {
@@ -76,17 +76,17 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
             nullptr);
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = osIMDSourceFilename;
+            m_osIMDSourceFilename = std::move(osIMDSourceFilename);
         }
     }
 
     // get _rpc.txt file
 
-    CPLString osRPBSourceFilename =
+    std::string osRPBSourceFilename =
         CPLFormFilename(osDirName, (osBaseName + "_rpc").c_str(), "txt");
     if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = osRPBSourceFilename;
+        m_osRPBSourceFilename = std::move(osRPBSourceFilename);
     }
     else
     {
@@ -94,7 +94,7 @@ GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
             CPLFormFilename(osDirName, (osBaseName + "_RPC").c_str(), "TXT");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = osRPBSourceFilename;
+            m_osRPBSourceFilename = std::move(osRPBSourceFilename);
         }
     }
 

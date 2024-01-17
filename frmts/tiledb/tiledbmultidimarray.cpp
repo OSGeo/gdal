@@ -341,8 +341,9 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
             return nullptr;
         }
 
-        auto attr = osAttributeName.empty() ? schema.attribute(0)
-                                            : schema.attribute(osAttributeName);
+        const auto &attr = osAttributeName.empty()
+                               ? schema.attribute(0)
+                               : schema.attribute(osAttributeName);
         GDALDataType eDT = TileDBDataTypeToGDALDataType(attr.type());
         if (eDT == GDT_Unknown)
         {
@@ -680,8 +681,8 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
         poArray->m_anBlockSize = std::move(anBlockSize);
         poArray->m_anStartDimOffset = std::move(anStartDimOffset);
         poArray->m_osAttrName = attr.name();
-        poArray->m_osUnit = osUnit;
-        poArray->m_poSRS = poSRS;
+        poArray->m_osUnit = std::move(osUnit);
+        poArray->m_poSRS = std::move(poSRS);
         poArray->m_nTimestamp = nTimestamp;
 
         const auto filters = attr.filter_list();
@@ -1384,7 +1385,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
         poArray->m_poSchema = std::move(poSchema);
         poArray->m_osAttrName = attr->name();
         poArray->m_poAttr = std::move(attr);
-        poArray->m_anBlockSize = anBlockSize;
+        poArray->m_anBlockSize = std::move(anBlockSize);
         poArray->m_anStartDimOffset.resize(aoDimensions.size());
         // To keep a reference on the indexing variables, so they are still
         // alive at Finalize() time

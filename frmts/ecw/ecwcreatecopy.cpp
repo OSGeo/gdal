@@ -53,7 +53,7 @@ static CPLString GetCompressionSoftwareName()
     if (CPLGetExecPath(szProcessName, sizeof(szProcessName) - 1))
     {
         szProcessName[sizeof(szProcessName) - 1] = 0;
-#ifdef WIN32
+#ifdef _WIN32
         char *szLastSlash = strrchr(szProcessName, '\\');
 #else
         char *szLastSlash = strrchr(szProcessName, '/');
@@ -1203,7 +1203,7 @@ CPLErr GDALECWCompressor::Initialize(
     {
         if (fpVSIL == nullptr)
         {
-#if ECWSDK_VERSION >= 40 && defined(WIN32)
+#if ECWSDK_VERSION >= 40 && defined(_WIN32)
             if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
             {
                 wchar_t *pwszFilename =

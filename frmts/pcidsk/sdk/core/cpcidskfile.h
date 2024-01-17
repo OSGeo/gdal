@@ -94,7 +94,7 @@ namespace PCIDSK
         std::string GetFilename() const { return base_filename; }
 
         void      GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
-                                std::string filename="", bool writable=false ) override;
+                                const std::string& filename=std::string(), bool writable=false ) override;
 
         bool      GetEDBFileDetails( EDBFile** file_p, Mutex **io_mutex_p,
                                      std::string filename );

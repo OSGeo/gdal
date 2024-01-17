@@ -1561,7 +1561,7 @@ CPLErr OGROpenFileGDBDataSource::FlushCache(bool /*bAtClosing*/)
 bool OGROpenFileGDBDataSource::AddFieldDomain(
     std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (eAccess != GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1741,7 +1741,7 @@ bool OGROpenFileGDBDataSource::DeleteFieldDomain(
 bool OGROpenFileGDBDataSource::UpdateFieldDomain(
     std::unique_ptr<OGRFieldDomain> &&domain, std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (eAccess != GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

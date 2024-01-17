@@ -46,7 +46,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
     bool bUseCRLF = false;
     if (pszCRLFFormat == nullptr)
     {
-#ifdef WIN32
+#ifdef _WIN32
         bUseCRLF = true;
 #endif
     }
@@ -63,7 +63,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
         CPLError(CE_Warning, CPLE_AppDefined,
                  "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                  pszCRLFFormat);
-#ifdef WIN32
+#ifdef _WIN32
         bUseCRLF = true;
 #endif
     }

@@ -261,7 +261,7 @@ void GDALDefaultOverviews::OverviewScan()
             CPLCheckForFile(&achOvrFilename[0], papszInitSiblingFiles));
         osOvrFilename = &achOvrFilename[0];
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
         if (!bInitNameIsOVR && !bExists && !papszInitSiblingFiles)
         {
             osOvrFilename.Printf("%s.OVR", pszInitName);
@@ -1270,7 +1270,7 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
         CPL_TO_BOOL(CPLCheckForFile(&achMskFilename[0], papszSiblingFiles));
     osMskFilename = &achMskFilename[0];
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
     if (!bExists && !papszSiblingFiles)
     {
         osMskFilename.Printf("%s.MSK", pszBasename);

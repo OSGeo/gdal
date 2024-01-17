@@ -116,7 +116,7 @@ namespace PCIDSK
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
 
         virtual void GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
-                                   std::string filename="", bool writable=false ) = 0;
+                                   const std::string& filename=std::string(), bool writable=false ) = 0;
 
         virtual std::string GetUniqueEDBFilename() = 0;
 

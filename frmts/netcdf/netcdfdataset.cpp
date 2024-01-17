@@ -8003,7 +8003,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     int new_cdfid = -1;
     CPLString osTmpFilename(osFilename + ".tmp");
     CPLString osFilenameForNCCreate(osTmpFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp =
@@ -8086,7 +8086,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     VSIUnlink(osOriFilename);
 
     CPLString osFilenameForNCOpen(osFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp = CPLRecode(osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP");
@@ -8443,7 +8443,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
 #endif
                         oMapVarToId[pszVarName] = nVarId;
                         oMapVarIdToType[nVarId] = nc_datatype;
-                        oMapVarIdToVectorOfDimId[nVarId] = aoDimIds;
+                        oMapVarIdToVectorOfDimId[nVarId] = std::move(aoDimIds);
                     }
                 }
                 CSLDestroy(papszTokens);
@@ -8982,7 +8982,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                           ? NC_WRITE
                           : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp = CPLRecode(osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP");
@@ -9104,7 +9104,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLDebug("GDAL_netCDF", "got cdfid=%d", cdfid);
 #endif
 
-#if defined(ENABLE_NCDUMP) && !defined(WIN32)
+#if defined(ENABLE_NCDUMP) && !defined(_WIN32)
     // Try to destroy the temporary file right now on Unix
     if (poDS->bFileToDestroyAtClosing)
     {
@@ -10015,7 +10015,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
 
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp =
@@ -10025,7 +10025,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
     }
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
     {
         // Works around bug of msys2 netCDF 4.9.0 package where nc_create()
         // crashes

@@ -116,7 +116,7 @@ typedef byte cryptopp_byte;
 // when cryptopp.dll and GDAL have been compiled with the same
 // VC version and /MD. But otherwise you'll get crashes
 // Borrowed from dlltest.cpp of crypto++
-#if defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
+#if defined(_WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
 
 static CryptoPP::PNew s_pNew = nullptr;
 static CryptoPP::PDelete s_pDelete = nullptr;
@@ -139,7 +139,7 @@ void __cdecl operator delete(void *p)
     s_pDelete(p);
 }
 
-#endif  // defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
+#endif  // defined(_WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
 
 static GByte *pabyGlobalKey = nullptr;
 static int nGlobalKeySize = 0;

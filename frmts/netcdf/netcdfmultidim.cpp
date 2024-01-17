@@ -4110,7 +4110,7 @@ netCDFVariable::GetCoordinateVariables() const
                 auto poLat = poLocationGroup->OpenMDArray("lat");
                 if (poLon && poLat)
                 {
-                    return {poLon, poLat};
+                    return {std::move(poLon), std::move(poLat)};
                 }
             }
         }
@@ -4542,7 +4542,7 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     if (dt.GetClass() == GEDTC_NUMERIC &&
         dt.GetNumericDataType() == GDT_Unknown)
     {
@@ -4928,7 +4928,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     const int nMode =
         (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0 ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(osFilename);
-#ifdef WIN32
+#ifdef _WIN32
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp = CPLRecode(osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP");
@@ -5004,7 +5004,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     CPLDebug("GDAL_netCDF", "got cdfid=%d", cdfid);
 #endif
 
-#if defined(ENABLE_NCDUMP) && !defined(WIN32)
+#if defined(ENABLE_NCDUMP) && !defined(_WIN32)
     // Try to destroy the temporary file right now on Unix
     if (poSharedResources->m_bFileToDestroyAtClosing)
     {
@@ -5081,7 +5081,7 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
 
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
-#ifdef WIN32
+#ifdef _WIN32
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp =

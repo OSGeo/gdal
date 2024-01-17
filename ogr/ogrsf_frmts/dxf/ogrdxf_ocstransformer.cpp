@@ -125,11 +125,11 @@ OGRDXFOCSTransformer::OGRDXFOCSTransformer(double adfNIn[3],
 /*                            Transform()                               */
 /************************************************************************/
 
-int OGRDXFOCSTransformer::Transform(int nCount, double *adfX, double *adfY,
+int OGRDXFOCSTransformer::Transform(size_t nCount, double *adfX, double *adfY,
                                     double *adfZ, double * /* adfT */,
                                     int *pabSuccess /* = nullptr */)
 {
-    for (int i = 0; i < nCount; i++)
+    for (size_t i = 0; i < nCount; i++)
     {
         const double x = adfX[i];
         const double y = adfY[i];
@@ -149,13 +149,13 @@ int OGRDXFOCSTransformer::Transform(int nCount, double *adfX, double *adfY,
 /*                          InverseTransform()                          */
 /************************************************************************/
 
-int OGRDXFOCSTransformer::InverseTransform(int nCount, double *adfX,
+int OGRDXFOCSTransformer::InverseTransform(size_t nCount, double *adfX,
                                            double *adfY, double *adfZ)
 {
     if (dfDeterminant == 0.0)
         return FALSE;
 
-    for (int i = 0; i < nCount; i++)
+    for (size_t i = 0; i < nCount; i++)
     {
         const double x = adfX[i];
         const double y = adfY[i];

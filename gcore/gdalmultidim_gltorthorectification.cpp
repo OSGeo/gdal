@@ -123,7 +123,7 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
         oSRS.importFromEPSG(4326);
         newAr->m_poSRS.reset(oSRS.Clone());
         newAr->m_poSRS->SetDataAxisToSRSAxisMapping(
-            {/*latIdx = */ 0, /* lonIdx = */ 1});
+            {/*latIdx = */ 1, /* lonIdx = */ 2});
         return newAr;
     }
 

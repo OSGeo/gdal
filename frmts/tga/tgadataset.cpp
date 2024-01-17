@@ -463,7 +463,8 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             poGDS->m_aoScanlineState[nLine + 1].nRemainingPixelsPrevScanline =
                 nRemainingPixelsPrevScanline;
             if (nRemainingPixelsPrevScanline)
-                poGDS->m_aoScanlineState[nLine + 1].abyDataPrevRLERun = abyData;
+                poGDS->m_aoScanlineState[nLine + 1].abyDataPrevRLERun =
+                    std::move(abyData);
         }
         if (pImage && nBands == 1)
         {

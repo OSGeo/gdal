@@ -697,7 +697,7 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Doesn't seem to bring any real performance gain on Linux.
     const bool bBuffered = CPLTestBool(CPLGetConfigOption("JP2KAK_BUFFERED",
-#ifdef WIN32
+#ifdef _WIN32
                                                           "YES"
 #else
                                                           "NO"

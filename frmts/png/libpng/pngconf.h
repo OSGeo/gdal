@@ -180,7 +180,7 @@
  * compiler-specific macros to the values required to change the calling
  * conventions of the various functions.
  */
-#if defined(_Windows) || defined(_WINDOWS) || defined(WIN32) ||\
+#if defined(_Windows) || defined(_WINDOWS) || defined(_WIN32) ||\
     defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
   /* Windows system (DOS doesn't support DLLs).  Includes builds under Cygwin or
    * MinGW on any architecture currently supported by Windows.  Also includes

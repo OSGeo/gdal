@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Login to GHCR
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
@@ -107,7 +107,7 @@ jobs:
       # different architecture.
       - name: Restore build cache
         id: restore-cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: ${{ github.workspace }}/.ccache
           key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
@@ -147,7 +147,7 @@ jobs:
             ccache -s
 
       - name: Save build cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         with:
           path: ${{ github.workspace }}/.ccache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}

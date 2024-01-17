@@ -302,3 +302,6 @@ The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/o
 either 2 or 4 comma separated values. The same rules apply for the source and destination ranges, and ``scale_bn`` syntax may be used as it is with (:ref:`gdal_translate`).  The option ``scale=true`` (default if unspecified is ``scale=false``) may also be used without value arguments (added in GDAL 3.8), where it results in the output range 0,255 from whatever the source range is. Do consider the need for also using ``ot`` option in order to accommodate the intended output range.
                         oSRS.SetLinearUnits("kilometre",
     ds = gdal.Open("vrt://" + dsn_unscale + "?unscale=true&ot=int16")
+     FAIL_REGEX "[Uu]nknown option"                         # HP
+     FAIL_REGEX "[Uu]nknown switch"                         # PGI
+* Esben Mose Hansen, Ange Optimization ApS

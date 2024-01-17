@@ -429,7 +429,7 @@ bool VSIDIRADLS::AnalysePathList(const std::string &osBaseURL,
             prop.bIsDirectory = CPL_TO_BOOL(VSI_ISDIR(entry->nMode));
             prop.nMode = entry->nMode;
             prop.mTime = static_cast<time_t>(entry->nMTime);
-            prop.ETag = ETag;
+            prop.ETag = std::move(ETag);
 
             std::string osCachedFilename =
                 osBaseURL + "/" + CPLAWSURLEncode(osName, false);
@@ -508,7 +508,7 @@ bool VSIDIRADLS::AnalyseFilesystemList(const std::string &osBaseURL,
             prop.fileSize = 0;
             prop.bIsDirectory = true;
             prop.mTime = static_cast<time_t>(entry->nMTime);
-            prop.ETag = ETag;
+            prop.ETag = std::move(ETag);
 
             std::string osCachedFilename =
                 osBaseURL + CPLAWSURLEncode(osName, false);

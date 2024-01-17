@@ -1083,7 +1083,7 @@ void OGROSMLayer::AddComputedAttribute(const char *pszName, OGRFieldType eType,
     oComputedAttribute.nIndex = m_poFeatureDefn->GetFieldCount() - 1;
     oComputedAttribute.osSQL = pszSQL;
     oComputedAttribute.hStmt = hStmt;
-    oComputedAttribute.aosAttrToBind = aosAttrToBind;
-    oComputedAttribute.anIndexToBind = anIndexToBind;
+    oComputedAttribute.aosAttrToBind = std::move(aosAttrToBind);
+    oComputedAttribute.anIndexToBind = std::move(anIndexToBind);
     oComputedAttribute.bHardcodedZOrder = bHardcodedZOrder;
 }

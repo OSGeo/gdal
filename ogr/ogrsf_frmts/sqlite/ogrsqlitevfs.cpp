@@ -422,7 +422,7 @@ static int OGRSQLiteVFSSleep(sqlite3_vfs *pVFS, int microseconds)
 
 // Derived for sqlite3.c implementation of unixCurrentTime64 and
 // winCurrentTime64
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 static int OGRSQLiteVFSCurrentTimeInt64(sqlite3_vfs * /*pVFS*/,
                                         sqlite3_int64 *piNow)

@@ -41,7 +41,7 @@
 
 // #define DEBUG_VERBOSE 1
 
-#ifdef WIN32
+#ifdef _WIN32
 #if defined(HAVE_ATLBASE_H)
 bool CPLFetchWindowsProductUUID(
     std::string &osStr);  // defined in cpl_aws_win32.cpp
@@ -549,7 +549,7 @@ enum class EC2InstanceCertainty
 
 static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 {
-#if defined(__linux) || defined(WIN32)
+#if defined(__linux) || defined(_WIN32)
     const auto IsMachinePotentiallyEC2InstanceFromLinuxHost = []()
     {
         // On the newer Nitro Hypervisor (C5, M5, H1, T3), use
@@ -620,7 +620,7 @@ static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 
     return IsMachinePotentiallyEC2InstanceFromLinuxHost();
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
     if (!CPLTestBool(CPLGetConfigOption("CPL_AWS_AUTODETECT_EC2", "YES")))
     {
         return EC2InstanceCertainty::MAYBE;
@@ -1134,7 +1134,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     }
     const std::string osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
     constexpr char SEP_STRING[] = "\\";
 #else
@@ -1142,9 +1142,8 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     constexpr char SEP_STRING[] = "/";
 #endif
 
-    std::string osDotAws(pszHome ? pszHome : "");
-    osDotAws += SEP_STRING;
-    osDotAws += ".aws";
+    const std::string osDotAws(
+        std::string(pszHome ? pszHome : "").append(SEP_STRING).append(".aws"));
 
     // Read first ~/.aws/credential file
 
@@ -1562,8 +1561,9 @@ bool VSIS3HandleHelper::GetConfiguration(
                             osSecretAccessKey, osAccessKeyId, osSessionToken))
                     {
                         CPLMutexHolder oHolder(&ghMutex);
-                        gosRoleArnWebIdentity = osRoleArnSP;
-                        gosWebIdentityTokenFile = osWebIdentityTokenFile;
+                        gosRoleArnWebIdentity = std::move(osRoleArnSP);
+                        gosWebIdentityTokenFile =
+                            std::move(osWebIdentityTokenFile);
                     }
                 }
             }
@@ -1614,9 +1614,9 @@ bool VSIS3HandleHelper::GetConfiguration(
                     gosGlobalSessionToken = osTempSessionToken;
                     gosRegion = osRegion;
                 }
-                osSecretAccessKey = osTempSecretAccessKey;
-                osAccessKeyId = osTempAccessKeyId;
-                osSessionToken = osTempSessionToken;
+                osSecretAccessKey = std::move(osTempSecretAccessKey);
+                osAccessKeyId = std::move(osTempAccessKeyId);
+                osSessionToken = std::move(osTempSessionToken);
                 eCredentialsSource = AWSCredentialsSource::ASSUMED_ROLE;
                 return true;
             }
@@ -1831,9 +1831,9 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                                     osSecretAccessKey, osAccessKeyId,
                                     osSessionToken))
         {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
         }
     }
     else if (m_eCredentialsSource == AWSCredentialsSource::ASSUMED_ROLE)
@@ -1844,9 +1844,9 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                 bForceRefresh, osSecretAccessKey, osAccessKeyId, osSessionToken,
                 osRegion))
         {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
         }
     }
     else if (m_eCredentialsSource == AWSCredentialsSource::WEB_IDENTITY)
@@ -1857,9 +1857,9 @@ void VSIS3HandleHelper::RefreshCredentials(const std::string &osPathForOption,
                 std::string(), osSecretAccessKey, osAccessKeyId,
                 osSessionToken))
         {
-            m_osSecretAccessKey = osSecretAccessKey;
-            m_osAccessKeyId = osAccessKeyId;
-            m_osSessionToken = osSessionToken;
+            m_osSecretAccessKey = std::move(osSecretAccessKey);
+            m_osAccessKeyId = std::move(osAccessKeyId);
+            m_osSessionToken = std::move(osSessionToken);
         }
     }
 }

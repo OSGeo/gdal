@@ -11999,10 +11999,38 @@ const int *OSRGetDataAxisToSRSAxisMapping(OGRSpatialReferenceH hSRS,
 
 /** \brief Set a custom data axis to CRS axis mapping.
  *
+ * The number of elements of the mapping vector should be the number of axis
+ * of the CRS (as returned by GetAxesCount()) (although this method does not
+ * check that, beyond checking there are at least 2 elements, so that this
+ * method and setting the CRS can be done in any order).
+ * This is taken into account by OGRCoordinateTransformation to transform the
+ * order of coordinates to the order expected by the CRS before
+ * transformation, and back to the data order after transformation.
+ *
+ * The mapping[i] value (one based) represents the data axis number for the i(th)
+ * axis of the CRS. A negative value can also be used to ask for a sign
+ * reversal during coordinate transformation (to deal with northing vs southing,
+ * easting vs westing, heights vs depths).
+ *
+ * When used with OGRCoordinateTransformation,
+ * - the only valid values for mapping[0] (data axis number for the first axis
+ *   of the CRS) are 1, 2, -1, -2.
+ * - the only valid values for mapping[1] (data axis number for the second axis
+ *   of the CRS) are 1, 2, -1, -2.
+ *  - the only valid values mapping[2] are 3 or -3.
+ * Note: this method does not validate the values of mapping[].
+ *
+ * mapping=[2,1] typically expresses the inversion of axis between the data
+ * axis and the CRS axis for a 2D CRS.
+ *
  * Automatically implies SetAxisMappingStrategy(OAMS_CUSTOM)
  *
- * See OGRSpatialReference::GetAxisMappingStrategy()
+ * This is the same as the C function OSRSetDataAxisToSRSAxisMapping().
+ *
+ * @param mapping The new data axis to CRS axis mapping.
+ *
  * @since GDAL 3.0
+ * @see OGRSpatialReference::GetDataAxisToSRSAxisMapping()
  */
 OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(
     const std::vector<int> &mapping)
@@ -12019,10 +12047,11 @@ OGRErr OGRSpatialReference::SetDataAxisToSRSAxisMapping(
 /************************************************************************/
 
 /** \brief Set a custom data axis to CRS axis mapping.
- *s
+ *
  * Automatically implies SetAxisMappingStrategy(OAMS_CUSTOM)
  *
- * See OGRSpatialReference::SetDataAxisToSRSAxisMapping()
+ * This is the same as the C++ method
+ * OGRSpatialReference::SetDataAxisToSRSAxisMapping()
  *
  * @since GDAL 3.1
  */

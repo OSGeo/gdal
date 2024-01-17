@@ -31,9 +31,9 @@ jobs:
       cache-name: cmake-ubuntu-focal
     steps:
     - name: Checkout GDAL
-      uses: actions/checkout@v4
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Setup cache
-      uses: actions/cache@v3
+      uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -313,9 +313,9 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Checkout GDAL
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install development packages
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@76b1bed68bac51ebe46cb431077217d4b98e2b7b # v2.21.0
         with:
           msystem: MINGW64
           update: true
@@ -328,7 +328,7 @@ jobs:
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil
       - name: Setup cache
-        uses: actions/cache@v3
+        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
         id: cache
         with:
           path: ${{ github.workspace }}\.ccache
@@ -406,13 +406,13 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@v4
-    - uses: ilammy/msvc-dev-cmd@v1
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
     - name: populate JAVA_HOME
       shell: pwsh
       run: |
         echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-    - uses: conda-incubator/setup-miniconda@v3
+    - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -506,8 +506,8 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v3
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -565,13 +565,13 @@ jobs:
       cache-name: cmake-macos
     steps:
     - name: Setup xcode
-      uses: maxim-lobanov/setup-xcode@v1
+      uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       with:
         xcode-version: 14.2
     - name: Checkout GDAL
-      uses: actions/checkout@v4
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Setup cache
-      uses: actions/cache@v3
+      uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -650,8 +650,8 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@v4
-    - uses: conda-incubator/setup-miniconda@v3
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
       with:
         activate-environment: gdalenv
         python-version: 3.9

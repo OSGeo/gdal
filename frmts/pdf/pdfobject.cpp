@@ -2522,7 +2522,7 @@ GDALPDFStream *GDALPDFObjectPdfium::GetStream()
     auto pStream = pdfium::WrapRetain(m_obj->AsStream());
     if (pStream)
     {
-        m_poStream = new GDALPDFStreamPdfium(pStream);
+        m_poStream = new GDALPDFStreamPdfium(std::move(pStream));
         return m_poStream;
     }
     else

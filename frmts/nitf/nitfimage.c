@@ -2418,7 +2418,7 @@ static int NITFFormatRPC00BCoefficient(char *pszBuffer, double dfVal,
     // We need 12 bytes + 2=3-1 bytes for MSVC potentially outputting exponents
     // with 3 digits + 1 terminating byte
     char szTemp[12 + 2 + 1];
-#if defined(DEBUG) || defined(WIN32)
+#if defined(DEBUG) || defined(_WIN32)
     int nLen;
 #endif
 
@@ -2430,12 +2430,12 @@ static int NITFFormatRPC00BCoefficient(char *pszBuffer, double dfVal,
     }
 
     CPLsnprintf(szTemp, sizeof(szTemp), "%+.6E", dfVal);
-#if defined(DEBUG) || defined(WIN32)
+#if defined(DEBUG) || defined(_WIN32)
     nLen = (int)strlen(szTemp);
     CPL_IGNORE_RET_VAL_INT(nLen);
 #endif
     CPLAssert(szTemp[9] == 'E');
-#ifdef WIN32
+#ifdef _WIN32
     if (nLen == 14)  // Old MSVC versions: 3 digits for the exponent
     {
         if (szTemp[11] != DIGIT_ZERO || szTemp[12] != DIGIT_ZERO)

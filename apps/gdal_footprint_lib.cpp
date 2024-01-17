@@ -560,10 +560,10 @@ class GeoTransformCoordinateTransformation final
         return nullptr;
     }
 
-    int Transform(int nCount, double *x, double *y, double * /* z */,
+    int Transform(size_t nCount, double *x, double *y, double * /* z */,
                   double * /* t */, int *pabSuccess) override
     {
-        for (int i = 0; i < nCount; ++i)
+        for (size_t i = 0; i < nCount; ++i)
         {
             const double X = m_gt[0] + x[i] * m_gt[1] + y[i] * m_gt[2];
             const double Y = m_gt[3] + x[i] * m_gt[4] + y[i] * m_gt[5];

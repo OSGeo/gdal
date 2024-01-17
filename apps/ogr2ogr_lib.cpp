@@ -39,6 +39,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>
@@ -1127,14 +1128,18 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
         return poSRS;
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double *z,
+    virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
     {
+        CPLAssert(nCount <=
+                  static_cast<size_t>(std::numeric_limits<int>::max()));
         if (bUseTPS)
-            return GDALTPSTransform(hTransformArg, FALSE, nCount, x, y, z,
+            return GDALTPSTransform(hTransformArg, FALSE,
+                                    static_cast<int>(nCount), x, y, z,
                                     pabSuccess);
         else
-            return GDALGCPTransform(hTransformArg, FALSE, nCount, x, y, z,
+            return GDALGCPTransform(hTransformArg, FALSE,
+                                    static_cast<int>(nCount), x, y, z,
                                     pabSuccess);
     }
 
@@ -1214,7 +1219,7 @@ class CompositeCT : public OGRCoordinateTransformation
             poCT2->SetEmitErrors(bEmitErrors);
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double *z,
+    virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double *t, int *pabSuccess) override
     {
         int nResult = TRUE;
@@ -1280,10 +1285,10 @@ class AxisMappingCoordinateTransformation : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double * /*z*/,
+    virtual int Transform(size_t nCount, double *x, double *y, double * /*z*/,
                           double * /*t*/, int *pabSuccess) override
     {
-        for (int i = 0; i < nCount; i++)
+        for (size_t i = 0; i < nCount; i++)
         {
             if (pabSuccess)
                 pabSuccess[i] = true;
@@ -3905,8 +3910,8 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
                                 const auto poSrcFieldDefn =
                                     poSrcFDefn->GetFieldDefn(iSrcField);
                                 // Create field domain in output dataset if not already existing.
-                                const auto osDomainName =
-                                    poSrcFieldDefn->GetDomainName();
+                                const std::string osDomainName(
+                                    poSrcFieldDefn->GetDomainName());
                                 if (!osDomainName.empty())
                                 {
                                     if (m_poDstDS->TestCapability(
@@ -4921,7 +4926,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
 
             // Create field domain in output dataset if not already existing.
-            const auto osDomainName = oFieldDefn.GetDomainName();
+            const std::string osDomainName(oFieldDefn.GetDomainName());
             if (!osDomainName.empty())
             {
                 if (m_poDstDS->TestCapability(ODsCAddFieldDomain) &&

@@ -146,7 +146,7 @@ EGifOpenFileHandle(int FileHandle) {
 
     f = fdopen(FileHandle, "wb");    /* Make it into a stream: */
 
-#if defined (__MSDOS__) || defined(WIN32)
+#if defined (__MSDOS__) || defined(_WIN32)
     setvbuf(f, NULL, _IOFBF, GIF_FILE_BUFFER_SIZE);    /* And inc. stream
                                                         * buffer. */
 #endif /* __MSDOS__ */
@@ -332,7 +332,7 @@ EGifPutImageDesc(GifFileType * GifFile,
     GifFilePrivateType *Private = (GifFilePrivateType *)GifFile->Private;
 
     if (Private->FileState & FILE_STATE_IMAGE &&
-#if defined(__MSDOS__) || defined(WIN32) || defined(__GNUC__)
+#if defined(__MSDOS__) || defined(_WIN32) || defined(__GNUC__)
         Private->PixelCount > 0xffff0000UL) {
 #else
         Private->PixelCount > 0xffff0000) {

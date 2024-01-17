@@ -760,7 +760,7 @@ static ContainerPtr MyGetContainerFromRoot(KmlFactory *poKmlFactory,
         }
         else if (poKmlRoot->IsA(kmldom::Type_Container))
         {
-            poKmlContainer = AsContainer(poKmlRoot);
+            poKmlContainer = AsContainer(std::move(poKmlRoot));
         }
     }
 

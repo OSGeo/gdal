@@ -2721,6 +2721,17 @@ int OGR2SQLITEModule::Setup(sqlite3 *hDBIn)
 OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
                                    OGRSQLiteDataSource *poSQLiteDS)
 {
+    if (sqlite3_api == nullptr)
+    {
+        // Unlikely to happen. One theoretical possibility would be that:
+        // - thread A calls OGR2SQLITE_Register(), which calls sqlite3_auto_extension((void (*)(void))OGR2SQLITE_static_register)
+        // - thread B calls sqlite3_reset_auto_extension()
+        // - thread A opens a sqlite3 handle (which normally would have caused OGR2SQLITE_static_register() to be called, and setting the sqlite3_api static variable, without prior B intervention.
+        // - thread A calls us (OGR2SQLITE_Setup()) with sqlite3_api still set to its initial nullptr value
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR2SQLITE_Setup() failed due to sqlite3_api == nullptr");
+        return nullptr;
+    }
     OGR2SQLITEModule *poModule = new OGR2SQLITEModule();
     poModule->Setup(poDS, poSQLiteDS);
     return poModule;

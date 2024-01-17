@@ -205,7 +205,7 @@ void OGRFeatherLayer::EstablishFeatureDefn()
                 oJSONDef = oIter->second;
             auto osEncoding = oJSONDef.GetString("encoding");
             if (osEncoding.empty() && !osExtensionName.empty())
-                osEncoding = osExtensionName;
+                osEncoding = std::move(osExtensionName);
 
             OGRwkbGeometryType eGeomType = wkbUnknown;
             auto eGeomEncoding = OGRArrowGeomEncoding::WKB;

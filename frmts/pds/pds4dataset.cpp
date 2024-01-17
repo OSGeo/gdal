@@ -1380,7 +1380,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
     {
         if (GetRasterCount())
         {
-            m_oSRS = oSRS;
+            m_oSRS = std::move(oSRS);
         }
         else if (GetLayerCount())
         {
@@ -4565,14 +4565,14 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
-    poDS->m_osImageFilename = osImageFilename;
+    poDS->m_osImageFilename = std::move(osImageFilename);
     poDS->m_bCreateHeader = true;
     poDS->m_bStripFileAreaObservationalFromTemplate = true;
     poDS->m_osInterleave = pszInterleave;
     poDS->m_papszCreationOptions = CSLDuplicate(aosOptions.List());
     poDS->m_bUseSrcLabel = aosOptions.FetchBool("USE_SRC_LABEL", true);
     poDS->m_bIsLSB = bIsLSB;
-    poDS->m_osHeaderParsingStandard = osHeaderParsingStandard;
+    poDS->m_osHeaderParsingStandard = std::move(osHeaderParsingStandard);
     poDS->m_bCreatedFromExistingBinaryFile = bCreateLabelOnly;
 
     if (EQUAL(pszInterleave, "BIP"))

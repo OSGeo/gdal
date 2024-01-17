@@ -14,6 +14,7 @@ GDAL - Geospatial Data Abstraction Library
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/gdal.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:gdal)
 [![Coverage Status](https://coveralls.io/repos/github/OSGeo/gdal/badge.svg?branch=master)](https://coveralls.io/github/OSGeo/gdal?branch=master)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8250/badge)](https://www.bestpractices.dev/projects/8250)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/OSGeo/gdal/badge)](https://securityscorecards.dev/viewer/?uri=github.com/OSGeo/gdal)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5884351.svg)](https://doi.org/10.5281/zenodo.5884351)
 

@@ -605,7 +605,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
                 osStyleName.Printf("AutoTextStyle-%d", nNextAutoID++);
             } while (poDS->oHeaderDS.TextStyleExists(osStyleName));
 
-            oNewTextStyles[osStyleName] = oTextStyleDef;
+            oNewTextStyles[osStyleName] = std::move(oTextStyleDef);
         }
 
         WriteValue(7, osStyleName);

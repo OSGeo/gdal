@@ -1207,10 +1207,11 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
         CPLTestBool(CPLGetConfigOption("PR_FORCE_LOAD_RASTERS", "FALSE"));
     bool bAllBandCaching = false;
 
-    CPLString osPrimaryKeyNameI(CPLQuotedSQLIdentifier(pszPrimaryKeyName));
-    CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
-    CPLString osTableI(CPLQuotedSQLIdentifier(pszTable));
-    CPLString osColumnI(CPLQuotedSQLIdentifier(pszColumn));
+    const std::string osPrimaryKeyNameI(
+        CPLQuotedSQLIdentifier(pszPrimaryKeyName));
+    const std::string osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
+    const std::string osTableI(CPLQuotedSQLIdentifier(pszTable));
+    const std::string osColumnI(CPLQuotedSQLIdentifier(pszColumn));
 
     PGresult *poResult = nullptr;
     if (m_nTiles > 0 && !bFetchAll)
@@ -1298,7 +1299,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
 
     if (bFetchAll || !osIDsToFetch.empty() || !osSpatialFilter.empty())
     {
-        CPLString osWHERE;
+        std::string osWHERE;
         if (!osIDsToFetch.empty())
         {
             osWHERE += osPrimaryKeyNameI;
@@ -1308,7 +1309,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
         }
         else if (!osSpatialFilter.empty())
         {
-            osWHERE = osSpatialFilter;
+            osWHERE = std::move(osSpatialFilter);
         }
         if (pszWhere != nullptr)
         {

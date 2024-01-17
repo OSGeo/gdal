@@ -1324,7 +1324,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
                 oSRSTmp.CopyGeogCSFrom(&oSRS);
                 oSRSTmp.UpdateCoordinateSystemFromGeogCRS();
             }
-            oSRS = oSRSTmp;
+            oSRS = std::move(oSRSTmp);
         }
     }
 

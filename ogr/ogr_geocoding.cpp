@@ -46,7 +46,7 @@
 #include "ogrsf_frmts.h"
 
 // Emulation of gettimeofday() for Windows.
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <time.h>
 #include <windows.h>
@@ -1236,8 +1236,11 @@ static OGRLayerH OGRGeocodeBuildLayer(const char *pszContent,
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
-                                  std::string osURL, char **papszOptions)
+                                  const std::string &osURLIn,
+                                  char **papszOptions)
 {
+    std::string osURL(osURLIn);
+
     // Only documented to work with OSM Nominatim.
     if (hSession->pszLanguage != nullptr)
     {

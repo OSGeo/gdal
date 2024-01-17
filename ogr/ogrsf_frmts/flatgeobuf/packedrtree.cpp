@@ -200,15 +200,16 @@ void hilbertSort(std::vector<NodeItem> &items)
 
 NodeItem calcExtent(const std::vector<std::shared_ptr<Item>> &items)
 {
-    return std::accumulate(items.begin(), items.end(), NodeItem::create(0),
-                           [](NodeItem a, const std::shared_ptr<Item> &b)
-                           { return a.expand(b->nodeItem); });
+    return std::accumulate(
+        items.begin(), items.end(), NodeItem::create(0),
+        [](NodeItem a, const std::shared_ptr<Item> &b) -> NodeItem
+        { return a.expand(b->nodeItem); });
 }
 
 NodeItem calcExtent(const std::vector<NodeItem> &nodes)
 {
     return std::accumulate(nodes.begin(), nodes.end(), NodeItem::create(0),
-                           [](NodeItem a, const NodeItem &b)
+                           [](NodeItem a, const NodeItem &b) -> NodeItem
                            { return a.expand(b); });
 }
 
@@ -350,7 +351,7 @@ PackedRTree::search(double minX, double minY, double maxX, double maxY) const
         // search through child nodes
         for (uint64_t pos = nodeIndex; pos < end; pos++)
         {
-            auto nodeItem = _nodeItems[static_cast<size_t>(pos)];
+            const auto &nodeItem = _nodeItems[static_cast<size_t>(pos)];
             if (!n.intersects(nodeItem))
                 continue;
             if (isLeafNode)
@@ -403,7 +404,7 @@ std::vector<SearchResultItem> PackedRTree::streamSearch(
         for (uint64_t pos = nodeIndex; pos < end; pos++)
         {
             uint64_t nodePos = pos - nodeIndex;
-            auto nodeItem = nodeItems[static_cast<size_t>(nodePos)];
+            const auto &nodeItem = nodeItems[static_cast<size_t>(nodePos)];
             if (!item.intersects(nodeItem))
                 continue;
             if (isLeafNode)

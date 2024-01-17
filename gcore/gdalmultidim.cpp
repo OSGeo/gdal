@@ -3251,7 +3251,7 @@ GByte *GDALRawResult::StealData()
 GDALRawResult GDALAttribute::ReadAsRaw() const
 {
     const auto nEltCount(GetTotalElementsCount());
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     const auto nDTSize(dt.GetSize());
     GByte *res = static_cast<GByte *>(
         VSI_MALLOC2_VERBOSE(static_cast<size_t>(nEltCount), nDTSize));
@@ -7492,8 +7492,6 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
                     m = 1;
                 else if (m == static_cast<int>(m_iYDim) + 1)
                     m = 2;
-                else
-                    m = 0;
             }
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
@@ -8464,8 +8462,6 @@ class GDALDatasetFromArray final : public GDALPamDataset
                     m = 1;
                 else if (m == static_cast<int>(m_iYDim) + 1)
                     m = 2;
-                else
-                    m = 0;
             }
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
@@ -9163,10 +9159,11 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                 }
             }
 
-            oItem.osDefinition = osModDefinition;
+            oItem.osDefinition = std::move(osModDefinition);
             oItem.bDefinitionUsesPctForG = bDefinitionUsesPctForG;
 
-            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(oItem);
+            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(
+                std::move(oItem));
         }
     }
 

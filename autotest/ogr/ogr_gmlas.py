@@ -1234,21 +1234,21 @@ def test_ogr_gmlas_composition_compositionPart():
 # from _Feature/AbstractFeature
 
 
-def test_ogr_gmlas_instantiate_only_gml_feature():
+def test_ogr_gmlas_instantiate_only_gml_feature(tmp_vsimem):
+
+    path = str(tmp_vsimem / "with space")
 
     with gdaltest.tempfile(
-        "/vsimem/with space/gmlas_instantiate_only_gml_feature.xsd",
+        f"{path}/gmlas_instantiate_only_gml_feature.xsd",
         open("data/gmlas/gmlas_instantiate_only_gml_feature.xsd", "rb").read(),
     ):
         with gdaltest.tempfile(
-            "/vsimem/with space/gmlas_fake_gml32.xsd",
+            f"{path}/gmlas_fake_gml32.xsd",
             open("data/gmlas/gmlas_fake_gml32.xsd", "rb").read(),
         ):
             ds = gdal.OpenEx(
                 "GMLAS:",
-                open_options=[
-                    "XSD=/vsimem/with space/gmlas_instantiate_only_gml_feature.xsd"
-                ],
+                open_options=[f"XSD={path}/gmlas_instantiate_only_gml_feature.xsd"],
             )
     assert ds.GetLayerCount() == 1
     ds = None
@@ -2026,6 +2026,8 @@ bar"""
         "/vsimem/subdir2/resource2_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_super_very_long.xml"
     )
     gdal.Unlink("/vsimem/non_matching_resource.xml")
+    gdal.RmdirRecursive("/vsimem/subdir1")
+    gdal.RmdirRecursive("/vsimem/subdir2")
 
 
 ###############################################################################
@@ -3422,3 +3424,23 @@ def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
         f.GetGeometryRef().ExportToIsoWkt()
         == "LINESTRING Z (1 2 3,4 5 6,7 8 9,10 11 12)"
     )
+
+
+###############################################################################
+# Test getting real GML and ISO schemas and the optimizations to fetch them
+# through .zip archives
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
+
+    cache_path = str(tmp_path / "cache")
+
+    ds = gdal.OpenEx(
+        "GMLAS:",
+        open_options=[
+            "XSD=https://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd",
+            f"CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>true</AllowRemoteSchemaDownload><SchemaCache><Directory>{cache_path}</Directory></SchemaCache><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>",
+        ],
+    )
+    assert ds

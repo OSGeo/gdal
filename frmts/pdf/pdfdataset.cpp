@@ -3621,11 +3621,15 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
             continue;
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
-            CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
+            std::string osName =
+                PDFSanitizeLayerName(poObj->GetString().c_str());
             if (!osTopLayer.empty())
-                osTopLayer = osTopLayer + "." + osName;
+            {
+                osTopLayer += '.';
+                osTopLayer += osName;
+            }
             else
-                osTopLayer = osName;
+                osTopLayer = std::move(osName);
             AddLayer(osTopLayer.c_str());
             m_oLayerOCGListPoppler.push_back(std::pair(osTopLayer, nullptr));
         }
@@ -3643,13 +3647,17 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
             GDALPDFObject *poName = poDict->Get("Name");
             if (poName != nullptr && poName->GetType() == PDFObjectType_String)
             {
-                CPLString osName =
+                std::string osName =
                     PDFSanitizeLayerName(poName->GetString().c_str());
                 /* coverity[copy_paste_error] */
                 if (!osTopLayer.empty())
-                    osCurLayer = osTopLayer + "." + osName;
+                {
+                    osCurLayer = osTopLayer;
+                    osCurLayer += '.';
+                    osCurLayer += osName;
+                }
                 else
-                    osCurLayer = osName;
+                    osCurLayer = std::move(osName);
                 // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
                 OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();

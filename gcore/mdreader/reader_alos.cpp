@@ -54,14 +54,14 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
         CPLFormFilename(osDirName, "summary", ".txt");
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = osIMDSourceFilename;
+        m_osIMDSourceFilename = std::move(osIMDSourceFilename);
     }
     else
     {
         osIMDSourceFilename = CPLFormFilename(osDirName, "SUMMARY", ".TXT");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = osIMDSourceFilename;
+            m_osIMDSourceFilename = std::move(osIMDSourceFilename);
         }
     }
 
@@ -73,7 +73,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
             osDirName, CPLSPrintf("HDR%s", osBaseName + 6), "txt");
         if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
-            m_osHDRSourceFilename = osHDRFileName;
+            m_osHDRSourceFilename = std::move(osHDRFileName);
         }
         else
         {
@@ -81,7 +81,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
                 osDirName, CPLSPrintf("HDR%s", osBaseName + 6), "TXT");
             if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
-                m_osHDRSourceFilename = osHDRFileName;
+                m_osHDRSourceFilename = std::move(osHDRFileName);
             }
         }
     }
@@ -93,7 +93,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
             osDirName, CPLSPrintf("HDR%s", osBaseName + 3), "txt");
         if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
-            m_osHDRSourceFilename = osHDRFileName;
+            m_osHDRSourceFilename = std::move(osHDRFileName);
         }
         else
         {
@@ -101,7 +101,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
                 osDirName, CPLSPrintf("HDR%s", osBaseName + 3), "TXT");
             if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
-                m_osHDRSourceFilename = osHDRFileName;
+                m_osHDRSourceFilename = std::move(osHDRFileName);
             }
         }
     }
@@ -113,7 +113,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
             osDirName, CPLSPrintf("RPC%s", osBaseName + 6), "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = osRPCFileName;
+            m_osRPBSourceFilename = std::move(osRPCFileName);
         }
         else
         {
@@ -121,7 +121,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
                 osDirName, CPLSPrintf("RPC%s", osBaseName + 6), "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
-                m_osRPBSourceFilename = osRPCFileName;
+                m_osRPBSourceFilename = std::move(osRPCFileName);
             }
         }
     }
@@ -133,7 +133,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
             osDirName, CPLSPrintf("RPC%s", osBaseName + 3), "txt");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = osRPCFileName;
+            m_osRPBSourceFilename = std::move(osRPCFileName);
         }
         else
         {
@@ -141,7 +141,7 @@ GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
                 osDirName, CPLSPrintf("RPC%s", osBaseName + 3), "TXT");
             if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
-                m_osRPBSourceFilename = osRPCFileName;
+                m_osRPBSourceFilename = std::move(osRPCFileName);
             }
         }
     }

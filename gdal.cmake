@@ -189,7 +189,6 @@ else ()
   endif ()
 
   if (CMAKE_BUILD_TYPE MATCHES Debug)
-    add_definitions(-DDEBUG)
     check_c_compiler_flag(-ftrapv HAVE_FTRAPV)
     if (HAVE_FTRAPV)
       set(GDAL_C_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS} -ftrapv)
@@ -198,6 +197,8 @@ else ()
   endif ()
 
 endif ()
+
+add_compile_definitions($<$<CONFIG:DEBUG>:DEBUG>)
 
 # message(STATUS "GDAL_C_WARNING_FLAGS: ${GDAL_C_WARNING_FLAGS}") message(STATUS "GDAL_CXX_WARNING_FLAGS: ${GDAL_CXX_WARNING_FLAGS}")
 

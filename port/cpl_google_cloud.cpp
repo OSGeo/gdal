@@ -117,7 +117,7 @@ bool CPLIsMachinePotentiallyGCEInstance()
         bIsMachinePotentialGCEInstance = CPLIsMachineForSureGCEInstance();
     }
     return bIsMachinePotentialGCEInstance;
-#elif defined(WIN32)
+#elif defined(_WIN32)
     // We might add later a way of detecting if we run on GCE using WMI
     // See https://cloud.google.com/compute/docs/instances/managing-instances
     // For now, unconditionally try
@@ -237,7 +237,7 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
     std::string &osOAuth2RefreshToken, std::string &osOAuth2ClientId,
     std::string &osOAuth2ClientSecret, std::string &osCredentials)
 {
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
     constexpr char SEP_STRING[] = "\\";
 #else
@@ -629,8 +629,8 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                 }
                 else if (nCount == 2)
                 {
-                    osClientId = osOAuth2ClientId;
-                    osClientSecret = osOAuth2ClientSecret;
+                    osClientId = std::move(osOAuth2ClientId);
+                    osClientSecret = std::move(osOAuth2ClientSecret);
                     bClientInfoFromFile = true;
                 }
             }

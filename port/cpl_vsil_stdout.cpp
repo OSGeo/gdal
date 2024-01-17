@@ -39,7 +39,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
 #endif
@@ -219,7 +219,7 @@ VSIStdoutFilesystemHandler::Open(const char * /* pszFilename */,
         return nullptr;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     if (strchr(pszAccess, 'b') != nullptr)
         setmode(fileno(stdout), O_BINARY);
 #endif

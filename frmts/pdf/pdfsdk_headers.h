@@ -128,7 +128,7 @@
 #endif
 
 // Linux ignores timeout, Windows returns if not INFINITE
-#ifdef WIN32
+#ifdef _WIN32
 #define PDFIUM_MUTEX_TIMEOUT INFINITE
 #else
 #define PDFIUM_MUTEX_TIMEOUT 0.0f

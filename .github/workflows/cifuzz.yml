@@ -18,18 +18,18 @@ jobs:
     steps:
     - name: Build Fuzzers
       id: build
-      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
+      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@56f58e25299ee6559fa40369bd4af908000c0c36 # master on 2023/12/31
       with:
         oss-fuzz-project-name: 'gdal'
         dry-run: false
     - name: Run Fuzzers
-      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
+      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@56f58e25299ee6559fa40369bd4af908000c0c36 # master on 2023/12/31
       with:
         oss-fuzz-project-name: 'gdal'
         fuzz-seconds: 600
         dry-run: false
     - name: Upload Crash
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.0.0
       if: failure() && steps.build.outcome == 'success'
       with:
         name: artifacts

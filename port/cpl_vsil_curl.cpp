@@ -3485,7 +3485,7 @@ struct CachedConnection
 };
 }  // namespace
 
-#ifdef WIN32
+#ifdef _WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
 static void FreeCachedConnection(void *pData)
 {
@@ -4709,7 +4709,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    std::string osURL(VSICurlGetURLFromFilename(
+    const std::string osURL(VSICurlGetURLFromFilename(
         pszDirname, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
         nullptr, nullptr, nullptr));
     if (bEmptyDir)
@@ -5149,15 +5149,16 @@ char **VSICurlFilesystemHandlerBase::ReadDirInternal(const char *pszDirname,
 {
     std::string osDirname(pszDirname);
 
-    const char *pszUpDir = strstr(osDirname.c_str(), "/..");
-    if (pszUpDir != nullptr)
+    // Replace a/b/../c by a/c
+    const auto posSlashDotDot = osDirname.find("/..");
+    if (posSlashDotDot != std::string::npos && posSlashDotDot >= 1)
     {
-        int pos = static_cast<int>(pszUpDir - osDirname.c_str() - 1);
-        while (pos >= 0 && osDirname[pos] != '/')
-            pos--;
-        if (pos >= 1)
+        const auto posPrecedingSlash =
+            osDirname.find_last_of('/', posSlashDotDot - 1);
+        if (posPrecedingSlash != std::string::npos && posPrecedingSlash >= 1)
         {
-            osDirname = osDirname.substr(0, pos) + std::string(pszUpDir + 3);
+            osDirname.erase(osDirname.begin() + posPrecedingSlash,
+                            osDirname.begin() + posSlashDotDot + strlen("/.."));
         }
     }
 

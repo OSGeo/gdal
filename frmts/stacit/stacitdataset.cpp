@@ -374,7 +374,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
         asset.osName = osAssetName;
         asset.eoBands = jAsset.GetArray("eo:bands");
 
-        collection.assets[osAssetName] = asset;
+        collection.assets[osAssetName] = std::move(asset);
     }
     auto &asset = collection.assets[osAssetName];
 
@@ -383,7 +383,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     {
         AssetSetByProjection assetByProj;
         assetByProj.osProjUserString = osProjUserString;
-        asset.assets[osProjUserString] = assetByProj;
+        asset.assets[osProjUserString] = std::move(assetByProj);
     }
     auto &assets = asset.assets[osProjUserString];
 

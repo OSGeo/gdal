@@ -353,9 +353,9 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     int nSize = oDimension.GetInteger("Size");
                     oMapDimensionNameToSize[osDimensionName] = nSize;
                     Dimension oDim;
-                    oDim.osName = osDimensionName;
+                    oDim.osName = std::move(osDimensionName);
                     oDim.nSize = nSize;
-                    poSwathMetadata->aoDimensions.push_back(oDim);
+                    poSwathMetadata->aoDimensions.emplace_back(std::move(oDim));
                 }
             }
 
@@ -439,18 +439,19 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     {
                         SwathGeolocationFieldMetadata oMetadata;
                         oMetadata.poSwathMetadata = poSwathMetadataRef;
-                        oMetadata.aoDimensions = aoDimensions;
 
                         if (osGeoFieldName == "Longitude")
                             aoLongitudeDimensions = aoDimensions;
                         else if (osGeoFieldName == "Latitude")
                             aoLatitudeDimensions = aoDimensions;
 
+                        oMetadata.aoDimensions = std::move(aoDimensions);
+
                         const std::string osSubdatasetName =
                             "//HDFEOS/SWATHS/" + osSwathName +
                             "/Geolocation_Fields/" + osGeoFieldName;
                         m_oMapSubdatasetNameToSwathGeolocationFieldMetadata
-                            [osSubdatasetName] = oMetadata;
+                            [osSubdatasetName] = std::move(oMetadata);
                     }
                 }
             }
@@ -549,7 +550,8 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 
                         m_oMapSubdatasetNameToSwathDataFieldMetadata
                             ["//HDFEOS/SWATHS/" + osSwathName +
-                             "/Data_Fields/" + osDataFieldName] = oMetadata;
+                             "/Data_Fields/" + osDataFieldName] =
+                                std::move(oMetadata);
                     }
                 }
             }

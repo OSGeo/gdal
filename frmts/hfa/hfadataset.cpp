@@ -1651,7 +1651,7 @@ void HFARasterAttributeTable::RemoveStatistics()
                 }
         }
     }
-    aoFields = aoNewFields;
+    aoFields = std::move(aoNewFields);
 }
 
 /************************************************************************/
@@ -4245,7 +4245,7 @@ CPLErr HFADataset::ReadProjection()
         CPLTestBool(CPLGetConfigOption("HFA_USE_ESRI_PE_STRING", "YES")) &&
         oSRSFromPE.importFromWkt(pszPE_COORDSYS) == OGRERR_NONE)
     {
-        m_oSRS = oSRSFromPE;
+        m_oSRS = std::move(oSRSFromPE);
 
         // Copy TOWGS84 clause from HFA SRS to PE SRS.
         if (poSRS != nullptr)

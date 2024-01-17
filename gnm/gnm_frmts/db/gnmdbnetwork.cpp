@@ -144,7 +144,7 @@ CPLErr GNMDatabaseNetwork::Create(const char *pszFilename, char **papszOptions)
             return CE_Failure;
         }
 
-        m_oSRS = spatialRef;
+        m_oSRS = std::move(spatialRef);
     }
 
     int nResult = CheckNetworkExist(pszFilename, papszOptions);

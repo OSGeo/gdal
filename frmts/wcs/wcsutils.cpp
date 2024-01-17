@@ -399,7 +399,7 @@ bool SetupCache(std::string &cache, bool clear)
 {
     if (cache == "")
     {
-#ifdef WIN32
+#ifdef _WIN32
         const char *home = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
         const char *home = CPLGetConfigOption("HOME", nullptr);
@@ -680,7 +680,7 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
     VSIFWriteL(entry.c_str(), sizeof(char), entry.size(), f);
     VSIFCloseL(f);
 
-    filename = path;
+    filename = std::move(path);
     return CE_None;
 }
 

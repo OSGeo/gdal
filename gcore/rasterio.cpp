@@ -3604,8 +3604,9 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
         CPLGetConfigOption("GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", nullptr);
     const double dfOversamplingThreshold =
         pszOversampligThreshold ? CPLAtof(pszOversampligThreshold)
-        : psExtraArg->eResampleAlg != GRIORA_NearestNeighbour ? 1.0
-                                                              : 1.2;
+        : psExtraArg && psExtraArg->eResampleAlg != GRIORA_NearestNeighbour
+            ? 1.0
+            : 1.2;
     for (int iOverview = 0; iOverview < nOverviewCount; iOverview++)
     {
         GDALRasterBand *poOverview = poBand->GetOverview(iOverview);

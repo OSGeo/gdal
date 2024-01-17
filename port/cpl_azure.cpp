@@ -317,7 +317,7 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
         CPLAzureCachedToken cachedToken;
         cachedToken.osAccessToken = osAccessToken;
         cachedToken.nExpiresOn = nExpiresOn;
-        goMapIMDSURLToCachedToken[osURLResource] = cachedToken;
+        goMapIMDSURLToCachedToken[osURLResource] = std::move(cachedToken);
         CPLDebug("AZURE", "Storing credentials for %s until " CPL_FRMT_GIB,
                  osURLResource.c_str(), nExpiresOn);
     }

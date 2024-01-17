@@ -225,7 +225,7 @@ int OGRNTFDataSource::Open(const char *pszFilename, int bTestOpen,
 
                 snprintf(fullFilename, sizeof(fullFilename), "%s%c%s",
                          pszFilename,
-#ifdef WIN32
+#ifdef _WIN32
                          '\\',
 #else
                          '/',

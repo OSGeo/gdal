@@ -49,7 +49,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi_virtual.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
 #endif
@@ -72,7 +72,7 @@ static void VSIStdinInit()
 {
     if (gpabyBuffer == nullptr)
     {
-#ifdef WIN32
+#ifdef _WIN32
         setmode(fileno(stdin), O_BINARY);
 #endif
         constexpr size_t MAX_INITIAL_ALLOC = 1024 * 1024;

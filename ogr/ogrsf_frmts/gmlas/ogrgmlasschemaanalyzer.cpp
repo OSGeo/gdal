@@ -105,10 +105,10 @@ void GMLASPrefixMappingHander::startElement(const XMLCh *const uri,
     if (osURI == szXS_URI && osLocalname == "schema")
     {
         bool bIsGML = false;
-        CPLString osVersion;
+        std::string osVersion;
         for (unsigned int i = 0; i < attrs.getLength(); i++)
         {
-            CPLString osAttrLocalName(transcode(attrs.getLocalName(i)));
+            const std::string osAttrLocalName(transcode(attrs.getLocalName(i)));
             if (osAttrLocalName == "targetNamespace")
             {
                 bIsGML = transcode(attrs.getValue(i)) == szGML_URI;
@@ -120,7 +120,7 @@ void GMLASPrefixMappingHander::startElement(const XMLCh *const uri,
         }
         if (bIsGML && !osVersion.empty())
         {
-            m_osGMLVersionFound = osVersion;
+            m_osGMLVersionFound = std::move(osVersion);
         }
     }
 }
@@ -2134,7 +2134,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             {
                 if (!apoChildrenElements.empty())
                 {
-                    apoImplEltList = apoChildrenElements;
+                    apoImplEltList = std::move(apoChildrenElements);
                 }
                 else if (!poElt->getAbstract())
                 {
