@@ -47,7 +47,7 @@ an **OGRVRTLayer** (or **OGRVRTWarpedLayer** or **OGRVRTUnionLayer**) child for
 each layer in the virtual
 datasource, and a **Metadata** element.
 
-An XML schema of the OGR VRT format is provided in :source_file:`data/ogrvrt.xsd`.
+An XML schema of the OGR VRT format is provided in :source_file:`ogr/ogrsf_frmts/vrt/data/ogrvrt.xsd`.
 When GDAL is configured with libXML2
 support, that schema will be used to validate the VRT documents.
 Non-conformities will be reported only as warnings. That validation can

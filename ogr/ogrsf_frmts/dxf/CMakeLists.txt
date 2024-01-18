@@ -23,3 +23,12 @@ add_gdal_driver(
           ogrdxf_ocstransformer.cpp
   BUILTIN)
 gdal_standard_includes(ogr_DXF)
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/header.dxf
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/trailer.dxf
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")

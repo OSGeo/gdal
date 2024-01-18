@@ -37,7 +37,7 @@ script. To update to a newer version of the WMO tables, update the wmo_github_ta
 variable at the top of the script.
 
 When adding a new table, it must be referenced in the GDAL_DATA_FILES variable
-of the gdal.cmake file, to be installed.
+of the frmts/grib/CMakeLists.txt file, to be installed.
 
 The following tables can be found:
 

@@ -68,18 +68,18 @@ $SCRIPT_DIR/../common_install.sh
 # build sqlite3
 wget https://sqlite.org/2018/sqlite-autoconf-3250100.tar.gz
 tar xzf sqlite-autoconf-3250100.tar.gz
-(cd sqlite-autoconf-3250100 && CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA" ./configure  --host=x86_64-w64-mingw32 --enable-rtree --prefix=/tmp/install && make -j3 && make install)
+(cd sqlite-autoconf-3250100 && CFLAGS="-O2 -DSQLITE_ENABLE_COLUMN_METADATA" ./configure  --host=x86_64-w64-mingw32 --enable-rtree --prefix=/tmp/install && make -j$(nproc) && make install)
 
 # Build proj
-(cd proj; ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' SQLITE3_CFLAGS='-I/tmp/install/include' SQLITE3_LIBS='-L/tmp/install/lib -lsqlite3' ./configure --disable-static --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j3)
-(cd proj; sudo make -j3 install)
+(cd proj; ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' SQLITE3_CFLAGS='-I/tmp/install/include' SQLITE3_LIBS='-L/tmp/install/lib -lsqlite3' ./configure --disable-static --host=x86_64-w64-mingw32 --prefix=/tmp/install && make -j$(nproc))
+(cd proj; sudo make -j$(nproc) install)
 
 # build GDAL
 mkdir build
 cd build
 cmake .. -DPROJ_INCLUDE_DIR=/tmp/install/include -DPROJ_LIBRARY=/tmp/install/lib/libproj.dll.a -DSQLITE3_INCLUDE_DIR=/tmp/install/include -DSQLITE3_LIBRARY=/tmp/install/lib/libsqlite3.dll.a -DCMAKE_C_FLAGS="-DPROJ_RENAME_SYMBOLS -Werror" -DCMAKE_CXX_FLAGS="-DPROJ_RENAME_SYMBOLS -Werror" -DBUILD_PYTHON_BINDINGS=OFF -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_VERSION=1 -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -DCMAKE_RC_COMPILER=86_64-w64-mingw32-windres -DCMAKE_RANLIB=x86_64-w64-mingw32-ranlib -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY
 
-make -j3
+make -j$(nproc)
 ln -sf $PWD/libgdal-*.dll $WINEPREFIX/drive_c/windows
 ln -sf /tmp/install/bin/libproj-15.dll $WINEPREFIX/drive_c/windows
 ln -sf /tmp/install/bin/libsqlite3-0.dll $WINEPREFIX/drive_c/windows

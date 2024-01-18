@@ -58,6 +58,78 @@ endif()
 
 gdal_standard_includes(gdal_GRIB)
 
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_versions.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_center.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_process.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_subcenter.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_13.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_14.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_15.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_16.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_17.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_18.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_190.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_191.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_19.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_1.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_20.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_21.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_2.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_3.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_4.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_5.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_6.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_0_7.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_191.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_1.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_2.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_3.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_10_4.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_1_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_1_1.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_1_2.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_1.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_20_2.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_3.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_4.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_5.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_2_6.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_1.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_2.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_3.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_4.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_5.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_3_6.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_0.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_10.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_1.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_2.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_3.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_4.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_5.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_6.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_7.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_8.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_4_9.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_local_Canada.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_local_HPC.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_local_index.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_local_MRMS.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_local_NCEP.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_2_local_NDFD.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/grib2_table_4_5.csv
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 target_include_directories(
   gdal_GRIB PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/degrib/degrib>
                     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/degrib/g2clib> $<TARGET_PROPERTY:gdal_MEM,SOURCE_DIR>)

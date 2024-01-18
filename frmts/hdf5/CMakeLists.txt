@@ -23,6 +23,14 @@ add_gdal_driver(TARGET gdal_HDF5
                 CORE_SOURCES hdf5drivercore.cpp
                 PLUGIN_CAPABLE)
 
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/bag_template.xml
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 if(NOT TARGET gdal_HDF5)
     return()
 endif()

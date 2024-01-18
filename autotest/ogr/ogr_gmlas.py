@@ -3434,6 +3434,11 @@ def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
 @pytest.mark.require_curl()
 def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
 
+    url = "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip"
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip(f"cannot open {url}")
+
     cache_path = str(tmp_path / "cache")
 
     ds = gdal.OpenEx(

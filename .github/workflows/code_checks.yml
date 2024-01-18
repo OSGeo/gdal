@@ -151,6 +151,6 @@ jobs:
 
       - name: Run xmllint checks
         run: |
-          xmllint --schema ./data/nitf_spec.xsd ./data/nitf_spec.xml --noout
-          xmllint --schema ./data/vdv452.xsd ./data/vdv452.xml --noout
-          xmllint --schema ./data/gmlasconf.xsd ./data/gmlasconf.xml --noout
+          xmllint --schema ./frmts/nitf/data/nitf_spec.xsd ./frmts/nitf/data/nitf_spec.xml --noout
+          xmllint --schema ./ogr/ogrsf_frmts/vdv/data/vdv452.xsd ./ogr/ogrsf_frmts/vdv/data/vdv452.xml --noout
+          xmllint --schema ./ogr/ogrsf_frmts/gmlas/data/gmlasconf.xsd ./ogr/ogrsf_frmts/gmlas/data/gmlasconf.xml --noout
