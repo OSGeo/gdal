@@ -63,7 +63,7 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,
             osCurrentPart += pszToken[1];
             for (int k = 2; pszToken[k]; ++k)
             {
-                if (isupper(pszToken[k]))
+                if (isupper(static_cast<unsigned char>(pszToken[k])))
                 {
                     if (!bLastIsLower)
                     {
