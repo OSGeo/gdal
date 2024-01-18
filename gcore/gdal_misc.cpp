@@ -1488,7 +1488,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
         {
             CPLString osAltExt = pszExt;
 
-            if (islower(pszExt[0]))
+            if (islower(static_cast<unsigned char>(pszExt[0])))
                 osAltExt.toupper();
             else
                 osAltExt.tolower();

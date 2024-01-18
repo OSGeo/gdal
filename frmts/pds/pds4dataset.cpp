@@ -1423,7 +1423,7 @@ static CPLString FixupTableFilename(const CPLString &osFilename)
     if (!osExt.empty())
     {
         CPLString osTry(osFilename);
-        if (islower(osExt[0]))
+        if (islower(static_cast<unsigned char>(osExt[0])))
         {
             osTry = CPLResetExtension(osFilename, osExt.toupper());
         }

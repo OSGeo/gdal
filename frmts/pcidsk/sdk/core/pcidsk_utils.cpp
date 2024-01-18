@@ -98,7 +98,7 @@ std::string &PCIDSK::UCaseStr( std::string &target )
 {
     for( unsigned int i = 0; i < target.size(); i++ )
     {
-        if( islower(target[i]) )
+        if( islower(static_cast<unsigned char>(target[i])) )
             target[i] = (char) toupper(target[i]);
     }
 
@@ -402,9 +402,9 @@ int PCIDSK::pci_strcasecmp( const char *string1, const char *string2 )
         char c1 = string1[i];
         char c2 = string2[i];
 
-        if( islower(c1) )
+        if( islower(static_cast<unsigned char>(c1)) )
             c1 = (char) toupper(c1);
-        if( islower(c2) )
+        if( islower(static_cast<unsigned char>(c2)) )
             c2 = (char) toupper(c2);
 
         if( c1 < c2 )
@@ -440,9 +440,9 @@ int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, size_t le
         char c1 = string1[i];
         char c2 = string2[i];
 
-        if( islower(c1) )
+        if( islower(static_cast<unsigned char>(c1)) )
             c1 = (char) toupper(c1);
-        if( islower(c2) )
+        if( islower(static_cast<unsigned char>(c2)) )
             c2 = (char) toupper(c2);
 
         if( c1 < c2 )
