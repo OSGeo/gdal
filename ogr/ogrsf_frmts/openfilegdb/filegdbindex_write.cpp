@@ -147,7 +147,7 @@ bool FileGDBTable::CreateIndex(const std::string &osIndexName,
 
     for (const char ch : osIndexName)
     {
-        if (!isalnum(ch) && ch != '_')
+        if (!isalnum(static_cast<unsigned char>(ch)) && ch != '_')
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid index name: must contain only alpha numeric "

@@ -176,13 +176,13 @@ static bool IsValidXPath(const CPLString &osXPath)
             // OK
         }
         else if (isdigit(static_cast<unsigned char>(chCur)) && i > 0 &&
-                 (isalnum(static_cast<int>(osXPath[i - 1])) ||
+                 (isalnum(static_cast<unsigned char>(osXPath[i - 1])) ||
                   osXPath[i - 1] == '_'))
         {
             // OK
         }
         else if (chCur == ':' && i > 0 &&
-                 (isalnum(static_cast<int>(osXPath[i - 1])) ||
+                 (isalnum(static_cast<unsigned char>(osXPath[i - 1])) ||
                   osXPath[i - 1] == '_') &&
                  i < osXPath.size() - 1 &&
                  isalpha(static_cast<int>(osXPath[i + 1])))

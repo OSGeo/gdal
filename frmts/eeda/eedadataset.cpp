@@ -184,7 +184,7 @@ GDALEEDALayer::GDALEEDALayer(GDALEEDADataset *poDS,
     CPLString osLaundered(osCollection);
     for (size_t i = 0; i < osLaundered.size(); i++)
     {
-        if (!isalnum(static_cast<int>(osLaundered[i])))
+        if (!isalnum(static_cast<unsigned char>(osLaundered[i])))
         {
             osLaundered[i] = '_';
         }

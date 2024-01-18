@@ -4048,7 +4048,7 @@ bool GDALMDArray::IAdviseRead(const GUInt64 *, const size_t *,
     std::string ret;
     for (const char ch : inputName)
     {
-        if (!isalnum(ch))
+        if (!isalnum(static_cast<unsigned char>(ch)))
             ret += '_';
         else
             ret += ch;

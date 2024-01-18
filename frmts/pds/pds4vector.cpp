@@ -436,7 +436,8 @@ CPLXMLNode *PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
         }
         for (char &ch : osLocalIdentifier)
         {
-            if (!isalnum(ch) && static_cast<unsigned>(ch) <= 127)
+            if (!isalnum(static_cast<unsigned char>(ch)) &&
+                static_cast<unsigned>(ch) <= 127)
                 ch = '_';
         }
     }

@@ -2249,8 +2249,9 @@ void CPLCleanXMLElementName(char *pszTarget)
 
     for (; *pszTarget != '\0'; pszTarget++)
     {
-        if ((*(reinterpret_cast<unsigned char *>(pszTarget)) & 0x80) ||
-            isalnum(*pszTarget) || *pszTarget == '_' || *pszTarget == '.')
+        if ((static_cast<unsigned char>(*pszTarget) & 0x80) ||
+            isalnum(static_cast<unsigned char>(*pszTarget)) ||
+            *pszTarget == '_' || *pszTarget == '.')
         {
             // Ok.
         }

@@ -306,7 +306,7 @@ CPLString GMLASSchemaAnalyzer::GetPrefix(const CPLString &osNamespaceURI)
             osPrefix = osNamespaceURI;
         for (size_t i = 0; i < osPrefix.size(); i++)
         {
-            if (!isalnum(osPrefix[i]))
+            if (!isalnum(static_cast<unsigned char>(osPrefix[i])))
                 osPrefix[i] = '_';
         }
         m_oMapURIToPrefix[osNamespaceURI] = osPrefix;
