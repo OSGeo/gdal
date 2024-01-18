@@ -982,7 +982,8 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
      *----------------------------------------------------------------*/
 #ifdef _WIN32
     if (psInfo->pszCoverPath[0] != '\\' &&
-        !(isalpha(psInfo->pszCoverPath[0]) && psInfo->pszCoverPath[1] == ':'))
+        !(isalpha((unsigned char)psInfo->pszCoverPath[0]) &&
+          psInfo->pszCoverPath[1] == ':'))
 #else
     if (psInfo->pszCoverPath[0] != '/')
 #endif

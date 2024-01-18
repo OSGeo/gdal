@@ -1260,8 +1260,9 @@ struct GTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
 
             m_driverPrefixComponent = aosParts[0];
 
-            const bool hasDriveLetter{strlen(aosParts[2]) == 1 &&
-                                      std::isalpha(aosParts[2][0])};
+            const bool hasDriveLetter{
+                strlen(aosParts[2]) == 1 &&
+                std::isalpha(static_cast<unsigned char>(aosParts[2][0]))};
 
             // Check for drive letter
             if (iPartsCount == 4)

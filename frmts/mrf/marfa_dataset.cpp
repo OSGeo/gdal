@@ -1594,8 +1594,9 @@ static inline bool is_absolute(const CPLString &name)
 {
     return (name.find_first_of("/\\") == 0)  // Starts with root
            || (name.size() > 1 && name[1] == ':' &&
-               isalpha(name[0]))  // Starts with drive letter
-           || (name[0] == '<');   // Maybe it is XML
+               isalpha(static_cast<unsigned char>(
+                   name[0])))    // Starts with drive letter
+           || (name[0] == '<');  // Maybe it is XML
 }
 
 // Add the dirname of path to the beginning of name, if it is relative

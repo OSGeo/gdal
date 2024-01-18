@@ -843,7 +843,7 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                     m_aState.back() = NUMBER;
                     break;
                 }
-                if (isalpha(ch))
+                if (isalpha(static_cast<unsigned char>(ch)))
                 {
                     m_osToken += ch;
                     if (eCurState == STATE_TRUE &&

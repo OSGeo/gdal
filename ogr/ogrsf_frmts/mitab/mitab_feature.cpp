@@ -6311,7 +6311,7 @@ const char *TABText::GetLabelStyleString() const
 
     if (QueryFontStyle(TABFSAllCaps))
         for (int i = 0; pszTextString[i]; ++i)
-            if (isalpha(pszTextString[i]))
+            if (isalpha(static_cast<unsigned char>(pszTextString[i])))
                 pszTextString[i] = static_cast<char>(toupper(pszTextString[i]));
 
     /* Escape the double quote chars and expand the text */

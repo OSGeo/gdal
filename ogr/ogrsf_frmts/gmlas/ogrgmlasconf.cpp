@@ -167,11 +167,11 @@ static bool IsValidXPath(const CPLString &osXPath)
         }
         else if (chCur == '@' && (i == 0 || osXPath[i - 1] == '/') &&
                  i < osXPath.size() - 1 &&
-                 isalpha(static_cast<int>(osXPath[i + 1])))
+                 isalpha(static_cast<unsigned char>(osXPath[i + 1])))
         {
             // OK
         }
-        else if (chCur == '_' || isalpha(static_cast<int>(chCur)))
+        else if (chCur == '_' || isalpha(static_cast<unsigned char>(chCur)))
         {
             // OK
         }
@@ -185,7 +185,7 @@ static bool IsValidXPath(const CPLString &osXPath)
                  (isalnum(static_cast<unsigned char>(osXPath[i - 1])) ||
                   osXPath[i - 1] == '_') &&
                  i < osXPath.size() - 1 &&
-                 isalpha(static_cast<int>(osXPath[i + 1])))
+                 isalpha(static_cast<unsigned char>(osXPath[i + 1])))
         {
             // OK
         }

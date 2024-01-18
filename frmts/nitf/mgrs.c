@@ -448,7 +448,7 @@ static long Break_MGRS_String(char *MGRS, long *Zone,
         error_code |= MGRS_STRING_ERROR;
     j = i;
 
-    while (isalpha(MGRS[i]))
+    while (isalpha((unsigned char)MGRS[i]))
         i++;
     num_letters = i - j;
     if (num_letters == 3)
