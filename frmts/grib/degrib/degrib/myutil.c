@@ -702,7 +702,7 @@ void strTrim (char *str)
    }
 
    /* Trim the string to the left first. */
-   for (ptr = str; isspace (*ptr); ptr++) {
+   for (ptr = str; isspace ((unsigned char)*ptr); ptr++) {
    }
    /* Did we hit the end of an all space string? */
    if (*ptr == '\0') {
@@ -711,7 +711,7 @@ void strTrim (char *str)
    }
 
    /* now work on the right side. */
-   for (ptr2 = ptr + (strlen (ptr) - 1); isspace (*ptr2); ptr2--) {
+   for (ptr2 = ptr + (strlen (ptr) - 1); isspace ((unsigned char)*ptr2); ptr2--) {
    }
 
    /* adjust the pointer to add the null byte. */

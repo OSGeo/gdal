@@ -2176,7 +2176,7 @@ void CPLLoadConfigOptionsFromFile(const char *pszFilename, int bOverrideEnvVars)
     {
         for (; *pszStr; ++pszStr)
         {
-            if (!isspace(*pszStr))
+            if (!isspace(static_cast<unsigned char>(*pszStr)))
                 return false;
         }
         return true;
