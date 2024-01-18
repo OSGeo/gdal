@@ -212,7 +212,7 @@ int myAtoI (const char *ptr, sInt4 *value)
    myAssert (ptr != NULL);
    *value = 0;
    while (*ptr != '\0') {
-      if (isdigit (*ptr) || (*ptr == '+') || (*ptr == '-')) {
+      if (isdigit ((unsigned char)*ptr) || (*ptr == '+') || (*ptr == '-')) {
          *value = (int)strtol (ptr, &extra, 10);
          myAssert (extra != NULL);
          if (*extra == '\0') {
@@ -283,7 +283,7 @@ int myAtoF (const char *ptr, double *value)
    myAssert (ptr != NULL);
    *value = 0;
    while (*ptr != '\0') {
-      if (isdigit (*ptr) || (*ptr == '+') || (*ptr == '-') || (*ptr == '.')) {
+      if (isdigit ((unsigned char)*ptr) || (*ptr == '+') || (*ptr == '-') || (*ptr == '.')) {
          *value = strtod (ptr, &extra);
          myAssert (extra != NULL);
          if (*extra == '\0') {
@@ -327,15 +327,15 @@ int myIsReal_old (const char *ptr, double *value)
    size_t len, i;
 
    *value = 0;
-   if ((!isdigit (*ptr)) && (*ptr != '.'))
+   if ((!isdigit ((unsigned char)*ptr)) && (*ptr != '.'))
       if (*ptr != '-')
          return 0;
    len = strlen (ptr);
    for (i = 1; i < len - 1; i++) {
-      if ((!isdigit (ptr[i])) && (ptr[i] != '.'))
+      if ((!isdigit ((unsigned char)ptr[i])) && (ptr[i] != '.'))
          return 0;
    }
-   if ((!isdigit (ptr[len - 1])) && (ptr[len - 1] != '.')) {
+   if ((!isdigit ((unsigned char)ptr[len - 1])) && (ptr[len - 1] != '.')) {
       if (ptr[len - 1] != ',') {
          return 0;
       } else {

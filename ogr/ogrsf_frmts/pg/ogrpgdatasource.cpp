@@ -785,7 +785,8 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
         /* Should work with "PostgreSQL X.Y.Z ..." or "EnterpriseDB X.Y.Z ..."
          */
         const char *pszSpace = strchr(pszVer, ' ');
-        if (pszSpace != nullptr && isdigit(pszSpace[1]))
+        if (pszSpace != nullptr &&
+            isdigit(static_cast<unsigned char>(pszSpace[1])))
         {
             OGRPGDecodeVersionString(&sPostgreSQLVersion, pszSpace + 1);
 #if defined(BINARY_CURSOR_ENABLED)

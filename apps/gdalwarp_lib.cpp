@@ -5447,7 +5447,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
                 return nullptr;
             }
             if (i < nArgc - 1 && atoi(papszArgv[i + 1]) >= 0 &&
-                isdigit(papszArgv[i + 1][0]))
+                isdigit(static_cast<unsigned char>(papszArgv[i + 1][0])))
             {
                 psOptions->aosTransformerOptions.SetNameValue(
                     "REFINE_MINIMUM_GCPS", papszArgv[++i]);

@@ -175,7 +175,7 @@ static bool IsValidXPath(const CPLString &osXPath)
         {
             // OK
         }
-        else if (isdigit(static_cast<int>(chCur)) && i > 0 &&
+        else if (isdigit(static_cast<unsigned char>(chCur)) && i > 0 &&
                  (isalnum(static_cast<int>(osXPath[i - 1])) ||
                   osXPath[i - 1] == '_'))
         {

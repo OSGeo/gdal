@@ -1962,12 +1962,12 @@ static int Clock_GetWord (char **Start, char **End, char word[30],
             f_integer = 0;
          }
       } else if (*ptr == '.') {
-         if (!isdigit (*(ptr + 1))) {
+         if (!isdigit ((unsigned char)*(ptr + 1))) {
             break;
          } else {
             f_integer = 0;
          }
-      } else if (!isdigit (*ptr)) {
+      } else if (!isdigit ((unsigned char)*ptr)) {
          f_integer = 0;
       }
       ptr++;

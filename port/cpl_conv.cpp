@@ -2461,7 +2461,7 @@ double CPLDMSToDec(const char *is)
     double v = 0.0;
     for (; nl < 3; nl = n + 1)
     {
-        if (!(isdigit(*s) || *s == '.'))
+        if (!(isdigit(static_cast<unsigned char>(*s)) || *s == '.'))
             break;
         const double tv = proj_strtod(s, &s);
         if (tv == HUGE_VAL)

@@ -717,7 +717,7 @@ void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
 
     const char * compression = mpoTileLayer->GetCompressType();
 
-    if (strlen(compression) > 4 && isdigit(compression[4]))
+    if (strlen(compression) > 4 && isdigit(static_cast<unsigned char>(compression[4])))
         quality = atoi(compression + 4);
 
 /* -------------------------------------------------------------------- */

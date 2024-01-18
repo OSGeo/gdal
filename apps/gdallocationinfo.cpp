@@ -166,7 +166,8 @@ MAIN_START(argc, argv)
         {
             papszOpenOptions = CSLAddString(papszOpenOptions, argv[++i]);
         }
-        else if (argv[i][0] == '-' && !isdigit(argv[i][1]))
+        else if (argv[i][0] == '-' &&
+                 !isdigit(static_cast<unsigned char>(argv[i][1])))
             Usage(true);
 
         else if (pszSrcFilename == nullptr)

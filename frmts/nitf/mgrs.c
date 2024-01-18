@@ -326,7 +326,7 @@ static long Check_Zone(char *MGRS, long *zone_exists)
     while (MGRS[i] == ' ')
         i++;
     j = i;
-    while (isdigit(MGRS[i]))
+    while (isdigit((unsigned char)MGRS[i]))
         i++;
     num_digits = i - j;
     if (num_digits <= 2)
@@ -428,7 +428,7 @@ static long Break_MGRS_String(char *MGRS, long *Zone,
     while (MGRS[i] == ' ')
         i++; /* skip any leading blanks */
     j = i;
-    while (isdigit(MGRS[i]))
+    while (isdigit((unsigned char)MGRS[i]))
         i++;
     num_digits = i - j;
     if (num_digits <= 2)
@@ -467,7 +467,7 @@ static long Break_MGRS_String(char *MGRS, long *Zone,
     else
         error_code |= MGRS_STRING_ERROR;
     j = i;
-    while (isdigit(MGRS[i]))
+    while (isdigit((unsigned char)MGRS[i]))
         i++;
     num_digits = i - j;
     if ((num_digits <= 10) && (num_digits % 2 == 0))

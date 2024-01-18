@@ -2842,7 +2842,7 @@ CPLValueType CPLGetValueType(const char *pszValue)
             if (!bFoundMantissa)
                 return CPL_VALUE_STRING;
             if (!(pszValue[1] == '+' || pszValue[1] == '-' ||
-                  isdigit(pszValue[1])))
+                  isdigit(static_cast<unsigned char>(pszValue[1]))))
                 return CPL_VALUE_STRING;
 
             bIsReal = true;

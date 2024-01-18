@@ -430,7 +430,7 @@ CPLXMLNode *PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
     {
         // Make a valid NCName
         osLocalIdentifier = GetName();
-        if (isdigit(osLocalIdentifier[0]))
+        if (isdigit(static_cast<unsigned char>(osLocalIdentifier[0])))
         {
             osLocalIdentifier = '_' + osLocalIdentifier;
         }

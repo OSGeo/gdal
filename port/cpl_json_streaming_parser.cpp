@@ -170,8 +170,8 @@ bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
 static bool IsValidNewToken(char ch)
 {
     return ch == '[' || ch == '{' || ch == '"' || ch == '-' || ch == '.' ||
-           isdigit(ch) || ch == 't' || ch == 'f' || ch == 'n' || ch == 'i' ||
-           ch == 'I' || ch == 'N';
+           isdigit(static_cast<unsigned char>(ch)) || ch == 't' || ch == 'f' ||
+           ch == 'n' || ch == 'i' || ch == 'I' || ch == 'N';
 }
 
 /************************************************************************/
@@ -208,8 +208,9 @@ bool CPLJSonStreamingParser::StartNewToken(const char *&pStr, size_t &nLength)
         m_aState.push_back(ARRAY);
         AdvanceChar(pStr, nLength);
     }
-    else if (ch == '-' || ch == '.' || isdigit(ch) || ch == 'i' || ch == 'I' ||
-             ch == 'N')
+    else if (ch == '-' || ch == '.' ||
+             isdigit(static_cast<unsigned char>(ch)) || ch == 'i' ||
+             ch == 'I' || ch == 'N')
     {
         m_aState.push_back(NUMBER);
     }
