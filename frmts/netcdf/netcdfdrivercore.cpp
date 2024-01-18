@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <string_view>
 
 /************************************************************************/
 /*                      netCDFIdentifyFormat()                          */
@@ -71,8 +72,6 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
     }
 #endif
 
-    constexpr char achHDF5Signature[] = "\211HDF\r\n\032\n";
-
     if (STARTS_WITH_CI(pszHeader, "CDF\001"))
     {
         // In case the netCDF driver is registered before the GMT driver,
@@ -81,16 +80,21 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         {
             bool bFoundZ = false;
             bool bFoundDimension = false;
-            for (int i = 0; i < poOpenInfo->nHeaderBytes - 11; i++)
+            constexpr const char *DIMENSION = "dimension";
+            constexpr int DIMENSION_LEN =
+                int(std::char_traits<char>::length(DIMENSION));
+            static_assert(DIMENSION_LEN == 9);
+            const std::string_view header(pszHeader, poOpenInfo->nHeaderBytes);
+            for (int i = 0;
+                 i < static_cast<int>(header.size()) - (1 + DIMENSION_LEN + 1);
+                 i++)
             {
-                if (poOpenInfo->pabyHeader[i] == 1 &&
-                    poOpenInfo->pabyHeader[i + 1] == 'z' &&
-                    poOpenInfo->pabyHeader[i + 2] == 0)
+                if (header[i] == 1 && header[i + 1] == 'z' &&
+                    header[i + 2] == 0)
                     bFoundZ = true;
-                else if (poOpenInfo->pabyHeader[i] == 9 &&
-                         memcmp((const char *)poOpenInfo->pabyHeader + i + 1,
-                                "dimension", 9) == 0 &&
-                         poOpenInfo->pabyHeader[i + 10] == 0)
+                else if (header[i] == DIMENSION_LEN &&
+                         header.substr(i + 1, DIMENSION_LEN) == DIMENSION &&
+                         header[i + DIMENSION_LEN + 1] == 0)
                     bFoundDimension = true;
             }
             if (bFoundZ && bFoundDimension)
@@ -99,13 +103,20 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
 
         return NCDF_FORMAT_NC;
     }
-    else if (STARTS_WITH_CI(pszHeader, "CDF\002"))
+
+    if (STARTS_WITH_CI(pszHeader, "CDF\002"))
     {
         return NCDF_FORMAT_NC2;
     }
-    else if (STARTS_WITH_CI(pszHeader, achHDF5Signature) ||
-             (poOpenInfo->nHeaderBytes > 512 + 8 &&
-              memcmp(pszHeader + 512, achHDF5Signature, 8) == 0))
+
+    constexpr char HDF5_SIG[] = "\211HDF\r\n\032\n";
+    constexpr int HDF5_SIG_LEN = int(std::char_traits<char>::length(HDF5_SIG));
+    static_assert(HDF5_SIG_LEN == 8);
+    // First non-zero offset at which the HDF5 signature can be found.
+    constexpr int HDF5_SIG_OFFSET = 512;
+    if (STARTS_WITH_CI(pszHeader, HDF5_SIG) ||
+        (poOpenInfo->nHeaderBytes > HDF5_SIG_OFFSET + HDF5_SIG_LEN &&
+         memcmp(pszHeader + HDF5_SIG_OFFSET, HDF5_SIG, HDF5_SIG_LEN) == 0))
     {
         // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
         // If HDF5 is not supported in GDAL, this driver will try to open the
@@ -167,16 +178,17 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         (!bCheckExt || EQUAL(pszExtension, "nc") ||
          EQUAL(pszExtension, "cdf") || EQUAL(pszExtension, "nc4")))
     {
-        vsi_l_offset nOffset = 512;
+        vsi_l_offset nOffset = HDF5_SIG_OFFSET;
         for (int i = 0; i < 64; i++)
         {
-            GByte abyBuf[8];
+            GByte abyBuf[HDF5_SIG_LEN];
             if (VSIFSeekL(poOpenInfo->fpL, nOffset, SEEK_SET) != 0 ||
-                VSIFReadL(abyBuf, 1, 8, poOpenInfo->fpL) != 8)
+                VSIFReadL(abyBuf, 1, HDF5_SIG_LEN, poOpenInfo->fpL) !=
+                    HDF5_SIG_LEN)
             {
                 break;
             }
-            if (memcmp(abyBuf, achHDF5Signature, 8) == 0)
+            if (memcmp(abyBuf, HDF5_SIG, HDF5_SIG_LEN) == 0)
             {
                 return NCDF_FORMAT_NC4;
             }
