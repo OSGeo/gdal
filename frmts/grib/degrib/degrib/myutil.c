@@ -873,7 +873,7 @@ void strToUpper (char *str)
       return;
    }
 
-   while ((*ptr++ = toupper (*str++)) != '\0') {
+   while ((*ptr++ = toupper ((unsigned char)(*str++))) != '\0') {
    }
 }
 #endif
@@ -908,7 +908,7 @@ void strToLower (char *str)
       return;
    }
 
-   while ((*ptr++ = tolower (*str++)) != '\0') {
+   while ((*ptr++ = tolower ((unsigned char)*str++)) != '\0') {
    }
 }
 #endif
@@ -920,7 +920,7 @@ void strToLower (char *str)
 int str2lw (char *s) {
   int i = 0, len = strlen (s);
   while (i < len) {
-    s[i] = (char) tolower(s[i]);
+    s[i] = (char) tolower((unsigned char)s[i]);
     i++;
   }
   return len;
@@ -968,18 +968,18 @@ int strcmpNoCase (const char *str1, const char *str2)
       return 1;
    }
 
-   for (; tolower (*str1) == tolower (*str2); str1++, str2++) {
+   for (; tolower ((unsigned char)*str1) == tolower ((unsigned char)*str2); str1++, str2++) {
       if (*str1 == '\0')
          return 0;
    }
-   return (tolower (*str1) - tolower (*str2) < 0) ? -1 : 1;
+   return (tolower ((unsigned char)*str1) - tolower ((unsigned char)*str2) < 0) ? -1 : 1;
 /*
    strlen1 = strlen (str1);
    strlen2 = strlen (str2);
    min = (strlen1 < strlen2) ? strlen1 : strlen2;
    for (i = 0; i < min; i++) {
-      c1 = tolower (str1[i]);
-      c2 = tolower (str2[i]);
+      c1 = tolower ((unsigned char)str1[i]);
+      c2 = tolower ((unsigned char)str2[i]);
       if (c1 < c2)
          return -1;
       if (c1 > c2)

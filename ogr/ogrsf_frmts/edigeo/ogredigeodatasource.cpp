@@ -190,7 +190,7 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
     {
         CPLString osExtLower = osExt;
         for (int i = 0; i < (int)osExt.size(); i++)
-            osExtLower[i] = (char)tolower(osExt[i]);
+            osExtLower[i] = (char)tolower(static_cast<unsigned char>(osExt[i]));
         CPLString osFilename2 = CPLFormCIFilename(
             CPLGetPath(pszName), osTmp.c_str(), osExtLower.c_str());
         fp = VSIFOpenL(osFilename2, "rb");

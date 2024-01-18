@@ -3712,7 +3712,8 @@ char *OGRSQLiteDataSource::LaunderName(const char *pszSrcName)
     char *pszSafeName = CPLStrdup(pszSrcName);
     for (int i = 0; pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] = (char)tolower(pszSafeName[i]);
+        pszSafeName[i] =
+            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
         if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
             pszSafeName[i] == '#')
             pszSafeName[i] = '_';

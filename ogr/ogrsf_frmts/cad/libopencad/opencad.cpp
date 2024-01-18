@@ -55,18 +55,18 @@ static int CheckCADFile(CADFileIO * pCADFileIO)
     size_t nPathLen = strlen( pszFilePath );
 
     if( nPathLen > 3 &&
-        toupper( pszFilePath[nPathLen - 3] ) == 'D' &&
-        toupper( pszFilePath[nPathLen - 2] ) == 'X' &&
-        toupper( pszFilePath[nPathLen - 1] ) == 'F' )
+        toupper( static_cast<unsigned char>(pszFilePath[nPathLen - 3]) ) == 'D' &&
+        toupper( static_cast<unsigned char>(pszFilePath[nPathLen - 2]) ) == 'X' &&
+        toupper( static_cast<unsigned char>(pszFilePath[nPathLen - 1]) ) == 'F' )
     {
         //TODO: "AutoCAD Binary DXF"
         //std::cerr << "DXF ASCII and binary is not supported yet.";
         return 0;
     }
     if( ! ( nPathLen > 3 &&
-            toupper( pszFilePath[nPathLen - 3] ) == 'D' &&
-            toupper( pszFilePath[nPathLen - 2] ) == 'W' &&
-            toupper( pszFilePath[nPathLen - 1] ) == 'G' ) )
+            toupper( static_cast<unsigned char>(pszFilePath[nPathLen - 3]) ) == 'D' &&
+            toupper( static_cast<unsigned char>(pszFilePath[nPathLen - 2]) ) == 'W' &&
+            toupper( static_cast<unsigned char>(pszFilePath[nPathLen - 1]) ) == 'G' ) )
     {
         return 0;
     }

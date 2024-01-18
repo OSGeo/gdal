@@ -497,7 +497,7 @@ VSILFILE *AIGLLOpen(const char *pszFilename, const char *pszAccess)
         for (i = (int)strlen(pszUCFilename) - 1;
              pszUCFilename[i] != '/' && pszUCFilename[i] != '\\'; i--)
         {
-            pszUCFilename[i] = (char)toupper(pszUCFilename[i]);
+            pszUCFilename[i] = (char)toupper((unsigned char)(pszUCFilename[i]));
         }
 
         fp = VSIFOpenL(pszUCFilename, pszAccess);

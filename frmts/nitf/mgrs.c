@@ -454,13 +454,13 @@ static long Break_MGRS_String(char *MGRS, long *Zone,
     if (num_letters == 3)
     {
         /* get letters */
-        Letters[0] = (toupper(MGRS[j]) - (long)'A');
+        Letters[0] = (toupper((unsigned char)MGRS[j]) - (long)'A');
         if ((Letters[0] == LETTER_I) || (Letters[0] == LETTER_O))
             error_code |= MGRS_STRING_ERROR;
-        Letters[1] = (toupper(MGRS[j + 1]) - (long)'A');
+        Letters[1] = (toupper((unsigned char)MGRS[j + 1]) - (long)'A');
         if ((Letters[1] == LETTER_I) || (Letters[1] == LETTER_O))
             error_code |= MGRS_STRING_ERROR;
-        Letters[2] = (toupper(MGRS[j + 2]) - (long)'A');
+        Letters[2] = (toupper((unsigned char)MGRS[j + 2]) - (long)'A');
         if ((Letters[2] == LETTER_I) || (Letters[2] == LETTER_O))
             error_code |= MGRS_STRING_ERROR;
     }

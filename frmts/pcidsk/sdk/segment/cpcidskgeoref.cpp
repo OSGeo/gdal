@@ -712,7 +712,7 @@ std::string CPCIDSKGeoref::ReformatGeosys( std::string const& geosysIn )
         if( *ptr == 'A' || *ptr == 'B' || *ptr == 'Y' || *ptr == 'Z' )
             ups_zone = *ptr;
         else if( *ptr == 'a' || *ptr == 'b' || *ptr == 'y' || *ptr == 'z' )
-            ups_zone = toupper( *ptr );
+            ups_zone = toupper( static_cast<unsigned char>(*ptr) );
         else
             ups_zone = ' ';
 

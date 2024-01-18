@@ -1944,7 +1944,7 @@ static int Clock_GetWord (char **Start, char **End, char word[30],
    f_integer = 1;
    while ((*ptr != ' ') && (*ptr != ',') && (*ptr != '\0')) {
       if (cnt < 29) {
-         word[cnt] = (char) toupper (*ptr);
+         word[cnt] = (char) toupper ((unsigned char)*ptr);
          cnt++;
       }
       if (*ptr == ':') {

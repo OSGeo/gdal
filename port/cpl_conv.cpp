@@ -341,7 +341,8 @@ char *CPLStrlwr(char *pszString)
 
     while (*pszTemp)
     {
-        *pszTemp = static_cast<char>(tolower(*pszTemp));
+        *pszTemp =
+            static_cast<char>(tolower(static_cast<unsigned char>(*pszTemp)));
         pszTemp++;
     }
 

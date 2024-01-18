@@ -712,7 +712,8 @@ const char *CPLFormCIFilename(const char *pszPath, const char *pszBasename,
         for (size_t i = 0; pszFilename[i] != '\0'; i++)
         {
             if (isupper(static_cast<unsigned char>(pszFilename[i])))
-                pszFilename[i] = static_cast<char>(tolower(pszFilename[i]));
+                pszFilename[i] = static_cast<char>(
+                    tolower(static_cast<unsigned char>(pszFilename[i])));
         }
 
         pszFullPath = CPLFormFilename(pszPath, pszFilename, nullptr);
