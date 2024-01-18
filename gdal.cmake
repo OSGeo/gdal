@@ -802,8 +802,7 @@ set(GDAL_DATA_FILES
     data/trailer.dxf
     data/vdv452.xml
     data/vdv452.xsd
-    data/vicar.json
-    data/MM_m_idofic.csv)
+    data/vicar.json)
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}
   APPEND
