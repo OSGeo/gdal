@@ -123,3 +123,5 @@ See Also
    Text Sequences (RS separator)
 -  `GeoJSONL <https://www.interline.io/blog/geojsonl-extracts/>`__: An
    optimized format for large geographic datasets
+-  `JSON streaming on Wikipedia <https://en.wikipedia.org/wiki/JSON_streaming>`__: An
+   overview over formats for concatenated JSON in a single file 
