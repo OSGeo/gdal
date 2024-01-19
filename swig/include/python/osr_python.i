@@ -66,6 +66,43 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
                 self.this = this
 
   %}
+
+%feature("shadow") ImportFromCF1 %{
+    def ImportFromCF1(self, keyValues, units = ""):
+        """ Import a CRS from netCDF CF-1 definitions.
+
+        http://cfconventions.org/cf-conventions/cf-conventions.html#appendix-grid-mappings
+        """
+        import copy
+        keyValues = copy.deepcopy(keyValues)
+        for key in keyValues:
+            val = keyValues[key]
+            if isinstance(val, list):
+                val = ','.join(["%.18g" % x for x in val])
+                keyValues[key] = val
+        return $action(self, keyValues, units)
+%}
+
+%feature("shadow") ExportToCF1 %{
+    def ExportToCF1(self, options = {}):
+        """ Export a CRS to netCDF CF-1 definitions.
+
+        http://cfconventions.org/cf-conventions/cf-conventions.html#appendix-grid-mappings
+        """
+        keyValues = $action(self, options)
+        for key in keyValues:
+            val = keyValues[key]
+            try:
+                val = float(val)
+                keyValues[key] = val
+            except:
+                try:
+                    val = [float(x) for x in val.split(',')]
+                    keyValues[key] = val
+                except:
+                    pass
+        return keyValues
+%}
 }
 
 %extend OSRCoordinateTransformationShadow {
