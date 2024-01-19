@@ -2721,7 +2721,8 @@ void ZarrArray::NotifyChildrenOfDeletion()
 /*                     ParseSpecialAttributes()                         */
 /************************************************************************/
 
-void ZarrArray::ParseSpecialAttributes(CPLJSONObject &oAttributes)
+void ZarrArray::ParseSpecialAttributes(
+    const std::shared_ptr<GDALGroup> &poGroup, CPLJSONObject &oAttributes)
 {
     const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
     std::shared_ptr<OGRSpatialReference> poSRS;
@@ -2739,32 +2740,6 @@ void ZarrArray::ParseSpecialAttributes(CPLJSONObject &oAttributes)
                             SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
                     OGRERR_NONE)
                 {
-                    int iDimX = 0;
-                    int iDimY = 0;
-                    int iCount = 1;
-                    for (const auto &poDim : GetDimensions())
-                    {
-                        if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
-                            iDimX = iCount;
-                        else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
-                            iDimY = iCount;
-                        iCount++;
-                    }
-                    if ((iDimX == 0 || iDimY == 0) && GetDimensionCount() >= 2)
-                    {
-                        iDimX = static_cast<int>(GetDimensionCount());
-                        iDimY = iDimX - 1;
-                    }
-                    if (iDimX > 0 && iDimY > 0)
-                    {
-                        if (poSRS->GetDataAxisToSRSAxisMapping() ==
-                            std::vector<int>{2, 1})
-                            poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
-                        else if (poSRS->GetDataAxisToSRSAxisMapping() ==
-                                 std::vector<int>{1, 2})
-                            poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
-                    }
-
                     oAttributes.Delete(CRS_ATTRIBUTE_NAME);
                     break;
                 }
@@ -2772,7 +2747,76 @@ void ZarrArray::ParseSpecialAttributes(CPLJSONObject &oAttributes)
             }
         }
     }
-    SetSRS(poSRS);
+    else
+    {
+        // Check if SRS is using CF-1 conventions
+        const auto gridMapping = oAttributes["grid_mapping"];
+        if (gridMapping.GetType() == CPLJSONObject::Type::String)
+        {
+            const auto gridMappingArray =
+                poGroup->OpenMDArray(gridMapping.ToString());
+            if (gridMappingArray)
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                CPLStringList aosKeyValues;
+                for (const auto &poAttr : gridMappingArray->GetAttributes())
+                {
+                    if (poAttr->GetDataType().GetClass() == GEDTC_STRING)
+                    {
+                        aosKeyValues.SetNameValue(poAttr->GetName().c_str(),
+                                                  poAttr->ReadAsString());
+                    }
+                    else if (poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
+                    {
+                        std::string osVal;
+                        for (double val : poAttr->ReadAsDoubleArray())
+                        {
+                            if (!osVal.empty())
+                                osVal += ',';
+                            osVal += CPLSPrintf("%.18g", val);
+                        }
+                        aosKeyValues.SetNameValue(poAttr->GetName().c_str(),
+                                                  osVal.c_str());
+                    }
+                }
+                if (poSRS->importFromCF1(aosKeyValues.List(), nullptr) !=
+                    OGRERR_NONE)
+                {
+                    poSRS.reset();
+                }
+            }
+        }
+    }
+
+    if (poSRS)
+    {
+        int iDimX = 0;
+        int iDimY = 0;
+        int iCount = 1;
+        for (const auto &poDim : GetDimensions())
+        {
+            if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                iDimX = iCount;
+            else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                iDimY = iCount;
+            iCount++;
+        }
+        if ((iDimX == 0 || iDimY == 0) && GetDimensionCount() >= 2)
+        {
+            iDimX = static_cast<int>(GetDimensionCount());
+            iDimY = iDimX - 1;
+        }
+        if (iDimX > 0 && iDimY > 0)
+        {
+            if (poSRS->GetDataAxisToSRSAxisMapping() == std::vector<int>{2, 1})
+                poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
+            else if (poSRS->GetDataAxisToSRSAxisMapping() ==
+                     std::vector<int>{1, 2})
+                poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+        }
+
+        SetSRS(poSRS);
+    }
 
     const auto unit = oAttributes[CF_UNITS];
     if (unit.GetType() == CPLJSONObject::Type::String)

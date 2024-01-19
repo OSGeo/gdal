@@ -5442,3 +5442,31 @@ def test_zarr_multidim_compute_statistics_update_metadata():
     finally:
         if gdal.VSIStatL(filename):
             gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_cf1():
+
+    ds = gdal.Open("data/zarr/byte_cf1.zarr")
+    assert ds
+    assert (
+        ds.GetSpatialRef().ExportToProj4()
+        == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
+    )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_cf1_zarrv3():
+
+    ds = gdal.Open("data/zarr/byte_cf1.zr3")
+    assert ds
+    assert (
+        ds.GetSpatialRef().ExportToProj4()
+        == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
+    )

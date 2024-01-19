@@ -1614,7 +1614,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poArray->ParseSpecialAttributes(oAttributes);
+    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
     poArray->SetAttributes(oAttributes);
     poArray->SetDtype(oDtype);
     if (poCodecs)
