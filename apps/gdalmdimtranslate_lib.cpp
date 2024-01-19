@@ -45,6 +45,7 @@ struct GDALMultiDimTranslateOptions
     std::string osFormat{};
     CPLStringList aosCreateOptions{};
     std::vector<std::string> aosArraySpec{};
+    CPLStringList aosArrayOptions{};
     std::vector<std::string> aosSubset{};
     std::vector<std::string> aosScaleFactor{};
     std::vector<std::string> aosGroup{};
@@ -1293,7 +1294,8 @@ static bool CopyGroup(
         }
     }
 
-    auto arrayNames = poSrcGroup->GetMDArrayNames();
+    auto arrayNames =
+        poSrcGroup->GetMDArrayNames(psOptions->aosArrayOptions.List());
     for (const auto &name : arrayNames)
     {
         if (!TranslateArray(oDimRemapper, nullptr, name, poSrcRootGroup,
@@ -1542,7 +1544,8 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
     }
     else
     {
-        auto srcArrayNames = poRG->GetMDArrayNames();
+        auto srcArrayNames = poRG->GetMDArrayNames(
+            psOptions ? psOptions->aosArrayOptions.List() : nullptr);
         for (const auto &srcArrayName : srcArrayNames)
         {
             auto tmpArray = poRG->OpenMDArray(srcArrayName);
@@ -1725,7 +1728,8 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     GDALDataset *poTmpSrcDS = poSrcDS;
     if (psOptions &&
         (!psOptions->aosArraySpec.empty() || !psOptions->aosGroup.empty() ||
-         !psOptions->aosSubset.empty() || !psOptions->aosScaleFactor.empty()))
+         !psOptions->aosSubset.empty() || !psOptions->aosScaleFactor.empty() ||
+         !psOptions->aosArrayOptions.empty()))
     {
         poTmpDS.reset(VRTDataset::CreateMultiDimensional("", nullptr, nullptr));
         CPLAssert(poTmpDS);
@@ -1832,7 +1836,11 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
             ++i;
             psOptions->aosArraySpec.push_back(papszArgv[i]);
         }
-
+        else if (i < argc - 1 && EQUAL(papszArgv[i], "-arrayoption"))
+        {
+            ++i;
+            psOptions->aosArrayOptions.AddString(papszArgv[i]);
+        }
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-group"))
         {
             ++i;
