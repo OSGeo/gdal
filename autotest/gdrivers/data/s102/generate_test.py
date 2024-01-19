@@ -66,7 +66,7 @@ def generate(filename, version, with_QualityOfSurvey=False):
     BathymetryCoverage_01.attrs["numPointsLongitudinal"] = np.uint32(values.shape[1])
     BathymetryCoverage_01.attrs["numPointsLatitudinal"] = np.uint32(values.shape[0])
 
-    f.create_group("Group_F")
+    group_f = f.create_group("Group_F")
 
     f.attrs["issueDate"] = "2023-12-31"
     f.attrs["geographicIdentifier"] = "Somewhere"
@@ -136,6 +136,26 @@ def generate(filename, version, with_QualityOfSurvey=False):
             dtype=featureAttributeTable_struct_type,
         )
         featureAttributeTable[...] = data
+
+        GroupFQualityOfSurvey_struct_type = np.dtype(
+            [
+                ("code", "S16"),
+                ("name", "S16"),
+                ("uom.name", "S16"),
+                ("fillValue", "S16"),
+                ("datatype", "S16"),
+                ("lower", "S16"),
+                ("upper", "S16"),
+                ("closure", "S16"),
+            ]
+        )
+        GroupFQualityOfSurvey = group_f.create_dataset(
+            "QualityOfSurvey", (1,), dtype=GroupFQualityOfSurvey_struct_type
+        )
+        GroupFQualityOfSurvey[...] = np.array(
+            [("id", "", "", "0", "H5T_INTEGER", "1", "", "geSemiInterval")],
+            dtype=GroupFQualityOfSurvey_struct_type,
+        )
 
 
 generate("test_s102_v2.1", "INT.IHO.S-102.2.1")
