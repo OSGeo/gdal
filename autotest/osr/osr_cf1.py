@@ -54,10 +54,10 @@ def test_osr_cf1_transverse_mercator():
     assert sr.ExportToCF1Units() == "m"
 
     sr2 = osr.SpatialReference()
+    del d["crs_wkt"]
     assert sr2.ImportFromCF1(d, "m") == ogr.OGRERR_NONE
     got_d = sr2.ExportToCF1()
     del got_d["crs_wkt"]
-    del d["crs_wkt"]
     assert got_d == d
 
 
@@ -82,8 +82,30 @@ def test_osr_cf1_lcc_2sp():
     assert "crs_wkt" in d
 
     sr2 = osr.SpatialReference()
+    del d["crs_wkt"]
     assert sr2.ImportFromCF1(d) == ogr.OGRERR_NONE
     got_d = sr2.ExportToCF1()
     del got_d["crs_wkt"]
-    del d["crs_wkt"]
     assert got_d == d
+
+
+###############################################################################
+
+
+def test_osr_cf1_import_from_spatial_ref_attribute():
+
+    wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
+    sr = osr.SpatialReference()
+    assert sr.ImportFromCF1({"spatial_ref": wkt}) == ogr.OGRERR_NONE
+    assert sr.GetAuthorityCode(None) == "4326"
+
+
+###############################################################################
+
+
+def test_osr_cf1_import_from_crs_wkt_attribute():
+
+    wkt = """GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]"""
+    sr = osr.SpatialReference()
+    assert sr.ImportFromCF1({"crs_wkt": wkt}) == ogr.OGRERR_NONE
+    assert sr.GetAuthorityCode(None) == "4326"

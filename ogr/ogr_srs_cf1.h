@@ -30,6 +30,9 @@
 #ifndef OGR_SRS_CF1_INCLUDED
 #define OGR_SRS_CF1_INCLUDED
 
+#define NCDF_CRS_WKT "crs_wkt"
+#define NCDF_SPATIAL_REF "spatial_ref"
+
 /* -------------------------------------------------------------------- */
 /*      CF-1 convention standard variables related to                   */
 /*      mapping & projection - see http://cf-pcmdi.llnl.gov/            */

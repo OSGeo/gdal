@@ -177,6 +177,15 @@ FetchStandardParallels(CSLConstList papszKeyValues)
 OGRErr OGRSpatialReference::importFromCF1(CSLConstList papszKeyValues,
                                           const char *pszUnits)
 {
+    // Import from "spatial_ref" or "crs_wkt" attributes in priority
+    const char *pszWKT = CSLFetchNameValue(papszKeyValues, NCDF_SPATIAL_REF);
+    if (!pszWKT)
+    {
+        pszWKT = CSLFetchNameValue(papszKeyValues, NCDF_CRS_WKT);
+    }
+    if (pszWKT)
+        return importFromWkt(pszWKT);
+
     const char *pszGridMappingName =
         CSLFetchNameValue(papszKeyValues, CF_GRD_MAPPING_NAME);
 
@@ -1664,7 +1673,6 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
             exportToWkt(&pszSpatialRef);
             if (pszSpatialRef && pszSpatialRef[0])
             {
-                constexpr const char *NCDF_CRS_WKT = "crs_wkt";
                 addParamString(NCDF_CRS_WKT, pszSpatialRef);
             }
             CPLFree(pszSpatialRef);

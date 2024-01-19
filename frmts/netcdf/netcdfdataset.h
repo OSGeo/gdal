@@ -113,8 +113,6 @@ static const size_t NCDF_MAX_STR_LEN = 8192;
 #define GDAL_DEFAULT_NCDF_CONVENTIONS NCDF_CONVENTIONS_CF_V1_5
 #define NCDF_CONVENTIONS_CF_V1_6 "CF-1.6"
 #define NCDF_CONVENTIONS_CF_V1_8 "CF-1.8"
-#define NCDF_CRS_WKT "crs_wkt"
-#define NCDF_SPATIAL_REF "spatial_ref"
 #define NCDF_GEOTRANSFORM "GeoTransform"
 #define NCDF_DIMNAME_X "x"
 #define NCDF_DIMNAME_Y "y"
