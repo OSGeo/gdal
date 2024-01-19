@@ -731,9 +731,15 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     // universal polygon (you can find the description of that in
     // the format description).
     if(hMiraMonLayer.bIsPolygon)
-        poFeature->SetFID(++iNextFID);
+    {
+        iNextFID++;
+        poFeature->SetFID(iNextFID);
+    }
     else
-        poFeature->SetFID(iNextFID++);
+    {
+        poFeature->SetFID(iNextFID);
+        iNextFID++;
+    }
     m_nFeaturesRead++;
 
     return poFeature;

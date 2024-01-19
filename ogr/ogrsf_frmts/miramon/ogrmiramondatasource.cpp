@@ -87,7 +87,8 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
 /*      currently but save the name.                                    */
 /************************************************************************/
 
-int OGRMiraMonDataSource::Create(const char *pszDSName, char ** /* papszOptions */)
+int OGRMiraMonDataSource::Create(const char *pszDSName,
+    char ** /* papszOptions */)
 
 {
     pszName = CPLStrdup(pszDSName);

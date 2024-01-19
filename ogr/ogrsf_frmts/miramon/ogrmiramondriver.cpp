@@ -85,7 +85,8 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
     if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
-                    poOpenInfo->eAccess == GA_Update, poOpenInfo->papszOpenOptions))
+                    poOpenInfo->eAccess == GA_Update,
+                    poOpenInfo->papszOpenOptions))
     {
         delete poDS;
         return nullptr;
@@ -95,7 +96,7 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         OGRMMDriverCreate()                         */
+/*                         OGRMMDriverCreate()                          */
 /************************************************************************/
 
 static GDALDataset *
@@ -113,7 +114,7 @@ OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                           RegisterOGRMM()                           */
+/*                           RegisterOGRMM()                            */
 /************************************************************************/
 
 void RegisterOGRMiraMon()
@@ -127,7 +128,8 @@ void RegisterOGRMiraMon()
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MiraMon Vectors (.pol, .arc, .pnt)");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+            "MiraMon Vectors (.pol, .arc, .pnt)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "pol");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "pol arc pnt");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/miramon.html");
@@ -171,7 +173,7 @@ void RegisterOGRMiraMon()
         "   For example, nMemoryRatio=2 in powerful computers and"
         "   nMemoryRatio=0.5 in less powerful computers."
         "   By increasing this parameter, more memory will be required,"
-        "   but there will be fewer read/write operations to the disk.'/>"
+        "   but there will be fewer read/write operations to the disk.'>"
         "    <Value>0.5</Value>"
         "    <Value>1</Value>"
         "    <Value>2</Value>"
