@@ -4430,7 +4430,8 @@ char aTimeString[30];
     printf_function(pF, "\n[%s]\n", SECTION_IDENTIFICATION);
     printf_function(pF, "%s=%s\n", KEY_code, aFileIdentifier);
     printf_function(pF, "%s=\n", KEY_codeSpace);
-    printf_function(pF, "%s=%s\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+    if(hMMMD->szLayerTitle)
+        printf_function(pF, "%s=%s\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
 
     if(hMMMD->ePlainLT!=MM_LayerType_Node)
     {
