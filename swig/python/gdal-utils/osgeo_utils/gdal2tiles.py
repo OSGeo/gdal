@@ -288,7 +288,8 @@ if filename:
             continue
         try:
             tms = TileMatrixSet.parse(j)
-        except UnsupportedTileMatrixSet:
+        except UnsupportedTileMatrixSet as e:
+            gdal.Debug("gdal2tiles", "Cannot parse " + tmsfilename + ": " + str(e))
             continue
         except Exception:
             logger.error("Cannot parse " + tmsfilename)
