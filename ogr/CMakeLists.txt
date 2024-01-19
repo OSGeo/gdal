@@ -34,6 +34,7 @@ add_library(
   ogr_srsnode.cpp
   ogr_fromepsg.cpp
   ogrct.cpp
+  ogr_srs_cf1.cpp
   ogr_srs_esri.cpp
   ogr_srs_pci.cpp
   ogr_srs_usgs.cpp

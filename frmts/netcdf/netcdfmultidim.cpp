@@ -2670,7 +2670,7 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
     {
         bool bWriteX = false;
         bool bWriteY = false;
-        const char *pszUnits = NCDFGetProjectedCFUnit(poSRS);
+        const std::string osUnits = NCDFGetProjectedCFUnit(poSRS);
         for (const auto &poDim : apoDims)
         {
             const char *pszStandardName = nullptr;
@@ -2691,7 +2691,8 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
             }
             if (pszStandardName && pszLongName)
             {
-                WriteDimAttrs(poDim, pszStandardName, pszLongName, pszUnits);
+                WriteDimAttrs(poDim, pszStandardName, pszLongName,
+                              osUnits.c_str());
             }
         }
         if (!bWriteX && !bWriteY && apoDims.size() >= 2 &&
@@ -2705,9 +2706,9 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
                      "Assuming the last one is X, and the preceding one Y",
                      GetName().c_str());
             WriteDimAttrs(apoDims[apoDims.size() - 1], CF_PROJ_X_COORD,
-                          CF_PROJ_X_COORD_LONG_NAME, pszUnits);
+                          CF_PROJ_X_COORD_LONG_NAME, osUnits.c_str());
             WriteDimAttrs(apoDims[apoDims.size() - 2], CF_PROJ_Y_COORD,
-                          CF_PROJ_Y_COORD_LONG_NAME, pszUnits);
+                          CF_PROJ_Y_COORD_LONG_NAME, osUnits.c_str());
         }
     }
     else if (poSRS->IsGeographic())
