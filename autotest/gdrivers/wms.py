@@ -55,7 +55,7 @@ def gpwv3_wms():
     tree = ET.parse(wms_xml)
     srv = next(tree.iter("ServerUrl")).text
 
-    wms_srv1_ok = gdaltest.gdalurlopen(srv) is not None
+    wms_srv1_ok = gdaltest.gdalurlopen(srv, timeout=5) is not None
 
     if not wms_srv1_ok:
         pytest.skip(f"Could not read from {srv}")
