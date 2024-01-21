@@ -489,6 +489,12 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
 #if ARROW_VERSION_MAJOR >= 12
         case arrow::Type::RUN_END_ENCODED:
 #endif
+#if ARROW_VERSION_MAJOR >= 15
+        case arrow::Type::STRING_VIEW:
+        case arrow::Type::BINARY_VIEW:
+        case arrow::Type::LIST_VIEW:
+        case arrow::Type::LARGE_LIST_VIEW:
+#endif
         case arrow::Type::MAX_ID:
         {
             bTypeOK = false;
@@ -2136,6 +2142,12 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             case arrow::Type::INTERVAL_MONTH_DAY_NANO:
 #if ARROW_VERSION_MAJOR >= 12
             case arrow::Type::RUN_END_ENCODED:
+#endif
+#if ARROW_VERSION_MAJOR >= 15
+            case arrow::Type::STRING_VIEW:
+            case arrow::Type::BINARY_VIEW:
+            case arrow::Type::LIST_VIEW:
+            case arrow::Type::LARGE_LIST_VIEW:
 #endif
             case arrow::Type::MAX_ID:
             {
