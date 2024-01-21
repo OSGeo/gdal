@@ -90,14 +90,6 @@ OGRPGDataSource::~OGRPGDataSource()
         PQfinish(hPGConn);
         hPGConn = nullptr;
     }
-
-    for (int i = 0; i < nKnownSRID; i++)
-    {
-        if (papoSRS[i] != nullptr)
-            papoSRS[i]->Release();
-    }
-    CPLFree(panSRID);
-    CPLFree(papoSRS);
 }
 
 /************************************************************************/
@@ -2574,7 +2566,7 @@ OGRErr OGRPGDataSource::InitializeMetadataTables()
 /*      OGRSpatialReference, as handles may be cached.                  */
 /************************************************************************/
 
-OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
+const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
 
 {
     if (nId < 0 || !m_bHasSpatialRefSys)
@@ -2583,10 +2575,10 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; i < nKnownSRID; i++)
+    auto oIter = m_oSRSCache.find(nId);
+    if (oIter != m_oSRSCache.end())
     {
-        if (panSRID[i] == nId)
-            return papoSRS[i];
+        return oIter->second.get();
     }
 
     EndCopy();
@@ -2595,7 +2587,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /*      Try looking up in spatial_ref_sys table.                        */
     /* -------------------------------------------------------------------- */
     CPLString osCommand;
-    OGRSpatialReference *poSRS = nullptr;
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
 
     osCommand.Printf("SELECT srtext, auth_name, auth_srid FROM spatial_ref_sys "
                      "WHERE srid = %d",
@@ -2608,7 +2600,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
         const char *pszWKT = PQgetvalue(hResult, 0, 0);
         const char *pszAuthName = PQgetvalue(hResult, 0, 1);
         const char *pszAuthSRID = PQgetvalue(hResult, 0, 2);
-        poSRS = new OGRSpatialReference();
+        poSRS.reset(new OGRSpatialReference());
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // Try to import first from EPSG code, and then from WKT
@@ -2620,8 +2612,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
         }
         else if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
         {
-            delete poSRS;
-            poSRS = nullptr;
+            poSRS.reset();
         }
     }
     else
@@ -2638,15 +2629,8 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    panSRID =
-        static_cast<int *>(CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1)));
-    papoSRS = static_cast<OGRSpatialReference **>(
-        CPLRealloc(papoSRS, sizeof(OGRSpatialReference *) * (nKnownSRID + 1)));
-    panSRID[nKnownSRID] = nId;
-    papoSRS[nKnownSRID] = poSRS;
-    nKnownSRID++;
-
-    return poSRS;
+    oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
+    return oIter->second.get();
 }
 
 /************************************************************************/
