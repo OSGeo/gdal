@@ -292,54 +292,66 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
     const std::map<std::string, std::unique_ptr<OGRFieldDefn>>
         &oMapFieldNameToGDALSchemaFieldDefn)
 {
-    bool bTypeOK = true;
+    bool bTypeOK = false;
     switch (type->id())
     {
         case arrow::Type::NA:
             break;
 
         case arrow::Type::BOOL:
+            bTypeOK = true;
             eType = OFTInteger;
             eSubType = OFSTBoolean;
             break;
         case arrow::Type::UINT8:
         case arrow::Type::INT8:
         case arrow::Type::UINT16:
+            bTypeOK = true;
             eType = OFTInteger;
             break;
         case arrow::Type::INT16:
+            bTypeOK = true;
             eType = OFTInteger;
             eSubType = OFSTInt16;
             break;
         case arrow::Type::UINT32:
+            bTypeOK = true;
             eType = OFTInteger64;
             break;
         case arrow::Type::INT32:
+            bTypeOK = true;
             eType = OFTInteger;
             break;
         case arrow::Type::UINT64:
+            bTypeOK = true;
             eType = OFTReal;  // potential loss
             break;
         case arrow::Type::INT64:
+            bTypeOK = true;
             eType = OFTInteger64;
             break;
         case arrow::Type::HALF_FLOAT:  // should use OFSTFloat16 if we had it
         case arrow::Type::FLOAT:
+            bTypeOK = true;
             eType = OFTReal;
             eSubType = OFSTFloat32;
             break;
         case arrow::Type::DOUBLE:
+            bTypeOK = true;
             eType = OFTReal;
             break;
         case arrow::Type::STRING:
         case arrow::Type::LARGE_STRING:
+            bTypeOK = true;
             eType = OFTString;
             break;
         case arrow::Type::BINARY:
         case arrow::Type::LARGE_BINARY:
+            bTypeOK = true;
             eType = OFTBinary;
             break;
         case arrow::Type::FIXED_SIZE_BINARY:
+            bTypeOK = true;
             eType = OFTBinary;
             oField.SetWidth(
                 std::static_pointer_cast<arrow::FixedSizeBinaryType>(type)
@@ -348,11 +360,13 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
 
         case arrow::Type::DATE32:
         case arrow::Type::DATE64:
+            bTypeOK = true;
             eType = OFTDate;
             break;
 
         case arrow::Type::TIMESTAMP:
         {
+            bTypeOK = true;
             const auto timestampType =
                 static_cast<arrow::TimestampType *>(type.get());
             eType = OFTDateTime;
@@ -371,10 +385,12 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         }
 
         case arrow::Type::TIME32:
+            bTypeOK = true;
             eType = OFTTime;
             break;
 
         case arrow::Type::TIME64:
+            bTypeOK = true;
             eType = OFTInteger64;  // our OFTTime doesn't have micro or
                                    // nanosecond accuracy
             break;
@@ -382,6 +398,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         case arrow::Type::DECIMAL128:
         case arrow::Type::DECIMAL256:
         {
+            bTypeOK = true;
             const auto decimalType =
                 std::static_pointer_cast<arrow::DecimalType>(type);
             eType = OFTReal;
@@ -393,6 +410,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         case arrow::Type::LIST:
         case arrow::Type::FIXED_SIZE_LIST:
         {
+            bTypeOK = true;
             auto listType = std::static_pointer_cast<arrow::BaseListType>(type);
             switch (listType->value_type()->id())
             {
@@ -454,6 +472,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
 
         case arrow::Type::MAP:
         {
+            bTypeOK = true;
             auto mapType = std::static_pointer_cast<arrow::MapType>(type);
             if (IsHandledMapType(mapType))
             {
@@ -497,7 +516,6 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
 #endif
         case arrow::Type::MAX_ID:
         {
-            bTypeOK = false;
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Field %s of unhandled type %s ignored",
                      field->name().c_str(), type->ToString().c_str());
