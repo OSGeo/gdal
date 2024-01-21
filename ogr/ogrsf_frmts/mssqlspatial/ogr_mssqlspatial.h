@@ -666,6 +666,8 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
     static char *LaunderName(const char *pszSrcName);
     OGRErr InitializeMetadataTables();
 
+    void AddSRIDToCache(int nId, OGRSpatialReference *poSRS);
+
     OGRSpatialReference *FetchSRS(int nId);
     int FetchSRSId(const OGRSpatialReference *poSRS);
 
