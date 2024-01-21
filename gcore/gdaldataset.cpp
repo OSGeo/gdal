@@ -3945,14 +3945,14 @@ retry:
                 if (!poMissingPluginDriver)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as a supported file format.",
+                             "`%s' not recognized as being in a supported file format.",
                              pszFilename);
                 }
                 else
                 {
                     std::string osMsg("`");
                     osMsg += pszFilename;
-                    osMsg += "' not recognized as a supported file format. "
+                    osMsg += "' not recognized as being in a supported file format. "
                              "It could have been recognized by driver ";
                     osMsg += poMissingPluginDriver->GetDescription();
                     osMsg += ", but plugin ";
