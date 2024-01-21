@@ -1738,7 +1738,7 @@ static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef)
                    {"MultiSurfacePropertyType", wkbMultiSurface},
                    {"MultiSolidPropertyType", wkbUnknown},
                    // GeometryArrayPropertyType ?
-                   // GeometricPrimitivePropertyType ?
+                   {"GeometricPrimitivePropertyType", wkbUnknown},
                    {"CurvePropertyType", wkbCurve},
                    {"SurfacePropertyType", wkbSurface},
                    // SurfaceArrayPropertyType ?
