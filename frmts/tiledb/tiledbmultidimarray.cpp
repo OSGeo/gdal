@@ -312,9 +312,9 @@ bool TileDBArray::Finalize() const
 /* static */
 std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
     const std::shared_ptr<TileDBSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
-    const std::string &osAttributeName, const std::string &osPath,
-    CSLConstList papszOptions)
+    const std::shared_ptr<GDALGroup> &poParent, const std::string &osParentName,
+    const std::string &osName, const std::string &osAttributeName,
+    const std::string &osPath, CSLConstList papszOptions)
 {
     try
     {
@@ -345,6 +345,8 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                                ? schema.attribute(0)
                                : schema.attribute(osAttributeName);
         GDALDataType eDT = TileDBDataTypeToGDALDataType(attr.type());
+        if (attr.type() == TILEDB_CHAR)
+            eDT = GDT_Byte;
         if (eDT == GDT_Unknown)
         {
             const char *pszTypeName = "";
@@ -566,7 +568,8 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                 auto label = tiledb::ArraySchemaExperimental::dimension_label(
                     ctx, schema, osLabelName);
                 auto poIndexingVar = OpenFromDisk(
-                    poSharedResource, osArrayFullName, poDim->GetName(),
+                    poSharedResource, nullptr, osArrayFullName,
+                    poDim->GetName(),
                     /* osAttributeName = */ std::string(), label.uri(),
                     /* papszOptions= */ nullptr);
                 if (poIndexingVar)
@@ -638,8 +641,163 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                         dfStep, 0));
             }
 
+            if (poParent && dims.size() >= 2)
+            {
+                for (const auto &osOtherArray : poParent->GetMDArrayNames())
+                {
+                    if (osOtherArray != osName)
+                    {
+                        auto poOtherArray = poParent->OpenMDArray(osOtherArray);
+                        if (poOtherArray &&
+                            poOtherArray->GetDimensionCount() == 1 &&
+                            poOtherArray->GetDataType().GetClass() ==
+                                GEDTC_NUMERIC &&
+                            poOtherArray->GetAttribute(
+                                std::string("__tiledb_attr.")
+                                    .append(poDim->GetName())
+                                    .append(".data.standard_name")))
+                        {
+                            if (dim.name() == "x")
+                            {
+                                osType = GDAL_DIM_TYPE_HORIZONTAL_X;
+                                osDirection = "EAST";
+                            }
+                            else if (dim.name() == "y")
+                            {
+                                osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
+                                osDirection = "NORTH";
+                            }
+                            if (!osType.empty())
+                            {
+                                poDim = std::make_shared<TileDBDimension>(
+                                    osArrayFullName, dim.name(), osType,
+                                    osDirection, nSize);
+                            }
+                            poDim->SetIndexingVariableOneTime(poOtherArray);
+                            break;
+                        }
+                    }
+                }
+            }
+
             aoDims.emplace_back(std::move(poDim));
             anBlockSize.push_back(dim.tile_extent<uint64_t>());
+        }
+
+        GDALExtendedDataType oType = GDALExtendedDataType::Create(eDT);
+        auto poArray = Create(poSharedResource, osParentName, osName, aoDims,
+                              oType, osPath);
+        poArray->m_poTileDBArray = std::move(poTileDBArray);
+        poArray->m_poSchema = std::make_unique<tiledb::ArraySchema>(
+            poArray->m_poTileDBArray->schema());
+        poArray->m_anBlockSize = std::move(anBlockSize);
+        poArray->m_anStartDimOffset = std::move(anStartDimOffset);
+        poArray->m_osAttrName = attr.name();
+        poArray->m_osUnit = std::move(osUnit);
+        poArray->m_nTimestamp = nTimestamp;
+
+        // Try to get SRS from CF-1 conventions, if dataset has been generated
+        // with https://github.com/TileDB-Inc/TileDB-CF-Py
+        if (poParent && !poSRS)
+        {
+            const auto ENDS_WITH_CI =
+                [](const char *pszStr, const char *pszNeedle)
+            {
+                const size_t nLenStr = strlen(pszStr);
+                const size_t nLenNeedle = strlen(pszNeedle);
+                return nLenStr >= nLenNeedle &&
+                       memcmp(pszStr + (nLenStr - nLenNeedle), pszNeedle,
+                              nLenNeedle) == 0;
+            };
+
+            const auto GetSRSFromGridMappingArray =
+                [](const std::shared_ptr<GDALMDArray> &poOtherArray,
+                   const std::string &osGMPrefix)
+            {
+                CPLStringList aosGridMappingKeyValues;
+                for (const auto &poGMAttr : poOtherArray->GetAttributes())
+                {
+                    if (STARTS_WITH(poGMAttr->GetName().c_str(),
+                                    osGMPrefix.c_str()))
+                    {
+                        const std::string osKey =
+                            poGMAttr->GetName().c_str() + osGMPrefix.size();
+                        if (poGMAttr->GetDataType().GetClass() == GEDTC_STRING)
+                        {
+                            const char *pszValue = poGMAttr->ReadAsString();
+                            if (pszValue)
+                                aosGridMappingKeyValues.AddNameValue(
+                                    osKey.c_str(), pszValue);
+                        }
+                        else if (poGMAttr->GetDataType().GetClass() ==
+                                 GEDTC_NUMERIC)
+                        {
+                            const auto aosValues =
+                                poGMAttr->ReadAsDoubleArray();
+                            std::string osVal;
+                            for (double dfVal : aosValues)
+                            {
+                                if (!osVal.empty())
+                                    osVal += ',';
+                                osVal += CPLSPrintf("%.18g", dfVal);
+                            }
+                            aosGridMappingKeyValues.AddNameValue(osKey.c_str(),
+                                                                 osVal.c_str());
+                        }
+                    }
+                }
+                auto l_poSRS = std::make_shared<OGRSpatialReference>();
+                l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (l_poSRS->importFromCF1(aosGridMappingKeyValues.List(),
+                                           nullptr) != OGRERR_NONE)
+                {
+                    l_poSRS.reset();
+                }
+                return l_poSRS;
+            };
+
+            const auto poAttributes = poArray->GetAttributes();
+            for (const auto &poAttr : poAttributes)
+            {
+                if (poAttr->GetDataType().GetClass() == GEDTC_STRING &&
+                    STARTS_WITH_CI(poAttr->GetName().c_str(),
+                                   "__tiledb_attr.") &&
+                    ENDS_WITH_CI(poAttr->GetName().c_str(), ".grid_mapping"))
+                {
+                    const char *pszGridMapping = poAttr->ReadAsString();
+                    if (pszGridMapping)
+                    {
+                        for (const auto &osOtherArray :
+                             poParent->GetMDArrayNames())
+                        {
+                            if (osOtherArray != osName)
+                            {
+                                auto poOtherArray =
+                                    poParent->OpenMDArray(osOtherArray);
+                                if (poOtherArray)
+                                {
+                                    const std::string osGMPrefix =
+                                        std::string("__tiledb_attr.")
+                                            .append(pszGridMapping)
+                                            .append(".");
+                                    auto poGridMappingNameAttr =
+                                        poOtherArray->GetAttribute(
+                                            std::string(osGMPrefix)
+                                                .append("grid_mapping_name")
+                                                .c_str());
+                                    if (poGridMappingNameAttr)
+                                    {
+                                        poSRS = GetSRSFromGridMappingArray(
+                                            poOtherArray, osGMPrefix);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
         }
 
         // Set SRS DataAxisToSRSAxisMapping
@@ -672,18 +830,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
             }
         }
 
-        GDALExtendedDataType oType = GDALExtendedDataType::Create(eDT);
-        auto poArray = Create(poSharedResource, osParentName, osName, aoDims,
-                              oType, osPath);
-        poArray->m_poTileDBArray = std::move(poTileDBArray);
-        poArray->m_poSchema = std::make_unique<tiledb::ArraySchema>(
-            poArray->m_poTileDBArray->schema());
-        poArray->m_anBlockSize = std::move(anBlockSize);
-        poArray->m_anStartDimOffset = std::move(anStartDimOffset);
-        poArray->m_osAttrName = attr.name();
-        poArray->m_osUnit = std::move(osUnit);
         poArray->m_poSRS = std::move(poSRS);
-        poArray->m_nTimestamp = nTimestamp;
 
         const auto filters = attr.filter_list();
         std::string osFilters;
