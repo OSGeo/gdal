@@ -170,7 +170,9 @@ def test_gti_cannot_open_index(tmp_vsimem):
     gdal.VSIFTruncateL(f, 100)
     gdal.VSIFCloseL(f)
 
-    with pytest.raises(Exception, match="not recognized as a supported file format"):
+    with pytest.raises(
+        Exception, match="not recognized as being in a supported file format"
+    ):
         gdal.Open(index_filename)
 
 

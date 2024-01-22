@@ -596,7 +596,8 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         if (m_psXMLTree == nullptr)
             return false;
     }
-    else if (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+    else if (poOpenInfo->nHeaderBytes > 0 &&
+             strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                     "<GDALTileIndexDataset"))
     {
         // CPLParseXMLFile() emits an error in case of failure
@@ -625,13 +626,41 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    m_poVectorDS.reset(GDALDataset::Open(
-        pszIndexDataset,
-        GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR |
-            ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) ? GDAL_OF_UPDATE
-                                                       : GDAL_OF_READONLY)));
-    if (!m_poVectorDS)
-        return false;
+    if (ENDS_WITH_CI(pszIndexDataset, ".gti.gpkg") &&
+        poOpenInfo->nHeaderBytes >= 100 &&
+        STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                    "SQLite format 3"))
+    {
+        const char *const apszAllowedDrivers[] = {"GPKG", nullptr};
+        m_poVectorDS.reset(GDALDataset::Open(
+            std::string("GPKG:\"").append(pszIndexDataset).append("\"").c_str(),
+            GDAL_OF_VECTOR | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR |
+                ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) ? GDAL_OF_UPDATE
+                                                           : GDAL_OF_READONLY),
+            apszAllowedDrivers));
+        if (!m_poVectorDS)
+        {
+            return false;
+        }
+        if (m_poVectorDS->GetLayerCount() == 0 &&
+            (m_poVectorDS->GetRasterCount() != 0 ||
+             m_poVectorDS->GetMetadata("SUBDATASETS") != nullptr))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        m_poVectorDS.reset(GDALDataset::Open(
+            pszIndexDataset, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR |
+                                 ((poOpenInfo->nOpenFlags & GDAL_OF_UPDATE)
+                                      ? GDAL_OF_UPDATE
+                                      : GDAL_OF_READONLY)));
+        if (!m_poVectorDS)
+        {
+            return false;
+        }
+    }
 
     if (m_poVectorDS->GetLayerCount() == 0)
     {
@@ -1935,7 +1964,7 @@ CPLErr GDALTileIndexDataset::SetMetadata(char **papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                     GDALTileIndexDatasetIdentify()                    */
+/*                     GDALTileIndexDatasetIdentify()                   */
 /************************************************************************/
 
 static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
@@ -1946,11 +1975,20 @@ static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(poOpenInfo->pszFilename, "<GDALTileIndexDataset"))
         return true;
 
+    if (poOpenInfo->nHeaderBytes >= 100 &&
+        STARTS_WITH(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                    "SQLite format 3") &&
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg") &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "GPKG:"))
+    {
+        // Most likely handled by GTI driver, but we can't be sure
+        return GDAL_IDENTIFY_UNKNOWN;
+    }
+
     return poOpenInfo->nHeaderBytes > 0 &&
            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
            (strstr(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
                    "<GDALTileIndexDataset") ||
-            ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg") ||
             ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.fgb") ||
             ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.parquet"));
 }
@@ -1961,7 +1999,7 @@ static int GDALTileIndexDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 static GDALDataset *GDALTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
 {
-    if (!GDALTileIndexDatasetIdentify(poOpenInfo))
+    if (GDALTileIndexDatasetIdentify(poOpenInfo) == GDAL_IDENTIFY_FALSE)
         return nullptr;
     auto poDS = std::make_unique<GDALTileIndexDataset>();
     if (!poDS->Open(poOpenInfo))

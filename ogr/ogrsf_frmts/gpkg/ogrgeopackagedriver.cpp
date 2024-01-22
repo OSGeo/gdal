@@ -93,13 +93,6 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
         return FALSE;
     }
 
-    if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
-    {
-        // Handled by GTI driver
-        return FALSE;
-    }
-
     /* Requirement 3: File name has to end in "gpkg" */
     /* http://opengis.github.io/geopackage/#_file_extension_name */
     /* But be tolerant, if the GPKG application id is found, because some */
@@ -251,6 +244,13 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
         }
     }
 
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
+    {
+        // Most likely handled by GTI driver, but we can't be sure
+        return GDAL_IDENTIFY_UNKNOWN;
+    }
+
     return TRUE;
 }
 
@@ -343,7 +343,8 @@ OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
 static GDALDataset *OGRGeoPackageDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     std::string osFilenameInGpkgZip;
-    if (!OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true))
+    if (OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true) ==
+        GDAL_IDENTIFY_FALSE)
         return nullptr;
 
     GDALGeoPackageDataset *poDS = new GDALGeoPackageDataset();
