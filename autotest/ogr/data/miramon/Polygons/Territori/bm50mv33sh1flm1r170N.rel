@@ -1,0 +1,239 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_1_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20120710
+characterSet=006
+nOrganismes=1
+FileIdentifier=bm50mv33sh1fc1r170ca5
+
+[METADADES:ORGANISME_1]
+role=006
+OrganisationName=Institut Cartogràfic de Catalunya (ICC)
+phoneVoice1=+34 93 567 15 00
+phoneFacsimile1=+34 93 567 15 67
+deliveryPoint1=Parc de Montjuïc
+city=Barcelona
+postalCode=E-08038
+electronicMailAddress1=centre.atencio@icc.cat
+n_onlineResource=1
+
+[IDENTIFICATION]
+AlternateTitle1=BM-50M
+topicCategory=003
+language=cat
+n_keywords=51
+code=bm50mv33sh1fc1r170ca5
+codeSpace=
+DatasetTitle=Base municipal de Catalunya 1:50 000 (BM-50M) v3.3
+keyword_type1=2
+keyword1=Alt Camp
+keyword_type2=2
+keyword2=Alt Empordà
+keyword_type3=2
+keyword3=Alt Penedès
+keyword_type4=2
+keyword4=Alt Urgell
+keyword_type5=2
+keyword5=Alta Ribagorça
+keyword_type6=2
+keyword6=Anoia
+keyword_type7=2
+keyword7=Bages
+keyword_type8=2
+keyword8=Baix Camp
+keyword_type9=2
+keyword9=Baix Ebre
+keyword_type10=2
+keyword10=Baix Empordà
+keyword_type11=2
+keyword11=Baix Llobregat
+keyword_type12=2
+keyword12=Baix Penedès
+keyword_type13=2
+keyword13=Barcelonès
+keyword_type14=2
+keyword14=Berguedà
+keyword_type15=2
+keyword15=Cerdanya
+keyword_type16=2
+keyword16=Conca de Barberà
+keyword_type17=2
+keyword17=Garraf
+keyword_type18=2
+keyword18=Garrigues
+keyword_type19=2
+keyword19=Garrotxa
+keyword_type20=2
+keyword20=Gironès
+keyword_type21=2
+keyword21=Maresme
+keyword_type22=2
+keyword22=Montsià
+keyword_type23=2
+keyword23=Noguera
+keyword_type24=2
+keyword24=Osona
+keyword_type25=2
+keyword25=Pallars Jussà
+keyword_type26=2
+keyword26=Pallars Sobirà
+keyword_type27=2
+keyword27=Pla d'Urgell
+keyword_type28=2
+keyword28=Pla de l'Estany
+keyword_type29=2
+keyword29=Priorat
+keyword_type30=2
+keyword30=Ribera d'Ebre
+keyword_type31=2
+keyword31=Ripollès
+keyword_type32=2
+keyword32=Segarra
+keyword_type33=2
+keyword33=Segrià
+keyword_type34=2
+keyword34=Selva
+keyword_type35=2
+keyword35=Solsonès
+keyword_type36=2
+keyword36=Tarragonès
+keyword_type37=2
+keyword37=Terra Alta
+keyword_type38=2
+keyword38=Urgell
+keyword_type39=2
+keyword39=Val d'Aran
+keyword_type40=2
+keyword40=Vallès Occidental
+keyword_type41=2
+keyword41=Vallès Oriental
+keyword_type42=2
+keyword42=Catalunya
+keyword_type43=2
+keyword43=Espanya
+keyword_type44=2
+keyword44=Europa
+keyword_type45=4
+keyword45=2012
+keyword_type46=5
+keyword46=Estat
+keyword_type47=5
+keyword47=Comunitat autònoma
+keyword_type48=5
+keyword48=Província
+keyword_type49=5
+keyword49=Comarca
+keyword_type50=5
+keyword50=Municipi
+keyword_type51=5
+keyword51=Límit administratiu
+
+[EXTENT]
+toler_env=0
+description=Catalunya
+
+[OVERVIEW]
+CreationDate=20131113 13550000+0200
+nConstraints=1
+summary=Base geogràfica de l'organització territorial de Catalunya en municipis, comarques i províncies.
+purpose=Base geogràfica necessària per al desenvolupament d'activitats tècniques, de gestió i de planificació en el territori.
+
+[METADADES:ORGANISME_1:ONLINE_RESOURCE_1]
+linkage=http://www.icc.cat
+description=information
+function=002
+
+[OVERVIEW:CONSTRAINTS1]
+otherConstraints1=La llicència d'ús de les dades elaborades per l'ICC, en qualsevol, suport s'entén atorgada únicament al sol·licitant, de manera personal, revocable, puntual, no exclusiva i intransferible, condicionada en tot moment al compliment de les clàusules que es detallen a l'apartat "Condicions d'ús" al Web de l'ICC. El sol·licitant no adquireix cap títol, dret o interès sobre la informació cedida, podent-la destinar únicament al seu ús personal o al de l'empresa a la que representa, per aquelles activitats directament relacionades amb el seu objecte social.
+tipusConstraints=1
+accessConstraints=001,006,008
+useConstraints=005,006,008
+
+[DISTRIBUTION_INFO:ORGANISME_1:ONLINE_RESOURCE_1]
+linkage=http://www.icc.cat
+description=information
+function=002
+
+[DISTRIBUTION_INFO:ORGANISME_1:TRANSFER_OPTIONS_1:MEDIUM]
+name=001
+
+[QUALITY:LINEAGE]
+LineageStatement=La delimitació municipal primària fou la resultant de l'anàlisi, feta a l'Institut Cartogràfic de Catalunya, de la documentació (actes, quaderns i cartografia a escala 1:25 000) dels expedients de delimitació municipal dipositats a l'Instituto Geográfico Nacional. S'ha considerat, també, les posteriors alteracions territorials publicades al DOGC i de les quals n'existeix acta de delimitació. La georeferenciació d'aquesta delimitació es recolza en la cartografia topogràfica 1:50 000 de l'Institut Cartogràfic de Catalunya, podent-se per tant haver modificat línies de la delimitació degut a canvis en la cartografia de referència. La divisió comarcal és l'aprovada per la Generalitat de Catalunya. La representació de la seva delimitació és un subconjunt de la municipal. La denominació oficial de les comarques, dels municipis i dels caps de municipi és l'establerta al Nomenclàtor oficial de toponímia major de Catalunya. La codificació de municipis, comarques i províncies és l'aprovada per la Generalitat de Catalunya. La georeferenciació dels caps de municipi es realitza a partir del Nomenclàtor i d'altres fonts existents. Els caps de comarca són un subconjunt dels de municipi. Les dades de superfície municipal es determinen automàticament a partir de la delimitació inclosa a la Base municipal 1:50 000 de l'Institut Cartogràfic de Catalunya, llevat d'aquells municipis que tenen el seu Mapa municipal 1:5 000 aprovat per la Comissió de Delimitació Territorial de Catalunya, per als quals la dada de superfície municipal prové directament d'aquest mapa. La superfície de les comarques i províncies es determina per la suma de les superfícies dels municipis que les conformen. Aquesta nova revisió (edició) de la base incorpora les modificacions aprovades fins a la data de referència.
+DescripcioFonts=De la delimitació municipal primària: Instituto Geográfico Nacional, actes, quaderns i cartografia a escala 1:25 000 dels expedients de delimitació municipal; de les alteracions territorials posteriors: Generalitat de Catalunya, DOGC; del recolzament de la delimitació: cartografia topogràfica de l'escala de referència; de la divisió comarcal: Generalitat de Catalunya, Llei 22/1987 de 16 de desembre (DOGC núm. 929, 18-12-87), Llei 5/1988 de 28 de març (DOGC núm. 992, 16-5-88) i Llei 3/1990 de 8 de gener (DOGC núm. 1243, 17-1-90); de la denominació oficial de les comarques, dels municipis i dels caps de municipi: Generalitat de Catalunya, Nomenclàtor oficial de toponímia major de Catalunya de l'any 2003 i posteriors modificacions; de la codificació de municipis, comarques i províncies: Generalitat de Catalunya, Ordre de 25 de febrer de 1993 (DOGC núm. 1734, 19-4-93) i posteriors modificacions publicades al DOGC. La data límit de publicació de les modificacions de delimitació, denominació i codificació que han estat considerades és: 2012-01-01.
+processes=1
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=GeMM: Gestor de Metadades i Relacions de Bases de Dades del MiraMon v. 8.0
+purpose=Edició de metadades
+date=20161028 12172243+0200
+NomFitxer=..\..\..\..\MiraMon\mm32.exe
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=Param1
+sentit=2
+TypeValues=S
+ResultUnits=
+source=<Parent>
+
+[DISTRIBUTION_INFO:ORGANISME_1]
+role=003
+OrganisationName=Institut Cartogràfic de Catalunya (ICC)
+phoneVoice1=+34 93 567 15 00
+phoneFacsimile1=+34 93 567 15 67
+deliveryPoint1=Parc de Montjuïc
+city=Barcelona
+postalCode=E-08038
+electronicMailAddress1=centre.atencio@icc.cat
+n_onlineResource=1
+nFormat=1
+nTransferOptions=1
+nOrderProcess=1
+
+[DISTRIBUTION_INFO:ORGANISME_1:FORMAT_1]
+name=SHP
+version=-
+
+[DISTRIBUTION_INFO:ORGANISME_1:TRANSFER_OPTIONS_1]
+unitsOfDistribution=Conjunt de dades complet
+n_onlineResource=1
+volumes=1
+
+[DISTRIBUTION_INFO:ORGANISME_1:TRANSFER_OPTIONS_1:ONLINE_RESOURCE_1]
+linkage=http://www.icc.cat/vissir3/
+function=001
+
+[DISTRIBUTION_INFO:ORGANISME_1:ORDER_PROCESS_1]
+fees=Informació digital gratuïta; CD i DVD segons tarifes vigents.
+orderingInstructions=El producte es pot obtenir per via telemàtica, tal i com s'indica a l'apartat "Opcions de transferència" d'aquestes metadades, y en els centres d'atenció al públic especificats al Web de l'ICC.
+
+[DISTRIBUTION_INFO]
+nDistributors=1
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE

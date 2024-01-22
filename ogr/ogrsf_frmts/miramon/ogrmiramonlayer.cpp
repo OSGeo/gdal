@@ -37,14 +37,10 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                          const OGRSpatialReference *poSRS, int bUpdateIn,
                          char **papszOpenOptions)
     : poFeatureDefn(nullptr), iNextFID(0), bUpdate(CPL_TO_BOOL(bUpdateIn)),
-      // Assume header complete in readonly mode.
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
       papszKeyedValues(nullptr), bValidFile(false), hMMFeature(),
-      hMiraMonLayer(), pMMHeader(), hLayerDB(), papszValues(nullptr), padfValues(nullptr)
+      hMiraMonLayer(), hLayerDB(), papszValues(nullptr), padfValues(nullptr)
 {
-
-    if (m_fp == nullptr)
-        return;
 
     CPLDebug("MiraMon", "Creating/Opening MiraMon layer...");
     /* -------------------------------------------------------------------- */
@@ -55,7 +51,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     poFeatureDefn->Reference();
 
     /* -------------------------------------------------------------------- */
-    /*      Establish the nMemoryRatio to use                                    */
+    /*      Establish the nMemoryRatio to use                               */
     /* -------------------------------------------------------------------- */
     const char *pszMemoryRatio=
         CSLFetchNameValue(papszOpenOptions, "MemoryRatio");
@@ -68,118 +64,57 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     if (bUpdate)
     {
         /* -------------------------------------------------------------------- */
+        /*      Establish the version to use                                    */
+        /* -------------------------------------------------------------------- */
+        const char *pszVersion =
+            CSLFetchNameValue(papszOpenOptions, "Version");
+        int nMMVersion;
+
+        if (pszVersion)
+        {
+            if (EQUAL(pszVersion, "V11"))
+                nMMVersion = MM_32BITS_VERSION;
+            else if (EQUAL(pszVersion, "V20") || EQUAL(pszVersion, "last_version"))
+                nMMVersion = MM_64BITS_VERSION;
+            else
+                nMMVersion = MM_32BITS_VERSION; // Default
+        }
+        else
+            nMMVersion = MM_32BITS_VERSION; // Default
+
+        /* -------------------------------------------------------------------- */
         /*      Preparing to write the layer                                    */
         /* -------------------------------------------------------------------- */
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
-            int nMMVersion;
-
-            // reading the minimal 
-            MMReadHeader(m_fp, &pMMHeader);
+            // Init the feature (memory, num,...)
             MMInitFeature(&hMMFeature);
 
-            nMMVersion = MMGetVectorVersion(&pMMHeader);
-            if (nMMVersion == MM_UNKNOWN_VERSION)
-                bValidFile = false;
-            if (pMMHeader.aFileType[0] == 'P' &&
-                pMMHeader.aFileType[1] == 'N' &&
-                pMMHeader.aFileType[2] == 'T')
-            {
-                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
-                {
-                    poFeatureDefn->SetGeomType(wkbPoint25D);
-                    MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                    hMiraMonLayer.eLT = MM_LayerType_Point3d;
-                }
-                else
-                {
-                    poFeatureDefn->SetGeomType(wkbPoint);
-                    MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                    hMiraMonLayer.eLT = MM_LayerType_Point;
-                }
-                MMInitLayerByType(&hMiraMonLayer);
-                hMiraMonLayer.bIsBeenInit = 1;
-                hMiraMonLayer.bIsPoint = 1;
-            }
-            else if (pMMHeader.aFileType[0] == 'A' &&
-                pMMHeader.aFileType[1] == 'R' &&
-                pMMHeader.aFileType[2] == 'C')
-            {
-                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
-                {
-                    poFeatureDefn->SetGeomType(wkbLineString25D);
-                    MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                    hMiraMonLayer.eLT = MM_LayerType_Arc3d;
-                }
-                else
-                {
-                    poFeatureDefn->SetGeomType(wkbLineString);
-                    MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                    hMiraMonLayer.eLT = MM_LayerType_Arc;
-                }
-                MMInitLayerByType(&hMiraMonLayer);
-                hMiraMonLayer.bIsBeenInit = 1;
-                hMiraMonLayer.bIsArc = 1;
-            }
-            else if (pMMHeader.aFileType[0] == 'P' &&
-                pMMHeader.aFileType[1] == 'O' &&
-                pMMHeader.aFileType[2] == 'L')
-            {
-                // 3D
-                if (pMMHeader.Flag & MM_LAYER_3D_INFO)
-                {
-                    if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
-                        poFeatureDefn->SetGeomType(wkbMultiPolygon25D);
-                    else
-                        poFeatureDefn->SetGeomType(wkbPolygon25D);
-                    MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                    hMiraMonLayer.eLT = MM_LayerType_Pol3d;
-                }
-                else
-                {
-                    if (pMMHeader.Flag & MM_LAYER_MULTIPOLYGON)
-                        poFeatureDefn->SetGeomType(wkbMultiPolygon);
-                    else
-                        poFeatureDefn->SetGeomType(wkbPolygon);
-                    MMInitLayer(&hMiraMonLayer, pszFilename,
-                        nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                    hMiraMonLayer.eLT = MM_LayerType_Pol;
-                }
-                MMInitLayerByType(&hMiraMonLayer);
-                hMiraMonLayer.bIsBeenInit = 1;
-                hMiraMonLayer.bIsPolygon = 1;
-            }
-            else
-            {
-                // Unknown type
-                MMInitLayer(&hMiraMonLayer, pszFilename,
-                    nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
-                hMiraMonLayer.bIsBeenInit = 0;
-                hMiraMonLayer.bNameNeedsCorrection = 1;
-            }
+            // Init the Layer (not in disk, only in memory until the first element is readed)
+            MMInitLayer(&hMiraMonLayer, pszFilename,
+                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE);
+            hMiraMonLayer.bIsBeenInit = 0;
         }
+
+        // Saving the HRS in the layer structure
         if (poSRS)
         {
             if (poSRS->GetAuthorityName(nullptr) &&
                     EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
                 hMiraMonLayer.pSRS = CPLStrdup(poSRS->GetAuthorityCode(nullptr));
         }
-        
-        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
     }
     else
     {
+        if (m_fp == nullptr)
+            return;
+
         /* ---------------------------------------------------------------- */
         /*      Read the header.                                            */
         /* -----------------------------------------------------------------*/
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
-            int nMMVersion;
+            int nMMLayerVersion;
 
             if (MMInitLayerToRead(&hMiraMonLayer, m_fp, pszFilename))
             {
@@ -187,8 +122,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 return;
             }
 
-            nMMVersion = MMGetVectorVersion(&hMiraMonLayer.TopHeader);
-            if (nMMVersion == MM_UNKNOWN_VERSION)
+            nMMLayerVersion = MMGetVectorVersion(&hMiraMonLayer.TopHeader);
+            if (nMMLayerVersion == MM_UNKNOWN_VERSION)
                 bValidFile = false;
             if (hMiraMonLayer.bIsPoint)
             {
@@ -810,6 +745,9 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 			    break;
 		    case wkbPolygon:
 		    case wkbMultiPolygon:
+            case wkbPolyhedralSurface:
+            case wkbTIN:
+            case wkbTriangle:
                 hMiraMonLayer.eLT=MM_LayerType_Pol;
 			    break;
             case wkbPolygon25D:
@@ -831,16 +769,16 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     MMResetFeature(&hMMFeature);
 
     // Reads objects with coordinates and transform them to MiraMon
-    eErr = LoadGeometry(OGRGeometry::ToHandle(poGeom), true, poFeature);
+    eErr = MMLoadGeometry(OGRGeometry::ToHandle(poGeom), true, poFeature);
 
     // Writes coordinates to the disk
     if (eErr == OGRERR_NONE)
     {
-        eErr=WriteGeometry(true, poFeature);
+        eErr=MMWriteGeometry(true, poFeature);
         return eErr;
     }
     else
-        CPLDebug("MiraMon", "Error in LoadGeometry()");
+        CPLDebug("MiraMon", "Error in MMLoadGeometry()");
 
     return eErr;
 }
@@ -918,12 +856,12 @@ OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
  }
 
 /************************************************************************/
-/*                           LoadGeometry()                             */
+/*                           MMLoadGeometry()                             */
 /*                                                                      */
 /*      Loads on a MiraMon object Feature all readed coordinates        */
 /*                                                                      */
 /************************************************************************/
-OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
+OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom,
                                         bool bExternalRing,
                                         OGRFeature *poFeature)
 
@@ -947,7 +885,7 @@ OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
     // If the layer has unknown type let's guess it from the feature.
     if(eLT == MM_LayerType_Unknown)
         eLT=poFeatureDefn->GetGeomType();
-
+    
     if (eLT == wkbMultiLineString || eLT == wkbMultiPoint)
     {
         for (int iGeom = 0; iGeom < nGeom && eErr == OGRERR_NONE; iGeom++)
@@ -955,16 +893,16 @@ OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
             OGRGeometryH poNewGeometry=OGR_G_GetGeometryRef(hGeom, iGeom);
             MMResetFeature(&hMMFeature);
             // Reads all coordinates
-            eErr = LoadGeometry(poNewGeometry, true, poFeature);
+            eErr = MMLoadGeometry(poNewGeometry, true, poFeature);
 
             // Writes them to the disk
             if(eErr == OGRERR_NONE)
-                return WriteGeometry(true, poFeature);
+                return MMWriteGeometry(true, poFeature);
         }
         return eErr;
                     
     }
-    else if (eLT == wkbMultiPolygon)
+    else if (eLT == wkbMultiPolygon || eLT == wkbPolyhedralSurface)
     {
         MMResetFeature(&hMMFeature);
         for (int iGeom = 0; iGeom < nGeom && eErr == OGRERR_NONE; iGeom++)
@@ -972,7 +910,7 @@ OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
             OGRGeometryH poNewGeometry=OGR_G_GetGeometryRef(hGeom, iGeom);
                 
             // Reads all coordinates
-            eErr = LoadGeometry(poNewGeometry, true, poFeature);
+            eErr = MMLoadGeometry(poNewGeometry, true, poFeature);
             if(eErr != OGRERR_NONE)
                 return eErr;
         }
@@ -1015,7 +953,7 @@ OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
 /*                                                                      */
 /************************************************************************/
 
-OGRErr OGRMiraMonLayer::WriteGeometry(bool bExternalRing,
+OGRErr OGRMiraMonLayer::MMWriteGeometry(bool bExternalRing,
                                         OGRFeature *poFeature)
 
 {

@@ -11,6 +11,8 @@ CPL_C_START // Necessary for compiling C in GDAL project
 
 #define MM_UNDEFINED_STATISTICAL_VALUE (2.9E+301)
 
+#define MM_CPL_PATH_BUF_SIZE 2048
+
 // BIT 1
 #define MM_BIT_1_ON     0x02    // Generated using MiraMon
 // BIT 3

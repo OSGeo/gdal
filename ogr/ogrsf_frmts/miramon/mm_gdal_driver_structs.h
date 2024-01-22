@@ -12,7 +12,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #else
 #include "mm_gdal\mm_gdal_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
-// Falta això o es queixa a diversos llocs
+// Falta aixÃ² o es queixa a diversos llocs
 #include "str_snyd.h"	// Per a struct SNY_TRANSFORMADOR_GEODESIA  
 #endif
 
@@ -312,7 +312,7 @@ struct MMAdmDatabase
 {
     // MiraMon Database (extended DBF)
     // Name of the extended DBF file
-    char *pszExtDBFLayerName; 
+    char pszExtDBFLayerName[MM_CPL_PATH_BUF_SIZE]; 
      // Pointer to the extended DBF file
     FILE_TYPE *pFExtDBF;
     // Pointer to a MiraMon database (auxiliar)
@@ -446,19 +446,19 @@ struct MM_PAL_MEM
 struct MiraMonPointLayer
 {
     // Name of the layer with extension
-    char *pszLayerName; 
+    char pszLayerName[MM_CPL_PATH_BUF_SIZE]; 
     FILE_TYPE *pF;
     
     // Coordinates x,y of the points
     struct MM_FLUSH_INFO FlushTL;
     char *pTL; // (II mode)
-    char *pszTLName; // Temporary file where to flush
+    char pszTLName[MM_CPL_PATH_BUF_SIZE]; // Temporary file where to flush
     FILE_TYPE *pFTL; // Pointer to temporary file where to flush
     
     // Z section
     // Temporal file where the Z coordinates are stored
     // if necessary
-    char *psz3DLayerName;
+    char psz3DLayerName[MM_CPL_PATH_BUF_SIZE];
     FILE_TYPE *pF3d; 
     struct MM_ZSection pZSection;
 
@@ -466,12 +466,12 @@ struct MiraMonPointLayer
     struct MMAdmDatabase MMAdmDB;
 
     // Metadata name
-    char *pszREL_LayerName; 
+    char pszREL_LayerName[MM_CPL_PATH_BUF_SIZE];
 };
 
 struct MiraMonNodeLayer
 {
-    char *pszLayerName; // Name of the layer with extension
+    char pszLayerName[MM_CPL_PATH_BUF_SIZE]; // Name of the layer with extension
     FILE_TYPE *pF;
     
     // Header of every node
@@ -482,23 +482,23 @@ struct MiraMonNodeLayer
     // NL: arcs confuent to node 
     struct MM_FLUSH_INFO FlushNL; // (II mode)
     char *pNL; // 
-    char *pszNLName; // Temporary file where to flush
+    char pszNLName[MM_CPL_PATH_BUF_SIZE]; // Temporary file where to flush
     FILE_TYPE *pFNL; // Pointer to temporary file where to flush
 
     struct MMAdmDatabase MMAdmDB;
 
     // Metadata name
-    char *pszREL_LayerName; 
+    char pszREL_LayerName[MM_CPL_PATH_BUF_SIZE];
 };
 
 struct MiraMonArcLayer
 {
-    char *pszLayerName; // Name of the layer with extension
+    char pszLayerName[MM_CPL_PATH_BUF_SIZE]; // Name of the layer with extension
     FILE_TYPE *pF;
 
     // Temporal file where the Z coordinates are stored
     // if necessary
-    char *psz3DLayerName;
+    char psz3DLayerName[MM_CPL_PATH_BUF_SIZE];
     FILE_TYPE *pF3d; 
                 
     // Header of every arc
@@ -510,7 +510,7 @@ struct MiraMonArcLayer
     struct MM_FLUSH_INFO FlushAL;
     int nALElementSize; //    16 // Two double coordinates
     char *pAL; // Arc List  // (II mode)
-    char *pszALName; // Temporary file where to flush
+    char pszALName[MM_CPL_PATH_BUF_SIZE]; // Temporary file where to flush
     FILE_TYPE *pFAL; // Pointer to temporary file where to flush
         
     // Z section
@@ -532,19 +532,19 @@ struct MiraMonArcLayer
     struct MMAdmDatabase MMAdmDB;
 
     // Metadata name
-    char *pszREL_LayerName; 
+    char pszREL_LayerName[MM_CPL_PATH_BUF_SIZE]; 
 };
 
 struct MiraMonPolygonLayer
 {
-    char *pszLayerName; // Name of the layer with extension
+    char pszLayerName[MM_CPL_PATH_BUF_SIZE]; // Name of the layer with extension
     FILE_TYPE *pF;
 
     // PS part
     struct MM_FLUSH_INFO FlushPS;
     int nPSElementSize; 
     char *pPS;  // Polygon side (II mode)
-    char *pszPSName; // Temporary file where to flush
+    char pszPSName[MM_CPL_PATH_BUF_SIZE]; // Temporary file where to flush
     FILE_TYPE *pFPS; // Pointer to temporary file where to flush
     
     // Header of every polygon
@@ -556,7 +556,7 @@ struct MiraMonPolygonLayer
     struct MM_FLUSH_INFO FlushPAL;
     int nPALElementSize;
     char *pPAL; // Polygon Arc List  // (II mode)
-    char *pszPALName; // Temporary file where to flush
+    char pszPALName[MM_CPL_PATH_BUF_SIZE]; // Temporary file where to flush
     FILE_TYPE *pFPAL; // Pointer to temporary file where to flush
 
     // Arc layer associated to the arc layer
@@ -566,7 +566,7 @@ struct MiraMonPolygonLayer
     struct MMAdmDatabase MMAdmDB;
 
     // Metadata name
-    char *pszREL_LayerName; 
+    char pszREL_LayerName[MM_CPL_PATH_BUF_SIZE]; 
 };
 
 #define MM_VECTOR_LAYER_LAST_VERSION    1
@@ -627,6 +627,9 @@ struct MiraMonVectLayerInfo
     // Layer name
     char *pszSrcLayerName;
 
+    // Layer title in metadata
+    char *szLayerTitle;
+
     // Pointer to the main REL name (do not free it)
     char *pszMainREL_LayerName;
 
@@ -660,8 +663,7 @@ struct MiraMonVectLayerInfo
 
     int eLT;    // Type of layer: Point, line or polygon (3d or not)
     int bIsBeenInit; // 1 if layer has already been initialized
-    int bNameNeedsCorrection; // 1 if name needs the extension to be added
-
+    
     // Point layer
     struct MiraMonPointLayer MMPoint;
 

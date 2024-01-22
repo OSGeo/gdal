@@ -50,7 +50,6 @@ class OGRMiraMonLayer final : public OGRLayer,
     GUIntBig iNextFID;
 
     struct MiraMonVectLayerInfo hMiraMonLayer; // MiraMon layer
-    struct MM_TH pMMHeader; // Main header
     struct MiraMonFeature hMMFeature; // Feature reading/writing
     struct MiraMonDataBase hLayerDB;
 
@@ -81,10 +80,10 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
                     bool bExternalRing, int eLT);
-    OGRErr OGRMiraMonLayer::LoadGeometry(OGRGeometryH hGeom,
+    OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom,
                                         bool bExternalRing,
                                         OGRFeature *poFeature);
-    OGRErr WriteGeometry(bool bExternalRing, 
+    OGRErr MMWriteGeometry(bool bExternalRing, 
                     OGRFeature *poFeature);
     GIntBig GetFeatureCount(int bForce);
     
@@ -129,7 +128,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
 {
     OGRMiraMonLayer **papoLayers;
     int nLayers;
-    char *pszName;
+    char *pszDSName;
     bool bUpdate;
        
   public:
@@ -143,7 +142,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
 
     const char *GetName() override
     {
-        return pszName;
+        return pszDSName;
     }
     int GetLayerCount() override
     {

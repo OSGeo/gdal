@@ -1,0 +1,26 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+descriptor=Identificador Gràfic intern
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE

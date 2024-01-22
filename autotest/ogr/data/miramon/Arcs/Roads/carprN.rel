@@ -1,0 +1,106 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_1_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+descriptor=Identificador gràfic intern
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20130529 08433322+0200
+characterSet=006
+nOrganismes=2
+FileIdentifier=carpr_64878
+
+[METADADES:ORGANISME_1]
+role=009
+OrganisationName=Centre de Recerca Ecològica i Aplicacions Forestals (CREAF)
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Generalitat de Catalunya
+
+[IDENTIFICATION]
+AlternateTitle1=Carreteres principals
+topicCategory=018
+language=cat
+n_keywords=2
+code=carpr_64878
+codeSpace=
+DatasetTitle=Xarxa principal de carreteres [DMAH]
+keyword_type1=2
+keyword_id1=17866
+keyword_type2=5
+keyword_id2=16640
+
+[OVERVIEW:ASPECTES_TECNICS]
+MidaUsuari=1
+comment1=Nombre d'entitats: 3632
+comment2=El fitxer era anteriorment en projecció UTM-31N-UB/ICC
+
+[EXTENT]
+MinX=261537.226462602
+MaxX=514980.053407917
+MinY=4484796.59591181
+MaxY=4751796.81242896
+toler_env=0
+GeographicIdentifierCode=Catalunya
+
+[OVERVIEW]
+CreationDate=20130529 08433308+0200
+nOrganismes=4
+nConstraints=0
+summary=El conjunt de dades conté les carreteres principals.
+purpose=Cartografia de referència
+
+[OVERVIEW:ORGANISME_1]
+role=006
+OrganisationName=Institut Cartogràfic de Catalunya (ICC)
+
+[OVERVIEW:ORGANISME_2]
+role=005
+OrganisationName=Generalitat de Catalunya
+
+[OVERVIEW:ORGANISME_3]
+role=009
+OrganisationName=Generalitat de Catalunya
+
+[OVERVIEW:ORGANISME_4]
+role=009
+OrganisationName=Generalitat de Catalunya
+
+[QUALITY:LINEAGE]
+LineageStatement=El conjunt de dades conté les carreteres principals.
+DescripcioFonts=La xarxa principal de carreteres procedeix de la Base cartogràfica 1:250.000 v1 (BC-250M) de l'Institut Cartogràfic de Catalunya (ICC).
+processes=1
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=GeMM: Gestor de Metadades i Relacions de Bases de Dades del MiraMon v. 7.0g
+purpose=Edició de metadades
+date=20110801 12431869+0200
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+OrganisationName=UAB-CREAF
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE

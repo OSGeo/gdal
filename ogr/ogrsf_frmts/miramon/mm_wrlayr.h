@@ -57,6 +57,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
     #define form_filename_function(a,b)         MuntaPath((a),(b),TRUE)
+    #define form_filename_extension_function(a,b)  MuntaPath((a),(b),TRUE) // ·$· REVISAR (es simplement afegir l'extensio pero demanant memoria)
 #else
     #define calloc_function(a) CPLCalloc(1,(a))
     #define realloc_function CPLRealloc
@@ -91,6 +92,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
     #define form_filename_function(a,b)       CPLFormFilename((a),(b),NULL)
+    #define form_filename_extension_function(a,b)       CPLFormFilename(NULL,(a),(b))
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -122,6 +124,7 @@ int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
 void MMDestroyLayer(struct MiraMonVectLayerInfo **hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
+void MMInitHeader(struct MM_TH *pMMHeader, int layerType, int nVersion);
 int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion);
 int MMReadAHArcSection(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMReadPHPolygonSection(struct MiraMonVectLayerInfo *hMiraMonLayer);

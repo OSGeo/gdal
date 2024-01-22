@@ -1,0 +1,287 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_1_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+descriptor=Identificador Gràfic intern
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:MENA_DECLA]
+descriptor=Mena de declaració
+IndexsJoinTaula=MENA_DECLA_TESAURUS_MENADECLARACIO_DBF
+JoinTaula_MENA_DECLA_TESAURUS_MENADECLARACIO_DBF=MENA_DECLA_TESAURUS_MENADECLARACIO_DBF
+
+[TAULA_MENA_DECLA_TESAURUS_MENADECLARACIO_DBF]
+NomFitxer=Tesaurus_MenaDeclaracio.dbf
+TipusRelacio=RELACIO_N_1_DICC
+AssociatRel=MENA_DECLA
+
+[TAULA_MENA_DECLA_TESAURUS_MENADECLARACIO_DBF:MENA_DECLA]
+descriptor=Mena de declaració
+
+[TAULA_MENA_DECLA_TESAURUS_MENADECLARACIO_DBF:DESC_DECLA]
+descriptor=Descripció de la declaració
+
+[TAULA_PRINCIPAL:NOM_DECLAR]
+descriptor=Nom de la declaració
+
+[TAULA_PRINCIPAL:ESPECIE]
+descriptor=Espècie
+
+[TAULA_PRINCIPAL:INE]
+descriptor=Codi INE
+
+[TAULA_PRINCIPAL:TERME_MUNI]
+descriptor=Terme municipal
+
+[TAULA_PRINCIPAL:COMARCA]
+descriptor=Comarca
+
+[TAULA_PRINCIPAL:MATRICULA]
+descriptor=Matrícula
+
+[TAULA_PRINCIPAL:ESTAT_DETA]
+descriptor=Estat
+
+[TAULA_PRINCIPAL:ESTAT_RESU]
+descriptor=Descrició de l'estat
+
+[TAULA_PRINCIPAL:URL]
+descriptor=Fitxa a Internet
+EsHipervincle=1
+
+[TAULA_PRINCIPAL:COORX]
+descriptor=Coordenada X (probablement ED50)
+visible=0
+unitats=m
+
+[TAULA_PRINCIPAL:COORY]
+descriptor=Coordenada Y (probablement ED50)
+visible=0
+unitats=m
+
+[TAULA_PRINCIPAL:OBJECTID]
+descriptor=Identificador d'objecte
+visible=0
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20220301 12553864+0100
+characterSet=006
+nOrganismes=2
+FileIdentifier=ArbresMonumentalsT_30068
+
+[METADADES:ORGANISME_1]
+role=009
+OrganisationName=Generalitat de Catalunya
+n_onlineResource=1
+
+[METADADES:ORGANISME_1:ONLINE_RESOURCE_1]
+linkage=https://mediambient.gencat.cat/ca/05_ambits_dactuacio/patrimoni_natural/arbres-monumentals/
+function=002
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+AlternateTitle1=ArbresMonumentals
+AlternateTitle2=AM
+topicCategory=001,002,007
+language=cat
+n_keywords=5
+code=ArbresMonumentalsT_30068
+codeSpace=
+DatasetTitle=Arbres i arbredes monumentals 2D v1.1 - novembre 2009
+keyword_type1=5
+keyword1=Arbredes monumentals
+keyword_type2=5
+keyword2=Arbres monumentals
+keyword_type3=5
+keyword_id3=34378
+keyword_type4=5
+keyword_id4=33874
+keyword_type5=5
+keyword_id5=1080
+
+[OVERVIEW:ASPECTES_TECNICS]
+comment1=Nombre de punts: 275
+comment2=El fitxer era anteriorment en la projecció UTM-31N-ETRS89
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-UB/ICC
+EquivalentScaleDenominator=50000
+
+[EXTENT]
+MinX=265402.000377024
+MaxX=512610.996233809
+MinY=4498865.00307845
+MaxY=4742560.00397444
+toler_env=0
+GeographicIdentifierCode=Catalunya
+
+[OVERVIEW]
+CreationDate=20220301 12553519+0100
+ContentDate=19870609,20091199
+summary=Conjunt d'informació que conté els arbres i les arbredes monumentals de Catalunya que s'han declarat, des de la primera Ordre de declaració de l'any 1987, segons s'estableix en els decrets 214/1987, de 9 de juny, 47/1988, d'11 de febrer, i 120/1989, de 17 d'abril, sobre declaració d'arbres i arbredes monumentals, d'interès comarcal i local. Els arbres i les arbredes monumentals de Catalunya, es descriuen mitjançant la seva representació en dues dimensions (2D), així com mitjançant uns atributs que especifiquen les seves característiques físiques i administratives.
+purpose=La correcta ubicació dels arbres monumentals és necessària per la planificació i gestió territorial, segons el Decret 214/1987 de declaració d'arbres monumentals i el Decret 47/1988 sobre la declaració d'arbres d'interés comarcal i local.
+
+[QUALITY:LINEAGE]
+LineageStatement=Localització dels punts on s'ubiquen els Arbres Monumentals de Catalunya a partir de 3 mètodes: GPS, ortofotomapa 1:5 000 de l'ICC i topogràfic 1:5 000 i 1:50 000 de l'ICC. Els Decrets 214/1987, de 9 de juny i 120/1989, de 17 d'abril, sobre declaració d'arbres i arbredes monumentals, estableixen el mecanisme de protecció dels arbres i arbredes els quals han estat declarats per les 9 ordres següents: 1. Ordre 20 octubre 1987 (DOGC 910, 04-11-1987) 2. Ordre 30 agost 1988 (DOGC 1042, 12-09-1988) 3. Ordre 8 febrer 1990 (DOGC 1262, 02-03-1990) 4. Ordre 19 abril 1991 (DOGC 1440, 08-05-1991) 5. Ordre 3 desembre 1992 (DOGC 1687, 28-12-1992) 6. Ordre 18 gener 1995 (DOGC 2005, 30-01-1995) 7. Ordre 3 setembre 1997 (DOGC 2480, 22-09-1997) 8. Ordre 6 juliol 2000 (DOGC 3189, 24-07-2000) 9. Ordre MAH 228/2005, 2 maig (DOGC 4393, 27-05-2005). Especificacions tècniques: Arbres monumentals 2D v1.1 de 03/07/2014.
+DescripcioFonts=Ortofoto 1:5 000 (ICC), base topogràfica 1:5 000 v2 (ICC) i base topogràfica 1:50 000 v3 (ICC).
+processes=1,2
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=SHPTop_64.exe 2 C:\Mapes\FLORA_ARBRESMONUMENTALS\FLORA_ARBRESMONUMENTALS.shp C:\Mapes\FLORA_ARBRESMONUMENTALS\MM\ArbresMonumentals /SLD=C:\Mapes\FLORA_ARBRESMONUMENTALS\ESTAT_ARBRES.sld
+purpose=L'opció 2 del programa realitza una simple importació del format sense modificar la geometria o la topologia de les entitats gràfiques. Per a fitxers SHP de polilínies, es generen fitxers ARC/NOD que poden presentar interseccions entre línies, superposicions i altres situacions no desitjades en un model topològic. Per a fitxers SHP de polígons, es genera un fitxer ARC on cada polígon SHP és representa per un arc tancat amb la vora del polígon (o més d'un arc si aquest polígon conté forats o enclavaments exteriors) i, per tant, les vores de polígons poden estar duplicades si els polígons són adjacents (tal com passa en el fitxer SHP). També es genera un fitxer de grups de polígons no topològics POL (polígons explícits) en el mateix ordre que estan en el fitxer SHP. En no realitzar cap transformació, aquest procés és més ràpid que el corresponent a l'opció 1 i pot ser igualment visualitzat amb MiraMon; tanmateix, en no contenir informació topològica, les eines d'anàlisi poden no acceptar-los com a entrada. Construir topologia sobre aquest fitxer implicaria l'ús combinat de les eines d'estructuració topològica: estructurar els arcs amb LINARC i, si el fitxer és de polígons, fer un nou ciclat de polígons amb CICLAR i transferir els atributs entre polígons amb ATRITOP.
+date=20220208 20520695+0100
+NomFitxer=..\..\..\MiraMon\SHPTop_64.exe
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Xavier Pons
+PositionName=Catedràtic d'Universitat
+OrganisationName=UAB
+
+[QUALITY:LINEAGE:PROCESS1:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=Param1
+TypeValues=N
+ResultValue=2
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT2]
+identifier=Param2
+TypeValues=S
+ResultUnits=
+source=1
+
+[QUALITY:LINEAGE:SOURCE1]
+NomFitxer=..\FLORA_ARBRESMONUMENTALS.shp
+
+[QUALITY:LINEAGE:PROCESS1:INOUT3]
+identifier=Param3
+sentit=1
+TypeValues=S
+ResultUnits=
+source=2
+
+[QUALITY:LINEAGE:SOURCE2]
+NomFitxer=ArbresMonumentals
+
+[QUALITY:LINEAGE:PROCESS1:INOUT4]
+identifier=SLD
+TypeValues=S
+ResultUnits=
+source=3
+
+[QUALITY:LINEAGE:SOURCE3]
+NomFitxer=..\ESTAT_ARBRES.sld
+
+[QUALITY:LINEAGE:PROCESS2]
+nOrganismes=1
+history=CanviPrj_64.exe "c:\Users\e.prat\OneDrive - CREAF\ColleccionsPreferides\ColleccionsPreferides_ED50\Catalunya\ArbresMonumentals\ArbresMonumentalsETRS89.pnt" "c:\Users\e.prat\OneDrive - CREAF\ColleccionsPreferides\ColleccionsPreferides_ED50\Catalunya\ArbresMonumentals\ArbresMonumentals.pnt" UTM-31N-UB/ICC
+purpose=Permet fer la transformació per a vectors estructurats de punts (PNT), d'arcs (ARC) i polígons (POL). Per a transformar fitxers de nodes (NOD) cal transformar el fitxer d'arcs associat.
+date=20220301 12553871+0100
+NomFitxer=..\..\..\..\..\..\..\MiraMon\CanviPrj_64.exe
+
+[QUALITY:LINEAGE:PROCESS2:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS2:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS2:INOUT1]
+identifier=Param1
+TypeValues=S
+ResultUnits=
+source=4
+
+[QUALITY:LINEAGE:SOURCE4]
+NomFitxer=ArbresMonumentalsETRS89.pnt
+processes=3
+
+[QUALITY:LINEAGE:PROCESS3]
+nOrganismes=1
+history=SHPTop_64.exe 2 C:\Mapes\FLORA_ARBRESMONUMENTALS\FLORA_ARBRESMONUMENTALS.shp C:\Mapes\FLORA_ARBRESMONUMENTALS\MM\ArbresMonumentals /SLD=C:\Mapes\FLORA_ARBRESMONUMENTALS\ESTAT_ARBRES.sld
+purpose=L'opció 2 del programa realitza una simple importació del format sense modificar la geometria o la topologia de les entitats gràfiques. Per a fitxers SHP de polilínies, es generen fitxers ARC/NOD que poden presentar interseccions entre línies, superposicions i altres situacions no desitjades en un model topològic. Per a fitxers SHP de polígons, es genera un fitxer ARC on cada polígon SHP és representa per un arc tancat amb la vora del polígon (o més d'un arc si aquest polígon conté forats o enclavaments exteriors) i, per tant, les vores de polígons poden estar duplicades si els polígons són adjacents (tal com passa en el fitxer SHP). També es genera un fitxer de grups de polígons no topològics POL (polígons explícits) en el mateix ordre que estan en el fitxer SHP. En no realitzar cap transformació, aquest procés és més ràpid que el corresponent a l'opció 1 i pot ser igualment visualitzat amb MiraMon; tanmateix, en no contenir informació topològica, les eines d'anàlisi poden no acceptar-los com a entrada. Construir topologia sobre aquest fitxer implicaria l'ús combinat de les eines d'estructuració topològica: estructurar els arcs amb LINARC i, si el fitxer és de polígons, fer un nou ciclat de polígons amb CICLAR i transferir els atributs entre polígons amb ATRITOP.
+date=20220208 20520695+0100
+NomFitxer=..\..\..\MiraMon\SHPTop_64.exe
+
+[QUALITY:LINEAGE:PROCESS3:ORGANISME_1]
+IndividualName=Xavier Pons
+PositionName=Catedràtic d'Universitat
+OrganisationName=UAB
+
+[QUALITY:LINEAGE:PROCESS3:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS3:INOUT1]
+identifier=Param1
+TypeValues=N
+ResultValue=2
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS3:INOUT2]
+identifier=Param2
+TypeValues=S
+ResultUnits=
+source=5
+
+[QUALITY:LINEAGE:SOURCE5]
+NomFitxer=..\FLORA_ARBRESMONUMENTALS.shp
+
+[QUALITY:LINEAGE:PROCESS3:INOUT3]
+identifier=Param3
+sentit=1
+TypeValues=S
+ResultUnits=
+source=6
+
+[QUALITY:LINEAGE:SOURCE6]
+NomFitxer=ArbresMonumentals
+
+[QUALITY:LINEAGE:PROCESS3:INOUT4]
+identifier=SLD
+TypeValues=S
+ResultUnits=
+source=7
+
+[QUALITY:LINEAGE:SOURCE7]
+NomFitxer=..\ESTAT_ARBRES.sld
+
+[QUALITY:LINEAGE:PROCESS2:INOUT2]
+identifier=Param2
+sentit=1
+TypeValues=S
+ResultUnits=
+source=<Parent>
+
+[QUALITY:LINEAGE:PROCESS2:INOUT3]
+identifier=Param3
+TypeValues=C
+ResultValue=UTM-31N-UB/ICC
+ResultUnits=

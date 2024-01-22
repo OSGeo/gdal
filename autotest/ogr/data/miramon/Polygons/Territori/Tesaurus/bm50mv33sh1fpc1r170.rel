@@ -1,0 +1,26 @@
+[VERSIO]
+Vers=4
+SubVers=3
+
+[TAULA_PRINCIPAL]
+NomFitxer=bm50mv33sh1fpc1r170.dbf
+TipusRelacio=RELACIO_N_1_DICC
+AssociatRel=COMARCA
+
+[TAULA_PRINCIPAL:COMARCA]
+-SEPARA-=
+descriptor=Codi comarcal
+
+[TAULA_PRINCIPAL:NOM_COMAR]
+descriptor=Comarca
+
+[TAULA_PRINCIPAL:CAP_COMAR]
+visible=0
+simbolitzable=0
+descriptor=Cap de comarca
+
+[TAULA_PRINCIPAL:SUP_COMAR]
+visible=0
+simbolitzable=0
+unitats=km²
+descriptor=Superfície de la comarca

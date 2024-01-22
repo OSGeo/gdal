@@ -32,7 +32,7 @@
 /************************************************************************/
 
 OGRMiraMonDataSource::OGRMiraMonDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), bUpdate(false)
+    : papoLayers(nullptr), nLayers(0), pszDSName(nullptr), bUpdate(false)
 {
 }
 
@@ -46,7 +46,7 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
-    CPLFree(pszName);
+    CPLFree(pszDSName);
 }
 
 /************************************************************************/
@@ -74,8 +74,8 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
-    CPLFree(pszName);
-    pszName = CPLStrdup(pszFilename);
+    CPLFree(pszDSName);
+    pszDSName = CPLStrdup(pszFilename);
 
     return TRUE;
 }
@@ -87,11 +87,11 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
 /*      currently but save the name.                                    */
 /************************************************************************/
 
-int OGRMiraMonDataSource::Create(const char *pszDSName,
+int OGRMiraMonDataSource::Create(const char *pszDataSetName,
     char ** /* papszOptions */)
 
 {
-    pszName = CPLStrdup(pszDSName);
+    pszDSName = CPLStrdup(pszDataSetName);
 
     return TRUE;
 }
@@ -107,75 +107,10 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 {
     CPLAssert(nullptr != pszLayerName);
 
-    const char *pszExtension= "pol";
-
-    /* -------------------------------------------------------------------- */
-    /*      Establish the version to use                                    */
-    /* -------------------------------------------------------------------- */
-    const char *pszVersion =
-        CSLFetchNameValue(papszOptions, "Version");
-    int nMMVersion;
-
-    if (pszVersion)
-    {
-        if (EQUAL(pszVersion, "V11"))
-            nMMVersion = MM_32BITS_VERSION;
-        else if (EQUAL(pszVersion, "V20") || EQUAL(pszVersion, "last_version"))
-            nMMVersion = MM_64BITS_VERSION;
-        else
-            nMMVersion = MM_32BITS_VERSION; // Default
-    }
-    else
-        nMMVersion = MM_32BITS_VERSION; // Default
-
-    /* -------------------------------------------------------------------- */
-    /*      Establish the layer type                                        */
-    /* -------------------------------------------------------------------- */
-    int layerType= 0;
-    switch (eType)
-    {
-        case wkbPoint:
-		case wkbMultiPoint:
-            layerType=MM_LayerType_Point;
-            pszExtension = "pnt";
-			break;
-        case wkbPoint25D:
-			layerType=MM_LayerType_Point3d;
-            pszExtension = "pnt";
-			break;
-		case wkbLineString:
-		case wkbMultiLineString:
-			layerType=MM_LayerType_Arc;
-            pszExtension = "arc";
-			break;
-        case wkbLineString25D:
-			layerType=MM_LayerType_Arc3d;
-            pszExtension = "arc";
-			break;
-		case wkbPolygon:
-		case wkbMultiPolygon:
-            layerType=MM_LayerType_Pol;
-            pszExtension = "pol";
-			break;
-        case wkbPolygon25D:
-        case wkbMultiPolygon25D:
-            layerType=MM_LayerType_Pol3d;
-            pszExtension = "pol";
-			break;
-        case wkbGeometryCollection:
-		case wkbUnknown:
-		default:
-            layerType=MM_LayerType_Unknown;
-			break;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      We will override the provided layer name                        */
-    /*      with the name from the file with the appropiate extension       */
-    /* -------------------------------------------------------------------- */
-
-    CPLString osPath = CPLGetPath(pszName);
-    CPLString osFilename(pszName);
+    const char *osPath;
+    CPLString osFilename(pszDSName);
+    char *pszMMLayerName;
+    const char *pszFullMMLayerName;
     const char *pszFlags = "wb+";
 
     if (osFilename == "/dev/stdout")
@@ -183,50 +118,47 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     if (STARTS_WITH(osFilename, "/vsistdout"))
         pszFlags = "wb";
-    else if(layerType!=MM_LayerType_Unknown)
+
+    // If the dataset has an extension, we understand that the path
+    // of the file is where to write, and the layer name is the
+    // dataset name (without extension).
+    const char *pszExtension = CPLGetExtension(pszDSName);
+    if(EQUAL(pszExtension, "pol") ||
+        EQUAL(pszExtension, "arc") ||
+        EQUAL(pszExtension, "pnt"))
     {
-        // Extension is determined only for the type of the layer
-        const char *extension=CPLGetExtension(pszLayerName);
-        if(!EQUAL(extension, pszExtension))
-            osFilename = CPLFormFilename(osPath, pszLayerName, pszExtension);
+        pszMMLayerName = CPLStrdup(CPLResetExtension(pszDSName, ""));
+        pszMMLayerName[strlen(pszMMLayerName)-1]='\0';
+
+        pszFullMMLayerName = (const char *)pszMMLayerName;
+        osPath = CPLGetPath(pszDSName);
     }
     else
     {
-        // If type undefined, no extensions is added until type is defined
-        osFilename = CPLFormFilename(osPath, pszLayerName, "~mm");
+        pszMMLayerName = CPLStrdup(pszLayerName);
+        osPath = pszDSName;
+        pszFullMMLayerName = CPLFormFilename(pszDSName, pszLayerName, NULL);
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Open the file.                                                  */
-    /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL(osFilename, pszFlags);
-    if (fp == nullptr)
+    // Let's create the folder if it's not already created.
+    if (VSIMkdirRecursive(osPath,  0777) !=0 )
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "open(%s) failed: %s",
-                 osFilename.c_str(), VSIStrerror(errno));
+        CPLError(CE_Failure, CPLE_AppDefined, "Unable to create directory %s.",
+                 pszDSName);
         return nullptr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Write out header.                                               */
-    /* -------------------------------------------------------------------- */
-    if(MMWriteEmptyHeader(fp, layerType, nMMVersion))
-        return nullptr;
-
+    }    
+    
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */
     /* -------------------------------------------------------------------- */
-    if (Open(osFilename, fp, poSRS, TRUE,papszOptions))
+    if (Open(pszFullMMLayerName, NULL, poSRS, TRUE,papszOptions))
     {
+        CPLFree(pszMMLayerName);
         auto poLayer = papoLayers[nLayers - 1];
-        if (layerType==MM_LayerType_Unknown)
-        {
-            poLayer->GetLayerDefn()->SetGeomType(wkbFlatten(eType));
-        }
         return poLayer;
     }
 
-    VSIFCloseL(fp);
+    CPLFree(pszMMLayerName);
     return nullptr;
 }
 
