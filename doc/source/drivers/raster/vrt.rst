@@ -20,6 +20,9 @@ extension .vrt.
 The VRT format can also describe :ref:`gdal_vrttut_warped`
 and :ref:`gdal_vrttut_pansharpen`
 
+For mosaic with a very large number of tiles (tens of thousands or mores),
+the :ref:`GTI <raster.gti>` driver may be used starting with GDAL 3.9.
+
 An example of a simple .vrt file referring to a 512x512 dataset with one band
 loaded from :file:`utm.tif` might look like this:
 

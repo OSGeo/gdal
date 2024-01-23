@@ -81,6 +81,7 @@ Raster drivers
    gsbg
    gsc
    gta
+   gti
    gtiff
    gxf
    hdf4

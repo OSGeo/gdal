@@ -35,10 +35,11 @@ import sys
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr, osr
+
+pytestmark = pytest.mark.slow
 
 
-@pytest.mark.slow()
 def test_translate_vrt_with_complex_source(tmp_path):
 
     metatile_filename = str(tmp_path / "metatile.tif")
@@ -157,3 +158,66 @@ def test_translate_vrt_with_complex_source(tmp_path):
         assert (
             out_ds.ReadRaster(xoff, yoff, metatile_width, metatile_height) == tile_data
         )
+
+
+@pytest.mark.require_driver("GPKG")
+def test_translate_vrtti(tmp_path):
+
+    tile_filename = str(tmp_path / "tile.tif")
+    tile_width = 1
+    tile_height = 1
+    tile_ds = gdal.GetDriverByName("GTiff").Create(
+        tile_filename, tile_width, tile_height, 3
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    tile_ds.SetSpatialRef(srs)
+    tile_ds.GetRasterBand(1).Fill(1)
+    tile_ds.GetRasterBand(2).Fill(2)
+    tile_ds.GetRasterBand(3).Fill(3)
+    del tile_ds
+
+    print("Creating tile index...")
+    tileindex = str(tmp_path / "tileindex.gti.gpkg")
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(tileindex)
+    lyr = ds.CreateLayer("index", geom_type=ogr.wkbPolygon, srs=srs)
+    lyr.CreateField(ogr.FieldDefn("location", ogr.OFTString))
+    lyr.SetMetadataItem("RESX", "0.001")
+    lyr.SetMetadataItem("RESY", "0.001")
+    lyr.SetMetadataItem("BAND_COUNT", "3")
+    lyr.SetMetadataItem("DATA_TYPE", "Byte")
+    lyr.StartTransaction()
+    tile_y_count = 200
+    tile_x_count = 200
+    resx = 0.001
+    resy = 0.001
+    for j in range(tile_y_count):
+        for i in range(tile_x_count):
+            minx = i * resx
+            miny = j * resy
+            maxx = minx + resx
+            maxy = miny + resy
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetField(
+                "location", f"vrt://{tile_filename}?a_ullr={minx},{maxy},{maxx},{miny}"
+            )
+            f.SetGeometry(
+                ogr.CreateGeometryFromWkt(
+                    f"POLYGON(({minx} {miny},{minx} {maxy},{maxx} {maxy},{maxx} {miny},{minx} {miny}))"
+                )
+            )
+            lyr.CreateFeature(f)
+    lyr.CommitTransaction()
+    del ds
+    print("... done")
+
+    print("Reading tile index...")
+    ds = gdal.Open(tileindex)
+    assert ds.RasterXSize == tile_x_count
+    assert ds.RasterYSize == tile_y_count
+    assert ds.GetGeoTransform() == pytest.approx(
+        (0.0, resx, 0.0, resy * tile_y_count, 0.0, -resy)
+    )
+    assert ds.ReadRaster() == b"\x01" * (tile_y_count * tile_x_count) + b"\x02" * (
+        tile_y_count * tile_x_count
+    ) + b"\x03" * (tile_y_count * tile_x_count)

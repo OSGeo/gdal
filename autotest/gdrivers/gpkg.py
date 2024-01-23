@@ -4266,3 +4266,16 @@ def test_gpkg_sql_gdal_get_layer_pixel_value():
         assert f[0] is None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test that we can write and open a .gti.gpkg file
+
+
+def test_gpkg_gti_gpkg_ext(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_gpkg_gti_gpkg_ext.gti.gpkg")
+    gdal.Translate(filename, "data/byte.tif", format="GPKG")
+    ds = gdal.Open(filename)
+    assert ds.GetDriver().ShortName == "GPKG"
+    assert ds.GetRasterBand(1).Checksum() == 4672

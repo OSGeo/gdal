@@ -6443,7 +6443,8 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 /*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
 /************************************************************************/
 
-#ifndef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
+#ifndef CheckHasEnoughAdditionalArgs_defined
+#define CheckHasEnoughAdditionalArgs_defined
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {
@@ -6456,13 +6457,13 @@ static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
     }
     return true;
 }
+#endif
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
     if (!CheckHasEnoughAdditionalArgs(papszArgv, i, nExtraArg, nArgc))         \
     {                                                                          \
         return nullptr;                                                        \
     }
-#endif
 
 /************************************************************************/
 /*                       GDALVectorTranslateOptionsNew()                */
@@ -7369,3 +7370,5 @@ void GDALVectorTranslateOptionsSetProgress(
     if (pfnProgress == GDALTermProgress)
         psOptions->bQuiet = false;
 }
+
+#undef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS

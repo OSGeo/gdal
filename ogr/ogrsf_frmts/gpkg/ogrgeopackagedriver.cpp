@@ -35,6 +35,11 @@
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
+static inline bool ENDS_WITH_CI(const char *a, const char *b)
+{
+    return strlen(a) >= strlen(b) && EQUAL(a + strlen(a) - strlen(b), b);
+}
+
 /************************************************************************/
 /*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
@@ -239,6 +244,13 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
         }
     }
 
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
+    {
+        // Most likely handled by GTI driver, but we can't be sure
+        return GDAL_IDENTIFY_UNKNOWN;
+    }
+
     return TRUE;
 }
 
@@ -331,7 +343,8 @@ OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
 static GDALDataset *OGRGeoPackageDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     std::string osFilenameInGpkgZip;
-    if (!OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true))
+    if (OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true) ==
+        GDAL_IDENTIFY_FALSE)
         return nullptr;
 
     GDALGeoPackageDataset *poDS = new GDALGeoPackageDataset();

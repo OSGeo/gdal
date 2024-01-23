@@ -32,6 +32,7 @@
 #include "gdal_priv.h"
 #include "commonutils.h"
 #include "vrtdataset.h"
+#include "vrt_priv.h"
 
 #include <algorithm>
 
@@ -275,15 +276,6 @@ static bool PartialRefreshFromSourceTimestamp(
     bool bMinSizeSpecified, int nMinSize, GDALProgressFunc pfnProgress,
     void *pProgressArg)
 {
-    auto poVRTDS = dynamic_cast<VRTDataset *>(poDS);
-    if (!poVRTDS)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "--partial-refresh-from-source-timestamp only works on a VRT "
-                 "dataset");
-        return false;
-    }
-
     std::vector<int> anOvrIndices;
     if (!GetOvrIndices(poDS, nLevelCount, panLevels, bMinSizeSpecified,
                        nMinSize, anOvrIndices))
@@ -304,81 +296,94 @@ static bool PartialRefreshFromSourceTimestamp(
         return false;
     }
 
-    auto poVRTBand =
-        dynamic_cast<VRTSourcedRasterBand *>(poDS->GetRasterBand(1));
-    if (!poVRTBand)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Band is not a VRTSourcedRasterBand");
-        return false;
-    }
-
-    struct Region
-    {
-        std::string osFileName;
-        int nXOff;
-        int nYOff;
-        int nXSize;
-        int nYSize;
-    };
-    std::vector<Region> regions;
+    std::vector<GTISourceDesc> regions;
 
     double dfTotalPixels = 0;
-    for (int i = 0; i < poVRTBand->nSources; ++i)
-    {
-        auto poSource =
-            dynamic_cast<VRTSimpleSource *>(poVRTBand->papoSources[i]);
-        if (poSource)
-        {
-            VSIStatBufL sStatSource;
-            if (VSIStatL(poSource->GetSourceDatasetName().c_str(),
-                         &sStatSource) == 0)
-            {
-                if (sStatSource.st_mtime > sStatVRTOvr.st_mtime)
-                {
-                    double dfXOff, dfYOff, dfXSize, dfYSize;
-                    poSource->GetDstWindow(dfXOff, dfYOff, dfXSize, dfYSize);
-                    constexpr double EPS = 1e-8;
-                    int nXOff = static_cast<int>(dfXOff + EPS);
-                    int nYOff = static_cast<int>(dfYOff + EPS);
-                    int nXSize = static_cast<int>(dfXSize + 0.5);
-                    int nYSize = static_cast<int>(dfYSize + 0.5);
-                    if (nXOff > poDS->GetRasterXSize() ||
-                        nYOff > poDS->GetRasterYSize() || nXSize <= 0 ||
-                        nYSize <= 0)
-                    {
-                        continue;
-                    }
-                    if (nXOff < 0)
-                    {
-                        nXSize += nXOff;
-                        nXOff = 0;
-                    }
-                    if (nXOff > poDS->GetRasterXSize() - nXSize)
-                    {
-                        nXSize = poDS->GetRasterXSize() - nXOff;
-                    }
-                    if (nYOff < 0)
-                    {
-                        nYSize += nYOff;
-                        nYOff = 0;
-                    }
-                    if (nYOff > poDS->GetRasterYSize() - nYSize)
-                    {
-                        nYSize = poDS->GetRasterYSize() - nYOff;
-                    }
 
-                    dfTotalPixels += static_cast<double>(nXSize) * nYSize;
-                    Region region;
-                    region.osFileName = poSource->GetSourceDatasetName();
-                    region.nXOff = nXOff;
-                    region.nYOff = nYOff;
-                    region.nXSize = nXSize;
-                    region.nYSize = nYSize;
-                    regions.push_back(std::move(region));
+    if (dynamic_cast<VRTDataset *>(poDS))
+    {
+        auto poVRTBand =
+            dynamic_cast<VRTSourcedRasterBand *>(poDS->GetRasterBand(1));
+        if (!poVRTBand)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Band is not a VRTSourcedRasterBand");
+            return false;
+        }
+
+        for (int i = 0; i < poVRTBand->nSources; ++i)
+        {
+            auto poSource =
+                dynamic_cast<VRTSimpleSource *>(poVRTBand->papoSources[i]);
+            if (poSource)
+            {
+                VSIStatBufL sStatSource;
+                if (VSIStatL(poSource->GetSourceDatasetName().c_str(),
+                             &sStatSource) == 0)
+                {
+                    if (sStatSource.st_mtime > sStatVRTOvr.st_mtime)
+                    {
+                        double dfXOff, dfYOff, dfXSize, dfYSize;
+                        poSource->GetDstWindow(dfXOff, dfYOff, dfXSize,
+                                               dfYSize);
+                        constexpr double EPS = 1e-8;
+                        int nXOff = static_cast<int>(dfXOff + EPS);
+                        int nYOff = static_cast<int>(dfYOff + EPS);
+                        int nXSize = static_cast<int>(dfXSize + 0.5);
+                        int nYSize = static_cast<int>(dfYSize + 0.5);
+                        if (nXOff > poDS->GetRasterXSize() ||
+                            nYOff > poDS->GetRasterYSize() || nXSize <= 0 ||
+                            nYSize <= 0)
+                        {
+                            continue;
+                        }
+                        if (nXOff < 0)
+                        {
+                            nXSize += nXOff;
+                            nXOff = 0;
+                        }
+                        if (nXOff > poDS->GetRasterXSize() - nXSize)
+                        {
+                            nXSize = poDS->GetRasterXSize() - nXOff;
+                        }
+                        if (nYOff < 0)
+                        {
+                            nYSize += nYOff;
+                            nYOff = 0;
+                        }
+                        if (nYOff > poDS->GetRasterYSize() - nYSize)
+                        {
+                            nYSize = poDS->GetRasterYSize() - nYOff;
+                        }
+
+                        dfTotalPixels += static_cast<double>(nXSize) * nYSize;
+                        GTISourceDesc region;
+                        region.osFilename = poSource->GetSourceDatasetName();
+                        region.nDstXOff = nXOff;
+                        region.nDstYOff = nYOff;
+                        region.nDstXSize = nXSize;
+                        region.nDstYSize = nYSize;
+                        regions.push_back(std::move(region));
+                    }
                 }
             }
         }
+    }
+    else if (auto poGTIDS = GDALDatasetCastToGTIDataset(poDS))
+    {
+        regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatVRTOvr.st_mtime);
+        for (const auto &region : regions)
+        {
+            dfTotalPixels +=
+                static_cast<double>(region.nDstXSize) * region.nDstYSize;
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "--partial-refresh-from-source-timestamp only works on a VRT "
+                 "dataset");
+        return false;
     }
 
     if (!regions.empty())
@@ -389,22 +394,22 @@ static bool PartialRefreshFromSourceTimestamp(
             if (pfnProgress == GDALDummyProgress)
             {
                 CPLDebug("GDAL", "Refresh from source %s",
-                         region.osFileName.c_str());
+                         region.osFilename.c_str());
             }
             else
             {
-                printf("Refresh from source %s.\n", region.osFileName.c_str());
+                printf("Refresh from source %s.\n", region.osFilename.c_str());
             }
             double dfNextCurPixels =
                 dfCurPixels +
-                static_cast<double>(region.nXSize) * region.nYSize;
+                static_cast<double>(region.nDstXSize) * region.nDstYSize;
             void *pScaledProgress = GDALCreateScaledProgress(
                 dfCurPixels / dfTotalPixels, dfNextCurPixels / dfTotalPixels,
                 pfnProgress, pProgressArg);
             bool bRet = PartialRefresh(
                 poDS, anOvrIndices, nBandCount, panBandList, pszResampling,
-                region.nXOff, region.nYOff, region.nXSize, region.nYSize,
-                GDALScaledProgress, pScaledProgress);
+                region.nDstXOff, region.nDstYOff, region.nDstXSize,
+                region.nDstYSize, GDALScaledProgress, pScaledProgress);
             GDALDestroyScaledProgress(pScaledProgress);
             if (!bRet)
                 return false;

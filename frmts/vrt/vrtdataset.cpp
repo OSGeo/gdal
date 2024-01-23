@@ -1553,7 +1553,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     poSrcDS->ReleaseRef();
 
-    auto poDS = cpl::down_cast<VRTDataset *>(GDALDataset::FromHandle(hRet));
+    auto poDS = dynamic_cast<VRTDataset *>(GDALDataset::FromHandle(hRet));
     if (poDS)
     {
         if (bPatchSourceFilename)

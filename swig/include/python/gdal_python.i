@@ -3806,6 +3806,202 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
         return BuildVRTInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
 
 
+def TileIndexOptions(options=None,
+                     overwrite=None,
+                     recursive=None,
+                     filenameFilter=None,
+                     minPixelSize=None,
+                     maxPixelSize=None,
+                     format=None,
+                     layerName=None,
+                     locationFieldName="location",
+                     outputSRS=None,
+                     writeAbsolutePath=None,
+                     skipDifferentProjection=None,
+                     gtiFilename=None,
+                     xRes=None,
+                     yRes=None,
+                     outputBounds=None,
+                     colorInterpretation=None,
+                     noData=None,
+                     bandCount=None,
+                     mask=None,
+                     metadataOptions=None,
+                     fetchMD=None):
+    """Create a TileIndexOptions() object that can be passed to gdal.TileIndex()
+
+    Parameters
+    ----------
+    options:
+        can be be an array of strings, a string or let empty and filled from other keywords.
+    overwrite:
+        Whether to overwrite the existing tile index
+    recursive:
+        Whether directories specified in source filenames should be explored recursively
+    filenameFilter:
+        Pattern that the filenames contained in directories pointed by <file_or_dir> should follow. '*' and '?' wildcard can be used. String or list of strings.
+    minPixelSize:
+        Minimum pixel size in term of geospatial extent per pixel (resolution) that a raster should have to be selected.
+    maxPixelSize:
+        Maximum pixel size in term of geospatial extent per pixel (resolution) that a raster should have to be selected.
+    format:
+        output format ("ESRI Shapefile", "GPKG", etc...)
+    layerName:
+        output layer name
+    locationFieldName:
+        Specifies the name of the field in the resulting vector dataset where the path of the input dataset will be stored. The default field name is "location". Can be set to None to disable creation of such field.
+    outputSRS:
+        assigned output SRS
+    writeAbsolutePath:
+        Enables writing the absolute path of the input dataset. By default, the filename is written in the location field exactly as the dataset name.
+    skipDifferentProjection:
+        Whether to skip sources that have a different SRS
+    gtiFilename:
+        Filename of the GDAL XML Tile Index file
+    xRes:
+        output horizontal resolution
+    yRes:
+        output vertical resolution
+    outputBounds:
+        output bounds as [minx, miny, maxx, maxy]
+    colorInterpretation:
+        tile color interpretation, as a single value or a list, of the following values: "red", "green", "blue", "alpha", "grey", "undefined"
+    noData:
+        tile nodata value, as a single value or a list
+    bandCount:
+        number of band of tiles in the index
+    mask:
+        whether tiles have a band mask
+    metadataOptions:
+        list or dict of metadata options
+    fetchMD:
+        Fetch a metadata item from the raster tile and write it as a field in the
+        tile index.
+        Tuple (raster metadata item name, target field name, target field type), or list of such tuples, with target field type in "String", "Integer", "Integer64", "Real", "Date", "DateTime";
+    """
+
+    # Only used for tests
+    return_option_list = options == '__RETURN_OPTION_LIST__'
+    if return_option_list:
+        options = []
+    else:
+        options = [] if options is None else options
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if overwrite:
+            new_options += ['-overwrite']
+        if recursive:
+            new_options += ['-recursive']
+        if filenameFilter is not None:
+            if isinstance(filenameFilter, list):
+                for filter in filenameFilter:
+                    new_options += ['-filename_filter', filter]
+            else:
+                new_options += ['-filename_filter', filenameFilter]
+        if minPixelSize is not None:
+            new_options += ['-min_pixel_size', _strHighPrec(minPixelSize)]
+        if maxPixelSize is not None:
+            new_options += ['-max_pixel_size', _strHighPrec(maxPixelSize)]
+        if format:
+            new_options += ['-f', format]
+        if layerName is not None:
+            new_options += ['-lyr_name', layerName]
+        if locationFieldName is not None:
+            new_options += ['-tileindex', locationFieldName]
+        if outputSRS is not None:
+            new_options += ['-t_srs', str(outputSRS)]
+        if writeAbsolutePath:
+            new_options += ['-write_absolute_path']
+        if skipDifferentProjection:
+            new_options += ['-skip_different_projection']
+        if gtiFilename is not None:
+            new_options += ['-gti_filename', gtiFilename]
+        if xRes is not None and yRes is not None:
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
+        elif xRes is not None:
+            raise Exception("yRes should also be specified")
+        elif yRes is not None:
+            raise Exception("xRes should also be specified")
+        if outputBounds is not None:
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
+        if colorInterpretation is not None:
+            if isinstance(noData, list):
+                new_options += ['-colorinterp', ','.join(colorInterpretation)]
+            else:
+                new_options += ['-colorinterp', colorInterpretation]
+        if noData is not None:
+            if isinstance(noData, list):
+                new_options += ['-nodata', ','.join([_strHighPrec(x) for x in noData])]
+            else:
+                new_options += ['-nodata', _strHighPrec(noData)]
+        if bandCount is not None:
+            new_options += ['-bandcount', str(bandCount)]
+        if mask:
+            new_options += ['-mask']
+        if metadataOptions is not None:
+            if isinstance(metadataOptions, str):
+                new_options += ['-mo', metadataOptions]
+            elif isinstance(metadataOptions, dict):
+                for k, v in metadataOptions.items():
+                    new_options += ['-mo', f'{k}={v}']
+            else:
+                for opt in metadataOptions:
+                    new_options += ['-mo', opt]
+        if fetchMD is not None:
+            if isinstance(fetchMD, list):
+                for mdItemName, fieldName, fieldType in fetchMD:
+                    new_options += ['-fetch_md', mdItemName, fieldName, fieldType]
+            else:
+                new_options += ['-fetch_md', fetchMD[0], fetchMD[1], fetchMD[2]]
+
+    if return_option_list:
+        return new_options
+
+    callback = None
+    callback_data = None
+    return (GDALTileIndexOptions(new_options), callback, callback_data)
+
+def TileIndex(destName, srcFilenames, **kwargs):
+    """Build a tileindex from a list of datasets.
+
+    Parameters
+    ----------
+    destName:
+        Output dataset name.
+    srcFilenames:
+        An array of filenames.
+    kwargs:
+        options: return of gdal.TileIndexOptions(), string or array of strings,
+        other keywords arguments of gdal.TileIndexOptions().
+        If options is provided as a gdal.TileIndexOptions() object,
+        other keywords are ignored.
+    """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, callback, callback_data) = TileIndexOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+
+    srcDSNamesTab = []
+
+    import os
+
+    if isinstance(srcFilenames, (str, os.PathLike)):
+        srcDSNamesTab = [str(srcFilenames)]
+    elif isinstance(srcFilenames, list):
+        for elt in srcFilenames:
+            srcDSNamesTab.append(str(elt))
+    else:
+        raise Exception("Unexpected type for srcFilenames")
+
+    return TileIndexInternalNames(destName, srcDSNamesTab, opts, callback, callback_data)
+
+
 def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
          arraySpecs=None, groupSpecs=None, subsetSpecs=None, scaleAxesSpecs=None,
          callback=None, callback_data=None):

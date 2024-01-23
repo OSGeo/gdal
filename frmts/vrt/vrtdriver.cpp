@@ -193,8 +193,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /*      it to disk as a special case to avoid extra layers of           */
     /*      indirection.                                                    */
     /* -------------------------------------------------------------------- */
-    if (poSrcDS->GetDriver() != nullptr &&
-        EQUAL(poSrcDS->GetDriver()->GetDescription(), "VRT"))
+    if (auto poSrcVRTDS = dynamic_cast<VRTDataset *>(poSrcDS))
     {
 
         /* --------------------------------------------------------------------
@@ -203,7 +202,6 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /* --------------------------------------------------------------------
          */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
-        auto poSrcVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
         poSrcVRTDS->UnsetPreservedRelativeFilenames();
         CPLXMLNode *psDSTree = poSrcVRTDS->SerializeToXML(pszVRTPath);
 

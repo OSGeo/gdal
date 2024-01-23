@@ -5269,7 +5269,8 @@ static bool IsValidSRS(const char *pszUserInput)
 /*                             GDALWarpAppOptionsNew()                  */
 /************************************************************************/
 
-#ifndef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
+#ifndef CheckHasEnoughAdditionalArgs_defined
+#define CheckHasEnoughAdditionalArgs_defined
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {
@@ -5282,13 +5283,13 @@ static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
     }
     return true;
 }
+#endif
 
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
     if (!CheckHasEnoughAdditionalArgs(papszArgv, i, nExtraArg, nArgc))         \
     {                                                                          \
         return nullptr;                                                        \
     }
-#endif
 
 /**
  * Allocates a GDALWarpAppOptions struct.
@@ -5942,3 +5943,5 @@ void GDALWarpAppOptionsSetWarpOption(GDALWarpAppOptions *psOptions,
 {
     psOptions->aosWarpOptions.SetNameValue(pszKey, pszValue);
 }
+
+#undef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS

@@ -84,6 +84,7 @@ void CPL_DLL GDALRegister_ECW_JP2ECW();
 void CPL_DLL GDALRegister_FujiBAS(void);
 void CPL_DLL GDALRegister_FIT(void);
 void CPL_DLL GDALRegister_VRT(void);
+void CPL_DLL GDALRegister_GTI(void);
 void CPL_DLL GDALRegister_USGSDEM(void);
 void CPL_DLL GDALRegister_FAST(void);
 void CPL_DLL GDALRegister_HDF4(void);

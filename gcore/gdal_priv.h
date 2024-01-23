@@ -106,7 +106,7 @@ class CPL_DLL GDALMultiDomainMetadata
     GDALMultiDomainMetadata();
     ~GDALMultiDomainMetadata();
 
-    int XMLInit(CPLXMLNode *psMetadata, int bMerge);
+    int XMLInit(const CPLXMLNode *psMetadata, int bMerge);
     CPLXMLNode *Serialize();
 
     char **GetDomainList()
@@ -960,6 +960,17 @@ struct CPL_DLL GDALDatasetUniquePtrDeleter
     void operator()(GDALDataset *poDataset) const
     {
         GDALClose(poDataset);
+    }
+};
+//! @endcond
+
+//! @cond Doxygen_Suppress
+struct CPL_DLL GDALDatasetUniquePtrReleaser
+{
+    void operator()(GDALDataset *poDataset) const
+    {
+        if (poDataset)
+            poDataset->Release();
     }
 };
 //! @endcond
@@ -4006,7 +4017,7 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
                                    char **papszOpenOptions);
-char **GDALDeserializeOpenOptionsFromXML(CPLXMLNode *psParentNode);
+char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode);
 
 int GDALCanFileAcceptSidecarFile(const char *pszFilename);
 

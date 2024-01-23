@@ -307,6 +307,23 @@ void CPL_DLL GDALVectorInfoOptionsFree(GDALVectorInfoOptions *psOptions);
 char CPL_DLL *GDALVectorInfo(GDALDatasetH hDataset,
                              const GDALVectorInfoOptions *psOptions);
 
+/*! Options for GDALTileIndex(). Opaque type */
+typedef struct GDALTileIndexOptions GDALTileIndexOptions;
+
+/** Opaque type */
+typedef struct GDALTileIndexOptionsForBinary GDALTileIndexOptionsForBinary;
+
+GDALTileIndexOptions CPL_DLL *
+GDALTileIndexOptionsNew(char **papszArgv,
+                        GDALTileIndexOptionsForBinary *psOptionsForBinary);
+
+void CPL_DLL GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions);
+
+GDALDatasetH CPL_DLL GDALTileIndex(const char *pszDest, int nSrcCount,
+                                   const char *const *papszSrcDSNames,
+                                   const GDALTileIndexOptions *psOptions,
+                                   int *pbUsageError);
+
 CPL_C_END
 
 #endif /* GDAL_UTILS_H_INCLUDED */
