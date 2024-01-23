@@ -38,6 +38,7 @@
 #include "ogrpgutility.h"
 #include "ogr_pgdump.h"
 
+#include <optional>
 #include <vector>
 
 /* These are the OIDs for some builtin types, as returned by PQftype(). */
@@ -623,6 +624,8 @@ class OGRPGDataSource final : public OGRDataSource
     OGRErr FlushSoftTransaction();
 
     OGRErr FlushCacheWithRet(bool bAtClosing);
+
+    std::optional<std::string> FindSchema(const char *pszSchemaNameIn);
 
   public:
     PGver sPostgreSQLVersion = {0, 0, 0};

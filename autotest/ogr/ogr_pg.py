@@ -5923,3 +5923,46 @@ def test_extent3d(pg_ds):
     assert lyr.GetFeatureCount() == 2
     extent = lyr.GetExtent3D()
     assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
+
+
+###############################################################################
+# Test CreateLayer() and schema name with a different case
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_pg_schema_case_createlayer(pg_ds, tmp_schema):
+
+    tmp_schema_uppercase = tmp_schema.upper()
+
+    with pytest.raises(Exception, match='Schema "unexisting_schema" does not exist'):
+        lyr = pg_ds.CreateLayer("unexisting_schema.layer")
+        assert lyr is None
+
+    lyr = pg_ds.CreateLayer(
+        f"{tmp_schema_uppercase}.test_ogr_pg_schema_case_createlayer"
+    )
+    assert lyr
+    assert lyr.GetName() == f"{tmp_schema}.test_ogr_pg_schema_case_createlayer"
+    # Force deferred creation to run
+    lyr.ResetReading()
+
+    pg_ds = reconnect(pg_ds, update=1)
+    assert pg_ds.GetLayerByName(
+        f"{tmp_schema_uppercase}.test_ogr_pg_schema_case_createlayer"
+    )
+
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema_uppercase}"')
+    try:
+        lyr = pg_ds.CreateLayer(f"{tmp_schema_uppercase}.another_layer")
+        assert lyr
+        assert lyr.GetName() == f"{tmp_schema_uppercase}.another_layer"
+
+        tmp_schema_mixedcase = (
+            tmp_schema[0 : len(tmp_schema) // 2]
+            + tmp_schema_uppercase[len(tmp_schema) // 2 :]
+        )
+        with pytest.raises(Exception, match="Several schemas exist whose name matches"):
+            lyr = pg_ds.CreateLayer(f"{tmp_schema_mixedcase}.yet_another_layer")
+            assert lyr is None
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema_uppercase}" CASCADE')
