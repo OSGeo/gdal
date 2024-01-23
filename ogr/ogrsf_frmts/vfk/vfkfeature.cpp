@@ -97,9 +97,11 @@ void IVFKFeature::SetFID(GIntBig nFID)
 
   \return double determinant value
 */
-double IVFKFeature::GetDeterminatOfMatrixDim3(double x[3], double y[3], double z[3])
+double IVFKFeature::GetDeterminatOfMatrixDim3(double x[3], double y[3],
+                                              double z[3])
 {
-    return x[0]*y[1]*z[2] - x[0]*z[1]*y[2] - y[0]*x[1]*z[2] + y[0]*x[2]*z[1] + z[0]*x[1]*y[2] - z[0]*y[1]*x[2];
+    return x[0] * y[1] * z[2] - x[0] * z[1] * y[2] - y[0] * x[1] * z[2] +
+           y[0] * x[2] * z[1] + z[0] * x[1] * y[2] - z[0] * y[1] * x[2];
 }
 
 /*!
@@ -109,26 +111,27 @@ double IVFKFeature::GetDeterminatOfMatrixDim3(double x[3], double y[3], double z
   \param x array of three x coordinates
   \param y array of three x coordinates
 */
-void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3], double y[3])
+void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3],
+                                             double y[3])
 {
     /* reduce coordinates by avarage coordinate */
     int n = 3;
     double sum_x = 0.0f, sum_y = 0.0f;
-    for(int i = 0; i<n ; i++)
+    for (int i = 0; i < n; i++)
     {
-      sum_x += x[i];
-      sum_y += y[i];
+        sum_x += x[i];
+        sum_y += y[i];
     }
 
-    const double x_t = sum_x/3;
-    const double y_t = sum_y/3;
+    const double x_t = sum_x / 3;
+    const double y_t = sum_y / 3;
 
     double x_r[3], y_r[3];
 
-    for(int i = 0; i<n ; i++)
+    for (int i = 0; i < n; i++)
     {
-      x_r[i] = x[i]-x_t;
-      y_r[i] = y[i]-y_t;
+        x_r[i] = x[i] - x_t;
+        y_r[i] = y[i] - y_t;
     }
 
     /* limits to test reasonable value of determinant */
@@ -137,15 +140,17 @@ void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3], double
 
     /* solve three linear equations */
     double z[3] = {1.0, 1.0, 1.0};
-    double c[3] = {-(pow(x_r[0],2) + pow(y_r[0],2)), -(pow(x_r[1],2) + pow(y_r[1],2)), -(pow(x_r[2],2) + pow(y_r[2],2))};
-    const double det_A = GetDeterminatOfMatrixDim3(x_r,y_r,z);
+    double c[3] = {-(pow(x_r[0], 2) + pow(y_r[0], 2)),
+                   -(pow(x_r[1], 2) + pow(y_r[1], 2)),
+                   -(pow(x_r[2], 2) + pow(y_r[2], 2))};
+    const double det_A = GetDeterminatOfMatrixDim3(x_r, y_r, z);
 
-    if (epsilon_min <= std::fabs( det_A ) && std::fabs( det_A ) <= epsilon_max)
+    if (epsilon_min <= std::fabs(det_A) && std::fabs(det_A) <= epsilon_max)
     {
         const double det_a = GetDeterminatOfMatrixDim3(c, y_r, z);
         const double det_b = GetDeterminatOfMatrixDim3(x_r, c, z);
-        c_xy[0] = -det_a/det_A/2 + x_t;
-        c_xy[1] = -det_b/det_A/2 + y_t;
+        c_xy[0] = -det_a / det_A / 2 + x_t;
+        c_xy[1] = -det_b / det_A / 2 + y_t;
     }
     else
     {
@@ -162,7 +167,8 @@ void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3], double
   \param c_y circle center y coordinate
   \param r circle radius
 */
-void IVFKFeature::AddCirclePointsToGeomString(OGRCircularString &poGeomString, double c_x, double c_y, double r)
+void IVFKFeature::AddCirclePointsToGeomString(OGRCircularString &poGeomString,
+                                              double c_x, double c_y, double r)
 {
     OGRPoint pt;
 
@@ -302,21 +308,27 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                     double c_xy[2];
                     double r = 0.0f;
                     GetCircleCenterFrom3Points(c_xy, x, y);
-                    
+
                     /* TODO (seidlmic) how to correctly handle invalid configuration */
                     if (c_xy[0] == -1.0f && c_xy[1] == -1.0f)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Invalid 3 points circle configuration. Can not find circle center");
+                                 "Invalid 3 points circle configuration. Can "
+                                 "not find circle center");
                         m_bValid = false;
                         return false;
                     }
-                    
-                    r = pow(pow((c_xy[0] - x[0]),2) + pow((c_xy[1] - y[0]),2),0.5);
 
-                    CPLDebug("OGR-VFK", "Circle center point (ftype 15) X: %f, Y: %f, r: %f", c_xy[0], c_xy[1], r);
+                    r = pow(pow((c_xy[0] - x[0]), 2) + pow((c_xy[1] - y[0]), 2),
+                            0.5);
 
-                    AddCirclePointsToGeomString(poGeomString, c_xy[0], c_xy[1], r);
+                    CPLDebug(
+                        "OGR-VFK",
+                        "Circle center point (ftype 15) X: %f, Y: %f, r: %f",
+                        c_xy[0], c_xy[1], r);
+
+                    AddCirclePointsToGeomString(poGeomString, c_xy[0], c_xy[1],
+                                                r);
                 }
             }
             else if (strlen(ftype) > 2 && STARTS_WITH_CI(ftype, "15"))
