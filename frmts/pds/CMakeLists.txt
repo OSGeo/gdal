@@ -13,6 +13,15 @@ add_gdal_driver(
   PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL\\\;NOT GDAL_USE_GEOTIFF_INTERNAL\\\;NOT GDAL_USE_TIFF_INTERNAL"
 )
 
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pds4_template.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/vicar.json
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 if(NOT TARGET gdal_PDS)
     return()
 endif()

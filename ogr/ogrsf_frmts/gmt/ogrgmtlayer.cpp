@@ -99,23 +99,23 @@ OGRGmtLayer::OGRGmtLayer(const char *pszFilename, VSILFILE *fp,
                     papszKeyedValues[iKey][1] != 0 &&
                     papszKeyedValues[iKey][2] != 0)
                 {
-                    CPLString osArg = papszKeyedValues[iKey] + 2;
+                    std::string osArg = papszKeyedValues[iKey] + 2;
                     if (osArg[0] == '"' && osArg.size() >= 2 &&
                         osArg.back() == '"')
                     {
                         osArg = osArg.substr(1, osArg.length() - 2);
                         char *pszArg = CPLUnescapeString(
-                            osArg, nullptr, CPLES_BackslashQuotable);
+                            osArg.c_str(), nullptr, CPLES_BackslashQuotable);
                         osArg = pszArg;
                         CPLFree(pszArg);
                     }
 
                     if (papszKeyedValues[iKey][1] == 'e')
-                        osEPSG = osArg;
+                        osEPSG = std::move(osArg);
                     if (papszKeyedValues[iKey][1] == 'p')
-                        osProj4 = osArg;
+                        osProj4 = std::move(osArg);
                     if (papszKeyedValues[iKey][1] == 'w')
-                        osWKT = osArg;
+                        osWKT = std::move(osArg);
                 }
             }
 

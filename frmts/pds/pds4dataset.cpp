@@ -432,7 +432,8 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
     if (m_poBaseBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
                                m_pBuffer, nReqXSize, nReqYSize, eSrcDT,
-                               nSrcDTSize, nSrcDTSize * nBlockXSize,
+                               nSrcDTSize,
+                               static_cast<GSpacing>(nSrcDTSize) * nBlockXSize,
                                nullptr) != CE_None)
     {
         return CE_Failure;
@@ -1379,7 +1380,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
     {
         if (GetRasterCount())
         {
-            m_oSRS = oSRS;
+            m_oSRS = std::move(oSRS);
         }
         else if (GetLayerCount())
         {
@@ -3125,7 +3126,9 @@ bool PDS4Dataset::InitImageFile()
                     GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
                     if (y != 0)
                     {
-                        if (nOffset != nLastOffset + nBlockSizeBytes * nBands)
+                        if (nOffset !=
+                            nLastOffset +
+                                static_cast<GIntBig>(nBlockSizeBytes) * nBands)
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Block %d,%d not at expected "
@@ -4562,14 +4565,14 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
-    poDS->m_osImageFilename = osImageFilename;
+    poDS->m_osImageFilename = std::move(osImageFilename);
     poDS->m_bCreateHeader = true;
     poDS->m_bStripFileAreaObservationalFromTemplate = true;
     poDS->m_osInterleave = pszInterleave;
     poDS->m_papszCreationOptions = CSLDuplicate(aosOptions.List());
     poDS->m_bUseSrcLabel = aosOptions.FetchBool("USE_SRC_LABEL", true);
     poDS->m_bIsLSB = bIsLSB;
-    poDS->m_osHeaderParsingStandard = osHeaderParsingStandard;
+    poDS->m_osHeaderParsingStandard = std::move(osHeaderParsingStandard);
     poDS->m_bCreatedFromExistingBinaryFile = bCreateLabelOnly;
 
     if (EQUAL(pszInterleave, "BIP"))

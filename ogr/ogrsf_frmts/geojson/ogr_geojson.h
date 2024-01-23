@@ -91,6 +91,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
                                   int nFlags) override;
     virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce = TRUE) override;
+    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                               int bForce = TRUE) override;
 
     //
     // OGRGeoJSONLayer Interface

@@ -691,7 +691,7 @@ static bool OGRWKBIntersectsRingSequencePessimistic(
             bErrorOut = true;
             return false;
         }
-        iOffsetInOut += nPoints * nDim * sizeof(double);
+        iOffsetInOut += sizeof(double) * nPoints * nDim;
     }
     return false;
 }

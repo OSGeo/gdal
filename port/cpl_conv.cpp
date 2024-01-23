@@ -1126,7 +1126,7 @@ void *CPLScanPointer(const char *pszString, int nMaxLength)
     {
         void *pResult = nullptr;
 
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+#if defined(__MSVCRT__) || (defined(_WIN32) && defined(_MSC_VER))
         // cppcheck-suppress invalidscanf
         sscanf(szTemp + 2, "%p", &pResult);
 #else
@@ -1360,7 +1360,7 @@ int CPLPrintUIntBig(char *pszBuffer, GUIntBig iValue, int nMaxLen)
 
     char szTemp[64] = {};
 
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+#if defined(__MSVCRT__) || (defined(_WIN32) && defined(_MSC_VER))
 /* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
@@ -2364,7 +2364,7 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
         CPLLoadConfigOptionsFromFile(pszFile, false);
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
         const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
         const char *pszHome = CPLGetConfigOption("HOME", nullptr);
@@ -3127,7 +3127,7 @@ int CPLMoveFile(const char *pszNewPath, const char *pszOldPath)
 /************************************************************************/
 
 /** Create a symbolic link */
-#ifdef WIN32
+#ifdef _WIN32
 int CPLSymlink(const char *, const char *, CSLConstList)
 {
     return -1;

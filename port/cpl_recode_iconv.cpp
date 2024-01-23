@@ -387,7 +387,7 @@ char *CPLRecodeFromWCharIconv(const wchar_t *pwszSource,
  *
  * @param pszSource input multi-byte character string.
  * @param pszSrcEncoding source encoding, typically CPL_ENC_UTF8.
- * @param pszDstEncoding destination encoding, typically CPL_ENC_UCS2.
+ * @param pszDstEncoding destination encoding. Must be "WCHAR_T".
  *
  * @return the zero terminated wchar_t string (to be freed with CPLFree()) or
  * NULL on error.
@@ -398,8 +398,19 @@ wchar_t *CPLRecodeToWCharIconv(const char *pszSource,
                                const char *pszDstEncoding)
 
 {
-    return reinterpret_cast<wchar_t *>(
-        CPLRecodeIconv(pszSource, pszSrcEncoding, pszDstEncoding));
+    if (strcmp(pszDstEncoding, "WCHAR_T") != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Stub recoding implementation does not support "
+                 "CPLRecodeToWCharIconv(...,%s,%s)",
+                 pszSrcEncoding, pszDstEncoding);
+        return nullptr;
+    }
+
+    // Using double static_cast<> makes CodeQL cpp/incorrect-string-type-conversion
+    // check happy...
+    return static_cast<wchar_t *>(static_cast<void *>(
+        CPLRecodeIconv(pszSource, pszSrcEncoding, pszDstEncoding)));
 }
 
 #endif /* CPL_RECODE_ICONV */

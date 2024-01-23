@@ -43,7 +43,7 @@
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 
-static CPLString osWindowsProductUUID;
+static std::string osWindowsProductUUID;
 
 static void FetchUUIDFunc(void *)
 {
@@ -136,9 +136,9 @@ com_cleanup:
     CoUninitialize();
 }
 
-bool CPLFetchWindowsProductUUID(CPLString &osStr);
+bool CPLFetchWindowsProductUUID(std::string &osStr);
 
-bool CPLFetchWindowsProductUUID(CPLString &osStr)
+bool CPLFetchWindowsProductUUID(std::string &osStr)
 {
     static std::mutex gMutex;
     std::lock_guard<std::mutex> oGuard(gMutex);

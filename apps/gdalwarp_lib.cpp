@@ -1365,13 +1365,20 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
  * @param pszDest the destination dataset path or NULL.
  * @param hDstDS the destination dataset or NULL.
  * @param nSrcCount the number of input datasets.
- * @param pahSrcDS the list of input datasets.
+ * @param pahSrcDS the list of input datasets. For practical purposes, the type
+ * of this argument should be considered as "const GDALDatasetH* const*", that
+ * is neither the array nor its values are mutated by this function.
  * @param psOptionsIn the options struct returned by GDALWarpAppOptionsNew() or
  * NULL.
  * @param pbUsageError pointer to a integer output variable to store if any
  * usage error has occurred, or NULL.
  * @return the output dataset (new dataset that must be closed using
- * GDALClose(), or hDstDS if not NULL) or NULL in case of error.
+ * GDALClose(), or hDstDS if not NULL) or NULL in case of error. If the output
+ * format is a VRT dataset, then the returned VRT dataset has a reference to
+ * pahSrcDS[0]. Hence pahSrcDS[0] should be closed after the returned dataset
+ * if using GDALClose().
+ * A safer alternative is to use GDALReleaseDataset() instead of using
+ * GDALClose(), in which case you can close datasets in any order.
  *
  * @since GDAL 2.1
  */
@@ -4230,16 +4237,27 @@ static GDALDatasetH GDALWarpCreateOutput(
             (psOptions->bCropToCutline &&
              psOptions->aosWarpOptions.FetchBool("CUTLINE_ALL_TOUCHED", false)))
         {
-            bDetectBlankBorders = true;
-
-            psOptions->dfMinX = floor(psOptions->dfMinX / psOptions->dfXRes) *
-                                psOptions->dfXRes;
+            if ((psOptions->bTargetAlignedPixels &&
+                 bNeedsSuggestedWarpOutput) ||
+                (psOptions->bCropToCutline &&
+                 psOptions->aosWarpOptions.FetchBool("CUTLINE_ALL_TOUCHED",
+                                                     false)))
+            {
+                bDetectBlankBorders = true;
+            }
+            constexpr double EPS = 1e-8;
+            psOptions->dfMinX =
+                floor(psOptions->dfMinX / psOptions->dfXRes + EPS) *
+                psOptions->dfXRes;
             psOptions->dfMaxX =
-                ceil(psOptions->dfMaxX / psOptions->dfXRes) * psOptions->dfXRes;
-            psOptions->dfMinY = floor(psOptions->dfMinY / psOptions->dfYRes) *
-                                psOptions->dfYRes;
+                ceil(psOptions->dfMaxX / psOptions->dfXRes - EPS) *
+                psOptions->dfXRes;
+            psOptions->dfMinY =
+                floor(psOptions->dfMinY / psOptions->dfYRes + EPS) *
+                psOptions->dfYRes;
             psOptions->dfMaxY =
-                ceil(psOptions->dfMaxY / psOptions->dfYRes) * psOptions->dfYRes;
+                ceil(psOptions->dfMaxY / psOptions->dfYRes - EPS) *
+                psOptions->dfYRes;
         }
 
         const auto UpdateGeoTransformandAndPixelLines = [&]()
@@ -4693,11 +4711,14 @@ class CutlineTransformer : public OGRCoordinateTransformation
         GDALDestroyTransformer(hSrcImageTransformer);
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double *z,
+    virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double * /* t */, int *pabSuccess) override
     {
-        return GDALGenImgProjTransform(hSrcImageTransformer, TRUE, nCount, x, y,
-                                       z, pabSuccess);
+        CPLAssert(nCount <=
+                  static_cast<size_t>(std::numeric_limits<int>::max()));
+        return GDALGenImgProjTransform(hSrcImageTransformer, TRUE,
+                                       static_cast<int>(nCount), x, y, z,
+                                       pabSuccess);
     }
 
     virtual OGRCoordinateTransformation *Clone() const override

@@ -39,6 +39,10 @@ constexpr const char *BAG_DRIVER_NAME = "BAG";
 
 constexpr const char *S102_DRIVER_NAME = "S102";
 
+constexpr const char *S104_DRIVER_NAME = "S104";
+
+constexpr const char *S111_DRIVER_NAME = "S111";
+
 int CPL_DLL HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo);
 
 int CPL_DLL HDF5ImageDatasetIdentify(GDALOpenInfo *poOpenInfo);
@@ -47,6 +51,10 @@ int CPL_DLL BAGDatasetIdentify(GDALOpenInfo *poOpenInfo);
 
 int CPL_DLL S102DatasetIdentify(GDALOpenInfo *poOpenInfo);
 
+int CPL_DLL S104DatasetIdentify(GDALOpenInfo *poOpenInfo);
+
+int CPL_DLL S111DatasetIdentify(GDALOpenInfo *poOpenInfo);
+
 void CPL_DLL HDF5DriverSetCommonMetadata(GDALDriver *poDriver);
 
 void CPL_DLL HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver);
@@ -54,5 +62,9 @@ void CPL_DLL HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver);
 void CPL_DLL BAGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 void CPL_DLL S102DriverSetCommonMetadata(GDALDriver *poDriver);
+
+void CPL_DLL S104DriverSetCommonMetadata(GDALDriver *poDriver);
+
+void CPL_DLL S111DriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

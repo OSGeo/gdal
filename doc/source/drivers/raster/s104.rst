@@ -1,0 +1,58 @@
+.. _raster.s104:
+
+================================================================================
+S104 -- S-104 Water Level Information for Surface Navigation Product
+================================================================================
+
+.. shortname:: S104
+
+.. build_dependencies:: libhdf5
+
+.. versionadded:: 3.9
+
+This driver provides read-only support for water level data in the S-104 format,
+which is a specific product profile in an HDF5 file.
+
+S-104 files have two image bands representing water level height (band 1)
+and water level trend (band 2) values for each cell in a raster grid area.
+
+When opening a S-104 file, no raster band is directly available. But a list of
+subdatasets will be reported, one for each timestamp available in the file.
+
+An actual dataset can be opened through such a subdataset, with a syntax like
+``S104:"filename.h5":Group_001``.
+
+Georeferencing is reported.
+
+Note that the driver currently only supports regularly gridded S104 datasets.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Open options
+------------
+
+- .. oo:: NORTH_UP
+     :choices: YES, NO
+     :default: YES
+
+     Whether the top line of the dataset should be the northern-most one.
+
+     This is the default behavior of most GDAL formats, but the native
+     organization of the data in S-104 products is to have the first line of
+     the grid being the southern-most one. This native organization can be
+     exposed by the driver by setting this option to NO (in which case the
+     6th term of the geotransform matrix will be positive)
+
+See Also
+--------
+
+-  Implemented as :source_file:`frmts/hdf5/s104dataset.cpp`.
+-  `S-104 Bathymetric Surface Product Specification <https://registry.iho.int/productspec/view.do?idx=198&product_ID=S-104&statusS=5&domainS=20&category=product_ID&searchValue=S-104>`__
+-  :ref:`BAG driver <raster.bag>`
+-  :ref:`S-102 driver <raster.s102>`
+-  :ref:`S-111 driver <raster.s111>`

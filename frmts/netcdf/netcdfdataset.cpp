@@ -2374,10 +2374,10 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
     void *pImageNC = pImage;
     if (edge[nBandXPos] != static_cast<size_t>(nBlockXSize))
     {
-        pImageNC =
-            static_cast<GByte *>(pImage) +
-            ((nBlockXSize * nBlockYSize - edge[nBandXPos] * nYChunkSize) *
-             (GDALGetDataTypeSize(eDataType) / 8));
+        pImageNC = static_cast<GByte *>(pImage) +
+                   ((static_cast<size_t>(nBlockXSize) * nBlockYSize -
+                     edge[nBandXPos] * nYChunkSize) *
+                    (GDALGetDataTypeSize(eDataType) / 8));
     }
 
     // Read data according to type.
@@ -2546,7 +2546,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     // Locate X, Y and Z position in the array.
 
-    size_t xstart = nBlockXOff * nBlockXSize;
+    size_t xstart = static_cast<size_t>(nBlockXOff) * nBlockXSize;
     size_t ystart = 0;
 
     // Check y order.
@@ -2562,7 +2562,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             else
             {
                 // in GDAL space
-                ystart = nBlockYOff * nBlockYSize;
+                ystart = static_cast<size_t>(nBlockYOff) * nBlockYSize;
                 const size_t yend =
                     std::min(ystart + nBlockYSize - 1,
                              static_cast<size_t>(nRasterYSize - 1));
@@ -2644,7 +2644,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         else
         {
-            ystart = nBlockYOff * nBlockYSize;
+            ystart = static_cast<size_t>(nBlockYOff) * nBlockYSize;
         }
     }
 
@@ -2674,7 +2674,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     size_t start[MAX_NC_DIMS];
     memset(start, 0, sizeof(start));
-    start[nBandXPos] = nBlockXOff * nBlockXSize;
+    start[nBandXPos] = static_cast<size_t>(nBlockXOff) * nBlockXSize;
 
     // check y order.
     if (static_cast<netCDFDataset *>(poDS)->bBottomUp)
@@ -2694,7 +2694,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        start[nBandYPos] = nBlockYOff * nBlockYSize;  // y
+        start[nBandYPos] = static_cast<size_t>(nBlockYOff) * nBlockYSize;  // y
     }
 
     size_t edge[MAX_NC_DIMS] = {};
@@ -8003,7 +8003,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     int new_cdfid = -1;
     CPLString osTmpFilename(osFilename + ".tmp");
     CPLString osFilenameForNCCreate(osTmpFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp =
@@ -8086,7 +8086,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     VSIUnlink(osOriFilename);
 
     CPLString osFilenameForNCOpen(osFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp = CPLRecode(osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP");
@@ -8443,7 +8443,7 @@ bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,
 #endif
                         oMapVarToId[pszVarName] = nVarId;
                         oMapVarIdToType[nVarId] = nc_datatype;
-                        oMapVarIdToVectorOfDimId[nVarId] = aoDimIds;
+                        oMapVarIdToVectorOfDimId[nVarId] = std::move(aoDimIds);
                     }
                 }
                 CSLDestroy(papszTokens);
@@ -8982,7 +8982,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                           ? NC_WRITE
                           : NC_NOWRITE;
     CPLString osFilenameForNCOpen(poDS->osFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp = CPLRecode(osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP");
@@ -9104,7 +9104,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLDebug("GDAL_netCDF", "got cdfid=%d", cdfid);
 #endif
 
-#if defined(ENABLE_NCDUMP) && !defined(WIN32)
+#if defined(ENABLE_NCDUMP) && !defined(_WIN32)
     // Try to destroy the temporary file right now on Unix
     if (poDS->bFileToDestroyAtClosing)
     {
@@ -10015,7 +10015,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
 
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
-#if defined(WIN32) && !defined(NETCDF_USES_UTF8)
+#if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp =
@@ -10025,7 +10025,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
     }
 #endif
 
-#if defined(WIN32)
+#if defined(_WIN32)
     {
         // Works around bug of msys2 netCDF 4.9.0 package where nc_create()
         // crashes

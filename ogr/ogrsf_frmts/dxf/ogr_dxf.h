@@ -179,10 +179,10 @@ class OGRDXFInsertTransformer final : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    int Transform(int nCount, double *x, double *y, double *z, double * /* t */,
-                  int *pabSuccess) override
+    int Transform(size_t nCount, double *x, double *y, double *z,
+                  double * /* t */, int *pabSuccess) override
     {
-        for (int i = 0; i < nCount; i++)
+        for (size_t i = 0; i < nCount; i++)
         {
             x[i] *= dfXScale;
             y[i] *= dfYScale;
@@ -296,10 +296,11 @@ class OGRDXFOCSTransformer final : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    int Transform(int nCount, double *adfX, double *adfY, double *adfZ,
+    int Transform(size_t nCount, double *adfX, double *adfY, double *adfZ,
                   double *adfT, int *pabSuccess) override;
 
-    int InverseTransform(int nCount, double *adfX, double *adfY, double *adfZ);
+    int InverseTransform(size_t nCount, double *adfX, double *adfY,
+                         double *adfZ);
 
     void ComposeOnto(OGRDXFAffineTransform &poCT) const;
 

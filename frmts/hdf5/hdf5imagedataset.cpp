@@ -1153,14 +1153,26 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
             if (LatitudeDatasetID > 0 && LongitudeDatasetID > 0)
             {
-                float *const Latitude = static_cast<float *>(
-                    CPLCalloc(nRasterYSize * nRasterXSize, sizeof(float)));
-                float *const Longitude = static_cast<float *>(
-                    CPLCalloc(nRasterYSize * nRasterXSize, sizeof(float)));
+                float *const Latitude =
+                    static_cast<float *>(VSI_MALLOC3_VERBOSE(
+                        nRasterYSize, nRasterXSize, sizeof(float)));
+                float *const Longitude =
+                    static_cast<float *>(VSI_MALLOC3_VERBOSE(
+                        nRasterYSize, nRasterXSize, sizeof(float)));
+                if (!Latitude || !Longitude)
+                {
+                    CPLFree(Latitude);
+                    CPLFree(Longitude);
+                    H5Dclose(LatitudeDatasetID);
+                    H5Dclose(LongitudeDatasetID);
+                    return CE_Failure;
+                }
                 memset(Latitude, 0,
-                       nRasterXSize * nRasterYSize * sizeof(float));
+                       static_cast<size_t>(nRasterXSize) * nRasterYSize *
+                           sizeof(float));
                 memset(Longitude, 0,
-                       nRasterXSize * nRasterYSize * sizeof(float));
+                       static_cast<size_t>(nRasterXSize) * nRasterYSize *
+                           sizeof(float));
 
                 // netCDF convention for nodata
                 double dfLatNoData = 0;

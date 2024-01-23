@@ -215,7 +215,7 @@ Uri ParseUri(const std::string &osUrl)
     }
     else
     {
-        stOut.osResourceId = osResourceId;
+        stOut.osResourceId = std::move(osResourceId);
     }
 
     return stOut;

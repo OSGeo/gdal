@@ -153,6 +153,14 @@ GDALRasterBand::~GDALRasterBand()
  * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
  * ]8 / 1.2, infinity[        | 8x downsampled band
  *
+ * Note that starting with GDAL 3.9, this 1.2 oversampling factor can be
+ * modified by setting the GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD configuration
+ * option. Also note that starting with GDAL 3.9, when the resampling algorithm
+ * specified in psExtraArg->eResampleAlg is different from GRIORA_NearestNeighbour,
+ * this oversampling threshold defaults to 1. Consequently if there are overviews
+ * of downscaling factor 2, 4 and 8, and the desired downscaling factor is
+ * 7.99, the overview of factor 4 will be selected for a non nearest resampling.
+ *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
  * ReadBlock() and WriteBlock() methods.
@@ -5812,8 +5820,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 nYReduced = 1;
         }
 
-        void *pData = CPLMalloc(GDALGetDataTypeSizeBytes(eDataType) *
-                                nXReduced * nYReduced);
+        void *pData = CPLMalloc(cpl::fits_on<int>(
+            GDALGetDataTypeSizeBytes(eDataType) * nXReduced * nYReduced));
 
         const CPLErr eErr =
             IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,
@@ -6721,8 +6729,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax(int bApproxOK, double *adfMinMax)
                 nYReduced = 1;
         }
 
-        void *const pData = CPLMalloc(GDALGetDataTypeSizeBytes(eDataType) *
-                                      nXReduced * nYReduced);
+        void *const pData = CPLMalloc(cpl::fits_on<int>(
+            GDALGetDataTypeSizeBytes(eDataType) * nXReduced * nYReduced));
 
         const CPLErr eErr =
             IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pData,

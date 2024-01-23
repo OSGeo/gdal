@@ -286,7 +286,7 @@ def test_multidim_getresampled_3d():
     assert attr.Write(1) == gdal.CE_None
 
     srs = ds.GetSpatialRef().Clone()
-    srs.SetDataAxisToSRSAxisMapping([1, 2])
+    srs.SetDataAxisToSRSAxisMapping([2, 3])
     ar.SetSpatialRef(srs)
     for i in range(ds.RasterCount):
         ar[i].Write(ds.GetRasterBand(i + 1).ReadRaster())

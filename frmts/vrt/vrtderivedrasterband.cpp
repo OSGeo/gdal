@@ -908,7 +908,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
              (!m_bNoDataValueSet || m_dfNoDataValue == 0))
     {
         memset(pData, 0,
-               static_cast<size_t>(nBufXSize * nBufYSize * nPixelSpace));
+               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
     }
     else if (m_bNoDataValueSet)
     {
@@ -1137,23 +1137,28 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                            (nYShiftInBuffer * nExtBufXSize + nXShiftInBuffer) *
                                nSrcTypeSize,
                        nExtBufXSizeReq, nExtBufYSizeReq, eSrcType, nSrcTypeSize,
-                       nSrcTypeSize * nExtBufXSize, &sExtraArg, oWorkingState);
+                       static_cast<GSpacing>(nSrcTypeSize) * nExtBufXSize,
+                       &sExtraArg, oWorkingState);
 
         // Extend first lines
         for (int iY = 0; iY < nYShiftInBuffer; iY++)
         {
-            memcpy(pabyBuffer + iY * nExtBufXSize * nSrcTypeSize,
-                   pabyBuffer + nYShiftInBuffer * nExtBufXSize * nSrcTypeSize,
-                   nExtBufXSize * nSrcTypeSize);
+            memcpy(pabyBuffer +
+                       static_cast<size_t>(iY) * nExtBufXSize * nSrcTypeSize,
+                   pabyBuffer + static_cast<size_t>(nYShiftInBuffer) *
+                                    nExtBufXSize * nSrcTypeSize,
+                   static_cast<size_t>(nExtBufXSize) * nSrcTypeSize);
         }
         // Extend last lines
         for (int iY = nYShiftInBuffer + nExtBufYSizeReq; iY < nExtBufYSize;
              iY++)
         {
-            memcpy(pabyBuffer + iY * nExtBufXSize * nSrcTypeSize,
-                   pabyBuffer + (nYShiftInBuffer + nExtBufYSizeReq - 1) *
+            memcpy(pabyBuffer +
+                       static_cast<size_t>(iY) * nExtBufXSize * nSrcTypeSize,
+                   pabyBuffer + static_cast<size_t>(nYShiftInBuffer +
+                                                    nExtBufYSizeReq - 1) *
                                     nExtBufXSize * nSrcTypeSize,
-                   nExtBufXSize * nSrcTypeSize);
+                   static_cast<size_t>(nExtBufXSize) * nSrcTypeSize);
         }
         // Extend first cols
         if (nXShiftInBuffer)
@@ -1162,9 +1167,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
             {
                 for (int iX = 0; iX < nXShiftInBuffer; iX++)
                 {
-                    memcpy(pabyBuffer + (iY * nExtBufXSize + iX) * nSrcTypeSize,
-                           pabyBuffer + (iY * nExtBufXSize + nXShiftInBuffer) *
-                                            nSrcTypeSize,
+                    memcpy(pabyBuffer +
+                               static_cast<size_t>(iY * nExtBufXSize + iX) *
+                                   nSrcTypeSize,
+                           pabyBuffer +
+                               (static_cast<size_t>(iY) * nExtBufXSize +
+                                nXShiftInBuffer) *
+                                   nSrcTypeSize,
                            nSrcTypeSize);
                 }
             }
@@ -1177,10 +1186,13 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
                 for (int iX = nXShiftInBuffer + nExtBufXSizeReq;
                      iX < nExtBufXSize; iX++)
                 {
-                    memcpy(pabyBuffer + (iY * nExtBufXSize + iX) * nSrcTypeSize,
-                           pabyBuffer + (iY * nExtBufXSize + nXShiftInBuffer +
-                                         nExtBufXSizeReq - 1) *
-                                            nSrcTypeSize,
+                    memcpy(pabyBuffer +
+                               (static_cast<size_t>(iY) * nExtBufXSize + iX) *
+                                   nSrcTypeSize,
+                           pabyBuffer +
+                               (static_cast<size_t>(iY) * nExtBufXSize +
+                                nXShiftInBuffer + nExtBufXSizeReq - 1) *
+                                   nSrcTypeSize,
                            nSrcTypeSize);
                 }
             }

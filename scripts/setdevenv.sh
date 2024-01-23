@@ -54,8 +54,8 @@ if [[ ! ${GDAL_DRIVER_PATH:-} =~ $CUR_DIR/gdalplugins ]]; then
     echo "Setting GDAL_DRIVER_PATH=$GDAL_DRIVER_PATH"
 fi
 
-if [[ ! "${GDAL_DATA:-}" =~ $GDAL_ROOT/data ]]; then
-    export GDAL_DATA="$GDAL_ROOT/data"
+if [[ ! "${GDAL_DATA:-}" =~ $CUR_DIR/data ]]; then
+    export GDAL_DATA="$CUR_DIR/data"
     echo "Setting GDAL_DATA=$GDAL_DATA"
 fi
 

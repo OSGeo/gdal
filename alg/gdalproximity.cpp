@@ -582,7 +582,8 @@ static CPLErr ProcessProximityLine(GInt32 *panSrcScanline, int *panNearX,
              panSrcScanline[iPixel] != *pdfSrcNoDataValue) &&
             dfNearDistSq <= dfMaxDist * dfMaxDist &&
             (pafProximity[iPixel] < 0 ||
-             dfNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]))
+             dfNearDistSq < static_cast<double>(pafProximity[iPixel]) *
+                                pafProximity[iPixel]))
             pafProximity[iPixel] = static_cast<float>(sqrt(dfNearDistSq));
     }
 

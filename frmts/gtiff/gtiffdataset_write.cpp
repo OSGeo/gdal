@@ -6305,7 +6305,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
     const int l_nBands = poDstDS->GetRasterCount();
     void *pBlockBuffer =
         VSI_MALLOC3_VERBOSE(poDstDS->m_nBlockXSize, poDstDS->m_nBlockYSize,
-                            l_nBands * nDataTypeSize);
+                            cpl::fits_on<int>(l_nBands * nDataTypeSize));
     if (pBlockBuffer == nullptr)
     {
         eErr = CE_Failure;
@@ -6353,8 +6353,9 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
                 eErr = poSrcDS->RasterIO(
                     GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
                     nReqXSize, nReqYSize, eType, l_nBands, nullptr,
-                    nDataTypeSize * l_nBands,
-                    poDstDS->m_nBlockXSize * nDataTypeSize * l_nBands,
+                    static_cast<GSpacing>(nDataTypeSize) * l_nBands,
+                    static_cast<GSpacing>(nDataTypeSize) * l_nBands *
+                        poDstDS->m_nBlockXSize,
                     nDataTypeSize, nullptr);
                 if (eErr == CE_None)
                 {
@@ -6381,7 +6382,9 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
                             GF_Read, iX, iY, nReqXSize, nReqYSize,
                             poBlock->GetDataRef(), nReqXSize, nReqYSize, eType,
                             nDataTypeSize,
-                            nDataTypeSize * poDstDS->m_nBlockXSize, nullptr);
+                            static_cast<GSpacing>(nDataTypeSize) *
+                                poDstDS->m_nBlockXSize,
+                            nullptr);
                         poBlock->MarkDirty();
                         apoLockedBlocks.emplace_back(poBlock);
                     }
@@ -6395,7 +6398,9 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
                     eErr = poSrcDS->GetRasterBand(l_nBands)->RasterIO(
                         GF_Read, iX, iY, nReqXSize, nReqYSize, pBlockBuffer,
                         nReqXSize, nReqYSize, eType, nDataTypeSize,
-                        nDataTypeSize * poDstDS->m_nBlockXSize, nullptr);
+                        static_cast<GSpacing>(nDataTypeSize) *
+                            poDstDS->m_nBlockXSize,
+                        nullptr);
                 }
                 if (eErr == CE_None)
                 {

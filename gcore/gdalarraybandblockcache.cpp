@@ -127,9 +127,9 @@ bool GDALArrayBandBlockCache::Init()
 
         if (poBand->nBlocksPerRow < INT_MAX / poBand->nBlocksPerColumn)
         {
-            u.papoBlocks = static_cast<GDALRasterBlock **>(
-                VSICalloc(sizeof(void *),
-                          poBand->nBlocksPerRow * poBand->nBlocksPerColumn));
+            u.papoBlocks = static_cast<GDALRasterBlock **>(VSICalloc(
+                sizeof(void *), cpl::fits_on<int>(poBand->nBlocksPerRow *
+                                                  poBand->nBlocksPerColumn)));
             if (u.papoBlocks == nullptr)
             {
                 poBand->ReportError(CE_Failure, CPLE_OutOfMemory,
@@ -156,7 +156,8 @@ bool GDALArrayBandBlockCache::Init()
         if (nSubBlocksPerRow < INT_MAX / nSubBlocksPerColumn)
         {
             u.papapoBlocks = static_cast<GDALRasterBlock ***>(VSICalloc(
-                sizeof(void *), nSubBlocksPerRow * nSubBlocksPerColumn));
+                sizeof(void *),
+                cpl::fits_on<int>(nSubBlocksPerRow * nSubBlocksPerColumn)));
             if (u.papapoBlocks == nullptr)
             {
                 poBand->ReportError(CE_Failure, CPLE_OutOfMemory,

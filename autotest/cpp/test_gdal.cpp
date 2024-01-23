@@ -559,6 +559,51 @@ TEST_F(test_gdal, GDALWarp_error_flush_cache)
     delete poDriver;
 }
 
+// Test GDALWarp() to VRT and that we can call GDALReleaseDataset() on the
+// source dataset when we want.
+TEST_F(test_gdal, GDALWarp_VRT)
+{
+    const char *args[] = {"-of", "VRT", nullptr};
+    GDALWarpAppOptions *psOptions =
+        GDALWarpAppOptionsNew((char **)args, nullptr);
+    GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    GDALDatasetH hOutDS = GDALWarp("", nullptr, 1, &hSrcDS, psOptions, nullptr);
+    GDALWarpAppOptionsFree(psOptions);
+    GDALReleaseDataset(hSrcDS);
+    EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
+              4672);
+    GDALReleaseDataset(hOutDS);
+}
+
+// Test GDALTranslate() to VRT and that we can call GDALReleaseDataset() on the
+// source dataset when we want.
+TEST_F(test_gdal, GDALTranslate_VRT)
+{
+    const char *args[] = {"-of", "VRT", nullptr};
+    GDALTranslateOptions *psOptions =
+        GDALTranslateOptionsNew((char **)args, nullptr);
+    GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, nullptr);
+    GDALTranslateOptionsFree(psOptions);
+    GDALReleaseDataset(hSrcDS);
+    EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
+              4672);
+    GDALReleaseDataset(hOutDS);
+}
+
+// Test GDALBuildVRT() and that we can call GDALReleaseDataset() on the
+// source dataset when we want.
+TEST_F(test_gdal, GDALBuildVRT)
+{
+    GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
+    GDALDatasetH hOutDS =
+        GDALBuildVRT("", 1, &hSrcDS, nullptr, nullptr, nullptr);
+    GDALReleaseDataset(hSrcDS);
+    EXPECT_EQ(GDALChecksumImage(GDALGetRasterBand(hOutDS, 1), 0, 0, 20, 20),
+              4672);
+    GDALReleaseDataset(hOutDS);
+}
+
 // Test that GDALSwapWords() with unaligned buffers
 TEST_F(test_gdal, GDALSwapWords_unaligned_buffers)
 {
@@ -2583,7 +2628,8 @@ template <class T> void TestCachedPixelAccessor()
         }
     }
 
-    std::vector<T> values(poBand->GetYSize() * poBand->GetXSize());
+    std::vector<T> values(static_cast<size_t>(poBand->GetYSize()) *
+                          poBand->GetXSize());
     accessor.FlushCache();
     EXPECT_EQ(poBand->RasterIO(GF_Read, 0, 0, poBand->GetXSize(),
                                poBand->GetYSize(), values.data(),

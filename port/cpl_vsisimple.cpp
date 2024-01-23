@@ -105,7 +105,7 @@ extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 #endif
 
 /* Unix or Windows NT/2000/XP */
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #include <unistd.h>
 #else
 #include <io.h>
@@ -120,7 +120,7 @@ extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 FILE *VSIFOpen(const char *pszFilename, const char *pszAccess)
 
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     FILE *fp = nullptr;
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
@@ -1266,7 +1266,7 @@ char *VSIStrdupVerbose(const char *pszStr, const char *pszFile, int nLine)
 int VSIStat(const char *pszFilename, VSIStatBuf *pStatBuf)
 
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1542,7 +1542,7 @@ GIntBig CPLGetPhysicalRAM(void)
     return nPhysMem;
 }
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 
 // GlobalMemoryStatusEx requires _WIN32_WINNT >= 0x0500.
 #ifndef _WIN32_WINNT

@@ -97,10 +97,10 @@ Configuration file
 ------------------
 
 A default configuration file
-:source_file:`data/gmlasconf.xml`
+:source_file:`ogr/ogrsf_frmts/gmlas/data/gmlasconf.xml`
 file is provided in the data directory of the GDAL installation. Its
 structure and content is documented in
-:source_file:`data/gmlasconf.xsd`
+:source_file:`ogr/ogrsf_frmts/gmlas/data/gmlasconf.xsd`
 schema.
 
 This configuration file enables the user to modify the following
@@ -192,7 +192,7 @@ Open options
 
       finition: filename of a
       XML configuration file conforming to the
-      :source_file:`data/gmlasconf.xsd`
+      :source_file:`ogr/ogrsf_frmts/gmlas/data/gmlasconf.xsd`
       schema. It is also possible to provide the XML content directly
       inlined provided that the very first characters are <Configuration.
 
@@ -354,7 +354,7 @@ The supported dataset creation options are:
 
       filename of a
       XML configuration file conforming to the
-      :source_file:`data/gmlasconf.xsd`
+      :source_file:`ogr/ogrsf_frmts/gmlas/data/gmlasconf.xsd`
       schema. It is also possible to provide the XML content directly
       inlined provided that the very first characters are <Configuration>.
 

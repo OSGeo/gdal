@@ -263,7 +263,8 @@ int GDALDitherRGB2PCTInternal(
     /* -------------------------------------------------------------------- */
     /*      Setup various variables.                                        */
     /* -------------------------------------------------------------------- */
-    int nCLevels = 1 << nBits;
+    const int nCLevels = 1 << nBits;
+    const int nCLevelsCube = nCLevels * nCLevels * nCLevels;
     ColorIndex *psColorIndexMap = nullptr;
 
     GByte *pabyRed = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
@@ -297,7 +298,7 @@ int GDALDitherRGB2PCTInternal(
          */
 
         pabyColorMap = static_cast<GByte *>(
-            VSI_MALLOC_VERBOSE(nCLevels * nCLevels * nCLevels * sizeof(GByte)));
+            VSI_MALLOC_VERBOSE(nCLevelsCube * sizeof(GByte)));
         if (pabyColorMap == nullptr)
         {
             CPLFree(pabyRed);

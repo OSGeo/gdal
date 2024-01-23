@@ -20,6 +20,17 @@ add_gdal_driver(
           "NOT GDAL_USE_JPEG_INTERNAL\\\;NOT GDAL_USE_JPEG12_INTERNAL\\\;NOT GDAL_USE_TIFF_INTERNAL"
 )
 
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/nitf_spec.xsd
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_datum.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gt_ellips.csv
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 if(NOT TARGET gdal_NITF)
     return()
 endif()

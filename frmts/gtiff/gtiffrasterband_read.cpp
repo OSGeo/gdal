@@ -225,7 +225,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         panOffsets[iLine] +=
             (nXOff + static_cast<vsi_l_offset>(nYOffsetInBlock) * nBlockXSize) *
             nSrcPixelSize;
-        panSizes[iLine] = nReqXSize * nSrcPixelSize;
+        panSizes[iLine] = static_cast<size_t>(nReqXSize) * nSrcPixelSize;
     }
 
     // Extract data from the file.

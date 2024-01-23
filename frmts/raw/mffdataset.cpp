@@ -1248,7 +1248,7 @@ GDALDataset *MFFDataset::CreateCopy(const char *pszFilename,
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand + 1);
         GDALRasterBand *poDstBand = poDS->GetRasterBand(iBand + 1);
 
-        void *pData = CPLMalloc(nBlockXSize * nBlockYSize *
+        void *pData = CPLMalloc(static_cast<size_t>(nBlockXSize) * nBlockYSize *
                                 GDALGetDataTypeSizeBytes(eType));
 
         for (int iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize)

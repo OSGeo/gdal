@@ -766,10 +766,10 @@ static xmlParserInputPtr CPLExternalEntityLoader(const char *URL,
         }
         else if (strcmp(URL, "http://www.w3.org/2001/xml.xsd") == 0)
         {
-            CPLString osTmp = CPLFindLocalXSD("xml.xsd");
+            std::string osTmp = CPLFindLocalXSD("xml.xsd");
             if (!osTmp.empty())
             {
-                osURL = osTmp;
+                osURL = std::move(osTmp);
                 URL = osURL.c_str();
             }
             else
@@ -782,10 +782,10 @@ static xmlParserInputPtr CPLExternalEntityLoader(const char *URL,
         }
         else if (strcmp(URL, "http://www.w3.org/1999/xlink.xsd") == 0)
         {
-            CPLString osTmp = CPLFindLocalXSD("xlink.xsd");
+            std::string osTmp = CPLFindLocalXSD("xlink.xsd");
             if (!osTmp.empty())
             {
-                osURL = osTmp;
+                osURL = std::move(osTmp);
                 URL = osURL.c_str();
             }
             else

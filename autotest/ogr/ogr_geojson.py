@@ -4734,8 +4734,6 @@ def test_ogr_geojson_foreign_members_feature(tmp_vsimem):
 
 
 ###############################################################################
-
-
 def test_ogr_json_getextent3d(tmp_vsimem):
 
     jdata = r"""{
@@ -4743,7 +4741,7 @@ def test_ogr_json_getextent3d(tmp_vsimem):
             "features": [
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"foo": "bar"},
                     "geometry": {
                         "type": "%s",
                         "coordinates": %s
@@ -4751,7 +4749,7 @@ def test_ogr_json_getextent3d(tmp_vsimem):
                 },
                 {
                     "type": "Feature",
-                    "properties": {},
+                    "properties": {"foo": "baz"},
                     "geometry": {
                         "type": "%s",
                         "coordinates": %s
@@ -4792,13 +4790,40 @@ def test_ogr_json_getextent3d(tmp_vsimem):
 
     assert gdal.GetLastErrorMsg() == ""
     lyr = ds.GetLayer(0)
-    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
     dfn = lyr.GetLayerDefn()
     assert dfn.GetGeomFieldCount() == 1
     ext2d = lyr.GetExtent()
     assert ext2d == (1.0, 2.0, 1.0, 2.0)
     ext3d = lyr.GetExtent3D()
     assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test capabilities and extent with filters and round trip
+    lyr.SetAttributeFilter("foo = 'baz'")
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent)
+    ext2d = lyr.GetExtent()
+    assert ext2d == (2.0, 2.0, 2.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (2.0, 2.0, 2.0, 2.0, float("inf"), float("-inf"))
+
+    lyr.SetAttributeFilter(None)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test capability with geometry filter
+    lyr.SetSpatialFilterRect(1.5, 1.5, 2.5, 2.5)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent)
+    ext2d = lyr.GetExtent()
+    assert ext2d == (2.0, 2.0, 2.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (2.0, 2.0, 2.0, 2.0, float("inf"), float("-inf"))
 
     # Test mixed 2D
     gdal.FileFromMemBuffer(
@@ -4819,3 +4844,215 @@ def test_ogr_json_getextent3d(tmp_vsimem):
     assert ext2d == (1.0, 2.0, 1.0, 2.0)
     ext3d = lyr.GetExtent3D()
     assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 1.0)
+
+    # Text mixed geometry types
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "LineString", "[[2, 2, 2], [3, 3, 3]]"),
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    # Check geometry type is unknown
+    assert dfn.GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
+
+    # Test a polygon
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[1, 1], [2, 1], [2, 2], [1, 2], [1, 1]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test a polygon with a hole
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[1, 1], [2, 1], [2, 2], [1, 2], [1, 1]], [[1.5, 1.5], [1.5, 1.6], [1.6, 1.6], [1.6, 1.5], [1.5, 1.5]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test a series of different 2D geometries including polygons with holes
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[2, 2], [3, 3]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[4, 4], [5, 4], [5, 5], [4, 5], [4, 4]]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[6, 6], [7, 6], [7, 7], [6, 7], [6, 6]], [[6.5, 6.5], [6.5, 6.6], [6.6, 6.6], [6.6, 6.5], [6.5, 6.5]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (1.0, 7.0, 1.0, 7.0)
+    assert lyr.GetExtent3D() == (1.0, 7.0, 1.0, 7.0, float("inf"), float("-inf"))
+
+    # Test a series of different 3D geometries including polygons with holes
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1, 1]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[2, 2, 2], [3, 3, 3]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[4, 4, 4], [5, 4, 4], [5, 5, 5], [4, 5, 5], [4, 4, 4]]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[6, 6, 6], [7, 6, 6], [7, 7, 7], [6, 7, 7], [6, 6, 6]], [[6.5, 6.5, 6.5], [6.5, 6.6, 6.5], [6.6, 6.6, 6.5], [6.6, 6.5, 6.5], [6.5, 6.5, 6.5]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (1.0, 7.0, 1.0, 7.0)
+    assert lyr.GetExtent3D() == (1.0, 7.0, 1.0, 7.0, 1.0, 7.0)
+
+    # Test geometrycollection
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        r"""
+        {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "GeometryCollection",
+                    "geometries": [{
+                            "type": "Point",
+                            "coordinates": [6, 7]
+                        }, {
+                            "type": "Polygon",
+                            "coordinates": [[[3, 4, 2], [5, 4, 4], [5, 5, 5], [4, 5, 5], [3, 4, 2]]]
+                        }]
+                }
+            }]
+        }
+        """,
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (3.0, 6.0, 4.0, 7.0)
+    assert lyr.GetExtent3D() == (3.0, 6.0, 4.0, 7.0, 2.0, 5.0)

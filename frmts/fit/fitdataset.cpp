@@ -1195,7 +1195,8 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     const size_t bytesPerPixel = static_cast<size_t>(nBands) * nDTSize;
 
-    const size_t pageBytes = blockX * blockY * bytesPerPixel;
+    const size_t pageBytes =
+        static_cast<size_t>(blockX) * blockY * bytesPerPixel;
     std::vector<GByte> output;
     try
     {

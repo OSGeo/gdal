@@ -2443,7 +2443,7 @@ OGRFeature *OGRWFSLayer::GetFeature(GIntBig nFID)
 /*                         DeleteFromFilter()                           */
 /************************************************************************/
 
-OGRErr OGRWFSLayer::DeleteFromFilter(CPLString osOGCFilter)
+OGRErr OGRWFSLayer::DeleteFromFilter(const std::string &osOGCFilter)
 {
     if (!TestCapability(OLCDeleteFeature))
     {

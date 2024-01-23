@@ -3251,7 +3251,7 @@ GByte *GDALRawResult::StealData()
 GDALRawResult GDALAttribute::ReadAsRaw() const
 {
     const auto nEltCount(GetTotalElementsCount());
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     const auto nDTSize(dt.GetSize());
     GByte *res = static_cast<GByte *>(
         VSI_MALLOC2_VERBOSE(static_cast<size_t>(nEltCount), nDTSize));
@@ -7492,8 +7492,6 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
                     m = 1;
                 else if (m == static_cast<int>(m_iYDim) + 1)
                     m = 2;
-                else
-                    m = 0;
             }
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
@@ -7573,7 +7571,7 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock(int nBlockXOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
-                     nDTSize * nBlockXSize, &sExtraArg);
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -8464,8 +8462,6 @@ class GDALDatasetFromArray final : public GDALPamDataset
                     m = 1;
                 else if (m == static_cast<int>(m_iYDim) + 1)
                     m = 2;
-                else
-                    m = 0;
             }
             m_poSRS->SetDataAxisToSRSAxisMapping(axisMapping);
         }
@@ -8775,7 +8771,7 @@ CPLErr GDALRasterBandFromArray::IReadBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
-                     nDTSize * nBlockXSize, &sExtraArg);
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -8794,7 +8790,7 @@ CPLErr GDALRasterBandFromArray::IWriteBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     return IRasterIO(GF_Write, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
-                     nDTSize * nBlockXSize, &sExtraArg);
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
 }
 
 /************************************************************************/
@@ -9163,10 +9159,11 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                 }
             }
 
-            oItem.osDefinition = osModDefinition;
+            oItem.osDefinition = std::move(osModDefinition);
             oItem.bDefinitionUsesPctForG = bDefinitionUsesPctForG;
 
-            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(oItem);
+            aoBandParameterMetadataItems[iExtraDimIdx].emplace_back(
+                std::move(oItem));
         }
     }
 

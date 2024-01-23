@@ -1598,7 +1598,7 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
     }
     else
     {
-        m_oSRS = oSRS;
+        m_oSRS = std::move(oSRS);
     }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
@@ -2424,7 +2424,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         for (int i = 0; i < nBands; i++)
         {
             // First set up the wavelength names and units if available.
-            CPLString osWavelength;
+            std::string osWavelength;
             if (papszWL && nWLCount > i)
             {
                 osWavelength = papszWL[i];
@@ -2436,7 +2436,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             }
 
             // Build the final name for this band.
-            CPLString osBandName;
+            std::string osBandName;
             if (papszBandNames && CSLCount(papszBandNames) > i)
             {
                 osBandName = papszBandNames[i];
@@ -2450,15 +2450,15 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             else
             {
                 // WL but no band names.
-                osBandName = osWavelength;
+                osBandName = std::move(osWavelength);
             }
 
             // Description is for internal GDAL usage.
-            poDS->GetRasterBand(i + 1)->SetDescription(osBandName);
+            poDS->GetRasterBand(i + 1)->SetDescription(osBandName.c_str());
 
             // Metadata field named Band_1, etc. Needed for ArcGIS integration.
             CPLString osBandId = CPLSPrintf("Band_%i", i + 1);
-            poDS->SetMetadataItem(osBandId, osBandName);
+            poDS->SetMetadataItem(osBandId, osBandName.c_str());
 
             // Set wavelength metadata to band.
             if (papszWL && nWLCount > i)

@@ -30,6 +30,8 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
+#include <cinttypes>
+
 static const TigerFieldInfo rt1_2002_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
     {"MODULE", ' ', ' ', OFTString, 0, 0, 8, 1, 0},
@@ -373,12 +375,16 @@ OGRFeature *TigerCompleteChain::GetFeature(int nRecordId)
     if (fpPrimary == nullptr)
         return nullptr;
 
-    if (VSIFSeekL(fpPrimary, (nRecordId + nRT1RecOffset) * nRecordLength,
-                  SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s1",
-                 nRecordId * nRecordLength, pszModule);
-        return nullptr;
+        const auto nOffset =
+            static_cast<uint64_t>(nRecordId + nRT1RecOffset) * nRecordLength;
+        if (VSIFSeekL(fpPrimary, nOffset, SEEK_SET) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %s1", nOffset,
+                     pszModule);
+            return nullptr;
+        }
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -396,9 +402,9 @@ OGRFeature *TigerCompleteChain::GetFeature(int nRecordId)
     /*      Set fields.                                                     */
     /* -------------------------------------------------------------------- */
 
-    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poFeatureDefn);
 
-    SetFields(psRT1Info, poFeature, achRecord);
+    SetFields(psRT1Info, poFeature.get(), achRecord);
 
     /* -------------------------------------------------------------------- */
     /*      Read RT3 record, and apply fields.                              */
@@ -410,11 +416,12 @@ OGRFeature *TigerCompleteChain::GetFeature(int nRecordId)
         int nRT3RecLen =
             psRT3Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
 
-        if (VSIFSeekL(fpRT3, nRecordId * nRT3RecLen, SEEK_SET) != 0)
+        const auto nOffset = static_cast<uint64_t>(nRecordId) * nRT3RecLen;
+        if (VSIFSeekL(fpRT3, nOffset, SEEK_SET) != 0)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s3",
-                     nRecordId * nRT3RecLen, pszModule);
-            delete poFeature;
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %s3", nOffset,
+                     pszModule);
             return nullptr;
         }
 
@@ -424,35 +431,32 @@ OGRFeature *TigerCompleteChain::GetFeature(int nRecordId)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to read record %d of %s3",
                      nRecordId, pszModule);
-            delete poFeature;
             return nullptr;
         }
 
-        SetFields(psRT3Info, poFeature, achRT3Rec);
+        SetFields(psRT3Info, poFeature.get(), achRT3Rec);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Set geometry                                                    */
     /* -------------------------------------------------------------------- */
-    OGRLineString *poLine = new OGRLineString();
+    auto poLine = std::make_unique<OGRLineString>();
 
     poLine->setPoint(0, atoi(GetField(achRecord, 191, 200)) / 1000000.0,
                      atoi(GetField(achRecord, 201, 209)) / 1000000.0);
 
-    if (!AddShapePoints(poFeature->GetFieldAsInteger("TLID"), nRecordId, poLine,
-                        0))
+    if (!AddShapePoints(poFeature->GetFieldAsInteger("TLID"), nRecordId,
+                        poLine.get(), 0))
     {
-        delete poFeature;
-        delete poLine;
         return nullptr;
     }
 
     poLine->addPoint(atoi(GetField(achRecord, 210, 219)) / 1000000.0,
                      atoi(GetField(achRecord, 220, 228)) / 1000000.0);
 
-    poFeature->SetGeometryDirectly(poLine);
+    poFeature->SetGeometryDirectly(poLine.release());
 
-    return poFeature;
+    return poFeature.release();
 }
 
 /************************************************************************/
@@ -487,10 +491,13 @@ bool TigerCompleteChain::AddShapePoints(int nTLID, int nRecordId,
     {
         int nBytesRead = 0;
 
-        if (VSIFSeekL(fpShape, (nShapeRecId - 1) * nShapeRecLen, SEEK_SET) != 0)
+        const auto nOffset =
+            static_cast<uint64_t>(nShapeRecId - 1) * nShapeRecLen;
+        if (VSIFSeekL(fpShape, nOffset, SEEK_SET) != 0)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s2",
-                     (nShapeRecId - 1) * nShapeRecLen, pszModule);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %s2", nOffset,
+                     pszModule);
             return false;
         }
 
@@ -617,11 +624,13 @@ int TigerCompleteChain::GetShapeRecordId(int nChainId, int nTLID)
 
     while (nChainsRead < nMaxChainToRead)
     {
-        if (VSIFSeekL(fpShape, (nWorkingRecId - 1) * nShapeRecLen, SEEK_SET) !=
-            0)
+        const auto nOffset =
+            static_cast<uint64_t>(nWorkingRecId - 1) * nShapeRecLen;
+        if (VSIFSeekL(fpShape, nOffset, SEEK_SET) != 0)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d of %s2",
-                     (nWorkingRecId - 1) * nShapeRecLen, pszModule);
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to seek to %" PRIu64 " of %s2", nOffset,
+                     pszModule);
             return -2;
         }
 

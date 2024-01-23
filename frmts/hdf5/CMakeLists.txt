@@ -10,15 +10,26 @@ set(SOURCE
     bagdataset.cpp
     hdf5multidim.cpp
     hdf5eosparser.cpp
+    rat.cpp
     s100.cpp
     s100.h
     s102dataset.cpp
+    s104dataset.cpp
+    s111dataset.cpp
 )
 
 add_gdal_driver(TARGET gdal_HDF5
                 SOURCES ${SOURCE}
                 CORE_SOURCES hdf5drivercore.cpp
                 PLUGIN_CAPABLE)
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/bag_template.xml
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
 if(NOT TARGET gdal_HDF5)
     return()

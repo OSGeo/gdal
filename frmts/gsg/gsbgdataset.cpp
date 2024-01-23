@@ -199,7 +199,7 @@ CPLErr GSBGRasterBand::ScanForMinMaxZ()
                 pafRowMaxZ[iRow] = pafRowVals[iCol];
 
             dfSum += pafRowVals[iCol];
-            dfSum2 += pafRowVals[iCol] * pafRowVals[iCol];
+            dfSum2 += static_cast<double>(pafRowVals[iCol]) * pafRowVals[iCol];
             nValuesRead++;
         }
 
@@ -323,7 +323,8 @@ CPLErr GSBGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (VSIFSeekL(poGDS->fp,
                   GSBGDataset::nHEADER_SIZE +
-                      4 * nRasterXSize * (nRasterYSize - nBlockYOff - 1),
+                      static_cast<vsi_l_offset>(4) * nRasterXSize *
+                          (nRasterYSize - nBlockYOff - 1),
                   SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,

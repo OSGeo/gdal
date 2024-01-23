@@ -305,7 +305,7 @@ void OGRStartXercesLimitsForThisThread(size_t nMaxMemAlloc,
     limitation.timeOut = dfTimeoutSecond;
     if (pszMsgTimeout)
         limitation.osMsgTimeout = pszMsgTimeout;
-    (*gpoMapThreadTimeout)[CPLGetPID()] = limitation;
+    (*gpoMapThreadTimeout)[CPLGetPID()] = std::move(limitation);
 }
 
 /************************************************************************/

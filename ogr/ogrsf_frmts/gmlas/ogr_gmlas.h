@@ -81,21 +81,22 @@ class GMLASResourceCache
 {
   protected:
     bool m_bHasCheckedCacheDirectory;
-    CPLString m_osCacheDirectory;
+    std::string m_osCacheDirectory;
     bool m_bRefresh;
     bool m_bAllowDownload;
-    std::set<CPLString> m_aoSetRefreshedFiles;
+    std::set<std::string> m_aoSetRefreshedFiles;
 
-    static bool RecursivelyCreateDirectoryIfNeeded(const CPLString &osDirname);
+    static bool
+    RecursivelyCreateDirectoryIfNeeded(const std::string &osDirname);
     bool RecursivelyCreateDirectoryIfNeeded();
 
-    CPLString GetCachedFilename(const CPLString &osResource);
+    std::string GetCachedFilename(const std::string &osResource);
 
   public:
     GMLASResourceCache();
     virtual ~GMLASResourceCache();
 
-    void SetCacheDirectory(const CPLString &osCacheDirectory);
+    void SetCacheDirectory(const std::string &osCacheDirectory);
     void SetRefreshMode(bool bRefresh)
     {
         m_bRefresh = bRefresh;
@@ -112,12 +113,15 @@ class GMLASResourceCache
 
 class GMLASXSDCache final : public GMLASResourceCache
 {
+    bool CacheAllGML321();
+    bool CacheAllISO20070417();
+
   public:
     GMLASXSDCache();
     virtual ~GMLASXSDCache();
 
-    VSILFILE *Open(const CPLString &osResource, const CPLString &osBasePath,
-                   CPLString &osOutFilename);
+    VSILFILE *Open(const std::string &osResource, const std::string &osBasePath,
+                   std::string &osOutFilename);
 };
 
 /************************************************************************/

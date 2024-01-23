@@ -847,7 +847,7 @@ bool OGRJSONFGReader::GenerateLayerDefnFromFeature(json_object *poObj)
             if (!poContext->bHasCoordRefSysAtFeatureLevel)
             {
                 poContext->bHasCoordRefSysAtFeatureLevel = true;
-                poContext->osCoordRefSysAtFeatureLevel = osVal;
+                poContext->osCoordRefSysAtFeatureLevel = std::move(osVal);
                 poContext->poCRSAtFeatureLevel =
                     OGRJSONFGReadCoordRefSys(poCoordRefSys);
                 if (poContext->poCRSAtFeatureLevel)

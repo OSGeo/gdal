@@ -564,7 +564,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
     /* -------------------------------------------------------------------- */
     if (strchr(osText, '"') != nullptr)
     {
-        CPLString osEscaped;
+        std::string osEscaped;
 
         for (size_t iC = 0; iC < osText.size(); iC++)
         {
@@ -573,7 +573,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
             else
                 osEscaped += osText[iC];
         }
-        osText = osEscaped;
+        osText = std::move(osEscaped);
     }
 
     /* -------------------------------------------------------------------- */

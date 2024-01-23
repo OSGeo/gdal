@@ -71,9 +71,9 @@ function(gdal_set_runtime_env res)
 
   # Set GDAL_DATA
   if(WIN32)
-      file(TO_NATIVE_PATH "${PROJECT_SOURCE_DIR}/data" GDAL_DATA)
+      file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}/data" GDAL_DATA)
   else()
-      set(GDAL_DATA "${PROJECT_SOURCE_DIR}/data")
+      set(GDAL_DATA "${PROJECT_BINARY_DIR}/data")
   endif()
   list(APPEND RUNTIME_ENV "GDAL_DATA=${GDAL_DATA}")
 

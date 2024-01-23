@@ -141,7 +141,7 @@ static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
 
 static LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
 {
-    CPLString osStr;
+    std::string osStr;
     const char *pszSQLCommand = *ppszSQLCommand;
     LayerDesc oLayerDesc;
 
@@ -162,7 +162,7 @@ static LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
     }
     else
     {
-        oLayerDesc.osLayerName = osStr;
+        oLayerDesc.osLayerName = std::move(osStr);
     }
 
     oLayerDesc.osOriginalStr.resize(pszSQLCommand - pszOriginalStrStart);
@@ -946,6 +946,13 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     /*      Attach the Virtual Table OGR2SQLITE module to it.               */
     /* -------------------------------------------------------------------- */
     OGR2SQLITEModule *poModule = OGR2SQLITE_Setup(poDS, poSQLiteDS);
+    if (!poModule)
+    {
+        delete poSQLiteDS;
+        VSIUnlink(pszTmpDBName);
+        CPLFree(pszTmpDBName);
+        return nullptr;
+    }
     sqlite3 *hDB = poSQLiteDS->GetDB();
 
     /* -------------------------------------------------------------------- */

@@ -5069,6 +5069,185 @@ GWKCheckAndComputeSrcOffsets(GWKJobStruct *psJob, int *_pabSuccess, int _iDstX,
 }
 
 /************************************************************************/
+/*                   GWKOneSourceCornerFailsToReproject()               */
+/************************************************************************/
+
+static bool GWKOneSourceCornerFailsToReproject(GWKJobStruct *psJob)
+{
+    GDALWarpKernel *poWK = psJob->poWK;
+    for (int iY = 0; iY <= 1; ++iY)
+    {
+        for (int iX = 0; iX <= 1; ++iX)
+        {
+            double dfXTmp = poWK->nSrcXOff + iX * poWK->nSrcXSize;
+            double dfYTmp = poWK->nSrcYOff + iY * poWK->nSrcYSize;
+            double dfZTmp = 0;
+            int nSuccess = FALSE;
+            poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp,
+                                 &dfYTmp, &dfZTmp, &nSuccess);
+            if (!nSuccess)
+                return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                       GWKAdjustSrcOffsetOnEdge()                     */
+/************************************************************************/
+
+static bool GWKAdjustSrcOffsetOnEdge(GWKJobStruct *psJob,
+                                     GPtrDiff_t &iSrcOffset)
+{
+    GDALWarpKernel *poWK = psJob->poWK;
+    const int nSrcXSize = poWK->nSrcXSize;
+    const int nSrcYSize = poWK->nSrcYSize;
+
+    // Check if the computed source position slightly altered
+    // fails to reproject. If so, then we are at the edge of
+    // the validity area, and it is worth checking neighbour
+    // source pixels for validity.
+    int nSuccess = FALSE;
+    {
+        double dfXTmp =
+            poWK->nSrcXOff + static_cast<int>(iSrcOffset % nSrcXSize);
+        double dfYTmp =
+            poWK->nSrcYOff + static_cast<int>(iSrcOffset / nSrcXSize);
+        double dfZTmp = 0;
+        poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp, &dfYTmp,
+                             &dfZTmp, &nSuccess);
+    }
+    if (nSuccess)
+    {
+        double dfXTmp =
+            poWK->nSrcXOff + static_cast<int>(iSrcOffset % nSrcXSize);
+        double dfYTmp =
+            poWK->nSrcYOff + static_cast<int>(iSrcOffset / nSrcXSize) + 1;
+        double dfZTmp = 0;
+        nSuccess = FALSE;
+        poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp, &dfYTmp,
+                             &dfZTmp, &nSuccess);
+    }
+    if (nSuccess)
+    {
+        double dfXTmp =
+            poWK->nSrcXOff + static_cast<int>(iSrcOffset % nSrcXSize) + 1;
+        double dfYTmp =
+            poWK->nSrcYOff + static_cast<int>(iSrcOffset / nSrcXSize);
+        double dfZTmp = 0;
+        nSuccess = FALSE;
+        poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp, &dfYTmp,
+                             &dfZTmp, &nSuccess);
+    }
+
+    if (!nSuccess && (iSrcOffset % nSrcXSize) + 1 < nSrcXSize &&
+        CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset + 1))
+    {
+        iSrcOffset++;
+        return true;
+    }
+    else if (!nSuccess && (iSrcOffset / nSrcXSize) + 1 < nSrcYSize &&
+             CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset + nSrcXSize))
+    {
+        iSrcOffset += nSrcXSize;
+        return true;
+    }
+    else if (!nSuccess && (iSrcOffset % nSrcXSize) > 0 &&
+             CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset - 1))
+    {
+        iSrcOffset--;
+        return true;
+    }
+    else if (!nSuccess && (iSrcOffset / nSrcXSize) > 0 &&
+             CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset - nSrcXSize))
+    {
+        iSrcOffset -= nSrcXSize;
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*                 GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity()          */
+/************************************************************************/
+
+static bool GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity(GWKJobStruct *psJob,
+                                                      GPtrDiff_t &iSrcOffset)
+{
+    GDALWarpKernel *poWK = psJob->poWK;
+    const int nSrcXSize = poWK->nSrcXSize;
+    const int nSrcYSize = poWK->nSrcYSize;
+
+    // Check if the computed source position slightly altered
+    // fails to reproject. If so, then we are at the edge of
+    // the validity area, and it is worth checking neighbour
+    // source pixels for validity.
+    int nSuccess = FALSE;
+    {
+        double dfXTmp =
+            poWK->nSrcXOff + static_cast<int>(iSrcOffset % nSrcXSize);
+        double dfYTmp =
+            poWK->nSrcYOff + static_cast<int>(iSrcOffset / nSrcXSize);
+        double dfZTmp = 0;
+        poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp, &dfYTmp,
+                             &dfZTmp, &nSuccess);
+    }
+    if (nSuccess)
+    {
+        double dfXTmp =
+            poWK->nSrcXOff + static_cast<int>(iSrcOffset % nSrcXSize);
+        double dfYTmp =
+            poWK->nSrcYOff + static_cast<int>(iSrcOffset / nSrcXSize) + 1;
+        double dfZTmp = 0;
+        nSuccess = FALSE;
+        poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp, &dfYTmp,
+                             &dfZTmp, &nSuccess);
+    }
+    if (nSuccess)
+    {
+        double dfXTmp =
+            poWK->nSrcXOff + static_cast<int>(iSrcOffset % nSrcXSize) + 1;
+        double dfYTmp =
+            poWK->nSrcYOff + static_cast<int>(iSrcOffset / nSrcXSize);
+        double dfZTmp = 0;
+        nSuccess = FALSE;
+        poWK->pfnTransformer(psJob->pTransformerArg, FALSE, 1, &dfXTmp, &dfYTmp,
+                             &dfZTmp, &nSuccess);
+    }
+
+    if (!nSuccess && (iSrcOffset % nSrcXSize) + 1 < nSrcXSize &&
+        poWK->pafUnifiedSrcDensity[iSrcOffset + 1] >= SRC_DENSITY_THRESHOLD)
+    {
+        iSrcOffset++;
+        return true;
+    }
+    else if (!nSuccess && (iSrcOffset / nSrcXSize) + 1 < nSrcYSize &&
+             poWK->pafUnifiedSrcDensity[iSrcOffset + nSrcXSize] >=
+                 SRC_DENSITY_THRESHOLD)
+    {
+        iSrcOffset += nSrcXSize;
+        return true;
+    }
+    else if (!nSuccess && (iSrcOffset % nSrcXSize) > 0 &&
+             poWK->pafUnifiedSrcDensity[iSrcOffset - 1] >=
+                 SRC_DENSITY_THRESHOLD)
+    {
+        iSrcOffset--;
+        return true;
+    }
+    else if (!nSuccess && (iSrcOffset / nSrcXSize) > 0 &&
+             poWK->pafUnifiedSrcDensity[iSrcOffset - nSrcXSize] >=
+                 SRC_DENSITY_THRESHOLD)
+    {
+        iSrcOffset -= nSrcXSize;
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                           GWKGeneralCase()                           */
 /*                                                                      */
 /*      This is the most general case.  It attempts to handle all       */
@@ -5118,6 +5297,9 @@ static void GWKGeneralCaseThread(void *pData)
         poWK->papszWarpOptions, "SRC_COORD_PRECISION", "0"));
     const double dfErrorThreshold = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
+
+    const bool bOneSourceCornerFailsToReproject =
+        GWKOneSourceCornerFailsToReproject(psJob);
 
     // Precompute values.
     for (int iDstX = 0; iDstX < nDstXSize; iDstX++)
@@ -5183,12 +5365,35 @@ static void GWKGeneralCaseThread(void *pData)
             {
                 dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
                 if (dfDensity < SRC_DENSITY_THRESHOLD)
-                    continue;
+                {
+                    if (!bOneSourceCornerFailsToReproject)
+                    {
+                        continue;
+                    }
+                    else if (GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity(
+                                 psJob, iSrcOffset))
+                    {
+                        dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
             }
 
             if (poWK->panUnifiedSrcValid != nullptr &&
                 !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset))
-                continue;
+            {
+                if (!bOneSourceCornerFailsToReproject)
+                {
+                    continue;
+                }
+                else if (!GWKAdjustSrcOffsetOnEdge(psJob, iSrcOffset))
+                {
+                    continue;
+                }
+            }
 
             /* ====================================================================
              */
@@ -5369,6 +5574,9 @@ static void GWKRealCaseThread(void *pData)
                                    poWK->papanBandSrcValid == nullptr &&
                                    poWK->pafUnifiedSrcDensity != nullptr;
 
+    const bool bOneSourceCornerFailsToReproject =
+        GWKOneSourceCornerFailsToReproject(psJob);
+
     // Precompute values.
     for (int iDstX = 0; iDstX < nDstXSize; iDstX++)
         padfX[nDstXSize + iDstX] = iDstX + 0.5 + poWK->nDstXOff;
@@ -5433,12 +5641,35 @@ static void GWKRealCaseThread(void *pData)
             {
                 dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
                 if (dfDensity < SRC_DENSITY_THRESHOLD)
-                    continue;
+                {
+                    if (!bOneSourceCornerFailsToReproject)
+                    {
+                        continue;
+                    }
+                    else if (GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity(
+                                 psJob, iSrcOffset))
+                    {
+                        dfDensity = poWK->pafUnifiedSrcDensity[iSrcOffset];
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
             }
 
             if (poWK->panUnifiedSrcValid != nullptr &&
                 !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset))
-                continue;
+            {
+                if (!bOneSourceCornerFailsToReproject)
+                {
+                    continue;
+                }
+                else if (!GWKAdjustSrcOffsetOnEdge(psJob, iSrcOffset))
+                {
+                    continue;
+                }
+            }
 
             /* ====================================================================
              */
@@ -5874,6 +6105,9 @@ template <class T> static void GWKNearestThread(void *pData)
     const double dfErrorThreshold = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
+    const bool bOneSourceCornerFailsToReproject =
+        GWKOneSourceCornerFailsToReproject(psJob);
+
     // Precompute values.
     for (int iDstX = 0; iDstX < nDstXSize; iDstX++)
         padfX[nDstXSize + iDstX] = iDstX + 0.5 + poWK->nDstXOff;
@@ -5930,7 +6164,16 @@ template <class T> static void GWKNearestThread(void *pData)
              */
             if (poWK->panUnifiedSrcValid != nullptr &&
                 !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset))
-                continue;
+            {
+                if (!bOneSourceCornerFailsToReproject)
+                {
+                    continue;
+                }
+                else if (!GWKAdjustSrcOffsetOnEdge(psJob, iSrcOffset))
+                {
+                    continue;
+                }
+            }
 
             /* --------------------------------------------------------------------
              */

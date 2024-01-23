@@ -151,6 +151,8 @@ bool NASReader::SetupParser()
         m_poSAXReader->setLexicalHandler(m_poNASHandler);
         m_poSAXReader->setEntityResolver(m_poNASHandler);
         m_poSAXReader->setDTDHandler(m_poNASHandler);
+        m_poSAXReader->setFeature(
+            XMLUni::fgXercesDisableDefaultEntityResolution, true);
 
         xmlUriValid =
             XMLString::transcode("http://xml.org/sax/features/validation");

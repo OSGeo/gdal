@@ -273,7 +273,7 @@ CPLErr GTiffRasterBand::SetUnitType(const char *pszNewValue)
     if (osNewValue.compare(m_osUnitType) != 0)
         m_poGDS->m_bMetadataChanged = true;
 
-    m_osUnitType = osNewValue;
+    m_osUnitType = std::move(osNewValue);
     return CE_None;
 }
 

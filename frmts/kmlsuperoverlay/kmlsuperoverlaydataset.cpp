@@ -1818,7 +1818,7 @@ static GDALDataset *KmlSuperOverlayLoadIcon(const char *pszBaseFilename,
 /*                    KmlSuperOverlayComputeDepth()                     */
 /************************************************************************/
 
-static bool KmlSuperOverlayComputeDepth(CPLString osFilename,
+static bool KmlSuperOverlayComputeDepth(const std::string &osFilename,
                                         CPLXMLNode *psDocument, int &nLevel)
 {
     CPLXMLNode *psIter = psDocument->psChild;
@@ -1839,8 +1839,8 @@ static bool KmlSuperOverlayComputeDepth(CPLString osFilename,
                         CPLSPrintf("/vsicurl_streaming/%s", pszHref);
                 else
                 {
-                    osSubFilename = CPLFormFilename(CPLGetPath(osFilename),
-                                                    pszHref, nullptr);
+                    osSubFilename = CPLFormFilename(
+                        CPLGetPath(osFilename.c_str()), pszHref, nullptr);
                     osSubFilename = KMLRemoveSlash(osSubFilename);
                 }
 
@@ -2160,7 +2160,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     GDALDataset *poImageDS = poGDS->poCurTileDS;
     if (poImageDS == nullptr)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize);
+        memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         return CE_None;
     }
     int nXSize = poImageDS->GetRasterXSize();
@@ -2188,7 +2188,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         if (nBand == 4 && poColorTable == nullptr)
         {
             /* Add fake alpha band */
-            memset(pImage, 255, nBlockXSize * nBlockYSize);
+            memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
             eErr = CE_None;
         }
         else
@@ -2237,7 +2237,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (nBand == 4 && poImageDS->GetRasterCount() == 3)
     {
         /* Add fake alpha band */
-        memset(pImage, 255, nBlockXSize * nBlockYSize);
+        memset(pImage, 255, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         eErr = CE_None;
     }
 
@@ -2468,7 +2468,7 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
         poDS->SetBand(iBand, new KmlSingleDocRasterRasterBand(poDS, iBand));
     poDS->SetDescription(pszFilename);
     poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
-    poDS->aosDescs = aosDescs;
+    poDS->aosDescs = std::move(aosDescs);
 
     return poDS;
 }

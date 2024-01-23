@@ -302,11 +302,11 @@ CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString &osURL) const
         {
             auto osUserPwd = m_osRootURL.substr(
                 strlen("https://"), nArobaseInURLPos - strlen("https://"));
-            auto osServer =
+            std::string osServer(
                 nFirstSlashPos == std::string::npos
                     ? m_osRootURL.substr(nArobaseInURLPos + 1)
                     : m_osRootURL.substr(nArobaseInURLPos + 1,
-                                         nFirstSlashPos - nArobaseInURLPos);
+                                         nFirstSlashPos - nArobaseInURLPos));
             if (STARTS_WITH(osRet, ("https://" + osServer).c_str()))
             {
                 osRet = "https://" + osUserPwd + "@" +
@@ -2085,7 +2085,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
                 if (oLinks.IsValid())
                 {
                     int nCountRelNext = 0;
-                    CPLString osNextURL;
+                    std::string osNextURL;
                     for (int i = 0; i < oLinks.Size(); i++)
                     {
                         CPLJSONObject oLink = oLinks[i];
@@ -2113,7 +2113,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
                     if (nCountRelNext == 1 && m_osGetURL.empty())
                     {
                         // In case we go a "rel": "next" without a "type"
-                        m_osGetURL = osNextURL;
+                        m_osGetURL = std::move(osNextURL);
                     }
                 }
 

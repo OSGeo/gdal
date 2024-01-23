@@ -1421,7 +1421,7 @@ OGRErr OGRNGWLayer::SyncToDisk()
             // Error message should set in CreateResource.
             return OGRERR_FAILURE;
         }
-        osResourceId = osResourceIdInt;
+        osResourceId = std::move(osResourceIdInt);
         OGRLayer::SetMetadataItem("id", osResourceId.c_str());
         FetchPermissions();
         bNeedSyncStructure = false;
@@ -1791,10 +1791,9 @@ OGRErr OGRNGWLayer::SetAttributeFilter(const char *pszQuery)
         {
             swq_expr_node *poNode =
                 reinterpret_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
-            std::string osWhereIn = TranslateSQLToFilter(poNode);
-            if (osWhereIn.empty())
+            osWhere = TranslateSQLToFilter(poNode);
+            if (osWhere.empty())
             {
-                osWhere.clear();
                 bClientSideAttributeFilter = true;
                 CPLDebug(
                     "NGW",
@@ -1804,8 +1803,7 @@ OGRErr OGRNGWLayer::SetAttributeFilter(const char *pszQuery)
             else
             {
                 bClientSideAttributeFilter = false;
-                CPLDebug("NGW", "Attribute filter: %s", osWhereIn.c_str());
-                osWhere = osWhereIn;
+                CPLDebug("NGW", "Attribute filter: %s", osWhere.c_str());
             }
         }
     }

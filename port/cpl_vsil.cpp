@@ -974,7 +974,7 @@ int VSISetFileMetadata(const char *pszFilename, CSLConstList papszMetadata,
  * Currently, this will return FALSE only for Windows real filenames. Other
  * VSI virtual filesystems are case sensitive.
  *
- * This methods avoid ugly \#ifndef WIN32 / \#endif code, that is wrong when
+ * This methods avoid ugly \#ifndef _WIN32 / \#endif code, that is wrong when
  * dealing with virtual filenames.
  *
  * @param pszFilename the path of the filesystem object to be tested.

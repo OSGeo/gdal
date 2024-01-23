@@ -28,6 +28,7 @@
 
 #include "hdf5drivercore.h"
 
+#include <algorithm>
 #include <cctype>
 
 /************************************************************************/
@@ -242,15 +243,12 @@ static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
+/*                         IdentifySxx()                                */
 /************************************************************************/
 
-int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
-
+static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszConfigOption,
+                        const char *pszMainGroupName)
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
-        return TRUE;
-
     // Is it an HDF5 file?
     static const char achSignature[] = "\211HDF\r\n\032\n";
 
@@ -258,25 +256,28 @@ int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
         memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
         return FALSE;
 
-    // GDAL_S102_IDENTIFY can be set to NO only for tests, to test that
-    // HDF5Dataset::Open() can redirect to S102 if the below logic fails
-    if (CPLTestBool(CPLGetConfigOption("GDAL_S102_IDENTIFY", "YES")))
+    // GDAL_Sxxx_IDENTIFY can be set to NO only for tests, to test that
+    // HDF5Dataset::Open() can redirect to Sxxx if the below logic fails
+    if (CPLTestBool(CPLGetConfigOption(pszConfigOption, "YES")))
     {
         // The below identification logic may be a bit fragile...
         // Works at least on:
         // - /vsis3/noaa-s102-pds/ed2.1.0/national_bathymetric_source/boston/dcf2/tiles/102US00_US4MA1GC.h5
         // - https://datahub.admiralty.co.uk/portal/sharing/rest/content/items/6fd07bde26124d48820b6dee60695389/data (S-102_Liverpool_Trial_Cells.zip)
-        const int nLenBC = static_cast<int>(strlen("BathymetryCoverage\0") + 1);
+        const int nLenMainGroup =
+            static_cast<int>(strlen(pszMainGroupName) + 1);
         const int nLenGroupF = static_cast<int>(strlen("Group_F\0") + 1);
-        bool bFoundBathymetryCoverage = false;
+        bool bFoundMainGroup = false;
         bool bFoundGroupF = false;
-        for (int i = 0; i < poOpenInfo->nHeaderBytes - nLenBC; ++i)
+        for (int i = 0;
+             i < poOpenInfo->nHeaderBytes - std::max(nLenMainGroup, nLenGroupF);
+             ++i)
         {
-            if (poOpenInfo->pabyHeader[i] == 'B' &&
-                memcmp(poOpenInfo->pabyHeader + i, "BathymetryCoverage\0",
-                       nLenBC) == 0)
+            if (poOpenInfo->pabyHeader[i] == pszMainGroupName[0] &&
+                memcmp(poOpenInfo->pabyHeader + i, pszMainGroupName,
+                       nLenMainGroup) == 0)
             {
-                bFoundBathymetryCoverage = true;
+                bFoundMainGroup = true;
                 if (bFoundGroupF)
                     return true;
             }
@@ -285,13 +286,52 @@ int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
                     0)
             {
                 bFoundGroupF = true;
-                if (bFoundBathymetryCoverage)
+                if (bFoundMainGroup)
                     return true;
             }
         }
     }
 
     return false;
+}
+
+/************************************************************************/
+/*                        S102DatasetIdentify()                         */
+/************************************************************************/
+
+int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
+
+{
+    if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
+        return TRUE;
+
+    return IdentifySxx(poOpenInfo, "GDAL_S102_IDENTIFY", "BathymetryCoverage");
+}
+
+/************************************************************************/
+/*                        S104DatasetIdentify()                         */
+/************************************************************************/
+
+int S104DatasetIdentify(GDALOpenInfo *poOpenInfo)
+
+{
+    if (STARTS_WITH(poOpenInfo->pszFilename, "S104:"))
+        return TRUE;
+
+    return IdentifySxx(poOpenInfo, "GDAL_S104_IDENTIFY", "WaterLevel");
+}
+
+/************************************************************************/
+/*                        S111DatasetIdentify()                         */
+/************************************************************************/
+
+int S111DatasetIdentify(GDALOpenInfo *poOpenInfo)
+
+{
+    if (STARTS_WITH(poOpenInfo->pszFilename, "S111:"))
+        return TRUE;
+
+    return IdentifySxx(poOpenInfo, "GDAL_S111_IDENTIFY", "SurfaceCurrent");
 }
 
 /************************************************************************/
@@ -474,6 +514,7 @@ void S102DriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s102.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
+    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
@@ -488,6 +529,58 @@ void S102DriverSetCommonMetadata(GDALDriver *poDriver)
         "northern-most one'/>"
         "</OpenOptionList>");
     poDriver->pfnIdentify = S102DatasetIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
+/*                    S104DriverSetCommonMetadata()                     */
+/************************************************************************/
+
+void S104DriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(S104_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_LONGNAME,
+        "S-104 Water Level Information for Surface Navigation Product");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s104.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='NORTH_UP' type='boolean' default='YES' "
+        "description='Whether the top line of the dataset should be the "
+        "northern-most one'/>"
+        "</OpenOptionList>");
+    poDriver->pfnIdentify = S104DatasetIdentify;
+    poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+}
+
+/************************************************************************/
+/*                    S111DriverSetCommonMetadata()                     */
+/************************************************************************/
+
+void S111DriverSetCommonMetadata(GDALDriver *poDriver)
+{
+    poDriver->SetDescription(S111_DRIVER_NAME);
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Surface Currents Product");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/s111.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "h5");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "   <Option name='NORTH_UP' type='boolean' default='YES' "
+        "description='Whether the top line of the dataset should be the "
+        "northern-most one'/>"
+        "</OpenOptionList>");
+    poDriver->pfnIdentify = S111DatasetIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
 }
 
@@ -536,6 +629,24 @@ void DeclareDeferredHDF5Plugin()
                                   PLUGIN_INSTALLATION_MESSAGE);
 #endif
         S102DriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+    }
+    {
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
+        S104DriverSetCommonMetadata(poDriver);
+        GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
+    }
+    {
+        auto poDriver = new GDALPluginDriverProxy(PLUGIN_FILENAME);
+#ifdef PLUGIN_INSTALLATION_MESSAGE
+        poDriver->SetMetadataItem(GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE,
+                                  PLUGIN_INSTALLATION_MESSAGE);
+#endif
+        S111DriverSetCommonMetadata(poDriver);
         GetGDALDriverManager()->DeclareDeferredPluginDriver(poDriver);
     }
 }

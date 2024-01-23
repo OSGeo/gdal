@@ -363,7 +363,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
                 // equal to the theoretical nLineOffset multiplied by nBands.
                 VSIFSeekL(poDS->fpImage, 0, SEEK_END);
                 const GUIntBig nWrongFileSize =
-                    nDTSize * nWidth *
+                    static_cast<GUIntBig>(nDTSize) * nWidth *
                     (static_cast<GUIntBig>(nFileLength - 1) * nBands * nBands +
                      nBands);
                 if (VSIFTellL(poDS->fpImage) == nWrongFileSize)

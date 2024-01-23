@@ -216,7 +216,7 @@ class GMLASWriter
 GMLASWriter::GMLASWriter(const char *pszFilename, GDALDataset *poSrcDS,
                          char **papszOptions)
     : m_osFilename(pszFilename)
-#ifdef WIN32
+#ifdef _WIN32
       ,
       m_osEOL("\r\n")
 #else

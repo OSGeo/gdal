@@ -190,9 +190,16 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(GDALRasterBand *red,
     const int dataGreenSize = GDALGetDataTypeSizeBytes(eGreenType);
     const int dataBlueSize = GDALGetDataTypeSizeBytes(eBlueType);
 
-    void *paRedLayer = CPLMalloc(dataRedSize * nWidth * nHeight);
-    void *paGreenLayer = CPLMalloc(dataGreenSize * nWidth * nHeight);
-    void *paBlueLayer = CPLMalloc(dataBlueSize * nWidth * nHeight);
+    void *paRedLayer = VSI_MALLOC3_VERBOSE(dataRedSize, nWidth, nHeight);
+    void *paGreenLayer = VSI_MALLOC3_VERBOSE(dataGreenSize, nWidth, nHeight);
+    void *paBlueLayer = VSI_MALLOC3_VERBOSE(dataBlueSize, nWidth, nHeight);
+    if (!paRedLayer || !paGreenLayer || !paBlueLayer)
+    {
+        CPLFree(paRedLayer);
+        CPLFree(paGreenLayer);
+        CPLFree(paBlueLayer);
+        return CE_Failure;
+    }
 
     CPLErr eErr = red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer,
                                 nWidth, nHeight, eRedType, 0, 0, nullptr);

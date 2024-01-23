@@ -854,8 +854,8 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             (static_cast<size_t>(nYOffsetInBlock) * poDS->m_nBlockXSize +
              nXOffsetInBlock) *
                 nDTSize * nBandsPerStrile;
-        const size_t nSrcLineInc =
-            poDS->m_nBlockXSize * nDTSize * nBandsPerStrile;
+        const size_t nSrcLineInc = static_cast<size_t>(poDS->m_nBlockXSize) *
+                                   nDTSize * nBandsPerStrile;
 
         // Optimization when writing to BIP buffer.
         if (psContext->bUseBIPOptim)
@@ -1437,7 +1437,7 @@ class FetchBufferVirtualMemIO final
     const GByte *FetchBytes(vsi_l_offset nOffset, int nPixels, int nDTSize,
                             bool bIsByteSwapped, bool bIsComplex, int nBlockId)
     {
-        if (nOffset + nPixels * nDTSize > nMappingSize)
+        if (nOffset + static_cast<size_t>(nPixels) * nDTSize > nMappingSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);
@@ -1445,7 +1445,8 @@ class FetchBufferVirtualMemIO final
         }
         if (!bIsByteSwapped)
             return pabySrcData + nOffset;
-        memcpy(pTempBuffer, pabySrcData + nOffset, nPixels * nDTSize);
+        memcpy(pTempBuffer, pabySrcData + nOffset,
+               static_cast<size_t>(nPixels) * nDTSize);
         if (bIsComplex)
             GDALSwapWords(pTempBuffer, nDTSize / 2, 2 * nPixels, nDTSize / 2);
         else
@@ -1457,13 +1458,14 @@ class FetchBufferVirtualMemIO final
                     int nDTSize, bool bIsByteSwapped, bool bIsComplex,
                     int nBlockId)
     {
-        if (nOffset + nPixels * nDTSize > nMappingSize)
+        if (nOffset + static_cast<size_t>(nPixels) * nDTSize > nMappingSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);
             return false;
         }
-        memcpy(pabyDstBuffer, pabySrcData + nOffset, nPixels * nDTSize);
+        memcpy(pabyDstBuffer, pabySrcData + nOffset,
+               static_cast<size_t>(nPixels) * nDTSize);
         if (bIsByteSwapped)
         {
             if (bIsComplex)
@@ -3009,7 +3011,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
             (nXOff +
              static_cast<vsi_l_offset>(nYOffsetInBlock) * m_nBlockXSize) *
             nSrcPixelSize;
-        panSizes[iLine] = nReqXSize * nSrcPixelSize;
+        panSizes[iLine] = static_cast<size_t>(nReqXSize) * nSrcPixelSize;
     }
 
     // Extract data from the file.

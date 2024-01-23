@@ -666,6 +666,36 @@ def test_gdalwarp_lib_32():
 
 
 ###############################################################################
+# Test -tap, -tr and -te
+
+
+def test_gdalwarp_lib_tap_tr_te(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 10980, 10980, 1, options=["SPARSE_OK=YES"]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([600000, 10, 0, 5700000, 0, -10])
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="VRT",
+        targetAlignedPixels=True,
+        xRes=10,
+        yRes=10,
+        outputBounds=[599800.0, 5590200.0, 709800.0, 5700000.0],
+    )
+    assert ds is not None
+    assert ds.GetGeoTransform() == pytest.approx(
+        (599800.0, 10.0, 0.0, 5700000.0, 0.0, -10.0)
+    )
+
+
+###############################################################################
 # Test warping multiple sources
 
 
@@ -3795,3 +3825,90 @@ def test_gdalwarp_lib_dict_arguments():
     )
 
     assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
+
+
+###############################################################################
+# Test warping from long/lat to ortho
+
+
+def test_gdalwarp_lib_long_lat_to_ortho():
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", options="-f VRT -outsize 10800 5400"
+    )
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        width=2138,
+        height=2063,
+        outputBounds=[-6378137, 3178376, -3189246, 6356752],
+        dstSRS="+proj=ortho +datum=WGS84 +units=m +no_defs",
+    )
+    assert ds.GetRasterBand(1).ReadRaster()[2100 + 600 * 2138] != 0
+
+
+###############################################################################
+# Test warping from ortho to long/lat
+
+
+def test_gdalwarp_lib_ortho_to_long_lat():
+
+    src_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        format="MEM",
+        dstSRS="+proj=ortho +datum=WGS84 +units=m +no_defs",
+    )
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        dstSRS="EPSG:4326",
+        # The fact that we have srcNoData set is a key for the heuristics
+        # that detects edges of the projection domain
+        srcNodata=0,
+    )
+    gt = ds.GetGeoTransform()
+    assert gt[0] == pytest.approx(-90, abs=gt[1])
+    assert gt[0] + gt[1] * ds.RasterXSize == pytest.approx(90, abs=gt[1])
+    data1 = ds.GetRasterBand(1).ReadRaster()
+    data2 = ds.GetRasterBand(2).ReadRaster()
+    data3 = ds.GetRasterBand(3).ReadRaster()
+    for j in range(ds.RasterYSize):
+        assert (
+            max(
+                data1[j * ds.RasterXSize],
+                data2[j * ds.RasterXSize],
+                data3[j * ds.RasterXSize],
+            )
+            != 0
+        ), (
+            "line %d" % j
+        )
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        dstSRS="EPSG:4326",
+        resampleAlg=gdal.GRA_Cubic,
+        # The fact that we have srcNoData set is a key for the heuristics
+        # that detects edges of the projection domain
+        srcNodata=0,
+    )
+    data1 = ds.GetRasterBand(1).ReadRaster()
+    data2 = ds.GetRasterBand(2).ReadRaster()
+    data3 = ds.GetRasterBand(3).ReadRaster()
+    for j in range(ds.RasterYSize):
+        assert (
+            max(
+                data1[j * ds.RasterXSize],
+                data2[j * ds.RasterXSize],
+                data3[j * ds.RasterXSize],
+            )
+            != 0
+        ), (
+            "line %d" % j
+        )

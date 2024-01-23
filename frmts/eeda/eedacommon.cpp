@@ -131,8 +131,12 @@ BuildBandDescArray(json_object *poBands,
         }
 
         CPLString osWKT;
+        // Cf https://developers.google.com/earth-engine/reference/rest/v1alpha/PixelGrid
         json_object *poCrs = CPL_json_object_object_get(poGrid, "crsCode");
         if (poCrs == nullptr)
+            poCrs = CPL_json_object_object_get(poGrid, "crsWkt");
+        if (poCrs ==
+            nullptr)  // "wkt" must come from a preliminary version of the API
             poCrs = CPL_json_object_object_get(poGrid, "wkt");
         OGRSpatialReference oSRS;
         if (poCrs)
@@ -232,12 +236,12 @@ BuildBandDescArray(json_object *poBands,
 
         EEDAIBandDesc oDesc;
         oDesc.osName = pszBandId;
-        oDesc.osWKT = osWKT;
+        oDesc.osWKT = std::move(osWKT);
         oDesc.eDT = eDT;
         oDesc.adfGeoTransform = std::move(adfGeoTransform);
         oDesc.nWidth = nWidth;
         oDesc.nHeight = nHeight;
-        aoBandDesc.push_back(oDesc);
+        aoBandDesc.emplace_back(std::move(oDesc));
     }
     return aoBandDesc;
 }

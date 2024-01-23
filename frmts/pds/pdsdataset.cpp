@@ -1455,7 +1455,7 @@ GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
                 0)
         {
             osFilenamePrefix = "/vsizip/" + osCompressedFilename + "/";
-            poDS->osExternalCube = osCompressedFilename;
+            poDS->osExternalCube = std::move(osCompressedFilename);
         }
         osEncodingType = "";
     }

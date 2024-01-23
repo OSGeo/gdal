@@ -4583,7 +4583,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (nSRSId != m_nUndefinedSRID)
     {
-        auto poCachedSRS = new OGRSpatialReference(oSRS);
+        auto poCachedSRS = new OGRSpatialReference(std::move(oSRS));
         poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         AddSRIDToCache(nSRSId, poCachedSRS);
     }

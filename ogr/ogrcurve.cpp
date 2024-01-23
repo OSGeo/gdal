@@ -815,7 +815,7 @@ int OGRCurve::isClockwise() const
     for (int i = 1; i < nPointCount - 1; i++)
     {
         ++oIter;
-        auto oPointNext = *oIter;
+        const auto &oPointNext = *oIter;
         dfSum += oPointCur.getX() * (oPointNext.getY() - oPointBefore.getY());
         oPointBefore = oPointCur;
         oPointCur = oPointNext;

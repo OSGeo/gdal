@@ -411,6 +411,90 @@ def ReleaseResultSet(self, sql_lyr):
     schema = property(schema)
 
 
+    def __arrow_c_stream__(self, requested_schema=None):
+        """
+        Export to a C ArrowArrayStream PyCapsule, according to
+        https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+        Also note that only one active stream can be queried at a time for a
+        given layer.
+
+        To specify options how the ArrowStream should be generated, use
+        the GetArrowArrayStreamInterface(self, options) method
+
+        Parameters
+        ----------
+        requested_schema : PyCapsule, default None
+            The schema to which the stream should be casted, passed as a
+            PyCapsule containing a C ArrowSchema representation of the
+            requested schema.
+            Currently, this is not supported and will raise a
+            NotImplementedError if the schema is not None
+
+        Returns
+        -------
+        PyCapsule
+            A capsule containing a C ArrowArrayStream struct.
+        """
+
+        if requested_schema is not None:
+            raise NotImplementedError("requested_schema != None not implemented")
+
+        return self.ExportArrowArrayStreamPyCapsule()
+
+
+    def GetArrowArrayStreamInterface(self, options = []):
+        """
+        Return a proxy object that implements the __arrow_c_stream__() method,
+        but allows the user to pass options.
+
+        Parameters
+        ----------
+        options : List of strings or dict with options such as INCLUDE_FID=NO, MAX_FEATURES_IN_BATCH=<number>, etc.
+
+        Returns
+        -------
+        a proxy object which implements the __arrow_c_stream__() method
+        """
+
+        class ArrowArrayStreamInterface:
+            def __init__(self, lyr, options):
+                self.lyr = lyr
+                self.options = options
+
+            def __arrow_c_stream__(self, requested_schema=None):
+                """
+                Export to a C ArrowArrayStream PyCapsule, according to
+                https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+                Also note that only one active stream can be queried at a time for a
+                given layer.
+
+                To specify options how the ArrowStream should be generated, use
+                the GetArrowArrayStreamInterface(self, options) method
+
+                Parameters
+                ----------
+                requested_schema : PyCapsule, default None
+                    The schema to which the stream should be casted, passed as a
+                    PyCapsule containing a C ArrowSchema representation of the
+                    requested schema.
+                    Currently, this is not supported and will raise a
+                    NotImplementedError if the schema is not None
+
+                Returns
+                -------
+                PyCapsule
+                    A capsule containing a C ArrowArrayStream struct.
+                """
+                if requested_schema is not None:
+                    raise NotImplementedError("requested_schema != None not implemented")
+
+                return self.lyr.ExportArrowArrayStreamPyCapsule(self.options)
+
+        return ArrowArrayStreamInterface(self, options)
+
+
     def GetArrowStreamAsPyArrow(self, options = []):
         """ Return an ArrowStream as PyArrow Schema and Array objects """
 

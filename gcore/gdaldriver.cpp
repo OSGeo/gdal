@@ -122,7 +122,7 @@ GDALDataset *GDALDriver::Open(GDALOpenInfo *poOpenInfo, bool bSetOpenOptions)
 
     if (poDS)
     {
-        poDS->nOpenFlags = poOpenInfo->nOpenFlags;
+        poDS->nOpenFlags = poOpenInfo->nOpenFlags & ~GDAL_OF_FROM_GDALOPEN;
 
         if (strlen(poDS->GetDescription()) == 0)
             poDS->SetDescription(poOpenInfo->pszFilename);
@@ -2809,4 +2809,166 @@ CPLErr GDALDriver::SetMetadataItem(const char *pszName, const char *pszValue,
         }
     }
     return GDALMajorObject::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
+/*                   DoesDriverHandleExtension()                        */
+/************************************************************************/
+
+static bool DoesDriverHandleExtension(GDALDriverH hDriver, const char *pszExt)
+{
+    bool bRet = false;
+    const char *pszDriverExtensions =
+        GDALGetMetadataItem(hDriver, GDAL_DMD_EXTENSIONS, nullptr);
+    if (pszDriverExtensions)
+    {
+        const CPLStringList aosTokens(CSLTokenizeString(pszDriverExtensions));
+        const int nTokens = aosTokens.size();
+        for (int j = 0; j < nTokens; ++j)
+        {
+            if (EQUAL(pszExt, aosTokens[j]))
+            {
+                bRet = true;
+                break;
+            }
+        }
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                  GDALGetOutputDriversForDatasetName()                */
+/************************************************************************/
+
+/** Return a list of driver short names that are likely candidates for the
+ * provided output file name.
+ *
+ * @param pszDestDataset Output dataset name (might not exist).
+ * @param nFlagRasterVector GDAL_OF_RASTER, GDAL_OF_VECTOR or
+ *                          binary-or'ed combination of both
+ * @param bSingleMatch Whether a single match is desired, that is to say the
+ *                     returned list will contain at most one item, which will
+ *                     be the first driver in the order they are registered to
+ *                     match the output dataset name. Note that in this mode, if
+ *                     nFlagRasterVector==GDAL_OF_RASTER and pszDestDataset has
+ *                     no extension, GTiff will be selected.
+ * @param bEmitWarning Whether a warning should be emitted when bSingleMatch is
+ *                     true and there are more than 2 candidates.
+ * @return NULL terminated list of driver short names.
+ * To be freed with CSLDestroy()
+ * @since 3.9
+ */
+char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
+                                          int nFlagRasterVector,
+                                          bool bSingleMatch, bool bEmitWarning)
+{
+    CPLStringList aosDriverNames;
+
+    std::string osExt = CPLGetExtension(pszDestDataset);
+    if (EQUAL(osExt.c_str(), "zip"))
+    {
+        const CPLString osLower(CPLString(pszDestDataset).tolower());
+        if (osLower.endsWith(".shp.zip"))
+        {
+            osExt = "shp.zip";
+        }
+        else if (osLower.endsWith(".gpkg.zip"))
+        {
+            osExt = "gpkg.zip";
+        }
+    }
+
+    const int nDriverCount = GDALGetDriverCount();
+    for (int i = 0; i < nDriverCount; i++)
+    {
+        GDALDriverH hDriver = GDALGetDriver(i);
+        bool bOk = false;
+        if ((GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) !=
+                 nullptr ||
+             GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATECOPY, nullptr) !=
+                 nullptr) &&
+            (((nFlagRasterVector & GDAL_OF_RASTER) &&
+              GDALGetMetadataItem(hDriver, GDAL_DCAP_RASTER, nullptr) !=
+                  nullptr) ||
+             ((nFlagRasterVector & GDAL_OF_VECTOR) &&
+              GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR, nullptr) !=
+                  nullptr)))
+        {
+            bOk = true;
+        }
+        else if (GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR_TRANSLATE_FROM,
+                                     nullptr) &&
+                 (nFlagRasterVector & GDAL_OF_VECTOR) != 0)
+        {
+            bOk = true;
+        }
+        if (bOk)
+        {
+            if (!osExt.empty() &&
+                DoesDriverHandleExtension(hDriver, osExt.c_str()))
+            {
+                aosDriverNames.AddString(GDALGetDriverShortName(hDriver));
+            }
+            else
+            {
+                const char *pszPrefix = GDALGetMetadataItem(
+                    hDriver, GDAL_DMD_CONNECTION_PREFIX, nullptr);
+                if (pszPrefix && STARTS_WITH_CI(pszDestDataset, pszPrefix))
+                {
+                    aosDriverNames.AddString(GDALGetDriverShortName(hDriver));
+                }
+            }
+        }
+    }
+
+    // GMT is registered before netCDF for opening reasons, but we want
+    // netCDF to be used by default for output.
+    if (EQUAL(osExt.c_str(), "nc") && aosDriverNames.size() == 2 &&
+        EQUAL(aosDriverNames[0], "GMT") && EQUAL(aosDriverNames[1], "netCDF"))
+    {
+        aosDriverNames.Clear();
+        aosDriverNames.AddString("netCDF");
+        aosDriverNames.AddString("GMT");
+    }
+
+    if (bSingleMatch)
+    {
+        if (nFlagRasterVector == GDAL_OF_RASTER)
+        {
+            if (aosDriverNames.empty())
+            {
+                if (osExt.empty())
+                {
+                    aosDriverNames.AddString("GTiff");
+                }
+            }
+            else if (aosDriverNames.size() >= 2)
+            {
+                if (bEmitWarning && !(EQUAL(aosDriverNames[0], "GTiff") &&
+                                      EQUAL(aosDriverNames[1], "COG")))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Several drivers matching %s extension. Using %s",
+                             osExt.c_str(), aosDriverNames[0]);
+                }
+                const std::string osDrvName = aosDriverNames[0];
+                aosDriverNames.Clear();
+                aosDriverNames.AddString(osDrvName.c_str());
+            }
+        }
+        else if (aosDriverNames.size() >= 2)
+        {
+            if (bEmitWarning)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Several drivers matching %s extension. Using %s",
+                         osExt.c_str(), aosDriverNames[0]);
+            }
+            const std::string osDrvName = aosDriverNames[0];
+            aosDriverNames.Clear();
+            aosDriverNames.AddString(osDrvName.c_str());
+        }
+    }
+
+    return aosDriverNames.StealList();
 }

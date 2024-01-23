@@ -618,8 +618,8 @@ CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
         GUInt32 iULong = CPL_LSBWORD32(poGDS->sInfoHeader.iClrUsed);
         VSIFWriteL(&iULong, 4, 1, poGDS->fp);
         poGDS->pabyColorTable = (GByte *)CPLRealloc(
-            poGDS->pabyColorTable,
-            poGDS->nColorElems * poGDS->sInfoHeader.iClrUsed);
+            poGDS->pabyColorTable, static_cast<size_t>(poGDS->nColorElems) *
+                                       poGDS->sInfoHeader.iClrUsed);
         if (!poGDS->pabyColorTable)
             return CE_Failure;
 
@@ -639,9 +639,10 @@ CPLErr BMPRasterBand::SetColorTable(GDALColorTable *poColorTable)
 
         VSIFSeekL(poGDS->fp, BFH_SIZE + poGDS->sInfoHeader.iSize, SEEK_SET);
         if (VSIFWriteL(poGDS->pabyColorTable, 1,
-                       poGDS->nColorElems * poGDS->sInfoHeader.iClrUsed,
-                       poGDS->fp) <
-            poGDS->nColorElems * (GUInt32)poGDS->sInfoHeader.iClrUsed)
+                       static_cast<size_t>(poGDS->nColorElems) *
+                           poGDS->sInfoHeader.iClrUsed,
+                       poGDS->fp) < static_cast<size_t>(poGDS->nColorElems) *
+                                        poGDS->sInfoHeader.iClrUsed)
         {
             return CE_Failure;
         }
@@ -1507,7 +1508,8 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     {
         poDS->sInfoHeader.iClrUsed = 1 << poDS->sInfoHeader.iBitCount;
         poDS->pabyColorTable =
-            (GByte *)CPLMalloc(poDS->nColorElems * poDS->sInfoHeader.iClrUsed);
+            (GByte *)CPLMalloc(static_cast<size_t>(poDS->nColorElems) *
+                               poDS->sInfoHeader.iClrUsed);
         for (unsigned int i = 0; i < poDS->sInfoHeader.iClrUsed; i++)
         {
             poDS->pabyColorTable[i * poDS->nColorElems] =
@@ -1627,9 +1629,10 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (poDS->sInfoHeader.iClrUsed)
     {
         if (VSIFWriteL(poDS->pabyColorTable, 1,
-                       poDS->nColorElems * poDS->sInfoHeader.iClrUsed,
+                       static_cast<size_t>(poDS->nColorElems) *
+                           poDS->sInfoHeader.iClrUsed,
                        poDS->fp) !=
-            poDS->nColorElems * poDS->sInfoHeader.iClrUsed)
+            static_cast<size_t>(poDS->nColorElems) * poDS->sInfoHeader.iClrUsed)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Error writing color table.  Is disk full?");

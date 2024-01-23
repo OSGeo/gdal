@@ -735,10 +735,10 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         jpeg_destroy_decompress(&cinfo);
         return CE_Failure;
     }
-    if (linesize * cinfo.image_height != dst.size)
+    if (static_cast<size_t>(linesize) * cinfo.image_height != dst.size)
     {
         CPLError(CE_Warning, CPLE_AppDefined, "MRF: read JPEG size is wrong");
-        if (linesize * cinfo.image_height > dst.size)
+        if (static_cast<size_t>(linesize) * cinfo.image_height > dst.size)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "MRF: JPEG decompress buffer overflow");

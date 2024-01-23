@@ -651,10 +651,10 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double * /*z*/,
+    virtual int Transform(size_t nCount, double *x, double *y, double * /*z*/,
                           double * /*t*/, int *pabSuccess) override
     {
-        for (int i = 0; i < nCount; i++)
+        for (size_t i = 0; i < nCount; i++)
         {
             x[i] *= m_dfRatioX;
             y[i] *= m_dfRatioY;

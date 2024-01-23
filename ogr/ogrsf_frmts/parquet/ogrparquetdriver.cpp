@@ -322,10 +322,10 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
 
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
     PARQUET_ASSIGN_OR_THROW(
-        factory,
-        arrow::dataset::ParquetDatasetFactory::Make(
-            osBasePath + '/' + pszMetadataFile, std::move(fs),
-            std::make_shared<arrow::dataset::ParquetFileFormat>(), options));
+        factory, arrow::dataset::ParquetDatasetFactory::Make(
+                     osBasePath + '/' + pszMetadataFile, std::move(fs),
+                     std::make_shared<arrow::dataset::ParquetFileFormat>(),
+                     std::move(options)));
 
     return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
 }
@@ -353,10 +353,10 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
 
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
     PARQUET_ASSIGN_OR_THROW(
-        factory,
-        arrow::dataset::FileSystemDatasetFactory::Make(
-            std::move(fs), selector,
-            std::make_shared<arrow::dataset::ParquetFileFormat>(), options));
+        factory, arrow::dataset::FileSystemDatasetFactory::Make(
+                     std::move(fs), selector,
+                     std::make_shared<arrow::dataset::ParquetFileFormat>(),
+                     std::move(options)));
 
     return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
 }
@@ -477,9 +477,6 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                 }
             }
         }
-
-        if (poOpenInfo->bIsDirectory)
-            return nullptr;
     }
 #endif
 
@@ -487,6 +484,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
     {
         return nullptr;
     }
+
+    if (poOpenInfo->bIsDirectory)
+        return nullptr;
 
     std::string osFilename(poOpenInfo->pszFilename);
     if (STARTS_WITH(poOpenInfo->pszFilename, "PARQUET:"))

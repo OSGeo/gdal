@@ -258,7 +258,7 @@ CPLErr IRISRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             return CE_Failure;
 
         pszRecord = static_cast<unsigned char *>(
-            VSI_MALLOC_VERBOSE(nBlockXSize * nDataLength));
+            VSI_MALLOC_VERBOSE(static_cast<size_t>(nBlockXSize) * nDataLength));
 
         if (pszRecord == nullptr)
         {
@@ -281,7 +281,8 @@ CPLErr IRISRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
               SEEK_SET);
 
     if (static_cast<int>(
-            VSIFReadL(pszRecord, nBlockXSize * nDataLength, 1, poGDS->fp)) != 1)
+            VSIFReadL(pszRecord, static_cast<size_t>(nBlockXSize) * nDataLength,
+                      1, poGDS->fp)) != 1)
         return CE_Failure;
 
     // If datatype is dbZ or dBT:

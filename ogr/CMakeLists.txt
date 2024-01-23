@@ -62,6 +62,23 @@ add_library(
   ogr_wkb.cpp)
 add_dependencies(ogr generate_gdal_version_h)
 
+set(GDAL_DATA_FILES
+    LICENSE.TXT
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/cubewerx_extra.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ecw_cs.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/epsg.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/esri_StatePlane_extra.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ozi_datum.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ozi_ellips.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_datum.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_ellips.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/stateplane.csv
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})

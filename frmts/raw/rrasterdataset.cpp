@@ -1041,6 +1041,8 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
+    auto poDS = std::make_unique<RRASTERDataset>();
+
     const char *pszLine = nullptr;
     int nRows = 0;
     int nCols = 0;
@@ -1050,21 +1052,17 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     double dfYMax = 0.0;
     int l_nBands = 1;
     CPLString osDataType;
-    CPLString osBandOrder;
     CPLString osProjection;
     CPLString osWkt;
     CPLString osByteOrder;
     CPLString osNoDataValue("NA");
     CPLString osMinValue;
     CPLString osMaxValue;
-    CPLString osCreator;
-    CPLString osCreated;
     CPLString osLayerName;
     CPLString osRatNames;
     CPLString osRatTypes;
     CPLString osRatValues;
     bool bInLegend = false;
-    CPLString osLegend;
     VSIRewindL(poOpenInfo->fpL);
     while ((pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024 * 1024, nullptr)) !=
            nullptr)
@@ -1076,17 +1074,17 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         if (bInLegend)
         {
-            osLegend += pszLine;
-            osLegend += "\n";
+            poDS->m_osLegend += pszLine;
+            poDS->m_osLegend += "\n";
         }
         char *pszKey = nullptr;
         const char *pszValue = CPLParseNameValue(pszLine, &pszKey);
         if (pszKey && pszValue)
         {
             if (EQUAL(pszKey, "creator"))
-                osCreator = pszValue;
+                poDS->m_osCreator = pszValue;
             if (EQUAL(pszKey, "created"))
-                osCreated = pszValue;
+                poDS->m_osCreated = pszValue;
             else if (EQUAL(pszKey, "ncols"))
                 nCols = atoi(pszValue);
             else if (EQUAL(pszKey, "nrows"))
@@ -1106,7 +1104,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
             else if (EQUAL(pszKey, "nbands"))
                 l_nBands = atoi(pszValue);
             else if (EQUAL(pszKey, "bandorder"))
-                osBandOrder = pszValue;
+                poDS->m_osBandOrder = pszValue;
             else if (EQUAL(pszKey, "datatype"))
                 osDataType = pszValue;
             else if (EQUAL(pszKey, "byteorder"))
@@ -1160,7 +1158,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
                  osDataType.c_str());
         return nullptr;
     }
-    if (l_nBands > 1 && osBandOrder.empty())
+    if (l_nBands > 1 && poDS->m_osBandOrder.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing 'bandorder'");
         return nullptr;
@@ -1185,13 +1183,12 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     int nPixelOffset = 0;
     int nLineOffset = 0;
     vsi_l_offset nBandOffset = 0;
-    if (!ComputeSpacings(osBandOrder, nCols, nRows, l_nBands, eDT, nPixelOffset,
-                         nLineOffset, nBandOffset))
+    if (!ComputeSpacings(poDS->m_osBandOrder, nCols, nRows, l_nBands, eDT,
+                         nPixelOffset, nLineOffset, nBandOffset))
     {
         return nullptr;
     }
 
-    CPLString osGriFilename;
     CPLString osDirname(CPLGetDirname(poOpenInfo->pszFilename));
     CPLString osBasename(CPLGetBasename(poOpenInfo->pszFilename));
     CPLString osGRDExtension(CPLGetExtension(poOpenInfo->pszFilename));
@@ -1204,20 +1201,22 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
                           CPLFormFilename(nullptr, osBasename, osGRIExtension));
         if (iFile < 0)
             return nullptr;
-        osGriFilename =
+        poDS->m_osGriFilename =
             CPLFormFilename(osDirname, papszSiblings[iFile], nullptr);
     }
     else
     {
-        osGriFilename = CPLFormFilename(osDirname, osBasename, osGRIExtension);
+        poDS->m_osGriFilename =
+            CPLFormFilename(osDirname, osBasename, osGRIExtension);
     }
 
-    VSILFILE *fpImage = VSIFOpenL(
-        osGriFilename, (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb");
+    VSILFILE *fpImage =
+        VSIFOpenL(poDS->m_osGriFilename,
+                  (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb");
     if (fpImage == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
-                 osGriFilename.c_str());
+                 poDS->m_osGriFilename.c_str());
         return nullptr;
     }
 
@@ -1229,7 +1228,6 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    auto poDS = std::make_unique<RRASTERDataset>();
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
@@ -1240,13 +1238,8 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->m_adfGeoTransform[3] = dfYMax;
     poDS->m_adfGeoTransform[4] = 0.0;
     poDS->m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRows;
-    poDS->m_osGriFilename = osGriFilename;
     poDS->m_fpImage = fpImage;
     poDS->m_bNativeOrder = bNativeOrder;
-    poDS->m_osCreator = osCreator;
-    poDS->m_osCreated = osCreated;
-    poDS->m_osBandOrder = osBandOrder;
-    poDS->m_osLegend = osLegend;
 
     if (osWkt.empty())
     {
@@ -1260,11 +1253,11 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->m_oSRS.importFromWkt(osWkt.c_str());
     }
 
-    if (!osCreator.empty())
-        poDS->GDALDataset::SetMetadataItem("CREATOR", osCreator);
+    if (!poDS->m_osCreator.empty())
+        poDS->GDALDataset::SetMetadataItem("CREATOR", poDS->m_osCreator);
 
-    if (!osCreated.empty())
-        poDS->GDALDataset::SetMetadataItem("CREATED", osCreated);
+    if (!poDS->m_osCreated.empty())
+        poDS->GDALDataset::SetMetadataItem("CREATED", poDS->m_osCreated);
 
     // Instantiate RAT
     if (!osRatNames.empty() && !osRatTypes.empty() && !osRatValues.empty())

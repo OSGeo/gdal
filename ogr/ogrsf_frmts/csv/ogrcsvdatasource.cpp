@@ -1021,7 +1021,7 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
 
     if (pszCRLFFormat == nullptr)
     {
-#ifdef WIN32
+#ifdef _WIN32
         bUseCRLF = true;
 #endif
     }
@@ -1034,7 +1034,7 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
         CPLError(CE_Warning, CPLE_AppDefined,
                  "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                  pszCRLFFormat);
-#ifdef WIN32
+#ifdef _WIN32
         bUseCRLF = true;
 #endif
     }

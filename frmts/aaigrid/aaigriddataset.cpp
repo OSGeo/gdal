@@ -1439,14 +1439,12 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
 
     // Write scanlines to output file
     int *panScanline = bReadAsInt
-                           ? static_cast<int *>(CPLMalloc(
-                                 nXSize * GDALGetDataTypeSizeBytes(GDT_Int32)))
+                           ? static_cast<int *>(CPLMalloc(sizeof(int) * nXSize))
                            : nullptr;
 
     double *padfScanline =
         bReadAsInt ? nullptr
-                   : static_cast<double *>(CPLMalloc(
-                         nXSize * GDALGetDataTypeSizeBytes(GDT_Float64)));
+                   : static_cast<double *>(CPLMalloc(sizeof(double) * nXSize));
 
     CPLErr eErr = CE_None;
 

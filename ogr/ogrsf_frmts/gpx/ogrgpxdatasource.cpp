@@ -654,7 +654,7 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
     const char *pszCRLFFormat = CSLFetchNameValue(papszOptions, "LINEFORMAT");
 
     bool bUseCRLF =
-#ifdef WIN32
+#ifdef _WIN32
         true
 #else
         false

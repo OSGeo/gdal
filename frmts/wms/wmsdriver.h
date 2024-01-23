@@ -301,13 +301,13 @@ class GDALWMSCache
     }
 
   protected:
-    CPLString m_osCachePath;
-    bool m_bIsCleanThreadRunning;
-    time_t m_nCleanThreadLastRunTime;
+    CPLString m_osCachePath{};
+    bool m_bIsCleanThreadRunning = false;
+    time_t m_nCleanThreadLastRunTime = 0;
 
   private:
-    GDALWMSCacheImpl *m_poCache;
-    CPLJoinableThread *m_hThread;
+    GDALWMSCacheImpl *m_poCache = nullptr;
+    CPLJoinableThread *m_hThread = nullptr;
 };
 
 /************************************************************************/

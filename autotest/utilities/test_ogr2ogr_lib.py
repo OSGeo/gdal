@@ -1073,11 +1073,14 @@ def test_ogr2ogr_lib_spat_srs_geographic():
 def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
 
     # Prepare the data layer to clip
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_filename = tmp_vsimem / "clip_src.gpkg"
+    srcDS = gdal.GetDriverByName("GPKG").Create(src_filename, 0, 0, 0, gdal.GDT_Unknown)
     srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString)
     f = ogr.Feature(srcLayer.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 2 2)"))
     srcLayer.CreateFeature(f)
+    f = None
+    srcDS = None
 
     # Prepare the data layers to clip with
     clip_path = tmp_vsimem / "clip_test.gpkg"
@@ -1103,41 +1106,47 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
 
     # Test clip with 'half_overlap_line_result' using sql statement
     sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
+    dst_filename = tmp_vsimem / "clip_dst.gpkg"
     dst_ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", clipSrc=clip_path, clipSrcSQL=sql
+        dst_filename, src_filename, format="GPKG", clipSrc=clip_path, clipSrcSQL=sql
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "exact_overlap_full_result" using clipSrcLayer + clipSrcWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipSrc=clip_path,
         clipSrcLayer="cliptest",
         clipSrcWhere="filter_field = 'exact_overlap_full_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "no_overlap_no_result" using only clipSrcWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipSrc=clip_path,
         clipSrcWhere="filter_field = 'no_overlap_no_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Cleanup
     gdal.Unlink(clip_path)
@@ -1256,11 +1265,14 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
 
     # Prepare the data layer to clip
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_filename = tmp_vsimem / "clip_src.gpkg"
+    srcDS = gdal.GetDriverByName("GPKG").Create(src_filename, 0, 0, 0, gdal.GDT_Unknown)
     srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString)
     f = ogr.Feature(srcLayer.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 2 2)"))
     srcLayer.CreateFeature(f)
+    f = None
+    srcDS = None
 
     # Prepare the data layers to clip with
     clip_path = tmp_vsimem / "clip_test.gpkg"
@@ -1286,41 +1298,47 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
 
     # Test clip with 'half_overlap_line_result' using sql statement
     sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
+    dst_filename = tmp_vsimem / "clip_dst.gpkg"
     dst_ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", clipDst=clip_path, clipDstSQL=sql
+        dst_filename, src_filename, format="GPKG", clipDst=clip_path, clipDstSQL=sql
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "exact_overlap_full_result" using clipDstLayer + clipDstWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipDst=clip_path,
         clipDstLayer="cliptest",
         clipDstWhere="filter_field = 'exact_overlap_full_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "no_overlap_no_result" using only clipSrcWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipDst=clip_path,
         clipDstWhere="filter_field = 'no_overlap_no_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Cleanup
     gdal.Unlink(clip_path)

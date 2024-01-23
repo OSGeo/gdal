@@ -592,8 +592,8 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
                             poFeature->GetFieldAsString(iDefinition));
                         if (poRelationship)
                         {
-                            const auto relationshipName =
-                                poRelationship->GetName();
+                            const std::string relationshipName(
+                                poRelationship->GetName());
                             m_osMapRelationships[relationshipName] =
                                 std::move(poRelationship);
                         }
@@ -949,7 +949,7 @@ int FGdbDataSource::HasPerLayerCopyingForTransaction()
 {
     if (bPerLayerCopyingForTransaction >= 0)
         return bPerLayerCopyingForTransaction;
-#ifdef WIN32
+#ifdef _WIN32
     bPerLayerCopyingForTransaction = FALSE;
 #else
     bPerLayerCopyingForTransaction =
@@ -997,7 +997,7 @@ FGdbDataSource::GetFieldDomain(const std::string &name) const
     auto poDomain = ParseXMLFieldDomainDef(domainDef);
     if (!poDomain)
         return nullptr;
-    const auto domainName = poDomain->GetName();
+    const std::string domainName(poDomain->GetName());
     m_oMapFieldDomains[domainName] = std::move(poDomain);
     return GDALDataset::GetFieldDomain(name);
 }
@@ -1032,7 +1032,7 @@ std::vector<std::string> FGdbDataSource::GetFieldDomainNames(CSLConstList) const
 bool FGdbDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                                     std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (!m_bUpdate)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

@@ -726,7 +726,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
         scl = 1;  // To allow for precision issues
 
     // Prepare parameters for RasterIO, they might be different from a full page
-    int vsz = GDALGetDataTypeSize(eDataType) / 8;
+    const GSpacing vsz = GDALGetDataTypeSizeBytes(eDataType);
     int Xoff = int(xblk * img.pagesize.x * scl + 0.5);
     int Yoff = int(yblk * img.pagesize.y * scl + 0.5);
     int readszx = int(img.pagesize.x * scl + 0.5);

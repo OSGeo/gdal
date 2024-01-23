@@ -472,7 +472,7 @@ void SetGeogCSCitation(GTIF *psGTIF,
 
     if (bRewriteGeogCitation)
     {
-        oMapAsciiKeys[GeogCitationGeoKey] = osCitation;
+        oMapAsciiKeys[GeogCitationGeoKey] = std::move(osCitation);
     }
 }
 

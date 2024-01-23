@@ -148,7 +148,8 @@ template <typename T = unsigned long long> class BitMap2D
     // Use init(~(T)0)) for all set
     void init(T val)
     {
-        _bits.assign(Chunks<TGSIZE>(_w) * Chunks<TGSIZE>(_h), val);
+        _bits.assign(
+            static_cast<size_t>(Chunks<TGSIZE>(_w)) * Chunks<TGSIZE>(_h), val);
     }
 
     // Support for store and load

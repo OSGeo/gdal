@@ -689,6 +689,8 @@ int ILI2Reader::SetupParser()
     m_poSAXReader->setLexicalHandler(m_poILI2Handler);
     m_poSAXReader->setEntityResolver(m_poILI2Handler);
     m_poSAXReader->setDTDHandler(m_poILI2Handler);
+    m_poSAXReader->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution,
+                              true);
 
     /* No Validation
     #if (OGR_ILI2_VALIDATION)

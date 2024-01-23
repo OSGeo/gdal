@@ -32,7 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define SEP_STRING "\\"
 #else
 #define SEP_STRING "/"

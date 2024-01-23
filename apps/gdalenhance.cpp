@@ -624,8 +624,8 @@ static CPLErr EnhancerCallback(void *hCBData, int nXOff, int nYOff, int nXSize,
 
     GByte *pabyOutImage = static_cast<GByte *>(pData);
     CPLErr eErr;
-    float *pafSrcImage =
-        static_cast<float *>(CPLCalloc(sizeof(float), nXSize * nYSize));
+    float *pafSrcImage = static_cast<float *>(
+        CPLCalloc(sizeof(float), static_cast<size_t>(nXSize) * nYSize));
 
     eErr = psEInfo->poSrcBand->RasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize,
                                         pafSrcImage, nXSize, nYSize,

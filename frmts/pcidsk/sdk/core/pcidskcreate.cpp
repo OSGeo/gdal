@@ -685,8 +685,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             interfaces->io->Close( band_io_handle );
 
             // Set the channel header information.
-            channel->SetChanInfo( relative_band_filename, 0, pixel_size,
-                                  pixel_size * pixels, true );
+            channel->SetChanInfo( std::move(relative_band_filename), 0, pixel_size,
+                                  static_cast<size_t>(pixel_size) * pixels, true );
         }
     }
 

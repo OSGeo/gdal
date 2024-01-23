@@ -523,8 +523,8 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             CPL_IGNORE_RET_VAL(
                 VSIFReadL(iRawScan, 1, poGDS->nRecordSize, poGDS->fp));
 
-            iScan = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize() *
-                                         poGDS->nBands * sizeof(GUInt16));
+            iScan = (GUInt16 *)CPLMalloc(
+                sizeof(GUInt16) * poGDS->GetRasterXSize() * poGDS->nBands);
             for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
             {
                 iScan[i] =
@@ -542,8 +542,8 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             CPL_IGNORE_RET_VAL(
                 VSIFReadL(byRawScan, 1, poGDS->nRecordSize, poGDS->fp));
 
-            iScan = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize() *
-                                         poGDS->nBands * sizeof(GUInt16));
+            iScan = (GUInt16 *)CPLMalloc(
+                sizeof(GUInt16) * poGDS->GetRasterXSize() * poGDS->nBands);
             for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
                 iScan[i] = byRawScan[poGDS->nRecordDataStart /
                                          (int)sizeof(byRawScan[0]) +

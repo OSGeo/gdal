@@ -648,6 +648,7 @@ TEST_F(test_cpl, CPLStringList_NameValue)
     {
         CPLStringList oTemp;
         oTemp.AddString("test");
+        // coverity[copy_assignment_call]
         oCopy = oTemp;
     }
     EXPECT_STREQ(oCopy[0], "test");
@@ -1136,7 +1137,7 @@ TEST_F(test_cpl, VSIMallocAligned)
 
     VSIFreeAligned(nullptr);
 
-#ifndef WIN32
+#ifndef _WIN32
     // Illegal use of API. Returns non NULL on Windows
     ptr = static_cast<GByte *>(VSIMallocAligned(2, 1));
     EXPECT_TRUE(ptr == nullptr);
@@ -3573,7 +3574,7 @@ TEST_F(test_cpl, CPLLoadConfigOptionsFromFile)
 
     // Try CPLLoadConfigOptionsFromPredefinedFiles() with $HOME/.gdal/gdalrc
     // file
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszHOMEEnvVarName = "USERPROFILE";
 #else
     const char *pszHOMEEnvVarName = "HOME";

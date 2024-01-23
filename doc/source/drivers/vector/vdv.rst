@@ -74,7 +74,7 @@ The following layer creation options are available:
       VDV-452-ENGLISH and VDV-452-GERMAN will restrict the VDV-452 to the
       specified language. The configuration file describing VDV-452 table
       and field names is
-      :source_file:`data/vdv452.xml`
+      :source_file:`ogr/ogrsf_frmts/vdv/data/vdv452.xml`
       located in the GDAL_DATA directory.
 
 -  .. lco:: PROFILE_STRICT

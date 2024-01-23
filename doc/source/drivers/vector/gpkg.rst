@@ -456,6 +456,18 @@ available:
 
 - :copy-config:`SQLITE_USE_OGR_VFS`
 
+- .. config:: OGR_GPKG_NUM_THREADS
+     :since: 3.8.3
+
+     Can be set to an integer or ``ALL_CPUS``.
+     This is the number of threads used when reading tables through the
+     ArrowArray interface, when no filter is applied and when features have
+     consecutive feature ID numbering.
+     The default is the minimum of 4 and the number of CPUs.
+     Note that setting this value too high is not recommended: a value of 4 is
+     close to the optimal.
+
+
 Metadata
 --------
 

@@ -1051,7 +1051,7 @@ bool OGRGMLASLayer::RemoveField(int nIdx)
             else if (oIter.first > nIdx)
                 oMapOGRFieldIdxtoFCFieldIdx[oIter.first - 1] = oIter.second;
         }
-        m_oMapOGRFieldIdxtoFCFieldIdx = oMapOGRFieldIdxtoFCFieldIdx;
+        m_oMapOGRFieldIdxtoFCFieldIdx = std::move(oMapOGRFieldIdxtoFCFieldIdx);
     }
 
     OGRLayer *poFieldsMetadataLayer = m_poDS->GetFieldsMetadataLayer();

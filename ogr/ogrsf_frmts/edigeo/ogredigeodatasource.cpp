@@ -458,7 +458,7 @@ int OGREDIGEODataSource::ReadSCD()
                     /*CPLDebug("EDIGEO", "Attribute %s = %s, %d",
                             osRID.c_str(), osNameRID.c_str(), nWidth);*/
 
-                    mapAttributesSCD[osRID] = attDesc;
+                    mapAttributesSCD[osRID] = std::move(attDesc);
                 }
             }
         }

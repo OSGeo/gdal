@@ -135,7 +135,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
          }
       }
 
-      if( !(floor(rmin*dscale) >= -FLT_MAX && floor(rmin*dscale) <= FLT_MAX) )
+      if( !(floor((double)rmin*dscale) >= -FLT_MAX && floor((double)rmin*dscale) <= FLT_MAX) )
       {
          fprintf(stderr,
                     "Scaled min value not representable on IEEE754 "

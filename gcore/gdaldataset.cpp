@@ -2574,6 +2574,14 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  * ]4 / 1.2, 8 / 1.2]         | 4x downsampled band
  * ]8 / 1.2, infinity[        | 8x downsampled band
  *
+ * Note that starting with GDAL 3.9, this 1.2 oversampling factor can be
+ * modified by setting the GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD configuration
+ * option. Also note that starting with GDAL 3.9, when the resampling algorithm
+ * specified in psExtraArg->eResampleAlg is different from GRIORA_NearestNeighbour,
+ * this oversampling threshold defaults to 1. Consequently if there are overviews
+ * of downscaling factor 2, 4 and 8, and the desired downscaling factor is
+ * 7.99, the overview of factor 4 will be selected for a non nearest resampling.
+ *
  * For highest performance full resolution data access, read and write
  * on "block boundaries" as returned by GetBlockSize(), or use the
  * ReadBlock() and WriteBlock() methods.
@@ -3092,7 +3100,7 @@ struct GDALAntiRecursionStruct
     std::map<std::string, int> m_oMapDepth{};
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 // Currently thread_local and C++ objects don't work well with DLL on Windows
 static void FreeAntiRecursionOpen(void *pData)
 {
@@ -3614,6 +3622,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
     }
 
     oOpenInfo.papszOpenOptions = papszOpenOptionsCleaned;
+    oOpenInfo.nOpenFlags |= GDAL_OF_FROM_GDALOPEN;
 
 #ifdef OGRAPISPY_ENABLED
     const bool bUpdate = (nOpenFlags & GDAL_OF_UPDATE) != 0;
@@ -3936,25 +3945,63 @@ retry:
                 if (!poMissingPluginDriver)
                 {
                     CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as a supported file format.",
+                             "`%s' not recognized as being in a supported file "
+                             "format.",
                              pszFilename);
                 }
                 else
                 {
-                    const char *pszInstallationMsg =
-                        poMissingPluginDriver->GetMetadataItem(
-                            GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE);
-                    CPLError(CE_Failure, CPLE_OpenFailed,
-                             "`%s' not recognized as a supported file format. "
-                             "It could have been recognized by driver %s, "
-                             "but plugin %s is not available in your "
-                             "installation.%s%s",
-                             pszFilename,
-                             poMissingPluginDriver->GetDescription(),
-                             poMissingPluginDriver->GetMetadataItem(
-                                 "MISSING_PLUGIN_FILENAME"),
-                             pszInstallationMsg ? " " : "",
-                             pszInstallationMsg ? pszInstallationMsg : "");
+                    std::string osMsg("`");
+                    osMsg += pszFilename;
+                    osMsg +=
+                        "' not recognized as being in a supported file format. "
+                        "It could have been recognized by driver ";
+                    osMsg += poMissingPluginDriver->GetDescription();
+                    osMsg += ", but plugin ";
+                    osMsg += poMissingPluginDriver->GetMetadataItem(
+                        "MISSING_PLUGIN_FILENAME");
+                    osMsg += " is not available in your "
+                             "installation.";
+                    if (const char *pszInstallationMsg =
+                            poMissingPluginDriver->GetMetadataItem(
+                                GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE))
+                    {
+                        osMsg += " ";
+                        osMsg += pszInstallationMsg;
+                    }
+
+                    VSIStatBuf sStat;
+                    if (const char *pszGDALDriverPath =
+                            CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr))
+                    {
+                        if (VSIStat(pszGDALDriverPath, &sStat) != 0)
+                        {
+                            osMsg += ". Directory '";
+                            osMsg += pszGDALDriverPath;
+                            osMsg +=
+                                "' pointed by GDAL_DRIVER_PATH does not exist.";
+                        }
+                    }
+                    else
+                    {
+#ifdef INSTALL_PLUGIN_FULL_DIR
+                        if (VSIStat(INSTALL_PLUGIN_FULL_DIR, &sStat) != 0)
+                        {
+                            osMsg += ". Directory '";
+                            osMsg += INSTALL_PLUGIN_FULL_DIR;
+                            osMsg += "' hardcoded in the GDAL library does not "
+                                     "exist and the GDAL_DRIVER_PATH "
+                                     "configuration option is not set.";
+                        }
+                        else
+#endif
+                        {
+                            osMsg += ". The GDAL_DRIVER_PATH configuration "
+                                     "option is not set.";
+                        }
+                    }
+
+                    CPLError(CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str());
                 }
             }
             else

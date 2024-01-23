@@ -30,6 +30,14 @@ if(TARGET gdal_PDF_core)
     endif ()
 endif()
 
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pdfcomposition.xsd
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 if(NOT TARGET gdal_PDF)
     return()
 endif()

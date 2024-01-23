@@ -189,7 +189,3 @@ can be set to ``NO`` to disable using the coordinate epoch associated with the
 source or target CRS.
 
 If a per-vertex time is specified, it overrides the one associated with the CRS.
-
-Note that dynamic CRS to dynamic CRS transformations are not supported currently.
-
-
