@@ -56,6 +56,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
         "                    [-srcnodata \"<value>[ <value>]...\"] [-vrtnodata "
         "\"<value>[ <value>]...\"\n"
         "                    [-ignore_srcmaskband]\n"
+        "                    [-nodata_if_mask_less_or_equal <threshold>]\n"
         "                    [-a_srs <srs_def>]\n"
         "                    [-r "
         "{nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]\n"
